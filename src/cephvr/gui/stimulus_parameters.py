@@ -16,12 +16,14 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.advanced_appearance import AdvancedAppearance
+from cephvr.gui.arena_limits import ArenaLimits
 from cephvr.gui.arena_movement import ArenaMovement
 from cephvr.gui.components import Card, button, equal_row_height, field, label
 from cephvr.gui.epoch_motion import EpochMotion
 from cephvr.gui.feedback_mappings import FeedbackMappings
 from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
 from cephvr.gui.image_parameters import ImageParameters
+from cephvr.gui.initial_pose import initial_pose_fields
 from cephvr.gui.looming_size import LoomingSize
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.paths import PathEdit
@@ -72,6 +74,7 @@ class StimulusParameters(QWidget):
         ] = []
         self.asset_forms: dict[str, PathEdit] = {}
         self.pending_profiles: dict[str, str] = {}
+        self.arena_limits: ArenaLimits | None = None
         self.feedback: FeedbackMappings | None = None
         self.retain = QCheckBox("Retain state")
         self.body = QVBoxLayout(self)
@@ -190,6 +193,7 @@ class StimulusParameters(QWidget):
         self.asset_forms.clear()
         self.pending_profiles.clear()
         self.feedback = None
+        self.arena_limits = None
         self.message.clear()
         self.message.setVisible(not self.compact)
         self.reset_button.hide()
@@ -276,20 +280,14 @@ class StimulusParameters(QWidget):
             self.update_link_controls()
             self.fades.changed.connect(self.mark_changed)
             self.extra_body.addWidget(appearance)
-        if values["kind"] == "texture":
-            center = ValueEditor(
-                {
-                    "type": "object",
-                    "properties": {"initial": schema["properties"]["initial"]},
-                },
-                {"initial": values["initial"]},
-                definitions,
-            )
+        if values["kind"] == "arena":
+            self.arena_limits = ArenaLimits()
+            self.extra_body.addWidget(self.arena_limits)
+        if values["kind"] in ("texture", "arena", "video") or looming:
+            center, center_field = initial_pose_fields(values, schema, definitions)
             center.changed.connect(self.mark_changed)
             self.forms.append(center)
-            self.extra_body.addWidget(
-                field("Initial texture center / orientation", center)
-            )
+            self.extra_body.addWidget(center_field)
         if values["kind"] == "image" and not looming:
             image = ImageParameters(values, schema, definitions)
             image.changed.connect(self.mark_changed)

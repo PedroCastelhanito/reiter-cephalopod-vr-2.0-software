@@ -1,9 +1,9 @@
 """G02 visual tokens, shared by every frontend component."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from PyQt6.QtGui import QColor, QFont, QPalette
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QWidget
 
 
 @dataclass(frozen=True)
@@ -71,11 +71,71 @@ class Metrics:
 COLORS = Palette()
 SIZES = Metrics()
 
+RETRO_COLORS = Palette(
+    window="#0b1213",
+    page="#0c1415",
+    sidebar="#091011",
+    card="#101c1d",
+    input="#0a1214",
+    border="#2d6e91",
+    input_border="#2b5064",
+    text="#c5ded3",
+    muted="#86a7a8",
+    label="#93bebf",
+    accent="#7fd6d4",
+    coral="#df7960",
+    projection="#dfac6f",
+    mirror="#b7dd9c",
+    focus="#57b6d1",
+    hover="#172e32",
+    active="#19363e",
+    selection="#163039",
+    primary="#18465b",
+    primary_hover="#1f5a70",
+    secondary="#13262c",
+    danger="#3a2521",
+    danger_border="#dc865e",
+    console="#091113",
+    console_text="#bdcf9c",
+    ready="#b7dd9c",
+    waiting="#e0b871",
+    error="#ef8b70",
+    disabled="#557174",
+)
+RETRO_SIZES = replace(
+    SIZES,
+    card_radius=0,
+    button_radius=0,
+    field_radius=1,
+    title_font=14,
+    body_font=12,
+    console_font=12,
+)
+RETRO_FONT = "'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace"
 
-def stylesheet() -> str:
-    c, s = COLORS, SIZES
+
+def retro_console(widget: QWidget) -> bool:
+    """Only the explicitly styled Review Dashboard uses custom instrument painting."""
+    current: QWidget | None = widget
+    while current is not None:
+        if current.property("retroConsole") is True:
+            return True
+        current = current.parentWidget()
+    return False
+
+
+def colors_for(widget: QWidget) -> Palette:
+    return RETRO_COLORS if retro_console(widget) else COLORS
+
+
+def stylesheet(
+    colors: Palette = COLORS,
+    metrics: Metrics = SIZES,
+    font_family: str = "'Segoe UI', 'Helvetica Neue'",
+) -> str:
+    c, s = colors, metrics
     return f"""
-    QWidget {{ color: {c.text}; font-family: 'Segoe UI', 'Helvetica Neue';
+    QWidget {{ color: {c.text}; font-family: {font_family};
                font-size: {s.body_font}px; }}
     QMainWindow, QDialog, QWidget#Shell {{ background: {c.window}; }}
     QWidget#Page {{ background: {c.page}; }}
@@ -89,6 +149,7 @@ def stylesheet() -> str:
                           font-weight: 700; letter-spacing: 0.8px; }}
     QLabel[role='muted'] {{ color: {c.muted}; font-size: {s.label_font}px; }}
     QLabel[role='hint'] {{ color: {c.muted}; }}
+    QLabel[role='error'] {{ color: {c.danger_border}; font-size: {s.label_font}px; }}
     QMenuBar {{ background: {c.sidebar}; color: {c.text};
                 border-bottom: 1px solid {c.border}; spacing: 4px; }}
     QMenuBar::item {{ background: transparent; color: {c.text}; padding: 6px 10px; }}
@@ -131,6 +192,7 @@ def stylesheet() -> str:
         border-color: {c.focus}; }}
     QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
         color: {c.muted}; background: {c.window}; }}
+    QLineEdit[invalid='true'] {{ border-color: {c.danger_border}; }}
     QLineEdit[role='point-coordinate'] {{ background: transparent; border-color: transparent;
                                         border-radius: 6px; padding: 7px 4px; }}
     QLineEdit[role='point-coordinate']:hover {{ background: {c.hover}; }}
@@ -202,6 +264,51 @@ def stylesheet() -> str:
                    border-radius: 6px; min-height: 14px; text-align: center; }}
     QProgressBar::chunk {{ background: {c.primary}; border-radius: 5px; }}
     QToolTip {{ background: {c.card}; color: {c.text}; border: 1px solid {c.focus}; padding: 6px; }}
+    """
+
+
+def retro_stylesheet() -> str:
+    c = RETRO_COLORS
+    return (
+        stylesheet(c, RETRO_SIZES, RETRO_FONT)
+        + f"""
+    QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; letter-spacing: 1px; font-size: 13px; }}
+    QLabel[role='label'] {{ letter-spacing: 1px; }}
+    QLineEdit, QComboBox {{ color: {c.text}; }}
+    QPushButton {{ letter-spacing: 0.8px; }}
+    QPushButton:pressed {{ background: {c.active}; border: 1px solid {c.accent}; }}
+    QCheckBox::indicator {{ border-radius: 0; width: 13px; height: 13px; }}
+    QCheckBox::indicator:checked {{ background: {c.ready}; border-color: {c.ready}; }}
+    QRadioButton[role='status-indicator']::indicator {{ border-radius: 0; width: 8px; height: 8px; }}
+    QRadioButton[role='status-indicator'] {{ min-height: 36px; }}
+    QPlainTextEdit[role='console'] {{ font-family: {RETRO_FONT}; padding: 12px;
+        border: 1px solid {c.input_border}; border-radius: 0; }}
+    QPlainTextEdit[terminal='telemetry'] {{ color: {c.mirror}; }}
+    """
+    )
+
+
+def retro_chrome_stylesheet() -> str:
+    c = RETRO_COLORS
+    return f"""
+    QMainWindow, QWidget#Shell, QWidget#Page {{ background: {c.page}; }}
+    QFrame#Sidebar {{ background: {c.sidebar}; border-right: 1px solid {c.border}; }}
+    QFrame#Sidebar QLabel, QWidget#WindowHeader QLabel {{
+        font-family: {RETRO_FONT}; color: {c.accent}; }}
+    QFrame#Sidebar QLabel[role='muted'] {{ color: {c.muted}; font-size: 10px; }}
+    QFrame#Sidebar QLabel[role='brand'] {{ color: {c.projection}; }}
+    QFrame#Sidebar QPushButton {{ font-family: {RETRO_FONT}; font-size: 12px;
+        color: {c.muted}; border-radius: 0; border: 1px solid transparent; }}
+    QFrame#Sidebar QPushButton:checked {{ color: {c.accent}; background: {c.selection};
+        border: 1px solid {c.border}; border-left: 3px solid {c.accent}; }}
+    QFrame#Sidebar QPushButton:hover {{ background: {c.hover}; border-color: {c.focus}; }}
+    QWidget#WindowHeader QPushButton {{ font-family: {RETRO_FONT}; color: {c.focus};
+        background: {c.secondary}; border: 1px solid {c.input_border}; border-radius: 1px; }}
+    QMenuBar, QMenu {{ font-family: {RETRO_FONT}; color: {c.text}; background: {c.sidebar}; }}
+    QMenuBar {{ border-bottom: 1px solid {c.border}; }}
+    QMenuBar::item, QMenu::item {{ color: {c.text}; }}
+    QMenuBar::item:selected, QMenu::item:selected {{ background: {c.selection}; color: {c.accent}; }}
+    QMenu {{ border: 1px solid {c.border}; }}
     """
 
 

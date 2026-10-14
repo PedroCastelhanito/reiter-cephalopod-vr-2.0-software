@@ -16,8 +16,8 @@ Each enabled camera has one camera worker (A02). Its CameraWorkerSetupPayload ca
 | --- | --- |
 | Capture | Confirmed device/settings/PFS baseline, file-resolved transport, actual native layout, metadata availability and clock descriptor; SDK buffer count, frame-silence budget and resolved `session_preview_max_hz`. |
 | Outputs | Tracking-ring attachment only when a tracking consumer needs this camera; one session PREVIEW slot only when `session_preview_max_hz > 0`. |
-| Failure scope | `owned_functions` reuses `PreparedFunctionScope`: this camera's capture, optional recording and exact reserved session output keys. Logical owner is the acquisition coordinator; authorized reporter is this registered worker. Closures are unique, self-inclusive and transitive. Recording includes every affected future output key; capture includes recording and those outputs. These are the same declarations emitted in backend Ready. |
-| Recording | Present only when saving: resolved FFmpeg/ffprobe executables, that camera's argument list and recording depth, frame-log/video sync, fragment and stall intervals, recording-queue and pending-record capacities, bounded diagnostic-tail sizes and session-config reference. External-trigger saving also requires `pulse_configuration`, the controller-confirmed existing `MicrocontrollerObservation`; use this role's applied rate, never the requested rate or camera free-running control. |
+| Failure scope | `owned_functions` reuses `PreparedFunctionScope`: this camera's capture, required recording and exact reserved session output keys. Logical owner is the acquisition coordinator; authorized reporter is this registered worker. Closures are unique, self-inclusive and transitive. Recording includes every affected future output key; capture includes recording and those outputs. These are the same declarations emitted in backend Ready. |
+| Recording | Required for every active experiment camera. Video off sets `metadata_only=true`, requiring frame-log sync interval, pending-record capacity and session-config reference, with no encoder settings. Video on additionally supplies: resolved FFmpeg/ffprobe executables, that camera's argument list and recording depth, frame-log/video sync, fragment and stall intervals, recording-queue and pending-record capacities, bounded diagnostic-tail sizes and session-config reference. External-trigger recording in either mode also requires `pulse_configuration`, the controller-confirmed existing `MicrocontrollerObservation`; use this role's applied rate, never the requested rate or camera free-running control. |
 
 Use positive integer capacities and nanosecond intervals; preserve scalar presence
 (including explicit false for native availability). Reject missing required fields,
@@ -79,15 +79,15 @@ owns complete file-policy routing. Implementation status is tracked in the revie
 ## Per-trial preparation
 
 The enclosing WorkerCommand supplies exact trial context. Camera preparation lists
-its expected session allocation IDs and, when saving, the symbolic MP4 and frame-log
-output plans. These must match retained Setup for the required configuration
+its expected session allocation IDs, required symbolic frame-log plan and optional
+MP4 plan when video is enabled. These must match retained Setup for the required configuration
 revision; never accept a replacement allocation without new Setup.
 
 Before dispatch, coordinator verifies prior closure/drain and safe ring reset to the
 new trial ID, with admission sealed. The camera worker performs fresh capture-critical
-readback, purges stale SDK frames and arms external capture with pulses off. When
-saving, it verifies prior file/encoder closure, resets trial-only counters and the
-recording queue and prepares fresh recording resources under A08; FFmpeg launches at
+readback, purges stale SDK frames and arms external capture with pulses off. It
+verifies prior metadata and optional encoder closure, resets trial-only counters and
+the record queue, and prepares fresh recording resources. With video enabled, FFmpeg launches at
 ScheduleTrial acceptance. Resource IDs remain stable; new trial identity prevents late
 frames from being accepted as the new trial.
 

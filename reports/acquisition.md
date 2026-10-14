@@ -44,6 +44,48 @@ Projector flip is explicitly deferred rather than a pending implementation test.
 
 Continuous pin tests now follow [A11 revision45](../docs/architecture/acquisition.md#a11): explicit Stop replaces elapsed expiry, while matched diagnostic polls renew a two-second firmware lease. Updated Uno firmware compiles; host/offscreen verification and limitations are in the [runtime assessment](runtime.md). Manual upload and physical sustained-output/lease-expiry acceptance remain in the [rig checklist](rig-verification.md).
 
+Oct14 encoding rig test plan: [commands, matrix and collection](rig-verification.md#encoding-test-plan)
+cover CQ16/CQ23 isolated/concurrent synthetic probes and separate live-app runs.
+`tools/encoding_probe.py` collects external decode/frame counts, sizes, source/drop/
+padding counters and renderer timing JSON. Review repaired launch/probe/decode failure
+retention, bounded version queries, malformed-log isolation and empty/missing diagnostic
+reporting; decoder error output suppresses successful throughput even with exit0.
+The plan uses one executable warm-up/three-repeat matrix and documents independent
+synthetic completion versus sustained live contention. Fifteen offline tool tests plus lint/format/
+Win32 mypy pass; no FFmpeg/NVENC, PowerShell or hardware execution on this machine.
+Eye inputs/readiness remain required; missing timing/completion evidence is not a pass.
+
+Oct14 `encoding-quality-defaults`: owner selects CQ16 as the standard, p4, unchanged
+source dimensions, Behavior color 4:4:4 and Tracking mono; Eye and Stimulus mono
+use explicit CQ23 test overrides pending owner evaluation. Mono chains explicitly
+convert to gray then NVENC-compatible 8-bit YUV 4:2:0 with neutral chroma; future
+color Stimulus uses 4:4:4. Camera source-depth protections remain; saved settings
+retain E07 precedence. No automatic bit-depth reduction or camera/PFS edits.
+[A08](../docs/architecture/acquisition.md#a08) and
+[E13](../docs/architecture/visual_stimulus.md#e13) govern these lists.
+Local validation: 34 configuration/filter-expression tests pass; all four token/filter
+chains preserve dimensions, TOML/policy bindings load, Ruff/format and Win32 mypy
+for the policy-binding module pass. Boundary check: 688 modules, zero violations;
+existing size warnings concern unchanged owners, with no new responsibility added.
+Installed GPU/FFmpeg conversion, visual
+quality, size and combined throughput remain [rig checks](rig-verification.md).
+
+Oct14 `always-save-scientific-evidence`: Required camera JSONL is now planned for every enabled experiment role. Metadata-only Setup skips FFmpeg/NVENC and conversion; capture admits bounded records without copying pixels or allocating video pools. The existing owner thread preserves interval, counters, invalid-image evidence, pulse/transport diagnostics and closure. Frame-log schema4 explicitly declares disabled video, without drops or fabricated mappings.
+Policy/config bindings updated together (acquisition21, Visual Stimulus14). Wiring,
+trigger timing, assumed first-trigger anchor and trial boundaries are unchanged.
+[Local evidence](runtime-evidence-2026-10-14/always-save-scientific-evidence/context.json):
+affected acquisition/Visual Stimulus/controller suites pass1200 tests
+(five skips, three deselections); offscreen recording-control check passes (478
+unrelated GUI cases deselected). Ruff/format and Win32 mypy338 source files pass;
+contract generation, TOML/schema consistency and whitespace checks pass. Boundary
+review:690 modules, zero violations. Native acceptance remains in the
+[rig checklist](rig-verification.md#always-saved-scientific-evidence).
+ARCH-002: keep existing lifecycle owners and bounded queues; camera metadata terminal
+assembly is a separate focused module. The larger camera session and stimulus native
+owner remain cohesive schedule/ownership adapters, without whole-runtime back-references
+or extra processes. Tests cover video-off sources/invalid images/bounds/cutoffs,
+pre-onset cancellation and write failure, plus stimulus scientific records and feedback
+interval closure without native capture/encoder ports. Existing video-on tests pass.
 
 Device workflow refinement under [G01](../docs/architecture/gui.md#g01) and
 [E07](../docs/architecture/experiment.md#e07) separates camera participation from
@@ -1157,3 +1199,36 @@ Background references from the retired design review:
 [NVIDIA FFmpeg guide](https://docs.nvidia.com/video-technologies/video-codec-sdk/13.1/ffmpeg-with-nvidia-gpu/index.html)
 and [MP4 muxer source](https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/movenc.c).
 These references do not govern CephVR behavior or establish rig compatibility.
+
+## Camera trigger-anchor capability assessment
+
+Oct14 source/documentation review identifies the cameras actually used in Oct13 rig
+readbacks: Behavioral acA4112-30uc serial40065509; Tracking a2A2464-77umPRO
+serial40747103. The Behavior PFS filename names a different model and is not identity
+evidence. Both models document ExposureActive. Behavior exposes a resettable acquired-
+image Counter1/CounterValue chunk, not an established count of all incoming triggers.
+Basler's Counter related-chunk table uses inconsistent names for this model; the
+Data Chunks model listing and general CounterValue description identify acquired-image
+counting. Tracking has two configurable counters and selectable CounterValue chunks;
+counting rising edges on its trigger input is a candidate requiring installed-node
+and per-image latch verification. Current CephVR adapter does not read CounterValue.
+
+The retained baseline has Behavior trigger Line4, output Line2=UserOutput1;
+Tracking trigger Line2, Line3=input/source Off. CounterValue chunks are disabled
+on both; Tracking counters are Off. The owner selects the initial first-trigger/first-video-source assumption under
+[A09](../docs/architecture/acquisition.md#a09), keeping wiring and cadence unchanged.
+Stronger hardware/coded-trigger anchors are deferred. Resolve the first video frame's
+source explicitly, retain leading-loss/padding evidence and label the correspondence
+assumed; metadata-only runs analogously use their first received source row.
+No independent exposure-time or absolute-offset validation is claimed. Existing raw
+counter/timestamp evidence remains useful for spotting inconsistencies and later
+revising alignment. See the [baseline rig checks](rig-verification.md#camera-no-wiring-anchoring).
+Eye was disabled; its PFS filename is not confirmed model evidence for this check.
+
+[Source hashes, documentation links and limitations](runtime-evidence-2026-10-14/camera-anchor-capabilities/context.json).
+Official [counter](https://docs.baslerweb.com/counter),
+[data chunks](https://docs.baslerweb.com/data-chunks) and
+[line source](https://docs.baslerweb.com/line-source) documentation establish model
+capability only. No installed capability query, acquisition, electrical test or
+runtime change; reset/latch/drop and signal timing validation remains within the
+existing paired/rig integration work.

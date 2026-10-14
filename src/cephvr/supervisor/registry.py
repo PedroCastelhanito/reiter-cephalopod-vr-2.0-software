@@ -242,11 +242,6 @@ class LaunchRegistry:
             raise LaunchError(
                 "COMMAND_ID_REUSED", "confirmation command ID has changed payload"
             )
-        if (
-            previous_confirmation is not None
-            and entry.state.phase == wire.LAUNCH_PHASE_RELEASED
-        ):
-            return _snapshot(entry)
         if previous_confirmation is None and len(entry.confirmations) >= 8:
             raise LaunchError(
                 "CONFIRM_CAPACITY", "launch confirmation record capacity exhausted"
@@ -257,6 +252,10 @@ class LaunchRegistry:
             raise LaunchError(
                 "WRONG_GENERATION", "launch identities differ from retained plan"
             )
+        if entry.state.phase == wire.LAUNCH_PHASE_RELEASED:
+            # Release is final: its job handle is closed, so inspecting it again
+            # would turn a retained release into a cleanup failure.
+            return _snapshot(entry)
         if (
             entry.state.phase
             in (wire.LAUNCH_PHASE_PLANNED, wire.LAUNCH_PHASE_OS_CONFIRMED)

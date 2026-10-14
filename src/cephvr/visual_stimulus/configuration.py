@@ -37,10 +37,10 @@ from cephvr.visual_stimulus.config.projection import projection_values
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 12
+_POLICY_VERSION = 15
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "096b5d2d919d64f08d547d18e16b4b375521d8745061ceb63f9fdc5e7a3a8824"
+_POLICY_SHA256 = "bbd67323fb527fbc5a2514d077055ef2c041cc7e648cac0555be5e7fb39e87ef"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port
@@ -54,7 +54,7 @@ _CONFIG_KEYS = frozenset(
     resources.evidence_pending_bytes
     recording_runtime.record_sync_interval_s recording_runtime.video_sync_interval_s
     recording_runtime.fragment_target_s recording_runtime.encoder_stall_timeout_s
-    recording_runtime.record_stall_timeout_s feedback.max_result_age_ms
+    recording_runtime.record_stall_timeout_s recording_runtime.review_scale_factor feedback.max_result_age_ms
     presentation.pacing_refresh_hz presentation.pacing_output_id
     projection.near_mm projection.far_mm projection.positional_tolerance_mm
     projection.orthogonality_tolerance
@@ -156,7 +156,7 @@ def _load_pair(root: Path) -> LoadedPair:
             "photometric_calibration",
         },
         expected_policy={
-            "runtime.process_layout": "coordinator_and_render_worker_with_recording_thread_when_saving"
+            "runtime.process_layout": "coordinator_and_render_worker_with_required_evidence_thread"
         },
     )
     if pair.policy_version != _POLICY_VERSION:
@@ -260,6 +260,10 @@ def load_file_policies(root: Path) -> runtime_pb2.VisualStimulusFilePolicies:
             result.limits, field, _positive_integer(limits, field, f"resources.{field}")
         )
     timing = pair.config.get("recording_runtime", {})
+    if "review_scale_factor" in timing:
+        result.review_scale_factor = _positive_integer(
+            timing, "review_scale_factor", "recording_runtime.review_scale_factor"
+        )
     for source, target in (
         ("record_sync_interval_s", "record_sync_interval_ns"),
         ("video_sync_interval_s", "video_sync_interval_ns"),

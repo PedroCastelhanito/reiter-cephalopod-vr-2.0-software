@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-15",
+  "task": "gui-retro-hud-only-divider",
+  "decision": "G02 revision47",
+  "scope": "Review Retro: remove main-card section dividers; HUD divider unchanged.",
+  "source": "Dirty checkout; unrelated concurrent work retained.",
+  "sha256": {
+    "components.py": "e7b11828382885d7116cd64a080b236c158d47f85ce309c8a337a70bce26b919",
+    "dashboard.py": "77da4e092fea49dd31e9152dacb60b69f7e803da6e0aefbdf4b5198183768bcf",
+    "retro_instruments.py": "9976a5cbd826f24310387a4489a30e0ead2b912af7ce9fe30f9f44675c4651a3"
+  },
+  "checks": [
+    "Scoped Ruff/format and Win32 mypy2 sources pass; boundaries696/zero violations",
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-15/retro-console/capture.py --output-dir reports/runtime-evidence-2026-10-15/retro-console/hud-only-divider: exit0; Standard round-trip pixels identical; wide render visually inspected",
+    "git diff --check passes"
+  ],
+  "launch": "Fresh Review via scripts/start_gui.py, session71475; earlier windows retained.",
+  "limits": "Offscreen macOS capture; no native accessibility or Windows/rig acceptance. PNGs ignored local-only evidence."
+}

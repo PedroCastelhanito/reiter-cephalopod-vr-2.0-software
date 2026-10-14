@@ -68,6 +68,13 @@ class DisplayInfo:
 def _stable_display_identity(
     screen: QScreen, bindings: tuple[MonitorBinding, ...]
 ) -> str:
+    by_name = [
+        binding
+        for binding in bindings
+        if binding.adapter and binding.adapter.casefold() == screen.name().casefold()
+    ]
+    if len(by_name) == 1 and by_name[0].interface:
+        return by_name[0].interface
     geometry = screen.geometry()
     ratio = screen.devicePixelRatio()
     matches = [
@@ -643,6 +650,8 @@ class ProjectorsPanel(DevicePanel):
             return None
         try:
             self.request("Refresh displays")
+            monitors = active_monitor_bindings()
+            native_interfaces = {monitor.interface for monitor in monitors}
             rows = tuple(
                 AssignedDisplay(
                     self.assignments.get(key, "Unassigned"),
@@ -651,6 +660,7 @@ class ProjectorsPanel(DevicePanel):
                     geometry.width(),
                     geometry.height(),
                     self.participation.get(key, True),
+                    interface=key if key in native_interfaces else "",
                 )
                 for key, (_, geometry) in zip(
                     self.keys, self.diagram.outputs, strict=True
@@ -660,7 +670,7 @@ class ProjectorsPanel(DevicePanel):
                 calibration_asset_root(),
                 self.calibration_files.calibration_snapshot(),
                 rows,
-                active_monitor_bindings(),
+                monitors,
                 view=view,
                 blackout_zones=(
                     self.timing.blackouts.snapshot() if view == "frame_grid" else None

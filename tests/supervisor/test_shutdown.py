@@ -121,6 +121,22 @@ async def test_controller_silence_after_shutdown_is_not_a_safety_fault(
     assert outbound.interruptions == []
 
 
+@pytest.mark.parametrize("isolated", [True, False])
+async def test_isolated_backend_exit_is_not_overridden_by_heartbeat_silence(
+    tmp_path: Path, isolated: bool
+) -> None:
+    runtime, _, _, _ = await _registered_visual_stimulus(tmp_path)
+    backend = next(iter(runtime.registration.required_backends().items()))
+    runtime.health_state.last_heartbeat[backend] = 1
+    if isolated:
+        runtime.health_state.isolated_backend_exits.add(backend)
+    monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
+    await asyncio.sleep(0.03)
+    monitor.cancel()
+    await asyncio.gather(monitor, return_exceptions=True)
+    assert (runtime.shutdown_state.interruption is None) is isolated
+
+
 async def test_lost_controller_with_active_session_interrupts_before_shutdown(
     tmp_path: Path,
 ) -> None:

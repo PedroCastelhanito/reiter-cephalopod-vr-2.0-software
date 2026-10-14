@@ -9,7 +9,7 @@ boundary; no replay renderer or export CLI belongs to the experiment backend.
 
 ## JSON Lines file
 
-With Save Visual Stimulus data On the renderer's recording thread writes `<prefix>_stimulus_frames.jsonl`:
+Independently of review-video saving, the renderer's recording thread writes `<prefix>_stimulus_frames.jsonl`:
 UTF-8 JSON Lines, one EvidenceRecord per line, each ending in `\n`. Use compact JSON
 with Unicode retained, no NaN/Infinity, no duplicate object keys and no arbitrary
 object deserialization. There are no envelopes, length prefixes, checksums, sequence
@@ -27,7 +27,11 @@ reference to `_stimulus_LOG.json` (including its manifest and uniform layouts). 
 referenced log must be published before the Header is written. Paths are relative to
 the session's `protocol-data/` directory (no `protocol-data/` prefix) and cannot escape
 it after normalization/symlink resolution.
-The image-selection evidence uses Header `format_version = 4`; readers also accept
+Current Header `format_version = 5` adds `video_enabled`. With video disabled,
+render groups retain full scientific state and submissions with empty `captures`;
+no encoder-outcome records are emitted. Completion records still reconcile actual
+render groups and submissions, with zero video admissions/drops. Older format4
+added image-selection evidence; readers also accept
 version 3 records without image selections. The earlier one-admitted-group
 mapping is not compatible with this encoded-slot correspondence.
 Artifact names still use E04's reservation mechanism.
@@ -209,4 +213,6 @@ scheduled images are skipped while the original clocks advance. First-use anchor
 prepared before Ready; selection before any earlier selection identifies the anchor
 without falsely marking a repetition. Existing per-output submission records distinguish
 selection/rendering from confirmed submission; video padding duplicates remain separate.
-E13's Save switch governs detailed history; Save Off creates no per-frame image log.
+E13's legacy `save_visual_stimulus_data` field controls review video only.
+False remains false on loading saved settings; scientific image-selection and other
+per-group evidence is always retained. No new user toggle or settings-file migration is required.

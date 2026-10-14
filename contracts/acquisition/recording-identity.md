@@ -8,7 +8,7 @@ it is not a checksum, content-validity certificate or crash-integrity proof.
 
 The camera worker constructs the identity from its validated Setup device and
 scheduled trial context/output plans. Never parse a filename to manufacture it.
-Require exact session and trial UUIDs, camera role (`behavioral` or `tracking`) and
+Require exact session and trial UUIDs, camera role (`behavioral`, `tracking` or `eye_tracking`) and
 confirmed physical device ID, consistent with the enabled role in session metadata.
 Camera role is not a device serial; trial number alone is not trial identity. No new
 recording UUID or sidecar.
@@ -27,6 +27,10 @@ at 1,024 UTF-8 bytes; a longer assigned identifier is an explicit preparation er
 not permission to substitute a shorter name. The frame-log header line carries identity
 from creation (also `trial_number` and `session_config_reference`, per
 [frame_log_schema.toml](frame_log_schema.toml)); frame lines repeat none of it.
+
+The metadata header is always required for active experiment trials. MP4 tags and
+pair matching apply only when video is enabled; metadata-only trials retain the
+same identity without claiming a video pair.
 
 ## Writer binding
 

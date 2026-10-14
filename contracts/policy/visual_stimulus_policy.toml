@@ -2,10 +2,10 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 12
+policy_version = 15
 
 [runtime]
-process_layout = "coordinator_and_render_worker_with_recording_thread_when_saving"
+process_layout = "coordinator_and_render_worker_with_required_evidence_thread"
 rendering_library = "moderngl"
 window_library = "glfw"
 
@@ -116,14 +116,14 @@ video_source = "final_output_images_after_renderer_corrections"
 video_layout = "one_tiled_composite_per_trial"
 tile_order = "display_output_order_row_major"
 tile_grid_columns = "ceil_sqrt_output_count"
-tile_scale = "smallest_integer_divisor_fitting_encoder_maximum"
+tile_scale = "encoder_fit_integer_divisor_times_configured_review_scale_factor"
 tile_resampling = "bilinear"
 composite_depth = "largest_output_depth_widened_codes"
 encoder_sessions = 1
 recording_execution = "renderer_recording_thread_and_ffmpeg_subprocess"
 readback = "gl_thread_pbo_to_bounded_capture_slots_recording_thread_writes_raw_frames"
 encoder_launch = "at_schedule_trial_off_render_thread_no_frames_before_t"
-video_fidelity = "high_quality_lossy"
+video_fidelity = "operator_tuned_lossy"
 framework = "ffmpeg"
 args_scope = "output_only"
 args_ownership = "composite"

@@ -448,10 +448,18 @@ class NativePreparation:
                         cpu_bytes=cpu_bytes,
                         gpu_bytes=pixels * 16 + frame_bytes * limits.capture_slots,
                     )
+                from cephvr.visual_stimulus.resources.glb import GLBScene
+
                 context = CompileContext(
                     identity=identity,
                     display=display,
                     arena_boundaries=boundaries,
+                    arena_geometry={
+                        key: value.arena_geometry_json
+                        for key, value in bundle.prepared_content.items()
+                        if isinstance(value, GLBScene)
+                        and value.arena_geometry_json is not None
+                    },
                     manifest=bundle.manifest,
                     seed_decimal=explicit_seed,
                     source_json=source_json,

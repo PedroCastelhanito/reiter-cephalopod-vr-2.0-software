@@ -84,3 +84,27 @@ guessed model defaults. This adds no periodic provenance logging or runtime
 file-content validation.
 
 Reference: [Basler timestamp documentation](https://docs.baslerweb.com/timestamp).
+
+## No-wiring anchor scope
+
+A09 accepts a first-trigger/first-video-source assumption for initial post hoc
+alignment, with existing trigger wiring, fixed cadence and trial-only capture.
+For each uniquely matched trial/camera pulse train, associate its first recorded
+trigger with the source image referenced by encoded video frame zero. Resolve that
+source through A07 video_frame mappings; leading padding can reference a later
+received source. Preserve and flag leading invalid/dropped source rows rather than
+silently declaring that the first video source equals received frame_id zero.
+With video disabled, the analogous assumption uses the first received source row.
+
+The external compiler must identify this correspondence as assumed. It must not
+convert native counters into measured trigger identities or imply independently
+verified exposure timing. Subsequent source matching uses actual native timing/counter
+semantics and available gaps; video duplication never creates exposures. A known
+contradiction is surfaced for review; absence of a contradiction or a low fit residual
+does not prove the anchor. No new runtime trigger-index field, reset, firmware,
+pre-roll phase or live alignment process is required for this selected baseline.
+Retain raw identity/timing evidence so future alignment can revise the assumption.
+
+Stronger anchors are deferred pending observed need and a new owner request.
+Outstanding baseline checks live in the
+[rig checklist](../../reports/rig-verification.md#camera-no-wiring-anchoring).

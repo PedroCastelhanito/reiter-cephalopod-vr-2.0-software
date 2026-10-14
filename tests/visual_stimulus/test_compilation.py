@@ -902,3 +902,101 @@ def test_nearly_parallel_linked_spin_has_no_residual_drift():
     assert linked_rates(
         source, settings[1], geometry, source_rotation=0, target_rotation=33
     ) == pytest.approx((0, 0, 45), abs=1e-15)
+
+
+def test_arena_file_geometry_resolves_transforms_and_rejects_invalid_starts():
+    from types import SimpleNamespace
+
+    import pytest
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.visual_stimulus.compiler.arena_regions import resolve_arena_regions
+    from cephvr.visual_stimulus.config.models.program_model import (
+        ArenaBoundary,
+        ArenaFileRegion,
+        TrialArenaBoundaries,
+    )
+
+    setting = add_stimulus(blank_program(), 0, "3D arena", ()).sequence[0].settings[0]
+    binding = ArenaBoundary(
+        instance_id=setting.instance_id,
+        world_frame_id=setting.world_frame_id,
+        region=ArenaFileRegion(kind="arena_file", margin_mm=30),
+    )
+    boundaries = TrialArenaBoundaries(format_version=1, bindings=(binding,))
+    geometry = {
+        setting.asset_id: json.dumps(
+            {"shape": "rectangular", "width": 500, "depth": 400}
+        )
+    }
+    epochs = [SimpleNamespace(settings=(setting,))]
+    from cephvr.visual_stimulus.compiler.arena_regions import geometry_vertices
+
+    with patch(
+        "cephvr.visual_stimulus.compiler.arena_regions.geometry_vertices",
+        wraps=geometry_vertices,
+    ) as parse_geometry:
+        resolve_arena_regions(boundaries, epochs * 20, geometry)
+        assert parse_geometry.call_count == 1
+    resolved = resolve_arena_regions(boundaries, epochs, geometry)
+    region = resolved.bindings[0].region
+    assert region.kind == "convex_polygon_xy" and region.margin_mm == 30
+    assert region.vertices_mm == ((-250, -200), (250, -200), (250, 200), (-250, 200))
+    assert boundaries.bindings[0].region.kind == "arena_file"
+    transform = (
+        (-1.0, 0.0, 0.0, 10.0),
+        (0.0, 2.0, 0.0, 20.0),
+        (0.0, 0.0, 1.0, 0.0),
+        (0.0, 0.0, 0.0, 1.0),
+    )
+    moved = setting.model_copy(update={"asset_to_world": transform})
+    transformed = resolve_arena_regions(
+        boundaries, [SimpleNamespace(settings=(moved,))], geometry
+    )
+    assert set(transformed.bindings[0].region.vertices_mm) == {
+        (-240, -380),
+        (260, -380),
+        (260, 420),
+        (-240, 420),
+    }
+    for invalid in (
+        {},
+        {setting.asset_id: '{"shape":"torus"}'},
+        {setting.asset_id: '{"shape":"rectangular","width":20,"depth":20}'},
+        {setting.asset_id: '{"shape":"rectangular","width":60,"depth":60}'},
+        {setting.asset_id: '{"shape":"rectangular","width":-20,"depth":200}'},
+    ):
+        with pytest.raises((ValueError, KeyError)):
+            resolve_arena_regions(boundaries, epochs, invalid)
+    outside = setting.model_copy(
+        update={
+            "initial": setting.initial.model_copy(update={"position_mm": (240.0, 0.0)})
+        }
+    )
+    with pytest.raises(ValueError, match="outside"):
+        resolve_arena_regions(
+            boundaries, [SimpleNamespace(settings=(outside,))], geometry
+        )
+    explicit = resolved
+    assert resolve_arena_regions(explicit, epochs, {}) == explicit
+
+
+def test_arena_file_convex_geometry_requires_convex_finite_vertices():
+    import pytest
+
+    from cephvr.visual_stimulus.compiler.arena_regions import geometry_vertices
+
+    vertices = [[-100, -100], [100, -100], [0, 100]]
+    assert geometry_vertices(
+        json.dumps({"shape": "convex_polygon", "vertices_mm": vertices})
+    ) == tuple(map(tuple, vertices))
+    with pytest.raises(ValueError):
+        geometry_vertices(
+            json.dumps(
+                {
+                    "shape": "convex_polygon",
+                    "vertices_mm": [[0, 0], [100, 0], [10, 10], [100, 100], [0, 100]],
+                }
+            )
+        )

@@ -165,7 +165,135 @@ def test_frame_log_header_matches_declared_and_planned_cadence_schema(
         header["schema_version"]
         == declaration["schema_version"]
         == planned.schema_version
-        == 3
+        == 4
     )
     assert "video_frame" in declaration["format"]["line_types"]
     assert "source_host_receipt_ns" in planned.fields["video_frame"]
+
+
+@pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+@pytest.mark.parametrize(
+    "ending", ["completed", "interrupted", "cancelled", "write_failure"]
+)
+def test_metadata_only_session_retains_sources_without_video_resources(
+    tmp_path, role, ending
+):
+    from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    from cephvr.acquisition.buffers.queue import (
+        PendingRecordCapacityError,
+        RecordingQueue,
+    )
+    from cephvr.acquisition.buffers.records import FrameRecord
+    from cephvr.acquisition.recording.session import RecordingSession
+    from cephvr.acquisition.recording.session_contracts import (
+        PulseEvidence,
+        RecordingCompletionContext,
+        RecordingFailure,
+    )
+
+    identity = _identity(role)
+    reserved = _reservation(identity)
+    paths = RecordingPaths(
+        tuple(p for p in reserved.outputs if p.extension == "jsonl"),
+        reserved.backend_generation,
+    )
+    now = [90]
+    queue = RecordingQueue(1, 2, metadata_only=True)
+    session = RecordingSession(
+        acq.RecordingSettings(
+            metadata_only=True, frame_log_sync_interval_ns=1, pending_records_capacity=2
+        ),
+        camera.CameraImageLayout(),
+        identity,
+        paths,
+        queue,
+        None,
+        None,
+        None,
+        None,
+        None,
+        SimpleNamespace(sync=lambda _: None),
+        role=role,
+        nominal_frame_rate_hz=60,
+        nominal_rate_source="applied_mcu_rate",
+        warning_occurrence=lambda *_: None,
+        started_observed=lambda _: None,
+        clock_ns=lambda: now[0],
+    )
+    session.prepare()
+    trial = paths.outputs[0].trial
+    schedule = acq.WorkerSchedule(
+        command=acq.WorkerCommand(
+            command_id="schedule",
+            target=acq.WorkerContext(
+                camera=camera.CameraRole.Value(f"CAMERA_ROLE_{role.upper()}"),
+                work=control.WorkContext(trial=trial),
+            ),
+        ),
+        start_monotonic_ns=100,
+        end_monotonic_ns=200,
+        trial_file_prefix=str(tmp_path / "trial"),
+        outputs=paths.outputs,
+    )
+    schedule.outputs[0].path = str(tmp_path / f"trial_{role}_cam_frames.jsonl")
+    session.schedule(schedule, deadline_ns=99)
+    assert not list(tmp_path.iterdir())
+    if ending == "cancelled":
+        results = session.cancel_before_start(deadline_ns=99)
+        assert results[0].closure == control.OUTPUT_CLOSURE_NOT_STARTED
+        assert not results[0].artifact_present
+        return
+    session.release(
+        acq.WorkerRelease(
+            command=acq.WorkerCommand(target=schedule.command.target),
+            schedule_operation=control.OperationContext(command_id="schedule"),
+            start_monotonic_ns=100,
+            end_monotonic_ns=200,
+        ),
+        deadline_ns=99,
+    )
+    queue.enqueue(FrameRecord(0, 110, 101, 1001, True, None), None)
+    queue.enqueue(FrameRecord(1, 120, 102, 1002, False, "INVALID_IMAGE"), None)
+    with pytest.raises(PendingRecordCapacityError):
+        queue.enqueue(FrameRecord(2, 130, 103, 1003, True, None), None)
+    now[0] = 120
+    if ending == "write_failure":
+        session._create_trial_outputs()
+        session._frame_log.append_frame = lambda *a, **k: (_ for _ in ()).throw(
+            OSError("disk full")
+        )
+        with pytest.raises(RecordingFailure, match="disk full"):
+            session.process_available()
+        results = session.fail_cleanup(deadline_ns=300)
+        assert results[0].closure == control.OUTPUT_CLOSURE_FAILED
+        assert queue.pending_records == 0
+        return
+    assert session.process_available() == 2
+    end = 150 if ending == "interrupted" else 200
+    now[0] = end
+    results = session.finish(
+        CaptureEndMarker(2, end, end, 0, None, True),
+        PulseEvidence(),
+        RecordingCompletionContext(ending, end, end, None),
+        deadline_ns=300,
+    )
+    assert results[0].closure == control.OUTPUT_CLOSURE_CLOSED
+    assert results[0].camera_video_content == control.CAMERA_VIDEO_CONTENT_UNSPECIFIED
+    rows = [json.loads(line) for line in Path(results[0].path).read_text().splitlines()]
+    assert [r["type"] for r in rows] == ["header", "frame", "frame", "completion"]
+    assert rows[0]["video"]["enabled"] is False
+    assert [
+        (r["frame_id"], r["camera_frame_counter"], r["camera_timestamp_ns"])
+        for r in rows[1:3]
+    ] == [(0, 101, 1001), (1, 102, 1002)]
+    assert all(
+        r["video_frame"] is None
+        and r["video_disposition"] == "video_disabled"
+        and not r["dropped"]
+        for r in rows[1:3]
+    )
+    assert rows[2]["invalid_code"] == "INVALID_IMAGE"
+    assert rows[-1]["timing"]["final_received_frame_count"] == 2
+    assert rows[-1]["video"]["recorded_frame_count"] == 0
+    assert rows[-1]["outcome"] == ending
+    assert len(list(tmp_path.iterdir())) == 1

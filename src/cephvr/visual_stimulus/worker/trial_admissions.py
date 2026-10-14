@@ -86,18 +86,17 @@ class TrialAdmissions:
             raise TimeoutError("schedule arrives beyond release cutoff")
         if self.state.setup is None:
             raise RuntimeError("Setup missing")
-        if self.state.setup.settings.save_visual_stimulus_data:
-            for output in request.outputs:
-                if output.output_key not in self.state.outputs:
-                    continue
-                self.state.outputs[output.output_key] = pb.OutputResult(
-                    output_key=output.output_key,
-                    path=output.path,
-                    closure=pb.OUTPUT_CLOSURE_UNCONFIRMED,
-                )
-            trial.schedule_completion = self.recording.schedule(
-                request, trial.artifact.artifact
+        for output in request.outputs:
+            if output.output_key not in self.state.outputs:
+                continue
+            self.state.outputs[output.output_key] = pb.OutputResult(
+                output_key=output.output_key,
+                path=output.path,
+                closure=pb.OUTPUT_CLOSURE_UNCONFIRMED,
             )
+        trial.schedule_completion = self.recording.schedule(
+            request, trial.artifact.artifact
+        )
         trial.schedule = request
         return trial.schedule_completion
 

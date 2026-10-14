@@ -48,6 +48,7 @@ message VisualStimulusFilePolicies {
   optional double pacing_refresh_hz = 9; // V20 file-only positive finite target.
   optional string pacing_output_id = 10; // V20 configured output identity.
   ProjectionLimits projection = 11; // V15 file-only geometry limits.
+  optional uint32 review_scale_factor = 12; // E13 extra integer divisor after encoder-fit tile scaling; absent means 1.
   // Lifecycle/recovery use shared ControlPolicies; health comes from startup policy.
 }
 enum DisplayCalibrationState {

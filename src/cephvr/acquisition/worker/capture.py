@@ -57,7 +57,11 @@ class CameraCaptureLoop:
         first_trial_frame: Callable[[FrameRecord], None] = lambda _: None,
         clock_ns: Callable[[], int] = host_time_ns,
     ) -> None:
-        if (recording_queue is None) != (pixel_pool is None):
+        if (recording_queue is None) != (pixel_pool is None) and not (
+            recording_queue is not None
+            and recording_queue.metadata_only
+            and pixel_pool is None
+        ):
             raise ValueError(
                 "recording queue and pixel pool must be configured together"
             )
@@ -281,10 +285,14 @@ class CameraCaptureLoop:
     ) -> None:
         queue, pool = self.recording_queue, self.pixel_pool
         window = self.recording_window()
-        if queue is None or pool is None or window is None:
+        if queue is None or window is None:
             return
         if not window.start_ns <= receipt_ns < window.end_ns:
             return
+        if queue.metadata_only:
+            queue.enqueue(record, None)
+            return
+        assert pool is not None
         private_pixels = pool.acquire_nowait()
         if private_pixels.nbytes != pixels.nbytes:
             pool.release(private_pixels)

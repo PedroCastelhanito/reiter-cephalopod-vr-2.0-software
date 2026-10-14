@@ -45,6 +45,30 @@ def test_release_is_idempotent_and_never_resurrects() -> None:
     assert len(seen) == 1
 
 
+def test_late_confirmation_never_revives_a_released_launch() -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    owner, child = _identity("acquisition"), _identity(WORKER_ROLE)
+    state = _launch(registry, native, owner, child, 1, python=True)
+    command_id = state.plan.command_id
+    native.jobs[state.containment_job_name] = []
+    registry.release(command_id, obligations_met=True)
+    late = wire.ConfirmLaunchRequest(
+        command_id=str(uuid4()),
+        launch_command_id=command_id,
+        owner=owner,
+        child=child,
+        pid=1,
+        creation_time_100ns=state.creation_time_100ns,
+    )
+    try:
+        registry.confirm(late, describe_host_clock())
+    except LaunchError:
+        pass
+    assert registry.refresh(command_id).phase == wire.LAUNCH_PHASE_RELEASED
+    assert [item.plan.command_id for item in registry.states()] == [command_id]
+
+
 def _gui_launch(
     registry: LaunchRegistry, native: Native, *, pid: int = 42
 ) -> wire.LaunchState:

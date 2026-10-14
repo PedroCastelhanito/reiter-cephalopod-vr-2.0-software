@@ -36,7 +36,7 @@ Configuration:
 <a id="e12"></a>
 ### E12 — Remote SpikeGLX control
 
-**Status:** Accepted · **Revision:** 20
+**Status:** Accepted · **Revision:** 21
 
 - **Owner and transport:** the controller owns the only SpikeGLX client (no
   supervisor fallback), using the official SDK Python wrapper against SpikeGLX's
@@ -59,7 +59,7 @@ Configuration:
   prepared connection in `SESSION_CONFIG.json`; missing endpoint evidence blocks
   paired Ready and later recovery reports it as unknown, not a guessed current value.
 - **Pulse inventory:** `synchronization_config.toml` `[pulse_inventory]` maps each
-  alignment role (behavioral/tracking camera triggers, photodiode) to stream, stream
+  alignment role (behavioral/tracking/Eye camera triggers, photodiode) to stream, stream
   index, saved channel and optional digital bit; camera roles use OneBox. The
   operator reassigns roles by editing that table, directly or through a controller-
   serialized Configuration GUI update checked against the original file digest and
@@ -71,7 +71,9 @@ Configuration:
   stream or unsaved channel blocks Ready. An
   unpaired session records a Setup warning in the session log, with no prompt, that
   CephVR cannot verify pulse recording. The check proves saved-channel configuration,
-  not wiring or recorded pulses. Optional trial-state, projector-flip and custom
+  not wiring or recorded pulses. Eye uses the first-class `eye_tracking_camera`
+  role; no physical channel assignment is defaulted before rig verification.
+  Optional trial-state, projector-flip and custom
   inputs are supplemental saved-channel metadata, never SpikeGLX acquisition-setting
   commands; preserve stream identity and absent digital bit separately from bit zero.
 - **Start:** after `session_started` is synchronized, call startRun. Release the first

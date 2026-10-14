@@ -13,6 +13,7 @@ class Selection:
     layer: int
     screen: str = ""
     paths: tuple[tuple[int, ...], ...] = ()
+    arena_boundaries_json: str = ""
 
 
 @dataclass

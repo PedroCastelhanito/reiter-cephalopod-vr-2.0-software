@@ -17,7 +17,7 @@ from cephvr.acquisition.recording.identity import (
 from cephvr.shared.ffmpeg_encoding_rules import _format_rate
 from cephvr.shared.nominal_video_grid import NominalVideoGrid
 
-FRAME_LOG_SCHEMA_VERSION = 3
+FRAME_LOG_SCHEMA_VERSION = 4
 
 FRAME_LOG_FIELDS = {
     "header": ("type", "schema_version", "identity", "clocks", "video"),
@@ -49,7 +49,7 @@ FRAME_LOG_FIELDS = {
         "camera_counter_wrap_semantics",
         "camera_counter_unavailable_reason",
     ),
-    "header.video": ("nominal_frame_rate_hz", "nominal_rate_source"),
+    "header.video": ("enabled", "nominal_frame_rate_hz", "nominal_rate_source"),
     "frame": (
         "type",
         "frame_id",
@@ -161,6 +161,7 @@ class FrameLogWriter:
         nominal_rate_source: str,
         sync_interval_ns: int,
         syncer: FileSync,
+        video_enabled: bool = True,
     ) -> None:
         if start_ns < 0 or sync_interval_ns <= 0:
             raise ValueError("invalid recording start or frame-log sync interval")
@@ -169,6 +170,7 @@ class FrameLogWriter:
         if nominal_rate_source not in {"applied_mcu_rate", "free_running_frame_rate"}:
             raise ValueError("unsupported nominal frame-rate source")
         identity.validate()
+        self.video_enabled = video_enabled
         self.path = Path(path)
         self.identity = identity
         self.start_ns = start_ns
@@ -205,6 +207,7 @@ class FrameLogWriter:
                 "identity": self.identity.header_identity(),
                 "clocks": header_clocks(self.identity, self.start_ns),
                 "video": {
+                    "enabled": self.video_enabled,
                     "nominal_frame_rate_hz": self._nominal_rate,
                     "nominal_rate_source": self._nominal_rate_source,
                 },
@@ -227,10 +230,16 @@ class FrameLogWriter:
         if frame_id != self._last_frame_id + 1:
             raise ValueError("frame IDs are not contiguous and ordered")
         invalid = not record.valid_image
-        final_dropped = bool(dropped or invalid)
+        if not self.video_enabled:
+            if dropped or video_frame is not None:
+                raise ValueError(
+                    "video-disabled rows cannot claim recording drops or slots"
+                )
+            video_disposition = "video_disabled"
+        final_dropped = bool(dropped or invalid) if self.video_enabled else False
         if final_dropped and video_frame is not None:
             raise ValueError("dropped source frames cannot map to encoded slots")
-        if not final_dropped and video_frame is None:
+        if self.video_enabled and not final_dropped and video_frame is None:
             raise ValueError("selected source frame requires a nominal video slot")
         values: dict[str, object] = {
             "type": "frame",
@@ -245,7 +254,7 @@ class FrameLogWriter:
         }
         self._append(values)
         self._last_frame_id = frame_id
-        if not final_dropped:
+        if self.video_enabled and not final_dropped:
             if self.first_recorded_frame_id is None:
                 self.first_recorded_frame_id = frame_id
             self.selected_source_count += 1
@@ -259,6 +268,8 @@ class FrameLogWriter:
         source_host_receipt_ns: int,
         disposition: str,
     ) -> None:
+        if not self.video_enabled:
+            raise ValueError("video-disabled log cannot contain encoded frames")
         if slot != self.frame_count or slot != self.next_video_slot:
             raise ValueError("encoded video slots must be contiguous and ordered")
         if disposition not in {

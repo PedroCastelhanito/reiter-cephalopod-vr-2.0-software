@@ -1561,3 +1561,79 @@ def test_image_worker_close_timeout_retains_reservation_until_thread_join():
     proceed.set()
     assert worker.close(time.monotonic_ns() + 1_000_000_000)
     assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+
+
+def test_glb_retains_declared_arena_geometry_from_protected_content(tmp_path):
+    document, binary = glb_fixture()
+    geometry = {"shape": "rectangular", "width": 500, "depth": 400}
+    document["extras"] = {"cephvr": {"metadata": {"geometry": geometry}}}
+    scene = parse_glb(pack_glb(document, binary), max_bytes=10000, max_elements=20)
+    assert json.loads(scene.arena_geometry_json) == geometry
+    from cephvr.visual_stimulus.resources.arena_geometry import read_geometry_preview
+
+    path = tmp_path / "arena.glb"
+    path.write_bytes(pack_glb(document, binary))
+    assert json.loads(read_geometry_preview(path, max_document_bytes=10000)) == geometry
+    with pytest.raises(ValueError, match="oversized"):
+        read_geometry_preview(path, max_document_bytes=1)
+    from dataclasses import replace
+
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.gui.arena_limits import boundary_document
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.visual_stimulus.compiler import compile_trial
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    class Source:
+        def __init__(self, path):
+            self.path = path
+            self.closed = False
+
+        def independent_reader(self):
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    program = add_stimulus(blank_program(), 0, "3D arena", ())
+    budget = BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000)
+    bundle = prepare_resources(
+        program,
+        tmp_path,
+        budget,
+        announce=lambda *_: None,
+        snapshot_limit_bytes=100_000,
+        video_index_limit_bytes=1000,
+        glb_element_limit=1000,
+        source_factory=Source,
+    )
+    try:
+        context = replace(
+            make_compile_context(program.model_dump_json()),
+            manifest=bundle.manifest,
+            arena_boundaries=boundary_document(program, ""),
+            arena_geometry={
+                key: value.arena_geometry_json
+                for key, value in bundle.prepared_content.items()
+            },
+        )
+        artifact = compile_trial(
+            program, context, max_expanded_epochs=8, max_prepared_plan_bytes=1_000_000
+        )
+        assert artifact.arena_boundaries.bindings[0].region.kind == "convex_polygon_xy"
+        assert artifact.arena_boundaries.bindings[0].region.margin_mm == 30
+        assert artifact.arena_boundaries.bindings[0].region.vertices_mm == (
+            (-250, -200),
+            (250, -200),
+            (250, 200),
+            (-250, 200),
+        )
+        assert (
+            artifact.manifest.resources[0].fingerprint.sha256
+            == bundle.asset_set.assets[0].sha256
+        )
+    finally:
+        assert bundle.asset_set.close() == ()
+    assert bundle.asset_set.assets[0].source.closed

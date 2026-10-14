@@ -25,7 +25,7 @@ the source choice does not promise zero-copy transfer or cost-free recording.
 Reserve output files under the existing E04 mechanism. Keep the existing single
 Save Visual Stimulus data switch; no independent switch per projector is introduced. Operator
 preview/recording layout must not alter the stimulus. Record the composite with
-high-quality lossy compression through one complete custom FFmpeg token list under
+operator-tuned lossy compression through one complete custom FFmpeg token list under
 [encoding options](encoding-options.md), including explicit codec/quality/pixel
 conversion within the required constraints. Keep fragmented MP4 at closure under
 that binding. The video is constant-rate; frame n occupies nominal slot n and maps
@@ -39,9 +39,12 @@ offline export; it does not decode the lossy review video to recover original pi
 
 Tiles follow DisplayProfile output order, left to right then top to bottom, in a grid
 of `ceil(sqrt(n))` columns for n outputs. A tile is its output's configured
-dimensions times one session-fixed scale `1/k`, with k the smallest positive integer
-for which the composite fits the encoder's advertised maximum resolution (Setup
-fails if none does); tile dimensions round down to whole pixels. Column width and
+dimensions times one session-fixed scale `1/k`. First find the smallest positive
+integer divisor fitting the encoder maximum, then multiply by file-owned
+`recording_runtime.review_scale_factor` (absent means 1 for older configuration).
+Setup rejects empty tiles or encoder-incompatible final dimensions; tile dimensions
+round down to whole pixels. The shipped factor 2 halves each tile dimension before
+readback, leaving presented images and reconstruction inputs unchanged. Column width and
 row height are the largest tile in that column/row; a tile sits at its cell's
 top-left, and unused area plus any encoder-alignment padding is fixed black code 0.
 Sampling uses the policy's fixed resampling filter; k = 1 copies codes unchanged.
@@ -55,7 +58,7 @@ the recipe; review pixels are never the per-output record.
 
 ## Recording thread and bounded admission
 
-With saving On, the rendering worker runs one recording thread and one FFmpeg/NVENC
+The rendering worker always runs one evidence recording thread. With video saving On it also runs one FFmpeg/NVENC
 child per trial (an owned child under E08; argument/launch/cleanup helpers are shared
 with acquisition). There is no separate recording process, shared-memory pixel
 transport or evidence bridge. The coordinator prepares the renderer and aggregates
@@ -73,8 +76,8 @@ paths; feed no frames before T. Launch failure before T is a required failure be
 release. Cancellation before T terminates it and deletes only the file it created.
 
 Prepare the recording thread and reservations before required readiness under
-E04/E05/E08; create/write trial outputs only under E11. When saving is Off no
-recording thread, capture or encoding runs and no capture slots are allocated.
+E04/E05/E08; create/write trial outputs only under E11. With video off the same
+thread persists scientific evidence, without capture, encoding or capture-slot allocation.
 
 Make one admission decision per render group. A same-slot omission is decided before
 pixel admission and remains distinct from a `capacity_drop`; neither changes source

@@ -241,12 +241,14 @@ class WorkerCaptureResources:
         self._window = window
 
     def install_recording(
-        self, queue: RecordingQueue, pixel_pool: PixelBufferPool
+        self, queue: RecordingQueue, pixel_pool: PixelBufferPool | None
     ) -> None:
         capture = self.capture
         if capture is None or self._active:
             raise RuntimeError("recording buffers require prepared, stopped capture")
-        if pixel_pool.capacity < queue.capacity_frames + 2:
+        if not queue.metadata_only and (
+            pixel_pool is None or pixel_pool.capacity < queue.capacity_frames + 2
+        ):
             raise ValueError("recording pool does not cover queue and in-flight slots")
         capture.recording_queue = queue
         capture.pixel_pool = pixel_pool

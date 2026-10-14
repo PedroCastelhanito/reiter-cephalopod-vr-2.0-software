@@ -2,7 +2,10 @@
 
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.visual_stimulus.config.calibration_adjustments import validated_adjustments
+from cephvr.visual_stimulus.config.calibration_adjustments import (
+    LIVE_ADJUSTABLE_VIEWS,
+    validated_adjustments,
+)
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
 
@@ -22,7 +25,7 @@ def validate_live_update(
         or evidence is None
         or evidence.state != vp.DISPLAY_CALIBRATION_STATE_ACTIVE
         or evidence.diagnostic_id != request.diagnostic_id
-        or evidence.calibration_view != "frame_grid"
+        or evidence.calibration_view not in LIVE_ADJUSTABLE_VIEWS
         or evidence.configuration_revision != request.configuration_revision
         or request.adjustment_sequence <= evidence.adjustment_sequence
     ):

@@ -2,7 +2,7 @@
 # Source rules: Camera/acquisition defaults. See architecture.md: E10, E14, A01-A05, A07-A11.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/acquisition_config.toml. The loader rejects a version mismatch.
-policy_version = 20
+policy_version = 21
 
 [platform]
 target_os = "windows"
@@ -103,7 +103,7 @@ working_buffer_allocation = "prepare_and_reuse"
 [recording]
 output_tag = "camera_role_cam"
 frame_log_video_column = "video_frame"
-metadata_policy = "with_video"
+metadata_policy = "always_for_active_trial"
 frame_records_format = "jsonl_header_source_frames_encoded_mappings_completion"
 saved_confirmation = "online_accounting_and_durable_closure"
 empty_video_action = "warn_continue_keep_metadata"

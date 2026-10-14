@@ -206,6 +206,9 @@ class CommandAdmissionGate:
                     self._session_work_key = current_work
             elif name in {"ExecuteCameraCommand", "ExecuteMicrocontrollerCommand"}:
                 self._camera_work_keys.add(work_key)
+            elif work_key == command_id:
+                # Admitted outside any session scope: its own scope ends here.
+                ledger.finalize_work(work_key, self._work.clock())
             else:
                 current_work = self._work.current_work_key()
                 if current_work is not None:
@@ -241,14 +244,16 @@ class CommandAdmissionGate:
         future: asyncio.Future[pb.CommandAdmission],
         result: pb.CommandAdmission,
     ) -> None:
-        ledger.complete(
-            command_id,
-            result.SerializeToString(deterministic=True),
-            self._work.clock(),
-        )
-        self._finalize_failed(ledger, command_id, work_key, synchronous)
-        if not future.done():
-            future.set_result(result)
+        try:
+            ledger.complete(
+                command_id,
+                result.SerializeToString(deterministic=True),
+                self._work.clock(),
+            )
+            self._finalize_failed(ledger, command_id, work_key, synchronous)
+        finally:
+            if not future.done():
+                future.set_result(result)
 
     def _finalize_failed(
         self, ledger: CommandLedger, command_id: str, work_key: str, synchronous: bool

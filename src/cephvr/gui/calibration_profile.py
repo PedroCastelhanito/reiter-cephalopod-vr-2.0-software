@@ -33,6 +33,7 @@ class MonitorBinding:
     height: int
     refresh_hz: int
     rgb_bits: int
+    adapter: str = ""
 
 
 def reference_bar_config(
@@ -57,6 +58,7 @@ class AssignedDisplay:
     width: int
     height: int
     enabled: bool
+    interface: str = ""
 
 
 def active_monitor_bindings() -> tuple[MonitorBinding, ...]:
@@ -88,6 +90,7 @@ def active_monitor_bindings() -> tuple[MonitorBinding, ...]:
                     mode.size.height,
                     mode.refresh_rate,
                     bits[0],
+                    str(glfw.get_win32_adapter(monitor)),
                 )
             )
         return tuple(result)
@@ -189,8 +192,12 @@ def diagnostic_display_profile(
         candidates = [
             monitor
             for monitor in monitors
-            if (monitor.x, monitor.y, monitor.width, monitor.height)
-            == (row.x, row.y, row.width, row.height)
+            if (
+                monitor.interface.casefold() == row.interface.casefold()
+                if row.interface
+                else (monitor.x, monitor.y, monitor.width, monitor.height)
+                == (row.x, row.y, row.width, row.height)
+            )
         ]
         if len(candidates) != 1:
             raise ValueError(

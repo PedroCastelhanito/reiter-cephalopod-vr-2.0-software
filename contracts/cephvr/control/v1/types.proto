@@ -178,7 +178,7 @@ message AcquisitionSettings {
 }
 message VisualStimulusSettings {
   cephvr.visual_stimulus.v1.DisplayConfiguration display = 1;
-  optional bool save_visual_stimulus_data = 2;
+  optional bool save_visual_stimulus_data = 2; // Legacy name: review video only; scientific evidence is always retained.
   reserved 3;
   reserved "encoding";
   repeated string review_ffmpeg_args = 4; // E13: one complete list for the tiled composite.

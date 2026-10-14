@@ -103,7 +103,7 @@ def uncertain_pre_header_results(
     video_path: Path | None,
     evidence_path: Path | None,
 ) -> tuple[pb.OutputResult, ...]:
-    if schedule is None or video_path is None or evidence_path is None:
+    if schedule is None or evidence_path is None:
         return ()
     outputs = {item.output_tag: item for item in schedule.outputs}
     return tuple(
@@ -118,4 +118,5 @@ def uncertain_pre_header_results(
             ),
         )
         for tag in ("stimulus", "stimulus_frames")
+        if tag in outputs
     )

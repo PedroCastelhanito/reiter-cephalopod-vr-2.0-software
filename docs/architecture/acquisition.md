@@ -91,14 +91,14 @@ Remaining format mappings and integration are classified in the contract worklis
 <a id="a02"></a>
 ### A02 — Acquisition service and camera workers
 
-**Status:** Accepted · **Revision:** 31
+**Status:** Accepted · **Revision:** 32
 
 - One acquisition coordinator serves Behavioral, Tracking and Eye tracking roles through one external control
   endpoint; it aggregates readiness/closure and never relays pixels.
 - The initial runtime targets Windows. Isolate OS-specific memory, process
   containment and storage integration; other OS support is future work.
-- Each enabled camera has one Python camera worker: a capture thread and, when saving
-  video, a recording thread feeding its FFmpeg subprocess; tracking runs in another
+- Each enabled camera has one Python camera worker: a capture thread and a required
+  metadata recording thread, with an FFmpeg subprocess only when saving video; tracking runs in another
   process. A native SDK crash thus also ends that camera's recording; E06 treats a
   camera's capture and recording as one data path.
 - Session-disabled roles open no devices except for explicitly requested
@@ -303,23 +303,28 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 61
+**Status:** Accepted · **Revision:** 63
 
 **Files**
 
-- Each saved camera/trial has two files sharing its prefix: `<prefix>_<role>_cam.mp4`
-  and `<prefix>_<role>_cam_frames.jsonl` (`behavioral_cam`, `tracking_cam`,
-  `eye_tracking_cam`). Eye trigger admission remains subject to A01/A11.
-  `save_video` enables both; disabled saving creates neither, no recording
-  thread/queue and no detailed camera history. Tracking outputs and operational
-  warnings/health are independent. No HDF5, CSV or separate meta file.
+- Every active experiment camera always saves trial-scoped acquisition metadata to
+  `<prefix>_<role>_cam_frames.jsonl` (`behavioral_cam`, `tracking_cam`,
+  `eye_tracking_cam`), independently of video saving. `save_video` controls only
+  `<prefix>_<role>_cam.mp4` and its encoding/capture resources. Metadata remains
+  required when video is disabled, with no fabricated encoded-frame mappings or
+  recording-drop claims for intentionally disabled video. Eye trigger admission
+  remains subject to A01/A11. Trial-only E11 boundaries remain unchanged; this
+  does not add continuous manual-preview recording. Tracking outputs remain
+  independent. No HDF5, CSV or separate meta file.
 - MP4 tags and the frame-log header embed session/trial/camera-role/device identities
   as acquisition-owned metadata that operator arguments cannot override. Filenames
   alone cannot establish a pair; the
   [pair-identity contract](../../contracts/acquisition/recording-identity.md) defines
   keys.
 - The [frame-log schema](../../contracts/acquisition/frame_log_schema.toml) owns line
-  types and fields. The recording thread owns both files.
+  types and fields. The recording thread owns required metadata and optional video.
+  Metadata-only trials use the same bounded ordered record queue and terminal
+  accounting, without pixel copies/pools, conversion, encoder discovery or subprocesses.
 
 **Frame log (`_frames.jsonl`)**
 
@@ -328,7 +333,9 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   lines, and one `completion` line. A missing `completion` line means incomplete.
 - `header`: identity, host and camera clock/counter descriptors (resolved once during
   preparation under the [camera-clock contract](../../contracts/acquisition/camera-clock.md)),
-  trial start and the nominal video rate.
+  trial start, configured nominal rate and whether video is enabled. With video off,
+  source rows use `video_disabled`, null video indices and no recording-drop claims;
+  invalid-image evidence remains in `invalid_code`. Encoded mapping rows are absent.
 - `frame`: source ID, host receipt ns, `dropped`, `video_frame` (MP4 index, null when
   dropped), optional native counter and native timestamp (null when unavailable) and
   `invalid_code` for invalid images. Include invalid images and recording drops; never
@@ -369,7 +376,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 **In-process accounting**
 
 - The capture thread passes each received frame's record to the recording thread with
-  its pixels in the A03 recording queue. A frame dropped from the queue releases its
+  its pixels only when video is enabled, in the A03 recording queue. A frame dropped from the queue releases its
   pixels but keeps its record (`dropped = true`). Records awaiting append are bounded
   at **10,000 per camera** (`pending_records_capacity`, configurable); exhaustion is a
   logging failure: fence the recording path and report to E06, never silently drop
@@ -579,7 +586,7 @@ deferral (E15) remains.
 <a id="a09"></a>
 ### A09 — Source-frame identity
 
-**Status:** Accepted · **Revision:** 12
+**Status:** Accepted · **Revision:** 15
 
 - A camera frame belongs to a trial only if its host-monotonic receipt timestamp
   (A05) satisfies `trial_start <= receipt < trial_stop`, using the normal scheduled
@@ -598,6 +605,18 @@ deferral (E15) remains.
   separate and unchanged. A frame reference must include its camera and trial
   identity (directly or through unambiguous enclosing context); a bare counter is not
   globally unique.
+- For initial Behavioral/Tracking post hoc alignment, accept the owner's simplifying
+  assumption that the first recorded camera trigger in the matched trial's pulse
+  train corresponds to the source image of its first video frame. Label this an
+  assumed anchor, not independently measured correspondence. Use A07's encoded-to-
+  source mapping: padding duplicates are not new exposures and later video indices
+  are not pulse indices. Preserve native timestamps/counters and explicit drops;
+  conflicting evidence is reported, never silently renumbered or repaired. With
+  video disabled, use the first received source row as the analogous assumed anchor.
+  Retain existing wiring, cadence and trial boundaries. ExposureActive wiring,
+  counter-origin changes and irregular pre-trial/in-trial trigger phases are deferred
+  unless a later owner request revisits this assumption. SYS-004 pulse timing
+  authority is unchanged; only the initial correspondence is assumed.
 - With a reliable camera hardware frame counter, retain native counters alongside
   CephVR identity and detect unexpected gaps between valid received frames, after
   accounting for documented wrap/reset behavior. Record the gap, warn and continue
@@ -630,7 +649,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 58
+**Status:** Accepted · **Revision:** 60
 
 **Capture lifetime**
 
@@ -956,7 +975,8 @@ hardware information and later implementation; no new deferral is implied.
 
 - One serial owner opens only the configured port. Boot/reset leaves outputs off and
   volatile configuration invalid. Reopen requires outputs-off verification, fresh
-  capabilities and full configuration; no automatic pulse/session resumption.
+  capabilities and full configuration; no automatic pulse/session resumption. A failed
+  manual Connect discards its owner and port so a retry opens a fresh one.
 - Never deliberately request an extra board reset on connection or assume opening
   preserves state; unavoidable port-open resets go through startup verification.
   Exact DTR/RTS behavior depends on the rig board/driver and is unverified.

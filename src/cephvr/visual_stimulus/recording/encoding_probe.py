@@ -37,6 +37,7 @@ def resolve_review_encoding(
     register_resource: Callable[[str], None],
     report_probe_resource: Callable[[str, bool], None],
     input_pixel_format: str | None = None,
+    review_scale_factor: int = 1,
 ) -> tuple[ReviewEncoding, str]:
     parsed = parse_option_tokens(
         ffmpeg_args, owner="Visual Stimulus", error=EncodingOptionsError
@@ -75,6 +76,7 @@ def resolve_review_encoding(
         capabilities=capabilities,
         input_pixel_format=capture_format,
         capability_evidence_id=aggregate_key,
+        review_scale_factor=review_scale_factor,
     )
     if (
         review.encoder_gpu_ordinal != resolved.encoder_gpu_ordinal

@@ -3,15 +3,17 @@
 Governing rule: [V16](../../docs/architecture/visual_stimulus.md#v16). The renderer owns instance
 state under [V07](state-continuity.md); the fixed physical observer and calibrated
 views follow [V15](projection.md). This contract declares preparation, ownership
-and sliding response; no runtime is implemented.
+and sliding response; current implementation evidence and limits live in the
+[Visual Stimulus report](../../reports/visual_stimulus.md).
 
 ## Authored and prepared data
 
 The trial protocol explicitly selects simple boundaries or unrestricted movement
 for each arena instance. A constrained instance receives a protocol-owned simple
 allowed-region definition in its declared arena coordinate frame and units.
-The visual asset is loaded under [V18](arena-assets.md); its metadata cannot supply
-or override the protocol's movement settings. An explicitly supplied nonnegative
+The visual asset is loaded under [V18](arena-assets.md). Explicit `arena_file` mode
+uses its declared rectangular/convex geometry under the [schema binding](stimulus-schema.md);
+it never overrides a saved explicit region or the protocol wall margin. An explicitly supplied nonnegative
 wall margin reduces the allowed region by the declared distance from its walls;
 omitting an optional margin means no additional inset. This is mathematical
 geometry, not a physical rig dimension or a collision mesh inferred from artwork.

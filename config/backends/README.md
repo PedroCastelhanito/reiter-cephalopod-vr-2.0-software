@@ -56,6 +56,8 @@ that must equal its policy file's.
 - For other session settings, defaults fill missing values. Explicit saved/operator settings, including
   `false`, retain their values. Existing stored stimulus seeds are also retained.
   For example, saved `save_visual_stimulus_data = false` stays false even though its default is true.
+  This legacy field now controls review video only; camera metadata and stimulus
+  scientific evidence are always retained for active experiment trials.
 - Use values within the accepted policies: positive finite timeouts, a health
   silence limit longer than the heartbeat interval, and nonnegative gaps. The
   shipped defaults remain starting values awaiting rig validation. Shared deadline

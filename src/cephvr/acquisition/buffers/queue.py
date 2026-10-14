@@ -46,9 +46,16 @@ class RecordingQueue:
     bounds all not-yet-accounted records.
     """
 
-    def __init__(self, capacity_frames: int, pending_records_capacity: int) -> None:
+    def __init__(
+        self,
+        capacity_frames: int,
+        pending_records_capacity: int,
+        *,
+        metadata_only: bool = False,
+    ) -> None:
         if capacity_frames <= 0 or pending_records_capacity <= 0:
             raise ValueError("queue and pending-record capacities must be positive")
+        self.metadata_only = metadata_only
         self.capacity_frames = capacity_frames
         self.pending_records_capacity = pending_records_capacity
         self._entries: deque[_Entry] = deque()
@@ -59,7 +66,9 @@ class RecordingQueue:
         self._condition = Condition()
 
     def enqueue(self, record: FrameRecord, pixels: memoryview | None) -> QueueAdmission:
-        if record.valid_image != (pixels is not None):
+        if self.metadata_only and pixels is not None:
+            raise ValueError("metadata-only queue cannot retain pixels")
+        if not self.metadata_only and record.valid_image != (pixels is not None):
             raise ValueError(
                 "valid frames require pixels; invalid frames must omit them"
             )

@@ -10,6 +10,7 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.controller.microcontroller.bridge import SerialOwnerBridge
 from cephvr.controller.microcontroller.owner import SerialOwner
 from cephvr.controller.microcontroller.serial_port import PySerialPort
+from cephvr.shared.clock import host_time_ns
 from cephvr.shared.microcontroller import SerialOwnerPort
 
 
@@ -59,9 +60,29 @@ class LazySerialOwner(SerialOwnerPort):
         bridge = self._ensure()
         if self.connected:
             return await bridge.status(deadline_ns=deadline_ns)
-        observation = await bridge.connect(deadline_ns=deadline_ns)
+        try:
+            observation = await bridge.connect(deadline_ns=deadline_ns)
+        except Exception:
+            # A failed first Connect leaves a closed or half-open owner that can
+            # never connect again; discard it so a retry opens a fresh port (A11).
+            await self._discard_failed(bridge)
+            raise
         self.connected = True
         return observation
+
+    async def _discard_failed(self, bridge: SerialOwnerBridge) -> None:
+        self.bridge = None
+        self.port = None
+        self.connected = False
+        try:
+            await bridge.close(
+                deadline_ns=host_time_ns()
+                + self.policies.serial_communication_timeout_ns
+            )
+        except Exception:
+            # The owner closes its own channel on startup failure; this also
+            # cancels a still-blocked probe so the old handle is released.
+            pass
 
     async def configure(
         self,

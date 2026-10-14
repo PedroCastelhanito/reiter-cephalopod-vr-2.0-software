@@ -131,7 +131,7 @@ message CameraWorkerSetupPayload {
   optional bool native_timestamp_available = 7;
   optional bool native_counter_available = 8;
   CameraClockDescriptor camera_clock = 9;
-  RecordingSettings recording = 10; // Session Setup only; present iff save_video.
+  RecordingSettings recording = 10; // Session Setup only; present for every active experiment camera.
   MicrocontrollerObservation pulse_configuration = 11; // Required for externally triggered saving.
   repeated cephvr.control.v1.PreparedFunctionScope owned_functions = 12; // Exact session fault catalogue, emitted unchanged in backend Ready.
 }
@@ -152,6 +152,7 @@ message RecordingSettings {
   optional int64 frame_log_sync_interval_ns = 12;
   optional uint32 pending_records_capacity = 13; // Frame records awaiting append (A07).
   optional uint32 recording_queue_frames = 14; // Resolved in-process queue capacity (A03).
+  bool metadata_only = 15; // No encoder or pixel queue; frame evidence remains required.
   // Acquisition injects raw stdin input args at the nominal rate (A08); encoder input
   // format/throughput feasibility remains deferred to the rig.
 }

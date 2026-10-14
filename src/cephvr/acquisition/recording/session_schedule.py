@@ -47,6 +47,7 @@ def launch_scheduled_encoder(
     video_path, frame_log_path = resolve_recording_paths(
         paths, role, identity, schedule
     )
+    assert video_path is not None
     for path in (video_path, frame_log_path):
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists() or path.is_symlink():

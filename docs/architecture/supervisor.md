@@ -28,7 +28,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
 <a id="e04"></a>
 ### E04 — Recording layout, identity, and metadata
 
-**Status:** Accepted · **Revision:** 88
+**Status:** Accepted · **Revision:** 89
 
 **Identity and files**
 
@@ -140,7 +140,8 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
 - Event catalog: `session_started`, `trial_started`, `trial_finished`,
   `session_ended`, `command_accepted`, `setup_override`, `error`, `recovery`,
   `spikeglx_started`, `spikeglx_stopped` (E12 run name in details; failures stay
-  `error`), and `incident_decision` for E06 operator choices and terminal
+  `error`), `incident_scope` (confirmed E06 incident ID/revision and affected
+  resources), and `incident_decision` for E06 operator choices and terminal
   unanswered/automatic-stop dispositions. Trial outcomes `completed`/`interrupted`;
   session `completed`/`stopped`/`interrupted`; recovery `completed`/`failed`. Other
   events omit outcome. Interruption remains a lifecycle outcome.

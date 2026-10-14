@@ -81,10 +81,10 @@ failure, without inventing an unseen recovery. Planned blank/static epochs are n
 starvation. Other scene animations continue; holding a video image does not freeze
 the whole scene. Compact administrative counts remain distinct from detailed E13 data.
 
-If replay-required evidence cannot be retained or written while saving is enabled,
+If replay-required evidence cannot be retained or written,
 use the existing required-logging failure path. A lossy review video is not a fallback
-for missing scientific state. When saving is Off, retain only the already-agreed
-administrative/setup data and do not claim actual-output replay is available.
+for missing scientific state. Review video off retains the same recipe and actual
+scientific evidence under E13/V28. Physical presentation remains independently unproven.
 
 ## Offline reconstruction in analysis software
 

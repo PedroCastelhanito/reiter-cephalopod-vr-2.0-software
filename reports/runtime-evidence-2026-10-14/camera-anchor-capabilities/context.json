@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "working_tree": "dirty; source review only",
+  "method": "Read retained rig identity/PFS evidence; official Basler model, counter, data-chunk and line-source documentation. No camera connection or mutation.",
+  "sources": [
+    {
+      "path": "reports/rig-audit-2026-09-29/capability-probes.jsonl",
+      "sha256": "32516812114ed364876943d8f679037cae56edabbb500b84ef8cea847f7020b2"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/cameras.json",
+      "sha256": "3528c8657a238332b26583dff9263eae6a8fcdd9ccd3a309aef0d933992d07d0"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/baseline.json",
+      "sha256": "cabd4ecd280f3d8cffac31627960065b8dfab7fa1290e8a2e59b7ca95501c27c"
+    },
+    {
+      "path": "src/cephvr/acquisition/camera/metadata.py",
+      "sha256": "de827452d0d5cd4e557adeb2ff555d1fbef78d476479293cbefdaedadf449472"
+    }
+  ],
+  "documentation": [
+    "https://docs.baslerweb.com/aca4112-30uc",
+    "https://docs.baslerweb.com/a2a2464-77umpro",
+    "https://docs.baslerweb.com/counter",
+    "https://docs.baslerweb.com/data-chunks",
+    "https://docs.baslerweb.com/line-source"
+  ],
+  "assessment": {
+    "behavioral": {
+      "serial": "40065509",
+      "model": "acA4112-30uc",
+      "exposure_active": "documented",
+      "counter": "Counter1 acquired-image count; CounterValue chunk. Not established as incoming electrical trigger count. Counter page related-chunk naming conflicts with model-specific Data Chunks listing.",
+      "saved_configuration": "FrameStart input Line4; Line2 output UserOutput1; CounterValue chunk disabled",
+      "candidate": "ExposureActive output to OneBox plus resettable acquired-image counter/known origin"
+    },
+    "tracking": {
+      "serial": "40747103",
+      "model": "a2A2464-77umPRO",
+      "exposure_active": "documented",
+      "counter": "Two configurable counters; CounterValue chunk supports selected counter. Candidate count rising edges on trigger input Line2; result-latching timing/installed enum choices need hardware validation.",
+      "saved_configuration": "FrameStart input Line2; Line3 input/source Off; counters Off; CounterValue chunk disabled",
+      "candidate": "ExposureActive on spare Line3 to OneBox plus exposure/frame count, or input-edge counter if validated"
+    },
+    "eye": "40278236 disabled in combined baseline; filename suggests a2A1920-160ucPRO, not established here by device readback; not a tested third-camera capability claim",
+    "misleading_filename": "Behavior PFS names a2A1920-160ucPRO but actual serial readback identifies acA4112-30uc"
+  },
+  "limits": [
+    "No installed firmware capability enumeration",
+    "No physical output wiring/electrical compatibility verification",
+    "No reset/latch/ignored-trigger/drop experiment",
+    "No precise exposure-to-output latency calibration",
+    "No implementation changes"
+  ]
+}

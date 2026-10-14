@@ -1,0 +1,50 @@
+........................................................................ [ 14%]
+........................................................................ [ 28%]
+........................................................................ [ 42%]
+........................................................................ [ 56%]
+.........................FF...F......................................... [ 70%]
+........................................................................ [ 84%]
+...................................................F..................F. [ 99%]
+F....                                                                    [100%]
+================================== FAILURES ===================================
+_________ test_epoch_parameter_warnings_wait_for_submission[generate] _________
+tests\gui\test_dashboard.py:9153: in test_epoch_parameter_warnings_wait_for_submission
+    assert all(n.dialog is None for n in editor.findChildren(FormNotice))
+E   assert False
+E    +  where False = all(<generator object test_epoch_parameter_warnings_wait_for_submission.<locals>.<genexpr> at 0x0000026C2CF8A810>)
+________ test_epoch_parameter_warnings_wait_for_submission[selection] _________
+tests\gui\test_dashboard.py:9153: in test_epoch_parameter_warnings_wait_for_submission
+    assert all(n.dialog is None for n in editor.findChildren(FormNotice))
+E   assert False
+E    +  where False = all(<generator object test_epoch_parameter_warnings_wait_for_submission.<locals>.<genexpr> at 0x0000026C28A27850>)
+_____ test_reference_type_change_clears_asset_and_switches_stimulus_mode ______
+tests\gui\test_dashboard.py:9415: in test_reference_type_change_clears_asset_and_switches_stimulus_mode
+    assert composer.rows["Front"].isHidden()
+E   assert False
+E    +  where False = <built-in method isHidden of ProjectorReference object at 0x0000026C2D9A4A60>()
+E    +    where <built-in method isHidden of ProjectorReference object at 0x0000026C2D9A4A60> = <cephvr.gui.projector_reference.ProjectorReference object at 0x0000026C2D9A4A60>.isHidden
+____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+tests\gui\test_dashboard.py:15254: in test_trial_row_actions_scroll_target_and_align_cards
+    app.processEvents()
+E   AssertionError: assert 'Selected group' == 'Group'
+E     
+E     - Group
+E     + Selected group
+_____________ test_plot_toggles_are_view_only_and_survive_refresh _____________
+tests\gui\test_dashboard.py:15858: in test_plot_toggles_are_view_only_and_survive_refresh
+    before = panel.calibration_files.snapshot()
+                        ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'ProjectorsPanel' object has no attribute 'plot_toggles'
+_____________ test_native_adapter_name_identifies_scaled_displays _____________
+tests\gui\test_dashboard.py:15918: in test_native_adapter_name_identifies_scaled_displays
+    )
+      
+E   TypeError: MonitorBinding.__init__() takes 8 positional arguments but 9 were given
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_epoch_parameter_warnings_wait_for_submission[generate]
+FAILED tests/gui/test_dashboard.py::test_epoch_parameter_warnings_wait_for_submission[selection]
+FAILED tests/gui/test_dashboard.py::test_reference_type_change_clears_asset_and_switches_stimulus_mode
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards
+FAILED tests/gui/test_dashboard.py::test_plot_toggles_are_view_only_and_survive_refresh
+FAILED tests/gui/test_dashboard.py::test_native_adapter_name_identifies_scaled_displays
+6 failed, 503 passed in 172.73s (0:02:52)

@@ -135,6 +135,48 @@ async def test_same_id_retry_returns_retained_rejection_and_prunes_later() -> No
         await gate.aclose()
 
 
+async def test_accepted_command_outside_a_session_scope_retires_its_own_record() -> (
+    None
+):
+    work = _Work()
+    work.key = None
+    gate = _gate(work)
+    try:
+        for _ in range(40):  # more than the 16-record ledger budget
+            command_id = _id()
+            admission = await gate.admit(
+                "UpdateDisplayCalibration",
+                command_id,
+                _request(command_id),
+                _action(False, command_id),
+            )
+            assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+            work.now += 1_000  # past the retention window
+    finally:
+        await gate.aclose()
+
+
+async def test_action_failure_with_long_message_resolves_and_replays() -> None:
+    work = _Work()
+    gate = _gate(work)
+    try:
+        command_id = _id()
+        request = _request(command_id)
+
+        async def failing() -> pb.CommandAdmission:
+            raise RuntimeError("x" * 5000)
+
+        first = await asyncio.wait_for(
+            gate.admit("StopAfterTrial", command_id, request, failing), 5
+        )
+        assert first.result == pb.COMMAND_RESULT_REJECTED
+        assert first.failure.code == "INTERNAL"
+        replay = await gate.admit("StopAfterTrial", command_id, request, failing)
+        assert replay == first
+    finally:
+        await gate.aclose()
+
+
 async def test_failed_execution_does_not_finalize_session_scope() -> None:
     work = _Work()
     gate = _gate(work)

@@ -492,7 +492,8 @@ design; runtime monitoring remains unimplemented.
   every descendant and sees any exit directly. Workers still send errors directly to
   the supervisor, but only the controller or a top-level coordinator may report
   controller or supervisor loss. Validate context and measure silence at recipient ingress:
-  **5 s** interval, **15 s** silence, no recovery window.
+  **5 s** interval, **15 s** silence, no recovery window. A required backend whose
+  exit was already classified continuable (isolated) is exempt from silence checks.
   Registered controller/coordinator Configuration heartbeats without work remain
   valid process health while session scope changes; they cannot carry session
   cleanup catalogues or continuing-function evidence. Work-scoped reports retain
@@ -552,7 +553,11 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 210
+**Status:** Accepted · **Revision:** 211
+
+- Visual Stimulus policy version15 combines the accepted file-owned projection limits
+  (V15/G01) with required scientific evidence and optional reduced review video
+  (E13/V12/V28). Keep the matching loader digest and both file versions aligned.
 
 - **Operator files contain only settings.** Human-readable `<backend>_config.toml`
   files under [config/backends/](../../config/backends/README.md) hold only values an

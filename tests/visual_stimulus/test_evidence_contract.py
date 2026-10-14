@@ -388,5 +388,5 @@ def test_cadence_header_rejects_legacy_evidence_version_and_keeps_recipe_v2() ->
     with pytest.raises(ValidationError):
         Header.model_validate(header)
     schemas = get_writer_schemas()
-    assert schemas["visual_stimulus", "stimulus_frames", "jsonl"].schema_version == 3
+    assert schemas["visual_stimulus", "stimulus_frames", "jsonl"].schema_version == 5
     assert schemas["visual_stimulus", "stimulus_LOG", "json"].schema_version == 2

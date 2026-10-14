@@ -2037,9 +2037,10 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
         (
             ("behavior-camera", "Behavioral camera", True),
             ("tracking-camera", "Tracking camera", True),
+            ("eye-camera", "Eye tracking", True),
             ("photodiode", "Photodiode", True),
         ),
-        frozenset({"behavior-camera", "tracking-camera"}),
+        frozenset({"behavior-camera", "tracking-camera", "eye-camera"}),
     )
     saved = (
         sync_pb.PulseChannel(
@@ -2075,6 +2076,15 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
             source_id="sync-input",
         ),
     )
+    saved += (
+        sync_pb.PulseChannel(
+            role=sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA,
+            family=sync_pb.STREAM_FAMILY_ONEBOX,
+            stream_index=0,
+            channel_index=1,
+            bit=1,
+        ),
+    )
     panel.install_inventory(
         saved,
         "f" * 64,
@@ -2082,6 +2092,7 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
             {
                 sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA,
                 sync_pb.PULSE_ROLE_TRACKING_CAMERA,
+                sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA,
             }
         ),
     )
@@ -2094,6 +2105,15 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
     assert not collected[sync_pb.PULSE_ROLE_TRACKING_CAMERA].HasField("bit")
     assert collected[sync_pb.PULSE_ROLE_TRIAL_STATE].channel_index == 4
     assert collected[sync_pb.PULSE_ROLE_CUSTOM].source_id == "sync-input"
+    assert collected[sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA].bit == 1
+    assert panel.inventory_rows[sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA] == "eye-camera"
+    assert panel.inventory_rows[sync_pb.PULSE_ROLE_TRACKING_CAMERA] == "tracking-camera"
+    from cephvr.gui.spikeglx_snapshot import SpikeGLXSnapshot
+
+    snapshot = SpikeGLXSnapshot(panel)
+    snapshot.restore(snapshot.validate(snapshot.capture()))
+    assert panel.inventory_rows[sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA] == "eye-camera"
+    assert {item.role: item for item in panel.inventory_for_submit()} == collected
     panel.close()
     panel.deleteLater()
     app.processEvents()
@@ -8102,14 +8122,14 @@ def test_protocol_cards_reflow_and_keep_properties_reachable(
     height = editor.timeline_card.height()
     position = editor.settings_card.y()
     assert not editor.timeline_card.findChildren(QScrollArea)
-    assert editor.timeline.height() == 86
+    assert editor.timeline.height() == 126
     assert not editor.timeline.show_details
     for index in range(len(editor.timeline.nodes)):
         editor.timeline.choose(index, Qt.KeyboardModifier.NoModifier)
         app.processEvents()
         assert editor.timeline_card.height() == height
         assert editor.settings_card.y() == position
-        assert editor.timeline.height() == 86
+        assert editor.timeline.height() == 126
     assert editor.program == original
 
 
@@ -9108,6 +9128,7 @@ def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mod
         owner = editor.subgroup
         composer = owner.composer
         notice = owner.notice
+    composer.set_subject_height("0")
     app.processEvents()
     row = next(row for row in composer.rows.values() if row.indices)
     parameters = row.parameters
@@ -9364,6 +9385,7 @@ def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
     editor = window.protocol.editor
     open_protocol_group(editor)
     composer = editor.subgroup.composer
+    composer.set_subject_height("0")
     composer.set_screens(("Front", "Right"))
     composer.set_asset_root(str(tmp_path))
     folder = tmp_path / "images"
@@ -9479,6 +9501,7 @@ def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
     batch = editor.subgroup
     composer = batch.composer
     composer.set_asset_root(str(tmp_path))
+    composer.set_subject_height("0")
     composer.mode.setCurrentIndex(1)
     path = tmp_path / "arena.glb"
     path.touch()
@@ -9541,6 +9564,7 @@ def test_arena_custom_feedback_is_preserved_and_channel_conflicts_rejected(
 
     composer = window.protocol.editor.subgroup.composer
     composer.set_asset_root(str(tmp_path))
+    composer.set_subject_height("0")
     composer.mode.setCurrentIndex(1)
     path = tmp_path / "arena.glb"
     path.touch()
@@ -10771,6 +10795,7 @@ def test_arena_feedback_and_axis_editors_stay_synchronized(window, tmp_path):
 
     composer = window.protocol.editor.subgroup.composer
     composer.set_asset_root(str(tmp_path))
+    composer.set_subject_height("0")
     composer.mode.setCurrentIndex(1)
     path = tmp_path / "arena.glb"
     path.touch()
@@ -11996,6 +12021,17 @@ def test_family_advanced_controls_preserve_hidden_state(window, app, preset, res
         movement = next(
             form for form in parameters.forms if isinstance(form, ArenaMovement)
         )
+        from cephvr.gui.stimulus_form import ValueEditor
+
+        initial = next(
+            form
+            for form in parameters.forms
+            if isinstance(form, ValueEditor)
+            and "fixed_height_mm" in form.children_by_key
+        )
+        assert parameters.advanced_card.isAncestorOf(initial)
+        initial.children_by_key["fixed_height_mm"].control.setText("12.5")
+        initial.children_by_key["yaw_deg"].control.setText("45")
         movement.axes[0].setChecked(True)
         movement.gains[0].setText("0.5")
         movement.mark_edited()
@@ -12009,6 +12045,9 @@ def test_family_advanced_controls_preserve_hidden_state(window, app, preset, res
         parameters.retain.setChecked(reset)
     assert parameters.apply()
     assert editor.program.sequence[0].settings[0].reset == reset
+    if preset == "3D arena":
+        assert editor.program.sequence[0].settings[0].fixed_height_mm == 12.5
+        assert editor.program.sequence[0].settings[0].initial.yaw_deg == 45
     if preset == "3D arena":
         real_editor = window.protocol.editor
         real_editor.set_program(program)
@@ -12992,6 +13031,21 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
             ),
         )
 
+    def editor_geometry(parent: QWidget) -> list:
+        return [
+            (
+                type(control).__name__,
+                control.text()
+                if isinstance(control, (QLabel, QLineEdit, QAbstractButton))
+                else control.currentText(),
+                control.mapTo(parent, QPoint()),
+                control.size(),
+            )
+            for control in parent.findChildren(QWidget)
+            if isinstance(control, (QLabel, QLineEdit, QComboBox, QAbstractButton))
+            and control.isVisible()
+        ]
+
     try:
         runtime.devices.cameras.populate_inventory()
         runtime.devices.cameras.load_selected()
@@ -13060,6 +13114,30 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
                 ]
 
             assert visible_cards(review_page) == visible_cards(runtime_page)
+        # Family-specific fields are created on selection, including initial pose
+        # and arena limits. Compare their placement with Advanced settings open.
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+
+        for preset in ("Texture", "Image", "Video", "Looming image", "3D arena"):
+            program = grouped_program(
+                add_stimulus(
+                    blank_program(), 0, preset, ("Front", "Left", "Right", "Bottom")
+                )
+            )
+            for window in (review, runtime):
+                window.select_page(1)
+                window.protocol.editor.set_program(program)
+                for row in window.protocol.editor.subgroup.composer.rows.values():
+                    row.parameters.more.setChecked(True)
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            for _ in range(4):
+                app.processEvents()
+            assert signature(review.protocol) == signature(runtime.protocol), preset
+            assert editor_geometry(review.protocol.editor) == editor_geometry(
+                runtime.protocol.editor
+            ), preset
         # Authority stays in the Runtime menu without changing any page geometry.
         requests = []
         monkeypatch.setattr(
@@ -15000,6 +15078,15 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(
         e.duration.duration.ns() == 20_000_000_000
         for e in editor.program.sequence[0].body
     )
+    # Rules belong to one batch identity: a mixed selection rejects them and keeps the edit.
+    mixed = editor.program
+    form.rows[0].random_fields["maximum"].setText("3000001")
+    form.rows[0].random_fields["maximum"].editingFinished.emit()
+    form.apply()
+    assert "one subgroup" in form.notice.text()
+    assert editor.program == mixed and form.dirty
+    form.discard()
+    assert not form.dirty and form.notice.dialog is None
 
     editor.select_epochs(((0, 0),))
     saved = editor.program
@@ -15166,7 +15253,7 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app):
     window.resize(1280, 1100)
     app.processEvents()
     assert editor.trial_card.height() < 320
-    assert editor.selected_group_label.text() == "Group"
+    assert editor.selected_group_label.text() == "Selected group"
     assert editor.group_editor.parentWidget() is editor.timeline_card
     assert editor.sequence_summary.geometry().bottom() < editor.timeline.y()
     assert editor.group_editor.y() > editor.timeline.geometry().bottom()
@@ -15562,3 +15649,538 @@ def test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors():
             ) / 2 * output_span_y * pitch_y == pytest.approx(10)
     assert geometries[0] != geometries[1]
     assert matrices[0] != matrices[1]
+
+
+@pytest.mark.parametrize("width", [1440, 720])
+def test_review_appearance_switch_preserves_drafts_and_runtime(
+    app: QApplication, tmp_path: Path, width: int
+) -> None:
+    from cephvr.gui.managed_window import ManagedDashboardWindow
+    from cephvr.gui.review import ReviewDashboardWindow
+    from cephvr.gui.theme import COLORS, RETRO_COLORS, colors_for
+
+    path = str(tmp_path / "appearance.ini")
+    settings = QSettings(path, QSettings.Format.IniFormat)
+    review = ReviewDashboardWindow(sample=True, settings=settings)
+    runtime = ManagedDashboardWindow(settings=settings)
+    reopened = None
+    try:
+        review.resize(width, 940)
+        review.show()
+        review.apply_view(review_view(Phase.CONFIGURATION))
+        review.dashboard.subject_id.setText("Unsaved subject")
+        review.dashboard.age.setText("Unfinished edit")
+        review.dashboard.log_console.setPlainText("Existing log entry")
+        before = review.snapshots.capture()
+        editors = review.dashboard.subject_editors
+        gates = [
+            button.isEnabled() for button in review.dashboard.command_buttons.values()
+        ]
+        original_application_style = app.styleSheet()
+        standard_hud = review.dashboard.runtime_console.toPlainText()
+        current_view = review.dashboard.view
+        brackets = next(
+            item
+            for item in review.appearance.focus_brackets
+            if item.parentWidget() is review.dashboard.subject_id
+        )
+        assert review.appearance.name == "standard"
+        assert "Style" not in [action.text() for action in runtime.menuBar().actions()]
+        for name in ("retro_console", "standard", "retro_console"):
+            review.appearance.actions[name].trigger()
+            for _ in range(4):
+                app.processEvents()
+            review.activateWindow()
+            review.dashboard.subject_id.setFocus()
+            app.processEvents()
+            assert review.dashboard.subject_id.hasFocus()
+            assert brackets.isVisible() == (name == "retro_console")
+            assert brackets.testAttribute(
+                Qt.WidgetAttribute.WA_TransparentForMouseEvents
+            )
+            assert review.dashboard.trial_position.isVisible() == (
+                name == "retro_console"
+            )
+            assert runtime.dashboard.trial_position.isHidden()
+            assert review.appearance.name == name
+            assert review.appearance.actions[name].isChecked()
+            assert review.snapshots.capture() == before
+            assert review.dashboard.subject_editors == editors
+            assert review.dashboard.log_console.toPlainText() == "Existing log entry"
+            assert review.dashboard.view == current_view
+            assert review.dashboard.session_controls.caption.text() == (
+                "SYSTEM CONTROLS" if name == "retro_console" else "System controls"
+            )
+            assert review.dashboard.hud_card.caption.text() == (
+                "RUNTIME HUD" if name == "retro_console" else "Runtime HUD"
+            )
+            assert (
+                runtime.dashboard.session_controls.caption.text() == "System controls"
+            )
+            hud = review.dashboard.runtime_console.toPlainText()
+            if name == "retro_console":
+                rows = [line for line in hud.splitlines() if line]
+                assert len({line.index(" : ") for line in rows}) == 1
+                assert " : Local review" in hud
+            else:
+                assert hud == standard_hud
+            assert [
+                button.isEnabled()
+                for button in review.dashboard.command_buttons.values()
+            ] == gates
+            assert colors_for(review.dashboard.subject_card) == (
+                RETRO_COLORS if name == "retro_console" else COLORS
+            )
+            assert colors_for(runtime.dashboard.subject_card) == COLORS
+            assert colors_for(review.devices.cameras) == COLORS
+            assert runtime.styleSheet() == ""
+            assert app.styleSheet() == original_application_style
+        for status in ("Ready", "Waiting", "Failed", "Unavailable"):
+            review.dashboard.apply_view(replace(current_view, camera_status=status))
+            indicator = review.dashboard.backend_indicators["Cameras"]
+            indicator.click()
+            assert indicator.status == status
+            assert indicator.isChecked() == (status == "Ready")
+            assert indicator.accessibleName() == f"Cameras · {status}"
+            assert indicator.toolTip() == f"Cameras · {status}"
+            assert not indicator.grab().isNull()
+        for index, count in ((0, 0), (0, 6), (2, 6), (6, 6), (30, 60)):
+            view = replace(current_view, trial_index=index, trial_count=count)
+            review.dashboard.apply_view(view)
+            position = review.dashboard.trial_position
+            assert position.isHidden() == (count == 0)
+            assert position.accessibleName() == f"Trial position {index} of {count}"
+            assert (position.index, position.count) == (index, count)
+            assert not position.grab().isNull()
+        review.appearance.select("standard")
+        assert position.isHidden() and brackets.isHidden()
+        review.appearance.select("retro_console")
+        assert position.isVisible()
+        review.dashboard.subject_id.setFocus()
+        QTest.keyClicks(review.dashboard.subject_id, "-edited")
+        assert review.dashboard.subject_id.text().endswith("-edited")
+        review.dashboard.sex.setFocus()
+        app.processEvents()
+        assert brackets.isHidden()
+        assert any(
+            item.isVisible() and item.parentWidget() is review.dashboard.sex
+            for item in review.appearance.focus_brackets
+        )
+        reopened = ReviewDashboardWindow(
+            settings=QSettings(path, QSettings.Format.IniFormat)
+        )
+        assert reopened.appearance.name == "retro_console"
+        assert reopened.appearance.actions["retro_console"].isChecked()
+        assert settings.value("review/appearance") == "retro_console"
+    finally:
+        for window in (review, runtime, reopened):
+            if window is not None:
+                window.tracking.annotation.close()
+                window.hide()
+                window.deleteLater()
+        app.processEvents()
+
+
+def test_camera_pin_tracks_selected_role_and_table_edits(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    devices = window.devices
+    cameras, panel = devices.cameras, devices.microcontroller
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    panel.set_role_pin("behavioral", "5")
+    panel.set_role_pin("tracking", "11")
+    assert cameras.trigger_pin.text() == "5"
+    cameras.table.selectRow(1)
+    assert cameras.trigger_pin.text() == "11"
+    cameras.trigger_pin.selectAll()
+    QTest.keyClicks(cameras.trigger_pin, "8")
+    assert panel.pin_editors["tracking"].text() == "8"
+    cameras.trigger_pin.setCursorPosition(0)
+    QTest.keyClicks(cameras.trigger_pin, "1")
+    assert cameras.trigger_pin.cursorPosition() == 1
+    assert panel.pin_editors["tracking"].text() == "18"
+    cameras.trigger_pin.selectAll()
+    QTest.keyClick(cameras.trigger_pin, Qt.Key.Key_Backspace)
+    assert panel.pin_editors["tracking"].text() == ""
+    assert panel.pin_editors["behavioral"].text() == "5"
+    panel.output_remove["tracking"].click()
+    assert cameras.trigger_pin.text() == ""
+    panel.pin_editors["tracking"].setText("D9")
+    assert cameras.trigger_pin.text() == "9"
+    snapshot = panel.snapshots.capture()
+    snapshot["camera_pins"]["tracking"] = "D10"
+    panel.snapshots.restore(snapshot)
+    assert cameras.trigger_pin.text() == "10"
+    cameras.role.setCurrentText("Eye tracking")
+    assert cameras.trigger_pin.text() == ""
+    QTest.keyClicks(cameras.trigger_pin, "7")
+    assert panel.pin_editors["eye_tracking"].text() == "7"
+    assert panel.pin_editors["tracking"].text() == "10"
+    cameras.role.setCurrentText("Unassigned")
+    assert cameras.trigger_pin.text() == ""
+    assert not cameras.trigger_pin.isEnabled()
+
+
+@pytest.mark.parametrize(
+    "change", ["authority", "pending", "connection", "upload", "capture", "phase"]
+)
+def test_camera_pin_obeys_editing_and_diagnostic_locks(
+    window: DashboardWindow, app: QApplication, change: str
+) -> None:
+    devices = window.devices
+    cameras, panel = devices.cameras, devices.microcontroller
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    panel.set_role_pin("behavioral", "5")
+    if change == "authority":
+        panel.can_review = False
+    elif change == "pending":
+        panel.pending_test_key = "behavioral"
+    elif change == "connection":
+        panel.connection_pending = True
+    elif change == "upload":
+        panel.upload_pending = True
+    elif change == "capture":
+        assert cameras.selected is not None
+        cameras.selected.connected = True
+    else:
+        window.apply_view(review_view(Phase.RUNNING))
+    panel.refresh_tests()
+    assert not cameras.trigger_pin.isEnabled()
+    devices.edit_camera_pin("9")
+    assert panel.pin_editors["behavioral"].text() == "5"
+    assert cameras.trigger_pin.text() == "5"
+
+
+def test_reference_bar_lengths_follow_the_output_until_measured(
+    window: DashboardWindow,
+):
+    panel = window.devices.projectors
+    drafts = panel.screen_editor.drafts
+    panel.display_pixels = {"native-a": (1280, 720)}
+    panel.assignments["native-a"] = "Front"
+    panel.update_geometry()
+    assert drafts["Front"]["reference_x_px"] == ""
+    panel.display_pixels = {"native-a": (1920, 1080)}
+    panel.update_geometry()
+    assert drafts["Front"]["reference_width_px"] == "1920"
+    assert drafts["Front"]["reference_x_px"] == ""
+    panel.screen_editor.fields["Front", "throw"].setText("1.5")
+    panel.measurements.fields["Front", "reference_x_mm"].setText("160")
+    panel.measurements.fields["Front", "reference_y_mm"].setText("90")
+    assert drafts["Front"]["reference_x_px"] == "480"  # Pinned by the measurement.
+    distance = float(drafts["Front"]["distance"])
+    assert distance > 0
+    # A partial edit keeps the derived distance instead of blanking it.
+    panel.measurements.fields["Front", "reference_y_mm"].setText("")
+    assert float(drafts["Front"]["distance"]) == pytest.approx(distance)
+    panel.measurements.fields["Front", "reference_y_mm"].setText("0")
+    assert drafts["Front"]["distance"] == ""  # A complete but invalid pair clears it.
+
+
+def test_native_adapter_name_identifies_scaled_displays(app: QApplication):
+    from types import SimpleNamespace
+
+    from PyQt6.QtCore import QRect
+
+    from cephvr.gui.calibration_profile import MonitorBinding
+    from cephvr.gui.projectors import _stable_display_identity
+
+    # Qt reports 125 % scaling in logical units, so rectangles cannot match GLFW's.
+    screen = SimpleNamespace(
+        name=lambda: r"\\.\DISPLAY3",
+        geometry=lambda: QRect(1536, 0, 2048, 1600),
+        devicePixelRatio=lambda: 1.25,
+        manufacturer=lambda: "m",
+        model=lambda: "d",
+        serialNumber=lambda: "s",
+    )
+    bindings = (
+        MonitorBinding("interface-2", 2000, 0, 2560, 2000, 60, 8, r"\\.\DISPLAY2"),
+        MonitorBinding("interface-3", 1920, 0, 2560, 2000, 60, 8, r"\\.\display3"),
+    )
+    assert _stable_display_identity(screen, bindings) == "interface-3"
+    assert _stable_display_identity(screen, bindings[:1]) == "|".join(
+        ("\\\\.\\DISPLAY3", "m", "d", "s")
+    )
+
+
+def test_pruning_keeps_referenced_and_newest_reference_profiles(tmp_path: Path):
+    import os
+
+    from cephvr.gui.calibration_assets import prune_reference_profiles, referenced_names
+
+    folder = tmp_path / "calibration"
+    folder.mkdir()
+    names = {
+        face: [f"reference_{face}_{index:064x}.json" for index in range(6)]
+        for face in ("front", "left")
+    }
+    for files in names.values():
+        for age, name in enumerate(files):  # index 0 is the oldest
+            path = folder / name
+            path.write_text("{}")
+            os.utime(path, (1_000_000 + age, 1_000_000 + age))
+    for keep in ("diagnostic_front.json", "rig_geometry_grid.glb", "notes.txt"):
+        (folder / keep).write_text("x")
+    (folder / f"reference_front_{'g' * 64}.json").write_text("{}")  # not a hash name
+    saved = tmp_path / "runtime_gui.json"
+    saved.write_text(f'{{"logical_path": "calibration/{names["front"][0]}"}}')
+    referenced = referenced_names([saved, tmp_path / "missing.json"])
+    assert referenced == {names["front"][0]}
+    dry = prune_reference_profiles(tmp_path, referenced)
+    assert len(dry.removed) == 5 and all(p.exists() for p in dry.removed)
+    done = prune_reference_profiles(tmp_path, referenced, apply=True)
+    assert done == dry
+    assert sorted(p.name for p in done.removed) == sorted(
+        names["front"][1:3] + names["left"][:3]
+    )
+    assert (folder / names["front"][0]).exists()  # referenced although oldest
+    assert all((folder / n).exists() for n in names["front"][3:] + names["left"][3:])
+    assert {p.name for p in folder.iterdir() if "reference_" not in p.name} == {
+        "diagnostic_front.json",
+        "rig_geometry_grid.glb",
+        "notes.txt",
+    }
+    with pytest.raises(ValueError, match="No calibration folder"):
+        prune_reference_profiles(tmp_path / "empty", frozenset())
+
+
+def test_protocol_arena_limits_default_edit_undo_and_saved_region(window, app):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_snapshot import (
+        capture_protocol,
+        restore_protocol,
+        validate_protocol,
+    )
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.visual_stimulus.config.models.program_model import TrialArenaBoundaries
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.set_program(
+        grouped_program(add_stimulus(blank_program(), 0, "3D arena", ()))
+    )
+    parameters = editor.subgroup.composer.rows[""].parameters
+    limits = parameters.arena_limits
+    editor.subgroup.composer.rows[""].advanced.setChecked(True)
+    from cephvr.gui.stimulus_form import ValueEditor
+
+    initial = next(
+        form
+        for form in parameters.forms
+        if isinstance(form, ValueEditor) and "fixed_height_mm" in form.children_by_key
+    )
+    for width in (1280, 720):
+        window.resize(width, 1100)
+        app.processEvents()
+        assert initial.height() >= initial.minimumSizeHint().height()
+
+    assert parameters.advanced_card.isAncestorOf(limits)
+    assert limits.mode.currentText() == "From arena file"
+    assert limits.margin.text() == "30"
+    limits.margin.setText("35")
+    limits.mark_changed()
+    assert editor.flush_parameters()
+    raw = editor.drafts[0].arena_boundaries_json
+    assert (
+        TrialArenaBoundaries.model_validate_json(raw).bindings[0].region.margin_mm == 35
+    )
+    snapshot = capture_protocol(window.protocol)
+    validate_protocol(snapshot)
+    editor.undo()
+    limits = editor.subgroup.composer.rows[""].parameters.arena_limits
+    assert limits.margin.text() == "30"
+    limits.margin.setText("nan")
+    limits.mark_changed()
+    assert not editor.flush_parameters()
+    limits.margin.setText("30")
+    assert limits.apply()
+    limits.mode.setCurrentIndex(1)
+    assert (
+        TrialArenaBoundaries.model_validate_json(editor.drafts[0].arena_boundaries_json)
+        .bindings[0]
+        .region.kind
+        == "unrestricted"
+    )
+    editor.undo()
+    assert (
+        editor.subgroup.composer.rows[""].parameters.arena_limits.mode.currentIndex()
+        == 0
+    )
+    document = TrialArenaBoundaries.model_validate_json(
+        editor.drafts[0].arena_boundaries_json
+    )
+    binding = document.bindings[0]
+    from cephvr.visual_stimulus.config.models.program_model import ConvexPolygon
+
+    explicit = binding.model_copy(
+        update={
+            "region": ConvexPolygon(
+                kind="convex_polygon_xy",
+                vertices_mm=((-100, -100), (100, -100), (100, 100), (-100, 100)),
+                margin_mm=12,
+            )
+        }
+    )
+    editor.drafts[0].arena_boundaries_json = document.model_copy(
+        update={"bindings": (explicit,)}
+    ).model_dump_json()
+    editor.render_selection()
+    limits = editor.subgroup.composer.rows[""].parameters.arena_limits
+    assert limits.mode.currentText() == "Saved explicit region"
+    assert limits.margin.text() == "12" and not limits.margin.isEnabled()
+    assert (
+        TrialArenaBoundaries.model_validate_json(
+            editor.drafts[0].arena_boundaries_json
+        ).bindings[0]
+        == explicit
+    )
+    saved = capture_protocol(window.protocol)
+    restore_protocol(window.protocol, saved)
+    assert (
+        TrialArenaBoundaries.model_validate_json(
+            editor.drafts[0].arena_boundaries_json
+        ).bindings[0]
+        == explicit
+    )
+
+
+def test_arena_xyz_orientation_default_subject_height_and_alignment(
+    window, app, tmp_path
+):
+    from cephvr.gui.initial_pose import ArenaPose
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.set_program(grouped_program(blank_program()))
+    composer = editor.subgroup.composer
+    composer.set_asset_root(str(tmp_path))
+    path = tmp_path / "arena.glb"
+    path.write_bytes(b"arena")
+    height = window.devices.projectors.rig_editor.fields["subject_z"]
+    height.setText("67.5")
+    composer.mode.setCurrentIndex(1)
+    setting = composer.program.sequence[0].settings[0]
+    assert setting.initial.position_mm == (0, 0)
+    assert setting.fixed_height_mm == 67.5
+    assert (
+        setting.initial.yaw_deg,
+        setting.fixed_pitch_deg,
+        setting.fixed_roll_deg,
+    ) == (0, 0, 0)
+    height.setText("88")
+    assert composer.program.sequence[0].settings[0].fixed_height_mm == 67.5
+    row = composer.rows[""]
+    row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
+    row.advanced.setChecked(True)
+    parameters = row.parameters
+    pose = next(form for form in parameters.forms if isinstance(form, ArenaPose))
+    from PyQt6.QtWidgets import QComboBox
+
+    assert not pose.findChildren(QComboBox)
+    from cephvr.gui.initial_pose import PoseNumber
+
+    saved = {"column_id": "height"}
+    referenced = PoseNumber({"type": "number"}, saved, {})
+    assert referenced.control.isReadOnly()
+    assert referenced.read() == saved
+    assert not referenced.findChildren(QComboBox)
+    referenced.deleteLater()
+    for width in (1280, 720):
+        window.resize(width, 1100)
+        app.processEvents()
+        assert (
+            parameters.arena_limits.mapTo(parameters, QPoint()).y()
+            < pose.mapTo(parameters, QPoint()).y()
+        )
+        limits = parameters.arena_limits
+        left = pose.position_fields[0]
+        right = pose.orientation_fields[0]
+        assert (
+            limits.mode_field.mapTo(parameters, QPoint()).x()
+            == left.mapTo(parameters, QPoint()).x()
+        )
+        assert (
+            limits.margin_field.mapTo(parameters, QPoint()).x()
+            == right.mapTo(parameters, QPoint()).x()
+        )
+        assert limits.mode_field.width() == left.width()
+        assert limits.margin_field.width() == right.width()
+        for position, orientation in zip(
+            pose.position_fields, pose.orientation_fields, strict=True
+        ):
+            assert (
+                position.mapTo(parameters, QPoint()).y()
+                == orientation.mapTo(parameters, QPoint()).y()
+            )
+            assert position.height() == orientation.height()
+    for key, value in (
+        ("x", "2"),
+        ("y", "3"),
+        ("fixed_height_mm", "40"),
+        ("yaw_deg", "15"),
+        ("fixed_pitch_deg", "10"),
+        ("fixed_roll_deg", "5"),
+    ):
+        pose.children_by_key[key].control.setText(value)
+    parameters.mark_changed()
+    assert parameters.apply(), parameters.message.text()
+    setting = composer.program.sequence[0].settings[0]
+    assert setting.initial.position_mm == (2, 3)
+    assert setting.fixed_height_mm == 40
+    assert (
+        setting.initial.yaw_deg,
+        setting.fixed_pitch_deg,
+        setting.fixed_roll_deg,
+    ) == (15, 10, 5)
+    # File-based creation uses the same current height, without changing existing poses.
+    from cephvr.gui.epoch_composer import EpochComposer
+
+    standalone = EpochComposer()
+    standalone.set_subject_height(height.text())
+    standalone.set_asset_root(str(tmp_path))
+    path = tmp_path / "arena.glb"
+    path.write_bytes(b"arena")
+    standalone.add_file("3D arena", str(path), "")
+    assert standalone.program.sequence[0].settings[0].fixed_height_mm == 88
+    before = standalone.program
+    standalone.set_subject_height("")
+    standalone.add_file("3D arena", str(path), "")
+    assert standalone.program == before
+    assert "subject height" in standalone.message.text()
+    standalone.deleteLater()
+
+
+def test_arena_mode_missing_height_keeps_previous_editor_and_reports_error(window, app):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.set_program(grouped_program(blank_program()))
+    composer = editor.subgroup.composer
+    composer.set_screens(("Front",))
+    window.devices.projectors.rig_editor.fields["subject_z"].clear()
+    before = composer.program
+    composer.mode.setCurrentIndex(1)
+    app.processEvents()
+    assert composer.mode.currentIndex() == composer.active_mode == 0
+    assert composer.program == before
+    assert not composer.rows["Front"].isHidden()
+    assert composer.rows[""].isHidden()
+    assert "subject height" in composer.message.text()
+    assert composer.message.dialog is not None
+    composer.message.dialog.accept()
+    window.devices.projectors.rig_editor.fields["subject_z"].setText("67.5")
+    composer.mode.setCurrentIndex(1)
+    assert composer.active_mode == composer.mode.currentIndex() == 1
+    assert composer.rows[""].indices
+    assert composer.rows[""].parameters.asset_forms
+    assert composer.program.sequence[0].settings[0].fixed_height_mm == 67.5
+    app.processEvents()
+    composer.mode.setCurrentIndex(0)
+    assert composer.mode.currentIndex() == composer.active_mode == 0
+    assert not composer.rows["Front"].isHidden()

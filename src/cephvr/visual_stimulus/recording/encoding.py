@@ -37,6 +37,7 @@ def prepare_review_encoding(
     capabilities: EncoderCapabilities,
     input_pixel_format: str,
     capability_evidence_id: str,
+    review_scale_factor: int = 1,
 ) -> tuple[ReviewEncoding, ResolvedEncoding]:
     """Validate one lossy encoder plan and derive the fixed E13 tile layout.
 
@@ -96,7 +97,7 @@ def prepare_review_encoding(
     )
     if maximum is None or min(maximum) <= 0:
         raise EncodingOptionsError("resolved encoder maximum dimensions are required")
-    geometry = _composite_geometry(display, maximum)
+    geometry = _composite_geometry(display, maximum, review_scale_factor)
     composite_width, composite_height, scale, tiles = geometry
     effective = validate_arguments(
         ffmpeg_args,
@@ -230,34 +231,39 @@ def build_review_argv(
 
 
 def _composite_geometry(
-    display: DisplayProfile, maximum: tuple[int, int]
+    display: DisplayProfile, maximum: tuple[int, int], review_scale_factor: int = 1
 ) -> tuple[int, int, int, tuple[tuple[str, int, int, int, int], ...]]:
-    count = len(display.active_outputs)
-    columns = isqrt(count - 1) + 1
+    if type(review_scale_factor) is not int or review_scale_factor < 1:
+        raise EncodingOptionsError("review scale factor must be a positive integer")
     for scale in range(
         1, max(max(o.width_px, o.height_px) for o in display.active_outputs) + 1
     ):
-        sizes = [
-            (o.width_px // scale, o.height_px // scale) for o in display.active_outputs
-        ]
-        if any(min(size) <= 0 for size in sizes):
-            break
-        widths = [
-            max(sizes[i][0] for i in range(col, count, columns))
-            for col in range(min(columns, count))
-        ]
-        rows = (count + columns - 1) // columns
-        heights = [
-            max(
-                sizes[i][1]
-                for i in range(row * columns, min(count, (row + 1) * columns))
-            )
-            for row in range(rows)
-        ]
-        width, height = sum(widths), sum(heights)
+        width, height, _ = _layout_at_scale(display, scale)
         if width <= maximum[0] and height <= maximum[1]:
-            layout = tile_layout(display.active_outputs, scale, height)
-            return width, height, scale, tuple(layout)
+            scale *= review_scale_factor
+            width, height, layout = _layout_at_scale(display, scale)
+            return width, height, scale, layout
     raise EncodingOptionsError(
         "no integer tile scale fits the selected encoder maximum"
     )
+
+
+def _layout_at_scale(
+    display: DisplayProfile, scale: int
+) -> tuple[int, int, tuple[tuple[str, int, int, int, int], ...]]:
+    sizes = [
+        (o.width_px // scale, o.height_px // scale) for o in display.active_outputs
+    ]
+    if any(min(size) <= 0 for size in sizes):
+        raise EncodingOptionsError("review scale factor produces an empty tile")
+    count = len(sizes)
+    columns = isqrt(count - 1) + 1
+    width = sum(
+        max(sizes[i][0] for i in range(col, count, columns))
+        for col in range(min(columns, count))
+    )
+    height = sum(
+        max(sizes[i][1] for i in range(row, min(count, row + columns)))
+        for row in range(0, count, columns)
+    )
+    return width, height, tuple(tile_layout(display.active_outputs, scale, height))

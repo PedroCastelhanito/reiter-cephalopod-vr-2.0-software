@@ -421,9 +421,11 @@ def test_evidence_pending_budget_fails_instead_of_growing() -> None:
 
 def test_recording_session_cancel_before_header_reconciles_process_without_output(
     tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     evidence = EvidenceWriter(max_pending_bytes=1024)
     events: list[str] = []
+    caplog.set_level("INFO", logger="cephvr.visual_stimulus.recording.session")
     worker = RecordingWorker(
         capture_slots=1,
         evidence=evidence,
@@ -453,6 +455,18 @@ def test_recording_session_cancel_before_header_reconciles_process_without_outpu
     assert result is not None and not result.evidence_closed
     assert events == ["registered_child_started", "exact_child_reconciled"]
     assert not (tmp_path / "frames.jsonl").exists()
+
+    import json
+
+    summaries = [
+        r.getMessage()
+        for r in caplog.records
+        if '"event": "recording_metrics"' in r.getMessage()
+    ]
+    assert len(summaries) == 1
+    summary = json.loads(summaries[0])
+    assert summary["evidence_path"] == str(tmp_path / "frames.jsonl")
+    assert summary["active_capture_slots"] == 0
 
 
 def test_recording_session_services_video_sync_independently_of_evidence_sync(
@@ -1263,3 +1277,385 @@ def test_image_selection_evidence_preserves_repeated_actual_indices():
         assert image.disposition == (
             "current" if requested == actual else "residency_hold"
         )
+
+
+@pytest.mark.parametrize("owned", [False, True])
+def test_capture_handoff_owns_buffer_through_partial_blocked_writes(
+    owned: bool,
+) -> None:
+    class BlockedInput(_Input):
+        blocked = True
+
+        def write_chunk(self, data: memoryview) -> int:
+            return 0 if self.blocked else super().write_chunk(data)
+
+    encoder = BlockedInput()
+    submitted = []
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=encoder,
+        video_start_ns=0,
+        video_rate_hz=1,
+        on_submitted=submitted.append,
+    )
+    reservation, _, _ = worker.classify_and_reserve(0, 0)
+    assert reservation is not None
+    pixels = bytearray(b"AAAABBBB")
+    worker.complete_capture(
+        reservation,
+        width=1,
+        height=2,
+        pixel_format="rgba8_bottom_up",
+        pixels=pixels,
+        take_ownership=owned,
+    )
+    if not owned:
+        pixels[:] = b"xxxxxxxx"
+    assert not worker.drain_once()
+    assert worker.classify_and_reserve(1, 1_000_000_000)[1] == "capacity_drop"
+    with pytest.raises(RuntimeError, match="admitted captures"):
+        worker.finish_input()
+    encoder.blocked = False
+    for _ in range(10):
+        if not worker.drain_once():
+            break
+    assert encoder.data == b"BBBBAAAA"
+    assert len(submitted) == 1
+    assert (submitted[0].pixels is pixels) == owned
+    assert worker.metrics.snapshot()["active_capture_slots"] == 0
+    next_reservation, _, _ = worker.classify_and_reserve(2, 2_000_000_000)
+    assert next_reservation is not None
+    worker.cancel_reservation(next_reservation)
+    worker.finish_input()
+    assert encoder.closed
+
+
+def test_capture_metrics_bound_pending_frames_and_separate_waits() -> None:
+    now = [0]
+    encoder = _DelayedInput()
+    worker = RecordingWorker(
+        capture_slots=2,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=encoder,
+        video_start_ns=0,
+        video_rate_hz=1,
+        clock_ns=lambda: now[0],
+    )
+    first, _, _ = worker.classify_and_reserve(0, 0)
+    now[0] = 10
+    second, _, _ = worker.classify_and_reserve(1, 1_000_000_000)
+    assert first is not None and second is not None
+    now[0] = 20
+    worker.complete_capture(
+        second,
+        width=1,
+        height=1,
+        pixel_format="rgba8_bottom_up",
+        pixels=bytearray(b"BBBB"),
+        take_ownership=True,
+    )
+    assert not worker.drain_once()  # Earlier GPU capture remains unresolved.
+    for group in range(2, 100):
+        assert (
+            worker.classify_and_reserve(group, group * 1_000_000_000)[1]
+            == "capacity_drop"
+        )
+    assert worker.metrics.snapshot()["active_capture_slots"] == 2
+    now[0] = 30
+    worker.complete_capture(
+        first, width=1, height=1, pixel_format="rgba8_bottom_up", pixels=b"AAAA"
+    )
+    now[0] = 40
+    assert not worker.drain_once()
+    now[0] = 50
+    assert worker.drain_once()
+    now[0] = 60
+    assert not worker.drain_once()
+    now[0] = 70
+    assert worker.drain_once()
+    assert encoder.data == b"AAAABBBB"
+    result = worker.metrics.snapshot()
+    assert result["active_capture_slots"] == result["queued_captures"] == 0
+    assert result["peak_capture_slots"] == 2
+    assert result["submitted_bytes"] == 8
+    assert result["zero_progress_writes"] == 2
+    assert result["stages_ns"]["capture_ready"] == {"count": 2, "total": 40, "max": 30}
+    assert result["stages_ns"]["queue_wait"] == {"count": 2, "total": 50, "max": 40}
+    assert result["stages_ns"]["slot_hold"] == {"count": 2, "total": 110, "max": 60}
+    assert len(result["stages_ns"]) == 7
+
+
+def test_invalid_capture_completion_preserves_reservation_and_cancel_releases_metrics() -> (
+    None
+):
+    from dataclasses import replace
+
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=_Input(),
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
+    reservation, _, _ = worker.classify_and_reserve(0, 0)
+    assert reservation is not None
+    with pytest.raises(TypeError, match="bytearray"):
+        worker.complete_capture(
+            reservation,
+            width=1,
+            height=1,
+            pixel_format="rgba8_bottom_up",
+            pixels=b"AAAA",
+            take_ownership=True,
+        )
+    with pytest.raises(RuntimeError, match="stale"):
+        worker.complete_capture(
+            replace(reservation, group_id=1),
+            width=1,
+            height=1,
+            pixel_format="rgba8_bottom_up",
+            pixels=bytearray(b"AAAA"),
+            take_ownership=True,
+        )
+    assert worker.counts().unresolved_capture_count == 1
+    worker.cancel_reservation(reservation)
+    assert worker.metrics.snapshot()["active_capture_slots"] == 0
+    assert worker.metrics.snapshot()["cancelled_captures"] == 1
+    with pytest.raises(RuntimeError, match="stale"):
+        worker.cancel_reservation(reservation)
+    worker.finish_input()
+
+
+def test_readback_poll_transfers_native_buffer_and_records_bounded_timings() -> None:
+    now = [0]
+    pixels = bytearray(b"RGBA")
+    returns = iter((None, pixels))
+    submitted = []
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=_Input(),
+        video_start_ns=0,
+        video_rate_hz=1,
+        clock_ns=lambda: now[0],
+        on_submitted=submitted.append,
+    )
+    reservation, _, _ = worker.classify_and_reserve(0, 0)
+    assert reservation is not None
+
+    def poll(_pending):
+        now[0] += 5
+        return next(returns)
+
+    session = NS(
+        metrics=worker.metrics,
+        complete_capture=worker.complete_capture,
+        enqueue_evidence_factory=lambda *_args, **_kwargs: None,
+    )
+    runtime = RecordingCaptureRuntime(
+        NS(poll_review_capture=poll),
+        session,
+        NS(
+            composite_width=1,
+            composite_height=1,
+            native_pixel_format="rgba8_bottom_up",
+            encoder_pixel_format="yuv420p",
+        ),
+        evidence_pending_bytes=4096,
+        capture_slots=1,
+    )
+    runtime.pending[reservation.token] = (reservation, object())
+    runtime.poll_pending()
+    assert len(runtime.pending) == 1
+    runtime.poll_pending()
+    assert not runtime.pending
+    while worker.drain_once():
+        pass
+    assert submitted[0].pixels is pixels
+    stages = worker.metrics.snapshot()["stages_ns"]
+    assert stages["readback_poll_ready"] == {"count": 1, "total": 5, "max": 5}
+    assert stages["readback_poll_pending"] == {"count": 1, "total": 5, "max": 5}
+
+
+@pytest.mark.parametrize("consumed", [-1, 5])
+def test_invalid_encoder_count_does_not_inflate_diagnostics(consumed: int) -> None:
+    encoder = NS(write_chunk=lambda _data: consumed)
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=encoder,
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
+    worker.offer(CompositeFrame(0, 0, 1, 1, "rgba8_bottom_up", b"RGBA"))
+    with pytest.raises(RuntimeError, match="invalid write count"):
+        worker.drain_once()
+    assert worker.metrics.snapshot()["submitted_bytes"] == 0
+    assert worker.counts().input_submitted_count == 0
+    assert worker.counts().unresolved_capture_count == 1
+
+
+def test_renderer_diagnostics_emit_json_with_root_warning_level(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import json
+    import logging
+    import time
+
+    from cephvr.visual_stimulus.recording.metrics import configure_recording_logger
+
+    root = logging.getLogger()
+    logger = logging.getLogger("cephvr.visual_stimulus.recording.session")
+    old = (logger.handlers, logger.level, logger.propagate, root.level)
+    logger.handlers = []
+    root.setLevel(logging.WARNING)
+    try:
+        configure_recording_logger()
+        configure_recording_logger()
+        assert len(logger.handlers) == 1
+        evidence = EvidenceWriter(max_pending_bytes=1024)
+        worker = RecordingWorker(
+            capture_slots=1,
+            evidence=evidence,
+            encoder=_Input(),
+            video_start_ns=0,
+            video_rate_hz=1,
+        )
+        session = RecordingSession(
+            worker=worker,
+            evidence=evidence,
+            evidence_path=tmp_path / "frames.jsonl",
+            recipe_path=tmp_path / "recipe.json",
+            max_queued_evidence_bytes=1024,
+            finalizer=lambda _counts: (b"{}\n", b"{}\n"),
+        )
+        result = session.finish(deadline_ns=time.perf_counter_ns() + 2_000_000_000)
+        assert not result.evidence_closed
+        lines = capsys.readouterr().err.splitlines()
+        assert len(lines) == 1
+        assert json.loads(lines[0])["event"] == "recording_metrics"
+        assert root.level == logging.WARNING
+    finally:
+        for handler in logger.handlers:
+            handler.close()
+        logger.handlers, level, logger.propagate, root_level = old
+        logger.setLevel(level)
+        root.setLevel(root_level)
+
+
+@pytest.mark.parametrize("cancel", [False, True])
+def test_native_video_off_retains_scientific_evidence_without_native_ports(
+    native_recording, tmp_path, cancel
+):
+    import json
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.visual_stimulus.recording.recipe import prepare_recipe
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+
+    from .support import make_prepared_trial
+
+    recording = native_recording
+    setup = visual.WorkerSetup()
+    setup.settings.save_visual_stimulus_data = False
+    setup.policies.limits.evidence_pending_bytes = 1_000_000
+    setup.policies.limits.max_prepared_plan_bytes = 1_000_000
+    setup.policies.record_sync_interval_ns = 1_000_000
+    setup.policies.record_stall_timeout_ns = 1_000_000
+    announced = []
+    recording.configure(setup, lambda key, path: announced.append(key), 100)
+    assert len(announced) == 1 and announced[0].startswith("recording-owner:")
+    artifact = make_prepared_trial()
+    assert artifact.review_encoding is None
+    recording.prepare_artifacts((artifact,), 100).result(timeout=1)
+    recipe = prepare_recipe(artifact, max_bytes=1_000_000)
+    request = visual.WorkerSchedule(start_monotonic_ns=10, normal_end_monotonic_ns=100)
+    request.command.target.work.trial.trial_id = artifact.identity.trial_id
+    request.prepared.plan_sha256 = recipe.sha256
+    for tag, extension in (("stimulus_LOG", "json"), ("stimulus_frames", "jsonl")):
+        request.outputs.add(
+            output_key=tag,
+            output_tag=tag,
+            extension=extension,
+            path=str(tmp_path / f"trial_{tag}.{extension}"),
+        )
+    recording.schedule(request, artifact).result(timeout=1)
+    assert recording._worker is None and recording._video_path is None
+    if cancel:
+        recording.begin_cancel(200)
+    else:
+        recipe_path = tmp_path / "trial_stimulus_LOG.json"
+        recipe_path.write_bytes(recipe.data)
+        recording.publication(
+            visual.WorkerRecipePublication(
+                published=True, prepared=request.prepared, path=str(recipe_path)
+            )
+        )
+        state = EvidenceStateSnapshot(
+            0, artifact.epochs[0].scene_id, 12, (), (), (), (), ()
+        )
+        update = NS(
+            group=NS(group_id=0, outputs=()),
+            evidence_state=state,
+            evidence_submissions=(),
+            feedback_evidence=(
+                FeedbackEvidenceSnapshot(
+                    stream_id="stream",
+                    result_id="r1",
+                    reset_generation="reset",
+                    binding_id="binding",
+                    group_id=None,
+                    source_frame_ids=(),
+                    source_receipt_ns=10,
+                    application_check_ns=12,
+                    age_limit_ns=None,
+                    disposition="invalid",
+                    requested_increment=(),
+                    applied_increment=(),
+                    target_units=(),
+                    target_frame_id=None,
+                ),
+            ),
+        )
+        recording.before_render()
+        recording.rendered(update)
+        recording.diagnostics(
+            (
+                DiagnosticSnapshot(
+                    0, artifact.display.active_outputs[0].output_id, 0, 12, ()
+                ),
+            )
+        )
+        recording.begin_finish(100, 200)
+    result = None
+    for _ in range(1000):
+        result = recording.poll_finished()
+        if result is not None:
+            break
+        threading.Event().wait(0.001)
+    assert result is not None and len(result) == 1
+    assert result[0].closure == (
+        pb.OUTPUT_CLOSURE_NOT_STARTED if cancel else pb.OUTPUT_CLOSURE_CLOSED
+    )
+    assert not list(tmp_path.glob("*.mp4"))
+    if not cancel:
+        rows = [
+            json.loads(line)["payload"]
+            for line in Path(result[0].path).read_text().splitlines()
+        ]
+        assert [row["kind"] for row in rows] == [
+            "header",
+            "render_group",
+            "feedback",
+            "interval",
+            "clipping",
+            "interval",
+            "completion",
+        ]
+        assert rows[0]["video_enabled"] is False and rows[0]["format_version"] == 5
+        assert rows[1]["captures"] == []
+        assert rows[1]["state"]["evaluation_host_ns"] == 12
+        assert rows[-2]["phase"] == "end" and rows[-2]["observation_host_ns"] == 100
+        assert rows[-1]["state_count"] == 1 and rows[-1]["capture_admission_count"] == 0
+    assert not recording.cleanup(200).outstanding

@@ -79,8 +79,6 @@ class TrackingDiagnosticController:
         self.maximum_frame_bytes = maximum_frame_bytes
         self._attachment: svc.PreviewAttachmentResult | None = None
         self._viewer = pb.ProcessIdentity()
-        self._tracking_transfer_operation = ""
-        self._diagnostic_command: tracking.TrackingDiagnosticCommand | None = None
 
     async def begin(
         self, request: svc.BeginTrackingDiagnosticRequest
@@ -194,15 +192,6 @@ class TrackingDiagnosticController:
             except (ProjectionError, ValueError) as exc:
                 return _reject(operator.operator.command_id, str(exc))
             self._viewer = viewer
-            self._tracking_transfer_operation = operation_id
-            self._diagnostic_command = tracking.TrackingDiagnosticCommand(
-                diagnostic_id=diagnostic_id,
-                configuration_revision=revision,
-                selected_stages=[
-                    tracking.TrackingDiagnosticStage.Name(int(stage))
-                    for stage in selected
-                ],
-            )
             self._attachment = None
             self.control.tracking_diagnostic.CopyFrom(
                 pb.TrackingDiagnosticState(
@@ -296,9 +285,6 @@ class TrackingDiagnosticController:
                 source_camera_serial=camera_serial,
                 maximum_overlay_items=256,
                 authorized_gui_viewer=viewer,
-            )
-            self._diagnostic_command = tracking.TrackingDiagnosticCommand.FromString(
-                request_to_tracking.SerializeToString(deterministic=True)
             )
             begin_attempted = True
             begun = await tracking_backend.begin_tracking_diagnostic(
@@ -407,7 +393,6 @@ class TrackingDiagnosticController:
                 self.projections.cancel_preview_expectation(operation_id)
                 async with self.lifecycle.lock:
                     self._attachment = None
-                    self._diagnostic_command = None
                     self.control.tracking_diagnostic.closed = True
                     self.control.tracking_diagnostic.active = False
                     self.control.tracking_diagnostic.failure = str(exc)[:512]

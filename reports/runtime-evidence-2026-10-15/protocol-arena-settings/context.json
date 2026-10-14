@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-15",
+  "timezone": "Asia/Tokyo",
+  "source_revision": "0d70295898bcb9f058ef4bf26df4680df62d595d",
+  "dirty_tree": true,
+  "method": "macOS QT_QPA_PLATFORM=offscreen; ProtocolEditor in QScrollArea 900x1500; grouped blank-program 3D arena fixture; advanced action enabled; declared rectangular GLB width=500 depth=400; QWidget.grab; explicit deferred-delete cleanup",
+  "outcome": "Screenshot visually inspected; initial pose and movement limits readable. Final capture/explicit widget cleanup exited 0. Earlier ad hoc capture scripts exited 139 during interpreter teardown after writing images; not a production-shutdown test.",
+  "scope": "Authoring layout and declared-geometry preview only; no renderer, Windows-native file protection, hardware or rig acceptance.",
+  "source_sha256": {
+    "src/cephvr/gui/arena_limits.py": "710f93b2e27ebbc08b136bb3bb853185b91d1f8696ace81605c60c425327d2d6",
+    "src/cephvr/gui/initial_pose.py": "6ba18db24bea5832827df0407dec16eee7b39f00ecc19405a48ee0eaad3de2fb",
+    "src/cephvr/gui/protocol_editor.py": "0b79b687228ee57dec4bb6580652085e25ea4a211616c1324385faae9d0fa4a0",
+    "src/cephvr/gui/protocol_controls.py": "3c03a015ef252fabc1ba0f5986a38eb8005b185e32bcf68332d58b08cbe08517",
+    "src/cephvr/gui/protocol_timeline.py": "4c8a8ebbc0980276526b0200f01ef29fdc24c7e72f235ac3102bd063289b5b95",
+    "src/cephvr/gui/stimulus_parameters.py": "519c7140a30e0dc9814b713d3944cd08200d200ea6da4c728f56b747dd38929e",
+    "src/cephvr/visual_stimulus/compiler/arena_regions.py": "cea881d1796084053c4e57937f4d5626ae45113c66ec1e6121d84392484b9ca5",
+    "src/cephvr/visual_stimulus/resources/arena_geometry.py": "4df7788ca69f291727e1b295b72899ec5b3deb1625e56c44a516a0ed5ceb2be1"
+  }
+}

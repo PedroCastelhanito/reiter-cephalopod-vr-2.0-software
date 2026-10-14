@@ -126,6 +126,9 @@ def test_session_config_excludes_dormant_settings_and_pfs_payload() -> None:
     active.acquisition.behavioral.device.pfs_baseline.text = "SDK SECRET SNAPSHOT"
     active.acquisition.tracking.enabled = False
     active.acquisition.tracking.device.device_id = "dormant-camera"
+    active.acquisition.eye_tracking.enabled = True
+    active.acquisition.eye_tracking.device.device_id = "eye-camera"
+    active.acquisition.eye_tracking.device.pfs_baseline.text = "EYE SDK SECRET"
     config.backends.add(
         backend_name="tracking", enabled=False
     ).tracking.pipeline_id = "dormant-pipeline"
@@ -139,6 +142,8 @@ def test_session_config_excludes_dormant_settings_and_pfs_payload() -> None:
         "condition": "fasted",
     }
     assert "camera-1" in text
+    assert "eye-camera" in text
+    assert "EYE SDK SECRET" not in text
     assert "SDK SECRET SNAPSHOT" not in text
     assert "dormant-camera" not in text
     assert "dormant-pipeline" not in text

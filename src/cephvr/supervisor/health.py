@@ -352,6 +352,9 @@ class HealthMonitor:
                 )
             )
         for role, generation in self.registration.required_backends().items():
+            if (role, generation) in self.state.isolated_backend_exits:
+                # Its exit was already classified continuable; silence is expected.
+                continue
             last = self.state.last_heartbeat.get((role, generation))
             if (
                 not self.shutdown.shutdown_request

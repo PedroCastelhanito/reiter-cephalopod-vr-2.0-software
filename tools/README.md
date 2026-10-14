@@ -65,3 +65,9 @@ Flow API 2 headers available, run
 `./tools/test_on_rig.ps1 -Install -Rig -BuildTrackingNative -NvofSdkRoot <actual-header-root>`.
 The Tracking build remains explicit; locate the installed headers on that machine.
 This automated command does not replace device/scientific/full-workload acceptance.
+
+`encoding_probe.py bench` runs bounded synthetic FFmpeg comparisons for explicitly
+confirmed 8-bit source profiles; `collect` reads completed rig videos/frame logs and
+renderer timing summaries. It never starts devices or modifies runtime configuration.
+See the [encoding test plan](../reports/rig-verification.md#encoding-test-plan) for
+PowerShell commands, the live-app matrix and evidence interpretation.

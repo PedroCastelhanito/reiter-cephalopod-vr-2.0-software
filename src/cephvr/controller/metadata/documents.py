@@ -26,6 +26,7 @@ def active_configuration_document(
             for camera in (
                 setting.acquisition.behavioral,
                 setting.acquisition.tracking,
+                setting.acquisition.eye_tracking,
             ):
                 if not camera.HasField("enabled") or not camera.enabled:
                     camera.ClearField("device")

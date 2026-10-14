@@ -36,7 +36,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.theme import COLORS, SIZES
+from cephvr.gui.retro_instruments import card_marks, terminal_marks
+from cephvr.gui.theme import SIZES, colors_for, retro_console
 
 
 def label(text: str, role: str = "hint", *, wrap: bool = False) -> QLabel:
@@ -70,8 +71,9 @@ class SelectionBox(QComboBox):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        colors = colors_for(self)
         painter.setPen(
-            QPen(QColor(COLORS.muted if self.isEnabled() else COLORS.disabled), 1.5)
+            QPen(QColor(colors.muted if self.isEnabled() else colors.disabled), 1.5)
         )
         x, y = self.width() - 14, self.height() / 2
         painter.drawLine(QPointF(x - 4, y - 2), QPointF(x, y + 2))
@@ -157,16 +159,27 @@ class Card(QFrame):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         frame = QRectF(self.rect()).adjusted(0.5, 0, -0.5, -0.5)
         frame.setTop(self.caption.geometry().center().y() + 0.5)
-        painter.setBrush(QColor(COLORS.card))
+        colors = colors_for(self)
+        radius = 0 if retro_console(self) else SIZES.card_radius
+        painter.setBrush(QColor(colors.card))
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawRoundedRect(frame, SIZES.card_radius, SIZES.card_radius)
+        painter.drawRoundedRect(frame, radius, radius)
         # Interrupt only the outline; keep the surface continuous beneath the title.
         painter.setClipRegion(
             QRegion(self.rect()).subtracted(QRegion(self.caption.geometry()))
         )
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QPen(QColor(COLORS.border), 1))
-        painter.drawRoundedRect(frame, SIZES.card_radius, SIZES.card_radius)
+        painter.setPen(QPen(QColor(colors.border), 1))
+        painter.drawRoundedRect(frame, radius, radius)
+        if retro_console(self):
+            card_marks(painter, frame)
+            painter.setPen(QPen(QColor(colors.accent), 1))
+            for corner, direction in (
+                (frame.bottomLeft(), 1),
+                (frame.bottomRight(), -1),
+            ):
+                painter.drawLine(corner, corner + QPointF(9 * direction, 0))
+                painter.drawLine(corner, corner + QPointF(0, -9))
 
 
 class StatusIndicator(QRadioButton):
@@ -181,6 +194,9 @@ class StatusIndicator(QRadioButton):
         self.set_status("Unavailable")
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        if retro_console(self):
+            self.paint_instrument_lamp()
+            return
         option = QStyleOptionButton()
         self.initStyleOption(option)
         style = self.style()
@@ -193,11 +209,57 @@ class StatusIndicator(QRadioButton):
         painter = QStylePainter(self)
         painter.drawControl(QStyle.ControlElement.CE_RadioButton, option)
 
+    def paint_instrument_lamp(self) -> None:
+        colors = colors_for(self)
+        ink = (
+            colors.ready
+            if self.status == "Ready"
+            else colors.error
+            if self.status.casefold() in {"fault", "failed", "error", "unhealthy"}
+            else colors.waiting
+            if self.status.casefold()
+            in {"not prepared", "preparing", "waiting", "connected"}
+            else colors.muted
+        )
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        lamp = QColor(ink)
+        halo = QColor(lamp)
+        halo.setAlpha(25)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(halo)
+        painter.drawEllipse(QRectF(0, 4, 12, 12))
+        painter.setPen(QPen(lamp, 1))
+        painter.setBrush(lamp if ink != colors.muted else QColor(colors.input))
+        painter.drawRect(QRectF(3, 7, 6, 6))
+        width = max(0, self.width() - 18)
+        painter.setPen(QColor(colors.label))
+        painter.drawText(
+            18,
+            14,
+            self.fontMetrics().elidedText(
+                self.text().upper(), Qt.TextElideMode.ElideRight, width
+            ),
+        )
+        font = painter.font()
+        font.setPixelSize(10)
+        painter.setFont(font)
+        painter.setPen(lamp)
+        painter.drawText(
+            18,
+            30,
+            painter.fontMetrics().elidedText(
+                f"[{self.status.upper()}]", Qt.TextElideMode.ElideRight, width
+            ),
+        )
+
     def set_status(self, status: str) -> None:
+        self.status = status
         self.setChecked(status == "Ready")
         description = f"{self.text()} · {status}"
         self.setToolTip(description)
         self.setAccessibleName(description)
+        self.update()
 
     def nextCheckState(self) -> None:
         pass
@@ -224,6 +286,12 @@ class Console(QPlainTextEdit):
         size = super().sizeHint()
         size.setHeight(self.minimumHeight())
         return size
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        super().paintEvent(event)
+        if not retro_console(self) or event is None:
+            return
+        terminal_marks(self, event)
 
 
 class FittedConsole(Console):
@@ -362,6 +430,7 @@ class StatusColumn(QWidget):
         body.setSpacing(SIZES.card_gap)
         self.hud_card = Card(title)
         self.hud = FittedConsole()
+        self.hud.setProperty("terminal", "telemetry")
         self.hud_card.body.addWidget(self.hud)
         self.log_card = Card("Activity log", grow=True)
         self.console = LogConsole()

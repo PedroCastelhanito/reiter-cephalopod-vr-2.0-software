@@ -194,15 +194,15 @@ Report closure through existing E06 output accounting. A write/sync failure is r
 logging failure even with Save Off. No trial file is created during Setup, and no
 serialization, rereading or post hoc validation is added to the trial transition.
 
-When saving, the evidence Header.recipe references this same `_stimulus_LOG.json`; keep
+The required evidence Header.recipe references this same `_stimulus_LOG.json`; keep
 dependent evidence in its bounded pending buffer until log publication succeeds,
 without blocking rendering. The existing finalization deadline and buffer limits apply;
 exhaustion/failure interrupts, never an unbounded queue or a timing extension. Publication
 must precede writing the dependent Header; a reference never proves successful closure.
-Save Off still closes the required stimulus log, but has no detailed evidence/video
-outputs and no guarantee of actual-output replay.
+Video off still closes the required stimulus log and detailed scientific evidence,
+without capture resources, encoded mappings or encoder outcomes.
 
-The stimulus log and, when enabled, evidence file and video have separate exact
+The stimulus log, required evidence file and optional video have separate exact
 OutputPlan/closure obligations. Unexpected existing paths fail; no runtime overwrite
 prompt or post hoc file validator is introduced. Encoder input format/throughput
 retain the explicit rig deferral.

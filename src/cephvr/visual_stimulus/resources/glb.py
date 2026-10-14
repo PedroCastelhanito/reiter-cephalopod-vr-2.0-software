@@ -9,6 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from .arena_geometry import declared_geometry_json
 from .glb_materials import GLBMaterial, GLBTexture, prepare_materials
 
 
@@ -36,6 +37,7 @@ class GLBScene:
     nodes: tuple[GLBNode, ...]
     materials: tuple[GLBMaterial, ...]
     textures: tuple[GLBTexture, ...] = ()
+    arena_geometry_json: str | None = None
 
 
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -406,4 +408,9 @@ def parse_glb(
         visit(root, identity, set())
     if not resolved:
         raise GLBError("selected GLB scene contains no triangle mesh")
-    return GLBScene(tuple(resolved), materials, textures)
+    return GLBScene(
+        tuple(resolved),
+        materials,
+        textures,
+        declared_geometry_json(document),
+    )

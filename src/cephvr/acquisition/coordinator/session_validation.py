@@ -106,8 +106,7 @@ def _acquisition_outputs(
         if not (
             setting.HasField("enabled")
             and setting.enabled
-            and setting.HasField("save_video")
-            and setting.save_video
+            and (output.output_tag.endswith("_frames") or setting.save_video)
         ):
             raise ValueError("Setup reserves output for an inactive camera writer")
         expected_extension = "mp4" if output.output_tag.endswith("_cam") else "jsonl"
@@ -120,11 +119,12 @@ def _acquisition_outputs(
             f"{trial.context.trial_id}:acquisition:{tag}"
             for trial in request.plan.trials
             for role, setting in cameras.items()
-            if setting.HasField("enabled")
-            and setting.enabled
-            and setting.HasField("save_video")
-            and setting.save_video
-            for tag in (f"{role}_cam", f"{role}_cam_frames")
+            if setting.HasField("enabled") and setting.enabled
+            for tag in (
+                (f"{role}_cam", f"{role}_cam_frames")
+                if setting.save_video
+                else (f"{role}_cam_frames",)
+            )
         }
         if keys != expected:
             raise ValueError(

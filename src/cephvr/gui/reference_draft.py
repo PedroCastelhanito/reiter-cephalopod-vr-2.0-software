@@ -6,7 +6,12 @@ from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
 
 
 def replace_reference(
-    program: Program, layer: int, kind: str, face: str
+    program: Program,
+    layer: int,
+    kind: str,
+    face: str,
+    *,
+    subject_height_mm: float = 0.0,
 ) -> tuple[Program, int]:
     epoch = program.sequence[0]
     assert isinstance(epoch, Epoch)
@@ -19,7 +24,9 @@ def replace_reference(
         program = remove_stimulus(program, 0, layer)
     if kind == "None":
         return program, -1
-    program = add_stimulus(program, 0, kind, (face,) if face else ())
+    program = add_stimulus(
+        program, 0, kind, (face,) if face else (), subject_height_mm=subject_height_mm
+    )
     data = program.model_dump(mode="json")
     node = data["sequence"][0]
     selected = len(node["settings"]) - 1

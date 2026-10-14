@@ -96,17 +96,6 @@ class SerialOwner:
         """Request cancellation; the eventual request evidence still controls state."""
         return self._channel.cancel_request()
 
-    def wait_for_active_request(self, timeout_seconds: float) -> bool:
-        """Wait for owner-thread I/O to return after a cancellation request."""
-        return self._channel.wait_for_request_completion(timeout_seconds)
-
-    @property
-    def next_keepalive_deadline_ns(self) -> int | None:
-        last = self._channel.last_valid_reply_ns
-        if not self._connected or last is None:
-            return None
-        return last + self._keepalive_ns
-
     def connect(
         self, deadline_ns: int
     ) -> microcontroller_pb2.MicrocontrollerObservation:

@@ -1870,3 +1870,24 @@ def test_image_lookahead_skips_long_repeated_history_without_scanning_suffix():
     assert len(reads) < 25
     with pytest.raises(ValueError, match="backwards"):
         cursor.advance(1)
+
+
+def test_physical_corners_use_surface_center_as_local_origin():
+    # V14: a stimulus centered on the surface spans -1..1; the map moves it elsewhere.
+    from cephvr.visual_stimulus.rendering.layer_projection import physical_corners
+
+    surface = NS(
+        surface_id="front",
+        bottom_left_mm=(0.0, 0.0, 0.0),
+        bottom_right_mm=(200.0, 0.0, 0.0),
+        top_left_mm=(0.0, 100.0, 0.0),
+    )
+    artifact = NS(display=NS(geometry=NS(surfaces=[surface])))
+    identity = NS(matrix=((1.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
+    state = {"x": 0.0, "y": 0.0, "width": 200.0, "height": 100.0}
+    corners = physical_corners(artifact, NS(state=state), "front", identity)
+    assert corners == [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
+    edge = physical_corners(
+        artifact, NS(state={**state, "x": 100.0, "y": 50.0}), "front", identity
+    )
+    assert edge[0] == (0.0, 0.0)

@@ -283,13 +283,23 @@ async def test_reloaded_limits_are_applied_only_on_accepted_setup(
 
 
 def _cancelling_setup(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, real_fences: bool = False
 ) -> tuple[ControllerRuntime, Attempt, str]:
-    runtime = _runtime(
-        tmp_path,
-        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
+    visual_stimulus = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
     )
-    attempt = _attempt(runtime, tmp_path, {})
+    runtime = _runtime(tmp_path, visual_stimulus)
+    attempt = _attempt(
+        runtime,
+        tmp_path,
+        {
+            "visual_stimulus": cast(
+                BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult())
+            )
+        }
+        if real_fences
+        else {},
+    )
     runtime.lifecycle.attempt = attempt
     runtime.lifecycle.session = pb.SessionState(
         phase=pb.SESSION_PHASE_SETTING_UP, context=attempt.context
@@ -305,7 +315,8 @@ def _cancelling_setup(
     async def fenced(*_args: object) -> bool:
         return True
 
-    monkeypatch.setattr(runtime.cleanup, "register_cleanup_fences", fenced)
+    if not real_fences:
+        monkeypatch.setattr(runtime.cleanup, "register_cleanup_fences", fenced)
     return runtime, attempt, setup_id
 
 
@@ -337,6 +348,26 @@ async def test_prompt_cancel_choice_completes_setup_operation(
     future.set_result("cancel")
     await task
     _assert_cancelled(runtime, setup_id)
+
+
+async def test_cancel_before_supervisor_registration_confirms_cleanup_without_dispatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # No backend work exists before the preliminary registration, so there is
+    # nothing to fence or cancel; cleanup must still be confirmable (E05/E06).
+    runtime, attempt, setup_id = _cancelling_setup(
+        tmp_path, monkeypatch, real_fences=True
+    )
+    assert attempt.registered_context is None
+    runtime.limit_state.current = replace(runtime.limits, low_space_bytes=2**62)
+    task = asyncio.create_task(
+        runtime.setup_execution.run_setup(attempt, setup_id, 10**12)
+    )
+    future, _ = await _prompt(runtime)
+    future.set_result("cancel")
+    await task
+    assert runtime.lifecycle.session.cleanup_confirmed
+    assert runtime.lifecycle.attempt is None
 
 
 async def test_cancel_setup_during_pending_prompt_completes_setup_operation(

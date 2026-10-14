@@ -76,10 +76,7 @@ class TrialExecution:
             if self.feedback is not None:
                 self.feedback.begin_trial(trial.prepared.trial.context.trial_id)
             trial.begun = True
-        saving = (
-            self.state.setup is not None
-            and self.state.setup.settings.save_visual_stimulus_data
-        )
+        saving = self.state.setup is not None
         if saving:
             self.recording.before_render()
         feedback_batch = (
@@ -150,10 +147,7 @@ class TrialExecution:
                     "GPU diagnostics name an unknown output/render group"
                 )
             trial.timing.setdefault(record.output_id, OutputTiming()).diagnostic(record)
-        if (
-            self.state.setup is not None
-            and self.state.setup.settings.save_visual_stimulus_data
-        ):
+        if self.state.setup is not None:
             self.recording.diagnostics(records)
 
     def stop(self, cutoff_ns: int, command: visual_stimulus.WorkerCommand) -> None:
@@ -196,10 +190,7 @@ class TrialExecution:
                 pb.LifecycleReport(stopped=stopped),
                 cutoff_ns + self.policies.stop_evidence_allowance_ns,
             )
-        saving = (
-            self.state.setup is not None
-            and self.state.setup.settings.save_visual_stimulus_data
-        )
+        saving = self.state.setup is not None
         if saving:
             if not trial.begun:
                 self.recording.begin_cancel(limit)
@@ -226,10 +217,7 @@ class TrialExecution:
                     "required GPU diagnostics missed the original finalization deadline"
                 )
             return
-        saving = (
-            self.state.setup is not None
-            and self.state.setup.settings.save_visual_stimulus_data
-        )
+        saving = self.state.setup is not None
         if saving:
             if trial.begun and not trial.recording_finish_started:
                 assert (

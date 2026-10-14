@@ -197,6 +197,11 @@ class StartActivation:
                 self.lifecycle.session.activated = True
                 self.publisher.publish()
             await self.metadata.log_event(attempt, "session_started")
+            for override in attempt.overrides:
+                # Setup Continue choices were held in memory until a log existed.
+                await self.metadata.log_event(
+                    attempt, "setup_override", details=override
+                )
             if attempt.paired:
                 if self.clock() >= start_deadline_ns:
                     raise TimeoutError("Start writing gate deadline elapsed")

@@ -6,7 +6,9 @@ import hashlib
 import json
 import math
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 
 from pydantic import BaseModel
 
@@ -68,6 +70,7 @@ class CompileContext:
     manifest: ResourceManifest
     seed_decimal: str
     source_json: str
+    arena_geometry: Mapping[str, str] = dataclass_field(default_factory=dict)
     uniform_layouts: tuple[UniformLayout, ...] = ()
     review_encoding: ReviewEncoding | None = None
     saving: bool = False
@@ -437,6 +440,14 @@ def compile_trial(
 
     boundaries = compile_boundaries(compiled_epochs)
     validate_link_geometry(compiled_epochs, boundaries, context.display.geometry)
+    from cephvr.visual_stimulus.compiler.arena_regions import resolve_arena_regions
+
+    arena_regions = resolve_arena_regions(
+        context.arena_boundaries,
+        compiled_epochs,
+        context.arena_geometry,
+        budget=preparation_budget,
+    )
     prepared = PreparedTrial(
         format_version=2,
         identity=context.identity,
@@ -449,7 +460,7 @@ def compile_trial(
         duration_sampler_id=duration_result.sampler_id or DURATION_SAMPLER_ID,
         epochs=tuple(compiled_epochs),
         boundaries=boundaries,
-        arena_boundaries=context.arena_boundaries,
+        arena_boundaries=arena_regions,
         manifest=context.manifest,
         uniform_layouts=context.uniform_layouts,
         model_compatibility=context.model_compatibility,

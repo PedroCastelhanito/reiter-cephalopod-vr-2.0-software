@@ -71,12 +71,7 @@ class TrialLifecycleValidation:
             <= callbacks[0].observed_monotonic_ns
             <= ingress_ns
             or setting is None
-            or (
-                setting.HasField("save_video")
-                and setting.save_video
-                and not recording_scope_unavailable
-                and len(recording) != 1
-            )
+            or (not recording_scope_unavailable and len(recording) != 1)
             or (
                 recording
                 and (
@@ -116,7 +111,7 @@ class TrialLifecycleValidation:
             trial is not None
             and any(
                 output.backend.backend_name == "acquisition"
-                and output.extension == "mp4"
+                and output.extension == "jsonl"
                 and output.output_tag.startswith(
                     role_name(worker.context.camera) + "_cam"
                 )

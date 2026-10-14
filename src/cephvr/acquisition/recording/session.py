@@ -80,9 +80,9 @@ class RecordingSession:
         identity: RecordingIdentity,
         paths: RecordingPaths,
         queue: RecordingQueue,
-        pixel_pool: PixelBufferPool,
-        pixel_preparer: PixelPreparer,
-        capabilities: EncoderCapabilities,
+        pixel_pool: PixelBufferPool | None,
+        pixel_preparer: PixelPreparer | None,
+        capabilities: EncoderCapabilities | None,
         launcher: EncoderLauncher,
         video_sync_factory: VideoSyncFactory,
         frame_log_sync: FileSync,
@@ -143,6 +143,20 @@ class RecordingSession:
     def prepare(self) -> None:
         if self._prepared:
             raise RecordingFailure("recording thread already prepared")
+        if self.settings.metadata_only:
+            if (
+                self.settings.frame_log_sync_interval_ns <= 0
+                or self.queue.pending_records_capacity
+                != self.settings.pending_records_capacity
+            ):
+                raise RecordingFailure(
+                    "metadata recording bounds differ from prepared settings"
+                )
+            self.identity.validate()
+            self.paths.validate(self.role, self.identity, metadata_only=True)
+            self._prepared = True
+            return
+        assert self.pixel_preparer is not None and self.capabilities is not None
         self._encoding, self._prepared_buffer, self._input_pixel_format = (
             prepare_recording(
                 self.settings,
@@ -158,7 +172,11 @@ class RecordingSession:
         self._prepared = True
 
     def schedule(self, schedule: acq.WorkerSchedule, *, deadline_ns: int) -> None:
-        if not self._prepared or self._scheduled is not None or self._encoding is None:
+        if (
+            not self._prepared
+            or self._scheduled is not None
+            or (not self.settings.metadata_only and self._encoding is None)
+        ):
             raise RecordingFailure(
                 "ScheduleTrial requires one fresh prepared recording"
             )
@@ -172,6 +190,11 @@ class RecordingSession:
         self._video_path, self._frame_log_path = resolve_recording_paths(
             self.paths, self.role, self.identity, schedule
         )
+        if self.settings.metadata_only:
+            if self._frame_log_path.exists() or self._frame_log_path.is_symlink():
+                raise RecordingFailure("reserved frame log path already exists")
+            return
+        assert self._encoding is not None
         (
             self._video_path,
             self._frame_log_path,
@@ -195,7 +218,11 @@ class RecordingSession:
         # Creation proof is established later by the encoder's exclusive -n output open.
 
     def release(self, release: acq.WorkerRelease, *, deadline_ns: int) -> None:
-        if self._scheduled is None or self._encoder is None or self._released:
+        if (
+            self._scheduled is None
+            or (self._encoder is None and not self.settings.metadata_only)
+            or self._released
+        ):
             raise RecordingFailure("ReleaseTrial has no unique retained schedule")
         if self.clock_ns() >= deadline_ns:
             raise RecordingFailure("ReleaseTrial missed its original cutoff")
@@ -219,7 +246,9 @@ class RecordingSession:
 
     def process_available(self, *, timeout: float = 0.0, max_entries: int = 64) -> int:
         """Process ordered queue entries; no capture or control thread performs I/O."""
-        if not self._released or self._encoder is None:
+        if not self._released or (
+            self._encoder is None and not self.settings.metadata_only
+        ):
             return 0
         if max_entries <= 0:
             raise ValueError("recording processing quantum must be positive")
@@ -238,10 +267,12 @@ class RecordingSession:
                 # payload slot must be returned so bounded cleanup can proceed.
                 recycled = self.queue.complete(entry.record)
                 if recycled is not None:
+                    assert self.pixel_pool is not None
                     self.pixel_pool.release(recycled)
                 raise RecordingFailure(self._error) from exc
             recycled = self.queue.complete(entry.record)
             if recycled is not None:
+                assert self.pixel_pool is not None
                 self.pixel_pool.release(recycled)
             processed += 1
             self._sync_due()
@@ -316,8 +347,6 @@ class RecordingSession:
             raise RecordingFailure(
                 "recording cannot retry terminal input after a prior failure"
             )
-        if self._encoder is None or self._frame_log is None:
-            raise RecordingFailure("recording is incomplete")
         arguments = (end, pulses, completion)
         if self._finish_arguments is None:
             self._finish_arguments = arguments
@@ -335,6 +364,28 @@ class RecordingSession:
         original_deadline = self._original_finish_deadline_ns
         assert original_deadline is not None
         assert self._scheduled is not None
+        if self.settings.metadata_only:
+            from .metadata_completion import finish_metadata
+
+            assert self._scheduled is not None and self._frame_log is not None
+            self._finish_results = finish_metadata(
+                end,
+                pulses,
+                completion,
+                schedule=self._scheduled,
+                frame_log=self._frame_log,
+                received=self._received,
+                logged=self._logged,
+                last_frame_id=self._last_frame_id,
+                diagnostics=self._diagnostics,
+                finalization=self._finalization,
+                deadline_ns=original_deadline,
+                clock_ns=self.clock_ns,
+            )
+            self._finished = True
+            return list(self._finish_results)
+        if self._encoder is None or self._frame_log is None:
+            raise RecordingFailure("recording is incomplete")
         assert self._video_path is not None and self._frame_log_path is not None
         stop_matches, timing_valid, accounting_complete = terminal_capture_proof(
             end,
@@ -412,6 +463,18 @@ class RecordingSession:
         """Close owned resources after frame processing fails, without normal evidence."""
         if self._finished:
             return list(self._finish_results or ())
+        if self.settings.metadata_only:
+            from .metadata_completion import cleanup_metadata
+
+            self._finish_results = cleanup_metadata(
+                self._scheduled,
+                self._frame_log,
+                self.queue,
+                cancelled=self._scheduled is not None
+                and self.clock_ns() < self._scheduled.start_monotonic_ns,
+            )
+            self._finished = True
+            return list(self._finish_results)
         self.launcher.terminate_unconfirmed(deadline_ns=deadline_ns)
         if self._scheduled is None:
             if self._encoder is not None or self._frame_log is not None:
@@ -433,6 +496,7 @@ class RecordingSession:
             self._finish_results = results
             self._finished = True
             return list(results)
+        assert self.pixel_pool is not None
         results, self._video_sync = close_failed_recording(
             self._scheduled,
             self._video_path,
@@ -457,8 +521,6 @@ class RecordingSession:
         """Stop a scheduled encoder and remove only its proven, created MP4."""
         if self._finished:
             raise RecordingFailure("pre-T cancellation is no longer allowed")
-        self.launcher.terminate_unconfirmed(deadline_ns=deadline_ns)
-        schedule = self._scheduled
         if (
             self._scheduled is not None
             and self.clock_ns() >= self._scheduled.start_monotonic_ns
@@ -466,6 +528,20 @@ class RecordingSession:
             raise RecordingFailure(
                 "pre-T cancellation cannot change a post-T recording"
             )
+        if self.settings.metadata_only:
+            from .metadata_completion import cleanup_metadata
+
+            self._finish_results = cleanup_metadata(
+                self._scheduled,
+                self._frame_log,
+                self.queue,
+                cancelled=self._scheduled is not None
+                and self.clock_ns() < self._scheduled.start_monotonic_ns,
+            )
+            self._finished = True
+            return list(self._finish_results)
+        self.launcher.terminate_unconfirmed(deadline_ns=deadline_ns)
+        schedule = self._scheduled
         results, self._video_sync = cancel_scheduled_before_start(
             schedule,
             self._video_path,
@@ -485,6 +561,27 @@ class RecordingSession:
         return results
 
     def _process_entry(self, entry: QueueEntry) -> None:
+        if self.settings.metadata_only:
+            if self._frame_log is None:
+                self._create_trial_outputs()
+            assert self._frame_log is not None and self._scheduled is not None
+            record = entry.record
+            if (
+                not self._scheduled.start_monotonic_ns
+                <= record.acquisition_time_ns
+                < self._scheduled.end_monotonic_ns
+            ):
+                raise RecordingFailure("record receipt is outside scheduled interval")
+            if not self._started:
+                self._started = True
+                self.started_observed(self.clock_ns())
+            for diagnostic in record.diagnostics:
+                self._diagnostics.record_frame(record, diagnostic)
+            self._frame_log.append_frame(record, dropped=False)
+            self._last_frame_id = record.frame_id
+            self._received += 1
+            self._logged += 1
+            return
         if self._frame_log is None or self._encoder is None:
             self._create_trial_outputs()
         assert self._frame_log is not None and self._encoder is not None
@@ -508,6 +605,7 @@ class RecordingSession:
             self._sync_due()
             self._observe_video_identity()
 
+        assert self.pixel_preparer is not None
         frame_id = entry.record.frame_id
         write_ordered_entry(
             entry,
@@ -529,7 +627,7 @@ class RecordingSession:
         self._observe_video_identity()
 
     def _create_trial_outputs(self) -> None:
-        assert self._scheduled is not None and self._video_path is not None
+        assert self._scheduled is not None
         assert self._frame_log_path is not None
         if self.clock_ns() < self._scheduled.start_monotonic_ns:
             raise RecordingFailure(
@@ -544,6 +642,7 @@ class RecordingSession:
             nominal_rate_source=self.nominal_rate_source,
             sync_interval_ns=int(self.settings.frame_log_sync_interval_ns),
             syncer=self.frame_log_sync,
+            video_enabled=not self.settings.metadata_only,
         )
         # Keep ownership before any file creation or header append can fail.
         self._frame_log = frame_log

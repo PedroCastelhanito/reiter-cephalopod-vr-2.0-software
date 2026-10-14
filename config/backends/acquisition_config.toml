@@ -2,7 +2,7 @@
 # Camera serials/rates are owner-assigned below; other rig bindings remain incomplete. A02 owns process layout.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/acquisition_policy.toml; versions must match.
-policy_version = 20
+policy_version = 21
 
 [rpc]
 # Fixed acquisition service endpoint; loopback-only, shared by all its clients.
@@ -53,7 +53,7 @@ save_video = true
 # Assignment changes require fresh Setup.
 
 # Independent complete encoding list for this camera; no shared-list inheritance.
-# Initial accepted baseline; edit this list without changing the other camera.
+# Owner-selected high-quality color baseline: CQ16/p4; preserve source dimensions.
 # RTX 2080 Ti probe rejected 4112-wide H.264; 4096-wide initialization passed.
 # Revalidate final dimensions/depth; do not infer a selected ROI from this baseline.
 # Output options only; encoding defaults live here, not in architecture policy.
@@ -75,7 +75,7 @@ ffmpeg_args = [
   "-colorspace", "bt709",
   "-preset", "p4",
   "-rc", "vbr",
-  "-cq", "18",
+  "-cq", "16",
   "-b:v", "0",
   "-rc-lookahead", "0",
 ]
@@ -95,15 +95,18 @@ exposure_duration_mode = "timed"
 frame_silence_timeout_s = 1
 enabled = false
 save_video = true
+# Standard CQ16/p4; owner-selected CQ23 test override pending visual evaluation.
+# Explicit mono conversion; neutral chroma in YUV 4:2:0, unchanged dimensions.
+# Preserve source precision: this 8-bit list rejects deeper sources without explicit consent.
 ffmpeg_args = [
   "-c:v", "h264_nvenc",
-  "-pix_fmt", "+yuv444p",
-  "-vf", "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p",
+  "-pix_fmt", "+yuv420p",
+  "-vf", "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=gray,scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv420p",
   "-color_range", "pc",
   "-colorspace", "bt709",
   "-preset", "p4",
   "-rc", "vbr",
-  "-cq", "18",
+  "-cq", "23",
   "-b:v", "0",
   "-rc-lookahead", "0",
 ]
@@ -144,26 +147,27 @@ save_video = true
 # device_id above is confirmed; complete other required settings before enabling.
 
 # Independent complete encoding list for this camera; no shared-list inheritance.
-# Initial accepted baseline; edit this list without changing the other camera.
+# Owner-selected high-quality mono baseline: CQ16/p4; preserve source dimensions.
 # Output options only; encoding defaults live here, not in architecture policy.
-# Default YUV 4:4:4, full range, BT.709 matrix; all configurable in this list.
+# Explicit grayscale conversion; YUV 4:2:0 stores neutral chroma/full-resolution luma.
+# Full range, BT.709 matrix; no spatial resizing.
 # The scale filter converts range/matrix without resizing; output tags must agree.
 # Explicit format plus +pix_fmt disables implicit conversion/fallback.
 # This does not assign calibrated color primaries/transfer or apply display gamma.
 # Optional recording_bit_depth = 8 or 10; intentionally unset, not defaulted to 8.
 # Absence preserves source precision; deeper-source reduction requires explicit consent.
-# yuv444p is 8-bit: deeper sources need recording_bit_depth = 8 for this list,
+# yuv420p is 8-bit: deeper sources need recording_bit_depth = 8 for this list,
 # or recording_bit_depth = 10 with compatible 10-bit format/codec arguments.
 # Setup rejects mismatches/unsupported capabilities; no automatic downgrade/fallback.
 ffmpeg_args = [
   "-c:v", "h264_nvenc",
-  "-pix_fmt", "+yuv444p",
-  "-vf", "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p",
+  "-pix_fmt", "+yuv420p",
+  "-vf", "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=gray,scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv420p",
   "-color_range", "pc",
   "-colorspace", "bt709",
   "-preset", "p4",
   "-rc", "vbr",
-  "-cq", "18",
+  "-cq", "16",
   "-b:v", "0",
   "-rc-lookahead", "0",
 ]

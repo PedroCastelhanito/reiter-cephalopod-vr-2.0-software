@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 204
+**Status:** Accepted · **Revision:** 205
 
 - Projector window creation and recreation preserve the current desktop cursor
   position; disable automatic fullscreen cursor centering in the native window owner.
@@ -195,12 +195,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Size the card to its contents. Use dark unselected group blocks and an accent
   border/fill for selection. Show repetitions and duration on separate lines on roomy blocks; omit
   per-group epoch counts. Trial totals retain the overall epoch count.
-  Add a subtle divider and compact Group label before the editing footer,
+  Put group names in a heading above their timeline cards, matching epoch subgroup headings.
+  Add a subtle divider and compact Selected group label before the editing footer,
   retaining readable repetition fields at narrow widths.
   Put selected group name and repetitions
   below the blocks in a compact row aligned with the last group's visible right edge,
   keeping the Sequence editor for subgroup controls. Crowded group blocks show only
-  their name when repetition/epoch-count/duration text does not fit; retain complete
+  repetitions when repetition/duration text does not fit; retain complete
   details on hover. Balance card spacing without duplicating these fields. Omit Order and preserve imported ordering.
   Protocol removal buttons (trials, groups, subgroups and variation rows) appear
   only while hovering their item, use the same compact × button role as MCU signal
@@ -314,6 +315,24 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   row, with its left edge aligned to Layer. Retain state is first when relevant;
   Linked to and fade-in/out durations follow, then control entries. Video hides
   Retain state and Linked to; 3D arena hides Retain state; Looming hides Linked to.
+  Expose initial position/orientation for arena, Video and Looming in Advanced settings,
+  Arena shows aligned Initial position XYZ (mm) and Orientation yaw/pitch/roll (degrees)
+  sections. New arena X/Y default to zero at arena center, Z copies the configured subject
+  height, and yaw/pitch/roll default to zero (forward +Y, level horizon). Require a finite
+  configured height when creating an arena; validate before switching modes. A rejected
+  mode change keeps the previous editor/selection and shows its missing-setting error.
+  Later geometry changes preserve existing poses.
+  Z edits the existing fixed height; runtime motion remains planar under V16.
+  Use plain numeric inputs without type/reference selectors for all six fields.
+  Preserve loaded pose values on unrelated edits; imported condition references remain
+  read-only saved values instead of being flattened into numbers.
+  All arena Advanced settings inputs share equal column tab stops: movement limits
+  align with position, and wall clearance aligns with orientation. Descriptive region text
+  spans the columns. Keep these stops at narrow widths.
+  Arena movement limits appear first, above position/orientation, and use arena-file geometry by default with editable 30 mm wall
+  clearance. Show declared file bounds as an authoring preview; protected Setup is
+  authoritative. Preserve saved explicit regions and unrestricted mode. Retain boundary
+  drafts in Protocol snapshots, Undo and Redo; invalid clearance blocks navigation/save.
   Other edits preserve loaded Video/arena reset values, with Video playback
   continuity owned by V07/V09.
   New GUI-created stimuli retain
@@ -547,6 +566,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Test/Stop state; a bounded follow-up status query begins after confirmed execution,
   and control/connection loss cancels local timers. Firmware/edge reports do not prove
   physical receiver wiring.
+- Cameras also exposes the selected role's MCU output pin beside trigger frequency.
+  Synchronize it with the same Microcontroller draft and retain authority, capture
+  and diagnostic locks; the existing identity-fenced contextual editor remains.
 - Microcontroller owns one selected COM port for all camera triggers. Cameras and
   their contextual editors use that same port and the relevant output pin; edits update the MCU draft rather than creating another controller or mapping. COM discovery uses the shared compact Refresh icon
   beside the port selector, distinct from Test connection. Scan ports lists discovered COM-number names with
@@ -633,7 +655,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   dimensions and config-only `reference_x_px` / `reference_y_px` lengths. These
   lengths control the actual calibration bars and the same conversion arithmetic;
   positive whole pixels must fit the assigned output. Older files migrate their
-  original quarter-output spans; unset lengths retain those defaults. Complete
+  original quarter-output spans; unset lengths retain those defaults until the first
+  measurement fixes them. Complete
   measured pairs estimate mm/px independently of throw ratio; projected distance
   additionally requires a positive throw ratio. Display derived projector distances
   in millimetres with exactly one decimal place; measured mm/px and mapping
@@ -642,8 +665,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   image dimensions; full projected width times throw ratio estimates ideal throw
   distance (Bottom: total folded path). Subject-to-screen distances stay independent.
   Measurements from another assigned projector are cleared; imported historical
-  distances remain visible until measurements are supplied. Missing or partial
-  measured pairs cannot produce a calibrated mapping. Clip/tolerance settings remain in Rig geometry without an Advanced
+  distances remain visible until measurements are supplied. A partial
+  pair keeps the earlier distance and cannot produce a calibrated mapping. Clip/tolerance settings remain in Rig geometry without an Advanced
   subtitle. One Load… / Save as… action row handles the complete rig, projection
   limits, all-screen correction/dimension values, synchronization and participation
   plus reusable runtime profile references under the
@@ -919,7 +942,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 39
+**Status:** Accepted · **Revision:** 47
 
 - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
@@ -931,12 +954,31 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   first Use column; inventory row selection shares the same behavior. Shared table
   fitting handles hidden signal headers without leaving an empty header gutter.
 
-- Use the current CephVR1.0 Dashboard as the visual template: dark blue/black
+- Standard uses the current CephVR1.0 Dashboard as the visual template: dark blue/black
   surfaces, subtle bordered cards, blue primary actions, muted red stopping actions,
   Segoe UI control text and pink monospace HUD/log panels. Use the shared coral
   accent for page headings, selected sidebar labels and active subtab text; keep
   form labels neutral, use bright blue coordinate headers and retain blue action/focus treatments. Embedded stimulus plots
   are excluded from the initial Dashboard increment.
+- Review alone offers a window-bar Style menu with Standard and Retro console,
+  retaining the choice as a local Review appearance preference. Retro console
+  styles its Dashboard and window chrome with green-black surfaces, blue frames
+  and actions, muted red-orange card titles, cyan page headings and field labels,
+  restrained amber branding, pale green readouts/logs, cyan navigation/focus and warm warning/stop
+  accents, unnumbered uppercase card headers, aligned monospace HUD columns, square
+  controls and instrument frames, labelled status lamps from the current view,
+  and faint static terminal lines, card/terminal edge ticks with periodic longer marks,
+  dashed section rules confined to the HUD, and cyan focus corners on Dashboard editors.
+  Status captions use brackets. A segmented trial-position strip appears only when
+  a count is available, with the exact current index/count; it represents position,
+  not completed trials. Ready lamps are green,
+  preparation/waiting amber, explicit faults red and unavailable states neutral;
+  preserve the exact status in the label/tooltip. No synthetic plots or telemetry.
+  Switch live using the existing widgets, preserving drafts, command gates,
+  actual status/log content and responsive layout. Runtime retains Standard and
+  exposes no style selector; other page contents retain their current presentation.
+  The shared theme owns both palettes; the experiment configuration excludes this
+  cosmetic preference. Unknown saved styles fall back to Standard.
 - Form errors never occupy inline labels. Keep editing and passive validation quiet;
   when an explicit action requires missing/invalid values, show a window-modal
   warning and preserve the draft/document. Leave validation actions callable so

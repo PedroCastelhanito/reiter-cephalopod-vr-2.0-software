@@ -1,5 +1,25 @@
 # Controller and supervisor status
 
+Git-sync integration (2026-10-15) preserves local pixel-size/offset calibration
+under [G01](../docs/architecture/gui.md#g01)/[V15](../docs/architecture/visual_stimulus.md#v15)
+and independent incoming camera, arena, appearance and scientific-evidence changes.
+Owner explicitly approved this conflict resolution. Direct role-pin editing shares the
+existing MCU draft and locks; identity-fenced contextual editing remains. Native display
+adapter identity survives scaled desktop rectangles. Invalid existing drafts stay quiet
+when mode changes are rejected; an otherwise valid creation with missing subject height
+still reports the incoming action-time warning. ARCH-002 review keeps these operations
+in their existing focused owners without added state, dependencies or processes.
+
+Final local validation: 1,737 non-GUI tests pass (four skips, 26 native/rig deselections),
+509 offscreen GUI tests pass, and the final Visual Stimulus rerun passes327/one deselected.
+Ruff and format911 files, Win32 mypy791 sources, boundaries695 modules/zero violations,
+114 architecture register entries, 1,575 Markdown targets/anchors, edited JSON/TOML and
+whitespace checks pass. Existing cohesive-owner size advisories remain. Superseded
+margin/keystone/seam tests follow the retained affine-calibration tests; the older plot-toggle
+scenario is covered by the retained interactive-legend regression. Initial failed/partial
+runs remain failures, not passes. No native Windows, hardware, optical or workload
+acceptance is claimed. [Commands, parent revisions and source fingerprints](runtime-evidence-2026-10-15/git-sync/context.json).
+
 Oct14 full working-tree review under [ARCH-002](../architecture.md#arch-002)
 and [E15](../docs/architecture/system-contracts.md#e15) closes local validation:
 1,670 backend tests pass (four skips, 26 native/rig deselections), 494 offscreen GUI
@@ -611,6 +631,106 @@ are still on; physical power-off/save/Setup/reconnect acceptance remains in the
 [rig checklist](rig-verification.md).
 [Commands, provenance and results](runtime-evidence-2026-10-14/gui-refresh/projector-offline-context.json).
 
+## Protocol group headings and arena Advanced settings
+
+`protocol-group-and-arena-settings` is implemented under [G01](../docs/architecture/gui.md#g01)
+revision191 and [V16](../docs/architecture/visual_stimulus.md#v16) revision5. Selected group
+labels the timeline parameter row; group names sit above blocks, with repetitions/duration
+inside. The longer footer label preserves a readable repetitions field at narrow widths.
+Advanced settings put trial-owned wall limits first, followed by aligned Initial position
+XYZ and Orientation yaw/pitch/roll sections with plain numeric inputs and no selectors.
+All arena inputs share the same equal column stops: Movement limits aligns with Position,
+wall clearance with Orientation; descriptive text spans both columns.
+Imported condition values remain read-only references rather than being flattened. New arenas start at X/Y=0, with Z copied
+from the configured subject height and zero orientation (forward, level horizon). Missing
+subject height blocks new-arena creation. The mode switch validates this prerequisite
+before changing active mode, preserving previous controls/selection and presenting an
+action-time warning. This repairs the reproduced empty 3D row with erased error after
+a failed height check. Later rig edits preserve existing authored poses.
+These fields reuse the existing planar pose plus fixed height/pitch/roll model. Arena limits default to declared arena-file geometry and
+30 mm clearance, preserve explicit saved regions/unrestricted mode, and participate in
+snapshot restoration and Undo/Redo. Invalid clearance blocks navigation/save. The editor
+shows declared asset bounds as a preview; protected preparation owns effective geometry.
+See the [Visual Stimulus implementation assessment](visual_stimulus.md#arena-file-movement-regions)
+and [native/rig worklist](rig-verification.md).
+
+ARCH-002: initial-pose form assembly, trial boundary controls and bounded metadata access
+are focused helpers; no new dependencies or process ownership. Existing cohesive source
+warnings remain for canonical Protocol selection/history, timeline paint/input, parameter
+binding and protected resource session ownership; geometry parsing/resolution lives outside
+them. Extend owning dashboard/compiler/resource test modules rather than per-fix files.
+Current mode-failure/default/gain checks: five owning cases pass. A pre-fix offscreen probe
+reproduced 3D arena selected, no arena controls and an empty error string. The regression
+verifies previous-mode/program preservation, a visible warning, successful retry with
+configured height, asset chooser availability and returning to per-projector editing.
+Scoped Ruff/format two files, Win32 mypy one source and boundaries696/zero violations pass.
+The earlier aligned layout capture remains at
+[aligned capture/context](runtime-evidence-2026-10-15/protocol-arena-settings/aligned-advanced-context.json).
+Earlier group/region and aligned-pose evidence remains in the dated evidence directory and LOG.
+No full GUI/native Windows/rig or production-shutdown acceptance is claimed.
+
+
+
+## Post-hoc alignment readiness after always-saved evidence
+
+Oct14 source/schema audit under [SYS-004](../architecture.md#sys-004),
+[A09](../docs/architecture/acquisition.md#a09), [E12](../docs/architecture/synchronization.md#e12)
+and [V22/V28](../docs/architecture/visual_stimulus.md#v22), accepting first matched
+camera trigger = source of first recorded video frame. No post-change rig dataset
+was validated; this is implementation evidence, not recorded-pulse proof.
+
+Camera schema4 retains source IDs/host receipt/native counters and timestamps,
+clock/counter descriptors, invalid/drop dispositions, explicit video-source mappings,
+cutoff/pulse/transport/completion evidence independently of video. Stimulus format5
+retains actual group state, per-output submissions/marker index+level, diagnostics,
+feedback and completion with recipe identities/provenance. Paired SESSION_CONFIG
+retains SpikeGLX run/directory, streams/rates/saved-channel indices and pulse mappings.
+
+Eye inventory support is implemented under E12 revision21: additive enum7 and
+`eye_tracking_camera` TOML/GUI mapping, including saved draft restoration and
+SESSION_CONFIG serialization through the existing preparation. Paired Setup requires
+Eye only when acquisition and Eye are enabled and externally triggered; missing,
+non-OneBox or unsaved required mappings fail before run-name mutation. "Eye tracking"
+is classified separately from Tracking in the GUI. No assigned channels, wiring,
+trigger cadence, native counter semantics or acquisition settings changed.
+ARCH-002 review: extend existing focused inventory/validation/panel modules and owning
+behavior tests; no dependencies, new state or extra coordination. No fixed policy
+values changed; the config addition is a commented operator mapping example only.
+Local checks: controller/client suite490 passes with14 loopback setup errors from
+sandbox socket restrictions; the authorized authenticated RPC rerun passes all15.
+Final SpikeGLX tests35 pass (including nested Eye TOML editing), focused GUI tests13
+pass/466 deselected. Protobuf generation19 sources, Ruff check/format15 files,
+Win32 mypy13 source files and boundary check690 modules/zero violations pass.
+Existing size warnings are outside the touched modules; no cohesion exception added.
+An initial new-test helper import error was corrected before these passing runs.
+Rig verification remains open in the [paired checklist](rig-verification.md).
+
+Remaining concrete gaps:
+- Checked-in synchronization pulse_inventory has no assigned channels. Supply actual
+  stream/acquisition-channel/digital-bit mappings for the camera triggers, enabled
+  photodiode and trial-state/projector-flip signals in use; do not copy legacy columns.
+- No explicit shared-sync association binds OneBox to each probe. Retain original
+  native bin/meta files, segment identities and actual common-waveform channel/bit
+  semantics on both ends. Existing custom mappings/native metadata may carry pieces;
+  CephVR does not require or verify the cross-stream relationship. Generic digital-bit
+  validation covers DW, not SY words, so a SY-bit mapping is not currently representable
+  through that validated path. Need actual rig sync inventory before selecting fields.
+- Native camera descriptors allow unknown reset/wrap semantics and generic "frames"
+  counter semantics; the first anchor does not prove recovery after missed triggers,
+  dropped SDK frames or reset. Review retained timestamps/counter gaps; unresolved
+  correspondence stays unresolved. No stronger anchor is requested.
+- Photodiode markers are recorded, but periodic60-submission landmarks are not absolute
+  IDs and held levels supply no internal edges. The measured output is the selected
+  photodiode display; other displays have host submission evidence, not independently
+  measured optical onset. These are timing/recovery limits, not missing source rows.
+
+Trial-to-pulse-train selection and raw-file completeness remain compiler prerequisites;
+no per-trial OneBox edge index is needed in the acquisition output when uniquely
+recoverable from recorded gates/trains. Alignment tables, clock fits and quality labels
+belong to the owner's future compiler. Tracking result files remain controlled by
+save_tracking_data; enable it if complete locomotion histories are required.
+
+
 Oct14 owner-requested repository cleanup under [ARCH-002](../architecture.md#arch-002)
 removes423 files/254291141 bytes from the current tracked tree:136 images,260
 captured-run dataset files,13 obsolete source/document-editing probes and14 other
@@ -635,6 +755,74 @@ contains images/videos; the sdist includes the generator and four JSON descripto
 Initial sandbox build fails on temporary-directory permission before the permitted
 replacement succeeds. This is packaging/fixture validation, not rig acceptance.
 Concurrent GUI-refresh work and its projector-availability finding are preserved.
+
+Oct15 Review-only style experiment (`gui-retro-console-style`) under
+[G02 revision47](../docs/architecture/gui.md#g02): Style → Standard / Retro console
+switches the Review Dashboard and window chrome live, with a local appearance
+preference. Green-black surfaces, blue borders/actions, muted red-orange card titles,
+cyan page headings/field labels, restrained amber branding, pale green readouts/logs, cyan navigation/focus,
+warm stop accents, unnumbered uppercase card headers, aligned HUD columns, square
+controls/frames, bracketed status lamps and static faint terminal lines with edge
+graduations use the shared theme. Periodic longer ticks extend to card edges;
+Dashed section rules remain only inside the HUD; cyan corners mark focused inputs.
+A segmented strip shows exact trial position when a count exists (up to24 visual
+segments), without claiming completed trials. Lamp colors reflect the current view, with a
+subtle halo; exact statuses remain in captions/tooltips. No embedded plots are added. Runtime retains
+Standard without a style selector. Existing widgets, drafts (including invalid
+unfinished values), actual log/status text, authority gates and experiment snapshots
+are preserved. ARCH-002 review parameterizes the existing stylesheet and adds a
+focused Review menu/preferences component, with no new dependency or runtime owner.
+Existing source-size advisories are outside these small cohesive changes.
+Seven focused appearance/theme/Standard-parity cases and eight log/HUD/navigation/
+draft-retention cases pass offscreen; GUI Ruff/format163 files, Win32 mypy161 sources
+and boundaries695 modules/zero violations pass. Wide1440 and narrow720 captures
+are visually inspected; returning to Standard produces identical captured pixels.
+[Dated method/results](runtime-evidence-2026-10-15/retro-console/context.json) retain
+source hashes and the capture method; PNGs are local-only ignored evidence.
+No native Windows or rig run. The owner explicitly limits the experiment to Review.
+The current terminal-marking refinement (`gui-retro-terminal-markings`) passes ten
+owning appearance/theme/HUD/Standard-parity cases (477 deselected), scoped
+Ruff/format5 files, Win32 mypy4 sources and boundaries696/zero violations. Existing
+appearance coverage verifies field/combo focus, mouse-transparent brackets,
+continued typing, unchanged drafts/logs/gates, live statuses and hidden/zero/mid/last/
+large-count trial positions. Standard restores and Runtime stays unchanged.
+Wide/narrow, focused-input and active-trial captures are visually inspected;
+Standard round-trip pixels match. ARCH-002 review extracts existing terminal
+painting into a focused retro instrument module with the new static decorations,
+editor-owned overlays and scalar-fed position widget; no new dependency, timer,
+experiment state or test module. Shared components stay below500 lines; remaining
+source cohesion advisories are pre-existing unrelated areas.
+Fresh native Review launched through scripts/start_gui.py (session10674), retaining
+earlier windows. Native accessibility verification remains unavailable for this
+Python app; no native Windows/rig acceptance.
+The main-card divider removal (`gui-retro-hud-only-divider`) deletes the unused
+section-anchor plumbing. Scoped Ruff/format and Win32 mypy2 sources pass, with
+boundaries696/zero violations; the wide render confirms no card divider and the
+HUD rule retained. Standard round-trip pixels still match. No new tests for this
+cosmetic removal. Fresh Review launched (session71475).
+[Current capture evidence](runtime-evidence-2026-10-15/retro-console/hud-only-divider/context.json);
+[earlier source/method/results](runtime-evidence-2026-10-15/retro-console/terminal-markings/context.json);
+[earlier instrument detail evidence](runtime-evidence-2026-10-15/retro-console/instrument-details/context.json)
+and [palette evidence](runtime-evidence-2026-10-15/retro-console/card-title-accent/context.json)
+are historical.
+
+Oct15 current Runtime/Review parity (`runtime-review-gui-current-parity`) under
+[G01](../docs/architecture/gui.md#g01) and [ARCH-002](../architecture.md#arch-002):
+both entry points resolve to this checkout and inherit the same DashboardWindow;
+no separate layout or stale source copy was found. Extend the existing owning
+parity regression through all five stimulus families with Advanced settings open,
+comparing visible labels, editors, buttons and their positions/sizes, including
+arena initial pose and movement limits. Preserve mode-specific menus, authority,
+device discovery and separate local draft files. No production layout changes or
+dependencies were needed; existing source-size advisories do not require extending
+those modules. Validation on macOS with QT_QPA_PLATFORM=offscreen and
+`-p no:faulthandler`: four wide/narrow, authority variants pass; twenty focused
+camera pin/contextual wiring, group editor, arena limits, advanced-family and
+runtime draft close/reopen cases pass. GUI Ruff/format and Win32 mypy (160 sources)
+pass; boundaries check694 modules/zero violations. Tested the dirty working tree
+based on `0d70295898bcb9f058ef4bf26df4680df62d595d`, retaining concurrent changes.
+These are source/composition checks, not native Windows or rig acceptance. Existing
+open processes were not refreshed; reopening each GUI loads the current source.
 
 Oct14 rig GUI refresh (`runtime-gui-source-refresh`) under
 [G01](../docs/architecture/gui.md#g01),
@@ -681,11 +869,34 @@ incorrectly checked a control on a hidden page. Scoped Ruff/format, Win32 mypy2
 sources, boundaries683/zero violations and whitespace pass. Existing native preview
 processes have not been restarted; no device or rig actions.
 
+Oct15 `camera-inline-mcu-pin` implements the owner's inline pin field beside
+Cameras' trigger frequency under [G01](../docs/architecture/gui.md#g01).
+The Microcontroller role row remains the single draft owner: user edits, table
+clearing, role/selection changes and MCU file restoration synchronize the displayed
+pin. Unassigned cameras have no editable pin; capture, authority, phase and pending
+MCU operation locks retain their existing scope. Pin edits retain Use and timing
+choices and enter the existing MCU submission/save path. ARCH-002 review removes
+the obsolete camera wiring dialog and its camera-specific stale-save branch;
+existing camera/MCU presentation modules only add a field and refresh notifications,
+with Devices owning synchronization. No new dependency, policy, schema or runtime
+state owner; these cohesive presentation modules retain their existing size warnings.
+Offscreen layout inspected at 1100×760: pin field sits beside rate without overflow.
+Validation: `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest
+ tests/gui/test_dashboard.py -q -p no:faulthandler -k "camera_pin or contextual_wiring
+ or cancelled_projector_wiring or microcontroller or camera"` passes81/402 deselected.
+Scoped Ruff check/format and Win32 mypy3 sources pass; boundary check690 modules/zero
+violations and edited Markdown links/whitespace pass. Optional aggregate GUI run was
+interrupted after focused completion and emitted a failure marker before exit134;
+no aggregate pass or diagnosis is claimed. A sandbox restriction prevented process
+listing for an earlier stop attempt; the owned tool session was interrupted directly.
+Native Windows/device acceptance remains in the [rig checklist](rig-verification.md).
+
 Device workflow refinement (`device-wiring-drafts`) under
 [G01](../docs/architecture/gui.md#g01) and
 [E07](../docs/architecture/experiment.md#e07) separates wiring from camera/display
 participation. MCU owns logical Behavior/Tracking/Eye pin drafts independently of
-inventory; contextual Camera/Projector editors update that same owner. MCU v3 files
+inventory; the inline Cameras pin field and contextual Projector editor update that
+same owner. MCU v3 files
 and review v2 drafts preserve role wiring without changing Use, with explicit legacy
 migration. Unfinished GUI settings survive polling; selected identity tests omit
 PFS/import/capture, MCU connection checks submit only their port, and manual camera
@@ -1913,8 +2124,11 @@ An investigation while testing invalid random edits also observed a pre-existing
 mixed-subgroup limitation: changing random rules while multiple batch identities
 are selected can leave stored rules unchanged and clear the local draft. The same
 `apply` path excludes metadata updates for mixed identities. This is separate from
-the automatic-update wiring; follow up with an explicit rejection or supported
-mixed-rule semantics before claiming bulk random-rule editing.
+the automatic-update wiring. Oct14 (`mixed-subgroup-random-rule-edit`): `SubgroupEditor.apply`
+now rejects a rule change across more than one batch identity with a notice and keeps
+the draft dirty; other mixed-selection edits are unchanged. Bulk random-rule editing
+remains unsupported. Offscreen regression in the owning subgroup test only; no native
+or rig validation.
 
 Oct13 subgroup editing follows [G01 revision175](../docs/architecture/gui.md#g01),
 [V03 revision12](../docs/architecture/visual_stimulus.md#v03) and
@@ -3049,6 +3263,44 @@ Recovery and native acceptance cases have one home in the
 Missing required participants fail explicitly; this report does not establish an
 operational experiment or authorize firmware, GUI or tracking implementation.
 
+### Controller/supervisor audit (2026-10-14)
+
+Scope: whole `src/cephvr/supervisor` and `src/cephvr/controller` trees with their tests, read by six
+module-group auditors; every candidate was then re-read and, where an observed defect, reproduced by
+probe or a failing regression test before any edit (source `0d70295` plus concurrent GUI/SpikeGLX
+work in the tree). Source and local-test evidence only; no Windows-native or rig run (E15).
+
+Fixed, each with a test that fails without the change:
+
+| Finding | Repair | Decisions |
+| --- | --- | --- |
+| Cancel or failure before the preliminary supervisor registration (low-space/collision Cancel, space-query or reservation failure) left cleanup blocked and the reservation held | `dispatch_backend_cleanup` returns confirmed when no registered context exists and authority is intact: backends receive Setup work only after that registration | E04, E05, E06 |
+| Accepted commands admitted with no live attempt (display calibration, tracking diagnostic, SpikeGLX inventory) were never finalized, so after 1,024 every non-safety command was refused | Such a command's own scope is finalized when it completes | E08 |
+| An action raising a message over 4 KiB hung the RPC and wedged its record | Rejection messages bounded to 2 KiB; the caller's future is always resolved | E08 |
+| A failed or timed-out calibration Close kept an IDLE pending with no timer, so the exact Close could never be retried | The unconfirmed Close expires on its recovery bound; the blocked flag stays until evidence arrives | E06, V01 |
+| A failed manual-camera release RPC never freed `camera_operation`, wedging cleanup retries | The slot is retired; a late exact report is still adopted | E06, E08, A10 |
+| Eye-tracking camera kept dormant values and the PFS payload in SESSION_CONFIG | Eye role handled with the other cameras | E04 |
+| `incident_scope` log events made startup recovery reject the session log | Added to the inspector and to the E04 catalog (revision 89) | E04, E06 |
+| A late ConfirmLaunch with a fresh command ID revived a RELEASED launch to CLEANUP_REQUIRED, after which registry refresh failed and health began shutdown | Release is final once the exact identities match | E08 |
+| A firmware-rejected DIAG_START left the diagnostic "uncertain" and Release unable to confirm | Only an unanswered start stays uncertain | A11 |
+| Pre-dispatch deadline failures were recorded as `SERIAL_FAILURE` | Labelled by exception type | A11 |
+| `setup_override` events were never written | Appended after `session_started` | E04 |
+| Stale protocol-3 text in the microcontroller contract | Corrected to 4 | A11 |
+| An isolated required-backend exit was later overridden by heartbeat silence and entered full shutdown (owner chose to exempt it, 2026-10-15) | Backends in `isolated_backend_exits` skip silence checks; E08 revision 171 | E06, E08 |
+| A failed manual Connect left an owner that could never reconnect (owner chose discard) | `LazySerialOwner` discards the failed owner and port; A11 revision 45 | A11 |
+| An unanswered DIAG_START wedged Release (owner chose firmware-bound cleanup) | Cleanup attempts Stop, then the verified OFF decides; a failed Stop of a known-active diagnostic still fences | A11 |
+| The host keepalive task ended if its failure handler raised, so later connections had no watchdog feed | Keepalive survives the handler error and skips only the failed connection; the failed close now warns | A11, E06 |
+
+Also removed as dead write-only state: `Attempt.cleanup_commands`, two tracking-diagnostic fields and three unused
+serial-owner members. Rejected: hard-coded 5 s delivery cap (matches E04's fixed 5 s), stop-after-trial gap wait (a
+configured minimum, no decision requires early exit), and findings that did not survive tracing.
+
+Open (tracked in TODO, none fixed): E04/E03 records still missing (`command_accepted`, automatic-stop
+`incident_decision`, SESSION_CONFIG provenance, trial-LOG output index detail, Snapshot retained-coverage flags);
+unproven race/accounting concerns listed under `controller-cleanup-and-race-hardening`; inactive-backend default TOML
+handling (E07); live calibration Update rejection; `mcu-owner-residual-hardening`; residual simplifications and the test gaps that hid the
+fixed defects (every cancel test patched `register_cleanup_fences`, and a calibration test's fake set the state it asserted).
+
 ### GUI preview design review
 
 Source review on 2026-10-01 of the sibling CephVR1.0 checkout at HEAD
@@ -3891,6 +4143,10 @@ remains separate from compilation/Ready. Asset folders and recording participati
 remain in-memory drafts; Save as writes one canonical trial. Session scheduling,
 persistence and managed configuration/Setup adoption remain unfinished.
 
+Recordings omits the metadata/scientific-data explanatory sentence (G01); offscreen
+construction confirms the text is absent. Recording choices and backend evidence policies
+retain their existing ownership. Scoped lint/format/type checks pass.
+
 Protocol type/Load/Save as sits beside Assets. Recordings now sits on Dashboard below
 Session config, in two columns with adjacent checkbox/label pairs. Camera and Visual Stimulus video switches are independent of
 required lifecycle metadata and acquisition/rendering. Tracking follows closed-loop
@@ -4550,6 +4806,7 @@ That fixture failure was subsequently corrected and verified in the
 | Same refactor, static/source review | Scoped Ruff lint/format and `mypy --platform win32 src/cephvr/supervisor`; `python tools/check_backend_boundaries.py`; AST comparison of extracted native exit body | Passed: 30 source/test files formatted, 21 supervisor modules typed, 390 backend modules with zero boundary violations. Native exit control flow matches the pre-refactor working copy after dependency/backend-role renaming, excluding result packaging. Shutdown's remaining size warning is assessed above. |
 | 2026-09-30, supervisor simplification second pass | `pytest tests/supervisor tests/visual_stimulus/test_transport.py -q -m 'not windows and not rig'` after each of four increments; scoped Ruff lint/format, `mypy --platform win32 src/cephvr/supervisor`, boundary checker, `git diff --check` | 110 passed throughout (106 supervisor plus 4 transport); 20 supervisor modules typed; 450 backend modules, zero violations; supervisor source 5,208 to 5,013 lines. Only `shutdown.py` (505) still exceeds the size warning. No test assertion changed; edits limited to renamed methods/modules and fake-port no-ops. |
 | Same pass, integration | `pytest tests/supervisor tests/launcher tests/shared tests/client tests/controller/test_shutdown_handoff.py tests/tracking/test_runtime.py tests/visual_stimulus/test_transport.py -q -m 'not windows and not rig'` | 188 passed (three repeats). One earlier run had a tracking heartbeat-catalogue test fail while another session was editing the Tracking runtime; it reproduced against the pre-refactor supervisor and passes with the current tree (see raw evidence). No native Windows/rig run; E15 checks remain open. |
+| 2026-10-14/15, controller/supervisor audit fixes | `pytest tests/supervisor tests/controller tests/shared tests/client tests/launcher tests/platform -q -m "not windows and not rig"` after each increment and at the end; `ruff check`/`ruff format --check` on supervisor, controller and their tests; `mypy --platform win32 src/cephvr/supervisor src/cephvr/controller`; `tools/check_backend_boundaries.py`; `git diff --check` | Final (after the owner-approved follow-ups) 840 passed, 1 skipped, 4 deselected; 129 source files typed; 690 backend modules, zero violations; ruff and whitespace clean. New regression tests were each confirmed to fail without their fix (admission, setup cancel, registry, calibration Close, camera release, startup recovery). Two existing tests were corrected: a lifecycle fixture now models an activated session's registered context, and a client RPC test no longer asserts the failed cancel that pinned the Setup-cancel defect. Local only; no Windows-native/rig run. |
 | 2026-10-01, controller simplification second pass | `pytest tests/controller tests/client tests/shared tests/launcher tests/supervisor tests/visual_stimulus/test_controller_communication.py -q -m 'not windows and not rig'` after each of seven increments; scoped Ruff lint/format, `mypy --platform win32 src/cephvr/controller`, boundary checker, `git diff --check`; whole repository `pytest tests -q -m 'not windows and not rig'` at the end | 379 passed throughout (200 controller cases collected before and after); whole repository 736 passed, 6 skipped, 2 deselected; 74 controller modules typed; 453 backend modules, zero violations. Controller source 16,494 to 16,297 lines (72 to 74 modules: `receipts.py`, `setup_resolution.py`), tests 7,069 to 6,991. No assertion changed; edits limited to removed dead fixtures/kwargs and shared fixture imports. `assembly.py` (519) remains the only controller size advisory. No native Windows/rig run; E15 checks remain open. [Raw evidence](runtime-evidence-2026-10-01/controller-simplification-pass2.txt). |
 | 2026-09-30, controller simplification increments | `.venv/bin/python -m pytest tests/controller -q -m 'not windows and not rig'` | Baseline 187 passed; lifecycle/metadata regressions 195 passed; camera retirement regressions 199 passed. Final integration adds one finalization regression, bringing controller coverage to 200 cases. |
 | Same controller refactor, integration | `pytest tests/controller tests/supervisor tests/shared tests/launcher tests/client -q -m 'not windows and not rig' --ignore=tests/client/test_controller_rpc.py`; separate network-permitted RPC run | 374 passed, plus two authenticated controller RPC tests passed: 376 total. Original deadlines, independent interruption delivery, metadata closure ordering/failure and camera result retention are covered. Native Windows/rig acceptance remains pending. |
@@ -4574,3 +4831,65 @@ Follow [E15](../docs/architecture/system-contracts.md#e15) for lightweight local
 implementation/communication tests and native/device/full-workload rig checks.
 Execution instructions and retained-result requirements are in
 [rig verification](rig-verification.md#execution-and-results).
+
+## Post hoc alignment compatibility review
+
+2026-10-14 source review (`posthoc-alignment-review`): supplied Desktop guide
+`raw_trial_preprocessing_and_spikeglx_alignment.md` and sibling CephVR1 checkout
+at `914ecbc` (matching the guide), particularly session_compiler/core/alignment.py,
+datasets.py and compiler/record schema paths; compared with current dirty CephVR2
+contracts and acquisition/tracking/Visual Stimulus writer source. No session was
+compiled and no hardware or scientific timing acceptance was performed.
+
+Under [SYS-004](../architecture.md#sys-004),
+[E04](../docs/architecture/supervisor.md#e04),
+[A07/A09](../docs/architecture/acquisition.md#a07),
+[T19](../docs/architecture/tracking.md#t19) and
+[V22/V28/E13](../docs/architecture/visual_stimulus.md#v22), current files carry
+session/trial identities, camera-native provenance, source/video-slot joins,
+tracking source lineage and per-output stimulus submission/marker evidence.
+These support external alignment when the required streams were saved and hardware
+correspondence is established; they do not supply measured OneBox times themselves.
+CephVR1's CSV reader and ten-frame optical-tag assumptions cannot consume CephVR2's
+JSONL records and six-frame marker every 60 submissions unchanged. A09 frame_id
+counts received images, not hardware triggers; never use its gaps as pulse gaps.
+Camera native counter meaning must be read from its descriptor. Review-video padding
+must join to its original source, never become additional scientific observations.
+
+Unresolved alignment limits: first-source/first-pulse assumptions can hide integral
+frame offsets; periodic optical landmarks cannot identify arbitrary missing cycles;
+one photodiode cannot prove other outputs' illumination times; saving Off removes
+required detailed histories. Probe-to-OneBox shared-sync mapping remains external,
+separate from discovering probe files or controlling SpikeGLX. The checked-in pulse
+inventory is unset and paired scientific acceptance remains open in the existing
+[rig checklist](rig-verification.md); this review does not infer live rig wiring.
+Legacy thresholding uses global extrema and 100-sample closing: noise sensitivity
+and pulse merging are risks, not observed corruption in a tested session.
+
+Recommendations, not accepted changes: use version-specific readers feeding one
+shared inspection/compiler alignment core; retain native edge sample indices,
+recording/segment identities and explicit per-row timing/anchor quality; derive
+analysis tables/events externally from canonical records instead of adding competing
+runtime CSV logs. Reuse existing central schema/output index and resolved pulse
+inventory; enrich missing sync-route/probe-segment provenance only where needed.
+Consider separating compact scientific stimulus evidence from optional review-video
+encoding to reduce load while retaining timing history; this requires an E13 policy
+choice. Additional physical absolute anchors or per-output optical measurement
+require their own accepted scope and rig validation, not merely new JSON fields.
+Legacy code already uses memmap, block/halo edge extraction and virtual views;
+profile disk/concurrency and avoid duplicate notebook processing before adding
+parallelism or changing storage format. Offline analysis implementation stays deferred.
+
+Owner clarification: assess missing raw evidence only; the owner will build the
+CephVR2 compiler separately. Additional source findings: A07 ties camera frame logs
+(including optional native counter/timestamp evidence) to save_video, whereas T14
+allows Tracking saving independently. Tracking records retain host/source lineage,
+but do not replace the full acquisition native-clock history when camera saving is
+Off. E13 similarly couples detailed presentation evidence to review-video saving.
+These are accepted configuration limitations, not a claim of corrupted files.
+The earlier missing-Eye finding is resolved by E12 revision21's first-class Eye
+inventory and active external-trigger Setup requirement; see the current alignment
+readiness section above. Actual channel assignments and pulse proof remain rig-pending. Raw files also do not establish
+an absolute first camera-trigger anchor, an absolute optical cycle identity, measured
+exposure latency, or other-projector optical onsets. Their necessity depends on the
+required timing claim; metadata alone cannot create missing physical observations.

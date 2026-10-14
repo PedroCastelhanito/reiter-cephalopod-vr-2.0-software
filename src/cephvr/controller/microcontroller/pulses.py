@@ -318,6 +318,8 @@ def _matches_reservation(
 def _error_code(error: BaseException) -> str:
     if isinstance(error, ChannelCancelled):
         return "REQUEST_CANCELLED"
+    if isinstance(error, ChannelDeadline):
+        return "DEADLINE_EXPIRED"
     message = str(error).upper()
     for code in (
         "ACK_TIMEOUT",

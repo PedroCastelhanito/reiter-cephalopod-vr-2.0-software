@@ -78,6 +78,13 @@ class ProjectorMeasurements(Card):
         for axis in ("x", "y"):
             self.fields[face, f"reference_{axis}_mm"].clear()
 
+    def _set(self, face: str, key: str, text: str) -> None:
+        editor = self.fields[face, key]
+        editor.blockSignals(True)
+        editor.setText(text)
+        editor.blockSignals(False)
+        self.drafts[face][key] = text
+
     def refresh(
         self,
         outputs: Mapping[str, tuple[int, int]],
@@ -87,24 +94,25 @@ class ProjectorMeasurements(Card):
             draft = self.drafts[face]
             dimensions = outputs.get(face)
             measured = any(draft.get(f"reference_{a}_mm", "") for a in ("x", "y"))
+            complete = all(draft.get(f"reference_{a}_mm", "") for a in ("x", "y"))
             if dimensions is not None and not measured:
                 for axis, value in zip(("width", "height"), dimensions, strict=True):
-                    key = f"reference_{axis}_px"
-                    text = str(value)
-                    editor = self.fields[face, key]
-                    editor.blockSignals(True)
-                    editor.setText(text)
-                    editor.blockSignals(False)
-                    draft[key] = text
-                lengths = reference_lengths(*dimensions)
-                for axis, length in zip(("x", "y"), lengths, strict=True):
-                    key = f"reference_{axis}_px"
-                    if not draft.get(key, ""):
-                        editor = self.fields[face, key]
-                        editor.blockSignals(True)
-                        editor.setText(str(int(length)))
-                        editor.blockSignals(False)
-                        draft[key] = str(int(length))
+                    self._set(face, f"reference_{axis}_px", str(value))
+                # Bar lengths follow the output mode until a measurement fixes them.
+                for axis in ("x", "y"):
+                    self._set(face, f"reference_{axis}_px", "")
+            elif measured:
+                try:
+                    lengths = reference_lengths(
+                        float(draft.get("reference_width_px", "")),
+                        float(draft.get("reference_height_px", "")),
+                    )
+                except ValueError:
+                    lengths = None
+                if lengths is not None:
+                    for axis, length in zip(("x", "y"), lengths, strict=True):
+                        if not draft.get(f"reference_{axis}_px", ""):
+                            self._set(face, f"reference_{axis}_px", str(int(length)))
             try:
                 width = float(draft.get("reference_width_px", ""))
                 height = float(draft.get("reference_height_px", ""))
@@ -139,8 +147,8 @@ class ProjectorMeasurements(Card):
                     distance = ""
             except ValueError:
                 self.scales[face].setText("—")
-                # Preserve an imported historical distance until measurements are supplied.
-                distance = "" if measured else draft.get("distance", "")
+                # Keep an imported or earlier distance while a measurement is partial.
+                distance = "" if complete else draft.get("distance", "")
             editor = distances[face, "distance"]
             editor.blockSignals(True)
             editor.setText(distance)

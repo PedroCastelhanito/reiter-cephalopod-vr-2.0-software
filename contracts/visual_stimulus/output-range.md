@@ -46,8 +46,8 @@ queue bindings must preserve the flag even if the corresponding review-video sam
 is dropped. Delayed diagnostic results retain their original frame association.
 
 Keep compact affected-frame counters/status warnings and administrative trial summaries
-regardless of Save Visual Stimulus data. Detailed per-frame records follow E13 and are not written
-elsewhere when saving is Off. Coalesce warnings rather than issuing a control RPC or
+regardless of review-video saving. Detailed per-frame records always follow E13/V28
+in the required evidence file, independently of video. Coalesce warnings rather than issuing a control RPC or
 session-log line for every affected frame. Required diagnostic loss follows the
 existing required-evidence failure path; do not report missing results as no clipping.
 Drain admitted required evidence before aggregate Finished under E11/V12.

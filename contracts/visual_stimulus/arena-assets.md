@@ -13,7 +13,7 @@ arena instance a stable identity. Selecting assets and configuring protocol
 boundaries does not introduce a built-in mesh generator or 3D modeling editor.
 
 The trial protocol is the single editable source of each arena instance's movement
-mode, allowed-region geometry and optional wall margin. Bind protocol movement
+mode (explicit region, unrestricted, or declared arena-file geometry) and optional wall margin. Bind protocol movement
 settings to the program's stable arena instance ID, not its filename: multiple
 instances may share one visual asset while using different movement settings.
 
@@ -27,8 +27,8 @@ G01 keeps the two diagnostic patterns (`reference_bars.glb` and `frame_grid.glb`
 separate; the [GUI calibration contract](../gui-calibration.md#two-stage-calibration-presentation)
 binds their source, pixel metadata, runtime staging and preparation.
 Validate missing/unknown instance references and conflicting assignments during
-Setup. Do not maintain another editable boundary definition in the visual asset
-or silently accept its embedded collision/navigation metadata as authoritative.
+Setup. Arena-file mode explicitly adopts the protected GLB's declared rectangular/convex
+geometry under V16; unrelated collision/navigation metadata remains ignored.
 
 Resolve protocol boundary coordinates and visual asset transforms into the same
 explicit arena frame and units. Do not derive physical scale from the tank dimensions

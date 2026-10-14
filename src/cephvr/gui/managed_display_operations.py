@@ -190,6 +190,7 @@ def update_display_calibration_request(
     adjustments: tuple[bytes, ...],
 ) -> rpc.UpdateDisplayCalibrationRequest:
     from cephvr.visual_stimulus.config.calibration_adjustments import (
+        LIVE_ADJUSTABLE_VIEWS,
         validated_adjustments,
     )
     from cephvr.visual_stimulus.v1 import messages_pb2 as messages
@@ -201,7 +202,7 @@ def update_display_calibration_request(
     evidence = client.snapshot.visual_stimulus_display.calibration
     if (
         evidence.state != vp.DISPLAY_CALIBRATION_STATE_ACTIVE
-        or evidence.calibration_view != "frame_grid"
+        or evidence.calibration_view not in LIVE_ADJUSTABLE_VIEWS
         or adjustment_sequence <= evidence.adjustment_sequence
     ):
         raise ClientError("Live adjustment targets a stale or inactive grid")

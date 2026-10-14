@@ -39,7 +39,7 @@ class RecordingCaptureRuntime:
         self,
         renderer: RenderPort,
         session: RecordingSession,
-        encoding: ReviewEncoding,
+        encoding: ReviewEncoding | None,
         *,
         evidence_pending_bytes: int,
         capture_slots: int,
@@ -68,8 +68,18 @@ class RecordingCaptureRuntime:
 
     def poll_pending(self) -> None:
         """Complete admitted GPU transfers without reserving another render group."""
+        if self.encoding is None:
+            return
         for token, (reservation, pending) in tuple(self.pending.items()):
+            metrics = self.session.metrics
+            started = metrics.clock_ns()
             pixels = self.renderer.poll_review_capture(pending)
+            metrics.observe(
+                "readback_poll_ready"
+                if pixels is not None
+                else "readback_poll_pending",
+                metrics.clock_ns() - started,
+            )
             if pixels is None:
                 continue
             self.session.complete_capture(
@@ -78,6 +88,7 @@ class RecordingCaptureRuntime:
                 height=self.encoding.composite_height,
                 pixel_format=self.encoding.native_pixel_format,
                 pixels=pixels,
+                take_ownership=isinstance(pixels, bytearray),
             )
             del self.pending[token]
             self.enqueue_capture_update(
@@ -96,6 +107,13 @@ class RecordingCaptureRuntime:
         self.submission_count += len(update.group.outputs)
         state = update.evidence_state
         submissions = update.evidence_submissions
+        if self.encoding is None:
+            self.next_group_id += 1
+            self.session.enqueue_evidence_factory(
+                _render_evidence_factory(group_id, state, submissions, (), None),
+                reserved_bytes=min(self.evidence_pending_bytes, 256 * 1024),
+            )
+            return
         reservation, disposition, slot = self.session.classify_capture(
             group_id, state.evaluation_host_ns
         )
@@ -223,7 +241,7 @@ class RecordingCaptureRuntime:
             reason,
         ) in tuple(self._feedback_intervals.items()):
             observation_ns = max(cutoff_ns, snapshot.application_check_ns)
-            self.session.enqueue_terminal_evidence_factory(
+            self.session.enqueue_evidence_factory(
                 _interval_factory(
                     interval_id, "end", category, snapshot, observation_ns, reason
                 ),
@@ -276,6 +294,8 @@ class RecordingCaptureRuntime:
         *,
         terminal: bool = False,
     ) -> None:
+        encoding = self.encoding
+        assert encoding is not None
         enqueue = (
             self.session.enqueue_terminal_evidence_factory
             if terminal
@@ -287,8 +307,8 @@ class RecordingCaptureRuntime:
                 disposition,
                 frame_index,
                 failure,
-                self.encoding.native_pixel_format,
-                self.encoding.encoder_pixel_format,
+                encoding.native_pixel_format,
+                encoding.encoder_pixel_format,
             ),
             reserved_bytes=2048,
         )
@@ -320,7 +340,7 @@ def _render_evidence_factory(
     state: EvidenceStateSnapshot,
     submissions: tuple[SubmissionSnapshot, ...],
     captures: tuple[tuple[CaptureDisposition, int | None, str | None], ...],
-    encoding: ReviewEncoding,
+    encoding: ReviewEncoding | None,
 ) -> Callable[[], RenderGroup]:
     def build() -> RenderGroup:
         return build_render_group_record(
@@ -328,8 +348,8 @@ def _render_evidence_factory(
             state,
             submissions,
             captures,
-            encoding.native_pixel_format,
-            encoding.encoder_pixel_format,
+            encoding.native_pixel_format if encoding is not None else "disabled",
+            encoding.encoder_pixel_format if encoding is not None else "disabled",
         )
 
     return build

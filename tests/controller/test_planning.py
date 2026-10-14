@@ -47,7 +47,10 @@ def _prepared_and_ready(
 def test_planner_preserves_visual_stimulus_save_switch_and_reserves_no_path() -> None:
     prepared, ready = _prepared_and_ready(save_visual_stimulus_data=False)
     outputs = plan_outputs(prepared, ready)
-    assert [(x.output_tag, x.extension) for x in outputs] == [("stimulus_LOG", "json")]
+    assert [(x.output_tag, x.extension) for x in outputs] == [
+        ("stimulus_LOG", "json"),
+        ("stimulus_frames", "jsonl"),
+    ]
     assert not outputs[0].HasField("path")
     assert outputs[0].trial == prepared.trials[0].context
     prepared, ready = _prepared_and_ready(save_visual_stimulus_data=True)
@@ -102,11 +105,18 @@ def test_schema_requires_actual_writer_definition_for_each_reserved_output() -> 
                 fields={"schema_version": "integer", "trial_id": "uuid"},
                 units={"schema_version": "count"},
                 clocks={"host": "cephvr.host.perf_counter_ns.v1"},
-            )
+            ),
+            ("visual_stimulus", "stimulus_frames", "jsonl"): WriterSchema(
+                schema_version=5,
+                format="jsonl",
+                fields={"line": "evidence"},
+                units={},
+                clocks={"host": "cephvr.host.perf_counter_ns.v1"},
+            ),
         },
     )
     assert schema["schema_version"] == 1
-    assert len(schema["outputs"]) == 1
+    assert len(schema["outputs"]) == 2
 
 
 @pytest.mark.parametrize("save", [False, True])

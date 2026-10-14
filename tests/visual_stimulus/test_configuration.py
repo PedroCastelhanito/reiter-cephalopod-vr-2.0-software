@@ -400,3 +400,35 @@ def test_file_projection_overrides_saved_profile_and_reloads(tmp_path):
     )
     with pytest.raises(ConfigurationError, match="must be below 1"):
         load_projection_settings(tmp_path)
+
+
+def test_review_reduction_scales_capture_tiles_without_changing_display() -> None:
+    from types import SimpleNamespace as NS
+
+    import pytest
+
+    from cephvr.shared.ffmpeg_types import EncodingOptionsError
+    from cephvr.visual_stimulus.recording.encoding import _composite_geometry
+
+    outputs = tuple(
+        NS(width_px=1280, height_px=1000, output_id=str(i)) for i in range(4)
+    )
+    display = NS(active_outputs=outputs)
+    full = _composite_geometry(display, (4096, 4096))
+    reduced = _composite_geometry(display, (4096, 4096), 2)
+    assert full[:3] == (2560, 2000, 1)
+    assert reduced[:3] == (1280, 1000, 2)
+    assert reduced[0] * reduced[1] * 4 == full[0] * full[1]
+    assert all((o.width_px, o.height_px) == (1280, 1000) for o in outputs)
+    assert reduced[3] == (
+        ("0", 0, 500, 640, 500),
+        ("1", 640, 500, 640, 500),
+        ("2", 0, 0, 640, 500),
+        ("3", 640, 0, 640, 500),
+    )
+    # Apply extra reduction after the existing encoder-fit divisor.
+    assert _composite_geometry(display, (1300, 1100), 2)[:3] == (640, 500, 4)
+    for factor in (0, -1, True, 2000):
+        with pytest.raises(EncodingOptionsError):
+            _composite_geometry(display, (4096, 4096), factor)
+    assert load_file_policies(_ROOT).review_scale_factor == 2

@@ -191,12 +191,21 @@ class SubgroupEditor(BatchCreate):
         ):
             return
         try:
+            identities = {
+                node.batch_id
+                for path in self.paths
+                if isinstance(node := node_at(self.source, path), Epoch)
+            }
+            rules_changed = self.rule_draft(samples=False) != self._rules
+            if rules_changed and len(identities) > 1:
+                # Rules are stored per batch identity; a mixed selection cannot keep them.
+                raise ValueError("Select one subgroup to change its variation rules")
             reference = self.reference()
             candidate = self.candidate() if self.rows else None
             variants = (
                 generated_batch(candidate)
                 if candidate is not None
-                and self.rule_draft(samples=False) != self._rules
+                and rules_changed
                 and any(row.method.currentIndex() != 2 for row in self.rows)
                 else None
             )
@@ -209,11 +218,6 @@ class SubgroupEditor(BatchCreate):
                 count,
                 variants=variants,
             )
-            identities = {
-                node.batch_id
-                for path in self.paths
-                if isinstance(node := node_at(self.source, path), Epoch)
-            }
             if len(identities) == 1:
                 data = program.model_dump(mode="json")
                 draft = self.rule_draft()

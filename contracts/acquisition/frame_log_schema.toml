@@ -3,7 +3,7 @@
 # One append-only JSON Lines frame log per recorded camera/trial, next to that
 # camera's MP4: a header, received-image rows, encoded-slot mappings and completion.
 contract_status = "declared" # Host acceptance/verification: reports/acquisition.md.
-schema_version = 3 # v2 was source-frame-only JSONL with implicit one-to-one video rows.
+schema_version = 4 # v2 was source-frame-only JSONL with implicit one-to-one video rows.
 camera_roles = ["behavioral", "tracking", "eye_tracking"]
 camera_tags = ["behavioral_cam", "tracking_cam", "eye_tracking_cam"]
 video_pattern = "<trial_prefix>_<camera_role>_cam.mp4"
@@ -46,7 +46,10 @@ camera_clock_value = "cephvr.camera.native.v1"
 [header.video]
 # Constant-rate video (A08): video frame n is shown at n / nominal_frame_rate_hz. The
 # video timeline is not a clock; real timing comes from the frame lines.
-fields = ["nominal_frame_rate_hz", "nominal_rate_source"]
+fields = ["enabled", "nominal_frame_rate_hz", "nominal_rate_source"]
+# enabled=false: no video_frame lines, all source rows have video_disposition=video_disabled,
+# video_frame=null and dropped=false. invalid_code still identifies invalid images.
+# Video counts are zero and first_recorded_frame_id is null; metadata counts remain actual.
 nominal_rate_source_values = ["applied_mcu_rate", "free_running_frame_rate"]
 
 [frame]
@@ -58,7 +61,7 @@ frame_id_start = 0 # Per camera per trial, including invalid/dropped frames (A09
 # null for invalid, capacity-dropped and same-slot-omitted sources. video_disposition
 # identifies the distinct source omission. camera_* : null when unavailable.
 # invalid_code: null for valid images; stable code for invalid/incomplete images.
-video_disposition_values = ["real", "invalid_image", "capacity_drop", "same_slot_omission"]
+video_disposition_values = ["real", "invalid_image", "capacity_drop", "same_slot_omission", "video_disabled"]
 video_mapping = "explicit_encoded_video_frame_lines_reference_original_source_identity_and_time"
 
 [video_frame]

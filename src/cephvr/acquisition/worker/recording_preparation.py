@@ -156,7 +156,7 @@ class TrialRecordingPreparation:
             started_observed=self._first_frame_observed,
         )
         queue, pool = runtime.recording_queue, runtime.pixel_pool
-        if queue is None or pool is None:
+        if queue is None or (not queue.metadata_only and pool is None):
             raise RuntimeError("prepared recording buffers are unavailable")
         self._captures.install_recording(queue, pool)
 

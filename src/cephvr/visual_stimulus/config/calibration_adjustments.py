@@ -3,6 +3,8 @@
 import math
 from collections.abc import Iterable, Sequence
 
+LIVE_ADJUSTABLE_VIEWS = frozenset({"frame_grid"})
+
 
 class CalibrationAdjustmentRejected(ValueError):
     """Validation rejected before any active GL resource was changed."""

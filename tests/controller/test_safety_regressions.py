@@ -293,9 +293,13 @@ async def test_start_terminal_operation_time_and_interruption_order(
         return object()
 
     started_log_seen = False
+    logged_events: list[tuple[str, object]] = []
+    override = {"check": "recording_space", "free_bytes": 5, "reason": "low space"}
+    attempt.overrides.append(override)
 
-    async def logged(_attempt: Attempt, event_type: str, **_kwargs: object) -> None:
+    async def logged(_attempt: Attempt, event_type: str, **kwargs: object) -> None:
         nonlocal started_log_seen
+        logged_events.append((event_type, kwargs.get("details")))
         if event_type == "session_started" and not started_log_seen:
             started_log_seen = True
             if interrupt_on_start:
@@ -328,6 +332,10 @@ async def test_start_terminal_operation_time_and_interruption_order(
                 assert command_id not in runtime.control.operation_finished_ns
         else:
             assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_RUNNING
+            assert logged_events == [
+                ("session_started", None),
+                ("setup_override", override),
+            ]
             assert operation.complete and operation.succeeded
             assert operation.progress == "session activated"
             assert runtime.control.operation_finished_ns[command_id] == 1_000

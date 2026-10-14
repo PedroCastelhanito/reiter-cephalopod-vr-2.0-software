@@ -1,0 +1,185 @@
+........................FF.............................................. [  4%]
+....F.......FFFFFFFFFF.F................................................ [  9%]
+.........................F.............................................. [ 14%]
+......F................................................................. [ 18%]
+........................................................................ [ 23%]
+........................................................................ [ 28%]
+........................................................................ [ 32%]
+........................................................................ [ 37%]
+........................................................................ [ 42%]
+........................................................................ [ 46%]
+........................................................................ [ 51%]
+........................................................................ [ 56%]
+..........................................................s............. [ 60%]
+........................................................................ [ 65%]
+....................................................s................... [ 70%]
+........................................................................ [ 74%]
+........................................................................ [ 79%]
+.............................s.......................................... [ 84%]
+........................................................................ [ 88%]
+........................................................................ [ 93%]
+........................................................s............... [ 98%]
+.............................                                            [100%]
+================================== FAILURES ===================================
+________ test_reference_guide_and_seam_view_are_bounded_profile_fields ________
+tests\visual_stimulus\test_configuration.py:207: in test_reference_guide_and_seam_view_are_bounded_profile_fields
+    assert LIVE_ADJUSTABLE_VIEWS == {"frame_grid", "seam_check"}
+E   AssertionError: assert frozenset({'frame_grid'}) == {'frame_grid', 'seam_check'}
+E     
+E     Extra items in the right set:
+E     'seam_check'
+E     Use -v to get more diff
+______ test_projective_mesh_keeps_corners_lines_and_perspective_spacing _______
+tests\visual_stimulus\test_configuration.py:216: in test_projective_mesh_keeps_corners_lines_and_perspective_spacing
+    from cephvr.visual_stimulus.config.calibration_adjustments import (
+E   ImportError: cannot import name 'is_convex_quadrilateral' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+___ test_live_calibration_bind_preserves_identity_and_rejects_stale_updates ___
+tests\visual_stimulus\test_coordinator.py:637: in test_live_calibration_bind_preserves_identity_and_rejects_stale_updates
+    child, _ = bind_command(
+src\cephvr\visual_stimulus\coordinator\commands.py:180: in bind_command
+    validate_live_update(
+src\cephvr\visual_stimulus\coordinator\calibration_updates.py:32: in validate_live_update
+    raise ValueError(
+E   ValueError: Live calibration update targets a stale or inactive diagnostic
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[reference_bars-False] _
+tests\visual_stimulus\test_display_calibration_rendering.py:657: in test_native_calibration_owner_uses_surface_warp_and_output_pipeline
+    display, prepared, outputs = _native_calibration_inputs(gl, display)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[reference_bars-True] _
+tests\visual_stimulus\test_display_calibration_rendering.py:657: in test_native_calibration_owner_uses_surface_warp_and_output_pipeline
+    display, prepared, outputs = _native_calibration_inputs(gl, display)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-False] _
+tests\visual_stimulus\test_display_calibration_rendering.py:657: in test_native_calibration_owner_uses_surface_warp_and_output_pipeline
+    display, prepared, outputs = _native_calibration_inputs(gl, display)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-True] _
+tests\visual_stimulus\test_display_calibration_rendering.py:657: in test_native_calibration_owner_uses_surface_warp_and_output_pipeline
+    display, prepared, outputs = _native_calibration_inputs(gl, display)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[seam_check-False] _
+tests\visual_stimulus\test_display_calibration_rendering.py:657: in test_native_calibration_owner_uses_surface_warp_and_output_pipeline
+    display, prepared, outputs = _native_calibration_inputs(gl, display)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[seam_check-True] _
+tests\visual_stimulus\test_display_calibration_rendering.py:657: in test_native_calibration_owner_uses_surface_warp_and_output_pipeline
+    display, prepared, outputs = _native_calibration_inputs(gl, display)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+___ test_native_calibration_owner_can_prepare_again_after_confirmed_release ___
+tests\visual_stimulus\test_display_calibration_rendering.py:813: in test_native_calibration_owner_can_prepare_again_after_confirmed_release
+    display, prepared, outputs = _native_calibration_inputs(gl)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+___ test_native_calibration_owner_retains_failed_context_resource_for_retry ___
+tests\visual_stimulus\test_display_calibration_rendering.py:838: in test_native_calibration_owner_retains_failed_context_resource_for_retry
+    display, prepared, outputs = _native_calibration_inputs(gl)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_______ test_native_port_releases_owner_and_accepts_a_later_calibration _______
+tests\visual_stimulus\test_display_calibration_rendering.py:879: in test_native_port_releases_owner_and_accepts_a_later_calibration
+    display, prepared, outputs = _native_calibration_inputs(gl)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+__ test_native_generic_release_clears_calibration_owner_before_reinitialize ___
+tests\visual_stimulus\test_display_calibration_rendering.py:946: in test_native_generic_release_clears_calibration_owner_before_reinitialize
+    display, prepared, outputs = _native_calibration_inputs(gl)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_ test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported_targets _
+tests\visual_stimulus\test_display_calibration_rendering.py:1054: in test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported_targets
+    display, prepared, outputs = _native_calibration_inputs(gl)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:604: in _native_calibration_inputs
+    assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_ test_native_preparation_compiles_deferred_recipe_and_installs_initial_residency _
+tests\visual_stimulus\test_lifecycle.py:1775: in test_native_preparation_compiles_deferred_recipe_and_installs_initial_residency
+    profiles = _geometric_profiles(display)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\visual_stimulus\test_display_calibration_rendering.py:540: in _geometric_profiles
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+E   ImportError: cannot import name 'projective_mesh' from 'cephvr.visual_stimulus.config.calibration_adjustments' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\calibration_adjustments.py)
+_______ test_reference_bars_share_exact_pixel_spans_and_restore_scissor _______
+tests\visual_stimulus\test_rendering.py:112: in test_reference_bars_share_exact_pixel_spans_and_restore_scissor
+    assert [rectangle for rectangle, color, _, _ in calls if color == (1, 1, 1)] == [
+E   assert [(0, 0, 1279,..., 2, 12), ...] == [(0, 0, 1279,...7, 0, 2, 719)]
+E     
+E     Left contains 36 more items, first extra item: (99, 0, 2, 12)
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_configuration.py::test_reference_guide_and_seam_view_are_bounded_profile_fields
+FAILED tests/visual_stimulus/test_configuration.py::test_projective_mesh_keeps_corners_lines_and_perspective_spacing
+FAILED tests/visual_stimulus/test_coordinator.py::test_live_calibration_bind_preserves_identity_and_rejects_stale_updates
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[reference_bars-False]
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[reference_bars-True]
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-False]
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-True]
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[seam_check-False]
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[seam_check-True]
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_can_prepare_again_after_confirmed_release
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_retains_failed_context_resource_for_retry
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_port_releases_owner_and_accepts_a_later_calibration
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_generic_release_clears_calibration_owner_before_reinitialize
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported_targets
+FAILED tests/visual_stimulus/test_lifecycle.py::test_native_preparation_compiles_deferred_recipe_and_installs_initial_residency
+FAILED tests/visual_stimulus/test_rendering.py::test_reference_bars_share_exact_pixel_spans_and_restore_scissor
+16 failed, 1521 passed, 4 skipped, 4 deselected in 21.27s

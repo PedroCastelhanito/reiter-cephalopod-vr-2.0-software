@@ -434,13 +434,15 @@ async def test_pending_setup_cancel_and_prompt_response_are_independent_loopback
                 )
                 == "failed"
             )
+            # No backend work exists before supervisor registration, so the
+            # cancellation itself confirms cleanup.
             assert (
                 next(
                     status
                     for action, command_id, status, _ in completions
                     if action == "Cancel Setup" and command_id == cancel_id
                 )
-                == "failed"
+                == "completed"
             )
 
             prompt = pb.Prompt(

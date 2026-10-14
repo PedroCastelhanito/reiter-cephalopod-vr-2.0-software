@@ -722,7 +722,10 @@ def test_continuous_invalid_result_stream_cannot_suppress_silence_deadline() -> 
     assert result.released
 
 
-def test_early_cutoff_retrieval_is_excluded_from_trial_accounting() -> None:
+@pytest.mark.parametrize("metadata_only", [False, True])
+def test_early_cutoff_retrieval_is_excluded_from_trial_accounting(
+    metadata_only,
+) -> None:
     class Result:
         valid_image = True
         pixels = memoryview(b"x")
@@ -761,8 +764,10 @@ def test_early_cutoff_retrieval_is_excluded_from_trial_accounting() -> None:
             self.index += 1
             return result
 
-    pool = PixelBufferPool(payload_bytes=1, capacity=3)
-    queue = RecordingQueue(capacity_frames=1, pending_records_capacity=3)
+    pool = None if metadata_only else PixelBufferPool(payload_bytes=1, capacity=3)
+    queue = RecordingQueue(
+        capacity_frames=1, pending_records_capacity=3, metadata_only=metadata_only
+    )
     times = iter((150, 150, 250, 250))
     loop = CameraCaptureLoop(
         adapter=Adapter(),  # type: ignore[arg-type]
@@ -782,10 +787,13 @@ def test_early_cutoff_retrieval_is_excluded_from_trial_accounting() -> None:
     entry = queue.dequeue()
     assert entry is not None and entry.record.frame_id == 0
     recycled = queue.complete(entry.record)
-    assert recycled is not None
-    pool.release(recycled)
+    if metadata_only:
+        assert recycled is None and not entry.dropped
+    else:
+        assert recycled is not None and pool is not None
+        pool.release(recycled)
+        pool.close()
     queue.close()
-    pool.close()
     assert all(result.released for result in results)
 
 

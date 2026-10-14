@@ -40,6 +40,7 @@ class CameraTrigger:
 
 class MicrocontrollerPanel(DevicePanel):
     draft_changed = pyqtSignal()
+    controls_changed = pyqtSignal()
     connection_requested = pyqtSignal()
     firmware_requested = pyqtSignal(str)
     save_requested = pyqtSignal(str, str, bool, str, bool, object, object, object)
@@ -458,6 +459,8 @@ class MicrocontrollerPanel(DevicePanel):
             self.signals.refresh(
                 self.can_review and not active and not self.upload_pending
             )
+
+        self.controls_changed.emit()
 
     def port_changed(self) -> None:
         self.stop_review_tests()

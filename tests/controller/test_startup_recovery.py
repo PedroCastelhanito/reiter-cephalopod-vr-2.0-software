@@ -52,6 +52,15 @@ def test_null_details_do_not_break_inspection(tmp_path: Path) -> None:
     assert result.spikeglx_stop_unconfirmed
 
 
+def test_every_controller_emitted_nonterminal_event_keeps_the_log_inspectable(
+    tmp_path: Path,
+) -> None:
+    log = _event("session_started")
+    for kind in ("error", "incident_scope", "incident_decision"):
+        log += _event(kind, details={"incident_id": _id()})
+    assert _inspect(tmp_path, log).log_identity is not None
+
+
 def test_stop_for_another_run_does_not_confirm_stop(tmp_path: Path) -> None:
     other = _event("session_started") + _event(
         "spikeglx_stopped", details={"run_name": "other-run"}

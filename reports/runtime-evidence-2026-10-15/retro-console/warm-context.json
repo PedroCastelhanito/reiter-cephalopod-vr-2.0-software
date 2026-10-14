@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-15",
+  "scope": "Review-only warmer orange/copper palette, G02 revision40",
+  "theme_sha256": "0edabbe5556a09a8687848b394aafc9371bc1bc6488f62951f97c643076ff073",
+  "render_method": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-15/retro-console/capture.py; warm captures copied to retro-console-warm.png and retro-narrow-warm.png; initial wide capture retained separately",
+  "checks": [
+    "3 appearance/theme cases passed, 483 deselected",
+    "Scoped Ruff and format passed",
+    "Win32 mypy theme.py passed",
+    "695 backend modules, zero boundary violations",
+    "Standard round-trip pixels equal"
+  ],
+  "visual_review": "1440x940 warm capture inspected; 720x940 also generated. Native launcher running in exec session32517; native accessibility remains unavailable for this Python app."
+}

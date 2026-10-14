@@ -3,6 +3,7 @@
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMessageBox
 
+from cephvr.gui.arena_limits import boundary_document, geometry_description
 from cephvr.gui.batch_insertion import Insertion, insert_batch
 from cephvr.gui.group_editor import ExpandedPreview
 from cephvr.gui.planner_popups import PlannerPopups
@@ -20,7 +21,15 @@ from cephvr.gui.protocol_history import EditHistory, Selection
 from cephvr.gui.protocol_nodes import edit_epoch
 from cephvr.gui.protocol_timeline import ProgramTimeline
 from cephvr.gui.subgroup_structure import edit_subgroup
-from cephvr.visual_stimulus.config.models.program_model import Group, Program
+from cephvr.visual_stimulus.config.models.program_model import (
+    ArenaBoundary,
+    ArenaFileRegion,
+    ArenaSettings,
+    Epoch,
+    Group,
+    Program,
+    TrialArenaBoundaries,
+)
 
 
 class ProtocolEditor(PlannerControls):
@@ -66,6 +75,7 @@ class ProtocolEditor(PlannerControls):
         self.output_preview_button.clicked.connect(self.request_output_preview)
         self.install_menus()
         self.epoch_action.connect(self.edit_epoch)
+        self.subgroup.composer.rows[""].parameters.bound.connect(self.bind_arena_limits)
         self.render_selection()
 
     @property
@@ -78,7 +88,13 @@ class ProtocolEditor(PlannerControls):
 
     def snapshot(self) -> Selection:
         return Selection(
-            self.program, self.scope, self.node_index, 0, "", self.selected_paths
+            self.program,
+            self.scope,
+            self.node_index,
+            0,
+            "",
+            self.selected_paths,
+            self.drafts[self.index].arena_boundaries_json,
         )
 
     def error(self, error: object) -> None:
@@ -173,9 +189,57 @@ class ProtocolEditor(PlannerControls):
             self.selected_paths,
             self.timeline.screens,
         )
+        self.bind_arena_limits()
         self.arrange_mode()
         self.sequence_summary.setText(self.timeline.summary())
         self.fit_timeline_card()
+
+    def bind_arena_limits(self) -> None:
+        draft = self.drafts[self.index]
+        document = boundary_document(self.program, draft.arena_boundaries_json)
+        draft.arena_boundaries_json = document.model_dump_json()
+        parameters = self.subgroup.composer.rows[""].parameters
+        limits = parameters.arena_limits
+        if limits is None or parameters.program is None:
+            return
+        epoch = node_at(parameters.program, parameters.node_index)
+        if not isinstance(epoch, Epoch):
+            return
+        setting = epoch.settings[parameters.layer_index]
+        if not isinstance(setting, ArenaSettings):
+            return
+        binding = next(
+            (b for b in document.bindings if b.instance_id == setting.instance_id),
+            ArenaBoundary(
+                instance_id=setting.instance_id,
+                world_frame_id=setting.world_frame_id,
+                region=ArenaFileRegion(kind="arena_file"),
+            ),
+        )
+        limits.bind(
+            binding,
+            geometry_description(parameters.program, setting, parameters.asset_root),
+        )
+        try:
+            limits.committed.disconnect(self.commit_arena_limits)
+            limits.changed.disconnect(self.refresh_history)
+        except TypeError:
+            pass
+        limits.committed.connect(self.commit_arena_limits)
+        limits.changed.connect(self.refresh_history)
+
+    def commit_arena_limits(self, binding: ArenaBoundary) -> None:
+        draft = self.drafts[self.index]
+        document = TrialArenaBoundaries.model_validate_json(draft.arena_boundaries_json)
+        bindings = tuple(
+            b for b in document.bindings if b.instance_id != binding.instance_id
+        ) + (binding,)
+        raw = document.model_copy(update={"bindings": bindings}).model_dump_json()
+        if raw != draft.arena_boundaries_json:
+            self.histories[self.index].push(self.snapshot())
+            draft.arena_boundaries_json = raw
+            self.refresh_history()
+            self.changed.emit()
 
     def select_epochs(
         self, paths: tuple[tuple[int, ...], ...], *, open_group: bool = True
@@ -207,6 +271,10 @@ class ProtocolEditor(PlannerControls):
             source.reveal_selection()
 
     def flush_parameters(self) -> bool:
+        limits = self.subgroup.composer.rows[""].parameters.arena_limits
+        if limits is not None and not limits.apply():
+            self.error("Correct the arena wall clearance before continuing")
+            return False
         if self.subgroup.dirty:
             self.subgroup.apply()
             if self.subgroup.dirty:
@@ -217,8 +285,12 @@ class ProtocolEditor(PlannerControls):
         if not hasattr(self, "histories"):
             return
         history = self.histories[self.index]
+        limits = self.subgroup.composer.rows[""].parameters.arena_limits
         self.undo_action.setEnabled(
-            bool(history.past) or self.subgroup.dirty or self.group_editor.dirty
+            bool(history.past)
+            or self.subgroup.dirty
+            or self.group_editor.dirty
+            or (limits is not None and limits.dirty)
         )
         self.redo_action.setEnabled(bool(history.future))
 
@@ -226,6 +298,12 @@ class ProtocolEditor(PlannerControls):
         if not self.isEnabled():
             return
         self.close_source_dialog()
+        limits = self.subgroup.composer.rows[""].parameters.arena_limits
+        if limits is not None and limits.dirty:
+            limits.dirty = False
+            self.bind_arena_limits()
+            self.refresh_history()
+            return
         if self.subgroup.dirty:
             self.subgroup.discard()
             self.refresh_history()
@@ -236,6 +314,7 @@ class ProtocolEditor(PlannerControls):
         state = self.histories[self.index].travel(self.snapshot(), redo)
         if state:
             self.drafts[self.index].program = state.program
+            self.drafts[self.index].arena_boundaries_json = state.arena_boundaries_json
             self.scope, self.node_index, self.selected_paths = (
                 state.scope,
                 state.index,

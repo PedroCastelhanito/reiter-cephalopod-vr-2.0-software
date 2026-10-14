@@ -55,7 +55,12 @@ SpikeGLX calls.
    family and read each stream's sample rate, acquired channels and saved channels
    (getStreamSaveChans). Require gate and trigger modes that start saving on startRun
    (reference codes: `immediate`); anything else blocks Ready with the setting named.
-4. Check `[pulse_inventory]` against the saved channels (E12). Read getDataDir.
+4. Check `[pulse_inventory]` against the saved channels (E12). Enabled externally
+   triggered Behavioral, Tracking and Eye cameras require their respective
+   `behavioral_camera`, `tracking_camera` and `eye_tracking_camera` OneBox mappings.
+   Missing mappings or unsaved required channels block Ready; disabled/free-running
+   cameras do not require mappings. Channel/bit assignments remain operator inputs
+   pending rig verification; this check does not verify wiring. Read getDataDir.
 5. Set the run name `<experiment_slug>_<subject>_<setup_YYYYMMDD>_<setup_HHMMSS>`
    (E04 Setup anchor; characters restricted to `[A-Za-z0-9_-]`) and read it back.
 6. Return `SpikeGLXPreparation` for SESSION_CONFIG.json: version, run name, data

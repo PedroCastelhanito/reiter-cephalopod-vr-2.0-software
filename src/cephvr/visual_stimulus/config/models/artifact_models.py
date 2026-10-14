@@ -160,7 +160,7 @@ class ReviewEncoding(
 ):  # E13: one tiled composite, one encoder (recorded-outputs.md#tiled-composite).
     composite_width: Pos
     composite_height: Pos
-    scale_denominator: Pos  # Tile = output size // k; Setup checks k is minimal for the encoder maximum.
+    scale_denominator: Pos  # Tile = output size // k; Encoder-fit divisor times the configured review scale factor.
     tiles: Annotated[tuple[CompositeTile, ...], Field(min_length=1)]
     native_pixel_format: Literal["rgba8_bottom_up", "r10g10b10a2_le_bottom_up"]
     input_pixel_format: str
@@ -289,6 +289,8 @@ class PreparedTrial(Model):
             for x in e.settings:
                 if isinstance(x, ArenaSettings):
                     arenas.setdefault(x.instance_id, set()).add(x.world_frame_id)
+        if any(b.region.kind == "arena_file" for b in self.arena_boundaries.bindings):
+            raise ValueError("prepared arena boundaries must contain resolved geometry")
         bound = {
             b.instance_id: b.world_frame_id for b in self.arena_boundaries.bindings
         }

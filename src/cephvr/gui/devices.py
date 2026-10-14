@@ -55,6 +55,7 @@ class DevicesPage(QWidget):
             lambda *_: self.invalidate_wiring_editor()
         )
         self.cameras.wiring_requested.connect(self.edit_camera_wiring)
+        self.cameras.trigger_pin.textEdited.connect(self.edit_camera_pin)
         self.microcontroller.snapshots.camera_available = (
             self.cameras.snapshots.available
         )
@@ -67,6 +68,8 @@ class DevicesPage(QWidget):
         )
         self.sync_cameras()
         self.projectors = ProjectorsPanel(settings=settings)
+        self.cameras.controls_changed.connect(self.sync_wiring_status)
+        self.microcontroller.controls_changed.connect(self.sync_wiring_status)
         self.microcontroller.port.currentIndexChanged.connect(self.sync_wiring_status)
         for editor in self.microcontroller.pin_editors.values():
             editor.textChanged.connect(self.sync_wiring_status)
@@ -145,6 +148,20 @@ class DevicesPage(QWidget):
     def invalidate_wiring_editor(self) -> None:
         if self.wiring_dialog is not None:
             self.wiring_dialog.reject()
+
+    def edit_camera_pin(self, pin: str) -> None:
+        camera = self.cameras.selected
+        if (
+            camera is None
+            or camera.connected
+            or not self.cameras.can_edit_camera_settings
+            or not self._mcu_wiring_editable()
+        ):
+            self.sync_wiring_status()
+            return
+        role = self.microcontroller.role_key(camera.role)
+        if role:
+            self.microcontroller.set_role_pin(role, pin)
 
     def edit_camera_wiring(self) -> None:
         camera = self.cameras.selected
@@ -239,6 +256,17 @@ class DevicesPage(QWidget):
             camera_missing.append("select MCU COM port")
         if not role_pin:
             camera_missing.append("assign this role's MCU output pin")
+        if self.cameras.trigger_pin.text() != role_pin:
+            with QSignalBlocker(self.cameras.trigger_pin):
+                self.cameras.trigger_pin.setText(role_pin)
+        camera = self.cameras.selected
+        self.cameras.trigger_pin.setEnabled(
+            bool(role)
+            and camera is not None
+            and not camera.connected
+            and self.cameras.can_edit_camera_settings
+            and self._mcu_wiring_editable()
+        )
         self.cameras.wiring_button.setToolTip(
             "Camera trigger wiring prerequisite: "
             + (

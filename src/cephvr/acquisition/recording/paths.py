@@ -19,12 +19,16 @@ class RecordingPaths:
     outputs: tuple[control.OutputPlan, ...]
     backend_generation: str
 
-    def validate(self, role: str, identity: RecordingIdentity) -> None:
+    def validate(
+        self, role: str, identity: RecordingIdentity, *, metadata_only: bool = False
+    ) -> None:
         if role not in {"behavioral", "tracking", "eye_tracking"}:
             raise ValueError("invalid recording role")
         if not self.backend_generation:
             raise ValueError("recording reservation lacks its acquisition generation")
-        expected = {f"{role}_cam": "mp4", f"{role}_cam_frames": "jsonl"}
+        expected = {f"{role}_cam_frames": "jsonl"}
+        if not metadata_only:
+            expected[f"{role}_cam"] = "mp4"
         keys = [item.output_key for item in self.outputs]
         tags = [item.output_tag for item in self.outputs]
         if len(set(keys)) != len(keys) or len(set(tags)) != len(tags):
@@ -64,7 +68,7 @@ def resolve_recording_paths(
     role: str,
     identity: RecordingIdentity,
     schedule: acq.WorkerSchedule,
-) -> tuple[Path, Path]:
+) -> tuple[Path | None, Path]:
     if not schedule.HasField("command") or not schedule.command.HasField("target"):
         raise RecordingFailure("ScheduleTrial lacks exact worker target context")
     target = schedule.command.target
@@ -150,4 +154,4 @@ def resolve_recording_paths(
             raise RecordingFailure(
                 "scheduled output key differs from exact acquisition work"
             )
-    return resolved[f"{role}_cam"], resolved[f"{role}_cam_frames"]
+    return resolved.get(f"{role}_cam"), resolved[f"{role}_cam_frames"]

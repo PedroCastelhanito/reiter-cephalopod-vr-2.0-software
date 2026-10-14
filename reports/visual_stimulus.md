@@ -1,5 +1,17 @@
 # Visual Stimulus status
 
+Oct15 Git-sync integration retains the owner-approved local pixel-size/offset calibration
+under [G01](../docs/architecture/gui.md#g01)/[V15](../docs/architecture/visual_stimulus.md#v15),
+while preserving independent required scientific evidence, optional reduced review video,
+arena-file regions and recording metrics under E13/V12/V16/V28. E14 policy version15
+binds the combined declarations; Protobuf projection remains field11 and review scaling
+uses field12. Existing periodic sync is preserved when the video worker is absent.
+Final owning suite327 passed/one deselected; full backend1,737 and offscreen GUI509 pass.
+Static/document checks and initial failed attempts are assessed in the
+[Runtime report](runtime.md) with [dated source provenance](runtime-evidence-2026-10-15/git-sync/context.json).
+These local checks do not close [rig verification](rig-verification.md).
+
+
 Oct14 `projection-calibration-window-controls` completes the owner's refinement under
 [G01 revision204](../docs/architecture/gui.md#g01) and
 [V15 revision20](../docs/architecture/visual_stimulus.md#v15). Screen names are smaller,
@@ -360,6 +372,122 @@ permitted replacement passes without weakened assertions. These rig checks cover
 fresh contexts/Idle only, not OF/recording/scientific/optical/full-load acceptance.
 [Methods, hashes and live/test evidence](runtime-evidence-2026-10-14/gui-refresh/gpu-selection-context.json)
 and the [rig checklist](rig-verification.md) retain scope and remaining checks.
+## Arena-file movement regions
+
+[V16](../docs/architecture/visual_stimulus.md#v16) revision5 and the
+[schema binding](../contracts/visual_stimulus/stimulus-schema.md) now allow explicitly selected
+arena-file regions. The protected GLB provider retains the declared legacy geometry; the
+compiler converts each unique asset/transform once, checks cancellation/deadline budgets,
+transforms it into the existing convex sliding input and rejects inconsistent instance
+geometry/invalid starts/empty insets, and retains the resolved polygon and resource fingerprint.
+Prepared artifacts reject unresolved source selectors. Existing explicit regions remain
+independent of metadata. Rectangular/convex imports are implemented; circular/cross/T/torus
+imports and wrapping are outside this owner-selected increment. GUI evidence lives in the
+[Runtime report](runtime.md#protocol-group-headings-and-arena-advanced-settings).
+
+ARCH-002 review uses focused geometry-declaration and region-resolution helpers, existing
+Pydantic models/GLB preparation ownership and owning tests; no dependencies or runtime
+back-references. Source/prepared boundary schemas regenerated. Local Visual Stimulus suite
+passes318/one deselected with loopback permission; the initial sandbox run passed309 and
+failed nine socket binds, and a15-case authenticated rerun passes before the full pass.
+Final protected-source-adapter→GLB metadata→compiled artifact/closure regression passes;
+native protection is mocked, not established. Ruff/format, Win32 mypy313 sources, boundary
+check694/zero violations and schema/document checks pass. Initial type/fixture issues were
+corrected. Native arena limits/sliding/four-view agreement remain in the single
+[rig checklist](rig-verification.md), with existing physical/hardware deferrals preserved.
+
+
+Oct14 encoding rig test plan: [commands, matrix and collection](rig-verification.md#encoding-test-plan)
+cover CQ16/CQ23 isolated/concurrent synthetic probes and separate live-app runs.
+`tools/encoding_probe.py` collects external decode/frame counts, sizes, source/drop/
+padding counters and renderer timing JSON. Review repaired launch/probe/decode failure
+retention, bounded version queries, malformed-log isolation and empty/missing diagnostic
+reporting; decoder error output suppresses successful throughput even with exit0.
+The plan uses one executable warm-up/three-repeat matrix and documents independent
+synthetic completion versus sustained live contention. Fifteen offline tool tests plus lint/format/
+Win32 mypy pass; no FFmpeg/NVENC, PowerShell or hardware execution on this machine.
+Eye inputs/readiness remain required; missing timing/completion evidence is not a pass.
+
+Oct14 `stimulus-local-recording-improvements` completed locally under
+[V12](../docs/architecture/visual_stimulus.md#v12) revision12 and
+[E13](../docs/architecture/visual_stimulus.md#e13) revision24. Fresh native readback
+bytearrays transfer exclusive ownership to the recording worker; borrowed inputs
+still copy. Rejecting stale completion/cancellation now preserves a live reservation
+instead of removing it before validation. The GL owner, bounded admission, evidence
+priority, frame identity/order, padding and original I/O/closure deadlines remain.
+
+File-owned `recording_runtime.review_scale_factor=2` multiplies the encoder-fit tile
+divisor before GPU readback: the prior 2560x2000 example becomes1280x1000 (5.12MB
+instead of20.48MB RGBA/frame). Exact scaled rectangles/dimensions remain in the
+prepared recipe; empty or incompatible layouts fail Setup. Full-resolution rendering
+and reconstruction inputs are unchanged; V13 offline implementation stays deferred.
+Policy version13/fingerprint and additive file-policy Protobuf binding are synchronized.
+Older absent scale fields mean1; deployed files must be reloaded through fresh Setup.
+
+`recording.metrics` stores fixed count/total/max nanosecond aggregates for ready and
+pending readback polls, admission-to-ready, ready-to-dequeue, row normalization,
+pipe-write calls and admitted-slot lifetime; it retains timestamps only for admitted
+captures. Peak/current slot occupancy, queued captures, zero-progress writes, bytes
+submitted and cancellations accompany the aggregates. `recording_metrics` emits one
+JSON summary through a dedicated INFO session logger on thread exit (including
+failure/cancel), with event=recording_metrics and the evidence path. Worker startup
+installs one stderr handler without changing root logging; rig tools must capture
+renderer stderr. Oct14 review fixed the previously unconfigured INFO logger, which
+normal root WARNING settings silently suppressed, and removed the non-JSON prefix.
+Invalid encoder write counts now fail before updating submitted-byte diagnostics. A live diagnostic reader can call `metrics.snapshot()`.
+Ready-poll time includes native mapping/copy/unmapping/cleanup, not isolated GPU time;
+pipe-call time excludes asynchronous OS wait (use zero-progress counts and slot hold).
+These are diagnostics, not scientific timestamps, encode acknowledgements or durability.
+
+Validation: `python -m pytest tests/visual_stimulus -q -m "not windows and not rig"`
+passes313/one deselected after review with loopback permission. Initial sandbox run passed300 but
+blocked nine socket binds; those15 owning transport tests then passed with permission.
+Final Ruff/format and Win32 mypy (151 sources) pass; boundaries689/zero violations.
+Protobuf generation succeeds for19 sources. Existing owning tests cover exclusive vs
+borrowed buffers, partial/blocked writes, delayed/out-of-order captures, cancellation,
+stale reservations, bounded counters/timing, diagnostic exit logging and scaled tile
+layout without display changes. Review adds root-WARNING/idempotent-handler JSON
+emission and invalid-write-count regressions. No other actionable ownership/scaling
+defect found in this source review; native stderr collection and encoding remain
+rig checks. ARCH-002: diagnostics are a focused module; existing
+oversized native owner only binds the scale/clock to existing lifecycle operations,
+with no added process/dependency or whole-runtime reference. No native GPU/FFmpeg
+encode or measured frame-drop reduction is claimed. PBO pooling, shared-context
+readback, CPU row-flip removal and RGB/mono capture-layout changes remain contingent
+on [rig measurements](rig-verification.md); current mono encoding still takes RGBA
+input, now at the reduced review dimensions.
+
+Oct14 `encoding-quality-defaults`: owner selects CQ16 as the standard, p4, unchanged
+camera dimensions (review composite now reduced as above), Behavior color 4:4:4 and Tracking mono; Eye and Stimulus mono
+use explicit CQ23 test overrides pending owner evaluation. Mono chains explicitly
+convert to gray then NVENC-compatible 8-bit YUV 4:2:0 with neutral chroma; future
+color Stimulus uses 4:4:4. Camera source-depth protections remain; saved settings
+retain E07 precedence. No automatic bit-depth reduction or camera/PFS edits.
+[A08](../docs/architecture/acquisition.md#a08) and
+[E13](../docs/architecture/visual_stimulus.md#e13) govern these lists.
+Local validation: 34 configuration/filter-expression tests pass; all four token/filter
+chains preserve dimensions, TOML/policy bindings load, Ruff/format and Win32 mypy
+for the policy-binding module pass. Boundary check: 688 modules, zero violations;
+existing size warnings concern unchanged owners, with no new responsibility added.
+Installed GPU/FFmpeg conversion, visual
+quality, size and combined throughput remain [rig checks](rig-verification.md).
+
+Oct14 `always-save-scientific-evidence`: Required stimulus recipe and JSONL are now planned and recorded with review video off. The existing bounded writer persists actual state, submissions, diagnostics, feedback and completion without a capture worker, GPU readback or FFmpeg child. Evidence schema5 declares video_enabled; disabled captures are empty and encoder outcomes absent. The saved legacy switch retains its value and controls video only; the GUI explains always-saved scientific evidence.
+Policy/config bindings updated together (acquisition21, Visual Stimulus14). Wiring,
+trigger timing, assumed first-trigger anchor and trial boundaries are unchanged.
+[Local evidence](runtime-evidence-2026-10-14/always-save-scientific-evidence/context.json):
+affected acquisition/Visual Stimulus/controller suites pass1200 tests
+(five skips, three deselections); offscreen recording-control check passes (478
+unrelated GUI cases deselected). Ruff/format and Win32 mypy338 source files pass;
+contract generation, TOML/schema consistency and whitespace checks pass. Boundary
+review:690 modules, zero violations. Native acceptance remains in the
+[rig checklist](rig-verification.md#always-saved-scientific-evidence).
+ARCH-002: keep existing lifecycle owners and bounded queues; camera metadata terminal
+assembly is a separate focused module. The larger camera session and stimulus native
+owner remain cohesive schedule/ownership adapters, without whole-runtime back-references
+or extra processes. Tests cover video-off sources/invalid images/bounds/cutoffs,
+pre-onset cancellation and write failure, plus stimulus scientific records and feedback
+interval closure without native capture/encoder ports. Existing video-on tests pass.
 
 Oct14 projector power-on recovery under
 [V19](../docs/architecture/visual_stimulus.md#v19) and
@@ -414,13 +542,15 @@ requires a known subject-centered reference pivot; Setup reports the necessary
 coordinates and runtime rechecks the retained center. GUI linking disables follower
 movement controls, including controls reparented into the reference table.
 
-Astra review found an existing coordinate discrepancy: stimulus-schema declares a
-bottom-left physical origin, while rendering/layer_projection.py's physical_corners
-emits `2*local/extent`, making zero the screen center. The new spin guard follows
-actual rendered coordinates; it neither fixes nor silently changes existing placement.
-`physical-surface-coordinate-origin` remains open in [TODO](../TODO.md) pending an
-explicit compatible contract/migration decision. Normal drift is independent of this
-pivot limitation. [Rig acceptance](rig-verification.md) remains deferred.
+Astra review found a coordinate discrepancy: stimulus-schema declared a bottom-left
+physical origin, while rendering/layer_projection.py's physical_corners emits
+`2*local/extent`, making zero the screen center. Oct14 owner decision
+([V14 revision 4](../docs/architecture/visual_stimulus.md#v14)): the surface-local
+origin is the surface center, so the contract now matches the renderer and spin guard
+and no placement changes. Surface maps authored against a different origin must be
+regenerated (the owner is redoing calibration and surface mapping). A rendering
+regression pins the convention. Normal drift is independent of the pivot limitation.
+[Rig acceptance](rig-verification.md) remains deferred.
 
 Final local texture validation:277 Visual Stimulus tests pass (one rig/platform
 case deselected),42 contract tests/79 subtests pass,11 schemas are current, and14
@@ -1014,6 +1144,55 @@ and asset fingerprints before Setup. Active requires renderer presentation evide
 Close requires Idle and confirmed release, restoring the prior display or known
 uninitialized state. Its local review entry point has no controller transport.
 Optical/native verification remains in `projector-calibration-launch` in TODO.
+
+Oct14 projector-calibration rework (owner-approved; local validation only) follows
+[G01 revision 183](../docs/architecture/gui.md#g01) and
+[V01 revision 19](../docs/architecture/visual_stimulus.md#v01). A source review found
+affine-only scale/offset correction, a 25 % centre-bar measurement, widget-only state,
+Qt-logical vs GLFW-physical output binding, an unrecoverable late-completing Open and
+silent live-update failures. The owner chose independent edge margins. Implemented:
+(1) the valid area is the output minus four independent pixel margins per face
+(blank = automatic, centered from a complete measurement, else the projector border;
+undershoot rejects with its remedy), with calibration file version 5/full 8 and
+conversion of older scale/offset files; (2) the reference view adds an output frame,
+100 px ticks and a screen-aspect guide outline beside the bars, and any face may be
+dark (Use ticks) so one projector is positioned at a time, using the existing output
+subsets; (3) a `seam_check` view draws bold eye-level, corner, meridian and floor
+lines through the same live mesh; (4) displays bind by native interface, with the
+Windows adapter name matching Qt screens; (5) a late-completing Open is closed without
+touching the renderer and a repeated Close repeats confirmed evidence; (6) live
+edits show working/applied/rejected status and invalid fields are outlined; diagnostic
+files are written atomically; the measurement table no longer pins bar lengths before a
+measurement or blanks the distance on partial input; (7) the renderer-side calibration owner builds
+its evidence through one `_build_evidence`/`_mark` pair instead of ten hand-built updates.
+Local evidence (macOS offscreen): 2089 passed/6 skipped across tests, Ruff/format, Win32
+mypy (782 sources), 11 schemas without drift, boundaries (687 modules, no violations;
+`worker/display_calibration.py` 590 lines and `gui/projectors.py` 904 lines keep their
+single owners, with launch helpers extracted to `gui/projector_launch.py`) and whitespace
+pass. Rendered reference view and calibration card were inspected as offscreen images.
+Not done and still open: native Windows/GPU/optical alignment; the 59.94 Hz refresh rate
+GLFW reports as an integer; the `projector-calibration-retention` cause (not
+reproduced; a launch/adjust/close regression and old-file loading are tested); and
+old content-addressed `reference_*.json` assets are removed on request with
+`python -m cephvr.gui.calibration_assets <assets> [--apply]` (dry run by default; keeps
+files named in saved GUI JSON and the newest three per face), not yet run on the rig;
+Keystone is now corrected (below); lens distortion and depth remain uncorrected.
+
+Oct14 keystone warp (owner-approved; local validation only): each face's valid area is
+now a convex quadrilateral. Signed Keystone H / V pixel fields narrow the top or bottom
+edge and shorten the right or left edge of the margin rectangle, and the screen maps onto
+the quadrilateral by the projective transform of its four corners, tessellated into a
+17×17 grid shared by the GUI profile builder, the submit path and the renderer's live
+update (`projective_mesh`; the same four-corner wire message, now any convex
+quadrilateral). Piecewise-affine error against the exact map is 0.13/0.29/0.69/2.1 px for
+5/10/20/40 % top-edge narrowing on a 2560 px output (measured locally). Calibration file
+version 6/full 9 adds `keystone_h/keystone_v`; older files load with none. Tests (macOS
+offscreen): 2099 passed/6 skipped, Ruff/format, Win32 mypy783, schemas, boundaries688. They
+cover mesh corners/straightness/perspective spacing, convexity rejection, the renderer's
+17×17 live write (no allocation, inversion/area rejections), sign conventions, profile
+validity, version 5 loading, signed entries, live keystone payload and preview. Not
+established: that real keystone is removed on the rig, or that the sign convention suits
+the Bottom mirror fold (check optically; the convention is output-space top/right).
 The four exported geometric profiles now carry per-face scale, pixel offsets and
 axis inversion when entered; unset fields produce identity mappings. A focused test
 checks adjustment, mirroring and rejection of corrections beyond the output.

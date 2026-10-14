@@ -55,6 +55,6 @@ retain their existing rules. Alpha still follows V21 clipping and invalid-state 
 Retain scene background, arena/instance identities, layer order and surface selection
 in the immutable recipe/resolved plan. Per-frame evidence references that plan plus
 actual instance state; it need not repeat the full layer list. Replay must use those
-values rather than current editor defaults. Under Save Off, preserve administrative
-summaries without adding detailed recording. Physical timing and rendering performance
+values rather than current editor defaults. Detailed scientific evidence remains
+required with review video off under E13/V28. Physical timing and rendering performance
 still require rig verification; full authoring/compiled/wire models remain local work.

@@ -2,7 +2,7 @@
 # Visual Stimulus is required in the accepted modes; this file offers no switch to disable it.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/visual_stimulus_policy.toml; versions must match.
-policy_version = 12
+policy_version = 15
 
 [rpc]
 # E08: fixed Visual Stimulus coordinator service port; loopback only; restart required after edits.
@@ -32,6 +32,8 @@ recording_bytes_total = 268_435_456
 evidence_pending_bytes = 16_777_216
 
 [recording_runtime]
+# Review-only reduction before GPU readback: half width/height, quarter pixels.
+review_scale_factor = 2
 # Required only when saving; positive seconds, exactly representable as int64 ns.
 # record_sync_interval_s: _stimulus_frames.jsonl OS sync cadence (V28).
 record_sync_interval_s = 1
@@ -97,9 +99,26 @@ pacing_refresh_hz = 60.0
 
 [recording]
 # One switch for the tiled Visual Stimulus review video and detailed Visual Stimulus outputs together.
-# ffmpeg_args = [...]: one complete lossy list for the composite (one NVENC session);
-# required when saving, no accepted default (encoding-options.md).
+# One complete lossy list for the composite (one NVENC session).
+# Standard CQ16/p4; owner-selected CQ23 test override pending visual evaluation.
+# Mono review copy: explicit grayscale conversion, neutral YUV chroma; composite reduced before readback.
+# This 8-bit review conversion leaves original rendering/scientific evidence untouched.
+# Future color: remove the gray conversion stage and use +yuv444p/format=yuv444p.
+# No calibrated primaries/transfer tags are inferred from the BT.709 conversion matrix.
+ffmpeg_args = [
+  "-c:v", "h264_nvenc",
+  "-pix_fmt", "+yuv420p",
+  "-vf", "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=gray,scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv420p",
+  "-color_range", "pc",
+  "-colorspace", "bt709",
+  "-preset", "p4",
+  "-rc", "vbr",
+  "-cq", "23",
+  "-b:v", "0",
+  "-rc-lookahead", "0",
+]
 # Disabling saving leaves Visual Stimulus rendering/projection and administrative logging active.
+# Legacy field name: controls review video only; scientific evidence is always saved.
 save_visual_stimulus_data = true
 # Recording engineering defaults are above; they do not guarantee zero crash loss.
 

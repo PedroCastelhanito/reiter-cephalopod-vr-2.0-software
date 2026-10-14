@@ -17,6 +17,7 @@ from cephvr.synchronization.v1 import spikeglx_pb2 as wire
 _ROLES = {
     wire.PULSE_ROLE_BEHAVIORAL_CAMERA: "behavioral_camera",
     wire.PULSE_ROLE_TRACKING_CAMERA: "tracking_camera",
+    wire.PULSE_ROLE_EYE_TRACKING_CAMERA: "eye_tracking_camera",
     wire.PULSE_ROLE_PHOTODIODE: "photodiode",
 }
 _STREAMS = {
@@ -29,7 +30,7 @@ _SUPPLEMENTAL_KEYS = {
     wire.PULSE_ROLE_PROJECTOR_FLIP: "projector_flip",
 }
 _INVENTORY_KEY_PATTERN = re.compile(
-    r"^(?:behavioral_camera|tracking_camera|photodiode|trial_state|projector_flip|custom_[A-Za-z0-9_-]{1,80})$"
+    r"^(?:behavioral_camera|tracking_camera|eye_tracking_camera|photodiode|trial_state|projector_flip|custom_[A-Za-z0-9_-]{1,80})$"
 )
 
 
@@ -99,7 +100,7 @@ def _parse(
         if family is None:
             raise ValueError(f"pulse_inventory.{key}.stream is invalid")
         if (
-            key in {"behavioral_camera", "tracking_camera"}
+            key in {"behavioral_camera", "tracking_camera", "eye_tracking_camera"}
             and family != wire.STREAM_FAMILY_ONEBOX
         ):
             raise ValueError(f"pulse_inventory.{key} must use a OneBox stream")
@@ -174,7 +175,7 @@ def _validate_channels(
             raise ValueError("pulse inventory repeats a source identity")
         role_ids.add(role_identity)
         if (
-            key in {"behavioral_camera", "tracking_camera"}
+            key in {"behavioral_camera", "tracking_camera", "eye_tracking_camera"}
             and item.family != wire.STREAM_FAMILY_ONEBOX
         ):
             raise ValueError(f"{key} must use a OneBox stream")
