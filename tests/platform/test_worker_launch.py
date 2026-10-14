@@ -665,7 +665,7 @@ async def test_visual_stimulus_launcher_wrapper_keeps_exact_registered_child(
         SimpleNamespace(platform="win32", executable=str(executable)),
     )
     monkeypatch.setattr(
-        visual_launcher, "resolve_python_executable", lambda _path: executable
+        visual_launcher, "resolve_renderer_executable", lambda _path: executable
     )
     monkeypatch.setattr(visual_launcher, "create_bootstrap_pipe", lambda: (81, 82))
     monkeypatch.setattr(

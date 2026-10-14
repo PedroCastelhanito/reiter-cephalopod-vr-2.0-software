@@ -395,7 +395,7 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
                 request.command_id, "CANCEL_SETUP", "Setup cancellation is stale"
             )
         await self.session.cancel(session, deadline_ns=deadline_ns)
-        return _accepted(request.command_id)
+        return await self.cleanup_owner.execute(request, deadline_ns=deadline_ns)
 
     async def prepare_trial(
         self, request: wire.PrepareTrialRequest, *, deadline_ns: int

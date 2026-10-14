@@ -37,6 +37,47 @@ class ManagedDisplayOperations:
         self.send = send
         self.live = LiveCalibration(projectors, snapshot=snapshot, send=send)
 
+    def install_pairing(self) -> None:
+        state = self.snapshot()
+        if state is None:
+            return
+        enabled = next(
+            (
+                item.enabled
+                for item in state.configuration_values.current.backends
+                if item.backend_name == "synchronization"
+            ),
+            False,
+        )
+        self.spikeglx.pairing.setChecked(enabled)
+
+    def submit_pairing(self, enabled: bool) -> None:
+        state = self.snapshot()
+        self.install_pairing()
+        if state is None or self.spikeglx.pairing_pending:
+            return
+        self.spikeglx.pairing_pending = True
+        self.spikeglx.pairing.setEnabled(False)
+        if not self.send(
+            "set_spikeglx_enabled",
+            enabled=enabled,
+            expected_revision=state.configuration.revision,
+        ):
+            self.pairing_finished()
+            self.spikeglx.console.appendPlainText(
+                "Pairing was not sent: controller command queue is unavailable."
+            )
+
+    def pairing_finished(self) -> None:
+        self.spikeglx.pairing_pending = False
+        self.install_pairing()
+        state = self.snapshot()
+        self.spikeglx.pairing.setEnabled(
+            self.spikeglx.can_review
+            and state is not None
+            and state.session.phase == pb.SESSION_PHASE_CONFIGURATION
+        )
+
     def submit_inventory(self, channels: object) -> None:
         state = self.snapshot()
         if state is None or not isinstance(channels, tuple):

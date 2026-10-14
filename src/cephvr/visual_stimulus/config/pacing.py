@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Mapping
 from typing import Any
 
 from cephvr.visual_stimulus.config.models.display_profile import (
@@ -24,7 +25,7 @@ def apply_pacing_settings(
         values["pacing_output_id"] = output_id
     resolved = DisplayProfile.model_validate(values)
     selected_id = resolved.selected_pacing_output_id
-    if selected_id is None and resolved.presentation_mode != "all_outputs_vsync":
+    if selected_id is None and resolved.presentation_mode == "photodiode_only_vsync":
         raise ValueError("mixed pacing requires a configured pacing output")
     selected = tuple(
         output
@@ -56,6 +57,7 @@ def resolve_pacing_profile(
     max_bytes: int,
     refresh_hz: float | None,
     output_id: str | None,
+    projection: Mapping[str, float] | None = None,
 ) -> DisplayProfile:
     """Apply the file-owned ID before canonical validation of a bounded profile."""
     if len(profile_json.encode("utf-8")) > max_bytes:
@@ -81,6 +83,11 @@ def resolve_pacing_profile(
         raise ValueError("display profile must be a JSON object")
     if output_id is not None:
         document["pacing_output_id"] = output_id
+    if projection is not None:
+        geometry = document.get("geometry")
+        if not isinstance(geometry, dict):
+            raise ValueError("display profile requires geometry")
+        geometry.update(projection)
     source = json.dumps(document, allow_nan=False, separators=(",", ":"))
     return apply_pacing_settings(
         parse_display_json(source, max_bytes=max_bytes),

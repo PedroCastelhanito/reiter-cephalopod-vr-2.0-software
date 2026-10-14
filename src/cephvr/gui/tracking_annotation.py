@@ -172,9 +172,11 @@ class TrackingAnnotation(QDialog):
         body.addLayout(toolbar)
         self.canvas = AnnotationCanvas()
         body.addWidget(self.canvas, 1)
-        self.caption = label(
-            "Load a reference image or freeze an acquired Tracking frame.", wrap=True
+        self.load.setToolTip(
+            "Load a reference image or freeze an acquired Tracking frame"
         )
+        self.caption = label("", wrap=True)
+        self.caption.hide()
         body.addWidget(self.caption)
         self.mode.currentTextChanged.connect(self.select_mode)
         self.point.currentIndexChanged.connect(
@@ -250,6 +252,7 @@ class TrackingAnnotation(QDialog):
         self.path = path
         self.canvas.image = image
         self.image_size = [image.width(), image.height()]
+        self.caption.show()
         self.caption.setText(
             f"{Path(path).name} · {image.width()} × {image.height()} px · reference image"
         )
@@ -288,6 +291,7 @@ class TrackingAnnotation(QDialog):
         self.path = ""
         self.canvas.image = image.copy()
         self.image_size = [image.width(), image.height()]
+        self.caption.show()
         self.caption.setText(
             f"Frozen acquired frame · {camera_serial} · frame {source_frame_id} · "
             f"{image.width()} × {image.height()} px · configuration {configuration_revision}"

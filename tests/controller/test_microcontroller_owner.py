@@ -452,7 +452,7 @@ def test_expired_startup_failure_still_releases_serial_handle() -> None:
     assert port.closed
 
 
-def test_bounded_trial_output_diagnostic_uses_one_serial_owner() -> None:
+def test_continuous_trial_output_diagnostic_uses_one_serial_owner() -> None:
     clock = _Clock(10)
     port = _ScriptedPort(statuses=[_status()])
     owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
@@ -464,20 +464,21 @@ def test_bounded_trial_output_diagnostic_uses_one_serial_owner() -> None:
         "D2",
         1,
     )
-    assert owner.diagnostic_status(10_000)[0]
-    assert owner.diagnostic_stop(10_000) == (False, "trial_state", "D2", 1)
+    clock.value = 5_000_000_010
+    assert owner.diagnostic_status(5_000_010_000)[0]
+    assert owner.diagnostic_stop(5_000_010_000) == (False, "trial_state", "D2", 1)
     assert port.verbs == ["CAPS", "STATUS", "DIAG_START", "DIAG_STATUS", "DIAG_STOP"]
-    assert port.fields[2] == {"kind": "trial_state", "pin": "D2", "duration_ms": "2000"}
+    assert port.fields[2] == {"kind": "trial_state", "pin": "D2", "duration_ms": "0"}
 
 
-def test_flip_input_requires_firmware_advertised_interrupt_pin() -> None:
+def test_flip_input_is_rejected_before_any_serial_command() -> None:
     clock = _Clock(10)
     port = _ScriptedPort(statuses=[_status()])
     owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
     owner.connect(deadline_ns=10_000)
 
-    with pytest.raises(ValueError, match="rising-edge input"):
-        owner.diagnostic_start("projector_flip", "D4", 10_000)
+    with pytest.raises(ValueError, match="unknown pin diagnostic kind"):
+        owner.diagnostic_start("projector_flip", "D2", 10_000)
 
     assert port.verbs == ["CAPS", "STATUS"]
 
@@ -1465,6 +1466,108 @@ async def test_keepalive_does_not_cross_firmware_serial_handoff(monkeypatch, han
     await health._keepalive_loop(shutdown)
     assert bool(waits) == handoff
     assert failures == ([] if handoff else ["MICROCONTROLLER_KEEPALIVE_FAILED"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("replacement", [None, "new_connection"])
+async def test_stale_keepalive_cancellation_does_not_fail_replaced_observation(
+    monkeypatch: pytest.MonkeyPatch, replacement: str | None
+) -> None:
+    from cephvr.controller.microcontroller.channel import ChannelCancelled
+    from cephvr.controller.microcontroller.health import MicrocontrollerHealth
+
+    shutdown = asyncio.Event()
+    original = microcontroller_pb2.MicrocontrollerObservation(
+        connection_id=str(uuid4()), observed_monotonic_ns=1
+    )
+    original.state.configuration_valid = True
+    original.state.watchdog_ms = 3000
+    current: list[microcontroller_pb2.MicrocontrollerObservation | None] = [original]
+    entered = asyncio.Event()
+    release = asyncio.Event()
+    failures = []
+
+    class Serial:
+        async def keepalive(self, *, deadline_ns: int):
+            entered.set()
+            await release.wait()
+            raise ChannelCancelled("request cancellation completed after serial read")
+
+    async def wait(_shutdown: asyncio.Event, _delay: int) -> None:
+        await asyncio.wait_for(shutdown.wait(), timeout=2)
+
+    async def fail(failure) -> None:
+        failures.append(failure.code)
+
+    monkeypatch.setattr("cephvr.controller.microcontroller.health._wait", wait)
+    health = MicrocontrollerHealth(
+        observation=lambda: current[0],
+        serial=cast(SerialOwnerPort, Serial()),
+        serial_keepalive_interval_ns=10,
+        serial_communication_timeout_ns=20,
+        serial_ack_timeout_ns=1,
+        serial_handoff_active=lambda: False,
+        next_boundary=lambda now: None,
+        failure_handler=fail,
+        clock=lambda: 100,
+    )
+
+    task = asyncio.create_task(health._keepalive_loop(shutdown))
+    await asyncio.wait_for(entered.wait(), timeout=2)
+    if replacement == "new_connection":
+        current[0] = microcontroller_pb2.MicrocontrollerObservation(
+            connection_id=str(uuid4()), observed_monotonic_ns=2
+        )
+    else:
+        current[0] = None
+    shutdown.set()
+    release.set()
+    await asyncio.wait_for(task, timeout=2)
+
+    assert failures == []
+
+
+@pytest.mark.asyncio
+async def test_current_keepalive_failure_is_still_reported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.controller.microcontroller.health import MicrocontrollerHealth
+
+    shutdown = asyncio.Event()
+    observation = microcontroller_pb2.MicrocontrollerObservation(
+        connection_id=str(uuid4()), observed_monotonic_ns=1
+    )
+    observation.state.configuration_valid = True
+    observation.state.watchdog_ms = 3000
+    failures = []
+
+    class Serial:
+        async def keepalive(self, *, deadline_ns: int):
+            raise RuntimeError("current connection transport failure")
+
+    async def fail(failure) -> None:
+        failures.append(failure.code)
+        shutdown.set()
+
+    monkeypatch.setattr(
+        "cephvr.controller.microcontroller.health._wait",
+        lambda _shutdown, _delay: asyncio.sleep(0),
+    )
+    health = MicrocontrollerHealth(
+        observation=lambda: observation,
+        serial=cast(SerialOwnerPort, Serial()),
+        serial_keepalive_interval_ns=10,
+        serial_communication_timeout_ns=20,
+        serial_ack_timeout_ns=1,
+        serial_handoff_active=lambda: False,
+        next_boundary=lambda now: None,
+        failure_handler=fail,
+        clock=lambda: 100,
+    )
+
+    await asyncio.wait_for(health._keepalive_loop(shutdown), timeout=2)
+
+    assert failures == ["MICROCONTROLLER_KEEPALIVE_FAILED"]
 
 
 async def test_unconfirmed_firmware_helper_blocks_camera_trigger_access() -> None:

@@ -1,0 +1,11 @@
+{
+  "src/cephvr/acquisition/coordinator/health.py": "abdf92b3af59b6a4b05dc2a09b94f46fbaec9dd72b75aad724e41e4fd502d197",
+  "src/cephvr/gui/cameras.py": "9f74dc5e7e20e6e3af48484d891e7fe7895b3bfd49d1b09c41f2a7a0bc93f25b",
+  "src/cephvr/gui/projector_timing.py": "8e75d401543f9d6e4299c1033aed0c6615bae52305b898bf4d7af4c71a3c2887",
+  "src/cephvr/gui/tables.py": "93641d5f867175e117b509596cda931770ae32f3f109c1c2e9cceb4d8858822f",
+  "tests/acquisition/test_coordinator.py": "ce7ff6df8f2e4b10d46d1320b5afa19ca716f2eaae6e91882b57194af6bc3714",
+  "tests/gui/test_dashboard.py": "904b37526f980b6dee918c36c7491f41463ee00fec4276bbbcb9fda8fe8af82d",
+  "tests/client/test_controller_rpc.py": "bc313e2a134ef4c289e57964a0bba3efe4edd993e99e9c65a315a258b35c7770",
+  "tests/platform/test_worker_launch.py": "8e2fbfebcdfc93df805b21159ea2c77e14b4d40aa68245dd00bd7a0ef08e2146",
+  "tests/visual_stimulus/test_transport.py": "180e95733a82f112222b54f9064c456bd07834fa797414023dbc403354c4bc31"
+}

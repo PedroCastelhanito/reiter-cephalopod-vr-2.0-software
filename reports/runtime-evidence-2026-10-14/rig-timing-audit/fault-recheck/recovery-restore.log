@@ -1,0 +1,14 @@
+recovery_prompt prompt_id: "e3f112da-e062-491c-8a14-866bde9ab870"
+setup {
+  controller_generation: "964bf477-7c16-4307-97f4-2fdffd57177a"
+  session_id: "3bf945da-d9cb-4617-86b6-a97879c6ae84"
+}
+operation {
+  command_id: "2cbe6165-99fa-4bd3-a712-aa5fd266ceb8"
+}
+explanation: "Recover unfinished session at C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-14\\rig-timing-audit\\three-camera\\recordings\\20261014_rig_timing_probe_20261014\\DUMMY-144915. Intact administrative logs can receive evidence-based terminal recovery events. Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker."
+permitted_choices: "continue"
+permitted_choices: "cancel"
+
+recovery {"command_id": "70a650c4-ec5d-4fb0-9ca3-514044303e85", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+{"command_id": "27482368-5d43-4c61-9b66-efb37846da09", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}

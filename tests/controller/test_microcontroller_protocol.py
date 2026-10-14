@@ -109,9 +109,10 @@ def test_caps_rejects_input_pin_outside_advertised_pins() -> None:
 
 
 def test_diagnostic_reply_requires_exact_kind_pin_and_edge_shape() -> None:
-    assert parse_diagnostic(
-        parse_reply(b"OK id=run-2 active=1 kind=projector_flip pin=D2 edges=3\n")
-    ) == (True, "projector_flip", "D2", 3)
+    with pytest.raises(ProtocolError, match="unsupported"):
+        parse_diagnostic(
+            parse_reply(b"OK id=run-2 active=1 kind=projector_flip pin=D2 edges=3\n")
+        )
     assert parse_diagnostic(
         parse_reply(b"OK id=run-3 active=0 kind=trial_state pin=D9 edges=1\n")
     ) == (False, "trial_state", "D9", 1)

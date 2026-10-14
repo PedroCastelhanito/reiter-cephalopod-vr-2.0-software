@@ -1,0 +1,59 @@
+{
+  "scope": "camera-only interrupted trial; projectors owner-deferred; original settings restored",
+  "checks": {
+    "file_policies": {
+      "contract_version": 1,
+      "cameras": [
+        {
+          "frame_silence_timeout_ns": "1000000000",
+          "camera": "CAMERA_ROLE_BEHAVIORAL",
+          "post_cutoff_drain_margin_ns": "125000000"
+        },
+        {
+          "frame_silence_timeout_ns": "1000000000",
+          "camera": "CAMERA_ROLE_TRACKING",
+          "post_cutoff_drain_margin_ns": "125000000"
+        },
+        {
+          "frame_silence_timeout_ns": "1000000000",
+          "camera": "CAMERA_ROLE_EYE_TRACKING",
+          "post_cutoff_drain_margin_ns": "125000000"
+        }
+      ],
+      "video_sync_interval_ns": "1000000000",
+      "fragment_target_ns": "1000000000",
+      "encoder_stall_timeout_ns": "10000000000",
+      "serial_baud_rate": 115200,
+      "serial_ack_timeout_ns": "100000000",
+      "serial_keepalive_interval_ns": "1000000000",
+      "serial_communication_timeout_ns": "3000000000",
+      "serial_stop_completion_margin_ns": "50000000",
+      "frame_log_sync_interval_ns": "1000000000"
+    },
+    "active_cameras": [
+      "behavioral",
+      "tracking"
+    ],
+    "operation_timings": [
+      {
+        "method": "UpdateConfiguration",
+        "begin_ns": 105351542456900,
+        "end_ns": 105351545764800
+      },
+      {
+        "method": "UpdateConfiguration",
+        "begin_ns": 105351546366100,
+        "end_ns": 105351558548800
+      }
+    ],
+    "restore": {
+      "command_id": "05dec12e-ca6d-4731-b8c3-d6a7b72aa9fe",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "configuration_restored": true,
+    "error": "ClientError: REJECTED: configuration validation failed: backends: Visual Stimulus is required for both session modes"
+  }
+}

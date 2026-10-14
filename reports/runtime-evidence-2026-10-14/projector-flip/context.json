@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "dirty; concurrent calibration changes preserved",
+  "task": "projector-flip-deferred",
+  "validation": [
+    {
+      "command": "pytest tests/controller/test_microcontroller_owner.py tests/controller/test_microcontroller_protocol.py tests/acquisition/test_configuration.py -q -m \"not windows and not rig\" --basetemp=.tmp-flip-backend-final",
+      "result": "122 passed, 1 skipped; permitted loopback"
+    },
+    {
+      "command": "pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"microcontroller_role_outputs or microcontroller_file or microcontroller_fixed or microcontroller_pin or contextual_wiring or sync_modes or microcontroller_config_load\" --basetemp=.tmp-flip-gui-complete",
+      "result": "11 passed, 459 deselected"
+    },
+    {
+      "command": "Arduino IDE bundled arduino-cli.exe compile --fqbn arduino:avr:uno --build-path .tmp-flip-firmware firmware/uno/cephvr2_mcu",
+      "result": "13590 bytes flash, 1199 bytes RAM; no upload"
+    },
+    {
+      "command": "scoped ruff check/format15, mypy win32 eleven sources, check_backend_boundaries.py, git diff --check",
+      "result": "passed; 688 modules, zero boundary violations"
+    }
+  ],
+  "attempts": [
+    "First edit partially applies GUI changes then source-anchor mismatch; owner and subsequent writes not applied until reread/retry.",
+    "Initial backend111 pass/1skip/11fail: Decimal digest mismatch and obsolete input diagnostic expectation; corrected.",
+    "Initial GUI9pass/1fail; obsolete input expectation corrected, second run9pass/1fail stale no-log assertion corrected.",
+    "Sandbox backend transport stalls interrupted. Broad GUI sandbox/permitted runs interrupted on stalls; no broad acceptance.",
+    "Broad GUI first-failure probe identifies legacy enabled-field expectation; corrected and focused load regression passes.",
+    "Controller test_device_admission14 pass/3fail in concurrently changing calibration workflow, outside MCU path."
+  ],
+  "limitations": [
+    "No running-runtime restart",
+    "No firmware upload",
+    "No physical/scientific/optical acceptance",
+    "Projector flip remains explicitly owner-deferred"
+  ]
+}

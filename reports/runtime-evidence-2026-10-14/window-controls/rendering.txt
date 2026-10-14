@@ -1,0 +1,4 @@
+Command: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe -m pytest tests/visual_stimulus/test_display_calibration_rendering.py tests/visual_stimulus/test_rendering.py -q -m "not windows and not rig" --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13970-73e5-7651-9f0d-6af2fc6a73b9/calibration-render-proof-temp --junitxml=reports\runtime-evidence-2026-10-14\window-controls/rendering.xml
+........................................................................ [ 98%]
+.                                                                        [100%]
+73 passed in 1.00s

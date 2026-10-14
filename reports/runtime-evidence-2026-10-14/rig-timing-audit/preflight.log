@@ -1,0 +1,120 @@
+{
+  "tracking_backend": "deferred by owner",
+  "displays": [
+    {
+      "adapter": "\\\\.\\DISPLAY9",
+      "monitor": "\\\\.\\DISPLAY9\\Monitor0",
+      "interface": "\\\\?\\DISPLAY#DEL41FA#5&1209fbcf&1&UID524#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "position": [
+        0,
+        0
+      ],
+      "size": [
+        1920,
+        1080
+      ],
+      "refresh_hz": 60,
+      "content_scale": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "adapter": "\\\\.\\DISPLAY1",
+      "monitor": "\\\\.\\DISPLAY1\\Monitor0",
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4352#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "position": [
+        -3840,
+        0
+      ],
+      "size": [
+        1280,
+        720
+      ],
+      "refresh_hz": 60,
+      "content_scale": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "adapter": "\\\\.\\DISPLAY2",
+      "monitor": "\\\\.\\DISPLAY2\\Monitor0",
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4353#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "position": [
+        -2560,
+        0
+      ],
+      "size": [
+        1280,
+        720
+      ],
+      "refresh_hz": 60,
+      "content_scale": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "adapter": "\\\\.\\DISPLAY3",
+      "monitor": "\\\\.\\DISPLAY3\\Monitor0",
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4355#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "position": [
+        -2280,
+        720
+      ],
+      "size": [
+        720,
+        1280
+      ],
+      "refresh_hz": 60,
+      "content_scale": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "adapter": "\\\\.\\DISPLAY4",
+      "monitor": "\\\\.\\DISPLAY4\\Monitor0",
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4357#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "position": [
+        -1280,
+        0
+      ],
+      "size": [
+        1280,
+        720
+      ],
+      "refresh_hz": 60,
+      "content_scale": [
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "glfw_initialized": true,
+  "spikeglx": {
+    "connected": true,
+    "address": "169.254.240.108",
+    "port": 4142,
+    "version": "SpikeGLX v20251218 api v4.1.3",
+    "running": true,
+    "run_name": "test",
+    "data_directory": "C:/SGL_DATA"
+  },
+  "gpus": {
+    "exit_code": 0,
+    "stdout": "index, name, uuid, driver_version\n0, NVIDIA GeForce RTX 5060 Ti, GPU-77642118-1623-48dd-3686-1014aa86b818, 617.14\n1, NVIDIA GeForce RTX 2080 Ti, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, 617.14\n",
+    "stderr": ""
+  },
+  "ffmpeg": {
+    "exit_code": 0,
+    "stdout": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers\nbuilt with gcc 16.2.0 (Rev3, Built by MSYS2 project)\nconfiguration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-cairo --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-openal --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberband\nlibavutil      61.  1.102 / 61.  1.102\nlibavcodec     63.  1.102 / 63.  1.102\nlibavformat    63.  1.102 / 63.  1.102\nlibavdevice    63.  1.102 / 63.  1.102\nlibavfilter    12.  1.102 / 12.  1.102\nlibswscale     10.  1.102 / 10.  1.102\nlibswresample   7.  1.102 /  7.  1.102\n\nExiting with exit code 0\n",
+    "stderr": ""
+  },
+  "ffprobe": {
+    "exit_code": 0,
+    "stdout": "ffprobe version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers\nbuilt with gcc 16.2.0 (Rev3, Built by MSYS2 project)\nconfiguration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-cairo --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-openal --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberband\nlibavutil      61.  1.102 / 61.  1.102\nlibavcodec     63.  1.102 / 63.  1.102\nlibavformat    63.  1.102 / 63.  1.102\nlibavdevice    63.  1.102 / 63.  1.102\nlibavfilter    12.  1.102 / 12.  1.102\nlibswscale     10.  1.102 / 10.  1.102\nlibswresample   7.  1.102 /  7.  1.102\n",
+    "stderr": ""
+  }
+}

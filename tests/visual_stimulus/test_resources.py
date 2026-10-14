@@ -46,6 +46,51 @@ from cephvr.visual_stimulus.resources.video_selection import PlaybackCursor
 from cephvr.visual_stimulus.resources.video_session import VideoSession
 
 
+def test_native_preparation_retains_release_proof_until_catalogue_retirement():
+    from cephvr.visual_stimulus.resources.session import NativePreparation
+
+    preparation = NativePreparation(object(), renderer_generation="renderer")
+
+    def announce(*_):
+        pass
+
+    old_key = "visual_stimulus:display:calibration:diagnostic_front"
+    preparation._registered_announce(announce, "visual_stimulus:display")(
+        "calibration:diagnostic_front", "calibration/diagnostic_front.json"
+    )
+    first = preparation.cleanup()
+    assert first.released == (old_key,)
+
+    # A failed display initialization can be followed by Setup while these
+    # released keys remain in the worker catalogue.
+    preparation._registered_announce(announce, "visual_stimulus:trial:new")(
+        "calibration:diagnostic_front", "calibration/diagnostic_front.json"
+    )
+    second = preparation.cleanup()
+    assert set(second.released) == {
+        old_key,
+        "visual_stimulus:trial:new:calibration:diagnostic_front",
+    }
+
+    # Reopening the original identity invalidates its old proof until the new
+    # owner confirms release.
+    preparation._registered_announce(announce, "visual_stimulus:display")(
+        "calibration:diagnostic_front", "calibration/diagnostic_front.json"
+    )
+
+    class Source:
+        def close_after_consumers(self):
+            raise OSError("source is still in use")
+
+    preparation._protected_sources.append((Source(), old_key))
+    reopened = preparation.cleanup()
+    assert old_key not in reopened.released
+    assert reopened.outstanding
+
+    preparation.retire_released_resources()
+    assert not preparation._released_resource_keys
+
+
 def test_json_texture_preparation_retains_recipe_identity_and_budget(
     tmp_path, monkeypatch
 ):

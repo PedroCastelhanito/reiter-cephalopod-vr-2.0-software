@@ -26,8 +26,10 @@ class DisplayLayout(QWidget):
         if not self.outputs:
             painter.drawText(
                 self.rect(),
-                Qt.AlignmentFlag.AlignCenter,
-                "No secondary displays found" if self.refreshed else "Refresh displays",
+                Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
+                "No available projectors have been identified"
+                if self.refreshed
+                else "Refresh displays",
             )
             return
         bounds = QRect()

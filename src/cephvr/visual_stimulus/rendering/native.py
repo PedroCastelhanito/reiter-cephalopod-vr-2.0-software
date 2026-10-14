@@ -27,7 +27,10 @@ from cephvr.visual_stimulus.rendering.native_display import (
     idle_device_color,
     verify_framebuffer,
 )
-from cephvr.visual_stimulus.rendering.output_masks import clear_regions
+from cephvr.visual_stimulus.rendering.output_masks import (
+    clear_regions,
+    clear_valid_background,
+)
 from cephvr.visual_stimulus.rendering.types import (
     DiagnosticSnapshot,
     DisplayInitialization,
@@ -210,19 +213,16 @@ class ModernGLPort:
                 verify_framebuffer(
                     context, glfw, window, output, self.gpu_identity_provider
                 )
-                swap_interval = (
-                    1
-                    if output.output_id == display.selected_pacing_output_id
-                    or display.presentation_mode == "all_outputs_vsync"
-                    else 0
-                )
+                swap_interval = display.requested_swap_interval(output.output_id)
                 glfw.swap_interval(swap_interval)
                 entry = self.clock_ns()
                 color = self._idle_device_color(output, display)
                 context.disable(self._moderngl.DEPTH_TEST | self._moderngl.BLEND)
                 context.screen.use()
                 context.viewport = (0, 0, output.width_px, output.height_px)
-                context.clear(*color, alpha=1.0)
+                clear_valid_background(
+                    context, color, output, display, self._display_calibration
+                )
                 if output.blackout_zones:
                     black = self._idle_device_color(
                         output,
@@ -504,7 +504,13 @@ class ModernGLPort:
             context.context.viewport = (0, 0, output.width_px, output.height_px)
             context.context.scissor = None
             context.context.disable(self._moderngl.DEPTH_TEST | self._moderngl.BLEND)
-            context.context.clear(*self._idle_device_color(output, display), alpha=1.0)
+            clear_valid_background(
+                context.context,
+                self._idle_device_color(output, display),
+                output,
+                display,
+                self._display_calibration,
+            )
             if output.blackout_zones:
                 black = self._idle_device_color(
                     output,

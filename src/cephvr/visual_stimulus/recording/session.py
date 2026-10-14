@@ -300,26 +300,33 @@ class RecordingSession:
                         self.evidence.enqueue_json(line)
                         self._line_bytes -= reservation
                     self.evidence.write_pending()
-                    continue
-                if self.worker.drain_once():
+                    if self.periodic_sync is not None:
+                        self.periodic_sync()
                     now_ns = self.clock_ns()
                     if (
                         self.sync_interval_ns
                         and now_ns - last_sync_ns >= self.sync_interval_ns
                     ):
                         self.evidence.write_pending(sync=True)
-                        if self.periodic_sync is not None:
-                            self.periodic_sync()
                         last_sync_ns = now_ns
                     continue
+                drained = self.worker.drain_once()
+                if self.periodic_sync is not None:
+                    self.periodic_sync()
                 now_ns = self.clock_ns()
+                if drained:
+                    if (
+                        self.sync_interval_ns
+                        and now_ns - last_sync_ns >= self.sync_interval_ns
+                    ):
+                        self.evidence.write_pending(sync=True)
+                        last_sync_ns = now_ns
+                    continue
                 if (
                     self.sync_interval_ns
                     and now_ns - last_sync_ns >= self.sync_interval_ns
                 ):
                     self.evidence.write_pending(sync=True)
-                    if self.periodic_sync is not None:
-                        self.periodic_sync()
                     last_sync_ns = now_ns
                 with self._condition:
                     closing = self._closing

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import struct
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -74,6 +76,48 @@ class PreparedDisplayCalibration:
         return frozenset(self._closed_source_ids)
 
 
+def _validate_reference_bars(
+    data: bytes, display: DisplayProfile, budget: PreparationBudget, owner: str
+) -> None:
+    """Bind the protected bars file's pixel lengths to its output presentation."""
+    length = struct.unpack_from("<I", data, 12)[0]
+    if length <= 0 or 20 + length > len(data):
+        raise ValueError("Invalid reference-bars document length")
+    budget.check_cancelled_or_expired()
+    budget.reserve(owner=owner, cpu_bytes=length * 64, gpu_bytes=0)
+    try:
+        document = json.loads(data[20 : 20 + length])
+    finally:
+        budget.release(owner=owner)
+    budget.check_cancelled_or_expired()
+    extras = document.get("extras")
+    metadata = extras.get("cephvr_reference_bars") if isinstance(extras, dict) else None
+    expected = {}
+    for output in display.active_outputs:
+        if output.reference_bars is None:
+            raise ValueError(
+                "Reference-bars asset requires explicit output pixel lengths"
+            )
+        expected[output.output_id] = {
+            "width_px": output.width_px,
+            "height_px": output.height_px,
+            "x_length_px": output.reference_bars.x_length_px,
+            "y_length_px": output.reference_bars.y_length_px,
+        }
+    if (
+        not isinstance(metadata, dict)
+        or metadata != expected
+        or any(
+            not isinstance(values, dict)
+            or any(type(value) is not int for value in values.values())
+            for values in metadata.values()
+        )
+    ):
+        raise ValueError(
+            "Protected reference-bars asset differs from the output pixel lengths"
+        )
+
+
 def prepare_display_calibration(
     display: DisplayProfile,
     display_calibration: PreparedCalibration,
@@ -113,6 +157,11 @@ def prepare_display_calibration(
         error = ValueError("protected calibration arena size or digest changed")
         _raise_with_cleanup(error, source.close())
     try:
+        if display.calibration_view == "reference_bars":
+            assert prepared.data is not None
+            _validate_reference_bars(
+                prepared.data, display, budget, f"{owner_prefix}:bars-document"
+            )
         arena = prepare_arena(
             asset,
             prepared,

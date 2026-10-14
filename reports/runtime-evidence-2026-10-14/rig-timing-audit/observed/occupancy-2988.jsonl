@@ -1,0 +1,5 @@
+{"kind":"instrumentation_loaded","pid":2988,"host_ns":90671602647100,"scope":"acquisition"}
+{"kind":"camera_terminal_drain","pid":2988,"host_ns":90735766526900,"serial":"40747103","elapsed_ns":814700,"confirmed":true}
+{"kind":"camera_stop_capture","pid":2988,"host_ns":90735904337400,"serial":"40747103","elapsed_ns":9333400,"outcome":"returned"}
+{"kind":"recording_queue_closed","pid":2988,"host_ns":90735905129900,"queue_id":2216172789392,"closed_ns":90735905125700,"waiting_pixels":0,"pending_records":0,"max_waiting_pixels":10,"max_pending_records":14,"drop_count":3}
+{"kind":"recording_queue_drain","pid":2988,"host_ns":90735928499400,"queue_id":2216172789392,"capacity_frames":10,"pending_records_capacity":10000,"created_ns":90675395979200,"enqueue_calls":3595,"dequeue_calls":11809,"complete_calls":3595,"drop_count":3,"max_waiting_pixels":10,"max_pending_records":14,"max_enqueue_call_ns":473200,"max_dequeue_call_ns":82186100,"max_complete_call_ns":750400,"max_queue_wait_ns":209179700,"max_host_receipt_to_enqueue_ns":1455200,"max_consumer_service_ns":224880500,"closed_ns":90735905125700,"reported":true,"drained_ns":90735928487300,"closure_to_drain_ns":23361600}

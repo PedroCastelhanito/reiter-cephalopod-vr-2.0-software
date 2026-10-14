@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-14",
+  "task": "projector-offline-drafts",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "working_tree_hashes": {
+    "src/cephvr/gui/gui_snapshot.py": "1edbe48985c33247df4334c6502d0542ea022f8126de5096309b997652bfa608",
+    "src/cephvr/gui/main.py": "1b743d0dda8a28a897f82710e1278c5b77f119f988ca16ba54136970b2216af8",
+    "src/cephvr/gui/projectors.py": "b54dd9228052b65ae96cbd5a66b7682132d4b9570a83dd6c85dd9f905cc27832",
+    "src/cephvr/gui/projector_prerequisites.py": "56835e01cce76dda3d7c2607b677abffcf3c18a673aaa4234bb542a540f7185d",
+    "src/cephvr/gui/display_layout.py": "c6b62d899ce6e9d2da26e2c136c4c2946d2b66b3e751efc7f891c02704ef341e",
+    "tests/gui/test_dashboard.py": "2503f196b9c11f15ba6b630291de946c56cfef519df50b2dd8341c0e1e0f077c"
+  },
+  "decisions": [
+    "G01 revision183",
+    "E07 revision62",
+    "ARCH-002",
+    "E15"
+  ],
+  "test_selection": "disconnected_projector or setup_without_projectors or projectors_page_install_collect or runtime_gui_close_reopen or setup_captures_exact or review_and_runtime_share_page or gui_snapshot or projection_group_replaces",
+  "commands": [
+    {
+      "command": "pytest tests/gui/test_dashboard.py -q -k <test_selection> -p no:faulthandler --basetemp .tmp/projector-offline-tests5 --junitxml reports/runtime-evidence-2026-10-14/gui-refresh/projector-offline-final.xml",
+      "result": "23 passed,445 deselected; QT_QPA_PLATFORM=offscreen; permitted loopback"
+    },
+    {
+      "command": "pytest tests/gui/test_dashboard.py -q -k \"projector or calibration or setup or full_gui\" -p no:faulthandler --basetemp .tmp/projector-offline-integration --junitxml reports/runtime-evidence-2026-10-14/gui-refresh/projector-offline-integration.xml",
+      "result": "86 passed,one pre-existing narrow15px horizontal-overflow failure,381 deselected"
+    },
+    {
+      "command": "Load unchanged HEAD projectors.py/display_layout.py into isolated import namespaces before running only configuration_scroll_keeps_projector_status_fixed",
+      "result": "same15px failure; projector-width-baseline.xml"
+    },
+    {
+      "command": "ruff check; ruff format --check affected5 source files and owning dashboard test",
+      "result": "passed"
+    },
+    {
+      "command": "mypy --platform win32 affected5 source files",
+      "result": "passed"
+    },
+    {
+      "command": "tools/check_backend_boundaries.py",
+      "result": "687 modules,zero violations; existing main/projector size advisories retain orchestration/presentation owners"
+    },
+    {
+      "command": "scripts/start_runtime_gui.py --reopen-gui",
+      "result": "prior GUI already closed; reopened only GUI,PID31324 responsive; preserved controller87ca3771-29f3-41db-bfdc-31ec13491f0f"
+    }
+  ],
+  "initial_attempts": [
+    "Two sandbox focused runs stopped after nine cases; a timed Python thread-stack dump located asyncio loop creation blocked at socketpair accept. Interrupted exact exec sessions; permitted loopback rerun completed. Raw initial stack/console not separately saved; this contextual summary reconstructed from tool outputs.",
+    "First permitted run17 passes/four test-only failures: normalized12.0 vs12 text, Setup method vscommand_buttons lookup and intentionally invalid mixed-pacing fixture now checked explicitly. Raw projector-offline.xml retained; production not changed to bypass validation."
+  ],
+  "limits": "No physical projector power-off or optical/full-workload acceptance. Projectors remain powered on. No Setup/Start/capture/firmware commands. Test hardware adapters cover disconnected inventory; native GUI update only verified responsive.",
+  "scope": "Saving/restoring drafts and structurally valid saved-profile acceptance independent of live display inventory. Clickable Setup refreshes inventory and logs reason before proposal collection/RPC if none identified. Unknown output properties/invalid scientific declarations still fail existing pure validation."
+}

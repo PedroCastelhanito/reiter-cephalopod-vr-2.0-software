@@ -540,6 +540,9 @@ async def test_worker_incident_ancestry_uses_exact_launch_owner_chain(
         ],
     )
     preliminary = wire.RegisterContextRequest(command_id=str(uuid4()), context=prepared)
+    assert not preliminary.context.outputs
+    assert not preliminary.context.cleanup_resources
+    assert not preliminary.context.prepared_functions
     assert (
         await runtime.service.RegisterContext(preliminary, controller_context)
     ).admission.result == types.COMMAND_RESULT_ACCEPTED

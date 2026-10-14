@@ -79,6 +79,9 @@ class AcquisitionHealth:
                 except TimeoutError:
                     pass
             session = self.session_slot.current
+            process_only = session is None or (
+                session.cleanup_complete and session.pending_cleanup_heartbeat is None
+            )
             now = self.clock()
             report = control.HeartbeatReport(
                 source=self.identity.process,
@@ -86,7 +89,7 @@ class AcquisitionHealth:
                 health_summary="acquisition coordinator and registered worker monitor active",
             )
             work = control.WorkContext()
-            if session is not None:
+            if session is not None and not process_only:
                 if session.trial is not None:
                     work.CopyFrom(session.trial.work)
                     report.trial_phase = _trial_phase(session.trial)
@@ -121,8 +124,9 @@ class AcquisitionHealth:
                     or now - heartbeat.sent_monotonic_ns > self.health_silence_ns
                 ):
                     continue
-                for item in heartbeat.continuing_functions:
-                    report.continuing_functions.add().CopyFrom(item)
+                if not process_only:
+                    for item in heartbeat.continuing_functions:
+                        report.continuing_functions.add().CopyFrom(item)
                 if heartbeat.HasField("active_error"):
                     error = heartbeat.active_error
                     payload = error.SerializeToString(deterministic=True)
@@ -156,28 +160,47 @@ class AcquisitionHealth:
                 async with self.catalogue_lock:
                     selected = report
                     deadline = now + self.heartbeat_interval_ns
-                    if (
-                        session is not None
+                    current_session = self.session_slot.current
+                    receipt_session = (
+                        session
+                        if session is not None
                         and session.pending_cleanup_heartbeat is not None
+                        else current_session
+                    )
+                    if (
+                        receipt_session is not None
+                        and receipt_session.pending_cleanup_heartbeat is not None
                     ):
                         if (
-                            session.setup_deadline_ns is None
-                            or now >= session.setup_deadline_ns
+                            receipt_session.setup_deadline_ns is None
+                            or now >= receipt_session.setup_deadline_ns
                         ):
                             raise TimeoutError(
                                 "retained cleanup catalogue receipt expired"
                             )
                         selected = control.HeartbeatReport.FromString(
-                            session.pending_cleanup_heartbeat.SerializeToString(
+                            receipt_session.pending_cleanup_heartbeat.SerializeToString(
                                 deterministic=True
                             )
                         )
-                        deadline = session.setup_deadline_ns
-                    elif session is not None and session.cleanup_catalogue_initialized:
+                        deadline = receipt_session.setup_deadline_ns
+                    elif current_session is not session or (
+                        current_session is not None and current_session.cleanup_complete
+                    ):
+                        report.ClearField("work")
+                        report.ClearField("trial_phase")
+                        report.session_phase = control.SESSION_PHASE_CONFIGURATION
+                        report.ClearField("continuing_functions")
+                    elif (
+                        current_session is not None
+                        and current_session.cleanup_catalogue_initialized
+                    ):
                         report.cleanup_resources_revision = (
-                            session.cleanup_resources_revision
+                            current_session.cleanup_resources_revision
                         )
-                        report.cleanup_resources.extend(session.cleanup_resources)
+                        report.cleanup_resources.extend(
+                            current_session.cleanup_resources
+                        )
                     receipt = await self.supervisor.report_heartbeat(
                         selected, deadline_ns=deadline
                     )
@@ -187,12 +210,12 @@ class AcquisitionHealth:
                             f"{receipt.failure.code}: {receipt.failure.message}"
                         )
                     if (
-                        session is not None
+                        receipt_session is not None
                         and selected is not report
-                        and self.session_slot.current is session
+                        and self.session_slot.current is receipt_session
                     ):
-                        session.cleanup_catalogue_initialized = True
-                        session.pending_cleanup_heartbeat = None
+                        receipt_session.cleanup_catalogue_initialized = True
+                        receipt_session.pending_cleanup_heartbeat = None
             except Exception as exc:
                 await self._fail(
                     self.identity.supervisor,

@@ -1,5 +1,366 @@
 # Visual Stimulus status
 
+Oct14 `projection-calibration-window-controls` completes the owner's refinement under
+[G01 revision204](../docs/architecture/gui.md#g01) and
+[V15 revision20](../docs/architecture/visual_stimulus.md#v15). Screen names are smaller,
+centered and use contiguous glyph cells. The table has no arrow buttons and adds
+separate whole-pixel Offset X/Y columns (positive right/up, blank zero). Interactive
+sizes cap at native resolution; offsets cap at remaining image margins and reclamp
+when a size grows. Numeric8/full11/review6 persist pixel offsets while older removed
+offsets remain discarded. Preview and published affine assets share translated bounds.
+Diagnostic assets/views cover the full measured native raster, so expansion reveals
+additional fixed-pitch, world-phase grid lines. Diagnostic plane isolation prevents
+expanded grids occluding other faces; trial drawing disables that filter.
+
+ARCH-002 reuses the pure extent owner, existing affine mapping, Qt entries, GLB
+builder and arena shader/drawer; no dependency, wire field, process, deadline,
+policy setting or whole-runtime reference is added. Projectors remains a cohesive
+composition owner and delegates bounds/files/geometry. Owning GUI26 and persistence11
+checks pass; renderer73 pass. Ruff/format157, Win32 mypy155 and boundaries686/zero
+violations pass, with existing size advisories. The730px offscreen table was inspected;
+no native restart/projector/optical/full-workload acceptance is claimed. Reopen the
+application to load the code and launch projection calibration to regenerate its grid.
+[Commands, XML, preview and provenance](runtime-evidence-2026-10-14/window-controls/context.json).
+Broader GUI/calibration attempts stalled and were interrupted; no full-suite pass.
+Stale version/extent assertions, numeric8 file routing and static findings were repaired.
+A failed Windows encoding write emptied the GUI architecture page; its complete
+pre-existing content was restored byte-exact from the Codex pre-edit snapshot before
+these focused amendments. Remaining physical checks stay in
+[rig verification](rig-verification.md).
+
+Oct14 combined sixty-second three-camera trial completes with nine closed outputs, restored settings and four counted/full-decoded videos. Stimulus slots21 saturate with3078 capacity drops/3098 CFR duplicates; finite buffer growth is rejected and original visual TOML restored byte-exact. V12 throughput remains open. Source review identifies per-capture PBO allocation/deletion, fresh CPU readback followed by another ownership copy, row normalization, copied overlapped pipe backing and5ms recorder polling as optimization candidates. Stage timings are needed before attributing the bottleneck; preserve image quality/accounting/GPU ownership. [Performance review](runtime-evidence-2026-10-14/rig-timing-audit/recording-performance-review.json). Retain3 slots with256MiB recording CPU/512MiB asset GPU budgets for the tested2560x2000 composite/assets: CPU accounting133120000bytes requires159744000with20%; GPU same-assets estimate335054176bytes requires402065012with20%. These are allocation accounting estimates, not new native measurements or whole-process/GPU memory guarantees. Twenty-one slots saturated, so no finite slot recommendation establishes steady throughput. Nested video-sync cadence is corrected: measured successful intervals stay below1.2s (maximum1040.5247ms), errors0. Native Save On to Save Off completes/cleans/restores with two decoded camera videos and no stimulus output. E05/E06/E08 cleanup repairs preserve strict output absence, exact resource receipts and confirmed delivery. Fault6 records accepted cleanup from both backends, but warning authority loss prevents overall cancellation; its scope repair is locally verified under E03 revision35. With projectors off, fault9 exposes lost prior calibration release receipts; catalogue retirement/reopen handling is repaired and full Visual suite311 passes, native retest deferred. No renderer-exit cause is inferred from generic CHILD_EXITED. [Current evidence](runtime-evidence-2026-10-14/rig-timing-audit/lifecycle-findings.json).
+
+ARCH-002 adds only a focused pure extent owner; reuse Qt and existing projection,
+texture-coordinate and resource builders. No dependencies, wire/policy fields,
+process/state machine, deadlines or ownership changes. Existing Projectors and
+scene-resource size advisories are cohesive composition/allocation owners; physical
+extent arithmetic stays in the helper. Current checks: owning GUI48 pass/445
+excluded; rendering/config82 pass including real builder allocation with fake GL
+contexts. Cross-projector proof uses different native resolutions and anisotropic
+pitches: equal usable mm dimensions give equal physical corners/off-axis matrices,
+and 20×10 mm texture spans retain physical size. Migration, arrow-click, integer
+rejection, preview/export, fixed-pitch live sequence and imported asset preservation
+checks pass. Ruff, format160, Win32 mypy158 and boundaries690/zero violations pass.
+Projection numeric settings are unchanged: resulting extents are bounded by native
+raster and measured pitch; current tests remain within near1/far250 and existing
+tolerances. Hardware geometry changes still require V15's owner-approved limits review.
+
+Initial unconfigured Qt runs fail without diagnostics; explicit offscreen mode fixes
+local execution. A broader calibration selection stalls in restricted integration,
+is interrupted, and is replaced by the focused owner checks. During implementation,
+UTF-8 handling, an overly broad numeric restore conversion, obsolete version/offset
+fixtures, strict JSON tuple validation and fake-resource cleanup field were corrected.
+No native renderer restart, projector alignment, optical/scientific or full-workload
+acceptance is claimed. Reopen the application to load changes; retain outstanding
+[rig verification](rig-verification.md).
+[Commands/scope](runtime-evidence-2026-10-14/integer-views/context.json) and XML evidence.
+Previous pixel-crop evidence remains [here](runtime-evidence-2026-10-14/valid-area/context.json).
+
+Oct14 `reference-calibration-output-frame` completed under
+[G01 revision200](../docs/architecture/gui.md#g01) and
+[V01 revision21](../docs/architecture/visual_stimulus.md#v01). Reference calibration
+now shows a white native output-boundary frame and unchanged colored raw-pixel bars.
+The initial frame needs only output resolution; it supports aiming/focus/rough
+positioning and cannot claim a measured physical screen boundary. Align the raw
+projection, measure bars, close it, then launch the measured physical frame/grid
+for existing Scale/Offset refinement. No screen dimensions/measurements/corrections
+or clipping values are changed by this step.
+
+ARCH-002 reuses one focused four-rectangle helper in the native drawer and GLB
+exporter; no dependencies, protocol fields, resources, policy or state additions.
+Frame draws before colored bars, so intersections preserve exact configured bar
+pixel spans; scissor restoration, native copy, protected lengths/digests, authority
+and cleanup remain. Source GLB now contains four frame edges plus two bars per output.
+Final rendering/resource71 and owning GUI15 pass/467 deselections. Ruff/format6,
+Win32 mypy3 and boundaries689/zero violations pass with unchanged size advisories.
+Initial70-pass/one-failure result exposes obsolete8-vertex asset assertion; update
+it to24vertices and the bar slices, preserving length/cleanup assertions. Final71 pass.
+No runtime/device/native/optical acceptance. A normal application restart loads the
+renderer change, and reference launch regenerates its source. Physical alignment
+remains in the [rig checklist](rig-verification.md).
+[Commands, limits and test XML](runtime-evidence-2026-10-14/reference-frame/context.json).
+
+Oct14 `updated-tank-screen-plot`: [3D/top/side plot](runtime-evidence-2026-10-14/tank-screen-plot/tank-screens.png)
+uses current production corner construction, owner-confirmed126×94mm Bottom image
+axes,5mm front/lower gaps and retained120×166×110mm tank / subject(60,93,53).
+Retained51mm side distances give4mm lateral clearance;52mm would give5mm for the
+centered94mm Bottom cross-span. Keep measured distances pending reconciliation;
+the plot labels this source-input discrepancy without claiming optical verification.
+[Inputs/corners](runtime-evidence-2026-10-14/tank-screen-plot/geometry.json) and
+[generator](runtime-evidence-2026-10-14/tank-screen-plot/plot.py) retain provenance.
+PNG inspected; front/lower gaps and Bottom axes asserted. No runtime/settings/device change.
+
+Oct14 `clean-calibration-grid-bottom-fit` software correction completed under
+[G01 revision199](../docs/architecture/gui.md#g01),
+[V15 revision17](../docs/architecture/visual_stimulus.md#v15) and E14 revision210.
+The grid remains solid neutral lines, a white border and one screen name. Owner
+confirms 5 mm frame gaps at both front and lower junctions: Side/Bottom front edges
+start behind Front; Front/side lower edges start above Bottom. Preserve perpendicular
+subject distances and physical heights. Bottom image X/width126mm follows +rig Y;
+Y/height94mm follows -rig X, preserving the 94×126mm tank footprint with corrected
+image axes. The earlier on-disk Bottom width94/height126 caused image X to target
+94mm instead of126mm. This resolves the source axis mismatch; actual optical
+coverage is still pending, not inferred from arithmetic.
+
+Numeric5/full8/review3 swap legacy Bottom width/height only, preserving raw native
+bar measurements, extra scales/offsets/inversions and imported runtime profiles.
+GUI fixed policy/config version6 declares the 5mm gap. All consumers reuse the shared
+corner helper; ARCH-002 needs no dependency/state/process/module extraction. Final
+owning GUI38 passes/444 deselections, plus2 focused passes after exact126/94 neutral
+mapping and legacy-review migration assertions. Ruff/format7, Win32 mypy6 and
+boundaries689/zero violations pass, with existing unrelated size advisories; TOML
+syntax/version/binding and documentation references/whitespace pass. Initial legacy
+affine/mirror-fixture failures and one static version comparison are corrected;
+source geometry changes require the mirror tests' new clearances, retaining all
+complete/partial/impossible-path scenarios.
+
+Retain V15 clipping/tolerances after reviewing the orthonormal axes and 5mm gap;
+no numeric change is needed for the supplied physical planes. Extra saved X/Y
+multipliers remain operator adjustments. Reopen the GUI to migrate drafts and launch
+projection calibration to regenerate the clean grid. No stored measurement edit,
+runtime restart, device/output command or native/optical/full-workload acceptance.
+Existing [rig checks](rig-verification.md) retain physical coverage verification.
+[Correction evidence and commands](runtime-evidence-2026-10-14/frame-gaps/context.json).
+The [earlier artifact assessment](runtime-evidence-2026-10-14/clean-grid/context.json)
+records the old axis assumption and remains historical evidence, superseded by the
+owner's126mm image-width/94mm image-height clarification.
+
+Oct14 `calibration-close-button-and-distance-format` completed under
+[G01 revision197](../docs/architecture/gui.md#g01). GUI derived distances display one
+decimal millimetre; raw reference measurements/mm-per-pixel mapping retain precision.
+The confirmed active step's own launch button becomes Close, with the other step
+disabled and both disabled while pending. Existing diagnostic Close transport and
+output-confirmation semantics remain unchanged. Owning GUI selection13 passes,
+scoped static/boundary checks pass; no native output/restart or optical acceptance.
+See the [runtime assessment](runtime.md) and
+[local evidence](runtime-evidence-2026-10-14/calibration-controls/context.json).
+
+Oct14 `bottom-attached-screen-elevation` completed under
+[G01 revision196](../docs/architecture/gui.md#g01) and
+[V15 revision16](../docs/architecture/visual_stimulus.md#v15). Replace tank-height
+centering of Front/Left/Right with lower edges at subject Z minus Bottom-screen
+distance. Preserve physical screen heights; shared corner construction now passes
+Bottom distance through diagram, trial preview, saved calibration/GLB export and
+prepared geometry. Missing/nonpositive/nonfinite Bottom distance invalidates all
+planes rather than retaining detached wall geometry. Saved drafts gain no fields.
+
+ARCH-002 reuses the focused geometry helper and existing owning behavior tests,
+without new state, dependencies, runtime references or extraction needs. Final local
+GUI selection25 passes/455 deselections; scoped Ruff/format5, Win32 mypy4 and
+boundaries689/zero violations pass. Existing oversized-module advisories are unchanged;
+all four edited source modules remain cohesive focused responsibilities. Initial
+8-pass/2-failure run exposed test-fixture migration needs (full versus numeric
+snapshot, missing Bottom distance); repair fixtures, intermediate20 and final25 pass.
+Initial format finding corrected. Retain current V15 clipping/tolerances: no new
+measured dimensions/scene depth justify a numeric adjustment, and planar attachment
+does not change orthogonality. No runtime restart/device/native/optical acceptance;
+reopen the GUI to load this fix. Existing [rig checks](rig-verification.md) remain.
+[Local command/results and test XML](runtime-evidence-2026-10-14/screen-elevation/context.json).
+
+Historical measured-base fit evidence used extra Scale multipliers; that rule is
+superseded by G01's pixel valid-area crop. The original
+[measured-base evidence](runtime-evidence-2026-10-14/measured-base-scale/context.json)
+retains its dated measurements, tests and limits.
+
+Oct14 `projector-cursor-stability` completed under
+[G01 revision194](../docs/architecture/gui.md#g01), retaining V01/V04 native output ownership.
+GLFW defaults to centering the cursor on each fullscreen creation; the shared native
+window configuration now sets CENTER_CURSOR false after every hint reset. ARCH-002
+uses the existing focused owner without cursor restoration, extra state or dependencies.
+Owning rendering/calibration tests71 pass; scoped Ruff/format2, Win32 mypy1 and
+boundaries689/zero violations pass. Native main-display checks verify launch at
+(497,768), Close at (497,784), and recreated reference outputs at (497,425), each
+exactly matching the clicked main-display location. Authenticated states confirm
+Active/presented, Idle/resources_closed, then Active/presented. Leave reference bars
+open for measurement; this verifies cursor placement, not optical/full-workload acceptance.
+The accidental Escape interrupted the first native attempt; resume on owner request,
+discover the closed Dashboard and reopen it in the running generation. The sandbox
+status probe stalls; permitted loopback read succeeds. One initial cursor evidence
+filename was overwritten by status evidence; record it separately on the next read.
+[Commands, status and native evidence](runtime-evidence-2026-10-14/projector-cursor/context.json).
+
+Oct14 `live-reference-measurements-and-tab` completed under
+[G01 revision193](../docs/architecture/gui.md#g01). Measured X/Y mm fields now stay
+editable with GUI editing authority during confirmed Active reference bars; retain
+native pixel/mode provenance, rig/assignment/correction locks and protected inputs.
+Edits update retained drafts/derived estimates without renderer updates or rewriting
+active assets. Pending/unknown/closing and observer states remain locked; a pending
+non-Active state now also locks the card. Frame/grid retains its original live
+Scale/Offset controls. Shared DataTable's grid navigation trapped Tab on embedded
+editors; disable that behavior to use Qt's normal widget traversal. Tab/Shift+Tab
+moves between nested editors/combos/checkboxes and skips disabled fields; inventory
+arrow selection remains native. Console, log-details and example text views release
+Tab for navigation. Incomplete imported display profiles no longer raise a pre-existing
+KeyError when adding file-owned projection limits; retain partial drafts while Setup
+still validates complete geometry.
+
+ARCH-002 reuses existing measurement drafts/refresh, shared Qt controls and owning
+behavior tests; no global event filter, dependency, process or extra state. Existing
+large Projectors code remains focused widget/view-lock composition; no separable new
+responsibility is added. Focused7 tests pass; final calibration/keyboard/table/measurement
+selection34 pass/441 deselections, after initial33-pass/incomplete-import failure.
+Scoped Ruff/format5, Win32 mypy4, boundaries689/zero violations, documentation references
+and whitespace pass. Final fixture run emits Windows COM0x8001010d diagnostic but
+continues/exit0 with34 passes; cause unverified. Correct initial Ruff line/zip findings.
+
+Reopen the already-closed GUI in the existing runtime using --reopen-gui. Native
+Active reference presentation and screenshots verify FrontX→FrontY→LeftX and reverse
+Tab movement with measurement fields focused; scientific values are unchanged.
+This native Active-case check precedes the final pending-only guard refinement;
+pending/observer behavior is verified by the local regressions. GUI remains open
+with reference bars Active. A transient DWM ghost is observed without inferring backend
+failure; read-only controller status confirms current presentation. Existing optical/
+full-workload limits remain in the [rig checklist](rig-verification.md).
+[Evidence and native focus captures](runtime-evidence-2026-10-14/live-reference-tab/context.json).
+
+Oct14 `reference-bars-visible-output` repaired and verified under
+[V01](../docs/architecture/visual_stimulus.md#v01)/[V15](../docs/architecture/visual_stimulus.md#v15).
+Reference bars were drawn into the device framebuffer without copying to the native
+screen; the branch continued before the copy used by frame/grid. Actual Front output
+was black. Copy that framebuffer to the current screen before returning; native-pixel
+lengths, correction independence, existing swaps, ownership and cleanup remain.
+ARCH-002 reuses the established framebuffer copy, with no dependency, process, state,
+module proliferation or architecture-policy change. Extend the owning behavior test
+to require each output copy after bar drawing; both bars cases fail before the fix,
+and both grid cases pass. After repair, rendering16 and calibration rendering/lifecycle/
+authenticated transport22 cases pass (37 deselections); scoped Ruff/format2, Win32
+mypy1, boundaries689/zero violations and whitespace pass. Default sandbox temp fixtures
+initially cause six errors/ten passes; workspace basetemp and permitted integration pass.
+
+Native GUI testing through Computer Use confirms four visible orange/green bar outputs,
+normal Close with authenticated Idle/resource-closure evidence, and successful reopen
+with Active/presented evidence. Graceful ShutdownApplication succeeds after the prior
+GUI has closed and resources are confirmed closed; restart through the managed launcher
+loads the repair and restores the draft/control. Final controller80dfe14b-7d23-45b0-a46f-eaf77c024b62
+is left running with reference calibration open for measurements. An input-observation
+race/stale-window binding and one geometry-unavailable click require refresh/reselection;
+no unknown UI input is retried blindly. Initial exact-color screenshot analysis rejects
+lossy JPEG values; corrected approximate-color analysis confirms both colors, without
+claiming exact framebuffer pixels or optical accuracy. Optical/full-workload checks
+remain in the [rig checklist](rig-verification.md). The repository asset directory
+still contains only the two requested GLBs. [Evidence, native captures and commands](runtime-evidence-2026-10-14/reference-bars/context.json).
+
+Oct14 `projection-config-only` completed locally under
+[G01](../docs/architecture/gui.md#g01), [V15](../docs/architecture/visual_stimulus.md#v15)
+and [E14](../docs/architecture/system-contracts.md#e14). Remove the four rig projection
+editors and frontend draft persistence. `[projection]` in the owning Visual Stimulus
+TOML supplies near 1 mm, far 250 mm, positional 0.000166 mm and orthogonality 0.000001.
+Both calibration and experiment submission read that file; controller validation/startup
+and worker Setup overlay its resolved snapshot before geometry validation. Missing or
+invalid file values reject preparation. Imported numeric calibration/review drafts stay
+loadable but cannot override these values; physical corners and other fields remain.
+Regenerate the authoritative Protobuf bindings for the focused ProjectionLimits payload;
+no policy value or policy_version changes. ARCH-002 removes the duplicate diagnostic
+heuristic and reuses existing file/profile assembly, adding one focused pure validator,
+no dependency/process/state. Existing large Projectors and worker lifecycle modules retain
+composition and lifecycle ownership; no new independent responsibility is placed there.
+
+GUI geometry/import/restoration/diagnostic 18 cases, configuration 9 cases, contracts 42
+cases plus 79 subtests, worker lifecycle 34 cases and a controller startup overlay case pass.
+Scoped Ruff/format and Win32 mypy 10 sources pass; boundaries 688 modules/zero violations
+retain existing cohesion advisories; whitespace passes. Default sandbox temp fixtures fail;
+repository-local basetemp works. Authenticated lifecycle tests stall under sandbox and are
+interrupted; permitted loopback run passes. Initial fixtures lacked required projection
+values and are updated, retaining rejection checks. Three transient admission failures
+during concurrent two-step migration are corrected by the matching source/runtime
+fixtures; the final55-case calibration selection passes and includes those scenarios. No running GUI restart, device command or
+physical/optical acceptance performed. Existing rig checklist retains those boundaries.
+
+Oct14 `projector-sync-modes` completed locally under
+[G01 revision190](../docs/architecture/gui.md#g01),
+[V20 revision9](../docs/architecture/visual_stimulus.md#v20) and E14 revision208.
+Synchronization follows Screen calibration and Rig geometry. Remove its MCU summary,
+editor and obsolete projector contextual-wiring path; Projector flip input/offsets
+are now owner-deferred under A11 revision46. Offer Free run (no VSync), VSync on pulse
+display, and VSync on all displays; migrate both old labels on portable/review draft
+load. Existing file-owned pacing identity remains independent of pulse placement.
+Free run requests zero swap interval on every output, including retained marker/pacer
+outputs; it preserves V10 scheduling, V22 pulse controls and nominal recording-rate
+validation. Canonical model, published schemas, codec and fixed policy agree;
+Visual Stimulus policy/config/loader version12 and verified policy digest match.
+
+ARCH-002 review removes redundant wiring and keeps mode mapping in ProjectorTiming,
+presentation requests in DisplayProfile and existing GL owner binding. No new process,
+dependency or runtime back-reference. Projectors remains composition of focused
+helpers; native/configuration owners retain existing cohesive responsibilities.
+Local GUI16, configuration/rendering61, lifecycle34 and contract42 cases pass
+(79 contract subtests); scoped Ruff/format12 files, Win32 mypy10 sources,
+boundaries687/zero violations and whitespace pass. Initial policy-version/digest and
+new-test API mistakes were corrected; sandbox temp failures avoided with workspace
+temp paths, stalled lifecycle transport run interrupted and permitted rerun passes.
+No running GUI restart, physical output/device action or optical acceptance.
+[Evidence and commands](runtime-evidence-2026-10-14/projector-sync/context.json).
+Remaining V20 optical/driver/full-load checks stay in the [rig checklist](rig-verification.md).
+
+Oct14 `two-step-calibration-assets` completed locally under
+[G01](../docs/architecture/gui.md#g01), [V01](../docs/architecture/visual_stimulus.md#v01)
+and [E07](../docs/architecture/experiment.md#e07). Exactly two files remain
+in `assets/calibration/` (the extra README is removed): `reference_bars.glb` contains only two native-pixel bars per
+output; `frame_grid.glb` contains the physical frame/grid for measured scale/offset
+adjustment. Each launch refreshes only its selected file. Remove the five generated
+repository JSONs and old shared grid filename. Generated profiles/mappings and exact
+working copies live outside the repository in separate per-step user runtime roots.
+GUI intent captures source/profile digests; controller rechecks the source, matching
+profile view and staged copy before passing the runtime root to protected renderer
+preparation. The reference file's pixel metadata must match the protected outputs;
+reject wrong lengths/grid files, stale copies and wrong step references. Preserve
+revision/authority/deadline/bounds, correction-independent bars, V15 frame/grid mapping,
+exact source ownership and cleanup. No hardware command or live restart occurred.
+
+ARCH-002 reuses the mesh packer, existing profiles and protected-source pipeline.
+Extend the focused shared path helper; extract the controller's separable bounded
+file reader into `device/calibration_inputs.py` before adding stage validation.
+No dependency/process/runtime back-reference. Remaining controller calibration and
+projector widget size advisories are cohesive command/state ownership and composition,
+without new unrelated responsibilities. Extend owning test modules rather than adding
+per-fix modules. Media outside calibration stays external; demo generator remains
+external-only. Source distribution includes the two patterns; repository-less wheel
+execution still rejects unavailable diagnostic sources.
+
+Validation: focused `.venv/Scripts/python.exe -m pytest` controller admission, GUI and
+calibration-rendering selection with `-m "not windows and not rig"`:55 pass/450
+deselections. Covers independent exports, unchanged grid after reference export,
+source/runtime byte identity, stale-copy rejection, exact reference quad pixel spans,
+wrong-length/grid rejection and source cleanup. Scoped Ruff/format10 files, Win32
+mypy7 sources, boundaries689/zero violations, actual two-file backend GLB parsing,
+reference metadata/geometry consistency, source-manifest contents, local links/anchors
+and whitespace pass. `python -m build --no-isolation` builds sdist/wheel. A transient
+script insertion lookup fails before adding the new test; corrected and verified.
+No application restart/native-output/optical/full-workload acceptance claimed; restart
+before using the new path. [Current evidence](runtime-evidence-2026-10-14/calibration-assets/two-step-context.json),
+[55-case results](runtime-evidence-2026-10-14/calibration-assets/two-step-tests.xml).
+
+Oct14 `renderer-opengl-adapter-selection` repaired under
+[SYS-002 revision3](../architecture.md#sys-002) and
+[E08 revision171](../docs/architecture/system-contracts.md#e08): use separate Windows
+executable identities with identical verified prepared Python bytes. Before creation,
+apply/read back power-saving preference for cephvr-python.exe (GUI/CPU) and high
+performance for cephvr-renderer.exe. Preserve unrelated per-application options;
+global/other-application preferences are untouched. Verify the role image against
+prepared provenance at resolution/bootstrap; stale/tampered images fail explicitly.
+Actual renderer NVIDIA model/UUID checks remain authoritative. CUDA/OF and RTX2080Ti
+encoding owners remain unchanged. ARCH-002 reuses prepared interpreter/launch/containment
+mechanisms with one focused preference helper, no extra process/dependency/fallback.
+
+Fresh hidden probes prove AMD GUI/CPU and RTX5060Ti renderer selection. After normal
+GUI save/closure and approved full E08 replacement, controller
+5a66b261-7079-49d6-bf9b-8bfcad0bb9ad reports four outputs resources-ready/applied
+revision1/returned Idle submissions without initialization issues. Live renderer
+PID23168 uses NVIDIA UUID GPU-77642118-1623-48dd-3686-1014aa86b818; native GUI
+PID13128 restores its draft, holds control and shows no failure dialog. Leave runtime
+session75315 open. The remedy now correctly distinguishes full renderer restart from
+GUI-only reopen. Earlier AMD context failure remains in raw evidence; the exact
+historical driver-selection cause is unproven, while fresh placement/Idle is verified.
+
+Final485 affected renderer/supervisor/platform-adapter/launcher cases pass/one
+deselection; native prepared-role-image tamper/refresh case passes. Focused89 cases
+also pass. Scoped Ruff/format8 files, Win32 mypy5 sources, boundaries687/zero
+violations and whitespace pass. Initial sandbox asyncio loopback stalls are interrupted;
+permitted replacement passes without weakened assertions. These rig checks cover
+fresh contexts/Idle only, not OF/recording/scientific/optical/full-load acceptance.
+[Methods, hashes and live/test evidence](runtime-evidence-2026-10-14/gui-refresh/gpu-selection-context.json)
+and the [rig checklist](rig-verification.md) retain scope and remaining checks.
+
 Oct14 projector power-on recovery under
 [V19](../docs/architecture/visual_stimulus.md#v19) and
 [E08](../docs/architecture/system-contracts.md#e08): all four saved DLP identities

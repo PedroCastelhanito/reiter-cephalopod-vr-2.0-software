@@ -66,7 +66,7 @@ class MicrocontrollerSnapshot:
             },
             "projector_flip": {
                 "pin": firmware_pin(panel.flip_pin.text()),
-                "enabled": panel.enable_controls["projector-flip"].isChecked(),
+                "enabled": False,
             },
             "camera_pins": {
                 key: firmware_pin(panel.pin_editors[key].text())
@@ -180,7 +180,11 @@ class MicrocontrollerSnapshot:
                 setattr(pulses, pin_name, pin)
             else:
                 pulses.ClearField(pin_name)
-            setattr(pulses, enable_name, panel.enable_controls[key].isChecked())
+            setattr(
+                pulses,
+                enable_name,
+                key != "projector-flip" and panel.enable_controls[key].isChecked(),
+            )
         for key, _role in ROLE_OUTPUTS:
             pulse = getattr(pulses, key)
             pin = firmware_pin(panel.pin_editors[key].text())

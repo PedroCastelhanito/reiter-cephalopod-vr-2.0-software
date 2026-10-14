@@ -23,8 +23,6 @@ class ProtocolHierarchy(QWidget):
         self.contents = ProgramTimeline(details=False)
         self.contents.setAccessibleName("Group contents")
         body.addWidget(self.contents)
-        self.scope_note = label("", wrap=True)
-        body.addWidget(self.scope_note)
         self.scope: tuple[int, ...] = ()
 
     def bind(
@@ -50,8 +48,7 @@ class ProtocolHierarchy(QWidget):
         self.contents_title.setVisible(bool(scope))
         self.contents.setVisible(bool(scope))
         editable = flat_group(program, scope)
-        self.scope_note.setVisible(not editable)
-        self.scope_note.setText(
+        self.contents.setToolTip(
             "Imported structure is preserved. Select a flat group to edit its epochs."
             if not editable
             else ""

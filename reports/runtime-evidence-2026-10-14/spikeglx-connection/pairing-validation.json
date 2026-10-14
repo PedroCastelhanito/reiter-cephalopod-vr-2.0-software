@@ -1,0 +1,13 @@
+{
+  "date_jst": "2026-10-14",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "working_tree": "dirty; validation includes uncommitted pairing edits and existing concurrent changes",
+  "source": "owner screenshot and source inspection; Connection Verified, running=False, saving=False",
+  "decisions": ["G01 revision202", "E12 revision20", "ARCH-002"],
+  "final_pytest_command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k 'spikeglx or camera_acceptance or camera_action_submits or repeated_camera_connect or managed_mcu_save' -m 'not windows and not rig' --basetemp .pytest-spikeglx-pairing-final",
+  "final_pytest_result": "30 passed, 460 deselected; permitted local socket/native inventory access",
+  "intermediate_pytest_result": "17 passed, 472 deselected; initial restricted focused run stalled after two passes and was interrupted",
+  "static": "Ruff check and format8 files pass; Win32 mypy7 source files pass; backend boundaries689 modules/zero violations with existing cohesion advisories",
+  "scope": "per-session pairing flag update only; controller lease/revision/phase checks; pending repeats blocked; confirmed snapshots displayed; existing device acceptance operation preserves unrelated drafts",
+  "limits": "no native GUI restart/click, paired session start, recording or pulse/wiring acceptance; host endpoint and defaults unchanged"
+}

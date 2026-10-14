@@ -13,6 +13,21 @@ class ReferenceScale:
     projector_distance_mm: float | None
 
 
+def reference_frame_rectangles(
+    width: int, height: int
+) -> tuple[tuple[int, int, int, int], ...]:
+    """Return an inside-only native output border, independent of physical scale."""
+    if min(width, height) <= 0:
+        raise ValueError("Reference frame requires positive output dimensions")
+    stroke = min(2, width, height)
+    return (
+        (0, 0, width, stroke),
+        (0, height - stroke, width, stroke),
+        (0, 0, stroke, height),
+        (width - stroke, 0, stroke, height),
+    )
+
+
 def reference_lengths(
     width_px: float,
     height_px: float,

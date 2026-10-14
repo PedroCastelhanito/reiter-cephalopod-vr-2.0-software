@@ -160,6 +160,13 @@ class TrialRecordingPreparation:
             raise RuntimeError("prepared recording buffers are unavailable")
         self._captures.install_recording(queue, pool)
 
+    def cancel_setup(self) -> None:
+        runtime = self._recording
+        if runtime is not None and runtime.enabled:
+            if not runtime.cancel_session_setup():
+                return
+        self._session = None
+
     @staticmethod
     def _applied_pulse_rate(
         observation: mcu.MicrocontrollerObservation, camera_role: int

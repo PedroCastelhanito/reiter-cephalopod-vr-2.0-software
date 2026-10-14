@@ -1,0 +1,94 @@
+[
+  {
+    "label": "generation",
+    "value": "964bf477-7c16-4307-97f4-2fdffd57177a"
+  },
+  {
+    "label": "0-40278236-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "0-40278236-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "0-40065509-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "0-40065509-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "0-40747103-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "0-40747103-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40278236-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40278236-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40065509-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40065509-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40747103-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40747103-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "configuration_unchanged",
+    "value": true
+  }
+]

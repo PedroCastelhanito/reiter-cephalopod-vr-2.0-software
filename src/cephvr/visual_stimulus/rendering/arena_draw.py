@@ -94,6 +94,7 @@ class ArenaOutputDrawer:
         )
         if surface is None:
             raise RuntimeError(f"physical surface {surface_id} is not prepared")
+        self.program["calibration_plane_active"].value = 0
         self.program["model"].write(
             _matrix_bytes(arena_model_matrix(settings, dict(snapshot.state)))
         )
@@ -155,6 +156,28 @@ class ArenaOutputDrawer:
             fixed_height_mm=0.0,
             fixed_pitch_deg=0.0,
             fixed_roll_deg=0.0,
+        )
+        # Full-raster diagnostic planes can overlap; draw only this face's plane.
+        import math
+
+        bl, br, tl = (
+            surface.bottom_left_mm,
+            surface.bottom_right_mm,
+            surface.top_left_mm,
+        )
+        u = tuple(br[i] - bl[i] for i in range(3))
+        v = tuple(tl[i] - bl[i] for i in range(3))
+        normal = (
+            u[1] * v[2] - u[2] * v[1],
+            u[2] * v[0] - u[0] * v[2],
+            u[0] * v[1] - u[1] * v[0],
+        )
+        length = math.sqrt(sum(n * n for n in normal))
+        normal = (normal[0] / length, normal[1] / length, normal[2] / length)
+        self.program["calibration_plane_active"].value = 1
+        self.program["calibration_plane"].value = (
+            *normal,
+            -sum(normal[i] * bl[i] for i in range(3)),
         )
         self.program["model"].write(
             _matrix_bytes(arena_model_matrix(pose, {"x": 0.0, "y": 0.0, "yaw": 0.0}))

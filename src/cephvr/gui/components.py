@@ -207,6 +207,7 @@ class Console(QPlainTextEdit):
     def __init__(self, *, lines: int = 6, grow: bool = True) -> None:
         super().__init__()
         self.setProperty("role", "console")
+        self.setTabChangesFocus(True)
         self.setReadOnly(True)
         self.setMaximumBlockCount(256)
         height = lines * (SIZES.console_font + 5) + 32
@@ -330,6 +331,7 @@ class LogConsole(Console):
             dialog.setWindowTitle("Log entry details")
             layout = QVBoxLayout(dialog)
             detail_view = QPlainTextEdit(dialog)
+            detail_view.setTabChangesFocus(True)
             detail_view.setProperty("role", "source")
             detail_view.setReadOnly(True)
             detail_view.setPlainText(data.details)

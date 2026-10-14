@@ -1,0 +1,9 @@
+{
+  "camera_frames": 17,
+  "review_capture_slots": 21,
+  "camera_basis": "ceil(1.2 * 0.2248805s maximum measured Tracking-role consumer burst *60Hz)=17; Behavior requires11",
+  "review_basis": "bounded diagnostic sizing for the measured shared-workload consumer burst ceil(1.2 *0.2778992s *60Hz)=21; proxy, not measured review demand; require direct IO/occupancy retest and uninstrumented confirmation",
+  "review_cpu_bytes_at_current1588x1344": 209158656,
+  "max_recording_bytes": 268435456,
+  "status": "not yet applied or accepted"
+}

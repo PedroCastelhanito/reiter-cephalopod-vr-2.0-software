@@ -1,0 +1,16 @@
+{
+  "status": "temporary measured-capacity experiment; retain only if repeated validation supports it",
+  "basis": "ceil(1.2 * observed finite highwater); highwater at a limit is censored and cannot guarantee zero drops",
+  "recording_queue_frames": {
+    "before": 10,
+    "candidate": 12,
+    "observed_peak": 10
+  },
+  "capture_slots": {
+    "before": 3,
+    "candidate": 4,
+    "observed_peak": 3
+  },
+  "restore_backup": "acquisition_config.toml.before and visual_stimulus_config.toml.before",
+  "timeouts_unchanged": true
+}

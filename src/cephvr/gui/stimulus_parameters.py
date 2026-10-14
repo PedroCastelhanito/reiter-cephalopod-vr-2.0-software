@@ -235,7 +235,6 @@ class StimulusParameters(QWidget):
             self.forms.append(form)
             if isinstance(form, EpochMotion):
                 form.extra.hide()
-                form.summary.setText("Custom motion · saved functions preserved")
                 if not looming and values["kind"] not in ("video", "arena"):
                     self.primary.addWidget(form)
                 else:

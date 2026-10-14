@@ -1,0 +1,132 @@
+{
+  "date": "2026-10-14",
+  "status": "measurement_assessment_pending_repeat_and_external_decode",
+  "sources": [
+    "run.json",
+    "verification.json",
+    "observed/run.json",
+    "observed/occupancy-15972.jsonl",
+    "observed/occupancy-2988.jsonl",
+    "observed/occupancy-32984.jsonl",
+    "context.json"
+  ],
+  "scope": {
+    "workload": "unpaired 60 s real Behavior and Tracking-role camera recordings plus four-output Visual Stimulus recording",
+    "tracking_processing_backend": "disabled",
+    "eye_camera": "disabled",
+    "observed_run_cleanup_confirmed": true,
+    "observed_run_configuration_restored": true,
+    "baseline_videos_counted_and_fully_decoded": true,
+    "observed_run_external_decode": "not run; parent requested no decode/test during sequential recording work"
+  },
+  "comparison_caveat": "The observed run loaded sitecustomize queue instrumentation; the baseline run did not. Instrumentation overhead and run-to-run variance are confounded. Observed Visual Stimulus capacity drops increased from 2342 baseline to 3312; do not attribute that change to production behavior or call the runs method-equivalent.",
+  "baseline": {
+    "visual_stimulus": {
+      "real_groups_per_s": 59.95,
+      "admitted": 1206,
+      "capacity_drops": 2342,
+      "same_slot_omissions": 49
+    },
+    "cameras": {
+      "behavioral": {"received_frames_per_s": 29.95, "recording_queue_drops": 6},
+      "tracking_role": {"received_frames_per_s": 59.93333333333333, "recording_queue_drops": 26}
+    },
+    "cutoff_to_session_ended_ms": 321.2069,
+    "full_decode": true
+  },
+  "observed": {
+    "visual_stimulus": {
+      "eligible_groups": 3601,
+      "input_submitted": 3600,
+      "admitted": 287,
+      "capacity_drops": 3312,
+      "failed_capture": 0,
+      "unresolved_capture": 0,
+      "max_inflight_captures": 3,
+      "current_capture_slots": 3,
+      "capture_admission_to_input_close_ms": 61191.08,
+      "input_close_ms": 0.0333
+    },
+    "cameras": {
+      "behavioral": {
+        "configured_recording_queue_frames": 10,
+        "configured_pending_records_capacity": 10000,
+        "max_waiting_pixels": 8,
+        "max_pending_records": 9,
+        "recording_queue_drops": 0,
+        "max_queue_wait_ms": 247.1176,
+        "max_host_receipt_to_enqueue_ms": 3.6695,
+        "max_consumer_service_ms": 277.8992,
+        "terminal_drain_ms": 21.7295,
+        "stop_capture_ms": 42.3447,
+        "queue_close_to_drain_ms": 90.4319
+      },
+      "tracking_role": {
+        "configured_recording_queue_frames": 10,
+        "configured_pending_records_capacity": 10000,
+        "max_waiting_pixels": 10,
+        "max_pending_records": 14,
+        "recording_queue_drops": 3,
+        "max_queue_wait_ms": 209.1797,
+        "max_host_receipt_to_enqueue_ms": 1.4552,
+        "max_consumer_service_ms": 224.8805,
+        "terminal_drain_ms": 0.8147,
+        "stop_capture_ms": 9.3334,
+        "queue_close_to_drain_ms": 23.3616
+      }
+    }
+  },
+  "margin_calculations": {
+    "rule": "ceil(1.2 * measured high-water occupancy), in the owning capacity units; a measured maximum at a hard cap is censored and is only a lower bound on demand",
+    "camera_recording_queue_frames": {
+      "observed_tracking_high_water": 10,
+      "current_capacity": 10,
+      "saturation": true,
+      "measured_demand_is_censored": true,
+      "minimum_20_percent_candidate": 12,
+      "recommendation": "12 frames as a temporary candidate for the shared camera recording_queue_frames field; repeat under equivalent instrumented workload and confirm zero drops before acceptance"
+    },
+    "camera_pending_records_capacity": {
+      "observed_high_water_max": 14,
+      "current_capacity": 10000,
+      "minimum_20_percent_candidate": 17,
+      "recommendation": "retain 10000; observed usage is far below the current bound"
+    },
+    "visual_stimulus_capture_slots": {
+      "observed_high_water": 3,
+      "current_capacity": 3,
+      "minimum_20_percent_candidate": 4,
+      "recommendation": "4 slots as a temporary candidate; repeat a matched run and establish memory/latency impact before acceptance"
+    }
+  },
+  "timing_bounds": {
+    "camera_encoder_stall_timeout": {
+      "configured_ms": 10000,
+      "observed_max_consumer_service_ms": 277.8992,
+      "observed_max_times_1_2_ms": 333.47904,
+      "recommendation": "retain 10000 ms; observed isolated consumer service maxima do not justify changing the failure timeout"
+    },
+    "camera_post_cutoff_drain_margin": {
+      "configured_ms": 125,
+      "behavioral_terminal_drain_ms": 21.7295,
+      "behavioral_terminal_drain_times_1_2_ms": 26.0754,
+      "tracking_terminal_drain_ms": 0.8147,
+      "tracking_terminal_drain_times_1_2_ms": 0.97764,
+      "limitation": "The recorded terminal drain observation includes the configured margin; it cannot isolate camera delivery demand or establish a worst-case bound. Keep the accepted 125 ms value pending the A10 full-load/Eye verification."
+    },
+    "file_closure": {
+      "behavioral_queue_close_to_drain_ms": 90.4319,
+      "tracking_queue_close_to_drain_ms": 23.3616,
+      "visual_stimulus_input_close_ms": 0.0333,
+      "limitation": "These are instrumented queue/input closure components, not end-to-end encoder finalization, file sync, frame-log close, controller Finished delivery, or complete output closure. Baseline end-to-end cutoff-to-session-ended was 321.2069 ms; no matched observed end-to-end closure metric was derived here."
+    }
+  },
+  "recommendations_and_limits": [
+    "Treat camera recording_queue_frames=12 and Visual Stimulus capture_slots=4 only as measured temporary candidates, not accepted configuration or zero-loss proof.",
+    "The tracking camera queue reached its 10-frame pixel cap and dropped 3 frames; the observed maximum is censored, so 12 is a floor candidate, not evidence of sufficient headroom.",
+    "The Visual Stimulus queue reached its 3-slot in-flight cap. Its 3312 observed capacity drops versus 2342 baseline, with only 287 admitted versus 1206 baseline, indicate substantial method/overhead or run variability. Repeat with controlled instrumentation before judging the 4-slot candidate.",
+    "Camera pending-record occupancy peaked at 14 of 10000 and had no capacity failure; do not increase it from these observations.",
+    "No test, video decode, hardware command, protocol mutation, or configuration change was performed for this assessment.",
+    "Tracking remains deferred. Eye camera is wired/paired by the owner request but was disabled in these trials. Photodiode assignment remains unset and physical optical timing remains deferred."
+  ]
+}

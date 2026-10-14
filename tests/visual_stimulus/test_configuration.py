@@ -55,6 +55,10 @@ class VisualStimulusConfigurationTests(unittest.TestCase):
         self.assertTrue(policies.HasField("pacing_refresh_hz"))
         self.assertEqual(policies.pacing_refresh_hz, 60.0)
         self.assertFalse(policies.HasField("pacing_output_id"))
+        self.assertEqual(policies.projection.near_mm, 1)
+        self.assertEqual(policies.projection.far_mm, 250)
+        self.assertEqual(policies.projection.positional_tolerance_mm, 0.000166)
+        self.assertEqual(policies.projection.orthogonality_tolerance, 0.000001)
 
     def test_display_validation_returns_exact_output_ids(self) -> None:
         surface = {
@@ -302,3 +306,97 @@ def test_all_output_vsync_without_pacer_preserves_common_recording_rate():
         resolve_pacing_profile(
             json.dumps(source), max_bytes=1_000_000, refresh_hz=60.0, output_id=None
         )
+
+
+def test_free_run_keeps_nominal_recording_rate_and_disables_every_swap():
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.configuration import resolve_pacing_profile
+
+    source = json.loads(valid_display_json())
+    source.update(
+        presentation_mode="free_run",
+        photodiode_enabled=False,
+        photodiode_output_id=None,
+        pacing_output_id=None,
+    )
+    resolved = resolve_pacing_profile(
+        json.dumps(source), max_bytes=1_000_000, refresh_hz=60.0, output_id=None
+    )
+    resolved.require_trial_marker()
+    assert resolved.review_refresh_rate() == (60, 1)
+    assert all(
+        resolved.requested_swap_interval(o.output_id) == 0
+        for o in resolved.active_outputs
+    )
+    source.update(
+        photodiode_enabled=True, photodiode_output_id=source["outputs"][0]["output_id"]
+    )
+    resolved = resolve_pacing_profile(
+        json.dumps(source), max_bytes=1_000_000, refresh_hz=60.0, output_id=None
+    )
+    assert all(
+        resolved.requested_swap_interval(o.output_id) == 0
+        for o in resolved.active_outputs
+    )
+    for mode, expected in (("photodiode_only_vsync", 1), ("all_outputs_vsync", 1)):
+        source["presentation_mode"] = mode
+        resolved = resolve_pacing_profile(
+            json.dumps(source), max_bytes=1_000_000, refresh_hz=60.0, output_id=None
+        )
+        assert (
+            resolved.requested_swap_interval(source["outputs"][0]["output_id"])
+            == expected
+        )
+        assert resolved.requested_swap_interval("other") == (
+            1 if mode == "all_outputs_vsync" else 0
+        )
+
+
+def test_file_projection_overrides_saved_profile_and_reloads(tmp_path):
+    import pytest
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.shared.config import ConfigurationError
+    from cephvr.visual_stimulus.config.pacing import resolve_pacing_profile
+    from cephvr.visual_stimulus.config.projection import policy_projection
+    from cephvr.visual_stimulus.configuration import load_projection_settings
+
+    config = tmp_path / "config/backends/visual_stimulus_config.toml"
+    policy = tmp_path / "contracts/policy/visual_stimulus_policy.toml"
+    config.parent.mkdir(parents=True)
+    policy.parent.mkdir(parents=True)
+    original = (_ROOT / config.relative_to(tmp_path)).read_text()
+    config.write_text(original)
+    policy.write_bytes((_ROOT / policy.relative_to(tmp_path)).read_bytes())
+    limits = load_file_policies(tmp_path)
+    source = json.loads(valid_display_json())
+    source["geometry"].update(near_mm=5000, far_mm=1, orthogonality_tolerance=2)
+    saved = json.dumps(source)
+    resolved = resolve_pacing_profile(
+        saved,
+        max_bytes=1_000_000,
+        refresh_hz=60.0,
+        output_id=None,
+        projection=policy_projection(limits.projection),
+    )
+    assert resolved.geometry.far_mm == 250
+    assert resolved.geometry.near_mm == 1
+    assert json.loads(saved)["geometry"]["near_mm"] == 5000
+    config.write_text(original.replace("far_mm = 250.0", "far_mm = 1000.0"))
+    assert load_projection_settings(tmp_path)["far_mm"] == 1000
+    assert limits.projection.far_mm == 250
+    for replacement in ("0", "nan", "true"):
+        config.write_text(original.replace("near_mm = 1.0", "near_mm = " + replacement))
+        with pytest.raises(ConfigurationError, match="projection.near_mm"):
+            load_file_policies(tmp_path)
+    config.write_text(original.replace("far_mm = 250.0", "far_mm = 0.5"))
+    with pytest.raises(ConfigurationError, match="must precede"):
+        load_file_policies(tmp_path)
+    config.write_text(
+        original.replace(
+            "orthogonality_tolerance = 0.000001", "orthogonality_tolerance = 1"
+        )
+    )
+    with pytest.raises(ConfigurationError, match="must be below 1"):
+        load_projection_settings(tmp_path)

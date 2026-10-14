@@ -126,6 +126,77 @@ def test_native_preparation_supports_first_use_with_temporary_profile(
     assert preparation._resource_keys == []
 
 
+@pytest.mark.parametrize("pattern", ["matching_bars", "wrong_pixel_length", "grid"])
+def test_reference_file_controls_pixel_lengths_and_rejects_other_patterns(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pattern: str
+) -> None:
+    from cephvr.gui.calibration_arena import make_reference_bars_glb
+    from cephvr.visual_stimulus.resources import display_calibration
+
+    raw = json.loads(valid_display_json())
+    raw["calibration_view"] = "reference_bars"
+    output = raw["outputs"][0]
+    output["reference_bars"] = {"x_length_px": 50, "y_length_px": 30}
+    arena = (
+        _arena_bytes()
+        if pattern == "grid"
+        else make_reference_bars_glb(
+            {
+                output["output_id"]: (
+                    100,
+                    100,
+                    51 if pattern == "wrong_pixel_length" else 50,
+                    30,
+                )
+            }
+        )
+    )
+    target = tmp_path / "calibration/reference_bars.glb"
+    target.parent.mkdir()
+    target.write_bytes(arena)
+    request = _request(tmp_path, arena)
+    request.arena_relative_path = "calibration/reference_bars.glb"
+    request.profile_json = json.dumps(raw)
+    request.profile_sha256 = hashlib.sha256(request.profile_json.encode()).hexdigest()
+    sources: list[_ProtectedFile] = []
+
+    def source_factory(path: Path) -> _ProtectedFile:
+        source = _ProtectedFile(path)
+        sources.append(source)
+        return source
+
+    monkeypatch.setattr(
+        display_calibration,
+        "prepare_calibration",
+        lambda *_args, **_kwargs: PreparedCalibration(
+            assets=(), resources=(), content={}
+        ),
+    )
+    preparation = NativePreparation(
+        _UnusedPort(),
+        renderer_generation="renderer-generation",
+        source_factory=source_factory,
+    )
+    deadline = time.perf_counter_ns() + 5_000_000_000
+    if pattern != "matching_bars":
+        with pytest.raises(ValueError, match="differs from the output pixel lengths"):
+            preparation.prepare_display_calibration(
+                request, lambda *_args: None, deadline
+            )
+        assert len(sources) == 1 and sources[0].close_attempts == 1
+        return
+    prepared = preparation.prepare_display_calibration(
+        request, lambda *_args: None, deadline
+    )
+    primitive = prepared.arena.scene.nodes[0].primitives[0]
+    assert len(primitive.positions) == 24
+    horizontal, vertical = primitive.positions[16:20], primitive.positions[20:]
+    assert max(p[0] for p in horizontal) - min(p[0] for p in horizontal) == 50
+    assert max(p[1] for p in vertical) - min(p[1] for p in vertical) == 30
+    assert preparation.release_display_calibration(prepared)
+    assert sources[0].close_attempts == 1
+
+
 def test_failed_protected_source_close_remains_owned_for_retry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -598,6 +669,19 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
         assert mask[2:] == ((0.0, 0.0, 0.0), (5, 6, 4, 4))
         output_draw = next(e for e in draws if e[1:3] == (mask[1], "output"))
         assert gl.events.index(mask) < gl.events.index(output_draw)
+    copies = [event for event in gl.events if event[0] == "copy"]
+    assert {event[1] for event in copies} == set(outputs)
+    for output_id in outputs:
+        copy = next(event for event in copies if event[1] == output_id)
+        if calibration_view == "reference_bars":
+            bars = [event for event in gl.events if event[:2] == ("bar", output_id)]
+            assert bars and all(
+                gl.events.index(bar) < gl.events.index(copy) for bar in bars
+            )
+            frame_rects = [bar[3] for bar in bars if bar[2] == (1.0, 1.0, 1.0)]
+            assert len(frame_rects) == 4
+            assert len(bars) == 8
+
     assert all(output.context.scissor is None for output in outputs.values())
     if configured_bars and calibration_view == "reference_bars":
         for output_id in outputs:
@@ -606,8 +690,8 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
                 o for o in display.active_outputs if o.output_id == output_id
             ).reference_bars
             assert configured is not None
-            assert bars[2][3][2] == configured.x_length_px
-            assert bars[3][3][3] == configured.y_length_px
+            assert bars[-2][3][2] == configured.x_length_px
+            assert bars[-1][3][3] == configured.y_length_px
     assert {event[2] for event in draws} == (
         set() if calibration_view == "reference_bars" else {"arena", "warp", "output"}
     )
@@ -628,8 +712,9 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
     } == set(outputs)
 
     if calibration_view == "frame_grid":
-        import struct
-
+        for frame in owner.frames.values():
+            assert frame.arena_drawer.program["calibration_plane_active"].value == 1
+            assert len(frame.arena_drawer.program["calibration_plane"].value) == 4
         allocation_count = len(gl.resources)
         owner.update(
             {
@@ -640,23 +725,27 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
         owner.present(display, prepared)
         assert len(gl.resources) == allocation_count
         for mapping in display.active_mappings[:4]:
+            assert owner.valid_areas[mapping.mapping_id] == (0.1, 0.2, 0.8, 0.9)
+            import struct
+
             data = (
                 owner.frames[mapping.output_id]
                 .warp_vertex_buffers[mapping.mapping_id]
                 .last_write
             )
-            expected_x = (
-                2
-                * (mapping.viewport.x + 0.1 * mapping.viewport.width)
-                / owner.frames[mapping.output_id].width
-                - 1
+            words = struct.unpack("16f", data)
+            assert (words[6] - words[2]) / 2 / (words[4] - words[0]) == pytest.approx(1)
+            assert (words[11] - words[3]) / 2 / (words[9] - words[1]) == pytest.approx(
+                1
             )
-            assert struct.unpack("16f", data)[2] == pytest.approx(expected_x)
+            assert owner.frames[mapping.output_id].warp_program["valid_area"].value == (
+                0.1,
+                0.2,
+                0.8,
+                0.9,
+            )
         first_mapping = display.active_mappings[0]
-        first_buffer = owner.frames[first_mapping.output_id].warp_vertex_buffers[
-            first_mapping.mapping_id
-        ]
-        last_valid = first_buffer.last_write
+        last_valid = dict(owner.valid_areas)
         with pytest.raises(ValueError, match="unknown"):
             owner.update(
                 {
@@ -669,8 +758,8 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
                     "unknown": ((0, 0), (1, 0), (0, 1), (1, 1)),
                 }
             )
-        assert first_buffer.last_write == last_valid
-        with pytest.raises(ValueError, match="area tolerance"):
+        assert owner.valid_areas == last_valid
+        with pytest.raises(ValueError, match="one output pixel"):
             owner.update(
                 {
                     first_mapping.mapping_id: (
@@ -681,7 +770,7 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
                     )
                 }
             )
-        assert first_buffer.last_write == last_valid
+        assert owner.valid_areas == last_valid
         with pytest.raises(ValueError, match="unknown"):
             owner.update({"unknown": ((0, 0), (1, 0), (0, 1), (1, 1))})
         with pytest.raises(ValueError):
@@ -954,3 +1043,47 @@ def test_cleanup_receipts_cover_all_announced_cpu_sources_only_after_close(
         "visual_stimulus:display:calibration:profile"
         not in preparation.cleanup().released
     )
+
+
+def test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported_targets():
+    from cephvr.visual_stimulus.rendering.scene_resources import SceneOutputBuilder
+
+    gl = _FakeGL()
+    display, prepared, outputs = _native_calibration_inputs(gl)
+    content = {}
+    for index, mapping in enumerate(display.active_mappings):
+        profile = prepared.display_calibration.content[mapping.mapping_id]
+        assert isinstance(profile, GeometricProfile)
+        content[mapping.mapping_id] = profile.model_copy(
+            update={
+                "calibration_id": "reference_valid"
+                if index == 0
+                else "imported_optical",
+                "valid_area": (0.25, 0.25, 0.75, 0.75),
+            }
+        )
+    artifact = SimpleNamespace(
+        identity=SimpleNamespace(
+            trial_id="valid-raster", resource_generation="generation"
+        ),
+        manifest=SimpleNamespace(resources=()),
+        display=display,
+        epochs=(),
+    )
+    builder = SceneOutputBuilder()
+    frames = {}
+    builder.prepare_trial(
+        artifact, SimpleNamespace(prepared_content=content), outputs, {}, frames
+    )
+    for index, mapping in enumerate(display.active_mappings):
+        target = frames[mapping.output_id].surface_textures[mapping.mapping_id]
+        expected = (
+            (mapping.viewport.width // 2, mapping.viewport.height // 2)
+            if index == 0
+            else (mapping.viewport.width, mapping.viewport.height)
+        )
+        assert target.size == expected
+    for frame in frames.values():
+        frame.activate()
+        for resource in reversed(frame.owned_resources):
+            resource.release()

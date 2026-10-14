@@ -1,0 +1,14 @@
+{
+  "controller_generation": "b51cab36-51b9-4a41-bcc1-458fed93fb28",
+  "result": {
+    "command_id": "ca801a9f-5ec6-4a86-a32f-f49b4cc507b5",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "change": "only acquisition.recording_queue_frames 10 to 17",
+  "baseline_preserved_except_queue": true,
+  "evidence": "final-sequence/measurement-assessment.json",
+  "scope": "measured burst demand times1.2; sustained guarantees not established"
+}

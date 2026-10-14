@@ -48,16 +48,7 @@ class RetainedReviewDialog(QDialog):
         layout.setSpacing(8)
         heading = QLabel("Controller events to review", self)
         heading.setProperty("role", "title")
-        subtitle = QLabel(
-            "Review retained errors, recovery work, warnings, and pending operations "
-            "before continuing.",
-            self,
-        )
-        subtitle.setWordWrap(True)
-        subtitle.setProperty("role", "hint")
         layout.addWidget(heading)
-        layout.addWidget(subtitle)
-
         self.summary = QLabel(self)
         self.summary.setTextFormat(Qt.TextFormat.RichText)
         self.summary.setWordWrap(True)

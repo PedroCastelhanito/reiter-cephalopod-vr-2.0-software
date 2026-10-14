@@ -5,6 +5,17 @@ representation after off-axis surface rendering; it does not select an automatic
 calibrator, a physical optical simulation or measured rig values. The one renderer,
 four direct surface views and fixed calibrated physical observer remain unchanged.
 
+Optional `valid_area: [x0,y0,x1,y1]` is a nondegenerate rectangle in normalized
+full-output coordinates (not viewport-local UV). It must cover at least one native
+pixel per axis. GUI whole-pixel dimensions times measured X/Y pitch define centered
+usable physical view extents; newly prepared GUI affine views render at the valid
+pixel resolution. Texture physical units and phase stay unchanged. Crop outside
+this rectangle; `intended_coverage` describes the base mesh footprint. Absent bounds
+retain legacy coverage. Live diagnostics crop their protected scene at fixed pitch
+until fresh preparation. Prepared metadata retains the rectangle and Idle uses its
+output union. Imported geometry/warps retain their existing interpretation.
+The independent V22 marker keeps its existing scene-mask ordering.
+
 ## Mapping ownership and representation
 
 Each prepared surface-to-output mapping identifies its source surface, destination

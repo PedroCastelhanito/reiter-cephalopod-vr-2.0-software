@@ -65,18 +65,28 @@ class ProjectionStore:
         self.transfers: dict[str, PreviewTransfer] = {}
         self.expected_display: tuple[str, int] | None = None
         self.work = pb.WorkContext()
-        self.previous_trial: pb.TrialContext | None = None
+        self.previous_warning_scope: tuple[pb.WorkContext, int] | None = None
         self.configuration_revision = 0
 
     def set_scope(self, work: pb.WorkContext, configuration_revision: int) -> None:
         old_session = self._session(self.work)
         new_session = self._session(work)
         if old_session != new_session:
+            self.previous_warning_scope = (
+                (
+                    pb.WorkContext.FromString(self.work.SerializeToString()),
+                    self.configuration_revision,
+                )
+                if old_session is not None and new_session is None
+                else None
+            )
             self.warnings.clear()
-            self.previous_trial = None
+        elif configuration_revision != self.configuration_revision:
+            self.previous_warning_scope = None
         elif self.work.WhichOneof("work") == "trial" and self.work != work:
-            self.previous_trial = pb.TrialContext.FromString(
-                self.work.trial.SerializeToString()
+            self.previous_warning_scope = (
+                pb.WorkContext.FromString(self.work.SerializeToString()),
+                self.configuration_revision,
             )
         self.work.CopyFrom(work)
         self.configuration_revision = configuration_revision
@@ -107,9 +117,15 @@ class ProjectionStore:
                 and view.configuration_revision == self.configuration_revision
             )
         return view.work == self.work or (
-            view.work.WhichOneof("work") == "trial"
-            and self.previous_trial is not None
-            and view.work.trial == self.previous_trial
+            self.previous_warning_scope is not None
+            and view.work == self.previous_warning_scope[0]
+            and (
+                view.work.WhichOneof("work") != "session"
+                or (
+                    view.HasField("configuration_revision")
+                    and view.configuration_revision == self.previous_warning_scope[1]
+                )
+            )
         )
 
     def _budget(self, delta: int) -> None:

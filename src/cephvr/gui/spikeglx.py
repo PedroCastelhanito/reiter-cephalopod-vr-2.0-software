@@ -2,7 +2,7 @@
 
 from typing import cast
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QHeaderView,
@@ -17,12 +17,13 @@ from cephvr.gui.device_panel import DevicePanel, entry
 from cephvr.gui.spikeglx_snapshot import SpikeGLXSnapshot
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import SIZES
-from cephvr.gui.view import DashboardView
+from cephvr.gui.view import DashboardView, Phase
 from cephvr.synchronization.v1 import spikeglx_pb2 as sync_pb
 
 
 class SpikeGLXPanel(DevicePanel):
     connection_requested = pyqtSignal()
+    pairing_requested = pyqtSignal(bool)
     inventory_update_requested = pyqtSignal(object)
 
     def __init__(self) -> None:
@@ -34,8 +35,10 @@ class SpikeGLXPanel(DevicePanel):
         self.pairing = QCheckBox("SpikeGLX pairing enabled")
         self.pairing.setChecked(False)
         self.pairing.setToolTip(
-            "Read-only host setting from config/backends/synchronization_config.toml"
+            "Enable SpikeGLX recording for this session. New-session default: config/backends/synchronization_config.toml"
         )
+        self.pairing_pending = False
+        self.pairing.clicked.connect(self.pairing_requested.emit)
         self.pairing.setEnabled(False)
         self.configuration.body.insertWidget(1, self.pairing)
         self.form.setContentsMargins(0, SIZES.section_toggle_gap, 0, 0)
@@ -56,7 +59,14 @@ class SpikeGLXPanel(DevicePanel):
             self.table.setColumnHidden(column, True)
         header = self.table.horizontalHeader()
         assert header is not None
-        for column, width in ((0, 42), (2, 102), (3, 58), (4, 82), (5, 48), (6, 40)):
+        for column, width in (
+            (0, 42),
+            (2, 102),
+            (3, 58),
+            (4, 82),
+            (5, 48),
+            (6, 26 + 2 * SIZES.table_cell_padding),
+        ):
             header.setSectionResizeMode(column, QHeaderView.ResizeMode.Fixed)
             header.resizeSection(column, width)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
@@ -111,11 +121,17 @@ class SpikeGLXPanel(DevicePanel):
         self.row_keys.append(key)
         self.table.set_control(row, 0, enabled)
         if custom:
-            remove = button("×", "compact", hint="Remove this custom input")
+            remove = button("×", "icon", hint="Remove this custom input")
+            remove.setFixedSize(26, 26)
             remove.setAccessibleName("Remove custom input")
             remove.clicked.connect(lambda: self.remove_custom(key))
             self.remove_buttons[key] = remove
             self.table.set_control(row, 6, remove)
+            host = self.table.cellWidget(row, 6)
+            assert host is not None
+            layout = host.layout()
+            assert layout is not None
+            layout.setAlignment(remove, Qt.AlignmentFlag.AlignCenter)
         for col, control in enumerate(self.rows[key]):
             control.setAccessibleName(
                 f"{name} {('signal', 'stream', 'index', 'channel', 'bit')[col]}"
@@ -395,11 +411,16 @@ class SpikeGLXPanel(DevicePanel):
     def apply_view(self, view: DashboardView) -> None:
         super().apply_view(view)
         self.action_buttons[0].setEnabled(view.connected and not view.sample)
-        self.pairing.setEnabled(self.can_review and view.sample)
+        self.pairing.setEnabled(
+            self.can_review
+            and view.phase == Phase.CONFIGURATION
+            and not self.pairing_pending
+        )
         self.refresh_controls()
 
     def request(self, name: str) -> None:
-        if self.can_review:
+        if name == "Test connection":
+            if self.action_buttons[0].isEnabled():
+                self.connection_requested.emit()
+        elif self.can_review:
             super().request(name)
-        elif name == "Test connection":
-            self.connection_requested.emit()

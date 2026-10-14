@@ -2,7 +2,7 @@
 # Visual Stimulus is required in the accepted modes; this file offers no switch to disable it.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/visual_stimulus_policy.toml; versions must match.
-policy_version = 11
+policy_version = 12
 
 [rpc]
 # E08: fixed Visual Stimulus coordinator service port; loopback only; restart required after edits.
@@ -42,7 +42,15 @@ record_stall_timeout_s = 10
 # Shared lifecycle and health timing retains its existing owner.
 
 [projection]
-# Corner/observer measurements, output assignments and clipping distances are unset.
+# V15: file-only rendering limits; reload for fresh Setup/calibration.
+# Depths are observer-relative per-view millimetres, not projector throw distances.
+near_mm = 1.0
+far_mm = 250.0
+# Numerical rectangle closure/minimum extent/observer distance threshold in mm.
+positional_tolerance_mm = 0.000166
+# Maximum absolute normalized screen-axis dot product (dimensionless).
+orthogonality_tolerance = 0.000001
+# Corner/observer measurements and output assignments are unset.
 # Profiles, mesh resolution and measured calibration values are unset; no auto solver.
 # The actual position remains unset; virtual-arena motion is separate.
 

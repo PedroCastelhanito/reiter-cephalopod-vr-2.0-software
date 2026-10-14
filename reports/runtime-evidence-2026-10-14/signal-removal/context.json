@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-14",
+  "source": "dirty working tree with concurrent unrelated GUI/GPU changes",
+  "pytest": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"microcontroller_fixed_signal_tests_and_layout or microcontroller_role_outputs_clear or microcontroller_file_restores_camera_output_rows or managed_mcu_pending_completion or managed_microcontroller_emits or pin_test_stop_toggle or camera_wiring or projector_wiring\" --basetemp=.tmp-signal-remove --junitxml=reports/runtime-evidence-2026-10-14/signal-removal/tests.xml",
+  "result": "7 passed, 461 deselected",
+  "static": "Scoped Ruff/format5 files; Win32 mypy4 sources; boundaries687/zero violations; whitespace pass",
+  "limits": "Offscreen fixture validation only; no runtime restart, device command or native acceptance."
+}

@@ -8,7 +8,10 @@ from collections.abc import Callable
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
-from cephvr.shared.cleanup_outputs import cleanup_output_discharged
+from cephvr.shared.cleanup_outputs import (
+    cleanup_output_absence_proven,
+    cleanup_output_discharged,
+)
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandCapacityError, CommandConflict, CommandLedger
 from cephvr.shared.credentials import default_runtime_root
@@ -216,7 +219,23 @@ class RecoveryCoordinator:
         }
         observed = {output.output_key: output for output in report.outputs}
         if expected != observed.keys() or len(observed) != len(report.outputs):
-            return False
+            context = self.registration.state.context
+            if (
+                expected
+                or self.registration.state.topology is not None
+                or context.paired_spikeglx
+                or context.outputs
+                or not report.outputs
+                or len(observed) != len(report.outputs)
+                or any(
+                    not cleanup_output_absence_proven(output)
+                    for output in report.outputs
+                )
+            ):
+                return False
+            # Preliminary registration has no output obligations yet; retain only
+            # path-free facts that the worker proves were never created.
+            return True
         return all(cleanup_output_discharged(observed[key]) for key in expected)
 
     async def get_recovery_state(

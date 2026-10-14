@@ -199,6 +199,56 @@ def test_initial_camera_warning_scope_matches_loaded_configuration(
         runtime.projections.accept_warnings(report)
 
 
+def test_late_setup_warning_is_limited_to_the_just_retired_session_scope(
+    tmp_path: Path,
+) -> None:
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.acquisition.worker.warnings import (
+        WarningOccurrence,
+        WorkerWarningLedger,
+    )
+    from cephvr.controller.projections import ProjectionError
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    session = pb.SessionContext(controller_generation=_id(), session_id=_id())
+    session_work = pb.WorkContext(session=session)
+    revision = runtime.configuration_state.revision
+    runtime.projections.set_scope(session_work, revision)
+    producer = acq.WorkerContext(
+        worker=pb.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=_id()
+        ),
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+    )
+    ledger = WorkerWarningLedger(producer)
+    ledger.begin_scope(session_work, configuration_revision=revision)
+    report = svc.AcquisitionWarningReport(source=backend)
+    report.view.CopyFrom(
+        ledger.observe(WarningOccurrence("NATIVE_TIMESTAMP_UNAVAILABLE", 1))
+    )
+
+    # Cleanup clears the active projection before a queued optional warning lands.
+    runtime.projections.set_scope(pb.WorkContext(), revision)
+    assert runtime.projections.accept_warnings(report)
+
+    report.view.configuration_revision += 1
+    with pytest.raises(ProjectionError, match="scope/revision"):
+        runtime.projections.accept_warnings(report)
+    report.view.configuration_revision -= 1
+    report.view.work.session.session_id = _id()
+    with pytest.raises(ProjectionError, match="scope/revision"):
+        runtime.projections.accept_warnings(report)
+
+    report.view.work.CopyFrom(session_work)
+    next_session = pb.WorkContext(
+        session=pb.SessionContext(controller_generation=_id(), session_id=_id())
+    )
+    runtime.projections.set_scope(next_session, revision)
+    with pytest.raises(ProjectionError, match="scope/revision"):
+        runtime.projections.accept_warnings(report)
+
+
 @pytest.mark.parametrize("version", [3, 4])
 async def test_microcontroller_status_completes_exact_operator_operation(
     tmp_path: Path,

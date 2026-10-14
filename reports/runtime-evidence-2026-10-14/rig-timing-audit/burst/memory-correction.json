@@ -1,0 +1,11 @@
+{
+  "measured_video_width": 2560,
+  "measured_video_height": 2000,
+  "capture_slots": 21,
+  "cpu_required_bytes": 501760000,
+  "cpu_budget_bytes": 602112000,
+  "gpu_capture_required_bytes": 512000000,
+  "gpu_budget_bytes": 614400000,
+  "margin": 1.2,
+  "status": "temporary diagnostic; Setup must validate total assets"
+}

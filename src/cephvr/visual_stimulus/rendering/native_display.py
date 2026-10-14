@@ -36,8 +36,10 @@ class DisplayGpuUnavailableError(DisplayUnavailableError):
     """A healthy context has the wrong adapter, rather than a GPU operation fault."""
 
     remedy = (
-        "Set Windows Graphics preference for the managed cephvr-python.exe to "
-        "the RTX 5060 Ti, then close and reopen Runtime GUI."
+        "The managed cephvr-renderer.exe requests the high-performance GPU, "
+        "but its actual context is not on the RTX 5060 Ti. Restart the full runtime "
+        "after correcting the renderer's Windows/driver GPU assignment; reopening "
+        "only the GUI does not restart the renderer."
     )
 
 
@@ -56,6 +58,7 @@ def attach_window_context(moderngl: Any) -> Any:
 def configure_window(glfw: Any, output: Output) -> None:
     glfw.default_window_hints()
     glfw.window_hint(glfw.VISIBLE, glfw.TRUE)
+    glfw.window_hint(glfw.CENTER_CURSOR, glfw.FALSE)
     # All projector windows must survive focus moving to another output or the GUI.
     glfw.window_hint(glfw.AUTO_ICONIFY, glfw.FALSE)
     glfw.window_hint(glfw.RED_BITS, output.rgb_bits_per_channel)

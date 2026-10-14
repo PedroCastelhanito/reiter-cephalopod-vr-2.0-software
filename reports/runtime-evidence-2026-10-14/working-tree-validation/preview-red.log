@@ -1,0 +1,45 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+_______ test_preview_calibration_matches_export_and_uses_display_pixels _______
+
+app = <PyQt6.QtWidgets.QApplication object at 0x00000239FBDB8790>
+
+    def test_preview_calibration_matches_export_and_uses_display_pixels(app):
+        from PyQt6.QtGui import QColor, QImage
+    
+        from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.trial_preview_canvas import PreviewCanvas
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_surfaces import (
+            PreviewCorrection,
+            PreviewGeometry,
+            PreviewSurface,
+        )
+    
+        draft = {
+            "valid_width_px": "50",
+            "valid_height_px": "50",
+            "offset_x_px": "10",
+            "offset_y_px": "20",
+            "flip_x": "True",
+            "flip_y": "False",
+        }
+        correction = PreviewCorrection.from_draft("Front", draft, (100, 100))
+        assert not correction.error
+>       assert correction.valid_area == pytest.approx((0.35, 0.45, 0.85, 0.95))
+E       assert (0.25, 0.25, 0.75, 0.75) == approx((0.35 ...95 � 9.5e-07))
+E         
+E         comparison failed. Mismatched elements: 4 / 4:
+E         Max absolute difference: 0.2
+E         Max relative difference: 0.8
+E         Index | Obtained | Expected      
+E         0     | 0.25     | 0.35 � 3.5e-07
+E         1     | 0.25     | 0.45 � 4.5e-07
+E         2     | 0.75     | 0.85 � 8.5e-07
+E         3     | 0.75     | 0.95 � 9.5e-07
+
+tests\gui\test_dashboard.py:11709: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_preview_calibration_matches_export_and_uses_display_pixels
+1 failed, 1 passed, 491 deselected in 2.60s

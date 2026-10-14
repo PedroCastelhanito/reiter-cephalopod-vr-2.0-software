@@ -1,0 +1,11 @@
+acquisition_tracking_worker RecordPulseEvidence 90c91c62-fc90-46e5-b477-ba7fcb63b714 failed: RuntimeError: worker session is not prepared
+acquisition_eye_tracking_worker RecordPulseEvidence 2f026a94-4972-49e1-b86b-950c820bf6af failed: TimeoutError: worker operation completed after its original deadline
+acquisition_eye_tracking_worker RecordPulseEvidence f3b2eeb2-00f1-4af0-8ead-d3833ce9bc61 failed: RuntimeError: worker session is not prepared
+acquisition_behavioral_worker RecordPulseEvidence 4e4a1547-1513-4150-a93c-91f28f89e376 failed: TimeoutError: worker operation completed after its original deadline
+acquisition_behavioral_worker RecordPulseEvidence f20c9289-75c9-4ad7-b06d-825caadc3769 failed: RuntimeError: worker session is not prepared
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_OPERATION: late worker evidence is not a terminal sessionless camera operation
+InterruptSession 795db411-317b-4ebd-8295-95bd787165ae failed: SESSION_IDENTITY: no exact live session
+Cleanup 0b78c39c-274a-4299-b581-c9159ef8ef37 failed: CLEANUP_EVIDENCE: dispatched output 7a644f71-2e6d-4512-bd08-212be2ca98e2:acquisition:behavioral_cam has no closure result
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

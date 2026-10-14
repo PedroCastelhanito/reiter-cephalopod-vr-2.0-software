@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-14",
+  "task": "measured-base-projection-scale",
+  "source_revision": "uncommitted working tree; concurrent changes preserved",
+  "finding": "Existing shared face_mapping already applies measured physical base fit times independent Scale X/Y multipliers; no behavioral implementation change required.",
+  "changes": "Clarify intent, G01 revision195 and calibration contract; extend owning affine mapping test across all four faces with neutral/extra multipliers and absent/present throw ratio.",
+  "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"measured_affine_profiles or projector_reference_measurements or diagnostic_display_profile or active_calibration_measurements or live_calibration\" -m \"not windows and not rig\" --basetemp=.tmp/measured-base-scale-final --junitxml=reports/runtime-evidence-2026-10-14/measured-base-scale/tests.xml",
+  "result": {"passed": 11, "deselected": 469},
+  "checks": {"ruff": "two files pass", "format": "two files pass after initial formatting repair", "mypy": "Win32 calibration_profile.py pass", "boundaries": "689 modules; zero violations"},
+  "scope": "Local mapping, persistence, measurement locks and live adjustment regressions. No native device commands/restart or optical acceptance."
+}

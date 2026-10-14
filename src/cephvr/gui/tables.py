@@ -1,6 +1,6 @@
 """Shared camera-style tables with optional persistent form controls."""
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -28,6 +28,7 @@ class DataTable(QTableWidget):
     def __init__(self, rows: int, columns: int) -> None:
         super().__init__(rows, columns)
         self.setShowGrid(False)
+        self.setTabKeyNavigation(False)
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         vertical, header = self.verticalHeader(), self.horizontalHeader()
@@ -58,10 +59,13 @@ class DataTable(QTableWidget):
     def set_control(self, row: int, column: int, control: QWidget) -> None:
         host = QWidget()
         layout = QHBoxLayout(host)
-        # The shared item style already insets persistent cell widgets.
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(control)
         self.setCellWidget(row, column, host)
+        timer = QTimer(host)
+        timer.setSingleShot(True)
+        timer.timeout.connect(layout.activate)
+        timer.start()
 
     def sizeHintForColumn(self, column: int) -> int:
         return max(

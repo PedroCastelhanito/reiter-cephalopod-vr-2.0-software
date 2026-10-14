@@ -184,8 +184,13 @@ async def test_worker_completion_routes_only_setup_to_controller(
     recovered_display = (
         method == "InitializeDisplay" and display_rejection == "confirmed"
     )
-    assert len(supervisor.reports) == int(not succeeded and not recovered_display)
-    assert state.interrupted is (not succeeded and not recovered_display)
+    setup_rejection = method == "SetupSession"
+    assert len(supervisor.reports) == int(
+        not succeeded and not recovered_display and not setup_rejection
+    )
+    assert state.interrupted is (
+        not succeeded and not recovered_display and not setup_rejection
+    )
 
 
 async def recipe_fixture(tmp_path):

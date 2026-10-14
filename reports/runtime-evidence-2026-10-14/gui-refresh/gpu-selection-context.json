@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-14",
+  "task": "renderer-opengl-adapter-selection",
+  "decisions": [
+    "SYS-002 revision3",
+    "E08 revision171",
+    "ARCH-002",
+    "E15"
+  ],
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_sha256": {
+    "src/cephvr/platform/windows/graphics_preferences.py": "6fb4a935700633f2dc2ee1ec091f141368bc83a4e1f9b41afc16adf27c760494",
+    "src/cephvr/platform/windows/python_runtime.py": "c5fdad09f92086f9379171b5f60607bcd88a6b8415149f54f54e6387805bdef5",
+    "src/cephvr/visual_stimulus/worker_launcher.py": "d5d1521d9746f23bc650076d8ce2d7d955d334f4ed55ae280247a25fb3cc2d9b",
+    "src/cephvr/visual_stimulus/rendering/native_display.py": "85d1b67c5df748a3c902d66fbaf278b44e413b2412fa5cc1f781857051101ab8",
+    "src/cephvr/launcher/main.py": "3ad61bea5201eb55f6427874c759985fde5d4923fa1a36fb05b46da157e29c78",
+    "tests/platform/test_nvidia_device.py": "c8cc224a7ee4accbb64fefd5f5aba79cbc97a3430fe3a7cfd705c8878bf2d419",
+    "tests/platform/test_windows_native_on_rig.py": "23254a8e2e8b909421a5a57ac4d98225cf29e831538bae633894499e0cb67701",
+    "tests/visual_stimulus/test_lifecycle.py": "a8c04f83e8175997a87d26aa1a460dc57287ca353d56b1caa021d01342cdf169"
+  },
+  "probes": {
+    "cephvr-python.exe": {
+      "vendor": "ATI Technologies Inc.",
+      "renderer": "AMD Radeon(TM) Graphics"
+    },
+    "cephvr-renderer.exe": {
+      "vendor": "NVIDIA Corporation",
+      "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2"
+    }
+  },
+  "probe_method": "Owned64x64 hidden GLFW OpenGL4.3 core window in each prepared executable; query GL_VENDOR/GL_RENDERER; destroy window/terminate GLFW. No projector window or scientific setting changed.",
+  "effective_current_user_application_preferences": {
+    "cephvr-python.exe": "GpuPreference=1;",
+    "cephvr-renderer.exe": "GpuPreference=2;"
+  },
+  "prepared_images": {
+    "cephvr-python.exe": "5ce9617b7b1f66b1b967e28d543cc7b9e589860fe997dff11401688ff2be87e6",
+    "cephvr-renderer.exe": "5ce9617b7b1f66b1b967e28d543cc7b9e589860fe997dff11401688ff2be87e6"
+  },
+  "runtime": {
+    "controller": "5a66b261-7079-49d6-bf9b-8bfcad0bb9ad",
+    "renderer_pid": 23168,
+    "renderer_gpu_uuid": "GPU-77642118-1623-48dd-3686-1014aa86b818",
+    "gui_pid": 13128,
+    "open_exec_session": 75315,
+    "four_output_idle_initialization": "all resources-ready/applied revision1/returned submissions; no issues"
+  },
+  "test_commands": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus tests/supervisor tests/platform/test_nvidia_device.py tests/launcher -q -m \"not windows and not rig\" --basetemp .tmp/gpu-selection-integration --junitxml reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-integration.xml",
+      "result": "485 passed,1 deselected"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/platform/test_windows_native_on_rig.py -q -k prepared_python --basetemp .tmp/gpu-selection-native2 --junitxml reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-native.xml",
+      "result": "1 passed,17 deselected; role-image tamper/refresh/bootstrap provenance covered"
+    },
+    {
+      "command": "Focused platform GPU/launcher/renderer lifecycle suite",
+      "result": "89 passed before broader suite"
+    },
+    {
+      "command": "Ruff check and format --check affected8 source/test files; Win32 mypy5 source files; tools/check_backend_boundaries.py; git diff --check",
+      "result": "passed;687 modules/zero violations; retained size advisories"
+    }
+  ],
+  "initial_attempts": "Sandbox focused test run stalled at asyncio loopback initialization after86 cases and was interrupted. Permitted run passed unchanged assertions. Initial stale-generation status UNAUTHENTICATED retained in gpu-selection-before-restart.json; re-resolved current generation774e and verified Configuration before approved exact owner replacement.",
+  "scope_limits": "Fresh role-context selection and four-output Idle only. No experiment Setup/Start/video recording, firmware or OF/encoding scientific workload acceptance. Historical driver-selection reason despite recorded preference remains unproven; prior single executable could not express independent GUI/renderer preferences. Wrong actual renderer adapters still rejected, never fallback.",
+  "reference_sources": [
+    "https://www.glfw.org/docs/latest/compile.html",
+    "https://raw.githubusercontent.com/NVIDIA/nvapi/main/NvApiDriverSettings.h"
+  ],
+  "simplification_review": "Reuse verified real interpreter copies and Windows current-user per-application routing, rather than introducing WGL/NVAPI rendering backend or a helper process. GPU preference is a request; existing physical-context validation remains the guarantee."
+}

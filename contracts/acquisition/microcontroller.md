@@ -8,6 +8,14 @@ camera outputs. The matching Uno source is under `firmware/uno`; compile and loc
 host verification do not establish upload, electrical or camera acceptance. See
 [rig verification](../../reports/rig-verification.md) for remaining checks.
 
+Continuous tests have no elapsed-duration limit. Only matched `DIAG_STATUS` polls
+renew their two-second firmware lease; service expiry before renewal so a late poll
+cannot restart an expired test. The GUI polls every 500 ms while Configuration/control
+is held. Expiry stops outputs LOW (or detaches the input observer) and retains counts.
+Existing camera watchdog and controller cleanup remain independent. Older firmware
+rejects `duration_ms=0`; report that failure without falling back to bounded tests.
+Install `cephvr2_uno_4` manually to use continuous tests; no automatic upload.
+
 ## Line grammar
 
 ASCII, one command/reply per LF-terminated line, at most 512 bytes including LF.
@@ -38,7 +46,7 @@ There are no per-token length limits beyond the complete-line bound.
 | PING | None. |
 | CONFIGURE | `watchdog_ms`; all three `<role>_enabled`; for each enabled role: `<role>_pin`, `<role>_hz`. Disabled roles omit pin/Hz. |
 | ON / OFF | `behavioral_selected`, `tracking_selected` and `eye_tracking_selected`; at least one is 1. |
-| DIAG_START | `kind=trial_state|projector_flip|behavioral|tracking|eye_tracking`, `pin=<CAPS pin>`, `duration_ms=2000`; camera kinds also require `hz=<0.1-Hz-grid rate>`. |
+| DIAG_START | `kind=trial_state|behavioral|tracking|eye_tracking`, `pin=<CAPS pin>`, `duration_ms=0` for continuous manual tests (`2000` retains legacy bounded tests); camera kinds also require `hz=<0.1-Hz-grid rate>`. |
 | DIAG_STATUS / DIAG_STOP | No additional fields. Operate on the one active diagnostic. |
 
 `role` is exactly `behavioral`, `tracking` or `eye_tracking`. CONFIGURE is one complete application,
@@ -57,15 +65,16 @@ Replies begin `OK id=...` or `ERR id=... code=...`. Successful payloads are:
 | CAPS | `protocol`, `firmware`, `pins`, `input_pins`, `min_hz`, `max_hz`, `watchdog_min_ms`, `watchdog_max_ms`. `input_pins` is a unique subset of `pins` capable of interrupt-driven rising-edge capture. |
 | STATUS / CONFIGURE | `valid`, `watchdog_stopped`, `watchdog_ms`, all three `<role>_enabled` and `<role>_running`; for each configured enabled output: `<role>_pin`, `<role>_applied_hz`. |
 | PING / ON / OFF | All three `<role>_running` and `watchdog_stopped`. |
-| DIAG_START / DIAG_STATUS / DIAG_STOP | `active=0|1`, `kind`, `pin`, `edges=<uint32>`. Input `edges` counts observed rising edges; output `edges` counts generated LOW-to-HIGH transitions. `DIAG_STOP` and elapsed duration return `active=0` with retained final count. |
+| DIAG_START / DIAG_STATUS / DIAG_STOP | `active=0|1`, `kind`, `pin`, `edges=<uint32>`. Input `edges` counts observed rising edges; output `edges` counts generated LOW-to-HIGH transitions. `DIAG_STOP`, communication-lease expiry and legacy elapsed duration return `active=0` with retained final count. |
 
 Only one diagnostic may run, and only when normal outputs are stopped. Firmware
 rejects a conflicting request without touching pins. A Trial state test holds its
 assigned output HIGH until Stop or the two-second deadline; camera tests use the
 requested rate only when it equals that role's configured applied rate, with 50% duty
-through the same hardware timer owner. A Projector flip test accepts only a CAPS
-`input_pins` pin, configures it as INPUT and counts interrupt-captured rising edges
-without driving it. All
+through the same hardware timer owner. Projector flip input/diagnostics and camera-trigger offsets are owner-deferred.
+Host rejects enabled legacy settings and projector_flip diagnostics before serial
+work; firmware rejects that kind and has no input interrupt diagnostic. Retained
+legacy pin fields and physical CAPS pin capability are not feature enablement. All
 diagnostic output pins return LOW on Stop, timeout, connection loss, reset or fault;
 the host reports an unconfirmed stop if the acknowledgement is missing. Successful
 serial replies prove firmware state and edge count only, not physical voltage,
@@ -82,7 +91,7 @@ controller's existing `rising_edges` field carries this count, distinguished by 
 GUI output labels explicitly say generated transitions. Protocol 2 output-zero replies
 are incompatible and rejected at connection rather than treated as measured zero.
 
-`protocol` is uint32 and must equal 3; watchdog values are uint32. Applied Hz is
+`protocol` is uint32 and must equal 4; watchdog values are uint32. Applied Hz is
 positive and finite decimal text (ordinary or exponent notation), parsed into the
 host's binary64 `applied_frequency_hz`. It is not restricted to the 0.1-Hz request grid.
 Firmware emits sufficient significant digits to preserve its computed rate on a

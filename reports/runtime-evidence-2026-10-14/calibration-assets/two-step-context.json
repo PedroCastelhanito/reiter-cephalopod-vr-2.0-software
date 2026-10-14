@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-14",
+  "task": "two-step-calibration-assets",
+  "source_revision": "working tree with concurrent owner-authorized GUI/projector edits",
+  "methods": [
+    "backend GLB parser for both files; exact quad spans vs protected reference metadata",
+    "focused pytest controller/GUI/native-preparation tests (55 pass,450 deselections)",
+    "Ruff scoped lint/format; Win32 mypy7 source files; backend boundaries689 modules/zero violations",
+    "source manifest sdist/wheel build --no-isolation; local documentation link/anchor and whitespace checks"
+  ],
+  "scope": "Local source/pattern and narrow hardware-boundary fixtures only; no connection check, hardware output or running application restart",
+  "patterns": {
+    "frame_grid.glb": {
+      "bytes": 242148,
+      "sha256": "822218d45bb7333a473b0906ff13e3c86d7ef72a01f16fb53a91a958e3b1f073"
+    },
+    "reference_bars.glb": {
+      "bytes": 2340,
+      "sha256": "6b4529eb2eec6edd6a8d7e2555af4dee7ece8c7b3ea8b79019644e107ece8415"
+    }
+  },
+  "reference_bars": {
+    "calibration_front": {
+      "width_px": 1280,
+      "height_px": 720,
+      "x_length_px": 320,
+      "y_length_px": 180
+    },
+    "calibration_left": {
+      "width_px": 1280,
+      "height_px": 720,
+      "x_length_px": 320,
+      "y_length_px": 180
+    },
+    "calibration_right": {
+      "width_px": 1280,
+      "height_px": 720,
+      "x_length_px": 320,
+      "y_length_px": 180
+    },
+    "calibration_bottom": {
+      "width_px": 720,
+      "height_px": 1280,
+      "x_length_px": 180,
+      "y_length_px": 320
+    }
+  },
+  "outcome": "Two selected-step sources; separate runtime mappings/copies; source/copy/profile-step/digest and protected pixel lengths validated; rejection and cleanup regressions pass",
+  "initial_pattern_provenance": "Reference bars derived from prior Oct14 just-prepared bundle output identities/dimensions/pixel lengths; frame_grid retains that bundle original GLB. Neither is optical acceptance."
+}

@@ -11,10 +11,13 @@ from typing import Any, cast
 from uuid import uuid4
 
 import grpc
+import pytest
 
+from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.lifecycle_reports import LifecycleReports, ReportHooks
 from cephvr.controller.metadata.reservation import OutputReservation
+from cephvr.controller.planning import requested_output_identities
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import (
     Attempt,
@@ -286,6 +289,90 @@ async def test_setup_ready_keeps_original_deadline_and_exact_duplicate_rule(
     rejected = await reports.receive(changed, 100)
     assert rejected.failure.code == "CONFLICT"
     assert fixture.publications[0] == 1
+
+
+@pytest.mark.parametrize(
+    ("include_expected", "include_unknown", "invalid_result", "accepted"),
+    [
+        (True, False, "", True),
+        (False, False, "", False),
+        (True, True, "", False),
+        (True, False, "closed", False),
+        (True, False, "path", False),
+        (True, False, "unknown-presence", False),
+        (True, False, "present", False),
+    ],
+)
+async def test_failed_setup_cleanup_matches_registered_output_set_exactly(
+    tmp_path: Path,
+    include_expected: bool,
+    include_unknown: bool,
+    invalid_result: str,
+    accepted: bool,
+) -> None:
+    fixture = _fixture(tmp_path)
+    attempt, backend = fixture.attempt, fixture.backend
+    setting = attempt.prepared.configuration.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
+    setting.visual_stimulus.save_visual_stimulus_data = True
+    work = pb.WorkContext(session=attempt.context)
+    source = pb.ProcessIdentity(
+        role=backend.backend_name, generation=backend.backend_generation
+    )
+    requested = requested_output_identities(
+        attempt.prepared,
+        {name: participant.context for name, participant in attempt.required.items()},
+    )
+    output_keys = {output.output_key for output in requested}
+    registered = svc.RegisteredContext(work=work)
+    operation_id = "cancel-setup"
+    registered.cleanup_commands.add(
+        target=source,
+        work=work,
+        operation=pb.OperationContext(command_id=operation_id),
+    )
+    attempt.registered_context = registered
+    assert len(registered.outputs) == 0
+    heartbeat = pb.HeartbeatReport(
+        source=source, work=work, cleanup_resources_revision=1
+    )
+    fixture.supervisor.processes[backend.backend_name] = svc.ProcessHealthStatus(
+        process=source, last_heartbeat=heartbeat
+    )
+    cleanup = pb.CleanupReport(
+        source=source,
+        work=work,
+        operation=pb.OperationContext(command_id=operation_id),
+        verified_monotonic_ns=1,
+        trial_activity_stopped=True,
+        cleanup_resources_revision=1,
+    )
+    if include_expected:
+        for output_key in output_keys:
+            output = cleanup.outputs.add(
+                output_key=output_key,
+                closure=(
+                    pb.OUTPUT_CLOSURE_CLOSED
+                    if invalid_result == "closed"
+                    else pb.OUTPUT_CLOSURE_NOT_STARTED
+                ),
+                path="unexpected.jsonl" if invalid_result == "path" else "",
+            )
+            if invalid_result != "unknown-presence":
+                output.artifact_present = invalid_result == "present"
+    if include_unknown:
+        cleanup.outputs.add(
+            output_key="unregistered-output",
+            closure=pb.OUTPUT_CLOSURE_NOT_STARTED,
+            artifact_present=False,
+        )
+
+    receipt = await fixture.reports.receive(pb.LifecycleReport(cleanup=cleanup), 50)
+
+    assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) is accepted
+    if not accepted:
+        assert receipt.failure.code == "EVIDENCE"
 
 
 async def test_trial_ready_requires_exact_trial_and_active_participant(

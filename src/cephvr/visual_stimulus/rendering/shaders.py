@@ -93,16 +93,21 @@ uniform mat4 model;
 uniform mat4 view_projection;
 out vec2 uv;
 out vec4 vertex_color;
+out vec3 world_position;
 void main() {
     uv = in_uv;
     vertex_color = in_color;
-    gl_Position = view_projection * model * vec4(in_position, 1.0);
+    world_position = (model * vec4(in_position, 1.0)).xyz;
+    gl_Position = view_projection * vec4(world_position, 1.0);
 }
 """
 
 _ARENA_FRAGMENT = """#version 430
 in vec2 uv;
 in vec4 vertex_color;
+in vec3 world_position;
+uniform int calibration_plane_active;
+uniform vec4 calibration_plane;
 out vec4 color;
 uniform sampler2D base_color_tex;
 uniform int has_base_color_tex;
@@ -111,6 +116,11 @@ uniform int alpha_mask;
 uniform float alpha_cutoff;
 layout(std430, binding = 3) buffer DiagnosticFlags { uint diagnostic_flags[]; };
 void main() {
+    if (calibration_plane_active != 0) {
+        vec3 normal = normalize(cross(dFdx(world_position), dFdy(world_position)));
+        if (abs(dot(normal, calibration_plane.xyz)) < 0.99
+            || abs(dot(calibration_plane.xyz, world_position) + calibration_plane.w) > 0.1) discard;
+    }
     vec4 base = base_color_factor * vertex_color;
     if (has_base_color_tex != 0) {
         vec4 texel = texture(base_color_tex, uv);
@@ -135,7 +145,12 @@ uniform sampler2D mask_tex;
 uniform sampler2D weight_tex;
 uniform int has_mask;
 uniform int has_weight;
+uniform vec4 valid_area;
+uniform vec2 output_size;
 void main() {
+    vec2 position = gl_FragCoord.xy / output_size;
+    if (position.x < valid_area.x || position.y < valid_area.y
+        || position.x >= valid_area.z || position.y >= valid_area.w) discard;
     vec4 scene = texture(scene_tex, uv);
     float mask_value = has_mask != 0 ? texture(mask_tex, uv).r : 1.0;
     float weight_value = has_weight != 0 ? texture(weight_tex, uv).r : 1.0;

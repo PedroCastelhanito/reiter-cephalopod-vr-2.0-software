@@ -25,11 +25,11 @@ pulse_frequency_hz = 30.0
 # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
 # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
 # Owner-selected 2026-10-13 after bounded drain measurements; full-load acceptance pending.
-post_cutoff_drain_margin_ms = 125
+post_cutoff_drain_margin_ms = 150
 # Independently configurable SDK image-buffer pool; validate before session locking.
 # Additional to recording/tracking rings and working copies; no growth while running.
 # Initial value awaits rig verification; this is not a bound on all driver/device RAM.
-sdk_buffer_count = 10
+sdk_buffer_count = 15
 microcontroller_pin = "D10"
 # The owner assigned D10 on 2026-10-05; pulse frequency remains the saved 30 Hz.
 # Use a distinct output pin per camera on the shared microcontroller connection.
@@ -85,8 +85,8 @@ ffmpeg_args = [
 # Assign the third camera serial, trigger pin/rate and required drain allowance explicitly.
 # Eye role provides preview/video only; it does not select the locomotion pipeline.
 # Owner-selected 2026-10-13 for all cameras; Eye timing remains unmeasured/disabled.
-post_cutoff_drain_margin_ms = 125
-sdk_buffer_count = 10
+post_cutoff_drain_margin_ms = 150
+sdk_buffer_count = 15
 frame_timing = "external_trigger"
 unaligned_free_running = false
 trigger_selector = "frame_start"
@@ -115,11 +115,11 @@ pulse_frequency_hz = 60.0
 # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
 # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
 # Owner-selected 2026-10-13 after bounded drain measurements; full-load acceptance pending.
-post_cutoff_drain_margin_ms = 125
+post_cutoff_drain_margin_ms = 150
 # Independently configurable SDK image-buffer pool; validate before session locking.
 # Additional to recording/tracking rings and working copies; no growth while running.
 # Initial value awaits rig verification; this is not a bound on all driver/device RAM.
-sdk_buffer_count = 10
+sdk_buffer_count = 15
 microcontroller_pin = "D11"
 # The owner assigned D11 on 2026-10-05; pulse frequency remains the saved 60 Hz.
 # Use a distinct output pin per camera on the shared microcontroller connection.
@@ -184,7 +184,7 @@ ffmpeg_args = [
 # The capture thread never waits; a lapped tracking read skips, a full recording
 # queue drops its oldest waiting frame (A04).
 tracking_ring_frames = 10
-recording_queue_frames = 10
+recording_queue_frames = 20
 # A03: optional; the recording queue grows to ceil(frame_rate_hz x allowance_ms / 1000)
 # frames, minimum recording_queue_frames. Not needed for encoder start-up (A08 launches
 # FFmpeg before T); available for sizing other bursts. Unset.

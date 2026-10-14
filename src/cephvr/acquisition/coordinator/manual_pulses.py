@@ -25,6 +25,7 @@ from cephvr.acquisition.coordinator.manual_session_access import (
     retire_completed_manual_session,
 )
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
+from cephvr.acquisition.identity import CAMERA_NAME_BY_ROLE
 from cephvr.acquisition.ports import ControllerPort, SerialOwnerPort
 from cephvr.acquisition.state import (
     ConfigurationRecord,
@@ -262,24 +263,28 @@ class ManualPulses:
 
 
 def _active_external_previews(
-    workers: dict[int, WorkerRecord], settings: control.AcquisitionSettings
+    workers: dict[int, WorkerRecord],
+    settings: control.AcquisitionSettings,
+    *,
+    adding_role: int | None = None,
 ) -> tuple[int, ...]:
+    """Select registered external-trigger previews, including one pending start."""
     selected = []
-    for role, setting in (
-        (camera.CAMERA_ROLE_BEHAVIORAL, settings.behavioral),
-        (camera.CAMERA_ROLE_TRACKING, settings.tracking),
-        (camera.CAMERA_ROLE_EYE_TRACKING, settings.eye_tracking),
-    ):
+    for role, name in CAMERA_NAME_BY_ROLE.items():
+        setting = getattr(settings, name)
         worker = workers.get(role)
         if (
-            worker is not None
-            and worker.preview is not None
-            and worker.preview.started
+            (
+                role == adding_role
+                or worker is not None
+                and worker.preview is not None
+                and worker.preview.started
+            )
             and setting.HasField("device")
             and setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
         ):
             selected.append(role)
-    return tuple(selected)
+    return tuple(sorted(selected))
 
 
 def _rejected(command_id: str, code: str, message: str) -> control.CommandAdmission:

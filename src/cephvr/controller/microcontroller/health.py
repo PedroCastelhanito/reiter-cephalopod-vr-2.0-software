@@ -154,7 +154,12 @@ class MicrocontrollerHealth:
                 due_ns = min(retry_at, watchdog_deadline)
                 continue
             except Exception as exc:
-                if self.serial_handoff_active():
+                if (
+                    self.serial_handoff_active()
+                    or self.observation() is not observation
+                    or observation.connection_id != connection_before
+                    or observation.observed_monotonic_ns != observed_before
+                ):
                     continue
                 await self.failure_handler(
                     control.Failure(

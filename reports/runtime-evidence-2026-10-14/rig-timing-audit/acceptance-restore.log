@@ -1,0 +1,14 @@
+recovery_prompt prompt_id: "a8d413b1-96c4-4a89-a9a6-b475ac5c17a2"
+setup {
+  controller_generation: "0de05a85-aad5-4c46-9eec-5708b8dde94e"
+  session_id: "a2588a91-6562-4e7a-8057-e538e67ebd98"
+}
+operation {
+  command_id: "8a2c8679-ccdc-412a-8bd0-80f30f5acd3a"
+}
+explanation: "Recover unfinished session at C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-14\\rig-timing-audit\\fault-recheck6\\recordings\\20261014_rig_timing_probe_20261014\\DUMMY-161215. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: \'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\reports\\\\runtime-evidence-2026-10-14\\\\rig-timing-audit\\\\fault-recheck6\\\\recordings\\\\20261014_rig_timing_probe_20261014\\\\DUMMY-161215\\\\protocol-data\\\\SESSION_CONFIG.json\' Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect/stop that exact remote run manually before another paired session."
+permitted_choices: "continue"
+permitted_choices: "cancel"
+
+recovery {"command_id": "91789b14-1042-42d0-99eb-a0e42d7fcc8d", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+{"command_id": "2847b4a3-58cb-4cf6-a0a2-d4e2cbc11e68", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}

@@ -1,0 +1,61 @@
+........................................................................ [ 23%]
+....................................................F................... [ 46%]
+........................................................................ [ 69%]
+........................................................................ [ 92%]
+.......................                                                  [100%]
+================================== FAILURES ===================================
+___ test_native_cpu_preparation_reaches_program_validation_without_gl_calls ___
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-225/test_native_cpu_preparation_re0')
+
+    def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_path):
+        from concurrent.futures import ThreadPoolExecutor
+    
+        from cephvr.visual_stimulus.resources.session import NativePreparation
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+    
+        clock = Clock()
+        preparation = NativePreparation(
+            object(), renderer_generation=str(uuid4()), clock_ns=clock
+        )
+        preparation._registered_announce(lambda *_: None, "prior")("asset", None)
+        assert preparation.cleanup().released == ("prior:asset",)
+        assert preparation.cleanup().released == ("prior:asset",)
+        setup = visual_stimulus.WorkerSetup()
+        setup.session.configuration.asset_root = str(tmp_path)
+        setup.session.trials.add().definition.stimulus.SetInParent()
+        setup.settings.display.profile_json = valid_display_json()
+        setup.policies.limits.CopyFrom(
+            vp.ResourceLimits(
+                max_document_bytes=1_000_000,
+                max_asset_cpu_bytes=2_000_000,
+                max_asset_gpu_bytes=2_000_000,
+                decoder_threads=1,
+                decoder_contexts=1,
+                codec_threads_per_context=1,
+                codec_threads_total=1,
+                decoded_frames_per_instance=1,
+                decoded_bytes_total=1_000_000,
+                decoder_working_bytes_total=1_000_000,
+            )
+        )
+        with ThreadPoolExecutor(max_workers=1) as cpu:
+            outcome = cpu.submit(
+                preparation.prepare_trials, setup, lambda *_: None, clock() + 10**9
+            )
+            with pytest.raises(ValueError, match="canonical stimulus program"):
+                outcome.result(timeout=2)
+        assert preparation.video_session is not None
+        assert preparation.engine._video_provider is None
+        assert preparation.engine._video_reset is None
+        preparation._registered_announce(lambda *_: None, "current")("asset", None)
+>       assert preparation.cleanup(clock() + 10**9).released == ("current:asset",)
+E       AssertionError: assert ('current:ass...'prior:asset') == ('current:asset',)
+E         
+E         Left contains one more item: 'prior:asset'
+E         Use -v to get more diff
+
+tests\visual_stimulus\test_lifecycle.py:171: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_lifecycle.py::test_native_cpu_preparation_reaches_program_validation_without_gl_calls
+1 failed, 310 passed in 2.29s

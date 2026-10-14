@@ -13,6 +13,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 
 from .capture_runtime import WorkerCaptureResources
+from .ports import command_from
 from .recording_fault import RecordingFaultLifecycle
 from .recording_preparation import TrialRecordingPreparation
 from .recording_runtime import WorkerRecordingRuntime
@@ -318,10 +319,12 @@ class WorkerTrialLifecycle:
             self.trial_state.transport_start = None
 
     def record_pulse_evidence(self, request: object) -> None:
-        self._require_ready_session_callback(request)
+        schedule = self.trial_state.schedule or self.trial_state.stopped_schedule
+        if not self._interrupted_schedule_matches(request, schedule):
+            self._require_ready_session_callback(request)
         self.trial_state.pulses.record(
             request,
-            self.trial_state.schedule or self.trial_state.stopped_schedule,
+            schedule,
             self.bootstrap.context.camera,
         )
         if (
@@ -331,6 +334,29 @@ class WorkerTrialLifecycle:
             and self.trial_state.pulses.off is not None
         ):
             self.stop_finalizer.publish_if_ready(self.trial_state.finish_deadline_ns)
+
+    def _interrupted_schedule_matches(
+        self, request: object, schedule: acq.WorkerSchedule | None
+    ) -> bool:
+        interruption = self.trial_state.stop_request
+        if (
+            not isinstance(interruption, acq.WorkerInterrupt)
+            or schedule is None
+            or self.trial_state.stopped_schedule is not schedule
+        ):
+            return False
+        command = command_from(request)
+        scheduled_work = schedule.command.target.work
+        interrupted_work = interruption.command.target.work
+        return bool(
+            scheduled_work.WhichOneof("work") == "trial"
+            and interrupted_work.WhichOneof("work") == "session"
+            and interrupted_work.session == scheduled_work.trial.session
+            and command.target.HasField("work")
+            and command.target.work == scheduled_work
+            and command.HasField("parent_operation")
+            and command.parent_operation.command_id == schedule.command.command_id
+        )
 
     def camera_first_frame(self, record: object) -> None:
         if not isinstance(record, FrameRecord):

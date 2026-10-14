@@ -16,15 +16,21 @@ The legacy enum spelling `photodiode_only_vsync` is retained for compatibility; 
 now refers to the selected pacing output even with the pulse disabled or elsewhere.
 Absent explicit pacing, legacy pulse-enabled profiles retain their marker target.
 Pulse-disabled mixed-mode configurations require explicit active pacing.
-All-output VSync allows no designated pacer; validate every enabled output's native
+All-output VSync and Free run allow no designated pacer; validate every enabled output's native
 rate against the file-owned target. No output identity is guessed.
 
-Use two session modes with explicit requested swap intervals:
+Use three session modes with explicit requested swap intervals:
 
 | Mode | Pacing output | Other outputs |
 | --- | --- | --- |
+| `free_run` | 0 | 0 |
 | `photodiode_only_vsync` (default for new profiles) | 1 | 0 |
 | `all_outputs_vsync` (selectable for rig testing; pacer optional) | 1 if selected | 1 |
+
+VSync has no MCU input prerequisite. A11 Projector flip controls camera-trigger
+phase offsets independently. Free run preserves V10 scheduling and nominal review
+recording rates, but requests immediate swaps for every output, even with a marker
+or retained pacing identity. It does not disable the independent V22 patch.
 
 Resolve the designated pacing output through a stable output identity, not a
 hard-coded tank face, monitor enumeration index or window creation order. The mixed
@@ -92,6 +98,6 @@ connection. Confirmed required-output failure follows E06; V10 owns timing misse
 Typed output/window schemas, swap ordering, GPU-resource lifetime, bounded recording
 and presentation metadata transport remain local contract work. Optical calibration,
 photodiode assignment and full-load measurements stay deferred until rig access.
-Check both modes with all four projectors, compare per-output timings, detect driver
+Check all three modes with all four projectors, compare per-output timings, detect driver
 settings that override requests and verify that rendering/recording share one state
 without serial-wait assumptions. No implementation or rig behavior is verified here.

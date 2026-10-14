@@ -27,6 +27,7 @@ class TankDiagram(QWidget):
         self.azimuth = 45.0
         self.elevation = 25.0
         self.drag_origin: QPointF | None = None
+        self.legend_regions: dict[str, QRectF] = {}
         self.visible_elements = {
             key: True
             for key in (
@@ -39,6 +40,8 @@ class TankDiagram(QWidget):
         self.setMinimumHeight(150)
         self.setAccessibleName("Tank, screens and projector footprints")
         self.setCursor(Qt.CursorShape.OpenHandCursor)
+        self.setMouseTracking(True)
+        self.setToolTip("Click a legend to show or hide its elements · Drag to rotate")
 
     def sizeHint(self) -> QSize:
         return QSize(260, 265)
@@ -48,6 +51,8 @@ class TankDiagram(QWidget):
         self.update()
 
     def draw_legend(self, painter: QPainter) -> float:
+        painter.save()
+        self.legend_regions.clear()
         font = painter.font()
         font.setPointSize(SIZES.label_font)
         painter.setFont(font)
@@ -58,11 +63,11 @@ class TankDiagram(QWidget):
             ("projection", "Projection", COLORS.projection, "optics"),
             ("subject", "Subject", COLORS.text, "dot"),
         ):
-            if not self.visible_elements[key]:
-                continue
             extent = painter.fontMetrics().horizontalAdvance(title) + 32
             if x + extent > self.width() - 5 and x > 8:
                 x, y = 8, y + 20
+            self.legend_regions[key] = QRectF(x - 3, y - 14, extent, 20)
+            painter.setOpacity(1.0 if self.visible_elements[key] else 0.35)
             painter.setPen(
                 QPen(
                     QColor(color),
@@ -85,7 +90,18 @@ class TankDiagram(QWidget):
                 painter.drawLine(QPointF(x, y - 4), QPointF(x + 13, y - 4))
             painter.drawText(QPointF(x + 18, y), title)
             x += extent
+        painter.restore()
         return y + 8
+
+    def legend_at(self, position: QPointF) -> str | None:
+        return next(
+            (
+                key
+                for key, region in self.legend_regions.items()
+                if region.contains(position)
+            ),
+            None,
+        )
 
     def screen_planes(self) -> dict[str, list[Point3]]:
         if self.rig is None:
@@ -98,6 +114,9 @@ class TankDiagram(QWidget):
                     face,
                     self.screens.get(face, {}),
                     front_distance=self.screens.get("Front", {}).get(
+                        "subject_distance", ""
+                    ),
+                    bottom_distance=self.screens.get("Bottom", {}).get(
                         "subject_distance", ""
                     ),
                 )
@@ -144,6 +163,7 @@ class TankDiagram(QWidget):
     def refresh(self) -> None:
         footprints = self.footprints(self.screen_planes())
         descriptions = [
+            "Click a legend to show or hide its elements",
             "Drag to rotate · Double-click to reset view",
             "Ideal centered projection; no lens shift or optical correction",
         ]
@@ -163,6 +183,11 @@ class TankDiagram(QWidget):
         if event is None:
             return
         if event.button() == Qt.MouseButton.LeftButton:
+            key = self.legend_at(event.position())
+            if key is not None:
+                self.set_element_visible(key, not self.visible_elements[key])
+                event.accept()
+                return
             self.drag_origin = event.position()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
             event.accept()
@@ -180,6 +205,11 @@ class TankDiagram(QWidget):
             self.update()
             event.accept()
         else:
+            self.setCursor(
+                Qt.CursorShape.PointingHandCursor
+                if self.legend_at(event.position()) is not None
+                else Qt.CursorShape.OpenHandCursor
+            )
             super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
@@ -187,7 +217,11 @@ class TankDiagram(QWidget):
             return
         if event.button() == Qt.MouseButton.LeftButton:
             self.drag_origin = None
-            self.setCursor(Qt.CursorShape.OpenHandCursor)
+            self.setCursor(
+                Qt.CursorShape.PointingHandCursor
+                if self.legend_at(event.position()) is not None
+                else Qt.CursorShape.OpenHandCursor
+            )
             event.accept()
         else:
             super().mouseReleaseEvent(event)
@@ -196,6 +230,9 @@ class TankDiagram(QWidget):
         if event is None:
             return
         if event.button() == Qt.MouseButton.LeftButton:
+            if self.legend_at(event.position()) is not None:
+                event.accept()
+                return
             self.azimuth, self.elevation = 45.0, 25.0
             self.drag_origin = None
             self.setCursor(Qt.CursorShape.OpenHandCursor)
@@ -212,6 +249,7 @@ class TankDiagram(QWidget):
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        legend_height = self.draw_legend(painter)
         painter.setPen(QColor(COLORS.muted))
         if self.rig is None:
             painter.drawText(
@@ -221,7 +259,6 @@ class TankDiagram(QWidget):
             )
             return
         rig = self.rig
-        legend_height = self.draw_legend(painter)
         w, d, h = rig.width, rig.depth, rig.height
         tank: tuple[list[Point3], ...] = (
             [(0, 0, 0), (w, 0, 0), (w, d, 0), (0, d, 0)],

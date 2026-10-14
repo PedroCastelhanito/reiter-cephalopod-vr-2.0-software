@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import threading
+from pathlib import Path
 from uuid import uuid4
 
 import grpc
@@ -26,6 +27,7 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.auth import Principal
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.visual_stimulus.configuration import load_file_policies
 from cephvr.visual_stimulus.coordinator.state import Identity
 from cephvr.visual_stimulus.runtime import VisualStimulusCoordinatorRuntime
 from cephvr.visual_stimulus.transport.peers import Peer
@@ -1033,6 +1035,9 @@ async def test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial()
     setup.settings.display.profile_json = valid_display_json()
     setup.policies.contract_version = 1
     setup.policies.limits.max_document_bytes = 1_000_000
+    setup.policies.projection.CopyFrom(
+        load_file_policies(Path(__file__).resolve().parents[2]).projection
+    )
 
     try:
         from cephvr.visual_stimulus.v1 import runtime_pb2 as vp

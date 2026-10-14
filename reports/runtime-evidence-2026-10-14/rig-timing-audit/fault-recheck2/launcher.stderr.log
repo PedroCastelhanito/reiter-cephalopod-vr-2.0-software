@@ -1,0 +1,4 @@
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 35544 exited; cleanup evidence remains required
+InterruptSession fb3e85a1-40eb-4692-9382-4b11c99cf712 failed: SESSION_IDENTITY: no exact live session
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

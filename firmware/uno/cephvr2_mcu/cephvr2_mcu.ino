@@ -10,7 +10,7 @@ namespace {
 constexpr uint32_t kTickHz = 10000;
 constexpr uint16_t kTickTop = 199;  // 16 MHz / 8 / (199 + 1) = 10 kHz.
 constexpr size_t kLineLimit = 512;
-constexpr uint16_t kDiagnosticMs = 2000;
+constexpr uint16_t kDiagnosticMs = 2000;  // Continuous-test communication lease.
 
 struct Output {
   uint8_t pin;
@@ -38,6 +38,8 @@ volatile bool diagnosticActive = false;
 char diagnosticKind[20] = "";
 volatile uint8_t diagnosticPin = 0;
 uint32_t diagnosticStartMs = 0;
+uint32_t diagnosticLastStatusMs = 0;
+bool diagnosticContinuous = false;
 volatile uint32_t diagnosticEdges = 0;
 
 void countDiagnosticRise() {
@@ -84,14 +86,13 @@ void stopDiagnostic() {
   if (strcmp(diagnosticKind, "tracking") == 0) stopOutput(1);
   if (strcmp(diagnosticKind, "eye_tracking") == 0) stopOutput(2);
   if (strcmp(diagnosticKind, "trial_state") == 0) digitalWrite(diagnosticPin, LOW);
-  if (strcmp(diagnosticKind, "projector_flip") == 0)
-    detachInterrupt(digitalPinToInterrupt(diagnosticPin));
   diagnosticActive = false;
 }
 
 void serviceDiagnostic() {
   if (!diagnosticActive) return;
-  if (uint32_t(millis() - diagnosticStartMs) >= kDiagnosticMs) stopDiagnostic();
+  const uint32_t since = diagnosticContinuous ? diagnosticLastStatusMs : diagnosticStartMs;
+  if (uint32_t(millis() - since) >= kDiagnosticMs) stopDiagnostic();
 }
 
 void stopAll() {
@@ -245,10 +246,10 @@ void command(char *buffer) {
   if (strcmp(verb, "CAPS") == 0) {
     const char *allowed[] = {"id"};
     if (!knownFields(keys, count, allowed, 1)) { error(id, F("UNKNOWN_FIELD")); return; }
-    ReplySize size; prefix(id, size); size.println(F(" protocol=4 firmware=cephvr2_uno_3 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    ReplySize size; prefix(id, size); size.println(F(" protocol=4 firmware=cephvr2_uno_4 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
     if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
     lastRequestMs = millis(); prefix(id);
-    Serial.println(F(" protocol=4 firmware=cephvr2_uno_3 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    Serial.println(F(" protocol=4 firmware=cephvr2_uno_4 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
     return;
   }
   if (strcmp(verb, "STATUS") == 0 || strcmp(verb, "PING") == 0) {
@@ -333,7 +334,10 @@ void command(char *buffer) {
     if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
     lastRequestMs = millis();
     if (strcmp(verb, "DIAG_STOP") == 0) stopDiagnostic();
-    else serviceDiagnostic();
+    else {
+      serviceDiagnostic();
+      if (diagnosticActive) diagnosticLastStatusMs = millis();
+    }
     diagnosticReply(id);
     return;
   }
@@ -347,7 +351,7 @@ void command(char *buffer) {
     const char *duration = field(keys, values, count, "duration_ms");
     const char *hz = field(keys, values, count, "hz");
     uint8_t pin = 0;
-    if (!kind || !parsePin(pinText, pin) || !duration || strcmp(duration, "2000") ||
+    if (!kind || !parsePin(pinText, pin) || !duration || (strcmp(duration, "0") && strcmp(duration, "2000")) ||
         diagnosticActive || outputs[0].running || outputs[1].running || outputs[2].running) {
       error(id, F("BAD_VALUE")); return;
     }
@@ -363,11 +367,8 @@ void command(char *buffer) {
     if (role >= 0 && rate != outputs[role].requestedHz) {
       error(id, F("BAD_VALUE")); return;
     }
-    if (role < 0 && strcmp(kind, "trial_state") && strcmp(kind, "projector_flip")) {
+    if (role < 0 && strcmp(kind, "trial_state")) {
       error(id, F("BAD_VALUE")); return;
-    }
-    if (strcmp(kind, "projector_flip") == 0 && pin != 2 && pin != 3) {
-      error(id, F("INVALID_PIN")); return;
     }
     for (uint8_t i = 0; i < kOutputCount; ++i)
       if (outputs[i].enabled && outputs[i].pin == pin && role != i) {
@@ -379,9 +380,10 @@ void command(char *buffer) {
     diagnosticKind[sizeof(diagnosticKind) - 1] = '\0';
     diagnosticPin = pin;
     noInterrupts(); diagnosticEdges = 0; diagnosticActive = true; interrupts();
-    diagnosticStartMs = millis();
-    pinMode(pin, role >= 0 || strcmp(kind, "trial_state") == 0 ? OUTPUT : INPUT);
-    if (role >= 0 || strcmp(kind, "trial_state") == 0) digitalWrite(pin, LOW);
+    diagnosticContinuous = strcmp(duration, "0") == 0;
+    diagnosticStartMs = diagnosticLastStatusMs = millis();
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
     if (role >= 0) {
       startOutput(uint8_t(role));
     } else if (strcmp(kind, "trial_state") == 0) {
@@ -389,7 +391,7 @@ void command(char *buffer) {
       digitalWrite(pin, HIGH);
       countDiagnosticRise();
       interrupts();
-    } else attachInterrupt(digitalPinToInterrupt(pin), countDiagnosticRise, RISING);
+    }
     lastRequestMs = millis();
     diagnosticReply(id);
     return;

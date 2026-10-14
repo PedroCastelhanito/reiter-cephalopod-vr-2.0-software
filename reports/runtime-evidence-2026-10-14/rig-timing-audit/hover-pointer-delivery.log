@@ -1,0 +1,39 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo FAILED [ 50%]
+tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards FAILED [100%]
+
+================================== FAILURES ===================================
+_____ test_inline_timeline_actions_target_blocks_append_and_preserve_undo _____
+tests\gui\test_dashboard.py:14967: in test_inline_timeline_actions_target_blocks_append_and_preserve_undo
+    remove = next(c for c in contents.block_actions.removers if c.isVisible())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   StopIteration
+---------------------------- Captured stdout call -----------------------------
+HOVER_DIAGNOSTIC_READY tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo
+MOUSE_MOVE_BEFORE requested_global=None state={'widget_at_cursor': ('QWidget', 'qt_scrollarea_viewport'), 'widget': 'QLineEdit', 'name': '', 'visible': True, 'active': True, 'size': (276, 37), 'global_rect': (785, 465, 1060, 501), 'cursor': (297, 330), 'screen_available': (0, 0, 1920, 1032)}
+MOUSE_MOVE_AFTER state={'widget_at_cursor': ('QLineEdit', ''), 'widget': 'QLineEdit', 'name': '', 'visible': True, 'active': True, 'size': (276, 37), 'global_rect': (785, 465, 1060, 501), 'cursor': (922, 483), 'screen_available': (0, 0, 1920, 1032)}
+MOUSE_MOVE_BEFORE requested_global=(541, 637) state={'widget_at_cursor': ('QLineEdit', ''), 'widget': 'ProgramTimeline', 'name': '', 'visible': True, 'active': True, 'size': (1042, 126), 'global_rect': (210, 619, 1251, 744), 'cursor': (922, 483), 'screen_available': (0, 0, 1920, 1032), 'hover_position': (-1.0, -1.0), 'first_batch_hit': (1.0, 0.0, 660.0, 36.0)}
+MOUSE_MOVE_AFTER state={'widget_at_cursor': ('ProgramTimeline', ''), 'widget': 'ProgramTimeline', 'name': '', 'visible': True, 'active': True, 'size': (1042, 126), 'global_rect': (210, 619, 1251, 744), 'cursor': (541, 637), 'screen_available': (0, 0, 1920, 1032), 'hover_position': (-1.0, -1.0), 'first_batch_hit': (1.0, 0.0, 660.0, 36.0)}
+____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+tests\gui\test_dashboard.py:15058: in test_trial_row_actions_scroll_target_and_align_cards
+    remove = next(
+E   StopIteration
+---------------------------- Captured stdout call -----------------------------
+HOVER_DIAGNOSTIC_READY tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards
+MOUSE_MOVE_BEFORE requested_global=None state={'widget_at_cursor': ('ProgramTimeline', ''), 'widget': 'QLineEdit', 'name': '', 'visible': True, 'active': True, 'size': (276, 37), 'global_rect': (785, 465, 1060, 501), 'cursor': (541, 637), 'screen_available': (0, 0, 1920, 1032)}
+MOUSE_MOVE_AFTER state={'widget_at_cursor': ('QLineEdit', ''), 'widget': 'QLineEdit', 'name': '', 'visible': True, 'active': True, 'size': (276, 37), 'global_rect': (785, 465, 1060, 501), 'cursor': (922, 483), 'screen_available': (0, 0, 1920, 1032)}
+MOUSE_MOVE_BEFORE requested_global=(297, 330) state={'widget_at_cursor': ('QLineEdit', ''), 'widget': 'QWidget', 'name': 'qt_scrollarea_viewport', 'visible': True, 'active': True, 'size': (176, 207), 'global_rect': (210, 310, 385, 516), 'cursor': (922, 483), 'screen_available': (0, 0, 1920, 1032), 'hover_row': -1}
+MOUSE_MOVE_EVENT {'receiver': 'QLineEdit', 'object_name': '', 'local': (137, 18), 'global': (922, 483), 'cursor': (297, 330), 'receiver_visible': True}
+MOUSE_MOVE_AFTER state={'widget_at_cursor': ('QWidget', 'qt_scrollarea_viewport'), 'widget': 'QWidget', 'name': 'qt_scrollarea_viewport', 'visible': True, 'active': True, 'size': (176, 207), 'global_rect': (210, 310, 385, 516), 'cursor': (297, 330), 'screen_available': (0, 0, 1920, 1032), 'hover_row': -1}
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo - StopIteration
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards - StopIteration
+============================== 2 failed in 1.93s ==============================

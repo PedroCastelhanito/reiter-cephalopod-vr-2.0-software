@@ -29,6 +29,29 @@ async def dispatch_device_action(
     principal: Principal,
 ) -> tuple[bool, str] | None:
     """Dispatch one device request; return None when another owner handles it."""
+    if action == "set_spikeglx_enabled":
+        state = client.snapshot
+        if state.configuration.revision != options["expected_revision"]:
+            raise ClientError("SpikeGLX pairing configuration revision changed.")
+        if state.session.phase != pb.SESSION_PHASE_CONFIGURATION:
+            raise ClientError("SpikeGLX pairing can only change in Configuration.")
+        proposed = pb.ExperimentConfiguration.FromString(
+            state.configuration_values.current.SerializeToString()
+        )
+        backend = next(
+            (
+                item
+                for item in proposed.backends
+                if item.backend_name == "synchronization"
+            ),
+            None,
+        )
+        if backend is None or type(options["enabled"]) is not bool:
+            raise ClientError("SpikeGLX pairing settings are unavailable.")
+        backend.enabled = options["enabled"]
+        if proposed != state.configuration_values.current:
+            await _update_configuration(client, state, proposed, "SpikeGLX pairing")
+        return True, "Pairing enabled" if backend.enabled else "Pairing disabled"
     if action == "camera":
         await _camera(client, options)
         return True, "Completed"
@@ -100,7 +123,7 @@ async def dispatch_device_action(
             else:
                 pulses.ClearField(field)
         pulses.trial_state_enabled = options["trial_enabled"]
-        pulses.projector_flip_enabled = options["flip_enabled"]
+        pulses.projector_flip_enabled = False
         for pulse, value in (
             (pulses.behavioral, options["behavioral_pin"]),
             (pulses.tracking, options["tracking_pin"]),

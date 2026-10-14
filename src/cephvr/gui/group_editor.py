@@ -96,9 +96,7 @@ class GroupEditor(QWidget):
     def refresh_summary(self, node: Group) -> None:
         self.summary.setVisible(node.conditions is not None)
         self.summary.setText(
-            f"{len(node.conditions.rows)} conditions · Each runs the full sequence"
-            if node.conditions
-            else ""
+            f"{len(node.conditions.rows)} conditions" if node.conditions else ""
         )
 
     def show_conditions(self, checked: bool) -> None:
@@ -147,20 +145,18 @@ class ExpandedPreview(QDialog):
         self.setWindowTitle("Expanded sequence · authoring example")
         self.resize(730, 550)
         body = QVBoxLayout(self)
-        body.addWidget(
-            label(
-                "Authoring example only. Setup owns the retained experiment seed and final prepared order. This seed is not saved into the protocol.",
-                wrap=True,
-            )
-        )
         row = QHBoxLayout()
         self.seed = QLineEdit("0")
+        self.seed.setToolTip(
+            "Authoring example only. Setup retains the experiment seed and final prepared order; this example seed is not saved."
+        )
         row.addWidget(field("Example seed", self.seed))
         refresh = button("Update example")
         refresh.clicked.connect(self.refresh)
         row.addWidget(refresh)
         body.addLayout(row)
         self.output = QPlainTextEdit()
+        self.output.setTabChangesFocus(True)
         self.output.setProperty("role", "source")
         self.output.setReadOnly(True)
         self.output.setWordWrapMode(QTextOption.WrapMode.WordWrap)

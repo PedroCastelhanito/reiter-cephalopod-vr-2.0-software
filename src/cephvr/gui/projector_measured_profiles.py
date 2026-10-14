@@ -8,6 +8,7 @@ from typing import Any
 from cephvr.gui.calibration_profile import (
     MonitorBinding,
     face_mapping,
+    face_valid_area,
     reference_bar_config,
 )
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
@@ -53,6 +54,14 @@ def measured_profiles(
             for axis in ("x", "y")
         )
     }
+    for face in ("Front", "Left", "Right", "Bottom"):
+        if face not in selected and any(
+            values.get(f"screens.{face}.{key}") is not None
+            for key in ("valid_width_px", "valid_height_px")
+        ):
+            raise ValueError(
+                f"{face}: complete reference measurements before applying a valid area"
+            )
     if not selected:
         return document
     if not asset_root:
@@ -105,6 +114,23 @@ def measured_profiles(
             0,
             output.rgb_bits_per_channel,
         )
+        from cephvr.gui.projector_extent import usable_corners
+
+        surface = next(
+            s
+            for s in document["geometry"]["surfaces"]
+            if s["surface_id"] == mapping["surface_id"]
+        )
+        names = ("bottom_left_mm", "bottom_right_mm", "top_right_mm", "top_left_mm")
+        original_corners = [tuple(surface[name]) for name in names]
+        for name, corner in zip(
+            names,
+            usable_corners(
+                original_corners, values, face, output.width_px, output.height_px
+            ),
+            strict=True,
+        ):
+            surface[name] = corner
         vertices, mirrored = face_mapping(calibration, face, monitor)
         corners = tuple(vertices[i]["xy"] for i in (0, 1, 3, 2))
         if mirrored:
@@ -119,6 +145,7 @@ def measured_profiles(
             output_height=output.height_px,
             viewport=viewport,
             vertices=vertices,
+            valid_area=face_valid_area(calibration, face, monitor),
             orientation="mirrored" if mirrored else "preserving",
             intended_coverage=corners,
         )

@@ -16,6 +16,7 @@ from cephvr.control.v1 import services_pb2_grpc
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
+from cephvr.shared.resources import ResourceObligationRegistry
 from cephvr.supervisor.acquisition_worker import AcquisitionWorkerControl
 from cephvr.supervisor.outbound import GrpcOutbound
 from tests.supervisor.support import Outbound, make_runtime
@@ -25,6 +26,152 @@ from .support import (
     _phase,
     _worker_and_helper,
 )
+
+
+def test_preliminary_cleanup_accepts_only_path_free_absence_facts(
+    tmp_path: Path,
+) -> None:
+    runtime, _, _, _ = make_runtime(tmp_path)
+    visual = types.ProcessIdentity(role="visual_stimulus", generation=str(uuid4()))
+    acquisition = types.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    participants = (visual, acquisition)
+    work = types.WorkContext(
+        session=types.SessionContext(
+            controller_generation=runtime.controller.generation,
+            session_id=str(uuid4()),
+        )
+    )
+    context = wire.RegisteredContext(
+        controller=runtime.controller,
+        supervisor=runtime.identity,
+        paired_spikeglx=False,
+        work=work,
+        required_participants=[
+            types.BackendContext(
+                backend_name=item.role, backend_generation=item.generation
+            )
+            for item in participants
+        ],
+    )
+    runtime.registration_state.context = context
+    runtime.registration_state.topology = None
+    for participant in participants:
+        key = (participant.role, participant.generation)
+        catalogue = ResourceObligationRegistry(
+            participant,
+            work,
+            allowed_owners=frozenset({key}),
+            max_resources=10,
+            max_bytes=10_000,
+        )
+        catalogue.accept_heartbeat(
+            types.HeartbeatReport(
+                source=participant,
+                work=work,
+                sent_monotonic_ns=1,
+                cleanup_resources_revision=0,
+            )
+        )
+        resource = f"{participant.role}:session-lock"
+        catalogue.accept_heartbeat(
+            types.HeartbeatReport(
+                source=participant,
+                work=work,
+                sent_monotonic_ns=2,
+                cleanup_resources_revision=1,
+                cleanup_resources=[
+                    types.ResourceObligation(owner=participant, resource=resource)
+                ],
+            )
+        )
+        runtime.registration_state.catalogues[key] = catalogue
+
+    def cleanup(participant: types.ProcessIdentity) -> types.CleanupReport:
+        command_id = str(uuid4())
+        context.cleanup_commands.add(
+            target=participant,
+            work=work,
+            operation=types.OperationContext(command_id=command_id),
+        )
+        report = types.CleanupReport(
+            source=participant,
+            work=work,
+            operation=types.OperationContext(command_id=command_id),
+            verified_monotonic_ns=host_time_ns(),
+            trial_activity_stopped=True,
+            cleanup_resources_revision=1,
+        )
+        report.resources.add(resource=f"{participant.role}:session-lock", released=True)
+        return report
+
+    report = cleanup(visual)
+    report.outputs.add(
+        output_key="visual_stimulus/session-log",
+        closure=types.OUTPUT_CLOSURE_NOT_STARTED,
+        artifact_present=False,
+    )
+    report.outputs.add(
+        output_key="visual_stimulus/review-video",
+        closure=types.OUTPUT_CLOSURE_NOT_STARTED,
+        artifact_present=False,
+        visual_stimulus_review_video_content=(
+            types.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_NO_FRAMES
+        ),
+    )
+    assert runtime.recovery.cleanup_verified(report)
+
+    acquisition_report = cleanup(acquisition)
+    acquisition_report.outputs.add(
+        output_key="acquisition/camera-video",
+        closure=types.OUTPUT_CLOSURE_NOT_STARTED,
+        artifact_present=False,
+        camera_video_content=types.CAMERA_VIDEO_CONTENT_NO_FRAMES,
+    )
+    assert runtime.recovery.cleanup_verified(acquisition_report)
+
+    duplicate = types.CleanupReport.FromString(report.SerializeToString())
+    duplicate.outputs.add().CopyFrom(duplicate.outputs[0])
+    assert not runtime.recovery.cleanup_verified(duplicate)
+    for invalid in (
+        types.OutputResult(
+            output_key="visual_stimulus/session-log",
+            closure=types.OUTPUT_CLOSURE_UNCONFIRMED,
+        ),
+        types.OutputResult(
+            output_key="visual_stimulus/session-log",
+            path="C:/recordings/session-log.json",
+            closure=types.OUTPUT_CLOSURE_NOT_STARTED,
+            artifact_present=False,
+        ),
+        types.OutputResult(
+            output_key="visual_stimulus/session-log",
+            closure=types.OUTPUT_CLOSURE_NOT_STARTED,
+            artifact_present=False,
+            camera_video_content=types.CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED,
+        ),
+        types.OutputResult(
+            output_key="visual_stimulus/session-log",
+            closure=types.OUTPUT_CLOSURE_NOT_STARTED,
+            artifact_present=False,
+            visual_stimulus_review_video_content=(
+                types.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED
+            ),
+        ),
+        types.OutputResult(
+            output_key="visual_stimulus/session-log",
+            closure=types.OUTPUT_CLOSURE_NOT_STARTED,
+            artifact_present=False,
+            camera_video_content=types.CAMERA_VIDEO_CONTENT_UNKNOWN,
+        ),
+    ):
+        rejected = types.CleanupReport.FromString(report.SerializeToString())
+        rejected.outputs[0].CopyFrom(invalid)
+        assert not runtime.recovery.cleanup_verified(rejected)
+
+    paired = wire.RegisteredContext.FromString(context.SerializeToString())
+    paired.paired_spikeglx = True
+    runtime.registration_state.context = paired
+    assert not runtime.recovery.cleanup_verified(report)
 
 
 async def test_concurrent_reconciles_are_serialized(tmp_path: Path) -> None:

@@ -1,0 +1,193 @@
+ M .gitignore
+ M LOG.md
+ M MANIFEST.in
+ M TODO.md
+ M architecture.md
+ M config/backends/README.md
+ M config/backends/gui_config.toml
+ M config/backends/microcontroller_config.toml
+ M config/backends/visual_stimulus_config.toml
+ M contracts/acquisition/microcontroller.md
+ M contracts/cephvr/visual_stimulus/v1/runtime.proto
+ M contracts/gui-calibration.md
+ M contracts/policy/gui_policy.toml
+ M contracts/policy/microcontroller_policy.toml
+ M contracts/policy/visual_stimulus_policy.toml
+ M contracts/visual_stimulus/arena-assets.md
+ M contracts/visual_stimulus/display-profile.schema.json
+ M contracts/visual_stimulus/geometric-correction.md
+ M contracts/visual_stimulus/geometric-profile.schema.json
+ M contracts/visual_stimulus/prepared-trial.schema.json
+ M contracts/visual_stimulus/presentation.md
+ M contracts/visual_stimulus/projection.md
+ M contracts/visual_stimulus/worker-control.md
+ M contracts/windows-launch.md
+ D demo_assets/manifest.json
+ D demo_assets/textures/checkerboard.texture.json
+ D demo_assets/textures/noise.texture.json
+ D demo_assets/textures/sine_grating.texture.json
+ M docs/architecture/acquisition.md
+ M docs/architecture/experiment.md
+ M docs/architecture/gui.md
+ M docs/architecture/system-contracts.md
+ M docs/architecture/visual_stimulus.md
+ M docs/development.md
+ M firmware/uno/cephvr2_mcu/cephvr2_mcu.ino
+ M reports/acquisition.md
+ M reports/rig-verification.md
+ M reports/runtime.md
+ M reports/visual_stimulus.md
+ M src/cephvr/acquisition/config/validation_pulse.py
+ M src/cephvr/acquisition/coordinator/manual_preview.py
+ M src/cephvr/acquisition/coordinator/manual_pulses.py
+ M src/cephvr/controller/control/connection_edits.py
+ M src/cephvr/controller/device/display_calibration.py
+ M src/cephvr/controller/microcontroller/config.py
+ M src/cephvr/controller/microcontroller/device.py
+ M src/cephvr/controller/microcontroller/owner.py
+ M src/cephvr/controller/microcontroller/protocol.py
+ M src/cephvr/controller/startup/providers.py
+ M src/cephvr/gui/batch_create.py
+ M src/cephvr/gui/calibration_arena.py
+ M src/cephvr/gui/calibration_files.py
+ M src/cephvr/gui/calibration_guides.py
+ M src/cephvr/gui/calibration_profile.py
+ M src/cephvr/gui/cameras.py
+ M src/cephvr/gui/components.py
+ M src/cephvr/gui/condition_values.py
+ M src/cephvr/gui/controller_bridge.py
+ M src/cephvr/gui/devices.py
+ M src/cephvr/gui/dialogs.py
+ M src/cephvr/gui/display_layout.py
+ M src/cephvr/gui/epoch_motion.py
+ M src/cephvr/gui/group_editor.py
+ M src/cephvr/gui/gui_snapshot.py
+ M src/cephvr/gui/live_calibration.py
+ M src/cephvr/gui/looming_size.py
+ M src/cephvr/gui/main.py
+ M src/cephvr/gui/managed_configuration.py
+ M src/cephvr/gui/managed_device_commands.py
+ M src/cephvr/gui/managed_display.py
+ M src/cephvr/gui/managed_display_operations.py
+ M src/cephvr/gui/managed_mcu.py
+ M src/cephvr/gui/managed_status.py
+ M src/cephvr/gui/microcontroller.py
+ M src/cephvr/gui/microcontroller_signals.py
+ M src/cephvr/gui/microcontroller_snapshot.py
+ M src/cephvr/gui/projector_calibration.py
+ M src/cephvr/gui/projector_codec.py
+ M src/cephvr/gui/projector_files.py
+ M src/cephvr/gui/projector_geometry.py
+ M src/cephvr/gui/projector_measured_profiles.py
+ M src/cephvr/gui/projector_measurements.py
+ M src/cephvr/gui/projector_prerequisites.py
+ M src/cephvr/gui/projector_timing.py
+ M src/cephvr/gui/projectors.py
+ M src/cephvr/gui/protocol_hierarchy.py
+ M src/cephvr/gui/retained_review.py
+ M src/cephvr/gui/review_draft.py
+ M src/cephvr/gui/spikeglx.py
+ M src/cephvr/gui/stimulus_parameters.py
+ M src/cephvr/gui/tables.py
+ M src/cephvr/gui/tank_diagram.py
+ M src/cephvr/gui/theme.py
+ M src/cephvr/gui/tracking_annotation.py
+ M src/cephvr/gui/trial_preview_canvas.py
+ M src/cephvr/gui/trial_preview_surfaces.py
+ M src/cephvr/launcher/main.py
+ M src/cephvr/platform/windows/python_runtime.py
+ M src/cephvr/visual_stimulus/config/calibration_adjustments.py
+ M src/cephvr/visual_stimulus/config/calibration_bars.py
+ M src/cephvr/visual_stimulus/config/models/artifact_models.py
+ M src/cephvr/visual_stimulus/config/models/display_profile.py
+ M src/cephvr/visual_stimulus/config/pacing.py
+ M src/cephvr/visual_stimulus/configuration.py
+ M src/cephvr/visual_stimulus/rendering/display_calibration.py
+ M src/cephvr/visual_stimulus/rendering/native.py
+ M src/cephvr/visual_stimulus/rendering/native_display.py
+ M src/cephvr/visual_stimulus/rendering/output_masks.py
+ M src/cephvr/visual_stimulus/rendering/reference_bars.py
+ M src/cephvr/visual_stimulus/rendering/scene.py
+ M src/cephvr/visual_stimulus/rendering/scene_resources.py
+ M src/cephvr/visual_stimulus/rendering/shaders.py
+ M src/cephvr/visual_stimulus/resources/display_calibration.py
+ M src/cephvr/visual_stimulus/worker/lifecycle.py
+ M src/cephvr/visual_stimulus/worker_launcher.py
+ M tests/acquisition/test_configuration.py
+ M tests/acquisition/test_manual_preview.py
+ M tests/controller/test_camera_configuration.py
+ M tests/controller/test_device_admission.py
+ M tests/controller/test_microcontroller_owner.py
+ M tests/controller/test_microcontroller_protocol.py
+ M tests/gui/test_dashboard.py
+ M tests/platform/test_nvidia_device.py
+ M tests/platform/test_windows_native_on_rig.py
+ M tests/visual_stimulus/test_configuration.py
+ M tests/visual_stimulus/test_display_calibration_rendering.py
+ M tests/visual_stimulus/test_lifecycle.py
+ M tests/visual_stimulus/test_rendering.py
+ M tools/README.md
+ M tools/generate_demo_assets.py
+?? .pytest-integer-agreement/
+?? .pytest-integer-calibration/
+?? .pytest-integer-final/
+?? .pytest-integer-focused/
+?? .pytest-integer-focused2/
+?? .pytest-integer-release/
+?? .pytest-integer-render-final/
+?? .pytest-integer-render/
+?? .pytest-screen-elevation-2/
+?? .pytest-screen-elevation-final/
+?? .pytest-screen-elevation/
+?? .pytest-spikeglx-gui-all/
+?? .pytest-spikeglx-pairing-all/
+?? .pytest-spikeglx-pairing-final/
+?? assets/
+?? reports/emergency-81866906167900-3678c359-e8ec-43e0-b86e-b7370f0aaf85.json
+?? reports/emergency-86745192458100-0d0b3809-08f8-4625-8b61-96a411ace9aa.json
+?? reports/emergency-87851945968100-a4574521-f6f1-4020-ac1c-c72eb75820ce.json
+?? reports/emergency-88244677062200-994e353f-67ad-4947-bf19-2cea3d977b64.json
+?? reports/emergency-89697614723900-6526e91e-c6d9-441c-b271-c0990567157c.json
+?? reports/runtime-evidence-2026-10-14/calibration-assets/
+?? reports/runtime-evidence-2026-10-14/calibration-controls/
+?? reports/runtime-evidence-2026-10-14/clean-grid/
+?? reports/runtime-evidence-2026-10-14/eye-readback/
+?? reports/runtime-evidence-2026-10-14/frame-gaps/
+?? reports/runtime-evidence-2026-10-14/gui-descriptions/
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-mismatch-status.json
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-after-restart.json
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-before-restart.json
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-context.json
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-current-before.json
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-integration.xml
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-native.xml
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-nvidia.txt
+?? reports/runtime-evidence-2026-10-14/gui-refresh/gpu-selection-tests.xml
+?? reports/runtime-evidence-2026-10-14/gui-refresh/offline-change-before.json
+?? reports/runtime-evidence-2026-10-14/gui-refresh/projector-offline-context.json
+?? reports/runtime-evidence-2026-10-14/gui-refresh/projector-offline-final.xml
+?? reports/runtime-evidence-2026-10-14/gui-refresh/projector-offline-integration.xml
+?? reports/runtime-evidence-2026-10-14/gui-refresh/projector-offline.xml
+?? reports/runtime-evidence-2026-10-14/gui-refresh/projector-width-baseline.xml
+?? reports/runtime-evidence-2026-10-14/integer-views/
+?? reports/runtime-evidence-2026-10-14/live-reference-tab/
+?? reports/runtime-evidence-2026-10-14/mcu-continuous/
+?? reports/runtime-evidence-2026-10-14/measured-base-scale/
+?? reports/runtime-evidence-2026-10-14/projector-cursor/
+?? reports/runtime-evidence-2026-10-14/projector-flip/
+?? reports/runtime-evidence-2026-10-14/projector-legend/
+?? reports/runtime-evidence-2026-10-14/projector-sync/
+?? reports/runtime-evidence-2026-10-14/reference-bars/
+?? reports/runtime-evidence-2026-10-14/reference-frame/
+?? reports/runtime-evidence-2026-10-14/registry-preview/
+?? reports/runtime-evidence-2026-10-14/screen-elevation/
+?? reports/runtime-evidence-2026-10-14/signal-removal/
+?? reports/runtime-evidence-2026-10-14/spikeglx-connection/
+?? reports/runtime-evidence-2026-10-14/spikeglx-table-buttons/
+?? reports/runtime-evidence-2026-10-14/tank-screen-plot/
+?? reports/runtime-evidence-2026-10-14/valid-area/
+?? src/cephvr/controller/device/calibration_inputs.py
+?? src/cephvr/gui/projector_extent.py
+?? src/cephvr/platform/windows/graphics_preferences.py
+?? src/cephvr/shared/calibration_assets.py
+?? src/cephvr/visual_stimulus/config/projection.py

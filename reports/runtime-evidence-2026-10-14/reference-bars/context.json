@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-14",
+  "task": "reference-bars-visible-output",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "working_tree": "Concurrent authorized edits present; source hashes below identify the fix",
+  "scope": "Reference calibration native display frames, GUI Open/Close/reopen, authenticated status and lightweight renderer/lifecycle/transport regressions; no optical measurement, camera/firmware/experiment recording",
+  "defect": "Reference-bars branch drew only to device_fbo and continued without copying it to context.screen; live Front capture was black",
+  "repair": "Copy device_fbo to the current native screen before leaving the bars branch",
+  "reproduction": "Owning pipeline regression before patch: two reference-bars cases fail, both frame_grid cases pass",
+  "validation": {
+    "rendering": "16 passed with workspace basetemp; default sandbox tmp_path initially causes six fixture errors/ten passes",
+    "integration": "22 passed,37 deselected across calibration rendering/lifecycle/authenticated transport; tests.xml",
+    "static": "Scoped Ruff lint/format2 files; Win32 mypy1 source; boundaries689/zero violations; whitespace pass",
+    "native": "Actual GUI launch, four native outputs with visible orange/green bars; Close returns Idle/resources_closed; reopen returns Active/presented. Screenshot captures are lossy JPEG and do not establish exact native-pixel count or optics."
+  },
+  "old_controller_generation": "752e806f-e9cf-4056-95fc-0f499555469a",
+  "new_controller_generation": "80dfe14b-7d23-45b0-a46f-eaf77c024b62",
+  "final": "Application running with GUI holding control and reference calibration open for owner measurements",
+  "source_hashes": {
+    "src\\cephvr\\visual_stimulus\\rendering\\display_calibration.py": "5128ce564ccbf0ac9ea48a548ff00bfbae0cd4a1b3f5b2c8da8710f2f2329af0",
+    "tests\\visual_stimulus\\test_display_calibration_rendering.py": "ab6c0ffdb70d929a20e623bcfc3a91e2653070b569e7f4b348f7acc293afceaa"
+  },
+  "screenshots": [
+    "after-calibration_bottom.jpg",
+    "after-calibration_front.jpg",
+    "after-calibration_left.jpg",
+    "after-calibration_right.jpg",
+    "before-front.jpg",
+    "final-front.jpg"
+  ]
+}

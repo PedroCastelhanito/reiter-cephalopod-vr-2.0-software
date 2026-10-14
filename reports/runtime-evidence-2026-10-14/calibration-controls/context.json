@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-14",
+  "task": "calibration-close-button-and-distance-format",
+  "source_revision": "uncommitted working tree; concurrent changes preserved",
+  "changes": "One-decimal derived distance formatting; reference/grid Close routed through the confirmed active step's button.",
+  "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"calibration_button_reflects or projector_reference_measurements or active_calibration_measurements or live_calibration or calibration_adjustment_steps or measured_affine_profiles\" -m \"not windows and not rig\" --basetemp=.tmp/calibration-controls-final --junitxml=reports/runtime-evidence-2026-10-14/calibration-controls/tests.xml",
+  "result": {"passed": 13, "deselected": 467},
+  "checks": {"ruff_and_format": "three files pass after format repair", "mypy": "two GUI source files with --platform win32 pass", "boundaries": "689 modules; zero violations"},
+  "attempts": "Initial six-case run: five pass, one fails on previous expectation that reference button stays disabled while active; update expectation for Close.",
+  "limitations": "Local Qt behavior tests; no running GUI restart, device command or optical acceptance."
+}

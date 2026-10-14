@@ -1,0 +1,30 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo FAILED [ 50%]
+tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards FAILED [100%]
+
+================================== FAILURES ===================================
+_____ test_inline_timeline_actions_target_blocks_append_and_preserve_undo _____
+tests\gui\test_dashboard.py:14969: in test_inline_timeline_actions_target_blocks_append_and_preserve_undo
+    remove = next(c for c in contents.block_actions.removers if c.isVisible())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   StopIteration
+---------------------------- Captured stdout call -----------------------------
+HOVER_ACTIVATION tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo before={'visible': True, 'active': True, 'cursor_global': (297, 330)} after={'visible': True, 'active': True, 'active_wait': True, 'cursor_global': (297, 330), 'frame_geometry': (8, 0, 1440, 971)}
+____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+tests\gui\test_dashboard.py:15060: in test_trial_row_actions_scroll_target_and_align_cards
+    remove = next(
+E   StopIteration
+---------------------------- Captured stdout call -----------------------------
+HOVER_ACTIVATION tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards before={'visible': True, 'active': True, 'cursor_global': (541, 637)} after={'visible': True, 'active': True, 'active_wait': True, 'cursor_global': (541, 637), 'frame_geometry': (8, 0, 1440, 971)}
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo - StopIteration
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards - StopIteration
+============================== 2 failed in 3.60s ==============================

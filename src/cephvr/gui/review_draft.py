@@ -44,7 +44,7 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
     projectors = window.devices.projectors
     spike = window.devices.spikeglx
     data = {
-        "format_version": 2,
+        "format_version": 6,
         "dashboard": {key: getattr(dashboard, key).text() for key in _DASHBOARD}
         | {"sex": dashboard.sex.currentText()},
         "cameras": [
@@ -91,10 +91,6 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
             "participation": dict(projectors.participation),
             "rig": {
                 key: field.text() for key, field in projectors.rig_editor.fields.items()
-            },
-            "projection": {
-                key: field.text()
-                for key, field in projectors.rig_editor.projection_fields.items()
             },
             "distances": {
                 key: field.text()
@@ -168,7 +164,7 @@ def load_review_draft(window: DashboardWindow, path: Path) -> bool:
     if (
         not isinstance(data, dict)
         or type(data.get("format_version")) is not int
-        or data["format_version"] not in (1, 2)
+        or data["format_version"] not in (1, 2, 3, 4, 5, 6)
     ):
         raise ValueError("Review draft format is unsupported")
     protocol = data["protocol"]
@@ -183,6 +179,61 @@ def load_review_draft(window: DashboardWindow, path: Path) -> bool:
     if not trials:
         raise ValueError("Review draft has no trial")
     data["microcontroller"]["camera_pins"] = _role_pins(data)
+    saved_projectors = data["projectors"]
+    if data["format_version"] < 3:
+        bottom = dict(saved_projectors["screens"].get("Bottom", {}))
+        bottom["width"], bottom["height"] = (
+            bottom.get("height", ""),
+            bottom.get("width", ""),
+        )
+        saved_projectors["screens"] = dict(saved_projectors["screens"], Bottom=bottom)
+    if data["format_version"] < 4:
+        for face, draft in saved_projectors["screens"].items():
+            for old, new in (
+                ("scale_u", "valid_width_px"),
+                ("scale_v", "valid_height_px"),
+            ):
+                old_value = draft.pop(old, "")
+                if old_value and float(old_value) != 1:
+                    from cephvr.gui.calibration_profile import (
+                        MonitorBinding,
+                        face_valid_area,
+                    )
+
+                    neutral = {
+                        f"screens.{face}.{key}": float(value) if value else None
+                        for key, value in draft.items()
+                        if key not in ("flip_x", "flip_y")
+                    }
+                    width, height = (
+                        float(draft.get("reference_width_px", "")),
+                        float(draft.get("reference_height_px", "")),
+                    )
+                    neutral[f"screens.{face}.offset_x"] = neutral[
+                        f"screens.{face}.offset_y"
+                    ] = 0
+                    rect = face_valid_area(
+                        {"version": 6, "values": neutral},
+                        face,
+                        MonitorBinding("", 0, 0, int(width), int(height), 0, 0),
+                    )
+                    draft[new] = str(
+                        float(old_value)
+                        * (
+                            (rect[2] - rect[0]) * width
+                            if new == "valid_width_px"
+                            else (rect[3] - rect[1]) * height
+                        )
+                    )
+                else:
+                    draft[new] = ""
+    if data["format_version"] < 5:
+        for draft in saved_projectors["screens"].values():
+            draft.pop("offset_x", None)
+            draft.pop("offset_y", None)
+            for key in ("valid_width_px", "valid_height_px"):
+                if draft.get(key, ""):
+                    draft[key] = str(round(float(draft[key])))
     _restore(window, data, trials)
     return True
 
@@ -190,7 +241,7 @@ def load_review_draft(window: DashboardWindow, path: Path) -> bool:
 def _role_pins(data: dict[str, Any]) -> dict[str, str]:
     """Keep role wiring even when its physical camera is absent on this machine."""
     roles = dict(ROLE_OUTPUTS)
-    if data["format_version"] == 2:
+    if data["format_version"] >= 2:
         pins = data["microcontroller"].get("camera_pins")
         if (
             not isinstance(pins, dict)
@@ -280,8 +331,6 @@ def _restore(
     projectors.request("Refresh displays")
     for key, field in projectors.rig_editor.fields.items():
         field.setText(saved_projectors["rig"].get(key, ""))
-    for key, field in projectors.rig_editor.projection_fields.items():
-        field.setText(saved_projectors["projection"].get(key, ""))
     for key, field in projectors.rig_editor.screen_distances.items():
         field.setText(saved_projectors["distances"].get(key, ""))
     for (face, key), field in projectors.screen_editor.fields.items():
@@ -296,7 +345,7 @@ def _restore(
             control.setText(value)
     pulse = saved_projectors["pulse"]
     projectors.timing.pulse.setChecked(pulse["enabled"])
-    projectors.timing.mode.setCurrentText(pulse["mode"])
+    projectors.timing.restore_mode_label(pulse["mode"])
     projectors.timing.target.setCurrentIndex(
         projectors.timing.target.findData(pulse["target"])
     )

@@ -50,6 +50,7 @@ from cephvr.controller.state import (
 from cephvr.shared.admission import CommandAdmissionTransport
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 from tests.controller.support_components import (
     _attempt,
     _id,
@@ -623,6 +624,81 @@ async def test_selected_camera_edit_validates_only_action_inputs_and_preserves_u
         ).result == pb.COMMAND_RESULT_REJECTED
 
 
+@pytest.mark.parametrize("role", [1, 2, 3])
+async def test_external_preview_readback_matches_acquisition_role_selection(
+    tmp_path: Path, role: int
+) -> None:
+    from cephvr.acquisition.coordinator.manual_preview import ManualPreview
+    from cephvr.acquisition.identity import camera_role_name
+
+    runtime = _runtime_with_validators(tmp_path)
+    backend = _Acquisition(pb.COMMAND_RESULT_ACCEPTED)
+    runtime.camera_readback.backends = {"acquisition": cast(Any, backend)}
+    runtime.camera_readback.validators = {
+        "acquisition": lambda _c: pb.ValidationResult(completed=True, valid=True)
+    }
+    settings = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    selected = getattr(settings, camera_role_name(role))
+    selected.device.device_id = "camera-serial"
+    selected.device.frame_timing = acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+    settings.pulses.port = "COM8"
+    pulse = getattr(settings.pulses, camera_role_name(role))
+    pulse.pin = "D9"
+    pulse.requested_frequency_hz = 60.0
+    operation = CameraOperation(
+        _id(),
+        _id(),
+        1,
+        role,
+        svc.CAMERA_COMMAND_KIND_START_PREVIEW,
+        pb.WorkContext(),
+        10**12,
+        True,
+    )
+    runtime.device_state.camera_operation = operation
+    runtime.configuration_commands.control_operations.operation(
+        operation.operator_id, "ExecuteCameraCommand", progress="pending"
+    )
+    owner = cast(
+        Any,
+        SimpleNamespace(
+            configuration=SimpleNamespace(settings=settings),
+            workers=SimpleNamespace(workers={}),
+        ),
+    )
+    external_roles = ManualPreview._external_roles(owner, role)
+    report = svc.AcquisitionResolutionReport(
+        source=backend.context,
+        operation=pb.OperationContext(command_id=operation.child_id),
+        requested_configuration_revision=operation.revision,
+    )
+    resolved = report.cameras.add(camera=role).result
+    resolved.configuration_revision = operation.revision
+    resolved.device.configured_id = "camera-serial"
+    resolved.device.physical_id = "physical-serial"
+    resolved.applied.CopyFrom(selected.device)
+    resolved.capabilities.SetInParent()
+    resolved.transport.SetInParent()
+    resolved.layout.SetInParent()
+    if external_roles:
+        report.pulses.requested_configuration_revision = operation.revision
+        report.pulses.requested.CopyFrom(settings.pulses)
+        for current_role in (1, 2, 3):
+            setattr(
+                report.pulses,
+                camera_role_name(current_role) + "_active",
+                current_role in external_roles,
+            )
+        report.pulses.applied.SetInParent()
+    await runtime.camera_readback.adopt_camera_resolution(operation, report)
+    assert operation.confirmed, runtime.control.operations[operation.operator_id]
+    assert len(backend.confirmations) == 1
+    assert backend.confirmations[0].confirmed_pulses == report.pulses
+    assert runtime.configuration_state.revision == 1
+
+
 async def test_manual_preview_readback_validates_selected_camera_with_unfinished_other(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -893,9 +969,10 @@ async def test_empty_edit_uses_real_acquisition_status_and_completion_path(
             return self.resolution_receipt
 
         async def report_acquisition_device_status(self, report, *, deadline_ns):
-            _ = deadline_ns
             self.status_started.set()
-            await self.status_gate.wait()
+            await asyncio.wait_for(
+                self.status_gate.wait(), remaining_seconds(deadline_ns)
+            )
             self.status_receipt = await runtime.report_projection(
                 "devices", report, runtime.clock()
             )

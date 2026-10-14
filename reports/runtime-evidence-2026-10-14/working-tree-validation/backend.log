@@ -1,0 +1,48 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1700 items / 26 deselected / 1674 selected
+
+tests/acquisition/test_camera_adapter_contracts.py::test_adapter_construction_does_not_load_pypylon PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_setting_saved_rate_preserves_external_pfs_limiter[On] PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_setting_saved_rate_preserves_external_pfs_limiter[Off] PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_absent_sdk_node_is_optional_only_for_readback PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_resolution_selects_requested_timing_before_applying_saved_rate[True] PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_resolution_selects_requested_timing_before_applying_saved_rate[False] PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_other_sdk_lookup_failure_is_not_hidden PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_float_capability_respects_optional_increment[False] PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_float_capability_respects_optional_increment[True] PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_sdk_version_mismatch_is_explicit_and_does_not_import PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_idle_control_wait_keeps_native_deadline_wake_and_close PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_joint_wait_retains_control_priority_and_rounding[False] PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_joint_wait_retains_control_priority_and_rounding[True] PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_open_uses_exact_assigned_serial_not_enumeration_order PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_trigger_timing_selects_and_verifies_exact_selector PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_missing_trigger_mode_blocks_readiness PASSED [  0%]
+tests/acquisition/test_camera_adapter_contracts.py::test_rgb_pylon_name_and_device_symbol_resolve_same_layout PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_native_color_result_uses_pylon_registry_not_device_symbol_registry PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_connection_check_verifies_identity_and_preserves_existing_owner[CAM-1-False] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_connection_check_verifies_identity_and_preserves_existing_owner[CAM-1-True] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_connection_check_verifies_identity_and_preserves_existing_owner[wrong-False] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_connection_check_verifies_identity_and_preserves_existing_owner[wrong-True] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_connection_check_never_reports_success_after_release_failure PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_first_pfs_import_opens_assigned_camera_and_retains_sdk_readback PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[False-False-3] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[False-False-4] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[False-False-5] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[False-False-6] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[False-True-3] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[False-True-4] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[False-True-5] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[False-True-6] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[True-False-3] PASSED [  1%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[True-False-4] PASSED [  2%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[True-False-5] PASSED [  2%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[True-False-6] PASSED [  2%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[True-True-3] PASSED [  2%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[True-True-4] PASSED [  2%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[True-True-5] PASSED [  2%]
+tests/acquisition/test_camera_adapter_contracts.py::test_preview_adoption_requires_retained_sdk_payload_and_exact_revision[True-True-6] PASSED [  2%]

@@ -9,7 +9,10 @@ from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfil
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.rendering.arena_gpu import ArenaGPUSet, upload_arena
 from cephvr.visual_stimulus.rendering.output_masks import clear_regions
-from cephvr.visual_stimulus.rendering.reference_bars import draw_reference_bars
+from cephvr.visual_stimulus.rendering.reference_bars import (
+    draw_reference_bars,
+    draw_valid_frame,
+)
 from cephvr.visual_stimulus.rendering.scene_resources import (
     PreparedCalibrationOutput,
     SceneOutputBuilder,
@@ -41,6 +44,7 @@ class DisplayCalibrationRenderer:
         self.display: DisplayProfile | None = None
         self.prepared: PreparedDisplayCalibration | None = None
         self._arena_gpu: ArenaGPUSet | None = None
+        self.valid_areas: dict[str, tuple[float, float, float, float]] = {}
 
     def present(
         self, display: DisplayProfile, prepared: PreparedDisplayCalibration
@@ -84,10 +88,9 @@ class DisplayCalibrationRenderer:
 
     def update(self, adjustments: dict[str, tuple[tuple[float, float], ...]]) -> None:
         """Validate all rectangles before writing the already-owned GL buffers."""
-        import struct
-
         from cephvr.visual_stimulus.config.calibration_adjustments import (
             CalibrationAdjustmentRejected,
+            validated_adjustments,
         )
 
         if (
@@ -98,23 +101,18 @@ class DisplayCalibrationRenderer:
             raise CalibrationAdjustmentRejected(
                 "Live adjustment requires an active frame/grid presentation"
             )
-        from cephvr.visual_stimulus.config.calibration_adjustments import (
-            validated_adjustments,
+        points = validated_adjustments(
+            (key, tuple(v for p in value for v in p))
+            for key, value in adjustments.items()
         )
-
-        adjustments = validated_adjustments(
-            (key, tuple(coordinate for point in points for coordinate in point))
-            for key, points in adjustments.items()
-        )
-        mappings = {item.mapping_id: item for item in self.display.active_mappings}
-        writes = []
-        for mapping_id, points in adjustments.items():
-            if mapping_id not in mappings:
+        mappings = {m.mapping_id: m for m in self.display.active_mappings}
+        pending = {}
+        for key, corners in points.items():
+            if key not in mappings:
                 raise CalibrationAdjustmentRejected(
                     "Live adjustment targets an unknown calibration mapping"
                 )
-            mapping = mappings[mapping_id]
-            profile = self.prepared.display_calibration.content[mapping_id]
+            profile = self.prepared.display_calibration.content[key]
             if (
                 not isinstance(profile, GeometricProfile)
                 or profile.rows != 2
@@ -126,48 +124,56 @@ class DisplayCalibrationRenderer:
                 raise CalibrationAdjustmentRejected(
                     "Live adjustment requires a GUI diagnostic affine mapping"
                 )
-            if (points[1][0] - points[0][0]) * (
-                profile.vertices[1].xy[0] - profile.vertices[0].xy[0]
-            ) <= 0 or (points[2][1] - points[0][1]) * (
-                profile.vertices[2].xy[1] - profile.vertices[0].xy[1]
-            ) <= 0:
+            xs, ys = [p[0] for p in corners], [p[1] for p in corners]
+            bounds = min(xs), min(ys), max(xs), max(ys)
+            frame = self.frames[mappings[key].output_id]
+            if (bounds[2] - bounds[0]) * frame.width < 1 or (
+                bounds[3] - bounds[1]
+            ) * frame.height < 1:
                 raise CalibrationAdjustmentRejected(
-                    "Live adjustment cannot change axis inversion"
+                    "Valid area must cover at least one output pixel on each axis"
                 )
-            area = (
-                abs((points[1][0] - points[0][0]) * (points[2][1] - points[0][1])) / 2
+            pending[key] = bounds
+        import struct
+
+        from cephvr.visual_stimulus.config.calibration_adjustments import (
+            affine_vertices,
+        )
+
+        writes = []
+        for key, bounds in pending.items():
+            profile = self.prepared.display_calibration.content[key]
+            assert isinstance(profile, GeometricProfile)
+            a, b, c = profile.vertices[:3]
+            sx = (b.xy[0] - a.xy[0]) / (b.uv[0] - a.uv[0])
+            sy = (c.xy[1] - a.xy[1]) / (c.uv[1] - a.uv[1])
+            vertices = affine_vertices(
+                sx, sy, (bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2
             )
-            if area <= profile.triangle_area_tolerance:
-                raise CalibrationAdjustmentRejected(
-                    "Live adjustment violates the protected mesh area tolerance"
-                )
-            frame = self.frames[mapping.output_id]
-            coordinates: list[float] = []
-            for original, (x, y) in zip(profile.vertices, points, strict=True):
-                coordinates.extend(
-                    (
-                        original.uv[0],
-                        original.uv[1],
-                        2
-                        * (mapping.viewport.x + x * mapping.viewport.width)
-                        / frame.width
-                        - 1,
-                        2
-                        * (mapping.viewport.y + y * mapping.viewport.height)
-                        / frame.height
-                        - 1,
-                    )
-                )
-            data = struct.pack("16f", *coordinates)
+            frame = self.frames[mappings[key].output_id]
+            data = struct.pack(
+                "16f",
+                *(
+                    value
+                    for v in vertices
+                    for value in (*v["uv"], 2 * v["xy"][0] - 1, 2 * v["xy"][1] - 1)
+                ),
+            )
             encoded = struct.unpack("16f", data)
-            if encoded[2] == encoded[6] or encoded[3] == encoded[11]:
+            if (
+                encoded[0] == encoded[4]
+                or encoded[1] == encoded[9]
+                or encoded[2] == encoded[6]
+                or encoded[3] == encoded[11]
+            ):
                 raise CalibrationAdjustmentRejected(
-                    "Live adjustment collapses at GPU vertex precision"
+                    "Valid-area translation collapses at GPU vertex precision"
                 )
-            writes.append((frame, frame.warp_vertex_buffers[mapping_id], data))
-        for frame, buffer, data in writes:
-            frame.activate()
-            buffer.write(data)
+            writes.append((frame, key, data))
+        for frame, key, data in writes:
+            self.outputs[mappings[key].output_id].activate()
+            frame.warp_vertex_buffers[key].write(data)
+        self.valid_areas.update(pending)
 
     def _render(
         self, display: DisplayProfile, prepared: PreparedDisplayCalibration
@@ -190,6 +196,9 @@ class DisplayCalibrationRenderer:
                     x_px=None if bars is None else bars.x_length_px,
                     y_px=None if bars is None else bars.y_length_px,
                 )
+                screen = getattr(context, "screen", None)
+                if screen is not None:
+                    context.copy_framebuffer(screen, frame.device_fbo)
                 continue
             from OpenGL import GL
 
@@ -236,6 +245,10 @@ class DisplayCalibrationRenderer:
                 profile = prepared.display_calibration.content[mapping.mapping_id]
                 if not isinstance(profile, GeometricProfile):
                     raise RuntimeError("protected geometric profile is unavailable")
+                frame.warp_program["valid_area"].value = self.valid_areas.get(
+                    mapping.mapping_id, profile.valid_area or (0.0, 0.0, 1.0, 1.0)
+                )
+                frame.warp_program["output_size"].value = (frame.width, frame.height)
                 frame.warp_program["has_mask"].value = int(profile.mask is not None)
                 frame.warp_program["has_weight"].value = int(profile.weight is not None)
                 frame.surface_textures[mapping.mapping_id].use(0)
@@ -265,6 +278,15 @@ class DisplayCalibrationRenderer:
             frame.output_texture.use(0)
             frame.lut_texture.use(1)
             frame.output_quad_array.render(mode=self.moderngl.TRIANGLE_STRIP)
+            for mapping in display.active_mappings:
+                if mapping.output_id == output_id:
+                    profile = prepared.display_calibration.content[mapping.mapping_id]
+                    assert isinstance(profile, GeometricProfile)
+                    bounds = self.valid_areas.get(
+                        mapping.mapping_id, profile.valid_area
+                    )
+                    if bounds is not None:
+                        draw_valid_frame(context, frame.width, frame.height, bounds)
             screen = getattr(context, "screen", None)
             if screen is not None:
                 context.copy_framebuffer(screen, frame.device_fbo)
@@ -284,4 +306,5 @@ class DisplayCalibrationRenderer:
         if not errors and not self.frames and self._arena_gpu is None:
             self.display = None
             self.prepared = None
+            self.valid_areas.clear()
         return tuple(errors)

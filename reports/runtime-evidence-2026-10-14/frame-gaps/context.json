@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-14",
+  "task": "clean-calibration-grid-bottom-fit",
+  "revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "Dirty working tree; concurrent work preserved. HEAD is not tested-byte provenance.",
+  "owner_approved": "Bottom usable image width126mm along+rigY; height94mm along-rigX. Both front and lower junction gaps5mm. Preserve measured perpendicular distances.",
+  "changes": "Shared screen corners offset side/Bottom front edges5mm behind Front and Front/side lower edges5mm above Bottom. Rotate Bottom local axes with inward normal preserved. Numeric5/full8/review3 migrate legacy width/height only. Fixed GUI policy/config version6 gap declaration agrees with implementation. No optical/default scale adjustment.",
+  "checks": {
+    "pytest_command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"front_attached or screen_distance_moves or calibration_arena or calibration_identity_profiles or measured_affine or bottom_mirror or bottom_center_path or calibration_json or review_draft or projector_configuration or portable_screen_profile or planning_preview or preview_calibration or live_calibration or projector_reference_measurements or calibration_adjustment_steps or legacy_numeric_projector or old_projector_snapshot or photodiode_frame\" --basetemp=.tmp/frame-gap-final -p no:faulthandler --junitxml=reports/runtime-evidence-2026-10-14/frame-gaps/tests.xml",
+    "result": "38 passed,444 deselected",
+    "extra_proof": "After adding exact126/94 measured affine and legacy review94/126 migration assertions, focused2 pass/480 deselected.",
+    "static": "Ruff/format7 files, Win32 mypy6 sources, boundaries689/zero violations; GUI TOML syntax/version6/5mm fixed binding pass.",
+    "attempts": "Initial21 pass/7 failures: legacy affine fixture still using old axis version, exact mirror fixture requires new5mm origin/orientation. Update fixture version and preserve mirror-clearance behaviors at appropriate new geometry; intermediate27 pass/1 mirror-clearance scenario failure, then31 and38 pass. Mypy object-version comparison corrected to explicit accepted-version membership."
+  },
+  "mapping_reason": "Old imageX width94mm vs required126mm explains insufficient long-axis fit under retained measurements. Correct dimensions yield126mm imageX and94mm imageY at neutralScale. Existing extra1.02/1.08 remain independent (128.52/101.52mm predicted, not measured acceptance).",
+  "projection_review": "Retain near1/far250mm and position0.000166mm/orthogonality0.000001; axis rotation is orthonormal and5mm inset does not require proposed numeric tolerance/clipping changes for given physical surfaces. Virtual scene-depth limits still require intended scene information and explicit owner approval.",
+  "limitations": "No runtime restart, stored user-value mutation, device/output command or optical/full-workload acceptance. GUI reopening migrates old drafts; normal projection launch regenerates clean grid. Existing rig checklist retains physical acceptance."
+}

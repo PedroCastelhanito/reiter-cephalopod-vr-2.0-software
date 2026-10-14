@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.814" timestamp="2026-10-14T09:13:24.507508+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_configuration_scroll_keeps_projector_status_fixed" time="0.401"><failure message="assert 15 == 0&#10; +  where 15 = &lt;built-in method maximum of QScrollBar object at 0x000002369E634670&gt;()&#10; +    where &lt;built-in method maximum of QScrollBar object at 0x000002369E634670&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x000002369E634670&gt;.maximum&#10; +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x000002369E634670&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000002369D5A53F0&gt;()&#10; +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000002369D5A53F0&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x000002369D5A53F0&gt;.horizontalScrollBar&#10; +          where &lt;PyQt6.QtWidgets.QScrollArea object at 0x000002369D5A53F0&gt; = &lt;cephvr.gui.projectors.ProjectorsPanel object at 0x000002369D58DAB0&gt;.config_scroll">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002369D176710&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000002369D1768C0&gt;
+
+    def test_configuration_scroll_keeps_projector_status_fixed(
+        window: DashboardWindow, app: QApplication
+    ):
+        window.resize(1175, 800)
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel = window.devices.projectors
+        assert [panel.setup_tabs.tabText(i) for i in range(3)] == [
+            "Screen calibration",
+            "Synchronization",
+            "Rig geometry",
+        ]
+        panel.setup_tabs.setCurrentIndex(2)
+        app.processEvents()
+        top = panel.layout_card.mapTo(window, QPoint())
+        log = panel.status_column.log_card.mapTo(window, QPoint())
+        scroll = panel.config_scroll.verticalScrollBar()
+        assert scroll.maximum() &gt; 0
+        scroll.setValue(scroll.maximum())
+        app.processEvents()
+        assert panel.layout_card.mapTo(window, QPoint()) == top
+        assert panel.status_column.log_card.mapTo(window, QPoint()) == log
+&gt;       assert panel.config_scroll.horizontalScrollBar().maximum() == 0
+E       assert 15 == 0
+E        +  where 15 = &lt;built-in method maximum of QScrollBar object at 0x000002369E634670&gt;()
+E        +    where &lt;built-in method maximum of QScrollBar object at 0x000002369E634670&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x000002369E634670&gt;.maximum
+E        +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x000002369E634670&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000002369D5A53F0&gt;()
+E        +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000002369D5A53F0&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x000002369D5A53F0&gt;.horizontalScrollBar
+E        +          where &lt;PyQt6.QtWidgets.QScrollArea object at 0x000002369D5A53F0&gt; = &lt;cephvr.gui.projectors.ProjectorsPanel object at 0x000002369D58DAB0&gt;.config_scroll
+
+tests\gui\test_dashboard.py:6888: AssertionError</failure></testcase></testsuite></testsuites>

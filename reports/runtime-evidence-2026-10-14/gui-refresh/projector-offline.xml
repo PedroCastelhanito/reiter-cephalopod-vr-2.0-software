@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="21" time="13.464" timestamp="2026-10-14T09:11:04.381710+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_gui_snapshot_rejects_invalid_json_before_editing[{&quot;format&quot;: &quot;a&quot;, &quot;format&quot;: &quot;b&quot;}]" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_gui_snapshot_rejects_invalid_json_before_editing[{&quot;n&quot;: NaN}]" time="0.358" /><testcase classname="tests.gui.test_dashboard" name="test_gui_snapshot_rejects_invalid_json_before_editing[[1,2]]" time="0.358" /><testcase classname="tests.gui.test_dashboard" name="test_gui_snapshot_rejects_invalid_json_before_editing[{&quot;invalid&quot;:]" time="0.357" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[camera]" time="0.358" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[camera_pending]" time="0.379" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[mcu]" time="0.362" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[tracking]" time="0.394" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[projector]" time="0.389" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_setup_captures_exact_accepted_configuration_for_bridge" time="0.425" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_close_reopen_preserves_full_draft[False]" time="0.855" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_close_reopen_preserves_full_draft[True]" time="0.872" /><testcase classname="tests.gui.test_dashboard" name="test_disconnected_projector_draft_restores_and_saves" time="0.455"><failure message="AssertionError: assert '12.0' == '12'&#10;  &#10;  - 12&#10;  + 12.0">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002B1DC5F6B00&gt;
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.tmp/projector-offline-tests3/test_disconnected_projector_dr0')
+
+    def test_disconnected_projector_draft_restores_and_saves(
+        window: DashboardWindow, tmp_path: Path
+    ) -&gt; None:
+        from cephvr.gui.gui_history import GuiHistory
+        from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
+    
+        panel = window.devices.projectors
+        panel.assignments = {"saved-front": "Front", "saved-left": "Left"}
+        panel.participation = {"saved-front": True, "saved-left": False}
+        panel.update_participation()
+        saved = window.snapshots.capture()
+        panel.review_displays = ()
+        panel.discover_displays()
+        window.snapshots.restore(window.snapshots.validate(saved))
+        assert panel.keys == []
+        assert panel.assignments == saved["projectors"]["assignments"]
+        assert panel.participation == saved["projectors"]["participation"]
+        assert panel.enabled_screens == ("Front",)
+        assert NO_PROJECTORS_MESSAGE in panel.console.toPlainText()
+        assert NO_PROJECTORS_MESSAGE in panel.status_column.hud.toPlainText()
+        field = panel.calibration_files.fields["screens.Front.offset_x"]
+        field.setText("12")
+        history = GuiHistory(window.snapshots, tmp_path / "runtime_gui.json")
+        history.restore()
+        history.save()
+        field.setText("20")
+        assert GuiHistory(window.snapshots, history.path).restore()
+&gt;       assert field.text() == "12"
+E       AssertionError: assert '12.0' == '12'
+E         
+E         - 12
+E         + 12.0
+
+tests\gui\test_dashboard.py:6433: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_setup_without_projectors_logs_and_submits_nothing" time="0.384"><failure message="AttributeError: 'function' object has no attribute 'isEnabled'">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002B1E0C9D2D0&gt;
+
+    def test_setup_without_projectors_logs_and_submits_nothing(
+        window: DashboardWindow,
+    ) -&gt; None:
+        from cephvr.gui.main import ManagedGui
+    
+        panel = window.devices.projectors
+        panel.review_displays = ()
+        requests = []
+        gui = SimpleNamespace(
+            window=window,
+            bridge=SimpleNamespace(request=lambda *args, **kw: requests.append(args)),
+        )
+        # Refresh on click must replace even a stale inventory from before power-off.
+        panel.keys = ["previously-connected"]
+        window.dashboard.action_requested.disconnect()
+        window.dashboard.action_requested.connect(
+            lambda action: ManagedGui.request_dashboard_action(gui, action)
+        )
+        window.dashboard.apply_view(DashboardView(connected=True, has_control=True))
+&gt;       assert window.dashboard.setup.isEnabled()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'function' object has no attribute 'isEnabled'
+
+tests\gui\test_dashboard.py:6455: AttributeError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_projection_group_replaces_individual_visibility_controls" time="0.389" /><testcase classname="tests.gui.test_dashboard" name="test_projectors_page_install_collect_keeps_file_owned_pacing_absent[False]" time="0.396"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for DisplayProfile&#10;  Value error, mixed pacing requires an explicit pacing output [type=value_error, input_value={'format_version': 1, 'ge...4, 'y_length_px': 24}}]}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/value_error">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002B1E0CBF250&gt;
+disconnected = False
+
+    @pytest.mark.parametrize("disconnected", [False, True])
+    def test_projectors_page_install_collect_keeps_file_owned_pacing_absent(
+        window: DashboardWindow,
+        disconnected: bool,
+    ):
+        import json
+    
+        from tests.visual_stimulus.support import valid_display_json
+    
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
+    
+        source = json.loads(valid_display_json())
+        source["presentation_mode"] = "photodiode_only_vsync"
+        source["photodiode_enabled"] = False
+        source["photodiode_output_id"] = None
+        source.pop("pacing_output_id", None)
+        display = visual_stimulus_pb.DisplayConfiguration(profile_json=json.dumps(source))
+        panel = window.devices.projectors
+    
+        panel.install_configuration(display)
+        if disconnected:
+            panel.review_displays = ()
+            panel.discover_displays()
+            assert not panel.keys
+        result = panel.configuration_for_submit(display)
+        profile = json.loads(result.profile_json)
+    
+        assert profile["photodiode_enabled"] is False
+        assert "pacing_output_id" not in profile
+        assert profile["geometry"] == source["geometry"]
+        assert profile["mappings"] == source["mappings"]
+        from cephvr.visual_stimulus.configuration import validate_display_profile
+    
+&gt;       assert validate_display_profile(result.profile_json)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\gui\test_dashboard.py:9787: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\configuration.py:278: in validate_display_profile
+    profile = parse_display_json(profile_json, max_bytes=max_bytes)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\visual_stimulus\config\models\display_profile.py:342: in parse_display_json
+    return parse_json(DisplayProfile, source, max_bytes=max_bytes, max_depth=32)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+model = &lt;class 'cephvr.visual_stimulus.config.models.display_profile.DisplayProfile'&gt;
+source = '{"format_version":1,"geometry":{"frame_id":"frame","observer_mm":[0.0,0.0,0.0],"near_mm":1.0,"far_mm":1000.0,"positio...:1,"rgb_bits_per_channel":8,"enabled":true,"blackout_zones":[],"reference_bars":{"x_length_px":24,"y_length_px":24}}]}'
+max_bytes = 16777216, max_depth = 32
+
+    def parse_json(
+        model: type[T], source: str, *, max_bytes: int, max_depth: int = 64
+    ) -&gt; T:
+        if (
+            type(max_bytes) is not int
+            or type(max_depth) is not int
+            or min(max_bytes, max_depth) &lt;= 0
+        ):
+            raise ValueError("positive integer JSON limits required")
+        if not isinstance(source, str):
+            raise ValueError("UTF-8 JSON text required")
+        if len(source.encode("utf8")) &gt; max_bytes:
+            raise ValueError("document exceeds byte budget")
+        depth = 0
+        quoted = False
+        escaped = False
+        for ch in source:
+            if quoted:
+                if escaped:
+                    escaped = False
+                elif ch == "\\":
+                    escaped = True
+                elif ch == '"':
+                    quoted = False
+            elif ch == '"':
+                quoted = True
+            elif ch in "[{":
+                depth += 1
+                if depth &gt; max_depth:
+                    raise ValueError("document exceeds nesting budget")
+            elif ch in "]}":
+                depth -= 1
+    
+        def unique(pairs: list[tuple[str, Any]]) -&gt; dict[str, Any]:
+            result: dict[str, Any] = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError(f"duplicate JSON key: {key}")
+                result[key] = value
+            return result
+    
+        def invalid(value: str) -&gt; NoReturn:
+            raise ValueError(f"nonfinite JSON constant: {value}")
+    
+        # This preflight checks duplicate keys; it is not a second schema definition.
+        json.loads(source, object_pairs_hook=unique, parse_constant=invalid)
+&gt;       return model.model_validate_json(source, strict=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for DisplayProfile
+E         Value error, mixed pacing requires an explicit pacing output [type=value_error, input_value={'format_version': 1, 'ge...4, 'y_length_px': 24}}]}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/value_error
+
+src\cephvr\visual_stimulus\config\models\schema_common.py:139: ValidationError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_projectors_page_install_collect_keeps_file_owned_pacing_absent[True]" time="0.390"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for DisplayProfile&#10;  Value error, mixed pacing requires an explicit pacing output [type=value_error, input_value={'format_version': 1, 'ge...4, 'y_length_px': 24}}]}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/value_error">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002B1CBAEB640&gt;
+disconnected = True
+
+    @pytest.mark.parametrize("disconnected", [False, True])
+    def test_projectors_page_install_collect_keeps_file_owned_pacing_absent(
+        window: DashboardWindow,
+        disconnected: bool,
+    ):
+        import json
+    
+        from tests.visual_stimulus.support import valid_display_json
+    
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
+    
+        source = json.loads(valid_display_json())
+        source["presentation_mode"] = "photodiode_only_vsync"
+        source["photodiode_enabled"] = False
+        source["photodiode_output_id"] = None
+        source.pop("pacing_output_id", None)
+        display = visual_stimulus_pb.DisplayConfiguration(profile_json=json.dumps(source))
+        panel = window.devices.projectors
+    
+        panel.install_configuration(display)
+        if disconnected:
+            panel.review_displays = ()
+            panel.discover_displays()
+            assert not panel.keys
+        result = panel.configuration_for_submit(display)
+        profile = json.loads(result.profile_json)
+    
+        assert profile["photodiode_enabled"] is False
+        assert "pacing_output_id" not in profile
+        assert profile["geometry"] == source["geometry"]
+        assert profile["mappings"] == source["mappings"]
+        from cephvr.visual_stimulus.configuration import validate_display_profile
+    
+&gt;       assert validate_display_profile(result.profile_json)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\gui\test_dashboard.py:9787: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\configuration.py:278: in validate_display_profile
+    profile = parse_display_json(profile_json, max_bytes=max_bytes)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\visual_stimulus\config\models\display_profile.py:342: in parse_display_json
+    return parse_json(DisplayProfile, source, max_bytes=max_bytes, max_depth=32)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+model = &lt;class 'cephvr.visual_stimulus.config.models.display_profile.DisplayProfile'&gt;
+source = '{"format_version":1,"geometry":{"frame_id":"frame","observer_mm":[0.0,0.0,0.0],"near_mm":1.0,"far_mm":1000.0,"positio...:1,"rgb_bits_per_channel":8,"enabled":true,"blackout_zones":[],"reference_bars":{"x_length_px":24,"y_length_px":24}}]}'
+max_bytes = 16777216, max_depth = 32
+
+    def parse_json(
+        model: type[T], source: str, *, max_bytes: int, max_depth: int = 64
+    ) -&gt; T:
+        if (
+            type(max_bytes) is not int
+            or type(max_depth) is not int
+            or min(max_bytes, max_depth) &lt;= 0
+        ):
+            raise ValueError("positive integer JSON limits required")
+        if not isinstance(source, str):
+            raise ValueError("UTF-8 JSON text required")
+        if len(source.encode("utf8")) &gt; max_bytes:
+            raise ValueError("document exceeds byte budget")
+        depth = 0
+        quoted = False
+        escaped = False
+        for ch in source:
+            if quoted:
+                if escaped:
+                    escaped = False
+                elif ch == "\\":
+                    escaped = True
+                elif ch == '"':
+                    quoted = False
+            elif ch == '"':
+                quoted = True
+            elif ch in "[{":
+                depth += 1
+                if depth &gt; max_depth:
+                    raise ValueError("document exceeds nesting budget")
+            elif ch in "]}":
+                depth -= 1
+    
+        def unique(pairs: list[tuple[str, Any]]) -&gt; dict[str, Any]:
+            result: dict[str, Any] = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError(f"duplicate JSON key: {key}")
+                result[key] = value
+            return result
+    
+        def invalid(value: str) -&gt; NoReturn:
+            raise ValueError(f"nonfinite JSON constant: {value}")
+    
+        # This preflight checks duplicate keys; it is not a second schema definition.
+        json.loads(source, object_pairs_hook=unique, parse_constant=invalid)
+&gt;       return model.model_validate_json(source, strict=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for DisplayProfile
+E         Value error, mixed pacing requires an explicit pacing output [type=value_error, input_value={'format_version': 1, 'ge...4, 'y_length_px': 24}}]}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/value_error
+
+src\cephvr\visual_stimulus\config\models\schema_common.py:139: ValidationError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[False-1280]" time="1.411" /><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[False-720]" time="1.074" /><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[True-1280]" time="1.101" /><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[True-720]" time="1.079" /></testsuite></testsuites>

@@ -42,3 +42,34 @@ def validated_adjustments(
             "Live calibration requires one to four mapping adjustments"
         )
     return result
+
+
+def affine_vertices(
+    sx: float, sy: float, center_x: float, center_y: float
+) -> tuple[dict[str, tuple[float, float]], ...]:
+    """Clip a translated affine image to output bounds, preserving its pixel pitch."""
+    if (
+        not all(math.isfinite(v) for v in (sx, sy, center_x, center_y))
+        or sx == 0
+        or sy == 0
+    ):
+        raise CalibrationAdjustmentRejected("Invalid fixed-pitch affine image")
+
+    def axis(
+        scale: float, center: float
+    ) -> tuple[tuple[float, float], tuple[float, float]]:
+        a, b = center - scale / 2, center + scale / 2
+        ca, cb = max(0.0, min(1.0, a)), max(0.0, min(1.0, b))
+        if ca == cb:
+            raise CalibrationAdjustmentRejected("Mapped image is outside its display")
+        return (max(0.0, min(1.0, (ca - a) / scale)), ca), (
+            max(0.0, min(1.0, (cb - a) / scale)),
+            cb,
+        )
+
+    x, y = axis(sx, center_x), axis(sy, center_y)
+    return tuple(
+        dict(uv=(x[i][0], y[j][0]), xy=(x[i][1], y[j][1]))
+        for j in (0, 1)
+        for i in (0, 1)
+    )

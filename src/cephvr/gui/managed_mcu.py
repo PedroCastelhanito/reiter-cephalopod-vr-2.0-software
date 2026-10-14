@@ -41,11 +41,12 @@ class ManagedMcu(QObject):
         self.bridge = bridge
         self.snapshot = snapshot
         self.pending = False
+        self.pending_kind = 0
         self.revision = -1
         self.observed_ns = -1
         self.settle = QTimer(self)
         self.settle.setSingleShot(True)
-        self.settle.setInterval(2300)
+        self.settle.setInterval(500)
         self.settle.timeout.connect(self.read_status)
         panel.connection_requested.connect(self.test_connection)
         panel.save_requested.connect(self.save_pins)
@@ -291,6 +292,7 @@ class ManagedMcu(QObject):
         self.pending = True
         self.panel.connection_pending = True
         self.panel.pending_test_key = key
+        self.pending_kind = kind
         self.panel.refresh_tests()
         if kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
             self.panel.console.appendPlainText(
@@ -314,13 +316,14 @@ class ManagedMcu(QObject):
         }:
             return
         self.pending = False
+        self.pending_kind = 0
         self.panel.upload_pending = False
         self.panel.connection_pending = False
         self.panel.pending_test_key = ""
         if not success:
             self.panel.console.appendPlainText(f"MCU command failed: {message}")
-        # The firmware bounds tests to two seconds. Query from confirmed command
-        # completion, not from submission (which can include serial startup).
+        # Confirm active state and renew the diagnostic lease after completion.
+        # Submission can include serial startup and does not prove a running test.
         if (
             success
             and action in {"mcu", "prepare_mcu_test"}
@@ -332,6 +335,7 @@ class ManagedMcu(QObject):
     def disconnected(self) -> None:
         self.settle.stop()
         self.pending = False
+        self.pending_kind = 0
         self.revision = self.observed_ns = -1
         self.panel.upload_pending = False
         self.panel.connection_pending = False

@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-14",
+  "task": "registry-preview-trigger-selection",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "Dirty working tree; revision identifies base only, including earlier Eye fix and unrelated concurrent work.",
+  "change": "Use CAMERA_NAME_BY_ROLE as selection registry; ManualPreview delegates to existing pulse-owner selector with optional adding_role. Defaults retain running-only selection. Sorted output, external timing and preview state gates preserved.",
+  "architecture": "A10/E07 existing behavior; ARCH-002 removes duplicate selection; no schema, firmware, timing, device-count or dependency change.",
+  "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_manual_preview.py tests/acquisition/test_manual_devices.py tests/controller/test_camera_configuration.py tests/controller/test_handoffs.py -q -m \"not windows and not rig\" --basetemp .pytest-registry-preview-final --junitxml reports/runtime-evidence-2026-10-14/registry-preview/final.xml",
+  "outcome": "174 passed, 1 Windows test deselected",
+  "initial_attempt": "tests.xml retains173 pass/one existing integration two-second timeout in empty_edit_uses_real_acquisition_status_and_completion_path[True]. Isolated recheck2 pass/53 deselections, final full selection pass without code/assertion changes; cause unverified.",
+  "checks": {
+    "ruff": "lint/format3 pass",
+    "mypy": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/acquisition/coordinator/manual_preview.py src/cephvr/acquisition/coordinator/manual_pulses.py:2 source files pass",
+    "boundaries": "690 modules,0 violations with existing size advisories; preview orchestration656 lines delegates focused responsibilities",
+    "whitespace": "git diff --check pass"
+  },
+  "coverage": "All registered roles across started/stopped and free/external timing; registry extension probe aliases an existing schema field to isolate discovery and does not claim hardware/schema support for role99. Existing controller real-resolver readback tests pass.",
+  "limits": "No runtime restart or device/SDK/serial/optical/full-workload verification. New physical roles need schema/device/firmware support; this is no arbitrary camera-count implementation.",
+  "attempts": [
+    "Guessed camera-control.md read failed; no effect on existing architecture/implementation review."
+  ]
+}

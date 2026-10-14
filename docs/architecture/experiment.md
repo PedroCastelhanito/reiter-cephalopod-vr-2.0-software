@@ -291,7 +291,7 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
 <a id="e07"></a>
 ### E07 — Configuration and protocol preparation
 
-**Status:** Accepted · **Revision:** 61
+**Status:** Accepted · **Revision:** 63
 
 #### Sources and loading
 
@@ -363,6 +363,11 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
   cleanup while the save problem is handled.
 
 #### Editing and edit validation
+
+- Disconnected projectors do not reject otherwise valid saved display settings.
+  Edit validation uses declared identities/properties without probing physical output
+  availability; projector tests and preparation still require identified outputs.
+  G01 owns the GUI's no-projector Setup explanation and no-submission guard.
 
 - Headless clients inspect and edit configuration through the same controller
   `GetSnapshot`, control-ownership and `UpdateConfiguration` contracts and rules
@@ -472,7 +477,8 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
   backends validate their required assets during Setup. The root follows ordinary
   configuration editing, history and session-locking rules. It does not change
   recording-output paths or E04's minimal central asset metadata; V13 owns the
-  scoped Visual Stimulus replay manifest.
+  scoped Visual Stimulus replay manifest. V01/G01 sessionless calibration uses its
+  fixed repository asset root independently, without changing this media root.
 - Each active backend returns the filename of every validated asset for the
   minimal session metadata defined in E04.
 - Setup resolves and retains every effective shared and trial-specific setting,

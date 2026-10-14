@@ -164,10 +164,10 @@ class PreviewCanvas(QWidget):
         else:
             source = QPolygonF(
                 [
-                    QPointF(0, image.height()),
-                    QPointF(image.width(), image.height()),
-                    QPointF(image.width(), 0),
-                    QPointF(0, 0),
+                    QPointF(u * image.width(), (1 - v) * image.height())
+                    for u, v in (
+                        correction.source_uv or ((0, 0), (1, 0), (1, 1), (0, 1))
+                    )
                 ]
             )
             target = QPolygonF(
@@ -178,6 +178,16 @@ class PreviewCanvas(QWidget):
             )
             transform = QTransform()
             if QTransform.quadToQuad(source, target, transform):
+                if correction.valid_area is not None:
+                    x0, y0, x1, y1 = correction.valid_area
+                    painter.setClipRect(
+                        QRectF(
+                            x0 * output.width(),
+                            (1 - y1) * output.height(),
+                            (x1 - x0) * output.width(),
+                            (y1 - y0) * output.height(),
+                        )
+                    )
                 painter.setTransform(transform)
                 painter.drawImage(QPointF(0, 0), image)
         painter.end()

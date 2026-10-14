@@ -1,0 +1,202 @@
+{
+  "scope": "snapshot",
+  "eye": "excluded",
+  "checks": {
+    "session": {
+      "phase": "SESSION_PHASE_CONFIGURATION",
+      "context": {
+        "controller_generation": "30645d86-accc-4df3-a29b-70b12f9d9012",
+        "session_id": "c5fd5b33-c7ef-4bf8-b939-48848922b13f"
+      }
+    },
+    "visual_stimulus_display": {
+      "source": {
+        "role": "visual_stimulus",
+        "generation": "fcf62a82-a954-4677-8066-74c31865bca0"
+      },
+      "backend": {
+        "backend_name": "visual_stimulus",
+        "backend_generation": "fcf62a82-a954-4677-8066-74c31865bca0"
+      },
+      "controller": {
+        "role": "controller",
+        "generation": "30645d86-accc-4df3-a29b-70b12f9d9012"
+      },
+      "command_id": "93328e0e-1634-4046-9d39-b7254f896d08",
+      "requested_revision": "1",
+      "applied_revision": "1",
+      "outputs": [
+        {
+          "output_id": "calibration_front",
+          "resources_ready": true,
+          "requested_rgb_bits": 8,
+          "observed_rgb_bits": [
+            8,
+            8,
+            8
+          ],
+          "requested_swap_interval": 1,
+          "idle_swap_entry_ns": "104036502986700",
+          "idle_swap_return_ns": "104036503287800",
+          "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+        },
+        {
+          "output_id": "calibration_left",
+          "resources_ready": true,
+          "requested_rgb_bits": 8,
+          "observed_rgb_bits": [
+            8,
+            8,
+            8
+          ],
+          "requested_swap_interval": 1,
+          "idle_swap_entry_ns": "104036613087600",
+          "idle_swap_return_ns": "104036613148700",
+          "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+        },
+        {
+          "output_id": "calibration_right",
+          "resources_ready": true,
+          "requested_rgb_bits": 8,
+          "observed_rgb_bits": [
+            8,
+            8,
+            8
+          ],
+          "requested_swap_interval": 1,
+          "idle_swap_entry_ns": "104036657945100",
+          "idle_swap_return_ns": "104036658003800",
+          "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+        },
+        {
+          "output_id": "calibration_bottom",
+          "resources_ready": true,
+          "requested_rgb_bits": 8,
+          "observed_rgb_bits": [
+            8,
+            8,
+            8
+          ],
+          "requested_swap_interval": 1,
+          "idle_swap_entry_ns": "104036702062900",
+          "idle_swap_return_ns": "104036702127900",
+          "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+        }
+      ],
+      "observed_monotonic_ns": "104036702184100",
+      "complete": true
+    },
+    "acquisition_devices": {},
+    "microcontroller": {
+      "observation": {
+        "port": "COM8",
+        "connection_id": "c42e1518-e7db-49a1-ac65-32686dbdae21",
+        "request_id": "c42e1518-e7db-49a1-ac65-32686dbdae21-8",
+        "observed_monotonic_ns": "104085631502700",
+        "state": {
+          "configuration_valid": true,
+          "watchdog_stopped": false,
+          "watchdog_ms": 3000,
+          "behavioral": {
+            "enabled": true,
+            "running": false,
+            "pin": "D11",
+            "applied_frequency_hz": 30.0
+          },
+          "tracking": {
+            "enabled": true,
+            "running": false,
+            "pin": "D10",
+            "applied_frequency_hz": 60.0
+          },
+          "eye_tracking": {
+            "enabled": false,
+            "running": false
+          }
+        },
+        "capabilities": {
+          "protocol_version": 4,
+          "firmware": "cephvr2_uno_4",
+          "pins": [
+            "D2",
+            "D3",
+            "D4",
+            "D5",
+            "D6",
+            "D7",
+            "D8",
+            "D9",
+            "D10",
+            "D11",
+            "D12",
+            "D13"
+          ],
+          "minimum_requested_hz": 0.1,
+          "maximum_requested_hz": 100.0,
+          "minimum_watchdog_ms": 500,
+          "maximum_watchdog_ms": 10000,
+          "rising_edge_input_pins": [
+            "D2",
+            "D3"
+          ]
+        },
+        "capabilities_observed_monotonic_ns": "104048625654700"
+      },
+      "cleanup_pending": true
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "warnings": [
+      {
+        "warning_id": "41a9ee3d-c43e-4827-b7b1-826060618888",
+        "component": "startup_recovery",
+        "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+      },
+      {
+        "warning_id": "008ea4c2-611a-4d94-9039-5e55c85f2488",
+        "component": "controller",
+        "message": "visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: review capture slots exceed the recording byte budget"
+      }
+    ],
+    "errors": []
+  },
+  "controller_generation": "30645d86-accc-4df3-a29b-70b12f9d9012"
+}

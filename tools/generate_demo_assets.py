@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import random
-import shutil
 import struct
 import zlib
 from collections.abc import Callable
@@ -38,13 +38,31 @@ def _png(pixel: Callable[[int, int], Pixel]) -> bytes:
 
 
 def generate(output: Path) -> int:
-    """Copy source descriptors and generate nine deterministic RGB8 samples."""
-    templates = Path(__file__).resolve().parents[1] / "demo_assets"
-    for source in templates.rglob("*.json"):
-        target = output / source.relative_to(templates)
+    """Generate external authoring descriptors and nine deterministic RGB8 samples."""
+    repository = Path(__file__).resolve().parents[1]
+    if output.resolve().is_relative_to(repository):
+        raise ValueError("Authoring samples must be generated outside the repository")
+    for name in ("checkerboard", "noise", "sine_grating"):
+        target = output / "textures" / f"{name}.texture.json"
         target.parent.mkdir(parents=True, exist_ok=True)
-        if source.resolve() != target.resolve():
-            shutil.copyfile(source, target)
+        target.write_text(
+            json.dumps(
+                {
+                    "cephvr_asset_type": "texture_design",
+                    "kind": "texture",
+                    "pattern": "image",
+                    "preview_file": f"{name}.png",
+                    "params": {
+                        "texture_path": f"{name}.png",
+                        "tile_width_mm": 40,
+                        "tile_height_mm": 40,
+                    },
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
     noise = random.Random(0)
     colors = ((255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0))
     samples: dict[str, Callable[[int, int], Pixel]] = {
@@ -62,6 +80,19 @@ def generate(output: Path) -> int:
             127.5 * (1 + math.sin(2 * math.pi * x / 32))
         ),
     }
+    manifest = {
+        "purpose": "Dummy media for local protocol authoring; not calibrated scientific stimuli.",
+        "images": [name for name in samples if name.startswith("images/")],
+        "textures": [
+            f"textures/{name}.texture.json"
+            for name in ("checkerboard", "sine_grating", "noise")
+        ],
+        "texture_tile_mm": [40, 40],
+        "usage": "Choose Image for images/*.png; choose Texture for textures/*.texture.json. Group repetitions repeat the full sequence.",
+    }
+    (output / "manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    )
     for name, pixel in samples.items():
         target = output / name
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -74,7 +105,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / "demo_assets",
+        required=True,
+        help="External asset directory (outside this repository)",
     )
     args = parser.parse_args()
     print(f"Generated {generate(args.output)} local sample images in {args.output}.")

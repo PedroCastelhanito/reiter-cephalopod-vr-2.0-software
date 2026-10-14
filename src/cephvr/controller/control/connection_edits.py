@@ -96,7 +96,14 @@ def validate_connections(
                 "INVALID_RATE",
                 "pulse rate must be positive and use the exact 0.1 Hz grid",
             )
-    for role in ("trial_state", "projector_flip"):
+    if settings.pulses.projector_flip_enabled:
+        issue(
+            result,
+            "backends.acquisition.pulses.projector_flip_enabled",
+            "UNSUPPORTED_SIGNAL",
+            "Projector flip input is deferred and cannot be enabled",
+        )
+    for role in ("trial_state",):
         _pin(
             result,
             settings.pulses,

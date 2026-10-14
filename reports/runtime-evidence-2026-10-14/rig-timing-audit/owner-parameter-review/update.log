@@ -1,0 +1,25 @@
+{
+  "controller_generation": "a53c36fe-5c52-4663-88cc-de0dbc56f006",
+  "updated": {
+    "command_id": "ebfa3198-c881-4f5a-99fb-81ebad4e8814",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "saved_history": {
+    "command_id": "5c889c0d-e509-4991-a475-af36e4501dfc",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "settings": {
+    "recording_queue_frames": 20,
+    "sdk_buffer_count_per_camera": 15,
+    "post_cutoff_drain_margin_ms": 150
+  },
+  "current_equals_proposed": true,
+  "saved_equals_proposed": true,
+  "scope": "Configuration settings only; no Setup, recording or projector tests dispatched. SDK15/drain150/queue20 not remeasured on rig."
+}

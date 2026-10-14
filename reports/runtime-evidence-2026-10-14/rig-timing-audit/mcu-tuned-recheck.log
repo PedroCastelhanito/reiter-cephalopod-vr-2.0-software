@@ -1,0 +1,26 @@
+session {"phase": "SESSION_PHASE_CONFIGURATION"}
+visual_stimulus_display {"source": {"role": "visual_stimulus", "generation": "230d940a-0b39-43cf-8313-ee8d4a417889"}, "backend": {"backend_name": "visual_stimulus", "backend_generation": "230d940a-0b39-43cf-8313-ee8d4a417889"}, "controller": {"role": "controller", "generation": "7e0a63e3-7466-4f21-8bd7-c505eed1e3a9"}, "command_id": "2e9327b0-e70c-4be6-85c2-f55a2bd1532e", "requested_revision": "1", "applied_revision": "1", "outputs": [{"output_id": "calibration_front", "resources_ready": true, "requested_rgb_bits": 8, "observed_rgb_bits": [8, 8, 8], "requested_swap_interval": 1, "idle_swap_entry_ns": "96935638638000", "idle_swap_return_ns": "96935639011500", "idle_submission": "SUBMISSION_OUTCOME_RETURNED"}, {"output_id": "calibration_left", "resources_ready": true, "requested_rgb_bits": 8, "observed_rgb_bits": [8, 8, 8], "requested_swap_interval": 1, "idle_swap_entry_ns": "96935759232700", "idle_swap_return_ns": "96935759385900", "idle_submission": "SUBMISSION_OUTCOME_RETURNED"}, {"output_id": "calibration_right", "resources_ready": true, "requested_rgb_bits": 8, "observed_rgb_bits": [8, 8, 8], "requested_swap_interval": 1, "idle_swap_entry_ns": "96935804633200", "idle_swap_return_ns": "96935804699000", "idle_submission": "SUBMISSION_OUTCOME_RETURNED"}, {"output_id": "calibration_bottom", "resources_ready": true, "requested_rgb_bits": 8, "observed_rgb_bits": [8, 8, 8], "requested_swap_interval": 1, "idle_swap_entry_ns": "96935849098500", "idle_swap_return_ns": "96935849165700", "idle_submission": "SUBMISSION_OUTCOME_RETURNED"}], "observed_monotonic_ns": "96935849221600", "complete": true}
+acquisition_devices {}
+configuration {"revision": "1"}
+warnings []
+errors []
+connect [true, "Completed"]
+connect_evidence {}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-14\rig-timing-audit\managed_probe.py", line 164, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-14\rig-timing-audit\managed_probe.py", line 64, in main
+    keep(name, await dispatch_device_action(client, "mcu", {"kind": kind}, principal))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\managed_device_commands.py", line 86, in dispatch_device_action
+    raise ClientError(outcome.failure or "MCU operation did not succeed.")
+cephvr.client.session.ClientError: OPERATION_FAILED: no pin diagnostic is active

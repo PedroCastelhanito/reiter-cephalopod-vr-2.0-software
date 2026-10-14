@@ -195,6 +195,7 @@ class _HeartbeatSupervisor:
     def __init__(self, shutdown: asyncio.Event) -> None:
         self.shutdown = shutdown
         self.reports: list[control.HeartbeatReport] = []
+        self.deadlines: list[int] = []
 
     async def report_heartbeat(
         self, request: control.HeartbeatReport, *, deadline_ns: int
@@ -202,7 +203,23 @@ class _HeartbeatSupervisor:
         assert deadline_ns > request.sent_monotonic_ns
         saved = control.HeartbeatReport.FromString(request.SerializeToString())
         self.reports.append(saved)
+        self.deadlines.append(deadline_ns)
         self.shutdown.set()
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+
+class _DelayedWorkerErrorSupervisor(_HeartbeatSupervisor):
+    def __init__(self, shutdown: asyncio.Event) -> None:
+        super().__init__(shutdown)
+        self.error_started = asyncio.Event()
+        self.release_error = asyncio.Event()
+
+    async def report_error(
+        self, _request: control.ErrorReport, *, deadline_ns: int
+    ) -> control.ReportReceipt:
+        assert deadline_ns > 0
+        self.error_started.set()
+        await self.release_error.wait()
         return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
 
 
@@ -270,6 +287,206 @@ async def test_trial_heartbeat_sets_only_trial_lifecycle_oneof() -> None:
     report = supervisor.reports[0]
     assert report.WhichOneof("lifecycle") == "trial_phase"
     assert report.work == trial_work
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "case",
+    [
+        "completed",
+        "unfinished",
+        "pending_receipt",
+        "cleanup_during_error_report",
+        "session_replaced_during_error_report",
+        "session_created_with_receipt_during_error_report",
+    ],
+)
+async def test_completed_session_heartbeat_changes_to_process_scope_only_after_cleanup(
+    case: str,
+) -> None:
+    shutdown = asyncio.Event()
+    is_race_case = case in (
+        "cleanup_during_error_report",
+        "session_replaced_during_error_report",
+        "session_created_with_receipt_during_error_report",
+    )
+    supervisor = (
+        _DelayedWorkerErrorSupervisor(shutdown)
+        if is_race_case
+        else _HeartbeatSupervisor(shutdown)
+    )
+    generation = _id()
+    process = control.ProcessIdentity(role="acquisition", generation=generation)
+    session_work = control.WorkContext(
+        session=control.SessionContext(session_id="session-1")
+    )
+    resource = control.ResourceObligation(
+        owner=control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=_id()
+        ),
+        resource="camera-ring-1",
+    )
+    pending = None
+    if case == "pending_receipt":
+        pending = control.HeartbeatReport(
+            source=process,
+            work=session_work,
+            sent_monotonic_ns=1,
+            session_phase=control.SESSION_PHASE_SETTING_UP,
+            cleanup_resources_revision=2,
+            cleanup_resources=[resource],
+        )
+    session = SimpleNamespace(
+        work=session_work,
+        trial=None,
+        ready_report=control.ReadyReport(),
+        cleanup_complete=case != "unfinished",
+        pending_cleanup_heartbeat=pending,
+        cleanup_catalogue_initialized=True,
+        cleanup_resources_revision=1,
+        cleanup_resources=[resource],
+        setup_deadline_ns=20,
+        interrupted=False,
+        setup_cancelled=False,
+    )
+    worker = SimpleNamespace(
+        launch=SimpleNamespace(
+            worker=control.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=_id()
+            )
+        ),
+        heartbeat=control.HeartbeatReport(
+            source=control.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=_id()
+            ),
+            work=session_work,
+            sent_monotonic_ns=1,
+            continuing_functions=[
+                control.ContinuingFunctionEvidence(
+                    resource_id="camera.capture", functioning=True
+                )
+            ],
+        ),
+        prune_child_operations=lambda: None,
+    )
+    # The launch identity is the identity reported in the worker heartbeat.
+    worker.heartbeat.source.CopyFrom(worker.launch.worker)
+    if is_race_case:
+        worker.heartbeat.active_error.SetInParent()
+    session_slot = SessionSlot(
+        current=None
+        if case == "session_created_with_receipt_during_error_report"
+        else session
+    )
+    health = AcquisitionHealth(
+        identity=CoordinatorIdentity(
+            backend=control.BackendContext(
+                backend_name="acquisition", backend_generation=generation
+            ),
+            process=process,
+            controller=control.ProcessIdentity(role="controller", generation=_id()),
+            supervisor=control.ProcessIdentity(role="supervisor", generation=_id()),
+            tracking=control.ProcessIdentity(role="tracking", generation=_id()),
+        ),
+        workers={camera_pb2.CAMERA_ROLE_BEHAVIORAL: worker},
+        commands=CommandLedger(
+            str(uuid4()),
+            300_000_000_000,
+            max_records=32,
+            max_bytes=2 * 1024 * 1024,
+            result_reservation_bytes=64 * 1024,
+        ),
+        session_slot=session_slot,
+        supervisor=cast(SupervisorPort, supervisor),
+        heartbeat_interval_ns=10,
+        health_silence_ns=100,
+        recovery_ns=100,
+        catalogue_lock=asyncio.Lock(),
+        failure_handler=_unexpected_health_failure,
+        clock=lambda: 1,
+    )
+
+    if is_race_case:
+        assert isinstance(supervisor, _DelayedWorkerErrorSupervisor)
+        heartbeat_task = asyncio.create_task(health._heartbeat_loop(shutdown))
+        await supervisor.error_started.wait()
+        if case == "cleanup_during_error_report":
+            session.cleanup_complete = True
+        elif case == "session_created_with_receipt_during_error_report":
+            created_work = control.WorkContext(
+                session=control.SessionContext(session_id="created")
+            )
+            receipt = control.HeartbeatReport(
+                source=process,
+                work=created_work,
+                sent_monotonic_ns=1,
+                session_phase=control.SESSION_PHASE_SETTING_UP,
+                cleanup_resources_revision=4,
+                cleanup_resources=[resource],
+            )
+            session_slot.current = SimpleNamespace(
+                work=created_work,
+                trial=None,
+                cleanup_complete=False,
+                pending_cleanup_heartbeat=receipt,
+                cleanup_catalogue_initialized=False,
+                cleanup_resources_revision=3,
+                cleanup_resources=[resource],
+                setup_deadline_ns=30,
+                interrupted=False,
+                setup_cancelled=False,
+            )
+        else:
+            session_slot.current = SimpleNamespace(
+                work=control.WorkContext(
+                    session=control.SessionContext(session_id="replacement")
+                ),
+                trial=None,
+                ready_report=None,
+                cleanup_complete=False,
+                pending_cleanup_heartbeat=None,
+                cleanup_catalogue_initialized=True,
+                cleanup_resources_revision=3,
+                cleanup_resources=[resource],
+                setup_deadline_ns=30,
+                interrupted=False,
+                setup_cancelled=False,
+            )
+        supervisor.release_error.set()
+        await heartbeat_task
+    else:
+        await health._heartbeat_loop(shutdown)
+
+    assert len(supervisor.reports) == 1
+    report = supervisor.reports[0]
+    if case == "session_created_with_receipt_during_error_report":
+        assert isinstance(supervisor, _DelayedWorkerErrorSupervisor)
+        assert report.work.session.session_id == "created"
+        assert report.cleanup_resources_revision == 4
+        assert supervisor.deadlines == [30]
+        assert session_slot.current.pending_cleanup_heartbeat is None
+        return
+    if case in (
+        "completed",
+        "cleanup_during_error_report",
+        "session_replaced_during_error_report",
+    ):
+        assert report.work.WhichOneof("work") is None
+        assert report.session_phase == control.SESSION_PHASE_CONFIGURATION
+        assert not report.HasField("cleanup_resources_revision")
+        assert not report.cleanup_resources
+        assert not report.continuing_functions
+    else:
+        assert report.work == session_work
+        assert report.HasField("cleanup_resources_revision")
+        assert report.cleanup_resources == [resource]
+        if case == "pending_receipt":
+            assert report.session_phase == control.SESSION_PHASE_SETTING_UP
+            assert report.cleanup_resources_revision == 2
+        else:
+            assert report.session_phase == control.SESSION_PHASE_READY
+            assert report.cleanup_resources_revision == 1
+            assert report.continuing_functions
 
 
 async def _unexpected_health_failure(
@@ -501,6 +718,56 @@ async def test_camera_retirement_confirms_exact_cleanup_proof(
         record.lifecycle_evidence[(work.session.session_id, child_id, "cleanup")] = (
             evidence
         )
+        cleanup_key = (
+            f"acquisition-child:{worker.generation}:{work.session.session_id}:safety"
+        )
+        child.retention_key = cleanup_key
+        child.retained_size = 4096
+        commands.reserve_payload(
+            cleanup_key, 4096, work_key=work.session.session_id, priority=True
+        )
+        unrelated_id = _id()
+        unrelated = ChildOperation(
+            command_id=unrelated_id,
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+            work=work,
+            parent_operation=launch.parent_operation,
+            kind="prepare_trial",
+            retention_key=(
+                f"acquisition-child:{worker.generation}:"
+                f"{work.session.session_id}:ordinary"
+            ),
+        )
+        record.child_operations[unrelated_id] = unrelated
+        commands.reserve_payload(
+            unrelated.retention_key,
+            4096,
+            work_key=work.session.session_id,
+        )
+        finalized_ns = 10
+        commands.admit(
+            child_id,
+            b"cleanup-command",
+            finalized_ns,
+            work_key=work.session.session_id,
+            priority=True,
+        )
+        commands.complete_terminal(child_id, b"cleanup-result", finalized_ns)
+        commands.finalize_command(child_id, finalized_ns)
+        commands.finalize_work(work.session.session_id, finalized_ns)
+        idle_expiry_ns = finalized_ns + commands.retention_ns + 1
+        commands.prune(idle_expiry_ns)
+        assert (
+            record.prune_lifecycle(idle_expiry_ns, commands.retention_ns, commands) == 0
+        )
+        assert record.prune_child_operations() == 1
+        assert record.child_operations[child_id] is child
+        assert unrelated_id not in record.child_operations
+        assert (
+            work.session.session_id,
+            child_id,
+            "cleanup",
+        ) in record.lifecycle_evidence
         retire = registry.retire_completed_session(work, deadline_ns=deadline)
     else:
         retire = registry.retire_sessionless_worker(
@@ -530,6 +797,8 @@ async def test_camera_retirement_confirms_exact_cleanup_proof(
     assert proof.cleanup.source == context
     assert proof.operation.source == context
     assert proof.cleanup.source.work == work
+    if session_scoped:
+        assert proof.operation.operation.context.command_id == child_id
     if record.port.completion_task is not None:
         await record.port.completion_task
 

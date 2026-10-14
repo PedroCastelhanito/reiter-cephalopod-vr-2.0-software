@@ -1,0 +1,224 @@
+..F.FFF..                                                                [100%]
+================================== FAILURES ===================================
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000018123510160>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001811F4CF7F0>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load�"
+        assert window.tracking.save_button.text() == "Save as�"
+        window.resize(1175, 940)
+        app.processEvents()
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1175, 720, 1175):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+                assert bar.tabRect(3).right() == bar.width() - 1
+                if width == 1175:
+                    hud = panel.layout_card if index == 2 else panel.columns[1].hud_card
+                    border_top = (
+                        hud.mapTo(window, QPoint()).y()
+                        + hud.caption.geometry().center().y()
+                    )
+                    assert abs(bar.mapTo(window, QPoint()).y() - border_top) <= 1
+                card = left.layout().itemAt(1).widget()
+                assert card is window.devices.config_cards[index]
+                assert card.caption.text() == "Configuration file"
+                files = panel.calibration_files if index == 2 else panel.config_files
+                assert card.isAncestorOf(files.load_button)
+                assert card.isAncestorOf(files.save_button)
+                assert files.load_button.text() == "Load�"
+                assert files.save_button.text() == "Save as�"
+                assert abs(files.load_button.width() - files.save_button.width()) <= 1
+                assert files.load_button.height() == files.save_button.height()
+                load_pos = files.load_button.mapTo(card, QPoint())
+                save_pos = files.save_button.mapTo(card, QPoint())
+                assert load_pos.y() == save_pos.y()
+                assert save_pos.x() - load_pos.x() - files.load_button.width() == (
+                    SIZES.field_x_gap
+                )
+                if index in (0, 2):
+                    if index == 2:
+                        measurements = panel.measurements
+                        assert measurements.caption.text() == "Pixel-to-mm calibration"
+                        widths = [measurements.table.columnWidth(i) for i in range(3)]
+                        assert max(widths) - min(widths) <= 1
+                    header = panel.table.horizontalHeader()
+                    refresh = panel.refresh_button
+                    assert refresh.parentWidget() is header.viewport()
+                    assert refresh.text() == "" and not refresh.icon().isNull()
+                    assert refresh.size() == QSize(26, 26)
+                    assert refresh.iconSize() == QSize(16, 16)
+                    assert header.viewport().rect().contains(refresh.geometry())
+                    assert panel.table.horizontalHeaderItem(0).text() == "Use"
+                if index == 1:
+                    assert panel.scan_button.parentWidget() is panel.port.parentWidget()
+                    assert panel.scan_button.size() == QSize(26, 26)
+                if index == 1:
+>                   assert panel.input_table.columnWidth(
+                        1
+                    ) == panel.output_table.columnWidth(1)
+E                   assert 142 == 95
+E                    +  where 142 = <built-in method columnWidth of DataTable object at 0x000001812351DAB0>(1)
+E                    +    where <built-in method columnWidth of DataTable object at 0x000001812351DAB0> = <cephvr.gui.tables.DataTable object at 0x000001812351DAB0>.columnWidth
+E                    +      where <cephvr.gui.tables.DataTable object at 0x000001812351DAB0> = <cephvr.gui.microcontroller.MicrocontrollerPanel object at 0x00000181235148B0>.input_table
+E                    +  and   95 = <built-in method columnWidth of DataTable object at 0x0000018123517A30>(1)
+E                    +    where <built-in method columnWidth of DataTable object at 0x0000018123517A30> = <cephvr.gui.tables.DataTable object at 0x0000018123517A30>.columnWidth
+E                    +      where <cephvr.gui.tables.DataTable object at 0x0000018123517A30> = <cephvr.gui.microcontroller.MicrocontrollerPanel object at 0x00000181235148B0>.output_table
+
+tests\gui\test_dashboard.py:3005: AssertionError
+___________________ test_microcontroller_row_heights_match ____________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000018121FEF910>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001811F4CF7F0>
+
+    def test_microcontroller_row_heights_match(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(1)
+        app.processEvents()
+        panel = window.devices.microcontroller
+        assert panel.trial_pin.height() == panel.test_buttons["trial-state"].height()
+        assert panel.flip_pin.height() == panel.test_buttons["projector-flip"].height()
+        for key, pin in panel.pin_editors.items():
+            assert pin.height() == panel.test_buttons[key].height()
+            for control in (pin, panel.test_buttons[key]):
+>               assert control.parentWidget().rect().contains(control.geometry())
+E               assert False
+E                +  where False = <built-in method contains of QRect object at 0x000001811FDD6650>(PyQt6.QtCore.QRect(0, 222, 640, 36))
+E                +    where <built-in method contains of QRect object at 0x000001811FDD6650> = PyQt6.QtCore.QRect(0, 0, 118, 36).contains
+E                +      where PyQt6.QtCore.QRect(0, 0, 118, 36) = <built-in method rect of _CellControlHost object at 0x00000181220F0D30>()
+E                +        where <built-in method rect of _CellControlHost object at 0x00000181220F0D30> = <cephvr.gui.tables._CellControlHost object at 0x00000181220F0D30>.rect
+E                +          where <cephvr.gui.tables._CellControlHost object at 0x00000181220F0D30> = <built-in method parentWidget of PinNumber object at 0x00000181220F09D0>()
+E                +            where <built-in method parentWidget of PinNumber object at 0x00000181220F09D0> = <cephvr.gui.pin_numbers.PinNumber object at 0x00000181220F09D0>.parentWidget
+E                +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = <built-in method geometry of PinNumber object at 0x00000181220F09D0>()
+E                +      where <built-in method geometry of PinNumber object at 0x00000181220F09D0> = <cephvr.gui.pin_numbers.PinNumber object at 0x00000181220F09D0>.geometry
+
+tests\gui\test_dashboard.py:7038: AssertionError
+__________ test_photodiode_controls_fit_with_growing_blackouts[1280] __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000018123588040>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001811F4CF7F0>, width = 1280
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    def test_photodiode_controls_fit_with_growing_blackouts(window, app, width):
+        panel = window.devices.projectors
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel.setup_tabs.setCurrentIndex(1)
+        panel.timing.pulse.setChecked(True)
+        definition = panel.timing.definition
+        assert definition.columnCount() == 5
+        assert definition.rowCount() == 2
+        assert [definition.horizontalHeaderItem(i).text() for i in range(1, 5)] == [
+            "Origin X",
+            "Origin Y",
+            "Width",
+            "Height",
+        ]
+        assert [definition.item(i, 0).text() for i in range(2)] == [
+            "Frame",
+            "Pulse",
+        ]
+        window.resize(width, 940)
+        for count in (0, 6):
+            for _ in range(count):
+                panel.timing.blackouts.add(
+                    dict(face="Front", x=0, y=0, width=10, height=10)
+                )
+            for _ in range(5):
+                app.processEvents()
+            for editor in (
+                panel.timing.target,
+                panel.timing.mode,
+                *panel.timing.fields.values(),
+                *panel.timing.pulse_fields.values(),
+            ):
+>               assert editor.parentWidget().rect().contains(editor.geometry())
+E               assert False
+E                +  where False = <built-in method contains of QRect object at 0x00000181236CBC30>(PyQt6.QtCore.QRect(0, 222, 640, 36))
+E                +    where <built-in method contains of QRect object at 0x00000181236CBC30> = PyQt6.QtCore.QRect(0, 0, 112, 36).contains
+E                +      where PyQt6.QtCore.QRect(0, 0, 112, 36) = <built-in method rect of _CellControlHost object at 0x00000181234811B0>()
+E                +        where <built-in method rect of _CellControlHost object at 0x00000181234811B0> = <cephvr.gui.tables._CellControlHost object at 0x00000181234811B0>.rect
+E                +          where <cephvr.gui.tables._CellControlHost object at 0x00000181234811B0> = <built-in method parentWidget of QLineEdit object at 0x00000181221043A0>()
+E                +            where <built-in method parentWidget of QLineEdit object at 0x00000181221043A0> = <PyQt6.QtWidgets.QLineEdit object at 0x00000181221043A0>.parentWidget
+E                +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = <built-in method geometry of QLineEdit object at 0x00000181221043A0>()
+E                +      where <built-in method geometry of QLineEdit object at 0x00000181221043A0> = <PyQt6.QtWidgets.QLineEdit object at 0x00000181221043A0>.geometry
+
+tests\gui\test_dashboard.py:13476: AssertionError
+__________ test_photodiode_controls_fit_with_growing_blackouts[720] ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000181235881F0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001811F4CF7F0>, width = 720
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    def test_photodiode_controls_fit_with_growing_blackouts(window, app, width):
+        panel = window.devices.projectors
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel.setup_tabs.setCurrentIndex(1)
+        panel.timing.pulse.setChecked(True)
+        definition = panel.timing.definition
+        assert definition.columnCount() == 5
+        assert definition.rowCount() == 2
+        assert [definition.horizontalHeaderItem(i).text() for i in range(1, 5)] == [
+            "Origin X",
+            "Origin Y",
+            "Width",
+            "Height",
+        ]
+        assert [definition.item(i, 0).text() for i in range(2)] == [
+            "Frame",
+            "Pulse",
+        ]
+        window.resize(width, 940)
+        for count in (0, 6):
+            for _ in range(count):
+                panel.timing.blackouts.add(
+                    dict(face="Front", x=0, y=0, width=10, height=10)
+                )
+            for _ in range(5):
+                app.processEvents()
+            for editor in (
+                panel.timing.target,
+                panel.timing.mode,
+                *panel.timing.fields.values(),
+                *panel.timing.pulse_fields.values(),
+            ):
+>               assert editor.parentWidget().rect().contains(editor.geometry())
+E               assert False
+E                +  where False = <built-in method contains of QRect object at 0x00000181236CBE60>(PyQt6.QtCore.QRect(0, 222, 640, 36))
+E                +    where <built-in method contains of QRect object at 0x00000181236CBE60> = PyQt6.QtCore.QRect(0, 0, 112, 36).contains
+E                +      where PyQt6.QtCore.QRect(0, 0, 112, 36) = <built-in method rect of _CellControlHost object at 0x00000181237088B0>()
+E                +        where <built-in method rect of _CellControlHost object at 0x00000181237088B0> = <cephvr.gui.tables._CellControlHost object at 0x00000181237088B0>.rect
+E                +          where <cephvr.gui.tables._CellControlHost object at 0x00000181237088B0> = <built-in method parentWidget of QLineEdit object at 0x0000018123708820>()
+E                +            where <built-in method parentWidget of QLineEdit object at 0x0000018123708820> = <PyQt6.QtWidgets.QLineEdit object at 0x0000018123708820>.parentWidget
+E                +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = <built-in method geometry of QLineEdit object at 0x0000018123708820>()
+E                +      where <built-in method geometry of QLineEdit object at 0x0000018123708820> = <PyQt6.QtWidgets.QLineEdit object at 0x0000018123708820>.geometry
+
+tests\gui\test_dashboard.py:13476: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+FAILED tests/gui/test_dashboard.py::test_microcontroller_row_heights_match - ...
+FAILED tests/gui/test_dashboard.py::test_photodiode_controls_fit_with_growing_blackouts[1280]
+FAILED tests/gui/test_dashboard.py::test_photodiode_controls_fit_with_growing_blackouts[720]
+4 failed, 5 passed in 4.14s

@@ -1,0 +1,3 @@
+DUMMY_140541_behavioral_cam.mp4 {"ffprobe_exit": 0, "decode_exit": 0, "received_frames": 1797, "received_frames_per_s": 29.95, "dropped_frames": 7, "invalid_frames": 0, "video_dispositions": {"leading_duplicate": 2, "real": 1790, "interior_duplicate": 8}}
+DUMMY_140541_stimulus.mp4 {"ffprobe_exit": 0, "decode_exit": 0, "real_groups_per_s": 59.983333333333334, "capture_dispositions": {"admitted": 654, "capacity_drop": 2944, "same_slot_omission": 1}}
+DUMMY_140541_tracking_cam.mp4 {"ffprobe_exit": 0, "decode_exit": 0, "received_frames": 3596, "received_frames_per_s": 59.93333333333333, "dropped_frames": 28, "invalid_frames": 0, "video_dispositions": {"leading_duplicate": 2, "real": 3568, "interior_duplicate": 30}}

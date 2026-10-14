@@ -1,0 +1,7 @@
+{
+  "method": "generate bindings in fresh isolated directory, compare generated pb2 files with source; generated source not edited",
+  "generator_exit": 0,
+  "stdout": "Generated 19 Protobuf sources into C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-14\\rig-timing-audit\\contract-check-2r5_8f8i.\n",
+  "checked_count": 57,
+  "drift": []
+}

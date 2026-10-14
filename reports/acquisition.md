@@ -1,5 +1,50 @@
 # Acquisition status
 
+Oct14 working-tree verification corrects the owning configuration test to the
+owner-selected 150 ms drain and retains its missing-field assertion. The controller
+integration fixture's status gate now honors its original RPC deadline, resolving
+the reproduced unbounded test wait without changing runtime deadlines or assertions.
+Owning configuration tests pass 72 cases; final local backend selection passes
+1,670 cases with four skips and 26 native/rig deselections. These results do not
+remeasure queue20/SDK15/drain150 or close hardware acceptance under
+[E15](../docs/architecture/system-contracts.md#e15).
+[Raw verification](runtime-evidence-2026-10-14/working-tree-validation/summary.json).
+
+Oct14 rig audit verifies a sixty-second combined Behavior/Tracking/Eye trial: confirmed cleanup, restored settings, four independently counted/full-decoded videos and zero camera queue overflows. The measured queue17 covered burst demand with20% margin at30/60/60Hz. Owner now selects queue20, SDK15 per camera and150ms drain allowance; TOML/live configuration/history loading are verified, but these new values have not been remeasured. Sustained headroom remains unproven. Camera nominal-slot omissions remain separately accounted. Dedicated Save On to Save Off completes in one generation with two decoded camera videos and no stimulus artifact. Four preview start/stop cycles per camera (12 total) complete with unchanged settings and all devices released. E05/E06/E08/A10 repairs cover completed-session health, stale serial failure, aggregate CancelSetup, exact cleanup receipt retention and interrupted-trial pulse evidence. The last two require renewed native session checks: projectors are now owner-deferred and E10 correctly rejects disabling required Visual Stimulus. Physical electrical/photodiode, paired mappings and Tracking processing remain deferred. [Configuration assessment](runtime-evidence-2026-10-14/rig-timing-audit/configuration-assessment.json), [Current findings](runtime-evidence-2026-10-14/rig-timing-audit/lifecycle-findings.json).
+
+Oct14 `projector-flip-deferred` completed locally under
+[A11 revision46](../docs/architecture/acquisition.md#a11),
+[G01 revision191](../docs/architecture/gui.md#g01) and E14 revision209.
+Owner explicitly defers Projector flip input, its diagnostics and camera-trigger
+offsets. Remove Inputs/Add input and new SpikeGLX flip source; retained hidden
+legacy draft fields migrate enablement to false, preserve the pin and cannot emit
+an activation/test command. Configuration and connection edits reject enabled
+legacy input fields; serial-owner/diagnostic parser reject the kind before work.
+Firmware removes input interrupt setup/cleanup and rejects the kind. V20's three
+modes remain independent. Remove default D2 assignment; Microcontroller policy,
+config and loader version3/digest agree and count only generated output transitions.
+No firmware upload, device command or running-runtime restart occurred.
+
+ARCH-002 reuses existing signal, validation, serial and firmware owners; delete
+unsupported signal actions/interrupt work rather than adding alternate behavior.
+Compatibility fields remain inert; existing panel/serial/device composition remains
+cohesive with no dependency/process/runtime reference. Backend owner/protocol/config
+122 pass/one existing skip; focused GUI11 pass; Ruff/format15 files, Win32 mypy11
+sources and boundaries688/zero violations pass. Uno compile uses13590 flash/1199 RAM
+bytes. Initial partial edit stopped before owner write due to an unmatched source
+anchor; reread and completed it. Correct policy digest using Decimal parsing, stale
+input-test expectations and a mypy variable-name collision. Sandbox backend and
+broader GUI runs were interrupted on transport/modal stalls. Permitted broader GUI
+also stalled; no broader pass claimed. Broader controller device admission14 pass/
+three calibration-open/close failures in concurrently changing calibration workflow;
+these are outside the MCU request path and remain with current calibration work.
+[Commands/results](runtime-evidence-2026-10-14/projector-flip/context.json).
+Output electrical acceptance stays in the [rig checklist](rig-verification.md);
+Projector flip is explicitly deferred rather than a pending implementation test.
+
+Continuous pin tests now follow [A11 revision45](../docs/architecture/acquisition.md#a11): explicit Stop replaces elapsed expiry, while matched diagnostic polls renew a two-second firmware lease. Updated Uno firmware compiles; host/offscreen verification and limitations are in the [runtime assessment](runtime.md). Manual upload and physical sustained-output/lease-expiry acceptance remain in the [rig checklist](rig-verification.md).
+
+
 Device workflow refinement under [G01](../docs/architecture/gui.md#g01) and
 [E07](../docs/architecture/experiment.md#e07) separates camera participation from
 logical MCU wiring. Identity tests and selected-camera preparation can proceed while

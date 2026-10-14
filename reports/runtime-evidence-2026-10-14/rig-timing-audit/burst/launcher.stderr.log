@@ -1,0 +1,6 @@
+acquisition_behavioral_worker CancelSetup 94db6fce-8d5b-4235-8367-d9301f6c3482 failed: RuntimeError: recording driver is not active
+acquisition_tracking_worker CancelSetup 4f93c860-b8ae-44d9-bad1-8c8444249c4c failed: RuntimeError: recording driver is not active
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 28144 exited; cleanup evidence remains required
+InterruptSession 9d58fa86-2d17-43a5-be5f-56c89788d4a7 failed: SESSION_IDENTITY: no exact live session
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

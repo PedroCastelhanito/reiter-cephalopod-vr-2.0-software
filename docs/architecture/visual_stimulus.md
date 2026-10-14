@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 18
+**Status:** Accepted · **Revision:** 22
 
 - The backend is named **Visual Stimulus**, with `visual_stimulus` as its canonical
   configuration, registration, package and protocol identifier. Use
@@ -50,19 +50,28 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   cleanup, retaining truthful output evidence rather than assuming a blank screen.
   Commands bind the diagnostic identity, accepted configuration revision, exact
   coordinator/renderer generations and original deadline. Protected profile/arena
-  content is fingerprinted; asset-root-relative references carry bounded size and
-  digest. Active requires actual presentation, and Closed requires confirmed Idle
+  content is fingerprinted: source patterns resolve only against G01's fixed
+  repository `assets/` root, independently of E07 Protocol Assets. The controller
+  verifies the selected pattern, matching-view runtime profile and identical working
+  copy, then passes the per-step user runtime root to the renderer for protected
+  input/dependency preparation. Relative references retain bounded size, digest and
+  containment checks; stale copies or mismatched steps reject before dispatch. Active requires actual presentation, and Closed requires confirmed Idle
   and resource closure; uncertain cleanup blocks Setup. Calibration-only orange
   horizontal and green vertical reference bars use the configured whole-pixel X/Y
-  lengths carried in each output's `reference_bars`; require positive lengths within
-  the output and center them on integer pixel boundaries. Unset legacy lengths
+  lengths carried in each output's `reference_bars` and bound to the protected
+  bars file's native dimensions/pixel-length metadata; require positive lengths within
+  the output and center them on integer pixel boundaries.
+  Draw the initial frame inside the native output bounds independently of physical
+  scale/distance or stored corrections; it is a rough alignment reference. G01 owns
+  the align→measure→measured-frame/Width/Height/Offset workflow. Unset legacy lengths
   retain rounded 3/8-to-5/8 spans. Draw them directly in native device-pixel space
   so measurement is independent of geometric/color correction; no trial timing,
   recording or extra persistent GPU resource is added. The protected display profile
-  selects reference_bars (bars only on black) or frame_grid (arena through the existing
+  selects reference_bars (raw bars and a white native output-boundary frame on black)
+  or frame_grid (arena through the existing
   V15 pipeline without reference bars); omitted selection defaults to frame_grid.
   Both use the same diagnostic ownership, actual-presentation and cleanup guarantees.
-  Controller-leased frame/grid adjustment accepts bounded GUI affine rectangles
+  Controller-leased frame/grid adjustment accepts bounded GUI valid-area rectangles
   under the exact active diagnostic/revision and increasing sequence. The GL owner
   validates the entire update before writing existing warp vertex buffers, retaining
   base protected inputs, axis inversion and resource ownership. Reject stale,
@@ -618,7 +627,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v15"></a>
 ### V15 — Four calibrated off-axis surface views
 
-**Status:** Accepted · **Revision:** 13
+**Status:** Accepted · **Revision:** 20
 
 - Optional per-output blackout rectangles replace final mapped scene pixels with
   linear black before output correction. Validate positive whole-pixel rectangles
@@ -653,16 +662,42 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   editor uses an explicit perpendicular distance from the fixed subject for each
   independent screen. Left/right screens have equal tank-wall offsets in that
   editor, so right distance is derived from tank width, subject position and left
-  distance under G01. Side and Bottom front edges start at the Front screen plane;
+  distance under G01. Side/Bottom front edges start 5 mm behind the Front plane;
+  Front/Left/Right lower edges start 5 mm above the Bottom plane, preserving physical
+  heights. G01 owns these usable-screen frame gaps and Bottom image axes (+rig Y,
+  -rig X); perpendicular subject distances remain measured plane positions.
   G01 owns the shared draft corner construction and ideal centered-projector diagram.
   The diagram does not change output corrections or introduce a runtime optical model.
   Corner-based backend geometry remains authoritative. Tank dimensions,
   subject position and derived ideal projector throw distance remain distinct.
   G01's measured raw-pixel bars derive X/Y scale and generate static affine mapping
-  assets for GUI-owned profiles using physical screen/full-image ratios and existing
-  offsets/inversions. Preserve imported warps, masks, weights and overlap ownership;
+  assets for GUI-owned profiles using valid pixel dimensions, measured per-axis
+  pitch and inversions. Preserve imported warps, masks, weights and overlap ownership;
   this does not solve nonlinear optics or change runtime projection ownership.
-- The display model covers physical corners/observer, explicit tolerances/clipping,
+- G01's integer Width/Height define a translated valid output-pixel rectangle retained
+  in normalized coordinates. Its dimensions times the independent measured X/Y
+  mm/pixel define the usable physical view, centered on the measured frame-placed
+  screen plane. Newly prepared GUI affine surface targets use valid pixel resolution;
+  V14 physical texture sizes/frequencies and common pattern phase retain their units
+  across different projector pitches. Never resize physical parameters to fit a crop.
+  Preview and prepared views use the same extents/mapping. Live diagnostics prepare a full-native-raster grid at measured pitch and isolate
+  each face plane, so larger crops reveal additional lines without stretching.
+  G01 owns capped center-relative pixel offsets. Validate all bounds/vertices
+  before updates and present all outputs before confirmation.
+  Imported meshes retain their original physical geometry/resolution; absent bounds
+  retain legacy coverage. V22's marker remains independent above scene masks/crops;
+  reference frames/bars stay raw and ignore saved valid-region/measurement edits.
+- Clipping and numerical geometry tolerances have one editable source in the
+  Visual Stimulus operator TOML under E14, with owner-selected starting defaults.
+  Calibration reads them at launch; controller resolves/distributes them for startup
+  and fresh Setup. Apply file values before validating imported geometry; saved
+  profiles cannot override them. Preserve resolved values in prepared/logged profiles
+  and lock them for the session; edits require fresh preparation, never a live change.
+  When tank dimensions, screen geometry or subject position change, review all four
+  settings and recommend values appropriate to the new geometry and intended scene
+  depth. Obtain explicit owner approval before changing any value in the TOML;
+  geometry edits alone never authorize automatic adjustment.
+- The display model covers physical corners/observer, resolved tolerances/clipping,
   output identities and viewport/profile references. Invalid/incomplete geometry or
   output mappings block preparation (E07). Geometric-profile content validation and
   runtime projection integration remain code work; measured values stay unset.
@@ -723,13 +758,13 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v18"></a>
 ### V18 — Externally prepared arena assets
 
-**Status:** Accepted · **Revision:** 2
+**Status:** Accepted · **Revision:** 3
 
 - Arenas are generated beforehand in an external authoring workflow and loaded as
   prepared assets. CephVR loads, validates and renders them; no general parametric
   generation or modeling editor. A dedicated offline calibration exporter may use
   G01's saved tank and four screen dimensions to author a static GLB containing
-  a physical screen grid, center cross and face name. It creates an asset for V01's
+  a clean physical screen grid, border and simple face name under G01. It creates an asset for V01's
   manually controlled diagnostic presentation through V15, not a timed trial,
   alternate display owner or calibration solver.
 - Resolve assets through E07's asset root and prepare geometry/material resources
@@ -746,7 +781,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v19"></a>
 ### V19 — Uniform Idle background
 
-**Status:** Accepted · **Revision:** 6
+**Status:** Accepted · **Revision:** 7
 
 - E05's Idle presentation uses a configurable uniform background color/brightness,
   black included, with V15 blackout zones remaining black, before the first trial, between trials, during finalization and
@@ -754,7 +789,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   carries the controller-selected asset root so protected display dependencies can
   be checked before Setup; missing required dependencies fail initialization.
 - The resident rendering worker owns Idle output independently of trial instances,
-  clearing full assigned outputs through the common output pipeline; calibration may
+  clearing outside the union of prepared valid areas to black and filling their
+  interiors through the common output pipeline (legacy absent bounds cover full
+  assigned outputs); calibration may
   use different device values for the same background. Never hold the preceding
   trial image or advance its state in Idle.
 - Idle has no image/video/arena program or stimulus timeline. Its configuration is
@@ -787,15 +824,17 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v20"></a>
 ### V20 — Configurable projector presentation pacing
 
-**Status:** Accepted · **Revision:** 8
+**Status:** Accepted · **Revision:** 10
 
 - Default: VSync on the explicitly designated pacing projector, immediate
   presentation on the other outputs (current CephVR rig behavior). All-output VSync
-  stays selectable for rig testing. Select the mode at Setup, preserve saved
+  stays selectable for rig testing; Free run requests interval zero on every output,
+  including any retained pacing/photodiode target. None of these modes requires an
+  MCU input; A11 keeps camera-trigger offsets owner-deferred. Select the mode at Setup, preserve saved
   selections and lock at Start (E07); changing it needs fresh Setup, never automatic
   switching on a late frame.
-- The rendering worker owns output contexts, swap settings and presentation. Both
-  modes keep V15's single evaluated state for all four views and V10's schedule and
+- The rendering worker owns output contexts, swap settings and presentation. All
+  three modes keep V15's single evaluated state for all four views and V10's schedule and
   timing-miss policy.
 - Select 8 or 10 bits per RGB channel explicitly per physical output, with equal
   channel depths within an output. Validate the actual framebuffer against the
@@ -811,7 +850,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Pacing selection is independent of V22 pulse visibility/placement. Existing profiles
   without an explicit pacing ID retain their enabled photodiode target as a legacy
   fallback. Mixed mode requires explicit pacing when the pulse is disabled;
-  all-output VSync may have no designated pacer. In that case validate the file-owned
+  all-output VSync and Free run may have no designated pacer. In that case validate the file-owned
   nominal refresh target against every enabled output without selecting a face.
   E13 owns the common-rate recording requirement.
 - VSync requests and sequential swaps do not establish simultaneous scanout or

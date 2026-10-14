@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-14",
+  "method": "Read-only current recording/capture/Windows pipe source review against retained native run evidence; no optimization implemented or hardware test dispatched.",
+  "measured_workload": {
+    "width": 2560,
+    "height": 2000,
+    "bytes_per_pixel": 4,
+    "target_fps": 60,
+    "raw_bytes_per_frame": 20480000,
+    "raw_bytes_per_second": 1228800000,
+    "capture_slots_trial": 21,
+    "capacity_drops_in_confirmation": 3078,
+    "evidence": "final-sequence/measurement-assessment.json"
+  },
+  "source_observations": [
+    {"path": "src/cephvr/visual_stimulus/rendering/capture.py", "observed": "Each admitted capture creates a PBO; successful poll copies mapped bytes into a fresh bytearray then deletes PBO/fence.", "candidate": "Reuse bounded GL readback buffers; profile mapping/copy/allocation separately."},
+    {"path": "src/cephvr/visual_stimulus/recording/capture.py", "observed": "complete_capture copies pixels again with bytearray(pixels); normalization swaps rows through native NumPy copies.", "candidate": "Explicit owned-buffer handoff to avoid the second copy; retain borrowing safety. Evaluate orientation correction during GPU composition with identical final pixels."},
+    {"path": "src/cephvr/platform/windows/byte_stream.py", "observed": "begin_write owns a copied backing buffer until overlapped completion.", "candidate": "A lifetime-bound borrowed/owned write interface could avoid another copy, keeping data pinned and immutable until cancellation/completion is proven."},
+    {"path": "src/cephvr/visual_stimulus/recording/session.py", "observed": "Recording loop handles queued evidence before encoder draining and uses5ms condition polling waits.", "candidate": "Measure completion-to-next-service delay; evaluate event notification and fair bounded evidence/encoder service without weakening required logging or closure deadlines."}
+  ],
+  "profiling_needed": ["GPU readback/fence latency", "each CPU copy and row normalization", "completion notification versus polling delay", "FFmpeg RGB/YUV conversion", "NVENC utilization/capacity and storage writes under three-camera load"],
+  "engineering_target": "Maintain60Hz presentation; demonstrate at least72fps capacity for throughput-limiting recording stages where independently measurable, then size outstanding-slot demand times1.2. Neither source review nor larger slots proves that target.",
+  "quality_policy": "Prioritize overhead removal preserving resolution, orientation, precision, color sampling, rate, exact frame accounting and GPU ownership. Preset/quality/workload changes require separate measured comparisons.",
+  "external_primary_reference": "https://docs.nvidia.com/video-technologies/video-codec-sdk/13.1/ffmpeg-with-nvidia-gpu/index.html"
+}

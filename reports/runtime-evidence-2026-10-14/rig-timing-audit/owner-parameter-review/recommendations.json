@@ -1,0 +1,12 @@
+{
+  "pending_records_capacity": 10000,
+  "capture_slots": 3,
+  "recording_bytes_total": 268435456,
+  "max_asset_gpu_bytes": 536870912,
+  "cpu_accounted_bytes": 133120000,
+  "cpu_accounted_times_1_2": 159744000,
+  "gpu_inferred_accounted_bytes_at3": 335054176,
+  "gpu_inferred_times_1_2": 402065012,
+  "scope": "CPU owning helper; GPU estimate uses same-assets21-slot budget accounting subtracting18 RGBA8 slots. Not a new measurement or whole-process/GPU memory estimate.",
+  "throughput": "21 slots saturated;3 slots is a provisional retained bound, not validated zero-loss capacity."
+}

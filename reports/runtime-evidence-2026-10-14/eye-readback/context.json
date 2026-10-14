@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-14",
+  "task": "eye-preview-readback-mismatch",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "Dirty working tree with unrelated concurrent changes; revision is base only.",
+  "cause": "ManualPreview._external_roles omitted Eye, so acquisition omitted pulses while controller expected them.",
+  "reproduction": "New controller regression uses actual acquisition role selection and actual resolved_configuration/adopt_camera_resolution; report construction mirrors producer pulse-presence gate; pure validators and backend confirmation are test doubles.",
+  "before": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_camera_configuration.py -q -m \"not windows and not rig\" -k external_preview_readback_matches --basetemp .pytest-eye-readback-repro --junitxml reports/runtime-evidence-2026-10-14/eye-readback/before.xml",
+    "outcome": "2 passed; Eye fails with exact screenshot error"
+  },
+  "final": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_camera_configuration.py tests/controller/test_handoffs.py tests/acquisition/test_manual_preview.py tests/acquisition/test_manual_devices.py -q -m \"not windows and not rig\" --basetemp .pytest-eye-readback-final --junitxml reports/runtime-evidence-2026-10-14/eye-readback/final.xml",
+    "outcome": "165 passed, 1 deselected"
+  },
+  "static_checks": [
+    ".venv/Scripts/python.exe -m ruff check src/cephvr/acquisition/coordinator/manual_preview.py tests/acquisition/test_manual_preview.py tests/controller/test_camera_configuration.py: passed",
+    ".venv/Scripts/python.exe -m ruff format --check (same three files): passed",
+    ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/acquisition/coordinator/manual_preview.py: passed",
+    ".venv/Scripts/python.exe tools/check_backend_boundaries.py: 690 modules, 0 violations; existing cohesion advisories reviewed for manual_preview",
+    "git diff --check: passed"
+  ],
+  "attempts": [
+    "Initial multi-file patch failed atomically because pre-existing TODO bytes are invalid UTF-8; task tracking edited as bytes preserving existing content.",
+    "Sandbox pytest default temp fixture could not create directories; workspace basetemp retry stalled and was interrupted. Permitted local run succeeds.",
+    "Initial test used ControlState.operation rather than existing control_operations.operation; corrected before exact-error reproduction.",
+    "Intermediate after.xml: 161 pass, 4 failures from missing test-only Any import; corrected. Ruff identified same missing import.",
+    "Two guessed wildcard/path reads failed and corrected through existing files."
+  ],
+  "limits": "No live retained report captured; exact production command identity unverified. Same Eye scenario and exact message reproduced locally. No native device commands, runtime restart, SDK/serial/pulse/optical/full-workload acceptance; rig checks remain pending."
+}

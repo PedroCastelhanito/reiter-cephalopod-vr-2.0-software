@@ -1,0 +1,83 @@
+{
+  "controller_generation": "0768dae0-1b01-4381-9454-156598268931",
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "2c5fbe5a-619e-4e86-a97d-11d791435627"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "2c5fbe5a-619e-4e86-a97d-11d791435627"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "0768dae0-1b01-4381-9454-156598268931"
+    },
+    "command_id": "524bf1c3-512b-4a2b-a140-2fb56cc0940c",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "83311662497400",
+        "idle_swap_return_ns": "83311662818100",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "83311787000900",
+        "idle_swap_return_ns": "83311787393100",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "83311836069300",
+        "idle_swap_return_ns": "83311836113100",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "83311884720100",
+        "idle_swap_return_ns": "83311884784700",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "83311884853100",
+    "complete": true
+  }
+}

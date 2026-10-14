@@ -13,6 +13,7 @@ from PyQt6.QtCore import QObject, QSettings
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
+from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.controller_bridge import ControllerBridge
 from cephvr.gui.gui_history import GuiHistory, history_path
@@ -34,6 +35,7 @@ from cephvr.gui.managed_status import (
 from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
 from cephvr.gui.managed_window import ManagedDashboardWindow
 from cephvr.gui.preview_placement import preview_window_placement
+from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import DashboardView
 from cephvr.platform.windows.bootstrap import read_bootstrap
@@ -174,6 +176,9 @@ class ManagedGui(QObject):
         window.devices.spikeglx.connection_requested.connect(
             lambda: bridge.request("spikeglx_connection")
         )
+        window.devices.spikeglx.pairing_requested.connect(
+            self.display_operations.submit_pairing
+        )
         window.devices.spikeglx.inventory_update_requested.connect(
             self.display_operations.submit_inventory
         )
@@ -196,7 +201,7 @@ class ManagedGui(QObject):
         bridge.command_finished.connect(self.display_operations.live.command_finished)
         bridge.connection_changed.connect(self.display_operations.live.disconnected)
         bridge.configuration_accepted.connect(self.configuration_accepted)
-        bridge.camera_configuration_accepted.connect(self.camera_configuration_accepted)
+        bridge.device_configuration_accepted.connect(self.device_configuration_accepted)
         bridge.spikeglx_inventory_received.connect(
             self.display_operations.install_inventory
         )
@@ -222,6 +227,7 @@ class ManagedGui(QObject):
         self.control_ready = False
         self.auto_control_attempted = False
         self.state = None
+        self.window.devices.spikeglx.pairing_pending = False
         self.tracking_diagnostics.install_snapshot(None)
         self._inventory_identity = None
         self.prompts.hide_prompt()
@@ -299,6 +305,7 @@ class ManagedGui(QObject):
         if not permitted:
             view = replace(view, has_control=False)
         self.window.apply_view(view)
+        self.display_operations.install_pairing()
         self.tracking_diagnostics.install_snapshot(state)
         self.mcu.install(state, held and permitted)
         if configuration_wired and not self.history.restore_attempted:
@@ -475,6 +482,14 @@ class ManagedGui(QObject):
         )
 
     def request_dashboard_action(self, action: str) -> None:
+        if action == "Setup":
+            projectors = self.window.devices.projectors
+            projectors.discover_displays()
+            if not projectors.keys:
+                self.window.dashboard.log_console.appendPlainText(
+                    "Setup not submitted. " + NO_PROJECTORS_MESSAGE
+                )
+                return
         if action not in {"Setup", "New session"}:
             self.bridge.request(action)
             return
@@ -608,14 +623,14 @@ class ManagedGui(QObject):
             "port": str(panel.port.currentData() or ""),
         }
 
-    def camera_configuration_accepted(self, base_revision: int, payload: bytes) -> None:
+    def device_configuration_accepted(self, base_revision: int, payload: bytes) -> None:
         state = pb.Snapshot.FromString(payload)
         if self.state is None or (
             self.state.controller_generation != state.controller_generation
             or self.state.configuration.revision > state.configuration.revision
         ):
             return
-        if not self.configuration.note_camera_revision(state, base_revision):
+        if not self.configuration.note_device_revision(state, base_revision):
             return
         if (
             self.state.configuration.revision == state.configuration.revision
@@ -674,9 +689,20 @@ class ManagedGui(QObject):
             )
 
     def command_finished(self, action: str, success: bool, message: str) -> None:
+        quiet_mcu_poll = (
+            action == "mcu"
+            and success
+            and self.mcu.pending_kind == rpc.MICROCONTROLLER_COMMAND_KIND_STATUS
+        )
+        if action == "set_spikeglx_enabled":
+            self.display_operations.pairing_finished()
+            self.window.devices.spikeglx.apply_view(self.window.dashboard.view)
+            self.window.devices.spikeglx.console.appendPlainText(message)
         label = action_label(action)
         rendered = f"{label}: {message}" if success else f"{label} failed: {message}"
-        if action != "tracking_diagnostic_frame" or not success:
+        if not quiet_mcu_poll and (
+            action != "tracking_diagnostic_frame" or not success
+        ):
             self.window.dashboard.log_console.append_entry(
                 rendered, f"Action: {action}\nSuccess: {success}\nMessage: {message}"
             )
@@ -697,7 +723,7 @@ class ManagedGui(QObject):
                     self.state.control.holder_client_id
                     == self.bridge.principal.generation,
                 )
-            if success:
+            if success and not quiet_mcu_poll:
                 self.window.devices.microcontroller.console.appendPlainText(rendered)
         self.cameras.finished(action, success, message)
         if action in {

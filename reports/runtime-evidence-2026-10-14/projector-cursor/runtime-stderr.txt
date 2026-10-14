@@ -1,0 +1,2 @@
+A fresh GUI was launched in the existing application generation.
+Operator confirmed runtime replacement; terminating application job.

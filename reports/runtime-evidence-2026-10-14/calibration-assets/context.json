@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-14",
+  "task": "repository-calibration-assets",
+  "source_revision": "working tree; concurrent edits present",
+  "initial_source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration",
+  "method": "Copy six just-prepared owner files; parse display and four geometric profiles; parse GLB with backend reader; scoped local regressions and static/package checks",
+  "scope": "Local source/bundle validation; no connection check, hardware output, live application restart or optical acceptance",
+  "outcome": "Display/mapping identity consistency and GLB syntax pass",
+  "files": {
+    "diagnostic_bottom.json": {
+      "bytes": 1224,
+      "sha256": "e47ac6823e296ed5e7c65832215c800a322b4be33e562f38d24708634d208200"
+    },
+    "diagnostic_display_profile.json": {
+      "bytes": 5671,
+      "sha256": "827c9eb66a70edbd9c11e3f65a5af0982e9318bacacd2d9ea65d2c8d1a829728"
+    },
+    "diagnostic_front.json": {
+      "bytes": 1220,
+      "sha256": "638792b39df1fc5b282ac3c99a2b24308c5b526034226d831472ff00720bde43"
+    },
+    "diagnostic_left.json": {
+      "bytes": 1216,
+      "sha256": "c4680c6274859f7ccee3916ab79de32df07f5067657e715d5425b3cd32492a36"
+    },
+    "diagnostic_right.json": {
+      "bytes": 1220,
+      "sha256": "e513dd128a8344757431e3b24fe353b60d7afff39357288cd1d3ec27cbfc64d5"
+    },
+    "rig_geometry_grid.glb": {
+      "bytes": 242148,
+      "sha256": "822218d45bb7333a473b0906ff13e3c86d7ef72a01f16fb53a91a958e3b1f073"
+    }
+  },
+  "checks": {
+    "pytest": "54 passed, 487 deselected (permitted Qt/asyncio run); initial generator missing-manifest failure fixed; sandbox runs stalled and interrupted",
+    "ruff": "7 scoped files lint and format pass",
+    "mypy": "4 source files --platform win32 pass",
+    "boundaries": "687 modules, zero violations; cohesive owner-size advisories retained",
+    "build": "isolated sandbox attempt WinError5; permitted --no-isolation sdist/wheel pass",
+    "whitespace": "git diff --check pass"
+  }
+}

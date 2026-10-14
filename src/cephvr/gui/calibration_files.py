@@ -47,8 +47,23 @@ class CalibrationFiles(QWidget):
                 values[key] = editor.isChecked()
             else:
                 text = editor.text().strip()
-                values[key] = float(text) if text else None
-        result = {"format": "cephvr-rig-calibration", "version": 4, "values": values}
+                values[key] = (
+                    (
+                        int(text)
+                        if key.endswith(
+                            (
+                                "valid_width_px",
+                                "valid_height_px",
+                                "offset_x_px",
+                                "offset_y_px",
+                            )
+                        )
+                        else float(text)
+                    )
+                    if text
+                    else None
+                )
+        result = {"format": "cephvr-rig-calibration", "version": 8, "values": values}
         self.validate(result)
         return result
 
@@ -62,10 +77,52 @@ class CalibrationFiles(QWidget):
         if (
             payload["format"] != "cephvr-rig-calibration"
             or type(payload["version"]) is not int
-            or payload["version"] not in (1, 2, 3, 4)
+            or payload["version"] not in (1, 2, 3, 4, 5, 6, 7, 8)
         ):
             raise ValueError("Unsupported calibration format/version")
         values = payload["values"]
+        if isinstance(values, dict):
+            values = dict(values)
+            for name in (
+                "near_mm",
+                "far_mm",
+                "positional_tolerance_mm",
+                "orthogonality_tolerance",
+            ):
+                values.pop(f"projection.{name}", None)
+        if payload["version"] < 7 and isinstance(values, dict):
+            for face in ("Front", "Left", "Right", "Bottom"):
+                for key in ("offset_x", "offset_y"):
+                    values.pop(f"screens.{face}.{key}", None)
+                for key in ("valid_width_px", "valid_height_px"):
+                    value = values.get(f"screens.{face}.{key}")
+                    if (
+                        isinstance(value, (int, float))
+                        and not isinstance(value, bool)
+                        and math.isfinite(value)
+                    ):
+                        values[f"screens.{face}.{key}"] = round(value)
+        legacy_scales = {}
+        if payload["version"] < 6 and isinstance(values, dict):
+            for face in ("Front", "Left", "Right", "Bottom"):
+                for old, new in (
+                    ("scale_u", "valid_width_px"),
+                    ("scale_v", "valid_height_px"),
+                ):
+                    prefix = f"screens.{face}."
+                    if prefix + old not in values or prefix + new in values:
+                        raise ValueError(
+                            "Legacy calibration has an invalid field inventory"
+                        )
+                    scale = values.pop(prefix + old)
+                    if scale is not None and (
+                        type(scale) not in (int, float)
+                        or not math.isfinite(scale)
+                        or scale <= 0
+                    ):
+                        raise ValueError("Legacy scale must be positive and finite")
+                    legacy_scales[face, new] = 1.0 if scale is None else float(scale)
+                    values[prefix + new] = None
         if payload["version"] == 1 and isinstance(values, dict):
             values = dict(values)
             old_right = values.pop("screens.Right.subject_distance", None)
@@ -98,7 +155,12 @@ class CalibrationFiles(QWidget):
                 for key in self.fields
                 if key.rsplit(".", 1)[-1].startswith("reference_")
             }
-            if set(values) != set(self.fields) - references:
+            offsets = {
+                key
+                for key in self.fields
+                if key.endswith(("offset_x_px", "offset_y_px"))
+            }
+            if set(values) != set(self.fields) - references - offsets:
                 raise ValueError("Legacy calibration has an invalid field inventory")
             values.update(dict.fromkeys(references))
         if payload["version"] == 3 and isinstance(values, dict):
@@ -107,7 +169,12 @@ class CalibrationFiles(QWidget):
                 for key in self.fields
                 if key.endswith(("reference_x_px", "reference_y_px"))
             }
-            if set(values) != set(self.fields) - pixel_lengths:
+            offsets = {
+                key
+                for key in self.fields
+                if key.endswith(("offset_x_px", "offset_y_px"))
+            }
+            if set(values) != set(self.fields) - pixel_lengths - offsets:
                 raise ValueError("Legacy calibration has an invalid field inventory")
             values = dict(values)
             for face in ("Front", "Left", "Right", "Bottom"):
@@ -121,6 +188,10 @@ class CalibrationFiles(QWidget):
                 )
                 for axis, length in zip(("x", "y"), lengths, strict=True):
                     values[f"screens.{face}.reference_{axis}_px"] = length
+        if payload["version"] < 8 and isinstance(values, dict):
+            for key in self.fields:
+                if key.endswith(("offset_x_px", "offset_y_px")):
+                    values.setdefault(key, None)
         if not isinstance(values, dict) or set(values) != set(self.fields):
             raise ValueError(
                 "Calibration must contain every rig, projection and screen field"
@@ -134,18 +205,26 @@ class CalibrationFiles(QWidget):
                     raise ValueError(f"{key}: expected a finite number or null")
                 name = key.rsplit(".", 1)[-1]
                 if (
-                    name in ("reference_x_px", "reference_y_px")
+                    name
+                    in (
+                        "reference_x_px",
+                        "reference_y_px",
+                        "valid_width_px",
+                        "valid_height_px",
+                        "offset_x_px",
+                        "offset_y_px",
+                    )
                     and not float(value).is_integer()
                 ):
                     raise ValueError(f"{key}: must be a whole pixel length")
                 if (
                     name
                     not in (
-                        "offset_x",
-                        "offset_y",
                         "subject_x",
                         "subject_y",
                         "subject_z",
+                        "offset_x_px",
+                        "offset_y_px",
                     )
                     and value <= 0
                 ):
@@ -162,6 +241,56 @@ class CalibrationFiles(QWidget):
                     values.get(f"screens.{face}.reference_x_px"),
                     values.get(f"screens.{face}.reference_y_px"),
                 )
+        if payload["version"] < 5:
+            values["screens.Bottom.width"], values["screens.Bottom.height"] = (
+                values["screens.Bottom.height"],
+                values["screens.Bottom.width"],
+            )
+        if legacy_scales:
+            from cephvr.gui.calibration_profile import MonitorBinding, face_valid_area
+
+            for face in ("Front", "Left", "Right", "Bottom"):
+                prefix = f"screens.{face}."
+                output_width, output_height = (
+                    values.get(prefix + "reference_width_px"),
+                    values.get(prefix + "reference_height_px"),
+                )
+                if any(
+                    legacy_scales[face, key] != 1
+                    for key in ("valid_width_px", "valid_height_px")
+                ):
+                    if not isinstance(output_width, (int, float)) or not isinstance(
+                        output_height, (int, float)
+                    ):
+                        raise ValueError(
+                            "Legacy non-neutral scale requires reference output dimensions before migration"
+                        )
+                    # Resolve at neutral mm/pixel; retain old bounds as a crop, never a stretch.
+                    base = dict(values)
+                    base[prefix + "offset_x"] = base[prefix + "offset_y"] = 0
+                    rect = face_valid_area(
+                        {"version": 6, "values": base},
+                        face,
+                        MonitorBinding(
+                            "", 0, 0, int(output_width), int(output_height), 0, 0
+                        ),
+                    )
+                    values[prefix + "valid_width_px"] = (
+                        (rect[2] - rect[0])
+                        * output_width
+                        * legacy_scales[face, "valid_width_px"]
+                    )
+                    values[prefix + "valid_height_px"] = (
+                        (rect[3] - rect[1])
+                        * output_height
+                        * legacy_scales[face, "valid_height_px"]
+                    )
+        for key, value in values.items():
+            if (
+                key.endswith(("valid_width_px", "valid_height_px"))
+                and value is not None
+            ):
+                values[key] = int(round(value))
         return values
 
     def apply_snapshot(self, payload: object) -> None:
@@ -171,7 +300,12 @@ class CalibrationFiles(QWidget):
             if isinstance(editor, QCheckBox):
                 editor.setChecked(bool(value))
             else:
-                editor.setText("" if value is None else str(value))
+                text = "" if value is None else str(value)
+                if key.endswith(
+                    ("valid_width_px", "valid_height_px", "offset_x_px", "offset_y_px")
+                ) and isinstance(value, (int, float)):
+                    text = str(int(value))
+                editor.setText(text)
 
     def load_path(self, path: str) -> None:
         if not self.isEnabled():

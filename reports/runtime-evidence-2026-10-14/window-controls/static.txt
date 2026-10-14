@@ -1,0 +1,1146 @@
+Command: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe -m ruff check src/cephvr/gui src/cephvr/visual_stimulus/rendering/arena_draw.py src/cephvr/visual_stimulus/rendering/shaders.py tests/gui/test_dashboard.py tests/visual_stimulus/test_display_calibration_rendering.py
+Exit: 0
+All checks passed!
+
+
+Command: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe -m ruff format --check src/cephvr/gui src/cephvr/visual_stimulus/rendering/arena_draw.py src/cephvr/visual_stimulus/rendering/shaders.py tests/gui/test_dashboard.py tests/visual_stimulus/test_display_calibration_rendering.py
+Exit: 1
+unformatted: File would be reformatted
+   --> src\cephvr\gui\projector_calibration.py:1:80
+    |
+    - """Compact per-face usable pixel controls sharing the rig's retained drafts."""
+    -
+    - from decimal import Decimal, InvalidOperation
+    -
+    - from PyQt6.QtCore import Qt, pyqtSignal
+    - from PyQt6.QtGui import QIntValidator, QKeyEvent
+    - from PyQt6.QtWidgets import (
+    -     QCheckBox,
+    -     QHBoxLayout,
+    -     QHeaderView,
+    -     QLineEdit,
+    -     QTableWidgetItem,
+    -     QWidget,
+    - )
+    -
+    - from cephvr.gui.components import Card, button
+    - from cephvr.gui.projector_geometry import FACES
+    - from cephvr.gui.tables import DataTable
+    -
+    -
+    - class AdjustmentEntry(QLineEdit):
+    -     """Whole-pixel entry with a blank measured default and one-pixel stepping."""
+    -
+    -     def __init__(self, axis: str, *, size: bool = True) -> None:
+    -         super().__init__()
+    -         self.setPlaceholderText(axis)
+    -         self.minimum = 1 if size else -2147483647
+    -         self.maximum = 2147483647
+    -         self.setValidator(QIntValidator(self.minimum, self.maximum, self))
+    -         self.setToolTip("Up/Down: adjust by 1 px")
+    -
+    -     def step_by(self, direction: int) -> None:
+    -         if self.isReadOnly() or not self.isEnabled():
+    -             return
+    -         try:
+    -             value = Decimal(self.text() or self.placeholderText())
+    -             if not value.is_finite() or value != value.to_integral_value():
+    -                 return
+    -             stepped = max(self.minimum, min(self.maximum, int(value) + direction))
+    -         except InvalidOperation:
+    -             return
+    -         text = str(stepped)
+    -         if self.text() != text:
+    -             self.setText(text)
+    -             self.textEdited.emit(text)
+    -
+    -     def set_limits(self, minimum: int, maximum: int) -> None:
+    -         self.minimum, self.maximum = minimum, maximum
+    -         self.setValidator(QIntValidator(minimum, maximum, self))
+    -         self.cap()
+    -
+    -     def cap(self) -> None:
+    -         try:
+    -             value = Decimal(self.text())
+    -             if value.is_finite() and value == value.to_integral_value():
+    -                 capped = max(self.minimum, min(self.maximum, int(value)))
+    -                 if capped != value:
+    -                     self.setText(str(capped))
+    -         except InvalidOperation:
+    -             pass
+    -
+    -     def keyPressEvent(self, event: QKeyEvent | None) -> None:
+    -         if (
+    -             event is not None
+    -             and event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down)
+    -             and event.modifiers() == Qt.KeyboardModifier.NoModifier
+    -             and not self.isReadOnly()
+    -         ):
+    -             event.accept()
+    -             self.step_by(1 if event.key() == Qt.Key.Key_Up else -1)
+    -         else:
+    -             super().keyPressEvent(event)
+    -
+    -
+    - class CalibrationTable(Card):
+    -     adjustments_changed = pyqtSignal(str, str)
+    -     launch_requested = pyqtSignal()
+    -     measurement_requested = pyqtSignal()
+    -     close_requested = pyqtSignal()
+    -
+    -     def __init__(self, drafts: dict[str, dict[str, str]]) -> None:
+    -         super().__init__("Screen calibration")
+    -         self.drafts = drafts
+    -         self.controls: dict[tuple[str, str], QWidget] = {}
+    -         self.table = DataTable(len(FACES), 5)
+    -         self.table.setHorizontalHeaderLabels(
+    -             [
+    -                 "Screen",
+    -                 "Inverse",
+    -                 "Width / Height (px)",
+    -                 "Offset X (px)",
+    -                 "Offset Y (px)",
+    -             ]
+    -         )
+    -         header = self.table.horizontalHeader()
+    -         assert header is not None
+    -         for col in (0, 1):
+    -             header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
+    -         for row, face in enumerate(FACES):
+    -             self.table.setItem(row, 0, QTableWidgetItem(face))
+    -             for col, keys in enumerate(
+    -                 (
+    -                     ("flip_x", "flip_y"),
+    -                     ("valid_width_px", "valid_height_px"),
+    -                     ("offset_x_px",),
+    -                     ("offset_y_px",),
+    -                 ),
+    -                 1,
+    -             ):
+    -                 cell = QWidget()
+    -                 layout = QHBoxLayout(cell)
+    -                 layout.setContentsMargins(0, 0, 0, 0)
+    -                 layout.setSpacing(5)
+    -                 for axis, key in zip(("X", "Y"), keys, strict=False):
+    -                     control: QCheckBox | QLineEdit
+    -                     if col == 1:
+    -                         control = QCheckBox(axis)
+    -                         control.toggled.connect(
+    -                             lambda value, f=face, k=key: self.drafts[f].__setitem__(
+    -                                 k, str(value)
+    -                             )
+    -                         )
+    -                     else:
+    -                         control = AdjustmentEntry(
+    -                             ("Width" if axis == "X" else "Height") if col == 2 else "0",
+    -                             size=col == 2,
+    -                         )
+    -                         control.setMinimumWidth(0)
+    -                         control.setMaximumWidth(90)
+    -                         control.textChanged.connect(
+    -                             lambda value, f=face, k=key: self.drafts[f].__setitem__(
+    -                                 k, value
+    -                             )
+    -                         )
+    -                         control.textEdited.connect(
+    -                             lambda _value, f=face, k=key: self.adjust(f, k)
+    -                         )
+    -                     control.setAccessibleName(f"{face} {key}")
+    -                     self.controls[face, key] = control
+    -                     layout.addWidget(control)
+    -                 self.table.set_control(row, col, cell)
+    -         self.table.fit_rows()
+    -         self.body.addWidget(self.table)
+    -         self.presentation_button = button("Launch projection calibration")
+    -         self.presentation_button.setToolTip(
+    -             "Prepare calibration files and launch with a connected managed Visual Stimulus renderer"
+    -         )
+    -         self.presentation_button.setEnabled(False)
+    -         self.presentation_button.clicked.connect(self.request_presentation)
+    -         self.measurement_button = button("Launch reference calibration")
+    -         self.measurement_button.setEnabled(False)
+    -         self.measurement_button.clicked.connect(self.request_measurement)
+    -         self.body.insertWidget(1, self.presentation_button)
+    -         self.presentation_view = ""
+    -         self.presentation_active = False
+    -         self.presentation_available = False
+    -         self.presentation_pending = False
+    -         self.outputs: dict[str, tuple[int, int]] = {}
+    -
+    -     def refresh_dimensions(self, outputs: dict[str, tuple[int, int]]) -> None:
+    -         from cephvr.gui.projector_extent import valid_pixels
+    -
+    -         self.outputs = outputs
+    -         for face, (width, height) in outputs.items():
+    -             for key, limit in (("valid_width_px", width), ("valid_height_px", height)):
+    -                 control = self.controls[face, key]
+    -                 assert isinstance(control, AdjustmentEntry)
+    -                 control.set_limits(1, limit)
+    -             try:
+    -                 values = {
+    -                     f"screens.{face}.{k}": float(v) if v else None
+    -                     for k, v in self.drafts[face].items()
+    -                     if k not in ("flip_x", "flip_y")
+    -                 }
+    -                 for key in ("valid_width_px", "valid_height_px"):
+    -                     values[f"screens.{face}.{key}"] = None
+    -                 pixels = valid_pixels(values, face, width, height)
+    -                 for key, value in zip(
+    -                     ("valid_width_px", "valid_height_px"), pixels, strict=True
+    -                 ):
+    -                     control = self.controls[face, key]
+    -                     assert isinstance(control, QLineEdit)
+    -                     control.setPlaceholderText(str(value))
+    -                     control.setToolTip(
+    -                         "Blank uses measured size. Up/Down: 1 px. Capped at the projector image size."
+    -                     )
+    -             except (ValueError, TypeError):
+    -                 pass
+    -             self.cap_offsets(face)
+    -
+    -     def cap_offsets(self, face: str) -> None:
+    -         dimensions = self.outputs.get(face)
+    -         if dimensions is None:
+    -             return
+    -         for axis, key, native in zip(
+    -             ("x", "y"), ("valid_width_px", "valid_height_px"), dimensions, strict=True
+    -         ):
+    -             size = self.controls[face, key]
+    -             assert isinstance(size, AdjustmentEntry)
+    -             try:
+    -                 pixels = int(size.text() or size.placeholderText())
+    -             except ValueError:
+    -                 continue
+    -             limit = max(0, (native - pixels) // 2)
+    -             offset = self.controls[face, f"offset_{axis}_px"]
+    -             assert isinstance(offset, AdjustmentEntry)
+    -             offset.set_limits(-limit, limit)
+    -             offset.setToolTip(
+    -                 f"From image center, {-limit} to {limit} px. Positive {axis.upper()}: {'right' if axis == 'x' else 'up'}. Up/Down: 1 px."
+    -             )
+    -
+    -     def adjust(self, face: str, key: str) -> None:
+    -         control = self.controls[face, key]
+    -         assert isinstance(control, AdjustmentEntry)
+    -         control.cap()
+    -         self.cap_offsets(face)
+    -         self.adjustments_changed.emit(face, key)
+    -
+    -     def request_measurement(self) -> None:
+    -         if not self.presentation_available or self.presentation_pending:
+    -             return
+    -         if self.presentation_active:
+    -             if self.presentation_view == "reference_bars":
+    -                 self.close_requested.emit()
+    -         else:
+    -             self.measurement_requested.emit()
+    -
+    -     def request_presentation(self) -> None:
+    -         if not self.presentation_available or self.presentation_pending:
+    -             return
+    -         if self.presentation_active:
+    -             if self.presentation_view != "reference_bars":
+    -                 self.close_requested.emit()
+    -         else:
+    -             self.launch_requested.emit()
+    -
+    -     def set_presentation_state(
+    -         self, *, active: bool, available: bool, pending: bool = False, view: str = ""
+    -     ) -> None:
+    -         """Show confirmed renderer state, never infer it from a button click."""
+    -         self.presentation_view = view
+    -         self.presentation_active = active
+    -         self.presentation_available = available
+    -         self.presentation_pending = pending
+    -         reference_active = active and view == "reference_bars"
+    -         projection_active = active and not reference_active
+    -         self.presentation_button.setText(
+    -             "Close" if projection_active else "Launch projection calibration"
+    -         )
+    -         self.measurement_button.setText(
+    -             "Close" if reference_active else "Launch reference calibration"
+    -         )
+    -         self.presentation_button.setEnabled(
+    -             available and not pending and not reference_active
+    -         )
+    -         self.measurement_button.setEnabled(
+    -             available and not pending and not projection_active
+    -         )
+1   + """Compact per-face usable pixel controls sharing the rig's retained drafts."""
+2   +
+3   + from decimal import Decimal, InvalidOperation
+4   +
+5   + from PyQt6.QtCore import Qt, pyqtSignal
+6   + from PyQt6.QtGui import QIntValidator, QKeyEvent
+7   + from PyQt6.QtWidgets import (
+8   +     QCheckBox,
+9   +     QHBoxLayout,
+10  +     QHeaderView,
+11  +     QLineEdit,
+12  +     QTableWidgetItem,
+13  +     QWidget,
+14  + )
+15  +
+16  + from cephvr.gui.components import Card, button
+17  + from cephvr.gui.projector_geometry import FACES
+18  + from cephvr.gui.tables import DataTable
+19  +
+20  +
+21  + class AdjustmentEntry(QLineEdit):
+22  +     """Whole-pixel entry with a blank measured default and one-pixel stepping."""
+23  +
+24  +     def __init__(self, axis: str, *, size: bool = True) -> None:
+25  +         super().__init__()
+26  +         self.setPlaceholderText(axis)
+27  +         self.minimum = 1 if size else -2147483647
+28  +         self.maximum = 2147483647
+29  +         self.setValidator(QIntValidator(self.minimum, self.maximum, self))
+30  +         self.setToolTip("Up/Down: adjust by 1 px")
+31  +
+32  +     def step_by(self, direction: int) -> None:
+33  +         if self.isReadOnly() or not self.isEnabled():
+34  +             return
+35  +         try:
+36  +             value = Decimal(self.text() or self.placeholderText())
+37  +             if not value.is_finite() or value != value.to_integral_value():
+38  +                 return
+39  +             stepped = max(self.minimum, min(self.maximum, int(value) + direction))
+40  +         except InvalidOperation:
+41  +             return
+42  +         text = str(stepped)
+43  +         if self.text() != text:
+44  +             self.setText(text)
+45  +             self.textEdited.emit(text)
+46  +
+47  +     def set_limits(self, minimum: int, maximum: int) -> None:
+48  +         self.minimum, self.maximum = minimum, maximum
+49  +         self.setValidator(QIntValidator(minimum, maximum, self))
+50  +         self.cap()
+51  +
+52  +     def cap(self) -> None:
+53  +         try:
+54  +             value = Decimal(self.text())
+55  +             if value.is_finite() and value == value.to_integral_value():
+56  +                 capped = max(self.minimum, min(self.maximum, int(value)))
+57  +                 if capped != value:
+58  +                     self.setText(str(capped))
+59  +         except InvalidOperation:
+60  +             pass
+61  +
+62  +     def keyPressEvent(self, event: QKeyEvent | None) -> None:
+63  +         if (
+64  +             event is not None
+65  +             and event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down)
+66  +             and event.modifiers() == Qt.KeyboardModifier.NoModifier
+67  +             and not self.isReadOnly()
+68  +         ):
+69  +             event.accept()
+70  +             self.step_by(1 if event.key() == Qt.Key.Key_Up else -1)
+71  +         else:
+72  +             super().keyPressEvent(event)
+73  +
+74  +
+75  + class CalibrationTable(Card):
+76  +     adjustments_changed = pyqtSignal(str, str)
+77  +     launch_requested = pyqtSignal()
+78  +     measurement_requested = pyqtSignal()
+79  +     close_requested = pyqtSignal()
+80  +
+81  +     def __init__(self, drafts: dict[str, dict[str, str]]) -> None:
+82  +         super().__init__("Screen calibration")
+83  +         self.drafts = drafts
+84  +         self.controls: dict[tuple[str, str], QWidget] = {}
+85  +         self.table = DataTable(len(FACES), 5)
+86  +         self.table.setHorizontalHeaderLabels(
+87  +             [
+88  +                 "Screen",
+89  +                 "Inverse",
+90  +                 "Width / Height (px)",
+91  +                 "Offset X (px)",
+92  +                 "Offset Y (px)",
+93  +             ]
+94  +         )
+95  +         header = self.table.horizontalHeader()
+96  +         assert header is not None
+97  +         for col in (0, 1):
+98  +             header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
+99  +         for row, face in enumerate(FACES):
+100 +             self.table.setItem(row, 0, QTableWidgetItem(face))
+101 +             for col, keys in enumerate(
+102 +                 (
+103 +                     ("flip_x", "flip_y"),
+104 +                     ("valid_width_px", "valid_height_px"),
+105 +                     ("offset_x_px",),
+106 +                     ("offset_y_px",),
+107 +                 ),
+108 +                 1,
+109 +             ):
+110 +                 cell = QWidget()
+111 +                 layout = QHBoxLayout(cell)
+112 +                 layout.setContentsMargins(0, 0, 0, 0)
+113 +                 layout.setSpacing(5)
+114 +                 for axis, key in zip(("X", "Y"), keys, strict=False):
+115 +                     control: QCheckBox | QLineEdit
+116 +                     if col == 1:
+117 +                         control = QCheckBox(axis)
+118 +                         control.toggled.connect(
+119 +                             lambda value, f=face, k=key: self.drafts[f].__setitem__(
+120 +                                 k, str(value)
+121 +                             )
+122 +                         )
+123 +                     else:
+124 +                         control = AdjustmentEntry(
+125 +                             ("Width" if axis == "X" else "Height") if col == 2 else "0",
+126 +                             size=col == 2,
+127 +                         )
+128 +                         control.setMinimumWidth(0)
+129 +                         control.setMaximumWidth(90)
+130 +                         control.textChanged.connect(
+131 +                             lambda value, f=face, k=key: self.drafts[f].__setitem__(
+132 +                                 k, value
+133 +                             )
+134 +                         )
+135 +                         control.textEdited.connect(
+136 +                             lambda _value, f=face, k=key: self.adjust(f, k)
+137 +                         )
+138 +                     control.setAccessibleName(f"{face} {key}")
+139 +                     self.controls[face, key] = control
+140 +                     layout.addWidget(control)
+141 +                 self.table.set_control(row, col, cell)
+142 +         self.table.fit_rows()
+143 +         self.body.addWidget(self.table)
+144 +         self.presentation_button = button("Launch projection calibration")
+145 +         self.presentation_button.setToolTip(
+146 +             "Prepare calibration files and launch with a connected managed Visual Stimulus renderer"
+147 +         )
+148 +         self.presentation_button.setEnabled(False)
+149 +         self.presentation_button.clicked.connect(self.request_presentation)
+150 +         self.measurement_button = button("Launch reference calibration")
+151 +         self.measurement_button.setEnabled(False)
+152 +         self.measurement_button.clicked.connect(self.request_measurement)
+153 +         self.body.insertWidget(1, self.presentation_button)
+154 +         self.presentation_view = ""
+155 +         self.presentation_active = False
+156 +         self.presentation_available = False
+157 +         self.presentation_pending = False
+158 +         self.outputs: dict[str, tuple[int, int]] = {}
+159 +
+160 +     def refresh_dimensions(self, outputs: dict[str, tuple[int, int]]) -> None:
+161 +         from cephvr.gui.projector_extent import valid_pixels
+162 +
+163 +         self.outputs = outputs
+164 +         for face, (width, height) in outputs.items():
+165 +             for key, limit in (("valid_width_px", width), ("valid_height_px", height)):
+166 +                 control = self.controls[face, key]
+167 +                 assert isinstance(control, AdjustmentEntry)
+168 +                 control.set_limits(1, limit)
+169 +             try:
+170 +                 values = {
+171 +                     f"screens.{face}.{k}": float(v) if v else None
+172 +                     for k, v in self.drafts[face].items()
+173 +                     if k not in ("flip_x", "flip_y")
+174 +                 }
+175 +                 for key in ("valid_width_px", "valid_height_px"):
+176 +                     values[f"screens.{face}.{key}"] = None
+177 +                 pixels = valid_pixels(values, face, width, height)
+178 +                 for key, value in zip(
+179 +                     ("valid_width_px", "valid_height_px"), pixels, strict=True
+180 +                 ):
+181 +                     control = self.controls[face, key]
+182 +                     assert isinstance(control, QLineEdit)
+183 +                     control.setPlaceholderText(str(value))
+184 +                     control.setToolTip(
+185 +                         "Blank uses measured size. Up/Down: 1 px. Capped at the projector image size."
+186 +                     )
+187 +             except (ValueError, TypeError):
+188 +                 pass
+189 +             self.cap_offsets(face)
+190 +
+191 +     def cap_offsets(self, face: str) -> None:
+192 +         dimensions = self.outputs.get(face)
+193 +         if dimensions is None:
+194 +             return
+195 +         for axis, key, native in zip(
+196 +             ("x", "y"), ("valid_width_px", "valid_height_px"), dimensions, strict=True
+197 +         ):
+198 +             size = self.controls[face, key]
+199 +             assert isinstance(size, AdjustmentEntry)
+200 +             try:
+201 +                 pixels = int(size.text() or size.placeholderText())
+202 +             except ValueError:
+203 +                 continue
+204 +             limit = max(0, (native - pixels) // 2)
+205 +             offset = self.controls[face, f"offset_{axis}_px"]
+206 +             assert isinstance(offset, AdjustmentEntry)
+207 +             offset.set_limits(-limit, limit)
+208 +             offset.setToolTip(
+209 +                 f"From image center, {-limit} to {limit} px. Positive {axis.upper()}: {'right' if axis == 'x' else 'up'}. Up/Down: 1 px."
+210 +             )
+211 +
+212 +     def adjust(self, face: str, key: str) -> None:
+213 +         control = self.controls[face, key]
+214 +         assert isinstance(control, AdjustmentEntry)
+215 +         control.cap()
+216 +         self.cap_offsets(face)
+217 +         self.adjustments_changed.emit(face, key)
+218 +
+219 +     def request_measurement(self) -> None:
+220 +         if not self.presentation_available or self.presentation_pending:
+221 +             return
+222 +         if self.presentation_active:
+223 +             if self.presentation_view == "reference_bars":
+224 +                 self.close_requested.emit()
+225 +         else:
+226 +             self.measurement_requested.emit()
+227 +
+228 +     def request_presentation(self) -> None:
+229 +         if not self.presentation_available or self.presentation_pending:
+230 +             return
+231 +         if self.presentation_active:
+232 +             if self.presentation_view != "reference_bars":
+233 +                 self.close_requested.emit()
+234 +         else:
+235 +             self.launch_requested.emit()
+236 +
+237 +     def set_presentation_state(
+238 +         self, *, active: bool, available: bool, pending: bool = False, view: str = ""
+239 +     ) -> None:
+240 +         """Show confirmed renderer state, never infer it from a button click."""
+241 +         self.presentation_view = view
+242 +         self.presentation_active = active
+243 +         self.presentation_available = available
+244 +         self.presentation_pending = pending
+245 +         reference_active = active and view == "reference_bars"
+246 +         projection_active = active and not reference_active
+247 +         self.presentation_button.setText(
+248 +             "Close" if projection_active else "Launch projection calibration"
+249 +         )
+250 +         self.measurement_button.setText(
+251 +             "Close" if reference_active else "Launch reference calibration"
+252 +         )
+253 +         self.presentation_button.setEnabled(
+254 +             available and not pending and not reference_active
+255 +         )
+256 +         self.measurement_button.setEnabled(
+257 +             available and not pending and not projection_active
+258 +         )
+    |
+
+unformatted: File would be reformatted
+   --> src\cephvr\visual_stimulus\rendering\arena_draw.py:1:78
+    |
+    - """Per-output GLB arena draw resources and calibrated physical projection."""
+    -
+    - from __future__ import annotations
+    -
+    - from collections.abc import Callable
+    - from typing import Any
+    -
+    - from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
+    - from cephvr.visual_stimulus.rendering.arena import (
+    -     arena_model_matrix,
+    -     off_axis_view_projection,
+    - )
+    - from cephvr.visual_stimulus.rendering.arena_gpu import ArenaGPUSet
+    - from cephvr.visual_stimulus.rendering.shaders import _ARENA_FRAGMENT, _ARENA_VERTEX
+    - from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
+    -
+    -
+    - class ArenaOutputDrawer:
+    -     """Own arena programs/VAOs for one current GL context."""
+    -
+    -     def __init__(
+    -         self,
+    -         context: Any,
+    -         output_id: str,
+    -         gpu_resources: dict[str, Any],
+    -         *,
+    -         retain: Callable[[Any], Any],
+    -     ) -> None:
+    -         self.program: Any | None = None
+    -         self.arrays: dict[tuple[str, int], Any] = {}
+    -         retain(self)
+    -         self.program = context.program(
+    -             vertex_shader=_ARENA_VERTEX, fragment_shader=_ARENA_FRAGMENT
+    -         )
+    -         for resource_id, gpu_set in gpu_resources.items():
+    -             if not isinstance(gpu_set, ArenaGPUSet):
+    -                 continue
+    -             output = gpu_set.outputs.get(output_id)
+    -             if output is None:
+    -                 raise ValueError(
+    -                     f"arena {resource_id} has no buffers for output {output_id}"
+    -                 )
+    -             for index, primitive in enumerate(output.primitives):
+    -                 key = (resource_id, index)
+    -                 self.arrays[key] = None
+    -                 self.arrays[key] = context.vertex_array(
+    -                     self.program,
+    -                     [
+    -                         (
+    -                             primitive.vertex_buffer,
+    -                             "3f 2f 4f",
+    -                             "in_position",
+    -                             "in_uv",
+    -                             "in_color",
+    -                         )
+    -                     ],
+    -                     primitive.index_buffer,
+    -                     index_element_size=4,
+    -                 )
+    -
+    -     def draw(
+    -         self,
+    -         *,
+    -         context: Any,
+    -         moderngl: Any,
+    -         target: Any,
+    -         artifact: PreparedTrial,
+    -         output_id: str,
+    -         surface_id: str,
+    -         snapshot: InstanceSnapshot,
+    -         gpu_resources: dict[str, Any],
+    -     ) -> None:
+    -         settings = snapshot.settings
+    -         if self.program is None:
+    -             raise RuntimeError("arena output drawer has been released")
+    -         if settings is None or settings.kind != "arena":
+    -             raise RuntimeError("arena draw requires prepared arena settings")
+    -         key = f"{artifact.identity.resource_generation}:{settings.asset_id}"
+    -         gpu_set = gpu_resources.get(key)
+    -         if not isinstance(gpu_set, ArenaGPUSet):
+    -             raise RuntimeError(
+    -                 f"prepared arena GPU resources {settings.asset_id} are unavailable"
+    -             )
+    -         output_buffers = gpu_set.outputs.get(output_id)
+    -         if output_buffers is None:
+    -             raise RuntimeError(f"prepared arena has no output buffers for {output_id}")
+    -         surface = next(
+    -             (
+    -                 item
+    -                 for item in artifact.display.geometry.surfaces
+    -                 if item.surface_id == surface_id
+    -             ),
+    -             None,
+    -         )
+    -         if surface is None:
+    -             raise RuntimeError(f"physical surface {surface_id} is not prepared")
+    -         self.program["calibration_plane_active"].value = 0
+    -         self.program["model"].write(
+    -             _matrix_bytes(arena_model_matrix(settings, dict(snapshot.state)))
+    -         )
+    -         self.program["view_projection"].write(
+    -             _matrix_bytes(off_axis_view_projection(artifact.display, surface))
+    -         )
+    -         self._draw_primitives(
+    -             context=context,
+    -             moderngl=moderngl,
+    -             gpu_set=gpu_set,
+    -             output_buffers=output_buffers,
+    -             resource_id=key,
+    -         )
+    -
+    -     def draw_calibration(
+    -         self,
+    -         *,
+    -         context: Any,
+    -         moderngl: Any,
+    -         display: object,
+    -         output_id: str,
+    -         surface_id: str,
+    -         resource_id: str,
+    -         gpu_resources: dict[str, Any],
+    -     ) -> None:
+    -         """Draw a static protected arena without constructing trial artifacts."""
+    -         from types import SimpleNamespace
+    -
+    -         from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+    -
+    -         if self.program is None or not isinstance(display, DisplayProfile):
+    -             raise RuntimeError("calibration display or arena program is unavailable")
+    -         gpu_set = gpu_resources.get(resource_id)
+    -         if not isinstance(gpu_set, ArenaGPUSet):
+    -             raise RuntimeError(
+    -                 "protected calibration arena GPU resources are unavailable"
+    -             )
+    -         output_buffers = gpu_set.outputs.get(output_id)
+    -         if output_buffers is None:
+    -             raise RuntimeError(f"calibration arena has no buffers for {output_id}")
+    -         surface = next(
+    -             (
+    -                 item
+    -                 for item in display.geometry.surfaces
+    -                 if item.surface_id == surface_id
+    -             ),
+    -             None,
+    -         )
+    -         if surface is None:
+    -             raise RuntimeError(f"physical surface {surface_id} is unavailable")
+    -         identity = (
+    -             (1.0, 0.0, 0.0, 0.0),
+    -             (0.0, 1.0, 0.0, 0.0),
+    -             (0.0, 0.0, 1.0, 0.0),
+    -             (0.0, 0.0, 0.0, 1.0),
+    -         )
+    -         pose = SimpleNamespace(
+    -             asset_to_world=identity,
+    -             fixed_height_mm=0.0,
+    -             fixed_pitch_deg=0.0,
+    -             fixed_roll_deg=0.0,
+    -         )
+    -         # Full-raster diagnostic planes can overlap; draw only this face's plane.
+    -         import math
+    -
+    -         bl, br, tl = (
+    -             surface.bottom_left_mm,
+    -             surface.bottom_right_mm,
+    -             surface.top_left_mm,
+    -         )
+    -         u = tuple(br[i] - bl[i] for i in range(3))
+    -         v = tuple(tl[i] - bl[i] for i in range(3))
+    -         normal = (
+    -             u[1] * v[2] - u[2] * v[1],
+    -             u[2] * v[0] - u[0] * v[2],
+    -             u[0] * v[1] - u[1] * v[0],
+    -         )
+    -         length = math.sqrt(sum(n * n for n in normal))
+    -         normal = (normal[0] / length, normal[1] / length, normal[2] / length)
+    -         self.program["calibration_plane_active"].value = 1
+    -         self.program["calibration_plane"].value = (
+    -             *normal,
+    -             -sum(normal[i] * bl[i] for i in range(3)),
+    -         )
+    -         self.program["model"].write(
+    -             _matrix_bytes(arena_model_matrix(pose, {"x": 0.0, "y": 0.0, "yaw": 0.0}))
+    -         )
+    -         self.program["view_projection"].write(
+    -             _matrix_bytes(off_axis_view_projection(display, surface))
+    -         )
+    -         self._draw_primitives(
+    -             context=context,
+    -             moderngl=moderngl,
+    -             gpu_set=gpu_set,
+    -             output_buffers=output_buffers,
+    -             resource_id=resource_id,
+    -         )
+    -
+    -     def _draw_primitives(
+    -         self,
+    -         *,
+    -         context: Any,
+    -         moderngl: Any,
+    -         gpu_set: ArenaGPUSet,
+    -         output_buffers: Any,
+    -         resource_id: str,
+    -     ) -> None:
+    -         if self.program is None:
+    -             raise RuntimeError("arena output drawer has been released")
+    -         self.program["base_color_tex"].value = 0
+    -         context.enable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
+    -         context.depth_func = "<="
+    -         try:
+    -             for index, primitive in enumerate(output_buffers.primitives):
+    -                 material = (
+    -                     gpu_set.scene.materials[primitive.material_index]
+    -                     if primitive.material_index is not None
+    -                     else None
+    -                 )
+    -                 self.program["has_base_color_tex"].value = int(
+    -                     material is not None and material.texture_index is not None
+    -                 )
+    -                 self.program["base_color_factor"].value = (
+    -                     material.base_color_factor
+    -                     if material is not None
+    -                     else (1.0, 1.0, 1.0, 1.0)
+    -                 )
+    -                 self.program["alpha_mask"].value = int(
+    -                     material is not None and material.alpha_mode == "MASK"
+    -                 )
+    -                 self.program["alpha_cutoff"].value = (
+    -                     material.alpha_cutoff if material else 0.5
+    -                 )
+    -                 if material is not None and material.texture_index is not None:
+    -                     variants = output_buffers.textures[material.texture_index]
+    -                     texture = (
+    -                         variants.premultiplied
+    -                         if material.alpha_mode == "MASK"
+    -                         else variants.opaque
+    -                     )
+    -                     if texture is None:
+    -                         raise RuntimeError(
+    -                             "prepared arena material texture is unavailable"
+    -                         )
+    -                     texture.use(0)
+    -                 if material is not None and material.double_sided:
+    -                     context.disable(moderngl.CULL_FACE)
+    -                 else:
+    -                     context.enable(moderngl.CULL_FACE)
+    -                 self.arrays[(resource_id, index)].render(mode=moderngl.TRIANGLES)
+    -         finally:
+    -             context.disable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
+    -
+    -     def release(self) -> None:
+    -         failures = []
+    -         for key, array in reversed(tuple(self.arrays.items())):
+    -             if array is None:
+    -                 del self.arrays[key]
+    -                 continue
+    -             try:
+    -                 array.release()
+    -                 del self.arrays[key]
+    -             except Exception as exc:
+    -                 failures.append(str(exc))
+    -         if not self.arrays and self.program is not None:
+    -             try:
+    -                 self.program.release()
+    -                 self.program = None
+    -             except Exception as exc:
+    -                 failures.append(str(exc))
+    -         if failures:
+    -             raise RuntimeError(
+    -                 "arena output drawer remains owned: " + "; ".join(failures)
+    -             )
+    -
+    -
+    - def _matrix_bytes(matrix: Any) -> bytes:
+    -     import struct
+    -
+    -     return struct.pack(
+    -         "16f",
+    -         *(matrix[row][column] for column in range(4) for row in range(4)),
+    -     )
+1   + """Per-output GLB arena draw resources and calibrated physical projection."""
+2   +
+3   + from __future__ import annotations
+4   +
+5   + from collections.abc import Callable
+6   + from typing import Any
+7   +
+8   + from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
+9   + from cephvr.visual_stimulus.rendering.arena import (
+10  +     arena_model_matrix,
+11  +     off_axis_view_projection,
+12  + )
+13  + from cephvr.visual_stimulus.rendering.arena_gpu import ArenaGPUSet
+14  + from cephvr.visual_stimulus.rendering.shaders import _ARENA_FRAGMENT, _ARENA_VERTEX
+15  + from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
+16  +
+17  +
+18  + class ArenaOutputDrawer:
+19  +     """Own arena programs/VAOs for one current GL context."""
+20  +
+21  +     def __init__(
+22  +         self,
+23  +         context: Any,
+24  +         output_id: str,
+25  +         gpu_resources: dict[str, Any],
+26  +         *,
+27  +         retain: Callable[[Any], Any],
+28  +     ) -> None:
+29  +         self.program: Any | None = None
+30  +         self.arrays: dict[tuple[str, int], Any] = {}
+31  +         retain(self)
+32  +         self.program = context.program(
+33  +             vertex_shader=_ARENA_VERTEX, fragment_shader=_ARENA_FRAGMENT
+34  +         )
+35  +         for resource_id, gpu_set in gpu_resources.items():
+36  +             if not isinstance(gpu_set, ArenaGPUSet):
+37  +                 continue
+38  +             output = gpu_set.outputs.get(output_id)
+39  +             if output is None:
+40  +                 raise ValueError(
+41  +                     f"arena {resource_id} has no buffers for output {output_id}"
+42  +                 )
+43  +             for index, primitive in enumerate(output.primitives):
+44  +                 key = (resource_id, index)
+45  +                 self.arrays[key] = None
+46  +                 self.arrays[key] = context.vertex_array(
+47  +                     self.program,
+48  +                     [
+49  +                         (
+50  +                             primitive.vertex_buffer,
+51  +                             "3f 2f 4f",
+52  +                             "in_position",
+53  +                             "in_uv",
+54  +                             "in_color",
+55  +                         )
+56  +                     ],
+57  +                     primitive.index_buffer,
+58  +                     index_element_size=4,
+59  +                 )
+60  +
+61  +     def draw(
+62  +         self,
+63  +         *,
+64  +         context: Any,
+65  +         moderngl: Any,
+66  +         target: Any,
+67  +         artifact: PreparedTrial,
+68  +         output_id: str,
+69  +         surface_id: str,
+70  +         snapshot: InstanceSnapshot,
+71  +         gpu_resources: dict[str, Any],
+72  +     ) -> None:
+73  +         settings = snapshot.settings
+74  +         if self.program is None:
+75  +             raise RuntimeError("arena output drawer has been released")
+76  +         if settings is None or settings.kind != "arena":
+77  +             raise RuntimeError("arena draw requires prepared arena settings")
+78  +         key = f"{artifact.identity.resource_generation}:{settings.asset_id}"
+79  +         gpu_set = gpu_resources.get(key)
+80  +         if not isinstance(gpu_set, ArenaGPUSet):
+81  +             raise RuntimeError(
+82  +                 f"prepared arena GPU resources {settings.asset_id} are unavailable"
+83  +             )
+84  +         output_buffers = gpu_set.outputs.get(output_id)
+85  +         if output_buffers is None:
+86  +             raise RuntimeError(f"prepared arena has no output buffers for {output_id}")
+87  +         surface = next(
+88  +             (
+89  +                 item
+90  +                 for item in artifact.display.geometry.surfaces
+91  +                 if item.surface_id == surface_id
+92  +             ),
+93  +             None,
+94  +         )
+95  +         if surface is None:
+96  +             raise RuntimeError(f"physical surface {surface_id} is not prepared")
+97  +         self.program["calibration_plane_active"].value = 0
+98  +         self.program["model"].write(
+99  +             _matrix_bytes(arena_model_matrix(settings, dict(snapshot.state)))
+100 +         )
+101 +         self.program["view_projection"].write(
+102 +             _matrix_bytes(off_axis_view_projection(artifact.display, surface))
+103 +         )
+104 +         self._draw_primitives(
+105 +             context=context,
+106 +             moderngl=moderngl,
+107 +             gpu_set=gpu_set,
+108 +             output_buffers=output_buffers,
+109 +             resource_id=key,
+110 +         )
+111 +
+112 +     def draw_calibration(
+113 +         self,
+114 +         *,
+115 +         context: Any,
+116 +         moderngl: Any,
+117 +         display: object,
+118 +         output_id: str,
+119 +         surface_id: str,
+120 +         resource_id: str,
+121 +         gpu_resources: dict[str, Any],
+122 +     ) -> None:
+123 +         """Draw a static protected arena without constructing trial artifacts."""
+124 +         from types import SimpleNamespace
+125 +
+126 +         from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+127 +
+128 +         if self.program is None or not isinstance(display, DisplayProfile):
+129 +             raise RuntimeError("calibration display or arena program is unavailable")
+130 +         gpu_set = gpu_resources.get(resource_id)
+131 +         if not isinstance(gpu_set, ArenaGPUSet):
+132 +             raise RuntimeError(
+133 +                 "protected calibration arena GPU resources are unavailable"
+134 +             )
+135 +         output_buffers = gpu_set.outputs.get(output_id)
+136 +         if output_buffers is None:
+137 +             raise RuntimeError(f"calibration arena has no buffers for {output_id}")
+138 +         surface = next(
+139 +             (
+140 +                 item
+141 +                 for item in display.geometry.surfaces
+142 +                 if item.surface_id == surface_id
+143 +             ),
+144 +             None,
+145 +         )
+146 +         if surface is None:
+147 +             raise RuntimeError(f"physical surface {surface_id} is unavailable")
+148 +         identity = (
+149 +             (1.0, 0.0, 0.0, 0.0),
+150 +             (0.0, 1.0, 0.0, 0.0),
+151 +             (0.0, 0.0, 1.0, 0.0),
+152 +             (0.0, 0.0, 0.0, 1.0),
+153 +         )
+154 +         pose = SimpleNamespace(
+155 +             asset_to_world=identity,
+156 +             fixed_height_mm=0.0,
+157 +             fixed_pitch_deg=0.0,
+158 +             fixed_roll_deg=0.0,
+159 +         )
+160 +         # Full-raster diagnostic planes can overlap; draw only this face's plane.
+161 +         import math
+162 +
+163 +         bl, br, tl = (
+164 +             surface.bottom_left_mm,
+165 +             surface.bottom_right_mm,
+166 +             surface.top_left_mm,
+167 +         )
+168 +         u = tuple(br[i] - bl[i] for i in range(3))
+169 +         v = tuple(tl[i] - bl[i] for i in range(3))
+170 +         normal = (
+171 +             u[1] * v[2] - u[2] * v[1],
+172 +             u[2] * v[0] - u[0] * v[2],
+173 +             u[0] * v[1] - u[1] * v[0],
+174 +         )
+175 +         length = math.sqrt(sum(n * n for n in normal))
+176 +         normal = (normal[0] / length, normal[1] / length, normal[2] / length)
+177 +         self.program["calibration_plane_active"].value = 1
+178 +         self.program["calibration_plane"].value = (
+179 +             *normal,
+180 +             -sum(normal[i] * bl[i] for i in range(3)),
+181 +         )
+182 +         self.program["model"].write(
+183 +             _matrix_bytes(arena_model_matrix(pose, {"x": 0.0, "y": 0.0, "yaw": 0.0}))
+184 +         )
+185 +         self.program["view_projection"].write(
+186 +             _matrix_bytes(off_axis_view_projection(display, surface))
+187 +         )
+188 +         self._draw_primitives(
+189 +             context=context,
+190 +             moderngl=moderngl,
+191 +             gpu_set=gpu_set,
+192 +             output_buffers=output_buffers,
+193 +             resource_id=resource_id,
+194 +         )
+195 +
+196 +     def _draw_primitives(
+197 +         self,
+198 +         *,
+199 +         context: Any,
+200 +         moderngl: Any,
+201 +         gpu_set: ArenaGPUSet,
+202 +         output_buffers: Any,
+203 +         resource_id: str,
+204 +     ) -> None:
+205 +         if self.program is None:
+206 +             raise RuntimeError("arena output drawer has been released")
+207 +         self.program["base_color_tex"].value = 0
+208 +         context.enable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
+209 +         context.depth_func = "<="
+210 +         try:
+211 +             for index, primitive in enumerate(output_buffers.primitives):
+212 +                 material = (
+213 +                     gpu_set.scene.materials[primitive.material_index]
+214 +                     if primitive.material_index is not None
+215 +                     else None
+216 +                 )
+217 +                 self.program["has_base_color_tex"].value = int(
+218 +                     material is not None and material.texture_index is not None
+219 +                 )
+220 +                 self.program["base_color_factor"].value = (
+221 +                     material.base_color_factor
+222 +                     if material is not None
+223 +                     else (1.0, 1.0, 1.0, 1.0)
+224 +                 )
+225 +                 self.program["alpha_mask"].value = int(
+226 +                     material is not None and material.alpha_mode == "MASK"
+227 +                 )
+228 +                 self.program["alpha_cutoff"].value = (
+229 +                     material.alpha_cutoff if material else 0.5
+230 +                 )
+231 +                 if material is not None and material.texture_index is not None:
+232 +                     variants = output_buffers.textures[material.texture_index]
+233 +                     texture = (
+234 +                         variants.premultiplied
+235 +                         if material.alpha_mode == "MASK"
+236 +                         else variants.opaque
+237 +                     )
+238 +                     if texture is None:
+239 +                         raise RuntimeError(
+240 +                             "prepared arena material texture is unavailable"
+241 +                         )
+242 +                     texture.use(0)
+243 +                 if material is not None and material.double_sided:
+244 +                     context.disable(moderngl.CULL_FACE)
+245 +                 else:
+246 +                     context.enable(moderngl.CULL_FACE)
+247 +                 self.arrays[(resource_id, index)].render(mode=moderngl.TRIANGLES)
+248 +         finally:
+249 +             context.disable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
+250 +
+251 +     def release(self) -> None:
+252 +         failures = []
+253 +         for key, array in reversed(tuple(self.arrays.items())):
+254 +             if array is None:
+255 +                 del self.arrays[key]
+256 +                 continue
+257 +             try:
+258 +                 array.release()
+259 +                 del self.arrays[key]
+260 +             except Exception as exc:
+261 +                 failures.append(str(exc))
+262 +         if not self.arrays and self.program is not None:
+263 +             try:
+264 +                 self.program.release()
+265 +                 self.program = None
+266 +             except Exception as exc:
+267 +                 failures.append(str(exc))
+268 +         if failures:
+269 +             raise RuntimeError(
+270 +                 "arena output drawer remains owned: " + "; ".join(failures)
+271 +             )
+272 +
+273 +
+274 + def _matrix_bytes(matrix: Any) -> bytes:
+275 +     import struct
+276 +
+277 +     return struct.pack(
+278 +         "16f",
+279 +         *(matrix[row][column] for column in range(4) for row in range(4)),
+280 +     )
+    |
+
+2 files would be reformatted, 155 files already formatted
+
+
+Command: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe -m mypy --platform win32 src/cephvr/gui src/cephvr/visual_stimulus/rendering/arena_draw.py src/cephvr/visual_stimulus/rendering/shaders.py
+Exit: 0
+Success: no issues found in 155 source files
+
+
+Command: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe tools/check_backend_boundaries.py
+Exit: 0
+REVIEW src\cephvr\acquisition\camera\basler.py: 682 lines; review cohesion
+REVIEW src\cephvr\acquisition\coordinator\cleanup.py: 515 lines; review cohesion
+REVIEW src\cephvr\acquisition\coordinator\manual_devices.py: 570 lines; review cohesion
+REVIEW src\cephvr\acquisition\coordinator\manual_preview.py: 656 lines; review cohesion
+REVIEW src\cephvr\acquisition\coordinator\workers.py: 537 lines; review cohesion
+REVIEW src\cephvr\acquisition\recording\session.py: 592 lines; review cohesion
+REVIEW src\cephvr\acquisition\runtime.py: 628 lines; review cohesion
+REVIEW src\cephvr\acquisition\worker\capture_runtime.py: 607 lines; review cohesion
+REVIEW src\cephvr\acquisition\worker\service.py: 563 lines; review cohesion
+REVIEW src\cephvr\controller\assembly.py: 643 lines; review cohesion
+REVIEW src\cephvr\controller\device\camera.py: 583 lines; review cohesion
+REVIEW src\cephvr\controller\device\display_calibration.py: 769 lines; review cohesion
+REVIEW src\cephvr\controller\device\tracking_diagnostic.py: 773 lines; review cohesion
+REVIEW src\cephvr\controller\lifecycle\interruption.py: 550 lines; review cohesion
+REVIEW src\cephvr\controller\metadata\reservation.py: 502 lines; review cohesion
+REVIEW src\cephvr\controller\microcontroller\owner.py: 586 lines; review cohesion
+REVIEW src\cephvr\controller\projections.py: 518 lines; review cohesion
+REVIEW src\cephvr\controller\runtime.py: 585 lines; review cohesion
+REVIEW src\cephvr\controller\service.py: 633 lines; review cohesion
+REVIEW src\cephvr\gui\cameras.py: 606 lines; review cohesion
+REVIEW src\cephvr\gui\controller_bridge.py: 776 lines; review cohesion
+REVIEW src\cephvr\gui\main.py: 845 lines; review cohesion
+REVIEW src\cephvr\gui\microcontroller.py: 590 lines; review cohesion
+REVIEW src\cephvr\gui\projectors.py: 827 lines; review cohesion
+REVIEW src\cephvr\gui\stimulus_parameters.py: 542 lines; review cohesion
+REVIEW src\cephvr\gui\tracking.py: 567 lines; review cohesion
+REVIEW src\cephvr\supervisor\registry.py: 563 lines; review cohesion
+REVIEW src\cephvr\supervisor\shutdown.py: 540 lines; review cohesion
+REVIEW src\cephvr\tracking\processing\diagnostics.py: 504 lines; review cohesion
+REVIEW src\cephvr\tracking\processing\session.py: 661 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\config\models\program_model.py: 757 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\recording\native.py: 833 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\rendering\engine.py: 699 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\rendering\native.py: 729 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\rendering\scene.py: 578 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\rendering\scene_resources.py: 548 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\resources\prepare.py: 546 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\resources\session.py: 643 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\resources\texture_recipe_patterns.py: 637 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\resources\video.py: 512 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\worker\display_calibration.py: 512 lines; review cohesion
+REVIEW src\cephvr\visual_stimulus\worker\lifecycle.py: 609 lines; review cohesion
+Checked 686 backend modules; 0 boundary violations.

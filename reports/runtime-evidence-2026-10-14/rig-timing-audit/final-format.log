@@ -1,0 +1,10 @@
+unformatted: File would be reformatted
+   --> tests\controller\test_lifecycle_reports.py:363:17
+    |
+362 |             if invalid_result != "unknown-presence":
+    -                     output.artifact_present = invalid_result == "present"
+363 +                 output.artifact_present = invalid_result == "present"
+364 |     if include_unknown:
+    |
+
+1 file would be reformatted, 905 files already formatted

@@ -125,7 +125,14 @@ def validate_pulse_io(
 ) -> None:
     """Keep disabled drafts while rejecting active pin conflicts."""
     pulses = settings.pulses
-    for role in ("trial_state", "projector_flip"):
+    if pulses.projector_flip_enabled:
+        issue(
+            result,
+            "backends.acquisition.pulses.projector_flip_enabled",
+            "UNSUPPORTED_SIGNAL",
+            "Projector flip input is deferred and cannot be enabled",
+        )
+    for role in ("trial_state",):
         pin_field = f"{role}_pin"
         enabled_field = f"{role}_enabled"
         enabled = pulses.HasField(enabled_field) and getattr(pulses, enabled_field)

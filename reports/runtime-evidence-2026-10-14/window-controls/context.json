@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-14",
+  "source_head": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "provenance": "Existing extensively dirty checkout preserved. GUI architecture recovered byte-exact from pre-edit Codex snapshot 1a575e4261ff5c9e23b6577468edd5250842f3af before focused amendments.",
+  "checks": {
+    "gui_controls_and_geometry": "26 passed / 467 deselected",
+    "persistence": "11 passed / 482 deselected",
+    "rendering": "73 passed",
+    "static": "Ruff check/format and Win32 mypy155 pass; boundaries686 modules / zero violations, existing cohesion advisories",
+    "visual": "Offscreen 730px table inspected; explicit Segoe UI font loaded because offscreen font inventory was empty",
+    "final_gui": "37 passed / 456 deselected, combined final selection after repairs",
+    "documentation": "New report links/anchors, G01/V15 register revisions and git diff --check pass"
+  },
+  "limits": "No native app restart, projector commands, optical alignment or workload acceptance. Full GUI / broader calibration runs interrupted after stalling; no full-suite pass.",
+  "repairs": "Stale version/diagnostic-extent fixtures updated; numeric8 import routing repaired; mypy/format findings corrected. First screenshot import name corrected and offscreen missing font handled. Failed Windows text-encoding write restored from exact pre-edit snapshot."
+}

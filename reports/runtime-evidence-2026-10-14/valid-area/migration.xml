@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="2.349" timestamp="2026-10-14T11:44:12.526343+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_front_attached_screens_share_plot_and_prepared_corners" time="0.442" /></testsuite></testsuites>

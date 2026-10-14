@@ -1,0 +1,157 @@
+{
+  "assessment_date": "2026-10-14",
+  "scope": "Saved baseline, tuned, and burst3 recording identity cross-check; read-only source trace",
+  "finding": "The earlier reported stimulus/tracking dimension swap came from a reversed summary inventory. It is not reproduced by the retained run artifacts. Session configuration, encoded files, camera identity tags, and sampled native encoder session dimensions agree.",
+  "correction": {
+    "prior_inference": "Stimulus 2560x2000 and tracking 1588x1344 were interpreted as swapped relative to renderer/tracking native sessions.",
+    "verified_interpretation": "Renderer review is 2560x2000; tracking camera is 1588x1344. The baseline native PID ancestry and encoder-session dimensions support that mapping."
+  },
+  "actual_paths_checked_with_ffprobe": [
+    {
+      "run": "baseline",
+      "path": "reports/runtime-evidence-2026-10-14/rig-timing-audit/recordings/20261014_rig_timing_probe_20261014/DUMMY-121201/protocol-data/DUMMY_121206_stimulus.mp4",
+      "width": 2560,
+      "height": 2000,
+      "fps": "60/1",
+      "identity_tags": null,
+      "result": "matches prepared visual review composite"
+    },
+    {
+      "run": "baseline",
+      "path": "reports/runtime-evidence-2026-10-14/rig-timing-audit/recordings/20261014_rig_timing_probe_20261014/DUMMY-121201/protocol-data/DUMMY_121206_tracking_cam.mp4",
+      "width": 1588,
+      "height": 1344,
+      "fps": "60/1",
+      "identity_tags": {
+        "cephvr_camera_role": "tracking",
+        "cephvr_device_id": "40747103"
+      },
+      "result": "matches configured tracking camera ROI"
+    },
+    {
+      "run": "tuned",
+      "path": "reports/runtime-evidence-2026-10-14/rig-timing-audit/tuned/recordings/20261014_rig_timing_probe_20261014/DUMMY-140535/protocol-data/DUMMY_140541_stimulus.mp4",
+      "width": 2560,
+      "height": 2000,
+      "fps": "60/1",
+      "identity_tags": null,
+      "result": "matches prepared visual review composite"
+    },
+    {
+      "run": "tuned",
+      "path": "reports/runtime-evidence-2026-10-14/rig-timing-audit/tuned/recordings/20261014_rig_timing_probe_20261014/DUMMY-140535/protocol-data/DUMMY_140541_tracking_cam.mp4",
+      "width": 1588,
+      "height": 1344,
+      "fps": "60/1",
+      "identity_tags": {
+        "cephvr_camera_role": "tracking",
+        "cephvr_device_id": "40747103"
+      },
+      "result": "matches configured tracking camera ROI"
+    },
+    {
+      "run": "burst3",
+      "path": "reports/runtime-evidence-2026-10-14/rig-timing-audit/burst3/recordings/20261014_rig_timing_probe_20261014/DUMMY-144508/protocol-data/DUMMY_144513_stimulus.mp4",
+      "width": 2560,
+      "height": 2000,
+      "fps": "60/1",
+      "identity_tags": null,
+      "result": "matches prepared visual review composite"
+    },
+    {
+      "run": "burst3",
+      "path": "reports/runtime-evidence-2026-10-14/rig-timing-audit/burst3/recordings/20261014_rig_timing_probe_20261014/DUMMY-144508/protocol-data/DUMMY_144513_tracking_cam.mp4",
+      "width": 1588,
+      "height": 1344,
+      "fps": "60/1",
+      "identity_tags": {
+        "cephvr_camera_role": "tracking",
+        "cephvr_device_id": "40747103"
+      },
+      "result": "matches configured tracking camera ROI"
+    }
+  ],
+  "burst3_session_configuration": {
+    "path": "reports/runtime-evidence-2026-10-14/rig-timing-audit/burst3/recordings/20261014_rig_timing_probe_20261014/DUMMY-144508/protocol-data/SESSION_CONFIG.json",
+    "session_id": "d854fb5e-75c4-4ee7-92cf-918bd5897f71",
+    "configuration_revision": 3,
+    "camera_roles": {
+      "behavioral": {
+        "enabled": true,
+        "save_video": true,
+        "device_id": "40065509",
+        "exposure_us": 25000.0,
+        "frame_rate_hz": 30.00030000300003,
+        "roi": {"width": 1760, "height": 3000, "offset_x": 396, "offset_y": 4},
+        "pixel_format": "BayerRG8",
+        "trigger_source": "Line4",
+        "sdk_buffer_count": 10
+      },
+      "tracking": {
+        "enabled": true,
+        "save_video": true,
+        "device_id": "40747103",
+        "exposure_us": 5000.0,
+        "frame_rate_hz": 60.0,
+        "roi": {"width": 1588, "height": 1344, "offset_x": 0, "offset_y": 135},
+        "pixel_format": "Mono8",
+        "trigger_source": "Line2",
+        "sdk_buffer_count": 10
+      },
+      "eye_tracking": {
+        "enabled": false,
+        "save_video": true,
+        "device_id": "40278236",
+        "exposure_us": 5000.0,
+        "frame_rate_hz": 100.0,
+        "roi": {"width": 1920, "height": 1200, "offset_x": 8, "offset_y": 8},
+        "pixel_format": "BayerRG8",
+        "trigger_source": "Line3",
+        "sdk_buffer_count": 10
+      }
+    },
+    "prepared_stimulus_review": {"width": 2560, "height": 2000, "frame_rate_hz": 60.0},
+    "recording_queue_frames": 17,
+    "pending_records_capacity": 10000
+  },
+  "native_encoder_session_cross_check": {
+    "baseline": {
+      "evidence": "run.json checks.gpu_samples, nvidia-smi encodersessions on GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+      "pid_dimensions_fps": {
+        "30860": "1588x1344 at 60 fps",
+        "15848": "2560x2000 at 60 fps",
+        "34164": "1760x3000 at 30 fps"
+      },
+      "process_ancestry_evidence": "recording-processes.json maps renderer PID 14640 to FFmpeg PID 15848; acquisition PID 9048 to FFmpeg PID 30860; acquisition PID 32280 to FFmpeg PID 34164.",
+      "assessment": "PID dimensions and parent roles align with saved tracking, renderer review, and behavioral outputs respectively."
+    },
+    "tuned": {
+      "evidence": "tuned/run.json checks.gpu_samples, nvidia-smi encodersessions on GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+      "pid_dimensions_fps": {
+        "35820": "1588x1344 at sampled 0-60 fps",
+        "24716": "2560x2000 at sampled 0-58 fps",
+        "18804": "1760x3000 at 30 fps"
+      },
+      "assessment": "Native dimensions align with actual tuned MP4 dimensions; a tuned per-PID parent-process snapshot was not retained."
+    },
+    "burst3": {
+      "evidence": "burst3/run.json checks.gpu_samples, nvidia-smi encodersessions on GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+      "pid_dimensions_fps": {
+        "29808": "1588x1344 at sampled 0-60 fps",
+        "4212": "2560x2000 at sampled 53-56 fps",
+        "23228": "1760x3000 at 30 fps"
+      },
+      "assessment": "Native dimensions align with actual burst3 MP4 dimensions; native samples are bounded snapshots, not complete command-line records."
+    }
+  },
+  "source_trace": {
+    "acquisition": "src/cephvr/acquisition/recording/session_schedule.py resolves paths by role and identity, builds argv from that role's CameraImageLayout width/height and video_path, and launches the same argv. src/cephvr/shared/supervised_encoder.py passes that argv to launch_suspended and binds the same output_path to the exact returned child owner.",
+    "visual_stimulus": "src/cephvr/visual_stimulus/recording/encoding.py builds rawvideo argv with -s composite_width x composite_height and the requested output path. src/cephvr/visual_stimulus/recording/encoder_owner.py passes that argv and output_path to the shared launcher; periodic sync checks the held file identity remains stable.",
+    "source_review_result": "No cross-role output-path or cached encoder-handle substitution was found in the inspected launch path."
+  },
+  "validation_limitations": [
+    "Elevated ffprobe was run read-only on baseline and tuned stimulus/tracking files. burst3 disk probing had already been captured by its verification.json and prior elevated read-only check.",
+    "Saved native session samples report PID, codec, dimensions, frame rate, and latency; they do not preserve the exact historical argv. The baseline process ancestry and the source launch path provide the PID-role join, while actual on-disk output dimensions and camera tags independently agree.",
+    "No source change, test, or hardware action was performed for this assessment."
+  ]
+}

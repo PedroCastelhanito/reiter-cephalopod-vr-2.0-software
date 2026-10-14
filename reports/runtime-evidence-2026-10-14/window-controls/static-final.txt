@@ -1,0 +1,11 @@
+Command: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe -m ruff format --check src/cephvr/gui src/cephvr/visual_stimulus/rendering/arena_draw.py src/cephvr/visual_stimulus/rendering/shaders.py tests/gui/test_dashboard.py tests/visual_stimulus/test_display_calibration_rendering.py
+Exit: 0
+157 files already formatted
+
+Command: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe -m ruff check src/cephvr/gui src/cephvr/visual_stimulus/rendering/arena_draw.py src/cephvr/visual_stimulus/rendering/shaders.py tests/gui/test_dashboard.py tests/visual_stimulus/test_display_calibration_rendering.py
+Exit: 0
+All checks passed!
+
+Command: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe -m mypy --platform win32 src/cephvr/gui src/cephvr/visual_stimulus/rendering/arena_draw.py src/cephvr/visual_stimulus/rendering/shaders.py
+Exit: 0
+Success: no issues found in 155 source files

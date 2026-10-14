@@ -134,7 +134,7 @@ class ProjectorMeasurements(Card):
                         raise ValueError(
                             "Projected distance requires a positive throw ratio"
                         )
-                    distance = f"{estimate:.17g}"
+                    distance = f"{estimate:.1f}"
                 except ValueError:
                     distance = ""
             except ValueError:

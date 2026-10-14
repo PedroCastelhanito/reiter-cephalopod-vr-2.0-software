@@ -297,23 +297,18 @@ class SerialOwner:
         *,
         frequency_hz: float | None = None,
     ) -> tuple[bool, str, str, int]:
-        """Start one firmware-bounded diagnostic on an otherwise stopped MCU."""
+        """Start one manually stopped diagnostic on an otherwise stopped MCU."""
         self._require_connected()
         if self._diagnostic is not None:
             raise SerialOwnerError("another pin diagnostic is active")
-        if kind not in {"trial_state", "projector_flip", *ROLES}:
+        if kind not in {"trial_state", *ROLES}:
             raise ValueError("unknown pin diagnostic kind")
         if pin not in self._require_capabilities().pins:
             raise ValueError("pin is absent from current firmware capabilities")
-        if (
-            kind == "projector_flip"
-            and pin not in self._require_capabilities().rising_edge_input_pins
-        ):
-            raise ValueError("pin does not support rising-edge input capture")
         assert self._state is not None
         if any(getattr(self._state, role).running for role in ROLES):
             raise SerialOwnerError("pin diagnostics require stopped camera outputs")
-        fields = {"kind": kind, "pin": pin, "duration_ms": "2000"}
+        fields = {"kind": kind, "pin": pin, "duration_ms": "0"}
         if kind in ROLES:
             if frequency_hz is None:
                 raise ValueError("camera pin diagnostic requires its requested rate")

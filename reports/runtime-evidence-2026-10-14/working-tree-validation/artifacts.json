@@ -1,0 +1,31 @@
+{
+  "generated_binding_outputs": 57,
+  "binding_drift": [],
+  "sdist_calibration_assets": [
+    "cephvr-2.0.0.dev0/assets/calibration/frame_grid.glb",
+    "cephvr-2.0.0.dev0/assets/calibration/reference_bars.glb"
+  ],
+  "sdist_removed_gui_modules": [],
+  "sdist_demo_assets": [],
+  "wheel_native_files": [
+    "cephvr/acquisition/camera/_pylon_wait_binding.cp311-win_amd64.pyd",
+    "cephvr/platform/windows/cephvr_atomics.dll",
+    "cephvr/tracking/native/cephvr_nvof.dll"
+  ],
+  "wheel_removed_gui_modules": [],
+  "wheel_calibration_assets": [],
+  "calibration_glb_headers_json": [
+    {
+      "path": "assets\\calibration\\frame_grid.glb",
+      "bytes": 61420,
+      "sha256": "2577e3ac9360422a02382fffc1ef88dabddc037751d74bc8236897706511d594",
+      "scene_count": 1
+    },
+    {
+      "path": "assets\\calibration\\reference_bars.glb",
+      "bytes": 4520,
+      "sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+      "scene_count": 1
+    }
+  ]
+}

@@ -1,5 +1,29 @@
 # Rig verification — outstanding checks
 
+Oct14 owner powers projectors off and defers projector-dependent checks. Final combined three-camera and SaveOff recordings count/full-decode; queue17 saved with measured20% burst margin. Review throughput, full CancelSetup/Abort/idle300s reuse and lifecycle receipt margins remain open. Source/local repairs are not native acceptance. [Current assessment](runtime-evidence-2026-10-14/rig-timing-audit/configuration-assessment.json).
+
+Owner defers Projector flip input/diagnostics and camera-trigger phase offsets on
+Oct14 under A11 revision46. Do not run former passive input checks; retained D2
+results below are historical evidence. Current firmware/host support output tests
+only. No upload or physical input acceptance is required for this deferred feature.
+
+V20 revision9 adds Free run (no VSync) alongside selected-output/all-output VSync.
+Verify all three modes' requested/effective driver swap behavior and optical timing
+on the rig, including retained pulse/pacer targets in Free run and no MCU input.
+Local tests do not establish flicker suppression or simultaneous scanout.
+
+- [ ] Extend SYS-002's verified AMD GUI/RTX5060Ti renderer startup to repeated
+  launcher generations and the existing simultaneous OF/camera/stimulus recording
+  workload, retaining actual adapter UUID evidence. Oct14 distinct verified images,
+  two hidden-context pairs and four-output Idle pass; throughput/optical/scientific
+  acceptance remains separate. [Current assessment](visual_stimulus.md).
+
+- [ ] Verify G01 offline projector drafts on the rig: with outputs off, save/close/
+  reopen retains assignments and calibration; clicking Setup logs no-projector reason
+  without a configuration/Setup request. Power on and refresh, then continue existing
+  projector preparation checks. Local23-case behavior/parity coverage passes;
+  physical disconnected acceptance is not claimed. [Current assessment](runtime.md).
+
 Oct13 final combined repair verifies two consecutive normal60s Behavior/Tracking
 recordings at60.0333/60.0167 actual render groups/s. Renderer RTX5060Ti/GPU0 and
 camera/review NVENC RTX2080Ti/GPU1 are proven with exact live PID/UUID samples;
@@ -39,8 +63,10 @@ restoration pass. See the [current failure/remedy inventory](runtime.md) and
 [new raw evidence](rig-evidence-2026-10-13/workflow-tests/); previous results below
 retain their historical scopes.
 
-- [ ] Regenerate ordinary calibration assets with current accepted all-output VSync;
-  retest normal GUI Open/update/Close and then measured optical calibration.
+- [ ] Complete frame/grid live-adjustment and measured optical calibration acceptance.
+  Oct14 native reference-bar GUI Open/four visible outputs/Close/reopen passes after
+  framebuffer-copy repair; this does not establish measured optics or frame/grid
+  update acceptance. — [Current evidence](runtime-evidence-2026-10-14/reference-bars/context.json)
 - [ ] Extend A10 drain/full-load verification to Eye when enabled and remaining
   scientific workloads. Owner125ms values/Behavior and Tracking bounded observations
   plus combined online closure now pass; worst-case/full scientific bound unproven.
@@ -54,24 +80,20 @@ retain their historical scopes.
   no unhandled UNAVAILABLE traceback, truthful unconfirmed release reporting and
   exact all-owned absence. Other RPC errors/live or uninspectable controller cases
   must remain failures; local injected tests now pass.
-- [ ] Repeat real preview start/stop cycles in one generation after terminal result
-  compaction. Capture exact command/lease/MCU claim state if pending/unavailable
-  persists. The local fourth-readback capacity failure is repaired without increasing
-  budgets, shortening retention or weakening pending-cleanup fences.
+Oct14 four preview start/stop cycles per camera (12 total) complete in one generation, settings unchanged and all devices released. Electrical/GUI acceptance remains separate. [Evidence](runtime-evidence-2026-10-14/rig-timing-audit/final-preview/measurement-cycles.json).
+
 - [ ] Reduce combined review/camera recording loss while preserving the verified
   nominal60fps presentation, exact omission accounting, original timing and precision.
   Profile capture/transfer/encoding under simultaneous load; final repeated sessions
   already close and reset successfully. Verify uniform/optical timing separately.
-- [ ] Repair/retest the observed pre-change Save On→Save Off session-cleanup failure
-  (`cleanup returned an unregistered resource`) under exact catalogue ownership;
-  the60s presentation completed but its session could not finish cleanly.
+Oct14 dedicated Save On to Save Off native60s trial completes in the same generation, confirms cleanup and restores settings. Both camera videos independently count/full-decode; no stimulus output is created. This closes the normal switch check; failed-Setup and Abort cleanup remain separate open checks. [Evidence](runtime-evidence-2026-10-14/rig-timing-audit/save-off/verification.json).
 
 Oct13 Eye output source and host are implemented/locally verified for protocol4.
 Owner explicitly keeps upload manual: install the updated Uno sketch (or retained
 application HEX), then verify CAPS protocol4/cephvr2_uno_3 and all three outputs
 stopped before any test. Assign the actual Eye camera, external FrameStart line,
 unique output pin and rate explicitly; GUI Add output collects an unset pin.
-Verify Eye Test/Stop and watchdog LOW electrically, passive Projector flip edges,
+Verify Eye Test/Stop and watchdog LOW electrically,
 three independent camera rates under load, preview/stop/reuse, Eye video/frame-log
 identity and exact all-three cleanup. Existing capture/electrical deferrals remain;
 compile/local fixtures do not close them. [Current evidence](runtime.md).
@@ -338,6 +360,9 @@ button response remains unverified. No E12 Setup or recording command was issued
 <a id="managed-device-gui"></a>
 ### Managed MCU and camera GUI verification
 
+- Install continuous-test firmware `cephvr2_uno_4` through explicit manual Upload. Verify tests stay active beyond two seconds, explicit Stop leaves outputs LOW/retains counts, and loss of matched diagnostic status renewal stops within the two-second lease without restart. Retest control/phase/closure cleanup. [Local evidence and limits](runtime.md) do not establish electrical/camera acceptance.
+
+
 - [ ] Under [G01](../docs/architecture/gui.md#g01), exercise each tab's native
   configuration chooser and sidebar full-GUI controls at narrow/window DPI settings;
   verify experimenter files restore explicit identities/paths, changed PFS paths
@@ -410,8 +435,7 @@ rejection, and physical COM/native cleanup on normal shutdown and authority loss
    counts must increase while active and remain stable after Stop/timeout. Repeat
    Test and confirm the counter resets rather than accumulating across tests.
    The counter does not independently measure the receiving signal. Projector flip
-   observes input edges; it must not drive that pin. A software response is not
-   physical waveform proof.
+   input tests remain owner-deferred; a software response is not physical waveform proof.
 3. In Cameras, refresh, assign Behavior/Tracking roles, select each PFS and confirm
    the detected trigger source. Set requested external rates; configure matching
    MCU pins. Wait for accepted settings, then enable Use. Missing source/rate/pin
@@ -461,7 +485,7 @@ Existing operating-point/throughput deferrals below remain separate.
 | Visual Stimulus review video and fragmented MP4 | Under E13, verify the constant-rate raw stdin input at the pacing output's nominal refresh sustains the composite resolution, video frame n maps to nominal slot n and its exact real source or identified duplicate, and tile placement/scale matches the recorded layout. Verify omission accounting permits successful closure, pre-T cancellation produces no padding, and cleanup retries retain the first cutoff and original write deadline. Exercise fragmented output, keyframe/fragment resource bounds, reader compatibility and drain/sync/close without ordinary-MP4 conversion or file-validation passes. |
 | Empty Visual Stimulus review video and explicit depth conversion | Under V12/E13, exercise an all-dropped composite with complete required records, warnings, truthful artifact presence and successful cleanup. Reject empty-input encoder errors, missing-created artifacts and unknown results as normal completion. Verify explicit RGB10-to-8-bit review conversion and rejection of silent negotiation while live output/replay retain their selected precision. Normal runtime does not inspect completed-file contents. |
 | Visual Stimulus capture and durability | Verify per-group composite admission, compositing/PBO readback cost on the render thread, recording-thread and FFmpeg throughput within the renderer's process/GIL, ScheduleTrial FFmpeg launch with no frames before T and pre-T cancellation cleanup, required state/metadata retention and failures under V12/V13/V28; test periodic sync, sync failure, an incomplete final JSON line and replay labelled "partial, up to render group N". Preserve Unconfirmed crashed-video outcomes. |
-| Acquisition electrical/serial behavior | COM8 Uno protocol-v2 CAPS/STATUS passed after the manual upload. Owner assigned D9 Trial state, D2 Projector flip input, D10 behavioral trigger and D11 tracking trigger; the initial D2 test counted zero edges while the projector was off, and a later local GUI-worker test counted 120 rising edges without independent source observation. Confirm actual destinations, 5 V compatibility and shared signal ground before output tests. Run bounded GUI Test/Stop with physical level/edge observation and repeat D2 with independently observed projector flips. Then verify camera trigger levels/edges, OFF/watchdog behavior, serial latency and DTR/RTS reconnect/reset under A10/A11; do not infer pulse-to-frame edge mapping from host receipts. |
+| Acquisition electrical/serial behavior | COM8 Uno protocol-v2 CAPS/STATUS passed after the manual upload. Owner assigned D9 Trial state, D2 Projector flip input, D10 behavioral trigger and D11 tracking trigger; the initial D2 test counted zero edges while the projector was off, and a later local GUI-worker test counted 120 rising edges without independent source observation. Confirm actual destinations, 5 V compatibility and shared signal ground before output tests. Run current output GUI Test/Stop with physical level/edge observation; former D2 input tests remain owner-deferred. Then verify camera trigger levels/edges, OFF/watchdog behavior, serial latency and DTR/RTS reconnect/reset under A10/A11; do not infer pulse-to-frame edge mapping from host receipts. |
 | Owned camera/pulse edits | Under A10/E07, apply a two-camera batch and pulse-only/configuration-only edits while the backend owns editing/preview devices. Verify actual readback, old external-output OFF before timing changes, exact preview restart and partial SDK/confirmation failure with capture/pulses stopped. Lose confirmation replies and verify committed configuration stays distinct from device outcome; exercise bounded next-edit base synchronization only after prior work quiesces, plus control loss, late results and exact cleanup. Suppress failed-restart status delivery before first-frame proof; recover the exact cleanup run without claiming it is running. Inject primary/Tracking transfer-release failure and lost MCU CLOSE replies; retain ownership fences until exact release or same-claim cleanup succeeds. Local fake-device tests do not close this check. |
 | Acquisition platform bindings | Verify frame-log flush/OS sync on the selected filesystem and SDK/native conversion under A07/A10, and the A03 seqlock slots plus Win32 named event adapter across spawned and independently launched consumers, including torn/lapped-read skips under load and a killed producer. |
 | Visual Stimulus feedback freshness | Tune and validate the 350 ms engineering default maximum under [V26](../docs/architecture/visual_stimulus.md#v26) with the full rig workload. Measure host-receipt-to-application age separately from optical latency; verify local stale-result rejection, fresh-result resumption within the same generation, producer-marker generation exclusion and logged hold/resumption. No passing evidence is supplied. |

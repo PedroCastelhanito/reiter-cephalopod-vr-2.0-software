@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-14",
+  "task": "projection-valid-area-dimensions",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "Dirty working tree with concurrent SpikeGLX changes preserved; HEAD is not tested-byte identity.",
+  "owner_choices": [
+    "Width/Height in projector pixels",
+    "Crop while preserving measured mm-per-pixel"
+  ],
+  "implementation": "Replace Scale controls with valid_width_px/valid_height_px, auto placeholders from physical dimensions/mm-per-pixel, centered pixel offsets. Keep fixed-pitch mapping; Width/Height change valid_area only, Offset translates mapping/crop with source UV clipping at output boundaries. Retain normalized full-output valid_area in geometric profiles; shader discards scene pixels outside, grid outlines it, preview applies it with source UVs, and Idle clears outside the union. Raw references and independent V22 marker ordering remain unchanged.",
+  "persistence": "Numeric6/full9/review4. Legacy Scale bounds migrate to pixel crop dimensions with retained native data; unsupported non-neutral legacy inputs reject before widget restoration. Existing Bottom-axis migration retained. Optional valid_area defaults None for old geometric profiles.",
+  "decisions": [
+    "G01 valid-area amendment introduced revision201; concurrent revision202 retained",
+    "V01 revision22",
+    "V15 revision18",
+    "V19 revision7"
+  ],
+  "validation": {
+    "gui_command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"front_attached or calibration_identity_profiles or measured_affine or preview_calibration or live_calibration or active_calibration_measurements or calibration_adjustment_steps or projector_reference_measurements or projector_configuration or all_screen_calibration_json or right_screen_is_derived or legacy_numeric_projector or old_projector_snapshot or photodiode_frame or review_draft or preview_rejects_invalid_corrections\" --basetemp=.tmp/valid-area-gui-final -p no:faulthandler --tb=short --junitxml=reports/runtime-evidence-2026-10-14/valid-area/gui.xml",
+    "gui_result": "34 passed,456 deselected",
+    "rendering_command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_display_calibration_rendering.py tests/visual_stimulus/test_configuration.py -q --basetemp=.tmp/valid-area-render-final --tb=short --junitxml=reports/runtime-evidence-2026-10-14/valid-area/rendering.xml",
+    "rendering_result": "81 passed",
+    "control_command": ".venv/Scripts/python.exe -m pytest tests/controller/test_device_admission.py tests/visual_stimulus/test_lifecycle.py -q -k calibration -m \"not windows and not rig\" --basetemp=.tmp/valid-area-control-permitted --tb=short --junitxml=reports/runtime-evidence-2026-10-14/valid-area/control.xml",
+    "control_result": "12 passed,41 deselected with permitted loopback; sandbox stall interrupted without claiming a pass.",
+    "followup_proofs": "Non-neutral legacy crop/unchanged raw-bar/missing-mode atomic-rejection proof1 pass/489 deselected. Final float32-collapse guard rendering/resource16 pass. XMLs migration.xml and precision.xml.",
+    "static": "Ruff checks pass; Win32 mypy162 source files pass; Ruff format167 files pass before last formatted precision/test increments; backend boundaries689/zero violations.11 schemas current; geometric-profile schema regenerated.",
+    "attempts": "Initial renderer69 pass/2 stale vertex-buffer tests; revised crop/translation behavior tests pass. Initial GUI11 pass/13 fixture/old Scale failures, then24 pass. Broader30 pass/3 stale legacy inventories; after fixture repairs33 pass/one old/new variable collision; fix collision, final34 pass. Added Idle proof first fails strict tuple fixture; correct and passes. Source clipping exposes UV1+epsilon; clamp analytically bounded UV endpoints and verify12 GUI cases. Repair initial missing helper read/failed test insertion anchor and unused/import lint findings. GUI counts changed during concurrent work; retain actual XML counts."
+  },
+  "architecture_review": "Reuse focused mapping/table/profile/live/renderer/preview owners; one pure clipped-affine helper plus existing output-mask helper for Idle. No dependency/process or whole-runtime reference. Projectors/native/scene remain cohesive widget/device/render ownership; separable operations stay in helpers. Immutable prepared source/profile ownership, revision/lease/sequence/original deadline and resource cleanup preserved.",
+  "limits": "No running GUI/renderer restart, physical measurements, hardware commands or native/optical/full-workload acceptance. Application restart needed; next normal diagnostic launch regenerates selected asset. Clip/tolerance TOML values unchanged because physical geometry/pixel pitch are unchanged."
+}

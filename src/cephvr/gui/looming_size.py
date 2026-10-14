@@ -8,7 +8,7 @@ from typing import Any, cast
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QGridLayout, QLineEdit, QVBoxLayout, QWidget
 
-from cephvr.gui.components import field, label
+from cephvr.gui.components import field
 from cephvr.gui.stimulus_form import ValueEditor
 
 
@@ -58,14 +58,11 @@ class LoomingSize(QWidget):
         grid.addWidget(field(f"End size ({unit})", self.end), 0, 1)
         grid.addWidget(field("Growth duration (s)", self.duration), 1, 0, 1, 2)
         layout.addWidget(self.basic)
-        self.summary = label(
-            "Custom size animation · available in More settings", wrap=True
-        )
-        layout.addWidget(self.summary)
         self.extra = QWidget()
         details = QVBoxLayout(self.extra)
         details.setContentsMargins(0, 0, 0, 0)
         self.custom = QCheckBox("Custom size animation")
+        self.custom.setToolTip("Custom size animation is available in More settings.")
         self.custom.setChecked(not supported)
         self.custom.setEnabled(supported)
         self.custom.toggled.connect(self.arrange)
@@ -113,7 +110,6 @@ class LoomingSize(QWidget):
 
     def arrange(self) -> None:
         self.basic.setVisible(not self.custom.isChecked())
-        self.summary.setVisible(self.custom.isChecked())
         self.advanced.setVisible(self.custom.isChecked())
 
     def read(self) -> dict[str, Any]:

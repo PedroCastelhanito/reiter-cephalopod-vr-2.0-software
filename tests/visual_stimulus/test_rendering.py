@@ -46,6 +46,48 @@ from cephvr.visual_stimulus.rendering.types import (
 )
 
 
+@pytest.mark.parametrize("bits", [8, 10])
+def test_projector_window_recreation_preserves_operator_cursor(bits):
+    from cephvr.visual_stimulus.rendering.native_display import configure_window
+
+    output = (
+        make_prepared_trial()
+        .display.active_outputs[0]
+        .model_copy(update={"rgb_bits_per_channel": bits})
+    )
+
+    class Windows:
+        TRUE, FALSE = 1, 0
+        hints = {}
+        cursor = (300, 200)
+
+        def __getattr__(self, name):
+            if name.isupper():
+                return name
+            raise AttributeError(name)
+
+        def default_window_hints(self):
+            self.hints = {self.CENTER_CURSOR: self.TRUE, self.AUTO_ICONIFY: self.TRUE}
+
+        def window_hint(self, hint, value):
+            self.hints[hint] = value
+
+        def create_fullscreen(self):
+            if self.hints[self.CENTER_CURSOR]:
+                self.cursor = (2560, 360)
+
+    windows = Windows()
+    for _ in range(3):
+        configure_window(windows, output)
+        windows.create_fullscreen()
+        assert windows.cursor == (300, 200)
+        assert windows.hints[windows.AUTO_ICONIFY] == windows.FALSE
+        assert windows.hints[windows.RED_BITS] == bits
+        assert windows.hints[windows.GREEN_BITS] == bits
+        assert windows.hints[windows.BLUE_BITS] == bits
+        assert windows.hints[windows.REFRESH_RATE] > 0
+
+
 def test_reference_bars_share_exact_pixel_spans_and_restore_scissor():
     from cephvr.visual_stimulus.config.calibration_bars import (
         reference_lengths,
@@ -65,15 +107,22 @@ def test_reference_bars_share_exact_pixel_spans_and_restore_scissor():
     x, y = reference_lengths(width, height)
     draw_reference_bars(context, width, height)
     assert context.scissor == (1, 2, 3, 4)
-    assert calls[2][0][2] == x
-    assert calls[3][0][3] == y
+    assert calls[-2][0][2] == x
+    assert calls[-1][0][3] == y
+    assert [rectangle for rectangle, color, _, _ in calls if color == (1, 1, 1)] == [
+        (0, 0, width, 2),
+        (0, height - 2, width, 2),
+        (0, 0, 2, height),
+        (width - 2, 0, 2, height),
+    ]
     assert all(scissor == viewport for scissor, _, _, viewport in calls)
     scale = reference_scale(width, height, x / 2, y / 2, 1.5)
     assert scale.mm_per_pixel_x == scale.mm_per_pixel_y == 0.5
     assert scale.projector_distance_mm == pytest.approx(width * 0.5 * 1.5)
     calls.clear()
     draw_reference_bars(context, width, height, x_px=200, y_px=100)
-    assert calls[2][0][2] == 200 and calls[3][0][3] == 100
+    assert calls[-2][0][2] == 200 and calls[-1][0][3] == 100
+    assert len(calls) == 8
     direct = reference_scale(width, height, 80, 60, x_px=200, y_px=100)
     assert direct.projector_distance_mm is None
     assert direct.projected_width_mm == pytest.approx(width * 0.4)
@@ -116,6 +165,62 @@ def test_output_blackouts_restore_scissor_on_success_and_failure():
     with pytest.raises(RuntimeError, match="clear failed"):
         clear_regions(context, fail, (zone,))
     assert context.scissor == (9, 9, 2, 2)
+
+
+def test_idle_uses_prepared_valid_area_union_and_restores_scissor():
+    from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
+    from cephvr.visual_stimulus.rendering.output_masks import clear_valid_background
+
+    display = make_prepared_trial().display
+    output = display.active_outputs[0]
+    mappings = [m for m in display.active_mappings if m.output_id == output.output_id]
+    profiles = {}
+    for mapping in mappings:
+        profiles[mapping.mapping_id] = GeometricProfile.model_validate(
+            dict(
+                format_version=1,
+                calibration_id="valid-area",
+                mapping_id=mapping.mapping_id,
+                surface_id=mapping.surface_id,
+                output_id=output.output_id,
+                output_width=output.width_px,
+                output_height=output.height_px,
+                viewport=mapping.viewport,
+                rows=2,
+                columns=2,
+                vertices=tuple(
+                    dict(uv=p, xy=p) for p in ((0, 0), (1, 0), (0, 1), (1, 1))
+                ),
+                orientation="preserving",
+                diagonal="bottom_left_to_top_right",
+                mask=None,
+                weight=None,
+                overlap_group=None,
+                intended_coverage=((0, 0), (1, 0), (1, 1), (0, 1)),
+                coverage_tolerance=1e-6,
+                triangle_area_tolerance=1e-9,
+                valid_area=(0.2, 0.3, 0.8, 0.9),
+            )
+        )
+    calls = []
+    context = NS(scissor=(2, 3, 4, 5))
+    context.clear = lambda *color, **kwargs: calls.append(
+        (context.scissor, color, kwargs)
+    )
+    clear_valid_background(
+        context, (0.3, 0.4, 0.5), output, display, NS(content=profiles)
+    )
+    assert calls[0][0] is None and calls[0][1] == (0, 0, 0)
+    assert len(calls) == len(mappings) + 1
+    assert all(c[0] == (20, 30, 60, 60) and c[1] == (0.3, 0.4, 0.5) for c in calls[1:])
+    assert context.scissor == (2, 3, 4, 5)
+    for key in profiles:
+        profiles[key] = profiles[key].model_copy(update={"valid_area": None})
+    calls.clear()
+    clear_valid_background(
+        context, (0.3, 0.4, 0.5), output, display, NS(content=profiles)
+    )
+    assert len(calls) == 1 and calls[0][1] == (0.3, 0.4, 0.5)
 
 
 def test_photodiode_pulse_renders_after_blackouts_and_black_frame():

@@ -549,7 +549,9 @@ async def test_commit_in_configuration_phase_just_commits(
 # ---- setup_request uses the frozen prepared settings ----------------------
 
 
-def test_setup_request_uses_prepared_backend_settings_not_live() -> None:
+def test_setup_request_uses_prepared_settings_for_setup_and_initial_registration(
+    tmp_path: Path,
+) -> None:
     visual_stimulus = pb.BackendContext(
         backend_name="visual_stimulus", backend_generation=_id()
     )
@@ -570,9 +572,15 @@ def test_setup_request_uses_prepared_backend_settings_not_live() -> None:
     prepared.trials.add(
         context=pb.TrialContext(session=session, trial_id=_id(), trial_number=1)
     )
-    attempt = Attempt(
-        session, prepared, cast(OutputReservation, None), {"visual_stimulus": peer}, {}
+    reservation = OutputReservation(
+        tmp_path,
+        "experiment",
+        "subject",
+        session.session_id,
+        runtime.generation,
+        datetime(2026, 9, 30, tzinfo=UTC),
     )
+    attempt = Attempt(session, prepared, reservation, {"visual_stimulus": peer}, {})
     attempt.file_policies["visual_stimulus"] = (
         visual_stimulus_pb.VisualStimulusFilePolicies()
     )
@@ -581,7 +589,20 @@ def test_setup_request_uses_prepared_backend_settings_not_live() -> None:
         peer,
         _id(),
     )
+    registration = runtime.preparation_context.registration(attempt, _id())
     assert request.settings.visual_stimulus.save_visual_stimulus_data is True
+    assert {output.output_tag for output in request.plan.outputs} == {
+        "stimulus_LOG",
+        "stimulus_frames",
+        "stimulus",
+    }
+    assert registration.context.outputs == []
+    assert all(not output.HasField("path") for output in request.plan.outputs)
+    attempt.prepared.outputs.extend(request.plan.outputs)
+    for output in attempt.prepared.outputs:
+        output.path = str(tmp_path / f"reserved-{output.output_tag}.{output.extension}")
+    final_registration = runtime.preparation_context.registration(attempt, _id())
+    assert list(final_registration.context.outputs) == list(attempt.prepared.outputs)
 
 
 # ---- evidence cutoff --------------------------------------------------------

@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "dirty working tree; concurrent owner-authorized changes preserved",
+  "task": "projector-sync-modes",
+  "scope": "local implementation/static/contract checks only",
+  "commands": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_configuration.py tests/visual_stimulus/test_rendering.py -q -m \"not windows and not rig\" --basetemp=.tmp-sync-backend2",
+      "outcome": "61 passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"sync_modes or contextual_wiring or projector_geometry_and_pulse or projector_codec or projectors_page_install_collect or photodiode_frame_pulse or authoritative_photodiode or configuration_scroll_keeps_projector\" --basetemp=.tmp-sync-gui2",
+      "outcome": "16 passed, 454 deselected"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_lifecycle.py -q -m \"not windows and not rig\" --basetemp=.tmp-sync-lifecycle-permitted",
+      "outcome": "34 passed; permitted local loopback execution"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest contracts/visual_stimulus/tests -q --basetemp=.tmp-sync-contracts",
+      "outcome": "42 passed, 79 subtests passed"
+    },
+    {
+      "command": "contracts/visual_stimulus/generate_schemas.py --check",
+      "outcome": "11 current schemas"
+    },
+    {
+      "command": "scoped ruff check/format --check (12 changed files), mypy --platform win32 (10 changed sources), tools/check_backend_boundaries.py, git diff --check",
+      "outcome": "pass; 687 modules, zero violations; existing cohesion advisories reviewed"
+    }
+  ],
+  "attempts": [
+    "Initial runtime tests: 57 passes, one stale policy-version failure, three sandbox temporary-directory errors.",
+    "Second runtime tests: 60 passes, stale policy-digest failure. Both loader bindings corrected.",
+    "Initial GUI tests: 12 passes, three incorrect restore-method test failures. Use apply_snapshot.",
+    "Sandbox lifecycle stalled after31 dots, interrupted; permitted rerun all34 pass.",
+    "Ruff import/newline formatting corrected."
+  ],
+  "limitations": [
+    "No GUI/runtime restart",
+    "No optical, hardware or full-load acceptance",
+    "Existing file-owned pacing remains independent of pulse placement"
+  ]
+}

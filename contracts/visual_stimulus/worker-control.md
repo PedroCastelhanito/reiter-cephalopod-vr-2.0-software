@@ -146,6 +146,13 @@ summaries even with Save Off, plus one ReviewRecordingSummary for the composite 
 ## Resource policy binding
 
 VisualStimulusFilePolicies is controller-resolved from visual_stimulus_config.toml, file-only and locked by E07.
+[projection] supplies required finite positive near_mm, far_mm,
+positional_tolerance_mm and orthogonality_tolerance as ProjectionLimits; require
+near_mm < far_mm and orthogonality_tolerance < 1. Resolve once for preparation and
+overlay saved profile values before geometry validation; the worker uses the exact
+controller snapshot, never reloads or accepts GUI overrides. Startup resolves the
+profile before display initialization. Calibration reads the same owning file at launch.
+
 [resources] keys map one-to-one to ResourceLimits; counts and byte capacities are positive
 integers, checked against protobuf widths and allocation overflow before use. Missing
 limits fail the path that needs them. Display-only startup uses document/CPU/GPU limits;
@@ -186,3 +193,12 @@ Schema generation, pure display validation and Protobuf compilation can be check
 locally. Native output capability, profile contents, window/GPU resource release,
 worker dispatch, transport integration and rig behavior are not established by these
 checks. Continue the explicit worklist; this does not declare Visual Stimulus fully implemented.
+
+
+GUI frame/grid updates reuse the existing eight row-major `destination_xy` doubles
+as normalized valid-area corners under G01/V15. Width/Height changes crop; the GL
+owner translates the fixed-pitch image to the rectangle center for Offset changes,
+clipping source UVs at output edges without rescaling. Validate the entire update
+before mutating crop/buffer state; retain the original lease, revision, diagnostic,
+sequence, deadline, presentation-evidence and cleanup ownership. Protected measured
+pixel pitch and source assets remain fixed for the active diagnostic.

@@ -232,7 +232,8 @@ class Reports:
                     )
                 )
             unavailable = recovered_startup_rejection(self.state, link, result)
-            if not result.succeeded and not unavailable:
+            setup_rejection = link.method == "SetupSession"
+            if not result.succeeded and not unavailable and not setup_rejection:
                 self.state.interrupted = True
                 deliveries.append(
                     self.supervisor.receipt(

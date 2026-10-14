@@ -2,7 +2,7 @@
 # Source rules: GUI client defaults. See architecture.md: E03, E08, E14, A03, A10.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/gui_config.toml. The loader rejects a version mismatch.
-policy_version = 5
+policy_version = 6
 
 [controller_reconnect]
 repeat_last_delay = true
@@ -22,3 +22,7 @@ acquisition = "automatic_unheld_after_synchronization_explicit_takeover"
 [recovery]
 supervisor_completion_report = false
 reconnect_warning = "acknowledge_before_state_changing_controls"
+
+[rig_geometry]
+# G01: fixed usable-screen separation at front and lower frame junctions.
+frame_gap_mm = 5.0

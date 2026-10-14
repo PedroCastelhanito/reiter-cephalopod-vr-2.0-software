@@ -1,0 +1,127 @@
+{
+  "status": "available_scope_completed_remaining_native_tests_owner_deferred",
+  "scope": "real unpaired rig generation; Tracking processing deferred",
+  "failed_setup": {
+    "evidence": [
+      "burst/run.json",
+      "burst2/run.json",
+      "fault-recheck/run.json",
+      "fault-recheck2/run.json",
+      "fault-recheck3/run.json",
+      "fault-recheck4/run.json",
+      "fault-recheck5/run.json",
+      "fault-recheck6/lifecycle.jsonl",
+      "fault-recheck9/lifecycle.jsonl"
+    ],
+    "observed": "review budget rejection followed by incomplete cleanup; original config restore blocked",
+    "fix_status": "Local fixes complete; both backend closure proofs accepted in fault6, aggregate cancellation not proven. Warning scope repaired; fault9 exposes stale calibration release proof, repaired with catalogue retirement/reopen tests. Native complete cancellation/reuse deferred while projectors off.",
+    "attempt_notes": "A provisional preliminary-output registration change was rejected by the actual supervisor; it was reverted. Later controlled tests resolved output-proof rejection, but CPU preparation error still escalated to application shutdown."
+  },
+  "preview": {
+    "evidence": "final-preview/measurement-cycles.json",
+    "cycles_per_role": 4,
+    "roles": [
+      "eye_tracking",
+      "behavioral",
+      "tracking"
+    ],
+    "all_start_stop_completed": true,
+    "configuration_unchanged": true,
+    "all_devices_released": true,
+    "limit": "commands/SDK capture and closure; electrical edges and GUI visibility not certified"
+  },
+  "three_camera": {
+    "evidence": "three-camera/run.json",
+    "setup": true,
+    "start_admission": true,
+    "outcome": "INTERRUPTED",
+    "reason": "required lifecycle evidence missing by deadline",
+    "cleanup_confirmed": false,
+    "all_owned_processes_absent": true,
+    "configuration_restoration_pending": true
+  },
+  "native_gui": {
+    "log": "gui-native-final.log",
+    "passes_before_stall": 12,
+    "full_suite_status": "stalled; stopped exact owned test process; cause unproven",
+    "focused_native_passes": {
+      "layout": 9,
+      "hover": 2
+    },
+    "offscreen_final": "494 passed; focused native layout9/hover2 passed; full native exception-hook stall unresolved"
+  },
+  "configuration": {
+    "recording_queue_frames": 20,
+    "camera_capacity_status": "Owner-selected20/15/150; TOML and Controller current/history verified. Prior native measurements were17/10/125; no new native validation.",
+    "visual_status": "original TOML restored byte-exact; 21-slot growth rejected because saturated",
+    "original_runtime_restore": "all original fields preserved except accepted queue17",
+    "sdk_buffers_per_camera": 15,
+    "post_cutoff_drain_margin_ms": 150
+  },
+  "owner_deferrals": [
+    "Tracking processing",
+    "photodiode",
+    "physical SpikeGLX pulse mappings and paired acceptance",
+    "projector-dependent tests while projectors off"
+  ],
+  "three_camera_normal_confirmation": {
+    "evidence": "uninstrumented/run.json",
+    "generation": "bd561b94-1bb7-4c02-98b2-577f2b448172",
+    "setup": true,
+    "start": true,
+    "outcome": "COMPLETED",
+    "cleanup_confirmed": true,
+    "configuration_restored": true,
+    "scope": "No worker frame instrumentation; controller serial-event probe active",
+    "external_decode_status": "four full external decodes and frame counts pass"
+  },
+  "final_three_camera_confirmation": {
+    "evidence": "final-sequence/verification.json",
+    "outcome": "COMPLETED",
+    "cleanup_confirmed": true,
+    "configuration_restored": true,
+    "decoded_videos": 4,
+    "camera_queue_overflows": 0,
+    "review_capacity_drops": 3078,
+    "review_cfr_duplicates": 3098
+  },
+  "save_on_to_off": {
+    "evidence": "save-off/verification.json",
+    "same_generation": true,
+    "outcome": "COMPLETED",
+    "cleanup_confirmed": true,
+    "configuration_restored": true,
+    "decoded_camera_videos": 2,
+    "stimulus_output_created": false
+  },
+  "abort": {
+    "evidence": "abort/run.json",
+    "partial_verification": "abort/partial-verification.json",
+    "interruption_after_start_s": 5.3356403,
+    "cleanup_confirmed": false,
+    "decoded_videos": 3,
+    "configuration_restore_blocked": true,
+    "repair": "Exact stopped-trial pulse evidence admission after interruption locally verified; native retest blocked by projector deferral and E10 required Visual participant."
+  },
+  "validation": {
+    "backend_passed": 1540,
+    "backend_skipped": 5,
+    "gui_offscreen_passed": 494,
+    "ruff": "passed",
+    "format_files": 906,
+    "mypy_win32_files": 786,
+    "backend_modules": 690,
+    "boundary_violations": 0,
+    "native_gui_full_suite": "unresolved exception-hook stall"
+  },
+  "final_shutdown": {
+    "succeeded": true,
+    "all_owned_processes_absent": true,
+    "evidence": "final-exit-receipt.json"
+  },
+  "owner_parameter_review": {
+    "evidence": "owner-parameter-review/result.json",
+    "application_left_running": true,
+    "setup_or_recording_dispatched": false
+  }
+}

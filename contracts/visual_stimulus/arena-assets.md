@@ -23,6 +23,9 @@ four physical screen planes. It draws a grid, center cross and face name on each
 screen and a thin tank outline. The operator uses the GLB for V01's manually
 opened and closed diagnostic presentation; the exporter does not create a timed
 trial program. Exporting it does not start output or validate optics.
+G01 keeps the two diagnostic patterns (`reference_bars.glb` and `frame_grid.glb`)
+separate; the [GUI calibration contract](../gui-calibration.md#two-stage-calibration-presentation)
+binds their source, pixel metadata, runtime staging and preparation.
 Validate missing/unknown instance references and conflicting assignments during
 Setup. Do not maintain another editable boundary definition in the visual asset
 or silently accept its embedded collision/navigation metadata as authoritative.

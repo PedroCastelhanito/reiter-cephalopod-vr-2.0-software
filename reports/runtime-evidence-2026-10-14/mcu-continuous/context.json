@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "dirty working tree; concurrent unrelated GPU/projector edits",
+  "controller_command": ".venv/Scripts/python.exe -m pytest tests/controller/test_microcontroller_owner.py tests/controller/test_microcontroller_protocol.py -q -m \"not windows and not rig\" --basetemp=.tmp-mcu-tests-permitted",
+  "controller_result": "105 passed, 1 skipped",
+  "gui_command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"managed_mcu_pending_completion_and_final_status or managed_microcontroller_emits_controller_intents or pin_test_stop_toggle_and_invalidation or microcontroller_fixed_signal_tests_and_layout\" --basetemp=.tmp-mcu-gui-focused --junitxml=.tmp-mcu-gui-focused.xml",
+  "gui_result": "4 passed, 464 deselected",
+  "compile": "arduino-cli compile --fqbn arduino:avr:uno --build-path .tmp-mcu-build firmware/uno/cephvr2_mcu",
+  "compile_result": "14038 bytes flash; 1219 bytes RAM; success",
+  "static": "Scoped Ruff/format6 files; Win32 mypy4 sources; boundaries687/zero violations; git diff --check pass",
+  "limits": "No upload, runtime restart or physical acceptance. Sandbox asyncio stalled; broad permitted GUI selection interrupted after one dot. Sandbox compile lacked indexes/core."
+}

@@ -1,0 +1,87 @@
+..F......                                                                [100%]
+================================== FAILURES ===================================
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000018853207250>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001884A3AF640>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load�"
+        assert window.tracking.save_button.text() == "Save as�"
+        window.resize(1175, 940)
+        app.processEvents()
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1175, 720, 1175):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+                assert bar.tabRect(3).right() == bar.width() - 1
+                if width == 1175:
+                    hud = panel.layout_card if index == 2 else panel.columns[1].hud_card
+                    border_top = (
+                        hud.mapTo(window, QPoint()).y()
+                        + hud.caption.geometry().center().y()
+                    )
+                    assert abs(bar.mapTo(window, QPoint()).y() - border_top) <= 1
+                card = left.layout().itemAt(1).widget()
+                assert card is window.devices.config_cards[index]
+                assert card.caption.text() == "Configuration file"
+                files = panel.calibration_files if index == 2 else panel.config_files
+                assert card.isAncestorOf(files.load_button)
+                assert card.isAncestorOf(files.save_button)
+                assert files.load_button.text() == "Load�"
+                assert files.save_button.text() == "Save as�"
+                assert abs(files.load_button.width() - files.save_button.width()) <= 1
+                assert files.load_button.height() == files.save_button.height()
+                load_pos = files.load_button.mapTo(card, QPoint())
+                save_pos = files.save_button.mapTo(card, QPoint())
+                assert load_pos.y() == save_pos.y()
+                assert save_pos.x() - load_pos.x() - files.load_button.width() == (
+                    SIZES.field_x_gap
+                )
+                if index in (0, 2):
+                    if index == 2:
+                        measurements = panel.measurements
+                        assert measurements.caption.text() == "Pixel-to-mm calibration"
+                        widths = [measurements.table.columnWidth(i) for i in range(3)]
+                        assert max(widths) - min(widths) <= 1
+                    header = panel.table.horizontalHeader()
+                    refresh = panel.refresh_button
+                    assert refresh.parentWidget() is header.viewport()
+                    assert refresh.text() == "" and not refresh.icon().isNull()
+                    assert refresh.size() == QSize(26, 26)
+                    assert refresh.iconSize() == QSize(16, 16)
+                    assert header.viewport().rect().contains(refresh.geometry())
+                    assert panel.table.horizontalHeaderItem(0).text() == "Use"
+                if index == 1:
+                    assert panel.scan_button.parentWidget() is panel.port.parentWidget()
+                    assert panel.scan_button.size() == QSize(26, 26)
+                if index == 1:
+                    assert panel.io.isHidden()
+                    assert panel.output_table.isVisible()
+>                   assert panel.triggers.body.rect().contains(
+                           ^^^^^^^^^^^^^^^^^^^^^^^^
+                        panel.output_table.geometry()
+                    )
+E                   AttributeError: 'QVBoxLayout' object has no attribute 'rect'
+
+tests\gui\test_dashboard.py:3007: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+1 failed, 8 passed in 5.19s

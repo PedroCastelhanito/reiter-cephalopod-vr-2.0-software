@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import threading
 from dataclasses import replace
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.visual_stimulus.configuration import load_file_policies
 from cephvr.visual_stimulus.rendering.types import (
     ResourceReleaseReport,
     SubmissionSnapshot,
@@ -88,6 +90,9 @@ def prepared_driver(
     setup.session.trials.add(context=trial)
     setup.settings.save_visual_stimulus_data = saving
     setup.settings.display.profile_json = display_json or valid_display_json()
+    setup.policies.projection.CopyFrom(
+        load_file_policies(Path(__file__).resolve().parents[2]).projection
+    )
     setup.policies.limits.max_document_bytes = 1_000_000
     if pacing_refresh_hz is not None:
         setup.policies.pacing_refresh_hz = pacing_refresh_hz
@@ -135,6 +140,7 @@ def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_
     preparation._registered_announce(lambda *_: None, "prior")("asset", None)
     assert preparation.cleanup().released == ("prior:asset",)
     assert preparation.cleanup().released == ("prior:asset",)
+    preparation.retire_released_resources()
     setup = visual_stimulus.WorkerSetup()
     setup.session.configuration.asset_root = str(tmp_path)
     setup.session.trials.add().definition.stimulus.SetInParent()
@@ -359,7 +365,7 @@ def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(
     assert view.complete and not view.HasField("applied_revision")
     assert view.issues[0].failure.code == DisplayUnavailableError.code
     if wrong_adapter:
-        assert "cephvr-python.exe" in view.issues[0].failure.message
+        assert "cephvr-renderer.exe" in view.issues[0].failure.message
         assert "RTX 5060 Ti" in view.issues[0].failure.message
     assert {item.resource for item in view.resources} == {
         "display:projector/main",
@@ -375,6 +381,9 @@ def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(
     setup.session.context.CopyFrom(session)
     setup.session.trials.add(context=trial)
     setup.settings.display.profile_json = valid_display_json()
+    setup.policies.projection.CopyFrom(
+        load_file_policies(Path(__file__).resolve().parents[2]).projection
+    )
     setup.policies.limits.max_document_bytes = 1_000_000
     fresh = driver.execute("SetupSession", setup, deadline)
     for _ in range(100):
@@ -431,6 +440,9 @@ def test_pre_setup_display_resources_are_local_then_promoted_by_setup():
     setup.session.context.CopyFrom(session)
     setup.session.trials.add(context=trial)
     setup.settings.display.profile_json = valid_display_json()
+    setup.policies.projection.CopyFrom(
+        load_file_policies(Path(__file__).resolve().parents[2]).projection
+    )
     setup.policies.limits.max_document_bytes = 1_000_000
     driver.deadline_ns = clock() + 100_000_000
     completion = driver.setup(setup)
@@ -461,13 +473,14 @@ def test_pre_setup_display_cleanup_requires_exact_local_release_without_session_
     )
     artifact = make_prepared_trial()
     graphics = Graphics(clock, artifact)
+    preparation = Preparation(artifact)
     driver = LifecycleDriver(
         worker=worker,
         owner=owner,
         controller=controller,
         policies=pb.ControlPolicies(recovery_ns=10_000_000),
         engine=graphics,
-        preparation=Preparation(artifact),
+        preparation=preparation,
         recording=recorder,
         reports=reports,
         cancelled=threading.Event(),
@@ -486,6 +499,7 @@ def test_pre_setup_display_cleanup_requires_exact_local_release_without_session_
     assert driver.state.cleaned
     assert not driver.state.pending_resources
     assert not driver.state.resources
+    assert preparation.retired_resource_catalogues == 1
     assert not any(
         method == "ReportWorkerLifecycle" for method, _, _ in reports.records
     )
@@ -525,6 +539,191 @@ def test_pre_setup_display_cleanup_retains_resources_when_release_is_unknown():
         driver.cleanup(command)
     assert driver.state.resources["display:projector/main"].resource
     assert "display:projector/main" in driver.state.pending_resources
+    assert not driver.state.cleaned
+
+
+def test_failed_setup_cleanup_waits_for_terminal_report_acceptance():
+    driver, clock, reports, _, _, command, _ = prepared_driver()
+    driver.cleanup(command())
+    reports.records.clear()
+    session = pb.SessionContext(session_id=str(uuid4()))
+    setup_context = visual_stimulus.WorkerContext(
+        worker=driver.worker,
+        owner=driver.owner,
+        configuration_revision=1,
+        work=pb.WorkContext(session=session),
+    )
+    setup = visual_stimulus.WorkerSetup(
+        command=visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            issuer=driver.owner,
+            target=setup_context,
+            deadline_monotonic_ns=clock() + 100_000_000,
+        )
+    )
+    setup.session.context.CopyFrom(session)
+    setup.session.trials.add(
+        context=pb.TrialContext(session=session, trial_id=str(uuid4()))
+    )
+    setup.settings.display.profile_json = "not-json"
+    setup.policies.limits.max_document_bytes = 1_000_000
+    setup.policies.projection.CopyFrom(
+        load_file_policies(Path(__file__).resolve().parents[2]).projection
+    )
+    with pytest.raises(ValueError) as setup_error:
+        driver.execute("SetupSession", setup, setup.command.deadline_monotonic_ns)
+    driver.fail(setup_error.value)
+    driver.engine.cleanup = lambda: ResourceReleaseReport(())
+    assert not driver.state.ready
+    assert any(
+        method == "ReportError" and message.failure.message == str(setup_error.value)
+        for method, message, _ in reports.records
+    )
+
+    confirmed = []
+    original_confirm = reports.confirm
+    original_send = reports.send
+
+    def confirm(method, message, deadline_ns):
+        if message.report.WhichOneof("report") == "cleanup":
+            assert driver.state.setup is not None
+            confirmed.append((method, deadline_ns))
+        original_confirm(method, message, deadline_ns)
+
+    def send(method, message, deadline_ns):
+        if (
+            method == "ReportWorkerLifecycle"
+            and message.report.WhichOneof("report") == "cleanup"
+        ):
+            raise AssertionError("terminal cleanup must use confirmed delivery")
+        original_send(method, message, deadline_ns)
+
+    reports.confirm = confirm
+    reports.send = send
+    assert driver.state.failure_deadline_ns is not None
+    deadline = min(clock() + 50_000_000, driver.state.failure_deadline_ns)
+    cancel = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        issuer=driver.owner,
+        target=setup_context,
+        deadline_monotonic_ns=deadline,
+    )
+    assert driver.execute("CancelSetup", cancel, deadline) is None
+
+    assert confirmed == [("ReportWorkerLifecycle", deadline)]
+    assert driver.state.cleaned
+    assert driver.state.setup is None
+    assert not any(
+        method == "ReportWorkerLifecycle"
+        and message.report.WhichOneof("report") == "ready"
+        for method, message, _ in reports.records
+    )
+
+
+def test_preparation_rejection_stays_setup_failure_and_allows_reuse():
+    driver, clock, reports, _, _, command, _ = prepared_driver()
+    driver.cleanup(command())
+    reports.records.clear()
+    original_prepare = driver.preparation.prepare_trials
+
+    def setup_request():
+        session = pb.SessionContext(session_id=str(uuid4()))
+        trial = pb.TrialContext(session=session, trial_id=str(uuid4()))
+        request = visual_stimulus.WorkerSetup(
+            command=visual_stimulus.WorkerCommand(
+                command_id=str(uuid4()),
+                issuer=driver.owner,
+                target=visual_stimulus.WorkerContext(
+                    worker=driver.worker,
+                    owner=driver.owner,
+                    configuration_revision=1,
+                    work=pb.WorkContext(session=session),
+                ),
+                deadline_monotonic_ns=clock() + 100_000_000,
+            )
+        )
+        request.session.context.CopyFrom(session)
+        request.session.trials.add(context=trial)
+        request.settings.display.profile_json = valid_display_json()
+        request.policies.projection.CopyFrom(
+            load_file_policies(Path(__file__).resolve().parents[2]).projection
+        )
+        request.policies.limits.max_document_bytes = 1_000_000
+        return request, trial
+
+    def reject_preparation(_request, _announce, _deadline_ns):
+        raise ValueError("recording byte budget rejected Setup")
+
+    driver.preparation.prepare_trials = reject_preparation
+    failed_setup, _ = setup_request()
+    failed_completion = driver.execute(
+        "SetupSession", failed_setup, failed_setup.command.deadline_monotonic_ns
+    )
+    assert failed_completion is not None
+    for _ in range(100):
+        driver.advance(clock())
+        if failed_completion.done():
+            break
+        threading.Event().wait(0.001)
+    with pytest.raises(ValueError, match="budget rejected"):
+        failed_completion.result(timeout=1)
+
+    assert driver.state.setup is not None
+    assert driver.state.interrupted and driver.cancelled.is_set()
+    assert not driver.state.ready
+    assert driver.state.failure_deadline_ns is None
+    assert not any(method == "ReportError" for method, _, _ in reports.records)
+    assert not any(
+        method == "ReportWorkerLifecycle"
+        and message.report.WhichOneof("report") == "ready"
+        for method, message, _ in reports.records
+    )
+
+    cancel = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        issuer=driver.owner,
+        target=failed_setup.command.target,
+        deadline_monotonic_ns=clock() + 100_000_000,
+    )
+    driver.execute("CancelSetup", cancel, cancel.deadline_monotonic_ns)
+    cleanup = reports.lifecycle("cleanup")[-1][0]
+    assert cleanup.trial_activity_stopped
+    assert driver.state.cleaned and driver.state.setup is None
+    assert not driver.state.ready
+
+    driver.preparation.prepare_trials = original_prepare
+    ready_setup, trial = setup_request()
+    driver.preparation.artifact = make_prepared_trial(
+        session_id=ready_setup.session.context.session_id,
+        trial_id=trial.trial_id,
+    )
+    ready_completion = driver.execute(
+        "SetupSession", ready_setup, ready_setup.command.deadline_monotonic_ns
+    )
+    assert ready_completion is not None
+    for _ in range(100):
+        driver.advance(clock())
+        if ready_completion.done():
+            break
+        threading.Event().wait(0.001)
+    ready_completion.result(timeout=1)
+    assert driver.state.ready
+    assert reports.lifecycle("ready")[-1][0].context.work == (
+        ready_setup.command.target.work
+    )
+
+
+def test_session_cleanup_delivery_failure_keeps_setup_unresolved():
+    driver, clock, reports, _, _, command, _ = prepared_driver()
+
+    def reject(_method, _message, _deadline_ns):
+        raise TimeoutError("cleanup report was not accepted")
+
+    reports.confirm = reject
+    with pytest.raises(TimeoutError, match="not accepted"):
+        driver.cleanup(command())
+
+    assert driver.state.setup is not None
     assert not driver.state.cleaned
 
 
@@ -813,7 +1012,6 @@ def test_failed_native_calibration_source_close_is_retried_by_lifecycle_cleanup(
 ):
     import hashlib
     from contextlib import contextmanager
-    from pathlib import Path
 
     from cephvr.visual_stimulus.rendering.types import ResourceReleaseReport
     from cephvr.visual_stimulus.resources import (

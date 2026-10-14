@@ -1,0 +1,5 @@
+pid, gpu_uuid, process_name
+9864, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\Program Files\WindowsApps\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\app\ChatGPT.exe
+10268, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\Windows\explorer.exe
+23168, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\cephvr-renderer.exe
+9864, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\Program Files\WindowsApps\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\app\ChatGPT.exe

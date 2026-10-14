@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="3.997" timestamp="2026-10-14T14:30:50.140018+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_batch_variations_target_projectors_and_local_layer_ordinals" time="0.994"><failure message="assert 6 == 227&#10; +  where 6 = &lt;built-in method y of QPoint object at 0x00000257908611C0&gt;()&#10; +    where &lt;built-in method y of QPoint object at 0x00000257908611C0&gt; = PyQt6.QtCore.QPoint(903, 6).y&#10; +      where PyQt6.QtCore.QPoint(903, 6) = &lt;built-in method mapTo of QPushButton object at 0x00000257900CACB0&gt;(&lt;PyQt6.QtWidgets.QWidget object at 0x000002578FE77640&gt;, PyQt6.QtCore.QPoint())&#10; +        where &lt;built-in method mapTo of QPushButton object at 0x00000257900CACB0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x00000257900CACB0&gt;.mapTo&#10; +          where &lt;PyQt6.QtWidgets.QPushButton object at 0x00000257900CACB0&gt; = &lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x00000257901864D0&gt;.remove&#10; +        and   &lt;PyQt6.QtWidgets.QWidget object at 0x000002578FE77640&gt; = &lt;built-in method viewport of VariationTable object at 0x00000257901868C0&gt;()&#10; +          where &lt;built-in method viewport of VariationTable object at 0x00000257901868C0&gt; = &lt;cephvr.gui.variation_table.VariationTable object at 0x00000257901868C0&gt;.viewport&#10; +        and   PyQt6.QtCore.QPoint() = QPoint()&#10; +  and   227 = &lt;built-in method y of QPoint object at 0x0000025790860B30&gt;()&#10; +    where &lt;built-in method y of QPoint object at 0x0000025790860B30&gt; = PyQt6.QtCore.QPoint(258, 227).y&#10; +      where PyQt6.QtCore.QPoint(258, 227) = &lt;built-in method mapTo of SelectionBox object at 0x00000257900CBA30&gt;(&lt;PyQt6.QtWidgets.QWidget object at 0x000002578FE77640&gt;, PyQt6.QtCore.QPoint())&#10; +        where &lt;built-in method mapTo of SelectionBox object at 0x00000257900CBA30&gt; = &lt;cephvr.gui.components.SelectionBox object at 0x00000257900CBA30&gt;.mapTo&#10; +          where &lt;cephvr.gui.components.SelectionBox object at 0x00000257900CBA30&gt; = &lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x00000257901864D0&gt;.parameter&#10; +        and   &lt;PyQt6.QtWidgets.QWidget object at 0x000002578FE77640&gt; = &lt;built-in method viewport of VariationTable object at 0x00000257901868C0&gt;()&#10; +          where &lt;built-in method viewport of VariationTable object at 0x00000257901868C0&gt; = &lt;cephvr.gui.variation_table.VariationTable object at 0x00000257901868C0&gt;.viewport&#10; +        and   PyQt6.QtCore.QPoint() = QPoint()">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000025790851AB0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000002578701F250&gt;
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-187/test_batch_variations_target_p0')
+
+    def test_batch_variations_target_projectors_and_local_layer_ordinals(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.components import Card
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        window.page_buttons[1].click()
+        create = window.protocol.editor.subgroup
+        create.composer.set_screens(("Left", "Right"))
+        create.composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        for face in ("Left", "Right"):
+            for _ in range(2):
+                create.composer.add_file("Texture", str(path), face)
+        create.add_variation()
+        row = create.rows[0]
+        assert isinstance(create.variation_host, Card)
+        assert not hasattr(create, "combine")
+        row.target.setCurrentIndex(row.target.findText("All projectors"))
+        row.layer.setCurrentIndex(row.layer.findData(1))
+        row.values.setText("10, 20")
+        epochs = expand_program(
+            create.candidate(), seed_decimal="0", max_expanded_epochs=2000
+        )
+        assert len(epochs) == 2
+        for epoch, speed in zip(epochs, (10, 20), strict=True):
+            for index in row.target_indices():
+                assert (
+                    motion_numbers(epoch.settings[index].model_dump(mode="json"))[0]
+                    == speed
+                )
+            for index in (0, 2):
+                assert motion_numbers(epoch.settings[index].model_dump(mode="json"))[0] == 0
+        row.target.setCurrentIndex(row.target.findText("Right"))
+        row.layer.setCurrentIndex(row.layer.findData(-1))
+        assert row.target_indices() == [2, 3]
+        for width in (1350, 720):
+            window.resize(width, 900)
+            app.processEvents()
+            table = create.variation_table
+            target_grid = row.layout().itemAt(0).widget().layout()
+            assert target_grid is not None
+            for control in (row.target, row.layer, row.parameter, row.remove):
+                assert target_grid.indexOf(control) == -1
+            assert table.cellWidget(0, 2).isAncestorOf(row.parameter)
+            assert table.cellWidget(0, 5).isAncestorOf(row.remove)
+&gt;           assert (
+                row.remove.mapTo(table.viewport(), QPoint()).y()
+                == row.parameter.mapTo(table.viewport(), QPoint()).y()
+            )
+E           assert 6 == 227
+E            +  where 6 = &lt;built-in method y of QPoint object at 0x00000257908611C0&gt;()
+E            +    where &lt;built-in method y of QPoint object at 0x00000257908611C0&gt; = PyQt6.QtCore.QPoint(903, 6).y
+E            +      where PyQt6.QtCore.QPoint(903, 6) = &lt;built-in method mapTo of QPushButton object at 0x00000257900CACB0&gt;(&lt;PyQt6.QtWidgets.QWidget object at 0x000002578FE77640&gt;, PyQt6.QtCore.QPoint())
+E            +        where &lt;built-in method mapTo of QPushButton object at 0x00000257900CACB0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x00000257900CACB0&gt;.mapTo
+E            +          where &lt;PyQt6.QtWidgets.QPushButton object at 0x00000257900CACB0&gt; = &lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x00000257901864D0&gt;.remove
+E            +        and   &lt;PyQt6.QtWidgets.QWidget object at 0x000002578FE77640&gt; = &lt;built-in method viewport of VariationTable object at 0x00000257901868C0&gt;()
+E            +          where &lt;built-in method viewport of VariationTable object at 0x00000257901868C0&gt; = &lt;cephvr.gui.variation_table.VariationTable object at 0x00000257901868C0&gt;.viewport
+E            +        and   PyQt6.QtCore.QPoint() = QPoint()
+E            +  and   227 = &lt;built-in method y of QPoint object at 0x0000025790860B30&gt;()
+E            +    where &lt;built-in method y of QPoint object at 0x0000025790860B30&gt; = PyQt6.QtCore.QPoint(258, 227).y
+E            +      where PyQt6.QtCore.QPoint(258, 227) = &lt;built-in method mapTo of SelectionBox object at 0x00000257900CBA30&gt;(&lt;PyQt6.QtWidgets.QWidget object at 0x000002578FE77640&gt;, PyQt6.QtCore.QPoint())
+E            +        where &lt;built-in method mapTo of SelectionBox object at 0x00000257900CBA30&gt; = &lt;cephvr.gui.components.SelectionBox object at 0x00000257900CBA30&gt;.mapTo
+E            +          where &lt;cephvr.gui.components.SelectionBox object at 0x00000257900CBA30&gt; = &lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x00000257901864D0&gt;.parameter
+E            +        and   &lt;PyQt6.QtWidgets.QWidget object at 0x000002578FE77640&gt; = &lt;built-in method viewport of VariationTable object at 0x00000257901868C0&gt;()
+E            +          where &lt;built-in method viewport of VariationTable object at 0x00000257901868C0&gt; = &lt;cephvr.gui.variation_table.VariationTable object at 0x00000257901868C0&gt;.viewport
+E            +        and   PyQt6.QtCore.QPoint() = QPoint()
+
+tests\gui\test_dashboard.py:11269: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_variation_controls_fit_narrow_protocol_without_horizontal_scroll" time="0.785" /></testsuite></testsuites>

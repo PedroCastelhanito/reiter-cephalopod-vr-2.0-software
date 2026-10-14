@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "dirty shared tree with concurrent calibration assets/synchronization changes",
+  "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"condition or expanded or batch or motion or looming or annotation or retained or stop_dialog or subgroup\" --basetemp=.tmp-gui-description --junitxml=reports/runtime-evidence-2026-10-14/gui-descriptions/tests.xml",
+  "initial_result": "61 passed,408 deselected,1 error: external-only sample generator rejects repo-local temp",
+  "retry_command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k subgroup_rules_persist_and_random_projectors_are_independent --junitxml=reports/runtime-evidence-2026-10-14/gui-descriptions/asset-fixture-retry.xml",
+  "retry_result": "1 passed,469 deselected",
+  "static": "Scoped Ruff/format11 files; Win32 mypy10 sources; boundaries687/zero violations; whitespace pass",
+  "limits": "Offscreen tests; no running GUI restart/device/native acceptance."
+}

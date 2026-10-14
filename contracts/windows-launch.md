@@ -124,6 +124,12 @@ explicitly, without falling back to the redirector. Preserve virtual-environment
 imports and prefix. The managed Python entry retains documented DLL-directory
 handles for the matching base runtime before dispatching the owning module; all
 owned Python descendants use the same preparation and retain the executing PID/image.
+The renderer uses `cephvr-renderer.exe`, byte-identical to the verified
+`cephvr-python.exe` GUI/CPU image, so SYS-002 graphics preferences can differ.
+Check the role image against the prepared interpreter before launch and at bootstrap;
+register its actual path in the existing plan. Preparation refreshes both images.
+Graphics preferences are applied/read back for these exact current-user application
+paths before creation; other application/global GPU settings are untouched.
 Native encoders/helpers use the same launch/containment helper without Python
 bootstrap or CephVR heartbeat requirements; their owners monitor actual progress.
 

@@ -33,13 +33,14 @@ from cephvr.visual_stimulus.config.pacing import (
     apply_pacing_settings,
     resolve_pacing_profile,
 )
+from cephvr.visual_stimulus.config.projection import projection_values
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 11
+_POLICY_VERSION = 12
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "6fb2cba514ebda8c91fcdc7ca6ee7ea49b5b23d0790df76f2dea163e4949b315"
+_POLICY_SHA256 = "096b5d2d919d64f08d547d18e16b4b375521d8745061ceb63f9fdc5e7a3a8824"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port
@@ -55,6 +56,8 @@ _CONFIG_KEYS = frozenset(
     recording_runtime.fragment_target_s recording_runtime.encoder_stall_timeout_s
     recording_runtime.record_stall_timeout_s feedback.max_result_age_ms
     presentation.pacing_refresh_hz presentation.pacing_output_id
+    projection.near_mm projection.far_mm projection.positional_tolerance_mm
+    projection.orthogonality_tolerance
     recording.save_visual_stimulus_data recording.ffmpeg_args
     """.split()
 )
@@ -216,6 +219,7 @@ def load_defaults(root: Path) -> types_pb2.VisualStimulusSettings:
     """Load operator-owned session defaults while preserving optional presence."""
     pair = _load_pair(Path(root))
     config = pair.config
+    projection_values(config.get("projection", {}))
     result = types_pb2.VisualStimulusSettings()
     recording = config.get("recording", {})
     if "save_visual_stimulus_data" in recording:
@@ -233,10 +237,18 @@ def load_defaults(root: Path) -> types_pb2.VisualStimulusSettings:
     return result
 
 
+def load_projection_settings(root: Path | None = None) -> dict[str, float]:
+    """Read the sole operator source for GUI geometry and diagnostics."""
+    pair = _load_pair(root if root is not None else Path(__file__).resolve().parents[3])
+    return projection_values(pair.config.get("projection", {}))
+
+
 def load_file_policies(root: Path) -> runtime_pb2.VisualStimulusFilePolicies:
     """Resolve versioned file-only resource and timing policies."""
     pair = _load_pair(Path(root))
     result = runtime_pb2.VisualStimulusFilePolicies(contract_version=CONTRACT_VERSION)
+    for key, value in projection_values(pair.config.get("projection", {})).items():
+        setattr(result.projection, key, value)
     refresh, output_id = _pacing_settings(pair.config)
     if refresh is not None:
         result.pacing_refresh_hz = refresh

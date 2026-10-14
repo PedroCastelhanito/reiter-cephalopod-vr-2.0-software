@@ -6,7 +6,7 @@ import asyncio
 import sys
 import time
 from types import SimpleNamespace
-from typing import cast
+from typing import Any, cast
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -30,6 +30,8 @@ from cephvr.acquisition.coordinator.manual_preview_start import ManualPreviewSta
 from cephvr.acquisition.coordinator.manual_preview_transfer import (
     ManualPreviewTransferOwner,
 )
+from cephvr.acquisition.coordinator.manual_pulses import _active_external_previews
+from cephvr.acquisition.identity import CAMERA_NAME_BY_ROLE, camera_role_name
 from cephvr.acquisition.ports import (
     ControllerPort,
     ResourcePort,
@@ -905,6 +907,66 @@ async def test_failed_connect_retires_readback_without_claiming_device_release(
         request_revision=1,
         deadline_ns=100,
     )
+
+
+@pytest.mark.parametrize("started", [False, True])
+@pytest.mark.parametrize("external", [False, True])
+@pytest.mark.parametrize("role", list(CAMERA_NAME_BY_ROLE))
+def test_registered_trigger_selection_for_start_and_existing_preview(
+    started: bool, external: bool, role: int
+) -> None:
+    owner = object.__new__(ManualPreview)
+    owner.configuration = ConfigurationRecord(
+        control.AcquisitionSettings(), runtime.AcquisitionFilePolicies(), revision=1
+    )
+    getattr(
+        owner.configuration.settings, camera_role_name(role)
+    ).device.frame_timing = (
+        camera.FRAME_TIMING_EXTERNAL_TRIGGER
+        if external
+        else camera.FRAME_TIMING_FREE_RUNNING
+    )
+    owner.workers = cast(
+        Any,
+        SimpleNamespace(
+            workers={
+                role: SimpleNamespace(
+                    preview=WorkerPreview(
+                        run_id=str(uuid4()), configuration_revision=1, started=started
+                    )
+                )
+            }
+        ),
+    )
+    expected = [role] if external else []
+    assert owner._external_roles(role) == expected
+    assert owner._external_roles(None) == (expected if started else [])
+    assert list(
+        _active_external_previews(owner.workers.workers, owner.configuration.settings)
+    ) == (expected if started else [])
+
+
+def test_trigger_selection_uses_new_registry_entry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Alias an existing schema field to isolate registry discovery from schema changes.
+    new_role = 99
+    monkeypatch.setitem(CAMERA_NAME_BY_ROLE, new_role, "eye_tracking")
+    settings = control.AcquisitionSettings()
+    settings.eye_tracking.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    owner = object.__new__(ManualPreview)
+    owner.configuration = ConfigurationRecord(
+        settings, runtime.AcquisitionFilePolicies(), revision=1
+    )
+    owner.workers = cast(Any, SimpleNamespace(workers={}))
+    assert owner._external_roles(new_role) == [new_role]
+    owner.workers.workers[new_role] = SimpleNamespace(
+        preview=WorkerPreview(
+            run_id=str(uuid4()), configuration_revision=1, started=True
+        )
+    )
+    assert owner._external_roles(None) == [new_role]
+    assert _active_external_previews(owner.workers.workers, settings) == (new_role,)
 
 
 async def test_unwired_eye_preview_rejects_before_worker_or_serial_access():

@@ -1,0 +1,4 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: review capture slots exceed the recording byte budget
+InterruptSession db02b8ea-da70-4188-81b6-f9c6cb176faf failed: SESSION_IDENTITY: no exact live session
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

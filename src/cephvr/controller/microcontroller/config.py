@@ -11,7 +11,7 @@ from cephvr.shared.config import (
     policy_digest,
 )
 
-_POLICY_SHA256 = "fb451678424002dfd35eaab0804afac0902ea6ad88c9c09a842815741febc750"
+_POLICY_SHA256 = "af10cdeb2e6f2134e74676b8c4c370af6e923a8bf3e5508b7cc36a5875fbeee0"
 
 _CONFIG_KEYS = frozenset(
     [
@@ -86,7 +86,7 @@ _EXPECTED: dict[str, object] = {
     "microcontroller.keepalive_reply": "compact_status",
     "microcontroller.status_reply": "state_and_applied_configuration",
     "microcontroller.pulse_counters": False,
-    "microcontroller.diagnostic_edge_counts": "input_observed_output_generated",
+    "microcontroller.diagnostic_edge_counts": "output_generated",
     "microcontroller.watchdog_status_clear": "successful_configuration",
     "microcontroller.command_timeout_action": "report_without_retry",
     "microcontroller.pulse_generation": "microcontroller",
@@ -106,11 +106,15 @@ def load_microcontroller_pair(root: Path) -> LoadedPair:
         allowed_policy_keys=frozenset(_EXPECTED),
         expected_policy=_EXPECTED,
     )
-    if pair.policy_version != 2:
-        raise ConfigurationError("Microcontroller policy_version must be 2")
+    if pair.policy_version != 3:
+        raise ConfigurationError("Microcontroller policy_version must be 3")
     if policy_digest(pair.policy) != _POLICY_SHA256:
         raise ConfigurationError(
-            "Microcontroller fixed-policy declarations differ from version 2"
+            "Microcontroller fixed-policy declarations differ from version 3"
+        )
+    if pair.config["microcontroller"].get("projector_flip_enabled", False):
+        raise ConfigurationError(
+            "Projector flip input is deferred and cannot be enabled"
         )
     return pair
 

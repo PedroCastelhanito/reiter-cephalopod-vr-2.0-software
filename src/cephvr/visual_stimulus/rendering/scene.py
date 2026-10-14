@@ -436,6 +436,16 @@ class ModernGLSceneRenderer:
     def _bind_warp_profile(
         self, frame: _OutputScene, profile: GeometricProfile
     ) -> None:
+        frame.warp_program["valid_area"].value = profile.valid_area or (
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+        )
+        frame.warp_program["output_size"].value = (
+            profile.output_width,
+            profile.output_height,
+        )
         frame.warp_program["has_mask"].value = int(profile.mask is not None)
         frame.warp_program["has_weight"].value = int(profile.weight is not None)
         frame.warp_program["scene_tex"].value = 0

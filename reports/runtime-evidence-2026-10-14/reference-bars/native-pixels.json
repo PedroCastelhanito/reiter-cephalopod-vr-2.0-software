@@ -1,0 +1,38 @@
+{
+  "after-calibration_bottom": {
+    "size": [
+      720,
+      1280
+    ],
+    "capture": "lossy JPEG; bounds are observational, not exact framebuffer readback",
+    "orange_span": 176,
+    "green_span": 320
+  },
+  "after-calibration_front": {
+    "size": [
+      1280,
+      720
+    ],
+    "capture": "lossy JPEG; bounds are observational, not exact framebuffer readback",
+    "orange_span": 320,
+    "green_span": 176
+  },
+  "after-calibration_left": {
+    "size": [
+      1280,
+      720
+    ],
+    "capture": "lossy JPEG; bounds are observational, not exact framebuffer readback",
+    "orange_span": 320,
+    "green_span": 176
+  },
+  "after-calibration_right": {
+    "size": [
+      1280,
+      720
+    ],
+    "capture": "lossy JPEG; bounds are observational, not exact framebuffer readback",
+    "orange_span": 320,
+    "green_span": 176
+  }
+}

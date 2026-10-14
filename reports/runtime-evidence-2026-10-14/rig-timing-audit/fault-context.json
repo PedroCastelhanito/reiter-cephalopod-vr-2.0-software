@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-14",
+  "method": "tuned run completed; first Eye manual preview request after restored Configuration; retained launcher stderr/emergency/exitreceipt",
+  "observed_failure": "SUPERVISOR_HEARTBEAT_FAILED / INVALID_CATALOGUE: resource owner/key unregistered or repeated",
+  "preview_failure": "backend transport no longer accepts new commands; admitted command cancellation and bounded shutdown timeout retained",
+  "source_assessment": "Completed-session worker retirement likely invalidates owner ancestry while acquisition continues publishing retained session catalogue. Exact rejected resource UUID/worker generation not persisted. Source cause pending focused regression and fix.",
+  "owned_absence": "tuned/exit-receipt.json confirms exact all-owned absent",
+  "eye_wiring": "user confirms ready; no native Eye preview/capture pass yet",
+  "photodiode": "user explicitly deferred; unset mapping/measurement",
+  "paired": "user authorizes disposable run checks; required physicalcamera pulseinventory empty and pending owner mapping",
+  "computer_use": "app approval timedout; no native visualinspection claimed",
+  "timeouts": "unchanged; donotadjusthealthbudgetfromunexplainedfailure",
+  "provisional12_4": "rejected as sufficient; restoredbothoperatorfiles to beforebytes"
+}

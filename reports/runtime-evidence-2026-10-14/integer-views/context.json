@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "dirty working tree; user/concurrent changes preserved",
+  "task": "projection-integer-physical-views",
+  "checks": {
+    "gui": "48 passed, 445 deselected; offscreen pytest tests/gui/test_dashboard.py selected calibration/preview/migration checks; gui-final.xml",
+    "renderer": "82 passed; pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_display_calibration_rendering.py tests/visual_stimulus/test_configuration.py -q -m not-windows/not-rig; rendering.xml",
+    "static": "Ruff pass; format160 pass; Win32 mypy158 pass; boundaries690 zero violations with existing size advisories; git diff --check pass"
+  },
+  "limits": [
+    "offscreen GUI/fake GL local evidence",
+    "no native restart/hardware/optical/full-workload acceptance",
+    "broad restricted integration selection stalled and interrupted; no assertions weakened"
+  ],
+  "behavior": [
+    "centered integer valid region; obsolete Offset discarded",
+    "usable physical dimensions = valid pixels * independent measured axis mm/pixel",
+    "prepared GUI affine raster = valid pixels",
+    "texture physical units/shared phase preserved",
+    "live protected scene stays fixed-pitch crop until fresh preparation"
+  ]
+}

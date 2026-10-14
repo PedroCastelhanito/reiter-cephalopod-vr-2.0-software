@@ -225,6 +225,8 @@ def retained_ack_required_for(
 
 def action_label(action: str) -> str:
     """Give command keys a readable label without losing unknown action names."""
+    if action == "set_spikeglx_enabled":
+        return "SpikeGLX pairing"
     known = {
         "setup": "Setup",
         "start": "Start",

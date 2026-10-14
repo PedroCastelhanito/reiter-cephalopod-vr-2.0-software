@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import QCheckBox, QLineEdit
 from cephvr.gui.calibration_files import CalibrationFiles
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.projector_profile import portable_profile
-from cephvr.gui.projector_timing import ProjectorTiming
+from cephvr.gui.projector_timing import LEGACY_MODE_LABELS, MODE_LABELS, ProjectorTiming
 
 
 class ProjectorFiles(CalibrationFiles):
@@ -38,7 +38,7 @@ class ProjectorFiles(CalibrationFiles):
     def snapshot(self) -> dict[str, object]:
         result = self.calibration_snapshot()
         result.update(
-            version=7,
+            version=11,
             settings={
                 "enabled_screens": self.read_participation(),
                 "photodiode_enabled": self.timing.pulse.isChecked(),
@@ -64,7 +64,7 @@ class ProjectorFiles(CalibrationFiles):
         settings: dict[str, Any], version: int
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Migrate legacy standalone rectangles and version-6 square drafts."""
-        if version == 7:
+        if version >= 7:
             return settings["frame_rect"], settings["pulse_rect"]
         square = settings.get("pulse_square", dict(X=None, Y=None, Size=None))
         if not isinstance(square, dict) or set(square) != {"X", "Y", "Size"}:
@@ -76,7 +76,7 @@ class ProjectorFiles(CalibrationFiles):
     def validate(self, payload: object) -> dict[str, object]:
         if (
             isinstance(payload, dict)
-            and payload.get("version") in (3, 4, 5, 6, 7)
+            and payload.get("version") in (3, 4, 5, 6, 7, 8, 9, 10, 11)
             and "settings" in payload
         ):
             if type(payload["version"]) is not int or set(payload) != {
@@ -90,7 +90,15 @@ class ProjectorFiles(CalibrationFiles):
             values = super().validate(
                 {
                     "format": payload["format"],
-                    "version": min(payload["version"] - 1, 4),
+                    "version": 8
+                    if payload["version"] == 11
+                    else 7
+                    if payload["version"] == 10
+                    else 6
+                    if payload["version"] == 9
+                    else 5
+                    if payload["version"] == 8
+                    else min(payload["version"] - 1, 4),
                     "values": payload["values"],
                 }
             )
@@ -104,7 +112,7 @@ class ProjectorFiles(CalibrationFiles):
             }
             if payload["version"] == 6:
                 setting_keys.update(("pulse_square", "blackout_zones"))
-            elif payload["version"] == 7:
+            elif payload["version"] >= 7:
                 setting_keys.update(("frame_rect", "blackout_zones"))
             if not isinstance(settings, dict) or set(settings) != setting_keys:
                 raise ValueError("Expected all projector synchronization settings")
@@ -121,8 +129,8 @@ class ProjectorFiles(CalibrationFiles):
             if settings["pulse_screen"] not in (*FACES, None):
                 raise ValueError("Pulse screen must be a rig face or null")
             if settings["vsync_mode"] not in (
-                "Selected display VSync",
-                "All displays VSync",
+                *MODE_LABELS.values(),
+                *LEGACY_MODE_LABELS,
             ):
                 raise ValueError("Unsupported VSync mode")
             frame, pulse = self._placement(settings, payload["version"])
@@ -165,7 +173,7 @@ class ProjectorFiles(CalibrationFiles):
         if isinstance(payload, dict) and "outputs" in payload and "mappings" in payload:
             profile = portable_profile(payload)
             converted = super().snapshot()
-            converted.update(version=7, screen_profile=profile)
+            converted.update(version=11, screen_profile=profile)
             outputs = payload["outputs"]
             if not isinstance(outputs, list) or any(
                 not isinstance(o, dict) for o in outputs
@@ -207,9 +215,9 @@ class ProjectorFiles(CalibrationFiles):
                 "pulse_screen": next(
                     (f for f, oid in face_outputs.items() if oid == target), None
                 ),
-                "vsync_mode": "All displays VSync"
-                if payload.get("presentation_mode") == "all_outputs_vsync"
-                else "Selected display VSync",
+                "vsync_mode": MODE_LABELS[
+                    payload.get("presentation_mode", "photodiode_only_vsync")
+                ],
                 "frame_rect": {
                     key: patch.get(key.lower()) for key in self.timing.fields
                 },
@@ -240,7 +248,17 @@ class ProjectorFiles(CalibrationFiles):
         assert isinstance(payload, dict)
         numeric = {key: payload[key] for key in ("format", "version", "values")}
         numeric["version"] = (
-            min(payload["version"] - 1, 4)
+            payload["version"]
+            if "settings" not in payload
+            else 8
+            if payload["version"] == 11
+            else 7
+            if payload["version"] == 10
+            else 6
+            if payload["version"] == 9
+            else 5
+            if payload["version"] == 8
+            else min(payload["version"] - 1, 4)
             if "settings" in payload
             else payload["version"]
         )
@@ -250,7 +268,7 @@ class ProjectorFiles(CalibrationFiles):
             self.profile = copy.deepcopy(payload["screen_profile"])
             self.apply_participation(settings["enabled_screens"])
             self.timing.pulse.setChecked(settings["photodiode_enabled"])
-            self.timing.mode.setCurrentText(settings["vsync_mode"])
+            self.timing.restore_mode_label(settings["vsync_mode"])
             frame, pulse = self._placement(settings, payload["version"])
             for values, fields in (
                 (frame, self.timing.fields),

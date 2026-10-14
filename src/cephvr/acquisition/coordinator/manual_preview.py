@@ -33,6 +33,7 @@ from cephvr.acquisition.coordinator.manual_pulse_observation import (
     retain_applied_pulse_state,
     retain_observation,
 )
+from cephvr.acquisition.coordinator.manual_pulses import _active_external_previews
 from cephvr.acquisition.coordinator.manual_session_access import (
     manual_configuration_available,
     retire_completed_manual_session,
@@ -575,26 +576,13 @@ class ManualPreview:
             )
 
     def _external_roles(self, adding_role: int | None) -> list[int]:
-        roles: set[int] = set()
-        for role, setting in (
-            (camera.CAMERA_ROLE_BEHAVIORAL, self.configuration.settings.behavioral),
-            (camera.CAMERA_ROLE_TRACKING, self.configuration.settings.tracking),
-        ):
-            worker = self.workers.workers.get(role)
-            is_starting = role == adding_role
-            if (
-                (
-                    is_starting
-                    or worker is not None
-                    and worker.preview is not None
-                    and worker.preview.started
-                )
-                and setting.HasField("device")
-                and setting.device.HasField("frame_timing")
-                and setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
-            ):
-                roles.add(role)
-        return sorted(roles)
+        return list(
+            _active_external_previews(
+                self.workers.workers,
+                self.configuration.settings,
+                adding_role=adding_role,
+            )
+        )
 
     def _valid(self, request: wire.AcquisitionCameraCommand, deadline_ns: int) -> bool:
         command = request.command

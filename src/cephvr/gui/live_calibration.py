@@ -1,4 +1,4 @@
-"""Coalesce live scale/offset edits until exact presentation evidence arrives."""
+"""Coalesce live valid-area edits until exact presentation evidence arrives."""
 
 from collections.abc import Callable
 
@@ -6,7 +6,7 @@ from PyQt6.QtCore import QObject, QTimer
 from PyQt6.QtWidgets import QLineEdit
 
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+from cephvr.gui.calibration_profile import MonitorBinding, face_valid_area
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.projectors import ProjectorsPanel
 from cephvr.visual_stimulus.config.calibration_adjustments import validated_adjustments
@@ -107,7 +107,10 @@ class LiveCalibration(QObject):
                     0,
                     8,
                 )
-                vertices, _ = face_mapping(calibration, face, monitor)
+                x0, y0, x1, y1 = face_valid_area(calibration, face, monitor)
+                vertices = tuple(
+                    dict(xy=p) for p in ((x0, y0), (x1, y0), (x0, y1), (x1, y1))
+                )
                 adjustments.append(
                     messages.DisplayCalibrationAdjustment(
                         mapping_id=f"diagnostic_{face.lower()}",

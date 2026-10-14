@@ -150,16 +150,9 @@ class NativePreparation:
 
         return register
 
-    def _begin_resource_scope(self) -> None:
-        # Idempotent cleanup receipts belong to the retired preparation. Never
-        # discard them while a source/consumer still needs cleanup retries.
-        if (
-            not self._resource_keys
-            and not self._protected_sources
-            and self.video_playback is None
-            and self.image_residency is None
-        ):
-            self._released_resource_keys.clear()
+    def retire_released_resources(self) -> None:
+        """Forget release proofs only after the worker catalogue retires them."""
+        self._released_resource_keys.clear()
 
     def prepare_display(
         self,
@@ -169,7 +162,6 @@ class NativePreparation:
     ) -> tuple[DisplayProfile, PreparedCalibration]:
         """Protect and validate display correction files without touching GL."""
         self._check(deadline_ns)
-        self._begin_resource_scope()
         if not request.asset_root:
             raise ValueError("display calibration requires the adopted asset_root")
         display = parse_display_json(
@@ -307,7 +299,6 @@ class NativePreparation:
             )
         self._check(deadline_ns)
         self._deadline_ns = deadline_ns
-        self._begin_resource_scope()
         if not request.HasField("session") or not request.session.HasField(
             "configuration"
         ):

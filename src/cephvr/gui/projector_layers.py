@@ -1,7 +1,6 @@
 """Projector/layer selection and canonical isolation of projector-local edits."""
 
 from copy import deepcopy
-from dataclasses import dataclass
 from pathlib import PurePosixPath
 
 from cephvr.gui.program_editing import (
@@ -86,27 +85,6 @@ def projector_edit(
     data["assets"].extend(a for a in candidate["assets"] if a["asset_id"] not in known)
     data["input_channels"] = candidate["input_channels"]
     return validate(data), selected
-
-
-@dataclass
-class ProjectorLayers:
-    """Current canonical selection, independent of any selection widget."""
-
-    face: str = ""
-    layer: int = -1
-
-    def bind(
-        self,
-        program: Program,
-        path: NodePath,
-        screens: tuple[str, ...],
-        preferred: int | None,
-    ) -> None:
-        node = node_at(program, path)
-        available = (
-            layers_for(program, node, self.face) if isinstance(node, Epoch) else []
-        )
-        self.layer = preferred if preferred in available else next(iter(available), -1)
 
 
 def reorder_projector_layer(

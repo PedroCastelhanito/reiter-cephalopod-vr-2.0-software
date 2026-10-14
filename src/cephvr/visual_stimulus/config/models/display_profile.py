@@ -196,9 +196,9 @@ class DisplayProfile(Model):
     outputs: Annotated[tuple[Output, ...], Field(min_length=1)]
     mappings: Annotated[tuple[Mapping, ...], Field(min_length=4)]
     # V20: new profiles default to mixed pacing; saved explicit selections are preserved.
-    presentation_mode: Literal["all_outputs_vsync", "photodiode_only_vsync"] = (
-        "photodiode_only_vsync"
-    )
+    presentation_mode: Literal[
+        "free_run", "all_outputs_vsync", "photodiode_only_vsync"
+    ] = "photodiode_only_vsync"
     photometric_mode: Literal["calibrated", "uncalibrated"]
     idle_linear_rgb: Vec3
     photodiode_enabled: bool = True
@@ -211,6 +211,16 @@ class DisplayProfile(Model):
         # Legacy profiles coupled timing and marker placement; explicit pacing wins.
         return self.pacing_output_id or (
             self.photodiode_output_id if self.photodiode_enabled else None
+        )
+
+    def requested_swap_interval(self, output_id: str) -> int:
+        """V20 presentation requests never depend on MCU inputs."""
+        return int(
+            self.presentation_mode == "all_outputs_vsync"
+            or (
+                self.presentation_mode == "photodiode_only_vsync"
+                and output_id == self.selected_pacing_output_id
+            )
         )
 
     @property
@@ -237,10 +247,10 @@ class DisplayProfile(Model):
             if selected is None or output.output_id == selected
         )
         if not outputs or (
-            selected is None and self.presentation_mode != "all_outputs_vsync"
+            selected is None and self.presentation_mode == "photodiode_only_vsync"
         ):
             raise ValueError(
-                "review recording requires a pacing output or all-output VSync"
+                "review recording requires a pacing output or a common nominal output refresh"
             )
         rates = {
             Fraction(output.refresh_numerator, output.refresh_denominator)
@@ -328,7 +338,7 @@ class DisplayProfile(Model):
     def require_trial_marker(self) -> None:
         """Setup-only requirement; startup Idle never needs a flashing patch."""
         if (
-            self.presentation_mode != "all_outputs_vsync"
+            self.presentation_mode == "photodiode_only_vsync"
             and self.selected_pacing_output_id is None
         ):
             raise ValueError("trial Setup requires an explicit pacing output")

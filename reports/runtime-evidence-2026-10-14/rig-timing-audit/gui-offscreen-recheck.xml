@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="11" skipped="0" tests="494" time="175.219" timestamp="2026-10-14T12:15:52.491683+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor0-area0-1.0-expected0]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor1-area1-1.0-expected1]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor2-area2-1.0-expected2]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor3-area3-1.0-expected3]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor4-area4-1.0-expected4]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor5-area5-2.0-expected5]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_square_preview_placement_fits_small_work_area" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_offline_frontend_cannot_request_commands" time="0.341" /><testcase classname="tests.gui.test_dashboard" name="test_protocol_config_round_trip_retains_complete_schedule" time="0.403" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_config_load_is_local_and_collects_for_normal_submission" time="0.352" /><testcase classname="tests.gui.test_dashboard" name="test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity" time="0.390" /><testcase classname="tests.gui.test_dashboard" name="test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory" time="0.443" /><testcase classname="tests.gui.test_dashboard" name="test_tab_config_buttons_roundtrip_into_fresh_gui[protocol]" time="0.826" /><testcase classname="tests.gui.test_dashboard" name="test_tab_config_buttons_roundtrip_into_fresh_gui[cameras]" time="0.826" /><testcase classname="tests.gui.test_dashboard" name="test_tab_config_buttons_roundtrip_into_fresh_gui[microcontroller]" time="0.785" /><testcase classname="tests.gui.test_dashboard" name="test_tab_config_buttons_roundtrip_into_fresh_gui[projectors]" time="0.827" /><testcase classname="tests.gui.test_dashboard" name="test_tab_config_buttons_roundtrip_into_fresh_gui[spikeglx]" time="0.834" /><testcase classname="tests.gui.test_dashboard" name="test_tab_config_buttons_roundtrip_into_fresh_gui[tracking]" time="0.802" /><testcase classname="tests.gui.test_dashboard" name="test_tab_config_buttons_roundtrip_into_fresh_gui[gui]" time="0.820" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_config_round_trip_restores_all_sections_without_commands" time="0.434" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_full_gui_config_changes_no_section[experiment]" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_full_gui_config_changes_no_section[protocol]" time="0.388" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_full_gui_config_changes_no_section[microcontroller]" time="0.390" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_full_gui_config_changes_no_section[projectors]" time="0.394" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_full_gui_config_changes_no_section[spikeglx]" time="0.379" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_full_gui_config_changes_no_section[tracking]" time="0.426" /><testcase classname="tests.gui.test_dashboard" name="test_gui_snapshot_rejects_invalid_json_before_editing[{&quot;format&quot;: &quot;a&quot;, &quot;format&quot;: &quot;b&quot;}]" time="0.378" /><testcase classname="tests.gui.test_dashboard" name="test_gui_snapshot_rejects_invalid_json_before_editing[{&quot;n&quot;: NaN}]" time="0.393" /><testcase classname="tests.gui.test_dashboard" name="test_gui_snapshot_rejects_invalid_json_before_editing[[1,2]]" time="0.403" /><testcase classname="tests.gui.test_dashboard" name="test_gui_snapshot_rejects_invalid_json_before_editing[{&quot;invalid&quot;:]" time="0.393" /><testcase classname="tests.gui.test_dashboard" name="test_snapshot_limits_and_failed_save_preserve_existing_file" time="0.390" /><testcase classname="tests.gui.test_dashboard" name="test_native_file_picker_immediate_cancel_and_parent_cleanup[False-False]" time="0.229" /><testcase classname="tests.gui.test_dashboard" name="test_native_file_picker_immediate_cancel_and_parent_cleanup[False-True]" time="0.235" /><testcase classname="tests.gui.test_dashboard" name="test_native_file_picker_immediate_cancel_and_parent_cleanup[True-False]" time="1.367" /><testcase classname="tests.gui.test_dashboard" name="test_native_file_picker_immediate_cancel_and_parent_cleanup[True-True]" time="0.849" /><testcase classname="tests.gui.test_dashboard" name="test_started_config_chooser_closes_on_authority_loss[False]" time="0.086" /><testcase classname="tests.gui.test_dashboard" name="test_started_config_chooser_closes_on_authority_loss[True]" time="0.082" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-protocol]" time="0.386" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-tracking]" time="0.389" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-cameras]" time="0.389" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-microcontroller]" time="0.395" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-spikeglx]" time="0.398" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-gui]" time="0.402" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-protocol]" time="0.397" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-tracking]" time="0.392" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-cameras]" time="0.392" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-microcontroller]" time="0.415" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-spikeglx]" time="0.390" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-gui]" time="0.408" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling" time="0.441" /><testcase classname="tests.gui.test_dashboard" name="test_loaded_camera_presets_cannot_claim_sdk_import_provenance" time="0.376" /><testcase classname="tests.gui.test_dashboard" name="test_loaded_camera_timing_keeps_only_applicable_activation[Internal clock]" time="0.448" /><testcase classname="tests.gui.test_dashboard" name="test_loaded_camera_timing_keeps_only_applicable_activation[External controller]" time="0.385" /><testcase classname="tests.gui.test_dashboard" name="test_camera_settings_timing_keeps_only_applicable_activation[Internal clock]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_camera_settings_timing_keeps_only_applicable_activation[External controller]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic" time="0.453" /><testcase classname="tests.gui.test_dashboard" name="test_camera_save_validation_error_routes_to_other_camera_row" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit" time="0.395" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[camera]" time="0.377" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[camera_pending]" time="0.365" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[mcu]" time="0.361" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[tracking]" time="0.374" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[projector]" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_managed_subject_metadata_preserves_absence_and_numeric_zero" time="0.333" /><testcase classname="tests.gui.test_dashboard" name="test_managed_subject_metadata_preserves_unknown_sex_value" time="0.335" /><testcase classname="tests.gui.test_dashboard" name="test_managed_runtime_editors_are_enabled_without_review_samples" time="0.330"><failure message="assert not True&#10; +  where True = &lt;built-in method isEnabled of QCheckBox object at 0x00000279FF00A680&gt;()&#10; +    where &lt;built-in method isEnabled of QCheckBox object at 0x00000279FF00A680&gt; = &lt;PyQt6.QtWidgets.QCheckBox object at 0x00000279FF00A680&gt;.isEnabled&#10; +      where &lt;PyQt6.QtWidgets.QCheckBox object at 0x00000279FF00A680&gt; = &lt;cephvr.gui.spikeglx.SpikeGLXPanel object at 0x00000279FCF665F0&gt;.pairing&#10; +        where &lt;cephvr.gui.spikeglx.SpikeGLXPanel object at 0x00000279FCF665F0&gt; = &lt;cephvr.gui.devices.DevicesPage object at 0x00000279FCE94430&gt;.spikeglx&#10; +          where &lt;cephvr.gui.devices.DevicesPage object at 0x00000279FCE94430&gt; = &lt;cephvr.gui.managed_window.ManagedDashboardWindow object at 0x000002799067FD90&gt;.devices">app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000279FCA3FEB0&gt;
+
+    def test_managed_runtime_editors_are_enabled_without_review_samples(
+        app: QApplication,
+    ) -&gt; None:
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+    
+        managed = ManagedDashboardWindow(sample=False)
+        view = DashboardView(
+            phase=Phase.CONFIGURATION,
+            connected=True,
+            has_control=True,
+            configuration_wired=True,
+        )
+        assert view.can_edit
+        managed.apply_view(view)
+        assert managed.protocol.can_edit
+        assert managed.protocol.editor.isEnabled()
+        assert managed.recordings.velocities.isEnabled()
+        assert managed.tracking.can_edit
+        assert managed.tracking.pipeline.isEnabled()
+        assert managed.protocol.assets.folders["root"].isEnabled()
+        assert managed.devices.projectors.can_review
+        assert managed.devices.projectors.calibration.isEnabled()
+        assert managed.devices.spikeglx.can_review
+&gt;       assert not managed.devices.spikeglx.pairing.isEnabled()
+E       assert not True
+E        +  where True = &lt;built-in method isEnabled of QCheckBox object at 0x00000279FF00A680&gt;()
+E        +    where &lt;built-in method isEnabled of QCheckBox object at 0x00000279FF00A680&gt; = &lt;PyQt6.QtWidgets.QCheckBox object at 0x00000279FF00A680&gt;.isEnabled
+E        +      where &lt;PyQt6.QtWidgets.QCheckBox object at 0x00000279FF00A680&gt; = &lt;cephvr.gui.spikeglx.SpikeGLXPanel object at 0x00000279FCF665F0&gt;.pairing
+E        +        where &lt;cephvr.gui.spikeglx.SpikeGLXPanel object at 0x00000279FCF665F0&gt; = &lt;cephvr.gui.devices.DevicesPage object at 0x00000279FCE94430&gt;.spikeglx
+E        +          where &lt;cephvr.gui.devices.DevicesPage object at 0x00000279FCE94430&gt; = &lt;cephvr.gui.managed_window.ManagedDashboardWindow object at 0x000002799067FD90&gt;.devices
+
+tests\gui\test_dashboard.py:1105: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_dashboard_control_status_matches_connection_and_authority" time="0.348" /><testcase classname="tests.gui.test_dashboard" name="test_shared_theme_styles_menu_bar_and_menu_states" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking" time="0.385" /><testcase classname="tests.gui.test_dashboard" name="test_managed_status_uses_readiness_and_output_closure_evidence" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_retained_summary_keeps_incidents_ahead_of_completed_operation_history" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_auto_retained_review_filters_only_exact_routine_warnings" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_auto_retained_review_operation_and_recovery_truth_table" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_retained_ack_guard_reassesses_fresh_snapshot_but_preserves_same_identity" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_manual_history_review_opens_without_ack_guard" time="0.011" /><testcase classname="tests.gui.test_dashboard" name="test_mandatory_review_can_be_reopened_after_same_identity_history_empties" time="0.005" /><testcase classname="tests.gui.test_dashboard" name="test_managed_prompt_window_is_single_and_responds_with_displayed_snapshot" time="0.003" /><testcase classname="tests.gui.test_dashboard" name="test_prompt_completion_preserves_current_lease_authority" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_managed_retained_summary_uses_one_acknowledgement_window" time="0.005" /><testcase classname="tests.gui.test_dashboard" name="test_old_retained_dialog_cannot_acknowledge_a_new_connection" time="0.005" /><testcase classname="tests.gui.test_dashboard" name="test_closing_retained_review_does_not_acknowledge" time="0.003" /><testcase classname="tests.gui.test_dashboard" name="test_long_retained_review_scrolls_without_hiding_actions" time="0.021" /><testcase classname="tests.gui.test_dashboard" name="test_retained_summary_keeps_ids_in_details_and_all_actionable_operations_visible" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_prompt_completion_wait_failure_retains_admitted_id_as_unconfirmed" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_spikeglx_connection_emits_read_only_intent[False]" time="0.006" /><testcase classname="tests.gui.test_dashboard" name="test_managed_spikeglx_connection_emits_read_only_intent[True]" time="0.006" /><testcase classname="tests.gui.test_dashboard" name="test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits" time="0.022" /><testcase classname="tests.gui.test_dashboard" name="test_preview_window_waits_for_backend_completion[True]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_preview_window_waits_for_backend_completion[False]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_controls_emit_intent_without_changing_local_device_state" time="0.014" /><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_icons_local_edits_and_command_gates" time="0.439" /><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_reflows_without_horizontal_clipping[720]" time="0.375"><failure message="assert 19 == 0&#10; +  where 19 = &lt;built-in method maximum of QScrollBar object at 0x0000027992C0B370&gt;()&#10; +    where &lt;built-in method maximum of QScrollBar object at 0x0000027992C0B370&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x0000027992C0B370&gt;.maximum&#10; +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x0000027992C0B370&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279FCF18670&gt;()&#10; +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279FCF18670&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x00000279FCF18670&gt;.horizontalScrollBar">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000027990637910&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000279FCA3FEB0&gt;, width = 720
+
+    @pytest.mark.parametrize("width", [720, 1175])
+    def test_devices_draft_reflows_without_horizontal_clipping(
+        window: DashboardWindow, app: QApplication, width: int
+    ) -&gt; None:
+        window.resize(width, 883)
+        window.page_buttons[2].click()
+        for index in range(4):
+            window.devices.tabs.setCurrentIndex(index)
+            app.processEvents()
+            scroll = window.devices.panels[index].scrollers[0]
+&gt;           assert scroll.horizontalScrollBar().maximum() == 0
+E           assert 19 == 0
+E            +  where 19 = &lt;built-in method maximum of QScrollBar object at 0x0000027992C0B370&gt;()
+E            +    where &lt;built-in method maximum of QScrollBar object at 0x0000027992C0B370&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x0000027992C0B370&gt;.maximum
+E            +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x0000027992C0B370&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279FCF18670&gt;()
+E            +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279FCF18670&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x00000279FCF18670&gt;.horizontalScrollBar
+
+tests\gui\test_dashboard.py:2201: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_reflows_without_horizontal_clipping[1175]" time="0.394"><failure message="assert 56 == 0&#10; +  where 56 = &lt;built-in method maximum of QScrollBar object at 0x00000279FCF18430&gt;()&#10; +    where &lt;built-in method maximum of QScrollBar object at 0x00000279FCF18430&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279FCF18430&gt;.maximum&#10; +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279FCF18430&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279FCF544C0&gt;()&#10; +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279FCF544C0&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x00000279FCF544C0&gt;.horizontalScrollBar">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000027992C0B2E0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000279FCA3FEB0&gt;, width = 1175
+
+    @pytest.mark.parametrize("width", [720, 1175])
+    def test_devices_draft_reflows_without_horizontal_clipping(
+        window: DashboardWindow, app: QApplication, width: int
+    ) -&gt; None:
+        window.resize(width, 883)
+        window.page_buttons[2].click()
+        for index in range(4):
+            window.devices.tabs.setCurrentIndex(index)
+            app.processEvents()
+            scroll = window.devices.panels[index].scrollers[0]
+&gt;           assert scroll.horizontalScrollBar().maximum() == 0
+E           assert 56 == 0
+E            +  where 56 = &lt;built-in method maximum of QScrollBar object at 0x00000279FCF18430&gt;()
+E            +    where &lt;built-in method maximum of QScrollBar object at 0x00000279FCF18430&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279FCF18430&gt;.maximum
+E            +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279FCF18430&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279FCF544C0&gt;()
+E            +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279FCF544C0&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x00000279FCF544C0&gt;.horizontalScrollBar
+
+tests\gui\test_dashboard.py:2201: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_folder_picker_selection_cancellation_and_phase_lock" time="0.477" /><testcase classname="tests.gui.test_dashboard" name="test_compact_path_keeps_full_text_tooltip_and_editing" time="0.408" /><testcase classname="tests.gui.test_dashboard" name="test_log_keeps_reading_position_during_append_and_retention" time="0.368" /><testcase classname="tests.gui.test_dashboard" name="test_log_entry_details_follow_their_own_bounded_document_block" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_operation_log_distinguishes_admission_completion_and_failure" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_successful_tracking_frame_poll_does_not_add_routine_log_row" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_preview_geometry_survives_recreation" time="0.749" /><testcase classname="tests.gui.test_dashboard" name="test_review_intent_does_not_advance_session" time="0.371" /><testcase classname="tests.gui.test_dashboard" name="test_preview_selector_reuses_modeless_window_and_keeps_visibility" time="0.382" /><testcase classname="tests.gui.test_dashboard" name="test_preview_snap_gap_and_available_screen_bounds[anchor0-area0-expected0]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_preview_snap_gap_and_available_screen_bounds[anchor1-area1-expected1]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_preview_snap_gap_and_available_screen_bounds[anchor2-area2-expected2]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_preview_waits_for_report_and_handles_failure_closure_and_control_loss" time="0.346" /><testcase classname="tests.gui.test_dashboard" name="test_unavailable_preview_retains_reported_state_without_commands" time="0.385" /><testcase classname="tests.gui.test_dashboard" name="test_review_phase_locks_and_actions[Configuration-actions0-True]" time="0.406" /><testcase classname="tests.gui.test_dashboard" name="test_review_phase_locks_and_actions[Setting up-actions1-False]" time="0.371" /><testcase classname="tests.gui.test_dashboard" name="test_review_phase_locks_and_actions[Ready-actions2-True]" time="0.404" /><testcase classname="tests.gui.test_dashboard" name="test_review_phase_locks_and_actions[Starting-actions3-False]" time="0.443" /><testcase classname="tests.gui.test_dashboard" name="test_review_phase_locks_and_actions[Running-actions4-False]" time="0.373" /><testcase classname="tests.gui.test_dashboard" name="test_review_phase_locks_and_actions[Stopping-actions5-False]" time="0.383" /><testcase classname="tests.gui.test_dashboard" name="test_review_phase_locks_and_actions[Finalizing-actions6-False]" time="0.379" /><testcase classname="tests.gui.test_dashboard" name="test_review_phase_locks_and_actions[Ended-actions7-False]" time="0.375" /><testcase classname="tests.gui.test_dashboard" name="test_observer_locks_preserve_local_draft" time="0.377" /><testcase classname="tests.gui.test_dashboard" name="test_responsive_navigation_preserves_widget_identity" time="0.488" /><testcase classname="tests.gui.test_dashboard" name="test_review_selector_renders_completion_and_observer_lock" time="0.382" /><testcase classname="tests.gui.test_dashboard" name="test_wide_layout_keeps_status_and_logs_visible[dimensions0]" time="0.425" /><testcase classname="tests.gui.test_dashboard" name="test_wide_layout_keeps_status_and_logs_visible[dimensions1]" time="0.410" /><testcase classname="tests.gui.test_dashboard" name="test_dashboard_has_only_requested_cards" time="0.419" /><testcase classname="tests.gui.test_dashboard" name="test_hud_fits_content_and_log_fills_available_height" time="0.444" /><testcase classname="tests.gui.test_dashboard" name="test_setup_serves_as_new_session_after_completion" time="0.407" /><testcase classname="tests.gui.test_dashboard" name="test_stop_cancels_setup_without_a_dialog[Setting up]" time="0.373" /><testcase classname="tests.gui.test_dashboard" name="test_stop_cancels_setup_without_a_dialog[Ready]" time="0.381" /><testcase classname="tests.gui.test_dashboard" name="test_stop_requires_a_choice_during_session[Abort now-expected0]" time="0.435" /><testcase classname="tests.gui.test_dashboard" name="test_stop_requires_a_choice_during_session[Stop after trial-expected1]" time="0.395" /><testcase classname="tests.gui.test_dashboard" name="test_stop_requires_a_choice_during_session[Cancel-expected2]" time="0.395" /><testcase classname="tests.gui.test_dashboard" name="test_stop_requires_a_choice_during_session[Escape-expected3]" time="0.404" /><testcase classname="tests.gui.test_dashboard" name="test_stop_requires_a_choice_during_session[Close-expected4]" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_stop_dialog_updates_choices_and_closes_on_control_loss" time="0.388" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_indicators_are_independent_and_read_only" time="0.406" /><testcase classname="tests.gui.test_dashboard" name="test_preview_participation_gates_and_camera_draft_selection" time="0.575" /><testcase classname="tests.gui.test_dashboard" name="test_camera_role_uniqueness_and_extra_preview_rows" time="0.619" /><testcase classname="tests.gui.test_dashboard" name="test_camera_pfs_picker_preserves_camera_identity_and_editing_gate" time="0.507" /><testcase classname="tests.gui.test_dashboard" name="test_all_pages_share_fitted_hud_and_expanding_log" time="0.428" /><testcase classname="tests.gui.test_dashboard" name="test_device_tabs_sit_above_controls_without_moving_hud" time="0.412"><failure message="assert 15 == 0&#10; +  where 15 = &lt;built-in method maximum of QScrollBar object at 0x00000279B4A7E050&gt;()&#10; +    where &lt;built-in method maximum of QScrollBar object at 0x00000279B4A7E050&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279B4A7E050&gt;.maximum&#10; +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279B4A7E050&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279B498FE20&gt;()&#10; +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279B498FE20&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x00000279B498FE20&gt;.horizontalScrollBar">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000279B4A7D510&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000279FCA3FEB0&gt;
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -&gt; None:
+        assert window.tracking.load_button.text() == "Load…"
+        assert window.tracking.save_button.text() == "Save as…"
+        window.resize(1175, 940)
+        app.processEvents()
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1175, 720, 1175):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+                assert bar.tabRect(3).right() == bar.width() - 1
+                if width == 1175:
+                    hud = panel.layout_card if index == 2 else panel.columns[1].hud_card
+                    border_top = (
+                        hud.mapTo(window, QPoint()).y()
+                        + hud.caption.geometry().center().y()
+                    )
+                    assert abs(bar.mapTo(window, QPoint()).y() - border_top) &lt;= 1
+                card = left.layout().itemAt(1).widget()
+                assert card is window.devices.config_cards[index]
+                assert card.caption.text() == "Configuration file"
+                files = panel.calibration_files if index == 2 else panel.config_files
+                assert card.isAncestorOf(files.load_button)
+                assert card.isAncestorOf(files.save_button)
+                assert files.load_button.text() == "Load…"
+                assert files.save_button.text() == "Save as…"
+                assert abs(files.load_button.width() - files.save_button.width()) &lt;= 1
+                assert files.load_button.height() == files.save_button.height()
+                load_pos = files.load_button.mapTo(card, QPoint())
+                save_pos = files.save_button.mapTo(card, QPoint())
+                assert load_pos.y() == save_pos.y()
+                assert save_pos.x() - load_pos.x() - files.load_button.width() == (
+                    SIZES.field_x_gap
+                )
+                if index in (0, 2):
+                    if index == 2:
+                        measurements = panel.measurements
+                        assert measurements.caption.text() == "Pixel-to-mm calibration"
+                        widths = [measurements.table.columnWidth(i) for i in range(3)]
+                        assert max(widths) - min(widths) &lt;= 1
+                    header = panel.table.horizontalHeader()
+                    refresh = panel.refresh_button
+                    assert refresh.parentWidget() is header.viewport()
+                    assert refresh.text() == "" and not refresh.icon().isNull()
+                    assert refresh.size() == QSize(26, 26)
+                    assert refresh.iconSize() == QSize(16, 16)
+                    assert header.viewport().rect().contains(refresh.geometry())
+                    assert panel.table.horizontalHeaderItem(0).text() == "Use"
+                if index == 1:
+                    assert panel.scan_button.parentWidget() is panel.port.parentWidget()
+                    assert panel.scan_button.size() == QSize(26, 26)
+                if index == 1:
+                    assert panel.input_table.columnWidth(
+                        1
+                    ) == panel.output_table.columnWidth(1)
+                    assert set(panel.pin_editors) == {
+                        "behavioral",
+                        "tracking",
+                        "eye_tracking",
+                    }
+                    assert all(
+                        pin.parentWidget()
+                        is panel.output_table.cellWidget(panel.role_rows[key], 2)
+                        for key, pin in panel.pin_editors.items()
+                    )
+                assert card.y() &gt;= window.devices.navigation.height() + SIZES.card_gap
+&gt;               assert (
+                    window.devices.panels[index]
+                    .scrollers[0]
+                    .horizontalScrollBar()
+                    .maximum()
+                    == 0
+                )
+E               assert 15 == 0
+E                +  where 15 = &lt;built-in method maximum of QScrollBar object at 0x00000279B4A7E050&gt;()
+E                +    where &lt;built-in method maximum of QScrollBar object at 0x00000279B4A7E050&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279B4A7E050&gt;.maximum
+E                +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279B4A7E050&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279B498FE20&gt;()
+E                +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x00000279B498FE20&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x00000279B498FE20&gt;.horizontalScrollBar
+
+tests\gui\test_dashboard.py:3019: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_camera_batch_check_preserves_selection_and_connections" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_pfs_trigger_hint_and_per_camera_drafts" time="0.405" /><testcase classname="tests.gui.test_dashboard" name="test_real_camera_inventory_preserves_roles_and_tests_open_close" time="0.383" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_camera_rows_and_discovery" time="0.374"><failure message="AssertionError: assert 'duplicate' in 'Review \xb7 Behavior cam: pin 5, requested 120 Hz output test; not tested, no command sent. Use the managed runtime to test pins.'">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002798C0CFE20&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002799E1C1510&gt;
+
+    def test_microcontroller_camera_rows_and_discovery(
+        window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        from cephvr.gui import microcontroller
+    
+        class Port:
+            def __init__(self, name="COM7"):
+                self.name = name
+    
+            def portName(self):
+                return self.name
+    
+            def systemLocation(self):
+                return "COM7"
+    
+            def description(self):
+                return "Test board"
+    
+        monkeypatch.setattr(
+            microcontroller.QSerialPortInfo,
+            "availablePorts",
+            lambda: [Port(), Port("ttyUSB0"), Port("cu.Bluetooth"), Port()],
+        )
+        panel = window.devices.microcontroller
+        panel.request("Scan ports")
+        assert panel.port.count() == 1
+        assert panel.port.itemText(0) == "COM7 — Test board"
+        assert panel.port.itemData(0) == "COM7"
+        panel.can_review = False
+        panel.scan_ports()  # Managed startup inventories before control is acquired.
+        assert panel.port.itemData(0) == "COM7"
+        panel.can_review = True
+        panel.port.setCurrentIndex(0)
+        camera = window.devices.cameras
+        camera.trigger_source.setCurrentText("External controller")
+        camera.fields["trigger_frequency_hz"].setText("120")
+        panel.pin_editors["behavioral"].setText("5")
+        camera.enable_controls[1].setChecked(False)
+        assert list(panel.pin_editors) == ["behavioral", "tracking", "eye_tracking"]
+        assert not camera.enable_controls[1].isChecked()
+        assert panel.pin_editors["tracking"].isEnabled()
+        assert panel.pins["behavioral"] == "5"
+        panel.test_pin("behavioral")
+        assert (
+            "pin 5, requested 120 Hz output test; not tested" in panel.console.toPlainText()
+        )
+        panel.test_pin("behavioral")  # Stop the review before changing wiring.
+        panel.flip_pin.setText("5")
+        panel.test_pin("behavioral")
+&gt;       assert "duplicate" in panel.console.toPlainText().splitlines()[-1]
+E       AssertionError: assert 'duplicate' in 'Review \xb7 Behavior cam: pin 5, requested 120 Hz output test; not tested, no command sent. Use the managed runtime to test pins.'
+
+tests\gui\test_dashboard.py:3203: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_wrapped_log_preserves_whole_words_and_reading_anchor" time="0.397" /><testcase classname="tests.gui.test_dashboard" name="test_projector_refresh_preserves_assignment" time="0.419" /><testcase classname="tests.gui.test_dashboard" name="test_projector_assignments_survive_restart_and_changed_inventory[False]" time="0.827" /><testcase classname="tests.gui.test_dashboard" name="test_projector_assignments_survive_restart_and_changed_inventory[True]" time="0.785" /><testcase classname="tests.gui.test_dashboard" name="test_saved_projector_assignments_restore_as_managed_drafts[False-False]" time="0.735" /><testcase classname="tests.gui.test_dashboard" name="test_saved_projector_assignments_restore_as_managed_drafts[False-True]" time="0.743" /><testcase classname="tests.gui.test_dashboard" name="test_saved_projector_assignments_restore_as_managed_drafts[True-False]" time="0.758" /><testcase classname="tests.gui.test_dashboard" name="test_saved_projector_assignments_restore_as_managed_drafts[True-True]" time="0.793" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_saved_projector_assignments_are_preserved_and_reported[broken]" time="0.377" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_saved_projector_assignments_are_preserved_and_reported[{&quot;version&quot;:1,&quot;assignments&quot;:{&quot;one&quot;:&quot;Front&quot;,&quot;two&quot;:&quot;Front&quot;}}]" time="0.374" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_saved_projector_assignments_are_preserved_and_reported[{&quot;version&quot;:1,&quot;assignments&quot;:{&quot;one&quot;:&quot;Front&quot;,&quot;one&quot;:&quot;Left&quot;}}]" time="0.370" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_saved_projector_assignments_are_preserved_and_reported[{&quot;version&quot;:2,&quot;assignments&quot;:{&quot;one&quot;:&quot;Front&quot;}}]" time="0.368" /><testcase classname="tests.gui.test_dashboard" name="test_projector_assignment_save_failure_keeps_draft_and_warns" time="0.363" /><testcase classname="tests.gui.test_dashboard" name="test_gui_display_number_is_local_and_shared_with_layout" time="0.403" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_fixed_signal_tests_and_layout" time="0.377" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_role_outputs_clear_without_changing_camera_use" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_file_restores_camera_output_rows_without_commands" time="0.404" /><testcase classname="tests.gui.test_dashboard" name="test_local_review_microcontroller_does_not_open_serial" time="0.388" /><testcase classname="tests.gui.test_dashboard" name="test_simulated_review_inventory_does_not_enumerate_com_ports" time="0.388" /><testcase classname="tests.gui.test_dashboard" name="test_managed_microcontroller_emits_controller_intents" time="0.484" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_waits_for_controller_confirmation[0]" time="0.464" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_waits_for_controller_confirmation[1]" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_accepts_missing_external_input" time="0.398" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_settings_submit_pfs_source_and_rate" time="0.399" /><testcase classname="tests.gui.test_dashboard" name="test_bridge_submits_configuration_and_waits_for_exact_version" time="0.020" /><testcase classname="tests.gui.test_dashboard" name="test_bridge_accepts_unchanged_configuration_at_same_revision" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_configuration_action_plan_preserves_edits_outside_editable_phases" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_setup_captures_exact_accepted_configuration_for_bridge" time="0.402" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_immutable_phase_actions_bypass_invalid_collection" time="0.421" /><testcase classname="tests.gui.test_dashboard" name="test_controller_bridge_setup_validates_captured_version_under_dispatch_lock" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_controller_bridge_submits_then_setup_uses_exact_accepted_version" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_display_calibration_requests_use_repository_relative_assets" time="0.010" /><testcase classname="tests.gui.test_dashboard" name="test_projector_first_run_profile_import_is_reachable_and_collectable" time="0.419" /><testcase classname="tests.gui.test_dashboard" name="test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly[True]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly[False]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_spikeglx_pairing_updates_only_session_flag[True]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_spikeglx_pairing_updates_only_session_flag[False]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_spikeglx_pairing_bridge_publishes_accepted_device_revision" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_spikeglx_pairing_waits_for_confirmation[True]" time="0.400" /><testcase classname="tests.gui.test_dashboard" name="test_managed_spikeglx_pairing_waits_for_confirmation[False]" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_managed_spikeglx_inventory_installs_read_only_host_settings" time="0.396" /><testcase classname="tests.gui.test_dashboard" name="test_queued_calibration_rejects_revision_and_asset_drift" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_queued_calibration_close_rejects_changed_diagnostic_identity" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_inventory_required_roles_follow_the_accepted_active_configuration" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_diagnostic_requests_keep_preview_and_draft_identity" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_viewer_rpc_uses_frozen_authorized_endpoint" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_viewer_detach_stays_detached_until_explicit_reopen" time="0.092" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_viewer_frame_freezes_only_on_explicit_exact_source_action" time="0.068" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_diagnostic_close_waits_for_closed_evidence" time="0.063" /><testcase classname="tests.gui.test_dashboard" name="test_managed_snapshot_keeps_diagnostic_close_pending_and_status_visible" time="0.431" /><testcase classname="tests.gui.test_dashboard" name="test_save_failure_dismissal_never_discards_draft[None-None]" time="0.003" /><testcase classname="tests.gui.test_dashboard" name="test_save_failure_dismissal_never_discards_draft[Retry-retry]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_save_failure_dismissal_never_discards_draft[Close without saving-discard]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_empty_diagnostic_mask_does_not_require_experiment_settings" time="0.057" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_flow_diagnostic_ignores_dormant_pose_and_estimator_drafts" time="0.054" /><testcase classname="tests.gui.test_dashboard" name="test_bridge_rejects_stale_configuration_base_without_admission" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_updates_only_assigned_camera[behavioral]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_updates_only_assigned_camera[tracking]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_updates_only_assigned_camera[eye_tracking]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_disconnect_after_failed_connect_uses_device_cleanup" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_eye_role_projects_and_tests_selected_without_capture" time="0.432" /><testcase classname="tests.gui.test_dashboard" name="test_eye_assignment_preserves_existing_camera_roles" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_loaded_camera_action_queues_parameters_without_setup[False]" time="0.419" /><testcase classname="tests.gui.test_dashboard" name="test_loaded_camera_action_queues_parameters_without_setup[True]" time="0.433" /><testcase classname="tests.gui.test_dashboard" name="test_camera_action_submits_before_test_and_stops_on_failure[False-none]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_action_submits_before_test_and_stops_on_failure[False-base]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_action_submits_before_test_and_stops_on_failure[False-settings]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_action_submits_before_test_and_stops_on_failure[False-import]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_action_submits_before_test_and_stops_on_failure[True-none]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_action_submits_before_test_and_stops_on_failure[True-base]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_action_submits_before_test_and_stops_on_failure[True-settings]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_action_submits_before_test_and_stops_on_failure[True-import]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_repeated_camera_connect_skips_noop_configuration_update" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_acceptance_preserves_other_local_configuration_drafts" time="0.441" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_settings_supply_missing_trigger_source" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_save_includes_camera_output_pins[D]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_save_includes_camera_output_pins[]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_draft_test_requires_exact_acceptance[]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_draft_test_requires_exact_acceptance[rejected]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_draft_test_requires_exact_acceptance[stale]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_draft_test_requires_exact_acceptance[unconfirmed]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_draft_test_requires_exact_acceptance[changed_after_acceptance]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_microcontroller_submits_edited_pin_before_test" time="0.467" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_pin_test_uses_saved_role_signal" time="0.453" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_preserves_camera_role_identity[Eye tracking]" time="0.394" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_preserves_camera_role_identity[Unassigned]" time="0.424" /><testcase classname="tests.gui.test_dashboard" name="test_managed_role_wiring_is_local_before_camera_discovery" time="0.386" /><testcase classname="tests.gui.test_dashboard" name="test_contextual_wiring_editors_update_only_the_shared_draft" time="2.922" /><testcase classname="tests.gui.test_dashboard" name="test_contextual_wiring_save_is_discarded_after_identity_or_authority_change[role]" time="0.392" /><testcase classname="tests.gui.test_dashboard" name="test_contextual_wiring_save_is_discarded_after_identity_or_authority_change[authority]" time="0.395" /><testcase classname="tests.gui.test_dashboard" name="test_contextual_wiring_save_is_discarded_after_identity_or_authority_change[pending]" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_projector_sync_modes_without_mcu_preserve_saved_drafts[free_run]" time="0.383" /><testcase classname="tests.gui.test_dashboard" name="test_projector_sync_modes_without_mcu_preserve_saved_drafts[photodiode_only_vsync]" time="0.511" /><testcase classname="tests.gui.test_dashboard" name="test_projector_sync_modes_without_mcu_preserve_saved_drafts[all_outputs_vsync]" time="0.388" /><testcase classname="tests.gui.test_dashboard" name="test_restored_managed_draft_assigns_eye_and_adds_output_locally" time="0.414" /><testcase classname="tests.gui.test_dashboard" name="test_managed_window_waits_for_history_save_before_closing" time="0.350" /><testcase classname="tests.gui.test_dashboard" name="test_managed_close_finishes_only_after_controller_save_result" time="0.353" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_close_reopen_preserves_full_draft[False]" time="0.818" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_close_reopen_preserves_full_draft[True]" time="0.893" /><testcase classname="tests.gui.test_dashboard" name="test_disconnected_projector_draft_restores_and_saves" time="0.435" /><testcase classname="tests.gui.test_dashboard" name="test_setup_without_projectors_logs_and_submits_nothing" time="0.364" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_save_failure_keeps_window_open_and_previous_file" time="0.426" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_unrestored_file_is_preserved" time="0.432" /><testcase classname="tests.gui.test_dashboard" name="test_managed_bridge_claims_free_control_for_history_save" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_review_draft_restores_local_configuration[False]" time="0.918" /><testcase classname="tests.gui.test_dashboard" name="test_review_draft_restores_local_configuration[True]" time="0.936" /><testcase classname="tests.gui.test_dashboard" name="test_legacy_review_draft_camera_pin_migrates_to_logical_role" time="0.962" /><testcase classname="tests.gui.test_dashboard" name="test_review_window_saves_draft_on_close" time="0.813" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_review_draft_is_not_replaced_during_load" time="0.476" /><testcase classname="tests.gui.test_dashboard" name="test_pin_test_stop_toggle_and_invalidation" time="0.509" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_enablement_preserves_pins_and_syncs_cameras" time="0.485" /><testcase classname="tests.gui.test_dashboard" name="test_projectors_number_secondary_screens_by_position" time="0.541" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_row_heights_match" time="0.461"><failure message="assert False&#10; +  where False = &lt;built-in method contains of QRect object at 0x00000279B83092A0&gt;(PyQt6.QtCore.QRect(0, 222, 640, 36))&#10; +    where &lt;built-in method contains of QRect object at 0x00000279B83092A0&gt; = PyQt6.QtCore.QRect(0, 0, 118, 36).contains&#10; +      where PyQt6.QtCore.QRect(0, 0, 118, 36) = &lt;built-in method rect of QWidget object at 0x00000279B4940820&gt;()&#10; +        where &lt;built-in method rect of QWidget object at 0x00000279B4940820&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x00000279B4940820&gt;.rect&#10; +          where &lt;PyQt6.QtWidgets.QWidget object at 0x00000279B4940820&gt; = &lt;built-in method parentWidget of PinNumber object at 0x00000279B4942050&gt;()&#10; +            where &lt;built-in method parentWidget of PinNumber object at 0x00000279B4942050&gt; = &lt;cephvr.gui.pin_numbers.PinNumber object at 0x00000279B4942050&gt;.parentWidget&#10; +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = &lt;built-in method geometry of PinNumber object at 0x00000279B4942050&gt;()&#10; +      where &lt;built-in method geometry of PinNumber object at 0x00000279B4942050&gt; = &lt;cephvr.gui.pin_numbers.PinNumber object at 0x00000279B4942050&gt;.geometry">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000279FCF19BD0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000279FCA3FEB0&gt;
+
+    def test_microcontroller_row_heights_match(
+        window: DashboardWindow, app: QApplication
+    ) -&gt; None:
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(1)
+        app.processEvents()
+        panel = window.devices.microcontroller
+        assert panel.trial_pin.height() == panel.test_buttons["trial-state"].height()
+        assert panel.flip_pin.height() == panel.test_buttons["projector-flip"].height()
+        for key, pin in panel.pin_editors.items():
+            assert pin.height() == panel.test_buttons[key].height()
+            for control in (pin, panel.test_buttons[key]):
+&gt;               assert control.parentWidget().rect().contains(control.geometry())
+E               assert False
+E                +  where False = &lt;built-in method contains of QRect object at 0x00000279B83092A0&gt;(PyQt6.QtCore.QRect(0, 222, 640, 36))
+E                +    where &lt;built-in method contains of QRect object at 0x00000279B83092A0&gt; = PyQt6.QtCore.QRect(0, 0, 118, 36).contains
+E                +      where PyQt6.QtCore.QRect(0, 0, 118, 36) = &lt;built-in method rect of QWidget object at 0x00000279B4940820&gt;()
+E                +        where &lt;built-in method rect of QWidget object at 0x00000279B4940820&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x00000279B4940820&gt;.rect
+E                +          where &lt;PyQt6.QtWidgets.QWidget object at 0x00000279B4940820&gt; = &lt;built-in method parentWidget of PinNumber object at 0x00000279B4942050&gt;()
+E                +            where &lt;built-in method parentWidget of PinNumber object at 0x00000279B4942050&gt; = &lt;cephvr.gui.pin_numbers.PinNumber object at 0x00000279B4942050&gt;.parentWidget
+E                +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = &lt;built-in method geometry of PinNumber object at 0x00000279B4942050&gt;()
+E                +      where &lt;built-in method geometry of PinNumber object at 0x00000279B4942050&gt; = &lt;cephvr.gui.pin_numbers.PinNumber object at 0x00000279B4942050&gt;.geometry
+
+tests\gui\test_dashboard.py:7037: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_projector_geometry_and_pulse_drafts_are_independent" time="0.451" /><testcase classname="tests.gui.test_dashboard" name="test_configuration_scroll_keeps_projector_status_fixed" time="0.431"><failure message="assert 15 == 0&#10; +  where 15 = &lt;built-in method maximum of QScrollBar object at 0x00000279B48B9870&gt;()&#10; +    where &lt;built-in method maximum of QScrollBar object at 0x00000279B48B9870&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279B48B9870&gt;.maximum&#10; +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279B48B9870&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x0000027990616C20&gt;()&#10; +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x0000027990616C20&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x0000027990616C20&gt;.horizontalScrollBar&#10; +          where &lt;PyQt6.QtWidgets.QScrollArea object at 0x0000027990616C20&gt; = &lt;cephvr.gui.projectors.ProjectorsPanel object at 0x00000279905EF130&gt;.config_scroll">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000279FCF1A5F0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000279FCA3FEB0&gt;
+
+    def test_configuration_scroll_keeps_projector_status_fixed(
+        window: DashboardWindow, app: QApplication
+    ):
+        window.resize(1175, 800)
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel = window.devices.projectors
+        assert [panel.setup_tabs.tabText(i) for i in range(3)] == [
+            "Screen calibration",
+            "Rig geometry",
+            "Synchronization",
+        ]
+        panel.setup_tabs.setCurrentIndex(1)
+        app.processEvents()
+        top = panel.layout_card.mapTo(window, QPoint())
+        log = panel.status_column.log_card.mapTo(window, QPoint())
+        scroll = panel.config_scroll.verticalScrollBar()
+        assert scroll.maximum() &gt; 0
+        scroll.setValue(scroll.maximum())
+        app.processEvents()
+        assert panel.layout_card.mapTo(window, QPoint()) == top
+        assert panel.status_column.log_card.mapTo(window, QPoint()) == log
+&gt;       assert panel.config_scroll.horizontalScrollBar().maximum() == 0
+E       assert 15 == 0
+E        +  where 15 = &lt;built-in method maximum of QScrollBar object at 0x00000279B48B9870&gt;()
+E        +    where &lt;built-in method maximum of QScrollBar object at 0x00000279B48B9870&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279B48B9870&gt;.maximum
+E        +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x00000279B48B9870&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x0000027990616C20&gt;()
+E        +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x0000027990616C20&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x0000027990616C20&gt;.horizontalScrollBar
+E        +          where &lt;PyQt6.QtWidgets.QScrollArea object at 0x0000027990616C20&gt; = &lt;cephvr.gui.projectors.ProjectorsPanel object at 0x00000279905EF130&gt;.config_scroll
+
+tests\gui\test_dashboard.py:7103: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_calibration_and_screen_dimensions_retain_separate_drafts" time="0.420" /><testcase classname="tests.gui.test_dashboard" name="test_spikeglx_sources_preserve_maps_and_follow_enablement" time="0.378" /><testcase classname="tests.gui.test_dashboard" name="test_projector_config_tabs_keep_column_width_and_table_drafts" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_screen_distance_moves_planes_independently_of_tank" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_hidden_scrollbar_preserves_wheel_scrolling" time="0.382" /><testcase classname="tests.gui.test_dashboard" name="test_all_screen_calibration_json_roundtrip_and_rejection" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_dialog_closes_on_authority_loss" time="0.418" /><testcase classname="tests.gui.test_dashboard" name="test_wheel_never_changes_input_values[False]" time="0.389" /><testcase classname="tests.gui.test_dashboard" name="test_wheel_never_changes_input_values[True]" time="0.392" /><testcase classname="tests.gui.test_dashboard" name="test_epoch_clock_duration_retains_fractional_precision" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_batch_variation_sweep_is_bounded" time="0.005" /><testcase classname="tests.gui.test_dashboard" name="test_epoch_reference_updates_do_not_show_detached_windows" time="0.188" /><testcase classname="tests.gui.test_dashboard" name="test_spikeglx_disable_restore_and_remove_custom" time="0.424" /><testcase classname="tests.gui.test_dashboard" name="test_right_screen_is_derived_and_legacy_asymmetry_rejected" time="0.392" /><testcase classname="tests.gui.test_dashboard" name="test_managed_protocol_roundtrips_ordered_trials_seed_and_gap" time="0.434" /><testcase classname="tests.gui.test_dashboard" name="test_managed_protocol_rejects_partial_restore_without_mutating_pages" time="0.380" /><testcase classname="tests.gui.test_dashboard" name="test_empty_managed_schedule_is_not_replaced_by_review_trial" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_managed_configuration_preserves_incomplete_draft_on_new_revision" time="0.391" /><testcase classname="tests.gui.test_dashboard" name="test_empty_schedule_first_add_becomes_the_first_trial" time="0.376" /><testcase classname="tests.gui.test_dashboard" name="test_managed_configuration_keeps_post_submit_edits_on_ack" time="0.463" /><testcase classname="tests.gui.test_dashboard" name="test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack" time="0.496" /><testcase classname="tests.gui.test_dashboard" name="test_protocol_participation_and_asset_pages" time="0.509" /><testcase classname="tests.gui.test_dashboard" name="test_protocol_program_validation_and_atomic_save" time="0.616" /><testcase classname="tests.gui.test_dashboard" name="test_protocol_timeline_edits_preserve_trials_and_imported_groups" time="0.968" /><testcase classname="tests.gui.test_dashboard" name="test_protocol_cards_reflow_and_keep_properties_reachable" time="0.540" /><testcase classname="tests.gui.test_dashboard" name="test_protocol_controls_and_enabled_screen_lanes" time="0.463"><failure message="AssertionError: assert ('Front',) == ()&#10;  &#10;  Left contains one more item: 'Front'&#10;  &#10;  Full diff:&#10;  - ()&#10;  + (&#10;  +     'Front',&#10;  + )">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000279F9F18C10&gt;
+
+    def test_protocol_controls_and_enabled_screen_lanes(window: DashboardWindow) -&gt; None:
+        from PyQt6.QtWidgets import QLineEdit
+    
+        panel = window.protocol
+        assert window.recordings.velocities.text() == ""
+        assert window.recordings.velocity_label.text() == "Tracking velocities"
+        assert not panel.program_card.findChildren(QLineEdit)
+        assert not hasattr(panel, "validate_button")
+        assert panel.message.isHidden()
+        projectors = window.devices.projectors
+        projectors.keys = ["left", "bottom"]
+        projectors.assignments = {"left": "Left", "bottom": "Bottom"}
+        projectors.diagram.outputs = [
+            ("2", QRect(0, 0, 100, 100)),
+            ("3", QRect(100, 0, 100, 100)),
+        ]
+        before = panel.editor.program
+        projectors.update_participation()
+        assert panel.editor.timeline.screens == ("Left", "Bottom")
+        projectors.set_participation("left", False)
+        assert panel.editor.timeline.screens == ("Bottom",)
+        projectors.assignments["bottom"] = "Front"
+        projectors.update_participation()
+        assert panel.editor.timeline.screens == ("Front",)
+        projectors.keys.clear()
+        projectors.diagram.outputs.clear()
+        projectors.update_participation()
+&gt;       assert panel.editor.timeline.screens == ()
+E       AssertionError: assert ('Front',) == ()
+E         
+E         Left contains one more item: 'Front'
+E         
+E         Full diff:
+E         - ()
+E         + (
+E         +     'Front',
+E         + )
+
+tests\gui\test_dashboard.py:8080: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_forms_round_trip_every_family[Sine grating]" time="0.482" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_forms_round_trip_every_family[Square grating]" time="0.430" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_forms_round_trip_every_family[Checkerboard]" time="0.429" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_forms_round_trip_every_family[Image tile]" time="0.425" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_forms_round_trip_every_family[Image]" time="0.495" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_forms_round_trip_every_family[Looming image]" time="0.608" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_forms_round_trip_every_family[Video]" time="0.503" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_forms_round_trip_every_family[3D arena]" time="0.430" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_parameter_edit_invalid_guard_and_media_root" time="0.580" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_animation_variants_reset_and_remove" time="0.511" /><testcase classname="tests.gui.test_dashboard" name="test_prepared_texture_bundle_and_epoch_motion" time="0.641" /><testcase classname="tests.gui.test_dashboard" name="test_prepared_file_change_is_epoch_local" time="0.475" /><testcase classname="tests.gui.test_dashboard" name="test_protocol_epoch_structure_actions" time="0.415" /><testcase classname="tests.gui.test_dashboard" name="test_add_prepared_file_picker_does_not_create_placeholder_on_cancel" time="0.501" /><testcase classname="tests.gui.test_dashboard" name="test_file_first_epoch_insertion_and_history" time="0.519" /><testcase classname="tests.gui.test_dashboard" name="test_screen_overrides_and_layers_preserve_other_epochs" time="0.413" /><testcase classname="tests.gui.test_dashboard" name="test_repeat_variation_uses_canonical_expansion_and_preserves_choreography" time="0.401" /><testcase classname="tests.gui.test_dashboard" name="test_nested_group_edit_and_duplicate_reference_remapping" time="0.751" /><testcase classname="tests.gui.test_dashboard" name="test_group_fields_reject_bad_values_and_lock_on_authority_loss" time="0.429" /><testcase classname="tests.gui.test_dashboard" name="test_motion_auto_commit_and_invalid_edit_undo" time="0.600" /><testcase classname="tests.gui.test_dashboard" name="test_saved_variations_reopen_as_speed_direction_lists" time="0.456" /><testcase classname="tests.gui.test_dashboard" name="test_variation_bounds_and_preview_limit" time="0.440" /><testcase classname="tests.gui.test_dashboard" name="test_stationary_texture_speed_variation_keeps_positive_x_direction" time="0.487" /><testcase classname="tests.gui.test_dashboard" name="test_expanded_close_and_trial_deletion" time="0.516" /><testcase classname="tests.gui.test_dashboard" name="test_recording_checks_stay_next_to_labels" time="0.393" /><testcase classname="tests.gui.test_dashboard" name="test_looming_primary_controls_and_custom_size_fidelity" time="0.615" /><testcase classname="tests.gui.test_dashboard" name="test_batch_create_variations_preview_insert_and_reload" time="0.942" /><testcase classname="tests.gui.test_dashboard" name="test_trial_overview_selects_ranges_and_sources_across_groups" time="0.431" /><testcase classname="tests.gui.test_dashboard" name="test_review_projector_inventory_drives_devices_and_planner" time="0.426" /><testcase classname="tests.gui.test_dashboard" name="test_timeline_overview_colors_and_current_epoch_details" time="0.505" /><testcase classname="tests.gui.test_dashboard" name="test_epoch_parameter_warnings_wait_for_submission[generate]" time="0.521" /><testcase classname="tests.gui.test_dashboard" name="test_epoch_parameter_warnings_wait_for_submission[selection]" time="0.683" /><testcase classname="tests.gui.test_dashboard" name="test_batch_reference_projector_parameters_and_layers" time="1.619" /><testcase classname="tests.gui.test_dashboard" name="test_batch_reference_picker_scope_and_lock" time="0.535" /><testcase classname="tests.gui.test_dashboard" name="test_compact_reference_rows_share_headers_and_commit_relocated_fields" time="0.739" /><testcase classname="tests.gui.test_dashboard" name="test_reference_type_change_clears_asset_and_switches_stimulus_mode" time="1.116" /><testcase classname="tests.gui.test_dashboard" name="test_batch_insertion_positions_are_atomic_and_select_new_epochs[append-expected0]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_batch_insertion_positions_are_atomic_and_select_new_epochs[start-expected1]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_batch_insertion_positions_are_atomic_and_select_new_epochs[before-expected2]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_batch_insertion_positions_are_atomic_and_select_new_epochs[after-expected3]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_batch_insertion_positions_are_atomic_and_select_new_epochs[replace-expected4]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_batch_insertion_positions_are_atomic_and_select_new_epochs[stride-expected5]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_arena_axis_gains_roundtrip_and_editor_spacing" time="0.592" /><testcase classname="tests.gui.test_dashboard" name="test_arena_custom_feedback_is_preserved_and_channel_conflicts_rejected" time="0.537" /><testcase classname="tests.gui.test_dashboard" name="test_front_attached_screens_share_plot_and_prepared_corners" time="0.496" /><testcase classname="tests.gui.test_dashboard" name="test_centered_projection_uses_throw_and_assigned_aspect" time="0.478" /><testcase classname="tests.gui.test_dashboard" name="test_tank_drag_changes_view_only_and_double_click_resets" time="0.516" /><testcase classname="tests.gui.test_dashboard" name="test_bottom_mirror_reflects_cone_and_uses_total_path" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_plot_legends_are_view_only_and_survive_refresh" time="0.492" /><testcase classname="tests.gui.test_dashboard" name="test_bottom_optics_survive_disabled_right_output" time="0.496" /><testcase classname="tests.gui.test_dashboard" name="test_label_insertion_repeats_batch_in_original_scope_and_undo" time="0.512" /><testcase classname="tests.gui.test_dashboard" name="test_visible_layer_selector_and_opacity_preserve_prepared_placement" time="0.677" /><testcase classname="tests.gui.test_dashboard" name="test_bottom_center_path_survives_outer_ray_clearance" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_projection_group_replaces_individual_visibility_controls" time="0.629" /><testcase classname="tests.gui.test_dashboard" name="test_projector_codec_preserves_file_pacing_and_imported_calibration" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_projectors_page_install_collect_keeps_file_owned_pacing_absent[photodiode_only_vsync-False]" time="0.554" /><testcase classname="tests.gui.test_dashboard" name="test_projectors_page_install_collect_keeps_file_owned_pacing_absent[photodiode_only_vsync-True]" time="0.548" /><testcase classname="tests.gui.test_dashboard" name="test_projectors_page_install_collect_keeps_file_owned_pacing_absent[all_outputs_vsync-False]" time="0.546" /><testcase classname="tests.gui.test_dashboard" name="test_projectors_page_install_collect_keeps_file_owned_pacing_absent[all_outputs_vsync-True]" time="0.526" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[2]" time="0.050" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[3]" time="0.048" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[4]" time="0.053" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[5]" time="0.048" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[6]" time="0.046" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[7]" time="0.052" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_identity_profiles_bind_unique_native_monitors[2]" time="0.154" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_identity_profiles_bind_unique_native_monitors[3]" time="0.128" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_identity_profiles_bind_unique_native_monitors[4]" time="0.120" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_identity_profiles_bind_unique_native_monitors[5]" time="0.128" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_identity_profiles_bind_unique_native_monitors[6]" time="0.127" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_identity_profiles_bind_unique_native_monitors[7]" time="0.124" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_button_reflects_confirmed_managed_output" time="0.461" /><testcase classname="tests.gui.test_dashboard" name="test_managed_first_use_calibration_launches_before_display_initialization" time="0.432" /><testcase classname="tests.gui.test_dashboard" name="test_unified_feedback_input_mapping_and_retain_state" time="0.514" /><testcase classname="tests.gui.test_dashboard" name="test_arena_feedback_and_axis_editors_stay_synchronized" time="0.495" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_mode_and_duration_use_proportional_header_widths" time="0.431" /><testcase classname="tests.gui.test_dashboard" name="test_new_stimuli_retain_state_without_changing_imported_reset" time="0.466" /><testcase classname="tests.gui.test_dashboard" name="test_reference_advanced_controls_align_to_layer_and_retain_first" time="3.002" /><testcase classname="tests.gui.test_dashboard" name="test_control_dialog_does_not_expand_projector_row_and_cancels" time="0.443" /><testcase classname="tests.gui.test_dashboard" name="test_control_action_is_limited_to_closed_loop_texture_and_looming" time="0.593" /><testcase classname="tests.gui.test_dashboard" name="test_fades_render_and_retime_without_changing_motion" time="0.446" /><testcase classname="tests.gui.test_dashboard" name="test_reference_fades_follow_batch_duration_and_new_rows" time="0.514" /><testcase classname="tests.gui.test_dashboard" name="test_imported_opacity_curve_is_preserved_and_not_editable" time="0.422" /><testcase classname="tests.gui.test_dashboard" name="test_blank_layer_then_family_keeps_each_projector_layer_configuration" time="0.989" /><testcase classname="tests.gui.test_dashboard" name="test_first_source_epoch_fade_does_not_change_rest_of_batch" time="0.490" /><testcase classname="tests.gui.test_dashboard" name="test_200_epoch_timeline_reuses_views_and_metadata_noop" time="0.450" /><testcase classname="tests.gui.test_dashboard" name="test_200_epoch_eight_layer_protocol_round_trip_exceeds_old_gui_limit" time="1.412" /><testcase classname="tests.gui.test_dashboard" name="test_variation_controls_fit_narrow_protocol_without_horizontal_scroll" time="0.948" /><testcase classname="tests.gui.test_dashboard" name="test_batch_variations_target_projectors_and_local_layer_ordinals" time="0.777" /><testcase classname="tests.gui.test_dashboard" name="test_layer_actions_offer_up_down_and_preserve_projector_values" time="0.764" /><testcase classname="tests.gui.test_dashboard" name="test_variations_use_stimulus_columns_and_materialize_looming_and_video" time="0.085" /><testcase classname="tests.gui.test_dashboard" name="test_preview_uses_retained_motion_and_backward_scrubbing" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up" time="0.512" /><testcase classname="tests.gui.test_dashboard" name="test_preview_rejects_setup_resolved_durations_without_mutating_program" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_planning_arena_draws_a_bounded_glb_on_a_configured_surface" time="0.028" /><testcase classname="tests.gui.test_dashboard" name="test_arena_variations_change_axis_gains_without_changing_other_axes" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_planning_preview_uses_rig_planes_and_only_enabled_projector_frames" time="0.029" /><testcase classname="tests.gui.test_dashboard" name="test_preview_calibration_matches_export_and_uses_display_pixels" time="0.016" /><testcase classname="tests.gui.test_dashboard" name="test_preview_rejects_invalid_corrections_and_unresolved_pixel_sizes" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_random_variations_respect_bounds_precision_and_size" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_random_batch_values_stay_fixed_across_preview_and_save" time="1.452" /><testcase classname="tests.gui.test_dashboard" name="test_timeline_epoch_shortcuts_and_keyboard_history" time="0.610" /><testcase classname="tests.gui.test_dashboard" name="test_image_fit_and_motion_are_saved_without_texture_phase" time="0.401" /><testcase classname="tests.gui.test_dashboard" name="test_family_advanced_controls_preserve_hidden_state[True-Video]" time="0.506" /><testcase classname="tests.gui.test_dashboard" name="test_family_advanced_controls_preserve_hidden_state[True-Looming image]" time="0.436" /><testcase classname="tests.gui.test_dashboard" name="test_family_advanced_controls_preserve_hidden_state[True-3D arena]" time="0.470" /><testcase classname="tests.gui.test_dashboard" name="test_family_advanced_controls_preserve_hidden_state[False-Video]" time="0.480" /><testcase classname="tests.gui.test_dashboard" name="test_family_advanced_controls_preserve_hidden_state[False-Looming image]" time="0.536" /><testcase classname="tests.gui.test_dashboard" name="test_family_advanced_controls_preserve_hidden_state[False-3D arena]" time="0.505" /><testcase classname="tests.gui.test_dashboard" name="test_image_fit_preview_contains_crops_and_stretches" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_batch_fit_choice_and_legacy_image_appearance" time="0.005" /><testcase classname="tests.gui.test_dashboard" name="test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs" time="0.594" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_pending_completion_and_final_status" time="0.394" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_batch_checks_continue_after_failure_without_capture" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_role_assignment_is_atomic_and_preserves_participation[False]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_role_assignment_is_atomic_and_preserves_participation[True]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_projection_distinguishes_open_capture_and_cleanup" time="0.457" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_auto_claims_only_unheld_control_once[]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_auto_claims_only_unheld_control_once[other-client]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_auto_claims_only_unheld_control_once[this-gui]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_waits_for_synchronization_and_warning_acknowledgement" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_retained_acknowledgement_cannot_clear_guard_without_current_snapshot" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_initial_and_reopened_retained_warnings_gate_auto_claim" time="0.001"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'install_pairing'">def test_initial_and_reopened_retained_warnings_gate_auto_claim() -&gt; None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.main import ManagedGui
+    
+        class Action:
+            def __init__(self) -&gt; None:
+                self.enabled = False
+    
+            def setEnabled(self, enabled: bool) -&gt; None:
+                self.enabled = enabled
+    
+        requests: list[str] = []
+        prompt_updates: list[tuple[bool, int]] = []
+    
+        def install_prompts(
+            _state: pb.Snapshot,
+            *,
+            require_acknowledgement: bool,
+            can_respond: bool,
+            connection_epoch: int,
+        ) -&gt; None:
+            assert not can_respond
+            prompt_updates.append((require_acknowledgement, connection_epoch))
+    
+        manager = SimpleNamespace(
+            _retained_ack_required=False,
+            _retained_ack_identity=None,
+            _acknowledged_identity=None,
+            _awaiting_reconnect_review=False,
+            _connection_epoch=1,
+            _connection_identity=None,
+            history=SimpleNamespace(restore_attempted=True),
+            state=None,
+            configuration=SimpleNamespace(
+                install=lambda _state: True,
+                installing_projection=nullcontext,
+                stale=False,
+                last_error="",
+                _installing=False,
+            ),
+            bridge=SimpleNamespace(
+                principal=SimpleNamespace(generation="gui-1"),
+                request=lambda action: requests.append(action),
+            ),
+            cameras=SimpleNamespace(install=lambda _state: []),
+            window=SimpleNamespace(
+                devices=SimpleNamespace(sync_cameras=lambda: None),
+                apply_view=lambda _view: None,
+            ),
+            display_operations=SimpleNamespace(
+                install_calibration_state=lambda _state, *, launch_eligible: None
+            ),
+            _calibration_launch_eligible=lambda _state: False,
+            mcu=SimpleNamespace(install=lambda _state, _held: None),
+            prompts=SimpleNamespace(update=install_prompts),
+            tracking_diagnostics=SimpleNamespace(install_snapshot=lambda _state: None),
+            review_retained=Action(),
+            take=Action(),
+            takeover=Action(),
+            release=Action(),
+            review_prompt=Action(),
+            reload_configuration=Action(),
+            control_ready=True,
+            auto_control_attempted=False,
+        )
+        manager.claim_unheld_control = lambda: ManagedGui.claim_unheld_control(manager)
+        initial = pb.Snapshot(controller_generation="controller-1")
+        initial.warnings.add(message="retained device warning")
+&gt;       ManagedGui.install_snapshot(manager, 1, "controller-1", initial.SerializeToString())
+
+tests\gui\test_dashboard.py:12420: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = namespace(_retained_ack_required=True, _retained_ack_identity=(1, 'controller-1'), _acknowledged_identity=None, _await...control=&lt;function test_initial_and_reopened_retained_warnings_gate_auto_claim.&lt;locals&gt;.&lt;lambda&gt; at 0x000002799DE7F060&gt;)
+epoch = 1, generation = 'controller-1'
+raw = b'\n\x0ccontroller-1Z\x19\x1a\x17retained device warning'
+
+    def install_snapshot(self, epoch: int, generation: str, raw: bytes) -&gt; None:
+        state = pb.Snapshot.FromString(raw)
+        if generation != state.controller_generation:
+            return
+        identity = (epoch, generation)
+        self._connection_epoch = epoch
+        self._connection_identity = identity
+        fresh_identity = self._awaiting_reconnect_review or (
+            self._retained_ack_required and self._retained_ack_identity != identity
+        )
+        if fresh_identity:
+            self._retained_ack_required = False
+            self._retained_ack_identity = None
+            self._awaiting_reconnect_review = False
+        if retained_ack_required_for(state, identity, self._acknowledged_identity):
+            self._retained_ack_required = True
+            self._retained_ack_identity = identity
+        self.state = state
+        held = state.control.holder_client_id == self.bridge.principal.generation
+        permitted = not self._retained_ack_required
+        self.review_retained.setEnabled(
+            self._retained_ack_required or has_retained_history(state)
+        )
+        self.take.setEnabled(
+            permitted and not held and not state.control.holder_client_id
+        )
+        self.takeover.setEnabled(
+            permitted and not held and bool(state.control.holder_client_id)
+        )
+        self.release.setEnabled(held)
+        with self.configuration.installing_projection():
+            preview_views = self.cameras.install(state)
+            self.window.devices.sync_cameras()
+        try:
+            configuration_wired = self.configuration.install(state)
+        except (ValueError, TypeError, AttributeError) as error:
+            configuration_wired = False
+            self.configuration.last_error = str(error)
+        self.reload_configuration.setEnabled(permitted and self.configuration.stale)
+        view = dashboard_view(
+            state,
+            self.bridge.principal.generation,
+            tuple(preview_views),
+            configuration_wired=configuration_wired,
+        )
+        if not permitted:
+            view = replace(view, has_control=False)
+        self.window.apply_view(view)
+&gt;       self.display_operations.install_pairing()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'install_pairing'
+
+src\cephvr\gui\main.py:308: AttributeError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_shared_notices_warn_on_action_and_send_status_to_log" time="0.383" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_methods_preserve_fields_and_hide_unrelated_controls" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_draft_roundtrip_and_invalid_load_is_atomic" time="0.369" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_camera_changes_invalidate_reference_and_lock_closes_tool" time="0.376" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_annotation_maps_letterboxed_image_to_source_pixels" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_distance_and_regions_use_original_pixels" time="0.379" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_v1_draft_migrates_without_inventing_calibration" time="0.374" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_preview_stages_retain_settings_and_clear_only_subject_reference" time="0.377" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_region_bounds_and_full_frame_are_validated" time="0.350" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits[Reference points]" time="0.355" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits[Manual pose]" time="0.359" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits[Distance reference]" time="0.356" /><testcase classname="tests.gui.test_dashboard" name="test_older_tracking_crop_fields_migrate_without_losing_annotations[False]" time="0.356" /><testcase classname="tests.gui.test_dashboard" name="test_older_tracking_crop_fields_migrate_without_losing_annotations[True]" time="0.376" /><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[False-1280]" time="1.586" /><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[False-720]" time="0.967" /><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[True-1280]" time="0.990" /><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[True-720]" time="0.959" /><testcase classname="tests.gui.test_dashboard" name="test_camera_connect_opens_only_the_confirmed_run[True-True]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_connect_opens_only_the_confirmed_run[False-True]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_connect_opens_only_the_confirmed_run[True-False]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_camera_selection_restores_pfs_source_and_frequency" time="0.350" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_inventory_restores_selected_configuration[0]" time="0.350" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_inventory_restores_selected_configuration[1]" time="0.356" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_firmware_controls_require_idle_configuration[hex]" time="0.363" /><testcase classname="tests.gui.test_dashboard" name="test_managed_firmware_controls_require_idle_configuration[ino]" time="0.369" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_json_restores_all_settings_without_screen_mapping" time="0.380" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_invalid_settings_preserve_complete_draft[pulse]" time="0.342" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_invalid_settings_preserve_complete_draft[mapping]" time="0.348" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_invalid_settings_preserve_complete_draft[nonfinite]" time="0.354" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_invalid_settings_preserve_complete_draft[duplicate]" time="0.360" /><testcase classname="tests.gui.test_dashboard" name="test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts" time="0.385" /><testcase classname="tests.gui.test_dashboard" name="test_photodiode_controls_fit_with_growing_blackouts[1280]" time="0.361"><failure message="assert False&#10; +  where False = &lt;built-in method contains of QRect object at 0x0000027993C65930&gt;(PyQt6.QtCore.QRect(0, 222, 640, 36))&#10; +    where &lt;built-in method contains of QRect object at 0x0000027993C65930&gt; = PyQt6.QtCore.QRect(0, 0, 112, 36).contains&#10; +      where PyQt6.QtCore.QRect(0, 0, 112, 36) = &lt;built-in method rect of QWidget object at 0x00000279BADB2A70&gt;()&#10; +        where &lt;built-in method rect of QWidget object at 0x00000279BADB2A70&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x00000279BADB2A70&gt;.rect&#10; +          where &lt;PyQt6.QtWidgets.QWidget object at 0x00000279BADB2A70&gt; = &lt;built-in method parentWidget of QLineEdit object at 0x00000279BADB29E0&gt;()&#10; +            where &lt;built-in method parentWidget of QLineEdit object at 0x00000279BADB29E0&gt; = &lt;PyQt6.QtWidgets.QLineEdit object at 0x00000279BADB29E0&gt;.parentWidget&#10; +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = &lt;built-in method geometry of QLineEdit object at 0x00000279BADB29E0&gt;()&#10; +      where &lt;built-in method geometry of QLineEdit object at 0x00000279BADB29E0&gt; = &lt;PyQt6.QtWidgets.QLineEdit object at 0x00000279BADB29E0&gt;.geometry">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000279BAD43130&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000279FCA3FEB0&gt;, width = 1280
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    def test_photodiode_controls_fit_with_growing_blackouts(window, app, width):
+        panel = window.devices.projectors
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel.setup_tabs.setCurrentIndex(1)
+        panel.timing.pulse.setChecked(True)
+        definition = panel.timing.definition
+        assert definition.columnCount() == 5
+        assert definition.rowCount() == 2
+        assert [definition.horizontalHeaderItem(i).text() for i in range(1, 5)] == [
+            "Origin X",
+            "Origin Y",
+            "Width",
+            "Height",
+        ]
+        assert [definition.item(i, 0).text() for i in range(2)] == [
+            "Frame",
+            "Pulse",
+        ]
+        window.resize(width, 940)
+        for count in (0, 6):
+            for _ in range(count):
+                panel.timing.blackouts.add(
+                    dict(face="Front", x=0, y=0, width=10, height=10)
+                )
+            for _ in range(5):
+                app.processEvents()
+            for editor in (
+                panel.timing.target,
+                panel.timing.mode,
+                *panel.timing.fields.values(),
+                *panel.timing.pulse_fields.values(),
+            ):
+&gt;               assert editor.parentWidget().rect().contains(editor.geometry())
+E               assert False
+E                +  where False = &lt;built-in method contains of QRect object at 0x0000027993C65930&gt;(PyQt6.QtCore.QRect(0, 222, 640, 36))
+E                +    where &lt;built-in method contains of QRect object at 0x0000027993C65930&gt; = PyQt6.QtCore.QRect(0, 0, 112, 36).contains
+E                +      where PyQt6.QtCore.QRect(0, 0, 112, 36) = &lt;built-in method rect of QWidget object at 0x00000279BADB2A70&gt;()
+E                +        where &lt;built-in method rect of QWidget object at 0x00000279BADB2A70&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x00000279BADB2A70&gt;.rect
+E                +          where &lt;PyQt6.QtWidgets.QWidget object at 0x00000279BADB2A70&gt; = &lt;built-in method parentWidget of QLineEdit object at 0x00000279BADB29E0&gt;()
+E                +            where &lt;built-in method parentWidget of QLineEdit object at 0x00000279BADB29E0&gt; = &lt;PyQt6.QtWidgets.QLineEdit object at 0x00000279BADB29E0&gt;.parentWidget
+E                +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = &lt;built-in method geometry of QLineEdit object at 0x00000279BADB29E0&gt;()
+E                +      where &lt;built-in method geometry of QLineEdit object at 0x00000279BADB29E0&gt; = &lt;PyQt6.QtWidgets.QLineEdit object at 0x00000279BADB29E0&gt;.geometry
+
+tests\gui\test_dashboard.py:13473: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_photodiode_controls_fit_with_growing_blackouts[720]" time="0.382"><failure message="assert False&#10; +  where False = &lt;built-in method contains of QRect object at 0x0000027993C64660&gt;(PyQt6.QtCore.QRect(0, 222, 640, 36))&#10; +    where &lt;built-in method contains of QRect object at 0x0000027993C64660&gt; = PyQt6.QtCore.QRect(0, 0, 112, 36).contains&#10; +      where PyQt6.QtCore.QRect(0, 0, 112, 36) = &lt;built-in method rect of QWidget object at 0x0000027982AA4940&gt;()&#10; +        where &lt;built-in method rect of QWidget object at 0x0000027982AA4940&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x0000027982AA4940&gt;.rect&#10; +          where &lt;PyQt6.QtWidgets.QWidget object at 0x0000027982AA4940&gt; = &lt;built-in method parentWidget of QLineEdit object at 0x0000027982AA6E60&gt;()&#10; +            where &lt;built-in method parentWidget of QLineEdit object at 0x0000027982AA6E60&gt; = &lt;PyQt6.QtWidgets.QLineEdit object at 0x0000027982AA6E60&gt;.parentWidget&#10; +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = &lt;built-in method geometry of QLineEdit object at 0x0000027982AA6E60&gt;()&#10; +      where &lt;built-in method geometry of QLineEdit object at 0x0000027982AA6E60&gt; = &lt;PyQt6.QtWidgets.QLineEdit object at 0x0000027982AA6E60&gt;.geometry">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000027982AF3BE0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000279FCA3FEB0&gt;, width = 720
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    def test_photodiode_controls_fit_with_growing_blackouts(window, app, width):
+        panel = window.devices.projectors
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel.setup_tabs.setCurrentIndex(1)
+        panel.timing.pulse.setChecked(True)
+        definition = panel.timing.definition
+        assert definition.columnCount() == 5
+        assert definition.rowCount() == 2
+        assert [definition.horizontalHeaderItem(i).text() for i in range(1, 5)] == [
+            "Origin X",
+            "Origin Y",
+            "Width",
+            "Height",
+        ]
+        assert [definition.item(i, 0).text() for i in range(2)] == [
+            "Frame",
+            "Pulse",
+        ]
+        window.resize(width, 940)
+        for count in (0, 6):
+            for _ in range(count):
+                panel.timing.blackouts.add(
+                    dict(face="Front", x=0, y=0, width=10, height=10)
+                )
+            for _ in range(5):
+                app.processEvents()
+            for editor in (
+                panel.timing.target,
+                panel.timing.mode,
+                *panel.timing.fields.values(),
+                *panel.timing.pulse_fields.values(),
+            ):
+&gt;               assert editor.parentWidget().rect().contains(editor.geometry())
+E               assert False
+E                +  where False = &lt;built-in method contains of QRect object at 0x0000027993C64660&gt;(PyQt6.QtCore.QRect(0, 222, 640, 36))
+E                +    where &lt;built-in method contains of QRect object at 0x0000027993C64660&gt; = PyQt6.QtCore.QRect(0, 0, 112, 36).contains
+E                +      where PyQt6.QtCore.QRect(0, 0, 112, 36) = &lt;built-in method rect of QWidget object at 0x0000027982AA4940&gt;()
+E                +        where &lt;built-in method rect of QWidget object at 0x0000027982AA4940&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x0000027982AA4940&gt;.rect
+E                +          where &lt;PyQt6.QtWidgets.QWidget object at 0x0000027982AA4940&gt; = &lt;built-in method parentWidget of QLineEdit object at 0x0000027982AA6E60&gt;()
+E                +            where &lt;built-in method parentWidget of QLineEdit object at 0x0000027982AA6E60&gt; = &lt;PyQt6.QtWidgets.QLineEdit object at 0x0000027982AA6E60&gt;.parentWidget
+E                +    and   PyQt6.QtCore.QRect(0, 222, 640, 36) = &lt;built-in method geometry of QLineEdit object at 0x0000027982AA6E60&gt;()
+E                +      where &lt;built-in method geometry of QLineEdit object at 0x0000027982AA6E60&gt; = &lt;PyQt6.QtWidgets.QLineEdit object at 0x0000027982AA6E60&gt;.geometry
+
+tests\gui\test_dashboard.py:13473: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_planning_preview_keeps_square_visible_over_blackout" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_authoritative_photodiode_area_installs_relative_square_and_zones" time="0.362" /><testcase classname="tests.gui.test_dashboard" name="test_legacy_numeric_projector_json_preserves_synchronization" time="0.361" /><testcase classname="tests.gui.test_dashboard" name="test_portable_screen_profile_rebinds_native_properties_and_preserves_coverage" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_authoritative_projector_install_clears_previous_profile_on_empty_state" time="0.372" /><testcase classname="tests.gui.test_dashboard" name="test_projector_reference_measurements_derive_distance_and_roundtrip" time="0.367" /><testcase classname="tests.gui.test_dashboard" name="test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields" time="0.365" /><testcase classname="tests.gui.test_dashboard" name="test_measured_affine_profiles_preserve_assets_and_match_preview[None-1.0-1.0]" time="0.067" /><testcase classname="tests.gui.test_dashboard" name="test_measured_affine_profiles_preserve_assets_and_match_preview[None-1.1-0.95]" time="0.059" /><testcase classname="tests.gui.test_dashboard" name="test_measured_affine_profiles_preserve_assets_and_match_preview[None-0.9-1.05]" time="0.051" /><testcase classname="tests.gui.test_dashboard" name="test_measured_affine_profiles_preserve_assets_and_match_preview[1.5-1.0-1.0]" time="0.050" /><testcase classname="tests.gui.test_dashboard" name="test_measured_affine_profiles_preserve_assets_and_match_preview[1.5-1.1-0.95]" time="0.048" /><testcase classname="tests.gui.test_dashboard" name="test_measured_affine_profiles_preserve_assets_and_match_preview[1.5-0.9-1.05]" time="0.048" /><testcase classname="tests.gui.test_dashboard" name="test_gui_firmware_dispatch_pins_selected_sketch_or_image[hex]" time="0.005" /><testcase classname="tests.gui.test_dashboard" name="test_gui_firmware_dispatch_pins_selected_sketch_or_image[ino]" time="0.014" /><testcase classname="tests.gui.test_dashboard" name="test_group_actions_preserve_contents_selection_and_history" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_group_actions_obey_authority_and_pending_validation" time="0.396" /><testcase classname="tests.gui.test_dashboard" name="test_group_actions_keep_one_group_and_noop_history" time="0.418" /><testcase classname="tests.gui.test_dashboard" name="test_rejected_controller_configuration_restores_edit_tracking[False]" time="0.359" /><testcase classname="tests.gui.test_dashboard" name="test_rejected_controller_configuration_restores_edit_tracking[True]" time="0.355" /><testcase classname="tests.gui.test_dashboard" name="test_calibration_adjustment_steps_preserve_drafts" time="0.007" /><testcase classname="tests.gui.test_dashboard" name="test_live_calibration_coalesces_edits_and_retains_last_valid_projection" time="0.354" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_editor_pair_creation_repeat_scope_and_history" time="0.393" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_batch_insertion_stays_inside_open_group[append]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_batch_insertion_stays_inside_open_group[start]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_batch_insertion_stays_inside_open_group[before]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_batch_insertion_stays_inside_open_group[after]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_batch_insertion_stays_inside_open_group[replace]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_batch_insertion_stays_inside_open_group[stride]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_batch_insertion_stays_inside_open_group[label]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_grouped_timeline_large_repeat_and_visible_paint_are_bounded" time="0.415" /><testcase classname="tests.gui.test_dashboard" name="test_flat_group_initial_trials_and_legacy_imports" time="0.381" /><testcase classname="tests.gui.test_dashboard" name="test_unified_subgroup_template_add_apply_history_and_files" time="1.011" /><testcase classname="tests.gui.test_dashboard" name="test_unified_subgroup_patch_preserves_variants_and_shared_sources" time="0.005" /><testcase classname="tests.gui.test_dashboard" name="test_unified_subgroup_preserves_projector_variants_and_guards_drafts" time="0.886" /><testcase classname="tests.gui.test_dashboard" name="test_unified_subgroup_duration_preserves_each_fade_and_batch_identity" time="0.006" /><testcase classname="tests.gui.test_dashboard" name="test_unified_subgroup_asset_edit_is_projector_local_and_atomic" time="0.573" /><testcase classname="tests.gui.test_dashboard" name="test_direct_group_editor_starts_open_and_uses_only_group_repetitions" time="0.384" /><testcase classname="tests.gui.test_dashboard" name="test_demo_assets_can_be_selected_and_review_path_restores" time="0.602" /><testcase classname="tests.gui.test_dashboard" name="test_subgroup_rules_persist_and_random_projectors_are_independent" time="1.623" /><testcase classname="tests.gui.test_dashboard" name="test_large_random_group_stays_compact_and_layer_controls_are_indices" time="0.753" /><testcase classname="tests.gui.test_dashboard" name="test_inline_timeline_actions_target_blocks_append_and_preserve_undo" time="0.437" /><testcase classname="tests.gui.test_dashboard" name="test_trial_row_actions_scroll_target_and_align_cards" time="1.311" /><testcase classname="tests.gui.test_dashboard" name="test_texture_recipe_file_selection_preserves_original_json" time="0.018" /><testcase classname="tests.gui.test_dashboard" name="test_texture_reference_link_keeps_appearance_and_disables_reparented_motion" time="0.424" /><testcase classname="tests.gui.test_dashboard" name="test_epoch_automatic_updates_preserve_focus_validation_and_history" time="0.392" /><testcase classname="tests.gui.test_dashboard" name="test_active_calibration_measurements_are_editable_only_for_reference_bars[reference_bars]" time="0.372" /><testcase classname="tests.gui.test_dashboard" name="test_active_calibration_measurements_are_editable_only_for_reference_bars[frame_grid]" time="0.376" /><testcase classname="tests.gui.test_dashboard" name="test_active_calibration_measurements_are_editable_only_for_reference_bars[]" time="0.383" /><testcase classname="tests.gui.test_dashboard" name="test_shared_tables_tab_between_nested_editors_and_other_controls" time="0.008" /><testcase classname="tests.gui.test_dashboard" name="test_console_tab_leaves_text_view_for_next_control" time="0.003" /><testcase classname="tests.gui.test_dashboard" name="test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors" time="0.016" /><testcase classname="tests.gui.test_tracking_live" name="test_tracking_diagnostic_presentation_copies_frame_and_checks_exact_scope" time="0.001" /></testsuite></testsuites>

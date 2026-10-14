@@ -40,7 +40,7 @@ def test_defaults_bind_owner_assigned_mcu_pins() -> None:
     assert settings.pulses.tracking.pin == "D11"
     assert settings.pulses.trial_state_pin == "D12"
     assert settings.pulses.trial_state_enabled
-    assert settings.pulses.projector_flip_pin == "D2"
+    assert not settings.pulses.HasField("projector_flip_pin")
     assert not settings.pulses.projector_flip_enabled
     assert not settings.behavioral.device.settings.HasField("trigger_source")
     assert not settings.behavioral.device.settings.HasField("exposure_us")
@@ -132,17 +132,13 @@ def test_microcontroller_io_pin_validation_keeps_disabled_drafts() -> None:
     pulses.trial_state_enabled = False
     pulses.projector_flip_pin = "D9"
     pulses.projector_flip_enabled = True
+    result = validate_configuration(candidate)
+    assert not result.valid
+    assert any(issue.failure.code == "UNSUPPORTED_SIGNAL" for issue in result.issues)
+    pulses.projector_flip_enabled = False
     assert validate_configuration(candidate).valid
-
     pulses.trial_state_enabled = True
-    result = validate_configuration(candidate)
-    assert not result.valid
-    assert any(issue.failure.code == "DUPLICATE_PIN" for issue in result.issues)
-
-    pulses.ClearField("projector_flip_pin")
-    result = validate_configuration(candidate)
-    assert not result.valid
-    assert any(issue.failure.code == "PIN_REQUIRED" for issue in result.issues)
+    assert validate_configuration(candidate).valid
 
 
 def test_disabled_acquisition_retains_future_camera_values_without_hardware() -> None:
@@ -205,13 +201,13 @@ def test_file_policies_resolve_exact_units_and_preserve_missing_margin(
         if item.camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL
     )
     assert behavioral.frame_silence_timeout_ns == 1_000_000_000
-    assert behavioral.post_cutoff_drain_margin_ns == 125_000_000
+    assert behavioral.post_cutoff_drain_margin_ns == 150_000_000
 
     root = _copy_configuration(tmp_path)
     config_path = root / "config/backends/acquisition_config.toml"
     config_path.write_text(
         config_path.read_text(encoding="utf-8").replace(
-            "post_cutoff_drain_margin_ms = 125\n", "", 1
+            "post_cutoff_drain_margin_ms = 150\n", "", 1
         ),
         encoding="utf-8",
     )

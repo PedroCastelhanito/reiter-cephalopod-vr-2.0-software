@@ -39,7 +39,7 @@ class ControllerBridge(QThread):
     spikeglx_inventory_received = pyqtSignal(int, str, bytes)
     tracking_frame_received = pyqtSignal(int, str, bytes)
     configuration_accepted = pyqtSignal(int, int)
-    camera_configuration_accepted = pyqtSignal(int, bytes)
+    device_configuration_accepted = pyqtSignal(int, bytes)
     _MAX_PENDING = 32
     _ORDINARY_PENDING = 24
 
@@ -300,6 +300,7 @@ class ControllerBridge(QThread):
                 "save_mcu_pins",
                 "add_mcu_output",
                 "set_camera_enabled",
+                "set_spikeglx_enabled",
                 "assign_camera_role",
                 "submit_configuration",
                 "spikeglx_inventory_update",
@@ -416,7 +417,7 @@ class ControllerBridge(QThread):
             else:
                 await prepare_mcu_test(client, options)
             confirmed_revision = client.snapshot.configuration.revision
-            self.camera_configuration_accepted.emit(
+            self.device_configuration_accepted.emit(
                 base_revision, client.snapshot.SerializeToString()
             )
             mcu_result = await dispatch_device_action(
@@ -437,7 +438,7 @@ class ControllerBridge(QThread):
                     state.controller_generation == options["generation"]
                     and state.configuration.revision != base_revision
                 ):
-                    self.camera_configuration_accepted.emit(
+                    self.device_configuration_accepted.emit(
                         base_revision, state.SerializeToString()
                     )
                     base_revision = state.configuration.revision
@@ -455,11 +456,20 @@ class ControllerBridge(QThread):
             assert camera_result is not None
             self.command_finished.emit(action, *camera_result)
             return
+        base_revision = client.snapshot.configuration.revision
         device_result = await dispatch_device_action(
             client, action, options, self.principal
         )
         if device_result is not None:
             success, message = device_result
+            if (
+                action == "set_spikeglx_enabled"
+                and success
+                and client.snapshot.configuration.revision != base_revision
+            ):
+                self.device_configuration_accepted.emit(
+                    base_revision, client.snapshot.SerializeToString()
+                )
             self.command_finished.emit(action, success, message)
             return
         if action == "take_control":

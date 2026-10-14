@@ -10,6 +10,10 @@ from uuid import uuid4
 from cephvr.client.session import ClientError, HeadlessClient
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.calibration_assets import (
+    calibration_asset_root,
+    calibration_runtime_root,
+)
 from cephvr.synchronization.v1 import spikeglx_pb2
 
 
@@ -61,25 +65,28 @@ def open_display_calibration_request(
         raise ClientError("Controller configuration is not synchronized.")
     if snapshot.configuration.revision != expected_revision:
         raise ClientError("Display calibration request is for an older configuration.")
-    configuration = snapshot.configuration_values.current
-    if not configuration.HasField("asset_root") or not configuration.asset_root:
-        raise ClientError("Choose and accept a Protocol Assets folder first.")
-    root = Path(configuration.asset_root).resolve(strict=True)
+    root = calibration_asset_root()
     arena = Path(arena_path).resolve(strict=True)
     try:
         arena_reference = arena.relative_to(root).as_posix()
     except ValueError as exc:
         raise ClientError(
-            "The prepared calibration arena is outside the accepted asset root."
+            "The prepared calibration arena is outside the repository calibration asset root."
         ) from exc
-    profile = (root / "calibration" / "diagnostic_display_profile.json").resolve(
-        strict=True
-    )
+    if arena_reference not in (
+        "calibration/reference_bars.glb",
+        "calibration/frame_grid.glb",
+    ):
+        raise ClientError("Calibration requires its selected repository step file.")
+    runtime_root = calibration_runtime_root(arena.stem).resolve(strict=True)
+    profile = (
+        runtime_root / "calibration" / "diagnostic_display_profile.json"
+    ).resolve(strict=True)
     try:
-        profile_reference = profile.relative_to(root).as_posix()
+        profile_reference = profile.relative_to(runtime_root).as_posix()
     except ValueError as exc:
         raise ClientError(
-            "The calibration profile is outside the accepted asset root."
+            "The calibration profile is outside its runtime preparation root."
         ) from exc
     profile_bytes = profile.read_bytes()
     arena_bytes = arena.read_bytes()
@@ -111,20 +118,27 @@ def capture_display_calibration_intent(
     """Freeze the revision and asset bytes at the GUI click/export boundary."""
     if not snapshot.HasField("configuration_values"):
         raise ValueError("Controller configuration is not synchronized.")
-    configuration = snapshot.configuration_values.current
-    if not configuration.HasField("asset_root") or not configuration.asset_root:
-        raise ValueError("Choose and accept a Protocol Assets folder first.")
-    root = Path(configuration.asset_root).resolve(strict=True)
+    root = calibration_asset_root()
     arena = Path(arena_path).resolve(strict=True)
-    profile = (root / "calibration" / "diagnostic_display_profile.json").resolve(
-        strict=True
-    )
-    for asset in (arena, profile):
+    if not arena.is_relative_to(root):
+        raise ValueError(
+            "Calibration asset is outside the repository calibration asset root."
+        )
+    if arena.relative_to(root).as_posix() not in (
+        "calibration/reference_bars.glb",
+        "calibration/frame_grid.glb",
+    ):
+        raise ValueError("Calibration requires its selected repository step file.")
+    runtime_root = calibration_runtime_root(arena.stem).resolve(strict=True)
+    profile = (
+        runtime_root / "calibration" / "diagnostic_display_profile.json"
+    ).resolve(strict=True)
+    for asset, base in ((arena, root), (profile, runtime_root)):
         try:
-            asset.relative_to(root)
+            asset.relative_to(base)
         except ValueError as exc:
             raise ValueError(
-                "Calibration asset is outside the accepted asset root."
+                "Calibration asset is outside the repository calibration asset root."
             ) from exc
     profile_bytes = profile.read_bytes()
     arena_bytes = arena.read_bytes()

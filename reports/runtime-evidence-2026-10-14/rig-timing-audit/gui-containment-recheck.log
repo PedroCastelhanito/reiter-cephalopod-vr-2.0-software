@@ -1,0 +1,209 @@
+EEEEF                                                                    [100%]
+=================================== ERRORS ====================================
+__________ ERROR at setup of test_microcontroller_row_heights_match ___________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x0000011E21F6F400>
+
+    @pytest.fixture
+    def window(app: QApplication) -> Iterator[DashboardWindow]:
+>       result = DashboardWindow(sample=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\gui\test_dashboard.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\gui\window.py:86: in __init__
+    self.devices = DevicesPage(sample=sample, settings=settings)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\gui\devices.py:44: in __init__
+    self.microcontroller = MicrocontrollerPanel(settings=settings)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\gui\microcontroller.py:116: in __init__
+    self.trial_pin = self.add_pin_row(
+src\cephvr\gui\microcontroller.py:217: in add_pin_row
+    table.set_control(row, 0, enabled)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.gui.tables.DataTable object at 0x0000011E249DA170>, row = 0
+column = 0, control = <PyQt6.QtWidgets.QCheckBox object at 0x0000011E24A081F0>
+
+    def set_control(self, row: int, column: int, control: QWidget) -> None:
+        host = QWidget()
+        layout = QHBoxLayout(host)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(control)
+        self.setCellWidget(row, column, host)
+>       QTimer.singleShot(0, host, lambda: layout.setGeometry(host.rect()))
+E       TypeError: arguments did not match any overloaded call:
+E         singleShot(msec: int, slot: PYQT_SLOT): too many arguments
+E         singleShot(msec: int, timerType: Qt.TimerType, slot: PYQT_SLOT): argument 2 has unexpected type 'QWidget'
+
+src\cephvr\gui\tables.py:65: TypeError
+_ ERROR at setup of test_photodiode_controls_fit_with_growing_blackouts[1280] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x0000011E21F6F400>
+
+    @pytest.fixture
+    def window(app: QApplication) -> Iterator[DashboardWindow]:
+>       result = DashboardWindow(sample=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\gui\test_dashboard.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\gui\window.py:86: in __init__
+    self.devices = DevicesPage(sample=sample, settings=settings)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\gui\devices.py:44: in __init__
+    self.microcontroller = MicrocontrollerPanel(settings=settings)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\gui\microcontroller.py:116: in __init__
+    self.trial_pin = self.add_pin_row(
+src\cephvr\gui\microcontroller.py:217: in add_pin_row
+    table.set_control(row, 0, enabled)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.gui.tables.DataTable object at 0x0000011E24A0B7F0>, row = 0
+column = 0, control = <PyQt6.QtWidgets.QCheckBox object at 0x0000011E24A0B490>
+
+    def set_control(self, row: int, column: int, control: QWidget) -> None:
+        host = QWidget()
+        layout = QHBoxLayout(host)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(control)
+        self.setCellWidget(row, column, host)
+>       QTimer.singleShot(0, host, lambda: layout.setGeometry(host.rect()))
+E       TypeError: arguments did not match any overloaded call:
+E         singleShot(msec: int, slot: PYQT_SLOT): too many arguments
+E         singleShot(msec: int, timerType: Qt.TimerType, slot: PYQT_SLOT): argument 2 has unexpected type 'QWidget'
+
+src\cephvr\gui\tables.py:65: TypeError
+_ ERROR at setup of test_photodiode_controls_fit_with_growing_blackouts[720] __
+
+app = <PyQt6.QtWidgets.QApplication object at 0x0000011E21F6F400>
+
+    @pytest.fixture
+    def window(app: QApplication) -> Iterator[DashboardWindow]:
+>       result = DashboardWindow(sample=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\gui\test_dashboard.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\gui\window.py:86: in __init__
+    self.devices = DevicesPage(sample=sample, settings=settings)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\gui\devices.py:44: in __init__
+    self.microcontroller = MicrocontrollerPanel(settings=settings)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\gui\microcontroller.py:116: in __init__
+    self.trial_pin = self.add_pin_row(
+src\cephvr\gui\microcontroller.py:217: in add_pin_row
+    table.set_control(row, 0, enabled)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.gui.tables.DataTable object at 0x0000011E24A875B0>, row = 0
+column = 0, control = <PyQt6.QtWidgets.QCheckBox object at 0x0000011E24A87C70>
+
+    def set_control(self, row: int, column: int, control: QWidget) -> None:
+        host = QWidget()
+        layout = QHBoxLayout(host)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(control)
+        self.setCellWidget(row, column, host)
+>       QTimer.singleShot(0, host, lambda: layout.setGeometry(host.rect()))
+E       TypeError: arguments did not match any overloaded call:
+E         singleShot(msec: int, slot: PYQT_SLOT): too many arguments
+E         singleShot(msec: int, timerType: Qt.TimerType, slot: PYQT_SLOT): argument 2 has unexpected type 'QWidget'
+
+src\cephvr\gui\tables.py:65: TypeError
+____ ERROR at setup of test_microcontroller_fixed_signal_tests_and_layout _____
+
+app = <PyQt6.QtWidgets.QApplication object at 0x0000011E21F6F400>
+
+    @pytest.fixture
+    def window(app: QApplication) -> Iterator[DashboardWindow]:
+>       result = DashboardWindow(sample=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\gui\test_dashboard.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\gui\window.py:86: in __init__
+    self.devices = DevicesPage(sample=sample, settings=settings)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\gui\devices.py:44: in __init__
+    self.microcontroller = MicrocontrollerPanel(settings=settings)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\gui\microcontroller.py:116: in __init__
+    self.trial_pin = self.add_pin_row(
+src\cephvr\gui\microcontroller.py:217: in add_pin_row
+    table.set_control(row, 0, enabled)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.gui.tables.DataTable object at 0x0000011E24A5C3A0>, row = 0
+column = 0, control = <PyQt6.QtWidgets.QCheckBox object at 0x0000011E24A5C160>
+
+    def set_control(self, row: int, column: int, control: QWidget) -> None:
+        host = QWidget()
+        layout = QHBoxLayout(host)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(control)
+        self.setCellWidget(row, column, host)
+>       QTimer.singleShot(0, host, lambda: layout.setGeometry(host.rect()))
+E       TypeError: arguments did not match any overloaded call:
+E         singleShot(msec: int, slot: PYQT_SLOT): too many arguments
+E         singleShot(msec: int, timerType: Qt.TimerType, slot: PYQT_SLOT): argument 2 has unexpected type 'QWidget'
+
+src\cephvr\gui\tables.py:65: TypeError
+================================== FAILURES ===================================
+______ test_shared_tables_tab_between_nested_editors_and_other_controls _______
+
+app = <PyQt6.QtWidgets.QApplication object at 0x0000011E21F6F400>
+
+    def test_shared_tables_tab_between_nested_editors_and_other_controls(app):
+        from PyQt6.QtWidgets import (
+            QCheckBox,
+            QComboBox,
+            QHBoxLayout,
+            QLineEdit,
+            QVBoxLayout,
+            QWidget,
+        )
+    
+        from cephvr.gui.tables import DataTable
+    
+        host = QWidget()
+        layout = QVBoxLayout(host)
+        table = DataTable(2, 2)
+        layout.addWidget(table)
+        pair = QWidget()
+        pair_layout = QHBoxLayout(pair)
+        x, y = QLineEdit(), QLineEdit()
+        pair_layout.addWidget(x)
+        pair_layout.addWidget(y)
+        choice, toggle, last = QComboBox(), QCheckBox(), QLineEdit()
+        choice.addItems(["A", "B"])
+>       table.set_control(0, 0, pair)
+
+tests\gui\test_dashboard.py:15275: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.gui.tables.DataTable object at 0x0000011E227DC310>, row = 0
+column = 0, control = <PyQt6.QtWidgets.QWidget object at 0x0000011E227DC0D0>
+
+    def set_control(self, row: int, column: int, control: QWidget) -> None:
+        host = QWidget()
+        layout = QHBoxLayout(host)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(control)
+        self.setCellWidget(row, column, host)
+>       QTimer.singleShot(0, host, lambda: layout.setGeometry(host.rect()))
+E       TypeError: arguments did not match any overloaded call:
+E         singleShot(msec: int, slot: PYQT_SLOT): too many arguments
+E         singleShot(msec: int, timerType: Qt.TimerType, slot: PYQT_SLOT): argument 2 has unexpected type 'QWidget'
+
+src\cephvr\gui\tables.py:65: TypeError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_shared_tables_tab_between_nested_editors_and_other_controls
+ERROR tests/gui/test_dashboard.py::test_microcontroller_row_heights_match - T...
+ERROR tests/gui/test_dashboard.py::test_photodiode_controls_fit_with_growing_blackouts[1280]
+ERROR tests/gui/test_dashboard.py::test_photodiode_controls_fit_with_growing_blackouts[720]
+ERROR tests/gui/test_dashboard.py::test_microcontroller_fixed_signal_tests_and_layout
+1 failed, 4 errors in 1.62s

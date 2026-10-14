@@ -120,13 +120,6 @@ class GuiSnapshot:
             projectors["configuration"]
         )
         assignments = validate_assignments(projectors["assignments"])
-        if any(
-            key not in self.pages.devices.projectors.keys and face != "Unassigned"
-            for key, face in assignments.items()
-        ):
-            raise ValueError(
-                "Saved projector display identity is unavailable; refresh/connect the matching rig first"
-            )
         participation = fields(
             projectors["participation"], set(assignments), "Display participation"
         )

@@ -1,0 +1,74 @@
+[
+  {
+    "ProcessId": 33564,
+    "ParentProcessId": 17692,
+    "Name": "cephvr-python.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  },
+  {
+    "ProcessId": 5248,
+    "ParentProcessId": 33564,
+    "Name": "cephvr-python.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  },
+  {
+    "ProcessId": 22260,
+    "ParentProcessId": 33564,
+    "Name": "cephvr-python.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  },
+  {
+    "ProcessId": 26872,
+    "ParentProcessId": 33564,
+    "Name": "cephvr-python.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  },
+  {
+    "ProcessId": 8260,
+    "ParentProcessId": 33564,
+    "Name": "cephvr-python.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  },
+  {
+    "ProcessId": 22560,
+    "ParentProcessId": 33564,
+    "Name": "cephvr-python.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  },
+  {
+    "ProcessId": 14640,
+    "ParentProcessId": 26872,
+    "Name": "cephvr-renderer.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe"
+  },
+  {
+    "ProcessId": 32280,
+    "ParentProcessId": 22260,
+    "Name": "cephvr-python.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  },
+  {
+    "ProcessId": 9048,
+    "ParentProcessId": 22260,
+    "Name": "cephvr-python.exe",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  },
+  {
+    "ProcessId": 15848,
+    "ParentProcessId": 14640,
+    "Name": "ffmpeg.exe",
+    "ExecutablePath": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe"
+  },
+  {
+    "ProcessId": 30860,
+    "ParentProcessId": 9048,
+    "Name": "ffmpeg.exe",
+    "ExecutablePath": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe"
+  },
+  {
+    "ProcessId": 34164,
+    "ParentProcessId": 32280,
+    "Name": "ffmpeg.exe",
+    "ExecutablePath": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe"
+  }
+]

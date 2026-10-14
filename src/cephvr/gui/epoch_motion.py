@@ -6,7 +6,7 @@ from typing import Any, cast
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
 
-from cephvr.gui.components import field, label
+from cephvr.gui.components import field
 from cephvr.gui.stimulus_form import ValueEditor
 from cephvr.visual_stimulus.config.parameter_edits import constant_rate as constant_rate
 
@@ -90,9 +90,10 @@ class EpochMotion(QWidget):
         details.addWidget(field("Angular speed (°/s)", self.angular))
         self.angular.textEdited.connect(self.changed)
         layout.addWidget(self.extra)
-        self.summary = label("Custom motion · available in More settings", wrap=True)
-        layout.addWidget(self.summary)
         self.custom = QCheckBox("Custom motion functions")
+        self.custom.setToolTip(
+            "Custom motion functions are available in More settings; saved functions are preserved."
+        )
         self.custom.setChecked(not supported)
         self.custom.setEnabled(supported)
         self.custom.toggled.connect(self.arrange)
@@ -104,7 +105,6 @@ class EpochMotion(QWidget):
         self.changed.connect(lambda: setattr(self, "edited", True))
 
     def arrange(self) -> None:
-        self.summary.setVisible(self.custom.isChecked())
         self.basic.setVisible(not self.custom.isChecked())
         self.advanced.setVisible(self.custom.isChecked())
 

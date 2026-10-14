@@ -11,7 +11,7 @@ import pytest
 
 pytest.importorskip("PyQt6")
 
-from PyQt6.QtCore import QPoint, QRect, QSettings, QSize, Qt
+from PyQt6.QtCore import QEvent, QEventLoop, QPoint, QRect, QSettings, QSize, Qt, QTimer
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import (
     QApplication,
@@ -93,6 +93,50 @@ def window(app: QApplication) -> Iterator[DashboardWindow]:
     yield result
     result.close()
     result.deleteLater()
+    app.processEvents()
+
+
+def _move_mouse_and_wait_for_native_event(
+    widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+) -> None:
+    """Wait for the platform-delivered hover event after moving the real cursor."""
+    from PyQt6.QtCore import QObject
+
+    target_global = widget.mapToGlobal(position)
+    loop = QEventLoop()
+    timer = QTimer()
+    timer.setSingleShot(True)
+    timer.timeout.connect(loop.quit)
+    matched = False
+
+    class TargetMouseMove(QObject):
+        def eventFilter(self, receiver, event):
+            nonlocal matched
+            if (
+                receiver is widget
+                and event.type() == QEvent.Type.MouseMove
+                and event.globalPosition().toPoint() == target_global
+            ):
+                matched = True
+                QTimer.singleShot(0, loop.quit)
+            return False
+
+    probe = TargetMouseMove(widget)
+    widget.installEventFilter(probe)
+    timer.start(timeout_ms)
+    try:
+        QTest.mouseMove(widget, position)
+        if not matched:
+            loop.exec()
+    finally:
+        timer.stop()
+        widget.removeEventFilter(probe)
+    assert matched, (
+        f"native MouseMove was not delivered to {type(widget).__name__} at "
+        f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+        f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+        f"{widget.size()}"
+    )
     app.processEvents()
 
 
@@ -240,6 +284,7 @@ def test_microcontroller_config_load_is_local_and_collects_for_normal_submission
     panel.connection_requested.connect(lambda *args: requests.append(args))
     panel.managed = True
     assert panel.config_files.load_path(str(path))
+    data["projector_flip"]["enabled"] = False
     assert panel.snapshots.capture() == data
     assert requests == []
     assert "Apply pin settings" not in [
@@ -443,7 +488,7 @@ def test_tab_config_buttons_roundtrip_into_fresh_gui(
                 fresh.devices.microcontroller.pin_editors["eye_tracking"].text() == "8"
             )
             assert fresh.devices.microcontroller.flip_pin.text() == "2"
-            assert fresh.devices.microcontroller.enable_controls[
+            assert not fresh.devices.microcontroller.enable_controls[
                 "projector-flip"
             ].isChecked()
     finally:
@@ -1101,7 +1146,7 @@ def test_managed_runtime_editors_are_enabled_without_review_samples(
     assert managed.devices.projectors.can_review
     assert managed.devices.projectors.calibration.isEnabled()
     assert managed.devices.spikeglx.can_review
-    assert not managed.devices.spikeglx.pairing.isEnabled()
+    assert managed.devices.spikeglx.pairing.isEnabled()
     assert managed.devices.spikeglx.address.isReadOnly()
     assert managed.devices.spikeglx.command_port.isReadOnly()
     managed.close()
@@ -1205,7 +1250,7 @@ def test_managed_configuration_creates_first_run_backends_and_installs_partial_t
         backend_name="visual_stimulus", enabled=True
     )
     visual_backend.visual_stimulus.display.profile_json = valid_display_json()
-    managed.devices.projectors.timing.mode.setCurrentText("Selected display VSync")
+    managed.devices.projectors.timing.mode.setCurrentText("VSync on pulse display")
     candidate = manager.collect(complete_base)
     by_name = {item.backend_name: item for item in candidate.backends}
     assert by_name["visual_stimulus"].enabled
@@ -1954,17 +1999,27 @@ async def test_prompt_completion_wait_failure_retains_admitted_id_as_unconfirmed
     ]
 
 
-def test_managed_spikeglx_connection_emits_read_only_intent(app: QApplication) -> None:
+@pytest.mark.parametrize("has_control", [False, True])
+def test_managed_spikeglx_connection_emits_read_only_intent(
+    app: QApplication, has_control: bool
+) -> None:
     from cephvr.gui.spikeglx import SpikeGLXPanel
 
     panel = SpikeGLXPanel()
     requested: list[bool] = []
     panel.connection_requested.connect(lambda: requested.append(True))
-    panel.apply_view(DashboardView(connected=True))
+    panel.apply_view(DashboardView(connected=True, has_control=has_control))
     assert panel.action_buttons[0].isEnabled()
-    assert not panel.editors[0].isEnabled()
+    assert panel.address.isReadOnly()
+    assert panel.command_port.isReadOnly()
     panel.action_buttons[0].click()
     assert requested == [True]
+    assert "no hardware command sent" not in panel.console.toPlainText()
+    for view in (DashboardView(), DashboardView(sample=True, has_control=True)):
+        panel.apply_view(view)
+        assert not panel.action_buttons[0].isEnabled()
+        panel.request("Test connection")
+        assert requested == [True]
     panel.close()
     panel.deleteLater()
     app.processEvents()
@@ -2991,9 +3046,9 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
                 assert panel.scan_button.parentWidget() is panel.port.parentWidget()
                 assert panel.scan_button.size() == QSize(26, 26)
             if index == 1:
-                assert panel.input_table.columnWidth(
-                    1
-                ) == panel.output_table.columnWidth(1)
+                assert panel.io.isHidden()
+                assert panel.output_table.isVisible()
+                assert panel.triggers.rect().contains(panel.output_table.geometry())
                 assert set(panel.pin_editors) == {
                     "behavioral",
                     "tracking",
@@ -3187,9 +3242,10 @@ def test_microcontroller_camera_rows_and_discovery(
         "pin 5, requested 120 Hz output test; not tested" in panel.console.toPlainText()
     )
     panel.test_pin("behavioral")  # Stop the review before changing wiring.
-    panel.flip_pin.setText("5")
-    panel.test_pin("behavioral")
-    assert "duplicate" in panel.console.toPlainText().splitlines()[-1]
+    console_before = panel.console.toPlainText()
+    assert not panel.enable_controls["projector-flip"].isChecked()
+    panel.test_pin("projector-flip")
+    assert panel.console.toPlainText() == console_before
     panel.request("Scan ports")
     assert panel.port.currentData() == "COM7"
     monkeypatch.setattr(microcontroller.QSerialPortInfo, "availablePorts", lambda: [])
@@ -3447,25 +3503,21 @@ def test_microcontroller_fixed_signal_tests_and_layout(window: DashboardWindow) 
     panel.flip_pin.setText("4")
     panel.test_buttons["trial-state"].click()
     assert "pin 3, active-high output test; not tested" in panel.console.toPlainText()
-    panel.test_buttons["projector-flip"].click()
-    assert (
-        "pin 4, rising-edge input observation; not tested"
-        in panel.console.toPlainText()
-    )
-    layout = panel.columns[0].layout()
-    assert layout.indexOf(panel.io) < layout.indexOf(panel.triggers)
-    captions = [label.text() for label in panel.triggers.findChildren(QLabel)]
-    assert "RATE (Hz)" not in captions and "CAMERA" not in captions
-    assert not hasattr(panel, "trial_polarity") and not hasattr(panel, "flip_edge")
-    window.apply_view(review_view(Phase.RUNNING))
     before = panel.console.toPlainText()
+    panel.test_buttons["projector-flip"].click()
+    assert panel.console.toPlainText() == before
+    assert panel.io.isHidden()
+    assert not panel.test_buttons["projector-flip"].isEnabled()
     panel.test_pin("trial-state")
+    assert not panel.review_tests
+    before = panel.console.toPlainText()
     panel.test_pin("projector-flip")
     assert panel.console.toPlainText() == before
 
 
 def test_microcontroller_role_outputs_clear_without_changing_camera_use(
     window: DashboardWindow,
+    monkeypatch,
 ) -> None:
     panel = window.devices.microcontroller
     cameras = window.devices.cameras
@@ -3478,9 +3530,42 @@ def test_microcontroller_role_outputs_clear_without_changing_camera_use(
     assert panel.pin_editors["behavioral"].text() == ""
     assert not cameras.drafts[0].enabled
     assert set(panel.pin_editors) == {"behavioral", "tracking", "eye_tracking"}
-    assert all(
-        not panel.output_table.isRowHidden(row) for row in panel.role_rows.values()
-    )
+    assert panel.output_table.isRowHidden(panel.role_rows["behavioral"])
+    original = [
+        (camera.role, camera.enabled, dict(camera.values)) for camera in cameras.drafts
+    ]
+    for key in panel.signals.editors:
+        panel.signals.remove(key)
+    assert panel.input_table.horizontalHeader().isHidden()
+    assert panel.output_table.horizontalHeader().isHidden()
+    assert not panel.enable_controls["trial-state"].isChecked()
+    assert not panel.enable_controls["projector-flip"].isChecked()
+    data = panel.snapshots.capture()
+    panel.snapshots.restore(data)
+    assert panel.input_table.horizontalHeader().isHidden()
+    assert panel.output_table.horizontalHeader().isHidden()
+    from PyQt6.QtWidgets import QInputDialog
+
+    monkeypatch.setattr(QInputDialog, "getInt", lambda *_args: (8, True))
+    panel.signals.add("behavioral")
+    assert not panel.output_table.isRowHidden(panel.role_rows["behavioral"])
+    assert not panel.output_table.horizontalHeader().isHidden()
+    assert panel.pin_editors["behavioral"].text() == "8"
+    monkeypatch.setattr(QInputDialog, "getInt", lambda *_args: (3, True))
+    panel.signals.add("projector-flip")
+    assert not panel.enable_controls["projector-flip"].isChecked()
+    assert panel.input_table.horizontalHeader().isHidden()
+    assert panel.io.isHidden()
+    assert "projector-flip" not in panel.signals.add_actions
+    assert original == [
+        (camera.role, camera.enabled, dict(camera.values)) for camera in cameras.drafts
+    ]
+    panel.managed_test_key = "behavioral"
+    panel.refresh_tests()
+    panel.signals.remove("behavioral")
+    panel.signals.add("trial-state")
+    assert panel.pin_editors["behavioral"].text() == "8"
+    assert not panel.trial_pin.text()
 
 
 def test_microcontroller_file_restores_camera_output_rows_without_commands(
@@ -3953,6 +4038,7 @@ def test_managed_configuration_action_plan_preserves_edits_outside_editable_phas
 @pytest.mark.asyncio
 async def test_managed_gui_setup_captures_exact_accepted_configuration_for_bridge(
     window: DashboardWindow,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import asyncio
 
@@ -3994,6 +4080,9 @@ async def test_managed_gui_setup_captures_exact_accepted_configuration_for_bridg
     gui.bridge = bridge
     gui.window = window
     gui.confirm_discard_local_draft = lambda: True
+
+    window.devices.projectors.keys = ["identified-projector"]
+    monkeypatch.setattr(window.devices.projectors, "discover_displays", lambda: None)
 
     gui.request_dashboard_action("Setup")
     await asyncio.sleep(0)
@@ -4226,8 +4315,9 @@ async def test_controller_bridge_submits_then_setup_uses_exact_accepted_version(
     assert accepted == [(5, 19)]
 
 
-def test_managed_display_calibration_requests_use_accepted_relative_assets(
+def test_managed_display_calibration_requests_use_repository_relative_assets(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.control.v1 import types_pb2 as pb
@@ -4239,17 +4329,26 @@ def test_managed_display_calibration_requests_use_accepted_relative_assets(
 
     generation = str(uuid4())
     client_id = str(uuid4())
-    root = tmp_path / "accepted-assets"
+    root = tmp_path / "repository-assets"
+    monkeypatch.setattr(
+        "cephvr.gui.managed_display_operations.calibration_asset_root", lambda: root
+    )
+    runtime = tmp_path / "runtime-data"
+    monkeypatch.setattr(
+        "cephvr.gui.managed_display_operations.calibration_runtime_root",
+        lambda _view: runtime,
+    )
+    (runtime / "calibration").mkdir(parents=True)
     calibration = root / "calibration"
     calibration.mkdir(parents=True)
-    profile = calibration / "diagnostic_display_profile.json"
-    arena = calibration / "rig_geometry_grid.glb"
+    profile = runtime / "calibration" / "diagnostic_display_profile.json"
+    arena = calibration / "frame_grid.glb"
     profile.write_text("{}", encoding="utf-8")
     arena.write_bytes(b"glb")
     state = pb.Snapshot(controller_generation=generation)
     state.configuration.revision = 9
     state.configuration_values.revision = 9
-    state.configuration_values.current.asset_root = str(root)
+    state.configuration_values.current.asset_root = str(tmp_path / "external-media")
     state.control.holder_client_id = client_id
     state.control.control_generation = "lease-1"
 
@@ -4272,10 +4371,21 @@ def test_managed_display_calibration_requests_use_accepted_relative_assets(
     assert (
         request.profile_asset_reference == "calibration/diagnostic_display_profile.json"
     )
-    assert request.arena_asset_reference == "calibration/rig_geometry_grid.glb"
+    assert request.arena_asset_reference == "calibration/frame_grid.glb"
     assert request.command.controller_generation == generation
     assert request.expected_profile_sha256
     assert request.expected_arena_sha256
+
+    state.configuration_values.current.ClearField("asset_root")
+    assert open_display_calibration_request(
+        Client(), **intent
+    ).arena_asset_reference == ("calibration/frame_grid.glb")
+    profile.write_text('{"changed":true}', encoding="utf-8")
+    from cephvr.client.session import ClientError
+
+    with pytest.raises(ClientError, match="changed before command admission"):
+        open_display_calibration_request(Client(), **intent)
+    profile.write_text("{}", encoding="utf-8")
 
     state.visual_stimulus_display.calibration.diagnostic_id = "diag-1"
     state.visual_stimulus_display.calibration.controller_generation = generation
@@ -4288,7 +4398,9 @@ def test_managed_display_calibration_requests_use_accepted_relative_assets(
 
     outside = tmp_path / "outside.glb"
     outside.write_bytes(b"outside")
-    with pytest.raises(ValueError, match="outside the accepted asset root"):
+    with pytest.raises(
+        ValueError, match="outside the repository calibration asset root"
+    ):
         capture_display_calibration_intent(state, arena_path=str(outside))
 
 
@@ -4463,6 +4575,171 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly(
     assert generic_finished == []
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("succeeded", [True, False])
+async def test_managed_spikeglx_pairing_updates_only_session_flag(
+    succeeded: bool,
+) -> None:
+    from cephvr.client.session import ClientError, CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_device_commands import dispatch_device_action
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot()
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 7
+    state.configuration_values.current.backends.add(
+        backend_name="synchronization", enabled=False
+    )
+    state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    original = state.configuration_values.current.SerializeToString()
+    requests = []
+
+    class Client:
+        snapshot = state
+
+        def operator_command(self):
+            return rpc.OperatorCommand()
+
+        async def execute(self, method, request):
+            assert method == "UpdateConfiguration"
+            requests.append(request)
+            return CommandOutcome("pairing", True, succeeded, failure="rejected")
+
+    principal = Principal("gui", str(uuid4()), "token")
+    options = {"expected_revision": 7, "enabled": True}
+    if succeeded:
+        result = await dispatch_device_action(
+            Client(), "set_spikeglx_enabled", options, principal
+        )
+        assert result == (True, "Pairing enabled")
+    else:
+        with pytest.raises(ClientError, match="rejected"):
+            await dispatch_device_action(
+                Client(), "set_spikeglx_enabled", options, principal
+            )
+    assert len(requests) == 1
+    expected = pb.ExperimentConfiguration.FromString(original)
+    expected.backends[0].enabled = True
+    assert requests[0].proposed == expected
+    assert requests[0].expected_revision == 7
+    assert state.configuration_values.current.SerializeToString() == original
+    for revision, phase, error in (
+        (8, pb.SESSION_PHASE_CONFIGURATION, "revision changed"),
+        (7, pb.SESSION_PHASE_RUNNING, "only change in Configuration"),
+    ):
+        state.configuration.revision = revision
+        state.session.phase = phase
+        with pytest.raises(ClientError, match=error):
+            await dispatch_device_action(
+                Client(), "set_spikeglx_enabled", options, principal
+            )
+        assert len(requests) == 1
+
+
+@pytest.mark.asyncio
+async def test_spikeglx_pairing_bridge_publishes_accepted_device_revision() -> None:
+    from cephvr.client.session import CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = state.configuration_values.revision = 7
+    state.configuration_values.current.backends.add(
+        backend_name="synchronization", enabled=False
+    )
+
+    class Client:
+        snapshot = state
+
+        def operator_command(self):
+            return rpc.OperatorCommand()
+
+        async def execute(self, method, request):
+            assert method == "UpdateConfiguration"
+            state.configuration_values.current.CopyFrom(request.proposed)
+            state.configuration.revision = state.configuration_values.revision = 8
+            return CommandOutcome("pairing", True, True)
+
+    bridge = ControllerBridge(
+        Principal("gui", str(uuid4()), "token"), 50051, 1024, (0,)
+    )
+    accepted = []
+    finished = []
+    bridge.device_configuration_accepted.connect(
+        lambda revision, raw: accepted.append((revision, pb.Snapshot.FromString(raw)))
+    )
+    bridge.command_finished.connect(lambda *result: finished.append(result))
+    await bridge._dispatch(
+        Client(), "set_spikeglx_enabled", {"enabled": True, "expected_revision": 7}
+    )
+    assert len(accepted) == 1
+    assert accepted[0][0] == 7
+    assert accepted[0][1].configuration.revision == 8
+    assert accepted[0][1].configuration_values.current.backends[0].enabled
+    assert finished == [("set_spikeglx_enabled", True, "Pairing enabled")]
+
+
+@pytest.mark.parametrize("queued", [True, False])
+def test_managed_spikeglx_pairing_waits_for_confirmation(
+    window: DashboardWindow, queued: bool
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_display import ManagedDisplayOperations
+    from cephvr.gui.view import DashboardView, Phase
+
+    state = pb.Snapshot()
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 7
+    backend = state.configuration_values.current.backends.add(
+        backend_name="synchronization", enabled=False
+    )
+    sent = []
+
+    def send(action, **options):
+        sent.append((action, options))
+        return queued
+
+    panel = window.devices.spikeglx
+    ops = ManagedDisplayOperations(
+        window.devices.projectors,
+        panel,
+        snapshot=lambda: state,
+        connection_identity=lambda: None,
+        send=send,
+    )
+    panel.pairing_requested.connect(ops.submit_pairing)
+    view = DashboardView(connected=True, has_control=True)
+    panel.apply_view(view)
+    ops.install_pairing()
+    panel.pairing.click()
+    assert sent == [("set_spikeglx_enabled", {"enabled": True, "expected_revision": 7})]
+    assert not panel.pairing.isChecked()
+    assert panel.pairing_pending == queued
+    assert panel.pairing.isEnabled() != queued
+    panel.apply_view(view)
+    assert panel.pairing.isEnabled() != queued
+    backend.enabled = True
+    ops.install_pairing()
+    assert panel.pairing.isChecked()
+    assert len(sent) == 1
+    ops.pairing_finished()
+    assert panel.pairing.isEnabled()
+    for locked in (
+        DashboardView(),
+        DashboardView(connected=True),
+        DashboardView(connected=True, has_control=True, phase=Phase.READY),
+    ):
+        panel.apply_view(locked)
+        assert not panel.pairing.isEnabled()
+
+
 def test_managed_spikeglx_inventory_installs_read_only_host_settings(
     window: DashboardWindow,
 ) -> None:
@@ -4499,7 +4776,7 @@ def test_managed_spikeglx_inventory_installs_read_only_host_settings(
     panel = window.devices.spikeglx
     panel.apply_view(DashboardView(connected=True, has_control=True))
     assert panel.pairing.isChecked()
-    assert not panel.pairing.isEnabled()
+    assert panel.pairing.isEnabled()
     assert panel.address.text() == "169.254.240.108"
     assert panel.address.isReadOnly()
     assert panel.command_port.text() == "4142"
@@ -5471,7 +5748,7 @@ async def test_camera_action_submits_before_test_and_stops_on_failure(
 
     bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
     accepted = []
-    bridge.camera_configuration_accepted.connect(
+    bridge.device_configuration_accepted.connect(
         lambda revision, payload: accepted.append(
             (revision, pb.Snapshot.FromString(payload))
         )
@@ -5655,14 +5932,14 @@ def test_camera_acceptance_preserves_other_local_configuration_drafts(
     window.dashboard.subject_id.setText("Local subject")
     manager.dirty = manager.tracking_dirty = manager.stale = True
     state.configuration.revision = state.configuration_values.revision = 5
-    assert manager.note_camera_revision(state, 4)
+    assert manager.note_device_revision(state, 4)
     assert manager.revision == 5 and not manager.stale
     assert manager.dirty and manager.tracking_dirty
     assert window.dashboard.subject_id.text() == "Local subject"
     assert window.devices.cameras.snapshot_draft
     assert window.devices.microcontroller.snapshots.draft_loaded
     state.controller_generation = "other"
-    assert not manager.note_camera_revision(state, 5)
+    assert not manager.note_device_revision(state, 5)
     assert manager.revision == 5
 
 
@@ -5871,7 +6148,7 @@ async def test_managed_mcu_draft_test_requires_exact_acceptance(failure: str) ->
         if failure == "changed_after_acceptance":
             state.configuration.revision = state.configuration_values.revision = 9
 
-    bridge.camera_configuration_accepted.connect(note_accepted)
+    bridge.device_configuration_accepted.connect(note_accepted)
     if failure == "stale":
         state.configuration.revision = 8
     if failure:
@@ -6102,25 +6379,6 @@ def test_contextual_wiring_editors_update_only_the_shared_draft(
     assert not cameras.drafts[0].enabled
     assert mcu.snapshots.draft_loaded and saved == []
 
-    def projector_save() -> None:
-        editor = devices.wiring_dialog
-        assert editor is not None
-        editor.port.setEditText("COM10")
-        editor.pin.setText("3")
-        assert editor.enabled is not None
-        editor.enabled.setChecked(False)
-        editor.accept()
-
-    QTimer.singleShot(0, projector_save)
-    devices.projectors.timing.wiring_button.click()
-    app.processEvents()
-    assert mcu.port.currentData() == "COM10"
-    assert mcu.flip_pin.text() == "3"
-    assert not mcu.enable_controls["projector-flip"].isChecked()
-    assert mcu.pin_editors["behavioral"].text() == "7"
-    assert mcu.pin_editors["tracking"].text() == "11"
-    assert saved == []
-
 
 @pytest.mark.parametrize("change", ["role", "authority", "pending"])
 def test_contextual_wiring_save_is_discarded_after_identity_or_authority_change(
@@ -6152,31 +6410,29 @@ def test_contextual_wiring_save_is_discarded_after_identity_or_authority_change(
     assert panel.pin_editors["tracking"].text() == ""
 
 
-def test_cancelled_projector_wiring_keeps_flip_enable_and_pin(
-    window: DashboardWindow, app: QApplication
-) -> None:
-    from PyQt6.QtCore import QTimer
-
-    devices = window.devices
-    window.apply_view(review_view(Phase.CONFIGURATION))
-    panel = devices.microcontroller
-    panel.flip_pin.setText("2")
-    panel.enable_controls["projector-flip"].setChecked(True)
-
-    def cancel() -> None:
-        editor = devices.wiring_dialog
-        assert editor is not None and editor.enabled is not None
-        editor.port.setEditText("COM99")
-        editor.pin.setText("3")
-        editor.enabled.setChecked(False)
-        editor.reject()
-
-    QTimer.singleShot(0, cancel)
-    devices.edit_projector_wiring()
-    app.processEvents()
-    assert panel.port.currentData() is None
-    assert panel.flip_pin.text() == "2"
-    assert panel.enable_controls["projector-flip"].isChecked()
+@pytest.mark.parametrize(
+    "mode", ["free_run", "photodiode_only_vsync", "all_outputs_vsync"]
+)
+def test_projector_sync_modes_without_mcu_preserve_saved_drafts(window, mode):
+    panel = window.devices.projectors
+    timing = panel.timing
+    window.devices.microcontroller.flip_pin.clear()
+    assert not hasattr(timing, "wiring_button")
+    assert [timing.mode.itemText(i) for i in range(timing.mode.count())] == [
+        "Free run (no VSync)",
+        "VSync on pulse display",
+        "VSync on all displays",
+    ]
+    timing.set_presentation_mode(mode)
+    assert timing.mode.isEnabled()
+    snapshot = panel.calibration_files.snapshot()
+    timing.set_presentation_mode("photodiode_only_vsync")
+    panel.calibration_files.apply_snapshot(snapshot)
+    assert timing.presentation_mode == mode
+    assert window.devices.microcontroller.flip_pin.text() == ""
+    snapshot["settings"]["vsync_mode"] = "All displays VSync"
+    panel.calibration_files.apply_snapshot(snapshot)
+    assert timing.presentation_mode == "all_outputs_vsync"
 
 
 def test_restored_managed_draft_assigns_eye_and_adds_output_locally(
@@ -6399,6 +6655,66 @@ def test_runtime_gui_close_reopen_preserves_full_draft(
     app.processEvents()
 
 
+def test_disconnected_projector_draft_restores_and_saves(
+    window: DashboardWindow, tmp_path: Path
+) -> None:
+    from cephvr.gui.gui_history import GuiHistory
+    from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
+
+    panel = window.devices.projectors
+    panel.assignments = {"saved-front": "Front", "saved-left": "Left"}
+    panel.participation = {"saved-front": True, "saved-left": False}
+    panel.update_participation()
+    saved = window.snapshots.capture()
+    panel.review_displays = ()
+    panel.discover_displays()
+    window.snapshots.restore(window.snapshots.validate(saved))
+    assert panel.keys == []
+    assert panel.assignments == saved["projectors"]["assignments"]
+    assert panel.participation == saved["projectors"]["participation"]
+    assert panel.enabled_screens == ("Front",)
+    assert NO_PROJECTORS_MESSAGE in panel.console.toPlainText()
+    assert NO_PROJECTORS_MESSAGE in panel.status_column.hud.toPlainText()
+    field = panel.calibration_files.fields["screens.Front.valid_width_px"]
+    field.setText("12")
+    history = GuiHistory(window.snapshots, tmp_path / "runtime_gui.json")
+    history.restore()
+    history.save()
+    field.setText("20")
+    assert GuiHistory(window.snapshots, history.path).restore()
+    assert float(field.text()) == 12
+
+
+def test_setup_without_projectors_logs_and_submits_nothing(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.gui.main import ManagedGui
+
+    panel = window.devices.projectors
+    panel.review_displays = ()
+    requests = []
+    gui = SimpleNamespace(
+        window=window,
+        bridge=SimpleNamespace(request=lambda *args, **kw: requests.append(args)),
+    )
+    # Refresh on click must replace even a stale inventory from before power-off.
+    panel.keys = ["previously-connected"]
+    window.dashboard.action_requested.disconnect()
+    window.dashboard.action_requested.connect(
+        lambda action: ManagedGui.request_dashboard_action(gui, action)
+    )
+    window.dashboard.apply_view(DashboardView(connected=True, has_control=True))
+    setup = window.dashboard.command_buttons["Setup"]
+    assert setup.isEnabled()
+    setup.click()
+    assert requests == []
+    assert panel.keys == []
+    message = window.dashboard.log_console.toPlainText()
+    assert "Setup not submitted" in message
+    assert "No available projectors have been identified" in message
+    assert "turn on" in message
+
+
 def test_runtime_gui_save_failure_keeps_window_open_and_previous_file(
     app: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -6498,6 +6814,7 @@ def test_review_draft_restores_local_configuration(
     first.devices.microcontroller.pin_editors["eye_tracking"].setText("D12")
     first.protocol.editor.drafts[0].name = "Last trial"
     first.devices.projectors.rig_editor.fields["width"].setText("250")
+    first.devices.projectors.calibration.controls["Front", "offset_x_px"].setText("15")
     first.devices.spikeglx.editors[0].setText("10.0.0.2")  # type: ignore[attr-defined]
     first.devices.spikeglx.rows[first.devices.cameras.drafts[0].key][4].setText("0")
     first.devices.spikeglx.add_input.click()
@@ -6525,6 +6842,10 @@ def test_review_draft_restores_local_configuration(
     assert second.devices.microcontroller.pin_editors["eye_tracking"].text() == "12"
     assert second.protocol.editor.drafts[0].name == "Last trial"
     assert second.devices.projectors.rig_editor.fields["width"].text() == "250"
+    assert (
+        second.devices.projectors.calibration.controls["Front", "offset_x_px"].text()
+        == "15"
+    )
     assert second.devices.spikeglx.editors[0].text() == "10.0.0.2"  # type: ignore[attr-defined]
     assert (
         second.devices.spikeglx.rows[second.devices.cameras.drafts[0].key][4].text()
@@ -6555,12 +6876,21 @@ def test_legacy_review_draft_camera_pin_migrates_to_logical_role(
     legacy["microcontroller"].pop("camera_pins")
     legacy["cameras"][0]["pin"] = "D8"
     legacy["cameras"][0]["role"] = "Eye tracking"
+    legacy["projectors"]["screens"]["Bottom"] = {"width": "94", "height": "126"}
     path.write_text(json.dumps(legacy))
     second = DashboardWindow(sample=True)
     ReviewControls(second)
     assert load_review_draft(second, path)
     assert second.devices.microcontroller.pin_editors["eye_tracking"].text() == "8"
     assert second.devices.microcontroller.pin_editors["behavioral"].text() == ""
+    assert (
+        second.devices.projectors.screen_editor.fields["Bottom", "width"].text()
+        == "126"
+    )
+    assert (
+        second.devices.projectors.screen_editor.fields["Bottom", "height"].text()
+        == "94"
+    )
     first.close()
     second.close()
     app.processEvents()
@@ -6779,8 +7109,7 @@ def test_projector_geometry_and_pulse_drafts_are_independent(window: DashboardWi
     from cephvr.visual_stimulus.config.models.display_profile import Geometry
     from cephvr.visual_stimulus.rendering.arena import off_axis_view_projection
 
-    for key, value in zip(rig.projection_fields, (1, 1000, 0.1, 0.01), strict=True):
-        rig.projection_fields[key].setText(str(value))
+    assert not hasattr(rig, "projection_fields")
     draft = {
         face: {"width": "200", "height": "150", "subject_distance": "200"}
         for face in ("Front", "Left", "Right", "Bottom")
@@ -6808,10 +7137,10 @@ def test_configuration_scroll_keeps_projector_status_fixed(
     panel = window.devices.projectors
     assert [panel.setup_tabs.tabText(i) for i in range(3)] == [
         "Screen calibration",
-        "Synchronization",
         "Rig geometry",
+        "Synchronization",
     ]
-    panel.setup_tabs.setCurrentIndex(2)
+    panel.setup_tabs.setCurrentIndex(1)
     app.processEvents()
     top = panel.layout_card.mapTo(window, QPoint())
     log = panel.status_column.log_card.mapTo(window, QPoint())
@@ -6828,10 +7157,10 @@ def test_calibration_and_screen_dimensions_retain_separate_drafts(
     window: DashboardWindow,
 ):
     panel = window.devices.projectors
-    panel.calibration.controls["Front", "scale_u"].setText("1.2")
+    panel.calibration.controls["Front", "valid_width_px"].setText("1.2")
     panel.calibration.controls["Front", "flip_x"].setChecked(True)
     panel.screen_editor.fields["Front", "width"].setText("200")
-    assert panel.screen_editor.drafts["Front"]["scale_u"] == "1.2"
+    assert panel.screen_editor.drafts["Front"]["valid_width_px"] == "1.2"
     assert panel.screen_editor.drafts["Front"]["flip_x"] == "True"
     assert panel.screen_editor.fields["Front", "width"].text() == "200"
 
@@ -6909,7 +7238,9 @@ def test_screen_distance_moves_planes_independently_of_tank():
     }
     values = {"width": "200", "height": "150", "subject_distance": "150"}
     for face, (axis, coordinate) in distances.items():
-        corners = screen_corners(rig, face, values, front_distance="150")
+        corners = screen_corners(
+            rig, face, values, front_distance="150", bottom_distance="150"
+        )
         assert all(p[axis] == coordinate for p in corners)
     assert rig.subject == (80, 100, 75)
     for distance in ("", "0", "-1", "nan", "inf"):
@@ -6955,12 +7286,13 @@ def test_all_screen_calibration_json_roundtrip_and_rejection(
     files = panel.calibration_files
     panel.rig_editor.fields["width"].setText("200")
     panel.rig_editor.screen_distances["Left"].setText("150")
-    panel.calibration.controls["Bottom", "offset_x"].setText("-12.5")
+    panel.calibration.controls["Bottom", "valid_width_px"].setText("125")
     panel.calibration.controls["Right", "flip_x"].setChecked(True)
     path = tmp_path / "calibration.json"
     panel.assignments["local-display"] = "Front"
     panel.participation["local-display"] = False
     expected = files.snapshot()
+    assert not any(key.startswith("projection.") for key in expected["values"])
     assert not any(
         "display" in key or "assignment" in key or "participation" in key
         for key in expected["values"]
@@ -6975,8 +7307,45 @@ def test_all_screen_calibration_json_roundtrip_and_rejection(
     assert panel.participation == {"local-display": False}
     assert panel.rig_editor.screen_distances["Left"].text() == "150.0"
     assert ("Left", "subject_distance") not in panel.screen_editor.fields
-    assert panel.screen_editor.drafts["Bottom"]["offset_x"] == "-12.5"
+    assert panel.screen_editor.drafts["Bottom"]["valid_width_px"] == "125"
     assert panel.screen_editor.drafts["Right"]["flip_x"] == "True"
+    legacy = json.loads(json.dumps(expected))
+    legacy["values"].update(
+        {
+            "projection.near_mm": 20,
+            "projection.far_mm": 2000,
+            "projection.positional_tolerance_mm": 0.1,
+            "projection.orthogonality_tolerance": 0.01,
+        }
+    )
+    files.apply_snapshot(legacy)
+    assert files.snapshot() == expected
+    old = json.loads(json.dumps(expected))
+    old["version"] = 9
+    old["values"] = {
+        k: v
+        for k, v in old["values"].items()
+        if not k.endswith(("offset_x_px", "offset_y_px"))
+    }
+    for face in ("Front", "Left", "Right", "Bottom"):
+        old["values"][f"screens.{face}.offset_x"] = 12.5
+        old["values"][f"screens.{face}.offset_y"] = -20.2
+    old["values"]["screens.Bottom.valid_width_px"] = 125.2
+    files.apply_snapshot(old)
+    assert files.snapshot() == expected
+    for key, value in (("offset_x_px", "12"), ("offset_y_px", "-7")):
+        panel.calibration.controls["Bottom", key].setText(value)
+    translated = files.snapshot()
+    files.apply_snapshot(expected)
+    files.apply_snapshot(translated)
+    assert files.snapshot() == translated
+    assert panel.calibration.controls["Bottom", "offset_y_px"].text() == "-7"
+    files.apply_snapshot(expected)
+    invalid_size = files.snapshot()
+    invalid_size["values"]["screens.Bottom.valid_width_px"] = 125.2
+    with pytest.raises(ValueError, match="whole pixel"):
+        files.apply_snapshot(invalid_size)
+    assert files.snapshot() == expected
     invalid = files.snapshot()
     invalid["values"]["screens.Left.subject_distance"] = -10
     path.write_text(json.dumps(invalid))
@@ -7149,7 +7518,11 @@ def test_right_screen_is_derived_and_legacy_asymmetry_rejected(
     panel.screen_editor.fields["Right", "height"].setText("150")
     assert panel.tank.screens["Right"]["subject_distance"] == "170.0"
     corners = screen_corners(
-        rig.dimensions(), "Right", panel.tank.screens["Right"], front_distance="150"
+        rig.dimensions(),
+        "Right",
+        panel.tank.screens["Right"],
+        front_distance="150",
+        bottom_distance="95",
     )
     assert all(p[0] == 250 for p in corners)
     payload = panel.calibration_files.snapshot()
@@ -7159,6 +7532,13 @@ def test_right_screen_is_derived_and_legacy_asymmetry_rejected(
         version=1,
         values=dict(payload["values"], **{"screens.Right.subject_distance": 170}),
     )
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for old, new in (("scale_u", "valid_width_px"), ("scale_v", "valid_height_px")):
+            legacy["values"].pop(f"screens.{face}.{new}")
+            legacy["values"][f"screens.{face}.{old}"] = None
+    legacy["values"] = {
+        k: v for k, v in legacy["values"].items() if "reference_" not in k
+    }
     path = tmp_path / "legacy.json"
     path.write_text(json.dumps(legacy))
     panel.calibration_files.load_path(str(path))
@@ -7758,6 +8138,7 @@ def test_protocol_controls_and_enabled_screen_lanes(window: DashboardWindow) -> 
     projectors.update_participation()
     assert panel.editor.timeline.screens == ("Front",)
     projectors.keys.clear()
+    projectors.assignments.clear()
     projectors.diagram.outputs.clear()
     projectors.update_participation()
     assert panel.editor.timeline.screens == ()
@@ -9207,14 +9588,13 @@ def test_front_attached_screens_share_plot_and_prepared_corners(
     window: DashboardWindow,
 ):
     panel = window.devices.projectors
+    from cephvr.gui.calibration_arena import geometry_from_calibration
+    from cephvr.gui.trial_preview_surfaces import PreviewGeometry
+
     for key, value in zip(
         panel.rig_editor.fields, (200, 300, 150, 80, 100, 75), strict=True
     ):
         panel.rig_editor.fields[key].setText(str(value))
-    for key, value in zip(
-        panel.rig_editor.projection_fields, (1, 1000, 0.1, 0.01), strict=True
-    ):
-        panel.rig_editor.projection_fields[key].setText(str(value))
     for face in ("Front", "Left", "Right", "Bottom"):
         panel.screen_editor.fields[face, "width"].setText("300")
         panel.screen_editor.fields[face, "height"].setText("180")
@@ -9223,18 +9603,116 @@ def test_front_attached_screens_share_plot_and_prepared_corners(
     planes = panel.tank.screen_planes()
     assert all(p[1] == -40 for p in planes["Front"])
     for face in ("Left", "Right", "Bottom"):
-        assert min(p[1] for p in planes[face]) == -40
-    assert max(p[1] for p in planes["Left"]) == 260
-    assert max(p[1] for p in planes["Bottom"]) == 140
+        assert min(p[1] for p in planes[face]) == -35
+    assert max(p[1] for p in planes["Left"]) == 265
+    assert max(p[1] for p in planes["Bottom"]) == 265
+    for distance, lower in ((95, -15), (55, 25)):
+        panel.rig_editor.screen_distances["Bottom"].setText(str(distance))
+        planes = panel.tank.screen_planes()
+        assert all(p[2] == lower - 5 for p in planes["Bottom"])
+        for face in ("Front", "Left", "Right"):
+            assert min(p[2] for p in planes[face]) == lower
+            assert max(p[2] for p in planes[face]) == lower + 180
+        preview = PreviewGeometry.from_drafts(
+            panel.rig_editor.dimensions(), panel.screen_editor.drafts
+        )
+        numeric = panel.calibration_files.calibration_snapshot()
+        _, exported = geometry_from_calibration(numeric)
+        assert exported == planes
+        assert {f: list(s.corners) for f, s in preview.surfaces.items()} == planes
     payload = panel.rig_editor.geometry_payload(panel.screen_editor.drafts)
     for surface in payload["surfaces"]:
         face = surface["surface_id"].title()
         assert list(surface.values())[1:] == planes[face]
+    for invalid in ("", "0", "-1", "nan", "inf"):
+        panel.rig_editor.screen_distances["Bottom"].setText(invalid)
+        assert panel.tank.screen_planes() == {}
+        assert not PreviewGeometry.from_drafts(
+            panel.rig_editor.dimensions(), panel.screen_editor.drafts
+        ).surfaces
+        with pytest.raises(ValueError):
+            panel.rig_editor.geometry_payload(panel.screen_editor.drafts)
+        with pytest.raises(ValueError):
+            geometry_from_calibration(panel.calibration_files.calibration_snapshot())
+    panel.rig_editor.screen_distances["Bottom"].setText("55")
     panel.rig_editor.screen_distances["Front"].setText("160")
     assert all(
-        min(p[1] for p in corners) == -60
-        for corners in panel.tank.screen_planes().values()
+        min(p[1] for p in corners) == (-60 if face == "Front" else -55)
+        for face, corners in panel.tank.screen_planes().items()
     )
+    # Bottom image X runs along depth, while image Y runs across tank width.
+    panel.screen_editor.fields["Bottom", "width"].setText("126")
+    panel.screen_editor.fields["Bottom", "height"].setText("94")
+    bottom = panel.tank.screen_planes()["Bottom"]
+    assert bottom[1][1] - bottom[0][1] == 126
+    assert bottom[3][0] - bottom[0][0] == -94
+    assert {p[0] for p in bottom} == {53, 147}
+    current = panel.calibration_files.calibration_snapshot()
+    legacy = dict(current, version=4, values=dict(current["values"]))
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for old, new in (("scale_u", "valid_width_px"), ("scale_v", "valid_height_px")):
+            legacy["values"].pop(f"screens.{face}.{new}")
+            legacy["values"][f"screens.{face}.{old}"] = None
+    legacy["values"]["screens.Bottom.width"] = 94
+    legacy["values"]["screens.Bottom.height"] = 126
+    assert panel.calibration_files.validate(legacy) == current["values"]
+    assert geometry_from_calibration(legacy)[1] == geometry_from_calibration(current)[1]
+    from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+
+    measured = dict(current, values=dict(current["values"]))
+    measured["values"].update(
+        {
+            "screens.Bottom.reference_width_px": 720,
+            "screens.Bottom.reference_height_px": 1280,
+            "screens.Bottom.reference_x_px": 180,
+            "screens.Bottom.reference_y_px": 320,
+            "screens.Bottom.reference_x_mm": 49,
+            "screens.Bottom.reference_y_mm": 37,
+            "screens.Bottom.scale_u": 1,
+            "screens.Bottom.scale_v": 1,
+        }
+    )
+    vertices, _ = face_mapping(
+        measured, "Bottom", MonitorBinding("", 0, 0, 720, 1280, 60, 8)
+    )
+    assert (vertices[1]["xy"][0] - vertices[0]["xy"][0]) * 196 == pytest.approx(
+        round(126 / 196 * 720) * 196 / 720
+    )
+    assert (vertices[2]["xy"][1] - vertices[0]["xy"][1]) * 148 == pytest.approx(
+        round(94 / 148 * 1280) * 148 / 1280
+    )
+
+    old_crop = dict(measured, version=5, values=dict(measured["values"]))
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for old_key, new_key in (
+            ("scale_u", "valid_width_px"),
+            ("scale_v", "valid_height_px"),
+        ):
+            old_crop["values"].pop(f"screens.{face}.{new_key}")
+            old_crop["values"][f"screens.{face}.{old_key}"] = None
+    old_crop["values"]["screens.Bottom.scale_u"] = 1.02
+    old_crop["values"]["screens.Bottom.scale_v"] = 1.08
+    migrated = panel.calibration_files.validate(old_crop)
+    assert migrated["screens.Bottom.valid_width_px"] == pytest.approx(
+        round(round(126 / 196 * 720) * 1.02)
+    )
+    assert migrated["screens.Bottom.valid_height_px"] == pytest.approx(
+        round(round(94 / 148 * 1280) * 1.08)
+    )
+    assert migrated["screens.Bottom.reference_x_mm"] == 49
+    assert migrated["screens.Bottom.reference_y_mm"] == 37
+    assert "screens.Bottom.scale_u" not in migrated
+    missing_mode = dict(old_crop, values=dict(old_crop["values"]))
+    missing_mode["values"]["screens.Bottom.reference_width_px"] = None
+    before = panel.calibration_files.snapshot()
+    with pytest.raises(ValueError, match="reference output dimensions"):
+        panel.calibration_files.apply_snapshot(missing_mode)
+    assert panel.calibration_files.snapshot() == before
+
+    old_full = dict(
+        panel.calibration_files.snapshot(), version=7, values=legacy["values"]
+    )
+    assert panel.calibration_files.validate(old_full) == current["values"]
     panel.rig_editor.screen_distances["Front"].clear()
     assert panel.tank.screen_planes() == {}
     with pytest.raises(ValueError):
@@ -9257,6 +9735,7 @@ def test_centered_projection_uses_throw_and_assigned_aspect(window: DashboardWin
             face,
             dict(width="300", height="180", subject_distance="140"),
             front_distance="140",
+            bottom_distance="140",
         )
         footprint = projection_footprint(corners, "600", "1.5", 16 / 9)
         assert footprint.width == 400 and footprint.height == 225
@@ -9286,6 +9765,7 @@ def test_centered_projection_uses_throw_and_assigned_aspect(window: DashboardWin
     ):
         panel.rig_editor.fields[key].setText(str(value))
     panel.rig_editor.screen_distances["Front"].setText("140")
+    panel.rig_editor.screen_distances["Bottom"].setText("140")
     for key, value in (
         ("width", "300"),
         ("height", "180"),
@@ -9344,7 +9824,9 @@ def test_bottom_mirror_reflects_cone_and_uses_total_path():
     rig = RigDimensions(200, 300, 150, (80, 100, 75))
     values = dict(width="300", height="200", subject_distance="140")
     bottom = screen_corners(rig, "Bottom", values, front_distance="140")
-    right = screen_corners(rig, "Right", values, front_distance="140")
+    right = screen_corners(
+        rig, "Right", values, front_distance="140", bottom_distance="140"
+    )
     folded = bottom_mirror_footprint(bottom, right, "900", "2", 16 / 9, "300")
     assert folded.width == 450 and folded.height == 253.125
     rx, ry, rz = (sum(p[i] for p in right) / 4 for i in range(3))
@@ -9382,25 +9864,45 @@ def test_bottom_mirror_reflects_cone_and_uses_total_path():
             )
 
 
-def test_plot_toggles_are_view_only_and_survive_refresh(
+def test_plot_legends_are_view_only_and_survive_refresh(
     window: DashboardWindow, app: QApplication
 ):
     panel = window.devices.projectors
     before = panel.calibration_files.snapshot()
     participation = dict(panel.participation)
-    for key, control in panel.plot_toggles.items():
-        assert control.isCheckable() and control.isChecked()
-        control.click()
+    panel.tank.setFixedWidth(180)
+    panel.tank.grab()
+    regions = dict(panel.tank.legend_regions)
+    assert set(regions) == set(panel.tank.visible_elements)
+    assert len({region.y() for region in regions.values()}) > 1
+    angles = (panel.tank.azimuth, panel.tank.elevation)
+    for key, region in regions.items():
+        assert panel.tank.visible_elements[key]
+        QTest.mouseClick(
+            panel.tank, Qt.MouseButton.LeftButton, pos=region.center().toPoint()
+        )
         assert not panel.tank.visible_elements[key]
+        assert panel.tank.drag_origin is None
+    assert (panel.tank.azimuth, panel.tank.elevation) == angles
     window.apply_view(review_view(Phase.RUNNING))
     panel.update_geometry()
     assert not any(panel.tank.visible_elements.values())
-    for key, control in panel.plot_toggles.items():
-        assert control.isEnabled()
-        control.click()
+    panel.tank.grab()
+    assert panel.tank.legend_regions == regions
+    for key, region in panel.tank.legend_regions.items():
+        QTest.mouseClick(
+            panel.tank, Qt.MouseButton.LeftButton, pos=region.center().toPoint()
+        )
         assert panel.tank.visible_elements[key]
     assert panel.calibration_files.snapshot() == before
     assert panel.participation == participation
+    origin = QPoint(80, 110)
+    QTest.mousePress(panel.tank, Qt.MouseButton.LeftButton, pos=origin)
+    QTest.mouseMove(panel.tank, QPoint(100, 120))
+    QTest.mouseRelease(panel.tank, Qt.MouseButton.LeftButton, pos=QPoint(100, 120))
+    assert (panel.tank.azimuth, panel.tank.elevation) != angles
+    QTest.mouseDClick(panel.tank, Qt.MouseButton.LeftButton, pos=origin)
+    assert (panel.tank.azimuth, panel.tank.elevation) == (45.0, 25.0)
     app.processEvents()
 
 
@@ -9552,7 +10054,7 @@ def test_bottom_center_path_survives_outer_ray_clearance():
     bottom = screen_corners(
         rig,
         "Bottom",
-        dict(width="250", height="325", subject_distance="100"),
+        dict(width="325", height="250", subject_distance="100"),
         front_distance="125",
     )
     right = screen_corners(
@@ -9560,24 +10062,25 @@ def test_bottom_center_path_survives_outer_ray_clearance():
         "Right",
         dict(width="325", height="180", subject_distance="140"),
         front_distance="125",
+        bottom_distance="100",
     )
     # No fixed 700 cutoff: full-cone clearance already works at 650 for this rig.
     for length in ("650", "699", "700"):
         complete = bottom_mirror_footprint(bottom, right, length, "1.6", 16 / 9, "300")
         assert complete.mirror and not complete.warning
-    partial = bottom_mirror_footprint(bottom, right, "600", "1.6", 16 / 9, "300")
-    assert partial.projector == (525, 137.5, -200)
-    assert partial.mirror_center == (100, 137.5, -200)
+    partial = bottom_mirror_footprint(bottom, right, "500", "1.6", 16 / 9, "300")
+    assert partial.projector == (525, 142.5, -100)
+    assert partial.mirror_center == (100, 142.5, -100)
     assert not partial.mirror and "outer rays" in partial.warning
-    assert partial.width == 375 and partial.height == 210.9375
+    assert partial.width == 312.5 and partial.height == 175.78125
     elevated_bottom = screen_corners(
         rig,
         "Bottom",
-        dict(width="250", height="325", subject_distance="50"),
+        dict(width="325", height="250", subject_distance="50"),
         front_distance="125",
     )
     upper_edge = bottom_mirror_footprint(
-        elevated_bottom, right, "470", "10", 16 / 9, "300"
+        elevated_bottom, right, "460", "10", 16 / 9, "300"
     )
     assert upper_edge.mirror_center and upper_edge.warning
     assert "tank bottom" in upper_edge.warning
@@ -9592,15 +10095,24 @@ def test_projection_group_replaces_individual_visibility_controls(
     from cephvr.gui.theme import COLORS
 
     panel = window.devices.projectors
-    assert set(panel.plot_toggles) == {
+    panel.tank.grab()
+    assert set(panel.tank.legend_regions) == {
         "tank",
         "screens",
         "projection",
         "subject",
     }
-    assert set(panel.tank.visible_elements) == set(panel.plot_toggles)
+    assert set(panel.tank.visible_elements) == set(panel.tank.legend_regions)
+    assert not any(
+        control.property("role") == "plot-toggle"
+        for control in panel.tank_card.findChildren(QPushButton)
+    )
     assert COLORS.footprint != COLORS.projection
-    panel.plot_toggles["projection"].click()
+    QTest.mouseClick(
+        panel.tank,
+        Qt.MouseButton.LeftButton,
+        pos=panel.tank.legend_regions["projection"].center().toPoint(),
+    )
     assert not panel.tank.visible_elements["projection"]
     assert panel.tank.visible_elements["screens"]
     assert panel.enabled_screens == ()
@@ -9688,8 +10200,14 @@ def test_projector_codec_preserves_file_pacing_and_imported_calibration():
     )
 
 
+@pytest.mark.parametrize("disconnected", [False, True])
+@pytest.mark.parametrize(
+    "presentation_mode", ["photodiode_only_vsync", "all_outputs_vsync"]
+)
 def test_projectors_page_install_collect_keeps_file_owned_pacing_absent(
     window: DashboardWindow,
+    disconnected: bool,
+    presentation_mode: str,
 ):
     import json
 
@@ -9698,7 +10216,7 @@ def test_projectors_page_install_collect_keeps_file_owned_pacing_absent(
     from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
     source = json.loads(valid_display_json())
-    source["presentation_mode"] = "photodiode_only_vsync"
+    source["presentation_mode"] = presentation_mode
     source["photodiode_enabled"] = False
     source["photodiode_output_id"] = None
     source.pop("pacing_output_id", None)
@@ -9706,16 +10224,38 @@ def test_projectors_page_install_collect_keeps_file_owned_pacing_absent(
     panel = window.devices.projectors
 
     panel.install_configuration(display)
+    if disconnected:
+        panel.review_displays = ()
+        panel.discover_displays()
+        assert not panel.keys
     result = panel.configuration_for_submit(display)
     profile = json.loads(result.profile_json)
 
     assert profile["photodiode_enabled"] is False
     assert "pacing_output_id" not in profile
-    assert profile["geometry"] == source["geometry"]
+    from cephvr.visual_stimulus.configuration import load_projection_settings
+
+    assert profile["geometry"] == {**source["geometry"], **load_projection_settings()}
     assert profile["mappings"] == source["mappings"]
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.visual_stimulus.configuration import (
+        validate_configuration,
+        validate_display_profile,
+    )
+
+    if presentation_mode == "all_outputs_vsync":
+        assert validate_display_profile(result.profile_json)
+        candidate = pb.ExperimentConfiguration()
+        backend = candidate.backends.add(backend_name="visual_stimulus")
+        backend.visual_stimulus.display.CopyFrom(result)
+        validation = validate_configuration(candidate)
+        assert validation.completed and validation.valid
+    else:
+        with pytest.raises(ValueError, match="mixed pacing requires"):
+            validate_display_profile(result.profile_json)
 
 
-@pytest.mark.parametrize("version", [2, 3, 4])
+@pytest.mark.parametrize("version", [2, 3, 4, 5, 6, 7])
 def test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile(version):
     from cephvr.gui.calibration_arena import (
         geometry_from_calibration,
@@ -9747,16 +10287,25 @@ def test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile(vers
     assert primitive.colors is not None
     colors = set(primitive.colors)
     assert (1.0, 1.0, 1.0, 1.0) in colors  # face names
-    assert any(color == pytest.approx((1.0, 0.86, 0.12, 1.0)) for color in colors)
+    expected_colors = (
+        (1.0, 1.0, 1.0, 1.0),
+        (0.0, 0.0, 0.0, 1.0),
+        (0.025, 0.035, 0.055, 1.0),
+        (0.35, 0.4, 0.45, 1.0),
+    )
+    assert len(colors) == len(expected_colors)
+    assert all(
+        any(color == pytest.approx(c) for c in expected_colors) for color in colors
+    )
     for face in FACES:
         for corner in screens[face]:
             assert any(point == pytest.approx(corner) for point in primitive.positions)
-    for invalid in (1, 5, True, 4.0, "4"):
-        with pytest.raises(ValueError, match="version 2/3/4"):
+    for invalid in (1, 9, True, 4.0, "4"):
+        with pytest.raises(ValueError, match="version 2/3/4/5/6/7"):
             geometry_from_calibration(dict(payload, version=invalid))
 
 
-@pytest.mark.parametrize("version", [2, 3, 4])
+@pytest.mark.parametrize("version", [2, 3, 4, 5, 6, 7])
 def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, version):
     from cephvr.gui.calibration_profile import (
         AssignedDisplay,
@@ -9810,7 +10359,10 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
     }
     assert profile.photometric_mode == "uncalibrated"
     assert profile.presentation_mode == "all_outputs_vsync"
-    assert profile.geometry.near_mm < 1 < profile.geometry.far_mm
+    assert profile.geometry.near_mm == 1
+    assert profile.geometry.far_mm == 250
+    assert profile.geometry.positional_tolerance_mm == 0.000166
+    assert profile.geometry.orthogonality_tolerance == 0.000001
     assert set(meshes) == {face.lower() for face in FACES}
     assert all(mesh.vertices[0].uv == mesh.vertices[0].xy for mesh in meshes.values())
     assert all(mesh.orientation == "preserving" for mesh in meshes.values())
@@ -9843,9 +10395,30 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
         measured_calibration, assignments, monitors, view="frame_grid"
     )
     assert grid.calibration_view == "frame_grid"
-    assert grid_meshes["front"].vertices[0].xy == pytest.approx(
-        (0.5 - 90 / 512 / 2, 0.5 - 80 / 360 / 2)
+    assert grid_meshes["front"].vertices[0].xy == (0, 0)
+    assert grid_meshes["front"].valid_area == pytest.approx(
+        (
+            0.5 - round(90 / 0.4) / 1280 / 2,
+            0.5 - 160 / 720 / 2,
+            0.5 + round(90 / 0.4) / 1280 / 2,
+            0.5 + 160 / 720 / 2,
+        )
     )
+    measured_values["screens.Front.offset_x_px"] = 75
+    measured_values["screens.Front.offset_y_px"] = -35
+    _, shifted_meshes = diagnostic_display_profile(
+        measured_calibration, assignments, monitors, view="frame_grid"
+    )
+    bounds = shifted_meshes["front"].valid_area
+    assert (bounds[0] + bounds[2]) / 2 == pytest.approx(0.5 + 75 / 1280)
+    assert (bounds[1] + bounds[3]) / 2 == pytest.approx(0.5 - 35 / 720)
+    measured_values["screens.Front.offset_x_px"] = 10000
+    with pytest.raises(ValueError, match="projection image"):
+        diagnostic_display_profile(
+            measured_calibration, assignments, monitors, view="frame_grid"
+        )
+    measured_values.pop("screens.Front.offset_x_px")
+    measured_values.pop("screens.Front.offset_y_px")
     measured_values["screens.Front.throw"] = 1.5
     assert diagnostic_display_profile(
         measured_calibration, assignments, monitors, view="frame_grid"
@@ -9866,44 +10439,76 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
         o.reference_bars.x_length_px == 200 and o.reference_bars.y_length_px == 100
         for o in remeasured.outputs
     )
-    values["screens.Front.scale_u"] = 0.8
-    values["screens.Front.offset_x"] = 40
+    values["screens.Front.valid_width_px"] = 1024
     values["screens.Left.flip_x"] = True
     adjusted, adjusted_meshes = diagnostic_display_profile(
         calibration, assignments, monitors
     )
     assert adjusted == profile
-    assert adjusted_meshes["front"].vertices[0].xy[0] == pytest.approx(
-        0.5 - 0.4 + 40 / 1280
-    )
+    assert adjusted_meshes["front"].vertices == meshes["front"].vertices
+    assert adjusted_meshes["front"].valid_area[0] == pytest.approx(0.5 - 0.4)
     assert adjusted_meshes["left"].orientation == "mirrored"
-    values["screens.Front.offset_x"] = 1000
-    with pytest.raises(ValueError, match="extends beyond"):
+    values["screens.Front.valid_width_px"] = 10000
+    with pytest.raises(ValueError, match="whole pixels"):
         diagnostic_display_profile(calibration, assignments, monitors)
     values["screens.Front.offset_x"] = None
-    values["screens.Front.scale_u"] = None
+    values["screens.Front.valid_width_px"] = None
     values["screens.Left.flip_x"] = False
     with pytest.raises(ValueError, match="unique native monitor"):
         diagnostic_display_profile(calibration, assignments, monitors[:-1])
+    runtime = tmp_path / "runtime-data"
     arena_path = write_diagnostic_bundle(
-        tmp_path, calibration, assignments, monitors, blackout_zones=zones
+        tmp_path,
+        calibration,
+        assignments,
+        monitors,
+        blackout_zones=zones,
+        runtime_root=runtime,
     )
     assert arena_path.is_file()
     assert not (arena_path.parent / "rig_geometry_grid.program.json").exists()
-    assert (arena_path.parent / "diagnostic_display_profile.json").is_file()
+    assert not list(arena_path.parent.glob("*.json"))
+    assert (
+        runtime / "calibration" / arena_path.name
+    ).read_bytes() == arena_path.read_bytes()
+    assert (runtime / "calibration/diagnostic_display_profile.json").is_file()
     from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 
     saved_profile = DisplayProfile.model_validate_json(
-        (arena_path.parent / "diagnostic_display_profile.json").read_text()
+        (runtime / "calibration/diagnostic_display_profile.json").read_text()
     )
     assert (
         saved_profile.outputs[0].blackout_zones
         == masked_profile.outputs[0].blackout_zones
     )
     assert all(
-        (arena_path.parent / f"diagnostic_{face.lower()}.json").is_file()
+        (runtime / "calibration" / f"diagnostic_{face.lower()}.json").is_file()
         for face in FACES
     )
+
+    grid_bytes = arena_path.read_bytes()
+    bars_path = write_diagnostic_bundle(
+        tmp_path,
+        calibration,
+        assignments,
+        monitors,
+        view="reference_bars",
+        runtime_root=tmp_path / "bars-runtime",
+    )
+    assert bars_path.name == "reference_bars.glb"
+    assert arena_path.name == "frame_grid.glb" and arena_path.read_bytes() == grid_bytes
+    assert {p.name for p in arena_path.parent.iterdir()} == {
+        "reference_bars.glb",
+        "frame_grid.glb",
+    }
+    assert len(bars_path.read_bytes()) < len(grid_bytes)
+    from cephvr.visual_stimulus.resources.glb import parse_glb
+
+    scene = parse_glb(bars_path.read_bytes(), max_bytes=1_000_000, max_elements=200_000)
+    primitive = scene.nodes[0].primitives[0]
+    assert primitive.colors is not None
+    assert sum(color == (1, 1, 1, 1) for color in primitive.colors) == 16 * len(FACES)
+    assert len(primitive.positions) == 24 * len(FACES)  # Four frame edges + two bars.
 
 
 def test_calibration_button_reflects_confirmed_managed_output(
@@ -9911,7 +10516,7 @@ def test_calibration_button_reflects_confirmed_managed_output(
 ):
     panel = window.devices.projectors
     table = panel.calibration
-    arena = tmp_path / "rig_geometry_grid.glb"
+    arena = tmp_path / "frame_grid.glb"
     prepared = []
     result = [arena]
 
@@ -9967,6 +10572,34 @@ def test_calibration_button_reflects_confirmed_managed_output(
     assert not table.measurement_button.isEnabled()
     table.measurement_button.click()
     assert len(prepared) == 3
+    table.set_presentation_state(active=True, available=True, view="reference_bars")
+    assert table.measurement_button.text() == "Close"
+    assert table.measurement_button.isEnabled()
+    assert table.presentation_button.text() == "Launch projection calibration"
+    assert not table.presentation_button.isEnabled()
+    table.request_presentation()
+    assert closed == [True]
+    table.measurement_button.click()
+    assert closed == [True, True] and len(prepared) == 3
+    table.set_presentation_state(
+        active=True, available=True, pending=True, view="reference_bars"
+    )
+    assert table.measurement_button.text() == "Close"
+    assert not table.measurement_button.isEnabled()
+    table.request_measurement()
+    assert closed == [True, True]
+    table.set_presentation_state(active=False, available=True)
+    assert table.measurement_button.text() == "Launch reference calibration"
+    assert (
+        table.measurement_button.isEnabled() and table.presentation_button.isEnabled()
+    )
+    table.set_presentation_state(active=True, available=True, view="frame_grid")
+    assert table.presentation_button.text() == "Close"
+    assert table.measurement_button.text() == "Launch reference calibration"
+    table.request_measurement()
+    assert closed == [True, True]
+    table.presentation_button.click()
+    assert closed == [True, True, True]
 
 
 def test_managed_first_use_calibration_launches_before_display_initialization(
@@ -9996,6 +10629,13 @@ def test_managed_first_use_calibration_launches_before_display_initialization(
     state.configuration_values.revision = 4
     state.control.holder_client_id = client_id
     state.configuration_values.current.asset_root = str(tmp_path)
+    monkeypatch.setattr(
+        "cephvr.gui.managed_display_operations.calibration_asset_root", lambda: tmp_path
+    )
+    monkeypatch.setattr(
+        "cephvr.gui.managed_display_operations.calibration_runtime_root",
+        lambda _view: tmp_path,
+    )
     calibration_dir = tmp_path / "calibration"
     calibration_dir.mkdir()
     (calibration_dir / "diagnostic_display_profile.json").write_text("{}")
@@ -10005,7 +10645,7 @@ def test_managed_first_use_calibration_launches_before_display_initialization(
     backend.visual_stimulus.SetInParent()  # First-use: display is absent/incomplete.
 
     panel = window.devices.projectors
-    arena = tmp_path / "rig_geometry_grid.glb"
+    arena = calibration_dir / "frame_grid.glb"
     arena.write_bytes(b"arena")
     monkeypatch.setattr(panel, "prepare_calibration", lambda **kwargs: arena)
     output_requests: list[str] = []
@@ -10623,7 +11263,9 @@ def test_batch_variations_target_projectors_and_local_layer_ordinals(
     from cephvr.visual_stimulus.compiler.expansion import expand_program
 
     window.page_buttons[1].click()
-    create = window.protocol.editor.subgroup
+    editor = window.protocol.editor
+    open_protocol_group(editor)
+    create = editor.subgroup
     create.composer.set_screens(("Left", "Right"))
     create.composer.set_asset_root(str(tmp_path))
     image = QImage(8, 8, QImage.Format.Format_RGB32)
@@ -10658,9 +11300,13 @@ def test_batch_variations_target_projectors_and_local_layer_ordinals(
     for width in (1350, 720):
         window.resize(width, 900)
         app.processEvents()
+        table = create.variation_table
+        assert table.isVisible() and row.isVisible() and row.parameter.isVisible()
+        assert table.cellWidget(0, 2).isAncestorOf(row.parameter)
+        assert table.cellWidget(0, 5).isAncestorOf(row.remove)
         assert (
-            row.remove.mapTo(row, QPoint()).y()
-            == row.parameter.mapTo(row, QPoint()).y()
+            row.remove.mapTo(table.viewport(), QPoint()).y()
+            == row.parameter.mapTo(table.viewport(), QPoint()).y()
         )
         assert row.remove.height() == row.parameter.height()
     create.composer.remove_layer("Right")
@@ -11051,15 +11697,16 @@ def test_preview_calibration_matches_export_and_uses_display_pixels(app):
     )
 
     draft = {
-        "scale_u": "0.5",
-        "scale_v": "0.5",
-        "offset_x": "10",
-        "offset_y": "20",
+        "valid_width_px": "50",
+        "valid_height_px": "50",
+        "offset_x_px": "10",
+        "offset_y_px": "20",
         "flip_x": "True",
         "flip_y": "False",
     }
     correction = PreviewCorrection.from_draft("Front", draft, (100, 100))
     assert not correction.error
+    assert correction.valid_area == pytest.approx((0.35, 0.45, 0.85, 0.95))
     values = {
         f"screens.Front.{key}": value.lower() == "true"
         if key.startswith("flip")
@@ -11085,13 +11732,14 @@ def test_preview_calibration_matches_export_and_uses_display_pixels(app):
             image.setPixelColor(x, y, QColor("blue"))
     output = canvas.correct_frame(image)
     assert output.pixelColor(40, 30) == QColor("blue")
-    assert output.pixelColor(80, 30) == QColor("red")
+    assert output.pixelColor(60, 30) == QColor("red")
     assert output.pixelColor(20, 30) == QColor("black")
     assert output.pixelColor(50, 80) == QColor("black")
     # The same pixel offset becomes a smaller normalized shift on a larger display.
     larger = PreviewCorrection.from_draft("Front", draft, (200, 200))
-    assert larger.corners[0][0] == pytest.approx(correction.corners[0][0] - 0.05)
-    assert larger.corners[0][1] == pytest.approx(correction.corners[0][1] - 0.1)
+    assert larger.valid_area != correction.valid_area
+    assert larger.valid_area[0] == pytest.approx(0.425)
+    assert larger.valid_area[1] == pytest.approx(0.475)
     vertical = PreviewCorrection.from_draft("Front", {"flip_y": "True"}, (100, 100))
     canvas.rig_geometry = PreviewGeometry(
         {"Front": PreviewSurface(100, 100, correction=vertical)}, (0, 0, 0)
@@ -11107,20 +11755,43 @@ def test_preview_calibration_matches_export_and_uses_display_pixels(app):
     canvas.deleteLater()
 
 
-def test_preview_rejects_invalid_corrections_and_unresolved_pixel_offsets():
+def test_preview_rejects_invalid_corrections_and_unresolved_pixel_sizes():
     from cephvr.gui.trial_preview_surfaces import PreviewCorrection
 
+    for axis in ("x", "y"):
+        assert (
+            "Assign a display"
+            in PreviewCorrection.from_draft(
+                "Front", {f"offset_{axis}_px": "1"}, None
+            ).error
+        )
+        assert (
+            "must fit"
+            in PreviewCorrection.from_draft(
+                "Front",
+                {
+                    "valid_width_px": "50",
+                    "valid_height_px": "50",
+                    f"offset_{axis}_px": "26",
+                },
+                (100, 100),
+            ).error
+        )
     assert (
         "Assign a display"
-        in PreviewCorrection.from_draft("Front", {"offset_x": "10"}, None).error
+        in PreviewCorrection.from_draft("Front", {"valid_width_px": "10"}, None).error
     )
     assert (
-        "positive"
-        in PreviewCorrection.from_draft("Front", {"scale_u": "0"}, (1920, 1080)).error
+        "whole pixels"
+        in PreviewCorrection.from_draft(
+            "Front", {"valid_width_px": "0"}, (1920, 1080)
+        ).error
     )
     assert (
-        "beyond"
-        in PreviewCorrection.from_draft("Front", {"scale_u": "2"}, (1920, 1080)).error
+        "whole pixels"
+        in PreviewCorrection.from_draft(
+            "Front", {"valid_width_px": "1921"}, (1920, 1080)
+        ).error
     )
     identity = PreviewCorrection.from_draft("Front", {}, None)
     assert not identity.error
@@ -11434,6 +12105,7 @@ def test_managed_mcu_pending_completion_and_final_status(
 ) -> None:
     from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
     from cephvr.gui.managed_mcu import ManagedMcu
 
     panel = window.devices.microcontroller
@@ -11455,6 +12127,11 @@ def test_managed_mcu_pending_completion_and_final_status(
         SimpleNamespace(request=lambda action, **kw: sent.append((action, kw)) or True),
         lambda: state,
     )
+    manager = SimpleNamespace(
+        window=window,
+        mcu=binding,
+        cameras=SimpleNamespace(finished=lambda *_: None),
+    )
     binding.test_connection()
     binding.test_connection()
     assert len(sent) == 1 and panel.connection_pending
@@ -11466,24 +12143,64 @@ def test_managed_mcu_pending_completion_and_final_status(
     diagnostic = state.microcontroller.diagnostic
     diagnostic.signal = pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE
     diagnostic.active = True
+    diagnostic.rising_edges = 1
     diagnostic.observed_monotonic_ns = 100
     binding.install(state, True)
-    binding.finished("mcu", True, "Started")
+    ManagedGui.command_finished(manager, "mcu", True, "Started")
+    assert binding.settle.isActive()
+    assert binding.settle.interval() == 500
+    assert panel.test_buttons["trial-state"].text() == "Stop"
+    console_before = panel.console.toPlainText()
+    log_before = window.dashboard.log_console.toPlainText()
+    for observed in range(101, 108):
+        binding.read_status()
+        assert sent[-1][1]["kind"] == rpc.MICROCONTROLLER_COMMAND_KIND_STATUS
+        diagnostic.observed_monotonic_ns = observed
+        binding.install(state, True)
+        ManagedGui.command_finished(manager, "mcu", True, "Completed")
+        assert panel.console.toPlainText() == console_before
+        assert window.dashboard.log_console.toPlainText() == log_before
+        assert not binding.pending and binding.pending_kind == 0
     assert binding.settle.isActive()
     assert panel.test_buttons["trial-state"].text() == "Stop"
-    binding.read_status()
-    assert sent[-1][1]["kind"] == rpc.MICROCONTROLLER_COMMAND_KIND_STATUS
+    binding.test_pin("trial-state", False)
+    assert sent[-1][1]["kind"] == rpc.MICROCONTROLLER_COMMAND_KIND_STOP
     diagnostic.active = False
-    diagnostic.observed_monotonic_ns = 200
+    diagnostic.observed_monotonic_ns = 5_000_000_200
     diagnostic.rising_edges = 10
     binding.install(state, True)
-    binding.finished("mcu", True, "Stopped")
+    ManagedGui.command_finished(manager, "mcu", True, "Stopped")
     assert not binding.settle.isActive()
     assert panel.test_buttons["trial-state"].text() == "Test"
+    assert "output LOW, 10 rising transitions" in panel.console.toPlainText()
+    assert "MCU command: Stopped" in panel.console.toPlainText()
+    assert (
+        sum(
+            options["kind"] == rpc.MICROCONTROLLER_COMMAND_KIND_START
+            for _, options in sent
+        )
+        == 1
+    )
+    diagnostic.signal = pb.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL
     diagnostic.active = True
     diagnostic.observed_monotonic_ns = 300
     binding.install(state, True)
-    assert panel.test_buttons["trial-state"].text() == "Stop"
+    assert panel.test_buttons["behavioral"].text() == "Stop"
+    console_before = panel.console.toPlainText()
+    binding.read_status()
+    diagnostic.rising_edges = 59
+    diagnostic.observed_monotonic_ns = 301
+    binding.install(state, True)
+    ManagedGui.command_finished(manager, "mcu", True, "Completed")
+    assert panel.console.toPlainText() == console_before
+    assert "59 rising transitions" in panel.status_column.hud.toPlainText()
+    binding.read_status()
+    ManagedGui.command_finished(manager, "mcu", False, "Status unavailable")
+    assert "MCU command failed: Status unavailable" in panel.console.toPlainText()
+    assert (
+        "MCU command failed: Status unavailable"
+        in window.dashboard.log_console.toPlainText()
+    )
     state.microcontroller.ClearField("diagnostic")
     state.microcontroller.ClearField("observation")
     binding.install(state, True)
@@ -11793,7 +12510,8 @@ def test_initial_and_reopened_retained_warnings_gate_auto_claim() -> None:
             apply_view=lambda _view: None,
         ),
         display_operations=SimpleNamespace(
-            install_calibration_state=lambda _state, *, launch_eligible: None
+            install_calibration_state=lambda _state, *, launch_eligible: None,
+            install_pairing=lambda: None,
         ),
         _calibration_launch_eligible=lambda _state: False,
         mcu=SimpleNamespace(install=lambda _state, _held: None),
@@ -12543,56 +13261,54 @@ def test_managed_camera_inventory_restores_selected_configuration(
     assert not requests
 
 
-def test_calibration_guides_keep_world_phase_center_and_physical_ruler():
-    from cephvr.gui.calibration_guides import CENTER, GRID_COLORS, add_face_guides
+def test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name():
+    from cephvr.gui.calibration_guides import GRID, WHITE, add_face_guides
 
     class Mesh:
         def __init__(self):
             self.lines = []
+            self.quads = []
 
         def line(self, start, end, width, normal, color):
             self.lines.append((start, end, width, color))
 
         def quad(self, corners, color):
-            pass
+            self.quads.append((corners, color))
 
-    for sign, origin in ((1, (23.0, 0.0, 0.0)), (-1, (203.0, 0.0, 0.0))):
-        mesh = Mesh()
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for sign, origin in ((1, (23.0, 0.0, 0.0)), (-1, (203.0, 0.0, 0.0))):
+            mesh = Mesh()
 
-        def at(x, y, z, origin=origin, sign=sign):
-            return origin[0] + sign * x, y, z
+            def at(x, y, z, origin=origin, sign=sign):
+                return origin[0] + sign * x, y, z
 
-        add_face_guides(
-            mesh,
-            "Front",
-            at,
-            origin,
-            (sign, 0, 0),
-            (0, 1, 0),
-            (0, 0, sign),
-            180,
-            130,
-            10,
-        )
-        grid = [
-            line
-            for line in mesh.lines
-            if line[3] in GRID_COLORS and line[0][0] == line[1][0]
-        ]
-        assert all(start[0] % 10 == 0 for start, end, width, color in grid)
-        assert any(
-            start[0] == 40 and color == GRID_COLORS[4]
-            for start, end, width, color in grid
-        )
-        cross = [line for line in mesh.lines if line[3] == CENTER]
-        assert len(cross) == 2
-        assert cross[0][0][1] == cross[0][1][1] == 65
-        assert abs(cross[0][1][0] - cross[0][0][0]) == 180
-        assert abs(cross[1][1][1] - cross[1][0][1]) == 130
-        assert any(
-            abs(end[0] - start[0]) == 50 and start[1] == end[1] == 32.5
-            for start, end, _, _ in mesh.lines
-        )
+            add_face_guides(
+                mesh,
+                face,
+                at,
+                origin,
+                (sign, 0, 0),
+                (0, 1, 0),
+                (0, 0, sign),
+                180,
+                130,
+                10,
+            )
+            grid = [line for line in mesh.lines if line[3] == GRID]
+            vertical = [line for line in grid if line[0][0] == line[1][0]]
+            horizontal = [line for line in grid if line[0][1] == line[1][1]]
+            assert len(vertical) == 18 and len(horizontal) == 12
+            assert all(start[0] % 10 == 0 for start, end, width, color in vertical)
+            assert all(start[1] == 0 and end[1] == 130 for start, end, _, _ in vertical)
+            assert all(abs(end[0] - start[0]) == 180 for start, end, _, _ in horizontal)
+            assert all(width == 0.2 for _, _, width, _ in grid)
+            assert len([line for line in mesh.lines if line[3] == WHITE]) == 4
+            assert len(mesh.lines) == len(grid) + 4
+            backgrounds = [quad for quad in mesh.quads if quad[1] == (0, 0, 0, 1)]
+            assert len(backgrounds) == 1  # Only the screen name; no dimensions/ruler.
+            assert all(
+                color == WHITE for _, color in mesh.quads if color != (0, 0, 0, 1)
+            )
 
 
 @pytest.mark.parametrize("suffix", ["hex", "ino"])
@@ -12672,7 +13388,7 @@ def test_projector_configuration_json_restores_all_settings_without_screen_mappi
         ]
     )
     panel.timing.pulse.setChecked(False)
-    panel.timing.mode.setCurrentText("All displays VSync")
+    panel.timing.mode.setCurrentText("VSync on all displays")
     panel.timing.target.setCurrentIndex(panel.timing.target.findData("current-front"))
     for key, value in zip(panel.timing.fields, (10, 20, 30, 40), strict=True):
         panel.timing.fields[key].setText(str(value))
@@ -12694,7 +13410,7 @@ def test_projector_configuration_json_restores_all_settings_without_screen_mappi
     assert "current-front" not in path.read_text()
     assert "current-left" not in path.read_text()
     panel.timing.pulse.setChecked(True)
-    panel.timing.mode.setCurrentText("Selected display VSync")
+    panel.timing.mode.setCurrentText("VSync on pulse display")
     panel.timing.fields["Width"].clear()
     panel.assignments = {"new-left": "Left", "new-front": "Front"}
     panel.participation = {"new-left": False, "new-front": True}
@@ -12805,6 +13521,10 @@ def test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts(
         "frame_rect"
     )
     legacy_square["settings"]["pulse_square"] = dict(X=20, Y=30, Size=40)
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for old, new in (("scale_u", "valid_width_px"), ("scale_v", "valid_height_px")):
+            legacy_square["values"].pop(f"screens.{face}.{new}")
+            legacy_square["values"][f"screens.{face}.{old}"] = None
     panel.calibration_files.apply_snapshot(legacy_square)
     assert timing.pulse_fields["Width"].text() == "40"
     assert timing.pulse_fields["Height"].text() == "40"
@@ -12923,14 +13643,14 @@ def test_legacy_numeric_projector_json_preserves_synchronization(
     numeric = panel.calibration_files.calibration_snapshot()
     numeric["values"]["rig.width"] = 200
     panel.timing.pulse.setChecked(True)
-    panel.timing.mode.setCurrentText("All displays VSync")
+    panel.timing.mode.setCurrentText("VSync on all displays")
     path = tmp_path / "legacy-calibration.json"
     path.write_text(json.dumps(numeric))
     panel.calibration_files.load_path(str(path))
     assert panel.rig_editor.fields["width"].text() == "200"
     assert panel.timing.pulse.isChecked()
-    assert panel.timing.mode.currentText() == "All displays VSync"
-    assert panel.calibration_files.snapshot()["version"] == 7
+    assert panel.timing.mode.currentText() == "VSync on all displays"
+    assert panel.calibration_files.snapshot()["version"] == 11
 
 
 def test_portable_screen_profile_rebinds_native_properties_and_preserves_coverage(
@@ -13021,9 +13741,13 @@ def test_projector_reference_measurements_derive_distance_and_roundtrip(
     distance = panel.screen_editor.fields["Front", "distance"]
     assert distance.isReadOnly()
     assert float(distance.text()) == pytest.approx(960)
+    assert distance.text() == "960.0"
+    panel.measurements.fields["Front", "reference_x_mm"].setText("30.4")
+    assert distance.text() == "182.4"
+    panel.measurements.fields["Front", "reference_x_mm"].setText("160")
     assert panel.measurements.scales["Front"].text() == "0.5 / 0.5"
     snapshot = panel.calibration_files.snapshot()
-    assert snapshot["version"] == 7
+    assert snapshot["version"] == 11
     assert snapshot["values"]["screens.Front.reference_width_px"] == 1280
     panel.measurements.fields["Front", "reference_x_mm"].setText("200")
     panel.calibration_files.apply_snapshot(snapshot)
@@ -13049,6 +13773,11 @@ def test_projector_reference_measurements_derive_distance_and_roundtrip(
     assert distance.text() == ""
     legacy = json.loads(json.dumps(snapshot))
     legacy["version"] = 4
+    legacy["values"] = {
+        k: v
+        for k, v in legacy["values"].items()
+        if not k.endswith(("offset_x_px", "offset_y_px"))
+    }
     legacy["settings"]["pulse_rect"] = legacy["settings"].pop("frame_rect")
     legacy["settings"].pop("blackout_zones")
     legacy["values"] = {
@@ -13056,6 +13785,10 @@ def test_projector_reference_measurements_derive_distance_and_roundtrip(
         for key, value in legacy["values"].items()
         if key.rsplit(".", 1)[-1] not in {"reference_x_px", "reference_y_px"}
     }
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for old, new in (("scale_u", "valid_width_px"), ("scale_v", "valid_height_px")):
+            legacy["values"].pop(f"screens.{face}.{new}")
+            legacy["values"][f"screens.{face}.{old}"] = None
     panel.calibration_files.apply_snapshot(legacy)
     panel.update_geometry()
     assert panel.calibration_files.snapshot() == snapshot
@@ -13082,6 +13815,11 @@ def test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fiel
     panel = window.devices.projectors
     old = panel.calibration_files.snapshot()
     old["version"] = 3
+    old["values"] = {
+        k: v
+        for k, v in old["values"].items()
+        if not k.endswith(("offset_x_px", "offset_y_px"))
+    }
     old["settings"]["pulse_rect"] = old["settings"].pop("frame_rect")
     old["settings"].pop("blackout_zones")
     old["values"] = {
@@ -13090,6 +13828,13 @@ def test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fiel
         if not key.rsplit(".", 1)[-1].startswith("reference_")
     }
     old["values"]["screens.Front.distance"] = 500
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for old_key, new in (
+            ("scale_u", "valid_width_px"),
+            ("scale_v", "valid_height_px"),
+        ):
+            old["values"].pop(f"screens.{face}.{new}")
+            old["values"][f"screens.{face}.{old_key}"] = None
     panel.calibration_files.apply_snapshot(old)
     assert panel.screen_editor.fields["Front", "distance"].text() == "500"
     assert panel.measurements.fields["Front", "reference_x_mm"].text() == ""
@@ -13101,7 +13846,11 @@ def test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fiel
     assert panel.calibration_files.snapshot() == before
 
 
-def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
+@pytest.mark.parametrize("extra_x,extra_y", [(1.0, 1.0), (1.1, 0.95), (0.9, 1.05)])
+@pytest.mark.parametrize("throw", [None, 1.5])
+def test_measured_affine_profiles_preserve_assets_and_match_preview(
+    tmp_path, extra_x, extra_y, throw
+):
     import json
 
     from cephvr.gui.calibration_profile import (
@@ -13133,7 +13882,7 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
         values[f"screens.{face}.height"] = 80
         if face != "Right":
             values[f"screens.{face}.subject_distance"] = 50
-    calibration = {"format": "cephvr-rig-calibration", "version": 3, "values": values}
+    calibration = {"format": "cephvr-rig-calibration", "version": 6, "values": values}
     assignments = tuple(
         AssignedDisplay(f, i * 1280, 0, 1280, 720, True) for i, f in enumerate(FACES)
     )
@@ -13142,7 +13891,9 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
         for i in range(4)
     )
     profile, _ = diagnostic_display_profile(calibration, assignments, monitors)
-    write_diagnostic_bundle(tmp_path, calibration, assignments, monitors)
+    write_diagnostic_bundle(
+        tmp_path, calibration, assignments, monitors, runtime_root=tmp_path
+    )
     original = tmp_path / "calibration/diagnostic_front.json"
     original_bytes = original.read_bytes()
     for key, value in dict(
@@ -13152,9 +13903,15 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
         reference_y_px=100,
         reference_x_mm=160,
         reference_y_mm=90,
-        throw=1.5,
+        throw=throw,
+        valid_width_px=round(90 / 0.8 * extra_x),
+        valid_height_px=round(80 / 0.9 * extra_y),
     ).items():
-        values[f"screens.Front.{key}"] = value
+        for face in FACES:
+            values[f"screens.{face}.{key}"] = value
+    _, grid_meshes = diagnostic_display_profile(
+        calibration, assignments, monitors, view="frame_grid"
+    )
     document = measured_profiles(
         profile.model_dump(mode="json"), calibration, str(tmp_path)
     )
@@ -13167,10 +13924,70 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
     assert generated != original
     mesh = json.loads(generated.read_text(encoding="utf-8"))
     assert mesh["vertices"][0]["xy"] == pytest.approx(
-        [0.5 - 90 / 1024 / 2, 0.5 - 80 / 648 / 2]
+        [
+            0.5 - round(90 / 0.8 * extra_x) / 1280 / 2,
+            0.5 - round(80 / 0.9 * extra_y) / 720 / 2,
+        ]
     )
+    for face in FACES:
+        mapping = next(
+            m for m in document["mappings"] if m["surface_id"] == face.lower()
+        )
+        submitted = json.loads(
+            (tmp_path / mapping["geometric_profile"]["logical_path"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        assert submitted["valid_area"] == list(grid_meshes[face.lower()].valid_area)
+        assert abs(
+            grid_meshes[face.lower()].vertices[1].xy[0]
+            - grid_meshes[face.lower()].vertices[0].xy[0]
+        ) == pytest.approx(1)
+        import math
+        from types import SimpleNamespace
+
+        from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+        from cephvr.visual_stimulus.rendering.layer_projection import physical_corners
+
+        surface = next(
+            s
+            for s in document["geometry"]["surfaces"]
+            if s["surface_id"] == face.lower()
+        )
+        extent_x = math.dist(surface["bottom_left_mm"], surface["bottom_right_mm"])
+        extent_y = math.dist(surface["bottom_left_mm"], surface["top_left_mm"])
+        assert extent_x == pytest.approx(round(90 / 0.8 * extra_x) * 0.8)
+        assert extent_y == pytest.approx(round(80 / 0.9 * extra_y) * 0.9)
+        projected = physical_corners(
+            SimpleNamespace(
+                display=DisplayProfile.model_validate_json(json.dumps(document))
+            ),
+            SimpleNamespace(state=(("width", 20), ("height", 10), ("x", 0), ("y", 0))),
+            face.lower(),
+            SimpleNamespace(matrix=((1, 0, 0), (0, 1, 0))),
+        )
+        # A 20-by-10 mm texture retains its physical period, irrespective of view crop.
+        assert (projected[1][0] - projected[0][0]) / 2 * round(
+            90 / 0.8 * extra_x
+        ) == pytest.approx(20 / 0.8)
+        assert (projected[3][1] - projected[0][1]) / 2 * round(
+            80 / 0.9 * extra_y
+        ) == pytest.approx(10 / 0.9)
+        # Cropping changes visible extents while physical pixel pitch stays fixed.
+        bounds = submitted["valid_area"]
+        assert (bounds[2] - bounds[0]) * 1280 == pytest.approx(
+            round(90 / 0.8 * extra_x)
+        )
+        assert (bounds[3] - bounds[1]) * 720 == pytest.approx(round(80 / 0.9 * extra_y))
+        bottom_left, bottom_right, top_left = submitted["vertices"][:3]
+        assert (bottom_right["xy"][0] - bottom_left["xy"][0]) * 1024 == pytest.approx(
+            round(90 / 0.8 * extra_x) * 0.8
+        )
+        assert (top_left["xy"][1] - bottom_left["xy"][1]) * 648 == pytest.approx(
+            round(80 / 0.9 * extra_y) * 0.9
+        )
     draft = {
-        k.removeprefix("screens.Front."): str(v)
+        k.removeprefix("screens.Front."): "" if v is None else str(v)
         for k, v in values.items()
         if k.startswith("screens.Front.")
     }
@@ -13351,10 +14168,8 @@ def test_calibration_adjustment_steps_preserve_drafts(app):
     edits = []
     table.adjustments_changed.connect(lambda face, key: edits.append((face, key)))
     for key, initial, increased, decreased in (
-        ("scale_u", "1", "1.01", "1.00"),
-        ("scale_v", "0.8", "0.81", "0.80"),
-        ("offset_x", "0", "0.1", "0.0"),
-        ("offset_y", "-1.2", "-1.1", "-1.2"),
+        ("valid_width_px", "100", "101", "100"),
+        ("valid_height_px", "80", "81", "80"),
     ):
         editor = table.controls["Front", key]
         editor.setText(initial)
@@ -13364,7 +14179,7 @@ def test_calibration_adjustment_steps_preserve_drafts(app):
         assert edits[-1] == ("Front", key)
         QTest.keyClick(editor, Qt.Key.Key_Down)
         assert editor.text() == decreased
-    scale = table.controls["Front", "scale_u"]
+    scale = table.controls["Front", "valid_width_px"]
     scale.setText("0.812345")
     assert scale.text() == "0.812345"  # Loading does not round saved precision.
     for partial in ("-", "nan", "inf"):
@@ -13378,6 +14193,31 @@ def test_calibration_adjustment_steps_preserve_drafts(app):
     scale.setReadOnly(True)
     QTest.keyClick(scale, Qt.Key.Key_Up)
     assert scale.text() == "0.01"
+    assert table.table.columnCount() == 5
+    from PyQt6.QtWidgets import QToolButton
+
+    assert not table.findChildren(QToolButton)
+    scale.setReadOnly(False)
+    table.refresh_dimensions({"Front": (120, 100)})
+    scale.setText("119")
+    QTest.keyClick(scale, Qt.Key.Key_Up)
+    QTest.keyClick(scale, Qt.Key.Key_Up)
+    assert scale.text() == "120"
+    scale.setText("100")
+    scale.textEdited.emit("100")
+    offset = table.controls["Front", "offset_x_px"]
+    offset.setText("10")
+    QTest.keyClick(offset, Qt.Key.Key_Up)
+    assert offset.text() == "10"
+    offset.setText("-10")
+    QTest.keyClick(offset, Qt.Key.Key_Down)
+    assert offset.text() == "-10"
+    scale.setText("120")
+    scale.textEdited.emit("120")
+    assert offset.text() == "0" and drafts["Front"]["offset_x_px"] == "0"
+    scale.setText("10000")
+    scale.textEdited.emit("10000")
+    assert scale.text() == "120"
     table.close()
 
 
@@ -13419,11 +14259,11 @@ def test_live_calibration_coalesces_edits_and_retains_last_valid_projection(wind
     panel.set_calibration_presentation_state(
         active=True, available=True, view="frame_grid"
     )
-    assert panel.calibration.controls["Front", "scale_u"].isEnabled()
+    assert panel.calibration.controls["Front", "valid_width_px"].isEnabled()
     assert not panel.calibration.controls["Front", "flip_x"].isEnabled()
     assert not panel.measurements.isEnabled()
     assert not panel.rig_editor.isEnabled()
-    offset = panel.calibration.controls["Front", "offset_x"]
+    offset = panel.calibration.controls["Front", "valid_width_px"]
     offset.setText("16")
     QTest.keyClick(offset, Qt.Key.Key_Up)
     live.flush()
@@ -13436,9 +14276,7 @@ def test_live_calibration_coalesces_edits_and_retains_last_valid_projection(wind
         first["adjustments"][0]
     )
     assert adjustment.mapping_id == "diagnostic_front"
-    assert adjustment.destination_xy[0] == pytest.approx(
-        0.5 - 90 / 640 / 2 + 16.1 / 1280
-    )
+    assert adjustment.destination_xy[0] == pytest.approx(0.5 - 17 / 1280 / 2)
     offset.setText("32")
     offset.textEdited.emit("32")
     live.flush()
@@ -13449,8 +14287,8 @@ def test_live_calibration_coalesces_edits_and_retains_last_valid_projection(wind
     assert len(sent) == 2 and sent[-1][1]["adjustment_sequence"] == 2
     evidence.adjustment_sequence = 2
     live.install(state)
-    offset.clear()
-    offset.textEdited.emit("")
+    offset.setText("-")
+    offset.textEdited.emit("-")
     live.flush()
     assert len(sent) == 2
     offset.setText("10000")
@@ -13980,7 +14818,7 @@ def test_direct_group_editor_starts_open_and_uses_only_group_repetitions(
     assert editor.subgroup.parameter_fields[2].isHidden()
     assert editor.subgroup.summary.isHidden()
     assert editor.group_editor.summary.isHidden()
-    assert editor.hierarchy.scope_note.isHidden()
+    assert not editor.hierarchy.contents.toolTip()
     assert editor.hierarchy.contents_title.text() == "Epochs"
     saved = capture_protocol(window.protocol)
     editor.add_trial()
@@ -14257,8 +15095,9 @@ def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, 
     QTest.mouseMove(editor.group_editor.name)
     app.processEvents()
     assert not any(c.isVisible() for c in contents.block_actions.removers)
-    QTest.mouseMove(contents, contents.batch_hits[0][0].center().toPoint())
-    app.processEvents()
+    _move_mouse_and_wait_for_native_event(
+        contents, contents.batch_hits[0][0].center().toPoint(), app
+    )
     # One cross removes the complete selected batch, preserving the remaining source.
     remove = next(c for c in contents.block_actions.removers if c.isVisible())
     assert remove.property("role") == "compact" and not remove.styleSheet()
@@ -14281,8 +15120,7 @@ def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, 
     app.processEvents()
     timeline = editor.timeline
     first_rect = next(rect for rect, i, _, _ in timeline.hits if i == 0)
-    QTest.mouseMove(timeline, first_rect.center().toPoint())
-    app.processEvents()
+    _move_mouse_and_wait_for_native_event(timeline, first_rect.center().toPoint(), app)
     remove = next(
         c
         for c in timeline.block_actions.removers
@@ -14349,8 +15187,7 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app):
     assert editor.index == 2
     app.processEvents()
     rect = trials.visualItemRect(trials.item(0))
-    QTest.mouseMove(trials.viewport(), rect.center())
-    app.processEvents()
+    _move_mouse_and_wait_for_native_event(trials.viewport(), rect.center(), app)
     remove = next(
         c for c in trials.removers if c.isVisible() and c.property("trial_row") == 0
     )
@@ -14496,3 +15333,232 @@ def test_epoch_automatic_updates_preserve_focus_validation_and_history(window, a
     app.processEvents()
     assert not form.dirty and not form.notice.text()
     assert editor.program.sequence[0].body[0].duration.duration.seconds == "70"
+
+
+@pytest.mark.parametrize("view", ["reference_bars", "frame_grid", ""])
+def test_active_calibration_measurements_are_editable_only_for_reference_bars(
+    window, view
+):
+    from cephvr.gui.projector_geometry import FACES
+
+    panel = window.devices.projectors
+    panel.apply_view(review_view(Phase.CONFIGURATION))
+    panel.set_calibration_presentation_state(active=True, available=True, view=view)
+    editable = view == "reference_bars"
+    for face in FACES:
+        for axis in ("x", "y"):
+            assert (
+                panel.measurements.fields[face, f"reference_{axis}_mm"].isEnabled()
+                == editable
+            )
+    assert not panel.rig_editor.isEnabled() and not panel.screen_editor.isEnabled()
+    assert not panel.timing.isEnabled()
+    assert panel.calibration.measurement_button.isEnabled() == editable
+    if editable:
+        editor = panel.measurements.fields["Front", "reference_x_mm"]
+        editor.clear()
+        QTest.keyClicks(editor, "123.5")
+        assert panel.screen_editor.drafts["Front"]["reference_x_mm"] == "123.5"
+        assert (
+            panel.calibration_files.calibration_snapshot()["values"][
+                "screens.Front.reference_x_mm"
+            ]
+            == 123.5
+        )
+    panel.set_calibration_presentation_state(
+        active=True, available=True, pending=True, view=view
+    )
+    assert not panel.measurements.isEnabled()
+    panel.set_calibration_presentation_state(
+        active=False, available=False, pending=True, view=view
+    )
+    assert not panel.measurements.isEnabled()
+    panel.set_calibration_presentation_state(active=False, available=True)
+    assert panel.measurements.isEnabled()
+    panel.set_calibration_presentation_state(
+        active=True, available=True, view="reference_bars"
+    )
+    panel.apply_view(review_view(Phase.CONFIGURATION, observer=True))
+    assert not panel.measurements.isEnabled()
+
+
+def test_shared_tables_tab_between_nested_editors_and_other_controls(app):
+    from PyQt6.QtWidgets import (
+        QCheckBox,
+        QComboBox,
+        QHBoxLayout,
+        QLineEdit,
+        QVBoxLayout,
+        QWidget,
+    )
+
+    from cephvr.gui.tables import DataTable
+
+    host = QWidget()
+    layout = QVBoxLayout(host)
+    table = DataTable(2, 2)
+    layout.addWidget(table)
+    pair = QWidget()
+    pair_layout = QHBoxLayout(pair)
+    x, y = QLineEdit(), QLineEdit()
+    pair_layout.addWidget(x)
+    pair_layout.addWidget(y)
+    choice, toggle, last = QComboBox(), QCheckBox(), QLineEdit()
+    choice.addItems(["A", "B"])
+    table.set_control(0, 0, pair)
+    table.set_control(0, 1, choice)
+    table.set_control(1, 0, toggle)
+    table.set_control(1, 1, last)
+    host.show()
+    host.activateWindow()
+    x.setFocus()
+    app.processEvents()
+    try:
+        sequence = [x, y, choice, toggle, last]
+        for current, following in zip(sequence[:-1], sequence[1:], strict=True):
+            assert app.focusWidget() is current
+            QTest.keyClick(current, Qt.Key.Key_Tab)
+            assert app.focusWidget() is following
+        for current, previous in zip(
+            reversed(sequence[1:]), reversed(sequence[:-1]), strict=True
+        ):
+            QTest.keyClick(current, Qt.Key.Key_Tab, Qt.KeyboardModifier.ShiftModifier)
+            assert app.focusWidget() is previous
+        y.setEnabled(False)
+        QTest.keyClick(x, Qt.Key.Key_Tab)
+        assert app.focusWidget() is choice
+    finally:
+        host.close()
+
+
+def test_console_tab_leaves_text_view_for_next_control(app):
+    from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
+
+    from cephvr.gui.components import Console
+
+    host = QWidget()
+    layout = QVBoxLayout(host)
+    console, editor = Console(), QLineEdit()
+    layout.addWidget(console)
+    layout.addWidget(editor)
+    host.show()
+    host.activateWindow()
+    console.setFocus()
+    app.processEvents()
+    try:
+        QTest.keyClick(console, Qt.Key.Key_Tab)
+        assert app.focusWidget() is editor
+        QTest.keyClick(editor, Qt.Key.Key_Tab, Qt.KeyboardModifier.ShiftModifier)
+        assert app.focusWidget() is console
+    finally:
+        host.close()
+
+
+def test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors():
+    import math
+    from types import SimpleNamespace
+
+    from cephvr.gui.calibration_profile import (
+        AssignedDisplay,
+        MonitorBinding,
+        diagnostic_display_profile,
+    )
+    from cephvr.gui.projector_geometry import FACES
+    from cephvr.visual_stimulus.rendering.arena import off_axis_view_projection
+    from cephvr.visual_stimulus.rendering.layer_projection import physical_corners
+
+    geometries = []
+    matrices = []
+    for native_width, native_height, pitch_x, pitch_y in (
+        (1000, 600, 0.1, 0.2),
+        (1920, 1080, 0.2, 0.1),
+    ):
+        values = dict(
+            zip(
+                (
+                    "rig.width",
+                    "rig.depth",
+                    "rig.height",
+                    "rig.subject_x",
+                    "rig.subject_y",
+                    "rig.subject_z",
+                ),
+                (120, 166, 110, 60, 93, 53),
+                strict=True,
+            )
+        )
+        for face in FACES:
+            for key, value in dict(
+                width=90,
+                height=80,
+                reference_width_px=native_width,
+                reference_height_px=native_height,
+                reference_x_px=200,
+                reference_y_px=100,
+                reference_x_mm=200 * pitch_x,
+                reference_y_mm=100 * pitch_y,
+                valid_width_px=round(80 / pitch_x),
+                valid_height_px=round(40 / pitch_y),
+            ).items():
+                values[f"screens.{face}.{key}"] = value
+            if face != "Right":
+                values[f"screens.{face}.subject_distance"] = 50
+        display, profiles = diagnostic_display_profile(
+            {"format": "cephvr-rig-calibration", "version": 7, "values": values},
+            tuple(
+                AssignedDisplay(
+                    f, i * native_width, 0, native_width, native_height, True
+                )
+                for i, f in enumerate(FACES)
+            ),
+            tuple(
+                MonitorBinding(
+                    f"interface-{i}",
+                    i * native_width,
+                    0,
+                    native_width,
+                    native_height,
+                    60,
+                    8,
+                )
+                for i in range(4)
+            ),
+            view="frame_grid",
+        )
+        geometries.append(display.geometry)
+        matrices.append(
+            tuple(
+                off_axis_view_projection(display, surface)
+                for surface in display.geometry.surfaces
+            )
+        )
+        for surface in display.geometry.surfaces:
+            assert math.dist(
+                surface.bottom_left_mm, surface.bottom_right_mm
+            ) == pytest.approx(native_width * pitch_x)
+            assert math.dist(
+                surface.bottom_left_mm, surface.top_left_mm
+            ) == pytest.approx(native_height * pitch_y)
+            corners = physical_corners(
+                SimpleNamespace(display=display),
+                SimpleNamespace(
+                    state=(("width", 20), ("height", 10), ("x", 0), ("y", 0))
+                ),
+                surface.surface_id,
+                SimpleNamespace(matrix=((1, 0, 0), (0, 1, 0))),
+            )
+            mesh = profiles[surface.surface_id]
+            output_span_x = (
+                mesh.vertices[1].xy[0] - mesh.vertices[0].xy[0]
+            ) * native_width
+            output_span_y = (
+                mesh.vertices[2].xy[1] - mesh.vertices[0].xy[1]
+            ) * native_height
+            assert (
+                corners[1][0] - corners[0][0]
+            ) / 2 * output_span_x * pitch_x == pytest.approx(20)
+            assert (
+                corners[3][1] - corners[0][1]
+            ) / 2 * output_span_y * pitch_y == pytest.approx(10)
+    assert geometries[0] != geometries[1]
+    assert matrices[0] != matrices[1]

@@ -1,10 +1,10 @@
 # Developer commands
 
-`python tools/generate_demo_assets.py` creates nine deterministic local images and
-texture previews for the source descriptors in `demo_assets/`. Use `--output <dir>`
-for another destination. These samples are for authoring/tests, not calibrated
-scientific stimuli. Generated images are ignored by Git; the tests generate their
-own temporary asset directory and do not require images in a fresh checkout.
+`python tools/generate_demo_assets.py --output <external-dir>` creates nine
+deterministic authoring images and texture descriptors outside the repository.
+Only projector calibration assets belong in `assets/calibration/`; experiment
+media stays in the operator's external Protocol Assets directory. Tests generate
+their own temporary samples. These patterns are not calibrated scientific stimuli.
 
 `generate_contracts.py` generates Python, type stubs and gRPC bindings from every
 authoritative Protobuf source. `build_backend.py` invokes the same generator before
@@ -54,6 +54,11 @@ prepared files against the current base runtime and `pyvenv.cfg`, then use the
 versioned module entry to retain required DLL-directory handles. Refresh with
 `-Install` after a base interpreter/configuration change; missing or stale preparation
 fails before managed launch instead of falling back to the Windows redirector.
+It also prepares byte-identical `cephvr-renderer.exe`. Managed startup applies separate
+Windows graphics preferences to the GUI/CPU image (power saving/AMD) and renderer
+image (high performance), verifies the writes, and checks the actual renderer against
+the RTX 5060 Ti. Restart the full runtime after changes affecting renderer selection;
+reopening only the GUI preserves the existing renderer process.
 
 For a fresh AMD64 Windows rig with Python 3.11, MSVC/CMake, CUDA and NVIDIA Optical
 Flow API 2 headers available, run

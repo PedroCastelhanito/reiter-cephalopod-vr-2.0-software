@@ -1,0 +1,6 @@
+SetupSession 50677ba5-f8af-425e-8cd4-98e3197268fe failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: session worker cleanup is not fully retained
+CancelSetup ca21759d-3a57-4ef6-ae6b-09a44c49541c failed: CANCEL_SETUP: Setup cancellation is stale
+CephVR supervisor shutdown: BACKEND_HEARTBEAT_LOST: visual_stimulus heartbeat silence
+InterruptSession 596ae194-21ce-49c8-b385-251818ae899b failed: SESSION_IDENTITY: no exact live session
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

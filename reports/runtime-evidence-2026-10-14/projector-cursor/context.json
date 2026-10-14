@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-14",
+  "task": "projector-cursor-stability",
+  "source_revision": "uncommitted working tree; concurrent changes preserved",
+  "mechanism": "configure_window sets GLFW_CENTER_CURSOR false after default_window_hints",
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_display_calibration_rendering.py -q -m \"not windows and not rig\" --basetemp=.tmp/projector-cursor-final --junitxml=reports/runtime-evidence-2026-10-14/projector-cursor/tests.xml",
+    "passed": 71,
+    "ruff_and_format": "two affected files passed",
+    "mypy": "native_display.py with --platform win32 passed",
+    "boundaries": "689 files; zero violations"
+  },
+  "native": {
+    "method": "Computer Use normal GUI launch, Close, reopen; read-only user32 GetCursorPos and authenticated controller snapshot",
+    "controller_generation": "6357d396-4246-4bd5-b532-d850712bc8b5",
+    "renderer_generation": "f657c4a2-a212-4bde-9b7a-4d9326c8cfd1",
+    "screenshot_origin": [7, 0],
+    "launch": {"clicked_relative": [490, 768], "observed_desktop": [497, 768], "state": "Active/presented"},
+    "close": {"clicked_relative": [490, 784], "observed_desktop": [497, 784], "state": "Idle/resources_closed"},
+    "reopen": {"clicked_relative": [490, 425], "observed_desktop": [497, 425], "state": "Active/presented"},
+    "outcome": "pointer remains at each clicked main-display location; reference calibration left active"
+  },
+  "attempts": [
+    "Initial live attempt interrupted by accidental physical Escape; stop immediately, resume on owner request.",
+    "Dashboard absent on resume; discover windows/status then --reopen-gui in existing runtime.",
+    "Sandbox snapshot stalls; permitted loopback snapshot succeeds; interrupt stalled probe.",
+    "Initial launch cursor file overwritten by snapshot of same name; separately record unchanged cursor on next read.",
+    "Initial documentation patch has wrong runtime heading and fails before changes; correct heading and retry."
+  ],
+  "limitations": "Cursor placement and lifecycle only; lossy JPEG screenshot. No optical or full-workload acceptance."
+}

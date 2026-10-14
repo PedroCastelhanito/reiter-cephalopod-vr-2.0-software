@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="0.356" timestamp="2026-10-14T11:56:36.263326+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.controller.test_camera_configuration" name="test_external_preview_readback_matches_acquisition_role_selection[1]" time="0.009" /><testcase classname="tests.controller.test_camera_configuration" name="test_external_preview_readback_matches_acquisition_role_selection[2]" time="0.004" /><testcase classname="tests.controller.test_camera_configuration" name="test_external_preview_readback_matches_acquisition_role_selection[3]" time="0.002"><failure message="AssertionError: context {&#10;    command_id: &quot;b7d02925-be9e-482f-b462-3256ede1b251&quot;&#10;  }&#10;  command: &quot;ExecuteCameraCommand&quot;&#10;  complete: true&#10;  succee...nfirmation failed&quot;&#10;  failure {&#10;    code: &quot;OPERATION_FAILED&quot;&#10;    message: &quot;resolution does not match the outstanding batch&quot;&#10;  }&#10;  &#10;assert False&#10; +  where False = CameraOperation(operator_id='b7d02925-be9e-482f-b462-3256ede1b251', child_id='c4ccb7ed-fe55-4e08-b7f4-78fba24170e5', r...ffects_before=False, status_reservation_key='', status_work_key='', internal_retention=False, is_microcontroller=False).confirmed">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.pytest-eye-readback-repro/test_external_preview_readback2')
+role = 3
+
+    @pytest.mark.parametrize("role", [1, 2, 3])
+    async def test_external_preview_readback_matches_acquisition_role_selection(
+        tmp_path: Path, role: int
+    ) -&gt; None:
+        from cephvr.acquisition.coordinator.manual_preview import ManualPreview
+        from cephvr.acquisition.identity import camera_role_name
+    
+        runtime = _runtime_with_validators(tmp_path)
+        backend = _Acquisition(pb.COMMAND_RESULT_ACCEPTED)
+        runtime.camera_readback.backends = {"acquisition": cast(Any, backend)}
+        runtime.camera_readback.validators = {
+            "acquisition": lambda _c: pb.ValidationResult(completed=True, valid=True)
+        }
+        settings = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        selected = getattr(settings, camera_role_name(role))
+        selected.device.device_id = "camera-serial"
+        selected.device.frame_timing = acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+        settings.pulses.port = "COM8"
+        pulse = getattr(settings.pulses, camera_role_name(role))
+        pulse.pin = "D9"
+        pulse.requested_frequency_hz = 60.0
+        operation = CameraOperation(
+            _id(), _id(), 1, role, svc.CAMERA_COMMAND_KIND_START_PREVIEW,
+            pb.WorkContext(), 10**12, True,
+        )
+        runtime.device_state.camera_operation = operation
+        runtime.configuration_commands.control_operations.operation(
+            operation.operator_id, "ExecuteCameraCommand", progress="pending"
+        )
+        owner = cast(Any, SimpleNamespace(
+            configuration=SimpleNamespace(settings=settings),
+            workers=SimpleNamespace(workers={}),
+        ))
+        external_roles = ManualPreview._external_roles(owner, role)
+        report = svc.AcquisitionResolutionReport(
+            source=backend.context,
+            operation=pb.OperationContext(command_id=operation.child_id),
+            requested_configuration_revision=operation.revision,
+        )
+        resolved = report.cameras.add(camera=role).result
+        resolved.configuration_revision = operation.revision
+        resolved.device.configured_id = "camera-serial"
+        resolved.device.physical_id = "physical-serial"
+        resolved.applied.CopyFrom(selected.device)
+        resolved.capabilities.SetInParent()
+        resolved.transport.SetInParent()
+        resolved.layout.SetInParent()
+        if external_roles:
+            report.pulses.requested_configuration_revision = operation.revision
+            report.pulses.requested.CopyFrom(settings.pulses)
+            for current_role in (1, 2, 3):
+                setattr(report.pulses, camera_role_name(current_role) + "_active",
+                        current_role in external_roles)
+            report.pulses.applied.SetInParent()
+        await runtime.camera_readback.adopt_camera_resolution(operation, report)
+&gt;       assert operation.confirmed, runtime.control.operations[operation.operator_id]
+E       AssertionError: context {
+E           command_id: "b7d02925-be9e-482f-b462-3256ede1b251"
+E         }
+E         command: "ExecuteCameraCommand"
+E         complete: true
+E         succee...nfirmation failed"
+E         failure {
+E           code: "OPERATION_FAILED"
+E           message: "resolution does not match the outstanding batch"
+E         }
+E         
+E       assert False
+E        +  where False = CameraOperation(operator_id='b7d02925-be9e-482f-b462-3256ede1b251', child_id='c4ccb7ed-fe55-4e08-b7f4-78fba24170e5', r...ffects_before=False, status_reservation_key='', status_work_key='', internal_retention=False, is_microcontroller=False).confirmed
+
+tests\controller\test_camera_configuration.py:683: AssertionError</failure></testcase></testsuite></testsuites>

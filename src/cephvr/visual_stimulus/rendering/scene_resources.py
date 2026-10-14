@@ -185,12 +185,15 @@ class SceneOutputBuilder:
             )
             for mapping in mappings:
                 viewport = mapping.viewport
-                texture = track(
-                    context.texture((viewport.width, viewport.height), 4, dtype="f4")
-                )
-                depth = track(
-                    context.depth_renderbuffer((viewport.width, viewport.height))
-                )
+                profile = cast(GeometricProfile, resource_content[mapping.mapping_id])
+                size = (viewport.width, viewport.height)
+                if profile.valid_area is not None and profile.calibration_id.startswith(
+                    ("reference_", "diagnostic_")
+                ):
+                    x0, y0, x1, y1 = profile.valid_area
+                    size = (round((x1 - x0) * width), round((y1 - y0) * height))
+                texture = track(context.texture(size, 4, dtype="f4"))
+                depth = track(context.depth_renderbuffer(size))
                 framebuffer = track(
                     context.framebuffer(
                         color_attachments=(texture,), depth_attachment=depth

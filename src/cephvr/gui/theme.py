@@ -117,8 +117,6 @@ def stylesheet() -> str:
     QPushButton[role='danger'] {{ background: {c.danger}; border-color: {c.danger_border}; }}
     QPushButton[role='compact-stop'] {{ background: {c.danger}; border-color: {c.danger_border}; }}
     QPushButton[role='compact'], QPushButton[role='compact-stop'] {{ padding: 7px 10px; font-size: {s.label_font}px; }}
-    QPushButton[role='plot-toggle'] {{ padding: 5px 4px; font-size: {s.label_font}px; border-radius: 6px; color: {c.muted}; }}
-    QPushButton[role='plot-toggle']:checked {{ background: {c.selection}; border-color: {c.focus}; color: {c.text}; }}
     QPushButton[role='navigation'] {{ background: transparent; color: {c.muted};
                                      text-align: left; padding: 14px 12px; }}
     QPushButton[role='navigation']:checked {{ background: {c.selection};

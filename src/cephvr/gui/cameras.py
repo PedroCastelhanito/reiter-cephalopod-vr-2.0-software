@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.gui.camera_inventory import CAMERA_ROLES, CameraDraft, discover_drafts
 from cephvr.gui.camera_snapshot import CameraSnapshot
-from cephvr.gui.components import Card, StatusColumn, button, combo, field, label
+from cephvr.gui.components import Card, StatusColumn, button, combo, field
 from cephvr.gui.formatting import metrics_text
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import PresetField
@@ -70,7 +70,7 @@ class CamerasPanel(ResponsiveColumns):
         self.pending_enable: dict[str, bool] = {}
         self.loading = False
         self.snapshot_draft = False
-        inventory = Card("Available devices")
+        inventory = Card("Available cameras")
         self.table = DataTable(len(self.drafts), 4)
         self.refresh_button = self.table.add_refresh_action("Refresh available cameras")
         self.table.setHorizontalHeaderLabels(["Use", "Camera", "Role", ""])
@@ -88,7 +88,9 @@ class CamerasPanel(ResponsiveColumns):
         self.enable_controls: list[QCheckBox] = []
         self.populate_inventory()
         inventory.body.addWidget(self.table)
-        actions = QHBoxLayout()
+        actions = QGridLayout()
+        actions.setContentsMargins(0, 0, 0, 0)
+        actions.setHorizontalSpacing(SIZES.field_x_gap)
         self.selected_test_button = button(
             "Test selected", hint="Verify the assigned camera identity without capture"
         )
@@ -104,18 +106,12 @@ class CamerasPanel(ResponsiveColumns):
         self.wiring_button.clicked.connect(self.wiring_requested.emit)
         self.refresh_button.clicked.connect(self.refresh_inventory)
         self.connect_button.clicked.connect(self.toggle_connection)
-        for control in (
-            self.selected_test_button,
-            self.wiring_button,
-            self.connect_button,
-        ):
-            actions.addWidget(control)
+        actions.addWidget(self.selected_test_button, 0, 0)
+        actions.addWidget(self.wiring_button, 0, 1)
+        actions.addWidget(self.connect_button, 1, 0, 1, 2)
+        actions.setColumnStretch(0, 1)
+        actions.setColumnStretch(1, 1)
         inventory.body.addLayout(actions)
-        self.wiring_summary = label(
-            "Assign a camera role to edit its MCU output wiring.", "muted"
-        )
-        self.wiring_summary.setWordWrap(True)
-        inventory.body.addWidget(self.wiring_summary)
         left_layout.addWidget(inventory)
         self.configuration = Card("Camera config")
         self.role = combo((*CAMERA_ROLES, "Unassigned"))

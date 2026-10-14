@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-14",
+  "task": "projector-legend-visibility",
+  "base_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "Uncommitted working tree; pre-existing GUI and documentation edits preserved.",
+  "python": ".venv/Scripts/python.exe",
+  "commands": [
+    "python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k 'plot_legends or projection_group or front_attached_screens or bottom_optics or rotat or trial_preview' --basetemp=.pytest-tmp-legend --junitxml=reports/runtime-evidence-2026-10-14/projector-legend/tests.xml",
+    "python -m ruff check src/cephvr/gui/tank_diagram.py src/cephvr/gui/projectors.py src/cephvr/gui/theme.py tests/gui/test_dashboard.py",
+    "python -m ruff format --check src/cephvr/gui/tank_diagram.py src/cephvr/gui/projectors.py src/cephvr/gui/theme.py tests/gui/test_dashboard.py",
+    "python -m mypy --platform win32 src/cephvr/gui/tank_diagram.py src/cephvr/gui/projectors.py src/cephvr/gui/theme.py",
+    "python tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "results": "5 passed, 463 deselected; Ruff/format/mypy pass; 687 modules, zero boundary violations with existing cohesion advisories; whitespace pass.",
+  "initial_attempts": "First focused run: 2 passed, 1 failed because layout overrode test resize; constrain test width. Initial lint identified newly unused button import; remove it and rerun successfully.",
+  "scope": "Local owning GUI interaction, geometry and rotation regressions; static checks. No managed GUI restart, hardware command, native visual or scientific acceptance. Existing native-picker faulthandler limitation retained."
+}

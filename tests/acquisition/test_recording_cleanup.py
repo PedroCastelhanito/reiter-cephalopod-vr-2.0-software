@@ -35,6 +35,7 @@ from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.worker.cleanup_lifecycle import WorkerCleanupLifecycle
 from cephvr.acquisition.worker.recording_fault import RecordingFaultLifecycle
+from cephvr.acquisition.worker.recording_preparation import TrialRecordingPreparation
 from cephvr.acquisition.worker.recording_runtime import WorkerRecordingRuntime
 from cephvr.acquisition.worker.trial_recording_terminal import TrialRecordingTerminal
 from cephvr.control.v1 import types_pb2 as control
@@ -83,6 +84,56 @@ def test_setup_cleanup_does_not_submit_to_an_uninstalled_recording_thread() -> N
     WorkerCleanupLifecycle.begin(cleanup, 100)
     assert WorkerCleanupLifecycle._reconcile(cleanup, 100)
     assert cleanup._future is None
+
+
+def test_cancel_setup_before_trial_recording_is_installed_is_confirmed() -> None:
+    runtime = object.__new__(WorkerRecordingRuntime)
+    runtime._settings = acq.RecordingSettings()
+    runtime._capabilities = object()
+    runtime._preparer = object()
+    runtime._queue = None
+    runtime._pool = None
+    runtime._session_id = "session-1"
+    runtime._device_id = "camera-1"
+    runtime._camera_clock = camera.CameraClockDescriptor(device_id="camera-1")
+    runtime._layout = camera.CameraImageLayout()
+    runtime._installed = False
+    runtime._handoff = None
+    runtime._run_future = None
+    runtime._pending_session = None
+
+    completed = runtime.cancel_before_start(deadline_ns=500)
+    preparation = object.__new__(TrialRecordingPreparation)
+    preparation._recording = runtime
+    preparation._session = object()
+    preparation.cancel_setup()
+
+    assert completed.done()
+    assert completed.result() == []
+    assert not runtime.enabled
+    assert runtime._session_id == ""
+    assert runtime._device_id == ""
+    assert runtime._camera_clock is None
+    assert runtime._layout is None
+    assert preparation._session is None
+
+
+def test_cancel_setup_preserves_an_installed_trial_cleanup_continuation() -> None:
+    runtime = object.__new__(WorkerRecordingRuntime)
+    runtime._settings = acq.RecordingSettings()
+    runtime._installed = True
+    runtime._handoff = object()
+    runtime._run_future = None
+    preparation = object.__new__(TrialRecordingPreparation)
+    preparation._recording = runtime
+    session = object()
+    preparation._session = session
+
+    preparation.cancel_setup()
+
+    assert runtime.enabled
+    assert runtime._installed
+    assert preparation._session is session
 
 
 class _Encoder:

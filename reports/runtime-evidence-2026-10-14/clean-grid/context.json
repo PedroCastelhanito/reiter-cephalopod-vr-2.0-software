@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-14",
+  "task": "clean-calibration-grid-bottom-fit",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "Dirty working tree; concurrent changes preserved. HEAD is not tested-byte identity.",
+  "change": "Solid thin neutral world-phase grid at existing10mm spacing, white border, one screen name; remove rainbow/dashes/cross/dimensions/ruler/tank outline and unused glyphs.",
+  "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"calibration_guides or calibration_arena or calibration_identity_profiles or measured_affine or preview_calibration or live_calibration or front_attached\" --basetemp=.tmp/clean-grid-tests --junitxml=reports/runtime-evidence-2026-10-14/clean-grid/tests.xml -p no:faulthandler",
+  "environment": "Repository Python3.11, QT_QPA_PLATFORM=offscreen",
+  "result": "16 passed,464 deselected",
+  "static": "Ruff/format3 files, Win32 mypy2 sources and backend boundaries689/zero violations pass; existing size warnings unaffected.",
+  "bottom_assessment": {
+    "source": "C:/Users/ReiterU_PC/AppData/Local/CephVR/calibration/dc327f2d29bec448/frame_grid/calibration/diagnostic_display_profile.json and diagnostic_bottom.json",
+    "profile_timestamp_utc": "2026-10-14T01:50:08.046863+00:00",
+    "scope": "Last generated on-disk artifact, not verified current live settings. Native window inventory exposes no CephVR windows; no launch/input performed.",
+    "screen_mm": [
+      94,
+      126
+    ],
+    "output_px": [
+      720,
+      1280
+    ],
+    "reference_bar_mm": [
+      49,
+      37
+    ],
+    "reference_bar_px": [
+      180,
+      320
+    ],
+    "projected_image_mm": [
+      196,
+      148
+    ],
+    "extra_scale": [
+      1.02,
+      1.08
+    ],
+    "mesh_y_range": [
+      0.04027027027027025,
+      0.9597297297297298
+    ],
+    "predicted_grid_height_mm": 136.08,
+    "interpretation": "126mm physical screen times1.08. Smaller than166mm tank depth; whether tank depth is desired remains unanswered. Under actual measurement/model consistency it already exceeds configured126mm screen.",
+    "pure_transform_probe": "All four corners of every saved surface map to normalized XY(-1,-1),(1,-1),(1,1),(-1,1), within near/far; no aspect letterboxing in V15 transform.",
+    "owner_reply": "let me measure again; preserve dimensions/measurements/corrections pending new values."
+  },
+  "limits": "No numeric config/settings edit, source GLB rewrite, device/output command, runtime/GUI restart or native/optical acceptance. Existing projection launch regenerates frame_grid.glb with clean generator after GUI reopen; reference_bars unchanged. Remaining physical Bottom diagnosis awaits remeasurement."
+}

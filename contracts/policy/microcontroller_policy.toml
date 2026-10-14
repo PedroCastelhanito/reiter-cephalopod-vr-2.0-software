@@ -1,5 +1,5 @@
 # Fixed controller-owned Microcontroller declarations. A11/E14.
-policy_version = 2
+policy_version = 3
 
 [microcontroller]
 firmware_target_scope = "rig_board_first"
@@ -60,7 +60,7 @@ configuration_while_running = "stop_apply_restore_running"
 keepalive_reply = "compact_status"
 status_reply = "state_and_applied_configuration"
 pulse_counters = false
-diagnostic_edge_counts = "input_observed_output_generated"
+diagnostic_edge_counts = "output_generated"
 watchdog_status_clear = "successful_configuration"
 command_timeout_action = "report_without_retry"
 pulse_generation = "microcontroller"

@@ -125,9 +125,6 @@ class BatchCreate(QWidget):
         )
         generation.addLayout(self.generation_grid)
         self.arrange_fields()
-        self.insertion_hint = label("", wrap=True)
-        self.insertion_hint.hide()
-        generation.addWidget(self.insertion_hint)
         self.composer.set_generation_controls(self.generation_controls)
         self.notice = FormNotice()
         body.addWidget(self.notice)
@@ -152,10 +149,7 @@ class BatchCreate(QWidget):
         mode = "append" if self.append_only else self.insert.currentData()
         self.stride_field.setVisible(mode == "stride")
         self.target_field.setVisible(mode == "label")
-        self.insertion_hint.setVisible(
-            mode in ("stride", "replace", "before", "after", "label")
-        )
-        self.insertion_hint.setText(
+        self.insert.setToolTip(
             f"Add this batch after each of {self.label_counts.get(self.target_label.currentText(), 0)} matching epochs (within repeat groups)."
             if mode == "label"
             else "Insert one generated block per interval; append any remaining blocks. Groups count as one block."

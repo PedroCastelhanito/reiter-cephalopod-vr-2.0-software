@@ -1098,6 +1098,7 @@
         "presentation_mode": {
           "default": "photodiode_only_vsync",
           "enum": [
+            "free_run",
             "all_outputs_vsync",
             "photodiode_only_vsync"
           ],

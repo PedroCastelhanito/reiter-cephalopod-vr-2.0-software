@@ -40,6 +40,7 @@ from cephvr.platform.windows.bootstrap import (
     create_control_pipe,
     write_bootstrap,
 )
+from cephvr.platform.windows.graphics_preferences import configure_graphics_preference
 from cephvr.platform.windows.jobs import WindowsJobs, WindowsLaunchError
 from cephvr.platform.windows.python_runtime import (
     module_arguments,
@@ -90,6 +91,7 @@ def run_launcher(
             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
         )
     interpreter = resolve_python_executable(interpreter)
+    configure_graphics_preference(interpreter, high_performance=False)
     if (
         supervisor_config.resolve()
         != (software_root / "config/backends/supervisor_config.toml").resolve()

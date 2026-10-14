@@ -154,8 +154,8 @@ python scripts/start_runtime_gui.py --reopen-gui
 ```
 
 Images and videos are local assets and are excluded from Git. To create the optional
-dummy authoring samples from the checked-in descriptors, run
-`python tools/generate_demo_assets.py`. Tests generate their own temporary samples.
+dummy authoring samples outside the repository, run
+`python tools/generate_demo_assets.py --output <external-dir>`. Tests generate their own temporary samples.
 These patterns are not calibrated scientific stimuli. Historical screenshot/run
 data kept locally is indexed by the dated cleanup manifests in `reports/`.
 

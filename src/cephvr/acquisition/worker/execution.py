@@ -207,6 +207,7 @@ class WorkerOperationExecutor:
             elif name == "CancelSetup":
                 if self.recording is not None and self.recording.enabled:
                     self.recording.cancel_before_start(deadline_ns=deadline_ns)
+                self.trial.recording_preparation.cancel_setup()
                 self.preparation.cancel_setup()
                 self.trial.trial_prepared = False
             elif name == "InterruptSession":

@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: CONTROLLER_LOST: controller heartbeat silence
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

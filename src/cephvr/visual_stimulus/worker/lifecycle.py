@@ -13,6 +13,7 @@ from google.protobuf.message import Message
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
 from cephvr.visual_stimulus.config.models.program_model import Program
+from cephvr.visual_stimulus.config.projection import policy_projection
 from cephvr.visual_stimulus.configuration import resolve_pacing_profile
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
@@ -280,6 +281,8 @@ class LifecycleDriver:
         ):
             raise RuntimeError("display calibration is not confirmed Idle")
         if self.state.cleaned:
+            if not self.state.pending_resources:
+                self.preparation.retire_released_resources()
             self.state.resources.clear()
             self.state.released_threads.clear()
             self.state.artifacts.clear()
@@ -307,6 +310,7 @@ class LifecycleDriver:
         display = resolve_pacing_profile(
             request.settings.display.profile_json,
             max_bytes=request.policies.limits.max_document_bytes,
+            projection=policy_projection(request.policies.projection),
             refresh_hz=(
                 request.policies.pacing_refresh_hz
                 if request.policies.HasField("pacing_refresh_hz")
@@ -460,11 +464,22 @@ class LifecycleDriver:
             self.preparation_job = None
             self.state.released_threads.add(job.resource_key)
             try:
-                self.complete_setup(job.request, job.result.result(), job.deadline_ns)
-                job.completion.set_result(None)
+                records = job.result.result()
+            except Exception as exc:
+                # A rejected Setup remains a command failure for CancelSetup to clean up.
+                self.state.interrupted = True
+                self.cancelled.set()
+                job.completion.set_exception(exc)
             except BaseException as exc:
                 job.completion.set_exception(exc)
                 self.fail(exc)
+            else:
+                try:
+                    self.complete_setup(job.request, records, job.deadline_ns)
+                    job.completion.set_result(None)
+                except BaseException as exc:
+                    job.completion.set_exception(exc)
+                    self.fail(exc)
         trial = self.state.trial
         if trial is not None and trial.stopped and not trial.finished:
             self.trials.finalize()
@@ -527,6 +542,7 @@ class LifecycleDriver:
             )
             self.state.resources.clear()
             self.state.pending_resources.clear()
+            self.preparation.retire_released_resources()
             return
         cleanup_resources(
             self.state,
@@ -538,7 +554,7 @@ class LifecycleDriver:
             preparation=self.preparation,
             engine=self.engine,
             feedback=self.feedback,
-            emit=self.lifecycle,
+            emit=self.confirm_cleanup,
         )
 
     def _promote_pending_resources(
@@ -559,6 +575,14 @@ class LifecycleDriver:
 
     def lifecycle(self, report: pb.LifecycleReport, deadline_ns: int) -> None:
         self.reports.send(
+            "ReportWorkerLifecycle",
+            visual_stimulus.WorkerLifecycle(source=self.worker, report=report),
+            deadline_ns,
+        )
+
+    def confirm_cleanup(self, report: pb.LifecycleReport, deadline_ns: int) -> None:
+        """Hold CancelSetup completion until the terminal cleanup proof is accepted."""
+        self.reports.confirm(
             "ReportWorkerLifecycle",
             visual_stimulus.WorkerLifecycle(source=self.worker, report=report),
             deadline_ns,

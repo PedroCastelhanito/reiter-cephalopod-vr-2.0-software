@@ -216,7 +216,14 @@ def test_native_atomic_compare_exchange_serializes_independent_processes() -> No
 
 def test_prepared_python_runtime_rejects_stale_or_mismatched_files(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from cephvr.platform.windows import graphics_preferences
+    from cephvr.platform.windows.python_runtime import resolve_renderer_executable
+
+    monkeypatch.setattr(
+        graphics_preferences, "configure_graphics_preference", lambda *_a, **_kw: None
+    )
     home = tmp_path / "base"
     scripts = tmp_path / "venv" / "Scripts"
     home.mkdir()
@@ -230,6 +237,14 @@ def test_prepared_python_runtime_rejects_stale_or_mismatched_files(
     (home / "zlib.dll").write_bytes(b"matching optional zlib")
     wrapper = prepare_python_runtime(scripts.parent, base_executable, base_dll)
     assert wrapper.read_bytes() == base_executable.read_bytes()
+    renderer = resolve_renderer_executable(wrapper)
+    assert renderer.name == "cephvr-renderer.exe"
+    assert resolve_python_executable(renderer) == wrapper
+    renderer.write_bytes(b"modified role image")
+    with pytest.raises(RuntimeError, match="renderer executable differs"):
+        resolve_python_executable(renderer)
+    prepare_python_runtime(scripts.parent, base_executable, base_dll)
+    assert resolve_python_executable(renderer) == wrapper
     assert (scripts / "python311.dll").read_bytes() == base_dll.read_bytes()
     assert (scripts / "VCRUNTIME140.dll").read_bytes() == b"matching runtime support"
     assert (scripts / "zlib.dll").read_bytes() == b"matching optional zlib"

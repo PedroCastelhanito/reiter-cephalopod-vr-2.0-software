@@ -1,9 +1,9 @@
-"""Compact per-face correction table, sharing the rig's retained drafts."""
+"""Compact per-face usable pixel controls sharing the rig's retained drafts."""
 
 from decimal import Decimal, InvalidOperation
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtGui import QIntValidator, QKeyEvent
 from PyQt6.QtWidgets import (
     QCheckBox,
     QHBoxLayout,
@@ -19,40 +19,57 @@ from cephvr.gui.tables import DataTable
 
 
 class AdjustmentEntry(QLineEdit):
-    """Step corrections without rounding imported drafts or partial typed input."""
+    """Whole-pixel entry with a blank measured default and one-pixel stepping."""
 
-    def __init__(self, axis: str, *, scale: bool) -> None:
+    def __init__(self, axis: str, *, size: bool = True) -> None:
         super().__init__()
         self.setPlaceholderText(axis)
-        self.decimals = 2 if scale else 1
-        self.step = Decimal("0.01" if scale else "0.1")
-        self.default = Decimal(1 if scale else 0)
-        self.scale = scale
-        self.setToolTip(f"Up/Down: adjust by {self.step}{'' if scale else ' px'}")
+        self.minimum = 1 if size else -2147483647
+        self.maximum = 2147483647
+        self.setValidator(QIntValidator(self.minimum, self.maximum, self))
+        self.setToolTip("Up/Down: adjust by 1 px")
+
+    def step_by(self, direction: int) -> None:
+        if self.isReadOnly() or not self.isEnabled():
+            return
+        try:
+            value = Decimal(self.text() or self.placeholderText())
+            if not value.is_finite() or value != value.to_integral_value():
+                return
+            stepped = max(self.minimum, min(self.maximum, int(value) + direction))
+        except InvalidOperation:
+            return
+        text = str(stepped)
+        if self.text() != text:
+            self.setText(text)
+            self.textEdited.emit(text)
+
+    def set_limits(self, minimum: int, maximum: int) -> None:
+        self.minimum, self.maximum = minimum, maximum
+        self.setValidator(QIntValidator(minimum, maximum, self))
+        self.cap()
+
+    def cap(self) -> None:
+        try:
+            value = Decimal(self.text())
+            if value.is_finite() and value == value.to_integral_value():
+                capped = max(self.minimum, min(self.maximum, int(value)))
+                if capped != value:
+                    self.setText(str(capped))
+        except InvalidOperation:
+            pass
 
     def keyPressEvent(self, event: QKeyEvent | None) -> None:
         if (
-            event is None
-            or event.key() not in (Qt.Key.Key_Up, Qt.Key.Key_Down)
-            or event.modifiers() != Qt.KeyboardModifier.NoModifier
-            or self.isReadOnly()
+            event is not None
+            and event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down)
+            and event.modifiers() == Qt.KeyboardModifier.NoModifier
+            and not self.isReadOnly()
         ):
+            event.accept()
+            self.step_by(1 if event.key() == Qt.Key.Key_Up else -1)
+        else:
             super().keyPressEvent(event)
-            return
-        event.accept()
-        try:
-            value = Decimal(self.text()) if self.text().strip() else self.default
-            if not value.is_finite():
-                return
-            direction = 1 if event.key() == Qt.Key.Key_Up else -1
-            value = (value + direction * self.step).quantize(self.step)
-        except InvalidOperation:
-            return
-        if self.scale and value <= 0:
-            return
-        text = f"{value:.{self.decimals}f}"
-        self.setText(text)
-        self.textEdited.emit(text)
 
 
 class CalibrationTable(Card):
@@ -65,21 +82,28 @@ class CalibrationTable(Card):
         super().__init__("Screen calibration")
         self.drafts = drafts
         self.controls: dict[tuple[str, str], QWidget] = {}
-        self.table = DataTable(len(FACES), 4)
+        self.table = DataTable(len(FACES), 5)
         self.table.setHorizontalHeaderLabels(
-            ["Screen", "Inverse", "Scale X / Y", "Offset X / Y (px)"]
+            [
+                "Screen",
+                "Inverse",
+                "Width / Height (px)",
+                "Offset X (px)",
+                "Offset Y (px)",
+            ]
         )
         header = self.table.horizontalHeader()
         assert header is not None
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        for col in (0, 1):
+            header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
         for row, face in enumerate(FACES):
             self.table.setItem(row, 0, QTableWidgetItem(face))
             for col, keys in enumerate(
                 (
                     ("flip_x", "flip_y"),
-                    ("scale_u", "scale_v"),
-                    ("offset_x", "offset_y"),
+                    ("valid_width_px", "valid_height_px"),
+                    ("offset_x_px",),
+                    ("offset_y_px",),
                 ),
                 1,
             ):
@@ -87,7 +111,7 @@ class CalibrationTable(Card):
                 layout = QHBoxLayout(cell)
                 layout.setContentsMargins(0, 0, 0, 0)
                 layout.setSpacing(5)
-                for axis, key in zip(("X", "Y"), keys, strict=True):
+                for axis, key in zip(("X", "Y"), keys, strict=False):
                     control: QCheckBox | QLineEdit
                     if col == 1:
                         control = QCheckBox(axis)
@@ -97,11 +121,9 @@ class CalibrationTable(Card):
                             )
                         )
                     else:
-                        control = AdjustmentEntry(axis, scale=col == 2)
-                        control.textEdited.connect(
-                            lambda _value, f=face, k=key: self.adjustments_changed.emit(
-                                f, k
-                            )
+                        control = AdjustmentEntry(
+                            ("Width" if axis == "X" else "Height") if col == 2 else "0",
+                            size=col == 2,
                         )
                         control.setMinimumWidth(0)
                         control.setMaximumWidth(90)
@@ -109,6 +131,9 @@ class CalibrationTable(Card):
                             lambda value, f=face, k=key: self.drafts[f].__setitem__(
                                 k, value
                             )
+                        )
+                        control.textEdited.connect(
+                            lambda _value, f=face, k=key: self.adjust(f, k)
                         )
                     control.setAccessibleName(f"{face} {key}")
                     self.controls[face, key] = control
@@ -130,20 +155,82 @@ class CalibrationTable(Card):
         self.presentation_active = False
         self.presentation_available = False
         self.presentation_pending = False
+        self.outputs: dict[str, tuple[int, int]] = {}
+
+    def refresh_dimensions(self, outputs: dict[str, tuple[int, int]]) -> None:
+        from cephvr.gui.projector_extent import valid_pixels
+
+        self.outputs = outputs
+        for face, (width, height) in outputs.items():
+            for key, limit in (("valid_width_px", width), ("valid_height_px", height)):
+                control = self.controls[face, key]
+                assert isinstance(control, AdjustmentEntry)
+                control.set_limits(1, limit)
+            try:
+                values = {
+                    f"screens.{face}.{k}": float(v) if v else None
+                    for k, v in self.drafts[face].items()
+                    if k not in ("flip_x", "flip_y")
+                }
+                for key in ("valid_width_px", "valid_height_px"):
+                    values[f"screens.{face}.{key}"] = None
+                pixels = valid_pixels(values, face, width, height)
+                for key, value in zip(
+                    ("valid_width_px", "valid_height_px"), pixels, strict=True
+                ):
+                    control = self.controls[face, key]
+                    assert isinstance(control, QLineEdit)
+                    control.setPlaceholderText(str(value))
+                    control.setToolTip(
+                        "Blank uses measured size. Up/Down: 1 px. Capped at the projector image size."
+                    )
+            except (ValueError, TypeError):
+                pass
+            self.cap_offsets(face)
+
+    def cap_offsets(self, face: str) -> None:
+        dimensions = self.outputs.get(face)
+        if dimensions is None:
+            return
+        for axis, key, native in zip(
+            ("x", "y"), ("valid_width_px", "valid_height_px"), dimensions, strict=True
+        ):
+            size = self.controls[face, key]
+            assert isinstance(size, AdjustmentEntry)
+            try:
+                pixels = int(size.text() or size.placeholderText())
+            except ValueError:
+                continue
+            limit = max(0, (native - pixels) // 2)
+            offset = self.controls[face, f"offset_{axis}_px"]
+            assert isinstance(offset, AdjustmentEntry)
+            offset.set_limits(-limit, limit)
+            offset.setToolTip(
+                f"From image center, {-limit} to {limit} px. Positive {axis.upper()}: {'right' if axis == 'x' else 'up'}. Up/Down: 1 px."
+            )
+
+    def adjust(self, face: str, key: str) -> None:
+        control = self.controls[face, key]
+        assert isinstance(control, AdjustmentEntry)
+        control.cap()
+        self.cap_offsets(face)
+        self.adjustments_changed.emit(face, key)
 
     def request_measurement(self) -> None:
-        if (
-            self.presentation_available
-            and not self.presentation_pending
-            and not self.presentation_active
-        ):
+        if not self.presentation_available or self.presentation_pending:
+            return
+        if self.presentation_active:
+            if self.presentation_view == "reference_bars":
+                self.close_requested.emit()
+        else:
             self.measurement_requested.emit()
 
     def request_presentation(self) -> None:
         if not self.presentation_available or self.presentation_pending:
             return
         if self.presentation_active:
-            self.close_requested.emit()
+            if self.presentation_view != "reference_bars":
+                self.close_requested.emit()
         else:
             self.launch_requested.emit()
 
@@ -155,8 +242,17 @@ class CalibrationTable(Card):
         self.presentation_active = active
         self.presentation_available = available
         self.presentation_pending = pending
+        reference_active = active and view == "reference_bars"
+        projection_active = active and not reference_active
         self.presentation_button.setText(
-            "Close" if active else "Launch projection calibration"
+            "Close" if projection_active else "Launch projection calibration"
         )
-        self.presentation_button.setEnabled(available and not pending)
-        self.measurement_button.setEnabled(available and not pending and not active)
+        self.measurement_button.setText(
+            "Close" if reference_active else "Launch reference calibration"
+        )
+        self.presentation_button.setEnabled(
+            available and not pending and not reference_active
+        )
+        self.measurement_button.setEnabled(
+            available and not pending and not projection_active
+        )

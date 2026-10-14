@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "Existing dirty working tree plus this bounded increment; HEAD alone does not identify tested bytes.",
+  "task": "bottom-attached-screen-elevation",
+  "behavior": "Front/Left/Right lower Z equals subject Z minus Bottom screen distance; physical heights are retained. Shared diagram/export/prepared/preview calculation.",
+  "validation": {
+    "pytest": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"front_attached or screen_distance_moves or right_screen_is_derived or centered_projection or bottom_mirror or bottom_center_path or calibration_arena or calibration_identity_profiles or measured_affine or planning_preview or preview_calibration or live_calibration_coalesces or all_screen_calibration or projector_geometry or calibration_and_screen\" --basetemp=.pytest-screen-elevation-final -p no:faulthandler --junitxml=reports/runtime-evidence-2026-10-14/screen-elevation/tests.xml",
+    "environment": "Python 3.11 repository venv; QT_QPA_PLATFORM=offscreen; local GUI tests.",
+    "result": "25 passed, 455 deselected",
+    "static": "Scoped Ruff check/format five files and Win32 mypy four source files pass. Backend boundaries: 689 modules, zero violations; existing size advisories unaffected.",
+    "attempts": "Initial 8 pass/2 failure: new test passed full version7 instead of numeric version4, old front-only optics fixture lacked newly required Bottom distance. Correct fixtures; intermediate20 and final25 pass. Initial Ruff format finding corrected."
+  },
+  "projection_settings_review": "Retain near1mm/far250mm/position0.000166mm/orthogonality0.000001. No new measured physical dimensions or intended virtual scene depth were supplied; attachment retains planar orthogonal geometry. Reassess clipping for actual scene depth/geometry before acceptance; no TOML edit.",
+  "limits": "No native GUI restart, output/device command, optical measurement or rig/full-workload acceptance. Running GUI requires reopening to load new source; static calibration files regenerate on existing launch actions."
+}

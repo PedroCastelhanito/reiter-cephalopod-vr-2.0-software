@@ -455,6 +455,85 @@ def test_recording_session_cancel_before_header_reconciles_process_without_outpu
     assert not (tmp_path / "frames.jsonl").exists()
 
 
+def test_recording_session_services_video_sync_independently_of_evidence_sync(
+    tmp_path: Path,
+) -> None:
+    recipe_path = tmp_path / "recipe.json"
+    recipe_path.write_bytes(b"recipe")
+    recipe = ArtifactRef(
+        relative_path="recipe.json",
+        sha256=hashlib.sha256(b"recipe").hexdigest(),
+        byte_length=6,
+        schema_id="prepared-v2",
+    )
+    header = Header(
+        kind="header",
+        format_version=3,
+        identity=_identity(),
+        writer_generation="writer",
+        recipe=recipe,
+        trial_start_host_ns=1,
+        required_output_ids=("front",),
+        renderer_compatibility="renderer-v1",
+    )
+    evidence = EvidenceWriter(max_pending_bytes=4096)
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=evidence,
+        encoder=_Input(),
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
+    clock_ns = [0]
+    calls = 0
+
+    def drain_once() -> bool:
+        nonlocal calls
+        calls += 1
+        clock_ns[0] += 250_000_000
+        return calls <= 4
+
+    worker.drain_once = drain_once  # type: ignore[method-assign]
+    video_sync_times: list[int] = []
+
+    def periodic_sync() -> None:
+        clock_ns[0] += 250_000_000
+        video_sync_times.append(clock_ns[0])
+
+    session = RecordingSession(
+        worker=worker,
+        evidence=evidence,
+        evidence_path=tmp_path / "frames.jsonl",
+        recipe_path=recipe_path,
+        max_queued_evidence_bytes=4096,
+        finalizer=lambda _counts: (b"{}\n", b"{}\n"),
+        sync_interval_ns=1_000_000_000,
+        periodic_sync=periodic_sync,
+        clock_ns=lambda: clock_ns[0],
+    )
+    for _ in range(4):
+        session.enqueue_evidence_json(b'{"kind":"evidence"}\n')
+    session.publish_header(header, recipe)
+    session.begin_finish(cutoff_ns=1_000_000_000, deadline_ns=2_000_000_000)
+
+    result = None
+    for _ in range(200):
+        result = session.poll_finished()
+        if result is not None:
+            break
+        import time
+
+        time.sleep(0.005)
+
+    assert result is not None and result.evidence_closed
+    assert video_sync_times[:4] == [
+        250_000_000,
+        500_000_000,
+        750_000_000,
+        1_000_000_000,
+    ]
+
+
 def test_recording_finish_publishes_cadence_cutoff_before_closing_wakes_owner(
     tmp_path: Path,
 ) -> None:

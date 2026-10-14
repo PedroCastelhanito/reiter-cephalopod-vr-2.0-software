@@ -5,13 +5,14 @@ from __future__ import annotations
 import asyncio
 import hashlib
 from collections.abc import Callable, Mapping
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from uuid import uuid4
 
 from google.protobuf.message import Message
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.device.calibration_inputs import read_reference
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.projections import ProjectionStore
@@ -22,43 +23,13 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.calibration_assets import (
+    calibration_asset_root,
+    calibration_runtime_root,
+)
 from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vs_runtime
-
-
-def _read_reference(
-    root_value: str, reference: str, expected_sha256: str, maximum: int
-) -> tuple[bytes, Path]:
-    relative = PurePosixPath(reference)
-    if (
-        not reference
-        or "\\" in reference
-        or relative.is_absolute()
-        or any(part in ("", ".", "..") for part in relative.parts)
-    ):
-        raise ValueError("calibration references must be portable relative paths")
-    root = Path(root_value).resolve(strict=True)
-    path = root.joinpath(*relative.parts).resolve(strict=True)
-    if not path.is_relative_to(root) or not path.is_file():
-        raise ValueError("calibration reference escapes the accepted asset root")
-    before = path.stat()
-    if before.st_size > maximum:
-        raise ValueError("calibration asset exceeds its accepted byte limit")
-    with path.open("rb") as source:
-        data = source.read(maximum + 1)
-    after = path.stat()
-    if (
-        len(data) > maximum
-        or (before.st_size, before.st_mtime_ns, before.st_ino)
-        != (after.st_size, after.st_mtime_ns, after.st_ino)
-        or len(data) != after.st_size
-    ):
-        raise OSError("calibration asset changed while being verified")
-    digest = hashlib.sha256(data).hexdigest()
-    if len(expected_sha256) != 64 or digest != expected_sha256.lower():
-        raise ValueError("calibration asset digest differs from the submitted identity")
-    return data, path
 
 
 class DisplayCalibrationController:
@@ -139,10 +110,6 @@ class DisplayCalibrationController:
                     command_id,
                     error="previous display calibration is not confirmed closed",
                 )
-            if self.configuration.current.HasField("asset_root") is False:
-                return self.hooks.admission(
-                    command_id, error="accepted asset root is unavailable"
-                )
             setting = next(
                 (
                     item
@@ -160,7 +127,8 @@ class DisplayCalibrationController:
                     error="enabled Visual Stimulus configuration is unavailable",
                 )
             revision = self.configuration.revision
-            asset_root = self.configuration.current.asset_root
+            # Resolve inside bounded validation so missing repository assets reject
+            # through the same pending-operation cleanup as any invalid bundle.
             backend_context = pb.BackendContext.FromString(
                 backend.context.SerializeToString()
             )
@@ -196,6 +164,17 @@ class DisplayCalibrationController:
             self._owner_loss_deadline_ns = None
             self.hooks.publish()
         try:
+            if request.arena_asset_reference not in (
+                "calibration/reference_bars.glb",
+                "calibration/frame_grid.glb",
+            ):
+                raise ValueError(
+                    "calibration requires its selected repository step file"
+                )
+            pattern_root = str(calibration_asset_root())
+            asset_root = str(
+                calibration_runtime_root(Path(request.arena_asset_reference).stem)
+            )
             loaded = await asyncio.wait_for(
                 asyncio.to_thread(
                     self.file_policy_loader, frozenset({"visual_stimulus"})
@@ -233,7 +212,7 @@ class DisplayCalibrationController:
             )
             profile_data, _ = await asyncio.wait_for(
                 asyncio.to_thread(
-                    _read_reference,
+                    read_reference,
                     asset_root,
                     request.profile_asset_reference,
                     request.expected_profile_sha256,
@@ -243,7 +222,17 @@ class DisplayCalibrationController:
             )
             arena_data, _ = await asyncio.wait_for(
                 asyncio.to_thread(
-                    _read_reference,
+                    read_reference,
+                    pattern_root,
+                    request.arena_asset_reference,
+                    request.expected_arena_sha256,
+                    arena_limit,
+                ),
+                remaining_seconds(deadline, clock=self.clock),
+            )
+            await asyncio.wait_for(
+                asyncio.to_thread(
+                    read_reference,
                     asset_root,
                     request.arena_asset_reference,
                     request.expected_arena_sha256,
@@ -266,6 +255,8 @@ class DisplayCalibrationController:
                     remaining_seconds(deadline, clock=self.clock),
                 )
             accepted = parse_display_json(display_json, max_bytes=profile_limit)
+            if accepted.calibration_view != Path(request.arena_asset_reference).stem:
+                raise ValueError("calibration profile and selected step file differ")
             canonical_profile_json = accepted.model_dump_json()
             output_ids = await asyncio.wait_for(
                 asyncio.to_thread(self.display_validator, display_json),

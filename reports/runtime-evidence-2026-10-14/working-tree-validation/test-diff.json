@@ -1,0 +1,281 @@
+[
+  {
+    "path": "tests/acquisition/test_cleanup_aggregation.py",
+    "added": [
+      "test_cancel_setup_runs_aggregate_cleanup_and_returns_its_admission"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 40,
+    "current_asserts": 43
+  },
+  {
+    "path": "tests/acquisition/test_configuration.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 73,
+    "current_asserts": 72
+  },
+  {
+    "path": "tests/acquisition/test_coordinator.py",
+    "added": [
+      "test_completed_session_heartbeat_changes_to_process_scope_only_after_cleanup"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 66,
+    "current_asserts": 93
+  },
+  {
+    "path": "tests/acquisition/test_manual_preview.py",
+    "added": [
+      "test_registered_trigger_selection_for_start_and_existing_preview",
+      "test_trigger_selection_uses_new_registry_entry"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 177,
+    "current_asserts": 183
+  },
+  {
+    "path": "tests/acquisition/test_recording_cleanup.py",
+    "added": [
+      "test_cancel_setup_before_trial_recording_is_installed_is_confirmed",
+      "test_cancel_setup_preserves_an_installed_trial_cleanup_continuation"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 61,
+    "current_asserts": 72
+  },
+  {
+    "path": "tests/acquisition/test_worker_foundations.py",
+    "added": [
+      "test_cancel_setup_preserves_installed_recording_cleanup_in_worker_executor",
+      "test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 151,
+    "current_asserts": 163
+  },
+  {
+    "path": "tests/client/test_controller_rpc.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 79,
+    "current_asserts": 79
+  },
+  {
+    "path": "tests/controller/test_camera_configuration.py",
+    "added": [
+      "test_external_preview_readback_matches_acquisition_role_selection"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 212,
+    "current_asserts": 216
+  },
+  {
+    "path": "tests/controller/test_camera_evidence.py",
+    "added": [
+      "test_late_setup_warning_is_limited_to_the_just_retired_session_scope"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 110,
+    "current_asserts": 111
+  },
+  {
+    "path": "tests/controller/test_configuration_transactions.py",
+    "added": [
+      "test_setup_request_uses_prepared_settings_for_setup_and_initial_registration"
+    ],
+    "removed_or_renamed": [
+      "test_setup_request_uses_prepared_backend_settings_not_live"
+    ],
+    "old_asserts": 65,
+    "current_asserts": 69
+  },
+  {
+    "path": "tests/controller/test_device_admission.py",
+    "added": [
+      "test_startup_display_resolves_only_file_projection_values"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 78,
+    "current_asserts": 86
+  },
+  {
+    "path": "tests/controller/test_lifecycle_reports.py",
+    "added": [
+      "test_failed_setup_cleanup_matches_registered_output_set_exactly"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 44,
+    "current_asserts": 47
+  },
+  {
+    "path": "tests/controller/test_microcontroller_owner.py",
+    "added": [
+      "test_continuous_trial_output_diagnostic_uses_one_serial_owner",
+      "test_current_keepalive_failure_is_still_reported",
+      "test_flip_input_is_rejected_before_any_serial_command",
+      "test_stale_keepalive_cancellation_does_not_fail_replaced_observation"
+    ],
+    "removed_or_renamed": [
+      "test_bounded_trial_output_diagnostic_uses_one_serial_owner",
+      "test_flip_input_requires_firmware_advertised_interrupt_pin"
+    ],
+    "old_asserts": 144,
+    "current_asserts": 146
+  },
+  {
+    "path": "tests/controller/test_microcontroller_protocol.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 35,
+    "current_asserts": 34
+  },
+  {
+    "path": "tests/gui/test_dashboard.py",
+    "added": [
+      "test_active_calibration_measurements_are_editable_only_for_reference_bars",
+      "test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name",
+      "test_console_tab_leaves_text_view_for_next_control",
+      "test_disconnected_projector_draft_restores_and_saves",
+      "test_managed_display_calibration_requests_use_repository_relative_assets",
+      "test_managed_spikeglx_pairing_updates_only_session_flag",
+      "test_managed_spikeglx_pairing_waits_for_confirmation",
+      "test_plot_legends_are_view_only_and_survive_refresh",
+      "test_preview_rejects_invalid_corrections_and_unresolved_pixel_sizes",
+      "test_projector_sync_modes_without_mcu_preserve_saved_drafts",
+      "test_setup_without_projectors_logs_and_submits_nothing",
+      "test_shared_tables_tab_between_nested_editors_and_other_controls",
+      "test_spikeglx_pairing_bridge_publishes_accepted_device_revision",
+      "test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors"
+    ],
+    "removed_or_renamed": [
+      "test_calibration_guides_keep_world_phase_center_and_physical_ruler",
+      "test_cancelled_projector_wiring_keeps_flip_enable_and_pin",
+      "test_managed_display_calibration_requests_use_accepted_relative_assets",
+      "test_plot_toggles_are_view_only_and_survive_refresh",
+      "test_preview_rejects_invalid_corrections_and_unresolved_pixel_offsets"
+    ],
+    "old_asserts": 2608,
+    "current_asserts": 2800
+  },
+  {
+    "path": "tests/platform/test_nvidia_device.py",
+    "added": [
+      "test_graphics_preferences_are_per_image_and_verified",
+      "test_renderer_image_is_distinct_and_rejects_modified_bytes"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 4,
+    "current_asserts": 12
+  },
+  {
+    "path": "tests/platform/test_windows_native_on_rig.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 75,
+    "current_asserts": 78
+  },
+  {
+    "path": "tests/platform/test_worker_launch.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 56,
+    "current_asserts": 56
+  },
+  {
+    "path": "tests/supervisor/test_recovery.py",
+    "added": [
+      "test_preliminary_cleanup_accepts_only_path_free_absence_facts"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 26,
+    "current_asserts": 31
+  },
+  {
+    "path": "tests/supervisor/test_registration.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 30,
+    "current_asserts": 33
+  },
+  {
+    "path": "tests/visual_stimulus/support.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 1,
+    "current_asserts": 1
+  },
+  {
+    "path": "tests/visual_stimulus/test_configuration.py",
+    "added": [
+      "test_file_projection_overrides_saved_profile_and_reloads",
+      "test_free_run_keeps_nominal_recording_rate_and_disables_every_swap"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 17,
+    "current_asserts": 27
+  },
+  {
+    "path": "tests/visual_stimulus/test_coordinator.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 55,
+    "current_asserts": 55
+  },
+  {
+    "path": "tests/visual_stimulus/test_display_calibration_rendering.py",
+    "added": [
+      "test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported_targets",
+      "test_reference_file_controls_pixel_lengths_and_rejects_other_patterns"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 74,
+    "current_asserts": 91
+  },
+  {
+    "path": "tests/visual_stimulus/test_lifecycle.py",
+    "added": [
+      "test_failed_setup_cleanup_waits_for_terminal_report_acceptance",
+      "test_preparation_rejection_stays_setup_failure_and_allows_reuse",
+      "test_session_cleanup_delivery_failure_keeps_setup_unresolved"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 178,
+    "current_asserts": 203
+  },
+  {
+    "path": "tests/visual_stimulus/test_recording.py",
+    "added": [
+      "test_recording_session_services_video_sync_independently_of_evidence_sync"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 138,
+    "current_asserts": 140
+  },
+  {
+    "path": "tests/visual_stimulus/test_rendering.py",
+    "added": [
+      "test_idle_uses_prepared_valid_area_union_and_restores_scissor",
+      "test_projector_window_recreation_preserves_operator_cursor"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 178,
+    "current_asserts": 191
+  },
+  {
+    "path": "tests/visual_stimulus/test_resources.py",
+    "added": [
+      "test_native_preparation_retains_release_proof_until_catalogue_retirement"
+    ],
+    "removed_or_renamed": [],
+    "old_asserts": 183,
+    "current_asserts": 188
+  },
+  {
+    "path": "tests/visual_stimulus/test_transport.py",
+    "added": [],
+    "removed_or_renamed": [],
+    "old_asserts": 94,
+    "current_asserts": 94
+  }
+]

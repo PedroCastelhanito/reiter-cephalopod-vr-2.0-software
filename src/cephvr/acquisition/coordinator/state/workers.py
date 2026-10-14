@@ -121,10 +121,36 @@ class WorkerRecord:
             for command_id, child in self.child_operations.items()
             if child.retention_key is not None
             and not self.commands.has_payload(child.retention_key)
+            and not self._has_retained_session_cleanup(child)
         ]
         for command_id in expired:
             self.child_operations.pop(command_id, None)
         return len(expired)
+
+    def _has_retained_session_cleanup(self, child: ChildOperation) -> bool:
+        """Pin the exact successful cleanup child while its worker is owned."""
+        report = child.report
+        if (
+            child.kind != "cleanup"
+            or child.work.WhichOneof("work") != "session"
+            or self.context.work != child.work
+            or report is None
+            or not report.complete
+            or not report.HasField("succeeded")
+            or not report.succeeded
+            or report.command != "Cleanup"
+            or report.work != child.work
+        ):
+            return False
+        session_id = child.work.session.session_id
+        evidence = self.lifecycle_evidence.get(
+            (session_id, child.command_id, "cleanup")
+        )
+        return (
+            evidence is not None
+            and evidence.source == self.context
+            and evidence.operation.command_id == child.command_id
+        )
 
     def retain_lifecycle(
         self,
@@ -297,10 +323,16 @@ class WorkerRecord:
         }
         if not expired_work:
             return 0
+        pinned_cleanup = {
+            (child.work.session.session_id, child.command_id, "cleanup")
+            for child in self.child_operations.values()
+            if self._has_retained_session_cleanup(child)
+        }
         expired = [
             key
             for key, evidence in self.lifecycle_evidence.items()
             if _lifecycle_retention_scope(evidence) in expired_work
+            and key not in pinned_cleanup
         ]
         for key in expired:
             self.lifecycle_evidence.pop(key)

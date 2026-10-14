@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-14",
+  "source": "Current production screen_corners/resolved_screens; last retained rig/profile inputs, not live optical measurements",
+  "tank_mm": [
+    120,
+    166,
+    110
+  ],
+  "subject_mm": [
+    60,
+    93,
+    53
+  ],
+  "screen_inputs": {
+    "Front": {
+      "width": "94",
+      "height": "85",
+      "subject_distance": "74.5"
+    },
+    "Left": {
+      "width": "126",
+      "height": "85",
+      "subject_distance": "51"
+    },
+    "Right": {
+      "width": "126",
+      "height": "85",
+      "subject_distance": "51.0"
+    },
+    "Bottom": {
+      "width": "126",
+      "height": "94",
+      "subject_distance": "51"
+    }
+  },
+  "corners_mm": {
+    "Front": [
+      [
+        107.0,
+        18.5,
+        7.0
+      ],
+      [
+        13.0,
+        18.5,
+        7.0
+      ],
+      [
+        13.0,
+        18.5,
+        92.0
+      ],
+      [
+        107.0,
+        18.5,
+        92.0
+      ]
+    ],
+    "Left": [
+      [
+        9.0,
+        23.5,
+        7.0
+      ],
+      [
+        9.0,
+        149.5,
+        7.0
+      ],
+      [
+        9.0,
+        149.5,
+        92.0
+      ],
+      [
+        9.0,
+        23.5,
+        92.0
+      ]
+    ],
+    "Right": [
+      [
+        111.0,
+        149.5,
+        7.0
+      ],
+      [
+        111.0,
+        23.5,
+        7.0
+      ],
+      [
+        111.0,
+        23.5,
+        92.0
+      ],
+      [
+        111.0,
+        149.5,
+        92.0
+      ]
+    ],
+    "Bottom": [
+      [
+        107.0,
+        23.5,
+        2.0
+      ],
+      [
+        107.0,
+        149.5,
+        2.0
+      ],
+      [
+        13.0,
+        149.5,
+        2.0
+      ],
+      [
+        13.0,
+        23.5,
+        2.0
+      ]
+    ]
+  },
+  "frame_front_lower_gap_mm": 5,
+  "lateral_clearance_mm": 4,
+  "limitations": "Saved distances51mm plus94mm floor cross-span yield4mm lateral clearance; no automatic side-distance adjustment. Plot is geometry only; no projected coverage/optical acceptance."
+}

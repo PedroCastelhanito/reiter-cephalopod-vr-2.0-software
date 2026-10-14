@@ -164,7 +164,7 @@ and verification remain in the
 <a id="a03"></a>
 ### A03 — Frame transfer between processes
 
-**Status:** Accepted · **Revision:** 32
+**Status:** Accepted · **Revision:** 33
 
 - Pixels reach other processes (tracking, preview viewers) through coordinator-owned
   host shared memory, never control gRPC. Inside a camera worker, capture hands frames
@@ -183,9 +183,8 @@ and verification remain in the
   latest-frame GUI ring. Acquisition retains allocation and transfer ownership,
   exact registered Tracking consumer identity and release obligations. This is not
   a session/trial binding; both scopes preserve native pixels and A04 reset rules.
-- The tracking ring and the in-process recording queue each default to **10 frames**
-  (`[buffers] tracking_ring_frames`, `recording_queue_frames`), configurable before
-  Setup. Create only what is needed; never grow at runtime. When the optional
+- Configure tracking-ring and recording-queue capacities before Setup; the owning
+  operator TOML holds their defaults and explicit saved values take precedence. Create only what is needed; never grow at runtime. When the optional
   `recording_startup_allowance_ms` is set, the recording queue holds at least
   `ceil(frame_rate_hz × recording_startup_allowance_ms / 1000)` frames (applied MCU
   rate or free-running rate). The allowance stays unset; Setup reports memory.
@@ -897,7 +896,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 44
+**Status:** Accepted · **Revision:** 46
 
 **Board and firmware**
 
@@ -970,7 +969,7 @@ hardware information and later implementation; no new deferral is implied.
 **Wire format**
 
 - Newline-terminated ASCII `CONFIGURE`, `ON`, `OFF`, `STATUS`, `PING`, `CAPS` and
-  bounded `DIAG_START`, `DIAG_STATUS`, `DIAG_STOP` with
+  `DIAG_START`, `DIAG_STATUS`, `DIAG_STOP` with
   OK/ERR. Space-separated named fields hold tokens/numbers; no quoting/escaping/debug
   prints. Per-output keys use lowercase `behavioral_` / `tracking_`, not numeric maps.
 - Every complete line, including newline, is at most **512 bytes**; no additional
@@ -1063,25 +1062,27 @@ hardware information and later implementation; no new deferral is implied.
 
 **Operator I/O diagnostics**
 
-- Trial state is an active-high output; Projector flip is a rising-edge input.
-  Their enablement and pin assignments are independently configurable in
-  Microcontroller; disabled signals retain their draft assignments and cannot run
-  diagnostics. The disconnected Projector flip defaults disabled; rendering VSync
-  does not require this physical input. Camera trigger enablement/rates retain A10's
-  owner. Per-output test intent targets
-  one assigned pin for external observation in SpikeGLX; camera tests use the rate
-  already configured in Cameras. Input diagnostics observe edges rather than drive
-  the input. Controller owns one diagnostic on its serial connection in
+- Projector flip input, its diagnostics and camera-trigger phase offsets are deferred
+  by the owner. Expose no MCU input control/add/test action and reject activation or
+  diagnostics before serial/device work. Legacy wire/snapshot pin fields may remain
+  inert for compatibility; they cannot enable the input. V20 presentation modes do
+  not require an MCU input. Firmware implements output diagnostics only.
+- Trial state is an active-high output; camera trigger enablement/rates retain A10's
+  owner. Disabled outputs retain draft assignments and cannot run diagnostics.
+  Per-output tests target one assigned pin for external observation in SpikeGLX;
+  camera tests use the rate configured in Cameras. Controller owns one diagnostic
+  on its serial connection in
   Configuration with control authority; it rejects session/preview activity and
-  conflicting or unsupported pins. Firmware ends every diagnostic within two
-  seconds and leaves tested outputs LOW; explicit Stop, control loss, transport
-  failure and shutdown request earlier stop. Return matched state and rising-edge
-  counts: observed edges for Projector flip, generated LOW-to-HIGH transitions at
+  conflicting or unsupported pins. Tests run until explicit Stop; matched diagnostic
+  status polls renew a two-second firmware communication lease without restarting
+  outputs or resetting counts. Lease expiry leaves tested outputs LOW. Control loss,
+  transport failure and shutdown request stop through existing cleanup. Return matched state and rising-edge
+  counts: generated LOW-to-HIGH transitions at
   the output write for camera/Trial state tests, including the first HIGH. Trial
   state holds HIGH and therefore counts one rise; camera tests count actual timer
   transitions, not requested Hz multiplied by duration. Reset on each new test,
   saturate at uint32 maximum, and retain the stopped count until the next test.
-  Counter updates and readback are atomic against timer/input interrupts. Ordinary
+  Counter updates and readback are atomic against timer interrupts. Ordinary
   STATUS/session outputs have no pulse counters. Generated counts do not prove
   electrical delivery, camera reception or SpikeGLX capture; label the GUI evidence
   accordingly and leave outputs LOW at stop.

@@ -10,7 +10,6 @@ from PyQt6.QtGui import QGuiApplication, QScreen
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QGridLayout,
     QHBoxLayout,
     QHeaderView,
     QLineEdit,
@@ -28,7 +27,7 @@ from cephvr.gui.calibration_profile import (
     active_monitor_bindings,
     write_diagnostic_bundle,
 )
-from cephvr.gui.components import Card, button, combo
+from cephvr.gui.components import Card, combo
 from cephvr.gui.device_panel import DevicePanel
 from cephvr.gui.display_layout import DisplayLayout
 from cephvr.gui.projector_assignments import (
@@ -45,13 +44,15 @@ from cephvr.gui.projector_geometry import (
 )
 from cephvr.gui.projector_measured_profiles import measured_profiles
 from cephvr.gui.projector_measurements import ProjectorMeasurements
-from cephvr.gui.projector_prerequisites import CalibrationPrerequisites
+from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
 from cephvr.gui.projector_profile import bind_profile, current_outputs, portable_profile
 from cephvr.gui.projector_timing import ProjectorTiming
 from cephvr.gui.tables import DataTable
 from cephvr.gui.tank_diagram import TankDiagram
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView
+from cephvr.shared.calibration_assets import calibration_asset_root
+from cephvr.visual_stimulus.configuration import load_projection_settings
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
@@ -96,7 +97,7 @@ class ProjectorsPanel(DevicePanel):
     def enabled_screens(self) -> tuple[str, ...]:
         enabled = {
             self.assignments.get(key)
-            for key in self.keys
+            for key in self.assignments
             if self.participation.get(key, True)
         }
         return tuple(
@@ -167,10 +168,6 @@ class ProjectorsPanel(DevicePanel):
         self.calibration = CalibrationTable(self.screen_editor.drafts)
         self.measurements = ProjectorMeasurements(self.screen_editor.drafts)
         self.measurements.body.insertWidget(1, self.calibration.measurement_button)
-        self.prerequisites = CalibrationPrerequisites()
-        self.measurements.body.insertWidget(2, self.prerequisites.reference)
-        self.calibration.body.insertWidget(1, self.prerequisites.projection)
-        self.prerequisites.refresh(self.enabled_screens, self.screen_editor.drafts)
         self.measurements.changed.connect(self._mark_geometry_dirty)
         self.calibration.launch_requested.connect(self.launch_calibration)
         self.calibration.measurement_requested.connect(
@@ -179,10 +176,6 @@ class ProjectorsPanel(DevicePanel):
         self.calibration.close_requested.connect(self.calibration_close_requested.emit)
         calibration_fields: dict[str, QLineEdit | QCheckBox] = {
             **{f"rig.{key}": editor for key, editor in self.rig_editor.fields.items()},
-            **{
-                f"projection.{key}": editor
-                for key, editor in self.rig_editor.projection_fields.items()
-            },
             **{
                 f"screens.{face}.{key}": editor
                 for (face, key), editor in self.screen_editor.fields.items()
@@ -238,13 +231,13 @@ class ProjectorsPanel(DevicePanel):
         calibration_layout = QVBoxLayout(calibration_page)
         calibration_layout.setContentsMargins(0, 0, 0, 0)
         calibration_layout.setSpacing(SIZES.card_gap)
-        calibration_layout.addWidget(self.calibration)
         calibration_layout.addWidget(self.measurements)
+        calibration_layout.addWidget(self.calibration)
         calibration_layout.addStretch()
         for title, card in (
             ("Screen calibration", calibration_page),
-            ("Synchronization", synchronization),
             ("Rig geometry", self.rig_page),
+            ("Synchronization", synchronization),
         ):
             self.setup_tabs.addTab(title)
             self.setup_pages.addWidget(card)
@@ -257,33 +250,6 @@ class ProjectorsPanel(DevicePanel):
         right.insertWidget(0, self.layout_card)
         self.tank_card = Card("Tank & screens")
         self.tank = TankDiagram()
-        self.plot_toggles = {}
-        plot_controls = QGridLayout()
-        plot_controls.setSpacing(6)
-        for i, (key, title) in enumerate(
-            (
-                ("tank", "Tank"),
-                ("screens", "Screens"),
-                ("projection", "Projection"),
-                ("subject", "Subject"),
-            )
-        ):
-            control = button(
-                title, "plot-toggle", hint=f"Show or hide {title.lower()} in the plot"
-            )
-            control.setCheckable(True)
-            if key == "projection":
-                control.setToolTip(
-                    "Show or hide projectors, rays, footprints and mirror together"
-                )
-            control.setChecked(True)
-            control.toggled.connect(
-                lambda visible, k=key: self.tank.set_element_visible(k, visible)
-            )
-            self.plot_toggles[key] = control
-            plot_controls.addWidget(control, i // 2, i % 2)
-            plot_controls.setColumnStretch(i % 2, 1)
-        self.tank_card.body.addLayout(plot_controls)
         self.tank_card.body.addWidget(self.tank)
         right.insertWidget(1, self.tank_card)
         self.rig_editor.changed.connect(self.update_geometry)
@@ -363,10 +329,8 @@ class ProjectorsPanel(DevicePanel):
         }
         self.loading = True
         self.timing.pulse.setChecked(profile.get("photodiode_enabled", True) is True)
-        self.timing.mode.setCurrentText(
-            "All displays VSync"
-            if profile.get("presentation_mode") == "all_outputs_vsync"
-            else "Selected display VSync"
+        self.timing.set_presentation_mode(
+            profile.get("presentation_mode", "photodiode_only_vsync")
         )
         output_by_identity = {
             item["device_identity"]: item
@@ -487,11 +451,7 @@ class ProjectorsPanel(DevicePanel):
                 if pulse_output_identity is not None
                 else None
             ),
-            presentation_mode=(
-                "all_outputs_vsync"
-                if self.timing.mode.currentText() == "All displays VSync"
-                else "photodiode_only_vsync"
-            ),
+            presentation_mode=self.timing.presentation_mode,
             pulse_patch=pulse_patch,
             blackout_zones=self.timing.blackouts.snapshot(),
             geometry=geometry,
@@ -501,6 +461,7 @@ class ProjectorsPanel(DevicePanel):
             self.calibration_files.calibration_snapshot(),
             self.asset_root,
         )
+        document.setdefault("geometry", {}).update(load_projection_settings())
         result.profile_json = json.dumps(
             document, allow_nan=False, separators=(",", ":")
         )
@@ -648,6 +609,8 @@ class ProjectorsPanel(DevicePanel):
         )
         if issue:
             self.console.appendPlainText(issue)
+        if not self.keys:
+            self.console.appendPlainText(NO_PROJECTORS_MESSAGE)
         missing = [
             name
             for key, name in self.assignments.items()
@@ -679,8 +642,6 @@ class ProjectorsPanel(DevicePanel):
             )
             return None
         try:
-            if not self.asset_root:
-                raise ValueError("Choose the Protocol Assets folder first")
             self.request("Refresh displays")
             rows = tuple(
                 AssignedDisplay(
@@ -696,7 +657,7 @@ class ProjectorsPanel(DevicePanel):
                 )
             )
             path = write_diagnostic_bundle(
-                Path(self.asset_root),
+                calibration_asset_root(),
                 self.calibration_files.calibration_snapshot(),
                 rows,
                 active_monitor_bindings(),
@@ -733,7 +694,9 @@ class ProjectorsPanel(DevicePanel):
 
     def refresh_calibration_editability(self) -> None:
         active = self.calibration.presentation_active
-        editable = self.can_review and not active
+        editable = (
+            self.can_review and not active and not self.calibration.presentation_pending
+        )
         live = (
             self.can_review
             and active
@@ -743,9 +706,26 @@ class ProjectorsPanel(DevicePanel):
         for (_, key), control in self.calibration.controls.items():
             control.setEnabled(
                 editable
-                or (live and key in {"scale_u", "scale_v", "offset_x", "offset_y"})
+                or (
+                    live
+                    and key
+                    in {
+                        "valid_width_px",
+                        "valid_height_px",
+                        "offset_x_px",
+                        "offset_y_px",
+                    }
+                )
             )
-        self.measurements.setEnabled(editable)
+        measuring = (
+            self.can_review
+            and active
+            and self.calibration.presentation_view == "reference_bars"
+            and not self.calibration.presentation_pending
+        )
+        self.measurements.setEnabled(editable or measuring)
+        for (_, key), control in self.measurements.fields.items():
+            control.setEnabled(editable or (measuring and key.endswith("_mm")))
         self.rig_editor.setEnabled(editable)
         self.screen_editor.setEnabled(editable)
         self.calibration_files.setEnabled(editable)
@@ -775,15 +755,13 @@ class ProjectorsPanel(DevicePanel):
         self.outputs_changed.emit()
 
     def update_geometry(self) -> None:
-        self.prerequisites.refresh(self.enabled_screens, self.screen_editor.drafts)
-        self.measurements.refresh(
-            {
-                self.assignments[key]: dimensions
-                for key, dimensions in self.display_pixels.items()
-                if self.assignments.get(key, "Unassigned") != "Unassigned"
-            },
-            self.screen_editor.fields,
-        )
+        outputs = {
+            self.assignments[key]: dimensions
+            for key, dimensions in self.display_pixels.items()
+            if self.assignments.get(key, "Unassigned") != "Unassigned"
+        }
+        self.measurements.refresh(outputs, self.screen_editor.fields)
+        self.calibration.refresh_dimensions(outputs)
         self.tank.rig = self.rig_editor.dimensions()
         self.tank.screens = resolved_screens(self.tank.rig, self.screen_editor.drafts)
         self.tank.aspects = {
@@ -822,6 +800,9 @@ class ProjectorsPanel(DevicePanel):
 
     def show_selected(self) -> None:
         if self.loading:
+            return
+        if not self.keys:
+            self.status_column.hud.setPlainText(NO_PROJECTORS_MESSAGE)
             return
         row = self.table.currentRow()
         key = self.keys[row] if 0 <= row < len(self.keys) else ""

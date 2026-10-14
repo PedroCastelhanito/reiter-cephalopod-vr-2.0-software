@@ -252,12 +252,16 @@ class Preparation:
 
     def __init__(self, artifact):
         self.artifact = artifact
+        self.retired_resource_catalogues = 0
 
     def prepare_trials(self, request, announce, deadline_ns):
         return (self.artifact,)
 
     def cleanup(self, deadline_ns):
         return ResourceReleaseReport(())
+
+    def retire_released_resources(self):
+        self.retired_resource_catalogues += 1
 
 
 class Recorder:

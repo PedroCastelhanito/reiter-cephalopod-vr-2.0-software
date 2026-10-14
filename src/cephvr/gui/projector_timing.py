@@ -3,34 +3,50 @@
 from collections.abc import Mapping
 from typing import Any
 
-from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGridLayout,
     QHeaderView,
     QLineEdit,
+    QSizePolicy,
     QTableWidgetItem,
     QWidget,
 )
 
-from cephvr.gui.components import Card, button, combo, field, label
+from cephvr.gui.components import Card, combo, field
 from cephvr.gui.device_panel import entry
 from cephvr.gui.projector_blackouts import BlackoutZones
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import SIZES
 
+MODE_LABELS = {
+    "free_run": "Free run (no VSync)",
+    "photodiode_only_vsync": "VSync on pulse display",
+    "all_outputs_vsync": "VSync on all displays",
+}
+LEGACY_MODE_LABELS = {
+    "Selected display VSync": "VSync on pulse display",
+    "All displays VSync": "VSync on all displays",
+}
+
 
 class ProjectorTiming(Card):
-    wiring_requested = pyqtSignal()
-
     def __init__(self) -> None:
         super().__init__("Photodiode & synchronization")
         self.pulse = QCheckBox("Enable photodiode pulse")
+        self.caption.setWordWrap(True)
+        caption_policy = self.caption.sizePolicy()
+        caption_policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
+        caption_policy.setVerticalPolicy(QSizePolicy.Policy.Preferred)
+        caption_policy.setHeightForWidth(True)
+        self.caption.setSizePolicy(caption_policy)
+        self.header.setStretch(0, 1)
         self.body.addWidget(self.pulse)
         self.target = combo(())
         self.target.setPlaceholderText("Select display")
-        self.mode = combo(("Selected display VSync", "All displays VSync"))
+        self.mode = combo(tuple(MODE_LABELS.values()))
+        self.set_presentation_mode("photodiode_only_vsync")
         self.fields: dict[str, QLineEdit] = {}
         self.options = QWidget()
         grid = QGridLayout(self.options)
@@ -66,16 +82,22 @@ class ProjectorTiming(Card):
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 1)
         self.body.addWidget(self.options)
-        self.wiring_summary = label("MCU flip input: not assigned", "muted")
-        self.wiring_summary.setWordWrap(True)
-        self.body.insertWidget(1, self.wiring_summary)
-        self.wiring_button = button("Edit MCU input…", "secondary")
-        self.wiring_button.clicked.connect(self.wiring_requested.emit)
-        self.body.insertWidget(2, self.wiring_button)
         self.blackouts = BlackoutZones()
         self.pulse.toggled.connect(self.refresh_controls)
         self.can_edit = False
         self.refresh_controls()
+
+    @property
+    def presentation_mode(self) -> str:
+        return next(
+            key for key, name in MODE_LABELS.items() if name == self.mode.currentText()
+        )
+
+    def set_presentation_mode(self, mode: str) -> None:
+        self.mode.setCurrentText(MODE_LABELS[mode])
+
+    def restore_mode_label(self, name: str) -> None:
+        self.mode.setCurrentText(LEGACY_MODE_LABELS.get(name, name))
 
     def set_displays(self, displays: list[tuple[str, str, bool]]) -> None:
         selected, text = self.target.currentData(), self.target.currentText()
@@ -95,7 +117,6 @@ class ProjectorTiming(Card):
     def refresh_controls(self) -> None:
         self.mode.setEnabled(self.can_edit)
         self.pulse.setEnabled(self.can_edit)
-        self.wiring_button.setEnabled(self.can_edit)
         self.options.setEnabled(self.can_edit and self.pulse.isChecked())
         self.blackouts.setEnabled(self.can_edit)
 

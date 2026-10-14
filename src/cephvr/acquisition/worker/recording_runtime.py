@@ -70,6 +70,7 @@ class WorkerRecordingRuntime:
         self._session_id = ""
         self._device_id = ""
         self._camera_clock: camera.CameraClockDescriptor | None = None
+        self._layout: camera.CameraImageLayout | None = None
         self._role = _camera_role(worker.camera)
         self._started = False
         self._installed = False
@@ -298,7 +299,11 @@ class WorkerRecordingRuntime:
         self, *, deadline_ns: int
     ) -> Future[list[types.OutputResult]]:
         if self._handoff is None:
-            raise RuntimeError("recording driver is not active")
+            if self._installed or self._queue is not None or self._pool is not None:
+                raise RuntimeError("recording trial lacks its completion handoff")
+            completed: Future[list[types.OutputResult]] = Future()
+            completed.set_result([])
+            return completed
         if self._queue is not None:
             self._queue.close()
         if self._run_future is None:
@@ -307,6 +312,20 @@ class WorkerRecordingRuntime:
         else:
             self._handoff.request_abort("cancel_before_start", deadline_ns=deadline_ns)
         return self._run_future
+
+    def cancel_session_setup(self) -> bool:
+        """Discard session preparation only when no trial writer was installed."""
+        if self._installed or self._handoff is not None or self._run_future is not None:
+            return False
+        self._settings = None
+        self._capabilities = None
+        self._preparer = None
+        self._session_id = ""
+        self._device_id = ""
+        self._camera_clock = None
+        self._layout = None
+        self._pending_session = None
+        return True
 
     def recycle_finished(self, deadline_ns: int) -> None:
         if self._run_future is None or not self._run_future.done():

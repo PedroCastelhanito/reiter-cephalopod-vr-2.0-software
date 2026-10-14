@@ -1,0 +1,19 @@
+python means .venv/Scripts/python.exe. Tests use PYTHONDONTWRITEBYTECODE=1.
+Backend closing: python -m pytest tests --ignore=tests/gui -m "not windows and not rig" -q -p no:cacheprovider --basetemp=<permitted external scratch>/validation-backend-closing --junitxml=<evidence>/backend-closing.xml; permitted outside sandbox for asyncio/loopback.
+GUI final: QT_QPA_PLATFORM=offscreen python -m pytest tests/gui -m "not windows and not rig" -q -p no:faulthandler -p no:cacheprovider --basetemp=<permitted external scratch>/validation-gui-final --junitxml=<evidence>/gui-final.xml; permitted outside sandbox for asyncio.
+python -m unittest discover -s contracts/tracking -p test_*.py
+python contracts/tracking/schema_check.py
+python -m unittest discover -s contracts/visual_stimulus/tests -p test_*.py
+python contracts/visual_stimulus/generate_schemas.py --check
+python -m ruff check src tests tools scripts
+python -m ruff format --check src tests tools scripts
+python -m mypy --platform win32 src/cephvr
+python tools/check_backend_boundaries.py
+python -m pip check
+python tools/generate_contracts.py --output <permitted external scratch>/validation-proto; compare all outputs with src.
+TEMP/TMP=<permitted external scratch>/validation-build-temp python -m build --no-isolation --outdir <permitted external scratch>/validation-packages-final
+AST parse changed Python; parse all 16 operator/policy TOMLs and 30 schema JSONs; check local Markdown paths/anchors and 114 register status/revision pairs; inspect GLB headers/JSON and package contents.
+git -c core.safecrlf=false diff --check
+Disposable repository directories: Resolve-Path containment and no-reparse-point checks, Remove-Item -LiteralPath -Recurse only; details in cleanup.json.
+Evidence path: reports/runtime-evidence-2026-10-14/working-tree-validation
+Permitted external scratch: C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a1396a-233d-72c2-b190-933da11d5b8d

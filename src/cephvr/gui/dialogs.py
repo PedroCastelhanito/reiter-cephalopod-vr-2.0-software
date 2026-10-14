@@ -18,12 +18,6 @@ class StopDialog(QDialog):
         body.setContentsMargins(*([SIZES.page_margin] * 4))
         body.setSpacing(SIZES.card_gap)
         body.addWidget(label("Stop session", "title"))
-        body.addWidget(
-            label(
-                "Stop now interrupts the active trial. Stop after trial lets it finish before ending the session.",
-                wrap=True,
-            )
-        )
         actions = QHBoxLayout()
         actions.setSpacing(SIZES.field_x_gap)
         self.choice_buttons = {}
@@ -32,6 +26,11 @@ class StopDialog(QDialog):
             ("Stop after trial", "Stop after trial"),
         ):
             control = button(text, "danger" if action == "Abort now" else "primary")
+            control.setToolTip(
+                "Interrupt the active trial now"
+                if action == "Abort now"
+                else "Finish the active trial before ending the session"
+            )
             control.setAutoDefault(False)
             control.clicked.connect(
                 lambda checked=False, value=action: self.select(value)

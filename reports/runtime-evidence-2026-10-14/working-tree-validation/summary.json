@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-14",
+  "timezone": "Asia/Tokyo",
+  "base_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "snapshot": "Pre-existing dirty/untracked working tree retained; file hashes identify the reviewed snapshot; no commit/reset performed.",
+  "governing_rules": [
+    "ARCH-002",
+    "GOV-001",
+    "E15",
+    "G01 revision 204",
+    "A03 revision 33",
+    "V15 revision 20"
+  ],
+  "changes_in_this_review": [
+    "Honor configured pixel offsets in planning preview; reject unresolved and out-of-bounds offsets using existing mapping owner.",
+    "Restore Tracking migration test fixtures without unrelated projector values.",
+    "Update acquisition test to accepted 150 ms drain, retaining exact-unit/missing-field assertions.",
+    "Bound configuration-confirmation test bridge status gate by original RPC deadline.",
+    "Replace stale report link to deleted demo manifest with external asset generator.",
+    "Reconcile TODO/LOG/current runtime and acquisition reports; remove disposable build and caches."
+  ],
+  "review_limits": "Reviewed current code/test/contract/config/package changes and checked document links/register consistency. Firmware source reviewed only; no compilation/flashing or electrical acceptance. Existing TODO findings/rig deferrals remain open.",
+  "test_results": {
+    "backend": {
+      "passed": 1670,
+      "skipped": 4,
+      "deselected": 26,
+      "seconds": 16.43,
+      "log": "backend-closing.log",
+      "xml": "backend-closing.xml"
+    },
+    "gui": {
+      "passed": 494,
+      "seconds": 163.93,
+      "log": "gui-final.log",
+      "xml": "gui-final.xml",
+      "environment": "QT_QPA_PLATFORM=offscreen, no faulthandler"
+    },
+    "tracking_contracts": {
+      "passed": 48,
+      "log": "tracking-contracts.log"
+    },
+    "visual_contracts": {
+      "passed": 42,
+      "log": "visual-contracts.log"
+    },
+    "owning_configuration": {
+      "passed": 72,
+      "log": "owning-final.log"
+    },
+    "preview_regressions": {
+      "passed": 3,
+      "log": "preview-green.log"
+    },
+    "total_final_suite_passes": 2254,
+    "skip_details": [
+      {
+        "test": "tests.controller.test_configuration_transactions::test_setup_rejects_unset_or_invalid_recording_root[symlink]",
+        "reason": "Windows account lacks symlink creation privilege"
+      },
+      {
+        "test": "tests.controller.test_microcontroller_owner::test_uno_sketch_digest_pins_companions_and_rejects_links",
+        "reason": "Windows symlink privilege or Developer Mode is unavailable"
+      },
+      {
+        "test": "tests.controller.test_storage::test_existing_lock_symlink_is_never_followed",
+        "reason": "symlink creation unavailable on this host"
+      },
+      {
+        "test": "tests.shared.test_recovery::test_unverified_exit_and_unsafe_pointer_cannot_authorize_recovery",
+        "reason": "Windows account lacks symlink creation privilege"
+      }
+    ]
+  },
+  "static_results": {
+    "ruff": "PASS src tests tools scripts",
+    "format": "PASS 902 files",
+    "mypy": "PASS win32, 782 files",
+    "boundaries": "PASS 686 modules, zero violations; existing cohesion advisories retained",
+    "pip_check": "PASS no broken requirements",
+    "tracking_schema_drift": "PASS 19 schemas",
+    "visual_schema_drift": "PASS 11 schemas",
+    "toml": "16 parsed; matching operator/policy versions",
+    "schema_json": "30 parsed (not formal JSON Schema meta-validation)",
+    "architecture_register": "114 status/revision entries match",
+    "protobuf": "19 sources compile; 57 generated files match installed source bindings",
+    "whitespace": "git diff --check passes",
+    "local_links": "1282 local links checked; 0 unresolved"
+  },
+  "initial_attempts": [
+    "Sandbox backend and GUI suite runs stopped after stalling at coroutine entry; no pass claimed. Permitted retries complete.",
+    "Initial backend: 1668 passed, 4 skipped, two failures (stale 125 ms assertion and deadline-ignoring test bridge); fixed and final full suite passes.",
+    "Initial GUI: 493 passed, one accidental Tracking fixture failure; corrected and final full suite passes.",
+    "Offset regression: one failure before fix, passes after fix.",
+    "Build default sandbox temp denied; retry with external writable TEMP/TMP succeeds."
+  ],
+  "package_results": {
+    "final_build": "PASS sdist + AMD64 Windows CPython 3.11 wheel",
+    "sdist": "Includes both calibration GLBs; excludes removed GUI modules/demo assets",
+    "wheel": "Contains three native binaries and current new/modified source modules; repository calibration assets are absent. Standalone installed operation not validated.",
+    "source_matches": {
+      "cephvr/controller/device/calibration_inputs.py": true,
+      "cephvr/gui/projector_extent.py": true,
+      "cephvr/platform/windows/graphics_preferences.py": true,
+      "cephvr/shared/calibration_assets.py": true,
+      "cephvr/visual_stimulus/config/projection.py": true,
+      "cephvr/gui/trial_preview_surfaces.py": true
+    },
+    "artifacts": [
+      {
+        "path": "C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\14\\01a1396a-233d-72c2-b190-933da11d5b8d\\validation-packages-final\\cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl",
+        "sha256": "aab8fffc22609842f9db57894460130766773ec006554cec864c6286dadf59da",
+        "bytes": 1824446
+      },
+      {
+        "path": "C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\14\\01a1396a-233d-72c2-b190-933da11d5b8d\\validation-packages-final\\cephvr-2.0.0.dev0.tar.gz",
+        "sha256": "2a1059583d7524b85244a7ba84ee156e4c6d93a7d4aa204c4808c342ef172b10",
+        "bytes": 1377454
+      }
+    ]
+  },
+  "cleanup": {
+    "RemovedDirectories": 60,
+    "RemovedFiles": 762,
+    "RemovedBytes": 46855471.0
+  },
+  "preserved": "Environment and installed metadata/native binaries, calibration assets, recordings/runtime/recovery files, all raw evidence and earlier uncommitted changes.",
+  "pending": "Native GUI/default faulthandler, installed-package acceptance, device/electrical/optical/scientific/full-load checks and existing TODO findings retain their current deferrals.",
+  "git_status": {
+    "clean": false,
+    "entries": 237,
+    "reason": "Reviewed source/document changes and earlier raw evidence remain uncommitted; no commit or reset authorized explicitly."
+  }
+}

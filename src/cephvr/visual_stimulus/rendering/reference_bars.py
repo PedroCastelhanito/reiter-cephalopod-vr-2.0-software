@@ -2,7 +2,10 @@
 
 from typing import Any
 
-from cephvr.visual_stimulus.config.calibration_bars import reference_lengths
+from cephvr.visual_stimulus.config.calibration_bars import (
+    reference_frame_rectangles,
+    reference_lengths,
+)
 
 
 def draw_reference_bars(
@@ -25,10 +28,31 @@ def draw_reference_bars(
         for rectangle, color in (
             ((x0 - 5, cy - 8, x1 - x0 + 10, 16), (0.0, 0.0, 0.0)),
             ((cx - 8, y0 - 5, 16, y1 - y0 + 10), (0.0, 0.0, 0.0)),
+            *(
+                (rect, (1.0, 1.0, 1.0))
+                for rect in reference_frame_rectangles(width, height)
+            ),
             ((x0, cy - 1, x1 - x0, 2), (1.0, 0.3, 0.0)),
             ((cx - 1, y0, 2, y1 - y0), (0.0, 1.0, 0.3)),
         ):
             context.scissor = rectangle
             context.clear(*color, alpha=1.0, viewport=rectangle)
+    finally:
+        context.scissor = previous
+
+
+def draw_valid_frame(
+    context: Any, width: int, height: int, bounds: tuple[float, float, float, float]
+) -> None:
+    """Outline a valid output rectangle during frame/grid adjustment only."""
+    x0, y0, x1, y1 = bounds
+    x, y = round(x0 * width), round(y0 * height)
+    w, h = max(1, round(x1 * width) - x), max(1, round(y1 * height) - y)
+    previous = context.scissor
+    try:
+        for left, bottom, rw, rh in reference_frame_rectangles(w, h):
+            rect = x + left, y + bottom, rw, rh
+            context.scissor = rect
+            context.clear(1, 1, 1, alpha=1, viewport=rect)
     finally:
         context.scissor = previous

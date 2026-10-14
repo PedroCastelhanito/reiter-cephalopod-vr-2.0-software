@@ -1,0 +1,54 @@
+{
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "1b15a760-d5a5-4b6f-9f59-7fbab42c87c9"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "1b15a760-d5a5-4b6f-9f59-7fbab42c87c9"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "752e806f-e9cf-4056-95fc-0f499555469a"
+    },
+    "command_id": "697aca07-01fc-4716-9f15-b40f20c285a8",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front"
+      },
+      {
+        "output_id": "calibration_left"
+      },
+      {
+        "output_id": "calibration_right"
+      },
+      {
+        "output_id": "calibration_bottom"
+      }
+    ],
+    "observed_monotonic_ns": "82670187185400",
+    "complete": true,
+    "calibration": {
+      "diagnostic_id": "ad8bb394-3508-4f92-b0ee-e9b72a71223b",
+      "controller_generation": "752e806f-e9cf-4056-95fc-0f499555469a",
+      "renderer_generation": "fd25cbd2-1d68-4e67-a523-3dec71f7b028",
+      "configuration_revision": "1",
+      "state": "DISPLAY_CALIBRATION_STATE_IDLE",
+      "observed_monotonic_ns": "82670187166400",
+      "profile_sha256": "9ffdd003f55e84913f5dc3ac55229f290fbd3629469502923b68c9d5eede4052",
+      "arena_sha256": "6b4529eb2eec6edd6a8d7e2555af4dee7ece8c7b3ea8b79019644e107ece8415",
+      "presented": false,
+      "idle": true,
+      "resources_closed": true,
+      "calibration_view": "reference_bars"
+    }
+  },
+  "control": {},
+  "controller_generation": "752e806f-e9cf-4056-95fc-0f499555469a"
+}

@@ -53,7 +53,12 @@ orthogonal in-plane axes, coplanarity and the fourth-corner rectangular closure
 within declared geometry tolerances. Require `d > 0`, `0 < near < far`, `l < r`
 and `b < t`; reject degenerate/behind-surface observer geometry. Do not silently
 repair a skew quadrilateral, guess observer height or copy old rig dimensions.
-Measurement tolerances and clip values require concrete configuration bindings.
+Clipping and numerical geometry tolerances come only from `[projection]` in
+`config/backends/visual_stimulus_config.toml`. Require finite positive values,
+`near_mm < far_mm` and `orthogonality_tolerance < 1`. The controller carries the
+resolved `ProjectionLimits` in `VisualStimulusFilePolicies` and overlays them before
+profile validation; workers apply that same snapshot during Setup. Calibration
+reads the owning file at launch. Saved profiles cannot override these settings.
 Projector keystone/warp belongs to the output mapping, not skewed physical corners.
 
 ## Render execution and output mapping

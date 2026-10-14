@@ -30,6 +30,12 @@ message ResourceLimits {
   reserved "evidence_queue_messages", "evidence_max_message_bytes";
   optional uint64 evidence_pending_bytes = 18; // In-process evidence lines awaiting write.
 }
+message ProjectionLimits {
+  optional double near_mm = 1;
+  optional double far_mm = 2;
+  optional double positional_tolerance_mm = 3;
+  optional double orthogonality_tolerance = 4;
+}
 message VisualStimulusFilePolicies {
   optional uint32 contract_version = 1; // Required 1.
   ResourceLimits limits = 2;
@@ -41,6 +47,7 @@ message VisualStimulusFilePolicies {
   optional int64 max_result_age_ns = 8; // V26: positive; visual_stimulus_config default 350 ms; closed loop.
   optional double pacing_refresh_hz = 9; // V20 file-only positive finite target.
   optional string pacing_output_id = 10; // V20 configured output identity.
+  ProjectionLimits projection = 11; // V15 file-only geometry limits.
   // Lifecycle/recovery use shared ControlPolicies; health comes from startup policy.
 }
 enum DisplayCalibrationState {

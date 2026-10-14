@@ -35,9 +35,9 @@ def geometry_from_calibration(
     if (
         payload.get("format") != "cephvr-rig-calibration"
         or type(payload.get("version")) is not int
-        or payload.get("version") not in (2, 3, 4)
+        or payload.get("version") not in (2, 3, 4, 5, 6, 7, 8)
     ):
-        raise ValueError("Expected a version 2/3/4 CephVR rig calibration JSON")
+        raise ValueError("Expected a version 2/3/4/5/6/7/8 CephVR rig calibration JSON")
     values = payload.get("values")
     if not isinstance(values, dict):
         raise ValueError("Calibration values must be an object")
@@ -59,6 +59,7 @@ def geometry_from_calibration(
     ):
         raise ValueError("Subject position must be inside the tank")
     front_distance = _number(values, "screens.Front.subject_distance", positive=True)
+    bottom_distance = _number(values, "screens.Bottom.subject_distance", positive=True)
     left_distance = _number(values, "screens.Left.subject_distance", positive=True)
     right_distance = rig.width + left_distance - 2 * rig.subject[0]
     if right_distance <= 0:
@@ -70,14 +71,38 @@ def geometry_from_calibration(
             key: str(_number(values, prefix + key, positive=True))
             for key in ("width", "height")
         }
+        if face == "Bottom" and payload["version"] in (2, 3, 4):
+            dimensions["width"], dimensions["height"] = (
+                dimensions["height"],
+                dimensions["width"],
+            )
         dimensions["subject_distance"] = str(
             right_distance
             if face == "Right"
             else _number(values, prefix + "subject_distance", positive=True)
         )
         screens[face] = screen_corners(
-            rig, face, dimensions, front_distance=str(front_distance)
+            rig,
+            face,
+            dimensions,
+            front_distance=str(front_distance),
+            bottom_distance=str(bottom_distance),
         )
+    from cephvr.gui.projector_extent import usable_corners
+
+    for face in FACES:
+        prefix = f"screens.{face}."
+        if any(
+            values.get(prefix + f"reference_{axis}_mm") is not None
+            for axis in ("x", "y")
+        ):
+            screens[face] = usable_corners(
+                screens[face],
+                values,
+                face,
+                int(_number(values, prefix + "reference_width_px", positive=True)),
+                int(_number(values, prefix + "reference_height_px", positive=True)),
+            )
     return rig, screens
 
 
@@ -145,12 +170,11 @@ def make_calibration_glb(
     *,
     spacing_mm: float = 10.0,
 ) -> bytes:
-    """Create grid, center cross, face names and a thin tank outline in rig millimetres."""
+    """Create a solid physical grid, border and screen name for each rig surface."""
     if not math.isfinite(spacing_mm) or spacing_mm <= 0:
         raise ValueError("Grid spacing must be finite and positive")
     mesh = _Mesh()
     dark = (0.025, 0.035, 0.055, 1.0)
-    outline = (0.4, 0.42, 0.46, 1.0)
     for face in FACES:
         corners = screens[face]
         if len(corners) != 4:
@@ -185,19 +209,68 @@ def make_calibration_glb(
         mesh.quad(tuple(corners), dark)  # type: ignore[arg-type]
         add_face_guides(mesh, face, at, origin, u, v, normal, width, height, spacing_mm)
 
-    # The tank outline is a spatial reference; screens remain the calibration surfaces.
-    for x in (0.0, rig.width):
-        for y in (0.0, rig.depth):
-            mesh.line((x, y, 0.0), (x, y, rig.height), 0.8, (0.0, 1.0, 0.0), outline)
-    for z in (0.0, rig.height):
-        for y in (0.0, rig.depth):
-            mesh.line((0.0, y, z), (rig.width, y, z), 0.8, (0.0, 0.0, 1.0), outline)
-        for x in (0.0, rig.width):
-            mesh.line((x, 0.0, z), (x, rig.depth, z), 0.8, (0.0, 0.0, 1.0), outline)
     return _pack_glb(mesh)
 
 
-def _pack_glb(mesh: _Mesh) -> bytes:
+def make_reference_bars_glb(
+    outputs: Mapping[str, tuple[int, int, int, int]],
+) -> bytes:
+    """Export an output-boundary frame and two raw native-pixel bars per output."""
+    from cephvr.visual_stimulus.config.calibration_bars import (
+        reference_frame_rectangles,
+        reference_lengths,
+    )
+
+    mesh = _Mesh()
+    for index, (width, height, x_px, y_px) in enumerate(outputs.values()):
+        reference_lengths(width, height, x_px, y_px)
+        x0, y0 = round((width - x_px) / 2), round((height - y_px) / 2)
+        cx, cy, z = width // 2, height // 2, float(index)
+        for fx, fy, fw, fh in reference_frame_rectangles(width, height):
+            mesh.quad(
+                (
+                    (fx, fy, z),
+                    (fx + fw, fy, z),
+                    (fx + fw, fy + fh, z),
+                    (fx, fy + fh, z),
+                ),
+                (1.0, 1.0, 1.0, 1.0),
+            )
+        mesh.quad(
+            (
+                (x0, cy - 1, z),
+                (x0 + x_px, cy - 1, z),
+                (x0 + x_px, cy + 1, z),
+                (x0, cy + 1, z),
+            ),
+            (1.0, 0.3, 0.0, 1.0),
+        )
+        mesh.quad(
+            (
+                (cx - 1, y0, z),
+                (cx + 1, y0, z),
+                (cx + 1, y0 + y_px, z),
+                (cx - 1, y0 + y_px, z),
+            ),
+            (0.0, 1.0, 0.3, 1.0),
+        )
+    return _pack_glb(
+        mesh,
+        {
+            "cephvr_reference_bars": {
+                key: {
+                    "width_px": width,
+                    "height_px": height,
+                    "x_length_px": x,
+                    "y_length_px": y,
+                }
+                for key, (width, height, x, y) in outputs.items()
+            }
+        },
+    )
+
+
+def _pack_glb(mesh: _Mesh, extras: Mapping[str, object] | None = None) -> bytes:
     positions = b"".join(struct.pack("<3f", *point) for point in mesh.positions)
     colors = b"".join(struct.pack("<4f", *color) for color in mesh.colors)
     indices = b"".join(struct.pack("<I", index) for index in mesh.indices)
@@ -258,6 +331,8 @@ def _pack_glb(mesh: _Mesh) -> bytes:
             },
         ],
     }
+    if extras is not None:
+        document["extras"] = dict(extras)
     source = json.dumps(document, separators=(",", ":")).encode("utf-8")
     source += b" " * (-len(source) % 4)
     binary += b"\0" * (-len(binary) % 4)

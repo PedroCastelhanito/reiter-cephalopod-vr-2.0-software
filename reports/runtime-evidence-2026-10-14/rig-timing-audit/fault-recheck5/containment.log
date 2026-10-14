@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\replacement.py", line 122, in _existing_endpoint
+    raise _EndpointPending(
+cephvr.launcher.replacement._EndpointPending: Existing runtime has no replacement endpoint at C:\Users\ReiterU_PC\.cephvr2\runtime\launcher.json. Use the same Windows profile/runtime directory as the running launcher, or stop it from its own terminal or controller before launching this version.

@@ -218,9 +218,15 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 170
+**Status:** Accepted · **Revision:** 172
 
 **Processes and startup**
+
+- SYS-002's renderer uses a distinct executable name with the same verified prepared
+  Python bytes/runtime provenance as the GUI/CPU interpreter. Plan and confirm its
+  actual executable path, PID, creation time and containment through the existing
+  launch path. Missing/stale/modified images or unconfirmed graphics-preference
+  writes block launch; no redirector fallback or extra process is introduced.
 
 - Supervisor, controller and GUI are separate Python processes. The launcher starts
   the supervisor and stays alive as containment owner, owning only containment/exit
@@ -359,7 +365,12 @@ design; runtime monitoring remains unimplemented.
   Each planned obligation needs the supervisor's accepted receipt before resource
   creation. Ready and final RegisterContext carry the identical last catalogue and
   seal it against later additions;
-  Cleanup matches its revision and exact releases, plus fenced/stopped work; the
+  Cleanup matches its revision and exact releases, plus fenced/stopped work. Before
+  final local output registration, the controller checks the frozen requested output
+  IDs and explicit never-started, absent, path-free results. The supervisor may retain
+  those absence facts alongside exact native release proof in an unpaired, unsealed preliminary
+  context; they create no new obligation and cannot discharge a registered output or
+  resource. Created, unknown or incomplete results remain unconfirmed. The
   controller registers exact append-only cleanup command target/work/ID before
   dispatch, or the supervisor matches its own issued recovery command. Empty
   Cleanup clears only a known-zero catalogue with stopped admissions. Source-owned typed fault and continuing
@@ -541,7 +552,7 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 207
+**Status:** Accepted · **Revision:** 210
 
 - **Operator files contain only settings.** Human-readable `<backend>_config.toml`
   files under [config/backends/](../../config/backends/README.md) hold only values an
@@ -582,7 +593,7 @@ and rig validation remain later work under E15.
 | `supervisor_config.toml` / `supervisor_policy.toml` | E03–E06/E08 |
 | `acquisition_config.toml` / `acquisition_policy.toml` | A01–A10; A11 camera-trigger consumers |
 | `microcontroller_config.toml` / `microcontroller_policy.toml` | A11/E08; controller device owner |
-| `gui_config.toml` / `gui_policy.toml` | E03/A10 |
+| `gui_config.toml` / `gui_policy.toml` | E03/A10/G01 (fixed usable-screen frame gap) |
 | `visual_stimulus_config.toml` / `visual_stimulus_policy.toml` | V01–V28/E13/A06 |
 | `tracking_config.toml` / `tracking_policy.toml` | E10/A04–A06/T01–T12/T14–T45 |
 | `synchronization_config.toml` / `synchronization_policy.toml` | SYS-004/E09/E10/E12 |

@@ -13,6 +13,7 @@ from google.protobuf.message import Message
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.evidence import outputs_satisfied
+from cephvr.controller.planning import PlanningError, requested_output_identities
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.state import (
@@ -22,7 +23,10 @@ from cephvr.controller.state import (
     LimitsState,
     SupervisorState,
 )
-from cephvr.shared.cleanup_outputs import cleanup_output_discharged
+from cephvr.shared.cleanup_outputs import (
+    cleanup_output_absence_proven,
+    cleanup_output_discharged,
+)
 from cephvr.shared.resources import cleanup_command_fenced
 
 _Report = TypeVar("_Report", bound=Message)
@@ -102,16 +106,43 @@ class DetailedCompletion:
             else None
         )
         releases = {resource.resource: resource for resource in payload.resources}
-        expected_outputs = (
-            {
+        if registered is None:
+            expected_outputs: set[str] = set()
+        elif not registered.outputs:
+            try:
+                planned = requested_output_identities(
+                    attempt.prepared,
+                    {
+                        backend_name: participant.context
+                        for backend_name, participant in attempt.required.items()
+                    },
+                )
+            except PlanningError:
+                return rejected_receipt(
+                    "EVIDENCE", "failed Setup output identities unavailable"
+                )
+            expected_outputs = {
+                output.output_key
+                for output in planned
+                if output.backend.backend_name == name
+            }
+        else:
+            expected_outputs = {
                 output.output_key
                 for output in registered.outputs
                 if output.backend.backend_name == name
             }
-            if attempt.incident_topology is not None and registered is not None
-            else set()
-        )
         actual_outputs = {output.output_key: output for output in payload.outputs}
+        if (
+            registered is not None
+            and not registered.outputs
+            and any(
+                not cleanup_output_absence_proven(output) for output in payload.outputs
+            )
+        ):
+            return rejected_receipt(
+                "EVIDENCE", "failed Setup output absence proof is invalid"
+            )
         if not self._cleanup_proof_valid(
             attempt,
             payload,

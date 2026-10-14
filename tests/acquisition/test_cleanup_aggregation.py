@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 from typing import cast
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -22,6 +23,7 @@ from cephvr.acquisition.ports import (
     SerialOwnerPort,
     SupervisorPort,
 )
+from cephvr.acquisition.runtime import AcquisitionCoordinatorRuntime
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
     LaunchRecord,
@@ -91,6 +93,46 @@ async def test_unconfirmed_preview_release_still_attempts_capture_and_pulse_clea
     assert result.result == control.COMMAND_RESULT_REJECTED
     assert result.failure.code == "PREVIEW_RELEASE_UNCONFIRMED"
     assert not owner._active
+
+
+@pytest.mark.parametrize(
+    "cleanup_result",
+    [control.COMMAND_RESULT_ACCEPTED, control.COMMAND_RESULT_REJECTED],
+)
+async def test_cancel_setup_runs_aggregate_cleanup_and_returns_its_admission(
+    cleanup_result: int,
+) -> None:
+    cleanup = _cleanup_owner()
+    work = control.WorkContext(session=control.SessionContext(session_id=str(uuid4())))
+    session = SimpleNamespace(work=work, cleanup_deadline_ns=None)
+
+    class SessionCancellation:
+        async def cancel(self, current: object, *, deadline_ns: int) -> None:
+            assert current is session
+            session.cleanup_deadline_ns = deadline_ns
+
+    request = wire.BackendCommand(
+        command_id=str(uuid4()),
+        issuer=cleanup.identity.controller,
+        target=cleanup.identity.backend,
+        work=work,
+    )
+    admission = control.CommandAdmission(
+        result=cleanup_result, command_id=request.command_id
+    )
+    cleanup.execute = AsyncMock(return_value=admission)
+    runtime = object.__new__(AcquisitionCoordinatorRuntime)
+    runtime.state = SimpleNamespace(session_slot=SessionSlot(current=session))
+    runtime.coordinator_identity = cleanup.identity
+    runtime.clock = lambda: 1
+    runtime.session = SessionCancellation()
+    runtime.cleanup_owner = cleanup
+
+    result = await runtime.cancel_setup(request, deadline_ns=100)
+
+    assert session.cleanup_deadline_ns == 100
+    cleanup.execute.assert_awaited_once_with(request, deadline_ns=100)
+    assert result is admission
 
 
 def _cleanup_owner() -> CoordinatorCleanup:

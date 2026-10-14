@@ -46,6 +46,10 @@ that must equal its policy file's.
   are config-file-only under E05/E06/E14. Edit their owning TOML before Setup
   (or application restart for startup-only health/shutdown-backstop settings);
   GUI/headless session values and trial protocols cannot override them.
+- V15 clipping and numerical geometry tolerances are file-only in the Visual
+  Stimulus `[projection]` table. Calibration reads them at launch; startup/fresh
+  Setup resolves them before profile validation. GUI drafts/imports cannot override
+  these values; changing them does not alter an active presentation/session.
 - A10 transport overrides are currently file-based: use each camera's `transport`
   table in `acquisition_config.toml` before preparation. Saved/session values cannot
   override these tables. GUI exposure remains a later decision.

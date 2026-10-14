@@ -13,6 +13,7 @@ from typing import Any
 
 _MANIFEST = "cephvr-python.runtime.json"
 _WRAPPER = "cephvr-python.exe"
+_RENDER_WRAPPER = "cephvr-renderer.exe"
 _STARTUP_DLL_NAMES = ("VCRUNTIME140.dll", "zlib.dll")
 
 
@@ -97,6 +98,7 @@ def prepare_python_runtime(
     wrapper = scripts / _WRAPPER
     venv_dll = scripts / base_dll.name
     _copy_atomic(base_executable, wrapper)
+    _copy_atomic(base_executable, scripts / _RENDER_WRAPPER)
     _copy_atomic(base_dll, venv_dll)
     startup_dlls: list[dict[str, str]] = []
     for name in _STARTUP_DLL_NAMES:
@@ -244,6 +246,7 @@ def resolve_python_runtime(
             "python.exe",
             "pythonw.exe",
             _WRAPPER,
+            _RENDER_WRAPPER,
         }
     ):
         raise PythonRuntimeError(
@@ -257,6 +260,10 @@ def resolve_python_runtime(
     ):
         raise PythonRuntimeError("CephVR managed Python requires 64-bit Windows")
     manifest, wrapper = _validate_manifest(candidate.parent)
+    if candidate.name.casefold() == _RENDER_WRAPPER and _digest(candidate) != _digest(
+        wrapper
+    ):
+        raise PythonRuntimeError("renderer executable differs from prepared Python")
     if candidate.name.casefold() == _WRAPPER and candidate != wrapper:
         raise PythonRuntimeError(
             "requested wrapper differs from the prepared executable"
@@ -270,6 +277,24 @@ def resolve_python_runtime(
 def resolve_python_executable(requested: Path | None = None) -> Path:
     """Resolve a venv Python path to its verified, real executable image."""
     return resolve_python_runtime(requested)[0]
+
+
+def resolve_renderer_executable(requested: Path | None = None) -> Path:
+    """Use identical verified Python bytes under a separate graphics identity."""
+    from cephvr.platform.windows.graphics_preferences import (
+        configure_graphics_preference,
+    )
+
+    wrapper = resolve_python_executable(requested)
+    renderer = wrapper.with_name(_RENDER_WRAPPER)
+    if not renderer.exists():
+        _copy_atomic(wrapper, renderer)
+    if _digest(renderer) != _digest(wrapper):
+        raise PythonRuntimeError(
+            "renderer executable is stale; refresh the prepared Python runtime"
+        )
+    configure_graphics_preference(renderer, high_performance=True)
+    return renderer
 
 
 def module_arguments(module: str, arguments: list[str]) -> list[str]:

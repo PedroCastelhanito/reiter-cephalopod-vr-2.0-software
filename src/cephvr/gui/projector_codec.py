@@ -95,7 +95,11 @@ def merge_projector_draft(
         if surface_id in face_outputs:
             mapping["output_id"] = face_outputs[surface_id]
 
-    if presentation_mode not in {"all_outputs_vsync", "photodiode_only_vsync"}:
+    if presentation_mode not in {
+        "free_run",
+        "all_outputs_vsync",
+        "photodiode_only_vsync",
+    }:
         raise ValueError("Unsupported display presentation mode")
     document["presentation_mode"] = presentation_mode
     if type(pulse_enabled) is not bool:

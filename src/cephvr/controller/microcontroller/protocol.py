@@ -192,15 +192,15 @@ def parse_compact_state(reply: Reply) -> dict[str, bool]:
 
 
 def parse_diagnostic(reply: Reply) -> tuple[bool, str, str, int]:
-    """Parse one firmware-owned bounded pin diagnostic observation."""
+    """Parse one firmware-owned pin diagnostic observation."""
     _require_ok(reply, {"active", "kind", "pin", "edges"})
     active = _bool(reply.fields["active"], "active")
     kind = reply.fields["kind"]
-    if kind not in {"trial_state", "projector_flip", *ROLES}:
+    if kind not in {"trial_state", *ROLES}:
         raise ProtocolError("diagnostic kind is unsupported")
     pin = _required_token(reply.fields["pin"], "pin")
     edges = _uint(reply.fields["edges"], 32, "edges")
-    if kind != "projector_flip" and not edges:
+    if not edges:
         raise ProtocolError("output diagnostic must report its initial HIGH transition")
     if kind == "trial_state" and edges != 1:
         raise ProtocolError(

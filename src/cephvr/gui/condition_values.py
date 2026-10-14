@@ -124,6 +124,9 @@ class ConditionValues(QWidget):
     def __init__(self, group: Group) -> None:
         super().__init__()
         assert group.conditions is not None
+        self.setToolTip(
+            "Comma-separated lists are paired by position. Every list must have the same length."
+        )
         self.group = group
         self.original = group.conditions.model_dump(mode="json")
         self.targets: list[MotionTarget] = []
@@ -132,12 +135,6 @@ class ConditionValues(QWidget):
         self.initial_text: dict[QLineEdit, list[str]] = {}
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
-        body.addWidget(
-            label(
-                "Comma-separated lists are paired by position. Every list must have the same length.",
-                wrap=True,
-            )
-        )
         form = QFormLayout()
         form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         body.addLayout(form)

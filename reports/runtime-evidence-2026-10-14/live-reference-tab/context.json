@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-14",
+  "task": "live-reference-measurements-and-tab",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_scope": "Working tree with concurrent previously authorized changes",
+  "governing": "G01 revision193; V01/V15 protected reference/warp semantics remain",
+  "reproduction": "Standalone real Qt probe: DataTable traps five successive Tab presses on first cell editor; setTabKeyNavigation(False) traverses adjacent/nested editors",
+  "changes": [
+    "Active reference-bar measured X/Y mm editors enabled while geometry/pixel metadata/assignments remain locked",
+    "Shared DataTable uses normal widget focus traversal; consoles and raw/detail text views use Tab changes focus",
+    "Pending non-Active presentation also locks projector edits",
+    "Pre-existing KeyError on unfinished imported profile without geometry repaired by retaining partial geometry with file-owned limits; Setup remains responsible for complete validation"
+  ],
+  "checks": {
+    "focused": "7 passed,468 deselections",
+    "integration": "Initial33 passes/one pre-existing incomplete-profile KeyError; fixed selection34 passes/441 deselections, repeated after pending-lock refinement also34 passes/441 deselections",
+    "native_diagnostic": "Final test run emits Windows COM diagnostic0x8001010d at fixture creation, continues and exits0 with all34 passes; cause unverified",
+    "static": "Ruff lint/format5 files; Win32 mypy4 sources; boundaries689 modules/zero violations; whitespace and documentation references pass"
+  },
+  "native": "Existing GUI was closed; --reopen-gui loads new editing/Tab behavior in existing controller0768dae0-1b01-4381-9454-156598268931. GUI launch yields Active/presented reference_bars. Real screenshots confirm FrontX\u2192FrontY\u2192LeftX and ShiftTab\u2192FrontY; no scientific values entered/changed. Active-case verification precedes the final pending-only guard refinement; pending transitions are locally tested, not native-tested. A DWM NotResponding ghost is observed in initial inventory; no health/fault conclusion drawn from that title. Native accessibility tree initially empty and focused_element disagrees with screenshot; use visible caret/border to assess focus. No backend restart, Setup, recording, MCU or camera mutation.",
+  "final": "GUI open with reference bars Active and measured fields editable; no additional repository assets",
+  "sources": {
+    "src\\cephvr\\gui\\projectors.py": "1d605f6ecc774d8e9cdcff8cd473388739421f6dbc2b48532809a05e428d7213",
+    "src\\cephvr\\gui\\tables.py": "c79b5720e38407b4ce91f84d748f17fb1cbda61c5b263dae676c24148e0f4aa4",
+    "src\\cephvr\\gui\\components.py": "1a361fa570cd6bc7a43b435cca73442a8e59d0ba546cd9b521c43a7e90e5c0d5",
+    "src\\cephvr\\gui\\group_editor.py": "80e9f3e76c42e384b09907e630c43ddb374ffc2b92e926b39ca8e1f807f67f0e"
+  }
+}

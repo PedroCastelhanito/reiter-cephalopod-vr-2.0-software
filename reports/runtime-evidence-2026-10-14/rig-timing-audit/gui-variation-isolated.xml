@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.137" timestamp="2026-10-14T14:27:15.229551+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_batch_variations_target_projectors_and_local_layer_ordinals" time="1.510"><failure message="assert 923 == 1144&#10; +  where 923 = &lt;built-in method y of QPoint object at 0x000001475CD37760&gt;()&#10; +    where &lt;built-in method y of QPoint object at 0x000001475CD37760&gt; = PyQt6.QtCore.QPoint(1098, 923).y&#10; +      where PyQt6.QtCore.QPoint(1098, 923) = &lt;built-in method mapTo of QPushButton object at 0x000001477F1D76D0&gt;(&lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x000001477F177AC0&gt;, PyQt6.QtCore.QPoint())&#10; +        where &lt;built-in method mapTo of QPushButton object at 0x000001477F1D76D0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001477F1D76D0&gt;.mapTo&#10; +          where &lt;PyQt6.QtWidgets.QPushButton object at 0x000001477F1D76D0&gt; = &lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x000001477F177AC0&gt;.remove&#10; +        and   PyQt6.QtCore.QPoint() = QPoint()&#10; +  and   1144 = &lt;built-in method y of QPoint object at 0x000001475CD370D0&gt;()&#10; +    where &lt;built-in method y of QPoint object at 0x000001475CD370D0&gt; = PyQt6.QtCore.QPoint(453, 1144).y&#10; +      where PyQt6.QtCore.QPoint(453, 1144) = &lt;built-in method mapTo of SelectionBox object at 0x000001477F1D7250&gt;(&lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x000001477F177AC0&gt;, PyQt6.QtCore.QPoint())&#10; +        where &lt;built-in method mapTo of SelectionBox object at 0x000001477F1D7250&gt; = &lt;cephvr.gui.components.SelectionBox object at 0x000001477F1D7250&gt;.mapTo&#10; +          where &lt;cephvr.gui.components.SelectionBox object at 0x000001477F1D7250&gt; = &lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x000001477F177AC0&gt;.parameter&#10; +        and   PyQt6.QtCore.QPoint() = QPoint()">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000001475CD99750&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001475A2BF250&gt;
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-183/test_batch_variations_target_p0')
+
+    def test_batch_variations_target_projectors_and_local_layer_ordinals(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.components import Card
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        window.page_buttons[1].click()
+        create = window.protocol.editor.subgroup
+        create.composer.set_screens(("Left", "Right"))
+        create.composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        for face in ("Left", "Right"):
+            for _ in range(2):
+                create.composer.add_file("Texture", str(path), face)
+        create.add_variation()
+        row = create.rows[0]
+        assert isinstance(create.variation_host, Card)
+        assert not hasattr(create, "combine")
+        row.target.setCurrentIndex(row.target.findText("All projectors"))
+        row.layer.setCurrentIndex(row.layer.findData(1))
+        row.values.setText("10, 20")
+        epochs = expand_program(
+            create.candidate(), seed_decimal="0", max_expanded_epochs=2000
+        )
+        assert len(epochs) == 2
+        for epoch, speed in zip(epochs, (10, 20), strict=True):
+            for index in row.target_indices():
+                assert (
+                    motion_numbers(epoch.settings[index].model_dump(mode="json"))[0]
+                    == speed
+                )
+            for index in (0, 2):
+                assert motion_numbers(epoch.settings[index].model_dump(mode="json"))[0] == 0
+        row.target.setCurrentIndex(row.target.findText("Right"))
+        row.layer.setCurrentIndex(row.layer.findData(-1))
+        assert row.target_indices() == [2, 3]
+        for width in (1350, 720):
+            window.resize(width, 900)
+            app.processEvents()
+&gt;           assert (
+                row.remove.mapTo(row, QPoint()).y()
+                == row.parameter.mapTo(row, QPoint()).y()
+            )
+E           assert 923 == 1144
+E            +  where 923 = &lt;built-in method y of QPoint object at 0x000001475CD37760&gt;()
+E            +    where &lt;built-in method y of QPoint object at 0x000001475CD37760&gt; = PyQt6.QtCore.QPoint(1098, 923).y
+E            +      where PyQt6.QtCore.QPoint(1098, 923) = &lt;built-in method mapTo of QPushButton object at 0x000001477F1D76D0&gt;(&lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x000001477F177AC0&gt;, PyQt6.QtCore.QPoint())
+E            +        where &lt;built-in method mapTo of QPushButton object at 0x000001477F1D76D0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001477F1D76D0&gt;.mapTo
+E            +          where &lt;PyQt6.QtWidgets.QPushButton object at 0x000001477F1D76D0&gt; = &lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x000001477F177AC0&gt;.remove
+E            +        and   PyQt6.QtCore.QPoint() = QPoint()
+E            +  and   1144 = &lt;built-in method y of QPoint object at 0x000001475CD370D0&gt;()
+E            +    where &lt;built-in method y of QPoint object at 0x000001475CD370D0&gt; = PyQt6.QtCore.QPoint(453, 1144).y
+E            +      where PyQt6.QtCore.QPoint(453, 1144) = &lt;built-in method mapTo of SelectionBox object at 0x000001477F1D7250&gt;(&lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x000001477F177AC0&gt;, PyQt6.QtCore.QPoint())
+E            +        where &lt;built-in method mapTo of SelectionBox object at 0x000001477F1D7250&gt; = &lt;cephvr.gui.components.SelectionBox object at 0x000001477F1D7250&gt;.mapTo
+E            +          where &lt;cephvr.gui.components.SelectionBox object at 0x000001477F1D7250&gt; = &lt;cephvr.gui.batch_variation.BatchVariationRow object at 0x000001477F177AC0&gt;.parameter
+E            +        and   PyQt6.QtCore.QPoint() = QPoint()
+
+tests\gui\test_dashboard.py:11262: AssertionError</failure></testcase></testsuite></testsuites>

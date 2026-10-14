@@ -1,0 +1,2 @@
+DUMMY_153712_behavioral_cam.mp4 {"ffprobe_exit": 0, "decode_exit": 0, "received_frames": 1797, "received_frames_per_s": 29.95, "dropped_frames": 2, "invalid_frames": 0, "video_dispositions": {"leading_duplicate": 2, "real": 1795, "interior_duplicate": 3}}
+DUMMY_153712_tracking_cam.mp4 {"ffprobe_exit": 0, "decode_exit": 0, "received_frames": 3596, "received_frames_per_s": 59.93333333333333, "dropped_frames": 16, "invalid_frames": 0, "video_dispositions": {"leading_duplicate": 2, "real": 3580, "interior_duplicate": 18}}

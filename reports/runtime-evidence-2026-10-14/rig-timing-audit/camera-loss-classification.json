@@ -1,0 +1,55 @@
+{
+  "baseline": {
+    "DUMMY_121206_behavioral_cam_frames.jsonl": {
+      "dropped_dispositions": {
+        "same_slot_omission": 6
+      },
+      "total_dropped": 6
+    },
+    "DUMMY_121206_tracking_cam_frames.jsonl": {
+      "dropped_dispositions": {
+        "capacity_drop": 2,
+        "same_slot_omission": 24
+      },
+      "total_dropped": 26
+    }
+  },
+  "tuned": {
+    "DUMMY_140541_behavioral_cam_frames.jsonl": {
+      "dropped_dispositions": {
+        "same_slot_omission": 7
+      },
+      "total_dropped": 7
+    },
+    "DUMMY_140541_tracking_cam_frames.jsonl": {
+      "dropped_dispositions": {
+        "capacity_drop": 1,
+        "same_slot_omission": 27
+      },
+      "total_dropped": 28
+    }
+  },
+  "three_camera_confirmation": {
+    "DUMMY_152239_behavioral_cam_frames.jsonl": {
+      "received_frames": 1797,
+      "dropped_dispositions": {
+        "same_slot_omission": 4
+      },
+      "total_dropped": 4
+    },
+    "DUMMY_152239_eye_tracking_cam_frames.jsonl": {
+      "received_frames": 3596,
+      "dropped_dispositions": {
+        "same_slot_omission": 18
+      },
+      "total_dropped": 18
+    },
+    "DUMMY_152239_tracking_cam_frames.jsonl": {
+      "received_frames": 3596,
+      "dropped_dispositions": {
+        "same_slot_omission": 21
+      },
+      "total_dropped": 21
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-14",
+  "task": "reference-calibration-output-frame",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "source_state": "Dirty working tree; existing edits preserved. HEAD is not tested-byte identity.",
+  "request": "Show initial frames with reference bars for alignment, then measure, then Scale/Offset. Clarify initial pixel boundary is not a known physical screen outline.",
+  "implementation": "Shared inside-only2pixel output-border rectangles used by raw framebuffer and GLB exporter. Black clear guards first, white frame then colored bars; preserve exact pixel spans even at edge intersections. No new resources/protocol/policy/settings. Existing measured grid/refinement and locks remain.",
+  "commands": {
+    "rendering": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_display_calibration_rendering.py -q --basetemp=.tmp/reference-frame-final --junitxml=reports/runtime-evidence-2026-10-14/reference-frame/rendering.xml",
+    "gui": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"calibration_identity_profiles or calibration_adjustment_steps or live_calibration or active_calibration_measurements or measured_affine\" --basetemp=.tmp/reference-frame-gui -p no:faulthandler --junitxml=reports/runtime-evidence-2026-10-14/reference-frame/gui.xml"
+  },
+  "results": {
+    "rendering": "71 passed",
+    "gui": "15 passed,467 deselected",
+    "static": "Ruff/format6 files, Win32 mypy3 source files, boundaries689/zero violations; existing cohesion advisories unaffected."
+  },
+  "attempts": "Initial70 pass/one stale GLB eight-vertex assertion; update frame-plus-bars24vertices and bar slices16:20/20:24. Final71 pass. Source render tests updated to distinguish frame rectangles from preserved bars.",
+  "limitations": "No native runtime/GUI restart, device/output command or optical alignment acceptance. Reopen GUI and restart renderer through normal application restart to load renderer source; normal reference launch regenerates its GLB. No physical scale/distance inferred from initial frame."
+}

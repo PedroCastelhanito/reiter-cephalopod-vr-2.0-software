@@ -336,6 +336,7 @@ class GeometricProfile(Model):
     mask: Grid | None
     weight: Grid | None
     overlap_group: Id | None
+    valid_area: tuple[Unit, Unit, Unit, Unit] | None = None
     intended_coverage: Annotated[
         tuple[tuple[Unit, Unit], ...], Field(min_length=3)
     ]  # Ordered simple polygon in viewport XY.
@@ -351,6 +352,22 @@ class GeometricProfile(Model):
             or self.viewport.y + self.viewport.height > self.output_height
         ):
             raise ValueError("viewport exceeds output")
+        if self.valid_area is not None and not (
+            self.valid_area[0] < self.valid_area[2]
+            and self.valid_area[1] < self.valid_area[3]
+        ):
+            raise ValueError("valid projection area must be nondegenerate")
+        if (
+            self.valid_area is not None
+            and min(
+                (self.valid_area[2] - self.valid_area[0]) * self.output_width,
+                (self.valid_area[3] - self.valid_area[1]) * self.output_height,
+            )
+            < 1 - 1e-9
+        ):
+            raise ValueError(
+                "valid projection area must cover one output pixel per axis"
+            )
         sign = 1 if self.orientation == "preserving" else -1
 
         def area(

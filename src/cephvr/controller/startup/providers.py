@@ -20,6 +20,7 @@ from cephvr.controller.planning import (
 from cephvr.controller.ports import BACKEND_NAMES, SpikeGLXPort
 from cephvr.controller.validator_gate import BackendValidator
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+from cephvr.visual_stimulus.config.projection import policy_projection
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
@@ -76,6 +77,7 @@ class _VisualStimulusValidator:
             display = self.profile_resolver(
                 settings.display.profile_json,
                 max_bytes=typed_policy.limits.max_document_bytes,
+                projection=policy_projection(typed_policy.projection),
                 refresh_hz=(
                     typed_policy.pacing_refresh_hz
                     if typed_policy.HasField("pacing_refresh_hz")
@@ -286,6 +288,7 @@ def _installed_display_pacing_resolver() -> Callable[[str, Message], str] | None
         output = provider(
             profile_json,
             max_bytes=typed_policy.limits.max_document_bytes,
+            projection=policy_projection(typed_policy.projection),
             refresh_hz=(
                 typed_policy.pacing_refresh_hz
                 if typed_policy.HasField("pacing_refresh_hz")

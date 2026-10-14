@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-14",
+  "status": "in_progress",
+  "baseline_source": "run.json and verification.json",
+  "controller_generation": "9b68b7c9-f3ec-45b6-b0bd-5c1d3e7de38d",
+  "scope": "unpaired real Behavior30Hz/Tracking-role-camera60Hz plus4 projector outputs; Tracking processing backend disabled; Eye disabled",
+  "session_completed": "SESSION_OUTCOME_COMPLETED",
+  "cleanup_confirmed": true,
+  "configuration_restored": true,
+  "all_videos_count_and_decode": true,
+  "baseline_operation_ms": {
+    "UpdateConfiguration": 18.2486,
+    "Setup": 4422.2858,
+    "StartSession": 75.0777,
+    "NewSession": 3.7986
+  },
+  "cutoff_to_session_ended_ms": 321.2069,
+  "margin_rule": "ceil20% additional to measured bounds at owning units; retain existing values if they already exceed required margin; saturation max is censored, not unconstrained demand",
+  "baseline_video_metrics": {
+    "DUMMY_121206_behavioral_cam.mp4": {
+      "received_frames_per_s": 29.95,
+      "dropped_frames": 6,
+      "video_dispositions": {
+        "leading_duplicate": 2,
+        "real": 1791,
+        "interior_duplicate": 7
+      }
+    },
+    "DUMMY_121206_stimulus.mp4": {
+      "real_groups_per_s": 59.95,
+      "capture_dispositions": {
+        "admitted": 1206,
+        "capacity_drop": 2342,
+        "same_slot_omission": 49
+      }
+    },
+    "DUMMY_121206_tracking_cam.mp4": {
+      "received_frames_per_s": 59.93333333333333,
+      "dropped_frames": 26,
+      "video_dispositions": {
+        "leading_duplicate": 1,
+        "real": 3570,
+        "interior_duplicate": 29
+      }
+    }
+  },
+  "limits": [
+    "No optical/electrical measurement",
+    "SpikeGLX externally active/test; no remote mutation",
+    "Baseline occupancy not measured; instrumentation repeat pending",
+    "Zero-loss recording not established",
+    "Timing bounds are measured workload observations, not universal worst-case guarantees"
+  ]
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="11" time="7.525" timestamp="2026-10-14T17:21:14.158791+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_review_draft_restores_local_configuration[False]" time="0.796" /><testcase classname="tests.gui.test_dashboard" name="test_review_draft_restores_local_configuration[True]" time="0.768" /><testcase classname="tests.gui.test_dashboard" name="test_legacy_review_draft_camera_pin_migrates_to_logical_role" time="0.726" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_review_draft_is_not_replaced_during_load" time="0.343" /><testcase classname="tests.gui.test_dashboard" name="test_projector_config_tabs_keep_column_width_and_table_drafts" time="0.369" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_json_restores_all_settings_without_screen_mapping" time="0.372" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_invalid_settings_preserve_complete_draft[pulse]" time="0.353" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_invalid_settings_preserve_complete_draft[mapping]" time="0.353" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_invalid_settings_preserve_complete_draft[nonfinite]" time="0.352" /><testcase classname="tests.gui.test_dashboard" name="test_projector_configuration_invalid_settings_preserve_complete_draft[duplicate]" time="0.355" /><testcase classname="tests.gui.test_dashboard" name="test_legacy_numeric_projector_json_preserves_synchronization" time="0.363"><failure message="AssertionError: assert '' == '200'&#10;  &#10;  - 200">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000016324353640&gt;
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13970-73e5-7651-9f0d-6af2fc6a73b9/calibration-persistence-temp/test_legacy_numeric_projector_0')
+
+    def test_legacy_numeric_projector_json_preserves_synchronization(
+        window: DashboardWindow, tmp_path: Path
+    ):
+        import json
+    
+        panel = window.devices.projectors
+        numeric = panel.calibration_files.calibration_snapshot()
+        numeric["values"]["rig.width"] = 200
+        panel.timing.pulse.setChecked(True)
+        panel.timing.mode.setCurrentText("VSync on all displays")
+        path = tmp_path / "legacy-calibration.json"
+        path.write_text(json.dumps(numeric))
+        panel.calibration_files.load_path(str(path))
+&gt;       assert panel.rig_editor.fields["width"].text() == "200"
+E       AssertionError: assert '' == '200'
+E         
+E         - 200
+
+tests\gui\test_dashboard.py:13640: AssertionError</failure></testcase></testsuite></testsuites>

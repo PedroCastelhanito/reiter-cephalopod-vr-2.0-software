@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any
 
-from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+from cephvr.gui.calibration_profile import MonitorBinding, face_mapping, face_valid_area
 from cephvr.gui.projector_geometry import (
     RigDimensions,
     resolved_screens,
@@ -17,6 +17,8 @@ from cephvr.gui.projector_geometry import (
 class PreviewCorrection:
     corners: tuple[tuple[float, float], ...] = ()
     error: str = ""
+    valid_area: tuple[float, float, float, float] | None = None
+    source_uv: tuple[tuple[float, float], ...] = ()
 
     @classmethod
     def from_draft(
@@ -25,10 +27,10 @@ class PreviewCorrection:
         try:
             values: dict[str, object] = {}
             for key in (
-                "scale_u",
-                "scale_v",
-                "offset_x",
-                "offset_y",
+                "valid_width_px",
+                "valid_height_px",
+                "offset_x_px",
+                "offset_y_px",
                 "width",
                 "height",
                 "throw",
@@ -46,14 +48,6 @@ class PreviewCorrection:
                 if text not in ("true", "false"):
                     raise ValueError(f"{face} {key} must be true or false")
                 values[f"screens.{face}.{key}"] = text == "true"
-            if (
-                any(
-                    values[f"screens.{face}.{key}"] not in (None, 0.0)
-                    for key in ("offset_x", "offset_y")
-                )
-                and resolution is None
-            ):
-                raise ValueError(f"Assign a display to {face} to resolve pixel offsets")
             if resolution is None and any(
                 values[f"screens.{face}.reference_{axis}_mm"] is not None
                 for axis in ("x", "y")
@@ -61,13 +55,31 @@ class PreviewCorrection:
                 raise ValueError(
                     f"Assign a display to {face} to resolve reference bars"
                 )
+            if resolution is None and any(
+                values.get(f"screens.{face}.{key}") is not None
+                for key in ("valid_width_px", "valid_height_px")
+            ):
+                raise ValueError(f"Assign a display to {face} to resolve pixel sizes")
+            if resolution is None and any(
+                values[f"screens.{face}.offset_{axis}_px"] not in (None, 0.0)
+                for axis in ("x", "y")
+            ):
+                raise ValueError(f"Assign a display to {face} to resolve pixel offsets")
             width, height = resolution or (1, 1)
             if min(width, height) <= 0:
                 raise ValueError(f"{face} display resolution must be positive")
             vertices, _ = face_mapping(
                 {"values": values}, face, MonitorBinding("", 0, 0, width, height, 0, 0)
             )
-            return cls(tuple(vertices[i]["xy"] for i in (0, 1, 3, 2)))
+            return cls(
+                tuple(vertices[i]["xy"] for i in (0, 1, 3, 2)),
+                source_uv=tuple(vertices[i]["uv"] for i in (0, 1, 3, 2)),
+                valid_area=face_valid_area(
+                    {"values": values},
+                    face,
+                    MonitorBinding("", 0, 0, width, height, 0, 0),
+                ),
+            )
         except (ValueError, TypeError) as error:
             return cls(error=str(error))
 
@@ -117,11 +129,36 @@ class PreviewGeometry:
                             face,
                             values,
                             front_distance=resolved["Front"]["subject_distance"],
+                            bottom_distance=resolved["Bottom"].get(
+                                "subject_distance", ""
+                            ),
                         )
                     )
                     if rig
                     else ()
                 )
+                resolution = (resolutions or {}).get(face)
+                if resolution and any(
+                    values.get(f"reference_{axis}_mm", "") for axis in ("x", "y")
+                ):
+                    from cephvr.gui.projector_extent import (
+                        measured_pitch,
+                        usable_corners,
+                        valid_pixels,
+                    )
+
+                    numeric = {
+                        f"screens.{face}.{key}": float(value) if value else None
+                        for key, value in values.items()
+                        if key not in ("flip_x", "flip_y")
+                    }
+                    pixels = valid_pixels(numeric, face, *resolution)
+                    pitch = measured_pitch(numeric, face, *resolution)
+                    width, height = pixels[0] * pitch[0], pixels[1] * pitch[1]
+                    if corners:
+                        corners = tuple(
+                            usable_corners(corners, numeric, face, *resolution)
+                        )
                 result[face] = PreviewSurface(
                     width,
                     height,

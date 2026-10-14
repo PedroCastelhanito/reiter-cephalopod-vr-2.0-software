@@ -445,8 +445,8 @@ class ManagedConfiguration:
             )
         )
 
-    def note_camera_revision(self, snapshot: pb.Snapshot, base_revision: int) -> bool:
-        """Adopt an explicit camera update without discarding any local page drafts."""
+    def note_device_revision(self, snapshot: pb.Snapshot, base_revision: int) -> bool:
+        """Adopt an explicit device update without discarding local page drafts."""
         if (
             self.generation != snapshot.controller_generation
             or self.revision != base_revision

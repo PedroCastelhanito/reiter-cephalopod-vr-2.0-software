@@ -1,0 +1,100 @@
+{
+  "status": "partial_rig_validation_with_owner_deferrals",
+  "sizing_rule": "Use ceil(measured demand * 1.2) for count limits. Preserve accepted fixed failure deadlines and crash-loss cadence; do not inflate them to mask failures.",
+  "accepted_change": {
+    "setting": "acquisition.recording_queue_frames",
+    "before": 10,
+    "after": 20,
+    "evidence": "final-sequence/measurement-assessment.json",
+    "method": "ceil(max consumer service seconds * observed external enqueue Hz * 1.2)",
+    "minimums": {
+      "behavioral": 9,
+      "tracking": 16,
+      "eye_tracking": 17
+    },
+    "observed_queue_capacity_drops": 0,
+    "saved_typed_settings": "owner-parameter-review/result.json",
+    "limit": "Measured 60-second combined run at Behavior30Hz, Tracking60Hz and Eye60Hz external triggers; not a sustained worst-case guarantee or an Eye100Hz arrival test.",
+    "measured_confirmation_capacity": 17,
+    "owner_revision": "Queue20 explicitly selected after measured queue17 confirmation; no new native run."
+  },
+  "rejected_visual_growth": {
+    "trial_slots": 21,
+    "trial_recording_bytes_total": 602112000,
+    "trial_max_asset_gpu_bytes": 844433012,
+    "observed_peak_slots": 21,
+    "capacity_drops": 3078,
+    "cfr_duplicates": 3098,
+    "result": "Finite growth saturates; restore original visual TOML bytes. Throughput repair remains open; no quality, ROI, exposure or frame-rate reduction."
+  },
+  "retained_settings": {
+    "post_cutoff_drain_margin_ms": {
+      "value": 150,
+      "max_cutoff_relative_observed_tail_ms": 64.9687,
+      "times_1_2_ms": 77.96244,
+      "limit": "A10 defines allowance after external OFF terminal outcome; cutoff-relative comparison does not decompose OFF/exposure/transfer and is not an exact A10 margin proof.",
+      "owner_revision": "Owner selects150ms; file-policy loading confirmed, measured tails were collected at125ms."
+    },
+    "file_sync_interval_ms": {
+      "value": 1000,
+      "measured_max_success_interval_ms": 1040.5247,
+      "reference_plus_20_percent_ms": 1200,
+      "errors": 0,
+      "result": "Keep cadence; corrected nested Visual video-sync gate. Interval is a crash-loss cadence, not a resource timeout to increase."
+    },
+    "sdk_buffers": {
+      "value": 15,
+      "result": "Owner selects15; defaults/live/history confirmed, native remeasurement pending."
+    },
+    "pending_records_capacity": {
+      "value": 10000,
+      "max_measured_pending_records": 14,
+      "peak_times_1_2_minimum": 17,
+      "result": "Retain existing bound; no overload observed.",
+      "recommendation": "Keep10000 metadata records; normal peak14 is not stalled-writer demand."
+    },
+    "setup_timeout_s": {
+      "value": 60,
+      "baseline_setup_elapsed_s": 4.422,
+      "times_1_2_s": 5.3064,
+      "result": "Retain; faulty cleanup failures are ownership/evidence defects, not timing-limit evidence."
+    },
+    "started_stopped_deadline_ms": {
+      "value": 250,
+      "result": "Retain E05 fixed bound; per-backend receipt latency/headroom not established by successful Snapshot polling."
+    },
+    "finished_timeout_s": {
+      "value": 30,
+      "result": "Retain; file close operations returned in successful runs, but no full worst-case Finished headroom measurement."
+    },
+    "other_failure_and_transport_limits": {
+      "result": "Existing accepted limits retained. Source/native regressions test semantics; do not claim all numerical timeout bounds measured with20% margin."
+    }
+  },
+  "owner_deferred": [
+    "projector-dependent tests while projectors off",
+    "Tracking processing",
+    "photodiode measurements",
+    "physical SpikeGLX trigger mappings/paired acceptance",
+    "manual firmware upload",
+    "projector flip inputs/diagnostics and camera-trigger phase offsets"
+  ],
+  "remaining_native_acceptance": [
+    "complete failed Setup cancellation and fresh reuse after source repairs",
+    "Abort cleanup and idle reuse beyond300s retention",
+    "sustained visual recording throughput",
+    "native GUI full-suite exception-hook stall and manual DPI/selector acceptance"
+  ],
+  "visual_recommendation": {
+    "pending_records_capacity": 10000,
+    "capture_slots": 3,
+    "recording_bytes_total": 268435456,
+    "max_asset_gpu_bytes": 536870912,
+    "cpu_accounted_bytes": 133120000,
+    "cpu_accounted_times_1_2": 159744000,
+    "gpu_inferred_accounted_bytes_at3": 335054176,
+    "gpu_inferred_times_1_2": 402065012,
+    "scope": "CPU owning helper; GPU estimate uses same-assets21-slot budget accounting subtracting18 RGBA8 slots. Not a new measurement or whole-process/GPU memory estimate.",
+    "throughput": "21 slots saturated;3 slots is a provisional retained bound, not validated zero-loss capacity."
+  }
+}

@@ -67,9 +67,7 @@ class DevicesPage(QWidget):
         )
         self.sync_cameras()
         self.projectors = ProjectorsPanel(settings=settings)
-        self.projectors.timing.wiring_requested.connect(self.edit_projector_wiring)
         self.microcontroller.port.currentIndexChanged.connect(self.sync_wiring_status)
-        self.microcontroller.flip_pin.textChanged.connect(self.sync_wiring_status)
         for editor in self.microcontroller.pin_editors.values():
             editor.textChanged.connect(self.sync_wiring_status)
         self.sync_wiring_status()
@@ -173,7 +171,7 @@ class DevicesPage(QWidget):
             pin_label=f"{dict(ROLE_OUTPUTS)[role_key]} output pin (2–13)",
             role=role_key,
             save=lambda port, pin, selected_role, _enabled: self._apply_wiring(
-                "camera", port, pin, selected_role, camera_key, camera_role, inventory
+                port, pin, selected_role, camera_key, camera_role, inventory
             ),
         )
         self.wiring_dialog = editor
@@ -185,64 +183,33 @@ class DevicesPage(QWidget):
             self.wiring_identity = None
             editor.deleteLater()
 
-    def edit_projector_wiring(self) -> None:
-        panel = self.microcontroller
-        if not self._mcu_wiring_editable():
-            return
-        editor = McuWiringEditor(
-            parent=self,
-            title="Projector flip input wiring",
-            port_values=self._port_options(),
-            port=str(panel.port.currentData() or ""),
-            pin=panel.flip_pin.text(),
-            pin_label="MCU flip input pin (2 or 3)",
-            enabled=panel.enable_controls["projector-flip"].isChecked(),
-            save=lambda port, pin, _role, enabled: self._apply_wiring(
-                "projector", port, pin, "projector-flip", enabled=enabled
-            ),
-        )
-        self.wiring_dialog = editor
-        self.wiring_identity = ("projector",)
-        try:
-            editor.exec()
-        finally:
-            self.wiring_dialog = None
-            self.wiring_identity = None
-            editor.deleteLater()
-
     def _apply_wiring(
         self,
-        source: str,
         port: str,
         pin: str,
         role_key: str,
         camera_key: str = "",
         camera_role: str = "",
         inventory: tuple[tuple[str, str, str], ...] = (),
-        enabled: bool | None = None,
     ) -> None:
         panel = self.microcontroller
         if not self._mcu_wiring_editable():
             return
-        if source == "camera":
-            camera = self.cameras.selected
-            current_inventory = tuple(
-                (item.key, item.serial, item.role) for item in self.cameras.drafts
-            )
-            if (
-                camera is None
-                or camera.key != camera_key
-                or camera.role != camera_role
-                or current_inventory != inventory
-                or self.wiring_identity
-                != ("camera", camera_key, camera_role, inventory)
-                or camera.connected
-                or not self.cameras.can_edit_camera_settings
-            ):
-                return
-            if role_key not in panel.pin_editors:
-                return
-        elif role_key != "projector-flip" or self.wiring_identity != ("projector",):
+        camera = self.cameras.selected
+        current_inventory = tuple(
+            (item.key, item.serial, item.role) for item in self.cameras.drafts
+        )
+        if (
+            camera is None
+            or camera.key != camera_key
+            or camera.role != camera_role
+            or current_inventory != inventory
+            or self.wiring_identity != ("camera", camera_key, camera_role, inventory)
+            or camera.connected
+            or not self.cameras.can_edit_camera_settings
+        ):
+            return
+        if role_key not in panel.pin_editors:
             return
         blocker = QSignalBlocker(panel.port)
         try:
@@ -251,14 +218,8 @@ class DevicesPage(QWidget):
             panel.port.setCurrentIndex(panel.port.findData(port) if port else -1)
         finally:
             del blocker
-        if role_key == "projector-flip":
-            panel.flip_pin.setText(pin)
-            if enabled is not None:
-                control = panel.enable_controls["projector-flip"]
-                control.setChecked(enabled)
-        else:
-            panel.pin_editors[role_key].setText(pin)
-            panel.pins[role_key] = pin
+        panel.pin_editors[role_key].setText(pin)
+        panel.pins[role_key] = pin
         panel.snapshots.draft_loaded = True
         panel.draft_changed.emit()
         panel.refresh_tests()
@@ -267,27 +228,6 @@ class DevicesPage(QWidget):
     def sync_wiring_status(self) -> None:
         panel = self.microcontroller
         port = str(panel.port.currentData() or "").strip()
-        pin = panel.flip_pin.text().strip()
-        missing = []
-        if not port:
-            missing.append("select an MCU COM port")
-        if not pin:
-            missing.append("assign the MCU flip input pin")
-        text = "Projector synchronization MCU input: " + (
-            "; ".join(missing) if missing else f"{port}, pin {pin}"
-        )
-        self.projectors.timing.wiring_summary.setText(text)
-        self.projectors.timing.wiring_button.setEnabled(
-            self.projectors.timing.can_edit
-            and panel.can_review
-            and not (
-                panel.review_tests
-                or panel.managed_test_key
-                or panel.pending_test_key
-                or panel.connection_pending
-                or panel.upload_pending
-            )
-        )
         role = self.microcontroller.role_key(
             self.cameras.selected.role if self.cameras.selected else ""
         )
@@ -307,31 +247,6 @@ class DevicesPage(QWidget):
                 else f"{port}, pin {role_pin}"
             )
         )
-        self.cameras.wiring_summary.setText(
-            self._camera_wiring_summary(role, camera_missing, port, role_pin)
-        )
-
-    def _camera_wiring_summary(
-        self, role: str, missing: list[str], port: str, pin: str
-    ) -> str:
-        camera = self.cameras.selected
-        if camera is None:
-            return "Select a camera to review trigger and MCU wiring prerequisites."
-        clock = camera.values.get("trigger_clock", "")
-        if clock == "Internal clock":
-            return "Internal clock selected; MCU wiring is not required for camera capture."
-        if clock != "External controller":
-            return "Select a trigger source; MCU wiring is optional for Internal clock."
-        needs = list(missing)
-        if camera.values.get("pfs_imported") != "yes":
-            needs.append("import the selected PFS settings before capture")
-        if not camera.values.get("trigger_source"):
-            needs.append("select the PFS FrameStart source")
-        if not camera.values.get("trigger_frequency_hz"):
-            needs.append("set the external trigger rate")
-        if needs:
-            return "External trigger prerequisites: " + "; ".join(needs)
-        return f"External trigger: MCU COM {port}, {role} output pin {pin}."
 
     def sync_cameras(self) -> None:
         if self.cameras.snapshot_draft:
@@ -353,10 +268,7 @@ class DevicesPage(QWidget):
         sources = [(c.key, c.role, c.enabled) for c in self.cameras.drafts]
         sources.extend(
             (key, name, self.microcontroller.enable_controls[key].isChecked())
-            for key, name in (
-                ("trial-state", "Trial state"),
-                ("projector-flip", "Projector flip"),
-            )
+            for key, name in (("trial-state", "Trial state"),)
         )
         if self.projectors.timing.pulse.isChecked():
             sources.append(("photodiode", "Photodiode", True))

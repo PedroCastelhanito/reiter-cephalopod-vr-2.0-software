@@ -1,7 +1,6 @@
 """Canonical epoch operations, including nested group bodies."""
 
 from copy import deepcopy
-from random import SystemRandom
 from typing import Any
 
 from cephvr.gui.program_editing import (
@@ -21,18 +20,6 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Program,
     Time,
 )
-
-
-def shuffle_trial_blocks(program: Program) -> tuple[Program, dict[int, int]]:
-    """Materialize a top-level permutation without changing nested source nodes."""
-    order = list(range(len(program.sequence)))
-    SystemRandom().shuffle(order)
-    return (
-        program.model_copy(
-            update={"sequence": tuple(program.sequence[i] for i in order)}
-        ),
-        {old: new for new, old in enumerate(order)},
-    )
 
 
 def edit_epoch(

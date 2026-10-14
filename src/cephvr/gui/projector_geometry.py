@@ -9,8 +9,10 @@ from PyQt6.QtWidgets import QGridLayout, QHeaderView, QLineEdit, QTableWidgetIte
 from cephvr.gui.components import Card, field
 from cephvr.gui.device_panel import entry
 from cephvr.gui.tables import DataTable
+from cephvr.visual_stimulus.configuration import load_projection_settings
 
 FACES = ("Front", "Left", "Right", "Bottom")
+FRAME_GAP_MM = 5.0
 
 
 @dataclass(frozen=True)
@@ -27,8 +29,9 @@ def screen_corners(
     values: dict[str, str],
     *,
     front_distance: str = "",
+    bottom_distance: str = "",
 ) -> list[tuple[float, float, float]]:
-    """Place inward-facing planes, with side/bottom front edges at the front plane."""
+    """Place inward-facing planes with frame gaps and Bottom image width along tank depth."""
     sw, sh, distance = (
         float(values.get(key, "")) for key in ("width", "height", "subject_distance")
     )
@@ -39,17 +42,22 @@ def screen_corners(
     if not math.isfinite(front) or front <= 0:
         raise ValueError("Set a positive subject distance for Front")
     front_y = y - front
+    bottom = distance if face == "Bottom" else float(bottom_distance)
+    if not math.isfinite(bottom) or bottom <= 0:
+        raise ValueError("Set a positive subject distance for Bottom")
+    wall_z = z - bottom + FRAME_GAP_MM + sh / 2
+    inset_y = front_y + FRAME_GAP_MM
     centers = {
-        "Front": (rig.width / 2, front_y, rig.height / 2),
-        "Left": (x - distance, front_y + sw / 2, rig.height / 2),
-        "Right": (x + distance, front_y + sw / 2, rig.height / 2),
-        "Bottom": (rig.width / 2, front_y + sh / 2, z - distance),
+        "Front": (rig.width / 2, front_y, wall_z),
+        "Left": (x - distance, inset_y + sw / 2, wall_z),
+        "Right": (x + distance, inset_y + sw / 2, wall_z),
+        "Bottom": (rig.width / 2, inset_y + sw / 2, z - distance),
     }
     right, up = {
         "Front": ((-1, 0, 0), (0, 0, 1)),
         "Left": ((0, 1, 0), (0, 0, 1)),
         "Right": ((0, -1, 0), (0, 0, 1)),
-        "Bottom": ((1, 0, 0), (0, 1, 0)),
+        "Bottom": ((0, 1, 0), (-1, 0, 0)),
     }[face]
     return [
         (
@@ -120,31 +128,6 @@ class RigGeometryEditor(Card):
             )
             distances.setColumnStretch(i, 1)
         self.body.addLayout(distances)
-        self.projection_fields: dict[str, QLineEdit] = {}
-        limits = QGridLayout()
-        for i, (key, title) in enumerate(
-            (
-                ("near_mm", "NEAR CLIP (mm)"),
-                ("far_mm", "FAR CLIP (mm)"),
-                ("positional_tolerance_mm", "POSITION TOLERANCE (mm)"),
-                ("orthogonality_tolerance", "ORTHOGONALITY TOLERANCE"),
-            )
-        ):
-            edit = entry("—")
-            edit.setAccessibleName(title)
-            edit.textChanged.connect(self.changed)
-            edit.setToolTip(
-                {
-                    "near_mm": "Nearest rendered depth from the observer; closer geometry is clipped",
-                    "far_mm": "Farthest rendered depth from the observer; farther geometry is clipped",
-                    "positional_tolerance_mm": "Tolerance for corner closure and minimum valid surface extent / observer-to-plane distance, in mm",
-                    "orthogonality_tolerance": "Maximum absolute dot product of normalized screen axes; 0 is exactly perpendicular (dimensionless)",
-                }[key]
-            )
-            self.projection_fields[key] = edit
-            limits.addWidget(field(title, edit), i // 2, i % 2)
-            limits.setColumnStretch(i % 2, 1)
-        self.body.addLayout(limits)
 
     def dimensions(self) -> RigDimensions | None:
         try:
@@ -159,24 +142,13 @@ class RigGeometryEditor(Card):
             return None
 
     def geometry_payload(self, screens: dict[str, dict[str, str]]) -> dict[str, object]:
-        """Build front-attached parallel planes; calibrated meshes remain separate."""
+        """Build frame-separated parallel planes; calibrated meshes remain separate."""
         rig = self.dimensions()
         if rig is None:
             raise ValueError(
                 "Set positive tank dimensions and an interior subject position"
             )
-        limits = {
-            key: float(edit.text()) for key, edit in self.projection_fields.items()
-        }
-        if not all(math.isfinite(value) and value > 0 for value in limits.values()):
-            raise ValueError("Set finite positive projection limits")
-        if (
-            limits["near_mm"] >= limits["far_mm"]
-            or limits["orthogonality_tolerance"] >= 1
-        ):
-            raise ValueError(
-                "Near clip must precede far clip; orthogonality tolerance must be below 1"
-            )
+        limits = load_projection_settings()
         surfaces = []
         screens = resolved_screens(rig, screens)
         for face in FACES:
@@ -185,6 +157,7 @@ class RigGeometryEditor(Card):
                 face,
                 screens[face],
                 front_distance=screens["Front"].get("subject_distance", ""),
+                bottom_distance=screens["Bottom"].get("subject_distance", ""),
             )
             surfaces.append(
                 dict(
@@ -231,6 +204,12 @@ class ScreenGeometryEditor(Card):
                 edit = entry("—")
                 edit.setMinimumWidth(0)
                 edit.setAccessibleName(f"{face} {title}")
+                if face == "Bottom" and key in ("width", "height"):
+                    edit.setToolTip(
+                        "Image X / width runs front to back along tank depth"
+                        if key == "width"
+                        else "Image Y / height runs across tank width"
+                    )
                 if key == "distance":
                     edit.setReadOnly(True)
                     edit.setToolTip(

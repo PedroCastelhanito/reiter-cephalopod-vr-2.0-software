@@ -1,0 +1,259 @@
+{
+  "scope": {
+    "source": "final-sequence 60-second three-camera run; SESSION_CONFIG.json is authoritative for typed settings",
+    "session_id": "508d85c0-f89d-43e5-87f4-5e106229ca02",
+    "trial_id": "d91f2d03-c7aa-4640-873e-92f044208b6b",
+    "trial_start_ns": 102369551918100,
+    "trial_cutoff_ns": 102429551918100,
+    "duration_s": 60,
+    "eye_tracking_enabled": true,
+    "eye_setting_is_temporary": true,
+    "restored_after_run": true,
+    "instrumentation": "bounded in-memory aggregates, one terminal JSONL summary per owner; no per-frame disk logging",
+    "not_in_scope": [
+      "tests",
+      "new hardware run",
+      "full media decode"
+    ]
+  },
+  "camera_settings": {
+    "behavioral": {
+      "serial": "40065509",
+      "exposure_us": 25000,
+      "configured_frame_rate_hz": 30.00030000300003,
+      "requested_external_pulse_hz": 30,
+      "dimensions": [
+        1760,
+        3000
+      ],
+      "format": "BayerRG8",
+      "sdk_buffers": 10
+    },
+    "tracking": {
+      "serial": "40747103",
+      "exposure_us": 5000,
+      "configured_frame_rate_hz": 60,
+      "requested_external_pulse_hz": 60,
+      "dimensions": [
+        1588,
+        1344
+      ],
+      "format": "Mono8",
+      "sdk_buffers": 10
+    },
+    "eye_tracking": {
+      "serial": "40278236",
+      "exposure_us": 5000,
+      "configured_frame_rate_hz": 100,
+      "requested_external_pulse_hz": 60,
+      "dimensions": [
+        1920,
+        1200
+      ],
+      "format": "BayerRG8",
+      "sdk_buffers": 10,
+      "note": "100 Hz is typed device setting; observed trigger/queue rate was approximately 60 Hz and used for queue sizing."
+    }
+  },
+  "queue_capacity_assessment": {
+    "configured_capacity_frames": 17,
+    "pending_records_capacity": 10000,
+    "engineering_heuristic": "ceil(max_consumer_service_seconds * measured_enqueue_rate_per_second * 1.2); separate comparison ceil(max_waiting_pixels * 1.2). This is a one-run sizing heuristic, not a guarantee.",
+    "cameras": [
+      {
+        "role": "behavioral",
+        "enqueue_count": 1797,
+        "measured_enqueue_rate_hz": 29.95,
+        "max_waiting_pixels": 7,
+        "max_pending_records": 8,
+        "drops": 0,
+        "max_queue_wait_ms": 208.5592,
+        "max_receipt_to_enqueue_ms": 2.9249,
+        "max_consumer_service_ms": 239.3682,
+        "service_rate_min_capacity": 9,
+        "peak_times_1_2_min_capacity": 9,
+        "configured_capacity_margin_over_service_heuristic": 8,
+        "closure_to_drain_ms": 109.501
+      },
+      {
+        "role": "tracking",
+        "enqueue_count": 3595,
+        "measured_enqueue_rate_hz": 59.9166667,
+        "max_waiting_pixels": 13,
+        "max_pending_records": 14,
+        "drops": 0,
+        "max_queue_wait_ms": 202.81,
+        "max_receipt_to_enqueue_ms": 1.416,
+        "max_consumer_service_ms": 218.7847,
+        "service_rate_min_capacity": 16,
+        "peak_times_1_2_min_capacity": 16,
+        "configured_capacity_margin_over_service_heuristic": 1,
+        "closure_to_drain_ms": 31.7847
+      },
+      {
+        "role": "eye_tracking",
+        "enqueue_count": 3595,
+        "measured_enqueue_rate_hz": 59.9166667,
+        "max_waiting_pixels": 13,
+        "max_pending_records": 14,
+        "drops": 0,
+        "max_queue_wait_ms": 212.8512,
+        "max_receipt_to_enqueue_ms": 33.996,
+        "max_consumer_service_ms": 228.508,
+        "service_rate_min_capacity": 17,
+        "peak_times_1_2_min_capacity": 16,
+        "configured_capacity_margin_over_service_heuristic": 0,
+        "closure_to_drain_ms": 60.905
+      }
+    ],
+    "assessment": "Retain capacity 17 for the next bounded experiment: it covers all measured 20%-margin heuristics, all queues drained with zero capacity drops, and eye tracking is exactly at the service-rate heuristic bound. Do not increase to 26 from these data alone. This does not establish sustained worst-case headroom; eye receipt-to-enqueue reached 33.996 ms and service maxima exceed a single 60 Hz frame period, so monitor repeat runs and sustained occupancy. A counterfactual 100 Hz eye arrival assumption would imply capacity 28 under the same service heuristic, but does not match the externally triggered observed session rate."
+  },
+  "camera_terminal_delivery": {
+    "configured_post_cutoff_drain_margin_ms": 125,
+    "comparison_rule": "Compare last valid retrieve return to trial cutoff and terminal-start separately; A10 drain allowance is exposure + transfer + one frame period after external OFF terminal outcome. The 125 ms configured allowance is not evidence that the complete A10-derived margin was consumed.",
+    "cameras": [
+      {
+        "role": "behavioral",
+        "terminal_start_ns": 102429600582200,
+        "terminal_begin_end_ns": 102429614854400,
+        "stop_capture_start_ns": 102429745715400,
+        "stop_capture_end_ns": 102429793140500,
+        "last_valid_retrieve_ns": 102429616886800,
+        "last_valid_after_terminal_ns": 102429616886800,
+        "last_valid_after_terminal_start_ms": 16.3046,
+        "last_valid_after_cutoff_ms": 64.9687,
+        "exposure_plus_period_ms": 58.333,
+        "tail_over_exposure_plus_period_ms": 6.6357,
+        "configured_125ms_margin_remaining_ms": 60.0313,
+        "stop_capture_elapsed_ms": 47.4251,
+        "retrieve_valid_count": 1798,
+        "retrieve_invalid_count": 0,
+        "retrieve_error_count": 0
+      },
+      {
+        "role": "tracking",
+        "terminal_start_ns": 102429600610100,
+        "terminal_begin_end_ns": 102429601421600,
+        "stop_capture_start_ns": 102429729826600,
+        "stop_capture_end_ns": 102429739722200,
+        "last_valid_retrieve_ns": 102429585774500,
+        "last_valid_after_terminal_ns": null,
+        "last_valid_after_terminal_start_ms": -14.8356,
+        "last_valid_after_cutoff_ms": 33.8564,
+        "exposure_plus_period_ms": 21.6667,
+        "tail_over_exposure_plus_period_ms": 12.1897,
+        "configured_125ms_margin_remaining_ms": 91.1436,
+        "stop_capture_elapsed_ms": 9.8956,
+        "retrieve_valid_count": 3598,
+        "retrieve_invalid_count": 0,
+        "retrieve_error_count": 0
+      },
+      {
+        "role": "eye_tracking",
+        "terminal_start_ns": 102429600673000,
+        "terminal_begin_end_ns": 102429601505500,
+        "stop_capture_start_ns": 102429729837800,
+        "stop_capture_end_ns": 102429781369500,
+        "last_valid_retrieve_ns": 102429586031600,
+        "last_valid_after_terminal_ns": null,
+        "last_valid_after_terminal_start_ms": -14.6414,
+        "last_valid_after_cutoff_ms": 34.1135,
+        "exposure_plus_period_at_typed_100hz_ms": 15,
+        "exposure_plus_period_at_triggered_60hz_ms": 21.6667,
+        "tail_over_typed_100hz_period_ms": 19.1135,
+        "tail_over_triggered_60hz_period_ms": 12.4468,
+        "configured_125ms_margin_remaining_ms": 90.8865,
+        "stop_capture_elapsed_ms": 51.5317,
+        "retrieve_valid_count": 3598,
+        "retrieve_invalid_count": 0,
+        "retrieve_error_count": 0
+      }
+    ],
+    "interpretation": "Behavioral camera returned one additional valid result after terminal start. Tracking and eye had no valid retrieve after terminal start; their last valid frames occurred 14.8 ms and 14.6 ms before terminal start. Stop-capture elapsed time includes configured wait and is not delivery-tail demand. Last-valid-after-cutoff tails were 64.9687 ms (behavioral), 33.8564 ms (tracking), and 34.1135 ms (eye); all are below the configured 125 ms cutoff-relative window. A10 measures drain margin after external OFF reaches terminal outcome, so cutoff-relative remainder is not proof of unused A10 margin. The behavioral tail exceeded exposure plus one nominal frame period by 6.6 ms; external OFF timing and transfer components are not independently decomposed here."
+  },
+  "file_sync_cadence": {
+    "configured_interval_ms": 1000,
+    "cadence_review_bound_ms": 1200,
+    "camera_files": [
+      {
+        "role": "behavioral",
+        "frame_log_actual_sync_count": 60,
+        "frame_log_sync_max_ms": 8.4036,
+        "frame_log_max_success_interval_ms": 1035.9557,
+        "frame_log_close_ms": 2.5106,
+        "video_sync_count": 60,
+        "video_sync_max_ms": 31.2266,
+        "video_max_success_interval_ms": 1040.5247,
+        "video_close_ms": 0.1711
+      },
+      {
+        "role": "tracking",
+        "frame_log_actual_sync_count": 61,
+        "frame_log_sync_max_ms": 4.6605,
+        "frame_log_max_success_interval_ms": 1017.6855,
+        "frame_log_close_ms": 2.2903,
+        "video_sync_count": 61,
+        "video_sync_max_ms": 4.895,
+        "video_max_success_interval_ms": 1018.7343,
+        "video_close_ms": 0.2811
+      },
+      {
+        "role": "eye_tracking",
+        "frame_log_actual_sync_count": 61,
+        "frame_log_sync_max_ms": 4.203,
+        "frame_log_max_success_interval_ms": 1019.0038,
+        "frame_log_close_ms": 2.1327,
+        "video_sync_count": 61,
+        "video_sync_max_ms": 23.5428,
+        "video_max_success_interval_ms": 1022.5273,
+        "video_close_ms": 0.1104
+      }
+    ],
+    "visual_stimulus": {
+      "evidence_writer_configured_interval_ms": 1000,
+      "evidence_sync_count": 66,
+      "evidence_sync_max_ms": 21.3951,
+      "evidence_max_success_interval_ms": 1022.9141,
+      "evidence_pending_peak_bytes": 3662,
+      "evidence_byte_limit": 16777216,
+      "evidence_close_ms": 1.9361,
+      "video_sync_count": 66,
+      "video_sync_max_ms": 8.8118,
+      "video_max_success_interval_ms": 1023.1337,
+      "video_close_ms": 0.1035
+    },
+    "errors": 0,
+    "assessment": "All measured successful-sync intervals were below 1.2 seconds after the cadence correction; all reported close operations returned. Maximum interval was behavioral video at 1040.5247 ms. These are observed maxima for this run, not long-term guarantees."
+  },
+  "lifecycle_client_timing": {
+    "start_stop_report_timestamps_available": false,
+    "status": "No serial lifecycle client report timestamps for trial Start/Stop were present in the run evidence; run.json operation timings cover configuration/setup/session operations but not trial lifecycle reports.",
+    "250ms_headroom_ms": null,
+    "note": "Do not infer client report latency/headroom from camera terminal or file-close timestamps."
+  },
+  "limitations": [
+    "Single 60-second trial; final sequence temporarily enabled eye tracking and was restored afterward.",
+    "Queue maxima are single-run observations. Metrics called max_waiting_pixels and max_pending_records are not interchangeable with a formal worst-case queue bound.",
+    "No source revision/hash or full independent media decode is recorded in this assessment.",
+    "Timing instrumentation adds bounded in-memory counter/timestamp work; no per-frame disk I/O."
+  ],
+  "visual_stimulus_admission": {
+    "capture_slots": 21,
+    "max_inflight_captures": 21,
+    "classify_calls": 3586,
+    "classify_elapsed_max_ms": 0.1867,
+    "input_submitted_count": 3600,
+    "admitted_count": 502,
+    "capacity_drop_count": 3078,
+    "failed_capture_count": 0,
+    "unresolved_capture_count": 0,
+    "encoded_frame_count": 3600,
+    "duplicate_frame_count": 3098,
+    "same_slot_omission_count": 6,
+    "selected_real_count": 502,
+    "input_close_elapsed_ms": 0.0624,
+    "capture_admission_to_input_close_ms": 64626.0859,
+    "input_close_outcome": "returned",
+    "interpretation": "The 3,078 admission capacity drops are distinct from CFR duplicate output frames (3,098) and same-slot omissions (6). This is visual-stimulus admission pressure, not a camera RecordingQueue drop. The capture-slot cap was fully occupied; this evidence does not justify changing camera queue capacity."
+  }
+}

@@ -18,7 +18,7 @@ from cephvr.platform.windows.bootstrap import (
 from cephvr.platform.windows.jobs import SuspendedProcess, WindowsJobs
 from cephvr.platform.windows.python_runtime import (
     module_arguments,
-    resolve_python_executable,
+    resolve_renderer_executable,
 )
 from cephvr.platform.windows.worker_launch import (
     BootstrapPipeHandles,
@@ -69,7 +69,7 @@ async def launch_renderer(
     identity = identity or pb.ProcessIdentity(
         role="visual_stimulus_renderer", generation=str(uuid4())
     )
-    interpreter = resolve_python_executable(Path(sys.executable))
+    interpreter = resolve_renderer_executable(Path(sys.executable))
     command_id = str(uuid4())
     token = secrets.token_urlsafe(32)
     request = wire.PlanLaunchRequest(

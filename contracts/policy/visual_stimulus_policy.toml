@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 11
+policy_version = 12
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_recording_thread_when_saving"
@@ -79,7 +79,7 @@ unavailable_frame_policy = "hold_last_valid_and_log"
 missed_presentation_policy = "record_and_continue_schedule"
 
 [presentation]
-supported_modes = ["all_outputs_vsync", "photodiode_only_vsync"]
+supported_modes = ["free_run", "all_outputs_vsync", "photodiode_only_vsync"]
 default_mode = "photodiode_only_vsync"
 supported_rgb_bits_per_channel = [8, 10]
 precision_policy = "explicit_per_output_require_framebuffer_match"

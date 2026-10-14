@@ -25,6 +25,7 @@ from cephvr.acquisition.buffers.records import FrameRecord
 from cephvr.acquisition.camera.types import PurgeEvidence, TransportCounters
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.worker.blocking_wait import verify_blocking_wait
 from cephvr.acquisition.worker.capture import CameraCaptureLoop, CaptureWindow
 from cephvr.acquisition.worker.capture_runtime import WorkerCaptureResources
@@ -34,10 +35,12 @@ from cephvr.acquisition.worker.health import WorkerHealthReporter
 from cephvr.acquisition.worker.limits import AcquisitionControlLimits
 from cephvr.acquisition.worker.owner import SerializedCameraOwner
 from cephvr.acquisition.worker.preview_lifecycle import WorkerPreviewLifecycle
+from cephvr.acquisition.worker.recording_preparation import TrialRecordingPreparation
 from cephvr.acquisition.worker.report_dispatch import WorkerReportDispatcher
 from cephvr.acquisition.worker.session_preparation import WorkerSessionPreparation
 from cephvr.acquisition.worker.state import WorkerBootstrap, WorkerState
 from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
+from cephvr.acquisition.worker.trial_state import WorkerTrialState
 from cephvr.acquisition.worker.warnings import WarningOccurrence, WorkerWarningLedger
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.commands import CommandLedger
@@ -106,6 +109,192 @@ def test_worker_executor_retains_unknown_operation_failure_under_original_deadli
     assert "unknown worker operation" in result.failure.message
     assert reports[0][0].operation == result
     assert reports[0][1] == deadline_ns
+
+
+def test_cancel_setup_preserves_installed_recording_cleanup_in_worker_executor() -> (
+    None
+):
+    state = _worker_state()
+    command_id = str(uuid4())
+    deadline_ns = 10**18
+    request = acq.WorkerCommand(command_id=command_id, target=state.context)
+    state.commands.admit(
+        command_id,
+        request.SerializeToString(deterministic=True),
+        1,
+        work_key=state.context.worker.generation,
+        deadline_ns=deadline_ns,
+    )
+    state.operations[command_id] = control.OperationState(
+        context=control.OperationContext(command_id=command_id),
+        command="CancelSetup",
+    )
+    events: list[str] = []
+    active_session = object()
+    runtime = SimpleNamespace(
+        enabled=True,
+        cancel_before_start=lambda **_kwargs: events.append("cancel-trial"),
+        cancel_session_setup=lambda: False,
+    )
+    preparation = object.__new__(TrialRecordingPreparation)
+    preparation._recording = runtime
+    preparation._session = active_session
+    reports: list[acq.WorkerOperationReport] = []
+    executor = object.__new__(WorkerOperationExecutor)
+    executor.bootstrap = SimpleNamespace(context=state.context)
+    executor.state = state
+    executor.recording = runtime
+    executor.trial = SimpleNamespace(
+        recording_preparation=preparation,
+        trial_prepared=True,
+    )
+    executor.preparation = SimpleNamespace(
+        cancel_setup=lambda: events.append("cancel-session")
+    )
+    executor._coordinator_loss_handled = False
+    executor.report_dispatcher = SimpleNamespace(
+        operation=lambda report, _deadline: reports.append(report)
+    )
+
+    executor.execute("CancelSetup", request, deadline_ns)
+
+    assert events == ["cancel-trial", "cancel-session"]
+    assert preparation._session is active_session
+    assert not executor.trial.trial_prepared
+    assert state.operations[command_id].succeeded
+    assert reports[0].operation.succeeded
+
+
+def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -> None:
+    context = _worker_context()
+    session_work = control.WorkContext(
+        session=control.SessionContext(
+            controller_generation=str(uuid4()), session_id=str(uuid4())
+        )
+    )
+    context.work.CopyFrom(session_work)
+    state = _worker_state(context)
+    state.confirmed_configuration_revision = 7
+    preparation = object.__new__(WorkerSessionPreparation)
+    preparation.state = state
+    preparation.session_ready = True
+
+    trial_work = control.WorkContext(
+        trial=control.TrialContext(
+            session=session_work.session, trial_id=str(uuid4()), trial_number=1
+        )
+    )
+    schedule = acq.WorkerSchedule(
+        command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
+        start_monotonic_ns=100,
+        end_monotonic_ns=200,
+    )
+    schedule.command.target.work.CopyFrom(trial_work)
+    trial_state = WorkerTrialState(schedule=schedule)
+    trial = object.__new__(WorkerTrialLifecycle)
+    trial.trial_state = trial_state
+    trial.bootstrap = SimpleNamespace(context=context)
+    trial.recording = None
+    trial._require_ready_session_callback = preparation.require_ready_session
+    trial.stop_finalizer = SimpleNamespace(
+        stop_trial=lambda _deadline, **_kwargs: _retain_stopped_schedule(trial_state)
+    )
+
+    def admit(name: str, request: object, deadline_ns: int) -> None:
+        command = request.command
+        work_kind = command.target.work.WhichOneof("work")
+        work_key = (
+            command.target.work.trial.trial_id
+            if work_kind == "trial"
+            else command.target.work.session.session_id
+            if work_kind == "session"
+            else context.worker.generation
+        )
+        state.commands.admit(
+            command.command_id,
+            request.SerializeToString(deterministic=True),
+            1,
+            work_key=work_key,
+            deadline_ns=deadline_ns,
+        )
+        state.operations[command.command_id] = control.OperationState(
+            context=control.OperationContext(command_id=command.command_id),
+            command=name,
+            work=command.target.work,
+        )
+
+    deadline_ns = 10**18
+    interrupt = acq.WorkerInterrupt(
+        command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
+        issued_monotonic_ns=150,
+    )
+    interrupt.command.target.work.CopyFrom(session_work)
+    admit("InterruptSession", interrupt, deadline_ns)
+    reports: list[acq.WorkerOperationReport] = []
+    executor = object.__new__(WorkerOperationExecutor)
+    executor.bootstrap = SimpleNamespace(context=context)
+    executor.state = state
+    executor.preparation = preparation
+    executor.trial = trial
+    executor.recording = None
+    executor._cancelled = Event()
+    executor._coordinator_loss_handled = False
+    executor._latest_work = None
+    executor._source = lambda target: acq.WorkerContext.FromString(
+        target.SerializeToString(deterministic=True)
+    )
+    executor.report_dispatcher = SimpleNamespace(
+        operation=lambda report, _deadline: reports.append(report)
+    )
+
+    executor.execute("InterruptSession", interrupt, deadline_ns)
+
+    assert not preparation.session_ready
+    assert trial_state.schedule is None
+    assert trial_state.stopped_schedule is schedule
+
+    pulse_request = acq.WorkerPulseEvidence(
+        command=acq.WorkerCommand(
+            command_id=str(uuid4()),
+            target=context,
+            parent_operation=control.OperationContext(
+                command_id=schedule.command.command_id
+            ),
+        ),
+        camera=context.camera,
+        evidence=mcu.PulseCommandEvidence(
+            connection_id="connection",
+            request_id=str(uuid4()),
+            command=mcu.PULSE_BOUNDARY_COMMAND_ON,
+            outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+            behavioral_selected=True,
+            applied=True,
+            dispatched_monotonic_ns=90,
+            acknowledged_monotonic_ns=95,
+            scheduled_boundary_monotonic_ns=100,
+        ),
+    )
+    pulse_request.command.target.work.CopyFrom(trial_work)
+    admit("RecordPulseEvidence", pulse_request, deadline_ns)
+    executor.execute("RecordPulseEvidence", pulse_request, deadline_ns)
+
+    assert state.operations[pulse_request.command.command_id].succeeded
+    assert trial_state.pulses.on is not None
+    assert reports[-1].operation.succeeded
+
+    wrong_parent = acq.WorkerPulseEvidence.FromString(
+        pulse_request.SerializeToString(deterministic=True)
+    )
+    wrong_parent.command.command_id = str(uuid4())
+    wrong_parent.command.parent_operation.command_id = str(uuid4())
+    admit("RecordPulseEvidence", wrong_parent, deadline_ns)
+    executor.execute("RecordPulseEvidence", wrong_parent, deadline_ns)
+    assert not state.operations[wrong_parent.command.command_id].succeeded
+
+
+def _retain_stopped_schedule(trial_state: WorkerTrialState) -> None:
+    trial_state.stopped_schedule = trial_state.schedule
+    trial_state.schedule = None
 
 
 def test_blocking_wait_wakeup_verification_uses_loop_and_respects_deadline() -> None:

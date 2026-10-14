@@ -35,6 +35,7 @@ from cephvr.controller.state import (
     Watch,
 )
 from cephvr.shared.commands import CommandLedger
+from cephvr.visual_stimulus.configuration import load_file_policies
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 from tests.controller.support_components import _id, _runtime, default_limits
 from tests.visual_stimulus.support import valid_display_json
@@ -265,24 +266,43 @@ async def test_display_initialization_still_dispatches_with_capacity() -> None:
     assert asyncio.get_running_loop() is not None
 
 
+@pytest.mark.parametrize("staged_matches", [True, False])
 async def test_display_calibration_open_adopts_a_profile_before_display_initialization(
     tmp_path: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    staged_matches: bool,
 ) -> None:
     env = _Env()
     asset_root = tmp_path / "assets"
+    runtime_root = tmp_path / "runtime"
+    (runtime_root / "calibration").mkdir(parents=True)
+    monkeypatch.setattr(
+        "cephvr.controller.device.display_calibration.calibration_runtime_root",
+        lambda _view: runtime_root,
+    )
+    monkeypatch.setattr(
+        "cephvr.controller.device.display_calibration.calibration_asset_root",
+        lambda: asset_root,
+    )
     asset_root.mkdir()
     profile_json = valid_display_json()
-    profile = asset_root / "calibration" / "diagnostic_display_profile.json"
-    profile.parent.mkdir()
+    (asset_root / "calibration").mkdir()
+    profile = runtime_root / "calibration" / "diagnostic_display_profile.json"
     profile.write_text(profile_json)
-    arena = asset_root / "calibration" / "arena.glb"
+    arena = asset_root / "calibration" / "frame_grid.glb"
     arena.write_bytes(b"protected arena")
-    accepted = pb.ExperimentConfiguration(asset_root=str(asset_root))
+    (runtime_root / "calibration/frame_grid.glb").write_bytes(
+        b"protected arena" if staged_matches else b"stale copy"
+    )
+    accepted = pb.ExperimentConfiguration(asset_root=str(tmp_path / "external-media"))
     setting = pb.BackendSettings(backend_name="visual_stimulus", enabled=True)
     setting.visual_stimulus.display.profile_json = '{"saved": "different"}'
     accepted.backends.append(setting)
     env.configuration.current.CopyFrom(accepted)
     policy = visual_stimulus_pb.VisualStimulusFilePolicies(contract_version=1)
+    policy.projection.CopyFrom(
+        load_file_policies(Path(__file__).resolve().parents[2]).projection
+    )
     policy.limits.max_document_bytes = 1_000_000
     policy.limits.max_asset_cpu_bytes = 1_000_000
     policy.limits.max_asset_gpu_bytes = 1_000_000
@@ -320,17 +340,24 @@ async def test_display_calibration_open_adopts_a_profile_before_display_initiali
         expected_configuration_revision=env.configuration.revision,
         diagnostic_id=str(uuid4()),
         profile_asset_reference="calibration/diagnostic_display_profile.json",
-        arena_asset_reference="calibration/arena.glb",
+        arena_asset_reference="calibration/frame_grid.glb",
         expected_profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
         expected_arena_sha256=hashlib.sha256(arena.read_bytes()).hexdigest(),
     )
     request.command.operator.command_id = _id()
     result = await controller.open(request)
 
+    if not staged_matches:
+        assert result.result == pb.COMMAND_RESULT_REJECTED
+        assert "digest differs" in result.failure.message
+        assert not sent and env.device.calibration_pending is None
+        return
+
     assert result.result == pb.COMMAND_RESULT_ACCEPTED
     assert sent[0].profile_json != setting.visual_stimulus.display.profile_json
     assert sent[0].policies.limits.max_asset_cpu_bytes == 1_000_000
     assert sent[0].arena_size_bytes == len(b"protected arena")
+    assert sent[0].asset_root == str(runtime_root)
     assert env.device.calibration_blocked
     for task in env.spawned:
         task.close()
@@ -338,20 +365,32 @@ async def test_display_calibration_open_adopts_a_profile_before_display_initiali
 
 async def test_display_calibration_validation_reserves_and_rechecks_authority(
     tmp_path: Any,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     env = _Env()
     asset_root = tmp_path / "assets"
+    monkeypatch.setattr(
+        "cephvr.controller.device.display_calibration.calibration_runtime_root",
+        lambda _view: asset_root,
+    )
+    monkeypatch.setattr(
+        "cephvr.controller.device.display_calibration.calibration_asset_root",
+        lambda: asset_root,
+    )
     (asset_root / "calibration").mkdir(parents=True)
     profile_json = valid_display_json()
     profile_path = asset_root / "calibration/profile.json"
     profile_path.write_text(profile_json)
-    arena_path = asset_root / "calibration/arena.glb"
+    arena_path = asset_root / "calibration/frame_grid.glb"
     arena_path.write_bytes(b"arena")
     setting = pb.BackendSettings(backend_name="visual_stimulus", enabled=True)
     setting.visual_stimulus.display.profile_json = profile_json
-    env.configuration.current.asset_root = str(asset_root)
+    env.configuration.current.ClearField("asset_root")
     env.configuration.current.backends.append(setting)
     policy = visual_stimulus_pb.VisualStimulusFilePolicies(contract_version=1)
+    policy.projection.CopyFrom(
+        load_file_policies(Path(__file__).resolve().parents[2]).projection
+    )
     policy.limits.max_document_bytes = 1_000_000
     policy.limits.max_asset_cpu_bytes = 1_000_000
     policy.limits.max_asset_gpu_bytes = 1_000_000
@@ -398,7 +437,7 @@ async def test_display_calibration_validation_reserves_and_rechecks_authority(
             expected_configuration_revision=env.configuration.revision,
             diagnostic_id=str(uuid4()),
             profile_asset_reference="calibration/profile.json",
-            arena_asset_reference="calibration/arena.glb",
+            arena_asset_reference="calibration/frame_grid.glb",
             expected_profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
             expected_arena_sha256=hashlib.sha256(arena_path.read_bytes()).hexdigest(),
         )
@@ -573,20 +612,32 @@ async def test_assembled_owner_loss_closes_exact_display_calibration(
 
 async def test_owner_loss_dispatches_exact_close_while_open_receipt_is_pending(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     env = _Env()
     asset_root = tmp_path / "assets"
+    monkeypatch.setattr(
+        "cephvr.controller.device.display_calibration.calibration_runtime_root",
+        lambda _view: asset_root,
+    )
+    monkeypatch.setattr(
+        "cephvr.controller.device.display_calibration.calibration_asset_root",
+        lambda: asset_root,
+    )
     (asset_root / "calibration").mkdir(parents=True)
     profile_json = valid_display_json()
     profile_path = asset_root / "calibration/profile.json"
     profile_path.write_text(profile_json)
-    arena_path = asset_root / "calibration/arena.glb"
+    arena_path = asset_root / "calibration/frame_grid.glb"
     arena_path.write_bytes(b"arena")
-    env.configuration.current.asset_root = str(asset_root)
+    env.configuration.current.ClearField("asset_root")
     setting = pb.BackendSettings(backend_name="visual_stimulus", enabled=True)
     setting.visual_stimulus.display.profile_json = profile_json
     env.configuration.current.backends.append(setting)
     policy = visual_stimulus_pb.VisualStimulusFilePolicies(contract_version=1)
+    policy.projection.CopyFrom(
+        load_file_policies(Path(__file__).resolve().parents[2]).projection
+    )
     policy.limits.max_document_bytes = 1_000_000
     policy.limits.max_asset_cpu_bytes = 1_000_000
     policy.limits.max_asset_gpu_bytes = 1_000_000
@@ -671,7 +722,7 @@ async def test_owner_loss_dispatches_exact_close_while_open_receipt_is_pending(
         expected_configuration_revision=env.configuration.revision,
         diagnostic_id=diagnostic_id,
         profile_asset_reference="calibration/profile.json",
-        arena_asset_reference="calibration/arena.glb",
+        arena_asset_reference="calibration/frame_grid.glb",
         expected_profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
         expected_arena_sha256=hashlib.sha256(arena_path.read_bytes()).hexdigest(),
     )
@@ -861,3 +912,23 @@ async def test_live_calibration_update_requires_exact_leased_active_grid():
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
     for task in env.spawned:
         task.close()
+
+
+def test_startup_display_resolves_only_file_projection_values():
+    import json
+
+    from cephvr.controller.startup.providers import _installed_display_pacing_resolver
+    from cephvr.shared.config import ConfigurationError
+
+    policy = load_file_policies(Path(__file__).resolve().parents[2])
+    resolver = _installed_display_pacing_resolver()
+    assert resolver is not None
+    source = json.loads(valid_display_json())
+    source["geometry"].update(near_mm=5000, far_mm=1, orthogonality_tolerance=2)
+    resolved = json.loads(resolver(json.dumps(source), policy))
+    assert resolved["geometry"]["near_mm"] == 1
+    assert resolved["geometry"]["far_mm"] == 250
+    assert resolved["geometry"]["surfaces"] == source["geometry"]["surfaces"]
+    policy.ClearField("projection")
+    with pytest.raises(ConfigurationError, match="projection.near_mm"):
+        resolver(json.dumps(source), policy)

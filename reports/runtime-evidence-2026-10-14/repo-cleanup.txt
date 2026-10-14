@@ -1,0 +1,29 @@
+Date: 2026-10-14 (Asia/Tokyo)
+Base revision: ffa3edefec43d1d167ab0f6a07434443776cbf71; substantially dirty working tree predates cleanup.
+Authorization: owner requests unnecessary-file/code cleanup.
+Governing rules: ARCH-002, GOV-001, G01; accepted behavior and deferrals unchanged.
+Inspection: AST declaration/import scan and repository symbol searches; no current callers for removed GUI branch.
+Removed: batch_edit.py (448 lines), epoch_targets.py (138), screen_scope.py (98), timeline_menus.py (47), ProjectorLayers/import (22), shuffle_trial_blocks/import (13); total 766 lines.
+Preserved: tested/shared GUI authoring helpers, Tracking contract declarations, generated bindings/native components, calibration assets, environment/installed metadata, live data, recovery outputs and dated evidence.
+Artifact method: native PowerShell Resolve-Path containment checks; reject root/nested reparse points; Remove-Item -LiteralPath only. No cross-shell deletion.
+Artifact counts: 19 root pytest directories, 2569 files, 23123727 bytes; 62 .tmp fixture directories, 2344 files, 24948036 bytes; 4 tooling cache/dist directories, 38 files, 40049500 bytes.
+.tmp fixture selection: only directories whose children are test_* or demo-assets* directories; retain ffmpeg-toolchain and gpu-selection-probe.py.
+CIM process inspection was unavailable; no process state inferred from it.
+Checks: python denotes .venv/Scripts/python.exe.
+python -m ruff check src tests tools: PASS.
+python -m ruff format --check src/cephvr/gui tests/gui: PASS, 155 files.
+python -m mypy --platform win32 src/cephvr/gui: PASS, 153 source files.
+python tools/check_backend_boundaries.py: PASS, 686 modules, zero violations; existing cohesion advisories remain.
+git diff --check: PASS; existing CRLF conversion warnings only.
+Broad GUI/client runs interrupted after no further progress; no suite pass claimed. Existing GUI exception-hook issue remains unverified here.
+Focused GUI broad -k run also interrupted after no progress; cause unverified.
+Owning selection first run: 11 passed, one demo_assets setup error because --basetemp was inside repository (generator rejects that).
+Owning selection default-temp retry: 7 passed, five setup errors because default sandbox temp directory was unwritable.
+Owning selection final run: QT_QPA_PLATFORM=offscreen python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -p no:cacheprovider --basetemp=C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a1396a-233d-72c2-b190-933da11d5b8d/repo-cleanup-pytest -k 'unified_subgroup or layer_actions_offer or timeline_epoch_shortcuts or selected_epoch_type_change or inline_timeline_actions or epoch_automatic_updates or subgroup_rules_persist or protocol_config_round_trip': PASS, 12 passed, 481 deselected, 7.24 seconds. No assertion or test source change.
+Final repository artifact cleanup: 73 pytest/bytecode directories, 990 files, 26383249 bytes; includes fixtures created during this cleanup.
+Aggregate repository removal: 158 top-level selected directories (including nested package bytecode directories), 5941 files, 114504512 bytes, approximately 109.2 MiB. Environment/installed metadata retained.
+Windows/native/device/full-load acceptance not run.
+
+Current cleanup source hashes (no complete-tree provenance claim):
+9cae668824c63f957b7dc7fd7c9fce54eb1ee10c50a8c045d31d5bd0349a5473  src/cephvr/gui/projector_layers.py
+643c090f05c3d140084b95a59853978bfdef31a9526c2a157121597d39dc7596  src/cephvr/gui/protocol_nodes.py

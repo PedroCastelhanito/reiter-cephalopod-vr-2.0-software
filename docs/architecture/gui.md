@@ -16,7 +16,29 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 182
+**Status:** Accepted · **Revision:** 204
+
+- Projector window creation and recreation preserve the current desktop cursor
+  position; disable automatic fullscreen cursor centering in the native window owner.
+
+- Tab and Shift+Tab move forward/backward through visible enabled GUI form controls,
+  including persistent editors inside tables. Tables retain arrow-key selection;
+  read-only text views pass Tab to focus traversal rather than trapping it.
+
+- Rig clipping and numerical geometry tolerances are file-only under V15/E14.
+  Remove their GUI editors and draft persistence. Existing numeric calibration and
+  review files remain loadable; discard legacy projection overrides while preserving
+  physical measurements and other settings. Calibration and submission use the
+  owning Visual Stimulus TOML.
+
+- Projector availability does not gate saving/restoring local GUI drafts or accepting
+  structurally valid settings with saved display identities/properties. Retain assignments,
+  participation and authoring fields while outputs are disconnected. With no identified
+  projectors, display an availability explanation and instruct the operator to turn them
+  on and refresh before projector tests/Setup. Setup remains clickable under ordinary
+  authority/phase gates; refresh inventory on click, then log the reason and submit no
+  configuration or Setup command when none are identified. Physical output validation
+  remains required for projector tests and backend preparation under E07/V19.
 
 - Projectors/Synchronization uses a two-row Frame/Pulse table with Origin X,
   Origin Y, Width and Height in pixels. Frame origins use bottom-left output
@@ -31,6 +53,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Add/remove and restore through the shared table rule. Planning preview shows final-space
   black regions and a white pulse as placement, never optical timing.
   V15/V19/V22 own final composition and trial/Idle behavior; both GUI modes share controls.
+- Omit explanatory body descriptions throughout GUI cards, editors and dialogs;
+  useful guidance belongs in control tooltips. Retain field labels, units, live
+  summaries/status, empty-state messages, errors and required operator choices.
 - Review and managed runtime use the same DashboardWindow page construction,
   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
   supplies local fixtures or authoritative state and command availability; it never
@@ -132,8 +157,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   External controller and preserve strict SDK capability validation.
   Inactive loaded Tracking drafts stay local until required. SpikeGLX files restore
   editable pulse rows without a separate Save pulse mapping button; GUI Save/Load
-  persists drafts without writing the controller inventory. E12/E14 startup host/pairing
-  values are informational references and retain their owning TOML authority.
+  persists drafts without writing the controller inventory. Saved host/pairing
+  references remain informational; E12/E14 host files supply endpoint and new-session defaults.
 - Protocol uses a widened Trials column beside a persistent Trial timeline, with a
   full-width Sequence editor below. Trials and timeline use matching top borders,
   title heights and a taller shared minimum card height (320 logical pixels). Trials
@@ -367,11 +392,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   or reflecting calibration. Paint screen faces from far to near in view depth.
   Snapshot the authored trial, rig geometry
   and current screen calibration. After surface composition, apply the exporter's
-  shared per-face scale, pixel offsets and axis inversions. Normalize pixel offsets
-  by the assigned display resolution, never the reduced preview image dimensions.
-  Blank correction fields use the same identity defaults as calibration export;
-  nonzero offsets without an assigned resolution or invalid/out-of-bounds corrections
-  show a per-screen error rather than an uncorrected output. Retain geometry/corrections
+  shared per-face centered pixel rectangle and axis inversions. Usable view extents
+  derive from measured X/Y mm/px and valid integer dimensions, using the assigned
+  native resolution. Invalid or unresolved pixel sizes show a per-screen error.
+  Retain geometry/corrections
   independently of projector enablement. Reopen the snapshot after changing settings;
   provide Play/Pause, scrubbing, previous/next epoch and playback speed. Reuse V07
   boundary state/retention and canonical expansion with an explicit example seed;
@@ -511,31 +535,33 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   silently reuse earlier values for an explicit action. Keep participation independent
   of wiring and retain device settings when Use is disabled. Show concise missing
   prerequisites beside the affected action and contextual wiring access in Cameras
-  and Projector synchronization. Identity checks require only their actual inputs;
+  only. Identity checks require only their actual inputs;
   capture, pulse tests and calibration require their own complete selected inputs.
   E07 still validates submissions and all participating Setup dependencies; local
   readiness hints never establish hardware or experiment readiness. Projector patch
   placement, presentation pacing and the MCU flip-input connection remain distinct
-  settings with their existing V20/V22/A11 owners. VSync mode and the contextual
-  MCU input editor stay editable when the photodiode patch is disabled.
+  settings with their existing V20/V22/A11 owners. VSync mode
+  remains editable when the photodiode patch is disabled.
 - Managed MCU connection/pin tests use controller-confirmed COM/pin/rate values.
   Pending commands lock edits and repeat tests. A11 diagnostic observations drive
   Test/Stop state; a bounded follow-up status query begins after confirmed execution,
   and control/connection loss cancels local timers. Firmware/edge reports do not prove
   physical receiver wiring.
 - Microcontroller owns one selected COM port for all camera triggers. Cameras and
-  Projectors expose contextual editors for that same port and the relevant output/
-  input pin; edits update the MCU draft rather than creating another controller or mapping. COM discovery uses the shared compact Refresh icon
+  their contextual editors use that same port and the relevant output pin; edits update the MCU draft rather than creating another controller or mapping. COM discovery uses the shared compact Refresh icon
   beside the port selector, distinct from Test connection. Scan ports lists discovered COM-number names with
   the available device description, preserving the port identity separately and
   a still-present selection without opening devices. Do not expose
   macOS/Linux serial device names or invent a second controller in the draft.
-  Inputs precedes Outputs. Show the supported Projector flip input, Trial state
+  Projector flip is deferred under A11; omit Inputs and Add input. Show Trial state
   output and logical Behavior/Tracking/Eye camera outputs with explicit pin editors
-  and Test/Stop. Logical camera output rows remain available before physical camera
-  discovery or assignment; clearing a pin removes its assignment. Fixed signal
-  toggles retain their own enablement. Omit redundant Add and signal-selection
-  controls for these fixed roles; no free-form signal or duplicated camera rate.
+  and Test/Stop. Every supported output row has Remove: clear its pin and disable fixed
+  I/O signals while leaving camera participation/source/rate unchanged. Unassigned
+  rows are hidden and empty table headers disappear. Add input/output offers only
+  missing supported signals with an explicit pin; readding fixed I/O enables it.
+  Camera outputs can be added before physical discovery/assignment; no free-form
+  signal or duplicated camera rate. Camera inventory is titled Available cameras;
+  omit the explanatory text beneath its action buttons and retain wiring tooltips.
   SpikeGLX retains its own Add/remove table and hidden empty header. Inventory
   headers retain Refresh when empty. Camera output assignment/removal changes wiring only;
   clearing a camera pin never changes Cameras' Use flag or timing source. Fixed input/
@@ -559,16 +585,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Disabling a signal stops its active diagnostic; editing authority gates enablement.
   In the explicit local real-device diagnostic mode, Test connection and per-pin
   Test/Stop use A11's exclusive
-  serial owner and firmware-bounded diagnostics. Display matched connection, start,
+  serial owner and continuous diagnostics until Stop. Poll matched status every
+  500 ms to renew A11's firmware communication lease; no elapsed test limit. Display matched connection, start,
   stop and edge-count evidence or the actual failure; a command request alone is not
-  a pass. Input tests listen without driving. Lock port/scan and pin editing during
+  a pass. Lock port/scan and pin editing during
   a diagnostic, stop on phase/control loss and close the port on window closure.
   Isolated frontend fixtures retain labelled, command-free review tests.
-  Fixed active-high Trial state and
-  rising-edge Projector flip behavior belongs to A11; no level/edge selectors remain.
+  Fixed active-high Trial state belongs to A11; no level selectors remain.
   Camera test rates are read from Cameras rather than duplicated here. Output tests
-  target one pin for observation in SpikeGLX; the input test observes rising edges,
-  never drives the input pin. Test requests require Configuration/control, a COM port,
+  target one pin for observation in SpikeGLX. Test requests require Configuration/control, a COM port,
   a nonempty pin and no target-pin conflict; camera requests additionally require an
   supported logical role and valid requested rate, independently of camera Use or
   timing source; this explicit pin diagnostic never starts camera capture. Managed diagnostics retain
@@ -587,19 +612,20 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Discovery/loading never writes preferences or guesses replacement displays;
   invalid preferences stay preserved and save/restore failures are reported.
   V15 owns output selection without altering calibrated surfaces.
-  Below the inventory, sections are ordered Screen calibration, Synchronization,
-  Rig geometry. Screen calibration uses a CephVR1.0-style per-face table containing
-  only paired scale, pixel offset and inverse-axis controls. Up/Down keys step scale
-  by 0.01 (two decimal places) and offsets by 0.1 px (one decimal place), using
-  the same draft/live-update path as typing. Loading preserves saved precision;
-  partial typed input is retained. Rig geometry owns tank
+  Below the inventory, sections are ordered Screen calibration, Rig geometry,
+  Synchronization. Screen calibration uses a CephVR1.0-style per-face table containing
+  paired integer Width/Height, separate Offset X/Y columns in pixels and inverse-axis controls.
+  Omit table arrows; Up/Down keys step by exactly 1 px through the existing draft/live-update path.
+  Partial typed input is retained; fractional dimensions fail validation. Rig geometry owns tank
   dimensions and fixed subject distances labeled Subject → Left wall / Front wall /
   Bottom (mm). Perpendicular distances to Left, Front and Bottom screens sit below these
   in the Rig geometry card. The screen-dimensions table contains width, height,
   derived read-only estimated projector distance, with wrapped headers.
-  Screen calibration and Pixel-to-mm calibration are sibling cards, without nesting.
+  Pixel-to-mm calibration precedes the projection correction card within Screen
+  calibration, matching the calibration workflow. Both are sibling cards, without nesting.
   Put Launch projection calibration above the correction table and Launch reference
-  calibration above the measurement table.
+  calibration above the measurement table. Omit description/prerequisite text
+  inside both calibration cards; launch validation retains its existing behavior.
   Effective throw ratio is config-only. Pixel-to-mm calibration omits explanatory text and pixel-span columns;
   its table has Screen, paired Measured X / Y (mm) inputs under one header, and
   read-only X / Y (mm/px) estimates, with all three columns stretching evenly.
@@ -609,7 +635,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   positive whole pixels must fit the assigned output. Older files migrate their
   original quarter-output spans; unset lengths retain those defaults. Complete
   measured pairs estimate mm/px independently of throw ratio; projected distance
-  additionally requires a positive throw ratio.
+  additionally requires a positive throw ratio. Display derived projector distances
+  in millimetres with exactly one decimal place; measured mm/px and mapping
+  calculations retain their existing precision.
   Known millimetres derive independent X/Y mm/px and full projected
   image dimensions; full projected width times throw ratio estimates ideal throw
   distance (Bottom: total folded path). Subject-to-screen distances stay independent.
@@ -622,7 +650,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   [GUI calibration contract](../../contracts/gui-calibration.md), replacing the
   per-screen profile picker. Validate the complete bounded document before applying;
   invalid files preserve drafts. Save atomically, retain unset values, respect editing
-  authority and cancel pickers on authority loss. Full version 7 retains reference
+  authority and cancel pickers on authority loss. Full version 9 retains reference
   measurements and their native output dimensions alongside the former runtime
   display-profile import into this row. Exclude physical inventory and output assignments;
   load preserves current display mappings, restores participation and pulse selection
@@ -634,13 +662,41 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Launch reference calibration and Launch projection calibration prepare calibration files before
   requesting output; no separate preparation button is shown. Preparation uses the current four enabled face
   assignments, current rig fields and native monitor identities to export a static
-  arena asset, display profile and explicitly diagnostic geometric
-  profiles into Protocol Assets. Reference measurement renders only raw-pixel bars
-  on black, ignoring stored measurements and manual corrections. Frame/grid
+  pattern into one of exactly two repository assets: `reference_bars.glb` contains
+  a raw output-boundary frame and native-pixel bars; `frame_grid.glb` contains the
+  measured physical frame/grid.
+  Refresh only the selected file. Generated display/geometric profiles and an exact
+  working copy live in separate per-step user runtime directories, independently of
+  Protocol Assets. Missing/unwritable source or runtime files reject preparation
+  without a launch request. Reference measurement renders a white native output
+  boundary frame and raw-pixel bars on black, ignoring saved measurements and
+  corrections. The initial frame supports aiming/focus/rough physical positioning;
+  it does not claim the usable screen boundary or known mm scale. Align first,
+  measure bars, then use the measured physical frame/grid for Width/Height
+  refinement. Frame/grid
   adjustment requires complete measurements matching each native mode and uses
   mm/px directly with rig geometry; neither action requires projector distance or
-  throw ratio. The grid mapping combines measured physical screen/image ratios
-  with each face's scale, pixel offset and inverse-axis drafts;
+  throw ratio. The mapping uses measured X/Y mm/px with physical screen dimensions
+  and inversion.
+  Projection calibration offers Width/Height in output pixels instead of Scale.
+  Blank dimensions derive from physical screen size divided by measured mm/px,
+  rounded to whole pixels and bounded by the native raster. Explicit whole-pixel
+  dimensions define a valid rectangle, at least one pixel per axis. Cap edits at native
+  Width/Height; center-relative integer Offset X/Y translates the window right/up,
+  capped at plus/minus floor((native size - valid size)/2). Expanding a size reclamps its offset.
+  Blank offsets mean zero. Numeric8/full11/review6 retain these pixel offsets; older
+  removed offsets remain discarded and fractional legacy sizes round on migration.
+  The usable physical view is valid Width/Height multiplied by measured X/Y mm/px,
+  centered on the physical screen plane placed from the 5 mm frame-gap references.
+  Preview and newly prepared views share these extents and fixed-pitch mappings.
+  Prepared GUI affine views render at their valid pixel resolution. V14 texture
+  parameters retain physical units/shared phase; changing crop never rescales them.
+  Saved profiles, live diagnostic cropping, prepared rendering and Idle retain
+  the translated crop. Diagnostic grid assets/views span the full measured native raster;
+  enlarging the live window reveals additional world-phase grid lines at fixed pitch.
+  Isolate each diagnostic face plane to avoid overlap occlusion. A visible frame marks
+  the crop, with a smaller centered screen name formed from contiguous glyph cells. Imported warps remain protected;
+  missing measurements reject a GUI-owned crop. No throw ratio/distance is required;
   reject corrections extending outside the output. Submission publishes new
   content-addressed measured affine assets for GUI-owned 2×2 profiles, preserves
   originals and rejects replacing imported nonlinear/masked/weighted calibration. Reject missing or
@@ -649,7 +705,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Unmeasured profiles are diagnostic placeholders; measured affine mappings
   still require optical acceptance and do not set experiment defaults. Both actions
   target all four assigned projectors together;
-  during an active frame/grid presentation only Scale X/Y and Offset X/Y remain
+  during an active frame/grid presentation only Width/Height and Offset X/Y remain
   editable. Debounce valid edits into bounded normalized mapping updates without
   rewriting protected assets, reopening windows or changing rig/measurement state.
   Coalesce newer edits behind one in-flight update; invalid/partial edits retain
@@ -657,20 +713,35 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   generations, configuration revision and increasing adjustment sequence bind each
   update. Lost authority/disconnection, closing/unknown state or another diagnostic
   discard pending live intents; no stale replay. Actual all-output presentation
-  confirms the new sequence. Other projector controls stay locked until closure.
+  confirms the new sequence. During confirmed active reference-bar presentation,
+  measured X/Y millimetres remain editable and update retained drafts/derived estimates;
+  pixel lengths/native modes, rig geometry, assignments and corrections remain locked.
+  Measurement edits do not rewrite protected inputs or send display updates. Pending,
+  unknown or lost-authority states retain the measurement lock. Other projector controls
+  stay locked until closure.
 
-  After confirmed output activation Launch projection calibration reads Close. It returns to
-  Launch projection calibration only after confirmed closure; Launch reference calibration remains
-  disabled while presentation is active or pending. Failed/pending commands never claim an
+  After confirmed output activation the active step's launch button reads Close:
+  reference bars use Launch reference calibration, frame/grid uses Launch projection
+  calibration. Disable the other step while active and both actions while pending.
+  Restore launch labels only after confirmed closure. Failed/pending commands never claim an
   output-state change. These actions and Close control V01's diagnostic presentation outside
   trial timing; preparation sends no output command.
   Retain per-face drafts without adopting measured defaults. Planar geometry
   conversion retains all four inward-facing surfaces and the fixed observer.
   Subject distances position screen planes independently of tank walls, parallel to
-  their corresponding faces. Front is centered on the tank width/height; sides remain
-  vertically centered and Bottom centered across the tank width. Side and Bottom
-  front edges start at the Front screen plane, extending toward the tank back using
-  their own dimensions. Changing Front distance moves these shared front edges. Require
+  their corresponding faces. Front and Bottom are centered across the tank width.
+  The frame separates usable screen regions by 5 mm at both lower and front
+  junctions, declared in the GUI policy. Front/Left/Right lower edges sit at subject Z
+  minus subject-to-Bottom-screen distance plus 5 mm; physical heights stay unchanged.
+  Changing Bottom distance moves all four screens vertically together. Side and Bottom
+  front edges start 5 mm behind the Front screen plane, extending toward the back
+  using their own dimensions. Bottom image width/X runs front-to-back (+rig Y);
+  height/Y runs across the tank (-rig X), so 126×94 mm retains a 94×126 mm footprint.
+  Numeric version 6/full version 9 retain pixel valid-area dimensions and migrate
+  older Scale bounds to crop sizes using retained native measurements; reject a
+  non-neutral legacy Scale without enough dimensions to migrate truthfully.
+  Older Bottom physical-axis migration remains. Review draft version 4 follows
+  the same conventions. Changing Front distance moves these shared front edges. Require
   finite positive screen dimensions/distances; unset values never imply tank-wall
   placement. The owner-selected parallel-plane editor assumes equal left/right
   tank-wall offsets: right subject distance = tank width + left screen distance −
@@ -680,6 +751,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   explicit right distance against this rule before adopting; unequal offsets reject
   the whole load. Version 2 saves only independent calibration values.
   Diagram and projection conversion share the same corner calculation.
+  Synchronization is the last Projectors tab, following Screen calibration and Rig
+  geometry. It offers Free run (no VSync), VSync on pulse display, and VSync on all
+  displays under V20, without an MCU input prerequisite or contextual MCU editor.
+  Projector flip and camera-trigger phase offsets remain deferred under A11,
+  independently of presentation pacing. Existing mode labels migrate on draft load.
   Synchronization places VSync mode beside Pulse display. Pacing identity and the
   60 Hz target live in Visual Stimulus configuration only, without a GUI editor. Pulse-off dims and locks
   photodiode editors while retaining independent pulse/pacing values; Blackout zones
@@ -708,12 +784,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   distinct from the physical reflected-ray/clearance calculation.
   Show full footprints including overspill;
   do not guess missing inputs or draw inactive output cones. Physical screens remain
-  visible independently of participation. Compact checkable buttons independently
-  toggle Tank, Screens, Projection and Subject. Projection groups
+  visible independently of participation. Clickable legend entries independently
+  toggle Tank, Screens, Projection and Subject, without separate plot buttons. Projection groups
   projectors, rays, footprints and mirror in both visibility controls and one legend
   entry; footprints use a distinct violet color. Retain view choices through draft/phase changes; they never alter output
   participation, calibration or runtime control. The legend stays visible and identifies
-  visible line/dot colors and ray styling. These outlines are an operator estimate,
+  line/dot colors and ray styling; hidden groups retain dimmed clickable entries.
+  Legend clicks do not rotate the view. These outlines are an operator estimate,
   not measured optical calibration or a runtime warp model. Pulse-off retains inactive/missing targets without blocking;
   enabled pulses require valid target/placement under V22. Timing and geometry
   drafts remain local until managed configuration integration. Exclude the operating system's
@@ -731,9 +808,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   assignments and reports missing/duplicate identities without silently remapping.
   V15 surface/viewport/calibration ownership stays separate; no one-projector-per-
   surface constraint or output-mode changes are introduced.
-- SpikeGLX connection omits explanatory prose; the read-only pairing tooltip
-  retains its owning config path. SpikeGLX exposes local channel-mapping drafts for discovered camera roles, Trial
-  state, Projector flip and photodiode only while pulse generation is enabled.
+- SpikeGLX connection omits explanatory prose. Pairing is the E12 per-session
+  synchronization enabled flag, editable with Configuration/control authority through
+  revision-checked controller configuration updates. Pending edits disable repeats;
+  display confirmed values and retain them on rejection/disconnection. The tooltip
+  identifies the host-file new-session default; endpoint settings remain read-only.
+  Test connection remains read-only and available without editing control, independently
+  of pairing; connection success does not start recording.
+  SpikeGLX exposes local channel-mapping drafts for discovered camera roles, Trial
+  state and photodiode only while pulse generation is enabled; no new Projector flip
+  mapping source is exposed while A11 is deferred.
   Disabled sources retain dimmed mappings; hidden photodiode mappings survive toggles.
   Each mapping has a local Use checkbox, preserving values while disabled; this
   does not disable its source camera or waive E12 required-channel validation.
@@ -827,14 +911,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   diagnostics stopped and all camera ownership/native cleanup released. A displayed
   MCU compatibility failure alone does not block this explicit repair operation.
 - Launch projection calibration prepares the geometry grid using measured mm/px and saved corrections:
-  world-phase colored solid/dashed lines, full-face center crosses, face dimensions
-  and a 50 mm ruler where it fits. Existing physical screen planes and offsets remain
+  thin solid neutral grid lines at the shared physical spacing, a clear screen border
+  and one simple screen name. Omit center crosses, dimensions, rulers, rainbow/dashed
+  lines and the tank outline. Existing physical screen planes and offsets remain
   authoritative; no separate placement-only/no-grid mode is offered.
 
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 38
+**Status:** Accepted · **Revision:** 39
 
 - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
@@ -880,7 +965,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   band, padding and rounded border through one shared table helper, including device
   I/O, signal mappings, projection calibration, screen dimensions and point editors.
   Persistent controls fit their styled height plus cell insets; content-sized columns
-  include control width and padding. Coordinate tables retain 2:1:1 name/X/Y columns and
+  include control width and padding. SpikeGLX custom-input remove controls use
+  centered 26-pixel icon buttons with a column sized for the button and shared padding.
+  Coordinate tables retain 2:1:1 name/X/Y columns and
   centered numeric headers/values. Fit single-line rows to their content; use no
   separate coordinate-header/divider theme. Cells remain directly editable with
   hover/focus affordances and dash placeholders. Preserve descriptive names,
@@ -929,7 +1016,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="e03"></a>
 ### E03 — GUI disconnection and control lease
 
-**Status:** Accepted · **Revision:** 34
+**Status:** Accepted · **Revision:** 35
 
 - **Closure and loss:** intentional GUI closure is allowed. GUI connection loss or
   crash never pauses, stops, restarts, or resumes the experiment. Unexpected
@@ -976,6 +1063,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Missing/mismatched configuration invalidates the view; remain read-only and
   resubscribe. Command admission still revalidates authority, configuration and
   lifecycle.
+  Controller warning delivery may retain one exact preceding trial or just-retired
+  session scope; session warnings must match its frozen configuration revision.
+  Clear that allowance on a configuration revision change or another session.
+  Preserve producer generation and occurrence validation; a late optional warning
+  cannot reactivate work or prove resource/output closure.
 - **Reconnect warnings:** built from the Snapshot's retained errors, recoveries and
   runtime incidents for the current Setup/session, bounded by
   `[control].max_retained_incidents` (default 256; oldest resolved entries evicted

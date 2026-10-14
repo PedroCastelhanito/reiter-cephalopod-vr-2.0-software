@@ -1,0 +1,268 @@
+FFF..                                                                    [100%]
+================================== FAILURES ===================================
+_ test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[hex] _
+
+path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...general_microcontroller_c0/credentials/0afa4d22-f021-4f4c-9656-3b217e4f55bf/9f5a4a1e-1472-4909-beb0-4c42e2b8aeba.json')
+directory = False
+
+    def _check_private(path: Path, *, directory: bool) -> None:
+        try:
+>           info = path.lstat()
+                   ^^^^^^^^^^^^
+
+src\cephvr\shared\credentials.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1163: in lstat
+    return self.stat(follow_symlinks=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...general_microcontroller_c0/credentials/0afa4d22-f021-4f4c-9656-3b217e4f55bf/9f5a4a1e-1472-4909-beb0-4c42e2b8aeba.json')
+follow_symlinks = False
+
+    def stat(self, *, follow_symlinks=True):
+        """
+        Return the result of the stat() system call on this path, like
+        os.stat() does.
+        """
+>       return os.stat(self, follow_symlinks=follow_symlinks)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\14\\01a13859-96a3-7890-a7f8-e7a8c4a8030c\\pytest-fixture-recheck-2e1821bcddf649ab952790632ae11432\\test_general_microcontroller_c0\\credentials\\0afa4d22-f021-4f4c-9656-3b217e4f55bf\\9f5a4a1e-1472-4909-beb0-4c42e2b8aeba.json'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1013: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+controller = (62031, <cephvr.shared.credentials.CredentialStore object at 0x00000229C5CEDAD0>, <cephvr.controller.runtime.ControllerRuntime object at 0x00000229C6972E50>)
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-recheck-2e1821bcddf649ab952790632ae11432/test_general_microcontroller_c0')
+source_kind = 'hex'
+
+    @pytest.mark.parametrize("source_kind", ["hex", "ino"])
+    async def test_general_microcontroller_commands_and_upload_work_without_acquisition_backend(
+        controller, tmp_path, source_kind
+    ):
+        from cephvr.controller.microcontroller.firmware import read_uno_image
+        from cephvr.controller.microcontroller.firmware_source import read_firmware
+    
+        port, store, runtime = controller
+        events = []
+        image_path = tmp_path / "compiled.hex"
+        image_path.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+        image = read_uno_image(str(image_path))
+        path = tmp_path / f"source.{source_kind}"
+        path.write_bytes(
+            b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+        )
+    
+        class Uploader:
+            cleanup_complete = True
+    
+            def reset_cancel(self):
+                pass
+    
+            def compile(self, selected, operation, *, deadline_ns):
+                events.append(("compile", operation.command_id, deadline_ns))
+                return image
+    
+            def prepare(self, selected):
+                assert selected.payload == image.payload
+    
+            def upload(self, port, operation, *, deadline_ns):
+                assert port == "COM8"
+                events.append(("upload", operation.command_id, deadline_ns))
+    
+            def close(self, *, deadline_ns):
+                self.cleanup_complete = True
+    
+            def cancel(self):
+                pass
+    
+        owner, serial = _install_microcontroller(runtime, uploader=Uploader())
+        assert runtime.microcontroller.device_views() is None
+        assert not runtime.configuration_state.current.backends[-1].enabled
+>       principal = store.provision_client("gui")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\client\test_controller_rpc.py:674: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\credentials.py:151: in provision_client
+    _check_private(self._path(client_id), directory=False)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...general_microcontroller_c0/credentials/0afa4d22-f021-4f4c-9656-3b217e4f55bf/9f5a4a1e-1472-4909-beb0-4c42e2b8aeba.json')
+directory = False
+
+    def _check_private(path: Path, *, directory: bool) -> None:
+        try:
+            info = path.lstat()
+        except OSError as exc:
+>           raise CredentialError(f"cannot inspect credential path {path}") from exc
+E           cephvr.shared.credentials.CredentialError: cannot inspect credential path C:\Users\ReiterU_PC\.codex\visualizations\2026\10\14\01a13859-96a3-7890-a7f8-e7a8c4a8030c\pytest-fixture-recheck-2e1821bcddf649ab952790632ae11432\test_general_microcontroller_c0\credentials\0afa4d22-f021-4f4c-9656-3b217e4f55bf\9f5a4a1e-1472-4909-beb0-4c42e2b8aeba.json
+
+src\cephvr\shared\credentials.py:51: CredentialError
+_ test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[ino] _
+
+path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...general_microcontroller_c1/credentials/69c73207-b445-4494-bdbb-576a9c90180f/0734b8b9-0672-47e1-9ce3-010754a2319b.json')
+directory = False
+
+    def _check_private(path: Path, *, directory: bool) -> None:
+        try:
+>           info = path.lstat()
+                   ^^^^^^^^^^^^
+
+src\cephvr\shared\credentials.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1163: in lstat
+    return self.stat(follow_symlinks=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...general_microcontroller_c1/credentials/69c73207-b445-4494-bdbb-576a9c90180f/0734b8b9-0672-47e1-9ce3-010754a2319b.json')
+follow_symlinks = False
+
+    def stat(self, *, follow_symlinks=True):
+        """
+        Return the result of the stat() system call on this path, like
+        os.stat() does.
+        """
+>       return os.stat(self, follow_symlinks=follow_symlinks)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\14\\01a13859-96a3-7890-a7f8-e7a8c4a8030c\\pytest-fixture-recheck-2e1821bcddf649ab952790632ae11432\\test_general_microcontroller_c1\\credentials\\69c73207-b445-4494-bdbb-576a9c90180f\\0734b8b9-0672-47e1-9ce3-010754a2319b.json'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1013: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+controller = (62036, <cephvr.shared.credentials.CredentialStore object at 0x00000229C7D62890>, <cephvr.controller.runtime.ControllerRuntime object at 0x00000229C8017910>)
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-recheck-2e1821bcddf649ab952790632ae11432/test_general_microcontroller_c1')
+source_kind = 'ino'
+
+    @pytest.mark.parametrize("source_kind", ["hex", "ino"])
+    async def test_general_microcontroller_commands_and_upload_work_without_acquisition_backend(
+        controller, tmp_path, source_kind
+    ):
+        from cephvr.controller.microcontroller.firmware import read_uno_image
+        from cephvr.controller.microcontroller.firmware_source import read_firmware
+    
+        port, store, runtime = controller
+        events = []
+        image_path = tmp_path / "compiled.hex"
+        image_path.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+        image = read_uno_image(str(image_path))
+        path = tmp_path / f"source.{source_kind}"
+        path.write_bytes(
+            b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+        )
+    
+        class Uploader:
+            cleanup_complete = True
+    
+            def reset_cancel(self):
+                pass
+    
+            def compile(self, selected, operation, *, deadline_ns):
+                events.append(("compile", operation.command_id, deadline_ns))
+                return image
+    
+            def prepare(self, selected):
+                assert selected.payload == image.payload
+    
+            def upload(self, port, operation, *, deadline_ns):
+                assert port == "COM8"
+                events.append(("upload", operation.command_id, deadline_ns))
+    
+            def close(self, *, deadline_ns):
+                self.cleanup_complete = True
+    
+            def cancel(self):
+                pass
+    
+        owner, serial = _install_microcontroller(runtime, uploader=Uploader())
+        assert runtime.microcontroller.device_views() is None
+        assert not runtime.configuration_state.current.backends[-1].enabled
+>       principal = store.provision_client("gui")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\client\test_controller_rpc.py:674: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\credentials.py:151: in provision_client
+    _check_private(self._path(client_id), directory=False)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...general_microcontroller_c1/credentials/69c73207-b445-4494-bdbb-576a9c90180f/0734b8b9-0672-47e1-9ce3-010754a2319b.json')
+directory = False
+
+    def _check_private(path: Path, *, directory: bool) -> None:
+        try:
+            info = path.lstat()
+        except OSError as exc:
+>           raise CredentialError(f"cannot inspect credential path {path}") from exc
+E           cephvr.shared.credentials.CredentialError: cannot inspect credential path C:\Users\ReiterU_PC\.codex\visualizations\2026\10\14\01a13859-96a3-7890-a7f8-e7a8c4a8030c\pytest-fixture-recheck-2e1821bcddf649ab952790632ae11432\test_general_microcontroller_c1\credentials\69c73207-b445-4494-bdbb-576a9c90180f\0734b8b9-0672-47e1-9ce3-010754a2319b.json
+
+src\cephvr\shared\credentials.py:51: CredentialError
+_______ test_normal_shutdown_releases_controller_owned_microcontroller ________
+
+path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...normal_shutdown_releases_0/credentials/05330269-d238-4b55-ba45-75a73ef1226d/fa581cc0-c4e9-4883-b6f2-a98e56fdd961.json')
+directory = False
+
+    def _check_private(path: Path, *, directory: bool) -> None:
+        try:
+>           info = path.lstat()
+                   ^^^^^^^^^^^^
+
+src\cephvr\shared\credentials.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1163: in lstat
+    return self.stat(follow_symlinks=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...normal_shutdown_releases_0/credentials/05330269-d238-4b55-ba45-75a73ef1226d/fa581cc0-c4e9-4883-b6f2-a98e56fdd961.json')
+follow_symlinks = False
+
+    def stat(self, *, follow_symlinks=True):
+        """
+        Return the result of the stat() system call on this path, like
+        os.stat() does.
+        """
+>       return os.stat(self, follow_symlinks=follow_symlinks)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\14\\01a13859-96a3-7890-a7f8-e7a8c4a8030c\\pytest-fixture-recheck-2e1821bcddf649ab952790632ae11432\\test_normal_shutdown_releases_0\\credentials\\05330269-d238-4b55-ba45-75a73ef1226d\\fa581cc0-c4e9-4883-b6f2-a98e56fdd961.json'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1013: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+controller = (62041, <cephvr.shared.credentials.CredentialStore object at 0x00000229C8180B10>, <cephvr.controller.runtime.ControllerRuntime object at 0x00000229C81EEF90>)
+
+    async def test_normal_shutdown_releases_controller_owned_microcontroller(controller):
+        port, store, runtime = controller
+        owner, serial = _install_microcontroller(runtime)
+        owner.port_owned = True
+        owner.view.observation.CopyFrom(serial.connect.return_value)
+        runtime.lifecycle.session.cleanup_confirmed = True
+>       principal = store.provision_client("gui")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\client\test_controller_rpc.py:736: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\credentials.py:151: in provision_client
+    _check_private(self._path(client_id), directory=False)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/14/01a13859-96a3-7890-a7f8-e7a8c4a8030c/pytest-fixture-...normal_shutdown_releases_0/credentials/05330269-d238-4b55-ba45-75a73ef1226d/fa581cc0-c4e9-4883-b6f2-a98e56fdd961.json')
+directory = False
+
+    def _check_private(path: Path, *, directory: bool) -> None:
+        try:
+            info = path.lstat()
+        except OSError as exc:
+>           raise CredentialError(f"cannot inspect credential path {path}") from exc
+E           cephvr.shared.credentials.CredentialError: cannot inspect credential path C:\Users\ReiterU_PC\.codex\visualizations\2026\10\14\01a13859-96a3-7890-a7f8-e7a8c4a8030c\pytest-fixture-recheck-2e1821bcddf649ab952790632ae11432\test_normal_shutdown_releases_0\credentials\05330269-d238-4b55-ba45-75a73ef1226d\fa581cc0-c4e9-4883-b6f2-a98e56fdd961.json
+
+src\cephvr\shared\credentials.py:51: CredentialError
+=========================== short test summary info ===========================
+FAILED tests/client/test_controller_rpc.py::test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[hex]
+FAILED tests/client/test_controller_rpc.py::test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[ino]
+FAILED tests/client/test_controller_rpc.py::test_normal_shutdown_releases_controller_owned_microcontroller
+3 failed, 2 passed in 0.73s
