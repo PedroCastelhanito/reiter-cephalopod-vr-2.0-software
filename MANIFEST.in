@@ -1,9 +1,11 @@
 include tools/build_backend.py
 include tools/generate_contracts.py
+include tools/generate_demo_assets.py
 include tools/build_pylon_wait.py
 include setup.py
 recursive-include contracts *.proto *.toml
 recursive-include config/backends *.toml
+recursive-include demo_assets *.json
 global-exclude *_pb2.py *_pb2.pyi *_pb2_grpc.py
 recursive-include native/tracking *.cpp CMakeLists.txt
 recursive-include native/windows *.cpp CMakeLists.txt

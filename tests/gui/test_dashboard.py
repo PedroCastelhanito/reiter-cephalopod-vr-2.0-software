@@ -13998,7 +13998,7 @@ def test_direct_group_editor_starts_open_and_uses_only_group_repetitions(
         assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
 
 
-def test_demo_assets_can_be_selected_and_review_path_restores(window):
+def test_demo_assets_can_be_selected_and_review_path_restores(window, demo_assets):
     import json
 
     from PyQt6.QtGui import QImage
@@ -14007,7 +14007,7 @@ def test_demo_assets_can_be_selected_and_review_path_restores(window):
     from cephvr.gui.protocol_document import blank_program
     from cephvr.gui.stimulus_files import resolve_stimulus_file
 
-    root = Path(__file__).resolve().parents[2] / "demo_assets"
+    root = demo_assets
     manifest = json.loads((root / "manifest.json").read_text())
     for path in manifest["images"]:
         assert not QImage(str(root / path)).isNull()
@@ -14036,7 +14036,9 @@ def test_demo_assets_can_be_selected_and_review_path_restores(window):
     assert editor.program.assets[0].logical_path == "textures/checkerboard.texture.json"
 
 
-def test_subgroup_rules_persist_and_random_projectors_are_independent(window, app):
+def test_subgroup_rules_persist_and_random_projectors_are_independent(
+    window, app, demo_assets
+):
     from cephvr.gui.projector_layers import layers_for
     from cephvr.gui.protocol_batches import grouped_program
     from cephvr.gui.protocol_document import blank_program
@@ -14050,7 +14052,7 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(window, ap
     editor.group_editor.mark_changed()
     assert editor.group_editor.apply()
     form = editor.subgroup
-    root = Path(__file__).resolve().parents[2] / "demo_assets"
+    root = demo_assets
     form.composer.set_asset_root(str(root))
     for face in ("Left", "Right"):
         form.composer.add_file("Texture", str(root / "textures/checkerboard.png"), face)
@@ -14171,7 +14173,9 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(window, ap
     assert form.notice.dialog is None
 
 
-def test_large_random_group_stays_compact_and_layer_controls_are_indices(window, app):
+def test_large_random_group_stays_compact_and_layer_controls_are_indices(
+    window, app, demo_assets
+):
     from unittest.mock import patch
 
     from cephvr.gui.protocol_batches import grouped_program
@@ -14183,7 +14187,7 @@ def test_large_random_group_stays_compact_and_layer_controls_are_indices(window,
     editor.timeline.set_screens(("Left", "Right"))
     editor.set_program(grouped_program(blank_program()))
     form = editor.subgroup
-    root = Path(__file__).resolve().parents[2] / "demo_assets"
+    root = demo_assets
     form.composer.set_asset_root(str(root))
     for face in ("Left", "Right"):
         form.composer.add_file("Texture", str(root / "textures/checkerboard.png"), face)

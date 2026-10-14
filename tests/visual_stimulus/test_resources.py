@@ -1239,9 +1239,7 @@ def test_image_recipe_protects_and_fingerprints_its_relative_input(
 
 
 @pytest.mark.parametrize("name", ["checkerboard", "noise", "sine_grating"])
-def test_demo_image_recipes_preserve_authored_png_pixels(name):
-    from pathlib import Path
-
+def test_demo_image_recipes_preserve_authored_png_pixels(name, demo_assets):
     import numpy as np
     from PIL import Image
 
@@ -1254,7 +1252,7 @@ def test_demo_image_recipes_preserve_authored_png_pixels(name):
         parse_texture_recipe,
     )
 
-    root = Path(__file__).resolve().parents[2] / "demo_assets"
+    root = demo_assets
     logical_path = f"textures/{name}.texture.json"
     asset = Asset(
         asset_id="demo",

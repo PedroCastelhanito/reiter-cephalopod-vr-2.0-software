@@ -1,4 +1,0 @@
-{"monotonic_ns":6286643040700,"wall_time":"2026-10-13T12:53:34.819389+09:00","event_type":"session_started","source":"controller"}
-{"monotonic_ns":6287155576700,"wall_time":"2026-10-13T12:53:35.331925+09:00","event_type":"trial_started","source":"controller","trial_number":1}
-{"monotonic_ns":6332967905800,"wall_time":"2026-10-13T12:54:21.144254+09:00","event_type":"trial_finished","source":"controller","trial_number":1,"outcome":"interrupted","details":{"output_closure_confirmed":true,"start_unconfirmed":[],"actual_end_monotonic_ns":6332794997600,"interruption_issued_monotonic_ns":6332748107000}}
-{"monotonic_ns":6332973056600,"wall_time":"2026-10-13T12:54:21.149404+09:00","event_type":"session_ended","source":"controller","outcome":"interrupted"}

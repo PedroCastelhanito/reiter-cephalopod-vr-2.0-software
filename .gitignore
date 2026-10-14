@@ -12,7 +12,8 @@ __pycache__/
 # Reproducible packaging outputs.
 /build/
 /dist/
-/src/cephvr/acquisition/camera/_pylon_wait_binding*.pyd
+/src/cephvr/**/*.pyd
+/src/cephvr/**/*.dll
 /src/cephvr/acquisition/camera/pylon_wait_binding.py
 *.egg-info/
 
@@ -27,8 +28,50 @@ __pycache__/
 /config/runtime_gui.json
 /cephvr-data/
 
-# Raw rig evidence videos remain local; dated manifests retain identity and hashes.
-/reports/**/*.mp4
+# Images/videos are local assets or evidence, never repository content.
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.tif
+*.tiff
+*.svg
+*.ico
+*.avif
+*.heic
+*.mp4
+*.m4v
+*.mkv
+*.mov
+*.avi
+*.webm
+*.mpeg
+*.mpg
+*.wmv
+
+# Captured run datasets and reproducible binaries remain local.
+/reports/**/recordings/
+/reports/**/*.whl
+/reports/**/*.tar.gz
+/reports/**/*.zip
+/reports/**/*.elf
+/reports/**/*.eep
+/reports/**/*.bin
+/reports/**/*.pid
+/reports/**/*.lock
+
+# Historical one-shot edits; current source and assessed results are authoritative.
+/reports/device-connection-evidence-2026-10-06/patch_legacy_camera_start.py
+/reports/device-connection-evidence-2026-10-06/restore_legacy_runtime_access.py
+/reports/review-evidence-2026-10-09/*-declarations.py
+/reports/review-evidence-2026-10-09/cleanup-caches-method.py
+/reports/review-evidence-2026-10-09/cleanup-scratch-method.py
+/reports/review-evidence-2026-10-09/nongui-cache-cleanup-method.py
+/reports/review-evidence-2026-10-09/nongui-deadline-migration-method.py
+/reports/review-evidence-2026-10-09/nongui-handoff-consolidation-method.py
+/reports/runtime-evidence-2026-10-13/combined-camera-stimulus/update_reports.py
 /.local-spikeglx-sdk/
 /.local-spikeglx-pytest/
 /.local-spikeglx-rpc-*/

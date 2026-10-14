@@ -1,0 +1,2612 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "4b85f0a3e787b616f70cd50382e608d34d92381b",
+  "scope": "Owner-requested current-tree cleanup; local bytes preserved. Historical commits unchanged unless separately authorized.",
+  "files_removed_from_tracking": [
+    {
+      "path": "demo_assets/images/01_gray_50.png",
+      "bytes": 779,
+      "sha256": "4d820bb95f34f85da80ea4390bf160786022fa649840d7c59e12edd71fc0619c",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "demo_assets/images/02_white.png",
+      "bytes": 779,
+      "sha256": "a46cbb96e66ad4d3d12b4c7a078ad03423545460532b906644dd27245c082630",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "demo_assets/images/03_black.png",
+      "bytes": 291,
+      "sha256": "268b6dd52aea0e3f42d55c94322f0989a03ddeff65a968eac352ca8d2fa4e1c9",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "demo_assets/images/04_gradient.png",
+      "bytes": 742,
+      "sha256": "7532418815e412f89a7561a468657d8372ef280333f7b690ed16d0d6b2c14887",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "demo_assets/images/05_circle.png",
+      "bytes": 1394,
+      "sha256": "205f72ecf849fc22d3fd17d51fb7a4f214c93f16c3d78447c1d16ad2f15ee8cf",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "demo_assets/images/06_color_quadrants.png",
+      "bytes": 798,
+      "sha256": "328cfd4d6f00883df63ff39aed864bd3e6bba24d7993bf396b08cf354510cfe4",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "demo_assets/textures/checkerboard.png",
+      "bytes": 882,
+      "sha256": "7233e71b9208f9896f38c7f5e3cb61a178d512360bfd37add1cb9a3aaf480c5b",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "demo_assets/textures/noise.png",
+      "bytes": 170193,
+      "sha256": "ab018b704e638b9ffb7fa9b76e719a184482e94d29f1a645da7295f32a5f4ae1",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "demo_assets/textures/sine_grating.png",
+      "bytes": 890,
+      "sha256": "4300b18f3791d9761a4941a0429672fd8bb6a53b06a270b23dcab08de0786e04",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/device-connection-evidence-2026-10-06/patch_legacy_camera_start.py",
+      "bytes": 2338,
+      "sha256": "7b0bf270023ddc22c4bc1008d3acde8308efea2b19ecb1350997dfb9e21e4dc2",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/device-connection-evidence-2026-10-06/restore_legacy_runtime_access.py",
+      "bytes": 1955,
+      "sha256": "b34c14be7c7b41b267845ecb7601455770a2a95df5a0401e05dfc3086bff8bb9",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/gui-configuration-evidence-2026-10-08/microcontroller.png",
+      "bytes": 55790,
+      "sha256": "6f0856ffad30dcce9a0d1005b2176989e3a00f19016ff36e18d89dd461e7c83a",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/gui-configuration-evidence-2026-10-08/sidebar.png",
+      "bytes": 52169,
+      "sha256": "092377ca15a3092b13c58f27b9a3a2f29f834c09f1a2217e571061854b928c6b",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/gui-configuration-evidence-2026-10-08/spikeglx.png",
+      "bytes": 54300,
+      "sha256": "4baf5e6c2388f35cc1f2df3e694022e0458ad84cde42d3645ede3102921965fa",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/cleanup-caches-method.py",
+      "bytes": 1434,
+      "sha256": "96773134b87c074b5e94fcae9602769e12554f0d435b4019c9bf1ceaf1ba8c21",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/cleanup-scratch-method.py",
+      "bytes": 2270,
+      "sha256": "b17254ee6195994b201130b6dec97ae9c42f17fef21687fcb89684f976a0204e",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/eye-camera-declarations.py",
+      "bytes": 4374,
+      "sha256": "d035b5cfe9ad21c2d3df077fd847f5cbd002eaffd404d8f751fe9072451175b7",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/firmware-layout-declarations.py",
+      "bytes": 4385,
+      "sha256": "f53f671f5d59c9701f185a0064758cc2b83884806fe2bb4356c4f2ef7cc23f0d",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/firmware-picker-declarations.py",
+      "bytes": 4381,
+      "sha256": "c9a2cb7e9a0c3f22b214de435b8764aadda783e6e1f718bcbfb05138a0d9005a",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/nongui-cache-cleanup-method.py",
+      "bytes": 1448,
+      "sha256": "b9272d132b462dc52b4e252813177d72a1f360edea70515dc4fddba83164e32b",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/nongui-deadline-migration-method.py",
+      "bytes": 2714,
+      "sha256": "1808a0e63a7c1b68cfbbcbba62ba93b7c2a99c5aa1a21d52aa700a05d035ed0e",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/nongui-handoff-consolidation-method.py",
+      "bytes": 1720,
+      "sha256": "fb447aee132ea5e60b5d2c3c4ffb845a2f13b831495e792fe6fc46d5b74cfbd3",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/runtime-root-declarations.py",
+      "bytes": 4380,
+      "sha256": "d66c73168eabe2157127609df9c7da723b28a22827cf5c58b5d1fb5b858089a5",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/review-evidence-2026-10-09/windows-checkout-declarations.py",
+      "bytes": 4129,
+      "sha256": "b729c80db40c4f8bd74b1bca2505d32bbdfc3f84c0ed0898087ed84c942c3398",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-audit-2026-10-01/repair-new-files.zip",
+      "bytes": 23005,
+      "sha256": "51a68b38ba03f6004c41fbdb62244ef7e737985090e40e5b4125d5812090f700",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-audit-2026-10-01/symlink-new-files.zip",
+      "bytes": 23962,
+      "sha256": "e54c9651750207b075d3e0c075cf01b9adafa7eaf9aca8c8c3f60a60251da436",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/native/packages/cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl",
+      "bytes": 1761017,
+      "sha256": "2aaf7fe5c1e11623024033195ea57814f81cba7809d9b22cb1a7ac0574072149",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/native/packages/cephvr-2.0.0.dev0.tar.gz",
+      "bytes": 1309247,
+      "sha256": "39ae02f328a4f58aad7f75a50910d94d2312791da8241a71a0da471d247223f0",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_protocol/DUMMY-114520/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "d911160a8f5839395529c500297ba86820e8afe19c54da14c829265b3976336d",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_protocol/DUMMY-114520/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_protocol/DUMMY-114520/protocol-data/RECOVERY-063dedcf-dacb-4706-8882-7134f8d98805.json",
+      "bytes": 1202,
+      "sha256": "74af74d5b36153f04849e39c664da5f3aeab01a853aafec111a05f24153bfb72",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "27e16fb3b63d8153e4a9565486f94a539a5ddf6a2c4222035dd6d85f2c0ce006",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/protocol-data/DUMMY_114725_LOG.json",
+      "bytes": 8375,
+      "sha256": "2a2c47dc5aa9f71182c0f48fcddfbb9aa44fe157d8d9cbc26390a21f959c4fde",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/protocol-data/DUMMY_114725_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "4c916498fde325a563bffca16eec8a206631f48b70ae50c2a6592089876c7385",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/protocol-data/DUMMY_114725_stimulus_frames.jsonl",
+      "bytes": 6002206,
+      "sha256": "f999df0a5fff9639a8dd3e4e60a2ec78f2d7ba629362091ada1cc43556fb8a0e",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/protocol-data/SCHEMA.json",
+      "bytes": 2164,
+      "sha256": "120145007f1f71afcb9f4d77e12b70d65bfebc572476c2178b40e98e128510e4",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/protocol-data/SESSION_CONFIG.json",
+      "bytes": 18861,
+      "sha256": "62d06d9880629ae909efba63dd3e66dfb11a71b42ad8b836602355bf94a29d85",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 597,
+      "sha256": "1a8178efcc36416cf6613ac4e144e0e07c13efb5316ec212338e3ea17111d053",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-07/mcu-counted-firmware/cephvr2_mcu.ino.eep",
+      "bytes": 13,
+      "sha256": "788e5ffc44ae4ee912fe01f495951f96b0accd5705e184dcaea197d8b64856a6",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-07/mcu-counted-firmware/cephvr2_mcu.ino.elf",
+      "bytes": 70928,
+      "sha256": "8887c8f2dad4530f4faea8b8e7ed8054fe61b877829eaf64d23542cf7fcacd9e",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-07/mcu-counted-firmware/cephvr2_mcu.ino.with_bootloader.bin",
+      "bytes": 32768,
+      "sha256": "9a86f5d4b5488aa5cde54ce69f6e8e39a39106e4ac773e7efc22966e91911e00",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-07/mcu-final-runtime.pid",
+      "bytes": 7,
+      "sha256": "44fe7b6a88b9d5027ed2b4354910b80894b4494ebef3c0f25c779939b1444bb6",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-07/mcu-handoff-runtime.pid",
+      "bytes": 7,
+      "sha256": "afc5dedb7c6235a62db60a3f21b234563b03ac1ad0b91d33d42042a7f748acda",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-07/mcu-preview-repaired-runtime.pid",
+      "bytes": 7,
+      "sha256": "19ab9a80a0633fdc4906ee5d9df3bd089bda30373baf4bfcd68e821ba4f16c78",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-07/mcu-update-runtime.pid",
+      "bytes": 7,
+      "sha256": "88fdc8bae18b09a771d2362e113ad853c876a58f68c6cce9684966c8bb251f1c",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-07/relaunch-runtime.pid",
+      "bytes": 7,
+      "sha256": "8de159fdef588ed0b57ddcf4d2057cf28480e1b980079dd1d4cd8419caedd787",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-08/behavior-preview.png",
+      "bytes": 180343,
+      "sha256": "90cbeed5e6f43f6d0fc9a2da218bedadc51093bec47d9ee00bcb4e28bbaa4e92",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-08/behavior_moved-preview.png",
+      "bytes": 162746,
+      "sha256": "77a9328afe62db7f8427a8912a92a0f2ba9d95640720fd537242fb135c1fa97b",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-11/shuffle-1175.png",
+      "bytes": 85376,
+      "sha256": "ba59aada65233e89b8242d059ab49fb02ef15923ca9eb228df3e993c4e945a57",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-11/shuffle-720.png",
+      "bytes": 81980,
+      "sha256": "0fe38636402315074315a6974b4e0e614a319c1e64cdbe40f36b1c084c277840",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-11/shuffle-final-1175.png",
+      "bytes": 85376,
+      "sha256": "ba59aada65233e89b8242d059ab49fb02ef15923ca9eb228df3e993c4e945a57",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-11/shuffle-final-720.png",
+      "bytes": 77820,
+      "sha256": "c1f14cde5490d7efd7beea2f14d6670c8230e83f7ae28e986d53d6ad4e6b90c0",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/compact-rules/editor-1280.png",
+      "bytes": 104053,
+      "sha256": "5379ce218476c5a317d83d14adc9401ea40d8878a6395fc66c45795711f1c3f6",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/compact-rules/editor-720.png",
+      "bytes": 87879,
+      "sha256": "323a7381771977d1d6b4994106c7ed277d550b6b9d9389f14d55f116ea49ba32",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/compact-rules/overview-1280.png",
+      "bytes": 114395,
+      "sha256": "c9be27d914d24d4615b3d49da494758d8dc608831d1a45cd73cb33de9063b776",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/compact-rules/overview-720.png",
+      "bytes": 89769,
+      "sha256": "71bb926ada7d76ff5ef55a0c6d1fdd5c0a3bc9707eaddf006cc266fca2c3afd5",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/devices-gui/cameras-1280.png",
+      "bytes": 102407,
+      "sha256": "1c3d3dc74854751bb617c333a06f1de360037b84983b48b6fbfcafbdadefb925",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/devices-gui/cameras-720.png",
+      "bytes": 74802,
+      "sha256": "cf05ca903f2a0890014cafd6232a36ed476daf9f70d61c73adb691974d30daef",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/devices-gui/microcontroller-1280.png",
+      "bytes": 109578,
+      "sha256": "8aba547b5559d78a1b5d7512ea276c288152374aeda2fd65c0f5efb296699a26",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/devices-gui/microcontroller-720.png",
+      "bytes": 75698,
+      "sha256": "e9852214e159aa22fa781ef61971ad23a5d7005ec9647b62b7349a0a01aa57db",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/devices-gui/projectors-1280.png",
+      "bytes": 115643,
+      "sha256": "365f53d37594b6ecd74f534832e921ceff1f7eb1082dbd36b3e28a11615c88bf",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/devices-gui/projectors-720.png",
+      "bytes": 67982,
+      "sha256": "e01fb88f6e7b32130cf72a2bf73377639d8c8ab6b35d2d1347d53f97e6972c72",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/devices-gui/spikeglx-1280.png",
+      "bytes": 100604,
+      "sha256": "afdd256e70447bd0e9cc0c38e43e733fded91532dc52c88b6dcbc4c2c8621169",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/devices-gui/spikeglx-720.png",
+      "bytes": 74371,
+      "sha256": "68604e6a52a33456ee18dcf37e81c8ed6b9736dd17e714aebd3d2ee832c3e281",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/direct-groups/editor-1280.png",
+      "bytes": 109994,
+      "sha256": "6efa160ec774f25cdd0dcf74f014a0b77576ba50f1f7ad6f934d970a20bca9b4",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/direct-groups/editor-720.png",
+      "bytes": 86323,
+      "sha256": "3cd295d20a1aee2ae5c47a7673d90d4701fa22c655993267f48cf66e48895107",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/direct-groups/overview-1280.png",
+      "bytes": 109994,
+      "sha256": "6efa160ec774f25cdd0dcf74f014a0b77576ba50f1f7ad6f934d970a20bca9b4",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/direct-groups/overview-720.png",
+      "bytes": 90806,
+      "sha256": "4045649d084e42a3ad5d878d081fa88b8da3ae923d266e72076d3975e2ad61e2",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/flat-groups/edit-1280.png",
+      "bytes": 110308,
+      "sha256": "01e3ed7004703d2def672227bcbba94318bbf8e2bc4f27b5aca1da33bed4d17b",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/flat-groups/edit-720.png",
+      "bytes": 95478,
+      "sha256": "7022c2e7445834913e52fa959361ce98e9754abf6707fc936decd429f0e209f3",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/flat-groups/generate-1280.png",
+      "bytes": 111829,
+      "sha256": "fb5eff4a9b42709208be217ba995f59db6d0d8f03dc7d453f8be790ea0995929",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/flat-groups/generate-720.png",
+      "bytes": 91159,
+      "sha256": "1bac06359d5b7108c075e1333bd422f19062209feb951bebe37a4ba14c25fed7",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/grouped-timeline/group-1280.png",
+      "bytes": 114296,
+      "sha256": "7dd676f184e1afada1373bb024b0ccee0669f98926a1a4f9dac61531d6e2b5e1",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/grouped-timeline/group-720.png",
+      "bytes": 93200,
+      "sha256": "baf2449dcc3d80f60c882ccc08c9daadc109a973defc23d92a7e06fe48612d43",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/output-overlays/controls-1280.png",
+      "bytes": 45134,
+      "sha256": "062df0c51c91e3059a29bd7a88acb27b7142ceb0885d72940ef5563e8e3753c3",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/output-overlays/controls-720.png",
+      "bytes": 44966,
+      "sha256": "f1e3302b4a126d0573e2865f00d306f4aa00ef3d90f09a7726770b07c8ae1ec2",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/pulse-definition-table/controls-1280.png",
+      "bytes": 36633,
+      "sha256": "53780d850b3a683261bd638963864f33664cace58f4e4e00b3cbdff887f2d1ab",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/pulse-definition-table/controls-720.png",
+      "bytes": 36619,
+      "sha256": "1d443049e0c7ef57d94c556f70d3dffa28e18b6c5dfdbb0256be2d09d6f4252e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/subgroup-rules/editor-1280.png",
+      "bytes": 106433,
+      "sha256": "0b22257c2400896349221a1c136552f8ac988b4a75a5add93ebc0d605cb6065d",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/subgroup-rules/editor-720.png",
+      "bytes": 89339,
+      "sha256": "19d0e3b0a825728ceab7a1274e3ed1e81631d92053d444b1c41d62182d330e82",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/subgroup-rules/overview-1280.png",
+      "bytes": 116731,
+      "sha256": "22953b2b1b6a590fb82a11b5ee7ab4dd6f1fd49516b05c399a14f9d14e8cd806",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/subgroup-rules/overview-720.png",
+      "bytes": 90899,
+      "sha256": "dd1d49c8f5800a4f1902e5c41a684267bfebb45373fcef1dcf367219f1c6a87a",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/unified-subgroups/editor-1280.png",
+      "bytes": 118195,
+      "sha256": "f4625f259b405038478286686a3035f94bbe9b662cdcbdf51f80b419336c0956",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/unified-subgroups/editor-720.png",
+      "bytes": 93631,
+      "sha256": "25bd02693271260d4e2239d4bb6a0744b56fb266dce544f9923744b13e408250",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/unified-subgroups/overview-1280.png",
+      "bytes": 116197,
+      "sha256": "75c7d9f7ec5a3c5836edabfb76a06bf67560cbed9b54f988592f19649d71fd38",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-12/unified-subgroups/overview-720.png",
+      "bytes": 96623,
+      "sha256": "61a0c18fc9491afa33ac26f6b565a3d6e89b219b88d3a5150f7ec97d287cffe3",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/card-balance/editor-1280.png",
+      "bytes": 103857,
+      "sha256": "77caaab09e049baf5bdba40492a91d962ef0cd2ebdb123c26553892e07e5de13",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/card-balance/editor-720.png",
+      "bytes": 90897,
+      "sha256": "859805b0b8f45755165050dca67d4dad721a6e36c5fba2bfea0d515ba9beb1e2",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/card-balance/hover-1280.png",
+      "bytes": 109725,
+      "sha256": "03a66f0dcdf45b633e60b8d271ed54ee119caa57ba258ffd1fca8c08cce9749a",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/card-balance/hover-720.png",
+      "bytes": 88142,
+      "sha256": "7de93998fda30ced7f8d7c58332b21578f1f8ecdeaf48b360d687d6bfef473ff",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/card-balance/overview-1280.png",
+      "bytes": 108884,
+      "sha256": "a8cb378ff65034c96d697da886df217801ad87e7f109adc2a086951a6ac58cdc",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/card-balance/overview-720.png",
+      "bytes": 87482,
+      "sha256": "b0741d2479637ef5e5974b2f2e53a109421afcab0ef2ccd1cedd98d1bc18de1a",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "2b09f56d0ff633d2e9d71b8ade56c43fdb01204f6e86ab3b7035943a9b823cf0",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/DUMMY_141408_LOG.json",
+      "bytes": 10175,
+      "sha256": "eda5f97488c36fc50f6f60071861edd01ae0f3b4c3bc50f2e61956d5d6c77bab",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/DUMMY_141408_behavioral_cam_frames.jsonl",
+      "bytes": 637895,
+      "sha256": "73b0e8f3613c1ddd5a3543552828b1dcf50a80159ba6ddaadbc721cb038361cd",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/DUMMY_141408_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "dbbfdfc990b8824f871a275dba8f3bda0c8019debb721c033a1166f1f98fd51f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/DUMMY_141408_stimulus_frames.jsonl",
+      "bytes": 7538507,
+      "sha256": "81084f9c0f2e1f1421cd1b10d6914f5e406cdadf91177e81f8a95181c3aaf9e7",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/DUMMY_141408_tracking_cam_frames.jsonl",
+      "bytes": 1280549,
+      "sha256": "e7d42ca16fb7cdaaec28c1b4aa0db889105b7d5bd9db83a4575d0f511add105b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "614649902cb5ecfb916694d9d0dd20a5424d76ff080df58f78b1ac26af9625cc",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "3cca1f1bece8e1043c25984b5a0269ab6aa482098ddd6bbb73ad823506bdaa45",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "190635b8aea8b631a4ffbcc3d2d4a3637b4c682de04cfea735d949817edaac15",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "692527f895d3ddfe25ba2394aafab91b4ea34ef0ea42a1ffaac9d703564c6b65",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/DUMMY_141837_LOG.json",
+      "bytes": 10175,
+      "sha256": "584a4803306a31c819e6171fe6f06bb7ed8fc9680706e0a34a2da1933de2b498",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/DUMMY_141837_behavioral_cam_frames.jsonl",
+      "bytes": 637895,
+      "sha256": "d9d8ba4b27d68df613613961cea531d0d08cf6f9b3f53f961b30c7abb3d90f20",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/DUMMY_141837_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "ed4b90fd0bb0f776f4fb5db2323bbbf77a8268e4afa57518fde6b18b88ad9a2d",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/DUMMY_141837_stimulus_frames.jsonl",
+      "bytes": 7354389,
+      "sha256": "580b4fdf0ca21c3594db592112576c855f49ea23affede38e03ac89a623286b7",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/DUMMY_141837_tracking_cam_frames.jsonl",
+      "bytes": 1280729,
+      "sha256": "749ab5abada1f11e4c7b39b9045098f64717c8659a527731e4d35ebcd39e91b8",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "9c145c0e90aab2e32c813523f276200d9570b45cc789ca2a26635311482973ab",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "169208180a883073bedbe3d770201b71104ad2f930e6a09509cb735ea0ef7ffe",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "b2c35bbda3e4a127e87fa0172367048c66bdd0b64ae64c88744ebf03aeab6f8a",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "b021abbe517f289ae2dc7df670ffa3ca538b54fd8a89f51510e01a7bd48fc1df",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/DUMMY_143001_LOG.json",
+      "bytes": 10175,
+      "sha256": "d474c0d21e4ce3ee0bce84bd9b3fe39b76cf3e3628063f7a0c904e75db3539e1",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/DUMMY_143001_behavioral_cam_frames.jsonl",
+      "bytes": 637834,
+      "sha256": "b2a6ba8d6ee73976ef09dca443b248f592ca2bda97095d8d3a68d7c31809960a",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/DUMMY_143001_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "cd88d99126bce25f300c781d8d195e7950690716ee197e407844173559261ab8",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/DUMMY_143001_stimulus_frames.jsonl",
+      "bytes": 9803576,
+      "sha256": "763e34d3775bb5740ad5d746cb0e4fdcf4ca5e2c6f705347f1b9340b67a349ed",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/DUMMY_143001_tracking_cam_frames.jsonl",
+      "bytes": 1281039,
+      "sha256": "c67312ce6aca1dd91961cf7505f18745ea96dc2623b69f3bb93dbcf7311f0b9b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "4504f924a8d375afcd7953615dc2d71a4b3b904ff8fc802f561359251a4ad070",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "6fd8d8e9fe1e114be0927a6e70df7fe72ef72ea251914ae6e5903e797fe1754b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "cfe048da500f513cade7fe028cf14d8c2dfc027359935e9acf3a33f6d0f27ea6",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "3826df571141b3cf4733617959c46c02a8582f8e31ebfaf08b785f476e9bf23e",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/DUMMY_143428_LOG.json",
+      "bytes": 10175,
+      "sha256": "4d80e939809ba53c9d1f2e536eea4f6a6b59a081f4744a6abeccddddc0931b1d",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/DUMMY_143428_behavioral_cam_frames.jsonl",
+      "bytes": 637833,
+      "sha256": "0c410742e04bbda3332c3f0a662861e71fe7ea6dd58bae906ab436ed97bb3ae5",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/DUMMY_143428_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "e01ca3a2174db109b483355962efacc210b2742b23db6a9e1225dca235e7c389",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/DUMMY_143428_stimulus_frames.jsonl",
+      "bytes": 9618505,
+      "sha256": "3f216f3292ea174dca3495f1b18e7869850c5f15ce7492b43d8d8e61bb0c15d9",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/DUMMY_143428_tracking_cam_frames.jsonl",
+      "bytes": 1280767,
+      "sha256": "f550e0a220b3dbbaeaccfed360437d7efe5b4d774a8f0b8ec22fa959031fa621",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "31e72ef550e173b7a89c3c0f116ab13b2082b061ac3a32190fa025b0ab66198f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "555ab5c00da940702f322da77adb6bc90516b947cf8b40120076472fe94d4119",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "ea7c0e82d0d0e633b075da9c84f892bf3f783fff27d4351d9fe0bb1e93449657",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "836c6903e64386a3c7b3f706b18dc0696f6ea1e519254a937d62422f96407cdf",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/DUMMY_143933_LOG.json",
+      "bytes": 10175,
+      "sha256": "b9d3134f8c8b17d63d7d9970f0c361cdd2462212f08c268120bdf12aa363c204",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/DUMMY_143933_behavioral_cam_frames.jsonl",
+      "bytes": 637895,
+      "sha256": "72b069c48281b26554eb9140a31a171852861adf48a89412c17f6352da36f3c6",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/DUMMY_143933_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "2668886bc197d6ae7fc6c6469c63fc64c8cd6de0bbcc82197a544c148b620360",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/DUMMY_143933_stimulus_frames.jsonl",
+      "bytes": 9431738,
+      "sha256": "25fb6bae68642d501d807ef0c9cee299c26b2410741c2ced40869b55088c651e",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/DUMMY_143933_tracking_cam_frames.jsonl",
+      "bytes": 1280675,
+      "sha256": "298041e28e97cf88fcaaff00046197b173e48ba4b83117081c3d7486683b46aa",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "7b5c9a887a3a0537fcded1a6a81c661c10cb37782da05360ebda2781e83caf03",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "7ae56d35cc55ab79c8724a8fb43a42b40e09157d85d7470ba1853aeaeca71a79",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "12240b72fc68f03c0a929ba51b23e880ae29eb0ec558c017f13cf9b0800ded3d",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "7d59eed7d0e5d3b44040057b5ba8c7453a07d1a7853db24170c73466cce841ad",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/DUMMY_144240_LOG.json",
+      "bytes": 10175,
+      "sha256": "aeaf8f1c0e9a03e0ce7dc1c50a56529dd57cc31c47814a6d3f3721ef75580f68",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/DUMMY_144240_behavioral_cam_frames.jsonl",
+      "bytes": 637923,
+      "sha256": "b85314fcd9605ceb37802da886571c9ac2bec88c1ce4969b382655014da2c574",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/DUMMY_144240_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "72bae8fde3b5bd0cc7051fefb9453d3e259df48e7ebbfab2a98e1292ad87379f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/DUMMY_144240_stimulus_frames.jsonl",
+      "bytes": 9763177,
+      "sha256": "239244f2817239418a8271fdb440d96137608b30607c4a31bd5dfab56be5ed57",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/DUMMY_144240_tracking_cam_frames.jsonl",
+      "bytes": 1280659,
+      "sha256": "be1c3c36233a8f034497c20049a45f1149d2cd8e2fcbe262ba44ca81f71b4a4f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "73c7d0529866d0b0195415ded834a616354e08d23d536367bedee04dcc7b7f6d",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "471fa1dfff773bf682c5bcb9768dcf7fdccfe108b94b8830e86cbce4bcac0070",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "3cc0b23b89036ea70d37db023fe22ba4ff5521b6874a0f7f9395ab12dc7451b1",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "2ee58d137ac6452d8432112d29681daa325d5a2ebc53999e6396f83c0b09f58f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/DUMMY_144959_LOG.json",
+      "bytes": 10175,
+      "sha256": "ebd27baaa3fd841586f6c22038727eeea9bed25a28b3ed60c13ee3e9a9576d10",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/DUMMY_144959_behavioral_cam_frames.jsonl",
+      "bytes": 637923,
+      "sha256": "b4bfd89fe5c4027937998567a5e34bff31971a4d8118838511636e2259b4d5ab",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/DUMMY_144959_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "87dda3c683042fcb65791247fb8a0aff7ed0258735bdead07a49af278973df88",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/DUMMY_144959_stimulus_frames.jsonl",
+      "bytes": 10292557,
+      "sha256": "6e222ab33bd2cc0293b462757c1801c1c48c75c6c69fcd9d406639f465f0b875",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/DUMMY_144959_tracking_cam_frames.jsonl",
+      "bytes": 1280409,
+      "sha256": "0fc8afed7bccdf72494e8c875381499ff29101dc2ab2968f99ff865f44d140ff",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "99bd41dadbfc3131ce517c9dd317f403c1d47ee4c4acd372fdda0b14715ac04e",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "c9c890a0329509f15434b9f2ec06ce9c947b1ccc279b45bbb42456e3e5202513",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "3aa57957d037898f9b89614b2fd06ad12b86104b9a1a49053738d59fcaeaa217",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "454525eced62536506c2068adcb661fd949ed04238d9db896c3b38a4e26a80bb",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/DUMMY_145652_LOG.json",
+      "bytes": 10535,
+      "sha256": "1d3662d124319cd12937558e66312a7c5b1d29f50a7657fa7ed1cdcc397bbd60",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/DUMMY_145652_behavioral_cam_frames.jsonl",
+      "bytes": 637962,
+      "sha256": "7f16408d214db7aa88a9ad804d21b59b7b3b602ea1771fea12e81fce3ddebfb5",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/DUMMY_145652_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "b2426bde47e83c7ae0e11bde926bbf215b4ac1e6364e364066f2235fb8571a98",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/DUMMY_145652_stimulus_frames.jsonl",
+      "bytes": 10381562,
+      "sha256": "a0a33814020ac277d1330dcecaa40d3898d7afd18704e0509685fc47d59f478f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/DUMMY_145652_tracking_cam_frames.jsonl",
+      "bytes": 1280731,
+      "sha256": "5994778d32db51700af784fa04d3477a1b21f33f2a21a8ba12c6a085cd068eab",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/RECOVERY-5f7b652e-1006-4ab2-b6a2-c0c0a6c4721c.json",
+      "bytes": 846,
+      "sha256": "63c4fd93a8351584ac6113845482b32de6e6613e91d61cb6b40b70925259ba71",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "da1bbe5526ddfe594169d8f1d7ff39fb22c952745339e99fcd21c278ee158067",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "61e79830265ad93175422435cd52f0dc59ea1eb4d4022efa28db3fd5508eff20",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 1873,
+      "sha256": "386d87b6c9e927390da20d50d3c8d485da3e545e041b67d7587f2a844e516095",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "3caf5aa20bbb915825d4b6624e3302243165a926f26e3dc69709ea0c09fc9051",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/protocol-data/DUMMY_150757_LOG.json",
+      "bytes": 10534,
+      "sha256": "257bcff6b7bdbe3553b4bdb449695930d4211004e67bae8f98656e6c1e56d0b6",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/protocol-data/DUMMY_150757_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "c73bbb3e26b79fa9a057d1f7b90d7d2a3c59fb8632a7c9bd6fd14356e4d2ec03",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/protocol-data/DUMMY_150757_stimulus_frames.jsonl",
+      "bytes": 36261,
+      "sha256": "bfcd729dd09ee34d91fecaba953abcd87c2865e258433bea583132a31dead994",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/protocol-data/RECOVERY-a04a0b89-1112-42dd-9a49-1ad4f034765c.json",
+      "bytes": 846,
+      "sha256": "b6dc8d9f858c62b3c9155603ae7a315b617f6f9419205dfca17cc1314966c947",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "23b920f16a279e1b5eb1af6f7be808d70c4ef0beddba4f6cd52b306f58bbc553",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "f81ef115878328ea6f2d1d83fab3ca3f8a466f5d0eebfa3ab7e880cb7e22aacb",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 1138,
+      "sha256": "c15abe5d1743a8da35770644a9a8473ff3c82cca210648a21cf4ace164394f2c",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "2ed5cff19a61ab6c08ac141a7d91d350d01808ba1002461a26abea5861963fcc",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/protocol-data/DUMMY_152017_LOG.json",
+      "bytes": 10534,
+      "sha256": "1527e570042a33550dbbc8dd37729c0834b3f0a8c4f4916b5d3b5cabfbb7dccc",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/protocol-data/DUMMY_152017_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "fa170f7206d53593733fa0d8c091dafb8d9a57d7d04e5cd741caf633571b30e0",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/protocol-data/DUMMY_152017_stimulus_frames.jsonl",
+      "bytes": 37632,
+      "sha256": "94cb24c42db2110d106e8d5ba421d1a0ba9bf42dddfa7da2773f096b590e4c39",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/protocol-data/RECOVERY-c42cfc2f-066b-4ed9-a535-356da0beade3.json",
+      "bytes": 846,
+      "sha256": "e2aacfbb9ab345f856847aec8a6d70eec1f498d5a8c62961deaab8aa26a7bd22",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "71ef711cd7af2e8788046637729406a45fe2932ded3e9efc2def5918b4a1f06b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "249e03820f003601745f1ee55488f759cb99eb1bdedd4813a9befd423b6c530c",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 1138,
+      "sha256": "1c95f558834c18abfe620a8cd1931fe40f687f87fef71e22d3bdacef52d2b56b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "f1d9bb995ab0f0d71cf08a84e263c053e8a14d838e47a9413044225084618cb9",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/DUMMY_152951_LOG.json",
+      "bytes": 10175,
+      "sha256": "7e3d9c17c41fa486614fadc6963591af3986060340859628fb12d9528846ff8b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/DUMMY_152951_behavioral_cam_frames.jsonl",
+      "bytes": 637865,
+      "sha256": "4d58a15c3018172c16c1f0e8457efa15e19d72fac289734e115e5f26b483cd25",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/DUMMY_152951_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "7fc9842fa69628e0b5dd939e46e9b0a3c8d9247ab0d314abd37fdae11529397f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/DUMMY_152951_stimulus_frames.jsonl",
+      "bytes": 10139470,
+      "sha256": "19694359b8ad70df1b75aa09e21e151273c8b98ef41e0633de39c4c9332c6702",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/DUMMY_152951_tracking_cam_frames.jsonl",
+      "bytes": 1280767,
+      "sha256": "77cc70b009b482fcf87f43ca5b9ebd22805b3364df2c90b669d2c6be0fc166e3",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "04735767f91d556d9f35f0102c1d69c04d2cd49bf8f5b8ad9a356bb01ebdba26",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "a7ce202a51a111861fc74ac4e6e4b10ce6a95036a9aa47866c596466bfe38201",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "09aa635de3d5a45b44cf729c73c7fcc4dfbbe40c400d88478111552597284d20",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "43daa5f6e97021610c03652dbee2c14db7a762c25d555e48c653f0c147723748",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/protocol-data/DUMMY_153432_LOG.json",
+      "bytes": 10534,
+      "sha256": "c63ee6c20cc2ff0bf5e0174b98f5b0c9c907b0a2e88dd93174f1e4c00ad0fef3",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/protocol-data/DUMMY_153432_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "31706f8cbec6c45c12ffb6fb1eaf352e4b4ad76a2e7b1837b3bc839e1f6e3210",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/protocol-data/DUMMY_153432_stimulus_frames.jsonl",
+      "bytes": 37866,
+      "sha256": "f20573aef5fac5febf18bd7f26fa42329c0e9a0960c633eba65e8ba2039004d2",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/protocol-data/RECOVERY-8c587ac6-55af-4de8-bdec-b5403909a3b7.json",
+      "bytes": 846,
+      "sha256": "22df8b99ab2192bbc4b8460f8217ab54077e046fc560c3de89709dde89393c52",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "62e5ba0c2fd98806b2b3c936da7ccf72e8cb692350f3c57824a9155e59c0cf33",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "d7084aad75a98d3f7726432b46cadd3d3e5268fa9c4dbcd46220bfe34af2f2e2",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 1138,
+      "sha256": "c162dd999c23086d0d1ee6acbdaa5902aa9a055cef23abb8f7f3cb86112d5dc2",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "7ec389c459d7e8a8c8d088497d620e58e34a0648cffd70e18d6e39b77351f4f6",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/DUMMY_153856_LOG.json",
+      "bytes": 10175,
+      "sha256": "27822f818143f8e0968a511102f18d3231d5513bc41ae0ac36aa3478b7dce4dd",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/DUMMY_153856_behavioral_cam_frames.jsonl",
+      "bytes": 637874,
+      "sha256": "ece16c979e6b2eb46f0fcd2b1b2212688b390b1d4bbd68dbee770944612f4030",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/DUMMY_153856_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "30a99b32374e6f9f247dd4c08da00917ced59ae6b15d8b174465a689608c0195",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/DUMMY_153856_stimulus_frames.jsonl",
+      "bytes": 10433072,
+      "sha256": "4349637a50d2d7b413ed2ef9decba5315cb1f7396c88a13ce94bb35c03087832",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/DUMMY_153856_tracking_cam_frames.jsonl",
+      "bytes": 1280375,
+      "sha256": "df64cbbfb561f5c14472db804fdd9c97872d2e3aff68dbc18aa8ffb726bba6e2",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "fd983809b1e7cef9080f990abef5884aa8861bccbd10043ec5046b6db0444489",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "5742f5d2f6b9906c0c19e4f76bd24f7f5021246dd0415394e660bb52584cc1ee",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "6f2063d3454429a8e649b2a5bdd9a574329f81efe9147314880af60c8724f7b0",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "0193af3e916f7bc4eee35bc077f7d9483e640cc869e46e68f86cc18f72666f79",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/DUMMY_154147_LOG.json",
+      "bytes": 10175,
+      "sha256": "58de84ae52fe08aa10966dadf6fae67f24f7a773f45e854c5223cd08d843b439",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/DUMMY_154147_behavioral_cam_frames.jsonl",
+      "bytes": 637860,
+      "sha256": "a315eefec2ce19c015e91465d40880c099b1bd17d0be30c75533b1c731c17893",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/DUMMY_154147_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "7a329751e128d978632038e4ea0466dd3c2e16bab9d95edb9fe1e2b4fbb4f4ad",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/DUMMY_154147_stimulus_frames.jsonl",
+      "bytes": 10587274,
+      "sha256": "52999fc7381cb008154f267774a424474f8e3e025a6cb60d789a9c1cf75d8ec0",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/DUMMY_154147_tracking_cam_frames.jsonl",
+      "bytes": 1280878,
+      "sha256": "49c9cd0d24a2bed7fa0ba91e6ce5a50bb201bc622ad55cfe5bf27bac0102652e",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "fc51101602b2eb87b39af5ec3eafc72bb05880006ac32cf069aa97f4a3cfaf7f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "1b81fb75f67c0d93cc20a40ab55519c9063ea50a5a42727e2b7763827bf68745",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "048013332423fbde02363960593518ad5567fec655cc5ca0a99900f00c6a9eb6",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "ffc5dd87e774dae4265fdb644ab7854b9d1ead0611db208709a4c5540a4c9c65",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/DUMMY_154314_LOG.json",
+      "bytes": 10534,
+      "sha256": "85777810edf9aaa9de87a7c34f93753c0ff289d57fb106efb82621c6add0c47b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/DUMMY_154314_behavioral_cam_frames.jsonl",
+      "bytes": 2104,
+      "sha256": "4fc76460fdd24708f794faf56944756bd05552929e17533e043d0e45f8206d54",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/DUMMY_154314_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "86bf97433ac1766e639f3fd955bfbf2e19fc23626177c3b902a2d83231065c9c",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/DUMMY_154314_stimulus_frames.jsonl",
+      "bytes": 35361,
+      "sha256": "c4ff23683b1698ea97e8dca0fed3c862962fcb07b1fe515d34e5b7786f80cf9d",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/DUMMY_154314_tracking_cam_frames.jsonl",
+      "bytes": 2102,
+      "sha256": "fb911db0f8b26300551278bbe177684c0739af7e24028aacd92fc5e9492414be",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/RECOVERY-1639bbc9-ceda-4d9e-9640-026aae554459.json",
+      "bytes": 846,
+      "sha256": "3b99da84fb3d2c150bea5f860fd8fd012205f5d11dcb557e2f09d894fb53ebf9",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "f62c1fa91f2e7948df45687bd6f8ba455c98df3c189e22e017175bb80a864666",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "1fc73c9a66eabc4064d0b8202ec33f69da3a87e1ae96588f738b4540959a3526",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 1513,
+      "sha256": "d231d272b27c5f4c480d7e0515e9cd7c574819e4df52e479f5d948aae53ecc76",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "781e82749254d7c5bc7e2660807bffe13a7e55aafb0f533de84de3406363e87e",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/DUMMY_154612_LOG.json",
+      "bytes": 10535,
+      "sha256": "7d653d8802aa624d2019557db5c3e9c6e7647c6591863cc4735cd54ae7eed0ea",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/DUMMY_154612_behavioral_cam_frames.jsonl",
+      "bytes": 637718,
+      "sha256": "8d3567d1fe36cf61f36b80eabe24bc1ca5fe82ded7d5b9a531339df0a35b3a02",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/DUMMY_154612_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "711c402c09d69ecf3039d7f8bc12aa64345d07008b81ef6e28a3da19164a59dd",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/DUMMY_154612_stimulus_frames.jsonl",
+      "bytes": 10552926,
+      "sha256": "d386a2e648240f6dacdaeb2e18aa28107715660b3b60626c4f880b80fe8e6f1b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/DUMMY_154612_tracking_cam_frames.jsonl",
+      "bytes": 1280759,
+      "sha256": "74ef3fa1a76e363ff2c0e4f469215184f33c28ef261d49abd3e9f7a11b8b24ab",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/RECOVERY-dee56fdf-c69c-4419-ad39-50d13a0213a8.json",
+      "bytes": 846,
+      "sha256": "fae3dd302cdad1cf7bce3012ce6c9e7dec8129907f91e189fee40cf4ad63e014",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "5aef616cbfee839233f3f5643a6fad360f4bd9c53c5aa748554229d36e9520ac",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "596553fb4dfefc4d00b90bcd7c5f82456372a4d14ae20b90980a3235918bc053",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 1873,
+      "sha256": "190ff2ffabcf0f4f6b4a745b6a8496f0db3643a57985d9c886c4142a0e07ab73",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "3cd8b9648944267c4937bbdd1f079b13afc1faea0f97a06358ebd3a7ea215f68",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/DUMMY_155048_LOG.json",
+      "bytes": 10175,
+      "sha256": "6643c16f9afe1a0bf6df4ae81bda7c4c645caa0e1198562ff64aeda04e3aca35",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/DUMMY_155048_behavioral_cam_frames.jsonl",
+      "bytes": 637923,
+      "sha256": "f01a92ad6aa55f4c6933a9ada6ca0f959f5be751df9eaa9a2ffd36b8a58384ed",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/DUMMY_155048_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "401176bffa83de404a7d9dc93fdc5d4d6d1a6f42a1ea3e74b56e35298c008fa9",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/DUMMY_155048_stimulus_frames.jsonl",
+      "bytes": 10613696,
+      "sha256": "735d044c4ccb92f89831aeb5e150a02d8256da3dc55cb859ff7f07e10742cf8e",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/DUMMY_155048_tracking_cam_frames.jsonl",
+      "bytes": 1280648,
+      "sha256": "acc80fdc9491e9913bcb5dc68bae351da0ed89783a4a0cdc8274f757acf6e976",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "402eb4a732232fe7e21de1e81271db5aeab900b0d489e86b091765de349094ec",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "17fedc588f2792734fee9b5cf0130d981e2348129370862149b16eb67487d0ca",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "d6802d89dc54b7a5bdab91bb8633e0fbd92c0cb4ab7349097cb6255d7b7c98ae",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "63fd08a0bc4a3cf7c0499a2c97cb20bffcad9969348f7c4612760fab50b03345",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/DUMMY_155223_LOG.json",
+      "bytes": 10175,
+      "sha256": "4852e7c04b7f25e1f1f944bcec59d9c1f8266c0660dd4684dfe9fbe6fb3f2dae",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/DUMMY_155223_behavioral_cam_frames.jsonl",
+      "bytes": 637923,
+      "sha256": "aca989334c45d7713ffea2df65fda6cb56d8b3d46e043c95147ce1698098ae9b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/DUMMY_155223_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "e7006ff9d3f8e51441abaa0f7f21c28becb37ef528d1124127198173696ff828",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/DUMMY_155223_stimulus_frames.jsonl",
+      "bytes": 10608356,
+      "sha256": "0979e6567b790cdb6f6302df9d262d41718775edf602e9eb96e1fdaabaf54411",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/DUMMY_155223_tracking_cam_frames.jsonl",
+      "bytes": 1281161,
+      "sha256": "8e8f59ab27b18a9ebe24070102b663a93cd097e9b6f5144b9c58f29c015b38cc",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/RECOVERY-9d68d9c4-d973-408b-82b5-57eba0adc71b.json",
+      "bytes": 846,
+      "sha256": "e26b905e9dd8b9b19ff1d09a17339dfeff845b1f238c202611a0803c60b778f8",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "a27cbc5cea2b0a9b071b7eb735110d6878f71f4cb6312dfe475b9d6aec60d307",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "e9b9e53f30eaba46c9fa82e068e43dd3384e4d5198cd86485bb743073a9308e6",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 972,
+      "sha256": "acca9503255b1d0317691754188bacd4c38340f70abc748d94f070188e1734d4",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "d3c454c52b98ce029a03f3e7091f1f552b3b8cf20d1576c07a141eb7bee83a29",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/DUMMY_155804_LOG.json",
+      "bytes": 10175,
+      "sha256": "5b658774a500c44e1ccb43d4c3d011fd5fb2c976f004ff8a9d146338fb059e77",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/DUMMY_155804_behavioral_cam_frames.jsonl",
+      "bytes": 637946,
+      "sha256": "e8831fbd99bfb8650292118cc773dc536dcfd3c94190fa95597de7d5c49eb33d",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/DUMMY_155804_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "bbb1a3e350bcdfbebbc857e7959272838867901d00e61cf3635186fa6694efb3",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/DUMMY_155804_stimulus_frames.jsonl",
+      "bytes": 10622171,
+      "sha256": "2122dcc1c91872890f94d9cae772e217dd8bd0dc68ac8a7b281a9056bda21b68",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/DUMMY_155804_tracking_cam_frames.jsonl",
+      "bytes": 1280879,
+      "sha256": "8fea7d4a6f1709d96b067cfe944571460fdd8ca15c876fc2237b3e634dd4e53a",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "8dd9bb34e7e26a803e74252665e3977016e90e0f854d6b71bcd9a1d9d6646f1b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "6bcd82b91c377b81dd976627e566046b70d94378ae86cf458e45bb956f563fc5",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "11267690c9e5f32dda9f0e9edb09895a14609b661220e0276a87105e351a1847",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "e3d40238bc36a28ad8ef873d4045461b282d02a535c9d0a43129959f68d44e1f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/DUMMY_160007_LOG.json",
+      "bytes": 10175,
+      "sha256": "4e2c2c10b0f4f4b76f85bdd57fb63e4a89cf160ad66b5586ebfc60919de22df7",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/DUMMY_160007_behavioral_cam_frames.jsonl",
+      "bytes": 637866,
+      "sha256": "5de05d13065fa2aa238bce564744917022eed32c33acd380e27a47c3d7727186",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/DUMMY_160007_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "94b5ada5e9e9e53bc96737c69d27d8059e6c5d00f8ccb5959312219648f236f6",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/DUMMY_160007_stimulus_frames.jsonl",
+      "bytes": 10626481,
+      "sha256": "bf9753753cc607e9888b9bf6d412ea2c5edaffa774fff9860b924f30b054ba17",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/DUMMY_160007_tracking_cam_frames.jsonl",
+      "bytes": 1280619,
+      "sha256": "123ae901987d04a25cb661a9d98d7ae956de914789e81e4bcdcd3e62cf21beda",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/SCHEMA.json",
+      "bytes": 8252,
+      "sha256": "f2d0590e8195bc33a9b6ea96d0571ae664f8e9da4da79248d6d956fc60753696",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/SESSION_CONFIG.json",
+      "bytes": 67705,
+      "sha256": "e51fa903041e8fd43527ee98c6c92ca129c336df4effc6890f1b630885d331ce",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 601,
+      "sha256": "397c7ded850f7fb011f75623e1e380504b560c241e9607668bc5948c1ce418e8",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/update_reports.py",
+      "bytes": 8812,
+      "sha256": "103278b2f97950df8d35978b96afe642553a27c6ecf5564027b63e2db641f3a4",
+      "reason": "Historical one-shot source/document edits or cleanup probes; active code and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/device-wiring-drafts/camera-wiring.png",
+      "bytes": 11636,
+      "sha256": "a0677dbb89f71289967bbc581ce7da01ea21059e9656c7e7468aa24853543c93",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/device-wiring-drafts/cameras.png",
+      "bytes": 108488,
+      "sha256": "9a4a079fcd98fc21306073fe0d9b30610c541608fa98a34e0c726032a2f605ef",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/device-wiring-drafts/microcontroller.png",
+      "bytes": 101969,
+      "sha256": "56433d13df78aac9bca333138cdc2b3a80a9c9c22285aeb6333dbfb3280b0162",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/device-wiring-drafts/projector-synchronization.png",
+      "bytes": 114714,
+      "sha256": "b8e487d5d1efd57888f2dfcc64a9a9d5fba1994c74889c4ab066a5040f6393ef",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/device-wiring-drafts/projector-wiring.png",
+      "bytes": 14974,
+      "sha256": "cfa22616197cc9668b90653c6b5b58798384adfe7ae45d6ccd27ba7cfc4c096d",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/device-wiring-drafts/projectors.png",
+      "bytes": 113057,
+      "sha256": "f0ddda9e334ead9d8efc4646078f151f398e7b5f4bf487ebe1ebc62b6744db26",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/epoch-auto-update/editor.png",
+      "bytes": 63978,
+      "sha256": "9ceb8798a6c874f001687f5f291d833fbd3328ab6579be6b45ff3fa859451c48",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/inline-actions/editor-1280.png",
+      "bytes": 107360,
+      "sha256": "633582c459d623df84107d433048819222341d2842962550a7781ce9b1d6d335",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/inline-actions/editor-720.png",
+      "bytes": 88789,
+      "sha256": "6e5957934b1da47d208cb7e054c34a79b135bb671efc4f0c02ec03542f91df0e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/inline-actions/overview-1280.png",
+      "bytes": 114388,
+      "sha256": "da6cc0046836f54ab1276fae3b92c02c2b0d2c700f647ecc901fdc43dbfc7aa6",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/inline-actions/overview-720.png",
+      "bytes": 92415,
+      "sha256": "ec1a90631c7592c0ec79f5d60209d2647e1c7c3ba47b5c3c33575843b7b88bb9",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/layout-polish/calibration-1280.png",
+      "bytes": 110609,
+      "sha256": "1202af868b0ff465d8f3b2ad268cf16ed3f02c3c319f8cec11750be14ba20bcf",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/layout-polish/calibration-720.png",
+      "bytes": 68620,
+      "sha256": "06391a3434384d3905aec1319144ee329c08419c8592910e2bd423bd157b8a0e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/layout-polish/editor-1280.png",
+      "bytes": 104855,
+      "sha256": "46ba0330867d8795619348ef23daa574484ba8797b1473b03f7544aa6b26108a",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/layout-polish/editor-720.png",
+      "bytes": 82123,
+      "sha256": "31806658c7d2c5bab1fa4d2811032731913c0c01df29d527ceeceaa4a68d85b0",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/layout-polish/hover-1280.png",
+      "bytes": 109575,
+      "sha256": "8ca2d062cb73b1d37f8880d989fd230c96afb99af54c230d94968d15e85119bb",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/layout-polish/hover-720.png",
+      "bytes": 88062,
+      "sha256": "2508380ecc020435d98808caebccb5722994c66af079efef6a7351d44c0709f4",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/layout-polish/overview-1280.png",
+      "bytes": 108723,
+      "sha256": "2fda3e9e761c629fbd193ee9d9b661c9590ddbe6dde2c716fc89d7f7aaba76a4",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/layout-polish/overview-720.png",
+      "bytes": 87385,
+      "sha256": "c1eaba2b49d6efc1291709a83cac32dc63f8acc7567d9817c0f236722fa8f087",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/activity-log-details.png",
+      "bytes": 15315,
+      "sha256": "c7b0338bcc17daeb347a32be32ac7a252ef4270d34e6d896a61bf1024b95809b",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/activity-log.png",
+      "bytes": 12599,
+      "sha256": "aaf833c40ae738a18d25e1884443d72db53a0cb8a20a60b839876116d3da5be8",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-compact/collapsed.png",
+      "bytes": 38136,
+      "sha256": "0e5d3e69922ed17b0185000a54b170390fbaa176c8fcf7a81934f44cf24b4414",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-compact/long-report.png",
+      "bytes": 42472,
+      "sha256": "58ccfacd3db6cd0e0b3e2efe7ad73268efba515d3c10597f22523a3443108c0a",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-redesign/collapsed.png",
+      "bytes": 40038,
+      "sha256": "2d3e16fc4ffb509367e0be1c793bbc304e048881dd208e3d840daeb307939dc9",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-redesign/expanded.png",
+      "bytes": 74941,
+      "sha256": "03a1f98a52598590f671013afe07bec15ab2618143c1427105d9589b9e7724b8",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-redesign/long-report.png",
+      "bytes": 70832,
+      "sha256": "6eca1ad11605b5d9ac29fa85d3f654e07e253bcddb8947e5d47bfd988ce677f7",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-simple/collapsed.png",
+      "bytes": 36977,
+      "sha256": "aa934220147b92954c6a0e4a42d3515934007840e305c2bb89bca077ccdf72f7",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-simple/long-report.png",
+      "bytes": 42649,
+      "sha256": "e81fd6b011b899abb3d162b71b270e7f59518cf84a98fc6d2f7c51e3fc1737a1",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/retained-collapsed.png",
+      "bytes": 29157,
+      "sha256": "25f427004ca124be77c1f95458a2445ca88379c4cce5bba5e03f062b4e1558ec",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/readable-gui-messages/retained-expanded.png",
+      "bytes": 50053,
+      "sha256": "e05b481cf77cf202eabd3a9cb716880a8a2509aca12b9ef6fbf2a4bfbd8815c6",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_off/DUMMY-125607/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "bc63a785eedbc30fbe1c0105da9a53be534697a35630c6ce11534cbfe4bed8a4",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_off/DUMMY-125607/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_off/DUMMY-125607/protocol-data/DUMMY_125608_LOG.json",
+      "bytes": 7515,
+      "sha256": "8d1c4b56b80d06ab7219296bdc5f6ecf18a2c3c4ee0f19c790732132833f57fb",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_off/DUMMY-125607/protocol-data/DUMMY_125608_stimulus_LOG.json",
+      "bytes": 24972,
+      "sha256": "be1289e0d120f84a6cfdf8b1218081a234fd7b065fbb7370dcac1394370f6418",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_off/DUMMY-125607/protocol-data/RECOVERY-ae5c1351-a8cb-4e25-8a9d-64d79ef29922.json",
+      "bytes": 846,
+      "sha256": "c46973ef812764dfb4f5d6fa7a0b6485c7d36143f5bd96aacb8221cd0179f0c3",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_off/DUMMY-125607/protocol-data/SCHEMA.json",
+      "bytes": 714,
+      "sha256": "c877d53497242298ac4041b41f0cc916a4deaa267eef43b9ed34b395b8e60b2b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_off/DUMMY-125607/protocol-data/SESSION_CONFIG.json",
+      "bytes": 17983,
+      "sha256": "06982b4111f519cf788c6f106e87f466904d2793b740f53a2172b6bf5758d11f",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_off/DUMMY-125607/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 967,
+      "sha256": "45a70ab768ac2ca1c24c273087c905c1fd73a91794ec49afb12094b759afdfd8",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "e0647a74138ffb086509af4b639b90b0895455e80696765355b96ccb03008705",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/protocol-data/DUMMY_125335_LOG.json",
+      "bytes": 8431,
+      "sha256": "18ea98b2cdcc50e84eaa56952e90e7af377e0c419400c3e4f62db1c9cdc485f5",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/protocol-data/DUMMY_125335_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "873aa03b4d466e53cb8a358dc63588eb7272beed82af030158a7819e03faa2a7",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/protocol-data/DUMMY_125335_stimulus_frames.jsonl",
+      "bytes": 4987719,
+      "sha256": "2ad2f97a9ec5b732e873fdf1dab2a4987c7f335a41f12e2a6dfd773b3880dd96",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/protocol-data/SCHEMA.json",
+      "bytes": 2164,
+      "sha256": "63ad32accf6b1d032555d11871b01f9a409a985f42e6b8f9d91819296848ddd8",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/protocol-data/SESSION_CONFIG.json",
+      "bytes": 18857,
+      "sha256": "ce624713575a228f4bf036d0ed028c74751d916dc556c70ff0746b5d81203423",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 757,
+      "sha256": "29075cf59a8db17d043ea48e8959fdd489ab42f8dc3b4e94fdbdd6fde535221d",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "5d0a6f5eb9ef18e4f7a15cac6471e7c0e2c1b7dc50ac8b11aa2d7aa9edf15238",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/protocol-data/DUMMY_125506_LOG.json",
+      "bytes": 8363,
+      "sha256": "79ebd40cf67029c485f6478499b84059566d548f9914778474faf7644674e22a",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/protocol-data/DUMMY_125506_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "eb0cb92f541989185478ad8a63c83cc580b0887747dddc62aabe22eab6569f2e",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/protocol-data/DUMMY_125506_stimulus_frames.jsonl",
+      "bytes": 5990150,
+      "sha256": "b12eb1af315f0840f59d0256a0a06bdda4486d09c35bdeed9a439943409aac7a",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/protocol-data/SCHEMA.json",
+      "bytes": 2164,
+      "sha256": "4a4df8846ec2eeb4ef20fcdbc0732104a32a991d0ce8282544c7c990a8cbfe09",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/protocol-data/SESSION_CONFIG.json",
+      "bytes": 18857,
+      "sha256": "f44bdb4891e1a7810b852cf318821b9e7b8f02f5585d9fe4461b1b192ff0d33b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 597,
+      "sha256": "3054d73de18f7a1a8017b1bfe9b9af65c7d1cd07787dcbad2f29a48272d3254c",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "6fb5faadff00fae3c293623b0f33b0647f6d081764ffbbc7c286eaeaf14aa825",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/protocol-data/DUMMY_125857_LOG.json",
+      "bytes": 8363,
+      "sha256": "18032b8744f6655c00fb8ed93821ddc98947743ee7b2514819ec61edc9506e31",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/protocol-data/DUMMY_125857_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "cf384685c98d6a3d766c4f63be7d59b5bd643ccb1e52fe22d479a97d3ade1dfa",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/protocol-data/DUMMY_125857_stimulus_frames.jsonl",
+      "bytes": 9408576,
+      "sha256": "5ab3d8bc39879ca5dc64abd09cf6bec04a39c33c41d73a1d65ea3224611a03a7",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/protocol-data/SCHEMA.json",
+      "bytes": 2164,
+      "sha256": "8a6ed83d838c4ac445a5b09e85f735ad363be5333496c2f4238b69199bec7eaf",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/protocol-data/SESSION_CONFIG.json",
+      "bytes": 18857,
+      "sha256": "61772c51274f8ae5a80e998be0457fa0923267061248bf416198a3dea84bdcb6",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 597,
+      "sha256": "4dda39b629d554c48256682f222f619fc58f3c1b87b4969746eaa3f1f42a5117",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "ed7619b478a8afc34c46c189c66cd6d3cf104ae6ed40696a800e4c3d049830d2",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/protocol-data/DUMMY_130320_LOG.json",
+      "bytes": 8363,
+      "sha256": "8007d5d2261ff1908e392cb207f862b182fa2698761bd01f9fd9d70361087d67",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/protocol-data/DUMMY_130320_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "0d23b515631715deab53b7b781f68eda0bccd19922b0a69adce2891753750555",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/protocol-data/DUMMY_130320_stimulus_frames.jsonl",
+      "bytes": 11083547,
+      "sha256": "a6fadfcee0e0ef206da62f82d35edd13702e66f5b1dd627fcbea02cb48580d90",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/protocol-data/SCHEMA.json",
+      "bytes": 2164,
+      "sha256": "8ed673280a832a08d2c9af15baf8ba3ccd550bf94920d93149a3690ad9764020",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/protocol-data/SESSION_CONFIG.json",
+      "bytes": 18857,
+      "sha256": "52a9e027a673fbd67435c38bd52c9544604388e0d45ee8438a11fd8ee91c041a",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 597,
+      "sha256": "2bdd57a21920d56cb33604460ddc397dbf901dc0d8769f28e6f106dee840d904",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "b106a9b5ae184cb5852b4b37ef9e6f38fae8340d28a06709e3e2524f7d692653",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/protocol-data/DUMMY_130559_LOG.json",
+      "bytes": 8363,
+      "sha256": "88d222fa2e2112d233d7a67f257f0bef670b8bf7a44a366a110f1b0e1065329a",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/protocol-data/DUMMY_130559_stimulus_LOG.json",
+      "bytes": 26097,
+      "sha256": "1cb4b95559c895d09d35431390d317e415faf1778b694d566c541af4b2520c6b",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/protocol-data/DUMMY_130559_stimulus_frames.jsonl",
+      "bytes": 11083768,
+      "sha256": "a52919dd2ce816249822b5a13be2a20f2a8d5da2c9773a835356a796aa5cffd8",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/protocol-data/SCHEMA.json",
+      "bytes": 2164,
+      "sha256": "1f7a530733ccc36a60cdb6501ac0297be31ed07516c27ebb39a35ca48ee5c7c9",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/protocol-data/SESSION_CONFIG.json",
+      "bytes": 18857,
+      "sha256": "45ec38befe38e5aef25a419e9d25edd6810d44d5788d523866e0d7a8c30c7122",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/protocol-data/SESSION_LOG.jsonl",
+      "bytes": 597,
+      "sha256": "b3275d0988cbe66a8ca7602f1d8e985897b411e5cf1c15fb0d14a3cc63e54fe0",
+      "reason": "Raw recorded-run dataset; summaries and assessed results remain tracked"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/timeline-edge-alignment/dashboard.png",
+      "bytes": 211767,
+      "sha256": "85dd7b253c120537c93ad2fa6ee6305517a7750a0081183dd0fd12d5adf285be",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/timeline-edge-alignment/timeline.png",
+      "bytes": 61732,
+      "sha256": "084e9a30a515656e93f9e15617df7fcc8528f17bfd3f91aad13e8ae8522dcd8c",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/trial-list/editor-1280.png",
+      "bytes": 100193,
+      "sha256": "d8473fcc80f060fc7b7f85573cfa53f457944943e4225e5419489e9a17ed085e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/trial-list/editor-720.png",
+      "bytes": 92289,
+      "sha256": "cdb1f8f64cb9dc69e2a03599da8ace14a78ef4bec8ec61b35659182c3db1dcfa",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/trial-list/overview-1280.png",
+      "bytes": 104568,
+      "sha256": "f35f74013c53b6ddb6f059ff6442b2a369f77bfb96f3c53f4ea097f0bf3c573a",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/trial-list/overview-720.png",
+      "bytes": 84926,
+      "sha256": "625466fe25bb52b6a63febb07bbb533008555c76903b05655cd175dd6d198c9b",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/trial-timeline-layout/1-groups-1200.png",
+      "bytes": 18785,
+      "sha256": "810b2823b7002f34867d8d7cd7c4f69db8aff234d39785bdcb02b63dfe99185a",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/trial-timeline-layout/8-groups-1200.png",
+      "bytes": 19517,
+      "sha256": "07be9506ca0116db0e4de0f941783f42ec99ab118443e2d39eb3f5a749854ae1",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/trial-timeline-layout/8-groups-720.png",
+      "bytes": 17363,
+      "sha256": "88695e191612c2a7a18d8726b7bbb4e357e7a238d2da411f6aad90972c345d67",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/trial-timeline-polish/timeline.png",
+      "bytes": 69293,
+      "sha256": "5b954dfb160833774df50068be08b8f57ef4911b98e9dfbdd1c7d8d2d7643854",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/variation-layout/editor-1280.png",
+      "bytes": 107987,
+      "sha256": "04483bb6715421f7f3e9fa9e8fc82d5709c62de67e3dd25e971fbab5fc5073f4",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/variation-layout/editor-720.png",
+      "bytes": 92347,
+      "sha256": "46062785fecb445cdca2c6b8e9ad1b4527bd6002ae04788051576afc040d7a09",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/variation-layout/overview-1280.png",
+      "bytes": 117200,
+      "sha256": "697e90deaa53f3fe296657d146c25295639f310b74e058b84961a2489f12ea94",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/variation-layout/overview-720.png",
+      "bytes": 92418,
+      "sha256": "c64f65140be8652f67a3383334ef2ba69e30ac5fa30672388bd6128eed199d2e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-control-menu-720.png",
+      "bytes": 9087,
+      "sha256": "1b931509bfca6cb56f508f890efee854944bc4e374e8816eaef84885a35f4a33",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-dashboard-720.png",
+      "bytes": 69374,
+      "sha256": "8697059b11923d6189c6e24ee124b00b437a4cf842beaf8c486bad9b89bf33d7",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-dashboard-wide.png",
+      "bytes": 117454,
+      "sha256": "7e10b0d74740b8498a31ae5e3cc6c074c77ebf348643e848be376178466e4dc8",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-projectors-720.png",
+      "bytes": 54028,
+      "sha256": "00b6f489441da1c39c3ae52af73ace4b034e686c8c3ade9e8045842c75f0d43e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-projectors-wide.png",
+      "bytes": 96329,
+      "sha256": "035c9b9f0e02f1e79b64f2c161ce813f9a3dd52501d1a1732003cb722aeba8e8",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-protocol-720.png",
+      "bytes": 76785,
+      "sha256": "007f88031838434888d1fb9caab7999bb3f832c9e1b19bcfec352a3cd15a6a5f",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-protocol-wide.png",
+      "bytes": 80009,
+      "sha256": "db8d8d243ebedaa24d5bd0a96c630e4dee76f4a1ef9bda633831de676232c49e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-spikeglx-720-tall.png",
+      "bytes": 95160,
+      "sha256": "09a9866a0fc9f51b0d63a126025f0f82316eb33a732597810917e02695d8e560",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-spikeglx-720.png",
+      "bytes": 69451,
+      "sha256": "d4441db0fb4f36366b955079642f7f96ec807d1d816dc39c67a0a359d7e277c4",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-spikeglx-wide.png",
+      "bytes": 103535,
+      "sha256": "a4e378a639c9070b48478ef92fc7fb2f5939ae539aced9fb9aa31c2350330a8b",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-tracking-720.png",
+      "bytes": 68577,
+      "sha256": "78ae3ebb45d30a7a00a825a7f2c4ee077d286a5a8dd1f931d58bc6d5eae099fd",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/managed-tracking-wide.png",
+      "bytes": 78612,
+      "sha256": "3f514861d4d9630cf4868da3530dfc1b3ceb94bee40081c03a529cf3446dd525",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-dashboard-720.png",
+      "bytes": 69367,
+      "sha256": "8a674e1a9af7fd754fb50df79ac4669d8b024e34e0f4f03b2250937b8af6a1bc",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-dashboard-wide.png",
+      "bytes": 117046,
+      "sha256": "26bed1abb2377fa3e2cafd15c04dd8bce4a70d685e1e203c222f91534b6719dc",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-projectors-720.png",
+      "bytes": 54112,
+      "sha256": "d921f8514fa89bd19cdd0b9b65d1487a4bd296c08cf5525d8525647ff3dc0575",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-projectors-wide.png",
+      "bytes": 96317,
+      "sha256": "59c80a6ccac141c26767b99af2c484cf703099ba51fa08a2c8553b955ec07a6e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-protocol-720.png",
+      "bytes": 76835,
+      "sha256": "0f2439c3c01fcd1a02f4c2fbbb512171df54c7092987d67b132e793903b0af40",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-protocol-wide.png",
+      "bytes": 79808,
+      "sha256": "74587d08df04ae19e645b90b1a88792527fefea7e8c69bd89620d7271aa5998c",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-spikeglx-720-tall.png",
+      "bytes": 95218,
+      "sha256": "3545256bef847060146815d2fa0b00500bcc88d6576b8f22c1c65b5bd7e536f5",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-spikeglx-720.png",
+      "bytes": 70778,
+      "sha256": "7291247ec773be603c568ac61da3b9257c85217251990cadf7e02de274199a02",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-spikeglx-wide.png",
+      "bytes": 103302,
+      "sha256": "35d8be5822ac6f68447230c11bf49ba2d3c9dcbb7c5b419621eacd945a80ab1e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-tracking-720.png",
+      "bytes": 68764,
+      "sha256": "f906ec788cc04f23440b7ae9acb866850f63c712eb609a008d55bc338bad3fd9",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-managed-2026-10-07/managed-tracking-wide.png",
+      "bytes": 78149,
+      "sha256": "7de9098e59be2e5d66ceb2e8da3b608b416afc01afa6b9f0439c260c22d5e193",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-dashboard-720.png",
+      "bytes": 56384,
+      "sha256": "cc6d7d02d6a6c4fcb47b1af238cafb5dd00b30996f633fc5a2e6609c6bedfb0e",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-dashboard-wide.png",
+      "bytes": 76500,
+      "sha256": "bf79bd7e6547df0376200e52236bf7d77d5950594b95c695afc7e615e16ee857",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-projectors-720.png",
+      "bytes": 47374,
+      "sha256": "8eee2abac02602e02c5bcff5f5111578215ea074af04e70dc05bd275c921133b",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-projectors-wide.png",
+      "bytes": 77389,
+      "sha256": "111fac8d36d8d5d850ed96537da60db857542982e292e02dea9682a625994df7",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-protocol-720.png",
+      "bytes": 59017,
+      "sha256": "98f47318d128120f9d3965b47e576fe89244a4b0b71f243ecd83a25daefabdc9",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-protocol-wide.png",
+      "bytes": 61975,
+      "sha256": "7aba2541c5cdfd1b37d5ca01864ff3b3506ee3040ee49e4ab8885a660689d0a8",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-spikeglx-720.png",
+      "bytes": 63687,
+      "sha256": "f4191ac5a316a1993e76c686153cc0623069eb0d8f48650512ed6e30d1cc5ccc",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-spikeglx-wide.png",
+      "bytes": 73797,
+      "sha256": "68bd20b2721cd285f2b9aee89d8099cc41a3a1b09b9fd02bc69d1e79995e212c",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-tracking-720.png",
+      "bytes": 55894,
+      "sha256": "d3a4816e29995cc33f2750bfd96541eed4e86e0bc50edfc81dcfb3493c5a0286",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/runtime-wiring-evidence-2026-10-06/gui-captures-unthemed-2026-10-07/managed-tracking-wide.png",
+      "bytes": 61747,
+      "sha256": "7bc8968552194db067ca9dd6d4d1b836dc6e5acc1560e709ff2695cc8ebf2ac1",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "reports/tracking-evidence-2026-10-08/physical-reference-gui.png",
+      "bytes": 29929,
+      "sha256": "ad13c24b62b8e487fc2bce87bc6bc97fe962812f9745247a038278dbd3d02b20",
+      "reason": "Image/video kept locally; excluded by owner request"
+    },
+    {
+      "path": "src/cephvr/platform/windows/cephvr_atomics.dll",
+      "bytes": 9728,
+      "sha256": "4bcebb9a9787179d3b8da71a7b0689f1eac0b101bb92be0dff7b4a4cd7375a1d",
+      "reason": "Reproducible build artifact or stale run marker"
+    },
+    {
+      "path": "src/cephvr/tracking/native/cephvr_nvof.dll",
+      "bytes": 27648,
+      "sha256": "347467dd568b04429c38c0699070557d65bdf281e84449801aa9136873e8cdaf",
+      "reason": "Reproducible build artifact or stale run marker"
+    }
+  ],
+  "count": 423,
+  "bytes_removed_from_current_tree": 254291141,
+  "native_outputs": "Local DLLs remain in place. Fresh checkouts build them from native/ sources with tools/test_on_rig.ps1, using the existing build flags.",
+  "demo_assets": "Nine demo PNGs are replaced by a standard-library generator and temporary fixtures; source manifest/texture descriptors remain tracked.",
+  "other_work": "Preserve concurrent runtime-gui-source-refresh changes and evidence.",
+  "updated_incoming_links": [
+    {
+      "path": "reports/rig-audit-2026-10-01/README.md",
+      "local_only_references": [
+        "repair-new-files.zip"
+      ]
+    },
+    {
+      "path": "reports/rig-wiring-evidence-2026-10-08/README.md",
+      "local_only_references": [
+        "behavior-preview.png",
+        "behavior_moved-preview.png"
+      ]
+    },
+    {
+      "path": "reports/runtime.md",
+      "local_only_references": [
+        "gui-configuration-evidence-2026-10-08/sidebar.png",
+        "gui-configuration-evidence-2026-10-08/microcontroller.png",
+        "gui-configuration-evidence-2026-10-08/spikeglx.png",
+        "tracking-evidence-2026-10-08/physical-reference-gui.png"
+      ]
+    }
+  ],
+  "verification": {
+    "focused_gui_and_resource_tests": "6 passed, 500 deselected",
+    "ruff": "src/tests/tools/scripts: pass",
+    "mypy": "--platform win32 tools/generate_demo_assets.py tests/conftest.py:2 source files pass",
+    "boundaries": "687 modules, zero violations; existing cohesion advisories",
+    "runtime_change": "No backend runtime behavior changed; native DLLs and all archived local artifacts remain in place.",
+    "packaging": [
+      {
+        "artifact": "cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl",
+        "bytes": 1819256,
+        "media_members": []
+      },
+      {
+        "artifact": "cephvr-2.0.0.dev0.tar.gz",
+        "bytes": 1360009,
+        "media_members": [],
+        "generator_included": true,
+        "descriptor_count": 4
+      }
+    ],
+    "final_index": "Zero tracked images/videos and zero ignored-but-tracked files;2592 local Markdown hyperlinks point to retained tracked files or existing tracked directories; staged/working whitespace checks pass."
+  },
+  "initial_attempts": [
+    "Sandbox build blocked by default temporary-directory permissions; permitted no-isolation build passed."
+  ],
+  "history_preference": "Owner explicitly chose clean current branch and preserve history on2026-10-14.",
+  "final_source_sha256": {
+    "tools/generate_demo_assets.py": "d31933c5d7910d9d236bb6b86673259a834cb9baa84db7edf62ddf8cb5a13383",
+    "tests/conftest.py": "9e57038bbc226a0453ae73c94a7e08ff5e15cfa2f84a703a9fcd84a442d30e2e",
+    "tests/gui/test_dashboard.py": "32c5b474579f393691e2e3ce20793e2bc0f44fbd86a464e0f40e8a491163cc48",
+    "tests/visual_stimulus/test_resources.py": "c36972ef7c3a8f4e1f30770f8e1d6fa09aee308962df318da9171729cdf5a44e",
+    "MANIFEST.in": "93a6f7eb05645086d25f001681fc7e5e0645924b218d2b28d683b1e08a0f797c"
+  },
+  "task_generated_temporary_paths_removed": [
+    ".tmp/repo-cleanup-tests",
+    ".tmp/repo-cleanup-build",
+    ".tmp/repo-cleanup-pathspec"
+  ]
+}

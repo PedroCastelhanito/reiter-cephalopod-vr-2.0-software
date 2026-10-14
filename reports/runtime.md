@@ -1,5 +1,66 @@
 # Controller and supervisor status
 
+Oct14 owner-requested repository cleanup under [ARCH-002](../architecture.md#arch-002)
+removes423 files/254291141 bytes from the current tracked tree:136 images,260
+captured-run dataset files,13 obsolete source/document-editing probes and14 other
+build/run artifacts, including locally generated native DLLs. Original local files
+and assessed evidence are preserved. Image/video ignore rules apply throughout the
+repository; historical commits stay unchanged, as explicitly selected by the owner.
+The [cleanup inventory](runtime-evidence-2026-10-14/repo-cleanup/context.json)
+records original paths, sizes, SHA-256 hashes and local-only storage. Screenshots,
+recording datasets, archived packages and old one-shot edits listed there require
+local access; summaries, contracts, logs and substantive verification records stay
+tracked. Existing screenshot/archive hyperlinks now identify local-only evidence.
+
+The nine demo PNGs are generated on demand from a small standard-library tool and
+source descriptors. The GUI/Visual Stimulus tests use one shared temporary fixture,
+so a fresh checkout needs no checked-in images. No backend runtime code/state,
+scientific policy, native C++ source or dependency is removed. The two native DLLs
+remain on the rig; fresh checkout builds use the existing documented flags.
+Six affected GUI/resource tests pass; full source/test/tool/script Ruff, Win32 mypy
+for the two new helper/fixture files, and boundaries687/zero violations pass.
+The no-isolation wheel/sdist build passes and archive inspection confirms neither
+contains images/videos; the sdist includes the generator and four JSON descriptors.
+Initial sandbox build fails on temporary-directory permission before the permitted
+replacement succeeds. This is packaging/fixture validation, not rig acceptance.
+Concurrent GUI-refresh work and its projector-availability finding are preserved.
+
+Oct14 rig GUI refresh (`runtime-gui-source-refresh`) under
+[G01](../docs/architecture/gui.md#g01),
+[E08](../docs/architecture/system-contracts.md#e08) and
+[E15](../docs/architecture/system-contracts.md#e15): Review and Runtime already
+inherit the same DashboardWindow; the rig editable install resolves this checkout.
+Regenerated 19 Protobuf sources with no tracked binding changes and installed the
+missing declared Pillow12.2.0 dependency. All20 declared runtime dependencies
+match current requirements. Existing owning GUI checks pass14 cases, including
+wide/narrow Review/Runtime parity, contextual wiring, managed editing and full-draft
+close/reopen; launcher tests pass46. Boundaries687/zero violations. Initial sandbox
+test attempt passes7 with7 temporary-directory fixture errors; the repository-local
+temporary-directory rerun passes all14. The initial sandbox package install lacked
+DNS; the permitted install succeeds. Tests use `-p no:faulthandler` for the GUI
+under the previously recorded native exception-hook limitation; no full/native suite
+or scientific acceptance is claimed.
+
+Reopened the GUI through the existing launcher, then performed the owner's explicitly
+approved full replacement through E08's exact owner event/exit-confirmation path.
+The new controller16297497-8a48-4a38-866a-f21c52339bf2 and supervisor
+575eb577-487e-4737-b768-3afa49d6c574 run current source with newly launched
+acquisition, Visual Stimulus, Tracking and GUI. Authenticated status confirms
+Configuration/revision1; Windows inspection confirms a responsive Dashboard.
+Native UI inspection confirms the updated shared cards and compact retained review.
+The initial unavailable-projector blocker is resolved after owner power-on:
+all four saved DLP identities enumerate at60Hz. A further approved E08 replacement
+starts controller87ca3771-29f3-41db-bfdc-31ec13491f0f; native GUI confirms saved
+settings restored as a local draft, Control held and enabled Setup without startup
+dialogs. Four renderer outputs report resources ready, applied revision1 and returned
+Idle submissions without initialization issues. Leave runtime session73592 open;
+no settings were reset and no experiment was started. This confirms restoration
+and native initialization, not measured calibration or optical/full-workload acceptance.
+[Power-on recovery evidence](runtime-evidence-2026-10-14/gui-refresh/projectors-on-context.json).
+[Evidence/provenance](runtime-evidence-2026-10-14/gui-refresh/context.json)
+retains test results and pre/post-replacement status; remaining acceptance stays in
+the [rig checklist](rig-verification.md).
+
 Oct13 sidebar cleanup under [G01 revision181](../docs/architecture/gui.md#g01)
 removes the full-GUI Load/Save buttons. Snapshot/history ownership and per-page
 file controls remain; restore errors no longer recommend the removed button.
@@ -1382,9 +1443,9 @@ projection/fixture cases pass. Ruff lint/format pass 138 GUI/test files, Win32 m
 passes 136 GUI sources, boundaries inspect 632 modules with zero violations, and
 732 local links/anchors plus ten register checks and whitespace pass. Retain
 [raw JUnit, source hashes and method limits](gui-configuration-evidence-2026-10-08/context.json),
-plus inspected offscreen [sidebar](gui-configuration-evidence-2026-10-08/sidebar.png),
-[MCU](gui-configuration-evidence-2026-10-08/microcontroller.png) and
-[SpikeGLX](gui-configuration-evidence-2026-10-08/spikeglx.png) images. No running
+plus inspected offscreen sidebar (local-only `gui-configuration-evidence-2026-10-08/sidebar.png`),
+MCU (local-only `gui-configuration-evidence-2026-10-08/microcontroller.png`) and
+SpikeGLX (local-only `gui-configuration-evidence-2026-10-08/spikeglx.png`) images. No running
 managed runtime is restarted or native chooser/hardware pass claimed;
 [rig checks](rig-verification.md) retain native chooser/DPI and hardware acceptance.
 ARCH-002 review keeps file IO and snapshot codecs in focused modules, with existing
@@ -1399,7 +1460,7 @@ throw distance with measured X/Y scale and a derived estimate; Tracking requires
 scale and publishes mm/s/deg/s proxies. Explicit old input/gain editing and versioned
 files prevent silent reinterpretation. Affected checks pass 658 (one skip; two concurrent
 temporary-pacing checks excluded plus one rig deselection), with post-review owning
-checks passing. The [offscreen card](tracking-evidence-2026-10-08/physical-reference-gui.png)
+checks passing. The offscreen card (local-only `tracking-evidence-2026-10-08/physical-reference-gui.png`)
 is visually checked. No managed runtime restart or physical calibration is claimed;
 native/DPI/optical/scientific/full-load acceptance remains in the rig checklist.
 

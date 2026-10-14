@@ -110,7 +110,7 @@ ignored caches/dist and default pytest directories 12/13/14 were retained becaus
 exact run mapping was not established; no blanket deletion was performed.
 
 Baseline-relative [tracked patch](repair-source.patch),
-[new source/native files](repair-new-files.zip) and
+new source/native files (local-only `repair-new-files.zip`) and
 [file/hash manifest](repair-source-manifest.json) preserve the dirty source snapshot.
 Optional-library missing-import scopes preserve the minimal-dev static baseline
 without suppressing installed types; absent-extra runtime was not executed.

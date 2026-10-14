@@ -1,5 +1,0 @@
-{"monotonic_ns":6440136724100,"wall_time":"2026-10-13T12:56:08.294542+09:00","event_type":"session_started","source":"controller"}
-{"monotonic_ns":6440649444200,"wall_time":"2026-10-13T12:56:08.807262+09:00","event_type":"trial_started","source":"controller","trial_number":1}
-{"monotonic_ns":6500649444200,"wall_time":"2026-10-13T12:57:08.807262+09:00","event_type":"trial_finished","source":"controller","trial_number":1,"outcome":"completed"}
-{"monotonic_ns":6500748871700,"wall_time":"2026-10-13T12:57:08.906689+09:00","event_type":"session_ended","source":"controller","outcome":"completed"}
-{"monotonic_ns":6607798123800,"wall_time":"2026-10-13T12:58:55.969242+09:00","event_type":"recovery","source":"controller","outcome":"completed","details":{"component":"controller","action":"startup_recovery","recovery_controller_generation":"c3532451-334e-4874-beaa-3e181be7bc2d","event_clock":"current_recovery_application","scientific_output_closure":"unconfirmed"}}

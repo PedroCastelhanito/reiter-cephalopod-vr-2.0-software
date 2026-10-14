@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "4b85f0a3e787b616f70cd50382e608d34d92381b",
+  "source_hash_scope": "End-of-task source hashes; concurrent edits appeared after the focused test run and are preserved. These hashes are not a reconstructed test-start snapshot.",
+  "sha256": {
+    "pyproject.toml": "c436d64620d94909bcfac3a6409427b89c89b5f4a26faeb2614f1e82973b409d",
+    "scripts/start_runtime_gui.py": "266f615d63baab4cbaf65363bc640ca9039580f4cc1d9cee37baed6debf701ec",
+    "src/cephvr/gui/window.py": "24906d9bb93359f0d4fc699f6e13256bce564a45805bffda694a8d91a1b57664",
+    "src/cephvr/gui/managed_window.py": "5dd0badf2d51b46e2efdd9412ded0619212bfb07603eaec1ab4c5fa9a8695d1b",
+    "src/cephvr/gui/main.py": "f756b756a626df2a0801b0a3b6814a3d352daf3603656d180cfb50895bc2253a",
+    "src/cephvr/gui/review.py": "155efd385923caa879b99b9ce365509671f7b45dff928224c2ac9dfa4c5a16a3",
+    "tests/gui/test_dashboard.py": "32c5b474579f393691e2e3ce20793e2bc0f44fbd86a464e0f40e8a491163cc48",
+    "tests/launcher/test_lifecycle.py": "c185c659750e54bd0a5a43fe7b86c468f7cfa1686bc1c9705fcb95b114e0132b"
+  },
+  "commands": [
+    {
+      "command": ".venv/Scripts/python.exe tools/generate_contracts.py",
+      "result": "19 sources; no tracked generated binding drift"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pip install Pillow==12.2.0",
+      "result": "Sandbox DNS failed; permitted cached wheel install succeeded"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pip check",
+      "result": "passed"
+    },
+    {
+      "command": "Compare pyproject core/gui/tracking/visual_stimulus/acquisition requirements with importlib.metadata",
+      "result": "20 unique requirements; no missing or mismatched versions"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"review_and_runtime_share_page_elements_and_card_layouts or managed_role_wiring or contextual_wiring or runtime_gui_close_reopen or timeline_edits_preserve or initial_and_reopened_retained or managed_runtime_editors\" -p no:faulthandler --basetemp .tmp/gui-refresh-pytest --junitxml reports/runtime-evidence-2026-10-14/gui-refresh/gui.xml",
+      "result": "14 passed, 449 deselected"
+    },
+    {
+      "command": "Same GUI selection before repository-local basetemp",
+      "result": "7 passed, 7 temp-directory setup errors, 449 deselected; raw initial console not saved, summary reconstructed from tool output"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/launcher -q -m \"not windows and not rig\" --basetemp .tmp/gui-refresh-launcher --junitxml reports/runtime-evidence-2026-10-14/gui-refresh/launcher.xml",
+      "result": "46 passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "687 modules, zero violations; existing cohesion advisories; no source extension"
+    },
+    {
+      "command": ".venv/Scripts/python.exe scripts/start_runtime_gui.py --reopen-gui",
+      "result": "reopen signal delivered; fresh GUI responsive"
+    },
+    {
+      "command": ".venv/Scripts/python.exe scripts/start_runtime_gui.py",
+      "result": "Owner explicitly approved full replacement; Y submitted to built-in prompt; exact old-owner exit confirmed; new runtime remains open in exec session81293"
+    }
+  ],
+  "pillow_version": "12.2.0",
+  "runtime": {
+    "controller_generation": "16297497-8a48-4a38-866a-f21c52339bf2",
+    "supervisor_generation": "575eb577-487e-4737-b768-3afa49d6c574",
+    "gui_pid": 31660,
+    "gui_title": "CephVR2.0 \u2014 Dashboard",
+    "phase": "Configuration",
+    "configuration_revision": 1
+  },
+  "native_inspection": "Computer-use accessibility and activated target screenshot verify shared Dashboard cards, compact important review and controller-connected log. First occluded screenshot captured foreground app and was not used as GUI evidence. Startup diagnostic dialogs left for owner review.",
+  "blocker": "Saved projector identity unavailable. runtime_gui.json preserved; DISPLAY_OUTPUT_UNAVAILABLE matched0 active monitors, initialization resources released. No scientific settings reset.",
+  "limits": "Focused local parity/behavior and authenticated startup checks only. No full GUI/native suite, Setup/Start/capture, optical/electrical/full-load acceptance. Full replacement used containment termination and does not prove graceful output closure."
+}

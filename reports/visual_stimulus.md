@@ -1,5 +1,25 @@
 # Visual Stimulus status
 
+Oct14 projector power-on recovery under
+[V19](../docs/architecture/visual_stimulus.md#v19) and
+[E08](../docs/architecture/system-contracts.md#e08): all four saved DLP identities
+enumerate at60Hz. The approved fresh runtime reports four resources-ready outputs,
+applied configuration revision1 and returned Idle submissions with no initialization
+issues. Saved GUI settings restore as a local draft; no Setup/Start or scientific
+settings change. This closes the unavailable-display startup blocker only;
+optical/calibration/full-workload acceptance remains in the
+[rig checklist](rig-verification.md).
+[Authenticated status and method](runtime-evidence-2026-10-14/gui-refresh/projectors-on-context.json).
+
+Oct14 repository media cleanup keeps the demo manifest/texture descriptors in source
+control and generates their nine sample PNGs locally through
+`tools/generate_demo_assets.py`. Existing texture decoding tests now use temporary
+samples; three owning decode cases and three GUI authoring/repetition cases pass.
+[Cleanup inventory and validation](runtime-evidence-2026-10-14/repo-cleanup/context.json)
+index the local-only screenshots/run datasets and generated binaries. V02/V04/V12
+runtime ownership, actual saved media/evidence and scientific acceptance limits are
+unchanged. The native sources/builders remain tracked; no active runtime is altered.
+
 Device workflow refinement under [G01](../docs/architecture/gui.md#g01) keeps
 projector assignment/participation separate from MCU input wiring. Projectors opens
 a contextual editor for the canonical MCU draft, shows calibration prerequisites,

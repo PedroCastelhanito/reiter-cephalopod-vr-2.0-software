@@ -1,5 +1,11 @@
 # Developer commands
 
+`python tools/generate_demo_assets.py` creates nine deterministic local images and
+texture previews for the source descriptors in `demo_assets/`. Use `--output <dir>`
+for another destination. These samples are for authoring/tests, not calibrated
+scientific stimuli. Generated images are ignored by Git; the tests generate their
+own temporary asset directory and do not require images in a fresh checkout.
+
 `generate_contracts.py` generates Python, type stubs and gRPC bindings from every
 authoritative Protobuf source. `build_backend.py` invokes the same generator before
 editable installations and wheel builds, then delegates packaging to setuptools.

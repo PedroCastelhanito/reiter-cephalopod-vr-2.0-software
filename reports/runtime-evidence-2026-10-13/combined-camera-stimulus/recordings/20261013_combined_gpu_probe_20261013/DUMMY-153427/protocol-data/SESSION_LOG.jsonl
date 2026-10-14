@@ -1,5 +1,0 @@
-{"monotonic_ns":15943205094500,"wall_time":"2026-10-13T15:34:31.364931+09:00","event_type":"session_started","source":"controller"}
-{"monotonic_ns":15943981873800,"wall_time":"2026-10-13T15:34:32.141710+09:00","event_type":"trial_started","source":"controller","trial_number":1}
-{"monotonic_ns":15984255157600,"wall_time":"2026-10-13T15:35:12.414994+09:00","event_type":"trial_finished","source":"controller","trial_number":1,"outcome":"interrupted","details":{"output_closure_confirmed":false,"start_unconfirmed":["acquisition"],"actual_end_monotonic_ns":null,"interruption_issued_monotonic_ns":15944242959400}}
-{"monotonic_ns":15984259500100,"wall_time":"2026-10-13T15:35:12.419336+09:00","event_type":"session_ended","source":"controller","outcome":"interrupted"}
-{"monotonic_ns":16203291875000,"wall_time":"2026-10-13T15:38:51.463093+09:00","event_type":"recovery","source":"controller","outcome":"completed","details":{"component":"controller","action":"startup_recovery","recovery_controller_generation":"90828389-d71a-4056-a2ba-8d80c5c2c51e","event_clock":"current_recovery_application","scientific_output_closure":"unconfirmed"}}

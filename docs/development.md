@@ -153,6 +153,18 @@ python scripts/start_runtime_gui.py
 python scripts/start_runtime_gui.py --reopen-gui
 ```
 
+Images and videos are local assets and are excluded from Git. To create the optional
+dummy authoring samples from the checked-in descriptors, run
+`python tools/generate_demo_assets.py`. Tests generate their own temporary samples.
+These patterns are not calibrated scientific stimuli. Historical screenshot/run
+data kept locally is indexed by the dated cleanup manifests in `reports/`.
+
+Native DLLs are generated outputs. A fresh Windows checkout builds the atomic
+helper with `tools/test_on_rig.ps1 -Install` or `-BuildWindowsNative`, and the Tracking
+library with `-BuildTrackingNative -NvofSdkRoot <actual-header-root>`. Existing native
+source and builder instructions remain authoritative; cleanup preserves the rig's
+local binaries and does not change a running application's files.
+
 In VS Code, open **Run and Debug** and choose **CephVR: Review GUI (simulated)**
 or **CephVR: Runtime GUI (managed)**, then press F5. The checked-in
 `.vscode/launch.json` selects the repository `.venv` and an integrated terminal

@@ -15,21 +15,11 @@ Recheck source findings before implementation; local completion does not close r
 ## In progress
 
 
-
-
-
-
-
-
-
-
-
 ## Next
 
 - [ ] `mixed-subgroup-random-rule-edit` [gui] Reject or correctly apply random-rule edits across multiple batch identities; source inspection and local invalid-input probe show stored rules remain unchanged while the draft is cleared. — [Assessment](reports/runtime.md)
 
 - [ ] `physical-surface-coordinate-origin` [visual_stimulus] Reconcile observed contract/renderer mismatch: stimulus-schema declares bottom-left local origin but physical_corners emits centered clip coordinates. Choose/migrate the intended contract before changing existing stimulus placement; linked-spin validation follows actual rendering without changing it. — [Assessment](reports/visual_stimulus.md)
-
 
 - [ ] `projector-calibration-retention` [gui] Diagnose owner-reported calibration loss after closure using the actual closure path and saved/restored values; current normal-close regressions and all16 nonzero field roundtrips pass, so production cause is unverified. — [Investigation](reports/runtime.md)
 - [ ] `gui-backend-dummy-experiment` [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Complete remaining Eye/locomotion Tracking/paired/optical/electrical scientific acceptance within owner-approved scope and existing deferrals. Combined Behavior/Tracking recording now verifies nominal60fps/GPU placement and repeated reset; uniform frame time and zero-loss recording are not established. — [Current assessment](reports/runtime-evidence-2026-10-13/combined-camera-stimulus/context.json)
@@ -40,7 +30,6 @@ Recheck source findings before implementation; local completion does not close r
 - [ ] `native-picker-pytest-exception-hook` [gui] Diagnose native picker exit0xC0000409 with pytest's default faulthandler; the same23-case regression without that plugin and standalone native shell/cancellation proofs pass. Cause unverified; establish ordinary native suite compatibility. — [Runtime assessment](reports/runtime.md)
 
 - [ ] `native-protocol-hover-tests` [gui] Diagnose two real-Windows Protocol hover-control lookup tests failing with StopIteration; isolated repeats construct zero file dialogs. Establish whether native input/geometry or fixture timing causes the failures before claiming production behavior or native GUI acceptance. — [Current assessment](reports/runtime.md), [Native evidence](reports/runtime-evidence-2026-10-13/native-chooser/context.json)
-
 
 - [ ] `mcu-managed-connection-and-io` [gui] [controller] [acquisition] Verify the fresh-GUI Eye pin9/60Hz diagnostic after the local submission repair, including installed protocol compatibility; complete original-boundary/watchdog latency under load and recoverable interrupted-upload/uncertain-cleanup injection. Oct13 COM8 Connect confirms protocol 3 / cephvr2_uno_2 with stopped camera outputs and final exclusive COM release; earlier verified GUI uploads remain historical passes. Electrical D2/source/receiver/LOW measurements are owner-deferred today. — [MCU submission repair](reports/runtime.md), [Current assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
 

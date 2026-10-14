@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-14",
+  "task": "rig-projector-display-availability",
+  "authority": "Owner powers on projectors; repeat earlier explicit full runtime replacement approval.",
+  "method": "Existing active_monitor_bindings read-only inventory; authenticated CLI status before/after; E08 normal duplicate launch and Y confirmation; computer-use activated native GUI screenshot.",
+  "active_monitors": [
+    {
+      "interface": "\\\\?\\DISPLAY#DEL41FA#5&1209fbcf&1&UID524#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 1080,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4352#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -3840,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4353#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -2560,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4355#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -2280,
+      "y": 720,
+      "width": 720,
+      "height": 1280,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4357#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -1280,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    }
+  ],
+  "controller_generation": "87ca3771-29f3-41db-bfdc-31ec13491f0f",
+  "supervisor_generation": "56d15bd7-ab16-41cc-b3a1-6bad8b0156c6",
+  "results": "Four saved DLP outputs available at60Hz; Configuration/revision1; each output resources_ready with applied_revision1 and returned Idle submission; no initialization issues. Native GUI shows Previous GUI configuration restored as a local draft, Control held, enabled Setup, and no startup modal.",
+  "snapshots": [
+    "projectors-on-before.json",
+    "projectors-on-after.json"
+  ],
+  "runtime_exec_session": 73592,
+  "scope_limits": "No Setup/Start, camera capture, firmware, measured calibration, optical timing or full-load acceptance. Runtime remains open. Existing saved values are used without reset."
+}
