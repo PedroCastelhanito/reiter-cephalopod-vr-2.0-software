@@ -15,18 +15,13 @@ def role_prepared_functions(
     """Return identical Ready and worker-Setup declarations for one exact role."""
     if session.confirmed_settings is None:
         raise RuntimeError("Setup settings were not adopted")
-    setting = getattr(session.confirmed_settings, role_name)
     output_prefix = f"{role_name}_cam"
     output_keys = sorted(
         output.output_key
         for output in session.reserved_outputs
         if output.output_tag in {output_prefix, f"{output_prefix}_frames"}
     )
-    recording_key = (
-        f"{role_name}.recording"
-        if setting.HasField("save_video") and setting.save_video
-        else None
-    )
+    recording_key = f"{role_name}.recording"
     capture_key = f"{role_name}.capture"
     capture_closure = [capture_key]
     if recording_key is not None:

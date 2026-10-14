@@ -28,15 +28,30 @@ def build_recording_settings(
 ) -> acq.RecordingSettings | None:
     """Resolve recording policy and tools for one controller-confirmed camera.
 
-    Saving-off cameras need neither encoder discovery nor capability setup. For a
-    saving camera this binds only data already resolved by configuration/Setup;
+    Video-off cameras receive metadata-only settings without encoder discovery.
+    Video settings bind only data already resolved by configuration/Setup;
     recording validation and device capability admission remain worker-owned.
     """
     selected = _selected_camera(settings, role)
     if not selected.HasField("enabled") or not selected.enabled:
         return None
-    if not selected.HasField("save_video") or not selected.save_video:
-        return None
+    if not selected.HasField("save_video"):
+        raise ValueError("camera save_video must be resolved")
+    if not selected.save_video:
+        if not session_config_reference or "\x00" in session_config_reference:
+            raise ValueError("session configuration reference must be nonempty text")
+        if (
+            file_policies.frame_log_sync_interval_ns <= 0
+            or settings.recording_options.pending_records_capacity <= 0
+        ):
+            raise ValueError("metadata recording bounds must be positive")
+        _validate_resolved_device(selected, resolved)
+        return acq.RecordingSettings(
+            metadata_only=True,
+            session_config_reference=session_config_reference,
+            frame_log_sync_interval_ns=file_policies.frame_log_sync_interval_ns,
+            pending_records_capacity=settings.recording_options.pending_records_capacity,
+        )
     _validate_resolved_device(selected, resolved)
     if not selected.HasField("ffmpeg_args"):
         raise ValueError(f"{_role_name(role)} recording arguments are unresolved")

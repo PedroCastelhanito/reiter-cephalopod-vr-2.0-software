@@ -171,7 +171,9 @@ class DashboardWindow(QMainWindow):
         editor = self.protocol.editor
         projectors = self.devices.projectors
         resolutions = {
-            projectors.assignments[key]: (rect.width(), rect.height())
+            projectors.assignments[key]: projectors.display_pixels.get(
+                key, (rect.width(), rect.height())
+            )
             for key, (_, rect) in zip(
                 projectors.keys, projectors.diagram.outputs, strict=True
             )

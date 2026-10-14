@@ -18,7 +18,10 @@ from cephvr.controller.state import (
     LimitsState,
 )
 from cephvr.shared.deadlines import remaining_seconds
-from cephvr.visual_stimulus.config.calibration_adjustments import validated_adjustments
+from cephvr.visual_stimulus.config.calibration_adjustments import (
+    LIVE_ADJUSTABLE_VIEWS,
+    validated_adjustments,
+)
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
 
@@ -61,7 +64,7 @@ async def update_calibration(
             or view.backend != backend.context
             or evidence is None
             or evidence.state != vp.DISPLAY_CALIBRATION_STATE_ACTIVE
-            or evidence.calibration_view != "frame_grid"
+            or evidence.calibration_view not in LIVE_ADJUSTABLE_VIEWS
             or evidence.diagnostic_id != request.diagnostic_id
             or evidence.configuration_revision != configuration.revision
             or evidence.controller_generation != generation

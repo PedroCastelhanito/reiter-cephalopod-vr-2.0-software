@@ -424,6 +424,9 @@ class ManualControlCleanup:
                         progress="safe camera release unconfirmed",
                         error=str(exc),
                     )
+                    # Free the slot so a cleanup retry is not wedged; a late exact
+                    # report is still adopted from the retained operation.
+                    self.status_retention.retire_operation(operation)
                     self.hooks.publish()
             raise
 

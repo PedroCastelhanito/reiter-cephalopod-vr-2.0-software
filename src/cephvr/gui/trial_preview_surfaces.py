@@ -5,7 +5,12 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any
 
-from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+from cephvr.gui.calibration_profile import (
+    KEYSTONE_KEYS,
+    MARGIN_KEYS,
+    MonitorBinding,
+    face_mapping,
+)
 from cephvr.gui.projector_geometry import (
     RigDimensions,
     resolved_screens,
@@ -25,10 +30,8 @@ class PreviewCorrection:
         try:
             values: dict[str, object] = {}
             for key in (
-                "scale_u",
-                "scale_v",
-                "offset_x",
-                "offset_y",
+                *MARGIN_KEYS,
+                *KEYSTONE_KEYS,
                 "width",
                 "height",
                 "throw",
@@ -49,11 +52,11 @@ class PreviewCorrection:
             if (
                 any(
                     values[f"screens.{face}.{key}"] not in (None, 0.0)
-                    for key in ("offset_x", "offset_y")
+                    for key in MARGIN_KEYS
                 )
                 and resolution is None
             ):
-                raise ValueError(f"Assign a display to {face} to resolve pixel offsets")
+                raise ValueError(f"Assign a display to {face} to resolve pixel margins")
             if resolution is None and any(
                 values[f"screens.{face}.reference_{axis}_mm"] is not None
                 for axis in ("x", "y")

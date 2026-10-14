@@ -99,7 +99,8 @@ class Pose(Model):
 
 class Header(Model):
     kind: Literal["header"]
-    format_version: Literal[3, 4]
+    format_version: Literal[3, 4, 5]
+    video_enabled: bool = True
     identity: Identity
     writer_generation: Id
     recipe: (

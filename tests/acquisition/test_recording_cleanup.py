@@ -534,7 +534,9 @@ def test_recording_session_pads_and_closes_with_original_tail_deadline(
     encoder = Encoder()
     video_sync = VideoSync()
     session = object.__new__(RecordingSession)
+    session.settings = SimpleNamespace(metadata_only=False)
     session.settings = SimpleNamespace(
+        metadata_only=False,
         recording_bit_depth=8,
         video_sync_interval_ns=1,
         frame_log_sync_interval_ns=1,
@@ -650,6 +652,7 @@ def test_unproved_terminal_stop_never_generates_trailing_video_slots(
     encoder = _Encoder()
     frame_log = SimpleNamespace(last_video_source=(0, start_ns), next_video_slot=1)
     session = object.__new__(RecordingSession)
+    session.settings = SimpleNamespace(metadata_only=False)
     session._finished = False
     session._finish_results = None
     session._error = None
@@ -722,6 +725,7 @@ def test_unlogged_submitted_tail_input_cannot_be_retried_as_normal_closure(
 
     encoder = _Encoder()
     session = object.__new__(RecordingSession)
+    session.settings = SimpleNamespace(metadata_only=False)
     session._finished = False
     session._finish_results = None
     session._error = None

@@ -23,6 +23,7 @@ def update_presentation(
     report: Callable[[messages.WorkerCommand, int], None],
 ) -> None:
     from cephvr.visual_stimulus.config.calibration_adjustments import (
+        LIVE_ADJUSTABLE_VIEWS,
         CalibrationAdjustmentRejected,
         validated_adjustments,
     )
@@ -34,7 +35,7 @@ def update_presentation(
         or evidence.diagnostic_id != request.diagnostic_id
         or evidence.configuration_revision
         != request.command.target.configuration_revision
-        or display.calibration_view != "frame_grid"
+        or display.calibration_view not in LIVE_ADJUSTABLE_VIEWS
         or request.adjustment_sequence <= evidence.adjustment_sequence
     ):
         raise CalibrationAdjustmentRejected(

@@ -465,7 +465,10 @@ def _two_output_display() -> DisplayProfile:
     return parse_display_json(json.dumps(raw), max_bytes=1_000_000)
 
 
-def _geometric_profiles(display: DisplayProfile) -> dict[str, object]:
+def _geometric_profiles(display: DisplayProfile, size: int = 2) -> dict[str, object]:
+    from cephvr.visual_stimulus.config.calibration_adjustments import projective_mesh
+
+    mesh = projective_mesh(((0, 0), (1, 0), (0, 1), (1, 1)), size, size)
     profiles = {}
     for mapping in display.active_mappings:
         output = next(
@@ -483,14 +486,9 @@ def _geometric_profiles(display: DisplayProfile) -> dict[str, object]:
                 "output_width": output.width_px,
                 "output_height": output.height_px,
                 "viewport": mapping.viewport,
-                "rows": 2,
-                "columns": 2,
-                "vertices": (
-                    {"uv": (0, 0), "xy": (0, 0)},
-                    {"uv": (1, 0), "xy": (1, 0)},
-                    {"uv": (0, 1), "xy": (0, 1)},
-                    {"uv": (1, 1), "xy": (1, 1)},
-                ),
+                "rows": size,
+                "columns": size,
+                "vertices": tuple({"uv": (u, v), "xy": (x, y)} for u, v, x, y in mesh),
                 "orientation": "preserving",
                 "diagonal": "bottom_left_to_top_right",
                 "mask": None,
@@ -504,7 +502,9 @@ def _geometric_profiles(display: DisplayProfile) -> dict[str, object]:
     return profiles
 
 
-def _native_calibration_inputs(gl: _FakeGL, display: DisplayProfile | None = None):
+def _native_calibration_inputs(
+    gl: _FakeGL, display: DisplayProfile | None = None, mesh_size: int = 2
+):
     display = display or _two_output_display()
     outputs = {}
     for output in display.active_outputs:
@@ -530,7 +530,7 @@ def _native_calibration_inputs(gl: _FakeGL, display: DisplayProfile | None = Non
         scene=scene, sources=(), resources=(), textures={}
     )
     prepared.display_calibration = PreparedCalibration(
-        assets=(), resources=(), content=_geometric_profiles(display)
+        assets=(), resources=(), content=_geometric_profiles(display, mesh_size)
     )
     return display, prepared, outputs
 
@@ -545,7 +545,9 @@ def _install_fake_gl_binding(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.parametrize("configured_bars", [False, True])
-@pytest.mark.parametrize("calibration_view", ["reference_bars", "frame_grid"])
+@pytest.mark.parametrize(
+    "calibration_view", ["reference_bars", "frame_grid", "seam_check"]
+)
 def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
     monkeypatch: pytest.MonkeyPatch,
     configured_bars: bool,
@@ -606,8 +608,9 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
                 o for o in display.active_outputs if o.output_id == output_id
             ).reference_bars
             assert configured is not None
-            assert bars[2][3][2] == configured.x_length_px
-            assert bars[3][3][3] == configured.y_length_px
+            # Frame, ticks and any guide precede the two measurement bars.
+            assert bars[-2][3][2] == configured.x_length_px
+            assert bars[-1][3][3] == configured.y_length_px
     assert {event[2] for event in draws} == (
         set() if calibration_view == "reference_bars" else {"arena", "warp", "output"}
     )
@@ -627,7 +630,7 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
         if resource.label.startswith("vao:")
     } == set(outputs)
 
-    if calibration_view == "frame_grid":
+    if calibration_view in ("frame_grid", "seam_check"):
         import struct
 
         allocation_count = len(gl.resources)
@@ -954,3 +957,56 @@ def test_cleanup_receipts_cover_all_announced_cpu_sources_only_after_close(
         "visual_stimulus:display:calibration:profile"
         not in preparation.cleanup().released
     )
+
+
+def test_live_update_applies_a_projective_mesh_to_a_keystone_quadrilateral(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import struct
+
+    _install_fake_gl_binding(monkeypatch)
+    gl = _FakeGL()
+    moderngl = SimpleNamespace(
+        DEPTH_TEST=1, CULL_FACE=2, BLEND=4, ONE=1, TRIANGLES=5, TRIANGLE_STRIP=6
+    )
+    display, prepared, outputs = _native_calibration_inputs(
+        gl, _two_output_display(), mesh_size=17
+    )
+    owner = DisplayCalibrationRenderer(
+        outputs, moderngl, lambda *_args: None, lambda *_args, **_kwargs: None
+    )
+    owner.present(display, prepared)
+    mapping = display.active_mappings[0]
+    frame = owner.frames[mapping.output_id]
+    buffer = frame.warp_vertex_buffers[mapping.mapping_id]
+    trapezoid = ((0.1, 0.1), (0.9, 0.1), (0.3, 0.9), (0.7, 0.9))
+    allocations = len(gl.resources)
+    owner.update({mapping.mapping_id: trapezoid})
+    assert len(gl.resources) == allocations
+    values = struct.unpack("1156f", buffer.last_write)  # 17 x 17 vertices of u,v,x,y
+
+    def clip_x(x: float) -> float:
+        return 2 * (mapping.viewport.x + x * mapping.viewport.width) / frame.width - 1
+
+    def clip_y(y: float) -> float:
+        return 2 * (mapping.viewport.y + y * mapping.viewport.height) / frame.height - 1
+
+    for index, (x, y) in zip((0, 16, 272, 288), trapezoid, strict=True):
+        assert values[4 * index + 2] == pytest.approx(clip_x(x))
+        assert values[4 * index + 3] == pytest.approx(clip_y(y))
+    # Perspective spacing: rows bunch up toward the narrow (top) edge.
+    centre_y = [values[4 * (row * 17 + 8) + 3] for row in range(17)]
+    gaps = [b - a for a, b in zip(centre_y, centre_y[1:], strict=False)]
+    assert all(later < earlier for earlier, later in zip(gaps, gaps[1:], strict=False))
+    before = buffer.last_write
+    for rejected, message in (
+        (((0.1, 0.1), (0.9, 0.1), (0.5, 0.2), (0.7, 0.9)), "convex"),
+        (((0.9, 0.1), (0.1, 0.1), (0.7, 0.9), (0.3, 0.9)), "inversion"),
+        (
+            ((0.1, 0.1), (0.9, 0.1), (0.1, 0.1000001), (0.9, 0.1000001)),
+            "area tolerance",
+        ),
+    ):
+        with pytest.raises(ValueError, match=message):
+            owner.update({mapping.mapping_id: rejected})
+        assert buffer.last_write == before

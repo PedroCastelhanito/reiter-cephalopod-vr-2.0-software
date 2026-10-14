@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-14",
+  "source_revision": "ffa3edefec43d1d167ab0f6a07434443776cbf71",
+  "working_tree": "uncommitted implementation plus concurrent changes; HEAD alone does not reproduce this validation",
+  "scope": "Local tests and static analysis only; no Windows/GPU/hardware/optical/paired acceptance",
+  "commands": {
+    "backend-tests.txt": ".venv/bin/python -m pytest tests/acquisition tests/visual_stimulus tests/controller -q -m \"not windows and not rig\" (loopback-enabled)",
+    "gui-check.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k recording_checks_stay_next_to_labels -p no:faulthandler",
+    "boundaries.txt": ".venv/bin/python tools/check_backend_boundaries.py"
+  },
+  "other_observed_checks": [
+    "Ruff check and format:379 files pass",
+    "mypy --platform win32 acquisition, visual_stimulus, controller/planning.py, gui/recordings.py:338 source files pass",
+    "Protobuf regeneration:19 sources",
+    "TOML/policy fingerprints, canonical evidence schema, revised decision register and documentation targets pass",
+    "git diff --check passes"
+  ]
+}

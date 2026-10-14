@@ -123,6 +123,15 @@ class Geometry(Model):
 class ReferenceBars(Model):
     x_length_px: PositiveInt
     y_length_px: PositiveInt
+    # Optional centered outline of the screen's aspect ratio, for physical alignment.
+    guide_width_px: PositiveInt | None = None
+    guide_height_px: PositiveInt | None = None
+
+    @model_validator(mode="after")
+    def guide_is_complete(self) -> Self:
+        if (self.guide_width_px is None) != (self.guide_height_px is None):
+            raise ValueError("Reference guide requires both width and height")
+        return self
 
 
 class Output(Model):
@@ -151,6 +160,8 @@ class Output(Model):
         if self.reference_bars is not None and (
             self.reference_bars.x_length_px > self.width_px
             or self.reference_bars.y_length_px > self.height_px
+            or (self.reference_bars.guide_width_px or 0) > self.width_px
+            or (self.reference_bars.guide_height_px or 0) > self.height_px
         ):
             raise ValueError("Reference bar lengths exceed the output dimensions")
         return self
@@ -190,7 +201,9 @@ class PhotodiodePatch(Model):
 
 
 class DisplayProfile(Model):
-    calibration_view: Literal["reference_bars", "frame_grid"] = "frame_grid"
+    calibration_view: Literal["reference_bars", "frame_grid", "seam_check"] = (
+        "frame_grid"
+    )
     format_version: Version1
     geometry: Geometry
     outputs: Annotated[tuple[Output, ...], Field(min_length=1)]

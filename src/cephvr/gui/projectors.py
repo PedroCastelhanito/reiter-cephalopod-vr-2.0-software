@@ -3,7 +3,6 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 from PyQt6.QtCore import QRect, QSettings, Qt, pyqtSignal
 from PyQt6.QtGui import QGuiApplication, QScreen
@@ -23,7 +22,9 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.calibration_profile import (
-    AssignedDisplay,
+    KEYSTONE_KEYS,
+    MARGIN_KEYS,
+    CalibrationView,
     MonitorBinding,
     active_monitor_bindings,
     write_diagnostic_bundle,
@@ -39,10 +40,12 @@ from cephvr.gui.projector_calibration import CalibrationTable
 from cephvr.gui.projector_codec import display_document, merge_projector_draft
 from cephvr.gui.projector_files import ProjectorFiles
 from cephvr.gui.projector_geometry import (
+    FACES,
     RigGeometryEditor,
     ScreenGeometryEditor,
     resolved_screens,
 )
+from cephvr.gui.projector_launch import assigned_displays, margin_hints
 from cephvr.gui.projector_measured_profiles import measured_profiles
 from cephvr.gui.projector_measurements import ProjectorMeasurements
 from cephvr.gui.projector_prerequisites import CalibrationPrerequisites
@@ -52,6 +55,7 @@ from cephvr.gui.tables import DataTable
 from cephvr.gui.tank_diagram import TankDiagram
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView
+from cephvr.visual_stimulus.config.calibration_adjustments import LIVE_ADJUSTABLE_VIEWS
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
@@ -67,6 +71,13 @@ class DisplayInfo:
 def _stable_display_identity(
     screen: QScreen, bindings: tuple[MonitorBinding, ...]
 ) -> str:
+    by_name = [
+        binding
+        for binding in bindings
+        if binding.adapter and binding.adapter.casefold() == screen.name().casefold()
+    ]
+    if len(by_name) == 1 and by_name[0].interface:
+        return by_name[0].interface
     geometry = screen.geometry()
     ratio = screen.devicePixelRatio()
     matches = [
@@ -91,6 +102,11 @@ class ProjectorsPanel(DevicePanel):
     outputs_changed = pyqtSignal()
     calibration_launch_requested = pyqtSignal(str)
     calibration_close_requested = pyqtSignal()
+
+    @property
+    def assigned_screens(self) -> tuple[str, ...]:
+        assigned = {self.assignments.get(key) for key in self.keys}
+        return tuple(face for face in FACES if face in assigned)
 
     @property
     def enabled_screens(self) -> tuple[str, ...]:
@@ -170,12 +186,15 @@ class ProjectorsPanel(DevicePanel):
         self.prerequisites = CalibrationPrerequisites()
         self.measurements.body.insertWidget(2, self.prerequisites.reference)
         self.calibration.body.insertWidget(1, self.prerequisites.projection)
-        self.prerequisites.refresh(self.enabled_screens, self.screen_editor.drafts)
+        self.prerequisites.refresh(
+            self.enabled_screens, self.screen_editor.drafts, self.assigned_screens
+        )
         self.measurements.changed.connect(self._mark_geometry_dirty)
         self.calibration.launch_requested.connect(self.launch_calibration)
         self.calibration.measurement_requested.connect(
             self.launch_reference_measurement
         )
+        self.calibration.seam_requested.connect(self.launch_seam_check)
         self.calibration.close_requested.connect(self.calibration_close_requested.emit)
         calibration_fields: dict[str, QLineEdit | QCheckBox] = {
             **{f"rig.{key}": editor for key, editor in self.rig_editor.fields.items()},
@@ -669,7 +688,7 @@ class ProjectorsPanel(DevicePanel):
         self.update_participation()
 
     def prepare_calibration(
-        self, *, view: Literal["reference_bars", "frame_grid"] = "frame_grid"
+        self, *, view: CalibrationView = "frame_grid"
     ) -> Path | None:
         if not self.can_review:
             return None
@@ -682,27 +701,29 @@ class ProjectorsPanel(DevicePanel):
             if not self.asset_root:
                 raise ValueError("Choose the Protocol Assets folder first")
             self.request("Refresh displays")
-            rows = tuple(
-                AssignedDisplay(
-                    self.assignments.get(key, "Unassigned"),
-                    geometry.x(),
-                    geometry.y(),
-                    geometry.width(),
-                    geometry.height(),
-                    self.participation.get(key, True),
-                )
-                for key, (_, geometry) in zip(
-                    self.keys, self.diagram.outputs, strict=True
-                )
+            bindings = active_monitor_bindings()
+            native = frozenset(binding.interface for binding in bindings)
+            rows = assigned_displays(
+                self.keys,
+                [
+                    (g.x(), g.y(), g.width(), g.height())
+                    for _, g in self.diagram.outputs
+                ],
+                self.display_pixels,
+                self.assignments,
+                self.participation,
+                native,
             )
             path = write_diagnostic_bundle(
                 Path(self.asset_root),
                 self.calibration_files.calibration_snapshot(),
                 rows,
-                active_monitor_bindings(),
+                bindings,
                 view=view,
                 blackout_zones=(
-                    self.timing.blackouts.snapshot() if view == "frame_grid" else None
+                    self.timing.blackouts.snapshot()
+                    if view != "reference_bars"
+                    else None
                 ),
             )
             self.console.appendPlainText(
@@ -723,11 +744,26 @@ class ProjectorsPanel(DevicePanel):
         if arena_path is not None:
             self.calibration_launch_requested.emit(str(arena_path))
 
+    def launch_seam_check(self) -> None:
+        arena_path = self.prepare_calibration(view="seam_check")
+        if arena_path is not None:
+            self.calibration_launch_requested.emit(str(arena_path))
+
     def set_calibration_presentation_state(
-        self, *, active: bool, available: bool, pending: bool = False, view: str = ""
+        self,
+        *,
+        active: bool,
+        available: bool,
+        pending: bool = False,
+        view: str = "",
+        unknown: bool = False,
     ) -> None:
         self.calibration.set_presentation_state(
-            active=active, available=available, pending=pending, view=view
+            active=active,
+            available=available,
+            pending=pending,
+            view=view,
+            unknown=unknown,
         )
         self.refresh_calibration_editability()
 
@@ -737,14 +773,18 @@ class ProjectorsPanel(DevicePanel):
         live = (
             self.can_review
             and active
-            and self.calibration.presentation_view == "frame_grid"
+            and self.calibration.presentation_view in LIVE_ADJUSTABLE_VIEWS
             and not self.calibration.presentation_pending
         )
         for (_, key), control in self.calibration.controls.items():
-            control.setEnabled(
-                editable
-                or (live and key in {"scale_u", "scale_v", "offset_x", "offset_y"})
-            )
+            margin = key in MARGIN_KEYS or key in KEYSTONE_KEYS
+            control.setEnabled(editable or (live and margin))
+            if not margin:
+                control.setToolTip(
+                    "Inversion applies when the calibration is shown: close it to change."
+                    if active
+                    else "Mirror the image of this screen horizontally (X) or vertically (Y)."
+                )
         self.measurements.setEnabled(editable)
         self.rig_editor.setEnabled(editable)
         self.screen_editor.setEnabled(editable)
@@ -775,7 +815,9 @@ class ProjectorsPanel(DevicePanel):
         self.outputs_changed.emit()
 
     def update_geometry(self) -> None:
-        self.prerequisites.refresh(self.enabled_screens, self.screen_editor.drafts)
+        self.prerequisites.refresh(
+            self.enabled_screens, self.screen_editor.drafts, self.assigned_screens
+        )
         self.measurements.refresh(
             {
                 self.assignments[key]: dimensions
@@ -784,6 +826,7 @@ class ProjectorsPanel(DevicePanel):
             },
             self.screen_editor.fields,
         )
+        self.refresh_margin_hints()
         self.tank.rig = self.rig_editor.dimensions()
         self.tank.screens = resolved_screens(self.tank.rig, self.screen_editor.drafts)
         self.tank.aspects = {
@@ -793,6 +836,22 @@ class ProjectorsPanel(DevicePanel):
         }
         self.tank.enabled_faces = self.enabled_screens
         self.tank.refresh()
+
+    def refresh_margin_hints(self) -> None:
+        """Show each edge's automatic margin from the measurement as its placeholder."""
+        try:
+            calibration: dict[str, object] | None = (
+                self.calibration_files.calibration_snapshot()
+            )
+        except ValueError:
+            calibration = None
+        pixels = {
+            self.assignments[key]: dimensions
+            for key, dimensions in self.display_pixels.items()
+            if self.assignments.get(key, "Unassigned") != "Unassigned"
+        }
+        for face, hints in margin_hints(calibration, pixels).items():
+            self.calibration.set_auto_margins(face, hints)
 
     def assign(self, key: str, name: str) -> None:
         if self.loading or not self.can_review:

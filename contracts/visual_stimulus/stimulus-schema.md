@@ -30,8 +30,9 @@ implicit products, callbacks or condition lookup during execution.
 | Texture | pattern, extent/opacity, mean/modulation RGB, contrast, spatial frequency or tile periods | centre, rotation, x/y phase |
 | Arena | GLB, asset-to-world transform, world frame, planar initial pose, fixed height/pitch/roll | planar x/y and yaw |
 
-A 2D physical surface uses bottom-left origin, right/up local axes measured in mm
-from calibrated corner vectors. Each selected surface has one nonsingular 2x3 affine
+A 2D physical surface uses its centre as local origin, with right/up axes in mm
+defined by the calibrated corner vectors (the corners themselves stay in rig
+coordinates); `±extent/2` are its edges. Each selected surface has one nonsingular 2x3 affine
 map from those coordinates into the explicitly declared common stimulus plane.
 The map may intentionally align/mirror adjacent faces; no face-name guess changes signs.
 The instance centre, extent and image x/y are in that plane; positive rotation is
@@ -100,9 +101,8 @@ renderer’s centered local face coordinates, transformed into its stimulus plan
 Carry known center positions through compiled transition actions; uncertain prior
 position writers require an explicit reset before spin linking. Fail Setup with the
 required coordinates if unknown/mismatched. Recheck actual retained centers during
-boundary binding. The separate existing bottom-left-versus-centered coordinate
-contract discrepancy remains tracked in the current report; this feature does not
-change projection or move authored textures implicitly.
+boundary binding. The surface-local origin is the surface centre (V14), matching the renderer, so this
+feature does not change projection or move authored textures.
 
 Bind followers after all epoch state transitions, using actual retained rotations.
 The existing state fields integrate the derived constant rates analytically; no new

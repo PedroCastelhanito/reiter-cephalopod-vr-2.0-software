@@ -605,6 +605,47 @@ def test_owner_loss_retention_uses_the_safety_reserve() -> None:
     assert internal.internal_retention
 
 
+async def test_failed_release_dispatch_frees_the_slot_for_a_cleanup_retry(
+    tmp_path: Path,
+) -> None:
+    from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    bind_ledger(runtime)
+
+    class Backend:
+        context = backend
+
+        async def execute_camera_command(self, command: Any, *, deadline_ns: int):
+            raise ConnectionError("link lost")
+
+    cleanup = cast(ManualControlCleanup, runtime.leases.owner_lost.__self__)  # type: ignore[union-attr]
+    settings = pb.AcquisitionSettings()
+    settings.behavioral.device.device_id = "cam"
+    policies = acquisition_pb.AcquisitionFilePolicies()
+    policies.cameras.add(camera=BEHAVIORAL)
+    view = pb.CameraDeviceView(
+        device_open=True,
+        preview_running=False,
+        preview_prepared=False,
+        cleanup_pending=False,
+    )
+    with pytest.raises(ConnectionError):
+        await cleanup._release_camera(
+            cast(Any, Backend()),
+            settings,
+            policies,
+            BEHAVIORAL,
+            view,
+            svc.CAMERA_COMMAND_KIND_FINISH_EDITING,
+            runtime.clock() + 1_000_000_000,
+            _id(),
+        )
+    assert runtime.device_state.camera_operation is None
+    assert await cleanup._finish_existing_operation(runtime.clock() + 50_000_000)
+
+
 async def test_owner_cleanup_failure_retries_with_warning_and_no_interruption(
     tmp_path: Path,
 ) -> None:

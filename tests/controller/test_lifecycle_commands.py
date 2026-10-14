@@ -10,6 +10,7 @@ from typing import Any, cast
 
 import pytest
 
+from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.configuration import manual_camera_owned
 from cephvr.controller.device.owner_cleanup import ManualControlCleanup
@@ -39,6 +40,7 @@ def _setup(
         phase=pb.SESSION_PHASE_RUNNING, context=attempt.context, activated=True
     )
     attempt.activated = True
+    attempt.registered_context = svc.RegisteredContext()  # activation implies it
     monkeypatch.setattr(
         runtime.session_commands.control_operations, "authorized", lambda *a, **k: ""
     )

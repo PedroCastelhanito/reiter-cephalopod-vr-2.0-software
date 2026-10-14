@@ -8,8 +8,10 @@ from typing import Any
 from cephvr.gui.calibration_profile import (
     MonitorBinding,
     face_mapping,
+    mesh_vertices,
     reference_bar_config,
 )
+from cephvr.visual_stimulus.config.calibration_adjustments import GUI_MESH_SIZE
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
 from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
 from cephvr.visual_stimulus.config.models.schema_common import parse_json
@@ -87,8 +89,8 @@ def measured_profiles(
         )
         if (
             not profile.calibration_id.startswith(("diagnostic_", "reference_"))
-            or profile.rows != 2
-            or profile.columns != 2
+            or profile.rows != profile.columns
+            or profile.rows not in (2, GUI_MESH_SIZE)
             or profile.mask is not None
             or profile.weight is not None
             or profile.overlap_group is not None
@@ -118,7 +120,9 @@ def measured_profiles(
             output_width=output.width_px,
             output_height=output.height_px,
             viewport=viewport,
-            vertices=vertices,
+            rows=GUI_MESH_SIZE,
+            columns=GUI_MESH_SIZE,
+            vertices=mesh_vertices(tuple(vertex["xy"] for vertex in vertices)),
             orientation="mirrored" if mirrored else "preserving",
             intended_coverage=corners,
         )

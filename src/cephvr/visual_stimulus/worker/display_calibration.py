@@ -61,9 +61,13 @@ class DisplayCalibrationOwner:
         self.job: _OpenJob | None = None
         self.active_id = ""
         self.active_profile: DisplayProfile | None = None
+        # Profile of the last confirmed-closed diagnostic, for repeated Close evidence.
+        self.closed_profile: DisplayProfile | None = None
         self.profile_sha256 = ""
         self.arena_sha256 = ""
         self.prepared: PreparedDisplayCalibration | None = None
+        # True while a prepared input exists that was never presented (late Open).
+        self.unpresented = False
         self.revision = 0
         self.evidence = view.DisplayCalibrationEvidence(
             state=view.DISPLAY_CALIBRATION_STATE_IDLE,
@@ -115,15 +119,8 @@ class DisplayCalibrationOwner:
             target=prepare, name="cephvr-display-calibration-prepare", daemon=True
         )
         self.job = _OpenJob(request, deadline_ns, result, completion, thread)
-        self.evidence = view.DisplayCalibrationEvidence(
-            diagnostic_id=request.diagnostic_id,
-            controller_generation=self.controller.generation,
-            renderer_generation=self.worker.generation,
-            configuration_revision=request.command.target.configuration_revision,
-            state=view.DISPLAY_CALIBRATION_STATE_PREPARING,
-            observed_monotonic_ns=self.clock(),
-            profile_sha256=request.profile_sha256,
-            arena_sha256=request.arena_sha256,
+        self.evidence = self._build_evidence(
+            request, view.DISPLAY_CALIBRATION_STATE_PREPARING
         )
         thread.start()
         return completion
@@ -138,12 +135,13 @@ class DisplayCalibrationOwner:
             try:
                 prepared = job.result.result()
             except BaseException as exc:
-                self.evidence.state = view.DISPLAY_CALIBRATION_STATE_UNKNOWN
-                self.evidence.idle = False
-                self.evidence.resources_closed = False
-                self.evidence.observed_monotonic_ns = self.clock()
-                self.evidence.failure_code = "CALIBRATION_PREPARE_CLEANUP"
-                self.evidence.failure_message = str(exc)[:1024]
+                self._mark(
+                    view.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+                    idle=False,
+                    closed=False,
+                    code="CALIBRATION_PREPARE_CLEANUP",
+                    message=str(exc),
+                )
                 cleanup_deadline = job.cleanup_deadline_ns or job.deadline_ns
                 closed = False
                 if job.close_completion is not None:
@@ -174,25 +172,16 @@ class DisplayCalibrationOwner:
             within_deadline = self.clock() < cleanup_deadline
             if closed:
                 self.set_display_profile(prepared.previous_display)
-            self.evidence = view.DisplayCalibrationEvidence(
-                diagnostic_id=self.active_id,
+            self.evidence = self._build_evidence(
+                job.request,
+                view.DISPLAY_CALIBRATION_STATE_IDLE
+                if closed and within_deadline
+                else view.DISPLAY_CALIBRATION_STATE_UNKNOWN,
                 calibration_view=self.active_profile.calibration_view
                 if self.active_profile is not None
                 else "",
-                controller_generation=self.controller.generation,
-                renderer_generation=self.worker.generation,
-                configuration_revision=job.request.command.target.configuration_revision,
-                state=(
-                    view.DISPLAY_CALIBRATION_STATE_IDLE
-                    if closed and within_deadline
-                    else view.DISPLAY_CALIBRATION_STATE_UNKNOWN
-                ),
-                observed_monotonic_ns=self.clock(),
-                profile_sha256=job.request.profile_sha256,
-                arena_sha256=job.request.arena_sha256,
-                presented=False,
                 idle=closed,
-                resources_closed=closed,
+                closed=closed,
             )
             if not closed:
                 self.evidence.failure_code = "CALIBRATION_SOURCE_CLOSE"
@@ -211,9 +200,7 @@ class DisplayCalibrationOwner:
                 )
             self.job = None
             if closed and within_deadline:
-                self.active_id = ""
-                self.active_profile = None
-                self.prepared = None
+                self._release_identity()
             if job.close_completion is not None and not job.close_completion.done():
                 if closed and within_deadline:
                     job.close_completion.set_result(None)
@@ -234,10 +221,12 @@ class DisplayCalibrationOwner:
             except BaseException:
                 self.job = None
                 return None
+            # The late preparation was never presented, so the renderer is unchanged.
             self.prepared = late_prepared
             self.active_profile = late_prepared.display
-            self._safe_release_sources(late_prepared)
+            self.unpresented = True
             self.job = None
+            self._close_unpresented(job.request.command, job.deadline_ns)
             return None
         try:
             if not job.result.done() or job.thread.is_alive():
@@ -269,19 +258,11 @@ class DisplayCalibrationOwner:
             self.profile_sha256 = job.request.profile_sha256
             self.arena_sha256 = job.request.arena_sha256
             self.revision = job.request.command.target.configuration_revision
-            self.evidence = view.DisplayCalibrationEvidence(
-                diagnostic_id=self.active_id,
+            self.evidence = self._build_evidence(
+                job.request,
+                view.DISPLAY_CALIBRATION_STATE_ACTIVE,
                 calibration_view=display.calibration_view,
-                controller_generation=self.controller.generation,
-                renderer_generation=self.worker.generation,
-                configuration_revision=self.revision,
-                state=view.DISPLAY_CALIBRATION_STATE_ACTIVE,
-                observed_monotonic_ns=self.clock(),
-                profile_sha256=self.profile_sha256,
-                arena_sha256=self.arena_sha256,
                 presented=True,
-                idle=False,
-                resources_closed=False,
             )
             self._report(job.request.command, job.deadline_ns)
             job.completion.set_result(None)
@@ -356,6 +337,15 @@ class DisplayCalibrationOwner:
         self, request: messages.CloseDisplayCalibrationCommand, deadline_ns: int
     ) -> Future[None] | None:
         require_uuid4(request.diagnostic_id)
+        if (
+            request.diagnostic_id != self.active_id
+            and request.diagnostic_id == self.evidence.diagnostic_id
+            and self.evidence.state == view.DISPLAY_CALIBRATION_STATE_IDLE
+            and self.evidence.resources_closed
+        ):
+            # Closure already confirmed (e.g. a late Open was closed); repeat the evidence.
+            self._report(request.command, deadline_ns, display=self.closed_profile)
+            return None
         if request.diagnostic_id != self.active_id:
             raise RuntimeError("exact active calibration identity is unavailable")
         if self.job is not None:
@@ -365,6 +355,10 @@ class DisplayCalibrationOwner:
             return self.job.close_completion
         if self.prepared is None:
             self.close_for_cleanup(request.command, deadline_ns)
+            return None
+        if self.unpresented:
+            if not self._close_unpresented(request.command, deadline_ns):
+                raise RuntimeError(self.evidence.failure_message)
             return None
         if self.clock() >= deadline_ns:
             raise TimeoutError("display calibration close missed its original deadline")
@@ -388,38 +382,32 @@ class DisplayCalibrationOwner:
             or not released
             or self.clock() >= deadline_ns
         ):
-            self.evidence.state = view.DISPLAY_CALIBRATION_STATE_UNKNOWN
-            self.evidence.idle = False
-            self.evidence.resources_closed = False
-            self.evidence.observed_monotonic_ns = self.clock()
-            self.evidence.failure_code = "CALIBRATION_CLOSE"
-            self.evidence.failure_message = (
-                "Idle or protected renderer resources remain unconfirmed"
+            self._mark(
+                view.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+                idle=False,
+                closed=False,
+                code="CALIBRATION_CLOSE",
+                message="Idle or protected renderer resources remain unconfirmed",
             )
             self._report(request.command, deadline_ns)
             raise RuntimeError(self.evidence.failure_message)
         sources_closed = self._safe_release_sources(prepared)
         if not sources_closed or self.clock() >= deadline_ns:
-            self.evidence.state = view.DISPLAY_CALIBRATION_STATE_UNKNOWN
-            self.evidence.idle = True
-            self.evidence.resources_closed = False
-            self.evidence.observed_monotonic_ns = self.clock()
-            self.evidence.failure_code = "CALIBRATION_SOURCE_CLOSE"
-            self.evidence.failure_message = "protected calibration sources remain owned"
+            self._mark(
+                view.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+                idle=True,
+                closed=False,
+                code="CALIBRATION_SOURCE_CLOSE",
+                message="protected calibration sources remain owned",
+            )
             self._report(request.command, deadline_ns)
             raise RuntimeError(self.evidence.failure_message)
-        self.evidence.state = view.DISPLAY_CALIBRATION_STATE_IDLE
-        self.evidence.observed_monotonic_ns = self.clock()
-        self.evidence.idle = True
-        self.evidence.resources_closed = True
-        self.evidence.presented = False
-        self.evidence.ClearField("failure_code")
-        self.evidence.ClearField("failure_message")
+        self._mark(
+            view.DISPLAY_CALIBRATION_STATE_IDLE, idle=True, closed=True, presented=False
+        )
         self.set_display_profile(prepared.previous_display)
         self._report(request.command, deadline_ns, display=display)
-        self.active_id = ""
-        self.active_profile = None
-        self.prepared = None
+        self._release_identity()
         return None
 
     def _close_incomplete(
@@ -436,24 +424,23 @@ class DisplayCalibrationOwner:
         if display is None:
             return False
         if closed:
-            self.evidence.state = view.DISPLAY_CALIBRATION_STATE_IDLE
-            self.evidence.observed_monotonic_ns = self.clock()
-            self.evidence.presented = False
-            self.evidence.idle = True
-            self.evidence.resources_closed = True
-            self.evidence.ClearField("failure_code")
-            self.evidence.ClearField("failure_message")
+            self._mark(
+                view.DISPLAY_CALIBRATION_STATE_IDLE,
+                idle=True,
+                closed=True,
+                presented=False,
+            )
             if report:
                 self._report(command, deadline_ns, display=display)
-            self.active_id = ""
-            self.active_profile = None
+            self._release_identity()
             return True
-        self.evidence.state = view.DISPLAY_CALIBRATION_STATE_UNKNOWN
-        self.evidence.observed_monotonic_ns = self.clock()
-        self.evidence.idle = False
-        self.evidence.resources_closed = False
-        self.evidence.failure_code = "CALIBRATION_SOURCE_CLOSE"
-        self.evidence.failure_message = "protected calibration sources remain owned"
+        self._mark(
+            view.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+            idle=False,
+            closed=False,
+            code="CALIBRATION_SOURCE_CLOSE",
+            message="protected calibration sources remain owned",
+        )
         if report:
             try:
                 self._report(command, deadline_ns, display=display)
@@ -488,11 +475,102 @@ class DisplayCalibrationOwner:
         report.calibration.CopyFrom(self.evidence)
         self.reports.send("ReportDisplay", report, deadline_ns)
 
+    def _build_evidence(
+        self,
+        request: messages.OpenDisplayCalibrationCommand,
+        state: view.DisplayCalibrationState,
+        *,
+        calibration_view: str = "",
+        presented: bool = False,
+        idle: bool = False,
+        closed: bool = False,
+    ) -> view.DisplayCalibrationEvidence:
+        """Fresh evidence for one Open request, stamped with the current identities."""
+        return view.DisplayCalibrationEvidence(
+            diagnostic_id=self.active_id,
+            calibration_view=calibration_view,
+            controller_generation=self.controller.generation,
+            renderer_generation=self.worker.generation,
+            configuration_revision=request.command.target.configuration_revision,
+            state=state,
+            observed_monotonic_ns=self.clock(),
+            profile_sha256=request.profile_sha256,
+            arena_sha256=request.arena_sha256,
+            presented=presented,
+            idle=idle,
+            resources_closed=closed,
+        )
+
+    def _mark(
+        self,
+        state: view.DisplayCalibrationState,
+        *,
+        idle: bool | None = None,
+        closed: bool | None = None,
+        presented: bool | None = None,
+        code: str = "",
+        message: str = "",
+    ) -> None:
+        """Update the retained evidence; no code clears any previous failure."""
+        evidence = self.evidence
+        evidence.state = state
+        evidence.observed_monotonic_ns = self.clock()
+        if idle is not None:
+            evidence.idle = idle
+        if closed is not None:
+            evidence.resources_closed = closed
+        if presented is not None:
+            evidence.presented = presented
+        if code:
+            evidence.failure_code = code
+            evidence.failure_message = message[:1024]
+        else:
+            evidence.ClearField("failure_code")
+            evidence.ClearField("failure_message")
+
+    def _release_identity(self) -> None:
+        """Forget the exact diagnostic after its closure is confirmed."""
+        self.closed_profile = self.active_profile
+        self.active_id = ""
+        self.active_profile = None
+        self.prepared = None
+        self.unpresented = False
+
+    def _close_unpresented(
+        self, command: messages.WorkerCommand, deadline_ns: int
+    ) -> bool:
+        """Release a preparation that never reached the renderer, then confirm Idle."""
+        prepared = self.prepared
+        closed = prepared is not None and self._safe_release_sources(prepared)
+        if closed:
+            self._mark(
+                view.DISPLAY_CALIBRATION_STATE_IDLE,
+                idle=True,
+                closed=True,
+                presented=False,
+            )
+        else:
+            self._mark(
+                view.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+                idle=True,
+                closed=False,
+                code="CALIBRATION_SOURCE_CLOSE",
+                message="protected calibration sources remain owned",
+            )
+        try:
+            self._report(command, deadline_ns)
+        except Exception:
+            pass  # The evidence record carries the outcome; the report is best effort.
+        if closed:
+            self._release_identity()
+        return closed
+
     def _mark_unknown(self, job: _OpenJob, error: BaseException) -> None:
-        self.evidence.state = view.DISPLAY_CALIBRATION_STATE_UNKNOWN
-        self.evidence.observed_monotonic_ns = self.clock()
-        self.evidence.failure_code = "CALIBRATION_OPEN"
-        self.evidence.failure_message = str(error)[:1024]
+        self._mark(
+            view.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+            code="CALIBRATION_OPEN",
+            message=str(error),
+        )
         if not job.completion.done():
             job.completion.set_exception(error)
         if not job.failure_reported:

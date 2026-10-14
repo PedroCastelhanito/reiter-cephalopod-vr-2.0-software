@@ -40,7 +40,9 @@ restoration pass. See the [current failure/remedy inventory](runtime.md) and
 retain their historical scopes.
 
 - [ ] Regenerate ordinary calibration assets with current accepted all-output VSync;
-  retest normal GUI Open/update/Close and then measured optical calibration.
+  retest normal GUI Open/update/Close and then measured optical calibration. Launch
+  rewrites the bundle itself and the current builder passes the pacing overlay locally,
+  so the earlier failing file was an older bundle; confirm on the rig.
 - [ ] Extend A10 drain/full-load verification to Eye when enabled and remaining
   scientific workloads. Owner125ms values/Behavior and Tracking bounded observations
   plus combined online closure now pass; worst-case/full scientific bound unproven.
@@ -61,7 +63,13 @@ retain their historical scopes.
 - [ ] Reduce combined review/camera recording loss while preserving the verified
   nominal60fps presentation, exact omission accounting, original timing and precision.
   Profile capture/transfer/encoding under simultaneous load; final repeated sessions
-  already close and reset successfully. Verify uniform/optical timing separately.
+  already close and reset successfully. Repeat with the locally implemented owned-buffer
+  handoff and review_scale_factor=2 (2560x2000 becomes1280x1000); retain actual prepared
+  recipe/arguments and capture renderer stderr JSON recording_metrics exit summaries
+  (verify one summary per recording thread), comparing real-frame drops,
+  padding, capture/queue/normalization/pipe timing and slot occupancy. Camera resolution
+  and live rendering remain unchanged. Evaluate PBO pooling, threaded readback and
+  row-flip/layout changes only after these measurements. Verify uniform/optical timing separately.
 - [ ] Repair/retest the observed pre-change Save On→Save Off session-cleanup failure
   (`cleanup returned an unregistered resource`) under exact catalogue ownership;
   the60s presentation completed but its session could not finish cleanly.
@@ -447,7 +455,7 @@ Existing operating-point/throughput deferrals below remain separate.
 | --- | --- |
 | Final camera operating points | Under A10, choose the owner-deferred ROI/source/recording precision, then re-read payload, chunks, transport limits and applicable resulting-rate nodes. Resolve behavioral 30 Hz's saved 368,640,000 B/s payload demand versus 360,000,000 B/s limit explicitly; no guessed higher limit or lower cadence. Verify simultaneous externally triggered 30/60 Hz capture with native counters and saved pulse evidence. Different USB host controllers and tracking's 71.803 Hz estimate do not prove sustained rates. |
 | Production encoder/tool combination | Under A08/E13/SYS-003, the Oct13 matched 9.0.2 PATH pair passes build/device and five short sequential synthetic cases. The tested FFmpeg 7.1 / ffprobe 4.3.2 combination is not that deployment baseline. Verify final camera post-filter and Visual Stimulus composite dimensions/depth on the RTX 2080 Ti; retain the handoff's H.264 width/10-bit and AV1 failures. Run both cameras plus composite with rendering/tracking, measuring drops, transfer cost, queue occupancy and finalization. Three static frames and small concurrent sessions do not close this check. |
-| Pulse inventory and wiring | Under E12/SYS-004, fill `[pulse_inventory]` from the actual OneBox wiring and verify each camera trigger and the photodiode appears on its mapped saved channel/bit, including edge polarity and a reassigned-role Setup. The Setup check proves configuration only. |
+| Pulse inventory and wiring | Under E12/SYS-004, fill `[pulse_inventory]` from the actual OneBox wiring and verify Behavioral, Tracking and Eye triggers plus the photodiode appear on their mapped saved channel/bit, including edge polarity and a reassigned-role Setup. Eye uses `eye_tracking_camera`; keep its actual stream/channel/bit unset until checked on the rig. Verify paired Setup rejects an enabled externally triggered Eye with missing/unsaved mapping and retains the verified mapping in SESSION_CONFIG; disabled/free-running Eye does not require it. Keep wiring and trigger timing unchanged. The Setup check proves configuration only. |
 | Visual Stimulus multi-output lifecycle/pacing | Under V15/V20/E05, measure both configured presentation modes with all outputs and full tracking/recording load. Verify per-output Started evidence within the existing 250 ms allowance, Idle transitions and late/in-flight submission handling; software swaps are not optical proof. |
 | Visual Stimulus startup Idle | Under V19/E08, check valid saved settings, first-run/missing outputs or profiles, partial window/context failure and cleanup, stale configuration results, Setup reuse/replacement and GUI/headless issue visibility. No guessed black/default calibration or false session Ready. |
 | Visual Stimulus geometry, photometry and photodiode | Verify surface/observer geometry, output mapping, calibrated/uncalibrated profiles, marker black-area/inner-square placement and levels, per-output blackout zones and optical sequence/timing under V15/V19/V22/V23. Check corner bounds, marker priority over overlapping zones, masked final recordings, static zones through Idle and frame/grid diagnostics, and unobscured raw reference bars. Include same-level marker boundaries with no edge. |
@@ -472,7 +480,7 @@ Existing operating-point/throughput deferrals below remain separate.
 | GUI authoring and planning preview | Install `.[dev,gui]` and launch `python scripts/start_gui.py`; follow [frontend review commands](../docs/development.md#dashboard-frontend-review). Check Windows DPI/narrow-window layouts, discovered cameras/COM ports, enabled projector combinations, calibration JSON load/save and pixel offsets/inversions. Build and reload a 200-epoch trial with independent per-projector layers and random/ordered batch values; use Shuffle trial on nested repeat/condition groups, verify intact blocks and selection through undo/redo/save/load, and check readable timeline actions at narrow DPI; switch trials and rotate/scrub the two-sided rig preview using local assets. Record latency and errors. This is frontend acceptance, not physical output or live Tracking validation. Typed pacing configuration and exact held-policy checks now pass locally; physical output acceptance remains open. |
 | Managed GUI configuration and authority | After local wiring acceptance, use the installed managed entry point and current review layout at wide/narrow Windows DPI. Submit subject metadata, ordered trials/seeds/gaps, recording selections, Tracking settings and projector mappings; compare accepted revision/history/session metadata. Exercise first-run display-profile import separately from calibration-value JSON. Invalid or stale visible drafts must block Setup with a useful explanation. Exercise pending Setup cancellation, Abort, lease loss/takeover, pending prompt updates, disconnect/reopen with retained warnings and GUI close/relaunch with `python scripts/start_runtime_gui.py --reopen-gui` for the same application generation. Exercise delayed/lost relaunch replies and shutdown during the request; containment deadlines must remain unchanged. Cancel a proposed discard or dismiss a save-error dialog and confirm unsent edits remain. No stale intent replay or silent draft replacement. |
 | Tracking configuration diagnostics | Under T08/A03/A10, attach to the selected owned camera preview with exact source identity, including when experiment Tracking is disabled. Start with an empty stage mask, then flow-only without pose annotations, and verify unavailable dependent stages. Verify crop/downscale annotations stay in acquired coordinates and enabled stages produce live overlays/timings. Confirm ordered Tracking consumption, bounded viewer latency, explicit viewer detach/reopen versus actual processing closure, and cleanup after source/authority loss and before Setup. Use **Use this frame for annotation** to freeze an exact acquired image; confirm source changes reset annotations and stale frames are rejected. Pending or failed Close must keep settings locked and must not enable another Begin. Changed diagnostic settings require confirmed Close and fresh Begin. Verify no scientific files or Visual Stimulus feedback arise from diagnostics. Under T20/T38, confirm missing/invalid camera calibration blocks experiment/runnable locomotion, early diagnostics still run, acquired-image scale survives crop/downscale, and known motion produces correctly converted mm/s/deg/s feedback/file values with retained pixel-space evidence. Verify explicit old gain/unit rejection; scale is not animal swimming-speed validation. Scientific accuracy/full-load acceptance remains separate. |
-| Untimed projector calibration | Under V01, before Setup and with no initialized experiment display, use Measure reference bars and Adjust frame and grid to launch their protected exported arena/profile on the assigned outputs and observe actual display before Active. Close must return to Idle and confirm resources closed. Exercise changed assets, stale revisions/generations, failed presentation, control loss, renderer loss and Shutdown during active or still-preparing calibration; unknown cleanup must block Setup. Repeat Open/Close and verify restoration of the prior display or known uninitialized state. Check all assigned outputs and per-face corrections optically. Under G01/V15, edit config-only X/Y pixel lengths, verify the actual native-pixel spans on every assigned output (including legacy quarter-span defaults), measure both bars per screen, close the bars presentation, launch frame/grid using measured mm/px, verify live Scale X/Y and Offset X/Y updates without Close/relaunch, last-valid retention for partial/invalid edits, repeated-edit resource stability, actual visible latency, rejected stale edits, lease loss/disconnect and exact cleanup, and config-only throw-based distance estimate, confirm X/Y mm/px and ideal throw estimate with current zoom/keystone/Bottom fold, compare measured affine mapping against physical screen dimensions, and invalidate changed modes/optics. Verify imported nonlinear/masked/weighted corrections are preserved. Local rendered checks do not establish alignment. |
+| Untimed projector calibration | Under V01/G01/V15, before Setup and with no initialized experiment display, launch each projector on its own (tick only its Use box; all four faces stay assigned) with Show reference bars: check the output frame, 100 px ticks (yellow every 500 px) and the cyan screen-aspect guide on the real screen, position the projector (centre, distance, lens) until the guide meets the screen edges, then measure both bars per screen and confirm the mm/px estimate and config-only throw-based distance with current zoom/keystone/Bottom fold. Close must return to Idle with resources confirmed closed. Show frame and grid: verify automatic margins centre the screen from the measurement, a blank/entered margin per edge, Reset valid areas, live margin updates without Close/relaunch (1 px, Shift 10 px), status line outcomes for invalid/rejected edits, last-valid retention, resource stability, visible latency, stale-edit rejection, lease loss/disconnect and exact cleanup; compare the grid with a ruler on every screen, including the hard-to-see Bottom edges, and a projection smaller than the screen. Keystone H / V: with a visibly trapezoidal grid (squares shrinking toward one edge), enter pixels until squares are uniform top to bottom and left to right on each screen, including the Bottom fold; confirm the sign convention (positive H narrows the top, positive V shortens the right edge, in projector output space) and that residual curvature, if any, is lens distortion that keystone does not model. Show seam check: the eye-level ring, tank-corner and meridian lines must continue unbroken across adjacent screens. Exercise changed assets, stale revisions/generations, failed presentation, an Open that misses its deadline, control loss, renderer loss and Shutdown during active or still-preparing calibration; unknown cleanup must block Setup. Repeat Open/Close and verify restoration of the prior display or known uninitialized state. Check at Windows scaling above 100 % that native identity binds every display. Invalidate changed modes/optics; imported nonlinear/masked/weighted corrections stay preserved. Local rendered checks do not establish alignment. |
 | GUI Windows display inventory | Compare Projectors table/diagram indices against Windows Settings → Identify on the actual multi-GPU rig, including reconnect, clone mode and changed topology. Verify pixel resolution, retained assignments and explicit query failures. Oct8 isolated Qt retention checks cover immediate saving, restart, reordered/missing/returning identities and local-draft/controller isolation; repeat actual GUI restart and physical unplug/reconnect with stable native identity. macOS inspection and mocked native API calls do not establish equivalence. See [G01](../docs/architecture/gui.md#g01). |
 | Windows venv interpreter process tree | Prepared-image native regression now verifies one live job member, exact launched/executing PID and OS image, fresh venv imports and inherited bootstrap. Verify real managed registration and shutdown after GUI implementation; focused evidence does not establish full application behavior. |
 | Runtime finalization boundary | Under A07/E05, verify bounded online accounting, encoder finalization, sync and close without a separate file-validation pass. Measure drain/closure delay before the next trial. Output-content inspection belongs to external post hoc or development verification, never an automatic runtime validator. |
@@ -831,3 +839,296 @@ between automated Windows checks and full camera/model/closed-loop experiment ev
   pacing selection; test pulse-off with inactive/missing stored target, pulse-on on
   a different enabled display, and verify patch placement/observed edges independently. Verify corrected frustum orientation against measured
   rig corners; local matrix tests do not establish optical accuracy.
+
+## Camera no-wiring anchoring
+
+Owner-selected simple baseline (2026-10-14): [A09](../docs/architecture/acquisition.md#a09)
+assumes the first trigger in the matched trial/camera pulse train corresponds to the
+source image of the first video frame. This is an assumption, not a demonstrated
+physical anchor. Keep existing wiring, fixed-rate triggers and trial-only capture;
+stronger counters/ExposureActive/coded pre-trial triggers are deferred. Always-save
+camera/stimulus evidence is locally implemented; native checks are listed below.
+
+- [ ] Verify saved camera-trigger routes and identify the correct trial pulse train;
+  retain original OneBox files/meta and camera/native timestamp/counter descriptors.
+  The first trigger means this camera/trial's first pulse, not the first event of
+  any kind in the session recording.
+- [ ] Resolve encoded frame zero to its actual source using video_frame mappings;
+  inspect leading padding, invalid images and recording omissions. Report any
+  conflict with first-trigger correspondence. Metadata-only runs use the first
+  received source row, explicitly labeled assumed.
+- [ ] Inspect timing/count consistency at beginning/middle/end under normal repeated
+  trials and combined load; handle video duplicates through source identity and
+  distinguish source loss from encoding loss. Native counter gaps are interpreted
+  only under their retained semantics. Good fit does not independently prove offset.
+- [ ] Retain mismatches, missing first-frame/pulse evidence, interrupted trials and
+  unknown intervals for owner review. Revisit stronger anchoring only if needed;
+  do not add wiring, reset counters or change cadence as part of this check.
+
+Method and provenance are specified in the
+[camera-clock contract](../contracts/acquisition/camera-clock.md#no-wiring-anchor-scope).
+
+
+## Always-saved scientific evidence
+
+Local implementation under [A07](../docs/architecture/acquisition.md#a07) and
+[E13/V12/V28](../docs/architecture/visual_stimulus.md#e13) has passing host tests;
+these checks remain native acceptance, without wiring or trigger-cadence changes.
+
+- [ ] Run video On → Off → On across repeated sessions/trials using unchanged saved
+  device/trigger settings. For every active camera, retain `_cam_frames.jsonl` in
+  both modes; for Visual Stimulus retain `_stimulus_LOG.json` and `_stimulus_frames.jsonl`.
+  Disabled cameras and sessionless preview must not acquire recording obligations.
+- [ ] With video off, verify no corresponding FFmpeg/NVENC probe/child, camera video
+  pixel pool/copy or stimulus review readback/capture allocation. Check required
+  metadata identities, native counters/timestamps, invalid images, contiguous source
+  IDs, pulse/transport summaries, actual stimulus states/submissions/image selections,
+  clipping/feedback intervals and completion against the retained trial cutoff.
+- [ ] Confirm camera header schema4 `video.enabled=false`, null video mappings and
+  `video_disabled` source dispositions without recording-drop claims; stimulus
+  header format5 `video_enabled=false`, empty captures and no encoder-outcome lines.
+  Video-on retains explicit real/duplicate mappings and the configured encoding.
+- [ ] Exercise normal completion, Abort, pre-T cancellation, required-evidence queue
+  exhaustion and storage/sync failure; retain truthful closure/incomplete evidence,
+  original deadlines and exact cleanup. Inspect GUI restoration of existing false
+  save switches: they disable video while scientific evidence remains required.
+- [ ] Retain source revision/settings and native observations. Keep Eye capture,
+  physical timing and paired SpikeGLX acceptance within their existing deferrals;
+  these checks do not establish an independent first-trigger anchor.
+
+<a id="encoding-test-plan"></a>
+## Encoding comparison: CQ16/CQ23, isolated and combined
+
+Prepared Oct14 for the owned-buffer/half-size review changes under
+[A08](../docs/architecture/acquisition.md#a08),
+[V12](../docs/architecture/visual_stimulus.md#v12) and
+[E13](../docs/architecture/visual_stimulus.md#e13). This is a plan, not rig evidence.
+Use `tools/encoding_probe.py` for synthetic encoder isolation and read-only collection.
+It does not acquire cameras, pulse the MCU, change application configuration or start
+an experiment. Full-path capture/drop testing below uses the normal managed app.
+Do not rerun the dated Oct13 scripts unchanged: they contain historical bindings,
+protocol assumptions and settings restoration logic specific to those sessions.
+
+### Freeze the workload and tools
+
+Use the Windows repository Python3.11 environment, installed FFmpeg/ffprobe pair and
+confirmed RTX2080Ti encoding adapter. Preserve original camera/PFS/configuration
+settings and the original adopted GUI configuration. Complete normal device/display
+readiness first; Eye tests remain pending until its real serial, source format,
+trigger line/pin/rate and drain allowance are confirmed. Do not assign these from
+another camera or enable Eye merely to fill the matrix. Locomotion Tracking, SpikeGLX
+and optical/electrical acceptance stay outside this encoder comparison.
+
+Run in PowerShell from the repository root, while no experiment is active:
+
+```powershell
+$Py = (Resolve-Path '.venv\Scripts\python.exe').Path
+$Run = Join-Path $env:LOCALAPPDATA ('CephVR2\EncodingTests\' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+New-Item -ItemType Directory -Path $Run | Out-Null
+& $Py tools/generate_contracts.py
+if ($LASTEXITCODE -ne 0) { throw 'Contract generation failed' }
+git rev-parse HEAD | Set-Content "$Run\revision.txt"
+git status --short | Set-Content "$Run\working-tree.txt"
+git diff HEAD --binary | Set-Content -Encoding utf8 "$Run\source.patch"
+Copy-Item tools\encoding_probe.py "$Run\encoding_probe.py"
+ffmpeg -version | Set-Content "$Run\ffmpeg-version.txt"
+ffprobe -version | Set-Content "$Run\ffprobe-version.txt"
+nvidia-smi --query-gpu=index,uuid,name,driver_version --format=csv | Tee-Object "$Run\gpu-inventory.csv"
+$Gpu = [int](Read-Host 'Confirmed RTX 2080 Ti ordinal from inventory')
+Copy-Item config\backends\acquisition_config.toml "$Run\acquisition-original.toml"
+Copy-Item config\backends\visual_stimulus_config.toml "$Run\stimulus-original.toml"
+```
+
+The patch includes staged and unstaged tracked edits; it omits untracked files.
+Preserve any additional untracked code used by the run with the evidence. The copied
+helper is provenance only; execute it from the repository so it finds the TOMLs.
+Confirm the selected FFmpeg/CUDA adapter is the2080Ti from its diagnostics and
+observed GPU activity; do not rely on matching numeric indices alone.
+
+Also record the storage volume/free space, power mode, source revision/dirty patch,
+real camera dimensions/rates/depth, exposure/gain, stimulus program/seed/duration and
+prepared recipe. The half-size setting is file-owned `review_scale_factor=2`; verify
+actual prepared dimensions, usually1280x1000 for the previously2560x2000 composite.
+Keep p4, unchanged camera resolution, no B-frames, identical fragment cadence,
+capture slots and memory bounds throughout. Color Behavior uses4:4:4; Tracking/Eye
+mono and current mono stimulus use the explicit grayscale/neutral-chroma chain.
+
+### A. Synthetic FFmpeg throughput (no live app or cameras)
+
+Create a profile manifest from confirmed Setup inputs. For each camera use its
+prepared width/height, nominal rate and FFmpeg input format; for Stimulus use the
+**reduced composite** dimensions and `rgba`. This helper intentionally supports only
+confirmed8-bit `rgb24`, `gray` and `rgba`. Do not downgrade a higher-depth source to
+make the probe run; that row needs a separately verified matching input/codec path.
+
+This command prompts for the values rather than guessing camera dimensions/rates:
+
+```powershell
+$Sources = @('behavioral', 'tracking', 'stimulus')
+# Add 'eye_tracking' only after its configuration is confirmed.
+$Profiles = @{}
+foreach ($Source in $Sources) {
+    $Profiles[$Source] = @{
+        width = [int](Read-Host "$Source prepared input width")
+        height = [int](Read-Host "$Source prepared input height")
+        fps = [double](Read-Host "$Source nominal fps")
+        input_pixel_format = Read-Host "$Source prepared format (rgb24, gray or rgba)"
+    }
+}
+$Profiles | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 "$Run\profiles.json"
+```
+
+The tool copies each source's current TOML output arguments and overrides only CQ
+in memory. It records the full command, profile, tools, elapsed time, FFmpeg progress,
+stderr, file size, external decoded count and full software-decode result. It runs
+without `-re`: requested frames divided by elapsed wall time estimates available
+throughput, including synthetic generation and startup. Decode checks run only after
+all concurrent encoders finish. Each output directory must be new. Validation errors
+(including decoder error output despite exit0) suppress the throughput result.
+Collector errors produce a saved summary and nonzero exit; successful collection
+is still not acceptance—inspect final accounting and match timing records to trials.
+
+Run a separate10s all-source warm-up, then three60s measurements of each source,
+all confirmed cameras, and all confirmed sources. Eye is included only if it was
+explicitly added to `$Sources` after readiness. Repeat2 reverses CQ order. Every
+row gets a unique directory; stop on failure and inspect its retained summary.
+
+```powershell
+$CameraSources = @($Sources | Where-Object { $_ -ne 'stimulus' }) -join ','
+$AllSources = $Sources -join ','
+& $Py tools/encoding_probe.py bench --profiles "$Run\profiles.json" --sources $AllSources --cq 16 --gpu $Gpu --seconds 10 --output "$Run\warmup"
+if ($LASTEXITCODE -ne 0) { throw 'Warm-up failed; inspect evidence' }
+$Cases = [ordered]@{}
+foreach ($Source in $Sources) { $Cases[$Source] = $Source }
+$Cases['cameras'] = $CameraSources
+$Cases['all'] = $AllSources
+foreach ($Repeat in 1..3) {
+    $Qualities = if ($Repeat -eq 2) { @(23, 16) } else { @(16, 23) }
+    foreach ($Case in $Cases.GetEnumerator()) {
+        foreach ($Cq in $Qualities) {
+            $Output = Join-Path $Run ("r{0}-{1}-cq{2}" -f $Repeat, $Case.Key, $Cq)
+            & $Py tools/encoding_probe.py bench --profiles "$Run\profiles.json" --sources $Case.Value --cq $Cq --gpu $Gpu --seconds 60 --timeout 300 --output $Output
+            if ($LASTEXITCODE -ne 0) { throw "Probe failed: $Output; inspect evidence" }
+        }
+    }
+}
+```
+
+Combined commands launch the selected FFmpeg processes concurrently, but finish
+independently: the faster stream's tail does not remain under full contention.
+Compare per-source start/elapsed times and use the full-app timed trial for sustained
+combined load. These streams are not synchronized capture or cross-GPU stdin traffic.
+The300s timeout bounds each encoder/probe/decode/version subprocess, not the whole
+matrix. A timeout or launch/validation failure is not a throughput pass. Synthetic moving
+patterns are deliberately reproducible but neither camera noise nor scientific
+stimulus content. They cannot establish image quality, native capture drops, pipe
+throughput or zero-loss recording. A slow synthetic run takes longer; it does not
+simulate real capture drops. File counts must equal the requested counts.
+
+### B. Full application capture/drop comparisons
+
+Launch the managed app through its normal entry point if it is not already running:
+
+```powershell
+& $Py -m cephvr.launcher.main --software-root (Get-Location).Path
+```
+
+Use the existing GUI Configuration → Setup → Start → normal completion → New Session
+workflow, one reproducible60s open-loop trial per row. Keep projectors rendering the
+same program at60Hz even when stimulus video is Off. Selecting the Tracking **camera**
+does not enable the locomotion Tracking backend. Saving Off still follows the current
+implemented scientific-evidence policy; inspect effective settings rather than assuming
+that a TOML edit overrides an explicitly saved value. Set each selected source's
+complete FFmpeg list in the adopted test configuration to VBR/CQ16 or VBR/CQ23,
+then perform fresh Setup. Preserve every other token. If the GUI workflow cannot
+update an explicitly saved list, stop and use the existing authenticated configuration
+API with a reviewed candidate; do not delete saved configuration or reuse a dated script.
+There is no supported one-command CLI for this live run matrix in this helper.
+
+| Row | Enabled cameras | Stimulus video | CQ comparisons |
+| --- | --- | --- | --- |
+| Behavior only | Behavior | Off |16,23 |
+| Tracking camera only | Tracking | Off |16,23 |
+| Eye only | Eye, when ready | Off |16,23 |
+| Stimulus only | None | On |16,23 |
+| Cameras together | All confirmed cameras | Off | all16, all23 |
+| Full combined | All confirmed cameras | On | all16, all23 |
+| Intended mixed setup | All confirmed cameras | On | Behavior/Tracking16; Eye/Stimulus23 |
+
+Do one10s warm-up, then three60s measured repetitions per available row/CQ variant.
+Use stable camera framing/lighting and repeatable motion where practical; preserve
+stimulus seed. Separate scene variation from codec differences when judging quality.
+Capture actual FFmpeg command lines and adapter identity **during** each trial:
+
+```powershell
+# Use a distinct label for every row/CQ/repeat, e.g. full-cq16-r1.
+$Label = 'full-cq16-r1'
+Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'ffmpeg.exe' } |
+    Select-Object ProcessId, CreationDate, CommandLine |
+    ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 "$Run\$Label-processes.json"
+# In a second terminal, first set $Run and $Label to the same values above.
+# Start before the trial; stop with Ctrl+C after completion.
+nvidia-smi --query-gpu=timestamp,index,uuid,utilization.gpu,utilization.encoder,memory.used --format=csv -l 1 |
+    Tee-Object "$Run\$Label-gpu.csv"
+```
+
+Before measured runs, verify renderer stderr collection emits one pure JSON
+`event=recording_metrics` summary per recording thread. Capture **renderer** stderr;
+redirecting the launcher alone does not establish child-handle inheritance. If no
+summary is collected, label timing unavailable and fix capture before timing comparisons;
+never infer zero latency from an empty log. Timing emission is local-test verified,
+but native stderr routing remains a rig check. App runs provide readback/queue/pipe
+metrics; the synthetic subprocesses do not.
+
+### C. Collect and interpret every completed run
+
+Close the trial normally before full decode/probe. Point at that run's actual session
+recording directory, and at the UTF-8 renderer stderr file collected for that run:
+
+```powershell
+$SessionDirectory = Read-Host 'Actual completed session recording directory'
+$RendererLog = Read-Host 'Renderer stderr UTF-8 log path for this run'
+& $Py tools/encoding_probe.py collect --directory $SessionDirectory --diagnostics $RendererLog --output "$Run\$Label-summary.json"
+```
+
+The collector is read-only and recursively finds MP4s and frame logs, including logs
+with no video. Missing completion, malformed/truncated logs, decode failures and
+missing diagnostics must remain unknown/failure, never zero drops. Match diagnostic
+`evidence_path` to the correct session/trial; an stderr file can contain several trials.
+A collector exit alone is not a pass: inspect its `errors`, each decode/probe status,
+`completion_present` and final accounting. JSON is the retained machine-readable result.
+
+For each source/row/CQ/repeat, record these columns in the owning report:
+
+- Actual command, source representation/rate, encoded dimensions/format/depth, CQ/p4,
+  physical GPU UUID, workload, duration, file size bytes and file bitrate
+  (8 × size_bytes / duration_seconds, in bits/s; includes container overhead).
+- Camera source counts: `received_frames`, invalid images and source dispositions
+  (`capacity_drop`, `same_slot_omission`, `video_disabled` separately); retain raw dropped
+  flags and completion transport counters. Video padding is counted from `video_frame`
+  dispositions, not from received-frame counts. Missed camera transport frames require
+  native counters; nominal rate minus received count is not an independent loss proof.
+- Stimulus: authoritative final `encoder_outcome` capacity-drop, selected-real,
+  same-slot-omission, encoded and duplicate counts; completion unresolved count.
+  Initial capture dispositions are diagnostics only: do not add late update lines to
+  admission counts and double-count the same group. Separate render cadence misses
+  from recording admission drops and padded video frames.
+- FFprobe decoded frame count versus final input-submitted/encoded mapping count;
+  complete software decode; normal completion and closure evidence. A playable padded
+  video alone is not zero-loss capture. Missing/contradictory evidence invalidates the row.
+- Timing aggregate count/total/max for ready/pending readback polls, capture readiness,
+  queue wait, normalization, pipe-call duration and slot lifetime; average=total/count
+  when count>0. Also peak/current slots, zero-progress writes and submitted bytes.
+  Readback polls include mapping/copy/cleanup; pipe-call time excludes async OS wait.
+  No percentiles can be recovered from these aggregates; zero-progress calls are not drops.
+
+Target zero recording capacity drops/unresolved captures, truthful duplicate accounting,
+normal closure and preserved nominal presentation. Throughput below nominal is a clear
+failure; throughput above nominal does not itself establish adequate full-workload
+headroom. Compare all three repetitions and visual crops at identical display scale,
+including motion/edges/low contrast. CQ16/CQ23 file size and acceptability are measured,
+not assumed. Owner evaluates whether to retain the temporary Eye/Stimulus CQ23 values;
+CQ16 remains the standard. Keep existing buffer sizes and remaining optimizations
+unchanged until these measurements identify the bottleneck. Restore the original
+adopted configuration/default files after testing through the normal configuration
+workflow, preserving the resulting evidence and explicit owner decisions.

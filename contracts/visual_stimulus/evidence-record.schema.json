@@ -582,10 +582,16 @@
         "format_version": {
           "enum": [
             3,
-            4
+            4,
+            5
           ],
           "title": "Format Version",
           "type": "integer"
+        },
+        "video_enabled": {
+          "default": true,
+          "title": "Video Enabled",
+          "type": "boolean"
         },
         "identity": {
           "$ref": "#/$defs/Identity"

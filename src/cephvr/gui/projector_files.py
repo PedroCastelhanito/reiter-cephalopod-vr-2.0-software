@@ -13,6 +13,9 @@ from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.projector_profile import portable_profile
 from cephvr.gui.projector_timing import ProjectorTiming
 
+# Full projector file version -> embedded numeric calibration version.
+NUMERIC_VERSIONS = {3: 2, 4: 3, 5: 4, 6: 4, 7: 4, 8: 5, 9: 6}
+
 
 class ProjectorFiles(CalibrationFiles):
     def __init__(
@@ -38,7 +41,7 @@ class ProjectorFiles(CalibrationFiles):
     def snapshot(self) -> dict[str, object]:
         result = self.calibration_snapshot()
         result.update(
-            version=7,
+            version=9,
             settings={
                 "enabled_screens": self.read_participation(),
                 "photodiode_enabled": self.timing.pulse.isChecked(),
@@ -64,7 +67,7 @@ class ProjectorFiles(CalibrationFiles):
         settings: dict[str, Any], version: int
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Migrate legacy standalone rectangles and version-6 square drafts."""
-        if version == 7:
+        if version >= 7:
             return settings["frame_rect"], settings["pulse_rect"]
         square = settings.get("pulse_square", dict(X=None, Y=None, Size=None))
         if not isinstance(square, dict) or set(square) != {"X", "Y", "Size"}:
@@ -76,7 +79,7 @@ class ProjectorFiles(CalibrationFiles):
     def validate(self, payload: object) -> dict[str, object]:
         if (
             isinstance(payload, dict)
-            and payload.get("version") in (3, 4, 5, 6, 7)
+            and payload.get("version") in (3, 4, 5, 6, 7, 8, 9)
             and "settings" in payload
         ):
             if type(payload["version"]) is not int or set(payload) != {
@@ -90,7 +93,7 @@ class ProjectorFiles(CalibrationFiles):
             values = super().validate(
                 {
                     "format": payload["format"],
-                    "version": min(payload["version"] - 1, 4),
+                    "version": NUMERIC_VERSIONS[payload["version"]],
                     "values": payload["values"],
                 }
             )
@@ -104,7 +107,7 @@ class ProjectorFiles(CalibrationFiles):
             }
             if payload["version"] == 6:
                 setting_keys.update(("pulse_square", "blackout_zones"))
-            elif payload["version"] == 7:
+            elif payload["version"] >= 7:
                 setting_keys.update(("frame_rect", "blackout_zones"))
             if not isinstance(settings, dict) or set(settings) != setting_keys:
                 raise ValueError("Expected all projector synchronization settings")
@@ -165,7 +168,7 @@ class ProjectorFiles(CalibrationFiles):
         if isinstance(payload, dict) and "outputs" in payload and "mappings" in payload:
             profile = portable_profile(payload)
             converted = super().snapshot()
-            converted.update(version=7, screen_profile=profile)
+            converted.update(version=9, screen_profile=profile)
             outputs = payload["outputs"]
             if not isinstance(outputs, list) or any(
                 not isinstance(o, dict) for o in outputs
@@ -240,7 +243,7 @@ class ProjectorFiles(CalibrationFiles):
         assert isinstance(payload, dict)
         numeric = {key: payload[key] for key in ("format", "version", "values")}
         numeric["version"] = (
-            min(payload["version"] - 1, 4)
+            NUMERIC_VERSIONS[payload["version"]]
             if "settings" in payload
             else payload["version"]
         )

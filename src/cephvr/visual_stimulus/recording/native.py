@@ -108,6 +108,7 @@ class NativeRecording:
             self.launcher, video_sync_factory, clock_ns=clock_ns
         )
         self.saving = False
+        self.review_scale_factor = 1
         self.capture_slots = 0
         self.evidence_pending_bytes = 0
         self.fragment_target_ns = 0
@@ -174,52 +175,57 @@ class NativeRecording:
         self._setup_work = request.command.target.work
         self._setup_parent_operation = request.command.parent_operation
         limits, policy = request.policies.limits, request.policies
+        if limits.evidence_pending_bytes <= 0 or (
+            self.saving and limits.capture_slots <= 0
+        ):
+            raise ValueError(
+                "Visual Stimulus recording capacities must be explicitly prepared"
+            )
+        if (
+            not limits.HasField("max_prepared_plan_bytes")
+            or limits.max_prepared_plan_bytes == 0
+        ):
+            raise ValueError(
+                "Visual Stimulus prepared recipe byte limit must be explicitly set"
+            )
+        timing_fields: tuple[str, ...] = (
+            "record_sync_interval_ns",
+            "record_stall_timeout_ns",
+        )
         if self.saving:
-            if self.ffmpeg_executable is None:
-                raise FileNotFoundError(
-                    "Save Visual Stimulus data is On but FFmpeg was not resolved"
-                )
-            if self.nvenc_owner is None:
-                raise ValueError("saving requires an NVENC capability owner")
-            if not limits.HasField("capture_slots") or not limits.HasField(
-                "evidence_pending_bytes"
-            ):
+            timing_fields += (
+                "video_sync_interval_ns",
+                "fragment_target_ns",
+                "encoder_stall_timeout_ns",
+            )
+        if not all(
+            policy.HasField(name) and getattr(policy, name) > 0
+            for name in timing_fields
+        ):
+            raise ValueError("Visual Stimulus recording timing policy is incomplete")
+        if deadline_ns <= self.clock_ns():
+            raise TimeoutError("Visual Stimulus recording Setup deadline expired")
+        self.review_scale_factor = (
+            policy.review_scale_factor if policy.HasField("review_scale_factor") else 1
+        )
+        if self.review_scale_factor < 1:
+            raise ValueError("review scale factor must be positive")
+        self.capture_slots = limits.capture_slots
+        self.evidence_pending_bytes = limits.evidence_pending_bytes
+        self.fragment_target_ns = policy.fragment_target_ns
+        self.record_sync_interval_ns = policy.record_sync_interval_ns
+        self.video_sync_interval_ns = policy.video_sync_interval_ns
+        self.encoder_stall_timeout_ns = policy.encoder_stall_timeout_ns
+        self.record_stall_timeout_ns = policy.record_stall_timeout_ns
+        self._configured_max_recipe_bytes = limits.max_prepared_plan_bytes
+        self._owner_key = f"recording-owner:{self._writer_generation}"
+        self._register_resource(self._owner_key, announce)
+        if self.saving:
+            if self.ffmpeg_executable is None or self.nvenc_owner is None:
                 raise ValueError(
-                    "Visual Stimulus recording capacities must be explicitly prepared"
+                    "review video requires FFmpeg and NVENC capability owner"
                 )
-            if (
-                not limits.HasField("max_prepared_plan_bytes")
-                or limits.max_prepared_plan_bytes == 0
-            ):
-                raise ValueError(
-                    "Visual Stimulus prepared recipe byte limit must be explicitly set"
-                )
-            if not all(
-                policy.HasField(name)
-                for name in (
-                    "record_sync_interval_ns",
-                    "video_sync_interval_ns",
-                    "fragment_target_ns",
-                    "encoder_stall_timeout_ns",
-                    "record_stall_timeout_ns",
-                )
-            ):
-                raise ValueError(
-                    "Visual Stimulus recording timing policy is incomplete"
-                )
-            if deadline_ns <= self.clock_ns():
-                raise TimeoutError("Visual Stimulus recording Setup deadline expired")
-            self.capture_slots = limits.capture_slots
-            self.evidence_pending_bytes = limits.evidence_pending_bytes
-            self.fragment_target_ns = policy.fragment_target_ns
-            self.record_sync_interval_ns = policy.record_sync_interval_ns
-            self.video_sync_interval_ns = policy.video_sync_interval_ns
-            self.encoder_stall_timeout_ns = policy.encoder_stall_timeout_ns
-            self.record_stall_timeout_ns = policy.record_stall_timeout_ns
-            self._configured_max_recipe_bytes = limits.max_prepared_plan_bytes
-            self._owner_key = f"recording-owner:{self._writer_generation}"
             self._capture_key = f"recording-capture-slots:{self._writer_generation}"
-            self._register_resource(self._owner_key, announce)
             self._register_resource(self._capture_key, announce)
             for trial in request.session.trials:
                 self._register_resource(
@@ -274,6 +280,7 @@ class NativeRecording:
             register_resource=register,
             report_probe_resource=report,
             input_pixel_format=self.review_input_pixel_format,
+            review_scale_factor=self.review_scale_factor,
         )
         if self._probe_failed:
             raise RuntimeError("FFmpeg capability helper cleanup was not confirmed")
@@ -283,8 +290,6 @@ class NativeRecording:
     def prepare_artifacts(
         self, artifacts: tuple[PreparedTrial, ...], deadline_ns: int
     ) -> Future[None] | None:
-        if not self.saving:
-            return None
         future: Future[None] = Future()
 
         def prepare() -> None:
@@ -311,8 +316,6 @@ class NativeRecording:
     def schedule(
         self, request: visual_stimulus.WorkerSchedule, artifact: PreparedTrial
     ) -> Future[None] | None:
-        if not self.saving:
-            return None
         if self._schedule is not None:
             if self._output_results is None:
                 raise RuntimeError("preceding recording has not reached output closure")
@@ -320,14 +323,15 @@ class NativeRecording:
         if artifact.identity.trial_id not in self._recipes:
             raise RuntimeError("Setup did not precompute this trial's recipe bytes")
         encoding = artifact.review_encoding
-        if encoding is None:
-            raise ValueError("saving requires Setup-prepared ReviewEncoding")
+        if self.saving != (encoding is not None):
+            raise ValueError("review encoding must match video saving")
         plans = {item.output_tag: item for item in request.outputs}
         required = {
             "stimulus_LOG": "json",
             "stimulus_frames": "jsonl",
-            "stimulus": "mp4",
         }
+        if self.saving:
+            required["stimulus"] = "mp4"
         if {tag: item.extension for tag, item in plans.items()} != required:
             raise ValueError(
                 "Schedule must reserve exact recipe/evidence/review-video outputs"
@@ -340,11 +344,14 @@ class NativeRecording:
         self._artifact, self._schedule = artifact, request
         self._recipe_path = Path(plans["stimulus_LOG"].path)
         self._evidence_path = Path(plans["stimulus_frames"].path)
-        self._video_path = Path(plans["stimulus"].path)
+        self._video_path = Path(plans["stimulus"].path) if self.saving else None
         if not request.command.HasField(
             "target"
         ) or not request.command.target.HasField("work"):
             raise ValueError("Schedule lacks exact renderer work identity")
+        if not self.saving:
+            return self._schedule_evidence_only(request)
+        assert encoding is not None and self._video_path is not None
         self.launcher.bind_operation(
             request.command.target.work,
             request.command.parent_operation,
@@ -380,6 +387,7 @@ class NativeRecording:
         )
         self._worker = RecordingWorker(
             capture_slots=self.capture_slots,
+            clock_ns=self.clock_ns,
             evidence=evidence,
             encoder=adapter,
             video_start_ns=request.start_monotonic_ns,
@@ -429,6 +437,37 @@ class NativeRecording:
 
         self._worker.on_submitted = record_video_input
         return launch_future
+
+    def _schedule_evidence_only(
+        self, request: visual_stimulus.WorkerSchedule
+    ) -> Future[None]:
+        assert self._evidence_path is not None and self._recipe_path is not None
+        evidence = EvidenceWriter(
+            max_pending_bytes=self.evidence_pending_bytes,
+            sync_file=WindowsFrameLogSync().sync
+            if sys.platform == "win32"
+            else lambda stream: os.fsync(stream.fileno()),
+        )
+        self._session = RecordingSession(
+            worker=None,
+            evidence=evidence,
+            evidence_path=self._evidence_path,
+            recipe_path=self._recipe_path,
+            max_queued_evidence_bytes=self.evidence_pending_bytes,
+            finalizer=self._finalize,
+            sync_interval_ns=self.record_sync_interval_ns,
+            clock_ns=self.clock_ns,
+        )
+        self._capture_runtime = RecordingCaptureRuntime(
+            self.renderer,
+            self._session,
+            None,
+            evidence_pending_bytes=self.evidence_pending_bytes,
+            capture_slots=0,
+        )
+        future: Future[None] = Future()
+        future.set_result(None)
+        return future
 
     def _io_deadline(self, timeout_ns: int) -> int:
         deadline = self.clock_ns() + timeout_ns
@@ -481,8 +520,6 @@ class NativeRecording:
             raise
 
     def publication(self, report: visual_stimulus.WorkerRecipePublication) -> None:
-        if not self.saving:
-            return
         if self._session is None or self._artifact is None or self._schedule is None:
             raise RuntimeError("recipe publication arrived before scheduled recorder")
         if not report.published or report.prepared != self._schedule.prepared:
@@ -510,7 +547,8 @@ class NativeRecording:
             )
             header = Header(
                 kind="header",
-                format_version=4,
+                format_version=5,
+                video_enabled=self.saving,
                 identity=artifact.identity,
                 writer_generation=self._writer_generation,
                 recipe=receipt,
@@ -526,12 +564,12 @@ class NativeRecording:
         self._header_published = True
 
     def before_render(self) -> None:
-        if not self.saving or self._capture_runtime is None:
+        if self._capture_runtime is None:
             return
         self._capture_runtime.before_render()
 
     def rendered(self, update: RenderUpdate) -> None:
-        if not self.saving or self._capture_runtime is None or self._artifact is None:
+        if self._capture_runtime is None or self._artifact is None:
             return
         try:
             self._capture_runtime.rendered(update)
@@ -540,12 +578,12 @@ class NativeRecording:
                 self._capture_runtime.feedback_snapshots(update.feedback_evidence)
 
     def diagnostics(self, records: tuple[DiagnosticSnapshot, ...]) -> None:
-        if not self.saving or self._capture_runtime is None:
+        if self._capture_runtime is None:
             return
         self._capture_runtime.diagnostics(records)
 
     def feedback(self, records: tuple[FeedbackEvidence, ...]) -> None:
-        if not self.saving or self._capture_runtime is None:
+        if self._capture_runtime is None:
             return
         self._capture_runtime.feedback(records)
 
@@ -569,9 +607,6 @@ class NativeRecording:
         )
 
     def begin_finish(self, cutoff_ns: int, deadline_ns: int) -> None:
-        if not self.saving:
-            self._output_results = ()
-            return
         if self._session is None:
             raise RuntimeError("scheduled recording is missing")
         if self._finish_deadline_ns is None:
@@ -589,9 +624,6 @@ class NativeRecording:
             )
 
     def begin_cancel(self, deadline_ns: int) -> None:
-        if not self.saving:
-            self._output_results = ()
-            return
         self._cancelled = True
         if self._finish_deadline_ns is None:
             now_ns = self.clock_ns()
@@ -626,8 +658,6 @@ class NativeRecording:
     def poll_finished(self) -> tuple[pb.OutputResult, ...] | None:
         if self._output_results is not None:
             return self._output_results
-        if not self.saving:
-            return ()
         if self._session is None:
             return None
         if self._finish_deadline_ns is not None and self._capture_runtime is not None:
@@ -662,7 +692,23 @@ class NativeRecording:
         if not self._header_published:
             self._output_results = self._pre_header_results()
             return self._output_results
-        assert self._schedule is not None and self._worker is not None
+        assert self._schedule is not None
+        if not self.saving:
+            plan = next(
+                p for p in self._schedule.outputs if p.output_tag == "stimulus_frames"
+            )
+            self._output_results = (
+                pb.OutputResult(
+                    output_key=plan.output_key,
+                    path=plan.path,
+                    closure=pb.OUTPUT_CLOSURE_CLOSED
+                    if result.evidence_closed
+                    else pb.OUTPUT_CLOSURE_FAILED,
+                    artifact_present=result.evidence_closed,
+                ),
+            )
+            return self._output_results
+        assert self._worker is not None
         self._output_results = closed_results(
             self._schedule,
             self._worker.counts(),
@@ -697,14 +743,12 @@ class NativeRecording:
 
     def _pre_header_results(self) -> tuple[pb.OutputResult, ...]:
         """Classify Schedule cancellation before released T without inventing files."""
-        if (
-            self._schedule is None
-            or self._video_path is None
-            or self._evidence_path is None
-        ):
+        if self._schedule is None or self._evidence_path is None:
             return ()
-        process_closed = self.encoder_owner.cleanup_complete
-        absent = not self._video_path.exists() and not self._evidence_path.exists()
+        process_closed = not self.saving or self.encoder_owner.cleanup_complete
+        absent = (
+            self._video_path is None or not self._video_path.exists()
+        ) and not self._evidence_path.exists()
         if process_closed and absent:
             return not_started_results(self._schedule)
         return uncertain_pre_header_results(
@@ -766,30 +810,34 @@ class NativeRecording:
             outstanding=tuple(sorted(outstanding)),
         )
 
-    def _finalize(self, counts: RecordingCounts) -> tuple[bytes, bytes]:
-        schedule = self._schedule
-        if schedule is None or self._video_path is None:
-            raise RuntimeError("recording process ownership is absent")
-        deadline = self._finish_deadline_ns or schedule.command.deadline_monotonic_ns
-        result = self.encoder_owner.finalize(self._video_path, deadline)
-        self._encoder_exit = result.exit_code
-        self._video_sync_ok = result.file_sync_and_close_confirmed
-        self._artifact_present = result.artifact_present
-        encoder = EncoderOutcome(
-            kind="encoder_outcome",
-            admitted_count=counts.admitted_count,
-            input_submitted_count=counts.input_submitted_count,
-            capacity_drop_count=counts.capacity_drop_count,
-            selected_real_count=counts.selected_real_count,
-            same_slot_omission_count=counts.same_slot_omission_count,
-            encoded_frame_count=counts.encoded_frame_count,
-            duplicate_frame_count=counts.duplicate_frame_count,
-            final_input_group_id=counts.final_input_group_id,
-            cutoff_host_ns=self._cutoff_ns,
-            exit_code=self._encoder_exit,
-            eof_sent=True,
-            drain_confirmed=self._encoder_exit == 0,
-        )
+    def _finalize(self, counts: RecordingCounts) -> tuple[bytes, ...]:
+        encoder = None
+        if self.saving:
+            schedule = self._schedule
+            if schedule is None or self._video_path is None:
+                raise RuntimeError("recording process ownership is absent")
+            deadline = (
+                self._finish_deadline_ns or schedule.command.deadline_monotonic_ns
+            )
+            result = self.encoder_owner.finalize(self._video_path, deadline)
+            self._encoder_exit = result.exit_code
+            self._video_sync_ok = result.file_sync_and_close_confirmed
+            self._artifact_present = result.artifact_present
+            encoder = EncoderOutcome(
+                kind="encoder_outcome",
+                admitted_count=counts.admitted_count,
+                input_submitted_count=counts.input_submitted_count,
+                capacity_drop_count=counts.capacity_drop_count,
+                selected_real_count=counts.selected_real_count,
+                same_slot_omission_count=counts.same_slot_omission_count,
+                encoded_frame_count=counts.encoded_frame_count,
+                duplicate_frame_count=counts.duplicate_frame_count,
+                final_input_group_id=counts.final_input_group_id,
+                cutoff_host_ns=self._cutoff_ns,
+                exit_code=self._encoder_exit,
+                eof_sent=True,
+                drain_confirmed=self._encoder_exit == 0,
+            )
         completion = Completion(
             kind="completion",
             cutoff_host_ns=self._cutoff_ns or self.clock_ns(),
@@ -814,9 +862,12 @@ class NativeRecording:
             unresolved_attempt_count=0,
             outcome="interrupted" if self._cancelled else "completed",
         )
-        return EvidenceWriter._encode(
-            EvidenceRecord(payload=encoder)
-        ), EvidenceWriter._encode(EvidenceRecord(payload=completion))
+        lines = (EvidenceWriter._encode(EvidenceRecord(payload=completion)),)
+        return (
+            (EvidenceWriter._encode(EvidenceRecord(payload=encoder)), *lines)
+            if encoder is not None
+            else lines
+        )
 
     def _periodic_video_sync(self) -> None:
         if self._video_path is None:

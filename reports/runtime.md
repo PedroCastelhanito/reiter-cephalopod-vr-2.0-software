@@ -1,5 +1,65 @@
 # Controller and supervisor status
 
+## Post-hoc alignment readiness after always-saved evidence
+
+Oct14 source/schema audit under [SYS-004](../architecture.md#sys-004),
+[A09](../docs/architecture/acquisition.md#a09), [E12](../docs/architecture/synchronization.md#e12)
+and [V22/V28](../docs/architecture/visual_stimulus.md#v22), accepting first matched
+camera trigger = source of first recorded video frame. No post-change rig dataset
+was validated; this is implementation evidence, not recorded-pulse proof.
+
+Camera schema4 retains source IDs/host receipt/native counters and timestamps,
+clock/counter descriptors, invalid/drop dispositions, explicit video-source mappings,
+cutoff/pulse/transport/completion evidence independently of video. Stimulus format5
+retains actual group state, per-output submissions/marker index+level, diagnostics,
+feedback and completion with recipe identities/provenance. Paired SESSION_CONFIG
+retains SpikeGLX run/directory, streams/rates/saved-channel indices and pulse mappings.
+
+Eye inventory support is implemented under E12 revision21: additive enum7 and
+`eye_tracking_camera` TOML/GUI mapping, including saved draft restoration and
+SESSION_CONFIG serialization through the existing preparation. Paired Setup requires
+Eye only when acquisition and Eye are enabled and externally triggered; missing,
+non-OneBox or unsaved required mappings fail before run-name mutation. "Eye tracking"
+is classified separately from Tracking in the GUI. No assigned channels, wiring,
+trigger cadence, native counter semantics or acquisition settings changed.
+ARCH-002 review: extend existing focused inventory/validation/panel modules and owning
+behavior tests; no dependencies, new state or extra coordination. No fixed policy
+values changed; the config addition is a commented operator mapping example only.
+Local checks: controller/client suite490 passes with14 loopback setup errors from
+sandbox socket restrictions; the authorized authenticated RPC rerun passes all15.
+Final SpikeGLX tests35 pass (including nested Eye TOML editing), focused GUI tests13
+pass/466 deselected. Protobuf generation19 sources, Ruff check/format15 files,
+Win32 mypy13 source files and boundary check690 modules/zero violations pass.
+Existing size warnings are outside the touched modules; no cohesion exception added.
+An initial new-test helper import error was corrected before these passing runs.
+Rig verification remains open in the [paired checklist](rig-verification.md).
+
+Remaining concrete gaps:
+- Checked-in synchronization pulse_inventory has no assigned channels. Supply actual
+  stream/acquisition-channel/digital-bit mappings for the camera triggers, enabled
+  photodiode and trial-state/projector-flip signals in use; do not copy legacy columns.
+- No explicit shared-sync association binds OneBox to each probe. Retain original
+  native bin/meta files, segment identities and actual common-waveform channel/bit
+  semantics on both ends. Existing custom mappings/native metadata may carry pieces;
+  CephVR does not require or verify the cross-stream relationship. Generic digital-bit
+  validation covers DW, not SY words, so a SY-bit mapping is not currently representable
+  through that validated path. Need actual rig sync inventory before selecting fields.
+- Native camera descriptors allow unknown reset/wrap semantics and generic "frames"
+  counter semantics; the first anchor does not prove recovery after missed triggers,
+  dropped SDK frames or reset. Review retained timestamps/counter gaps; unresolved
+  correspondence stays unresolved. No stronger anchor is requested.
+- Photodiode markers are recorded, but periodic60-submission landmarks are not absolute
+  IDs and held levels supply no internal edges. The measured output is the selected
+  photodiode display; other displays have host submission evidence, not independently
+  measured optical onset. These are timing/recovery limits, not missing source rows.
+
+Trial-to-pulse-train selection and raw-file completeness remain compiler prerequisites;
+no per-trial OneBox edge index is needed in the acquisition output when uniquely
+recoverable from recorded gates/trains. Alignment tables, clock fits and quality labels
+belong to the owner's future compiler. Tracking result files remain controlled by
+save_tracking_data; enable it if complete locomotion histories are required.
+
+
 Oct14 owner-requested repository cleanup under [ARCH-002](../architecture.md#arch-002)
 removes423 files/254291141 bytes from the current tracked tree:136 images,260
 captured-run dataset files,13 obsolete source/document-editing probes and14 other
@@ -1292,8 +1352,11 @@ An investigation while testing invalid random edits also observed a pre-existing
 mixed-subgroup limitation: changing random rules while multiple batch identities
 are selected can leave stored rules unchanged and clear the local draft. The same
 `apply` path excludes metadata updates for mixed identities. This is separate from
-the automatic-update wiring; follow up with an explicit rejection or supported
-mixed-rule semantics before claiming bulk random-rule editing.
+the automatic-update wiring. Oct14 (`mixed-subgroup-random-rule-edit`): `SubgroupEditor.apply`
+now rejects a rule change across more than one batch identity with a notice and keeps
+the draft dirty; other mixed-selection edits are unchanged. Bulk random-rule editing
+remains unsupported. Offscreen regression in the owning subgroup test only; no native
+or rig validation.
 
 Oct13 subgroup editing follows [G01 revision175](../docs/architecture/gui.md#g01),
 [V03 revision12](../docs/architecture/visual_stimulus.md#v03) and
@@ -3952,3 +4015,65 @@ Follow [E15](../docs/architecture/system-contracts.md#e15) for lightweight local
 implementation/communication tests and native/device/full-workload rig checks.
 Execution instructions and retained-result requirements are in
 [rig verification](rig-verification.md#execution-and-results).
+
+## Post hoc alignment compatibility review
+
+2026-10-14 source review (`posthoc-alignment-review`): supplied Desktop guide
+`raw_trial_preprocessing_and_spikeglx_alignment.md` and sibling CephVR1 checkout
+at `914ecbc` (matching the guide), particularly session_compiler/core/alignment.py,
+datasets.py and compiler/record schema paths; compared with current dirty CephVR2
+contracts and acquisition/tracking/Visual Stimulus writer source. No session was
+compiled and no hardware or scientific timing acceptance was performed.
+
+Under [SYS-004](../architecture.md#sys-004),
+[E04](../docs/architecture/supervisor.md#e04),
+[A07/A09](../docs/architecture/acquisition.md#a07),
+[T19](../docs/architecture/tracking.md#t19) and
+[V22/V28/E13](../docs/architecture/visual_stimulus.md#v22), current files carry
+session/trial identities, camera-native provenance, source/video-slot joins,
+tracking source lineage and per-output stimulus submission/marker evidence.
+These support external alignment when the required streams were saved and hardware
+correspondence is established; they do not supply measured OneBox times themselves.
+CephVR1's CSV reader and ten-frame optical-tag assumptions cannot consume CephVR2's
+JSONL records and six-frame marker every 60 submissions unchanged. A09 frame_id
+counts received images, not hardware triggers; never use its gaps as pulse gaps.
+Camera native counter meaning must be read from its descriptor. Review-video padding
+must join to its original source, never become additional scientific observations.
+
+Unresolved alignment limits: first-source/first-pulse assumptions can hide integral
+frame offsets; periodic optical landmarks cannot identify arbitrary missing cycles;
+one photodiode cannot prove other outputs' illumination times; saving Off removes
+required detailed histories. Probe-to-OneBox shared-sync mapping remains external,
+separate from discovering probe files or controlling SpikeGLX. The checked-in pulse
+inventory is unset and paired scientific acceptance remains open in the existing
+[rig checklist](rig-verification.md); this review does not infer live rig wiring.
+Legacy thresholding uses global extrema and 100-sample closing: noise sensitivity
+and pulse merging are risks, not observed corruption in a tested session.
+
+Recommendations, not accepted changes: use version-specific readers feeding one
+shared inspection/compiler alignment core; retain native edge sample indices,
+recording/segment identities and explicit per-row timing/anchor quality; derive
+analysis tables/events externally from canonical records instead of adding competing
+runtime CSV logs. Reuse existing central schema/output index and resolved pulse
+inventory; enrich missing sync-route/probe-segment provenance only where needed.
+Consider separating compact scientific stimulus evidence from optional review-video
+encoding to reduce load while retaining timing history; this requires an E13 policy
+choice. Additional physical absolute anchors or per-output optical measurement
+require their own accepted scope and rig validation, not merely new JSON fields.
+Legacy code already uses memmap, block/halo edge extraction and virtual views;
+profile disk/concurrency and avoid duplicate notebook processing before adding
+parallelism or changing storage format. Offline analysis implementation stays deferred.
+
+Owner clarification: assess missing raw evidence only; the owner will build the
+CephVR2 compiler separately. Additional source findings: A07 ties camera frame logs
+(including optional native counter/timestamp evidence) to save_video, whereas T14
+allows Tracking saving independently. Tracking records retain host/source lineage,
+but do not replace the full acquisition native-clock history when camera saving is
+Off. E13 similarly couples detailed presentation evidence to review-video saving.
+These are accepted configuration limitations, not a claim of corrupted files.
+The earlier missing-Eye finding is resolved by E12 revision21's first-class Eye
+inventory and active external-trigger Setup requirement; see the current alignment
+readiness section above. Actual channel assignments and pulse proof remain rig-pending. Raw files also do not establish
+an absolute first camera-trigger anchor, an absolute optical cycle identity, measured
+exposure latency, or other-projector optical onsets. Their necessity depends on the
+required timing claim; metadata alone cannot create missing physical observations.

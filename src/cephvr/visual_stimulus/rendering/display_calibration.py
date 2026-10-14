@@ -19,6 +19,28 @@ from cephvr.visual_stimulus.resources.display_calibration import (
 )
 
 
+def _smallest_triangle_area(
+    mesh: tuple[tuple[float, float, float, float], ...],
+    rows: int,
+    columns: int,
+    sign: int,
+) -> float:
+    """Smallest output triangle area in the profile's orientation (negative if folded)."""
+    smallest = float("inf")
+    for row in range(rows - 1):
+        for column in range(columns - 1):
+            a = mesh[row * columns + column]
+            b = mesh[row * columns + column + 1]
+            c = mesh[(row + 1) * columns + column]
+            d = mesh[(row + 1) * columns + column + 1]
+            for first, second, third in ((a, b, d), (a, d, c)):
+                area = (second[2] - first[2]) * (third[3] - first[3]) - (
+                    second[3] - first[3]
+                ) * (third[2] - first[2])
+                smallest = min(smallest, sign * area)
+    return smallest
+
+
 class DisplayCalibrationRenderer:
     """Own temporary calibration GL state without constructing an experiment trial."""
 
@@ -83,25 +105,25 @@ class DisplayCalibrationRenderer:
         )
 
     def update(self, adjustments: dict[str, tuple[tuple[float, float], ...]]) -> None:
-        """Validate all rectangles before writing the already-owned GL buffers."""
+        """Validate all quadrilaterals before writing the already-owned GL buffers."""
         import struct
 
         from cephvr.visual_stimulus.config.calibration_adjustments import (
+            LIVE_ADJUSTABLE_VIEWS,
             CalibrationAdjustmentRejected,
+            corner_cross_products,
+            projective_mesh,
+            validated_adjustments,
         )
 
         if (
             self.display is None
             or self.prepared is None
-            or self.display.calibration_view != "frame_grid"
+            or self.display.calibration_view not in LIVE_ADJUSTABLE_VIEWS
         ):
             raise CalibrationAdjustmentRejected(
-                "Live adjustment requires an active frame/grid presentation"
+                "Live adjustment requires an active frame/grid or seam presentation"
             )
-        from cephvr.visual_stimulus.config.calibration_adjustments import (
-            validated_adjustments,
-        )
-
         adjustments = validated_adjustments(
             (key, tuple(coordinate for point in points for coordinate in point))
             for key, points in adjustments.items()
@@ -117,37 +139,40 @@ class DisplayCalibrationRenderer:
             profile = self.prepared.display_calibration.content[mapping_id]
             if (
                 not isinstance(profile, GeometricProfile)
-                or profile.rows != 2
-                or profile.columns != 2
                 or not profile.calibration_id.startswith("diagnostic_")
                 or profile.mask is not None
                 or profile.weight is not None
             ):
                 raise CalibrationAdjustmentRejected(
-                    "Live adjustment requires a GUI diagnostic affine mapping"
+                    "Live adjustment requires a GUI diagnostic mapping"
                 )
-            if (points[1][0] - points[0][0]) * (
-                profile.vertices[1].xy[0] - profile.vertices[0].xy[0]
-            ) <= 0 or (points[2][1] - points[0][1]) * (
-                profile.vertices[2].xy[1] - profile.vertices[0].xy[1]
-            ) <= 0:
+            rows, columns = profile.rows, profile.columns
+            original = tuple(
+                profile.vertices[index].xy
+                for index in (0, columns - 1, (rows - 1) * columns, rows * columns - 1)
+            )
+            if (
+                corner_cross_products(points)[0] * corner_cross_products(original)[0]
+                <= 0
+            ):
                 raise CalibrationAdjustmentRejected(
                     "Live adjustment cannot change axis inversion"
                 )
-            area = (
-                abs((points[1][0] - points[0][0]) * (points[2][1] - points[0][1])) / 2
-            )
-            if area <= profile.triangle_area_tolerance:
+            mesh = projective_mesh(points, rows, columns)
+            sign = 1 if corner_cross_products(points)[0] > 0 else -1
+            if _smallest_triangle_area(mesh, rows, columns, sign) <= (
+                profile.triangle_area_tolerance
+            ):
                 raise CalibrationAdjustmentRejected(
                     "Live adjustment violates the protected mesh area tolerance"
                 )
             frame = self.frames[mapping.output_id]
             coordinates: list[float] = []
-            for original, (x, y) in zip(profile.vertices, points, strict=True):
+            for source, (_u, _v, x, y) in zip(profile.vertices, mesh, strict=True):
                 coordinates.extend(
                     (
-                        original.uv[0],
-                        original.uv[1],
+                        source.uv[0],
+                        source.uv[1],
                         2
                         * (mapping.viewport.x + x * mapping.viewport.width)
                         / frame.width
@@ -158,9 +183,13 @@ class DisplayCalibrationRenderer:
                         - 1,
                     )
                 )
-            data = struct.pack("16f", *coordinates)
-            encoded = struct.unpack("16f", data)
-            if encoded[2] == encoded[6] or encoded[3] == encoded[11]:
+            data = struct.pack(f"{len(coordinates)}f", *coordinates)
+            encoded = struct.unpack(f"{len(coordinates)}f", data)
+            last = len(profile.vertices) - 1
+            if (
+                encoded[2] == encoded[4 * (columns - 1) + 2]
+                or encoded[3] == encoded[4 * last + 3]
+            ):
                 raise CalibrationAdjustmentRejected(
                     "Live adjustment collapses at GPU vertex precision"
                 )
@@ -189,6 +218,11 @@ class DisplayCalibrationRenderer:
                     frame.height,
                     x_px=None if bars is None else bars.x_length_px,
                     y_px=None if bars is None else bars.y_length_px,
+                    guide=(
+                        None
+                        if bars is None or bars.guide_width_px is None
+                        else (bars.guide_width_px, bars.guide_height_px or 0)
+                    ),
                 )
                 continue
             from OpenGL import GL

@@ -4,6 +4,13 @@ Derived from [A07–A09](../../docs/architecture/acquisition.md) and
 [E05/E11](../../docs/architecture/experiment.md). These are contracts, not runtime
 or rig evidence. Capture and recording are threads of one camera worker (A02).
 
+Metadata is required for every active experiment camera. With `metadata_only=true`,
+Setup skips encoder discovery/conversion, PrepareTrial allocates only bounded records
+and the writer, and Schedule retains the JSONL path without launching a child.
+Release, source admission, Started, cutoff and durable completion follow the same
+lifecycle below. No MP4 obligation, pixel pool, video mapping or recording-drop
+claim exists in this mode. Sessionless manual preview remains unsaved.
+
 ## Launch ordering
 
 1. Setup validates resolved tools/settings, source conversion and attachments.

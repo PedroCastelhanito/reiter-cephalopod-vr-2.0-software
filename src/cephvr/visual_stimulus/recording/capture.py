@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import time
 from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from typing import Literal, cast
 from cephvr.shared.nominal_video_grid import NominalVideoGrid
 
 from .evidence import EncoderInput, EvidenceWriter
+from .metrics import RecordingMetrics
 
 
 @dataclass(frozen=True)
@@ -87,9 +89,11 @@ class RecordingWorker:
         on_submitted: Callable[[CompositeFrame], None] | None = None,
         video_start_ns: int,
         video_rate_hz: float | Fraction,
+        clock_ns: Callable[[], int] = time.perf_counter_ns,
     ) -> None:
         if min(capture_slots, max_encoder_write_chunk) <= 0:
             raise ValueError("recording capacities must be positive")
+        self.metrics = RecordingMetrics(clock_ns)
         self.capture_slots = capture_slots
         self.evidence = evidence
         self.encoder = encoder
@@ -162,6 +166,7 @@ class RecordingWorker:
             )
             self._next_token += 1
             self._reservations[reservation.token] = reservation
+            self.metrics.reserve(reservation.group_id, self._inflight_capture_count())
             self._admitted += 1
             self._last_selected_slot = slot
             return reservation, "admitted", slot
@@ -174,8 +179,15 @@ class RecordingWorker:
         height: int,
         pixel_format: str,
         pixels: bytes | bytearray | memoryview,
+        take_ownership: bool = False,
     ) -> None:
-        """Transfer a signaled PBO's bytes to the recording thread's owned slot."""
+        """Copy borrowed pixels, or consume an exclusively owned bytearray.
+
+        With take_ownership, callers must never access the buffer after success.
+        Validation failure leaves ownership with the caller.
+        """
+        if take_ownership and not isinstance(pixels, bytearray):
+            raise TypeError("owned capture requires a bytearray")
         if pixel_format not in {"rgba8_bottom_up", "r10g10b10a2_le_bottom_up"}:
             raise ValueError("unsupported review-composite pixel format")
         owned = CompositeFrame(
@@ -186,15 +198,17 @@ class RecordingWorker:
             pixel_format=cast(
                 Literal["rgba8_bottom_up", "r10g10b10a2_le_bottom_up"], pixel_format
             ),
-            pixels=bytearray(
-                pixels
-            ),  # Own the readback before the GL adapter reuses a slot.
+            pixels=pixels
+            if take_ownership and isinstance(pixels, bytearray)
+            else bytearray(pixels),
             source_host_ns=reservation.source_host_ns,
         )
         with self._lock:
-            current = self._reservations.pop(reservation.token, None)
+            current = self._reservations.get(reservation.token)
             if current != reservation:
                 raise RuntimeError("capture reservation is stale or already completed")
+            del self._reservations[reservation.token]
+            self.metrics.ready(reservation.group_id)
             self._selected_real += 1
             self._frames.append((owned, 0, False))
             self._frames = deque(
@@ -203,9 +217,11 @@ class RecordingWorker:
 
     def cancel_reservation(self, reservation: CaptureReservation) -> None:
         with self._lock:
-            current = self._reservations.pop(reservation.token, None)
+            current = self._reservations.get(reservation.token)
             if current != reservation:
                 raise RuntimeError("capture reservation is stale or already completed")
+            del self._reservations[reservation.token]
+            self.metrics.release(reservation.group_id, cancelled=True)
             self._failed_capture += 1
 
     def drain_once(self) -> bool:
@@ -246,6 +262,7 @@ class RecordingWorker:
                     if earlier_reservation:
                         return False
                     self._frames.popleft()
+                    self.metrics.dequeue(frame.group_id)
                     gap = frame.video_frame_index - self._next_encoded_slot
                     if gap < 0:
                         raise RuntimeError("capture completed behind encoded order")
@@ -300,7 +317,9 @@ class RecordingWorker:
         # Only the recording thread changes the active pixels. Admission and
         # accounting must remain available while the native row copies run.
         if normalize:
+            started = self.metrics.clock_ns()
             normalized_frame = _ffmpeg_input_order(frame)
+            self.metrics.observe("normalization", self.metrics.clock_ns() - started)
             with self._lock:
                 if self._active_frame is not frame or self._active_offset != offset:
                     raise RuntimeError(
@@ -316,9 +335,11 @@ class RecordingWorker:
                     self._pending_real_normalized = True
         end = min(len(frame.pixels), offset + self.max_encoder_write_chunk)
         chunk = memoryview(frame.pixels)[offset:end]
+        started = self.metrics.clock_ns()
         consumed = self.encoder.write_chunk(chunk)
         if consumed < 0 or consumed > len(chunk):
             raise RuntimeError("encoder input returned an invalid write count")
+        self.metrics.write(self.metrics.clock_ns() - started, consumed)
         if consumed == 0:
             return False
         submitted_frame: CompositeFrame | None = None
@@ -356,6 +377,7 @@ class RecordingWorker:
                         self._active_offset = 0
                         self._active_normalized = False
                 else:
+                    self.metrics.release(frame.group_id)
                     self._last_usable = frame
                     self._active_frame = None
                     self._active_offset = 0

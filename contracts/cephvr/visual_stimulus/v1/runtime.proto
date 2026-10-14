@@ -41,6 +41,7 @@ message VisualStimulusFilePolicies {
   optional int64 max_result_age_ns = 8; // V26: positive; visual_stimulus_config default 350 ms; closed loop.
   optional double pacing_refresh_hz = 9; // V20 file-only positive finite target.
   optional string pacing_output_id = 10; // V20 configured output identity.
+  optional uint32 review_scale_factor = 11; // E13 extra integer divisor after encoder-fit tile scaling; absent means 1.
   // Lifecycle/recovery use shared ControlPolicies; health comes from startup policy.
 }
 enum DisplayCalibrationState {

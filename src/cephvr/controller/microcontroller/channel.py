@@ -67,7 +67,6 @@ class SerialChannel:
         self._counter = 0
         self.unmatched_replies = 0
         self.malformed_replies = 0
-        self.last_valid_reply_ns: int | None = None
         self.last_exchange: Exchange | None = None
         self._cancel_requested = threading.Event()
         self._finished = threading.Event()
@@ -244,7 +243,6 @@ class SerialChannel:
                     self.last_exchange = exchange
                     if not reply.ok:
                         raise FirmwareRejected(reply.error_code or "UNKNOWN_ERROR")
-                    self.last_valid_reply_ns = received_ns
                     return exchange
                 if len(line) + 1 > 512:
                     too_long = True
@@ -290,4 +288,3 @@ class SerialChannel:
             self.port.close()
             self.port = None
         self.connection_id = None
-        self.last_valid_reply_ns = None

@@ -160,7 +160,7 @@ class ReviewEncoding(
 ):  # E13: one tiled composite, one encoder (recorded-outputs.md#tiled-composite).
     composite_width: Pos
     composite_height: Pos
-    scale_denominator: Pos  # Tile = output size // k; Setup checks k is minimal for the encoder maximum.
+    scale_denominator: Pos  # Tile = output size // k; Encoder-fit divisor times the configured review scale factor.
     tiles: Annotated[tuple[CompositeTile, ...], Field(min_length=1)]
     native_pixel_format: Literal["rgba8_bottom_up", "r10g10b10a2_le_bottom_up"]
     input_pixel_format: str

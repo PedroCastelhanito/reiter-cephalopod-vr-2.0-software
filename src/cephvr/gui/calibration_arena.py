@@ -35,9 +35,9 @@ def geometry_from_calibration(
     if (
         payload.get("format") != "cephvr-rig-calibration"
         or type(payload.get("version")) is not int
-        or payload.get("version") not in (2, 3, 4)
+        or payload.get("version") not in (2, 3, 4, 5, 6)
     ):
-        raise ValueError("Expected a version 2/3/4 CephVR rig calibration JSON")
+        raise ValueError("Expected a version 2/3/4/5/6 CephVR rig calibration JSON")
     values = payload.get("values")
     if not isinstance(values, dict):
         raise ValueError("Calibration values must be an object")
@@ -137,6 +137,68 @@ class _Mesh:
             ),
             color,
         )
+
+
+def _cross(a: Point, b: Point) -> Point:
+    return (
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    )
+
+
+def _bold_line(
+    mesh: _Mesh,
+    start: Point,
+    end: Point,
+    width: float,
+    color: tuple[float, float, float, float],
+) -> None:
+    """Two crossed ribbons so the line stays visible from every viewing direction."""
+    direction = _subtract(end, start)
+    length = math.sqrt(sum(value * value for value in direction))
+    axis = (1.0, 0.0, 0.0) if abs(direction[0]) < 0.9 * length else (0.0, 1.0, 0.0)
+    first = _cross(direction, axis)
+    second = _cross(direction, first)
+    for normal in (first, second):
+        size = math.sqrt(sum(value * value for value in normal))
+        mesh.line(start, end, width, _scale(normal, 1 / size), color)
+
+
+def make_seam_glb(rig: RigDimensions, *, stroke_mm: float = 3.0) -> bytes:
+    """Bold 3D lines that cross the screen boundaries as seen from the subject.
+
+    An eye-level ring, tank-corner verticals, meridians through the subject and the
+    floor outline are drawn at tank walls, so a correct calibration shows each line
+    continuing unbroken from one screen to the next.
+    """
+    if not math.isfinite(stroke_mm) or stroke_mm <= 0:
+        raise ValueError("Seam line width must be finite and positive")
+    mesh = _Mesh()
+    eye = (1.0, 0.86, 0.12, 1.0)
+    corner = (0.9, 0.3, 0.65, 1.0)
+    meridian = (0.15, 0.75, 0.9, 1.0)
+    floor = (0.2, 0.8, 0.35, 1.0)
+    width, depth, height = rig.width, rig.depth, rig.height
+    x, y, z = rig.subject
+    ring = ((0.0, 0.0, z), (width, 0.0, z), (width, depth, z), (0.0, depth, z))
+    for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
+        _bold_line(mesh, a, b, stroke_mm, eye)
+    for cx in (0.0, width):
+        for cy in (0.0, depth):
+            _bold_line(mesh, (cx, cy, 0.0), (cx, cy, height), stroke_mm, corner)
+    for a, b in (
+        ((x, 0.0, 0.0), (x, 0.0, height)),
+        ((0.0, y, 0.0), (0.0, y, height)),
+        ((width, y, 0.0), (width, y, height)),
+    ):
+        _bold_line(mesh, a, b, stroke_mm, meridian)
+    base = ((0.0, 0.0, 0.0), (width, 0.0, 0.0), (width, depth, 0.0), (0.0, depth, 0.0))
+    for a, b in zip(base, base[1:] + base[:1], strict=True):
+        _bold_line(mesh, a, b, stroke_mm, floor)
+    _bold_line(mesh, (x, 0.0, 0.0), (x, depth, 0.0), stroke_mm, floor)
+    _bold_line(mesh, (0.0, y, 0.0), (width, y, 0.0), stroke_mm, floor)
+    return _pack_glb(mesh)
 
 
 def make_calibration_glb(

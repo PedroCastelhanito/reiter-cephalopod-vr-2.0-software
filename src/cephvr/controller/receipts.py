@@ -13,8 +13,10 @@ def rejected_receipt(code: str, message: str) -> pb.ReportReceipt:
 
 
 def rejected_admission(command_id: str, code: str, message: str) -> pb.CommandAdmission:
+    # Bound the message so the retained result always fits its ledger reservation.
+    bounded = message.encode()[:2048].decode(errors="ignore")
     return pb.CommandAdmission(
         result=pb.COMMAND_RESULT_REJECTED,
         command_id=command_id,
-        failure=pb.Failure(code=code, message=message),
+        failure=pb.Failure(code=code, message=bounded),
     )

@@ -65,15 +65,30 @@ def test_reference_bars_share_exact_pixel_spans_and_restore_scissor():
     x, y = reference_lengths(width, height)
     draw_reference_bars(context, width, height)
     assert context.scissor == (1, 2, 3, 4)
-    assert calls[2][0][2] == x
-    assert calls[3][0][3] == y
+    # The two measurement bars are the last clears, after frame, ticks and guide.
+    assert calls[-2][0][2] == x
+    assert calls[-1][0][3] == y
     assert all(scissor == viewport for scissor, _, _, viewport in calls)
+    assert calls[0][0] == (0, 0, width, 2)  # frame edge
+    assert any(scissor == (99, 0, 2, 12) for scissor, *_ in calls)  # edge tick
+    assert any(color == (1.0, 0.9, 0.0) for _, color, *_ in calls)  # 500 px tick
     scale = reference_scale(width, height, x / 2, y / 2, 1.5)
     assert scale.mm_per_pixel_x == scale.mm_per_pixel_y == 0.5
     assert scale.projector_distance_mm == pytest.approx(width * 0.5 * 1.5)
     calls.clear()
     draw_reference_bars(context, width, height, x_px=200, y_px=100)
-    assert calls[2][0][2] == 200 and calls[3][0][3] == 100
+    assert calls[-2][0][2] == 200 and calls[-1][0][3] == 100
+    calls.clear()
+    draw_reference_bars(context, width, height, guide=(719, 404))
+    cyan = [scissor for scissor, color, *_ in calls if color == (0.0, 0.8, 1.0)]
+    assert cyan[0] == (280, 157, 719, 2) and len(cyan) == 4
+    # Full-span bars place their halo partly off-screen; every clear stays on-screen.
+    calls.clear()
+    draw_reference_bars(context, width, height, x_px=width, y_px=height)
+    assert all(
+        x >= 0 and y >= 0 and x + w <= width and y + h <= height
+        for (x, y, w, h), *_ in calls
+    )
     direct = reference_scale(width, height, 80, 60, x_px=200, y_px=100)
     assert direct.projector_distance_mm is None
     assert direct.projected_width_mm == pytest.approx(width * 0.4)
@@ -1765,3 +1780,24 @@ def test_image_lookahead_skips_long_repeated_history_without_scanning_suffix():
     assert len(reads) < 25
     with pytest.raises(ValueError, match="backwards"):
         cursor.advance(1)
+
+
+def test_physical_corners_use_surface_center_as_local_origin():
+    # V14: a stimulus centered on the surface spans -1..1; the map moves it elsewhere.
+    from cephvr.visual_stimulus.rendering.layer_projection import physical_corners
+
+    surface = NS(
+        surface_id="front",
+        bottom_left_mm=(0.0, 0.0, 0.0),
+        bottom_right_mm=(200.0, 0.0, 0.0),
+        top_left_mm=(0.0, 100.0, 0.0),
+    )
+    artifact = NS(display=NS(geometry=NS(surfaces=[surface])))
+    identity = NS(matrix=((1.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
+    state = {"x": 0.0, "y": 0.0, "width": 200.0, "height": 100.0}
+    corners = physical_corners(artifact, NS(state=state), "front", identity)
+    assert corners == [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
+    edge = physical_corners(
+        artifact, NS(state={**state, "x": 100.0, "y": 50.0}), "front", identity
+    )
+    assert edge[0] == (0.0, 0.0)

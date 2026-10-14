@@ -17,6 +17,7 @@ from .native import _FAMILY, _STREAMS
 ROLE_BY_NAME = {
     "behavioral_camera": wire.PULSE_ROLE_BEHAVIORAL_CAMERA,
     "tracking_camera": wire.PULSE_ROLE_TRACKING_CAMERA,
+    "eye_tracking_camera": wire.PULSE_ROLE_EYE_TRACKING_CAMERA,
     "photodiode": wire.PULSE_ROLE_PHOTODIODE,
 }
 FAMILY_NAMES = {int(value): name for name, value in _FAMILY.items()}
@@ -87,6 +88,7 @@ def validate_inventory(
             in {
                 wire.PULSE_ROLE_BEHAVIORAL_CAMERA,
                 wire.PULSE_ROLE_TRACKING_CAMERA,
+                wire.PULSE_ROLE_EYE_TRACKING_CAMERA,
             }
             and family != "onebox"
         ):
@@ -158,6 +160,7 @@ def required_inventory_roles(
             for name, role in (
                 ("behavioral", wire.PULSE_ROLE_BEHAVIORAL_CAMERA),
                 ("tracking", wire.PULSE_ROLE_TRACKING_CAMERA),
+                ("eye_tracking", wire.PULSE_ROLE_EYE_TRACKING_CAMERA),
             ):
                 camera = getattr(acquisition, name)
                 if (

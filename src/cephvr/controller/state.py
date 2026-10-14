@@ -412,7 +412,6 @@ class Attempt:
     scope_results: dict[str, pb.OperationState] = field(default_factory=dict)
     scope_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     scope_inflight: dict[str, frozenset[str]] = field(default_factory=dict)
-    cleanup_commands: dict[str, str] = field(default_factory=dict)
     cleanup_catalogue_revisions: dict[str, int] = field(default_factory=dict)
     resolution_received: svc.AcquisitionResolutionReport | None = None
     # Revision the accepted resolution was requested at; adoption bumps prepared's.

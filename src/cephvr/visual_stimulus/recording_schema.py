@@ -48,7 +48,7 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         },
     )
     evidence = WriterSchema(
-        schema_version=3,
+        schema_version=5,
         format="jsonl",
         fields={
             "line": "EvidenceRecord(payload: Header|RenderGroup|GroupUpdate|FeedbackEvidence|Interval|EncoderOutcome|Completion)",

@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 18
+**Status:** Accepted · **Revision:** 21
 
 - The backend is named **Visual Stimulus**, with `visual_stimulus` as its canonical
   configuration, registration, package and protocol identifier. Use
@@ -40,7 +40,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - One rendering worker serves the configured outputs and keeps running across trials
   to provide E05's configurable Idle presentation. Programs follow V02/V03, rendering
   stack V04, surface views V15; V12 owns the renderer's recording thread and FFmpeg
-  subprocess when saving is enabled.
+  optional subprocess when video saving is enabled.
 - Controller-authorized calibration presentation uses that same rendering worker,
   prepared static arena and V15 display pipeline during Configuration. It is a
   diagnostic state outside trial programs and recording, with no duration or trial
@@ -58,15 +58,21 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   the output and center them on integer pixel boundaries. Unset legacy lengths
   retain rounded 3/8-to-5/8 spans. Draw them directly in native device-pixel space
   so measurement is independent of geometric/color correction; no trial timing,
-  recording or extra persistent GPU resource is added. The protected display profile
-  selects reference_bars (bars only on black) or frame_grid (arena through the existing
-  V15 pipeline without reference bars); omitted selection defaults to frame_grid.
-  Both use the same diagnostic ownership, actual-presentation and cleanup guarantees.
-  Controller-leased frame/grid adjustment accepts bounded GUI affine rectangles
-  under the exact active diagnostic/revision and increasing sequence. The GL owner
+  recording or extra persistent GPU resource is added. The bars share the native
+  frame with a 2 px output border, edge ticks every 100 px (yellow every 500 px) and
+  an optional centered guide outline (`guide_width_px`/`guide_height_px`, both or
+  neither, within the output) for physical alignment. The protected display profile
+  selects reference_bars (guides and bars only on black), frame_grid (arena through the
+  existing V15 pipeline) or seam_check (a bold 3D wire arena through the same
+  pipeline); omitted selection defaults to frame_grid. All use the same diagnostic
+  ownership, actual-presentation and cleanup guarantees; only enabled outputs are
+  shown. An Open that completes after its deadline is never presented: its protected
+  sources are released, Close then confirms Idle, and repeating a confirmed Close
+  repeats its evidence. Controller-leased frame_grid or seam_check adjustment accepts bounded GUI convex quadrilaterals
+  (four corners, rebuilt as a projective 17×17 grid) under the exact active diagnostic/revision and increasing sequence. The GL owner
   validates the entire update before writing existing warp vertex buffers, retaining
   base protected inputs, axis inversion and resource ownership. Reject stale,
-  nonfinite, degenerate, outside-output or non-GUI mappings. Confirm a sequence only
+  nonfinite, degenerate, non-convex, outside-output or non-GUI mappings. Confirm a sequence only
   after actual presentation on every output within its original deadline; uncertain
   GPU/presentation results become Unknown under existing cleanup. Validation
   rejection retains the prior applied sequence and healthy projection without
@@ -209,7 +215,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 14
+**Status:** Accepted · **Revision:** 15
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -278,7 +284,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   When saving, every presentation record identifies requested/actual image IDs and
   stable indices, with explicit holds and repeated identities. Source/decode/GL errors
   remain failures, not readiness misses. E13 controls detailed-history retention;
-  Save Off retains bounded diagnostic counts, not per-frame history.
+  Required per-group scientific history remains with review video off under E13/V28.
 - **Contracts:** [media profiles](../../contracts/visual_stimulus/media-profiles.md);
   [color pipeline](../../contracts/visual_stimulus/color-pipeline.md);
   [asset lifetime contract](../../contracts/visual_stimulus/asset-lifetime.md);
@@ -511,11 +517,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v12"></a>
 ### V12 — Visual Stimulus recording thread and overload
 
-**Status:** Accepted · **Revision:** 11
+**Status:** Accepted · **Revision:** 13
 
-- With E13 saving enabled, the rendering worker runs one recording thread and one
-  FFmpeg/NVENC subprocess for the tiled review video; that thread also writes the
-  detailed evidence file (V28). No separate recording process, pixel-slot transport
+- The rendering worker always runs one recording thread for required trial evidence
+  (V28). E13 video saving additionally enables an FFmpeg/NVENC subprocess and the
+  tiled review capture path. No separate recording process, pixel-slot transport
   or evidence bridge. The coordinator owns preparation/lifecycle aggregation.
 - The GL thread tiles each render group's final output images into one composite and
   reads it back through bounded pixel buffers (`capture_slots`); the recording thread
@@ -526,7 +532,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   same-slot omissions have a separate disposition from capacity drops. Never evict
   an admitted sample, slow presentation or grow memory without bound. Retained
   padding pixels count against the recording resource budget. Submission evidence
-  stays per output.
+  stays per output. Fresh readback bytearrays transfer exclusive ownership to the
+  recording thread; borrowed inputs are copied. Keep fixed-size per-trial stage
+  timing/slot aggregates and timestamps only for admitted captures; emit diagnostics
+  on recording-thread exit without changing evidence or failure deadlines.
 - Launch FFmpeg at ScheduleTrial acceptance, off the render thread, with final paths;
   feed no frames before T (as A08). Launch failure before T is a required failure
   before release; cancellation before T terminates it and deletes only its own file.
@@ -544,7 +553,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Prepare the recording thread before required Ready; finalize video and evidence
   before aggregate Finished, draining admitted in-interval samples and E13's
   identified in-interval padding (E11). With
-  saving Off, no recording thread, capture or encoding runs. The thread shares the
+  video saving off, evidence writing still runs, with no capture slots, GPU readback
+  or encoding. The thread shares the
   renderer's process and GIL; full-workload throughput is an E15 rig check.
 - **Contracts:** [completion contract](../../contracts/visual_stimulus/video-completion.md);
   [recorded-output contract](../../contracts/visual_stimulus/recorded-outputs.md) (capture,
@@ -553,7 +563,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v13"></a>
 ### V13 — Trial replay from program and actual render evidence
 
-**Status:** Accepted · **Revision:** 10
+**Status:** Accepted · **Revision:** 11
 
 - Analysis software owns offline reconstruction and lossless export. The experiment
   backend records immutable program/resolved-plan information, matching asset
@@ -584,7 +594,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   local digest cache; re-hash only when one changes. Read protection (V04) is still
   acquired before any read or hash. The cache is a speed-up, not provenance: the
   manifest always records the digest.
-- With E13 saving Off, setup logs alone do not guarantee actual-output replay.
+- With E13 video saving off, retain the same recipe and actual scientific evidence.
+  Setup logs alone do not guarantee actual-output replay.
   Lossless export does not prove original pixel/optical equality or physical
   presentation; replay compatibility still needs implementation checks.
 - **Contracts:** [replay contract](../../contracts/visual_stimulus/replay.md) (snapshots,
@@ -595,14 +606,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v14"></a>
 ### V14 — Explicit stimulus coordinate spaces
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 4
 
 - 2D stimuli support physical-surface and observer-centered visual-angle
   coordinates. Each stimulus explicitly selects its space; the GUI shows matching
   units and the versioned program retains the selection. No implicit default or
   automatic reinterpretation.
 - Physical-surface positions/sizes use millimetres and spatial frequency cycles/mm in
-  an identified surface frame; visual-angle positions/sizes use degrees and
+  an identified surface frame whose local origin is the surface centre (right/up axes,
+  edges at ±extent/2, matching the renderer); visual-angle positions/sizes use degrees and
   cycles/degree relative to an identified observer frame. True 3D arenas keep
   explicit world coordinates and units.
 - The renderer maps these through shared display/observer geometry and calibration,
@@ -624,7 +636,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   linear black before output correction. Validate positive whole-pixel rectangles
   within output bounds; do not clip/resize invalid placements. Apply after imported
   warps/masks/weights; V22's marker remains above them. Reference-bar diagnostics
-  remain unobscured; frame/grid calibration honors zones. No extra GPU resources.
+  remain unobscured; frame/grid and seam-check calibration honor zones. No extra GPU resources.
 - V01's single rendering worker renders four calibrated views for the rectangular
   rig's front, left, right and bottom screens by direct per-surface rendering with the
   generalized off-axis perspective method documented by PsychoPy (Kooima), on V04's
@@ -659,8 +671,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   Corner-based backend geometry remains authoritative. Tank dimensions,
   subject position and derived ideal projector throw distance remain distinct.
   G01's measured raw-pixel bars derive X/Y scale and generate static affine mapping
-  assets for GUI-owned profiles using physical screen/full-image ratios and existing
-  offsets/inversions. Preserve imported warps, masks, weights and overlap ownership;
+  assets for GUI-owned profiles from the valid-area edge margins (automatic from
+  physical screen/full-image ratios when blank), signed keystone and inversions; the
+  four corners map the screen projectively onto a 17×17 grid. Keystone does not
+  model lens distortion or depth. Preserve imported warps, masks, weights and overlap ownership;
   this does not solve nonlinear optics or change runtime projection ownership.
 - The display model covers physical corners/observer, explicit tolerances/clipping,
   output identities and viewport/profile references. Invalid/incomplete geometry or
@@ -827,7 +841,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v21"></a>
 ### V21 — Output-range clipping with evidence
 
-**Status:** Accepted · **Revision:** 2
+**Status:** Accepted · **Revision:** 3
 
 - Clamp finite color/brightness values outside the declared software output range,
   record the clipping and continue the original schedule. Never reject a valid
@@ -835,7 +849,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   image/contrast; expose predictable clipping as a Setup warning.
 - The renderer owns clipping and its evidence, with named alpha, linear-output and
   device-code boundaries in V04's color pipeline. Detailed per-output/frame records
-  follow E13; compact warning/count summaries remain with saving Off. Recording
+  follow E13; detailed evidence and compact warning/count summaries remain with video off. Recording
   overload cannot discard required clipping metadata.
 - Scope: finite output-range excursions only. Invalid parameters, nonfinite numerical
   state, unsupported calibration/asset formats and GPU/component or required-logging
@@ -1008,9 +1022,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v28"></a>
 ### V28 — Visual Stimulus evidence file and crash behavior
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 6
 
-- With E13 saving On, the recording thread writes `<prefix>_stimulus_frames.jsonl`:
+- Independently of review-video saving, the recording thread writes `<prefix>_stimulus_frames.jsonl`:
   UTF-8 JSON Lines, one line per render group plus separate update lines for late
   outcomes (referencing the group ID), append-only, OS-synced every **1 s**
   (`record_sync_interval_s`) and at closure. Never rewrite earlier lines or make
@@ -1018,7 +1032,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   selected real composite or leading/gap/trailing duplicate and its exact source
   group/time; padding adds no render-group or presentation evidence. A final closing
   line records real, omitted and padded accounting separately. Missing required
-  evidence or failed writes/sync follows V12/E06.
+  evidence or failed writes/sync follows V12/E06. Header format5 declares
+  `video_enabled`; video-off groups have empty captures and no encoder-outcome
+  records. Required state/submission/feedback/diagnostic/completion records remain.
 - After a crash the file is valid up to its last complete line; readers discard an
   incomplete final line. No checksums, custom framing or recovery contract. Periodic
   sync does not guarantee pending lines survive.
@@ -1033,18 +1049,22 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="e13"></a>
 ### E13 — Save Visual Stimulus data
 
-**Status:** Accepted · **Revision:** 21
+**Status:** Accepted · **Revision:** 25
 
-- One **Save Visual Stimulus data** switch controls rendered Visual Stimulus video, associated frame logs and
-  detailed Visual Stimulus state and presentation outputs. It defaults to On for a new
-  configuration, preserves explicit saved On or Off values and locks at Start. Visual Stimulus
-  output files follow E11's trial-only boundaries.
+- Active experiment Visual Stimulus always saves scientific data and metadata:
+  recipe/program provenance, effective state, per-output submission/marker evidence,
+  feedback lineage and required completion accounting. Review-video saving is
+  independent and optional; its switch controls only video capture/encoding and
+  defaults to On, preserves saved On/Off choices and locks at Start. An existing
+  saved Off value disables review video, never required scientific evidence.
+  Output files retain E11's trial-only boundaries. Required evidence remains bounded
+  and its loss follows V12/E06, including when video is disabled.
 - Save one tiled review video per trial: every configured output's final renderer
   image, after configured renderer-applied corrections, in the fixed
   [tile layout](../../contracts/visual_stimulus/recorded-outputs.md#tiled-composite) retained in
   the recipe. Reuse those images; never rerender a recording viewpoint.
 - One NVENC session in an FFmpeg subprocess encodes the composite from raw frames fed
-  by V12's recording thread (never the render thread), as high-quality lossy video
+  by V12's recording thread (never the render thread), as operator-tuned lossy video
   for posthoc visualization only, not a replay input. V13 owns exact per-output
   reconstruction and lossless export; V12 owns recording execution and overload.
 - Use the existing validated FFmpeg output-token mechanism with one complete custom
@@ -1052,6 +1072,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   timing and MP4 lifecycle, reusing compatible parser/launch/cleanup mechanisms.
   Transfer/timing implementation remains unfinished; review recordings do not prove
   pixel identity or physical display.
+- Review recording uses configurable monochrome lossy quality; future color uses
+  4:4:4. A file-owned positive integer review scale factor multiplies the encoder-fit
+  tile divisor before GPU readback; the prepared recipe retains actual dimensions
+  and tile rectangles. Rendering and reconstruction evidence stay full resolution.
+  Reject empty or encoder-incompatible dimensions; never silently crop. Encoding
+  tuning remains in the owning FFmpeg argument list.
 - Explicitly configured review-video depth reduction is allowed with validated
   conversion and retained source/target representation evidence; silent negotiation
   is forbidden. Rendering and V13 reconstruction keep their original precision.
@@ -1077,11 +1103,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   conversion to ordinary MP4 or faststart pass at trial end. Normal encoder drain,
   finalization, sync and close stay required; V28's Unconfirmed crashed-video outcome
   and no-repair policy apply.
-- When Off, detailed evidence and review video are not written. The complete
-  `_stimulus_LOG.json` stays required (V03/V13); it preserves planned content, not
-  actual closed-loop presentation history. Rendering/projection, camera recording
-  and tracking are unchanged. Encoder input format/throughput retain the accepted rig
-  deferral.
+- With review video Off, `_stimulus_LOG.json` and `_stimulus_frames.jsonl` remain
+  required. Do not fabricate captures, encoder outcomes or video mappings for an
+  intentionally disabled video. Rendering/projection and independent Tracking saving
+  are unchanged. Encoder input format/throughput retain the accepted rig deferral.
 - **Contracts:** [Visual Stimulus encoding binding](../../contracts/visual_stimulus/encoding-options.md);
   [output reservation and naming](../../contracts/visual_stimulus/runtime-bindings.md)
   (`_stimulus_LOG.json`, `_stimulus_frames.jsonl` and `_stimulus.mp4` under E04).

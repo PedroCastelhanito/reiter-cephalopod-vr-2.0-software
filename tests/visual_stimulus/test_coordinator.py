@@ -628,6 +628,11 @@ def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates():
     evidence.calibration_view = "reference_bars"
     with pytest.raises(ValueError, match="inactive"):
         bind_command(identity, state, "UpdateDisplayCalibration", request, 123456)
+    evidence.calibration_view = "seam_check"  # Also drawn through the live mesh.
+    child, _ = bind_command(
+        identity, state, "UpdateDisplayCalibration", request, 123456
+    )
+    assert child.adjustment_sequence == 2
     evidence.calibration_view = "frame_grid"
     state.interrupted = True
     with pytest.raises(ValueError, match="fenced"):

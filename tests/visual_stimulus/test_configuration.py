@@ -169,6 +169,87 @@ def test_output_subsets_preserve_rig_geometry_and_calibrated_mappings():
         DisplayProfile.model_validate_json(json.dumps(source))
 
 
+def test_reference_guide_and_seam_view_are_bounded_profile_fields():
+    import pytest
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.config.calibration_adjustments import (
+        LIVE_ADJUSTABLE_VIEWS,
+    )
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+
+    source = json.loads(valid_display_json())
+    output = source["outputs"][0]
+    width, height = output["width_px"], output["height_px"]
+
+    def parsed(**changes):
+        source["outputs"][0]["reference_bars"] = dict(
+            x_length_px=10, y_length_px=10, **changes
+        )
+        return DisplayProfile.model_validate_json(json.dumps(source))
+
+    guided = parsed(guide_width_px=width // 2, guide_height_px=height // 2)
+    assert guided.outputs[0].reference_bars.guide_width_px == width // 2
+    assert parsed().outputs[0].reference_bars.guide_height_px is None
+    with pytest.raises(ValueError, match="both width and height"):
+        parsed(guide_width_px=10)
+    with pytest.raises(ValueError, match="exceed the output"):
+        parsed(guide_width_px=width + 1, guide_height_px=10)
+    parsed()  # Restore valid bars after the rejected guides.
+    source["calibration_view"] = "seam_check"
+    assert DisplayProfile.model_validate_json(json.dumps(source)).calibration_view == (
+        "seam_check"
+    )
+    assert LIVE_ADJUSTABLE_VIEWS == {"frame_grid", "seam_check"}
+    source["calibration_view"] = "unknown_view"
+    with pytest.raises(ValueError):
+        DisplayProfile.model_validate_json(json.dumps(source))
+
+
+def test_projective_mesh_keeps_corners_lines_and_perspective_spacing():
+    import pytest
+
+    from cephvr.visual_stimulus.config.calibration_adjustments import (
+        CalibrationAdjustmentRejected,
+        is_convex_quadrilateral,
+        projective_mesh,
+        validated_adjustments,
+    )
+
+    rectangle = ((0.1, 0.2), (0.9, 0.2), (0.1, 0.8), (0.9, 0.8))
+    uniform = projective_mesh(rectangle, 3, 3)
+    assert [(round(x, 9), round(y, 9)) for _, _, x, y in uniform] == [
+        (0.1, 0.2), (0.5, 0.2), (0.9, 0.2),
+        (0.1, 0.5), (0.5, 0.5), (0.9, 0.5),
+        (0.1, 0.8), (0.5, 0.8), (0.9, 0.8),
+    ]  # fmt: skip
+    trapezoid = ((0.0, 0.0), (1.0, 0.0), (0.25, 1.0), (0.75, 1.0))
+    mesh = projective_mesh(trapezoid, 9, 9)
+    for index, corner in zip((0, 8, 72, 80), trapezoid, strict=True):
+        assert mesh[index][2:] == pytest.approx(corner)
+    left_edge = [mesh[9 * row][2:] for row in range(9)]
+    for x, y in left_edge:  # the left edge stays on the straight line x = y / 4
+        assert x == pytest.approx(0.25 * y)
+    gaps = [b[1] - a[1] for a, b in zip(left_edge, left_edge[1:], strict=False)]
+    assert all(later < earlier for earlier, later in zip(gaps, gaps[1:], strict=False))
+    centre = [mesh[9 * row + 4][2] for row in range(9)]
+    assert centre == pytest.approx([0.5] * 9)  # symmetry is preserved
+    assert is_convex_quadrilateral(trapezoid)
+    assert not is_convex_quadrilateral(((0, 0), (1, 0), (0.5, 0.2), (0.7, 1)))
+    assert not is_convex_quadrilateral(((0, 0), (1, 0), (0, 0), (1, 0)))
+    with pytest.raises(ValueError, match="convex"):
+        projective_mesh(((0, 0), (1, 0), (0.5, 0.2), (0.7, 1)), 3, 3)
+    flat = [x for corner in trapezoid for x in corner]
+    assert validated_adjustments([("front", flat)])["front"] == trapezoid
+    for bad in (
+        [0, 0, 1, 0, 0.5, 0.2, 0.7, 1],
+        [0, 0, 1, 1, 0, 0, 1, 1],
+        [0, 0, 1, 0, 0, 1, 1.5, 1],
+    ):
+        with pytest.raises(CalibrationAdjustmentRejected):
+            validated_adjustments([("front", bad)])
+
+
 def test_photodiode_visibility_is_independent_of_pacing_and_disabled_target():
     import pytest
     from tests.visual_stimulus.support import valid_display_json
@@ -302,3 +383,35 @@ def test_all_output_vsync_without_pacer_preserves_common_recording_rate():
         resolve_pacing_profile(
             json.dumps(source), max_bytes=1_000_000, refresh_hz=60.0, output_id=None
         )
+
+
+def test_review_reduction_scales_capture_tiles_without_changing_display() -> None:
+    from types import SimpleNamespace as NS
+
+    import pytest
+
+    from cephvr.shared.ffmpeg_types import EncodingOptionsError
+    from cephvr.visual_stimulus.recording.encoding import _composite_geometry
+
+    outputs = tuple(
+        NS(width_px=1280, height_px=1000, output_id=str(i)) for i in range(4)
+    )
+    display = NS(active_outputs=outputs)
+    full = _composite_geometry(display, (4096, 4096))
+    reduced = _composite_geometry(display, (4096, 4096), 2)
+    assert full[:3] == (2560, 2000, 1)
+    assert reduced[:3] == (1280, 1000, 2)
+    assert reduced[0] * reduced[1] * 4 == full[0] * full[1]
+    assert all((o.width_px, o.height_px) == (1280, 1000) for o in outputs)
+    assert reduced[3] == (
+        ("0", 0, 500, 640, 500),
+        ("1", 640, 500, 640, 500),
+        ("2", 0, 0, 640, 500),
+        ("3", 640, 0, 640, 500),
+    )
+    # Apply extra reduction after the existing encoder-fit divisor.
+    assert _composite_geometry(display, (1300, 1100), 2)[:3] == (640, 500, 4)
+    for factor in (0, -1, True, 2000):
+        with pytest.raises(EncodingOptionsError):
+            _composite_geometry(display, (4096, 4096), factor)
+    assert load_file_policies(_ROOT).review_scale_factor == 2

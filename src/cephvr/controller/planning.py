@@ -41,9 +41,9 @@ def _tags(
             raise PlanningError(
                 "Visual Stimulus Ready lacks resolved Visual Stimulus settings"
             )
-        tags = [("stimulus_LOG", "json")]
+        tags = [("stimulus_LOG", "json"), ("stimulus_frames", "jsonl")]
         if _save_flag(settings.visual_stimulus, "save_visual_stimulus_data"):
-            tags.extend((("stimulus_frames", "jsonl"), ("stimulus", "mp4")))
+            tags.append(("stimulus", "mp4"))
         return tuple(tags)
     if backend_name == "acquisition":
         if settings.WhichOneof("settings") != "acquisition":
@@ -51,9 +51,11 @@ def _tags(
         tags = []
         for camera_role in CAMERA_NAMES:
             camera = getattr(settings.acquisition, camera_role)
-            if _save_flag(camera, "enabled") and _save_flag(camera, "save_video"):
+            if _save_flag(camera, "enabled"):
                 tag = f"{camera_role}_cam"
-                tags.extend(((tag, "mp4"), (f"{tag}_frames", "jsonl")))
+                tags.append((f"{tag}_frames", "jsonl"))
+                if _save_flag(camera, "save_video"):
+                    tags.append((tag, "mp4"))
         return tuple(tags)
     if backend_name == "tracking":
         if settings.WhichOneof("settings") != "tracking":

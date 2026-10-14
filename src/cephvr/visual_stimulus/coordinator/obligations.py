@@ -8,9 +8,12 @@ from cephvr.control.v1 import types_pb2 as pb
 def output_plans(
     backend: pb.BackendContext, trials: list[pb.TrialPlan], saving: bool
 ) -> tuple[pb.OutputPlan, ...]:
-    tags: tuple[tuple[str, str], ...] = (("stimulus_LOG", "json"),)
+    tags: tuple[tuple[str, str], ...] = (
+        ("stimulus_LOG", "json"),
+        ("stimulus_frames", "jsonl"),
+    )
     if saving:
-        tags += (("stimulus_frames", "jsonl"), ("stimulus", "mp4"))
+        tags += (("stimulus", "mp4"),)
     return tuple(
         pb.OutputPlan(
             backend=backend,

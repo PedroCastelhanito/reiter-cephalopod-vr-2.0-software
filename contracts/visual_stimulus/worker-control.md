@@ -93,7 +93,7 @@ and reuses/replaces resources; there is no new retry UI or automatic polling loo
 
 ## Session/trial lifecycle
 
-| Stage | Renderer | Recording thread when saving On |
+| Stage | Renderer | Required evidence thread (video resources only when enabled) |
 | --- | --- | --- |
 | SetupSession | Validate display/program resources; retain immutable prepared identities and live Idle. | Validate arguments, output reservations and bounded capture/evidence resources; create no trial files. |
 | PrepareTrial | Retain the exact trial plan/duration, prepared initial state and required initial media; acknowledge required resources. | Prepare the trial's paths, encoder configuration and capture slots. |
@@ -138,9 +138,9 @@ Missing required lines are required-evidence failure. [Capture/evidence paths](r
 bind this in-process path; it still requires runtime implementation.
 
 GetState reconciles retained command/evidence without resetting clocks or starting work.
-An unknown command never authorizes blindly replaying an uncertain release. Save Off
-has no recording/capture/encoding obligations; the coordinator still writes and closes
-the required stimulus log under runtime-bindings.md. Finished includes compact per-output timing
+An unknown command never authorizes blindly replaying an uncertain release. Video off
+retains required recipe and evidence closure, with no capture/encoding obligations.
+The coordinator writes the recipe and the renderer writes evidence under runtime-bindings.md. Finished includes compact per-output timing
 summaries even with Save Off, plus one ReviewRecordingSummary for the composite when saving; detailed scientific histories never enter these RPCs.
 
 ## Resource policy binding
@@ -150,8 +150,9 @@ VisualStimulusFilePolicies is controller-resolved from visual_stimulus_config.to
 integers, checked against protobuf widths and allocation overflow before use. Missing
 limits fail the path that needs them. Display-only startup uses document/CPU/GPU limits;
 program expansion adds epoch/plan limits; video inputs add decoder/context/frame limits;
-saving adds capture/evidence limits and recording progress/sync intervals. Save Off
-and programs without videos do not require irrelevant settings or allocate their buffers.
+trial evidence always requires bounded evidence bytes and record sync/stall intervals;
+review video adds capture limits and encoder timing. Video off and programs without
+video assets do not require irrelevant settings or allocate their buffers.
 
 [feedback] max_result_age_ms (default 350, configurable, positive) maps to
 VisualStimulusFilePolicies.max_result_age_ns using exact decimal milliseconds-to-positive-int64-
@@ -186,3 +187,7 @@ Schema generation, pure display validation and Protobuf compilation can be check
 locally. Native output capability, profile contents, window/GPU resource release,
 worker dispatch, transport integration and rig behavior are not established by these
 checks. Continue the explicit worklist; this does not declare Visual Stimulus fully implemented.
+
+The file-only `recording_runtime.review_scale_factor` is a positive integer carried
+in `VisualStimulusFilePolicies` (absent means 1). Setup applies it to the encoder-fit
+tile divisor before capture; see [composite geometry](recorded-outputs.md#tiled-composite).

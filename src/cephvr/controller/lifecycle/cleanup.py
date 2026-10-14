@@ -188,13 +188,14 @@ class CleanupWorkflow:
         Returns whether the fences registered and every backend accepted; the
         caller handles ``TimeoutError``.
         """
+        if attempt.registered_context is None and not self.lifecycle.authority_lost:
+            # Setup work reaches backends only after the preliminary supervisor
+            # registration, so nothing exists to fence or cancel before it.
+            return True
         requests = {
             name: self.backend_command(attempt, backend)
             for name, backend in attempt.required.items()
         }
-        attempt.cleanup_commands.update(
-            {name: request.command_id for name, request in requests.items()}
-        )
         fenced = (
             await self.register_cleanup_fences(attempt, requests, deadline)
             if not self.lifecycle.authority_lost

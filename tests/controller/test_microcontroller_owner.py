@@ -550,6 +550,17 @@ def test_reserved_off_blocks_routine_status_and_dispatches_with_original_deadlin
     assert port.verbs[-1] == "OFF"
 
 
+def test_pre_dispatch_deadline_failure_is_labelled_by_type_not_message() -> None:
+    from cephvr.controller.microcontroller.pulses import _error_code
+
+    assert (
+        _error_code(
+            ChannelDeadline("original operation deadline expired before dispatch")
+        )
+        == "DEADLINE_EXPIRED"
+    )
+
+
 def _policies(*, ack_ns: int = 20) -> runtime_pb2.AcquisitionFilePolicies:
     return runtime_pb2.AcquisitionFilePolicies(
         serial_baud_rate=115_200,
@@ -1666,6 +1677,37 @@ async def test_uncertain_diagnostic_start_remains_fenced_for_cleanup():
     assert not owner.cleanup_complete and owner.snapshot_view().cleanup_pending
     serial.close.assert_not_awaited()
     serial.off.assert_not_awaited()
+
+
+async def test_rejected_diagnostic_start_is_not_an_uncertain_start():
+    from unittest.mock import AsyncMock
+
+    from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+    from cephvr.controller.microcontroller.protocol import FirmwareRejected
+    from cephvr.shared.clock import host_time_ns
+
+    serial = AsyncMock()
+    serial.diagnostic_start.side_effect = FirmwareRejected("PIN_CONFLICT")
+    owner = MicrocontrollerDevice(
+        serial,
+        control.AcquisitionSettings(),
+        runtime_pb2.AcquisitionFilePolicies(),
+        host_time_ns,
+    )
+    owner.port_owned = True
+    owner.view.observation.port = "COM8"
+    pulses = camera.CameraPulseConfiguration(
+        port="COM8", trial_state_pin="D9", trial_state_enabled=True
+    )
+    request = wire.MicrocontrollerCommandRequest(
+        kind=wire.MICROCONTROLLER_COMMAND_KIND_START,
+        signal=control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
+    )
+    deadline = host_time_ns() + 1_000_000_000
+    with pytest.raises(FirmwareRejected):
+        await owner.execute(request, pulses, deadline)
+    owner.ensure_idle()  # the refusal leaves no uncertain diagnostic behind
+    assert not owner._diagnostic_uncertain
 
 
 async def test_cancel_on_retains_off_boundary_for_watchdog_arbitration():

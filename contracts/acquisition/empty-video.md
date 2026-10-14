@@ -73,7 +73,7 @@ recreate files twice.
 
 Other outputs retain their owning predicates. Visual Stimulus's separately accepted result is
 bound in [Visual Stimulus completion](../visual_stimulus/video-completion.md); this camera contract grants no
-tracking exception. Preview and saving Off do not create
-camera recording obligations. Existing result, metadata and cleanup deadlines remain.
+tracking exception. Sessionless preview creates no recording obligations; video off
+retains required camera metadata obligations without an MP4 obligation. Existing result, metadata and cleanup deadlines remain.
 CLOSED/FRAMES_SUBMITTED do not claim a reread, decoded-frame count or integrity check.
 Normal completed-file validation stays external post hoc under E05.

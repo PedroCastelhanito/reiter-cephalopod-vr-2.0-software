@@ -169,6 +169,8 @@ class SpikeGLXPanel(DevicePanel):
             if source_key in camera_keys:
                 if "behavior" in normalized_name:
                     role = sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA
+                elif "eye" in normalized_name:
+                    role = sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA
                 elif "tracking" in normalized_name:
                     role = sync_pb.PULSE_ROLE_TRACKING_CAMERA
             elif source_key == "photodiode":
@@ -212,6 +214,7 @@ class SpikeGLXPanel(DevicePanel):
                 not in {
                     sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA,
                     sync_pb.PULSE_ROLE_TRACKING_CAMERA,
+                    sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA,
                     sync_pb.PULSE_ROLE_PHOTODIODE,
                 }
                 or role in self.active_inventory_roles
@@ -255,6 +258,7 @@ class SpikeGLXPanel(DevicePanel):
             if key is None and channel.role in {
                 sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA,
                 sync_pb.PULSE_ROLE_TRACKING_CAMERA,
+                sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA,
                 sync_pb.PULSE_ROLE_PHOTODIODE,
             }:
                 source_name = (

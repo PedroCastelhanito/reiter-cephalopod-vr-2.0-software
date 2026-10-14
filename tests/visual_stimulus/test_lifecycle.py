@@ -808,6 +808,127 @@ def test_display_calibration_cleanup_retains_and_releases_late_prepare():
     assert report.calibration.diagnostic_id == opened.diagnostic_id
 
 
+@pytest.mark.parametrize("release_fails_once", [False, True])
+def test_display_calibration_open_that_prepares_after_its_deadline_returns_to_idle(
+    release_fails_once,
+):
+    import hashlib
+    import threading
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+    from cephvr.visual_stimulus.worker.display_calibration import (
+        DisplayCalibrationOwner,
+    )
+
+    clock = Clock()
+    profile = parse_display_json(valid_display_json(), max_bytes=1_000_000)
+    profile_json = profile.model_dump_json()
+    worker = pb.ProcessIdentity(
+        role="visual_stimulus_renderer", generation=str(uuid4())
+    )
+    controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+    coordinator = pb.ProcessIdentity(role="visual_stimulus", generation=str(uuid4()))
+    prepared = SimpleNamespace(display=profile, previous_display=None)
+    allow_prepare = threading.Event()
+    releases = []
+
+    class PreparationStub:
+        def prepare_display_calibration(self, request, announce, deadline_ns):
+            assert allow_prepare.wait(1)
+            return prepared
+
+        def release_display_calibration(self, asset):
+            releases.append(asset)
+            return not (release_fails_once and len(releases) == 1)
+
+    class EngineStub:
+        def present_display_calibration(self, selected, asset):
+            raise AssertionError("a late preparation must not be presented")
+
+        def close_display_calibration(self, selected, asset):
+            raise AssertionError("the renderer never held this preparation")
+
+    reports = Reports()
+    owner = DisplayCalibrationOwner(
+        worker=worker,
+        controller=controller,
+        backend=pb.BackendContext(
+            backend_name="visual_stimulus", backend_generation=coordinator.generation
+        ),
+        engine=EngineStub(),
+        preparation=PreparationStub(),
+        reports=reports,
+        display_profile=lambda: None,
+        set_display_profile=lambda _selected: None,
+        clock=clock,
+    )
+    command = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        issuer=coordinator,
+        target=visual_stimulus.WorkerContext(
+            worker=worker, owner=coordinator, configuration_revision=9
+        ),
+        parent_operation=pb.OperationContext(command_id=str(uuid4())),
+        deadline_monotonic_ns=clock() + 1_000_000,
+    )
+    opened = visual_stimulus.OpenDisplayCalibrationCommand(
+        command=command,
+        diagnostic_id=str(uuid4()),
+        profile_json=profile_json,
+        profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+        asset_root="/accepted",
+        arena_relative_path="calibration/arena.glb",
+        arena_size_bytes=64,
+        arena_sha256="a" * 64,
+        policies=vp.VisualStimulusFilePolicies(
+            limits=vp.ResourceLimits(max_document_bytes=1_000_000)
+        ),
+    )
+    completion = owner.open(opened, command.deadline_monotonic_ns)
+    late = command.deadline_monotonic_ns + 1
+    assert owner.advance(late) is not None  # deadline missed, preparation still running
+    assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+    with pytest.raises(TimeoutError):
+        completion.result(timeout=1)
+    allow_prepare.set()
+    for _ in range(100):
+        owner.advance(late)
+        if owner.job is None:
+            break
+        threading.Event().wait(0.001)
+    assert owner.job is None
+
+    close = visual_stimulus.CloseDisplayCalibrationCommand(
+        command=visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            issuer=coordinator,
+            target=command.target,
+            parent_operation=pb.OperationContext(command_id=str(uuid4())),
+            deadline_monotonic_ns=clock() + 1_000_000,
+        ),
+        diagnostic_id=opened.diagnostic_id,
+    )
+    if release_fails_once:
+        # The failed release leaves exact evidence; Close retries it without the renderer.
+        assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+        assert owner.evidence.failure_code == "CALIBRATION_SOURCE_CLOSE"
+        assert owner.active_id == opened.diagnostic_id
+        owner.close(close, close.command.deadline_monotonic_ns)
+    assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_IDLE
+    assert owner.evidence.idle and owner.evidence.resources_closed
+    assert not owner.evidence.failure_code
+    assert owner.evidence.diagnostic_id == opened.diagnostic_id
+    assert owner.active_id == "" and owner.prepared is None
+    # Repeating the controller's Close confirms the same evidence instead of failing.
+    owner.close(close, close.command.deadline_monotonic_ns)
+    report = reports.records[-1][1]
+    assert report.command_id == close.command.command_id
+    assert report.calibration.state == vp.DISPLAY_CALIBRATION_STATE_IDLE
+    assert len(releases) == (2 if release_fails_once else 1)
+
+
 def test_failed_native_calibration_source_close_is_retried_by_lifecycle_cleanup(
     tmp_path, monkeypatch
 ):
@@ -1017,8 +1138,17 @@ def test_release_is_required_and_no_activity_before_onset():
     clock.value = release.normal_end_monotonic_ns
     driver.advance(clock())
     assert reports.lifecycle("stopped")[0][0].visual_stimulus_idle
+    assert not reports.lifecycle("finished")
+    recorder.results = ()
+    driver.advance(clock())
     assert reports.lifecycle("finished")
-    assert recorder.calls == ["configure"]
+    assert recorder.calls == [
+        "configure",
+        "schedule",
+        "before_render",
+        "rendered",
+        "finish",
+    ]
 
 
 def test_recording_closure_does_not_block_gl_or_extend_deadline():
@@ -1171,15 +1301,11 @@ def test_delayed_clipping_diagnostics_drain_before_finished_with_original_group(
         deadline
         == release.normal_end_monotonic_ns + driver.policies.trial_finished.initial_ns
     )
-    if saving:
-        assert recorder.calls[-1] == "finish"
-        assert recorder.diagnostic_records[0].group_id == 0
-        assert (
-            recorder.diagnostic_records[0].evaluation_host_ns
-            == release.start_monotonic_ns
-        )
-    else:
-        assert recorder.diagnostic_records == []
+    assert recorder.calls[-1] == "finish"
+    assert recorder.diagnostic_records[0].group_id == 0
+    assert (
+        recorder.diagnostic_records[0].evaluation_host_ns == release.start_monotonic_ns
+    )
 
 
 def test_timing_counts_actual_submissions_and_epochs_without_attempts():
@@ -1228,6 +1354,7 @@ def test_cleanup_retains_prior_trial_results_and_unscheduled_output_absence():
         closure=pb.OUTPUT_CLOSURE_NOT_STARTED,
         artifact_present=False,
     )
+    recorder.results = ()
     driver.execute("Cleanup", command(), clock() + 100_000_000)
     outputs = {
         item.output_key: item for item in reports.lifecycle("cleanup")[0][0].outputs

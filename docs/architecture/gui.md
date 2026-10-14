@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 182
+**Status:** Accepted · **Revision:** 184
 
 - Projectors/Synchronization uses a two-row Frame/Pulse table with Origin X,
   Origin Y, Width and Height in pixels. Frame origins use bottom-left output
@@ -367,10 +367,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   or reflecting calibration. Paint screen faces from far to near in view depth.
   Snapshot the authored trial, rig geometry
   and current screen calibration. After surface composition, apply the exporter's
-  shared per-face scale, pixel offsets and axis inversions. Normalize pixel offsets
-  by the assigned display resolution, never the reduced preview image dimensions.
-  Blank correction fields use the same identity defaults as calibration export;
-  nonzero offsets without an assigned resolution or invalid/out-of-bounds corrections
+  shared per-face edge margins and axis inversions. Margins are pixels of the
+  assigned display resolution, never the reduced preview image dimensions.
+  Blank margins follow the same automatic/identity defaults as calibration export;
+  nonzero margins without an assigned resolution or invalid/no-visible-area corrections
   show a per-screen error rather than an uncorrected output. Retain geometry/corrections
   independently of projector enablement. Reopen the snapshot after changing settings;
   provide Play/Pause, scrubbing, previous/next epoch and playback speed. Reuse V07
@@ -588,18 +588,25 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   invalid preferences stay preserved and save/restore failures are reported.
   V15 owns output selection without altering calibrated surfaces.
   Below the inventory, sections are ordered Screen calibration, Synchronization,
-  Rig geometry. Screen calibration uses a CephVR1.0-style per-face table containing
-  only paired scale, pixel offset and inverse-axis controls. Up/Down keys step scale
-  by 0.01 (two decimal places) and offsets by 0.1 px (one decimal place), using
-  the same draft/live-update path as typing. Loading preserves saved precision;
-  partial typed input is retained. Rig geometry owns tank
+  Rig geometry. Screen calibration uses a per-face table of inverse-axis flags and the
+  four independent valid-area edges, entered as Left / Right and Top / Bottom margins
+  in output pixels, and signed Keystone H / V pixels (positive H narrows the top edge,
+  negative the bottom; positive V shortens the right edge, negative the left; each edge
+  of the quadrilateral moves in by half). A blank edge is automatic (centered from a complete reference
+  measurement, else the projector border) and its placeholder shows that value.
+  Up/Down steps 1 px (Shift: 10 px) through the same draft/live-update path as typing;
+  invalid text is outlined and reported, never applied. Loading preserves saved
+  precision; partial typed input is retained. Reset valid areas blanks every margin
+  and keystone.
+  Rig geometry owns tank
   dimensions and fixed subject distances labeled Subject → Left wall / Front wall /
   Bottom (mm). Perpendicular distances to Left, Front and Bottom screens sit below these
   in the Rig geometry card. The screen-dimensions table contains width, height,
   derived read-only estimated projector distance, with wrapped headers.
   Screen calibration and Pixel-to-mm calibration are sibling cards, without nesting.
-  Put Launch projection calibration above the correction table and Launch reference
-  calibration above the measurement table.
+  Put Show frame and grid, Show seam check and Reset valid areas above the correction
+  table with one status line (state, plus each live edit's applied/rejected outcome),
+  and Show reference bars above the measurement table.
   Effective throw ratio is config-only. Pixel-to-mm calibration omits explanatory text and pixel-span columns;
   its table has Screen, paired Measured X / Y (mm) inputs under one header, and
   read-only X / Y (mm/px) estimates, with all three columns stretching evenly.
@@ -607,50 +614,57 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   dimensions and config-only `reference_x_px` / `reference_y_px` lengths. These
   lengths control the actual calibration bars and the same conversion arithmetic;
   positive whole pixels must fit the assigned output. Older files migrate their
-  original quarter-output spans; unset lengths retain those defaults. Complete
+  original quarter-output spans; unset lengths retain those defaults until the first
+  measurement fixes them. Complete
   measured pairs estimate mm/px independently of throw ratio; projected distance
   additionally requires a positive throw ratio.
   Known millimetres derive independent X/Y mm/px and full projected
   image dimensions; full projected width times throw ratio estimates ideal throw
   distance (Bottom: total folded path). Subject-to-screen distances stay independent.
   Measurements from another assigned projector are cleared; imported historical
-  distances remain visible until measurements are supplied. Missing or partial
-  measured pairs cannot produce a calibrated mapping. Clip/tolerance settings remain in Rig geometry without an Advanced
+  distances remain visible until measurements are supplied. A partial
+  pair keeps the earlier distance and gives no automatic margins. Clip/tolerance settings remain in Rig geometry without an Advanced
   subtitle. One Load… / Save as… action row handles the complete rig, projection
   limits, all-screen correction/dimension values, synchronization and participation
   plus reusable runtime profile references under the
   [GUI calibration contract](../../contracts/gui-calibration.md), replacing the
   per-screen profile picker. Validate the complete bounded document before applying;
   invalid files preserve drafts. Save atomically, retain unset values, respect editing
-  authority and cancel pickers on authority loss. Full version 7 retains reference
-  measurements and their native output dimensions alongside the former runtime
+  authority and cancel pickers on authority loss. Full version 9 (numeric 6) retains reference
+  measurements, their native output dimensions, edge margins and keystone alongside the former runtime
   display-profile import into this row. Exclude physical inventory and output assignments;
   load preserves current display mappings, restores participation and pulse selection
   by logical rig face, and retains geometry/color calibration references and shared-output
   coverage. Rebind references using current output properties at submission; missing roles
   fail without guessing. Legacy full version 3 and numeric-only versions 1/2
-  load with unset measurements; numeric version 3 retains them. Legacy
+  load with unset measurements; numeric version 3 retains them. Versions up to 7
+  (numeric 4) convert their centered scale/pixel offset to equivalent margins when the
+  output size is saved, otherwise to automatic margins; numeric 5 loads with no keystone. Legacy
   runtime profiles remain loadable through the same action. Loading is not backend preparation.
-  Launch reference calibration and Launch projection calibration prepare calibration files before
-  requesting output; no separate preparation button is shown. Preparation uses the current four enabled face
-  assignments, current rig fields and native monitor identities to export a static
-  arena asset, display profile and explicitly diagnostic geometric
-  profiles into Protocol Assets. Reference measurement renders only raw-pixel bars
-  on black, ignoring stored measurements and manual corrections. Frame/grid
-  adjustment requires complete measurements matching each native mode and uses
-  mm/px directly with rig geometry; neither action requires projector distance or
-  throw ratio. The grid mapping combines measured physical screen/image ratios
-  with each face's scale, pixel offset and inverse-axis drafts;
-  reject corrections extending outside the output. Submission publishes new
-  content-addressed measured affine assets for GUI-owned 2×2 profiles, preserves
+  Show reference bars, Show frame and grid and Show seam check prepare calibration files
+  before requesting output; no separate preparation button is shown. Preparation uses
+  the current rig fields and native monitor identities (the native interface, never the
+  Qt desktop rectangle, binds each display) to export the view's static arena asset,
+  display profile and explicitly diagnostic geometric profiles into Protocol Assets,
+  written atomically with the profile last. Every face needs an assigned display; the
+  Use ticks choose which are shown, so one projector can be positioned while the rest
+  stay dark, and a dark face needs no valid correction. The reference view shows the
+  output frame, edge ticks, a centered guide outline with the screen's aspect ratio and
+  the raw-pixel bars on black, ignoring stored measurements and margins. Frame and
+  grid and seam check need no measurement: each blank margin is automatic (centered
+  from a complete measurement, else the projector border) and an entered margin
+  overrides only its edge. A projection smaller than the screen rejects with the
+  remedy; negative margins and areas with no visible pixel reject. Neither action
+  requires projector distance or throw ratio. Submission publishes new
+  content-addressed measured projective-grid assets for GUI-owned profiles, preserves
   originals and rejects replacing imported nonlinear/masked/weighted calibration. Reject missing or
   ambiguous monitor bindings.
   Failed preparation does not send a launch request.
   Unmeasured profiles are diagnostic placeholders; measured affine mappings
-  still require optical acceptance and do not set experiment defaults. Both actions
-  target all four assigned projectors together;
-  during an active frame/grid presentation only Scale X/Y and Offset X/Y remain
-  editable. Debounce valid edits into bounded normalized mapping updates without
+  still require optical acceptance and do not set experiment defaults. Output
+  actions show the displays ticked Use together;
+  during an active frame and grid or seam check presentation only the four margins and
+  the two keystone values remain editable; Inverse is locked with an explanatory tooltip. Debounce valid edits into bounded normalized mapping updates without
   rewriting protected assets, reopening windows or changing rig/measurement state.
   Coalesce newer edits behind one in-flight update; invalid/partial edits retain
   the last confirmed projection. Exact active diagnostic, controller/renderer
@@ -659,8 +673,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   discard pending live intents; no stale replay. Actual all-output presentation
   confirms the new sequence. Other projector controls stay locked until closure.
 
-  After confirmed output activation Launch projection calibration reads Close. It returns to
-  Launch projection calibration only after confirmed closure; Launch reference calibration remains
+  After confirmed output activation Show frame and grid reads Close calibration. It returns to
+  Show frame and grid only after confirmed closure; Show reference bars and Show seam check remain
   disabled while presentation is active or pending. Failed/pending commands never claim an
   output-state change. These actions and Close control V01's diagnostic presentation outside
   trial timing; preparation sends no output command.
@@ -826,7 +840,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   flashing. In managed mode Upload is available only in idle Configuration, with
   diagnostics stopped and all camera ownership/native cleanup released. A displayed
   MCU compatibility failure alone does not block this explicit repair operation.
-- Launch projection calibration prepares the geometry grid using measured mm/px and saved corrections:
+- Show frame and grid prepares the geometry grid using each face's valid area (automatic from measured mm/px, else the saved margins):
   world-phase colored solid/dashed lines, full-face center crosses, face dimensions
   and a 50 mm ruler where it fits. Existing physical screen planes and offsets remain
   authoritative; no separate placement-only/no-grid mode is offered.

@@ -82,7 +82,7 @@ controller's existing `rising_edges` field carries this count, distinguished by 
 GUI output labels explicitly say generated transitions. Protocol 2 output-zero replies
 are incompatible and rejected at connection rather than treated as measured zero.
 
-`protocol` is uint32 and must equal 3; watchdog values are uint32. Applied Hz is
+`protocol` is uint32 and must equal 4; watchdog values are uint32. Applied Hz is
 positive and finite decimal text (ordinary or exponent notation), parsed into the
 host's binary64 `applied_frequency_hz`. It is not restricted to the 0.1-Hz request grid.
 Firmware emits sufficient significant digits to preserve its computed rate on a

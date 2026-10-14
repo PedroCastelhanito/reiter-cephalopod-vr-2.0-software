@@ -22,6 +22,7 @@ port = 4142
 # Camera trigger roles must use stream = "onebox". channel = saved acquisition channel
 # index in that stream; bit = digital line within the channel, only for a digital word.
 # behavioral_camera = { stream = "onebox", stream_index = 0, channel = <index>, bit = <line> }
+# eye_tracking_camera = { stream = "onebox", stream_index = 0, channel = <index>, bit = <line> }
 # tracking_camera   = { stream = "onebox", stream_index = 0, channel = <index>, bit = <line> }
 # photodiode        = { stream = "<onebox|ni|imec>", stream_index = <n>, channel = <index> }
 

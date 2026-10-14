@@ -434,13 +434,15 @@ async def test_pending_setup_cancel_and_prompt_response_are_independent_loopback
                 )
                 == "failed"
             )
+            # No backend work exists before supervisor registration, so the
+            # cancellation itself confirms cleanup.
             assert (
                 next(
                     status
                     for action, command_id, status, _ in completions
                     if action == "Cancel Setup" and command_id == cancel_id
                 )
-                == "failed"
+                == "completed"
             )
 
             prompt = pb.Prompt(
@@ -508,6 +510,7 @@ def _install_microcontroller(runtime: ControllerRuntime, *, uploader=None):
     )
     observation.state.behavioral.running = False
     observation.state.tracking.running = False
+    observation.state.eye_tracking.running = False
     serial.connect.return_value = observation
     serial.configure.return_value = observation
     serial.status.return_value = observation

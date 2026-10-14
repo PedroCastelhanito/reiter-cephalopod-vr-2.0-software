@@ -89,6 +89,7 @@ def stylesheet() -> str:
                           font-weight: 700; letter-spacing: 0.8px; }}
     QLabel[role='muted'] {{ color: {c.muted}; font-size: {s.label_font}px; }}
     QLabel[role='hint'] {{ color: {c.muted}; }}
+    QLabel[role='error'] {{ color: {c.danger_border}; font-size: {s.label_font}px; }}
     QMenuBar {{ background: {c.sidebar}; color: {c.text};
                 border-bottom: 1px solid {c.border}; spacing: 4px; }}
     QMenuBar::item {{ background: transparent; color: {c.text}; padding: 6px 10px; }}
@@ -133,6 +134,7 @@ def stylesheet() -> str:
         border-color: {c.focus}; }}
     QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
         color: {c.muted}; background: {c.window}; }}
+    QLineEdit[invalid='true'] {{ border-color: {c.danger_border}; }}
     QLineEdit[role='point-coordinate'] {{ background: transparent; border-color: transparent;
                                         border-radius: 6px; padding: 7px 4px; }}
     QLineEdit[role='point-coordinate']:hover {{ background: {c.hover}; }}

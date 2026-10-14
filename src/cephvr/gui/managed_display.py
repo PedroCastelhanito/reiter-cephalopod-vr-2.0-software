@@ -160,4 +160,6 @@ class ManagedDisplayOperations:
             if evidence is not None
             and evidence.state == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
             else "",
+            unknown=expected
+            and evidence.state == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_UNKNOWN,
         )

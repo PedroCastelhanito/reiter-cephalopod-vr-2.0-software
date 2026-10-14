@@ -258,6 +258,7 @@ def inspect_recovery(
             "spikeglx_started",
             "spikeglx_stopped",
             "incident_decision",
+            "incident_scope",
         }
         for line in raw.splitlines():
             if recovery_recorded:

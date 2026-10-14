@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import logging
 import threading
 import time
 from collections import deque
@@ -23,6 +25,7 @@ from .capture import (
     RecordingWorker,
 )
 from .evidence import EvidenceWriter
+from .metrics import RecordingMetrics
 
 __all__ = ["RecordingSession", "WindowsEncoderInputAdapter"]
 
@@ -44,12 +47,12 @@ class RecordingSession:
     def __init__(
         self,
         *,
-        worker: RecordingWorker,
+        worker: RecordingWorker | None,
         evidence: EvidenceWriter,
         evidence_path: Path,
         recipe_path: Path,
         max_queued_evidence_bytes: int,
-        finalizer: Callable[[RecordingCounts], tuple[bytes, bytes]],
+        finalizer: Callable[[RecordingCounts], tuple[bytes, ...]],
         startup: Callable[[], None] | None = None,
         sync_interval_ns: int = 0,
         periodic_sync: Callable[[], None] | None = None,
@@ -59,6 +62,9 @@ class RecordingSession:
         if max_queued_evidence_bytes <= 0:
             raise ValueError("queued evidence byte limit must be positive")
         self.worker = worker
+        self.metrics = (
+            worker.metrics if worker is not None else RecordingMetrics(clock_ns)
+        )
         self.evidence = evidence
         self.evidence_path = evidence_path
         self.recipe_path = recipe_path
@@ -164,6 +170,8 @@ class RecordingSession:
         with self._condition:
             if self._closing:
                 raise RuntimeError("capture admission is sealed at cutoff")
+        if self.worker is None:
+            raise RuntimeError("review video is disabled")
         return self.worker.classify_and_reserve(group_id, evaluation_host_ns)
 
     def complete_capture(
@@ -174,18 +182,22 @@ class RecordingSession:
         height: int,
         pixel_format: str,
         pixels: bytes | bytearray | memoryview,
+        take_ownership: bool = False,
     ) -> None:
+        assert self.worker is not None
         self.worker.complete_capture(
             reservation,
             width=width,
             height=height,
             pixel_format=pixel_format,
             pixels=pixels,
+            take_ownership=take_ownership,
         )
         with self._condition:
             self._condition.notify_all()
 
     def cancel_capture(self, reservation: CaptureReservation) -> None:
+        assert self.worker is not None
         self.worker.cancel_reservation(reservation)
         with self._condition:
             self._condition.notify_all()
@@ -200,7 +212,8 @@ class RecordingSession:
         if cutoff_ns < 0 or deadline_ns < cutoff_ns:
             raise ValueError("recording cutoff/deadline are invalid")
         with self._condition:
-            self.worker.set_cutoff(cutoff_ns)
+            if self.worker is not None:
+                self.worker.set_cutoff(cutoff_ns)
             self._closing = True
             self._condition.notify_all()
 
@@ -212,7 +225,8 @@ class RecordingSession:
             raise ValueError("recording cancellation cutoff is invalid")
         with self._condition:
             if cutoff_ns is not None:
-                self.worker.set_cutoff(cutoff_ns)
+                if self.worker is not None:
+                    self.worker.set_cutoff(cutoff_ns)
             self._closing = True
             self._condition.notify_all()
 
@@ -253,6 +267,13 @@ class RecordingSession:
             )
         return self._result
 
+    def counts(self) -> RecordingCounts:
+        return (
+            self.worker.counts()
+            if self.worker is not None
+            else RecordingCounts(0, 0, 0, 0, 0, 0, None)
+        )
+
     def _run(self) -> None:
         try:
             if self.startup is not None:
@@ -269,7 +290,7 @@ class RecordingSession:
                         if self.failure_cleanup is not None:
                             self.failure_cleanup()
                         self._result = RecordingCloseResult(
-                            self.worker.counts(), evidence_closed=False
+                            self.counts(), evidence_closed=False
                         )
                         self._done = True
                         return
@@ -301,7 +322,7 @@ class RecordingSession:
                         self._line_bytes -= reservation
                     self.evidence.write_pending()
                     continue
-                if self.worker.drain_once():
+                if self.worker is not None and self.worker.drain_once():
                     now_ns = self.clock_ns()
                     if (
                         self.sync_interval_ns
@@ -324,7 +345,7 @@ class RecordingSession:
                 with self._condition:
                     closing = self._closing
                 if closing:
-                    counts = self.worker.counts()
+                    counts = self.counts()
                     if counts.unresolved_capture_count:
                         # A nonblocking stdin write may still be owned by Windows.
                         # Keep polling it until it completes or its original deadline
@@ -332,10 +353,10 @@ class RecordingSession:
                         with self._condition:
                             self._condition.wait(timeout=0.005)
                         continue
-                    self.worker.finish_input()
-                    encoder_line, completion_line = self.finalizer(counts)
-                    self.evidence.enqueue_json(encoder_line)
-                    self.evidence.enqueue_json(completion_line)
+                    if self.worker is not None:
+                        self.worker.finish_input()
+                    for line in self.finalizer(counts):
+                        self.evidence.enqueue_json(line)
                     self.evidence.write_pending(sync=True)
                     self.evidence.close(sync=True)
                     self._result = RecordingCloseResult(counts, True)
@@ -355,3 +376,15 @@ class RecordingSession:
                 pass  # Same: the recording failure is reported, not the cleanup's.
             self._error = exc
             self._done = True
+        finally:
+            logging.getLogger(__name__).info(
+                "%s",
+                json.dumps(
+                    {
+                        "event": "recording_metrics",
+                        "evidence_path": str(self.evidence_path),
+                        **self.metrics.snapshot(),
+                    },
+                    sort_keys=True,
+                ),
+            )

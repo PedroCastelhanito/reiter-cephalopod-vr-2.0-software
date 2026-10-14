@@ -144,15 +144,28 @@ def test_recording_payload_rejects_depth_identity_and_policy_ambiguity(
 def test_disabled_or_save_off_camera_needs_no_encoder_discovery() -> None:
     settings, resolved, policies = _inputs()
     settings.behavioral.save_video = False
+    resolved.layout.pixel_format = "Mono12"  # No video conversion required.
+    result = build_recording_settings(
+        settings,
+        resolved,
+        policies,
+        camera.CAMERA_ROLE_BEHAVIORAL,
+        session_config_reference="config",
+        nominal_frame_rate_hz=30.0,
+        executable_lookup=lambda _: pytest.fail("encoder discovery with video off"),
+    )
+    assert result is not None and result.metadata_only
+    assert result.pending_records_capacity == 10000
+    assert not result.ffmpeg_executable and not result.ffmpeg_args
+    settings.behavioral.enabled = False
     assert (
         build_recording_settings(
             settings,
             resolved,
             policies,
             camera.CAMERA_ROLE_BEHAVIORAL,
-            session_config_reference="unused",
+            session_config_reference="config",
             nominal_frame_rate_hz=30.0,
-            executable_lookup=lambda _name: None,
         )
         is None
     )

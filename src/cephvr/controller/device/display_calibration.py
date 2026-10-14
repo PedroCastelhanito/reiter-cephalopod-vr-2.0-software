@@ -756,6 +756,10 @@ class DisplayCalibrationController:
                 elif rejected:
                     self.device.calibration_pending = None
                     self.projections.expected_display = None
+                elif pending[4] == vs_runtime.DISPLAY_CALIBRATION_STATE_IDLE:
+                    # An unconfirmed Close expires like an accepted one so the
+                    # retained diagnostic identity can be closed again.
+                    self.hooks.spawn(self._timeout(command_id, pending[2]))
                 self.hooks.publish()
 
     async def _timeout(self, command_id: str, deadline_ns: int) -> None:

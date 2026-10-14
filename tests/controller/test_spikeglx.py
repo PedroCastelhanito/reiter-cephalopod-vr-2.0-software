@@ -67,6 +67,12 @@ def test_inventory_requires_all_source_roles_and_preserves_optional_bit_presence
             "channel": 1,
             "bit": 0,
         },
+        "eye_tracking_camera": {
+            "stream": "onebox",
+            "stream_index": 0,
+            "channel": 1,
+            "bit": 1,
+        },
         "tracking_camera": {
             "stream": "onebox",
             "stream_index": 0,
@@ -109,6 +115,12 @@ def test_inventory_rejects_bit_outside_mapped_native_word() -> None:
             "stream_index": 0,
             "channel": 0,
             "bit": 16,
+        },
+        "eye_tracking_camera": {
+            "stream": "onebox",
+            "stream_index": 0,
+            "channel": 2,
+            "bit": 1,
         },
         "tracking_camera": {"stream": "onebox", "stream_index": 0, "channel": 2},
         "photodiode": {"stream": "ni", "stream_index": 0, "channel": 2},
@@ -1017,6 +1029,15 @@ def test_inventory_file_update_is_digest_guarded_and_preserves_other_settings(
             channel_index=4,
         ),
     )
+    channels += (
+        wire.PulseChannel(
+            role=wire.PULSE_ROLE_EYE_TRACKING_CAMERA,
+            family=wire.STREAM_FAMILY_ONEBOX,
+            stream_index=0,
+            channel_index=1,
+            bit=1,
+        ),
+    )
     changed = update_inventory(
         root, expected_file_sha256=digest, pulse_channels=channels
     )
@@ -1029,6 +1050,7 @@ def test_inventory_file_update_is_digest_guarded_and_preserves_other_settings(
     )
     assert "stop_margin_s = 1" in contents
     loaded_digest, loaded = read_inventory(root)
+    assert loaded == channels
     assert loaded_digest == changed
     assert loaded[0].HasField("bit") and loaded[0].bit == 0
     assert not loaded[1].HasField("bit")
@@ -1058,14 +1080,23 @@ def test_inventory_file_update_is_digest_guarded_and_preserves_other_settings(
     assert after_clear == ()
 
 
-def test_inventory_update_preserves_valid_nested_table_comments(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "key, role",
+    [
+        ("behavioral_camera", wire.PULSE_ROLE_BEHAVIORAL_CAMERA),
+        ("eye_tracking_camera", wire.PULSE_ROLE_EYE_TRACKING_CAMERA),
+    ],
+)
+def test_inventory_update_preserves_valid_nested_table_comments(
+    tmp_path: Path, key: str, role: int
+) -> None:
     repository = Path(__file__).resolve().parents[2]
     config = tmp_path / "config/backends/synchronization_config.toml"
     config.parent.mkdir(parents=True)
     text = (repository / "config/backends/synchronization_config.toml").read_text()
     text = text.replace(
         "[monitor]",
-        """[pulse_inventory.behavioral_camera]
+        f"""[pulse_inventory.{key}]
 # Keep this operator note while changing the row.
 stream = "onebox"
 stream_index = 0
@@ -1084,7 +1115,7 @@ bit = 0
         expected_file_sha256=digest,
         pulse_channels=(
             wire.PulseChannel(
-                role=wire.PULSE_ROLE_BEHAVIORAL_CAMERA,
+                role=role,
                 family=wire.STREAM_FAMILY_ONEBOX,
                 stream_index=0,
                 channel_index=3,
@@ -1556,3 +1587,116 @@ async def test_cancelled_sdk_caller_keeps_native_ownership_and_late_error(
         in caplog.text
     )
     owner.close(wait=True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "unsaved",
+        "wrong_family",
+        "valid",
+        "disabled",
+        "free_running",
+        "backend_disabled",
+    ],
+)
+async def test_eye_mapping_setup_and_saved_preparation(
+    case: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from dataclasses import replace
+
+    from cephvr.acquisition.v1 import camera_pb2
+    from cephvr.controller.metadata.documents import message_dict
+
+    configuration = pb.ExperimentConfiguration()
+    backend = configuration.backends.add(
+        backend_name="acquisition", enabled=case != "backend_disabled"
+    )
+    eye = backend.acquisition.eye_tracking
+    eye.enabled = case != "disabled"
+    eye.device.frame_timing = (
+        camera_pb2.FRAME_TIMING_FREE_RUNNING
+        if case == "free_running"
+        else camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+    )
+    channel = wire.PulseChannel(
+        role=wire.PULSE_ROLE_EYE_TRACKING_CAMERA,
+        family=wire.STREAM_FAMILY_NI
+        if case == "wrong_family"
+        else wire.STREAM_FAMILY_ONEBOX,
+        stream_index=0,
+        channel_index=1,
+        bit=0,
+    )
+    inventory = (
+        ()
+        if case in {"missing", "disabled", "free_running", "backend_disabled"}
+        else (channel,)
+    )
+    stream = wire.NativeStream(
+        family=wire.STREAM_FAMILY_ONEBOX,
+        index=0,
+        acquired_channel_counts=(1, 1, 0),
+        saved_channel_indices=() if case == "unsaved" else (1,),
+    )
+    settings = replace(
+        load_host_settings(Path(__file__).resolve().parents[2]), inventory=inventory
+    )
+    monkeypatch.setattr(client_module, "load_host_settings", lambda _root: settings)
+    run_name = "old"
+
+    def readback(_root: Path, _settings: HostSettings) -> Readback:
+        return Readback(
+            "v",
+            "D:/data",
+            False,
+            False,
+            run_name,
+            (stream,),
+            "params",
+            "immediate",
+            "immediate",
+            (),
+        )
+
+    monkeypatch.setattr(client_module, "read_sdk", readback)
+
+    class SDK:
+        @staticmethod
+        def c_sglx_setRunName(handle: int, name: bytes) -> bool:
+            nonlocal run_name
+            run_name = name.decode()
+            return True
+
+    monkeypatch.setattr(
+        client_module,
+        "with_sdk",
+        lambda _root, _settings, operation: operation(SDK(), 1),
+    )
+    client = SpikeGLXControllerClient(Path("."), controller_generation="test")
+
+    async def immediate(operation: object, timeout_s: float) -> object:
+        return operation()  # type: ignore[operator]
+
+    monkeypatch.setattr(client, "_run", immediate)
+    errors = {
+        "missing": "missing required active roles.*EYE_TRACKING_CAMERA",
+        "unsaved": "channel is not saved",
+        "wrong_family": "OneBox",
+    }
+    if case in errors:
+        with pytest.raises(ValueError, match=errors[case]):
+            await client.prepare(configuration, pb.SessionContext(), "managed_run")
+        assert run_name == "old"
+    else:
+        prepared = await client.prepare(
+            configuration, pb.SessionContext(), "managed_run"
+        )
+        assert tuple(prepared.pulse_channels) == inventory
+        if case == "valid":
+            assert (
+                message_dict(prepared)["pulse_channels"][0]["role"]
+                == "PULSE_ROLE_EYE_TRACKING_CAMERA"
+            )

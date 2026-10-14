@@ -9,7 +9,10 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.projectors import ProjectorsPanel
-from cephvr.visual_stimulus.config.calibration_adjustments import validated_adjustments
+from cephvr.visual_stimulus.config.calibration_adjustments import (
+    LIVE_ADJUSTABLE_VIEWS,
+    validated_adjustments,
+)
 from cephvr.visual_stimulus.v1 import messages_pb2 as messages
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
@@ -46,7 +49,7 @@ class LiveCalibration(QObject):
             and state.visual_stimulus_display.calibration.state
             == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
             and state.visual_stimulus_display.calibration.calibration_view
-            == "frame_grid"
+            in LIVE_ADJUSTABLE_VIEWS
             and state.visual_stimulus_display.calibration.controller_generation
             == state.controller_generation
             and state.visual_stimulus_display.calibration.configuration_revision
@@ -77,6 +80,8 @@ class LiveCalibration(QObject):
             self.inflight = 0
             if self.dirty:
                 self.timer.start()
+            else:
+                self.projectors.calibration.set_detail("Last change applied.")
 
     def flush(self) -> None:
         state = self.snapshot()
@@ -88,11 +93,13 @@ class LiveCalibration(QObject):
         assert state is not None
         evidence = state.visual_stimulus_display.calibration
         try:
-            for field_key in self.edited_fields:
-                control = self.projectors.calibration.controls[field_key]
-                assert isinstance(control, QLineEdit)
-                if not control.text().strip():
-                    raise ValueError("Incomplete live adjustment")
+            for (face, key), control in self.projectors.calibration.controls.items():
+                if isinstance(control, QLineEdit) and control.property("invalid"):
+                    name = getattr(control, "edge", key)
+                    raise ValueError(
+                        f"{face} {name} must be a number of pixels"
+                        + ("" if getattr(control, "signed", False) else ", 0 or more")
+                    )
             calibration = self.projectors.calibration_files.calibration_snapshot()
             values = calibration["values"]
             assert isinstance(values, dict)
@@ -121,9 +128,15 @@ class LiveCalibration(QObject):
             validated_adjustments(
                 (item.mapping_id, item.destination_xy) for item in adjustments
             )
-        except (ValueError, TypeError, KeyError):
-            # Partial/invalid typing leaves the last confirmed projection visible.
+        except (ValueError, TypeError, KeyError) as error:
+            # The last confirmed projection stays visible; say why nothing changed.
             self.dirty = False
+            detail = (
+                "Assign displays and enter the rig values first."
+                if isinstance(error, (TypeError, KeyError))
+                else str(error)
+            )
+            self.projectors.calibration.set_detail(f"Not applied: {detail}", error=True)
             return
         sequence = evidence.adjustment_sequence + 1
         if self.send(
@@ -135,8 +148,12 @@ class LiveCalibration(QObject):
         ):
             self.inflight = sequence
             self.dirty = False
+            self.projectors.calibration.set_detail("Applying…")
         else:
             self.dirty = False
+            self.projectors.calibration.set_detail(
+                "Not applied: controller queue unavailable.", error=True
+            )
             self.projectors.console.appendPlainText(
                 "Live grid update was not sent: controller queue unavailable."
             )
@@ -149,14 +166,20 @@ class LiveCalibration(QObject):
         self.identity = None
 
     def finished(
-        self, action: str, _command_id: str, status: str, _message: str
+        self, action: str, _command_id: str, status: str, message: str
     ) -> None:
         if action == "update_display_calibration" and status != "completed":
             self.reset()
+            self.projectors.calibration.set_detail(
+                f"Rejected: {message or status}", error=True
+            )
 
-    def command_finished(self, action: str, success: bool, _message: str) -> None:
+    def command_finished(self, action: str, success: bool, message: str) -> None:
         if action == "update_display_calibration" and not success:
             self.reset()
+            self.projectors.calibration.set_detail(
+                f"Rejected: {message or 'renderer did not confirm'}", error=True
+            )
 
     def disconnected(self, connected: bool, *_args: object) -> None:
         if not connected:

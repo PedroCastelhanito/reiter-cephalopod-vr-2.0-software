@@ -131,33 +131,35 @@ class WorkerRecordingRuntime:
             raise ValueError("recording capability probe requires exact Setup session")
         if role != self._role or not device_id or camera_clock.device_id != device_id:
             raise ValueError("recording Setup identity differs from exact worker")
-        self.launcher.bind_operation(work, parent_operation)
-        probe = SupervisedCapabilityProbe(
-            self.launcher,
-            work,
-            parent_operation,
-            capability_resource_released,
-        )
-        codec = _codec(settings.ffmpeg_args)
-        try:
-            capabilities = inspect_encoder(
-                settings.ffmpeg_executable,
-                codec=codec,
-                nvenc_owner=self.nvenc,
-                probe=probe,
-                deadline_ns=deadline_ns,
+        capabilities = None
+        if not settings.metadata_only:
+            self.launcher.bind_operation(work, parent_operation)
+            probe = SupervisedCapabilityProbe(
+                self.launcher,
+                work,
+                parent_operation,
+                capability_resource_released,
             )
-        except BaseException as original:
+            codec = _codec(settings.ffmpeg_args)
             try:
-                probe.retry_cleanup(deadline_ns=deadline_ns)
-            except BaseException as cleanup_error:
-                original.add_note(f"FFmpeg probe cleanup remains: {cleanup_error}")
-            try:
-                self.nvenc.retry_cleanup(deadline_ns=deadline_ns)
-            except BaseException as cleanup_error:
-                original.add_note(f"NVENC probe cleanup remains: {cleanup_error}")
-            raise
-        self._preparer = PixelPreparer(native_layout)
+                capabilities = inspect_encoder(
+                    settings.ffmpeg_executable,
+                    codec=codec,
+                    nvenc_owner=self.nvenc,
+                    probe=probe,
+                    deadline_ns=deadline_ns,
+                )
+            except BaseException as original:
+                try:
+                    probe.retry_cleanup(deadline_ns=deadline_ns)
+                except BaseException as cleanup_error:
+                    original.add_note(f"FFmpeg probe cleanup remains: {cleanup_error}")
+                try:
+                    self.nvenc.retry_cleanup(deadline_ns=deadline_ns)
+                except BaseException as cleanup_error:
+                    original.add_note(f"NVENC probe cleanup remains: {cleanup_error}")
+                raise
+            self._preparer = PixelPreparer(native_layout)
         self._settings = acq.RecordingSettings.FromString(
             settings.SerializeToString(deterministic=True)
         )
@@ -182,12 +184,7 @@ class WorkerRecordingRuntime:
         *,
         started_observed: Callable[[int], None],
     ) -> None:
-        if (
-            self._settings is None
-            or self._preparer is None
-            or self._capabilities is None
-            or self._layout is None
-        ):
+        if self._settings is None or self._layout is None:
             raise RuntimeError("session recording capabilities are not prepared")
         if (
             self._session_id != trial_identity.session_id
@@ -203,12 +200,16 @@ class WorkerRecordingRuntime:
         if self._installed:
             raise RuntimeError("prior trial recording has not been recycled")
         queue = RecordingQueue(
-            int(self._settings.recording_queue_frames),
+            int(self._settings.recording_queue_frames) or 1,
             int(self._settings.pending_records_capacity),
+            metadata_only=self._settings.metadata_only,
         )
-        pool = PixelBufferPool(
-            self._preparer.layout.image_payload_bytes,
-            queue.capacity_frames + 2,
+        pool = (
+            PixelBufferPool(
+                self._preparer.layout.image_payload_bytes, queue.capacity_frames + 2
+            )
+            if self._preparer is not None
+            else None
         )
         session = RecordingSession(
             self._settings,
@@ -274,7 +275,7 @@ class WorkerRecordingRuntime:
         *,
         deadline_ns: int,
     ) -> Future[list[types.OutputResult]]:
-        if self._queue is None or self._pool is None or self._handoff is None:
+        if self._queue is None or self._handoff is None:
             raise RuntimeError("recording trial is not prepared")
         if self._run_future is None:
             raise RuntimeError("recording owner has not started at ReleaseTrial")
@@ -356,6 +357,13 @@ class WorkerRecordingRuntime:
 
 
 def _validate_recording_settings(settings: acq.RecordingSettings) -> None:
+    if settings.metadata_only:
+        if (
+            settings.frame_log_sync_interval_ns <= 0
+            or settings.pending_records_capacity <= 0
+        ):
+            raise ValueError("metadata recording bounds must be positive")
+        return
     for field in (
         "video_sync_interval_ns",
         "fragment_target_ns",

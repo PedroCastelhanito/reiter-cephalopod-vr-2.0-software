@@ -1982,9 +1982,10 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
         (
             ("behavior-camera", "Behavioral camera", True),
             ("tracking-camera", "Tracking camera", True),
+            ("eye-camera", "Eye tracking", True),
             ("photodiode", "Photodiode", True),
         ),
-        frozenset({"behavior-camera", "tracking-camera"}),
+        frozenset({"behavior-camera", "tracking-camera", "eye-camera"}),
     )
     saved = (
         sync_pb.PulseChannel(
@@ -2020,6 +2021,15 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
             source_id="sync-input",
         ),
     )
+    saved += (
+        sync_pb.PulseChannel(
+            role=sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA,
+            family=sync_pb.STREAM_FAMILY_ONEBOX,
+            stream_index=0,
+            channel_index=1,
+            bit=1,
+        ),
+    )
     panel.install_inventory(
         saved,
         "f" * 64,
@@ -2027,6 +2037,7 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
             {
                 sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA,
                 sync_pb.PULSE_ROLE_TRACKING_CAMERA,
+                sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA,
             }
         ),
     )
@@ -2039,6 +2050,15 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
     assert not collected[sync_pb.PULSE_ROLE_TRACKING_CAMERA].HasField("bit")
     assert collected[sync_pb.PULSE_ROLE_TRIAL_STATE].channel_index == 4
     assert collected[sync_pb.PULSE_ROLE_CUSTOM].source_id == "sync-input"
+    assert collected[sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA].bit == 1
+    assert panel.inventory_rows[sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA] == "eye-camera"
+    assert panel.inventory_rows[sync_pb.PULSE_ROLE_TRACKING_CAMERA] == "tracking-camera"
+    from cephvr.gui.spikeglx_snapshot import SpikeGLXSnapshot
+
+    snapshot = SpikeGLXSnapshot(panel)
+    snapshot.restore(snapshot.validate(snapshot.capture()))
+    assert panel.inventory_rows[sync_pb.PULSE_ROLE_EYE_TRACKING_CAMERA] == "eye-camera"
+    assert {item.role: item for item in panel.inventory_for_submit()} == collected
     panel.close()
     panel.deleteLater()
     app.processEvents()
@@ -6828,10 +6848,10 @@ def test_calibration_and_screen_dimensions_retain_separate_drafts(
     window: DashboardWindow,
 ):
     panel = window.devices.projectors
-    panel.calibration.controls["Front", "scale_u"].setText("1.2")
+    panel.calibration.controls["Front", "margin_left"].setText("12.5")
     panel.calibration.controls["Front", "flip_x"].setChecked(True)
     panel.screen_editor.fields["Front", "width"].setText("200")
-    assert panel.screen_editor.drafts["Front"]["scale_u"] == "1.2"
+    assert panel.screen_editor.drafts["Front"]["margin_left"] == "12.5"
     assert panel.screen_editor.drafts["Front"]["flip_x"] == "True"
     assert panel.screen_editor.fields["Front", "width"].text() == "200"
 
@@ -6955,7 +6975,7 @@ def test_all_screen_calibration_json_roundtrip_and_rejection(
     files = panel.calibration_files
     panel.rig_editor.fields["width"].setText("200")
     panel.rig_editor.screen_distances["Left"].setText("150")
-    panel.calibration.controls["Bottom", "offset_x"].setText("-12.5")
+    panel.calibration.controls["Bottom", "margin_top"].setText("12.5")
     panel.calibration.controls["Right", "flip_x"].setChecked(True)
     path = tmp_path / "calibration.json"
     panel.assignments["local-display"] = "Front"
@@ -6975,7 +6995,7 @@ def test_all_screen_calibration_json_roundtrip_and_rejection(
     assert panel.participation == {"local-display": False}
     assert panel.rig_editor.screen_distances["Left"].text() == "150.0"
     assert ("Left", "subject_distance") not in panel.screen_editor.fields
-    assert panel.screen_editor.drafts["Bottom"]["offset_x"] == "-12.5"
+    assert panel.screen_editor.drafts["Bottom"]["margin_top"] == "12.5"
     assert panel.screen_editor.drafts["Right"]["flip_x"] == "True"
     invalid = files.snapshot()
     invalid["values"]["screens.Left.subject_distance"] = -10
@@ -9715,7 +9735,7 @@ def test_projectors_page_install_collect_keeps_file_owned_pacing_absent(
     assert profile["mappings"] == source["mappings"]
 
 
-@pytest.mark.parametrize("version", [2, 3, 4])
+@pytest.mark.parametrize("version", [2, 3, 4, 5, 6])
 def test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile(version):
     from cephvr.gui.calibration_arena import (
         geometry_from_calibration,
@@ -9751,12 +9771,12 @@ def test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile(vers
     for face in FACES:
         for corner in screens[face]:
             assert any(point == pytest.approx(corner) for point in primitive.positions)
-    for invalid in (1, 5, True, 4.0, "4"):
-        with pytest.raises(ValueError, match="version 2/3/4"):
+    for invalid in (1, 7, True, 6.0, "6"):
+        with pytest.raises(ValueError, match="version 2/3/4/5/6"):
             geometry_from_calibration(dict(payload, version=invalid))
 
 
-@pytest.mark.parametrize("version", [2, 3, 4])
+@pytest.mark.parametrize("version", [2, 3, 4, 5, 6])
 def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, version):
     from cephvr.gui.calibration_profile import (
         AssignedDisplay,
@@ -9765,6 +9785,7 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
         write_diagnostic_bundle,
     )
     from cephvr.gui.projector_geometry import FACES
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 
     values = {
         "rig.width": 120,
@@ -9822,10 +9843,12 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
     assert all(
         mesh.vertices[0].uv == mesh.vertices[0].xy for mesh in bar_meshes.values()
     )
-    with pytest.raises(ValueError, match="measure both reference bars"):
-        diagnostic_display_profile(
-            calibration, assignments, monitors, view="frame_grid"
-        )
+    # Measurement is optional: unmeasured edges start at the projector border.
+    unmeasured, unmeasured_meshes = diagnostic_display_profile(
+        calibration, assignments, monitors, view="frame_grid"
+    )
+    assert unmeasured.calibration_view == "frame_grid"
+    assert unmeasured_meshes == meshes
     measured_values = dict(values)
     for face in FACES:
         measured_values.update(
@@ -9855,8 +9878,8 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
         diagnostic_display_profile(
             measured_calibration, assignments, monitors, view="frame_grid"
         )
-    # Stale measurements and invalid manual correction cannot block remeasurement.
-    measured_values["screens.Front.scale_u"] = 100
+    # Stale measurements and invalid manual margins cannot block remeasurement.
+    measured_values["screens.Front.margin_left"] = 100000
     remeasured, remeasurement_meshes = diagnostic_display_profile(
         measured_calibration, assignments, monitors, view="reference_bars"
     )
@@ -9866,33 +9889,81 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
         o.reference_bars.x_length_px == 200 and o.reference_bars.y_length_px == 100
         for o in remeasured.outputs
     )
-    values["screens.Front.scale_u"] = 0.8
-    values["screens.Front.offset_x"] = 40
+    values["screens.Front.margin_left"] = 160
+    values["screens.Front.margin_bottom"] = 36
     values["screens.Left.flip_x"] = True
     adjusted, adjusted_meshes = diagnostic_display_profile(
         calibration, assignments, monitors
     )
     assert adjusted == profile
-    assert adjusted_meshes["front"].vertices[0].xy[0] == pytest.approx(
-        0.5 - 0.4 + 40 / 1280
+    assert adjusted_meshes["front"].vertices[0].xy == pytest.approx(
+        (160 / 1280, 36 / 720)
     )
+    assert adjusted_meshes["front"].vertices[-1].xy == pytest.approx((1.0, 1.0))
     assert adjusted_meshes["left"].orientation == "mirrored"
-    values["screens.Front.offset_x"] = 1000
-    with pytest.raises(ValueError, match="extends beyond"):
+    values["screens.Front.margin_left"] = 1300
+    with pytest.raises(ValueError, match="no visible area"):
         diagnostic_display_profile(calibration, assignments, monitors)
-    values["screens.Front.offset_x"] = None
-    values["screens.Front.scale_u"] = None
+    # A dark face needs no valid correction, so another projector can be positioned.
+    one_face = tuple(
+        AssignedDisplay(
+            row.face, row.x, row.y, row.width, row.height, row.face == "Left"
+        )
+        for row in assignments
+    )
+    shown, shown_meshes = diagnostic_display_profile(calibration, one_face, monitors)
+    assert [o.enabled for o in shown.outputs] == [False, True, False, False]
+    assert shown_meshes["front"].vertices[0].uv == shown_meshes["front"].vertices[0].xy
+    with pytest.raises(ValueError, match="Use at least one"):
+        diagnostic_display_profile(
+            calibration,
+            tuple(
+                AssignedDisplay(r.face, r.x, r.y, r.width, r.height, False)
+                for r in assignments
+            ),
+            monitors,
+        )
+    values["screens.Front.margin_left"] = None
+    values["screens.Front.margin_bottom"] = None
     values["screens.Left.flip_x"] = False
-    with pytest.raises(ValueError, match="unique native monitor"):
+    with pytest.raises(ValueError, match="active native monitor"):
         diagnostic_display_profile(calibration, assignments, monitors[:-1])
+    with pytest.raises(ValueError, match="Assign one display"):
+        diagnostic_display_profile(calibration, assignments[:-1], monitors)
+    # Native identity binds even when the desktop rectangle is in different units.
+    scaled = tuple(
+        AssignedDisplay(
+            row.face, 17, 3, 1024, 576, True, interface=f"INTERFACE-{index}"
+        )
+        for index, row in enumerate(assignments)
+    )
+    by_identity, _ = diagnostic_display_profile(calibration, scaled, monitors)
+    assert [o.device_identity for o in by_identity.outputs] == [
+        m.interface for m in monitors
+    ]
     arena_path = write_diagnostic_bundle(
         tmp_path, calibration, assignments, monitors, blackout_zones=zones
     )
     assert arena_path.is_file()
+    assert arena_path.name == "rig_geometry_grid.glb"
     assert not (arena_path.parent / "rig_geometry_grid.program.json").exists()
     assert (arena_path.parent / "diagnostic_display_profile.json").is_file()
-    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
-
+    assert not list(arena_path.parent.glob("*.tmp"))
+    seam_path = write_diagnostic_bundle(
+        tmp_path,
+        calibration,
+        assignments,
+        monitors,
+        view="seam_check",
+        blackout_zones=zones,
+    )
+    assert seam_path.name == "rig_geometry_seam.glb" and seam_path.is_file()
+    assert (
+        DisplayProfile.model_validate_json(
+            (seam_path.parent / "diagnostic_display_profile.json").read_text()
+        ).calibration_view
+        == "seam_check"
+    )
     saved_profile = DisplayProfile.model_validate_json(
         (arena_path.parent / "diagnostic_display_profile.json").read_text()
     )
@@ -9926,33 +9997,42 @@ def test_calibration_button_reflects_confirmed_managed_output(
     closed: list[bool] = []
     table.launch_requested.connect(lambda: launched.append(True))
     table.close_requested.connect(lambda: closed.append(True))
-    assert set(table.findChildren(QPushButton)) == {table.presentation_button}
+    assert set(table.findChildren(QPushButton)) == {
+        table.presentation_button,
+        table.seam_button,
+        table.reset_button,
+    }
     assert not table.isAncestorOf(panel.measurements)
     assert panel.measurements.isAncestorOf(table.measurement_button)
-    assert table.body.indexOf(table.presentation_button) < table.body.indexOf(
-        table.table
-    )
+    actions = table.presentation_button.parentWidget()
+    assert actions is not None and actions is table.seam_button.parentWidget()
+    assert table.body.indexOf(actions) < table.body.indexOf(table.table)
     assert panel.measurements.body.indexOf(
         table.measurement_button
     ) < panel.measurements.body.indexOf(panel.measurements.table)
-    assert table.measurement_button.text() == "Launch reference calibration"
+    assert table.measurement_button.text() == "Show reference bars"
     assert not table.presentation_button.isEnabled()
     table.set_presentation_state(active=False, available=True)
     table.presentation_button.click()
     assert launched == [True]
     assert prepared == ["frame_grid"]
     assert output_requests == [str(arena)]
-    assert table.presentation_button.text() == "Launch projection calibration"
-    table.set_presentation_state(active=True, available=True)
-    assert table.presentation_button.text() == "Close"
+    assert table.presentation_button.text() == "Show frame and grid"
+    table.set_presentation_state(active=True, available=True, view="frame_grid")
+    assert table.presentation_button.text() == "Close calibration"
+    assert "Frame and grid active" in table.status.text()
+    assert not table.seam_button.isEnabled()
     table.presentation_button.click()
     assert closed == [True]
     assert prepared == ["frame_grid"]
-    assert table.presentation_button.text() == "Close"
+    assert table.presentation_button.text() == "Close calibration"
     table.set_presentation_state(active=True, available=True, pending=True)
     assert not table.presentation_button.isEnabled()
+    assert "Working" in table.status.text()
+    table.set_presentation_state(active=True, available=True, unknown=True)
+    assert "unknown" in table.status.text() and table.status.property("role") == "error"
     table.set_presentation_state(active=False, available=False)
-    assert table.presentation_button.text() == "Launch projection calibration"
+    assert table.presentation_button.text() == "Show frame and grid"
     assert not table.presentation_button.isEnabled()
     result[0] = None
     table.set_presentation_state(active=False, available=True)
@@ -9967,6 +10047,10 @@ def test_calibration_button_reflects_confirmed_managed_output(
     assert not table.measurement_button.isEnabled()
     table.measurement_button.click()
     assert len(prepared) == 3
+    table.set_presentation_state(active=False, available=True)
+    table.seam_button.click()
+    assert prepared[-1] == "seam_check" and len(prepared) == 4
+    assert output_requests[-1] == str(arena)
 
 
 def test_managed_first_use_calibration_launches_before_display_initialization(
@@ -11051,10 +11135,10 @@ def test_preview_calibration_matches_export_and_uses_display_pixels(app):
     )
 
     draft = {
-        "scale_u": "0.5",
-        "scale_v": "0.5",
-        "offset_x": "10",
-        "offset_y": "20",
+        "margin_left": "35",
+        "margin_right": "15",
+        "margin_top": "5",
+        "margin_bottom": "45",
         "flip_x": "True",
         "flip_y": "False",
     }
@@ -11088,10 +11172,10 @@ def test_preview_calibration_matches_export_and_uses_display_pixels(app):
     assert output.pixelColor(80, 30) == QColor("red")
     assert output.pixelColor(20, 30) == QColor("black")
     assert output.pixelColor(50, 80) == QColor("black")
-    # The same pixel offset becomes a smaller normalized shift on a larger display.
+    # The same pixel margins cover a smaller share of a larger display.
     larger = PreviewCorrection.from_draft("Front", draft, (200, 200))
-    assert larger.corners[0][0] == pytest.approx(correction.corners[0][0] - 0.05)
-    assert larger.corners[0][1] == pytest.approx(correction.corners[0][1] - 0.1)
+    assert larger.corners[0][0] == pytest.approx(1 - 15 / 200)
+    assert larger.corners[0][1] == pytest.approx(45 / 200)
     vertical = PreviewCorrection.from_draft("Front", {"flip_y": "True"}, (100, 100))
     canvas.rig_geometry = PreviewGeometry(
         {"Front": PreviewSurface(100, 100, correction=vertical)}, (0, 0, 0)
@@ -11107,20 +11191,24 @@ def test_preview_calibration_matches_export_and_uses_display_pixels(app):
     canvas.deleteLater()
 
 
-def test_preview_rejects_invalid_corrections_and_unresolved_pixel_offsets():
+def test_preview_rejects_invalid_corrections_and_unresolved_pixel_margins():
     from cephvr.gui.trial_preview_surfaces import PreviewCorrection
 
     assert (
         "Assign a display"
-        in PreviewCorrection.from_draft("Front", {"offset_x": "10"}, None).error
+        in PreviewCorrection.from_draft("Front", {"margin_left": "10"}, None).error
     )
     assert (
-        "positive"
-        in PreviewCorrection.from_draft("Front", {"scale_u": "0"}, (1920, 1080)).error
+        "negative"
+        in PreviewCorrection.from_draft(
+            "Front", {"margin_left": "-1"}, (1920, 1080)
+        ).error
     )
     assert (
-        "beyond"
-        in PreviewCorrection.from_draft("Front", {"scale_u": "2"}, (1920, 1080)).error
+        "no visible area"
+        in PreviewCorrection.from_draft(
+            "Front", {"margin_left": "1000", "margin_right": "1000"}, (1920, 1080)
+        ).error
     )
     identity = PreviewCorrection.from_draft("Front", {}, None)
     assert not identity.error
@@ -12764,6 +12852,19 @@ def test_projector_configuration_invalid_settings_preserve_complete_draft(
     assert "load failed" in panel.console.toPlainText()
 
 
+def legacy_calibration_values(values: dict) -> dict:
+    """The pre-margin field names: a centered scale and pixel offset per screen."""
+    result = {
+        key: value
+        for key, value in values.items()
+        if not key.rsplit(".", 1)[-1].startswith(("margin_", "keystone_"))
+    }
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for key in ("scale_u", "scale_v", "offset_x", "offset_y"):
+            result[f"screens.{face}.{key}"] = None
+    return result
+
+
 def test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts(
     window, tmp_path
 ):
@@ -12800,7 +12901,12 @@ def test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts(
         timing.patch_draft()
     with pytest.raises(ValueError, match="fit inside"):
         panel.calibration_files.validate(panel.calibration_files.snapshot())
-    legacy_square = dict(expected, version=6, settings=dict(expected["settings"]))
+    legacy_square = dict(
+        expected,
+        version=6,
+        values=legacy_calibration_values(expected["values"]),
+        settings=dict(expected["settings"]),
+    )
     legacy_square["settings"]["pulse_rect"] = legacy_square["settings"].pop(
         "frame_rect"
     )
@@ -12813,7 +12919,12 @@ def test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts(
     with pytest.raises(ValueError, match="fit inside"):
         panel.calibration_files.apply_snapshot(legacy_square)
     assert panel.calibration_files.snapshot() == before
-    legacy = dict(expected, version=5, settings=dict(expected["settings"]))
+    legacy = dict(
+        expected,
+        version=5,
+        values=legacy_calibration_values(expected["values"]),
+        settings=dict(expected["settings"]),
+    )
     legacy["settings"]["pulse_rect"] = legacy["settings"].pop("frame_rect")
     legacy["settings"].pop("blackout_zones")
     panel.calibration_files.apply_snapshot(legacy)
@@ -12930,7 +13041,7 @@ def test_legacy_numeric_projector_json_preserves_synchronization(
     assert panel.rig_editor.fields["width"].text() == "200"
     assert panel.timing.pulse.isChecked()
     assert panel.timing.mode.currentText() == "All displays VSync"
-    assert panel.calibration_files.snapshot()["version"] == 7
+    assert panel.calibration_files.snapshot()["version"] == 9
 
 
 def test_portable_screen_profile_rebinds_native_properties_and_preserves_coverage(
@@ -13023,8 +13134,10 @@ def test_projector_reference_measurements_derive_distance_and_roundtrip(
     assert float(distance.text()) == pytest.approx(960)
     assert panel.measurements.scales["Front"].text() == "0.5 / 0.5"
     snapshot = panel.calibration_files.snapshot()
-    assert snapshot["version"] == 7
+    assert snapshot["version"] == 9
     assert snapshot["values"]["screens.Front.reference_width_px"] == 1280
+    # Bar lengths are fixed by the first measurement, not before it.
+    assert snapshot["values"]["screens.Front.reference_x_px"] == 320
     panel.measurements.fields["Front", "reference_x_mm"].setText("200")
     panel.calibration_files.apply_snapshot(snapshot)
     panel.update_geometry()
@@ -13053,7 +13166,7 @@ def test_projector_reference_measurements_derive_distance_and_roundtrip(
     legacy["settings"].pop("blackout_zones")
     legacy["values"] = {
         key: value
-        for key, value in legacy["values"].items()
+        for key, value in legacy_calibration_values(legacy["values"]).items()
         if key.rsplit(".", 1)[-1] not in {"reference_x_px", "reference_y_px"}
     }
     panel.calibration_files.apply_snapshot(legacy)
@@ -13086,7 +13199,7 @@ def test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fiel
     old["settings"].pop("blackout_zones")
     old["values"] = {
         key: value
-        for key, value in old["values"].items()
+        for key, value in legacy_calibration_values(old["values"]).items()
         if not key.rsplit(".", 1)[-1].startswith("reference_")
     }
     old["values"]["screens.Front.distance"] = 500
@@ -13161,7 +13274,13 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
     front_output = next(
         o for o in document["outputs"] if o["output_id"] == "calibration_front"
     )
-    assert front_output["reference_bars"] == {"x_length_px": 200, "y_length_px": 100}
+    # The guide is the largest centered rectangle with the 90 x 80 mm screen's aspect.
+    assert front_output["reference_bars"] == {
+        "x_length_px": 200,
+        "y_length_px": 100,
+        "guide_width_px": 810,
+        "guide_height_px": 720,
+    }
     front = next(m for m in document["mappings"] if m["surface_id"] == "front")
     generated = tmp_path / front["geometric_profile"]["logical_path"]
     assert generated != original
@@ -13176,8 +13295,10 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
     }
     preview = PreviewCorrection.from_draft("Front", draft, (1280, 720))
     assert not preview.error
+    last = len(mesh["vertices"]) - 1
+    side = round((last + 1) ** 0.5)
     assert preview.corners == tuple(
-        tuple(mesh["vertices"][i]["xy"]) for i in (0, 1, 3, 2)
+        tuple(mesh["vertices"][i]["xy"]) for i in (0, side - 1, last, last - side + 1)
     )
     assert original.read_bytes() == original_bytes
     # Repeated submission produces the same content-addressed asset.
@@ -13351,10 +13472,10 @@ def test_calibration_adjustment_steps_preserve_drafts(app):
     edits = []
     table.adjustments_changed.connect(lambda face, key: edits.append((face, key)))
     for key, initial, increased, decreased in (
-        ("scale_u", "1", "1.01", "1.00"),
-        ("scale_v", "0.8", "0.81", "0.80"),
-        ("offset_x", "0", "0.1", "0.0"),
-        ("offset_y", "-1.2", "-1.1", "-1.2"),
+        ("margin_left", "10", "11", "10"),
+        ("margin_right", "0.5", "1.5", "0.5"),
+        ("margin_top", "212.5", "213.5", "212.5"),
+        ("margin_bottom", "3", "4", "3"),
     ):
         editor = table.controls["Front", key]
         editor.setText(initial)
@@ -13364,20 +13485,38 @@ def test_calibration_adjustment_steps_preserve_drafts(app):
         assert edits[-1] == ("Front", key)
         QTest.keyClick(editor, Qt.Key.Key_Down)
         assert editor.text() == decreased
-    scale = table.controls["Front", "scale_u"]
-    scale.setText("0.812345")
-    assert scale.text() == "0.812345"  # Loading does not round saved precision.
-    for partial in ("-", "nan", "inf"):
-        scale.setText(partial)
+    margin = table.controls["Front", "margin_left"]
+    margin.setText("12")
+    QTest.keyClick(margin, Qt.Key.Key_Up, Qt.KeyboardModifier.ShiftModifier)
+    assert margin.text() == "22"  # Shift steps by 10 px.
+    margin.setText("12.3456")
+    assert margin.text() == "12.3456"  # Loading does not round saved precision.
+    margin.setText("0")
+    QTest.keyClick(margin, Qt.Key.Key_Down)
+    assert margin.text() == "0"  # A margin never goes negative.
+    margin.clear()
+    margin.set_hint(40.0)
+    QTest.keyClick(margin, Qt.Key.Key_Up)
+    assert margin.text() == "41"  # An empty edge steps from its automatic value.
+    for partial in ("-", "nan", "inf", "-5"):
+        margin.setText(partial)
+        assert margin.property("invalid") is True
         count = len(edits)
-        QTest.keyClick(scale, Qt.Key.Key_Up)
-        assert scale.text() == partial and len(edits) == count
-    scale.setText("0.01")
-    QTest.keyClick(scale, Qt.Key.Key_Down)
-    assert scale.text() == "0.01"
-    scale.setReadOnly(True)
-    QTest.keyClick(scale, Qt.Key.Key_Up)
-    assert scale.text() == "0.01"
+        QTest.keyClick(margin, Qt.Key.Key_Up)
+        assert margin.text() == partial and len(edits) == count
+    margin.setText("5")
+    assert margin.property("invalid") is False
+    margin.setReadOnly(True)
+    QTest.keyClick(margin, Qt.Key.Key_Up)
+    assert margin.text() == "5"
+    margin.setReadOnly(False)
+    table.reset_margins()
+    assert all(
+        not control.text()
+        for (_, key), control in table.controls.items()
+        if key.startswith("margin_")
+    )
+    assert ("Front", "margin_left") in edits
     table.close()
 
 
@@ -13419,14 +13558,16 @@ def test_live_calibration_coalesces_edits_and_retains_last_valid_projection(wind
     panel.set_calibration_presentation_state(
         active=True, available=True, view="frame_grid"
     )
-    assert panel.calibration.controls["Front", "scale_u"].isEnabled()
+    assert panel.calibration.controls["Front", "margin_left"].isEnabled()
     assert not panel.calibration.controls["Front", "flip_x"].isEnabled()
+    assert "close" in panel.calibration.controls["Front", "flip_x"].toolTip()
     assert not panel.measurements.isEnabled()
     assert not panel.rig_editor.isEnabled()
-    offset = panel.calibration.controls["Front", "offset_x"]
+    offset = panel.calibration.controls["Front", "margin_left"]
     offset.setText("16")
     QTest.keyClick(offset, Qt.Key.Key_Up)
     live.flush()
+    assert panel.calibration.status.text().endswith("Applying…")
     assert len(sent) == 1
     action, first = sent[0]
     assert action == "update_display_calibration"
@@ -13436,9 +13577,9 @@ def test_live_calibration_coalesces_edits_and_retains_last_valid_projection(wind
         first["adjustments"][0]
     )
     assert adjustment.mapping_id == "diagnostic_front"
-    assert adjustment.destination_xy[0] == pytest.approx(
-        0.5 - 90 / 640 / 2 + 16.1 / 1280
-    )
+    assert adjustment.destination_xy[0] == pytest.approx(17 / 1280)
+    # The untouched right edge stays at its automatic, measurement-centered value.
+    assert adjustment.destination_xy[2] == pytest.approx(0.5 + 90 / 640 / 2)
     offset.setText("32")
     offset.textEdited.emit("32")
     live.flush()
@@ -13449,30 +13590,69 @@ def test_live_calibration_coalesces_edits_and_retains_last_valid_projection(wind
     assert len(sent) == 2 and sent[-1][1]["adjustment_sequence"] == 2
     evidence.adjustment_sequence = 2
     live.install(state)
-    offset.clear()
+    offset.clear()  # An empty edge is automatic, so this is a valid update.
     offset.textEdited.emit("")
     live.flush()
-    assert len(sent) == 2
+    assert len(sent) == 3 and sent[-1][1]["adjustment_sequence"] == 3
+    evidence.adjustment_sequence = 3
+    live.install(state)
+    assert panel.calibration.status.text().endswith("Last change applied.")
+    keystone = panel.calibration.controls["Front", "keystone_h"]
+    keystone.setText("64")
+    keystone.textEdited.emit("64")
+    live.flush()
+    assert len(sent) == 4 and sent[-1][1]["adjustment_sequence"] == 4
+    trapezoid = messages.DisplayCalibrationAdjustment.FromString(
+        sent[-1][1]["adjustments"][0]
+    ).destination_xy
+    left = 0.5 - 90 / 640 / 2  # automatic left edge from the measurement
+    assert trapezoid[0] == pytest.approx(left)  # bottom-left stays on the edge
+    assert trapezoid[4] == pytest.approx(left + 32 / 1280)  # top edge 64 px narrower
+    assert trapezoid[7] == pytest.approx(trapezoid[5])  # top corners share a height
+    evidence.adjustment_sequence = 4
+    live.install(state)
+    keystone.clear()
+    keystone.textEdited.emit("")
+    live.flush()
+    assert len(sent) == 5
+    evidence.adjustment_sequence = 5
+    live.install(state)
+    offset.setText("-")
+    offset.textEdited.emit("-")
+    live.flush()
+    status = panel.calibration.status
+    assert len(sent) == 5 and "Not applied" in status.text()
+    assert "0 or more" in status.text() and status.property("role") == "error"
     offset.setText("10000")
     offset.textEdited.emit("10000")
     live.flush()
-    assert len(sent) == 2  # Outside output leaves the confirmed frame unchanged.
+    assert len(sent) == 5  # No visible area leaves the confirmed frame unchanged.
+    assert "no visible area" in status.text()
     offset.setText("40")
     offset.textEdited.emit("40")
     evidence.state = vp.DISPLAY_CALIBRATION_STATE_IDLE
     live.install(state)
     live.flush()
-    assert len(sent) == 2 and not live.dirty and not live.inflight
+    assert len(sent) == 5 and not live.dirty and not live.inflight
     evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
     evidence.calibration_view = "reference_bars"
     live.edited()
     live.flush()
-    assert len(sent) == 2
+    assert len(sent) == 5
+    evidence.calibration_view = "seam_check"  # The seam view adjusts live too.
+    offset.setText("12")
+    offset.textEdited.emit("12")
+    live.flush()
+    assert len(sent) == 6
+    evidence.adjustment_sequence = 6
+    live.install(state)
+    live.finished("update_display_calibration", "id", "rejected", "too far")
+    assert "Rejected: too far" in panel.calibration.status.text()
     evidence.calibration_view = "frame_grid"
     panel.apply_view(review_view(Phase.CONFIGURATION, observer=True))
     live.edited()
     live.flush()
-    assert len(sent) == 2 and not offset.isEnabled()
+    assert len(sent) == 6 and not offset.isEnabled()
     live.reset()
 
     # Unknown presentation remains closable, with all tuning disabled.
@@ -13488,8 +13668,9 @@ def test_live_calibration_coalesces_edits_and_retains_last_valid_projection(wind
         send=lambda *_args, **_kwargs: True,
     )
     operations.install_calibration_state(state, launch_eligible=True)
-    assert panel.calibration.presentation_button.text() == "Close"
+    assert panel.calibration.presentation_button.text() == "Close calibration"
     assert panel.calibration.presentation_button.isEnabled()
+    assert "unknown" in panel.calibration.status.text()
     assert not offset.isEnabled()
     operations.live.reset()
 
@@ -14162,6 +14343,15 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(
         e.duration.duration.ns() == 20_000_000_000
         for e in editor.program.sequence[0].body
     )
+    # Rules belong to one batch identity: a mixed selection rejects them and keeps the edit.
+    mixed = editor.program
+    form.rows[0].random_fields["maximum"].setText("3000001")
+    form.rows[0].random_fields["maximum"].editingFinished.emit()
+    form.apply()
+    assert "one subgroup" in form.notice.text()
+    assert editor.program == mixed and form.dirty
+    form.discard()
+    assert not form.dirty and form.notice.dialog is None
 
     editor.select_epochs(((0, 0),))
     saved = editor.program
@@ -14496,3 +14686,480 @@ def test_epoch_automatic_updates_preserve_focus_validation_and_history(window, a
     app.processEvents()
     assert not form.dirty and not form.notice.text()
     assert editor.program.sequence[0].body[0].duration.duration.seconds == "70"
+
+
+def _front_rig(values: dict) -> None:
+    for key, value in zip(
+        (
+            "rig.width",
+            "rig.depth",
+            "rig.height",
+            "rig.subject_x",
+            "rig.subject_y",
+            "rig.subject_z",
+        ),
+        (120, 166, 110, 60, 93, 53),
+        strict=True,
+    ):
+        values[key] = value
+    for face in ("Front", "Left", "Right", "Bottom"):
+        values[f"screens.{face}.width"] = 90
+        values[f"screens.{face}.height"] = 80
+        if face != "Right":
+            values[f"screens.{face}.subject_distance"] = 50
+
+
+def test_automatic_margins_center_the_measurement_and_explain_undershoot():
+    from cephvr.gui.calibration_profile import (
+        MonitorBinding,
+        automatic_margins,
+        face_mapping,
+    )
+
+    values: dict = {}
+    _front_rig(values)
+    calibration = {"format": "cephvr-rig-calibration", "version": 5, "values": values}
+    monitor = MonitorBinding("m", 0, 0, 1280, 720, 60, 8)
+    assert automatic_margins(calibration, "Front", monitor) is None
+    for key, value in dict(
+        reference_width_px=1280,
+        reference_height_px=720,
+        reference_x_px=320,
+        reference_y_px=180,
+        reference_x_mm=160,
+        reference_y_mm=90,
+    ).items():
+        values[f"screens.Front.{key}"] = value
+    left, right, top, bottom = automatic_margins(calibration, "Front", monitor)
+    assert left == right == pytest.approx((1280 - 90 / 0.5) / 2)
+    assert top == bottom == pytest.approx((720 - 80 / 0.5) / 2)
+    # An explicit edge overrides only itself; the others stay centered.
+    values["screens.Front.margin_left"] = 100
+    vertices, _ = face_mapping(calibration, "Front", monitor)
+    assert vertices[0]["xy"][0] == pytest.approx(100 / 1280)
+    assert vertices[3]["xy"][0] == pytest.approx(1 - right / 1280)
+    # A projection smaller than the screen names the cause and the remedy.
+    values["screens.Front.reference_x_mm"] = 20
+    values["screens.Front.margin_left"] = None
+    with pytest.raises(ValueError, match="smaller than the screen.*move the projector"):
+        face_mapping(calibration, "Front", monitor)
+    values["screens.Front.margin_left"] = 0
+    values["screens.Front.margin_right"] = 0
+    values["screens.Front.margin_top"] = 0
+    values["screens.Front.margin_bottom"] = 0
+    face_mapping(calibration, "Front", monitor)  # Fully manual edges need no fit.
+    values["screens.Front.margin_top"] = -1
+    with pytest.raises(ValueError, match="must not be negative"):
+        face_mapping(calibration, "Front", monitor)
+
+
+def test_legacy_scale_offset_calibration_converts_to_equivalent_margins(
+    window: DashboardWindow,
+):
+    panel = window.devices.projectors
+    files = panel.calibration_files
+    current = files.calibration_snapshot()
+    values = legacy_calibration_values(current["values"])
+    values["screens.Front.reference_width_px"] = 1000
+    values["screens.Front.reference_height_px"] = 500
+    values["screens.Front.scale_u"] = 0.5  # centered half width, shifted right 100 px
+    values["screens.Front.scale_v"] = 0.8
+    values["screens.Front.offset_x"] = 100
+    values["screens.Left.scale_u"] = 0.5  # no output size: cannot be converted
+    legacy = dict(current, version=4, values=values)
+    files.apply_snapshot(legacy)
+    snapshot = files.calibration_snapshot()
+    assert snapshot["version"] == 6
+    assert snapshot["values"]["screens.Front.margin_left"] == pytest.approx(350)
+    assert snapshot["values"]["screens.Front.keystone_h"] is None
+    assert snapshot["values"]["screens.Front.margin_right"] == pytest.approx(150)
+    assert snapshot["values"]["screens.Front.margin_top"] == pytest.approx(50)
+    assert snapshot["values"]["screens.Front.margin_bottom"] == pytest.approx(50)
+    assert snapshot["values"]["screens.Left.margin_left"] is None
+    assert snapshot["values"]["screens.Right.margin_left"] is None
+    # A saved full file of the previous format (version 7) still loads and converts.
+    full = dict(
+        panel.calibration_files.snapshot(),
+        version=7,
+        values=values,
+    )
+    files.apply_snapshot(full)
+    assert files.calibration_snapshot()["values"] == snapshot["values"]
+    bad = dict(
+        current, values=dict(current["values"], **{"screens.Front.margin_left": -1})
+    )
+    with pytest.raises(ValueError, match="negative"):
+        files.apply_snapshot(bad)
+
+
+def test_reference_bar_lengths_follow_the_output_until_measured(
+    window: DashboardWindow,
+):
+    panel = window.devices.projectors
+    drafts = panel.screen_editor.drafts
+    panel.display_pixels = {"native-a": (1280, 720)}
+    panel.assignments["native-a"] = "Front"
+    panel.update_geometry()
+    assert drafts["Front"]["reference_x_px"] == ""
+    panel.display_pixels = {"native-a": (1920, 1080)}
+    panel.update_geometry()
+    assert drafts["Front"]["reference_width_px"] == "1920"
+    assert drafts["Front"]["reference_x_px"] == ""
+    panel.screen_editor.fields["Front", "throw"].setText("1.5")
+    panel.measurements.fields["Front", "reference_x_mm"].setText("160")
+    panel.measurements.fields["Front", "reference_y_mm"].setText("90")
+    assert drafts["Front"]["reference_x_px"] == "480"  # Pinned by the measurement.
+    distance = float(drafts["Front"]["distance"])
+    assert distance > 0
+    # A partial edit keeps the derived distance instead of blanking it.
+    panel.measurements.fields["Front", "reference_y_mm"].setText("")
+    assert float(drafts["Front"]["distance"]) == pytest.approx(distance)
+    panel.measurements.fields["Front", "reference_y_mm"].setText("0")
+    assert drafts["Front"]["distance"] == ""  # A complete but invalid pair clears it.
+
+
+def test_native_adapter_name_identifies_scaled_displays(app: QApplication):
+    from types import SimpleNamespace
+
+    from PyQt6.QtCore import QRect
+
+    from cephvr.gui.calibration_profile import MonitorBinding
+    from cephvr.gui.projectors import _stable_display_identity
+
+    # Qt reports 125 % scaling in logical units, so rectangles cannot match GLFW's.
+    screen = SimpleNamespace(
+        name=lambda: r"\\.\DISPLAY3",
+        geometry=lambda: QRect(1536, 0, 2048, 1600),
+        devicePixelRatio=lambda: 1.25,
+        manufacturer=lambda: "m",
+        model=lambda: "d",
+        serialNumber=lambda: "s",
+    )
+    bindings = (
+        MonitorBinding("interface-2", 2000, 0, 2560, 2000, 60, 8, r"\\.\DISPLAY2"),
+        MonitorBinding("interface-3", 1920, 0, 2560, 2000, 60, 8, r"\\.\display3"),
+    )
+    assert _stable_display_identity(screen, bindings) == "interface-3"
+    assert _stable_display_identity(screen, bindings[:1]) == "|".join(
+        ("\\\\.\\DISPLAY3", "m", "d", "s")
+    )
+
+
+def test_calibration_values_survive_a_launch_adjust_close_cycle(
+    window: DashboardWindow,
+):
+    from types import SimpleNamespace
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_display import ManagedDisplayOperations
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+    panel = window.devices.projectors
+    panel.apply_view(review_view(Phase.CONFIGURATION))
+    panel.calibration.controls["Front", "margin_left"].setText("37.5")
+    panel.calibration.controls["Left", "flip_x"].setChecked(True)
+    panel.measurements.fields["Front", "reference_x_mm"].setText("160")
+    panel.measurements.fields["Front", "reference_y_mm"].setText("90")
+    before = panel.calibration_files.snapshot()
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 4
+    evidence = state.visual_stimulus_display.calibration
+    evidence.controller_generation = state.controller_generation
+    evidence.configuration_revision = 4
+    evidence.diagnostic_id = str(uuid4())
+    operations = ManagedDisplayOperations(
+        panel,
+        window.devices.spikeglx,
+        snapshot=lambda: state,
+        connection_identity=lambda: (1, state.controller_generation),
+        send=lambda *_args, **_kwargs: True,
+    )
+    for calibration_state, view in (
+        (vp.DISPLAY_CALIBRATION_STATE_PREPARING, ""),
+        (vp.DISPLAY_CALIBRATION_STATE_ACTIVE, "frame_grid"),
+        (vp.DISPLAY_CALIBRATION_STATE_CLOSING, ""),
+        (vp.DISPLAY_CALIBRATION_STATE_IDLE, ""),
+    ):
+        evidence.state = calibration_state
+        evidence.calibration_view = view
+        operations.install_calibration_state(state, launch_eligible=True)
+    assert panel.calibration_files.snapshot() == before
+    assert panel.calibration.controls["Front", "margin_left"].text() == "37.5"
+    assert panel.calibration.controls["Left", "flip_x"].isChecked()
+    # The full-GUI draft written at close restores the same values.
+    snapshots = SimpleNamespace(
+        capture=window.snapshots.capture, validate=window.snapshots.validate
+    )
+    captured = snapshots.validate(snapshots.capture())
+    assert captured["projectors"]["configuration"] == before
+
+
+def test_seam_arena_draws_bold_lines_that_cross_screen_boundaries():
+    from cephvr.gui.calibration_arena import make_seam_glb
+    from cephvr.gui.projector_geometry import RigDimensions
+    from cephvr.visual_stimulus.resources.glb import parse_glb
+
+    rig = RigDimensions(120, 166, 110, (60, 93, 53))
+    scene = parse_glb(make_seam_glb(rig), max_bytes=1_000_000, max_elements=200_000)
+    primitive = scene.nodes[0].primitives[0]
+    assert primitive.colors is not None and primitive.material_index is not None
+    assert scene.materials[primitive.material_index].double_sided
+    colors = set(primitive.colors)
+    assert len(colors) == 4  # eye ring, tank corners, meridians, floor
+    positions = primitive.positions
+    # The eye-level ring runs along the front wall at the subject's height.
+    ring = [p for p in positions if p[2] == pytest.approx(53, abs=1.6) and p[1] < 2]
+    assert min(p[0] for p in ring) == pytest.approx(-0.0, abs=1.6)
+    assert max(p[0] for p in ring) == pytest.approx(120, abs=1.6)
+    # Every line is crossed ribbons, 3 mm wide, so none disappears edge-on.
+    assert len(primitive.indices) == 6 * (len(positions) // 4)
+    with pytest.raises(ValueError, match="width"):
+        make_seam_glb(rig, stroke_mm=0)
+
+
+def test_diagnostic_profile_passes_the_controller_pacing_overlay():
+    from cephvr.gui.calibration_profile import (
+        AssignedDisplay,
+        MonitorBinding,
+        diagnostic_display_profile,
+    )
+    from cephvr.visual_stimulus.config.pacing import resolve_pacing_profile
+
+    values: dict = {}
+    _front_rig(values)
+    calibration = {"format": "cephvr-rig-calibration", "version": 5, "values": values}
+    faces = ("Front", "Left", "Right", "Bottom")
+    monitors = tuple(
+        MonitorBinding(f"interface-{i}", i * 1280, 0, 1280, 720, 60, 8)
+        for i in range(4)
+    )
+    assigned = tuple(
+        AssignedDisplay(f, i * 1280, 0, 1280, 720, f == "Left")
+        for i, f in enumerate(faces)
+    )
+    profile, _ = diagnostic_display_profile(calibration, assigned, monitors)
+    source = profile.model_dump_json()
+    # The generated bundle never needs a pacing output: all active outputs pace together.
+    resolved = resolve_pacing_profile(
+        source, max_bytes=1_000_000, refresh_hz=60.0, output_id=None
+    )
+    assert resolved.presentation_mode == "all_outputs_vsync"
+    with pytest.raises(ValueError, match="pacing output must exist and be enabled"):
+        resolve_pacing_profile(
+            source, max_bytes=1_000_000, refresh_hz=60.0, output_id="calibration_front"
+        )
+
+
+def test_pruning_keeps_referenced_and_newest_reference_profiles(tmp_path: Path):
+    import os
+
+    from cephvr.gui.calibration_assets import prune_reference_profiles, referenced_names
+
+    folder = tmp_path / "calibration"
+    folder.mkdir()
+    names = {
+        face: [f"reference_{face}_{index:064x}.json" for index in range(6)]
+        for face in ("front", "left")
+    }
+    for files in names.values():
+        for age, name in enumerate(files):  # index 0 is the oldest
+            path = folder / name
+            path.write_text("{}")
+            os.utime(path, (1_000_000 + age, 1_000_000 + age))
+    for keep in ("diagnostic_front.json", "rig_geometry_grid.glb", "notes.txt"):
+        (folder / keep).write_text("x")
+    (folder / f"reference_front_{'g' * 64}.json").write_text("{}")  # not a hash name
+    saved = tmp_path / "runtime_gui.json"
+    saved.write_text(f'{{"logical_path": "calibration/{names["front"][0]}"}}')
+    referenced = referenced_names([saved, tmp_path / "missing.json"])
+    assert referenced == {names["front"][0]}
+    dry = prune_reference_profiles(tmp_path, referenced)
+    assert len(dry.removed) == 5 and all(p.exists() for p in dry.removed)
+    done = prune_reference_profiles(tmp_path, referenced, apply=True)
+    assert done == dry
+    assert sorted(p.name for p in done.removed) == sorted(
+        names["front"][1:3] + names["left"][:3]
+    )
+    assert (folder / names["front"][0]).exists()  # referenced although oldest
+    assert all((folder / n).exists() for n in names["front"][3:] + names["left"][3:])
+    assert {p.name for p in folder.iterdir() if "reference_" not in p.name} == {
+        "diagnostic_front.json",
+        "rig_geometry_grid.glb",
+        "notes.txt",
+    }
+    with pytest.raises(ValueError, match="No calibration folder"):
+        prune_reference_profiles(tmp_path / "empty", frozenset())
+
+
+def test_keystone_narrows_one_edge_and_builds_a_valid_projective_profile():
+    from cephvr.gui.calibration_profile import (
+        AssignedDisplay,
+        MonitorBinding,
+        diagnostic_display_profile,
+        face_mapping,
+    )
+    from cephvr.visual_stimulus.config.calibration_adjustments import GUI_MESH_SIZE
+
+    values: dict = {}
+    _front_rig(values)
+    calibration = {"format": "cephvr-rig-calibration", "version": 6, "values": values}
+    monitor = MonitorBinding("m", 0, 0, 1280, 720, 60, 8)
+
+    def corners(**changes):
+        for key, value in changes.items():
+            values[f"screens.Front.{key}"] = value
+        vertices, mirrored = face_mapping(calibration, "Front", monitor)
+        return {
+            name: vertices[index]["xy"]
+            for name, index in (("bl", 0), ("br", 1), ("tl", 2), ("tr", 3))
+        }, mirrored
+
+    plain, _ = corners()
+    assert plain == {"bl": (0, 0), "br": (1, 0), "tl": (0, 1), "tr": (1, 1)}
+    # Positive H: the top edge is 128 px narrower (64 px in from each side).
+    shaped, _ = corners(keystone_h=128)
+    assert shaped["tl"] == pytest.approx((64 / 1280, 1.0))
+    assert shaped["tr"] == pytest.approx((1 - 64 / 1280, 1.0))
+    assert shaped["bl"] == (0, 0) and shaped["br"] == (1, 0)
+    # Negative H narrows the bottom instead; V shortens the right (positive) or left.
+    shaped, _ = corners(keystone_h=-128)
+    assert shaped["bl"] == pytest.approx((64 / 1280, 0.0))
+    assert shaped["tl"] == (0, 1)
+    values["screens.Front.keystone_h"] = None
+    shaped, _ = corners(keystone_v=72)
+    assert shaped["br"] == pytest.approx((1.0, 36 / 720))
+    assert shaped["tr"] == pytest.approx((1.0, 1 - 36 / 720))
+    assert shaped["bl"] == (0, 0)
+    shaped, _ = corners(keystone_v=-72)
+    assert shaped["bl"] == pytest.approx((0.0, 36 / 720))
+    # Keystone applies inside the margins and follows inversion of the image.
+    values["screens.Front.keystone_v"] = None
+    values["screens.Front.margin_left"] = 100
+    shaped, _ = corners(keystone_h=128)
+    assert shaped["tl"] == pytest.approx(((100 + 64) / 1280, 1.0))
+    values["screens.Front.margin_left"] = None
+    vertices, mirrored = face_mapping(
+        {
+            "values": {
+                **values,
+                "screens.Front.flip_x": True,
+                "screens.Front.keystone_h": 128,
+            }
+        },
+        "Front",
+        monitor,
+    )
+    assert mirrored and vertices[0]["xy"] == pytest.approx((1.0, 0.0))  # uv(0,0)
+    assert vertices[2]["xy"] == pytest.approx((1 - 64 / 1280, 1.0))  # uv(0,1)
+    for bad in (1280, -1280, 5000):
+        values["screens.Front.keystone_h"] = bad
+        with pytest.raises(ValueError, match="keystone is larger"):
+            face_mapping(calibration, "Front", monitor)
+    # The exported profile is a validated grid whose corners are the quadrilateral.
+    values["screens.Front.keystone_h"] = 128
+    assignments = tuple(
+        AssignedDisplay(f, i * 1280, 0, 1280, 720, True, interface=f"interface-{i}")
+        for i, f in enumerate(("Front", "Left", "Right", "Bottom"))
+    )
+    monitors = tuple(
+        MonitorBinding(f"interface-{i}", i * 1280, 0, 1280, 720, 60, 8)
+        for i in range(4)
+    )
+    _, meshes = diagnostic_display_profile(calibration, assignments, monitors)
+    front = meshes["front"]
+    assert (front.rows, front.columns) == (GUI_MESH_SIZE, GUI_MESH_SIZE)
+    last = len(front.vertices) - 1
+    assert front.vertices[last - GUI_MESH_SIZE + 1].xy == pytest.approx(
+        (64 / 1280, 1.0)
+    )
+    assert meshes["left"].vertices[0].uv == meshes["left"].vertices[0].xy
+
+
+def test_version_five_calibration_without_keystone_still_loads(
+    window: DashboardWindow,
+):
+    files = window.devices.projectors.calibration_files
+    current = files.calibration_snapshot()
+    values = {
+        key: value
+        for key, value in current["values"].items()
+        if not key.rsplit(".", 1)[-1].startswith("keystone_")
+    }
+    values["screens.Front.margin_left"] = 12.5
+    files.apply_snapshot(dict(current, version=5, values=values))
+    loaded = files.calibration_snapshot()
+    assert loaded["version"] == 6
+    assert loaded["values"]["screens.Front.margin_left"] == 12.5
+    assert loaded["values"]["screens.Front.keystone_h"] is None
+    broken = dict(current, version=5)  # still carrying keystone fields
+    with pytest.raises(ValueError, match="every rig"):
+        files.apply_snapshot(broken)
+    current["values"]["screens.Front.keystone_h"] = -37.5  # signed values are valid
+    files.apply_snapshot(current)
+    assert files.calibration_snapshot()["values"]["screens.Front.keystone_h"] == -37.5
+
+
+def test_keystone_entries_are_signed_live_and_reset_with_the_margins(
+    window: DashboardWindow,
+):
+    panel = window.devices.projectors
+    table = panel.calibration
+    edits = []
+    table.adjustments_changed.connect(lambda face, key: edits.append((face, key)))
+    entry = table.controls["Front", "keystone_h"]
+    assert "narrower" in entry.toolTip()
+    entry.setText("-3")
+    assert entry.property("invalid") is False
+    QTest.keyClick(entry, Qt.Key.Key_Down, Qt.KeyboardModifier.ShiftModifier)
+    assert entry.text() == "-13"
+    entry.setText("abc")
+    assert entry.property("invalid") is True
+    entry.setText("4")
+    QTest.keyClick(entry, Qt.Key.Key_Up)
+    assert entry.text() == "5" and edits[-1] == ("Front", "keystone_h")
+    assert panel.screen_editor.drafts["Front"]["keystone_h"] == "5"
+    table.set_presentation_state(active=True, available=True, view="frame_grid")
+    panel.set_calibration_presentation_state(
+        active=True, available=True, view="seam_check"
+    )
+    assert entry.isEnabled()  # Keystone is adjustable live, like the margins.
+    assert not table.controls["Front", "flip_x"].isEnabled()
+    panel.set_calibration_presentation_state(active=False, available=True)
+    table.reset_margins()
+    assert entry.text() == ""
+    assert ("Front", "keystone_h") in edits
+
+
+def test_preview_follows_keystone_quadrilateral_projectively(app):
+    from PyQt6.QtGui import QColor, QImage
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.trial_preview_canvas import PreviewCanvas
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_surfaces import (
+        PreviewCorrection,
+        PreviewGeometry,
+        PreviewSurface,
+    )
+
+    correction = PreviewCorrection.from_draft("Front", {"keystone_h": "40"}, (100, 100))
+    assert not correction.error
+    assert correction.corners[2] == pytest.approx((0.8, 1.0))  # top-right, 20 px in
+    media = PreviewMedia(blank_program(), "", None)
+    canvas = PreviewCanvas(
+        "Front",
+        media,
+        PreviewGeometry(
+            {"Front": PreviewSurface(100, 100, correction=correction)}, (0, 0, 0)
+        ),
+    )
+    image = QImage(100, 100, QImage.Format.Format_RGB32)
+    image.fill(QColor("white"))
+    output = canvas.correct_frame(image)
+    assert output.pixelColor(50, 90) == QColor("white")  # bottom keeps full width
+    assert output.pixelColor(5, 90) == QColor("white")
+    assert output.pixelColor(5, 5) == QColor("black")  # top corner is cut away
+    assert output.pixelColor(50, 5) == QColor("white")
+    media.close()
+    canvas.deleteLater()

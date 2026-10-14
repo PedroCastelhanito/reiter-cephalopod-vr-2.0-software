@@ -11,6 +11,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.microcontroller.firmware import FirmwareUploadPort
 from cephvr.controller.microcontroller.firmware_operation import FirmwareUpdate
+from cephvr.controller.microcontroller.protocol import FirmwareRejected
 from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.microcontroller import SerialOwnerPort
 
@@ -182,9 +183,15 @@ class MicrocontrollerDevice:
                         )
                     )
                 self._diagnostic_uncertain = True
-                active, _, _, edges = await self.serial.diagnostic_start(
-                    kind, pin, frequency_hz=frequency, deadline_ns=deadline_ns
-                )
+                try:
+                    active, _, _, edges = await self.serial.diagnostic_start(
+                        kind, pin, frequency_hz=frequency, deadline_ns=deadline_ns
+                    )
+                except FirmwareRejected:
+                    # A matched ERR proves nothing started; only an unanswered
+                    # start stays uncertain (A11).
+                    self._diagnostic_uncertain = False
+                    raise
                 self.view.diagnostic.CopyFrom(
                     pb.MicrocontrollerDiagnosticView(
                         signal=request.signal,

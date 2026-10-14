@@ -692,6 +692,73 @@ async def test_owner_loss_dispatches_exact_close_while_open_receipt_is_pending(
         task.close()
 
 
+async def test_failed_calibration_close_expires_so_the_exact_close_can_be_retried(
+    tmp_path: Path,
+) -> None:
+    from dataclasses import replace
+
+    from tests.controller.support_components import _runtime
+
+    ctx = pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id())
+    runtime = _runtime(tmp_path, ctx)
+    calls: list[Any] = []
+
+    class Renderer:
+        context = ctx
+
+        async def close_display_calibration(self, request: Any, *, deadline_ns: int):
+            calls.append(request)
+            if len(calls) == 1:
+                raise ConnectionError("renderer hung")
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    calibration = runtime.display_calibration
+    calibration.hooks = replace(calibration.hooks, authorized=lambda *a, **k: "")
+    renderer = Renderer()
+    calibration.backends["visual_stimulus"] = cast(BackendPort, renderer)
+    calibration._active_backend = cast(BackendPort, renderer)
+    calibration._active_backend_context = pb.BackendContext.FromString(
+        ctx.SerializeToString()
+    )
+    diagnostic_id = _id()
+    display = pb.VisualStimulusDisplayView(backend=ctx)
+    display.outputs.add(output_id="projector/main")
+    display.calibration.CopyFrom(
+        visual_stimulus_pb.DisplayCalibrationEvidence(
+            diagnostic_id=diagnostic_id,
+            controller_generation=runtime.generation,
+            configuration_revision=runtime.configuration_state.revision,
+            state=visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE,
+            presented=True,
+            idle=False,
+            resources_closed=False,
+        )
+    )
+    runtime.projections.display = display
+    runtime.device_state.calibration_blocked = True
+
+    def close_request() -> svc.CloseDisplayCalibrationRequest:
+        request = svc.CloseDisplayCalibrationRequest(
+            expected_configuration_revision=runtime.configuration_state.revision,
+            diagnostic_id=diagnostic_id,
+        )
+        request.command.operator.command_id = _id()
+        return request
+
+    first = await calibration.close(close_request())
+    assert first.result == pb.COMMAND_RESULT_REJECTED
+    assert runtime.device_state.calibration_pending is not None
+    for _ in range(300):  # the recovery bound retires the unconfirmed Close
+        if runtime.device_state.calibration_pending is None:
+            break
+        await asyncio.sleep(0.01)
+    assert runtime.device_state.calibration_pending is None
+    assert runtime.device_state.calibration_blocked  # evidence still unconfirmed
+    retry = await calibration.close(close_request())
+    assert retry.result == pb.COMMAND_RESULT_ACCEPTED
+    assert len(calls) == 2
+
+
 @pytest.mark.parametrize("blocked", ["", "camera", "diagnostic", "phase", "digest"])
 async def test_controller_authorizes_firmware_only_in_idle_configuration(blocked):
     from cephvr.controller.device.microcontroller import MicrocontrollerCommands

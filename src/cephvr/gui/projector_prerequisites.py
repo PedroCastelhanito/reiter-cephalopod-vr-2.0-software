@@ -18,15 +18,23 @@ class CalibrationPrerequisites:
         self,
         available_faces: tuple[str, ...],
         measurements: Mapping[str, Mapping[str, str]],
+        assigned_faces: tuple[str, ...] | None = None,
     ) -> None:
-        missing = [face for face in FACES if face not in available_faces]
+        assigned_faces = available_faces if assigned_faces is None else assigned_faces
+        missing = [face for face in FACES if face not in assigned_faces]
         if missing:
-            text = "Assign and enable displays: " + ", ".join(missing) + "."
+            text = "Assign a display to: " + ", ".join(missing) + "."
+            self.reference.setText(text)
+            self.projection.setText(text)
+            return
+        if not available_faces:
+            text = "Tick Use for at least one display."
             self.reference.setText(text)
             self.projection.setText(text)
             return
         self.reference.setText(
-            "Reference bars can be measured before screen calibration."
+            "Tick Use for the projector(s) to position; the others stay dark. "
+            "Align the cyan outline with the screen edges, then measure the bars."
         )
         missing = [
             face
@@ -37,9 +45,11 @@ class CalibrationPrerequisites:
             )
         ]
         self.projection.setText(
-            "Measure reference bars first: " + ", ".join(missing) + "."
+            "Without a measurement each edge starts at the projector border: "
+            + ", ".join(missing)
+            + "."
             if missing
-            else "Display bindings, geometry and measurements are checked on launch."
+            else "Edges start centered from the measurement; edit any edge to override."
         )
 
 

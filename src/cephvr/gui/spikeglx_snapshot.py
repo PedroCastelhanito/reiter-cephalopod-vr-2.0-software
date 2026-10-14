@@ -169,6 +169,7 @@ class SpikeGLXSnapshot:
                 if role in (
                     pb.PULSE_ROLE_BEHAVIORAL_CAMERA,
                     pb.PULSE_ROLE_TRACKING_CAMERA,
+                    pb.PULSE_ROLE_EYE_TRACKING_CAMERA,
                     pb.PULSE_ROLE_PHOTODIODE,
                 ):
                     panel.inventory_rows[role] = key
