@@ -175,5 +175,10 @@
     "tests/visual_stimulus/test_rendering.py": "daa13fecd7d75670118391b0ff520428e45becf70c99692238e72fb6e119c9f8",
     "tests/visual_stimulus/test_resources.py": "3301e488a5198c6f5110492d51eb59d94e8fb22cd12fac764c70b19a7ada9eac"
   },
-  "static_result_source": "Commands and stdout observed through exec_command in this chat; boundary output retained separately."
+  "static_result_source": "Commands and stdout observed through exec_command in this chat; boundary output retained separately.",
+  "git_sync": {
+    "merge_commit": "763fcb013e2cad20f050dd2935b31aa003d281bf",
+    "pushed": "origin main",
+    "verification": "HEAD=origin/main; ahead/behind 0/0; clean working tree; MERGE_HEAD absent before final tracking-only commit."
+  }
 }

@@ -10,7 +10,6 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `git-sync-repair` [repo] Resolve interrupted main/origin merge, preserve both histories, validate integration and synchronize. Owner: current Codex chat. Status: merge resolutions in working tree; owner approved local pixel-size/offset calibration resolution; completing integration validation and sync.
 
 ## Next
 
