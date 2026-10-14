@@ -2591,7 +2591,9 @@
         "descriptor_count": 4
       }
     ],
-    "final_index": "Zero tracked images/videos and zero ignored-but-tracked files;2592 local Markdown hyperlinks point to retained tracked files or existing tracked directories; staged/working whitespace checks pass."
+    "final_index": "Zero tracked images/videos and zero ignored-but-tracked files;2592 local Markdown hyperlinks point to retained tracked files or existing tracked directories; staged/working whitespace checks pass.",
+    "pushed_cleanup_commit": "3b4a58ba9c37edbfaaa775dda77123907ebcb586",
+    "remote": "Direct origin/main SHA matched cleanup commit;0 ahead/0 behind and clean tracked working tree before final bookkeeping."
   },
   "initial_attempts": [
     "Sandbox build blocked by default temporary-directory permissions; permitted no-isolation build passed."
