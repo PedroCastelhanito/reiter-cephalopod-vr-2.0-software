@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-15",
+  "governing_decisions": [
+    "G01",
+    "V01",
+    "E08",
+    "ARCH-002"
+  ],
+  "scope": "Final propagation repair after real native evidence exposed outer owner/coordinator escalation. Existing quarantine/device/runtime outputs not mutated by this agent.",
+  "behavior": {
+    "worker_owner": "Only UpdateDisplayCalibration plus typed CalibrationAdjustmentRejected skips driver.fail. Future still fails; advance/generic/deadline/other-method behavior unchanged.",
+    "coordinator": "Retains failed terminal ledger result and suppresses supervisor ReportError only for exact rejected sessionless Update with admitted same-command complete Active/presented prior-sequence display proof, matching diagnostic/revision/controller/renderer. No new state or policy."
+  },
+  "validation": {
+    "focused": "21 pass, including actual RenderOwner mailbox and authenticated worker/coordinator path",
+    "visual_stimulus_owner": "361 pass in2.53s",
+    "managed_affected": "132 pass in1.17s",
+    "ruff": "pass6files",
+    "format": "pass6files",
+    "mypy_win32": "pass4sources",
+    "boundaries": "699modules/0violations",
+    "whitespace_scoped": "pass"
+  },
+  "tests": {
+    "mailbox": "Typed Update rejection survives and validnext command works; generic exception and typed exception on wrong method still call driver.fail.",
+    "coordinator": "Positive exact accepted display proof plus14 mismatched/missing/generic/method/session/Setup negatives; failed terminal remains retained.",
+    "authenticated": "Existing three-view transport case now uses actualRenderOwner; display evidence accepted before failed terminal; no driver.fail/cancel/interruption; subsequent valid same-sequence update succeeds."
+  },
+  "attempts": "First baseline: real mailbox positive fails as expected,15 coordinator fixtures fail missing required ledger work_key rather than exercising policy. Corrected work_key before final21pass. No claim that fixture setup errors prove production behavior.",
+  "review": "Astra final source/test diff accepted after actualRenderOwner boundary coverage.",
+  "source_hashes": {
+    "src/cephvr/visual_stimulus/worker/calibration_adjustments.py": "9b4fb78dd3dbe2583ee0f2cab89e77b506b146c26d98657955a393f5ae850361",
+    "src/cephvr/visual_stimulus/worker/owner.py": "fcbda8a313025ed87224c65361b27eae0cd65fbeb44fef296735bddf5446cbd9",
+    "src/cephvr/visual_stimulus/coordinator/display.py": "1cd14934e407ce8ea5802de549a29511c6856b3c7a5fb8c47aac9e1e4cc82536",
+    "src/cephvr/visual_stimulus/coordinator/reports.py": "abf9e88c3d0979547a0cbbe5544126b22d25ba28cc89bb00f7156228d08c3ce4",
+    "tests/visual_stimulus/test_lifecycle.py": "3b0171b3c8f0f5c979be31053a892f4727a57a1441c551fb166e5cbff0a732b7",
+    "tests/visual_stimulus/test_coordinator.py": "e69198db2e4f772fea1ed0ac1e13728adcac648c3da11c1ca79c5a75942131ba",
+    "tests/visual_stimulus/test_controller_communication.py": "c91289af91a6464ae0d84700a587e0c4783078861a07ebbd92afcdfd3cb27293"
+  },
+  "suites": {
+    "placement-propagation-after2": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "21",
+      "time": "0.366",
+      "timestamp": "2026-10-15T18:40:56.610177+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "propagation-owner": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "361",
+      "time": "2.529",
+      "timestamp": "2026-10-15T18:41:49.668504+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "propagation-native-owner": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "132",
+      "time": "1.152",
+      "timestamp": "2026-10-15T18:41:50.410274+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    }
+  },
+  "native_retest": "Rig lead owns fresh-generation actual invalid\u2192valid retest; not run by this agent."
+}

@@ -1,0 +1,3643 @@
+{
+  "method": "AST inventory of owning GUI tests; existence is not execution evidence. Groups overlap by feature name.",
+  "collected_native_cases": 519,
+  "owning_test_functions": 349,
+  "native_completed_cases_before_stall": 12,
+  "features": [
+    {
+      "feature": "Dashboard and session",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1087,
+          "test": "test_managed_subject_metadata_preserves_absence_and_numeric_zero"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1106,
+          "test": "test_managed_subject_metadata_preserves_unknown_sex_value"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1157,
+          "test": "test_dashboard_control_status_matches_connection_and_authority"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2453,
+          "test": "test_preview_selector_reuses_modeless_window_and_keeps_visibility"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2668,
+          "test": "test_dashboard_has_only_requested_cards"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2743,
+          "test": "test_setup_serves_as_new_session_after_completion"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2757,
+          "test": "test_stop_cancels_setup_without_a_dialog"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2780,
+          "test": "test_stop_requires_a_choice_during_session"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2812,
+          "test": "test_stop_dialog_updates_choices_and_closes_on_control_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2834,
+          "test": "test_runtime_indicators_are_independent_and_read_only"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4059,
+          "test": "test_managed_gui_setup_captures_exact_accepted_configuration_for_bridge"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4188,
+          "test": "test_controller_bridge_setup_validates_captured_version_under_dispatch_lock"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4261,
+          "test": "test_controller_bridge_submits_then_setup_uses_exact_accepted_version"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6708,
+          "test": "test_setup_without_projectors_logs_and_submits_nothing"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6961,
+          "test": "test_pin_test_stop_toggle_and_invalidation"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8808,
+          "test": "test_recording_checks_stay_next_to_labels"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11546,
+          "test": "test_preview_rejects_setup_resolved_durations_without_mutating_program"
+        }
+      ]
+    },
+    {
+      "feature": "Authority, disconnection and history",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 648,
+          "test": "test_started_config_chooser_closes_on_authority_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 695,
+          "test": "test_config_chooser_closes_on_authority_loss_and_rechecks_load"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1157,
+          "test": "test_dashboard_control_status_matches_connection_and_authority"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1317,
+          "test": "test_retained_summary_keeps_incidents_ahead_of_completed_operation_history"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1345,
+          "test": "test_auto_retained_review_filters_only_exact_routine_warnings"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1416,
+          "test": "test_auto_retained_review_operation_and_recovery_truth_table"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1463,
+          "test": "test_retained_ack_guard_reassesses_fresh_snapshot_but_preserves_same_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1573,
+          "test": "test_managed_prompt_window_is_single_and_responds_with_displayed_snapshot"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1634,
+          "test": "test_prompt_completion_preserves_current_lease_authority"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1670,
+          "test": "test_managed_retained_summary_uses_one_acknowledgement_window"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1750,
+          "test": "test_old_retained_dialog_cannot_acknowledge_a_new_connection"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1798,
+          "test": "test_closing_retained_review_does_not_acknowledge"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1829,
+          "test": "test_long_retained_review_scrolls_without_hiding_actions"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1868,
+          "test": "test_retained_summary_keeps_ids_in_details_and_all_actionable_operations_visible"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1893,
+          "test": "test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1931,
+          "test": "test_prompt_completion_wait_failure_retains_admitted_id_as_unconfirmed"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2268,
+          "test": "test_folder_picker_selection_cancellation_and_phase_lock"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2582,
+          "test": "test_review_phase_locks_and_actions"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2601,
+          "test": "test_observer_locks_preserve_local_draft"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2638,
+          "test": "test_review_selector_renders_completion_and_observer_lock"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4486,
+          "test": "test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6404,
+          "test": "test_contextual_wiring_save_is_discarded_after_identity_or_authority_change"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6794,
+          "test": "test_managed_bridge_claims_free_control_for_history_save"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7380,
+          "test": "test_calibration_dialog_closes_on_authority_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8621,
+          "test": "test_group_fields_reject_bad_values_and_lock_on_authority_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11465,
+          "test": "test_preview_uses_retained_motion_and_backward_scrubbing"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12508,
+          "test": "test_retained_acknowledgement_cannot_clear_guard_without_current_snapshot"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12521,
+          "test": "test_initial_and_reopened_retained_warnings_gate_auto_claim"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14197,
+          "test": "test_group_actions_obey_authority_and_pending_validation"
+        }
+      ]
+    },
+    {
+      "feature": "Configuration and file dialogs",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 207,
+          "test": "test_protocol_config_round_trip_retains_complete_schedule"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 266,
+          "test": "test_microcontroller_config_load_is_local_and_collects_for_normal_submission"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 303,
+          "test": "test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 344,
+          "test": "test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 409,
+          "test": "test_tab_config_buttons_roundtrip_into_fresh_gui"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 500,
+          "test": "test_full_gui_config_round_trip_restores_all_sections_without_commands"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 557,
+          "test": "test_invalid_full_gui_config_changes_no_section"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 575,
+          "test": "test_gui_snapshot_rejects_invalid_json_before_editing"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 585,
+          "test": "test_snapshot_limits_and_failed_save_preserve_existing_file"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 599,
+          "test": "test_native_file_picker_immediate_cancel_and_parent_cleanup"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 648,
+          "test": "test_started_config_chooser_closes_on_authority_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 695,
+          "test": "test_config_chooser_closes_on_authority_loss_and_rechecks_load"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 924,
+          "test": "test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1069,
+          "test": "test_full_gui_snapshot_cannot_load_during_device_work"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1463,
+          "test": "test_retained_ack_guard_reassesses_fresh_snapshot_but_preserves_same_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1573,
+          "test": "test_managed_prompt_window_is_single_and_responds_with_displayed_snapshot"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2268,
+          "test": "test_folder_picker_selection_cancellation_and_phase_lock"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2923,
+          "test": "test_camera_pfs_picker_preserves_camera_identity_and_editing_gate"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3476,
+          "test": "test_projector_assignment_save_failure_keeps_draft_and_warns"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5320,
+          "test": "test_managed_snapshot_keeps_diagnostic_close_pending_and_status_visible"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5417,
+          "test": "test_save_failure_dismissal_never_discards_draft"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6525,
+          "test": "test_managed_window_waits_for_history_save_before_closing"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6587,
+          "test": "test_runtime_gui_close_reopen_preserves_full_draft"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6678,
+          "test": "test_disconnected_projector_draft_restores_and_saves"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6738,
+          "test": "test_runtime_gui_save_failure_keeps_window_open_and_previous_file"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6794,
+          "test": "test_managed_bridge_claims_free_control_for_history_save"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6822,
+          "test": "test_review_draft_restores_local_configuration"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7218,
+          "test": "test_projector_config_tabs_keep_column_width_and_table_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8405,
+          "test": "test_add_prepared_file_picker_does_not_create_placeholder_on_cancel"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9266,
+          "test": "test_batch_reference_picker_scope_and_lock"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12508,
+          "test": "test_retained_acknowledgement_cannot_clear_guard_without_current_snapshot"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13923,
+          "test": "test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields"
+        }
+      ]
+    },
+    {
+      "feature": "Cameras",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 344,
+          "test": "test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 840,
+          "test": "test_loaded_camera_presets_cannot_claim_sdk_import_provenance"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 873,
+          "test": "test_loaded_camera_timing_keeps_only_applicable_activation"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 896,
+          "test": "test_camera_settings_timing_keeps_only_applicable_activation"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 924,
+          "test": "test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 977,
+          "test": "test_camera_save_validation_error_routes_to_other_camera_row"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1023,
+          "test": "test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2180,
+          "test": "test_managed_camera_controls_emit_intent_without_changing_local_device_state"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2417,
+          "test": "test_preview_geometry_survives_recreation"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2509,
+          "test": "test_preview_snap_gap_and_available_screen_bounds"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2515,
+          "test": "test_preview_waits_for_report_and_handles_failure_closure_and_control_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2553,
+          "test": "test_unavailable_preview_retains_reported_state_without_commands"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2852,
+          "test": "test_preview_participation_gates_and_camera_draft_selection"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2902,
+          "test": "test_camera_role_uniqueness_and_extra_preview_rows"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2923,
+          "test": "test_camera_pfs_picker_preserves_camera_identity_and_editing_gate"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3100,
+          "test": "test_camera_batch_check_preserves_selection_and_connections"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3131,
+          "test": "test_pfs_trigger_hint_and_per_camera_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3159,
+          "test": "test_real_camera_inventory_preserves_roles_and_tests_open_close"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3218,
+          "test": "test_microcontroller_camera_rows_and_discovery"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3538,
+          "test": "test_microcontroller_role_outputs_clear_without_changing_camera_use"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3591,
+          "test": "test_microcontroller_file_restores_camera_output_rows_without_commands"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3776,
+          "test": "test_managed_camera_enable_waits_for_controller_confirmation"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3821,
+          "test": "test_managed_camera_enable_accepts_missing_external_input"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3842,
+          "test": "test_managed_camera_settings_submit_pfs_source_and_rate"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5541,
+          "test": "test_managed_camera_enable_updates_only_assigned_camera"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5642,
+          "test": "test_eye_assignment_preserves_existing_camera_roles"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5673,
+          "test": "test_loaded_camera_action_queues_parameters_without_setup"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5711,
+          "test": "test_camera_action_submits_before_test_and_stops_on_failure"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5851,
+          "test": "test_repeated_camera_connect_skips_noop_configuration_update"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5927,
+          "test": "test_camera_acceptance_preserves_other_local_configuration_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5967,
+          "test": "test_managed_camera_settings_supply_missing_trigger_source"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6034,
+          "test": "test_managed_mcu_save_includes_camera_output_pins"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6256,
+          "test": "test_managed_camera_pin_test_uses_saved_role_signal"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6304,
+          "test": "test_managed_mcu_preserves_camera_role_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6349,
+          "test": "test_managed_role_wiring_is_local_before_camera_discovery"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6883,
+          "test": "test_legacy_review_draft_camera_pin_migrates_to_logical_role"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6992,
+          "test": "test_microcontroller_enablement_preserves_pins_and_syncs_cameras"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12273,
+          "test": "test_managed_camera_batch_checks_continue_after_failure_without_capture"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12369,
+          "test": "test_managed_camera_projection_distinguishes_open_capture_and_cleanup"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12732,
+          "test": "test_tracking_camera_changes_invalidate_reference_and_lock_closes_tool"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13200,
+          "test": "test_camera_connect_opens_only_the_confirmed_run"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13248,
+          "test": "test_camera_selection_restores_pfs_source_and_frequency"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13277,
+          "test": "test_managed_camera_inventory_restores_selected_configuration"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15848,
+          "test": "test_camera_pin_tracks_selected_role_and_table_edits"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15891,
+          "test": "test_camera_pin_obeys_editing_and_diagnostic_locks"
+        }
+      ]
+    },
+    {
+      "feature": "Microcontroller and wiring",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 266,
+          "test": "test_microcontroller_config_load_is_local_and_collects_for_normal_submission"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3218,
+          "test": "test_microcontroller_camera_rows_and_discovery"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3515,
+          "test": "test_microcontroller_fixed_signal_tests_and_layout"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3538,
+          "test": "test_microcontroller_role_outputs_clear_without_changing_camera_use"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3591,
+          "test": "test_microcontroller_file_restores_camera_output_rows_without_commands"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3652,
+          "test": "test_local_review_microcontroller_does_not_open_serial"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3705,
+          "test": "test_managed_microcontroller_emits_controller_intents"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6034,
+          "test": "test_managed_mcu_save_includes_camera_output_pins"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6105,
+          "test": "test_managed_mcu_draft_test_requires_exact_acceptance"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6200,
+          "test": "test_managed_microcontroller_submits_edited_pin_before_test"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6256,
+          "test": "test_managed_camera_pin_test_uses_saved_role_signal"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6304,
+          "test": "test_managed_mcu_preserves_camera_role_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6349,
+          "test": "test_managed_role_wiring_is_local_before_camera_discovery"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6367,
+          "test": "test_contextual_wiring_editors_update_only_the_shared_draft"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6404,
+          "test": "test_contextual_wiring_save_is_discarded_after_identity_or_authority_change"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6436,
+          "test": "test_projector_sync_modes_without_mcu_preserve_saved_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6883,
+          "test": "test_legacy_review_draft_camera_pin_migrates_to_logical_role"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6961,
+          "test": "test_pin_test_stop_toggle_and_invalidation"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6992,
+          "test": "test_microcontroller_enablement_preserves_pins_and_syncs_cameras"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7095,
+          "test": "test_microcontroller_row_heights_match"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12161,
+          "test": "test_managed_mcu_pending_completion_and_final_status"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15848,
+          "test": "test_camera_pin_tracks_selected_role_and_table_edits"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15891,
+          "test": "test_camera_pin_obeys_editing_and_diagnostic_locks"
+        }
+      ]
+    },
+    {
+      "feature": "Projectors and synchronization",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2509,
+          "test": "test_preview_snap_gap_and_available_screen_bounds"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3300,
+          "test": "test_projector_refresh_preserves_assignment"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3330,
+          "test": "test_projector_assignments_survive_restart_and_changed_inventory"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3384,
+          "test": "test_saved_projector_assignments_restore_as_managed_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3458,
+          "test": "test_invalid_saved_projector_assignments_are_preserved_and_reported"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3476,
+          "test": "test_projector_assignment_save_failure_keeps_draft_and_warns"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4338,
+          "test": "test_managed_display_calibration_requests_use_repository_relative_assets"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4427,
+          "test": "test_projector_first_run_profile_import_is_reachable_and_collectable"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4815,
+          "test": "test_queued_calibration_rejects_revision_and_asset_drift"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4857,
+          "test": "test_queued_calibration_close_rejects_changed_diagnostic_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6436,
+          "test": "test_projector_sync_modes_without_mcu_preserve_saved_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6678,
+          "test": "test_disconnected_projector_draft_restores_and_saves"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 6708,
+          "test": "test_setup_without_projectors_logs_and_submits_nothing"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7036,
+          "test": "test_projectors_number_secondary_screens_by_position"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7111,
+          "test": "test_projector_geometry_and_pulse_drafts_are_independent"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7151,
+          "test": "test_configuration_scroll_keeps_projector_status_fixed"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7176,
+          "test": "test_calibration_and_screen_dimensions_retain_separate_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7218,
+          "test": "test_projector_config_tabs_keep_column_width_and_table_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7249,
+          "test": "test_screen_distance_moves_planes_independently_of_tank"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7300,
+          "test": "test_all_screen_calibration_json_roundtrip_and_rejection"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7380,
+          "test": "test_calibration_dialog_closes_on_authority_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7524,
+          "test": "test_right_screen_is_derived_and_legacy_asymmetry_rejected"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8136,
+          "test": "test_protocol_controls_and_enabled_screen_lanes"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8475,
+          "test": "test_screen_overrides_and_layers_preserve_other_epochs"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9018,
+          "test": "test_review_projector_inventory_drives_devices_and_planner"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9171,
+          "test": "test_batch_reference_projector_parameters_and_layers"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10145,
+          "test": "test_projector_codec_preserves_file_pacing_and_imported_calibration"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10231,
+          "test": "test_projectors_page_install_collect_keeps_file_owned_pacing_absent"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10283,
+          "test": "test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10333,
+          "test": "test_calibration_identity_profiles_bind_unique_native_monitors"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10557,
+          "test": "test_calibration_button_reflects_confirmed_managed_output"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10648,
+          "test": "test_managed_first_use_calibration_launches_before_display_initialization"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10920,
+          "test": "test_control_dialog_does_not_expand_projector_row_and_cancels"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11056,
+          "test": "test_blank_layer_then_family_keeps_each_projector_layer_configuration"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11300,
+          "test": "test_batch_variations_target_projectors_and_local_layer_ordinals"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11361,
+          "test": "test_layer_actions_offer_up_down_and_preserve_projector_values"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11653,
+          "test": "test_planning_preview_uses_rig_planes_and_only_enabled_projector_frames"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11730,
+          "test": "test_preview_calibration_matches_export_and_uses_display_pixels"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12137,
+          "test": "test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12814,
+          "test": "test_tracking_v1_draft_migrates_without_inventing_calibration"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13362,
+          "test": "test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13481,
+          "test": "test_projector_configuration_json_restores_all_settings_without_screen_mapping"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13565,
+          "test": "test_projector_configuration_invalid_settings_preserve_complete_draft"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13596,
+          "test": "test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13665,
+          "test": "test_photodiode_controls_fit_with_growing_blackouts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13703,
+          "test": "test_planning_preview_keeps_square_visible_over_blackout"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13750,
+          "test": "test_legacy_numeric_projector_json_preserves_synchronization"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13769,
+          "test": "test_portable_screen_profile_rebinds_native_properties_and_preserves_coverage"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13806,
+          "test": "test_authoritative_projector_install_clears_previous_profile_on_empty_state"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13822,
+          "test": "test_projector_reference_measurements_derive_distance_and_roundtrip"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 13923,
+          "test": "test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14275,
+          "test": "test_calibration_adjustment_steps_preserve_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14337,
+          "test": "test_live_calibration_coalesces_edits_and_retains_last_valid_projection"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14747,
+          "test": "test_unified_subgroup_preserves_projector_variants_and_guards_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14848,
+          "test": "test_unified_subgroup_asset_edit_is_projector_local_and_atomic"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15019,
+          "test": "test_subgroup_rules_persist_and_random_projectors_are_independent"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15490,
+          "test": "test_active_calibration_measurements_are_editable_only_for_reference_bars"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15608,
+          "test": "test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors"
+        }
+      ]
+    },
+    {
+      "feature": "SpikeGLX",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 303,
+          "test": "test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2003,
+          "test": "test_managed_spikeglx_connection_emits_read_only_intent"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2028,
+          "test": "test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4486,
+          "test": "test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4600,
+          "test": "test_managed_spikeglx_pairing_updates_only_session_flag"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4664,
+          "test": "test_spikeglx_pairing_bridge_publishes_accepted_device_revision"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4710,
+          "test": "test_managed_spikeglx_pairing_waits_for_confirmation"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4763,
+          "test": "test_managed_spikeglx_inventory_installs_read_only_host_settings"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7188,
+          "test": "test_spikeglx_sources_preserve_maps_and_follow_enablement"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7506,
+          "test": "test_spikeglx_disable_restore_and_remove_custom"
+        }
+      ]
+    },
+    {
+      "feature": "Tracking",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 924,
+          "test": "test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1188,
+          "test": "test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2395,
+          "test": "test_successful_tracking_frame_poll_does_not_add_routine_log_row"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 4926,
+          "test": "test_tracking_diagnostic_requests_keep_preview_and_draft_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5008,
+          "test": "test_tracking_viewer_rpc_uses_frozen_authorized_endpoint"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5098,
+          "test": "test_tracking_viewer_detach_stays_detached_until_explicit_reopen"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5150,
+          "test": "test_tracking_viewer_frame_freezes_only_on_explicit_exact_source_action"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5268,
+          "test": "test_tracking_diagnostic_close_waits_for_closed_evidence"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5442,
+          "test": "test_tracking_empty_diagnostic_mask_does_not_require_experiment_settings"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 5464,
+          "test": "test_tracking_flow_diagnostic_ignores_dormant_pose_and_estimator_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8068,
+          "test": "test_protocol_cards_reflow_and_keep_properties_reachable"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12659,
+          "test": "test_tracking_methods_preserve_fields_and_hide_unrelated_controls"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12712,
+          "test": "test_tracking_draft_roundtrip_and_invalid_load_is_atomic"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12732,
+          "test": "test_tracking_camera_changes_invalidate_reference_and_lock_closes_tool"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12762,
+          "test": "test_tracking_annotation_maps_letterboxed_image_to_source_pixels"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12784,
+          "test": "test_tracking_distance_and_regions_use_original_pixels"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12814,
+          "test": "test_tracking_v1_draft_migrates_without_inventing_calibration"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12833,
+          "test": "test_tracking_preview_stages_retain_settings_and_clear_only_subject_reference"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12896,
+          "test": "test_tracking_region_bounds_and_full_frame_are_validated"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12918,
+          "test": "test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12955,
+          "test": "test_older_tracking_crop_fields_migrate_without_losing_annotations"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14232,
+          "test": "test_rejected_controller_configuration_restores_edit_tracking"
+        },
+        {
+          "file": "tests/gui/test_tracking_live.py",
+          "line": 13,
+          "test": "test_tracking_diagnostic_presentation_copies_frame_and_checks_exact_scope"
+        }
+      ]
+    },
+    {
+      "feature": "Protocol authoring and planning preview",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 207,
+          "test": "test_protocol_config_round_trip_retains_complete_schedule"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1893,
+          "test": "test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3100,
+          "test": "test_camera_batch_check_preserves_selection_and_connections"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7428,
+          "test": "test_epoch_clock_duration_retains_fractional_precision"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7438,
+          "test": "test_batch_variation_sweep_is_bounded"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7457,
+          "test": "test_epoch_reference_updates_do_not_show_detached_windows"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7578,
+          "test": "test_managed_protocol_roundtrips_ordered_trials_seed_and_gap"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7670,
+          "test": "test_managed_protocol_rejects_partial_restore_without_mutating_pages"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7841,
+          "test": "test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7894,
+          "test": "test_protocol_participation_and_asset_pages"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7942,
+          "test": "test_protocol_program_validation_and_atomic_save"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8001,
+          "test": "test_protocol_timeline_edits_preserve_trials_and_imported_groups"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8068,
+          "test": "test_protocol_cards_reflow_and_keep_properties_reachable"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8136,
+          "test": "test_protocol_controls_and_enabled_screen_lanes"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8185,
+          "test": "test_stimulus_parameter_forms_round_trip_every_family"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8207,
+          "test": "test_stimulus_parameter_edit_invalid_guard_and_media_root"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8258,
+          "test": "test_stimulus_animation_variants_reset_and_remove"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8283,
+          "test": "test_prepared_texture_bundle_and_epoch_motion"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8353,
+          "test": "test_prepared_file_change_is_epoch_local"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8380,
+          "test": "test_protocol_epoch_structure_actions"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8405,
+          "test": "test_add_prepared_file_picker_does_not_create_placeholder_on_cancel"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8435,
+          "test": "test_file_first_epoch_insertion_and_history"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8475,
+          "test": "test_screen_overrides_and_layers_preserve_other_epochs"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8511,
+          "test": "test_repeat_variation_uses_canonical_expansion_and_preserves_choreography"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8567,
+          "test": "test_nested_group_edit_and_duplicate_reference_remapping"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8621,
+          "test": "test_group_fields_reject_bad_values_and_lock_on_authority_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8671,
+          "test": "test_saved_variations_reopen_as_speed_direction_lists"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8714,
+          "test": "test_variation_bounds_and_preview_limit"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8744,
+          "test": "test_stationary_texture_speed_variation_keeps_positive_x_direction"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8776,
+          "test": "test_expanded_close_and_trial_deletion"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8878,
+          "test": "test_batch_create_variations_preview_insert_and_reload"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8969,
+          "test": "test_trial_overview_selects_ranges_and_sources_across_groups"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9049,
+          "test": "test_timeline_overview_colors_and_current_epoch_details"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9104,
+          "test": "test_epoch_parameter_warnings_wait_for_submission"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9171,
+          "test": "test_batch_reference_projector_parameters_and_layers"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9266,
+          "test": "test_batch_reference_picker_scope_and_lock"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9379,
+          "test": "test_reference_type_change_clears_asset_and_switches_stimulus_mode"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9456,
+          "test": "test_batch_insertion_positions_are_atomic_and_select_new_epochs"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9491,
+          "test": "test_arena_axis_gains_roundtrip_and_editor_spacing"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9559,
+          "test": "test_arena_custom_feedback_is_preserved_and_channel_conflicts_rejected"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9611,
+          "test": "test_front_attached_screens_share_plot_and_prepared_corners"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 9969,
+          "test": "test_label_insertion_repeats_batch_in_original_scope_and_undo"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10010,
+          "test": "test_visible_layer_selector_and_opacity_preserve_prepared_placement"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10116,
+          "test": "test_projection_group_replaces_individual_visibility_controls"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10283,
+          "test": "test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10812,
+          "test": "test_arena_feedback_and_axis_editors_stay_synchronized"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10845,
+          "test": "test_stimulus_mode_and_duration_use_proportional_header_widths"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10957,
+          "test": "test_control_action_is_limited_to_closed_loop_texture_and_looming"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11001,
+          "test": "test_reference_fades_follow_batch_duration_and_new_rows"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11124,
+          "test": "test_first_source_epoch_fade_does_not_change_rest_of_batch"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11155,
+          "test": "test_200_epoch_timeline_reuses_views_and_metadata_noop"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11217,
+          "test": "test_200_epoch_eight_layer_protocol_round_trip_exceeds_old_gui_limit"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11257,
+          "test": "test_variation_controls_fit_narrow_protocol_without_horizontal_scroll"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11300,
+          "test": "test_batch_variations_target_projectors_and_local_layer_ordinals"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11404,
+          "test": "test_variations_use_stimulus_columns_and_materialize_looming_and_video"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11501,
+          "test": "test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11563,
+          "test": "test_planning_arena_draws_a_bounded_glb_on_a_configured_surface"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11632,
+          "test": "test_arena_variations_change_axis_gains_without_changing_other_axes"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11845,
+          "test": "test_random_variations_respect_bounds_precision_and_size"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11869,
+          "test": "test_random_batch_values_stay_fixed_across_preview_and_save"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11938,
+          "test": "test_timeline_epoch_shortcuts_and_keyboard_history"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11992,
+          "test": "test_image_fit_and_motion_are_saved_without_texture_phase"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12097,
+          "test": "test_batch_fit_choice_and_legacy_image_appearance"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12137,
+          "test": "test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12273,
+          "test": "test_managed_camera_batch_checks_continue_after_failure_without_capture"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14172,
+          "test": "test_group_actions_preserve_contents_selection_and_history"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14197,
+          "test": "test_group_actions_obey_authority_and_pending_validation"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14217,
+          "test": "test_group_actions_keep_one_group_and_noop_history"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14517,
+          "test": "test_grouped_batch_insertion_stays_inside_open_group"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14538,
+          "test": "test_grouped_timeline_large_repeat_and_visible_paint_are_bounded"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14575,
+          "test": "test_flat_group_initial_trials_and_legacy_imports"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14618,
+          "test": "test_unified_subgroup_template_add_apply_history_and_files"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14697,
+          "test": "test_unified_subgroup_patch_preserves_variants_and_shared_sources"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14747,
+          "test": "test_unified_subgroup_preserves_projector_variants_and_guards_drafts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14796,
+          "test": "test_unified_subgroup_duration_preserves_each_fade_and_batch_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14848,
+          "test": "test_unified_subgroup_asset_edit_is_projector_local_and_atomic"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14900,
+          "test": "test_direct_group_editor_starts_open_and_uses_only_group_repetitions"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 14991,
+          "test": "test_empty_variation_blocks_add_group_without_losing_draft"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15019,
+          "test": "test_subgroup_rules_persist_and_random_projectors_are_independent"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15165,
+          "test": "test_large_random_group_stays_compact_and_layer_controls_are_indices"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15222,
+          "test": "test_inline_timeline_actions_target_blocks_append_and_preserve_undo"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15310,
+          "test": "test_trial_row_actions_scroll_target_and_align_cards"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15383,
+          "test": "test_texture_recipe_file_selection_preserves_original_json"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15412,
+          "test": "test_texture_reference_link_keeps_appearance_and_disables_reparented_motion"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15448,
+          "test": "test_epoch_automatic_updates_preserve_focus_validation_and_history"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 16012,
+          "test": "test_protocol_arena_limits_default_edit_undo_and_saved_region"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 16113,
+          "test": "test_arena_xyz_orientation_default_subject_height_and_alignment"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 16221,
+          "test": "test_arena_mode_missing_height_keeps_previous_editor_and_reports_error"
+        }
+      ]
+    },
+    {
+      "feature": "Navigation, theme, focus and layout",
+      "automation_scope": "frontend fixture behavior, except explicit presentation/state helpers",
+      "automated_current_run": "All519 existing GUI cases passed offscreen across512+7 runs. Native full suite remains incomplete.",
+      "actual_managed_gui_evidence": "Managed window inventoried, state capture helper hung twice; no control tree/screenshot, navigation, responsiveness or hardware acceptance by this agent.",
+      "tests": [
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 409,
+          "test": "test_tab_config_buttons_roundtrip_into_fresh_gui"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1176,
+          "test": "test_shared_theme_styles_menu_bar_and_menu_states"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1750,
+          "test": "test_old_retained_dialog_cannot_acknowledge_a_new_connection"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 1829,
+          "test": "test_long_retained_review_scrolls_without_hiding_actions"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2256,
+          "test": "test_devices_draft_reflows_without_horizontal_clipping"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2291,
+          "test": "test_compact_path_keeps_full_text_tooltip_and_editing"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2307,
+          "test": "test_log_keeps_reading_position_during_append_and_retention"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2328,
+          "test": "test_log_entry_details_follow_their_own_bounded_document_block"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2355,
+          "test": "test_managed_operation_log_distinguishes_admission_completion_and_failure"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2395,
+          "test": "test_successful_tracking_frame_poll_does_not_add_routine_log_row"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2615,
+          "test": "test_responsive_navigation_preserves_widget_identity"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2651,
+          "test": "test_wide_layout_keeps_status_and_logs_visible"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2699,
+          "test": "test_hud_fits_content_and_log_fills_available_height"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2812,
+          "test": "test_stop_dialog_updates_choices_and_closes_on_control_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 2960,
+          "test": "test_all_pages_share_fitted_hud_and_expanding_log"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3279,
+          "test": "test_wrapped_log_preserves_whole_words_and_reading_anchor"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3501,
+          "test": "test_gui_display_number_is_local_and_shared_with_layout"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 3515,
+          "test": "test_microcontroller_fixed_signal_tests_and_layout"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7095,
+          "test": "test_microcontroller_row_heights_match"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7151,
+          "test": "test_configuration_scroll_keeps_projector_status_fixed"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7271,
+          "test": "test_hidden_scrollbar_preserves_wheel_scrolling"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7380,
+          "test": "test_calibration_dialog_closes_on_authority_loss"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 7391,
+          "test": "test_wheel_never_changes_input_values"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 8068,
+          "test": "test_protocol_cards_reflow_and_keep_properties_reachable"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 10920,
+          "test": "test_control_dialog_does_not_expand_projector_row_and_cancels"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 11257,
+          "test": "test_variation_controls_fit_narrow_protocol_without_horizontal_scroll"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 12982,
+          "test": "test_review_and_runtime_share_page_elements_and_card_layouts"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15310,
+          "test": "test_trial_row_actions_scroll_target_and_align_cards"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15536,
+          "test": "test_shared_tables_tab_between_nested_editors_and_other_controls"
+        },
+        {
+          "file": "tests/gui/test_dashboard.py",
+          "line": 15585,
+          "test": "test_console_tab_leaves_text_view_for_next_control"
+        }
+      ]
+    }
+  ],
+  "test_functions": [
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 55,
+      "test": "test_square_preview_initial_edge_placement"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 64,
+      "test": "test_square_preview_placement_fits_small_work_area"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 192,
+      "test": "test_offline_frontend_cannot_request_commands"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 207,
+      "test": "test_protocol_config_round_trip_retains_complete_schedule"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 266,
+      "test": "test_microcontroller_config_load_is_local_and_collects_for_normal_submission"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 303,
+      "test": "test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 344,
+      "test": "test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 409,
+      "test": "test_tab_config_buttons_roundtrip_into_fresh_gui"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 500,
+      "test": "test_full_gui_config_round_trip_restores_all_sections_without_commands"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 557,
+      "test": "test_invalid_full_gui_config_changes_no_section"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 575,
+      "test": "test_gui_snapshot_rejects_invalid_json_before_editing"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 585,
+      "test": "test_snapshot_limits_and_failed_save_preserve_existing_file"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 599,
+      "test": "test_native_file_picker_immediate_cancel_and_parent_cleanup"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 648,
+      "test": "test_started_config_chooser_closes_on_authority_loss"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 695,
+      "test": "test_config_chooser_closes_on_authority_loss_and_rechecks_load"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 731,
+      "test": "test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 840,
+      "test": "test_loaded_camera_presets_cannot_claim_sdk_import_provenance"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 873,
+      "test": "test_loaded_camera_timing_keeps_only_applicable_activation"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 896,
+      "test": "test_camera_settings_timing_keeps_only_applicable_activation"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 924,
+      "test": "test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 977,
+      "test": "test_camera_save_validation_error_routes_to_other_camera_row"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1023,
+      "test": "test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1069,
+      "test": "test_full_gui_snapshot_cannot_load_during_device_work"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1087,
+      "test": "test_managed_subject_metadata_preserves_absence_and_numeric_zero"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1106,
+      "test": "test_managed_subject_metadata_preserves_unknown_sex_value"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1126,
+      "test": "test_managed_runtime_editors_are_enabled_without_review_samples"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1157,
+      "test": "test_dashboard_control_status_matches_connection_and_authority"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1176,
+      "test": "test_shared_theme_styles_menu_bar_and_menu_states"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1188,
+      "test": "test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1294,
+      "test": "test_managed_status_uses_readiness_and_output_closure_evidence"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1317,
+      "test": "test_retained_summary_keeps_incidents_ahead_of_completed_operation_history"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1345,
+      "test": "test_auto_retained_review_filters_only_exact_routine_warnings"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1416,
+      "test": "test_auto_retained_review_operation_and_recovery_truth_table"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1463,
+      "test": "test_retained_ack_guard_reassesses_fresh_snapshot_but_preserves_same_identity"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1476,
+      "test": "test_manual_history_review_opens_without_ack_guard"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1534,
+      "test": "test_mandatory_review_can_be_reopened_after_same_identity_history_empties"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1573,
+      "test": "test_managed_prompt_window_is_single_and_responds_with_displayed_snapshot"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1634,
+      "test": "test_prompt_completion_preserves_current_lease_authority"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1670,
+      "test": "test_managed_retained_summary_uses_one_acknowledgement_window"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1750,
+      "test": "test_old_retained_dialog_cannot_acknowledge_a_new_connection"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1798,
+      "test": "test_closing_retained_review_does_not_acknowledge"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1829,
+      "test": "test_long_retained_review_scrolls_without_hiding_actions"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1868,
+      "test": "test_retained_summary_keeps_ids_in_details_and_all_actionable_operations_visible"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1893,
+      "test": "test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 1931,
+      "test": "test_prompt_completion_wait_failure_retains_admitted_id_as_unconfirmed"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2003,
+      "test": "test_managed_spikeglx_connection_emits_read_only_intent"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2028,
+      "test": "test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2124,
+      "test": "test_preview_window_waits_for_backend_completion"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2180,
+      "test": "test_managed_camera_controls_emit_intent_without_changing_local_device_state"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2209,
+      "test": "test_devices_draft_icons_local_edits_and_command_gates"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2256,
+      "test": "test_devices_draft_reflows_without_horizontal_clipping"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2268,
+      "test": "test_folder_picker_selection_cancellation_and_phase_lock"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2291,
+      "test": "test_compact_path_keeps_full_text_tooltip_and_editing"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2307,
+      "test": "test_log_keeps_reading_position_during_append_and_retention"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2328,
+      "test": "test_log_entry_details_follow_their_own_bounded_document_block"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2355,
+      "test": "test_managed_operation_log_distinguishes_admission_completion_and_failure"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2395,
+      "test": "test_successful_tracking_frame_poll_does_not_add_routine_log_row"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2417,
+      "test": "test_preview_geometry_survives_recreation"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2446,
+      "test": "test_review_intent_does_not_advance_session"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2453,
+      "test": "test_preview_selector_reuses_modeless_window_and_keeps_visibility"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2509,
+      "test": "test_preview_snap_gap_and_available_screen_bounds"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2515,
+      "test": "test_preview_waits_for_report_and_handles_failure_closure_and_control_loss"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2553,
+      "test": "test_unavailable_preview_retains_reported_state_without_commands"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2582,
+      "test": "test_review_phase_locks_and_actions"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2601,
+      "test": "test_observer_locks_preserve_local_draft"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2615,
+      "test": "test_responsive_navigation_preserves_widget_identity"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2638,
+      "test": "test_review_selector_renders_completion_and_observer_lock"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2651,
+      "test": "test_wide_layout_keeps_status_and_logs_visible"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2668,
+      "test": "test_dashboard_has_only_requested_cards"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2699,
+      "test": "test_hud_fits_content_and_log_fills_available_height"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2743,
+      "test": "test_setup_serves_as_new_session_after_completion"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2757,
+      "test": "test_stop_cancels_setup_without_a_dialog"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2780,
+      "test": "test_stop_requires_a_choice_during_session"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2812,
+      "test": "test_stop_dialog_updates_choices_and_closes_on_control_loss"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2834,
+      "test": "test_runtime_indicators_are_independent_and_read_only"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2852,
+      "test": "test_preview_participation_gates_and_camera_draft_selection"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2902,
+      "test": "test_camera_role_uniqueness_and_extra_preview_rows"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2923,
+      "test": "test_camera_pfs_picker_preserves_camera_identity_and_editing_gate"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 2960,
+      "test": "test_all_pages_share_fitted_hud_and_expanding_log"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3001,
+      "test": "test_device_tabs_sit_above_controls_without_moving_hud"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3100,
+      "test": "test_camera_batch_check_preserves_selection_and_connections"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3131,
+      "test": "test_pfs_trigger_hint_and_per_camera_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3159,
+      "test": "test_real_camera_inventory_preserves_roles_and_tests_open_close"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3218,
+      "test": "test_microcontroller_camera_rows_and_discovery"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3279,
+      "test": "test_wrapped_log_preserves_whole_words_and_reading_anchor"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3300,
+      "test": "test_projector_refresh_preserves_assignment"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3330,
+      "test": "test_projector_assignments_survive_restart_and_changed_inventory"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3384,
+      "test": "test_saved_projector_assignments_restore_as_managed_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3458,
+      "test": "test_invalid_saved_projector_assignments_are_preserved_and_reported"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3476,
+      "test": "test_projector_assignment_save_failure_keeps_draft_and_warns"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3501,
+      "test": "test_gui_display_number_is_local_and_shared_with_layout"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3515,
+      "test": "test_microcontroller_fixed_signal_tests_and_layout"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3538,
+      "test": "test_microcontroller_role_outputs_clear_without_changing_camera_use"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3591,
+      "test": "test_microcontroller_file_restores_camera_output_rows_without_commands"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3652,
+      "test": "test_local_review_microcontroller_does_not_open_serial"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3677,
+      "test": "test_simulated_review_inventory_does_not_enumerate_com_ports"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3705,
+      "test": "test_managed_microcontroller_emits_controller_intents"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3776,
+      "test": "test_managed_camera_enable_waits_for_controller_confirmation"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3821,
+      "test": "test_managed_camera_enable_accepts_missing_external_input"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3842,
+      "test": "test_managed_camera_settings_submit_pfs_source_and_rate"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3904,
+      "test": "test_bridge_submits_configuration_and_waits_for_exact_version"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 3972,
+      "test": "test_bridge_accepts_unchanged_configuration_at_same_revision"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4027,
+      "test": "test_managed_configuration_action_plan_preserves_edits_outside_editable_phases"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4059,
+      "test": "test_managed_gui_setup_captures_exact_accepted_configuration_for_bridge"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4142,
+      "test": "test_managed_gui_immutable_phase_actions_bypass_invalid_collection"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4188,
+      "test": "test_controller_bridge_setup_validates_captured_version_under_dispatch_lock"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4261,
+      "test": "test_controller_bridge_submits_then_setup_uses_exact_accepted_version"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4338,
+      "test": "test_managed_display_calibration_requests_use_repository_relative_assets"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4427,
+      "test": "test_projector_first_run_profile_import_is_reachable_and_collectable"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4486,
+      "test": "test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4600,
+      "test": "test_managed_spikeglx_pairing_updates_only_session_flag"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4664,
+      "test": "test_spikeglx_pairing_bridge_publishes_accepted_device_revision"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4710,
+      "test": "test_managed_spikeglx_pairing_waits_for_confirmation"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4763,
+      "test": "test_managed_spikeglx_inventory_installs_read_only_host_settings"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4815,
+      "test": "test_queued_calibration_rejects_revision_and_asset_drift"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4857,
+      "test": "test_queued_calibration_close_rejects_changed_diagnostic_identity"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4896,
+      "test": "test_inventory_required_roles_follow_the_accepted_active_configuration"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 4926,
+      "test": "test_tracking_diagnostic_requests_keep_preview_and_draft_identity"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5008,
+      "test": "test_tracking_viewer_rpc_uses_frozen_authorized_endpoint"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5098,
+      "test": "test_tracking_viewer_detach_stays_detached_until_explicit_reopen"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5150,
+      "test": "test_tracking_viewer_frame_freezes_only_on_explicit_exact_source_action"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5268,
+      "test": "test_tracking_diagnostic_close_waits_for_closed_evidence"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5320,
+      "test": "test_managed_snapshot_keeps_diagnostic_close_pending_and_status_visible"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5417,
+      "test": "test_save_failure_dismissal_never_discards_draft"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5442,
+      "test": "test_tracking_empty_diagnostic_mask_does_not_require_experiment_settings"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5464,
+      "test": "test_tracking_flow_diagnostic_ignores_dormant_pose_and_estimator_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5512,
+      "test": "test_bridge_rejects_stale_configuration_base_without_admission"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5541,
+      "test": "test_managed_camera_enable_updates_only_assigned_camera"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5586,
+      "test": "test_disconnect_after_failed_connect_uses_device_cleanup"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5608,
+      "test": "test_eye_role_projects_and_tests_selected_without_capture"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5642,
+      "test": "test_eye_assignment_preserves_existing_camera_roles"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5673,
+      "test": "test_loaded_camera_action_queues_parameters_without_setup"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5711,
+      "test": "test_camera_action_submits_before_test_and_stops_on_failure"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5851,
+      "test": "test_repeated_camera_connect_skips_noop_configuration_update"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5927,
+      "test": "test_camera_acceptance_preserves_other_local_configuration_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 5967,
+      "test": "test_managed_camera_settings_supply_missing_trigger_source"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6034,
+      "test": "test_managed_mcu_save_includes_camera_output_pins"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6105,
+      "test": "test_managed_mcu_draft_test_requires_exact_acceptance"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6200,
+      "test": "test_managed_microcontroller_submits_edited_pin_before_test"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6256,
+      "test": "test_managed_camera_pin_test_uses_saved_role_signal"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6304,
+      "test": "test_managed_mcu_preserves_camera_role_identity"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6349,
+      "test": "test_managed_role_wiring_is_local_before_camera_discovery"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6367,
+      "test": "test_contextual_wiring_editors_update_only_the_shared_draft"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6404,
+      "test": "test_contextual_wiring_save_is_discarded_after_identity_or_authority_change"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6436,
+      "test": "test_projector_sync_modes_without_mcu_preserve_saved_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6458,
+      "test": "test_restored_managed_draft_assigns_eye_and_adds_output_locally"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6525,
+      "test": "test_managed_window_waits_for_history_save_before_closing"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6546,
+      "test": "test_managed_close_finishes_only_after_controller_save_result"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6587,
+      "test": "test_runtime_gui_close_reopen_preserves_full_draft"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6678,
+      "test": "test_disconnected_projector_draft_restores_and_saves"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6708,
+      "test": "test_setup_without_projectors_logs_and_submits_nothing"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6738,
+      "test": "test_runtime_gui_save_failure_keeps_window_open_and_previous_file"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6776,
+      "test": "test_runtime_gui_unrestored_file_is_preserved"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6794,
+      "test": "test_managed_bridge_claims_free_control_for_history_save"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6822,
+      "test": "test_review_draft_restores_local_configuration"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6883,
+      "test": "test_legacy_review_draft_camera_pin_migrates_to_logical_role"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6919,
+      "test": "test_review_window_saves_draft_on_close"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6944,
+      "test": "test_invalid_review_draft_is_not_replaced_during_load"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6961,
+      "test": "test_pin_test_stop_toggle_and_invalidation"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 6992,
+      "test": "test_microcontroller_enablement_preserves_pins_and_syncs_cameras"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7036,
+      "test": "test_projectors_number_secondary_screens_by_position"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7095,
+      "test": "test_microcontroller_row_heights_match"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7111,
+      "test": "test_projector_geometry_and_pulse_drafts_are_independent"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7151,
+      "test": "test_configuration_scroll_keeps_projector_status_fixed"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7176,
+      "test": "test_calibration_and_screen_dimensions_retain_separate_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7188,
+      "test": "test_spikeglx_sources_preserve_maps_and_follow_enablement"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7218,
+      "test": "test_projector_config_tabs_keep_column_width_and_table_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7249,
+      "test": "test_screen_distance_moves_planes_independently_of_tank"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7271,
+      "test": "test_hidden_scrollbar_preserves_wheel_scrolling"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7300,
+      "test": "test_all_screen_calibration_json_roundtrip_and_rejection"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7380,
+      "test": "test_calibration_dialog_closes_on_authority_loss"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7391,
+      "test": "test_wheel_never_changes_input_values"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7428,
+      "test": "test_epoch_clock_duration_retains_fractional_precision"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7438,
+      "test": "test_batch_variation_sweep_is_bounded"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7457,
+      "test": "test_epoch_reference_updates_do_not_show_detached_windows"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7506,
+      "test": "test_spikeglx_disable_restore_and_remove_custom"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7524,
+      "test": "test_right_screen_is_derived_and_legacy_asymmetry_rejected"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7578,
+      "test": "test_managed_protocol_roundtrips_ordered_trials_seed_and_gap"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7670,
+      "test": "test_managed_protocol_rejects_partial_restore_without_mutating_pages"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7693,
+      "test": "test_empty_managed_schedule_is_not_replaced_by_review_trial"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7708,
+      "test": "test_managed_configuration_preserves_incomplete_draft_on_new_revision"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7754,
+      "test": "test_empty_schedule_first_add_becomes_the_first_trial"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7771,
+      "test": "test_managed_configuration_keeps_post_submit_edits_on_ack"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7841,
+      "test": "test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7894,
+      "test": "test_protocol_participation_and_asset_pages"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 7942,
+      "test": "test_protocol_program_validation_and_atomic_save"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8001,
+      "test": "test_protocol_timeline_edits_preserve_trials_and_imported_groups"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8068,
+      "test": "test_protocol_cards_reflow_and_keep_properties_reachable"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8136,
+      "test": "test_protocol_controls_and_enabled_screen_lanes"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8185,
+      "test": "test_stimulus_parameter_forms_round_trip_every_family"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8207,
+      "test": "test_stimulus_parameter_edit_invalid_guard_and_media_root"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8258,
+      "test": "test_stimulus_animation_variants_reset_and_remove"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8283,
+      "test": "test_prepared_texture_bundle_and_epoch_motion"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8353,
+      "test": "test_prepared_file_change_is_epoch_local"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8380,
+      "test": "test_protocol_epoch_structure_actions"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8405,
+      "test": "test_add_prepared_file_picker_does_not_create_placeholder_on_cancel"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8435,
+      "test": "test_file_first_epoch_insertion_and_history"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8475,
+      "test": "test_screen_overrides_and_layers_preserve_other_epochs"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8511,
+      "test": "test_repeat_variation_uses_canonical_expansion_and_preserves_choreography"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8567,
+      "test": "test_nested_group_edit_and_duplicate_reference_remapping"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8621,
+      "test": "test_group_fields_reject_bad_values_and_lock_on_authority_loss"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8640,
+      "test": "test_motion_auto_commit_and_invalid_edit_undo"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8671,
+      "test": "test_saved_variations_reopen_as_speed_direction_lists"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8714,
+      "test": "test_variation_bounds_and_preview_limit"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8744,
+      "test": "test_stationary_texture_speed_variation_keeps_positive_x_direction"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8776,
+      "test": "test_expanded_close_and_trial_deletion"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8808,
+      "test": "test_recording_checks_stay_next_to_labels"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8833,
+      "test": "test_looming_primary_controls_and_custom_size_fidelity"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8878,
+      "test": "test_batch_create_variations_preview_insert_and_reload"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 8969,
+      "test": "test_trial_overview_selects_ranges_and_sources_across_groups"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9018,
+      "test": "test_review_projector_inventory_drives_devices_and_planner"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9049,
+      "test": "test_timeline_overview_colors_and_current_epoch_details"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9104,
+      "test": "test_epoch_parameter_warnings_wait_for_submission"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9171,
+      "test": "test_batch_reference_projector_parameters_and_layers"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9266,
+      "test": "test_batch_reference_picker_scope_and_lock"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9292,
+      "test": "test_compact_reference_rows_share_headers_and_commit_relocated_fields"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9379,
+      "test": "test_reference_type_change_clears_asset_and_switches_stimulus_mode"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9456,
+      "test": "test_batch_insertion_positions_are_atomic_and_select_new_epochs"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9491,
+      "test": "test_arena_axis_gains_roundtrip_and_editor_spacing"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9559,
+      "test": "test_arena_custom_feedback_is_preserved_and_channel_conflicts_rejected"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9611,
+      "test": "test_front_attached_screens_share_plot_and_prepared_corners"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9746,
+      "test": "test_centered_projection_uses_throw_and_assigned_aspect"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9811,
+      "test": "test_tank_drag_changes_view_only_and_double_click_resets"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9842,
+      "test": "test_bottom_mirror_reflects_cone_and_uses_total_path"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9891,
+      "test": "test_plot_legends_are_view_only_and_survive_refresh"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9933,
+      "test": "test_bottom_optics_survive_disabled_right_output"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 9969,
+      "test": "test_label_insertion_repeats_batch_in_original_scope_and_undo"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10010,
+      "test": "test_visible_layer_selector_and_opacity_preserve_prepared_placement"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10073,
+      "test": "test_bottom_center_path_survives_outer_ray_clearance"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10116,
+      "test": "test_projection_group_replaces_individual_visibility_controls"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10145,
+      "test": "test_projector_codec_preserves_file_pacing_and_imported_calibration"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10231,
+      "test": "test_projectors_page_install_collect_keeps_file_owned_pacing_absent"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10283,
+      "test": "test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10333,
+      "test": "test_calibration_identity_profiles_bind_unique_native_monitors"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10557,
+      "test": "test_calibration_button_reflects_confirmed_managed_output"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10648,
+      "test": "test_managed_first_use_calibration_launches_before_display_initialization"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10726,
+      "test": "test_unified_feedback_input_mapping_and_retain_state"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10812,
+      "test": "test_arena_feedback_and_axis_editors_stay_synchronized"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10845,
+      "test": "test_stimulus_mode_and_duration_use_proportional_header_widths"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10861,
+      "test": "test_new_stimuli_retain_state_without_changing_imported_reset"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10880,
+      "test": "test_reference_advanced_controls_align_to_layer_and_retain_first"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10920,
+      "test": "test_control_dialog_does_not_expand_projector_row_and_cancels"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10957,
+      "test": "test_control_action_is_limited_to_closed_loop_texture_and_looming"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 10970,
+      "test": "test_fades_render_and_retime_without_changing_motion"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11001,
+      "test": "test_reference_fades_follow_batch_duration_and_new_rows"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11036,
+      "test": "test_imported_opacity_curve_is_preserved_and_not_editable"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11056,
+      "test": "test_blank_layer_then_family_keeps_each_projector_layer_configuration"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11124,
+      "test": "test_first_source_epoch_fade_does_not_change_rest_of_batch"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11155,
+      "test": "test_200_epoch_timeline_reuses_views_and_metadata_noop"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11217,
+      "test": "test_200_epoch_eight_layer_protocol_round_trip_exceeds_old_gui_limit"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11257,
+      "test": "test_variation_controls_fit_narrow_protocol_without_horizontal_scroll"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11300,
+      "test": "test_batch_variations_target_projectors_and_local_layer_ordinals"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11361,
+      "test": "test_layer_actions_offer_up_down_and_preserve_projector_values"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11404,
+      "test": "test_variations_use_stimulus_columns_and_materialize_looming_and_video"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11465,
+      "test": "test_preview_uses_retained_motion_and_backward_scrubbing"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11501,
+      "test": "test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11546,
+      "test": "test_preview_rejects_setup_resolved_durations_without_mutating_program"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11563,
+      "test": "test_planning_arena_draws_a_bounded_glb_on_a_configured_surface"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11632,
+      "test": "test_arena_variations_change_axis_gains_without_changing_other_axes"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11653,
+      "test": "test_planning_preview_uses_rig_planes_and_only_enabled_projector_frames"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11730,
+      "test": "test_preview_calibration_matches_export_and_uses_display_pixels"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11802,
+      "test": "test_preview_rejects_invalid_corrections_and_unresolved_pixel_sizes"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11845,
+      "test": "test_random_variations_respect_bounds_precision_and_size"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11869,
+      "test": "test_random_batch_values_stay_fixed_across_preview_and_save"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11938,
+      "test": "test_timeline_epoch_shortcuts_and_keyboard_history"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 11992,
+      "test": "test_image_fit_and_motion_are_saved_without_texture_phase"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12019,
+      "test": "test_family_advanced_controls_preserve_hidden_state"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12077,
+      "test": "test_image_fit_preview_contains_crops_and_stretches"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12097,
+      "test": "test_batch_fit_choice_and_legacy_image_appearance"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12137,
+      "test": "test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12161,
+      "test": "test_managed_mcu_pending_completion_and_final_status"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12273,
+      "test": "test_managed_camera_batch_checks_continue_after_failure_without_capture"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12329,
+      "test": "test_managed_role_assignment_is_atomic_and_preserves_participation"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12369,
+      "test": "test_managed_camera_projection_distinguishes_open_capture_and_cleanup"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12460,
+      "test": "test_managed_gui_auto_claims_only_unheld_control_once"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12482,
+      "test": "test_managed_gui_waits_for_synchronization_and_warning_acknowledgement"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12508,
+      "test": "test_retained_acknowledgement_cannot_clear_guard_without_current_snapshot"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12521,
+      "test": "test_initial_and_reopened_retained_warnings_gate_auto_claim"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12630,
+      "test": "test_shared_notices_warn_on_action_and_send_status_to_log"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12659,
+      "test": "test_tracking_methods_preserve_fields_and_hide_unrelated_controls"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12712,
+      "test": "test_tracking_draft_roundtrip_and_invalid_load_is_atomic"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12732,
+      "test": "test_tracking_camera_changes_invalidate_reference_and_lock_closes_tool"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12762,
+      "test": "test_tracking_annotation_maps_letterboxed_image_to_source_pixels"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12784,
+      "test": "test_tracking_distance_and_regions_use_original_pixels"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12814,
+      "test": "test_tracking_v1_draft_migrates_without_inventing_calibration"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12833,
+      "test": "test_tracking_preview_stages_retain_settings_and_clear_only_subject_reference"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12896,
+      "test": "test_tracking_region_bounds_and_full_frame_are_validated"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12918,
+      "test": "test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12955,
+      "test": "test_older_tracking_crop_fields_migrate_without_losing_annotations"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 12982,
+      "test": "test_review_and_runtime_share_page_elements_and_card_layouts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13200,
+      "test": "test_camera_connect_opens_only_the_confirmed_run"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13248,
+      "test": "test_camera_selection_restores_pfs_source_and_frequency"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13277,
+      "test": "test_managed_camera_inventory_restores_selected_configuration"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13362,
+      "test": "test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13428,
+      "test": "test_managed_firmware_controls_require_idle_configuration"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13481,
+      "test": "test_projector_configuration_json_restores_all_settings_without_screen_mapping"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13565,
+      "test": "test_projector_configuration_invalid_settings_preserve_complete_draft"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13596,
+      "test": "test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13665,
+      "test": "test_photodiode_controls_fit_with_growing_blackouts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13703,
+      "test": "test_planning_preview_keeps_square_visible_over_blackout"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13731,
+      "test": "test_authoritative_photodiode_area_installs_relative_square_and_zones"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13750,
+      "test": "test_legacy_numeric_projector_json_preserves_synchronization"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13769,
+      "test": "test_portable_screen_profile_rebinds_native_properties_and_preserves_coverage"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13806,
+      "test": "test_authoritative_projector_install_clears_previous_profile_on_empty_state"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13822,
+      "test": "test_projector_reference_measurements_derive_distance_and_roundtrip"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13923,
+      "test": "test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 13964,
+      "test": "test_measured_affine_profiles_preserve_assets_and_match_preview"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14127,
+      "test": "test_gui_firmware_dispatch_pins_selected_sketch_or_image"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14172,
+      "test": "test_group_actions_preserve_contents_selection_and_history"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14197,
+      "test": "test_group_actions_obey_authority_and_pending_validation"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14217,
+      "test": "test_group_actions_keep_one_group_and_noop_history"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14232,
+      "test": "test_rejected_controller_configuration_restores_edit_tracking"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14275,
+      "test": "test_calibration_adjustment_steps_preserve_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14337,
+      "test": "test_live_calibration_coalesces_edits_and_retains_last_valid_projection"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14448,
+      "test": "test_grouped_editor_pair_creation_repeat_scope_and_history"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14517,
+      "test": "test_grouped_batch_insertion_stays_inside_open_group"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14538,
+      "test": "test_grouped_timeline_large_repeat_and_visible_paint_are_bounded"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14575,
+      "test": "test_flat_group_initial_trials_and_legacy_imports"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14618,
+      "test": "test_unified_subgroup_template_add_apply_history_and_files"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14697,
+      "test": "test_unified_subgroup_patch_preserves_variants_and_shared_sources"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14747,
+      "test": "test_unified_subgroup_preserves_projector_variants_and_guards_drafts"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14796,
+      "test": "test_unified_subgroup_duration_preserves_each_fade_and_batch_identity"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14848,
+      "test": "test_unified_subgroup_asset_edit_is_projector_local_and_atomic"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14900,
+      "test": "test_direct_group_editor_starts_open_and_uses_only_group_repetitions"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14952,
+      "test": "test_demo_assets_can_be_selected_and_review_path_restores"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 14991,
+      "test": "test_empty_variation_blocks_add_group_without_losing_draft"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15019,
+      "test": "test_subgroup_rules_persist_and_random_projectors_are_independent"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15165,
+      "test": "test_large_random_group_stays_compact_and_layer_controls_are_indices"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15222,
+      "test": "test_inline_timeline_actions_target_blocks_append_and_preserve_undo"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15310,
+      "test": "test_trial_row_actions_scroll_target_and_align_cards"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15383,
+      "test": "test_texture_recipe_file_selection_preserves_original_json"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15412,
+      "test": "test_texture_reference_link_keeps_appearance_and_disables_reparented_motion"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15448,
+      "test": "test_epoch_automatic_updates_preserve_focus_validation_and_history"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15490,
+      "test": "test_active_calibration_measurements_are_editable_only_for_reference_bars"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15536,
+      "test": "test_shared_tables_tab_between_nested_editors_and_other_controls"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15585,
+      "test": "test_console_tab_leaves_text_view_for_next_control"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15608,
+      "test": "test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15719,
+      "test": "test_review_appearance_switch_preserves_drafts_and_runtime"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15848,
+      "test": "test_camera_pin_tracks_selected_role_and_table_edits"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15891,
+      "test": "test_camera_pin_obeys_editing_and_diagnostic_locks"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15918,
+      "test": "test_reference_bar_lengths_follow_the_output_until_measured"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15944,
+      "test": "test_native_adapter_name_identifies_scaled_displays"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 15971,
+      "test": "test_pruning_keeps_referenced_and_newest_reference_profiles"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 16012,
+      "test": "test_protocol_arena_limits_default_edit_undo_and_saved_region"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 16113,
+      "test": "test_arena_xyz_orientation_default_subject_height_and_alignment"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 16221,
+      "test": "test_arena_mode_missing_height_keeps_previous_editor_and_reports_error"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 16254,
+      "test": "test_placement_buttons_live_edits_and_unknown_close"
+    },
+    {
+      "file": "tests/gui/test_dashboard.py",
+      "line": 16390,
+      "test": "test_placement_bundle_uses_native_pixels_without_reference_measurements"
+    },
+    {
+      "file": "tests/gui/test_tracking_live.py",
+      "line": 13,
+      "test": "test_tracking_diagnostic_presentation_copies_frame_and_checks_exact_scope"
+    }
+  ],
+  "current_offscreen_result": {
+    "passed_across_two_runs": 519,
+    "first_run_passed": 512,
+    "first_run_deselected": 7,
+    "second_run_passed": 7,
+    "seconds": [
+      197.11,
+      6.33
+    ]
+  },
+  "native_picker_final": "PostShow event callback then setDirectory(parent)+selectFile(name), finally bounded10msselectedFiles observation through2s; nativehelpertrue but selection remained defaultrepo/protocol.json. Stopiterations perroot/Astra. No nativepicker pass.",
+  "delegated_native_placement_evidence": "Riglead reports fresh generationfd8bef3c both photodiode/blackout invalid\u2192failedterminal\u2192valid\u2192move/remove\u2192Close pass2.13s, configurationrestored andall-ownedabsence. This is headlessauthenticated actualoutput lifecycle, not nativeGUI navigation.",
+  "current_native_result": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "2",
+    "skipped": "0",
+    "tests": "512",
+    "time": "207.005",
+    "timestamp": "2026-10-15T18:48:57.929931+09:00",
+    "hostname": "DESKTOP-MSOH8EL"
+  },
+  "current_native_failures": [
+    {
+      "test": "test_inline_timeline_actions_target_blocks_append_and_preserve_undo",
+      "message": "AssertionError: native MouseMove was not delivered to ProgramTimeline at PyQt6.QtCore.QPoint(541, 677) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(210, 659) PyQt6.QtCore.QSize(1042, 126)\nassert False"
+    },
+    {
+      "test": "test_trial_row_actions_scroll_target_and_align_cards",
+      "message": "assert 326 < 320\n +  where 326 = <built-in method height of Card object at 0x0000024A171D7B50>()\n +    where <built-in method height of Card object at 0x0000024A171D7B50> = <cephvr.gui.components.Card object at 0x0000024A171D7B50>.height\n +      where <cephvr.gui.components.Card object at 0x0000024A171D7B50> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x0000024A171D4AF0>.trial_card"
+    }
+  ],
+  "final_targeted_native_correction": "AstrareviewedG02containmenttestcorrection; trialrowfullnativepass,inlinehoverremainsfailed;1pass1fail4.68s. No claimfullaggregatepass/nativepicker7."
+}

@@ -1,0 +1,107 @@
+{
+  "direct-cq23-60-r1": {
+    "stimulus": {
+      "source_frames": 3600,
+      "decoded_frames": 3600,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 120852846,
+      "observed_receipt_fps": 59.99964693733736,
+      "block_id_gaps": 0,
+      "first_frame_mean_8bit": 127.22220486111111,
+      "first_frame_std_8bit": 16.184400175090715
+    },
+    "behavioral": {
+      "source_frames": 1807,
+      "decoded_frames": 1807,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 141582950,
+      "observed_receipt_fps": 30.09437144970776,
+      "block_id_gaps": 0,
+      "first_frame_mean_8bit": 34.904753500918275,
+      "first_frame_std_8bit": 5.273989468173947
+    },
+    "tracking": {
+      "source_frames": 3601,
+      "decoded_frames": 3601,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 322612,
+      "observed_receipt_fps": 59.9989854171566,
+      "block_id_gaps": 0,
+      "first_frame_mean_8bit": 0.0,
+      "first_frame_std_8bit": 0.0
+    }
+  },
+  "direct-cq18-60-r1": {
+    "stimulus": {
+      "source_frames": 3600,
+      "decoded_frames": 3600,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 120955450,
+      "observed_receipt_fps": 59.995835665541556,
+      "block_id_gaps": 0,
+      "first_frame_mean_8bit": 127.22354600694445,
+      "first_frame_std_8bit": 16.35907155254391
+    },
+    "behavioral": {
+      "source_frames": 1806,
+      "decoded_frames": 1806,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 338543338,
+      "observed_receipt_fps": 30.08678664455975,
+      "block_id_gaps": 0,
+      "first_frame_mean_8bit": 34.90810729674366,
+      "first_frame_std_8bit": 5.6943267989302475
+    },
+    "tracking": {
+      "source_frames": 3600,
+      "decoded_frames": 3600,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 325453,
+      "observed_receipt_fps": 59.99657757783364,
+      "block_id_gaps": 0,
+      "first_frame_mean_8bit": 0.0,
+      "first_frame_std_8bit": 0.0
+    }
+  },
+  "direct-native4096-grating20-r1": {
+    "stimulus": {
+      "source_frames": 1199,
+      "decoded_frames": 1199,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 80504,
+      "observed_receipt_fps": 60.00743340829103,
+      "block_id_gaps": 0,
+      "first_frame_mean_8bit": 127.12295355902778,
+      "first_frame_std_8bit": 90.04194190316619
+    },
+    "behavioral": {
+      "source_frames": 594,
+      "decoded_frames": 594,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 216752164,
+      "observed_receipt_fps": 29.691119677007485,
+      "block_id_gaps": 1,
+      "first_frame_mean_8bit": 7.447942626953125,
+      "first_frame_std_8bit": 6.194780031024187
+    },
+    "tracking": {
+      "source_frames": 1199,
+      "decoded_frames": 1199,
+      "count_matches": true,
+      "full_decode_exit": 0,
+      "bytes": 107858,
+      "observed_receipt_fps": 60.00644242790073,
+      "block_id_gaps": 0,
+      "first_frame_mean_8bit": 0.0,
+      "first_frame_std_8bit": 0.0
+    }
+  }
+}

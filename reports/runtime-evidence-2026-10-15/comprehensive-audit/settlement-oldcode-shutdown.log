@@ -1,0 +1,3 @@
+endpoint {"controller_generation": "9bcdcfbf-11b5-452f-8a09-101e6976f927"}
+control {"holder_client_id": "dde28040-0413-45d8-a234-e16a148f91eb", "control_generation": "e596ec94-581c-4016-a9b1-b718a1c15626"}
+shutdown {"command_id": "b679471a-f443-4897-ad4b-47aa589b2d6b", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}

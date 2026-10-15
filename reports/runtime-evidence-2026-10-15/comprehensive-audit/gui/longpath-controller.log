@@ -1,0 +1,42 @@
+........................................................................ [ 13%]
+........................................................................ [ 27%]
+..............s......................................................... [ 41%]
+.F...................................................................... [ 55%]
+................s....................................................... [ 69%]
+........................................................................ [ 83%]
+...................................................................s.... [ 97%]
+...............                                                          [100%]
+================================== FAILURES ===================================
+_________ test_controller_module_enters_cli_without_starting_devices __________
+
+    def test_controller_module_enters_cli_without_starting_devices() -> None:
+        result = subprocess.run(
+            [sys.executable, "-m", "cephvr.controller.main", "--help"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<frozen runpy>", line 198, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\main.py", line 9, in <module>
+E             from cephvr.controller.startup.application import run_controller
+E           File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\application.py", line 18, in <module>
+E             from cephvr.controller.authority import (
+E           File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\authority.py", line 23, in <module>
+E             from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
+E           File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\bootstrap.py", line 6, in <module>
+E             import ctypes
+E           File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py", line 8, in <module>
+E             from _ctypes import Union, Structure, Array
+E         ImportError: DLL load failed while importing _ctypes: The specified module could not be found.
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\ce...n, Structure, Array\nImportError: DLL load failed while importing _ctypes: The specified module could not be found.\n').returncode
+
+tests\controller\test_entrypoint.py:17: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_entrypoint.py::test_controller_module_enters_cli_without_starting_devices
+1 failed, 515 passed, 3 skipped in 9.89s

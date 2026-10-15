@@ -225,10 +225,18 @@ class ConfigurationResolution:
     ) -> control.AcquisitionSettings:
         async with self.lock:
             pending = self._require_pending(operation)
-        await asyncio.wait_for(
-            pending.confirmed.wait(),
-            remaining_seconds(min(deadline_ns, pending.deadline_ns)),
-        )
+        deadline_ns = min(deadline_ns, pending.deadline_ns)
+        while True:
+            try:
+                await asyncio.wait_for(
+                    pending.confirmed.wait(),
+                    remaining_seconds(deadline_ns, clock=self.clock),
+                )
+                break
+            except TimeoutError:
+                # An async timer can wake before the absolute host deadline.
+                if self.clock() >= deadline_ns:
+                    raise
         if pending.failure is not None:
             raise RuntimeError(pending.failure)
         if pending.confirmed_settings is None:

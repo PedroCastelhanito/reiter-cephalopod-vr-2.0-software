@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="4.661" timestamp="2026-10-15T18:58:45.481924+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_inline_timeline_actions_target_blocks_append_and_preserve_undo" time="1.727"><failure message="AssertionError: native MouseMove was not delivered to ProgramTimeline at PyQt6.QtCore.QPoint(541, 677) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(210, 659) PyQt6.QtCore.QSize(1042, 126)&#10;assert False">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000001A9FE019900&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001A987C9F880&gt;
+
+    def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, app):
+        from PyQt6.QtTest import QTest
+        from PyQt6.QtWidgets import QPushButton
+    
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        data = grouped_program(review_program()).model_dump(mode="json")
+        data["sequence"][0]["repetitions"] = 10
+        for epoch in data["sequence"][0]["body"][:2]:
+            epoch["batch_id"] = "batch_pair"
+        editor.set_program(validate(data))
+        window.resize(1280, 1100)
+        app.processEvents()
+        contents = editor.hierarchy.contents
+        before = editor.program
+        assert not any(
+            control.text() in ("+ Group", "− Group", "+ Epoch")
+            for control in editor.findChildren(QPushButton)
+        )
+        # Selection alone has no cross; hovering reveals a standard compact control.
+        QTest.mouseMove(editor.group_editor.name)
+        app.processEvents()
+        assert not any(c.isVisible() for c in contents.block_actions.removers)
+&gt;       _move_mouse_and_wait_for_native_event(
+            contents, contents.batch_hits[0][0].center().toPoint(), app
+        )
+
+tests\gui\test_dashboard.py:15249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+widget = &lt;cephvr.gui.protocol_timeline.ProgramTimeline object at 0x000001A9FEAB4310&gt;
+position = PyQt6.QtCore.QPoint(331, 18)
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001A987C9F880&gt;
+timeout_ms = 1000
+
+    def _move_mouse_and_wait_for_native_event(
+        widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+    ) -&gt; None:
+        """Wait for the platform-delivered hover event after moving the real cursor."""
+        from PyQt6.QtCore import QObject
+    
+        target_global = widget.mapToGlobal(position)
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        matched = False
+    
+        class TargetMouseMove(QObject):
+            def eventFilter(self, receiver, event):
+                nonlocal matched
+                if (
+                    receiver is widget
+                    and event.type() == QEvent.Type.MouseMove
+                    and event.globalPosition().toPoint() == target_global
+                ):
+                    matched = True
+                    QTimer.singleShot(0, loop.quit)
+                return False
+    
+        probe = TargetMouseMove(widget)
+        widget.installEventFilter(probe)
+        timer.start(timeout_ms)
+        try:
+            QTest.mouseMove(widget, position)
+            if not matched:
+                loop.exec()
+        finally:
+            timer.stop()
+            widget.removeEventFilter(probe)
+&gt;       assert matched, (
+            f"native MouseMove was not delivered to {type(widget).__name__} at "
+            f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+            f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+            f"{widget.size()}"
+        )
+E       AssertionError: native MouseMove was not delivered to ProgramTimeline at PyQt6.QtCore.QPoint(541, 677) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(210, 659) PyQt6.QtCore.QSize(1042, 126)
+E       assert False
+
+tests\gui\test_dashboard.py:134: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_trial_row_actions_scroll_target_and_align_cards" time="0.698" /></testsuite></testsuites>

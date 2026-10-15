@@ -468,17 +468,38 @@ async def test_authenticated_live_calibration_update_transport_and_exact_receipt
     )
     calls = []
 
-    import threading
+    loop = asyncio.get_running_loop()
 
-    class Owner:
+    class Driver:
         def __init__(self):
-            self.cancelled = threading.Event()
+            self.failures = []
 
-        async def submit(self, method, request, deadline_ns):
+        def execute(self, method, request, deadline_ns):
             calls.append((method, request, deadline_ns))
-            if (
+            rejected = (
                 request.adjustments and request.adjustments[0].mapping_id == "reject"
-            ) or '"x": 999' in request.placement_json:
+            ) or '"x": 999' in request.placement_json
+            report = pb.VisualStimulusDisplayView(
+                source=identity.worker,
+                backend=identity.backend,
+                controller=identity.controller,
+                command_id=request.command.command_id,
+                requested_revision=4,
+                complete=True,
+            )
+            report.outputs.add(output_id="projector/main")
+            report.calibration.CopyFrom(runtime.state.display.calibration)
+            if rejected:
+                report.calibration.failure_code = "CALIBRATION_ADJUSTMENT_REJECTED"
+            else:
+                report.calibration.adjustment_sequence = request.adjustment_sequence
+                report.calibration.presented = True
+                report.calibration.ClearField("failure_code")
+            asyncio.run_coroutine_threadsafe(
+                runtime.report("ReportDisplay", report, ingress_ns=host_time_ns()),
+                loop,
+            ).result(timeout=1)
+            if rejected:
                 from cephvr.visual_stimulus.config.calibration_adjustments import (
                     CalibrationAdjustmentRejected,
                 )
@@ -487,13 +508,18 @@ async def test_authenticated_live_calibration_update_transport_and_exact_receipt
                     "stale mapping rejected before GL writes"
                 )
 
-        def cancel(self):
-            self.cancelled.set()
+        def advance(self, now_ns):
+            return None
 
+        def fail(self, error):
+            self.failures.append(error)
+
+    driver = Driver()
+    owner = RenderOwner(lambda _: driver)
     worker = VisualStimulusWorkerRuntime(
         visual_stimulus.WorkerContext(worker=identity.worker, owner=identity.process),
         identity.supervisor,
-        Owner(),
+        owner,
         SupervisorReceipt(),
         command_ledger(identity.worker.generation, 10**12, 1_000_000),
     )
@@ -661,7 +687,29 @@ async def test_authenticated_live_calibration_update_transport_and_exact_receipt
         assert outcome.complete and not outcome.succeeded
         assert outcome.failure.code == "CALIBRATION_ADJUSTMENT_REJECTED"
         assert not worker.interrupted and not worker.owner.cancelled.is_set()
+        assert not runtime.state.interrupted
+        assert not driver.failures
+        assert runtime.state.display.calibration.adjustment_sequence == 1
+        request.command_id = str(uuid4())
+        if calibration_view == "frame_grid":
+            request.adjustments[0].mapping_id = "diagnostic_front"
+        else:
+            placement_value["outputs"][0]["blackout_zones"] = []
+            request.placement_json = json.dumps(placement_value)
+        admission = await port.update_display_calibration(request, deadline_ns=deadline)
+        assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+        for _ in range(200):
+            if len(calls) == 3:
+                record = worker.ledger.get(calls[-1][1].command.command_id)
+                if record is not None and record.executor_result:
+                    break
+            await asyncio.sleep(0.005)
+        assert len(calls) == 3
+        assert pb.OperationState.FromString(record.executor_result).succeeded
+        assert runtime.state.display.calibration.adjustment_sequence == 2
+        assert not runtime.state.interrupted and not driver.failures
     finally:
+        await owner.close(host_time_ns() + 2_000_000_000)
         await port.channel.close()
         await wrong_port.channel.close()
         await listener.close(host_time_ns() + 2_000_000_000)

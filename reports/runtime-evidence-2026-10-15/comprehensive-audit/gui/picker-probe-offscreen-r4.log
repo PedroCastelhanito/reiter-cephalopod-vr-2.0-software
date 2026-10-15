@@ -1,0 +1,30 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[protocol] {"event": "instrument_fixture_started"}
+{"event": "dialog_factory_called"}
+{"event": "accept_entered"}
+{"event": "selected_files", "value": ["C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-picker-probe-offscreen-20261015-r4/test_tab_config_buttons_roundt0/protocol-\u5b9e\u9a8c.json"]}
+{"event": "directory", "value": "C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-picker-probe-offscreen-20261015-r4/test_tab_config_buttons_roundt0"}
+{"event": "visible", "value": false}
+{"event": "native_hidden", "value": false}
+{"event": "timers", "value": [{"active": true, "remaining": 0}]}
+{"event": "accept_returned"}
+{"event": "dialog_factory_called"}
+{"event": "accept_entered"}
+{"event": "selected_files", "value": ["C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-picker-probe-offscreen-20261015-r4/test_tab_config_buttons_roundt0/protocol-\u5b9e\u9a8c.json"]}
+{"event": "directory", "value": "C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-picker-probe-offscreen-20261015-r4/test_tab_config_buttons_roundt0"}
+{"event": "visible", "value": false}
+{"event": "native_hidden", "value": false}
+{"event": "timers", "value": [{"active": true, "remaining": 0}]}
+{"event": "accept_returned"}
+PASSED
+
+============================== 1 passed in 1.24s ==============================
+{"event": "pytest_finished", "exitcode": 0}

@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="6" time="0.344" timestamp="2026-10-15T18:30:59.269503+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_sessionless_display_calibration_requires_presentation_then_closed_idle[False-frame_grid]" time="0.007" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_sessionless_display_calibration_requires_presentation_then_closed_idle[False-photodiode_placement]" time="0.003"><failure message="AssertionError: assert (DisplayProfile(calibration_view='photodiode_placement', format_version=1, geometry=Geometry(frame_id='frame', observer...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))) is DisplayProfile(calibration_view='photodiode_placement', format_version=1, geometry=Geometry(frame_id='frame', observer...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))))&#10; +  where DisplayProfile(calibration_view='photodiode_placement', format_version=1, geometry=Geometry(frame_id='frame', observer...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))) = &lt;cephvr.visual_stimulus.worker.display_calibration.DisplayCalibrationOwner object at 0x0000022669F08A50&gt;.active_profile">fail_update = False, calibration_view = 'photodiode_placement'
+
+    @pytest.mark.parametrize(
+        "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+    )
+    @pytest.mark.parametrize("fail_update", [False, True])
+    def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
+        fail_update,
+        calibration_view,
+    ):
+        import hashlib
+        from types import SimpleNamespace
+    
+        from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+        from cephvr.visual_stimulus.rendering.types import OutputActivity
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+        from cephvr.visual_stimulus.worker.display_calibration import (
+            DisplayCalibrationOwner,
+        )
+    
+        clock = Clock()
+        profile = parse_display_json(valid_display_json(), max_bytes=1_000_000)
+        profile = profile.model_copy(update=dict(calibration_view=calibration_view))
+        profile_json = profile.model_dump_json()
+        worker = pb.ProcessIdentity(
+            role="visual_stimulus_renderer", generation=str(uuid4())
+        )
+        controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+        coordinator = pb.ProcessIdentity(role="visual_stimulus", generation=str(uuid4()))
+        reports = Reports()
+        prepared = SimpleNamespace(display=profile, previous_display=None)
+        retained_profile = [None]
+    
+        class PreparationStub:
+            def prepare_display_calibration(self, request, announce, deadline_ns):
+                announce("arena", "/accepted/calibration/arena.glb")
+                return prepared
+    
+            def release_display_calibration(self, asset):
+                assert asset is prepared
+                return True
+    
+        presentations = []
+        updates = []
+        pulse_failure = [False]
+    
+        class EngineStub:
+            def present_display_calibration(self, selected, asset):
+                assert selected == profile and asset is prepared
+                presentations.append(selected)
+                return (
+                    OutputActivity(
+                        "projector/main", 10, 11, 1, "failed" if pulse_failure[0] else None
+                    ),
+                )
+    
+            def update_display_calibration(self, selected, asset, adjustments):
+                assert selected == profile and asset is prepared
+                updates.append(adjustments)
+                if calibration_view == "frame_grid":
+                    assert "front" in adjustments
+                else:
+                    from cephvr.visual_stimulus.config.calibration_placement import (
+                        CalibrationPlacement,
+                    )
+    
+                    assert isinstance(adjustments, CalibrationPlacement)
+                    assert adjustments.outputs[0].output_id == "projector/main"
+                return (
+                    OutputActivity(
+                        "projector/main", 11, 12, 1, "swap failed" if fail_update else None
+                    ),
+                )
+    
+            def close_display_calibration(self, selected, asset):
+                assert selected == profile and asset is prepared
+                return (OutputActivity("projector/main", 12, 13, 1),), True
+    
+        owner = DisplayCalibrationOwner(
+            worker=worker,
+            controller=controller,
+            backend=pb.BackendContext(
+                backend_name="visual_stimulus", backend_generation=coordinator.generation
+            ),
+            engine=EngineStub(),
+            preparation=PreparationStub(),
+            reports=reports,
+            display_profile=lambda: None,
+            set_display_profile=lambda selected: retained_profile.__setitem__(0, selected),
+            clock=clock,
+        )
+        command = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            issuer=coordinator,
+            target=visual_stimulus.WorkerContext(
+                worker=worker,
+                owner=coordinator,
+                configuration_revision=7,
+            ),
+            parent_operation=pb.OperationContext(command_id=str(uuid4())),
+            deadline_monotonic_ns=clock() + 1_000_000,
+        )
+        opened = visual_stimulus.OpenDisplayCalibrationCommand(
+            command=command,
+            diagnostic_id=str(uuid4()),
+            profile_json=profile_json,
+            profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+            asset_root="/accepted",
+            arena_relative_path="calibration/arena.glb",
+            arena_size_bytes=64,
+            arena_sha256="a" * 64,
+            policies=vp.VisualStimulusFilePolicies(
+                limits=vp.ResourceLimits(max_document_bytes=1_000_000)
+            ),
+        )
+        completion = owner.open(opened, command.deadline_monotonic_ns)
+        for _ in range(100):
+            owner.advance(clock())
+            if completion.done():
+                break
+            threading.Event().wait(0.001)
+        completion.result(timeout=1)
+        assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        assert owner.evidence.presented is True
+        assert not owner.evidence.idle
+        assert owner.evidence.resources_closed is False
+        assert retained_profile[0] == profile
+        assert [item.output_id for item in reports.records[-1][1].outputs] == [
+            "projector/main"
+        ]
+        assert reports.records[-1][1].calibration.diagnostic_id == opened.diagnostic_id
+        assert reports.records[-1][1].calibration.renderer_generation == worker.generation
+    
+        for _ in range(3):
+            owner.advance(clock())
+        assert len(presentations) == (
+            4 if calibration_view == "photodiode_placement" else 1
+        )
+        assert owner.evidence.adjustment_sequence == 0
+    
+        update = visual_stimulus.UpdateDisplayCalibrationCommand(
+            command=command, diagnostic_id=opened.diagnostic_id, adjustment_sequence=1
+        )
+        update.adjustments.add(
+            mapping_id="front", destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9]
+        )
+        import json
+    
+        placement_json = json.dumps(
+            dict(
+                outputs=[dict(output_id="projector/main", blackout_zones=[])],
+                **(
+                    dict(
+                        photodiode_output_id="projector/main",
+                        photodiode_patch=dict(
+                            rect=dict(x=1, y=1, width=2, height=2),
+                            high_linear_rgb=[1, 1, 1],
+                            low_linear_rgb=[0, 0, 0],
+                        ),
+                    )
+                    if calibration_view == "photodiode_placement"
+                    else {}
+                ),
+            )
+        )
+        if calibration_view != "frame_grid":
+            update.ClearField("adjustments")
+            update.placement_json = placement_json
+        if fail_update:
+            with pytest.raises(RuntimeError, match="presentation evidence"):
+                owner.update(update, command.deadline_monotonic_ns)
+            assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+            assert not owner.evidence.presented
+            assert owner.evidence.adjustment_sequence == 0
+            assert owner.prepared is prepared
+        else:
+            owner.update(update, command.deadline_monotonic_ns)
+            assert owner.prepared is prepared
+            assert owner.evidence.adjustment_sequence == 1
+            assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+            with pytest.raises(ValueError, match="stale"):
+                owner.update(update, command.deadline_monotonic_ns)
+            update.adjustment_sequence = 2
+            update.diagnostic_id = str(uuid4())
+            with pytest.raises(ValueError, match="stale"):
+                owner.update(update, command.deadline_monotonic_ns)
+            update.diagnostic_id = opened.diagnostic_id
+            if calibration_view == "frame_grid":
+                update.adjustments[0].destination_xy[0] = -1
+            else:
+                update.placement_json = "{}"
+            with pytest.raises(ValueError):
+                owner.update(update, command.deadline_monotonic_ns)
+            assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+            assert owner.evidence.adjustment_sequence == 1
+            assert owner.evidence.failure_code == "CALIBRATION_ADJUSTMENT_REJECTED"
+            if calibration_view != "frame_grid":
+                from copy import deepcopy
+    
+                payload = json.loads(placement_json)
+                invalid = deepcopy(payload)
+                invalid["outputs"][0]["blackout_zones"] = [
+                    dict(x=100_000, y=1, width=2, height=2)
+                ]
+                invalid_updates = [invalid]
+                invalid = deepcopy(payload)
+                invalid["outputs"].append(dict(output_id="unknown", blackout_zones=[]))
+                invalid_updates.append(invalid)
+                if calibration_view == "photodiode_placement":
+                    invalid = deepcopy(payload)
+                    invalid["photodiode_patch"]["rect"]["x"] = 100_000
+                    invalid_updates.append(invalid)
+                    invalid = deepcopy(payload)
+                    invalid["photodiode_patch"]["background_rect"] = dict(
+                        x=0, y=0, width=100_000, height=100_000
+                    )
+                    invalid_updates.append(invalid)
+                applied = updates[-1]
+                for invalid in invalid_updates:
+                    update.placement_json = json.dumps(invalid)
+                    with pytest.raises(ValueError):
+                        owner.update(update, command.deadline_monotonic_ns)
+                    assert updates == [applied]
+                    assert owner.active_id == opened.diagnostic_id
+&gt;                   assert owner.active_profile is profile and owner.prepared is prepared
+E                   AssertionError: assert (DisplayProfile(calibration_view='photodiode_placement', format_version=1, geometry=Geometry(frame_id='frame', observer...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))) is DisplayProfile(calibration_view='photodiode_placement', format_version=1, geometry=Geometry(frame_id='frame', observer...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))))
+E                    +  where DisplayProfile(calibration_view='photodiode_placement', format_version=1, geometry=Geometry(frame_id='frame', observer...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))) = &lt;cephvr.visual_stimulus.worker.display_calibration.DisplayCalibrationOwner object at 0x0000022669F08A50&gt;.active_profile
+
+tests\visual_stimulus\test_lifecycle.py:952: AssertionError</failure></testcase><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_sessionless_display_calibration_requires_presentation_then_closed_idle[False-blackout_placement]" time="0.002"><failure message="AssertionError: assert (DisplayProfile(calibration_view='blackout_placement', format_version=1, geometry=Geometry(frame_id='frame', observer_m...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))) is DisplayProfile(calibration_view='blackout_placement', format_version=1, geometry=Geometry(frame_id='frame', observer_m...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))))&#10; +  where DisplayProfile(calibration_view='blackout_placement', format_version=1, geometry=Geometry(frame_id='frame', observer_m...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))) = &lt;cephvr.visual_stimulus.worker.display_calibration.DisplayCalibrationOwner object at 0x0000022669F06B10&gt;.active_profile">fail_update = False, calibration_view = 'blackout_placement'
+
+    @pytest.mark.parametrize(
+        "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+    )
+    @pytest.mark.parametrize("fail_update", [False, True])
+    def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
+        fail_update,
+        calibration_view,
+    ):
+        import hashlib
+        from types import SimpleNamespace
+    
+        from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+        from cephvr.visual_stimulus.rendering.types import OutputActivity
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+        from cephvr.visual_stimulus.worker.display_calibration import (
+            DisplayCalibrationOwner,
+        )
+    
+        clock = Clock()
+        profile = parse_display_json(valid_display_json(), max_bytes=1_000_000)
+        profile = profile.model_copy(update=dict(calibration_view=calibration_view))
+        profile_json = profile.model_dump_json()
+        worker = pb.ProcessIdentity(
+            role="visual_stimulus_renderer", generation=str(uuid4())
+        )
+        controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+        coordinator = pb.ProcessIdentity(role="visual_stimulus", generation=str(uuid4()))
+        reports = Reports()
+        prepared = SimpleNamespace(display=profile, previous_display=None)
+        retained_profile = [None]
+    
+        class PreparationStub:
+            def prepare_display_calibration(self, request, announce, deadline_ns):
+                announce("arena", "/accepted/calibration/arena.glb")
+                return prepared
+    
+            def release_display_calibration(self, asset):
+                assert asset is prepared
+                return True
+    
+        presentations = []
+        updates = []
+        pulse_failure = [False]
+    
+        class EngineStub:
+            def present_display_calibration(self, selected, asset):
+                assert selected == profile and asset is prepared
+                presentations.append(selected)
+                return (
+                    OutputActivity(
+                        "projector/main", 10, 11, 1, "failed" if pulse_failure[0] else None
+                    ),
+                )
+    
+            def update_display_calibration(self, selected, asset, adjustments):
+                assert selected == profile and asset is prepared
+                updates.append(adjustments)
+                if calibration_view == "frame_grid":
+                    assert "front" in adjustments
+                else:
+                    from cephvr.visual_stimulus.config.calibration_placement import (
+                        CalibrationPlacement,
+                    )
+    
+                    assert isinstance(adjustments, CalibrationPlacement)
+                    assert adjustments.outputs[0].output_id == "projector/main"
+                return (
+                    OutputActivity(
+                        "projector/main", 11, 12, 1, "swap failed" if fail_update else None
+                    ),
+                )
+    
+            def close_display_calibration(self, selected, asset):
+                assert selected == profile and asset is prepared
+                return (OutputActivity("projector/main", 12, 13, 1),), True
+    
+        owner = DisplayCalibrationOwner(
+            worker=worker,
+            controller=controller,
+            backend=pb.BackendContext(
+                backend_name="visual_stimulus", backend_generation=coordinator.generation
+            ),
+            engine=EngineStub(),
+            preparation=PreparationStub(),
+            reports=reports,
+            display_profile=lambda: None,
+            set_display_profile=lambda selected: retained_profile.__setitem__(0, selected),
+            clock=clock,
+        )
+        command = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            issuer=coordinator,
+            target=visual_stimulus.WorkerContext(
+                worker=worker,
+                owner=coordinator,
+                configuration_revision=7,
+            ),
+            parent_operation=pb.OperationContext(command_id=str(uuid4())),
+            deadline_monotonic_ns=clock() + 1_000_000,
+        )
+        opened = visual_stimulus.OpenDisplayCalibrationCommand(
+            command=command,
+            diagnostic_id=str(uuid4()),
+            profile_json=profile_json,
+            profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+            asset_root="/accepted",
+            arena_relative_path="calibration/arena.glb",
+            arena_size_bytes=64,
+            arena_sha256="a" * 64,
+            policies=vp.VisualStimulusFilePolicies(
+                limits=vp.ResourceLimits(max_document_bytes=1_000_000)
+            ),
+        )
+        completion = owner.open(opened, command.deadline_monotonic_ns)
+        for _ in range(100):
+            owner.advance(clock())
+            if completion.done():
+                break
+            threading.Event().wait(0.001)
+        completion.result(timeout=1)
+        assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        assert owner.evidence.presented is True
+        assert not owner.evidence.idle
+        assert owner.evidence.resources_closed is False
+        assert retained_profile[0] == profile
+        assert [item.output_id for item in reports.records[-1][1].outputs] == [
+            "projector/main"
+        ]
+        assert reports.records[-1][1].calibration.diagnostic_id == opened.diagnostic_id
+        assert reports.records[-1][1].calibration.renderer_generation == worker.generation
+    
+        for _ in range(3):
+            owner.advance(clock())
+        assert len(presentations) == (
+            4 if calibration_view == "photodiode_placement" else 1
+        )
+        assert owner.evidence.adjustment_sequence == 0
+    
+        update = visual_stimulus.UpdateDisplayCalibrationCommand(
+            command=command, diagnostic_id=opened.diagnostic_id, adjustment_sequence=1
+        )
+        update.adjustments.add(
+            mapping_id="front", destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9]
+        )
+        import json
+    
+        placement_json = json.dumps(
+            dict(
+                outputs=[dict(output_id="projector/main", blackout_zones=[])],
+                **(
+                    dict(
+                        photodiode_output_id="projector/main",
+                        photodiode_patch=dict(
+                            rect=dict(x=1, y=1, width=2, height=2),
+                            high_linear_rgb=[1, 1, 1],
+                            low_linear_rgb=[0, 0, 0],
+                        ),
+                    )
+                    if calibration_view == "photodiode_placement"
+                    else {}
+                ),
+            )
+        )
+        if calibration_view != "frame_grid":
+            update.ClearField("adjustments")
+            update.placement_json = placement_json
+        if fail_update:
+            with pytest.raises(RuntimeError, match="presentation evidence"):
+                owner.update(update, command.deadline_monotonic_ns)
+            assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+            assert not owner.evidence.presented
+            assert owner.evidence.adjustment_sequence == 0
+            assert owner.prepared is prepared
+        else:
+            owner.update(update, command.deadline_monotonic_ns)
+            assert owner.prepared is prepared
+            assert owner.evidence.adjustment_sequence == 1
+            assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+            with pytest.raises(ValueError, match="stale"):
+                owner.update(update, command.deadline_monotonic_ns)
+            update.adjustment_sequence = 2
+            update.diagnostic_id = str(uuid4())
+            with pytest.raises(ValueError, match="stale"):
+                owner.update(update, command.deadline_monotonic_ns)
+            update.diagnostic_id = opened.diagnostic_id
+            if calibration_view == "frame_grid":
+                update.adjustments[0].destination_xy[0] = -1
+            else:
+                update.placement_json = "{}"
+            with pytest.raises(ValueError):
+                owner.update(update, command.deadline_monotonic_ns)
+            assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+            assert owner.evidence.adjustment_sequence == 1
+            assert owner.evidence.failure_code == "CALIBRATION_ADJUSTMENT_REJECTED"
+            if calibration_view != "frame_grid":
+                from copy import deepcopy
+    
+                payload = json.loads(placement_json)
+                invalid = deepcopy(payload)
+                invalid["outputs"][0]["blackout_zones"] = [
+                    dict(x=100_000, y=1, width=2, height=2)
+                ]
+                invalid_updates = [invalid]
+                invalid = deepcopy(payload)
+                invalid["outputs"].append(dict(output_id="unknown", blackout_zones=[]))
+                invalid_updates.append(invalid)
+                if calibration_view == "photodiode_placement":
+                    invalid = deepcopy(payload)
+                    invalid["photodiode_patch"]["rect"]["x"] = 100_000
+                    invalid_updates.append(invalid)
+                    invalid = deepcopy(payload)
+                    invalid["photodiode_patch"]["background_rect"] = dict(
+                        x=0, y=0, width=100_000, height=100_000
+                    )
+                    invalid_updates.append(invalid)
+                applied = updates[-1]
+                for invalid in invalid_updates:
+                    update.placement_json = json.dumps(invalid)
+                    with pytest.raises(ValueError):
+                        owner.update(update, command.deadline_monotonic_ns)
+                    assert updates == [applied]
+                    assert owner.active_id == opened.diagnostic_id
+&gt;                   assert owner.active_profile is profile and owner.prepared is prepared
+E                   AssertionError: assert (DisplayProfile(calibration_view='blackout_placement', format_version=1, geometry=Geometry(frame_id='frame', observer_m...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))) is DisplayProfile(calibration_view='blackout_placement', format_version=1, geometry=Geometry(frame_id='frame', observer_m...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))))
+E                    +  where DisplayProfile(calibration_view='blackout_placement', format_version=1, geometry=Geometry(frame_id='frame', observer_m...x=0, y=0, width=10, height=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0))) = &lt;cephvr.visual_stimulus.worker.display_calibration.DisplayCalibrationOwner object at 0x0000022669F06B10&gt;.active_profile
+
+tests\visual_stimulus\test_lifecycle.py:952: AssertionError</failure></testcase><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_sessionless_display_calibration_requires_presentation_then_closed_idle[True-frame_grid]" time="0.002" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_sessionless_display_calibration_requires_presentation_then_closed_idle[True-photodiode_placement]" time="0.001" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_sessionless_display_calibration_requires_presentation_then_closed_idle[True-blackout_placement]" time="0.002" /></testsuite></testsuites>

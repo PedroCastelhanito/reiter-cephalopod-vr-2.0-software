@@ -2037,6 +2037,76 @@ async def test_rejected_readback_confirmation_keeps_prior_configuration(
     assert failures and "nope" in failures[0]
 
 
+@pytest.mark.parametrize("external", [False, True])
+@pytest.mark.parametrize("pulse_report", [False, True])
+async def test_setup_readback_requires_pulses_only_for_external_cameras(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, external: bool, pulse_report: bool
+) -> None:
+    runtime = _runtime_with_validators(tmp_path)
+    backend = _Acquisition(pb.COMMAND_RESULT_ACCEPTED)
+    attempt = _attempt(runtime, tmp_path, {"acquisition": cast(Any, backend)})
+    attempt.setup_deadline_ns = 10**12
+    operation = _id()
+    attempt.setup_operations["acquisition"] = operation
+    setting = attempt.prepared.configuration.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    setting.pulses.port = "COM8"
+    setting.behavioral.enabled = True
+    setting.behavioral.device.device_id = "camera-serial"
+    setting.behavioral.device.frame_timing = (
+        acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+        if external
+        else acquisition_camera_pb.FRAME_TIMING_FREE_RUNNING
+    )
+    setting.behavioral.device.unaligned_free_running = not external
+    setting.tracking.enabled = False
+    setting.tracking.device.frame_timing = (
+        acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+    )
+    runtime.lifecycle.attempt = attempt
+    runtime.lifecycle.session = pb.SessionState(phase=pb.SESSION_PHASE_SETTING_UP)
+    resolver = runtime.acquisition_resolution
+    resolver.preparation_context = cast(
+        Any, SimpleNamespace(handoff_command=lambda *a: svc.BackendCommand())
+    )
+    resolver.validators = runtime.configuration_commands.validators
+    failures: list[str] = []
+
+    async def fail(_attempt: object, _command: str, error: str) -> None:
+        failures.append(error)
+
+    monkeypatch.setattr(resolver.setup_execution, "fail_setup", fail)
+    report = svc.AcquisitionResolutionReport(
+        source=backend.context,
+        work=pb.WorkContext(session=attempt.context),
+        operation=pb.OperationContext(command_id=operation),
+        requested_configuration_revision=attempt.prepared.configuration_revision,
+    )
+    readback = report.cameras.add(
+        camera=acquisition_camera_pb.CAMERA_ROLE_BEHAVIORAL
+    ).result
+    readback.configuration_revision = attempt.prepared.configuration_revision
+    readback.device.configured_id = "camera-serial"
+    readback.device.physical_id = "physical-serial"
+    readback.applied.CopyFrom(setting.behavioral.device)
+    readback.capabilities.SetInParent()
+    readback.transport.SetInParent()
+    readback.layout.SetInParent()
+    if pulse_report:
+        report.pulses.requested_configuration_revision = (
+            attempt.prepared.configuration_revision
+        )
+        report.pulses.requested.CopyFrom(setting.pulses)
+        report.pulses.behavioral_active = external
+        report.pulses.tracking_active = False
+        report.pulses.eye_tracking_active = False
+        report.pulses.applied.SetInParent()
+    await resolver.adopt_acquisition_resolution(attempt, report)
+    assert bool(backend.confirmations) == (external == pulse_report)
+    assert bool(failures) == (external != pulse_report)
+
+
 async def test_accepted_readback_confirmation_commits_and_bumps_revision(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

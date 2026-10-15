@@ -1,0 +1,18 @@
+{
+  "case": "restore",
+  "events": [
+    {
+      "name": "UpdateConfiguration",
+      "monotonic_ns": 80528256659500,
+      "value": {
+        "command_id": "5ef26dd4-fc7f-4b65-9f61-9ef6ab2def49",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": "",
+        "elapsed_ns": 13645900
+      }
+    }
+  ],
+  "generation": "7c3ae0fa-acc1-4949-b3a4-1b446e1e9c51"
+}

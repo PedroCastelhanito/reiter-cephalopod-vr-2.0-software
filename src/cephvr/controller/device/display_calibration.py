@@ -400,7 +400,7 @@ class DisplayCalibrationController:
             clock=self.clock,
             dispatch_lock=self._dispatch_lock,
             track=self._track_backend_call,
-            failed=self._admission_failed,
+            failed=self._update_admission_failed,
             expire=self._timeout,
         )
 
@@ -723,8 +723,20 @@ class DisplayCalibrationController:
 
         task.add_done_callback(finished)
 
+    async def _update_admission_failed(
+        self, command_id: str, message: str, rejected: bool
+    ) -> None:
+        await self._admission_failed(
+            command_id, message, rejected=rejected, retain_active=True
+        )
+
     async def _admission_failed(
-        self, command_id: str, message: str, *, rejected: bool = False
+        self,
+        command_id: str,
+        message: str,
+        *,
+        rejected: bool = False,
+        retain_active: bool = False,
     ) -> None:
         async with self.lifecycle.lock:
             pending = self.device.calibration_pending
@@ -739,7 +751,8 @@ class DisplayCalibrationController:
                     rejected
                     and pending[4] == vs_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE
                 ):
-                    self.device.calibration_blocked = False
+                    # Rejected Updates leave the existing diagnostic active.
+                    self.device.calibration_blocked = retain_active
                     self.device.calibration_pending = None
                     self.projections.expected_display = None
                 elif rejected:

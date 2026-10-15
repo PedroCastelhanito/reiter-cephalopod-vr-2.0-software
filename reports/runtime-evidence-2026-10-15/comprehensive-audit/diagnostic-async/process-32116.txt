@@ -1,0 +1,910 @@
+executable=C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\cephvr-python.exe
+argv=['-m', 'cephvr.controller.main', '--bootstrap-handle', '828']
+
+ASYNC TASK CHAINS
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-42
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-77
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-32
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-2
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\admission.py:91 _housekeep
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-85
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-74
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-22
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-33
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-46
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\service.py:628 close_after_stop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-175
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-23
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-34
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-177
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-45
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK Task-20
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-24
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\ingress.py:71 _drain
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-35
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\application.py:281 run_controller
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:87 authority_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK Task-36
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-31
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-26
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-37
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-49
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:54 run
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:100 _keepalive_loop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:215 _wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-27
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-38
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-28
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-39
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-18
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-52
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:46 send_heartbeats
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-8
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-40
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-216
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-30
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-41
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-59
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\display.py:255 _display_timeout
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-82
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+Timeout (0:00:30)!
+Thread 0x00002b8c (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\serial\serialwin32.py", line 288 in read
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\serial\serialutil.py", line 663 in read_until
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\serial_port.py", line 66 in read
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\channel.py", line 201 in _perform_request
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\channel.py", line 131 in request
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\channel.py", line 266 in probe
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\owner.py", line 108 in connect
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py", line 50 in <lambda>
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py", line 212 in invoke_before_deadline
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 58 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 83 in _worker
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00006a68 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 81 in _worker
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00006484 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 81 in _worker
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00000cd8 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00004cd8 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 825 in _poll
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 444 in select
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 1898 in _run_once
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 608 in run_forever
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 321 in run_forever
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 641 in run_until_complete
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190 in run
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py", line 40 in traced_run
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\main.py", line 23 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\main.py", line 28 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 98 in _run_module_code
+  File "<frozen runpy>", line 226 in run_module
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+
+ASYNC TASK CHAINS
+TASK Task-42
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-228
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-32
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-2
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\admission.py:91 _housekeep
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-74
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-85
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/ExecuteMicrocontrollerIo]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_unary_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_unary_response
+TASK Task-22
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-33
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-259
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\admission.py:69 _perform
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\runtime.py:242 execute_microcontroller_io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lifecycle.py:280 execute
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\device.py:249 io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\device.py:310 _io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lazy_owner.py:64 connect
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py:49 connect
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py:234 _call
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:428 wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:535 _wait
+TASK Task-46
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\service.py:628 close_after_stop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-223
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-23
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-34
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-45
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-350
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-24
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-35
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\ingress.py:71 _drain
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\application.py:281 run_controller
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:87 authority_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-36
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-348
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-26
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-37
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-49
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:54 run
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:100 _keepalive_loop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:215 _wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-82
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-27
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-38
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-28
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-234
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\camera.py:528 _camera_timeout
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-39
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-52
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:46 send_heartbeats
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-258
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-40
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-8
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-388
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-30
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-41
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-59
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\display.py:255 _display_timeout
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-225
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+
+ASYNC TASK CHAINS
+TASK Task-42
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-228
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-32
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-2
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\admission.py:91 _housekeep
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-74
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-85
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/ExecuteMicrocontrollerIo]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_unary_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_unary_response
+TASK Task-22
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-33
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-259
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\admission.py:69 _perform
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\runtime.py:242 execute_microcontroller_io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lifecycle.py:280 execute
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\device.py:249 io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\device.py:310 _io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lazy_owner.py:64 connect
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py:49 connect
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py:234 _call
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:428 wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:535 _wait
+TASK Task-46
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\service.py:628 close_after_stop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-223
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-23
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-34
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-45
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-504
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-24
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-35
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\ingress.py:71 _drain
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\application.py:281 run_controller
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:87 authority_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-36
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-503
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-26
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-37
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-49
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:54 run
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:100 _keepalive_loop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:215 _wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-82
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-27
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-38
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-28
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-234
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\camera.py:528 _camera_timeout
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-39
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-52
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:46 send_heartbeats
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-258
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-40
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-8
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-542
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-30
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-41
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-59
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\display.py:255 _display_timeout
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-225
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+Timeout (0:00:30)!
+Thread 0x00002b8c (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\serial\serialwin32.py", line 274 in read
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\serial\serialutil.py", line 663 in read_until
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\serial_port.py", line 67 in read
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\channel.py", line 201 in _perform_request
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\channel.py", line 131 in request
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\channel.py", line 266 in probe
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\owner.py", line 108 in connect
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py", line 50 in <lambda>
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py", line 212 in invoke_before_deadline
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 58 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 83 in _worker
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00006a68 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 81 in _worker
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00006484 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 81 in _worker
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00000cd8 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00004cd8 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 825 in _poll
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 444 in select
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 1898 in _run_once
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 608 in run_forever
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 321 in run_forever
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 641 in run_until_complete
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190 in run
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py", line 40 in traced_run
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\main.py", line 23 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\main.py", line 28 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 98 in _run_module_code
+  File "<frozen runpy>", line 226 in run_module
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+
+ASYNC TASK CHAINS
+TASK Task-42
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-228
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-32
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-2
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\admission.py:91 _housekeep
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-74
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-85
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/ExecuteMicrocontrollerIo]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_unary_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_unary_response
+TASK Task-22
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-33
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-259
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\admission.py:69 _perform
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\runtime.py:242 execute_microcontroller_io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lifecycle.py:280 execute
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\device.py:249 io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\device.py:310 _io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lazy_owner.py:64 connect
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py:49 connect
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py:234 _call
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:428 wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:535 _wait
+TASK Task-46
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\service.py:628 close_after_stop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-223
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-23
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-34
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-652
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\admission.py:190 _execute
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\runtime.py:389 release_control
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\control\leases.py:97 release_control
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:242 request
+TASK Task-45
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-665
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-24
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-35
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\ingress.py:71 _drain
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-653
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lifecycle.py:68 _finish_owner_loss
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\application.py:281 run_controller
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:87 authority_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-36
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK manual-camera-cleanup
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:214 _task
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:111 run
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:275 _finish_existing_operation
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-26
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-37
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-655
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-49
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:54 run
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:100 _keepalive_loop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:215 _wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-82
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-27
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-38
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-656
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/ReleaseControl]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_unary_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_unary_response
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-28
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-234
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\camera.py:528 _camera_timeout
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-39
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-52
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:46 send_heartbeats
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-649
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-258
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-40
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-8
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-704
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-664
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-41
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-59
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\display.py:255 _display_timeout
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-225
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+
+ASYNC TASK CHAINS
+TASK Task-42
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-228
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-32
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-2
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\admission.py:91 _housekeep
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-74
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-85
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/ExecuteMicrocontrollerIo]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_unary_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_unary_response
+TASK Task-22
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-33
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-259
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\admission.py:69 _perform
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\runtime.py:242 execute_microcontroller_io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lifecycle.py:280 execute
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\device.py:249 io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\device.py:310 _io
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lazy_owner.py:64 connect
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py:49 connect
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\bridge.py:234 _call
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:428 wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:535 _wait
+TASK Task-46
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\service.py:628 close_after_stop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-858
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-23
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-34
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-652
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\admission.py:190 _execute
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\runtime.py:389 release_control
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\control\leases.py:97 release_control
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:242 request
+TASK Task-45
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-865
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-24
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-35
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\ingress.py:71 _drain
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-653
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lifecycle.py:68 _finish_owner_loss
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\application.py:281 run_controller
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:87 authority_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-871
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-36
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK manual-camera-cleanup
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:214 _task
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:111 run
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:275 _finish_existing_operation
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-870
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lifecycle.py:68 _finish_owner_loss
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-855
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-26
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-37
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-655
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-49
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:54 run
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:100 _keepalive_loop
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\health.py:215 _wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-869
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\transport\admission.py:190 _execute
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\runtime.py:389 release_control
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\control\leases.py:97 release_control
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\owner_cleanup.py:242 request
+TASK Task-82
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-27
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-38
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/ReleaseControl]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_unary_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_unary_response
+TASK Task-656
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-872
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-28
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-234
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\device\camera.py:528 _camera_timeout
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK rpc_task
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _schedule_rpc_coro
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_cancellation_from_core
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi:None execute_batch
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-878
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-819
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-52
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\startup\monitor.py:46 send_heartbeats
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-258
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-40
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-8
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-852
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-41
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-862
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\controller\microcontroller\lifecycle.py:321 shutdown
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:476 wait_for
+TASK HandleExceptions[/cephvr.control.v1.ExperimentControllerService/WatchState]
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_exceptions
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _handle_unary_stream_rpc
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _finish_handler_with_stream_responses
+TASK Task-867
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call

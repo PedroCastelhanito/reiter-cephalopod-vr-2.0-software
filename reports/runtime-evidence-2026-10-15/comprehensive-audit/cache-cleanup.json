@@ -1,0 +1,446 @@
+[
+  {
+    "path": ".pytest_cache",
+    "file_count": 5,
+    "bytes": 289102,
+    "removed": true
+  },
+  {
+    "path": ".ruff_cache",
+    "file_count": 12,
+    "bytes": 64166,
+    "removed": true
+  },
+  {
+    "path": ".mypy_cache",
+    "file_count": 18,
+    "bytes": 34885861,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\__pycache__",
+    "file_count": 2,
+    "bytes": 549,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\__pycache__",
+    "file_count": 12,
+    "bytes": 105632,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\buffers\\__pycache__",
+    "file_count": 9,
+    "bytes": 67051,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\camera\\__pycache__",
+    "file_count": 14,
+    "bytes": 146039,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\config\\__pycache__",
+    "file_count": 10,
+    "bytes": 57677,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\coordinator\\__pycache__",
+    "file_count": 56,
+    "bytes": 748719,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\coordinator\\state\\__pycache__",
+    "file_count": 5,
+    "bytes": 55043,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\preview\\__pycache__",
+    "file_count": 3,
+    "bytes": 18709,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\recording\\__pycache__",
+    "file_count": 28,
+    "bytes": 163267,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\transport\\__pycache__",
+    "file_count": 5,
+    "bytes": 50953,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\v1\\__pycache__",
+    "file_count": 6,
+    "bytes": 68605,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\acquisition\\worker\\__pycache__",
+    "file_count": 40,
+    "bytes": 452917,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\client\\__pycache__",
+    "file_count": 3,
+    "bytes": 38482,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\control\\__pycache__",
+    "file_count": 1,
+    "bytes": 291,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\control\\v1\\__pycache__",
+    "file_count": 5,
+    "bytes": 193990,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\__pycache__",
+    "file_count": 24,
+    "bytes": 390696,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\control\\__pycache__",
+    "file_count": 9,
+    "bytes": 111069,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\device\\__pycache__",
+    "file_count": 20,
+    "bytes": 284084,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\incident\\__pycache__",
+    "file_count": 4,
+    "bytes": 52163,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\lifecycle\\__pycache__",
+    "file_count": 14,
+    "bytes": 263962,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\metadata\\__pycache__",
+    "file_count": 8,
+    "bytes": 94629,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\microcontroller\\__pycache__",
+    "file_count": 19,
+    "bytes": 227611,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\startup\\__pycache__",
+    "file_count": 6,
+    "bytes": 54628,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\controller\\transport\\__pycache__",
+    "file_count": 4,
+    "bytes": 27513,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\gui\\__pycache__",
+    "file_count": 159,
+    "bytes": 2134224,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\launcher\\__pycache__",
+    "file_count": 10,
+    "bytes": 75626,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\platform\\__pycache__",
+    "file_count": 1,
+    "bytes": 292,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\platform\\windows\\__pycache__",
+    "file_count": 30,
+    "bytes": 328736,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\shared\\__pycache__",
+    "file_count": 36,
+    "bytes": 295606,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\shared\\pixels\\__pycache__",
+    "file_count": 4,
+    "bytes": 24579,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\supervisor\\__pycache__",
+    "file_count": 22,
+    "bytes": 313164,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\synchronization\\__pycache__",
+    "file_count": 10,
+    "bytes": 111860,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\synchronization\\v1\\__pycache__",
+    "file_count": 2,
+    "bytes": 4734,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\__pycache__",
+    "file_count": 7,
+    "bytes": 81079,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\config\\__pycache__",
+    "file_count": 7,
+    "bytes": 62327,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\config\\models\\__pycache__",
+    "file_count": 4,
+    "bytes": 47387,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\coordinator\\__pycache__",
+    "file_count": 7,
+    "bytes": 56212,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\feedback\\__pycache__",
+    "file_count": 3,
+    "bytes": 15461,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\methods\\__pycache__",
+    "file_count": 15,
+    "bytes": 115941,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\native\\__pycache__",
+    "file_count": 2,
+    "bytes": 7422,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\processing\\__pycache__",
+    "file_count": 12,
+    "bytes": 138788,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\recording\\__pycache__",
+    "file_count": 4,
+    "bytes": 19774,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\transport\\__pycache__",
+    "file_count": 5,
+    "bytes": 29798,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\tracking\\v1\\__pycache__",
+    "file_count": 7,
+    "bytes": 33779,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\__pycache__",
+    "file_count": 7,
+    "bytes": 75236,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\compiler\\__pycache__",
+    "file_count": 8,
+    "bytes": 80762,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\config\\__pycache__",
+    "file_count": 10,
+    "bytes": 69701,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\config\\models\\__pycache__",
+    "file_count": 10,
+    "bytes": 160252,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\coordinator\\__pycache__",
+    "file_count": 12,
+    "bytes": 106277,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\feedback\\__pycache__",
+    "file_count": 9,
+    "bytes": 76857,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\recording\\__pycache__",
+    "file_count": 14,
+    "bytes": 177062,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\rendering\\__pycache__",
+    "file_count": 30,
+    "bytes": 353081,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\resources\\__pycache__",
+    "file_count": 29,
+    "bytes": 368353,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\transport\\__pycache__",
+    "file_count": 7,
+    "bytes": 42664,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\v1\\__pycache__",
+    "file_count": 6,
+    "bytes": 51448,
+    "removed": true
+  },
+  {
+    "path": "src\\cephvr\\visual_stimulus\\worker\\__pycache__",
+    "file_count": 20,
+    "bytes": 213879,
+    "removed": true
+  },
+  {
+    "path": "tests\\__pycache__",
+    "file_count": 2,
+    "bytes": 1569,
+    "removed": true
+  },
+  {
+    "path": "tests\\acquisition\\__pycache__",
+    "file_count": 24,
+    "bytes": 1796088,
+    "removed": true
+  },
+  {
+    "path": "tests\\client\\__pycache__",
+    "file_count": 3,
+    "bytes": 159099,
+    "removed": true
+  },
+  {
+    "path": "tests\\controller\\__pycache__",
+    "file_count": 29,
+    "bytes": 2091945,
+    "removed": true
+  },
+  {
+    "path": "tests\\gui\\__pycache__",
+    "file_count": 2,
+    "bytes": 3545539,
+    "removed": true
+  },
+  {
+    "path": "tests\\launcher\\__pycache__",
+    "file_count": 2,
+    "bytes": 201790,
+    "removed": true
+  },
+  {
+    "path": "tests\\platform\\__pycache__",
+    "file_count": 8,
+    "bytes": 384896,
+    "removed": true
+  },
+  {
+    "path": "tests\\shared\\__pycache__",
+    "file_count": 10,
+    "bytes": 337401,
+    "removed": true
+  },
+  {
+    "path": "tests\\supervisor\\__pycache__",
+    "file_count": 9,
+    "bytes": 500932,
+    "removed": true
+  },
+  {
+    "path": "tests\\tracking\\__pycache__",
+    "file_count": 8,
+    "bytes": 446398,
+    "removed": true
+  },
+  {
+    "path": "tests\\visual_stimulus\\__pycache__",
+    "file_count": 16,
+    "bytes": 1914058,
+    "removed": true
+  },
+  {
+    "path": "tools\\__pycache__",
+    "file_count": 2,
+    "bytes": 24743,
+    "removed": true
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-15\\comprehensive-audit\\__pycache__",
+    "file_count": 1,
+    "bytes": 25159,
+    "removed": true
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-15\\comprehensive-audit\\diagnostics\\__pycache__",
+    "file_count": 1,
+    "bytes": 3326,
+    "removed": true
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-15\\comprehensive-audit\\gui\\__pycache__",
+    "file_count": 1,
+    "bytes": 2188,
+    "removed": true
+  }
+]

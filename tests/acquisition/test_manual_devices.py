@@ -6,6 +6,8 @@ import asyncio
 from types import SimpleNamespace
 from uuid import uuid4
 
+import pytest
+
 from cephvr.acquisition.coordinator.manual_device_recovery import (
     ManualDeviceRecovery,
 )
@@ -791,6 +793,79 @@ def test_manual_command_installs_current_draft_but_rejects_stale_or_owned_change
     request.settings.CopyFrom(configuration.settings)
     assert owner.install(request, 100) is None  # unrelated controller revision
     assert configuration.revision == 3
+
+
+@pytest.mark.parametrize("outcome", ["confirmed", "expired", "cancelled"])
+async def test_confirmation_wait_rechecks_early_timeout_against_original_deadline(
+    monkeypatch: pytest.MonkeyPatch, outcome: str
+) -> None:
+    from cephvr.acquisition.coordinator.configuration_resolution import (
+        ConfigurationResolution,
+    )
+
+    now = [50]
+    identity = CoordinatorIdentity(
+        process=control.ProcessIdentity(),
+        supervisor=control.ProcessIdentity(),
+        tracking=control.ProcessIdentity(),
+        controller=control.ProcessIdentity(role="controller", generation=_id()),
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=_id()
+        ),
+    )
+    resolution = ConfigurationResolution(
+        identity=identity,
+        configuration=ConfigurationRecord(
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            revision=1,
+        ),
+        controller=SimpleNamespace(),
+        lock=asyncio.Lock(),
+        clock=lambda: now[0],
+    )
+    operation = await resolution.begin(
+        wire.BackendCommand(
+            command_id=_id(),
+            issuer=identity.controller,
+            target=identity.backend,
+            parent_operation=control.OperationContext(command_id=_id()),
+        ),
+        expected_cameras=set(),
+        request_revision=1,
+        deadline_ns=100,
+        allow_empty=True,
+    )
+    pending = resolution._pending
+    assert pending is not None
+    timeouts = []
+    settings = control.AcquisitionSettings()
+    settings.pulses.port = "COM8"
+
+    async def early_timeout(awaitable, timeout):
+        awaitable.close()
+        timeouts.append(timeout)
+        if len(timeouts) == 1:
+            now[0] = 60
+            raise TimeoutError()
+        if outcome == "expired":
+            now[0] = 90
+            raise TimeoutError()
+        if outcome == "cancelled":
+            raise asyncio.CancelledError()
+        pending.confirmed_settings = settings
+        pending.confirmed.set()
+
+    monkeypatch.setattr(asyncio, "wait_for", early_timeout)
+    if outcome == "confirmed":
+        result = await resolution.wait_confirmed(operation, deadline_ns=90)
+        assert result == settings and result is not settings
+    else:
+        error = TimeoutError if outcome == "expired" else asyncio.CancelledError
+        with pytest.raises(error):
+            await resolution.wait_confirmed(operation, deadline_ns=90)
+    assert timeouts == [40 / 1e9, 30 / 1e9]
+    assert pending.deadline_ns == 100
 
 
 def test_canceled_pfs_export_retires_only_its_readback_barrier() -> None:

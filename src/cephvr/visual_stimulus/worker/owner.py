@@ -15,6 +15,9 @@ from google.protobuf.message import Message
 
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.deadlines import remaining_seconds
+from cephvr.visual_stimulus.config.calibration_adjustments import (
+    CalibrationAdjustmentRejected,
+)
 
 
 class Driver(Protocol):
@@ -131,7 +134,11 @@ class RenderOwner:
                             )
                     except BaseException as exc:
                         item.future.set_exception(exc)
-                        driver.fail(exc)
+                        if not (
+                            item.method == "UpdateDisplayCalibration"
+                            and isinstance(exc, CalibrationAdjustmentRejected)
+                        ):
+                            driver.fail(exc)
                 self._begin_progress()
                 try:
                     due = driver.advance(self.clock())

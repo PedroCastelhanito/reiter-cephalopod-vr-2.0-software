@@ -27,6 +27,7 @@ def update_presentation(
         CalibrationAdjustmentRejected,
         validated_update,
     )
+    from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 
     if (
         prepared is None
@@ -49,6 +50,8 @@ def update_presentation(
             ((item.mapping_id, item.destination_xy) for item in request.adjustments),
             request.placement_json,
         )
+        if isinstance(adjustments, CalibrationPlacement):
+            adjustments.validate_display(display)
         activities = engine.update_display_calibration(display, prepared, adjustments)
         expected = {output.output_id for output in display.active_outputs}
         if (

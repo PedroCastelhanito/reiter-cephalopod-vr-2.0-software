@@ -1,0 +1,86 @@
+{
+  "summary": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "2",
+    "skipped": "0",
+    "tests": "512",
+    "time": "207.005",
+    "timestamp": "2026-10-15T18:48:57.929931+09:00",
+    "hostname": "DESKTOP-MSOH8EL"
+  },
+  "deselected": 7,
+  "known_exclusion": "test_tab_config_buttons_roundtrip_into_fresh_gui all7parameters",
+  "failures": [
+    {
+      "test": "test_inline_timeline_actions_target_blocks_append_and_preserve_undo",
+      "message": "AssertionError: native MouseMove was not delivered to ProgramTimeline at PyQt6.QtCore.QPoint(541, 677) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(210, 659) PyQt6.QtCore.QSize(1042, 126)\nassert False"
+    },
+    {
+      "test": "test_trial_row_actions_scroll_target_and_align_cards",
+      "message": "assert 326 < 320\n +  where 326 = <built-in method height of Card object at 0x0000024A171D7B50>()\n +    where <built-in method height of Card object at 0x0000024A171D7B50> = <cephvr.gui.components.Card object at 0x0000024A171D7B50>.height\n +      where <cephvr.gui.components.Card object at 0x0000024A171D7B50> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x0000024A171D4AF0>.trial_card"
+    }
+  ],
+  "native_helper_attempts": "PostShow event callback then setDirectory(parent)+selectFile(name), finally bounded10msselectedFiles observation through2s; nativehelpertrue but selection remained defaultrepo/protocol.json. Stopiterations perroot/Astra. No nativepicker pass.",
+  "fixture_source": "Unsuccessful select_path helper entirely reverted; git diff--exit-code tests/gui/test_dashboard.py confirmsnoGUIpatch. Successful backend code/regressions preserved.",
+  "synthetic_artifact": "FirstpostShow attempt created new untrackedrepo/protocol.json5039bytes at18:46:33JST; movedonlythat newtestfile to picker-shown-r1-wrong-output.json. Laterattempts rejectmismatched paths beforeaccept; no existingfile overwrite.",
+  "cleanup": "Suite completed exit1 in207.03s,300swatchdog notneeded. Exactownedpython command query confirmsnone; native512-process-absence.json=[]; no forcedprocesskill.",
+  "prior_offscreen": "Both nativefailing testcases passed inoffscreen-r1 among512; remaining7offscreen cases separatelypassed. Total519offscreen pass.",
+  "interpretation": "MouseMove delivery/focus and326pxplatformfont/layout versus320pxtestcap need boundeddiagnosis. Neither provesvisualclipping. FullnativeGUIacceptance notestablished.",
+  "evidence": [
+    "native512-final.log",
+    "native512-final.xml",
+    "native512-final.exitcode",
+    "native512-process-absence.json",
+    "picker-shown-r1.log",
+    "picker-shown-r2.log",
+    "picker-shown-r3.log"
+  ],
+  "post_benchmark_diagnostics": {
+    "method": "native_protocol_probe.py read-only Qt state at testfailure,40s watchdog; no screenshots or sky.",
+    "inline": "SameMouseMove failure. Qtwindowactive,noModal/popup,cursor exactlyglobaltarget(541,677),QApplication.widgetAt returnsProgramTimeline,target visible throughallancestorregions. No clipping/occlusion/inactiveQtwindow explanation established; native eventdelivery cause unresolved.",
+    "trial_row": "326pxcardheight equals timelinebody.sizeHint326. Bothcardsaligned/equalheight,all4trialchildren and15timelinechildren geometricallyinside.96logicalDPI/devicePixelRatio1/SegoeUI. No observedcontrolclipping; <320constant doesnotreflectcontentrequiredheight. No thresholdrelaxation/productionshrink performed.",
+    "attempt_limit": "Initial2-case diagnostic capturedinline but itsreport hook assumedbatch_hits nonempty forrow andraisedIndexError. Fixedevidencehelperfallback,reranonlyrow,1failed1.39s. This instrumentationissue isnotproductdefect.",
+    "evidence": [
+      "native-protocol-final.log",
+      "native-protocol-final.json",
+      "native-trial-row-final.log",
+      "native-trial-row-final.json",
+      "native-protocol-process-absence.json"
+    ],
+    "cleanup": "Exactprobecommandprocessqueryempty;GUItestsourcegitdiffzero."
+  },
+  "reviewed_assertion_correction": {
+    "source": "tests/gui/test_dashboard.py",
+    "sha256": "b00159000d6e773fb50ec8ceb1c255c66bb4e2e0bf90798ef41d2c6d6ffd36b0",
+    "review": "Root/Astra approve replacing unsupported320pxtestcap withG02equalcardheights andactualvisiblecontrolcontainment. Existinginput/hover/delete/narrowtests unchanged. No productionchange.",
+    "native_rerun": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "0",
+      "tests": "2",
+      "time": "4.661",
+      "timestamp": "2026-10-15T18:58:45.481924+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "outcome": "Trial-row entire native testpasses; inline timeline stillfailsmissingMouseMove atsamevisiblepoint.1passed1failed4.68s. No furthernative retries.",
+    "evidence": [
+      "native-assertion-final.log",
+      "native-assertion-final.xml",
+      "row-offscreen-final.log",
+      "row-offscreen-final.xml"
+    ],
+    "validation": "Ruffpassed;formatpassed afterlinewrap;scopedwhitespacepassed. Prior519offscreen cases pass predates thisassertion-onlycorrection; no freshfullnative/offscreenaggregate claimed.",
+    "offscreen_targeted": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "2.446",
+      "timestamp": "2026-10-15T19:00:00.331973+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    }
+  }
+}

@@ -394,8 +394,16 @@ class AcquisitionResolution:
                 operation_id=attempt.setup_operations["acquisition"],
                 revision=requested_revision,
                 expected_cameras=expected_cameras,
-                expect_pulses=setting.pulses.HasField("port")
-                and bool(setting.pulses.port),
+                expect_pulses=any(
+                    selected.enabled
+                    and selected.device.frame_timing
+                    == camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+                    for selected in (
+                        setting.behavioral,
+                        setting.tracking,
+                        setting.eye_tracking,
+                    )
+                ),
             )
             results = await asyncio.wait_for(
                 asyncio.gather(

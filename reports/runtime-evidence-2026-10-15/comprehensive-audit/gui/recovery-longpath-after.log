@@ -1,0 +1,15 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\cephvr-python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 3 items
+
+tests/controller/test_startup_recovery.py::test_native_long_quarantine_settlement_preserves_evidence_guards[lock_only] PASSED [ 33%]
+tests/controller/test_startup_recovery.py::test_native_long_quarantine_settlement_preserves_evidence_guards[marker] PASSED [ 66%]
+tests/controller/test_startup_recovery.py::test_native_long_quarantine_settlement_preserves_evidence_guards[user_file] PASSED [100%]
+
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\gui\recovery-longpath-after.xml -
+============================== 3 passed in 0.27s ==============================

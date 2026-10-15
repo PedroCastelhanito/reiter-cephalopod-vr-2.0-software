@@ -1,0 +1,51 @@
+{
+  "scope": "Actual native projector diagnostic Open/Update/reject/Close through authenticated controller; no saved drafts/assets edited, no optical measurement",
+  "events": [
+    {
+      "name": "photodiode_placement-open",
+      "monotonic_ns": 79214780540000,
+      "value": {
+        "command_id": "0cb95822-2693-48c9-a29b-b5b7b7a95b5e",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "photodiode_placement-active",
+      "monotonic_ns": 79214781256000,
+      "value": {
+        "diagnostic_id": "c2b02c6c-be90-4faf-821c-b23a4499c05f",
+        "controller_generation": "32ffe742-6248-43a4-a467-4ca24f605c7f",
+        "renderer_generation": "5fdb744e-5248-4837-bb38-323c12945780",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_ACTIVE",
+        "observed_monotonic_ns": "79214775919900",
+        "profile_sha256": "44b67393fe6809d3e56ec3185f02a1713a82662f6ba51b48f93fb2d00fd2de09",
+        "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "presented": true,
+        "idle": false,
+        "resources_closed": false,
+        "calibration_view": "photodiode_placement"
+      }
+    },
+    {
+      "name": "photodiode_placement-admitted-terminal-rejection",
+      "monotonic_ns": 79214794175400,
+      "value": {
+        "command_id": "46189610-de1f-4ee1-a2b6-91319a884cc1",
+        "complete": true,
+        "succeeded": false,
+        "needs_input": false,
+        "failure": "OPERATION_FAILED: renderer did not confirm the required calibration state"
+      }
+    },
+    {
+      "name": "error",
+      "monotonic_ns": 79215210602900,
+      "value": "ClientError: REJECTED: interrupted Visual Stimulus session is permanently fenced"
+    }
+  ],
+  "generation": "32ffe742-6248-43a4-a467-4ca24f605c7f"
+}

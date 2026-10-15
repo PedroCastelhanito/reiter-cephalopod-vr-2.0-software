@@ -1,0 +1,7 @@
+{
+  "original_boundary_ns": 78732536347800,
+  "new_trial_start_ns": 78724391143000,
+  "new_trial_end_ns": 78784391143000,
+  "boundary_after_new_start_seconds": 8.1452048,
+  "new_trial_beyond_boundary_seconds": 51.8547952
+}

@@ -1,5 +1,120 @@
 # Controller and supervisor status
 
+Current comprehensive Oct15 audit final source checks pass (E06/E07/E08/ARCH-002):
+1920 backend cases pass/five skip/one rig deselected, including eligible native
+Windows and HighGUI tests. Ruff, format915, Win32 mypy795 and boundaries699/zero
+violations pass. Five skips retain privilege/platform limitations in the JUnit log.
+The separately selected rig-only synthetic CUDA/NVOF lease test also passes; it
+does not enable live Tracking processing or feedback.
+GUI519 pass offscreen across512+7 selections. Native execution finishes510pass/two
+fail with seven picker roundtrips excluded. A focused follow-up replaces an
+unsupported320px test cap with equal-height/control-containment checks; the full
+native trial-row interaction then passes. Inline timeline MouseMove delivery
+remains unresolved despite an active/unobscured target; synthetic picker selection
+is ignored by the Windows helper. Computer-use state capture separately hangs
+twice, so complete manual/native feature acceptance and an all-tests-pass claim
+are unavailable. The native failures do not establish clipping or operator picker
+failure; bounded diagnostics and exact process absence are retained.
+
+Focused controller repairs distinguish explicitly rejected live-calibration Updates
+from unknown transport outcomes, and require acquisition pulse readback only for
+enabled external-trigger cameras. Owning coverage pins retained Active fencing,
+valid retry after rejection, and real free-running/external readback adoption.
+Camera configuration59 cases pass. The later empty-edit failure is traced to a
+Windows asyncio timeout occurring3.4854ms before its original deadline. The
+acquisition wait now retries only within that unchanged deadline; deterministic
+regressions and the combined acquisition/controller/shared1148pass/four privilege
+skips verify the correction. Affected managed-interpreter cases70pass/one skip.
+
+Fresh COM8 boot text is `OK READY three_camera_ttl`; read-only request-ID CAPS
+returns `ERR Unexpected command arguments`. Managed Connect reaches its original
+deadline failure; firmware is unchanged. Earlier40-second preview attempts stop
+before the configured70-second deadline and establish only incomplete admission
+within the harness bound. Exact managed exit receipts/inventories separate attempts.
+
+The corrected retained-COM8/free-running Setup reaches acquisition Ready but the
+saved arena asset exceeds the declared GPU budget. Cancellation then leaves an
+exact quarantine containing its marker/lock; its275-character marker path fails
+ordinary Windows filesystem access, blocking startup recovery. Native before/after
+tests verify existing extended-path transport repairs both cancellation and
+lock-only settlement while marker/user-file guards remain strict. Exact own
+unstarted artifact remediation retains marker/lock bytes and hashes; no durable
+pointer is edited and no general recovery acceptance is claimed.
+Subsequent native recovery and seven managed trials complete: four normal60-second
+Save-On trials (Gaussian and reduced-texture arena), one normal60-second Save-Off,
+and two interrupted trials. All18 retained videos fully decode/count successfully;
+Off retains frame/scientific logs but no videos. The immediate post-Abort trial
+crosses the retired boundary8.1452seconds after its new start and completes normally.
+Abort still takes approximately40.12seconds to settle interrupted metadata; this
+responsiveness finding remains open. Independent camera/shader/NVENC runs and nine
+full-video decode/count passes are recorded in the owning backend reports; they
+do not prove managed lifecycle or calibrated projector rendering. Native cancellation
+and startup lock-only settlement now use the existing extended-path transport;
+marker-bearing/user-file guards remain strict. The unused shared Deadline wrapper
+is removed after a source/contract consumer search, retaining active helper coverage.
+An unsupported whole-suite managed-executable
+invocation separately fails an entrypoint child missing its DLL bootstrap; this is
+retained separately from normal-suite results. [Fresh evidence and settings backups](runtime-evidence-2026-10-15/comprehensive-audit/)
+retain these limits; previous successful endurance evidence remains historical.
+
+Fresh native photodiode and blackout diagnostics now pass Open, invalid bounds
+rejection, subsequent valid updates, move/remove and Close with Idle/resources
+closed; saved asset/profile hashes remain unchanged. The repair validates before
+GL dispatch and propagates only typed, exactly proven retained-Active rejection
+without renderer shutdown. Generic/mismatched failures remain fatal.361 owning
+and132 managed-interpreter cases cover the full mailbox/report path. Opening
+calibration after a completed session remains rejected by
+retained interrupted/setup fences; safe context retirement is a separate follow-up.
+
+| Feature group | Fresh evidence | Remaining limit |
+| --- | --- | --- |
+| Dashboard, file/load/save, protocol/variation validation, status and operator controls |519 offscreen pass; native510pass plus focused repaired row pass; [per-feature owning inventory](runtime-evidence-2026-10-15/comprehensive-audit/gui/coverage-inventory.json) |One native hover-input failure and seven synthetic picker roundtrips remain; manual end-to-end GUI coverage incomplete |
+| Setup/Start/normal completion/NewSession |Real authenticated controller, two cameras and four projectors; Gaussian and reduced-texture arena |Unaligned free-running fixture; no MCU synchronization or Tracking processing |
+| Video Save On→Off→On |3→0→3 videos; frame/scientific logs retained throughout |No scientific scene-quality acceptance |
+| Abort/reuse |Two Interrupted trials with confirmed cleanup; immediate new trial crosses retired boundary and completes |40.12second interrupted-metadata settlement remains |
+| Camera/controller connections |Fresh enumeration, native Setup/readbacks, full-bound COM8 failure |Legacy MCU command dialect prevents external-trigger acceptance; no firmware flash |
+| Calibration diagnostics |Two native views pass Open/invalid→valid/move/remove/Close with unchanged asset hashes |Post-session reopening still fenced; physical calibration unmeasured |
+| Rendering/encoding capacity |CQ23/CQ18 camera+offscreen-shader workloads, native4096 variant, full counts/decodes |Tracking imagery sampled black, native4096 one BlockID gap; initial CPU sample confounded |
+
+The final isolated production workload runs exactly60seconds with Behavioral
+1760×1716/30Hz and Tracking1588×1344/60Hz, camera CQ23, stimulus CQ18/YUV444,
+four60Hz projector outputs and the explicit512-pixel arena derivative. No other
+test runs during this interval. Current machine is Ryzen9 9950X16cores/32threads,
+66,094,223,360bytes usable RAM,2TB CT2000P3PSSD8, RTX5060Ti16,311MiB and
+RTX2080Ti11,264MiB (driver617.14). [Hardware and monitor evidence](runtime-evidence-2026-10-15/comprehensive-audit/).
+
+| Active-trial measurement | Median |95th percentile |Maximum |
+| --- | ---: | ---: | ---: |
+| System CPU |11.28% |16.19% |20.32% |
+| RTX5060Ti GPU utilization |11% |12% |12% |
+| RTX2080Ti encoder utilization |44% |46% |47% |
+| Monitored process working sets |2.137GiB |2.179GiB |2.189GiB |
+
+Device-wide GPU memory is716/713MiB respectively;5060Ti encoder utilization is0%.
+Working sets include monitoring processes/shared pages and are not system used RAM;
+process IO counters include pipes, not physical disk bandwidth. GPU UUIDs and
+59 active one-second GPU/CPU-delta samples are retained; no per-process GPU
+attribution or sustained headroom guarantee is inferred. Camera videos contain
+1801=1798real+3duplicate and3600=3588real+12duplicate frames; stimulus contains
+3600=3592real+8duplicate frames with four capacity drops/two same-slot omissions.
+Camera failed/missed buffers are0 and counter gaps absent. Stimulus has3598 render
+groups, median16.659ms/p99 17.920ms/max33.381ms intervals, with no unresolved
+submission attempts. All three full decodes match declared counts, completing
+27 video validations across18 managed/nine direct outputs. This is a bounded
+low-loss engineering result, not optical synchronization or representative-scene
+quality acceptance. [Active resources](runtime-evidence-2026-10-15/comprehensive-audit/managed-isolated-mixed60-r1/resource-assessment.json),
+[source/CFR accounting](runtime-evidence-2026-10-15/comprehensive-audit/managed-accounting-summary.json).
+All three original pre-audit PFS files restore byte-exact, every original feature
+readback matches and all cameras close. All10 saved JSON/TOML files also match
+their original bytes; exact application exit receipts confirm process absence.
+[Restoration](runtime-evidence-2026-10-15/comprehensive-audit/final-restoration.json).
+Final Shutdown returns a successful command and exact process-absence receipt but
+also emits `cleanup returned an unregistered resource` from Visual Stimulus after
+the completed trial/NewSession/original-configuration restoration sequence. The
+trial, decode/count and physical restoration evidence remain valid; shutdown
+resource-report acceptance is unresolved. [Emergency evidence](emergency-80538644376400-cf134742-126d-4fc6-aa22-c7ed8d33f493.json)
+is retained for a focused follow-up rather than interpreted as clean shutdown.
+
 Oct15 photodiode placement now repeats V22 pulses while accepting live Frame/Pulse
 edits. The preview uses a separate submission index and retains the existing
 controller fences; see the [current checks and limits](visual_stimulus.md).

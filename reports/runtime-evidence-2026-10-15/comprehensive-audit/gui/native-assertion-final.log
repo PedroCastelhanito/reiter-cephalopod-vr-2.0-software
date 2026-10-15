@@ -1,0 +1,107 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo FAILED [ 50%]
+tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards PASSED [100%]
+
+================================== FAILURES ===================================
+_____ test_inline_timeline_actions_target_blocks_append_and_preserve_undo _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001A9FE019900>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001A987C9F880>
+
+    def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, app):
+        from PyQt6.QtTest import QTest
+        from PyQt6.QtWidgets import QPushButton
+    
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        data = grouped_program(review_program()).model_dump(mode="json")
+        data["sequence"][0]["repetitions"] = 10
+        for epoch in data["sequence"][0]["body"][:2]:
+            epoch["batch_id"] = "batch_pair"
+        editor.set_program(validate(data))
+        window.resize(1280, 1100)
+        app.processEvents()
+        contents = editor.hierarchy.contents
+        before = editor.program
+        assert not any(
+            control.text() in ("+ Group", "\u2212 Group", "+ Epoch")
+            for control in editor.findChildren(QPushButton)
+        )
+        # Selection alone has no cross; hovering reveals a standard compact control.
+        QTest.mouseMove(editor.group_editor.name)
+        app.processEvents()
+        assert not any(c.isVisible() for c in contents.block_actions.removers)
+>       _move_mouse_and_wait_for_native_event(
+            contents, contents.batch_hits[0][0].center().toPoint(), app
+        )
+
+tests\gui\test_dashboard.py:15249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+widget = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x000001A9FEAB4310>
+position = PyQt6.QtCore.QPoint(331, 18)
+app = <PyQt6.QtWidgets.QApplication object at 0x000001A987C9F880>
+timeout_ms = 1000
+
+    def _move_mouse_and_wait_for_native_event(
+        widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+    ) -> None:
+        """Wait for the platform-delivered hover event after moving the real cursor."""
+        from PyQt6.QtCore import QObject
+    
+        target_global = widget.mapToGlobal(position)
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        matched = False
+    
+        class TargetMouseMove(QObject):
+            def eventFilter(self, receiver, event):
+                nonlocal matched
+                if (
+                    receiver is widget
+                    and event.type() == QEvent.Type.MouseMove
+                    and event.globalPosition().toPoint() == target_global
+                ):
+                    matched = True
+                    QTimer.singleShot(0, loop.quit)
+                return False
+    
+        probe = TargetMouseMove(widget)
+        widget.installEventFilter(probe)
+        timer.start(timeout_ms)
+        try:
+            QTest.mouseMove(widget, position)
+            if not matched:
+                loop.exec()
+        finally:
+            timer.stop()
+            widget.removeEventFilter(probe)
+>       assert matched, (
+            f"native MouseMove was not delivered to {type(widget).__name__} at "
+            f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+            f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+            f"{widget.size()}"
+        )
+E       AssertionError: native MouseMove was not delivered to ProgramTimeline at PyQt6.QtCore.QPoint(541, 677) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(210, 659) PyQt6.QtCore.QSize(1042, 126)
+E       assert False
+
+tests\gui\test_dashboard.py:134: AssertionError
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\gui\native-assertion-final.xml -
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo - AssertionError: native MouseMove was not delivered to ProgramTimeline at PyQt6.QtCore.QPoint(541, 677) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(210, 659) PyQt6.QtCore.QSize(1042, 126)
+assert False
+========================= 1 failed, 1 passed in 4.68s =========================

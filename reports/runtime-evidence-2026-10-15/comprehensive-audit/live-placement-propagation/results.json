@@ -1,0 +1,238 @@
+{
+  "scope": "Actual native projector diagnostic Open/Update/reject/Close through authenticated controller; no saved drafts/assets edited, no optical measurement",
+  "events": [
+    {
+      "name": "photodiode_placement-open",
+      "monotonic_ns": 79789104278400,
+      "value": {
+        "command_id": "a89aec33-0792-4288-a3b8-81c033970a79",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "photodiode_placement-active",
+      "monotonic_ns": 79789104843800,
+      "value": {
+        "diagnostic_id": "4979894c-32aa-42c2-8fd5-c0e783934403",
+        "controller_generation": "fd8bef3c-f287-4964-a0b6-6364fcbd9902",
+        "renderer_generation": "a7782e29-aab1-4719-bacf-e0f777141976",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_ACTIVE",
+        "observed_monotonic_ns": "79789099446200",
+        "profile_sha256": "44b67393fe6809d3e56ec3185f02a1713a82662f6ba51b48f93fb2d00fd2de09",
+        "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "presented": true,
+        "idle": false,
+        "resources_closed": false,
+        "calibration_view": "photodiode_placement"
+      }
+    },
+    {
+      "name": "photodiode_placement-admitted-terminal-rejection",
+      "monotonic_ns": 79789115733200,
+      "value": {
+        "command_id": "e1982ed2-9529-42c7-9714-9184d7694512",
+        "complete": true,
+        "succeeded": false,
+        "needs_input": false,
+        "failure": "OPERATION_FAILED: renderer did not confirm the required calibration state"
+      }
+    },
+    {
+      "name": "photodiode_placement-valid-after-rejection",
+      "monotonic_ns": 79789168635900,
+      "value": {
+        "command_id": "42842541-8767-4238-be22-9d59c77802f4",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "photodiode_placement-updated",
+      "monotonic_ns": 79789169350500,
+      "value": {
+        "diagnostic_id": "4979894c-32aa-42c2-8fd5-c0e783934403",
+        "controller_generation": "fd8bef3c-f287-4964-a0b6-6364fcbd9902",
+        "renderer_generation": "a7782e29-aab1-4719-bacf-e0f777141976",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_ACTIVE",
+        "observed_monotonic_ns": "79789165775600",
+        "profile_sha256": "44b67393fe6809d3e56ec3185f02a1713a82662f6ba51b48f93fb2d00fd2de09",
+        "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "presented": true,
+        "idle": false,
+        "resources_closed": false,
+        "adjustment_sequence": "2",
+        "calibration_view": "photodiode_placement"
+      }
+    },
+    {
+      "name": "photodiode_placement-move-or-remove",
+      "monotonic_ns": 79789218968700,
+      "value": {
+        "command_id": "02d79995-e72a-4231-bc52-e1113b786031",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "photodiode_placement-close",
+      "monotonic_ns": 79789671795800,
+      "value": {
+        "command_id": "72afe68b-d98c-4c6c-b682-5e22d8009d63",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "photodiode_placement-closed",
+      "monotonic_ns": 79789672600200,
+      "value": {
+        "diagnostic_id": "4979894c-32aa-42c2-8fd5-c0e783934403",
+        "controller_generation": "fd8bef3c-f287-4964-a0b6-6364fcbd9902",
+        "renderer_generation": "a7782e29-aab1-4719-bacf-e0f777141976",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_IDLE",
+        "observed_monotonic_ns": "79789668315900",
+        "profile_sha256": "44b67393fe6809d3e56ec3185f02a1713a82662f6ba51b48f93fb2d00fd2de09",
+        "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "presented": false,
+        "idle": true,
+        "resources_closed": true,
+        "adjustment_sequence": "3",
+        "calibration_view": "photodiode_placement"
+      }
+    },
+    {
+      "name": "blackout_placement-open",
+      "monotonic_ns": 79790127110100,
+      "value": {
+        "command_id": "7c0899a8-9e5e-4a62-a03f-9be83b24aa85",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "blackout_placement-active",
+      "monotonic_ns": 79790127808900,
+      "value": {
+        "diagnostic_id": "fe685f03-4077-4186-babe-abe28be21c5c",
+        "controller_generation": "fd8bef3c-f287-4964-a0b6-6364fcbd9902",
+        "renderer_generation": "a7782e29-aab1-4719-bacf-e0f777141976",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_ACTIVE",
+        "observed_monotonic_ns": "79790122782100",
+        "profile_sha256": "0e68b30b2a462ccb0c241113bebd0aeabefcd3e811cf3f61cd4ea6936621abf1",
+        "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "presented": true,
+        "idle": false,
+        "resources_closed": false,
+        "calibration_view": "blackout_placement"
+      }
+    },
+    {
+      "name": "blackout_placement-admitted-terminal-rejection",
+      "monotonic_ns": 79790134985400,
+      "value": {
+        "command_id": "4313046b-d1f2-4f08-adfa-774cd4b6c711",
+        "complete": true,
+        "succeeded": false,
+        "needs_input": false,
+        "failure": "OPERATION_FAILED: renderer did not confirm the required calibration state"
+      }
+    },
+    {
+      "name": "blackout_placement-valid-after-rejection",
+      "monotonic_ns": 79790145820100,
+      "value": {
+        "command_id": "a2d70e9a-48b0-4024-b7ba-dd03bd061f58",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "blackout_placement-updated",
+      "monotonic_ns": 79790146472200,
+      "value": {
+        "diagnostic_id": "fe685f03-4077-4186-babe-abe28be21c5c",
+        "controller_generation": "fd8bef3c-f287-4964-a0b6-6364fcbd9902",
+        "renderer_generation": "a7782e29-aab1-4719-bacf-e0f777141976",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_ACTIVE",
+        "observed_monotonic_ns": "79790142789900",
+        "profile_sha256": "0e68b30b2a462ccb0c241113bebd0aeabefcd3e811cf3f61cd4ea6936621abf1",
+        "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "presented": true,
+        "idle": false,
+        "resources_closed": false,
+        "adjustment_sequence": "2",
+        "calibration_view": "blackout_placement"
+      }
+    },
+    {
+      "name": "blackout_placement-move-or-remove",
+      "monotonic_ns": 79790156162300,
+      "value": {
+        "command_id": "dbed793f-331a-454b-a5ac-d35a8d3e8993",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "blackout_placement-close",
+      "monotonic_ns": 79790563847900,
+      "value": {
+        "command_id": "f4864698-7e14-48ba-a874-6f8c40c9efb6",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "blackout_placement-closed",
+      "monotonic_ns": 79790564566300,
+      "value": {
+        "diagnostic_id": "fe685f03-4077-4186-babe-abe28be21c5c",
+        "controller_generation": "fd8bef3c-f287-4964-a0b6-6364fcbd9902",
+        "renderer_generation": "a7782e29-aab1-4719-bacf-e0f777141976",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_IDLE",
+        "observed_monotonic_ns": "79790560148000",
+        "profile_sha256": "0e68b30b2a462ccb0c241113bebd0aeabefcd3e811cf3f61cd4ea6936621abf1",
+        "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "presented": false,
+        "idle": true,
+        "resources_closed": true,
+        "adjustment_sequence": "3",
+        "calibration_view": "blackout_placement"
+      }
+    },
+    {
+      "name": "asset_hashes_unchanged",
+      "monotonic_ns": 79790565582400,
+      "value": {
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\assets\\calibration\\photodiode_placement.glb": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR\\calibration\\dc327f2d29bec448\\photodiode_placement\\calibration\\diagnostic_display_profile.json": "a56b53147c89d2612f920d1b9d19be788a7488fd53096de16d6ca4acde197150",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\assets\\calibration\\blackout_placement.glb": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR\\calibration\\dc327f2d29bec448\\blackout_placement\\calibration\\diagnostic_display_profile.json": "d70fb87d9a2f1dc113b8027109680e731c08c0bb1fe5f852aea4fa655fe2d374"
+      }
+    }
+  ],
+  "generation": "fd8bef3c-f287-4964-a0b6-6364fcbd9902"
+}

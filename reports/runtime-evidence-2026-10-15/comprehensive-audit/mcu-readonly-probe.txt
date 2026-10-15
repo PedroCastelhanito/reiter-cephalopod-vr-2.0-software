@@ -1,0 +1,16 @@
+opened
+{
+  "elapsed_s": 5.10899999999674,
+  "closed": true,
+  "rows": [
+    {
+      "phase": "startup",
+      "bytes": "4f4b2052454144592074687265655f63616d6572615f74746c0d0a"
+    },
+    {
+      "phase": "caps",
+      "bytes": "45525220556e657870656374656420636f6d6d616e6420617267756d656e74730d0a",
+      "text": "ERR Unexpected command arguments\r\n"
+    }
+  ]
+}

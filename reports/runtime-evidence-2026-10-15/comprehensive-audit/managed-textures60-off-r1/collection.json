@@ -1,0 +1,241 @@
+{
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "bd053e89-edaf-41c5-9f00-bdfedefef285",
+      "session_id": "94492c74-b076-413b-a4e3-26d8d228c4fe"
+    },
+    "outcome": "SESSION_OUTCOME_COMPLETED",
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-textures60-off-r\\DUMMY-181727",
+    "trial_count": 1,
+    "activated": true,
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "bd053e89-edaf-41c5-9f00-bdfedefef285",
+        "session_id": "94492c74-b076-413b-a4e3-26d8d228c4fe"
+      },
+      "trial_id": "a92d7c29-1d2c-408e-9ca9-1ec63df6e4e5",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_ENDED",
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "start_monotonic_ns": "78285025550200",
+    "scheduled_end_monotonic_ns": "78345025550200",
+    "actual_end_monotonic_ns": "78345025550200"
+  },
+  "errors": [],
+  "videos": {},
+  "frame_logs": {
+    "protocol-data\\DUMMY_181731_behavioral_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 1798,
+        "completion": 1
+      },
+      "received_frames": 1798,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {
+        "video_disabled": 1798
+      },
+      "video_dispositions": {},
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 78285108320900,
+      "last_source_ns": 78345008286500,
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 78345025550200,
+            "first_recorded_frame_id": null,
+            "final_received_frame_count": 1798,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 0,
+            "selected_source_frame_count": 0,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 1798
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": [
+            {
+              "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+              "count": 1,
+              "first_observed_monotonic_ns": 78285108320900,
+              "last_observed_monotonic_ns": 78285108320900,
+              "first_frame_id": 0,
+              "details": "optional native timestamp is unavailable"
+            }
+          ]
+        }
+      },
+      "completion_present": true
+    },
+    "protocol-data\\DUMMY_181731_stimulus_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "render_group": 3601,
+        "clipping": 14404,
+        "completion": 1
+      },
+      "received_frames": 0,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {},
+      "video_dispositions": {},
+      "render_groups": 3601,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 78285028492400,
+      "last_source_ns": 78345013262800,
+      "final_records": {
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 78345025550200,
+          "last_group_id": 3600,
+          "state_count": 3601,
+          "submission_attempt_count": 14404,
+          "capture_admission_count": 0,
+          "capture_drop_count": 0,
+          "same_slot_omission_count": 0,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        }
+      },
+      "completion_present": true
+    },
+    "protocol-data\\DUMMY_181731_tracking_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 3588,
+        "completion": 1
+      },
+      "received_frames": 3588,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {
+        "video_disabled": 3588
+      },
+      "video_dispositions": {},
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 78285224797800,
+      "last_source_ns": 78345009791900,
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 78345025550200,
+            "first_recorded_frame_id": null,
+            "final_received_frame_count": 3588,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 0,
+            "selected_source_frame_count": 0,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 3588
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": [
+            {
+              "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+              "count": 1,
+              "first_observed_monotonic_ns": 78285224797800,
+              "last_observed_monotonic_ns": 78285224797800,
+              "first_frame_id": 0,
+              "details": "optional native timestamp is unavailable"
+            }
+          ]
+        }
+      },
+      "completion_present": true
+    }
+  },
+  "files": [
+    {
+      "path": ".cephvr-reservation.json",
+      "bytes": 151
+    },
+    {
+      "path": ".cephvr.lock",
+      "bytes": 0
+    },
+    {
+      "path": "protocol-data\\DUMMY_181731_behavioral_cam_frames.jsonl",
+      "bytes": 382974
+    },
+    {
+      "path": "protocol-data\\DUMMY_181731_LOG.json",
+      "bytes": 12574
+    },
+    {
+      "path": "protocol-data\\DUMMY_181731_stimulus_frames.jsonl",
+      "bytes": 16737603
+    },
+    {
+      "path": "protocol-data\\DUMMY_181731_stimulus_LOG.json",
+      "bytes": 33399
+    },
+    {
+      "path": "protocol-data\\DUMMY_181731_tracking_cam_frames.jsonl",
+      "bytes": 764234
+    },
+    {
+      "path": "protocol-data\\SCHEMA.json",
+      "bytes": 6446
+    },
+    {
+      "path": "protocol-data\\SESSION_CONFIG.json",
+      "bytes": 30063
+    },
+    {
+      "path": "protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 601
+    }
+  ]
+}

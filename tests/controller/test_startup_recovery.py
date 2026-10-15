@@ -166,6 +166,49 @@ async def test_quarantine_with_marker_keeps_strict_blocking(tmp_path: Path) -> N
     assert quarantine.exists()
 
 
+@pytest.mark.windows
+@pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+@pytest.mark.parametrize("evidence", ["lock_only", "marker", "user_file"])
+async def test_native_long_quarantine_settlement_preserves_evidence_guards(
+    tmp_path: Path, evidence: str
+) -> None:
+    from cephvr.platform.windows.paths import extended_path
+
+    suffix = "20260929_experiment/subject-000000"
+    padding = 205 - len(str(tmp_path / suffix)) - 1
+    assert padding > 0
+    root = tmp_path / ("p" * padding)
+    root.mkdir()
+    store, reservation, pointer = _pointer(root)
+    session = reservation.session_directory
+    marker = reservation.marker.read_bytes()
+    reservation.protocol_directory.rmdir()
+    reservation.spikeglx_directory.rmdir()
+    if evidence != "marker":
+        reservation.marker.unlink()
+    if evidence == "user_file":
+        (session / "owner-evidence.bin").write_bytes(b"preserve")
+    reservation.release()
+    quarantine = session.with_name(f".{session.name}.{uuid.uuid4()}.cleanup")
+    assert len(str(quarantine / ".cephvr.lock")) > 260
+    session.rename(quarantine)
+    quarantine_io = Path(extended_path(quarantine))
+    if evidence == "lock_only":
+        recovery = await _prepare(root, pointer, store)
+        assert store.read_pointer() is None
+        assert not quarantine_io.exists()
+        assert recovery.notice
+    else:
+        with pytest.raises((StorageError, OSError)):
+            await _prepare(root, pointer, store)
+        assert store.read_pointer() == pointer
+        assert (quarantine_io / ".cephvr.lock").is_file()
+        if evidence == "marker":
+            assert (quarantine_io / reservation.marker.name).read_bytes() == marker
+        else:
+            assert (quarantine_io / "owner-evidence.bin").read_bytes() == b"preserve"
+
+
 async def test_pointer_with_not_activated_marker_is_cleared_without_report(
     tmp_path: Path,
 ) -> None:

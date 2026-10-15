@@ -1,0 +1,64 @@
+{
+  "source_frames": 1199,
+  "decoded_frames": 1199,
+  "count_matches": true,
+  "stream": {
+    "codec_name": "h264",
+    "width": 1280,
+    "height": 720,
+    "pix_fmt": "yuv420p",
+    "avg_frame_rate": "60/1",
+    "duration": "19.983333",
+    "nb_read_frames": "1199"
+  },
+  "full_decode_exit": 0,
+  "full_decode_error": "",
+  "probe_exit": 0,
+  "probe_error": "",
+  "probe_command": [
+    "ffprobe",
+    "-v",
+    "error",
+    "-count_frames",
+    "-select_streams",
+    "v:0",
+    "-show_entries",
+    "stream=codec_name,width,height,pix_fmt,avg_frame_rate,nb_read_frames,duration",
+    "-of",
+    "json",
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\direct-native4096-grating20-r1\\stimulus.mp4"
+  ],
+  "decode_command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-v",
+    "error",
+    "-xerror",
+    "-i",
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\direct-native4096-grating20-r1\\stimulus.mp4",
+    "-map",
+    "0:v:0",
+    "-f",
+    "null",
+    "-"
+  ],
+  "bytes": 80504,
+  "receipt_span_s": 19.9641933,
+  "observed_receipt_fps": 60.00743340829103,
+  "block_id_gaps": 0,
+  "block_id_nonincreases": 0,
+  "failed_grabs": null,
+  "interval_ms": {
+    "mean": 16.664602086811353,
+    "p95": 25.893234999999997,
+    "max": 218.8348
+  },
+  "first_frame_mean_8bit": 127.12295355902778,
+  "first_frame_std_8bit": 90.04194190316619,
+  "settings": {
+    "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2"
+  },
+  "camera_closed": null,
+  "pfs_exact_restored": null,
+  "scope": "Observed SDK receipt IDs and direct encoder frames; no managed CFR/source-selection, physical trigger/timing or scene quality equivalence claim"
+}

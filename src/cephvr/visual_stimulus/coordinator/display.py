@@ -30,6 +30,39 @@ def recovered_startup_rejection(
     )
 
 
+def rejected_calibration_update(
+    identity: Identity, state: State, link: CommandLink, result: pb.OperationState
+) -> bool:
+    display = state.display
+    if (
+        link.method != "UpdateDisplayCalibration"
+        or result.command != link.method
+        or state.setup is not None
+        or link.parent.work.WhichOneof("work") is not None
+        or result.failure.code != "CALIBRATION_ADJUSTMENT_REJECTED"
+        or display is None
+        or not display.HasField("calibration")
+    ):
+        return False
+    evidence = display.calibration
+    return (
+        display.command_id == link.parent.command_id
+        and display.complete
+        and display.source == identity.process
+        and display.backend == identity.backend
+        and display.controller == identity.controller
+        and display.requested_revision == link.child.target.configuration_revision
+        and evidence.diagnostic_id == link.diagnostic_id
+        and evidence.configuration_revision == link.child.target.configuration_revision
+        and evidence.renderer_generation == identity.worker.generation
+        and evidence.controller_generation == identity.controller.generation
+        and evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        and evidence.presented
+        and evidence.failure_code == "CALIBRATION_ADJUSTMENT_REJECTED"
+        and evidence.adjustment_sequence < link.adjustment_sequence
+    )
+
+
 async def accept_display_report(
     identity: Identity,
     state: State,

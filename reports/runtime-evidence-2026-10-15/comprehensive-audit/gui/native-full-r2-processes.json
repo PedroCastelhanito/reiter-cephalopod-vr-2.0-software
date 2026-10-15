@@ -1,0 +1,14 @@
+[
+  {
+    "ProcessId": 20432,
+    "ParentProcessId": 26524,
+    "CreationDate": "2026-10-15T17:36:47.885328+09:00",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" -m pytest tests/gui -vv -o faulthandler_timeout=60 --basetemp=C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-gui-native-20261015-r2 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/native-full-r2.xml"
+  },
+  {
+    "ProcessId": 7992,
+    "ParentProcessId": 20432,
+    "CreationDate": "2026-10-15T17:36:48.011919+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -m pytest tests/gui -vv -o faulthandler_timeout=60 --basetemp=C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-gui-native-20261015-r2 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/native-full-r2.xml"
+  }
+]

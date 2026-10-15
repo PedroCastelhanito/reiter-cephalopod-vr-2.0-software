@@ -1,0 +1,55 @@
+{
+  "observed_unix_time": 1792058699.4010668,
+  "source_revision_at_start": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "head_before_commit": "bc3c86bda4b69427ceb9311fb4600ae93108a8f7",
+  "modified_source_sha256": {
+    "src/cephvr/acquisition/coordinator/configuration_resolution.py": "a3a2d8f7810a54221b8dc2b029a4db8d60bd8fa6e66b1c22dad595858a8e6c3d",
+    "src/cephvr/controller/device/display_adjustments.py": "d3f379e1c3d44a7ef2f7994a158c879bf0a49d5e24cd682120607fe02f0a2c17",
+    "src/cephvr/controller/device/display_calibration.py": "8daf70e8913b926928fd26920f51c2eccd145da5d8d75909e6bb493ada246a07",
+    "src/cephvr/controller/lifecycle/acquisition_resolution.py": "8b34087db2aa0af44ee6a9c776ebae3c4822ef6de146303e31416bc1d8ebbeb0",
+    "src/cephvr/controller/metadata/reservation.py": "e282eaac9b1f3e8a875cbc5ebeb838536bf42eae0e0283bc22b0f6c01122b647",
+    "src/cephvr/controller/recovery.py": "f075471d1f1b65da828e8f409275e040cd884ecbec70ddf045cc4608429b2a21",
+    "src/cephvr/shared/deadlines.py": "7795d2f9542f1bbcdbf41066c27b7087cc6bd210c647babb7b436d02b62fb567",
+    "src/cephvr/visual_stimulus/coordinator/display.py": "1cd14934e407ce8ea5802de549a29511c6856b3c7a5fb8c47aac9e1e4cc82536",
+    "src/cephvr/visual_stimulus/coordinator/reports.py": "abf9e88c3d0979547a0cbbe5544126b22d25ba28cc89bb00f7156228d08c3ce4",
+    "src/cephvr/visual_stimulus/worker/calibration_adjustments.py": "9b4fb78dd3dbe2583ee0f2cab89e77b506b146c26d98657955a393f5ae850361",
+    "src/cephvr/visual_stimulus/worker/owner.py": "fcbda8a313025ed87224c65361b27eae0cd65fbeb44fef296735bddf5446cbd9",
+    "tests/acquisition/test_manual_devices.py": "4f9226d3a3a8bec30d27492b42dbf7b270aa561b6bc17754f45988556b25a18d",
+    "tests/controller/test_camera_configuration.py": "fd0fc07dd069bb25714687330a9f0b483b3f5fe623f2b3b43d0c8ec00af2f4d1",
+    "tests/controller/test_device_admission.py": "4d1620676195c081802afe319273052eed61362692137e3b87411839e8121dd7",
+    "tests/controller/test_startup_recovery.py": "22c9198054e300282f29da9838e59ec9438273cb73026e8502409a768ad7b62d",
+    "tests/controller/test_storage.py": "1ffeb04650eda085b9a2a9304c78a93b22c4e75153d867fc4ee59ea4edc1298f",
+    "tests/gui/test_dashboard.py": "b00159000d6e773fb50ec8ceb1c255c66bb4e2e0bf90798ef41d2c6d6ffd36b0",
+    "tests/shared/test_invariants.py": "0b433aa7517720b114f98d78969723a503b1055ba45ca4ec1802a143f168e1d2",
+    "tests/visual_stimulus/test_controller_communication.py": "c91289af91a6464ae0d84700a587e0c4783078861a07ebbd92afcdfd3cb27293",
+    "tests/visual_stimulus/test_coordinator.py": "e69198db2e4f772fea1ed0ac1e13728adcac648c3da11c1ca79c5a75942131ba",
+    "tests/visual_stimulus/test_lifecycle.py": "3b0171b3c8f0f5c979be31053a892f4727a57a1441c551fb166e5cbff0a732b7"
+  },
+  "checks": {
+    "backend": "1920 passed,5 skipped (symlink privilege),1 rig deselected;20.92s",
+    "explicit_rig_flow": "1 passed;0.37s; synthetic same-image CUDA/NVOF only",
+    "gui_offscreen": "519 passed across512+7; later changed row fixture separately passes",
+    "gui_native": "510 passed/2 failed/7 deselected; later reviewed row fixture passes native and offscreen; one MouseMove case unresolved and7 selection fixtures blocked",
+    "tracking_contracts": "48 passed",
+    "visual_contracts": "42 passed",
+    "static": "Ruff/format915/Win32 mypy795/boundaries699zero/whitespace pass",
+    "videos": "27 full decode/count passes:18 managed with declared counts matched;9 direct submitted counts matched",
+    "restoration": "all3 original PFS byteexact,all original feature readbacks matched,camerasclosed;10 savedJSON/TOML byteexact",
+    "final_shutdown": "Command succeeded and exact process absence confirmed, but cleanup returned an unregistered resource emergency retained; shutdown resource-report acceptance unresolved",
+    "markdown_link_targets": {
+      "checked": 1245,
+      "missing": [],
+      "scope": "edited documents and evidence README; no heading anchors changed"
+    }
+  },
+  "limits": [
+    "No MCU firmware flash; external-trigger acceptance blocked by current incompatible CAPS dialect",
+    "Tracking processing/feedback and physical optical calibration unverified",
+    "Saved full arena resource budget rejection retained; explicit reduced512texture fixture used",
+    "Abort metadata settlement40.12s and post-session calibration reopening fence remain",
+    "Final shutdown cleanup resource registration emergency remains despite command success and confirmed process absence",
+    "Native4096 direct case one BlockID gap; black Tracking sample and dim scene limit quality claims",
+    "Original direct CPU interval overlaps tests; final managed active60s interval isolated",
+    "Harnesses evolved during audit; final helper hashes are not exact historical execution revisions; per-run commands/settings/results retained"
+  ]
+}

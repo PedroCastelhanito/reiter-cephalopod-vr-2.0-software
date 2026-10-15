@@ -1,0 +1,10 @@
+{
+  "synthetic_only": true,
+  "logical_marker": "C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cv-longpath-before-20261015\\test_native_cancellation_handl0\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\.subject-131415.1d78822c-b6eb-4ece-b008-a5dd001758e2.cleanup\\.cephvr-reservation.json",
+  "logical_chars": 276,
+  "extended_bytes": 152,
+  "normal_error": {
+    "type": "FileNotFoundError",
+    "winerror": null
+  }
+}

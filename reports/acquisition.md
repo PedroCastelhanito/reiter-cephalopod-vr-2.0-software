@@ -1,5 +1,45 @@
 # Acquisition status
 
+Comprehensive Oct15 recheck completes bounded native workloads. Fresh native camera readback differs
+from saved configuration: Behavioral4096×3000/3ms versus saved1760×1716/25ms;
+Tracking ROI1588×1344 matches; Eye1920×1200 matches but native100Hz/limiter-off
+differs from saved60Hz/free-running. Full native PFS and exact saved-file backups
+are retained before mutation. Engineering tests explicitly use the saved profile
+and restore all three fresh native PFS baselines byte-exact with every original
+feature readback matching and camera closed; no new scientific settings are adopted.
+COM8 currently exposes an incompatible `three_camera_ttl` command dialect, so
+external-trigger preview cannot be accepted. No firmware is flashed. Explicit
+unaligned free-running tests disable every MCU output and prove no synchronization.
+The controller's retained-port/free-running pulse-report mismatch is repaired with
+real owning regressions; native Setup reaches acquisition Ready, then a renderer
+resource rejection and long-path cancellation/recovery issue initially block trials.
+After focused repairs, native saved-profile/free-running trials complete Gaussian,
+reduced-texture arena and video Save On→Off→On cases with real cameras and four
+projector outputs. Save-Off produces no videos but retains detailed frame/scientific
+logs. All18 videos across seven normal/interrupted trials fully decode/count;
+the final isolated two-camera/four-projector workload and exact original PFS/settings
+restoration are assessed in [runtime](runtime.md). Camera final CFR outputs have
+3/1801 Behavioral and12/3600 Tracking repeats, with zero failed/missed buffers;
+this is explicit resampling, not loss-free source capture or synchronization.
+An immediate post-Abort60-second trial runs51.8548seconds beyond the retired
+boundary without stale-worker/cleanup errors. Both interrupted runs still require
+about40.12seconds for metadata settlement; no normal Finished outcome is invented.
+Independent synchronous SDK/FFmpeg capacity tests now complete two60-second
+CQ23/CQ18 camera+offscreen-shader runs and a separate20-second native4096×3000
+Behavioral/grating variant. All nine videos fully decode and counts equal submitted
+frames. CQ23 receives1807 Behavioral/3601 Tracking frames; CQ18 receives1806/3600;
+both have zero failed grabs/observed BlockID gaps. Cameras start before the common
+barrier, so these are receipt spans, not exact trial CFR counts. Native4096 receives
+594 frames at29.69 receipt fps with one BlockID gap: this is observed loss, not a
+loss-free full-resolution guarantee. The sampled Tracking image is exactly black;
+Behavioral imagery is dim. CQ23/CQ18 Behavioral sizes141.58/338.54MB are engineering
+measurements, not representative-scene quality selection. SDK pipelines bypass
+production queues/CFR and Tracking processing. Camera closure is confirmed;
+Per-case PFS serialization initially differs only in selector context; final
+pre-audit PFS restoration is byte-exact for all three cameras, with original feature
+readbacks verified. [Counts/full decodes/settings](runtime-evidence-2026-10-15/comprehensive-audit/direct-assessment.json),
+[final restoration](runtime-evidence-2026-10-15/comprehensive-audit/final-restoration.json).
+
 Owner-selected Oct15 recording tuning now uses CQ23/p4 H.264 NVENC VBR with
 zero target bitrate, zero lookahead and both AQ modes explicitly disabled for
 all three cameras. Behavioral retains full-range BT.709 YUV444; Tracking and Eye

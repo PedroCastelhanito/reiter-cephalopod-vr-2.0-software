@@ -1,0 +1,74 @@
+[
+  {
+    "ProcessId": 20432,
+    "ParentProcessId": 26524,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" -m pytest tests/gui -vv -o faulthandler_timeout=60 --basetemp=C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-gui-native-20261015-r2 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/native-full-r2.xml"
+  },
+  {
+    "ProcessId": 7992,
+    "ParentProcessId": 20432,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -m pytest tests/gui -vv -o faulthandler_timeout=60 --basetemp=C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-gui-native-20261015-r2 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/native-full-r2.xml"
+  },
+  {
+    "ProcessId": 23684,
+    "ParentProcessId": 32064,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe\" -u -m cephvr.platform.windows.python_entry cephvr.launcher.main --no-tracking"
+  },
+  {
+    "ProcessId": 15168,
+    "ParentProcessId": 23684,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.supervisor.main --bootstrap-handle 816 --launcher-control-handle 828 --launcher-controller-control-handle 836 --launcher-ack-handle 840"
+  },
+  {
+    "ProcessId": 27352,
+    "ParentProcessId": 15168,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.controller.main --bootstrap-handle 792"
+  },
+  {
+    "ProcessId": 4196,
+    "ParentProcessId": 15168,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.main --bootstrap-handle 800"
+  },
+  {
+    "ProcessId": 18080,
+    "ParentProcessId": 15168,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.visual_stimulus.main --bootstrap-handle 852"
+  },
+  {
+    "ProcessId": 28444,
+    "ParentProcessId": 15168,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.gui.main --bootstrap-handle 872"
+  },
+  {
+    "ProcessId": 25796,
+    "ParentProcessId": 18080,
+    "Name": "cephvr-renderer.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe -m cephvr.platform.windows.python_entry cephvr.visual_stimulus.worker.main --bootstrap-handle 952"
+  },
+  {
+    "ProcessId": 27552,
+    "ParentProcessId": 20896,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" -u reports/runtime-evidence-2026-10-15/comprehensive-audit/managed.py previews --label previews-r1"
+  },
+  {
+    "ProcessId": 30184,
+    "ParentProcessId": 27552,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -u reports/runtime-evidence-2026-10-15/comprehensive-audit/managed.py previews --label previews-r1"
+  },
+  {
+    "ProcessId": 8028,
+    "ParentProcessId": 4196,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.worker.main --bootstrap-handle 1020"
+  }
+]

@@ -1,0 +1,286 @@
+executable=C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\cephvr-python.exe
+argv=['-m', 'cephvr.acquisition.worker.main', '--bootstrap-handle', '628']
+
+ASYNC TASK CHAINS
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-6
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py:178 _serve
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\server.py:65 serve_registered_worker
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:428 wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:535 _wait
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-18
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-20
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK cephvr-acquisition-worker-health
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py:258 _health_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK Task-11
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK Task-23
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-13
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-24
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+Timeout (0:00:30)!
+Thread 0x000033d0 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\events.py", line 135 in wait
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\camera\wait.py", line 137 in wait_control
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\camera\basler.py", line 393 in wait_for_control
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 242 in _wait_control
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 153 in <lambda>
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\owner.py", line 244 in _run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00001f74 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x000076d4 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 825 in _poll
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 444 in select
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 1898 in _run_once
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 608 in run_forever
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 321 in run_forever
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 641 in run_until_complete
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190 in run
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py", line 40 in traced_run
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 51 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 288 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 98 in _run_module_code
+  File "<frozen runpy>", line 226 in run_module
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+
+ASYNC TASK CHAINS
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-6
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py:178 _serve
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\server.py:65 serve_registered_worker
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:428 wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:535 _wait
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-18
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-20
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK cephvr-acquisition-worker-health
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py:258 _health_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK Task-11
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK Task-23
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-13
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-24
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+
+ASYNC TASK CHAINS
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-6
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py:178 _serve
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\server.py:65 serve_registered_worker
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:428 wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:535 _wait
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-18
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-20
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK cephvr-acquisition-worker-health
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py:258 _health_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK Task-11
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK Task-23
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-13
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-24
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+Timeout (0:00:30)!
+Thread 0x000033d0 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\events.py", line 135 in wait
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\camera\wait.py", line 137 in wait_control
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\camera\basler.py", line 393 in wait_for_control
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 242 in _wait_control
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 153 in <lambda>
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\owner.py", line 244 in _run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00001f74 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x000076d4 (most recent call first):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 825 in _poll
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 444 in select
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 1898 in _run_once
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 608 in run_forever
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\windows_events.py", line 321 in run_forever
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 641 in run_until_complete
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190 in run
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py", line 40 in traced_run
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 51 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 288 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 98 in _run_module_code
+  File "<frozen runpy>", line 226 in run_module
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+
+ASYNC TASK CHAINS
+TASK Task-25
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-4
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-15
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-5
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-16
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-6
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-1
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\diagnostics\sitecustomize.py:38 traced
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py:178 _serve
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\server.py:65 serve_registered_worker
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:428 wait
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:535 _wait
+TASK Task-17
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-7
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-18
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-19
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-9
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-20
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-10
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK cephvr-acquisition-worker-health
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py:258 _health_loop
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:649 sleep
+TASK Task-21
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_call
+TASK Task-11
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-12
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-3
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _server_main_loop
+TASK Task-23
+  C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py:210 wait_for_termination
+TASK Task-13
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call
+TASK Task-24
+  C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py:213 wait
+TASK Task-14
+  src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi:None _request_registered_call

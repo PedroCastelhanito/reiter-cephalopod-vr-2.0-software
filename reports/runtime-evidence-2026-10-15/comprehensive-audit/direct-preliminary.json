@@ -1,0 +1,60 @@
+{
+  "direct-cq23-60-r1": {
+    "stimulus": {
+      "frames": 3600,
+      "measured_fps": 59.99964693733736,
+      "bytes": 120852846,
+      "failed_grabs": null,
+      "id_gaps": 0,
+      "mean_write_or_render_ms": 7.435537888888889,
+      "encoder_exit": 0
+    },
+    "behavioral": {
+      "frames": 1807,
+      "measured_fps": 30.09437144970776,
+      "bytes": 141582950,
+      "failed_grabs": 0,
+      "id_gaps": 0,
+      "mean_write_or_render_ms": 2.7399080796900943,
+      "encoder_exit": 0
+    },
+    "tracking": {
+      "frames": 3601,
+      "measured_fps": 59.9989854171566,
+      "bytes": 322612,
+      "failed_grabs": 0,
+      "id_gaps": 0,
+      "mean_write_or_render_ms": 0.9588376839766731,
+      "encoder_exit": 0
+    }
+  },
+  "direct-cq18-60-r1": {
+    "stimulus": {
+      "frames": 3600,
+      "measured_fps": 59.995835665541556,
+      "bytes": 120955450,
+      "failed_grabs": null,
+      "id_gaps": 0,
+      "mean_write_or_render_ms": 7.485100805555556,
+      "encoder_exit": 0
+    },
+    "behavioral": {
+      "frames": 1806,
+      "measured_fps": 30.08678664455975,
+      "bytes": 338543338,
+      "failed_grabs": 0,
+      "id_gaps": 0,
+      "mean_write_or_render_ms": 3.7126281284606866,
+      "encoder_exit": 0
+    },
+    "tracking": {
+      "frames": 3600,
+      "measured_fps": 59.99657757783364,
+      "bytes": 325453,
+      "failed_grabs": 0,
+      "id_gaps": 0,
+      "mean_write_or_render_ms": 2.187647222222222,
+      "encoder_exit": 0
+    }
+  }
+}

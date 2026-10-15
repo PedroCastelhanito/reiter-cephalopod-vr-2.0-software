@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-15",
+  "governing_decisions": [
+    "G01",
+    "V01",
+    "ARCH-002"
+  ],
+  "scope": "Worker update_presentation reuses canonical CalibrationPlacement.validate_display(display) before effectful engine.update_display_calibration; exact adopted DisplayProfile already exists. No new coordinator state, fences or retirement behavior.",
+  "problem": "Native live Update admitted structurally valid out-of-bounds pulse, then GL/native validation caused actor shutdown. Command admission did not establish successful terminal update.",
+  "fix": "Placement bounds/output-set validation now raises CalibrationAdjustmentRejected before engine dispatch; existing rejection reporting retains Active/presented/sequence/identity/prepared inputs.",
+  "coverage": "Existing lifecycle test checks out-of-bounds pulse, Frame/background and blackout; unknown output set; engine call count/prior applied placement unchanged; prior active parsedprofile identity/diagnostic/prepared/presented/sequence retained; owner advances and next valid seq2 succeeds.",
+  "before": "2 placement variants fail to reject;4 variants pass",
+  "after": "6 owning variants pass. Initial post-fix fixture checked external profile identity rather than saved parsed profile; corrected snapshot and retained raw failed attempt.",
+  "review": "Astra final source/test diff accepted; exact CalibrationAdjustmentRejected asserted.",
+  "source_hashes": {
+    "src/cephvr/visual_stimulus/worker/calibration_adjustments.py": "9b4fb78dd3dbe2583ee0f2cab89e77b506b146c26d98657955a393f5ae850361",
+    "tests/visual_stimulus/test_lifecycle.py": "f80ad7b906246332821b98938ee09c235feb116dcbc413d0fa5d303f129ebfbf"
+  },
+  "validation": {
+    "ruff": "pass2files",
+    "format": "pass2files after correcting initial assertion wrapping",
+    "mypy_win32": "pass1source",
+    "boundaries": "699modules/0violations",
+    "whitespace_scoped": "pass"
+  },
+  "suites": {
+    "placement-bounds-after2": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "6",
+      "time": "0.276",
+      "timestamp": "2026-10-15T18:31:20.449963+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "placement-owner": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "343",
+      "time": "2.498",
+      "timestamp": "2026-10-15T18:32:06.767060+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "placement-native-owner": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "73",
+      "time": "0.990",
+      "timestamp": "2026-10-15T18:32:07.858166+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    }
+  },
+  "native_retest": "Rig lead owns fresh-generation actual invalid-to-valid update. Not run by this agent."
+}

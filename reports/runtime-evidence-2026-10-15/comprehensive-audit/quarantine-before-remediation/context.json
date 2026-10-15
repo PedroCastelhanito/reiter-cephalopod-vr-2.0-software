@@ -1,0 +1,28 @@
+{
+  "scope": "Explicit cleanup of this audit's failed pre-StartSession artifact after exact process absence; not general recovery acceptance",
+  "logical_target": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\comprehensive-audit\\recordings\\20261015_comprehensive_audit_textures60-cq23-fixed-r2\\.DUMMY-175717.3c8081ea-3bf4-4e8a-8bb9-db7533431295.cleanup",
+  "session": "a83a2f34-7e49-4c8f-b74f-ecc12c8d56b5",
+  "generation": "aeeeb20a-4ba2-4584-918e-e181a3dbcb9b",
+  "receipt": {
+    "all_owned_processes_absent": true,
+    "controller_channel_loss": "eof",
+    "controller_generation": "aeeeb20a-4ba2-4584-918e-e181a3dbcb9b",
+    "format_version": 1,
+    "observed_monotonic_ns": 77151470510600,
+    "supervisor_generation": "fb278ba4-855f-483b-8fe4-c7cab0b104a2"
+  },
+  "files": [
+    {
+      "name": ".cephvr-reservation.json",
+      "size": 152,
+      "sha256": "7cd6d52996c201825d1b9b20627b1d4875914683fb9c1de34a3c3be92141a138",
+      "attributes": 32
+    },
+    {
+      "name": ".cephvr.lock",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "attributes": 32
+    }
+  ]
+}

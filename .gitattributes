@@ -3,3 +3,5 @@
 # Captured diagnostic bytes and patch context retain original whitespace.
 reports/*evidence*/** -whitespace
 reports/**/*.pb binary
+# Preserve the byte hashes of this audit's raw captures and restoration backups.
+reports/runtime-evidence-2026-10-15/comprehensive-audit/** -text

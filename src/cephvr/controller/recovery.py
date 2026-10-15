@@ -12,6 +12,7 @@ import base64
 import json
 import logging
 import re
+import sys
 import threading
 import uuid
 from collections.abc import Awaitable, Callable
@@ -31,6 +32,7 @@ from cephvr.controller.recovery_inspection import (
     inspect_recovery,
 )
 from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
+from cephvr.platform.windows.paths import extended_path
 from cephvr.shared.clock import host_time_ns, require_int64_ns
 from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
@@ -84,6 +86,8 @@ def _settle_cancelled_namespace(directory: Path) -> bool:
     A remaining quarantine that holds a reservation marker or anything but the lock
     is not ours to judge: return False and keep today's strict blocking.
     """
+    if sys.platform == "win32":
+        directory = Path(extended_path(directory))
     if directory.is_symlink() or directory.exists():
         return False
     parent = directory.parent

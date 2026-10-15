@@ -1,0 +1,19 @@
+{
+  "format": "cephvr-microcontroller-config",
+  "version": 3,
+  "port": "COM91",
+  "firmware_path": "C:/实验/firmware.ino",
+  "trial_state": {
+    "pin": "D8",
+    "enabled": false
+  },
+  "projector_flip": {
+    "pin": "D2",
+    "enabled": true
+  },
+  "camera_pins": {
+    "behavioral": "D9",
+    "tracking": "D10",
+    "eye_tracking": "D11"
+  }
+}

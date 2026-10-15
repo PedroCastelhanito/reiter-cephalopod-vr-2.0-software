@@ -1,0 +1,21 @@
+{
+  "scope": "Distinct reduced-texture engineering fixture, not original-scene fidelity/quality acceptance; original geometry/materials/BIN prefix retained, embedded images separately resized to at most512px",
+  "source": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\arenas\\open-loop-engineering\\arena-unlit-engineering.glb",
+  "source_sha256": "ee2e22d95cdbe3c835162a15b2f494d89399d7ca2b75f64bf81e4bbd94064f70",
+  "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\arenas\\cephvr-audit-20261015\\arena512.glb",
+  "logical_path": "media/arenas/cephvr-audit-20261015/arena512.glb",
+  "sha256": "cff8d0e3d24a4d052f4218162ffcc9bfca438a582ff1d2a6ca9b5fde2df2b3e4",
+  "images": [
+    {
+      "image": 0,
+      "original_size": [
+        2048,
+        2048
+      ],
+      "fixture_size": [
+        512,
+        512
+      ]
+    }
+  ]
+}

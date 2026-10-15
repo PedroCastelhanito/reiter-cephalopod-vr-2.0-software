@@ -1,0 +1,113 @@
+{
+  "scope": "Active managed trial only; system CPU and device-wide GPU samples, no per-process GPU attribution",
+  "requested_interval_ns": [
+    80448206625400,
+    80508206625400
+  ],
+  "sample_interval_ns": [
+    80448737417800,
+    80507737283900
+  ],
+  "cpu_percent": {
+    "samples": 59,
+    "mean": 11.370790993646025,
+    "p50": 11.284807034684905,
+    "p95": 16.18686437097235,
+    "maximum": 20.323212536728697,
+    "minimum": 6.158357771260997
+  },
+  "gpus": {
+    "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization_gpu": {
+        "samples": 59,
+        "mean": 11.152542372881356,
+        "p50": 11.0,
+        "p95": 12.0,
+        "maximum": 12.0,
+        "minimum": 10.0
+      },
+      "utilization_encoder": {
+        "samples": 59,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0,
+        "minimum": 0.0
+      },
+      "memory_mib": {
+        "samples": 59,
+        "mean": 716.0,
+        "p50": 716.0,
+        "p95": 716.0,
+        "maximum": 716.0,
+        "minimum": 716.0
+      },
+      "power_w": {
+        "samples": 59,
+        "mean": 32.9386440677966,
+        "p50": 33.0,
+        "p95": 33.33,
+        "maximum": 33.49,
+        "minimum": 29.37
+      }
+    },
+    "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 2080 Ti",
+      "utilization_gpu": {
+        "samples": 59,
+        "mean": 27.983050847457626,
+        "p50": 26.0,
+        "p95": 31.0,
+        "maximum": 32.0,
+        "minimum": 14.0
+      },
+      "utilization_encoder": {
+        "samples": 59,
+        "mean": 43.186440677966104,
+        "p50": 44.0,
+        "p95": 46.0,
+        "maximum": 47.0,
+        "minimum": 13.0
+      },
+      "memory_mib": {
+        "samples": 59,
+        "mean": 713.0,
+        "p50": 713.0,
+        "p95": 713.0,
+        "maximum": 713.0,
+        "minimum": 713.0
+      },
+      "power_w": {
+        "samples": 59,
+        "mean": 58.51050847457627,
+        "p50": 62.19,
+        "p95": 63.242,
+        "maximum": 79.81,
+        "minimum": 39.75
+      }
+    }
+  },
+  "monitored_process_rss_bytes": {
+    "samples": 60,
+    "mean": 2291900484.266667,
+    "p50": 2294890496.0,
+    "p95": 2339130572.8,
+    "maximum": 2349871104,
+    "minimum": 2233450496
+  },
+  "memory_scope": "Sum of monitored Python/CephVR/FFmpeg/nvidia-smi working sets, including monitor; not system used RAM or deduplicated shared pages",
+  "disk_free_bytes": {
+    "first": 1394316058624,
+    "last": 1394124591104,
+    "minimum": 1394124591104
+  },
+  "monitored_process_io_bytes": {
+    "read_bytes": 41717330056,
+    "write_bytes": 41907450720,
+    "other_bytes": 31040988
+  },
+  "io_scope": "Identity-fenced process IO counter deltas over sampled interval; not physical disk throughput"
+}

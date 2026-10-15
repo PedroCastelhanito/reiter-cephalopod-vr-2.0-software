@@ -1,0 +1,52 @@
+executable=C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\cephvr-python.exe
+argv=['-m', 'cephvr.launcher.main', '--no-tracking']
+Timeout (0:00:30)!
+Thread 0x00004348 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\notification_reader.py", line 41 in read_notifications
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00006508 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\notification_reader.py", line 41 in read_notifications
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00003508 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 409 in run_launcher
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 468 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 481 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 98 in _run_module_code
+  File "<frozen runpy>", line 226 in run_module
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+Timeout (0:00:30)!
+Thread 0x00004348 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\notification_reader.py", line 41 in read_notifications
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00006508 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\notification_reader.py", line 41 in read_notifications
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 982 in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\threading.py", line 1002 in _bootstrap
+
+Thread 0x00003508 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 409 in run_launcher
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 468 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 481 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 98 in _run_module_code
+  File "<frozen runpy>", line 226 in run_module
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24 in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

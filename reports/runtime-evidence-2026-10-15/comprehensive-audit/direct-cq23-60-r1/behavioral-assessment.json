@@ -1,0 +1,67 @@
+{
+  "source_frames": 1807,
+  "decoded_frames": 1807,
+  "count_matches": true,
+  "stream": {
+    "codec_name": "h264",
+    "width": 1760,
+    "height": 1716,
+    "pix_fmt": "yuvj444p",
+    "avg_frame_rate": "1000000/33333",
+    "duration": "60.232731",
+    "nb_read_frames": "1807"
+  },
+  "full_decode_exit": 0,
+  "full_decode_error": "",
+  "probe_exit": 0,
+  "probe_error": "",
+  "probe_command": [
+    "ffprobe",
+    "-v",
+    "error",
+    "-count_frames",
+    "-select_streams",
+    "v:0",
+    "-show_entries",
+    "stream=codec_name,width,height,pix_fmt,avg_frame_rate,nb_read_frames,duration",
+    "-of",
+    "json",
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\direct-cq23-60-r1\\behavioral.mp4"
+  ],
+  "decode_command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-v",
+    "error",
+    "-xerror",
+    "-i",
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\direct-cq23-60-r1\\behavioral.mp4",
+    "-map",
+    "0:v:0",
+    "-f",
+    "null",
+    "-"
+  ],
+  "bytes": 141582950,
+  "receipt_span_s": 60.0112218,
+  "observed_receipt_fps": 30.09437144970776,
+  "block_id_gaps": 0,
+  "block_id_nonincreases": 0,
+  "failed_grabs": 0,
+  "interval_ms": {
+    "mean": 33.228804983388706,
+    "p95": 34.0661,
+    "max": 232.2558
+  },
+  "first_frame_mean_8bit": 34.904753500918275,
+  "first_frame_std_8bit": 5.273989468173947,
+  "settings": {
+    "width": 1760,
+    "height": 1716,
+    "actual_hz": 30.00030000300003,
+    "pixel_format": "BayerRG8"
+  },
+  "camera_closed": true,
+  "pfs_exact_restored": false,
+  "scope": "Observed SDK receipt IDs and direct encoder frames; no managed CFR/source-selection, physical trigger/timing or scene quality equivalence claim"
+}

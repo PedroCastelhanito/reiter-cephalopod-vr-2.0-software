@@ -768,6 +768,7 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
             return True
 
     presentations = []
+    updates = []
     pulse_failure = [False]
 
     class EngineStub:
@@ -782,6 +783,7 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
 
         def update_display_calibration(self, selected, asset, adjustments):
             assert selected == profile and asset is prepared
+            updates.append(adjustments)
             if calibration_view == "frame_grid":
                 assert "front" in adjustments
             else:
@@ -919,6 +921,47 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
         assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
         assert owner.evidence.adjustment_sequence == 1
         assert owner.evidence.failure_code == "CALIBRATION_ADJUSTMENT_REJECTED"
+        if calibration_view != "frame_grid":
+            from copy import deepcopy
+
+            from cephvr.visual_stimulus.config.calibration_adjustments import (
+                CalibrationAdjustmentRejected,
+            )
+
+            payload = json.loads(placement_json)
+            invalid = deepcopy(payload)
+            invalid["outputs"][0]["blackout_zones"] = [
+                dict(x=100_000, y=1, width=2, height=2)
+            ]
+            invalid_updates = [invalid]
+            invalid = deepcopy(payload)
+            invalid["outputs"].append(dict(output_id="unknown", blackout_zones=[]))
+            invalid_updates.append(invalid)
+            if calibration_view == "photodiode_placement":
+                invalid = deepcopy(payload)
+                invalid["photodiode_patch"]["rect"]["x"] = 100_000
+                invalid_updates.append(invalid)
+                invalid = deepcopy(payload)
+                invalid["photodiode_patch"]["background_rect"] = dict(
+                    x=0, y=0, width=100_000, height=100_000
+                )
+                invalid_updates.append(invalid)
+            applied = updates[-1]
+            active_profile = owner.active_profile
+            for invalid in invalid_updates:
+                update.placement_json = json.dumps(invalid)
+                with pytest.raises(CalibrationAdjustmentRejected):
+                    owner.update(update, command.deadline_monotonic_ns)
+                assert updates == [applied]
+                assert owner.active_id == opened.diagnostic_id
+                assert owner.active_profile is active_profile
+                assert owner.prepared is prepared
+                assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+                assert owner.evidence.presented
+                assert owner.evidence.adjustment_sequence == 1
+                assert owner.evidence.failure_code == "CALIBRATION_ADJUSTMENT_REJECTED"
+                owner.advance(clock())
+                assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
         if calibration_view == "frame_grid":
             update.adjustments[0].destination_xy[0] = 0.1
         else:
@@ -1630,6 +1673,62 @@ def test_cleanup_retains_prior_trial_results_and_unscheduled_output_absence():
     assert outputs["previous"].artifact_present
     assert outputs["unscheduled"].closure == pb.OUTPUT_CLOSURE_NOT_STARTED
     assert not outputs["unscheduled"].artifact_present
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "method,rejected,benign",
+    [
+        ("UpdateDisplayCalibration", True, True),
+        ("UpdateDisplayCalibration", False, False),
+        ("OpenDisplayCalibration", True, False),
+    ],
+)
+async def test_render_mailbox_retains_typed_update_rejection_without_failing_driver(
+    method, rejected, benign
+):
+    from cephvr.visual_stimulus.config.calibration_adjustments import (
+        CalibrationAdjustmentRejected,
+    )
+    from cephvr.visual_stimulus.worker.owner import RenderOwner
+
+    clock = Clock()
+    error = (
+        CalibrationAdjustmentRejected("invalid placement")
+        if rejected
+        else RuntimeError("presentation failed")
+    )
+
+    class Driver:
+        def __init__(self):
+            self.failures = []
+            self.commands = []
+
+        def execute(self, selected, request, deadline_ns):
+            self.commands.append(selected)
+            if len(self.commands) == 1:
+                raise error
+
+        def advance(self, now_ns):
+            return None
+
+        def fail(self, failure):
+            self.failures.append(failure)
+
+    driver = Driver()
+    owner = RenderOwner(lambda _: driver, clock=clock)
+    try:
+        with pytest.raises(type(error), match=str(error)):
+            await owner.submit(method, pb.OperationState(), clock() + 1_000_000_000)
+        await owner.submit(
+            "UpdateDisplayCalibration", pb.OperationState(), clock() + 1_000_000_000
+        )
+        assert driver.failures == ([] if benign else [error])
+        assert owner.failure is None
+        assert not owner.cancelled.is_set()
+        assert len(driver.commands) == 2
+    finally:
+        await owner.close(clock() + 1_000_000_000)
 
 
 @pytest.mark.asyncio

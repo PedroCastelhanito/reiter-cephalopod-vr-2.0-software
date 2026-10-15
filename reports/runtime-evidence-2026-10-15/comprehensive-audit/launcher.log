@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 20, in <module>
+    from cephvr.launcher.gui_relaunch import (
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\gui_relaunch.py", line 17, in <module>
+    from cephvr.platform.windows.jobs import WindowsLaunchError
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\jobs.py", line 5, in <module>
+    import ctypes
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py", line 8, in <module>
+    from _ctypes import Union, Structure, Array
+ImportError: DLL load failed while importing _ctypes: The specified module could not be found.

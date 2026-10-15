@@ -1,0 +1,4 @@
+endpoint=LauncherEndpoint(controller_generation='60396af4-4079-439b-9201-83481dcd5ec3', supervisor_generation='6ca5acc9-4697-47f7-b027-ae70ad2211d4', event_id='c877bff0-8dc6-4e3e-a193-cd90fb88a9ad', replacement_timeout_ns=92000000000, gui_relaunch_event_id='7a0d113c-c56c-44de-a228-e393880fbb5e')
+phase: SESSION_PHASE_CONFIGURATION
+
+[]

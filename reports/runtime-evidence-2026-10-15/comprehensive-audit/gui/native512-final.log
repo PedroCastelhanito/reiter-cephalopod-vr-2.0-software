@@ -1,0 +1,642 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 519 items / 7 deselected / 512 selected
+
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor0-area0-1.0-expected0] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor1-area1-1.0-expected1] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor2-area2-1.0-expected2] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor3-area3-1.0-expected3] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor4-area4-1.0-expected4] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor5-area5-2.0-expected5] PASSED [  1%]
+tests/gui/test_dashboard.py::test_square_preview_placement_fits_small_work_area PASSED [  1%]
+tests/gui/test_dashboard.py::test_offline_frontend_cannot_request_commands PASSED [  1%]
+tests/gui/test_dashboard.py::test_protocol_config_round_trip_retains_complete_schedule PASSED [  1%]
+tests/gui/test_dashboard.py::test_microcontroller_config_load_is_local_and_collects_for_normal_submission PASSED [  1%]
+tests/gui/test_dashboard.py::test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity PASSED [  2%]
+tests/gui/test_dashboard.py::test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory PASSED [  2%]
+tests/gui/test_dashboard.py::test_full_gui_config_round_trip_restores_all_sections_without_commands PASSED [  2%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[experiment] PASSED [  2%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[protocol] PASSED [  2%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[microcontroller] PASSED [  3%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[projectors] PASSED [  3%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[spikeglx] PASSED [  3%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[tracking] PASSED [  3%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"format": "a", "format": "b"}] PASSED [  3%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"n": NaN}] PASSED [  4%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[[1,2]] PASSED [  4%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"invalid":] PASSED [  4%]
+tests/gui/test_dashboard.py::test_snapshot_limits_and_failed_save_preserve_existing_file PASSED [  4%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[False-False] PASSED [  4%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[False-True] PASSED [  5%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[True-False] PASSED [  5%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[True-True] PASSED [  5%]
+tests/gui/test_dashboard.py::test_started_config_chooser_closes_on_authority_loss[False] PASSED [  5%]
+tests/gui/test_dashboard.py::test_started_config_chooser_closes_on_authority_loss[True] PASSED [  5%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-protocol] PASSED [  6%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-tracking] PASSED [  6%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-cameras] PASSED [  6%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-microcontroller] PASSED [  6%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-spikeglx] PASSED [  6%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-gui] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-protocol] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-tracking] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-cameras] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-microcontroller] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-spikeglx] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-gui] PASSED [  8%]
+tests/gui/test_dashboard.py::test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling PASSED [  8%]
+tests/gui/test_dashboard.py::test_loaded_camera_presets_cannot_claim_sdk_import_provenance PASSED [  8%]
+tests/gui/test_dashboard.py::test_loaded_camera_timing_keeps_only_applicable_activation[Internal clock] PASSED [  8%]
+tests/gui/test_dashboard.py::test_loaded_camera_timing_keeps_only_applicable_activation[External controller] PASSED [  8%]
+tests/gui/test_dashboard.py::test_camera_settings_timing_keeps_only_applicable_activation[Internal clock] PASSED [  9%]
+tests/gui/test_dashboard.py::test_camera_settings_timing_keeps_only_applicable_activation[External controller] PASSED [  9%]
+tests/gui/test_dashboard.py::test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic PASSED [  9%]
+tests/gui/test_dashboard.py::test_camera_save_validation_error_routes_to_other_camera_row PASSED [  9%]
+tests/gui/test_dashboard.py::test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit PASSED [  9%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[camera] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[camera_pending] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[mcu] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[tracking] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[projector] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_managed_subject_metadata_preserves_absence_and_numeric_zero PASSED [ 11%]
+tests/gui/test_dashboard.py::test_managed_subject_metadata_preserves_unknown_sex_value PASSED [ 11%]
+tests/gui/test_dashboard.py::test_managed_runtime_editors_are_enabled_without_review_samples PASSED [ 11%]
+tests/gui/test_dashboard.py::test_dashboard_control_status_matches_connection_and_authority PASSED [ 11%]
+tests/gui/test_dashboard.py::test_shared_theme_styles_menu_bar_and_menu_states PASSED [ 11%]
+tests/gui/test_dashboard.py::test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking PASSED [ 12%]
+tests/gui/test_dashboard.py::test_managed_status_uses_readiness_and_output_closure_evidence PASSED [ 12%]
+tests/gui/test_dashboard.py::test_retained_summary_keeps_incidents_ahead_of_completed_operation_history PASSED [ 12%]
+tests/gui/test_dashboard.py::test_auto_retained_review_filters_only_exact_routine_warnings PASSED [ 12%]
+tests/gui/test_dashboard.py::test_auto_retained_review_operation_and_recovery_truth_table PASSED [ 12%]
+tests/gui/test_dashboard.py::test_retained_ack_guard_reassesses_fresh_snapshot_but_preserves_same_identity PASSED [ 13%]
+tests/gui/test_dashboard.py::test_manual_history_review_opens_without_ack_guard PASSED [ 13%]
+tests/gui/test_dashboard.py::test_mandatory_review_can_be_reopened_after_same_identity_history_empties PASSED [ 13%]
+tests/gui/test_dashboard.py::test_managed_prompt_window_is_single_and_responds_with_displayed_snapshot PASSED [ 13%]
+tests/gui/test_dashboard.py::test_prompt_completion_preserves_current_lease_authority PASSED [ 13%]
+tests/gui/test_dashboard.py::test_managed_retained_summary_uses_one_acknowledgement_window PASSED [ 14%]
+tests/gui/test_dashboard.py::test_old_retained_dialog_cannot_acknowledge_a_new_connection PASSED [ 14%]
+tests/gui/test_dashboard.py::test_closing_retained_review_does_not_acknowledge PASSED [ 14%]
+tests/gui/test_dashboard.py::test_long_retained_review_scrolls_without_hiding_actions PASSED [ 14%]
+tests/gui/test_dashboard.py::test_retained_summary_keeps_ids_in_details_and_all_actionable_operations_visible PASSED [ 14%]
+tests/gui/test_dashboard.py::test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch PASSED [ 15%]
+tests/gui/test_dashboard.py::test_prompt_completion_wait_failure_retains_admitted_id_as_unconfirmed PASSED [ 15%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_connection_emits_read_only_intent[False] PASSED [ 15%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_connection_emits_read_only_intent[True] PASSED [ 15%]
+tests/gui/test_dashboard.py::test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits PASSED [ 15%]
+tests/gui/test_dashboard.py::test_preview_window_waits_for_backend_completion[True] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_preview_window_waits_for_backend_completion[False] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_managed_camera_controls_emit_intent_without_changing_local_device_state PASSED [ 16%]
+tests/gui/test_dashboard.py::test_devices_draft_icons_local_edits_and_command_gates PASSED [ 16%]
+tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[720] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[1175] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_folder_picker_selection_cancellation_and_phase_lock PASSED [ 17%]
+tests/gui/test_dashboard.py::test_compact_path_keeps_full_text_tooltip_and_editing PASSED [ 17%]
+tests/gui/test_dashboard.py::test_log_keeps_reading_position_during_append_and_retention PASSED [ 17%]
+tests/gui/test_dashboard.py::test_log_entry_details_follow_their_own_bounded_document_block PASSED [ 17%]
+tests/gui/test_dashboard.py::test_managed_operation_log_distinguishes_admission_completion_and_failure PASSED [ 17%]
+tests/gui/test_dashboard.py::test_successful_tracking_frame_poll_does_not_add_routine_log_row PASSED [ 18%]
+tests/gui/test_dashboard.py::test_preview_geometry_survives_recreation PASSED [ 18%]
+tests/gui/test_dashboard.py::test_review_intent_does_not_advance_session PASSED [ 18%]
+tests/gui/test_dashboard.py::test_preview_selector_reuses_modeless_window_and_keeps_visibility PASSED [ 18%]
+tests/gui/test_dashboard.py::test_preview_snap_gap_and_available_screen_bounds[anchor0-area0-expected0] PASSED [ 18%]
+tests/gui/test_dashboard.py::test_preview_snap_gap_and_available_screen_bounds[anchor1-area1-expected1] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_preview_snap_gap_and_available_screen_bounds[anchor2-area2-expected2] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_preview_waits_for_report_and_handles_failure_closure_and_control_loss PASSED [ 19%]
+tests/gui/test_dashboard.py::test_unavailable_preview_retains_reported_state_without_commands PASSED [ 19%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Configuration-actions0-True] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Setting up-actions1-False] PASSED [ 20%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Ready-actions2-True] PASSED [ 20%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Starting-actions3-False] PASSED [ 20%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Running-actions4-False] PASSED [ 20%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Stopping-actions5-False] PASSED [ 20%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Finalizing-actions6-False] PASSED [ 21%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Ended-actions7-False] PASSED [ 21%]
+tests/gui/test_dashboard.py::test_observer_locks_preserve_local_draft PASSED [ 21%]
+tests/gui/test_dashboard.py::test_responsive_navigation_preserves_widget_identity PASSED [ 21%]
+tests/gui/test_dashboard.py::test_review_selector_renders_completion_and_observer_lock PASSED [ 21%]
+tests/gui/test_dashboard.py::test_wide_layout_keeps_status_and_logs_visible[dimensions0] PASSED [ 22%]
+tests/gui/test_dashboard.py::test_wide_layout_keeps_status_and_logs_visible[dimensions1] PASSED [ 22%]
+tests/gui/test_dashboard.py::test_dashboard_has_only_requested_cards PASSED [ 22%]
+tests/gui/test_dashboard.py::test_hud_fits_content_and_log_fills_available_height PASSED [ 22%]
+tests/gui/test_dashboard.py::test_setup_serves_as_new_session_after_completion PASSED [ 22%]
+tests/gui/test_dashboard.py::test_stop_cancels_setup_without_a_dialog[Setting up] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_stop_cancels_setup_without_a_dialog[Ready] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Abort now-expected0] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Stop after trial-expected1] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Cancel-expected2] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Escape-expected3] PASSED [ 24%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Close-expected4] PASSED [ 24%]
+tests/gui/test_dashboard.py::test_stop_dialog_updates_choices_and_closes_on_control_loss PASSED [ 24%]
+tests/gui/test_dashboard.py::test_runtime_indicators_are_independent_and_read_only PASSED [ 24%]
+tests/gui/test_dashboard.py::test_preview_participation_gates_and_camera_draft_selection PASSED [ 24%]
+tests/gui/test_dashboard.py::test_camera_role_uniqueness_and_extra_preview_rows PASSED [ 25%]
+tests/gui/test_dashboard.py::test_camera_pfs_picker_preserves_camera_identity_and_editing_gate PASSED [ 25%]
+tests/gui/test_dashboard.py::test_all_pages_share_fitted_hud_and_expanding_log PASSED [ 25%]
+tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud PASSED [ 25%]
+tests/gui/test_dashboard.py::test_camera_batch_check_preserves_selection_and_connections PASSED [ 25%]
+tests/gui/test_dashboard.py::test_pfs_trigger_hint_and_per_camera_drafts PASSED [ 25%]
+tests/gui/test_dashboard.py::test_real_camera_inventory_preserves_roles_and_tests_open_close PASSED [ 26%]
+tests/gui/test_dashboard.py::test_microcontroller_camera_rows_and_discovery PASSED [ 26%]
+tests/gui/test_dashboard.py::test_wrapped_log_preserves_whole_words_and_reading_anchor PASSED [ 26%]
+tests/gui/test_dashboard.py::test_projector_refresh_preserves_assignment PASSED [ 26%]
+tests/gui/test_dashboard.py::test_projector_assignments_survive_restart_and_changed_inventory[False] PASSED [ 26%]
+tests/gui/test_dashboard.py::test_projector_assignments_survive_restart_and_changed_inventory[True] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_saved_projector_assignments_restore_as_managed_drafts[False-False] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_saved_projector_assignments_restore_as_managed_drafts[False-True] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_saved_projector_assignments_restore_as_managed_drafts[True-False] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_saved_projector_assignments_restore_as_managed_drafts[True-True] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_invalid_saved_projector_assignments_are_preserved_and_reported[broken] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_invalid_saved_projector_assignments_are_preserved_and_reported[{"version":1,"assignments":{"one":"Front","two":"Front"}}] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_invalid_saved_projector_assignments_are_preserved_and_reported[{"version":1,"assignments":{"one":"Front","one":"Left"}}] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_invalid_saved_projector_assignments_are_preserved_and_reported[{"version":2,"assignments":{"one":"Front"}}] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_projector_assignment_save_failure_keeps_draft_and_warns PASSED [ 28%]
+tests/gui/test_dashboard.py::test_gui_display_number_is_local_and_shared_with_layout PASSED [ 29%]
+tests/gui/test_dashboard.py::test_microcontroller_fixed_signal_tests_and_layout PASSED [ 29%]
+tests/gui/test_dashboard.py::test_microcontroller_role_outputs_clear_without_changing_camera_use PASSED [ 29%]
+tests/gui/test_dashboard.py::test_microcontroller_file_restores_camera_output_rows_without_commands PASSED [ 29%]
+tests/gui/test_dashboard.py::test_local_review_microcontroller_does_not_open_serial PASSED [ 29%]
+tests/gui/test_dashboard.py::test_simulated_review_inventory_does_not_enumerate_com_ports PASSED [ 30%]
+tests/gui/test_dashboard.py::test_managed_microcontroller_emits_controller_intents PASSED [ 30%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_waits_for_controller_confirmation[0] PASSED [ 30%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_waits_for_controller_confirmation[1] PASSED [ 30%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_accepts_missing_external_input PASSED [ 30%]
+tests/gui/test_dashboard.py::test_managed_camera_settings_submit_pfs_source_and_rate PASSED [ 31%]
+tests/gui/test_dashboard.py::test_bridge_submits_configuration_and_waits_for_exact_version PASSED [ 31%]
+tests/gui/test_dashboard.py::test_bridge_accepts_unchanged_configuration_at_same_revision PASSED [ 31%]
+tests/gui/test_dashboard.py::test_managed_configuration_action_plan_preserves_edits_outside_editable_phases PASSED [ 31%]
+tests/gui/test_dashboard.py::test_managed_gui_setup_captures_exact_accepted_configuration_for_bridge PASSED [ 31%]
+tests/gui/test_dashboard.py::test_managed_gui_immutable_phase_actions_bypass_invalid_collection PASSED [ 32%]
+tests/gui/test_dashboard.py::test_controller_bridge_setup_validates_captured_version_under_dispatch_lock PASSED [ 32%]
+tests/gui/test_dashboard.py::test_controller_bridge_submits_then_setup_uses_exact_accepted_version PASSED [ 32%]
+tests/gui/test_dashboard.py::test_managed_display_calibration_requests_use_repository_relative_assets PASSED [ 32%]
+tests/gui/test_dashboard.py::test_projector_first_run_profile_import_is_reachable_and_collectable PASSED [ 32%]
+tests/gui/test_dashboard.py::test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly[True] PASSED [ 33%]
+tests/gui/test_dashboard.py::test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly[False] PASSED [ 33%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_pairing_updates_only_session_flag[True] PASSED [ 33%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_pairing_updates_only_session_flag[False] PASSED [ 33%]
+tests/gui/test_dashboard.py::test_spikeglx_pairing_bridge_publishes_accepted_device_revision PASSED [ 33%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_pairing_waits_for_confirmation[True] PASSED [ 33%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_pairing_waits_for_confirmation[False] PASSED [ 34%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_inventory_installs_read_only_host_settings PASSED [ 34%]
+tests/gui/test_dashboard.py::test_queued_calibration_rejects_revision_and_asset_drift PASSED [ 34%]
+tests/gui/test_dashboard.py::test_queued_calibration_close_rejects_changed_diagnostic_identity PASSED [ 34%]
+tests/gui/test_dashboard.py::test_inventory_required_roles_follow_the_accepted_active_configuration PASSED [ 34%]
+tests/gui/test_dashboard.py::test_tracking_diagnostic_requests_keep_preview_and_draft_identity PASSED [ 35%]
+tests/gui/test_dashboard.py::test_tracking_viewer_rpc_uses_frozen_authorized_endpoint PASSED [ 35%]
+tests/gui/test_dashboard.py::test_tracking_viewer_detach_stays_detached_until_explicit_reopen PASSED [ 35%]
+tests/gui/test_dashboard.py::test_tracking_viewer_frame_freezes_only_on_explicit_exact_source_action PASSED [ 35%]
+tests/gui/test_dashboard.py::test_tracking_diagnostic_close_waits_for_closed_evidence PASSED [ 35%]
+tests/gui/test_dashboard.py::test_managed_snapshot_keeps_diagnostic_close_pending_and_status_visible PASSED [ 36%]
+tests/gui/test_dashboard.py::test_save_failure_dismissal_never_discards_draft[None-None] PASSED [ 36%]
+tests/gui/test_dashboard.py::test_save_failure_dismissal_never_discards_draft[Retry-retry] PASSED [ 36%]
+tests/gui/test_dashboard.py::test_save_failure_dismissal_never_discards_draft[Close without saving-discard] PASSED [ 36%]
+tests/gui/test_dashboard.py::test_tracking_empty_diagnostic_mask_does_not_require_experiment_settings PASSED [ 36%]
+tests/gui/test_dashboard.py::test_tracking_flow_diagnostic_ignores_dormant_pose_and_estimator_drafts PASSED [ 37%]
+tests/gui/test_dashboard.py::test_bridge_rejects_stale_configuration_base_without_admission PASSED [ 37%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_updates_only_assigned_camera[behavioral] PASSED [ 37%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_updates_only_assigned_camera[tracking] PASSED [ 37%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_updates_only_assigned_camera[eye_tracking] PASSED [ 37%]
+tests/gui/test_dashboard.py::test_disconnect_after_failed_connect_uses_device_cleanup PASSED [ 38%]
+tests/gui/test_dashboard.py::test_eye_role_projects_and_tests_selected_without_capture PASSED [ 38%]
+tests/gui/test_dashboard.py::test_eye_assignment_preserves_existing_camera_roles PASSED [ 38%]
+tests/gui/test_dashboard.py::test_loaded_camera_action_queues_parameters_without_setup[False] PASSED [ 38%]
+tests/gui/test_dashboard.py::test_loaded_camera_action_queues_parameters_without_setup[True] PASSED [ 38%]
+tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-none] PASSED [ 39%]
+tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-base] PASSED [ 39%]
+tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-settings] PASSED [ 39%]
+tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-import] PASSED [ 39%]
+tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[True-none] PASSED [ 39%]
+tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[True-base] PASSED [ 40%]
+tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[True-settings] PASSED [ 40%]
+tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[True-import] PASSED [ 40%]
+tests/gui/test_dashboard.py::test_repeated_camera_connect_skips_noop_configuration_update PASSED [ 40%]
+tests/gui/test_dashboard.py::test_camera_acceptance_preserves_other_local_configuration_drafts PASSED [ 40%]
+tests/gui/test_dashboard.py::test_managed_camera_settings_supply_missing_trigger_source PASSED [ 41%]
+tests/gui/test_dashboard.py::test_managed_mcu_save_includes_camera_output_pins[D] PASSED [ 41%]
+tests/gui/test_dashboard.py::test_managed_mcu_save_includes_camera_output_pins[] PASSED [ 41%]
+tests/gui/test_dashboard.py::test_managed_mcu_draft_test_requires_exact_acceptance[] PASSED [ 41%]
+tests/gui/test_dashboard.py::test_managed_mcu_draft_test_requires_exact_acceptance[rejected] PASSED [ 41%]
+tests/gui/test_dashboard.py::test_managed_mcu_draft_test_requires_exact_acceptance[stale] PASSED [ 41%]
+tests/gui/test_dashboard.py::test_managed_mcu_draft_test_requires_exact_acceptance[unconfirmed] PASSED [ 42%]
+tests/gui/test_dashboard.py::test_managed_mcu_draft_test_requires_exact_acceptance[changed_after_acceptance] PASSED [ 42%]
+tests/gui/test_dashboard.py::test_managed_microcontroller_submits_edited_pin_before_test PASSED [ 42%]
+tests/gui/test_dashboard.py::test_managed_camera_pin_test_uses_saved_role_signal PASSED [ 42%]
+tests/gui/test_dashboard.py::test_managed_mcu_preserves_camera_role_identity[Eye tracking] PASSED [ 42%]
+tests/gui/test_dashboard.py::test_managed_mcu_preserves_camera_role_identity[Unassigned] PASSED [ 43%]
+tests/gui/test_dashboard.py::test_managed_role_wiring_is_local_before_camera_discovery PASSED [ 43%]
+tests/gui/test_dashboard.py::test_contextual_wiring_editors_update_only_the_shared_draft PASSED [ 43%]
+tests/gui/test_dashboard.py::test_contextual_wiring_save_is_discarded_after_identity_or_authority_change[role] PASSED [ 43%]
+tests/gui/test_dashboard.py::test_contextual_wiring_save_is_discarded_after_identity_or_authority_change[authority] PASSED [ 43%]
+tests/gui/test_dashboard.py::test_contextual_wiring_save_is_discarded_after_identity_or_authority_change[pending] PASSED [ 44%]
+tests/gui/test_dashboard.py::test_projector_sync_modes_without_mcu_preserve_saved_drafts[free_run] PASSED [ 44%]
+tests/gui/test_dashboard.py::test_projector_sync_modes_without_mcu_preserve_saved_drafts[photodiode_only_vsync] PASSED [ 44%]
+tests/gui/test_dashboard.py::test_projector_sync_modes_without_mcu_preserve_saved_drafts[all_outputs_vsync] PASSED [ 44%]
+tests/gui/test_dashboard.py::test_restored_managed_draft_assigns_eye_and_adds_output_locally PASSED [ 44%]
+tests/gui/test_dashboard.py::test_managed_window_waits_for_history_save_before_closing PASSED [ 45%]
+tests/gui/test_dashboard.py::test_managed_close_finishes_only_after_controller_save_result PASSED [ 45%]
+tests/gui/test_dashboard.py::test_runtime_gui_close_reopen_preserves_full_draft[False] PASSED [ 45%]
+tests/gui/test_dashboard.py::test_runtime_gui_close_reopen_preserves_full_draft[True] PASSED [ 45%]
+tests/gui/test_dashboard.py::test_disconnected_projector_draft_restores_and_saves PASSED [ 45%]
+tests/gui/test_dashboard.py::test_setup_without_projectors_logs_and_submits_nothing PASSED [ 46%]
+tests/gui/test_dashboard.py::test_runtime_gui_save_failure_keeps_window_open_and_previous_file PASSED [ 46%]
+tests/gui/test_dashboard.py::test_runtime_gui_unrestored_file_is_preserved PASSED [ 46%]
+tests/gui/test_dashboard.py::test_managed_bridge_claims_free_control_for_history_save PASSED [ 46%]
+tests/gui/test_dashboard.py::test_review_draft_restores_local_configuration[False] PASSED [ 46%]
+tests/gui/test_dashboard.py::test_review_draft_restores_local_configuration[True] PASSED [ 47%]
+tests/gui/test_dashboard.py::test_legacy_review_draft_camera_pin_migrates_to_logical_role PASSED [ 47%]
+tests/gui/test_dashboard.py::test_review_window_saves_draft_on_close PASSED [ 47%]
+tests/gui/test_dashboard.py::test_invalid_review_draft_is_not_replaced_during_load PASSED [ 47%]
+tests/gui/test_dashboard.py::test_pin_test_stop_toggle_and_invalidation PASSED [ 47%]
+tests/gui/test_dashboard.py::test_microcontroller_enablement_preserves_pins_and_syncs_cameras PASSED [ 48%]
+tests/gui/test_dashboard.py::test_projectors_number_secondary_screens_by_position PASSED [ 48%]
+tests/gui/test_dashboard.py::test_microcontroller_row_heights_match PASSED [ 48%]
+tests/gui/test_dashboard.py::test_projector_geometry_and_pulse_drafts_are_independent PASSED [ 48%]
+tests/gui/test_dashboard.py::test_configuration_scroll_keeps_projector_status_fixed PASSED [ 48%]
+tests/gui/test_dashboard.py::test_calibration_and_screen_dimensions_retain_separate_drafts PASSED [ 49%]
+tests/gui/test_dashboard.py::test_spikeglx_sources_preserve_maps_and_follow_enablement PASSED [ 49%]
+tests/gui/test_dashboard.py::test_projector_config_tabs_keep_column_width_and_table_drafts PASSED [ 49%]
+tests/gui/test_dashboard.py::test_screen_distance_moves_planes_independently_of_tank PASSED [ 49%]
+tests/gui/test_dashboard.py::test_hidden_scrollbar_preserves_wheel_scrolling PASSED [ 49%]
+tests/gui/test_dashboard.py::test_all_screen_calibration_json_roundtrip_and_rejection PASSED [ 50%]
+tests/gui/test_dashboard.py::test_calibration_dialog_closes_on_authority_loss PASSED [ 50%]
+tests/gui/test_dashboard.py::test_wheel_never_changes_input_values[False] PASSED [ 50%]
+tests/gui/test_dashboard.py::test_wheel_never_changes_input_values[True] PASSED [ 50%]
+tests/gui/test_dashboard.py::test_epoch_clock_duration_retains_fractional_precision PASSED [ 50%]
+tests/gui/test_dashboard.py::test_batch_variation_sweep_is_bounded PASSED [ 50%]
+tests/gui/test_dashboard.py::test_epoch_reference_updates_do_not_show_detached_windows PASSED [ 51%]
+tests/gui/test_dashboard.py::test_spikeglx_disable_restore_and_remove_custom PASSED [ 51%]
+tests/gui/test_dashboard.py::test_right_screen_is_derived_and_legacy_asymmetry_rejected PASSED [ 51%]
+tests/gui/test_dashboard.py::test_managed_protocol_roundtrips_ordered_trials_seed_and_gap PASSED [ 51%]
+tests/gui/test_dashboard.py::test_managed_protocol_rejects_partial_restore_without_mutating_pages PASSED [ 51%]
+tests/gui/test_dashboard.py::test_empty_managed_schedule_is_not_replaced_by_review_trial PASSED [ 52%]
+tests/gui/test_dashboard.py::test_managed_configuration_preserves_incomplete_draft_on_new_revision PASSED [ 52%]
+tests/gui/test_dashboard.py::test_empty_schedule_first_add_becomes_the_first_trial PASSED [ 52%]
+tests/gui/test_dashboard.py::test_managed_configuration_keeps_post_submit_edits_on_ack PASSED [ 52%]
+tests/gui/test_dashboard.py::test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack PASSED [ 52%]
+tests/gui/test_dashboard.py::test_protocol_participation_and_asset_pages PASSED [ 53%]
+tests/gui/test_dashboard.py::test_protocol_program_validation_and_atomic_save PASSED [ 53%]
+tests/gui/test_dashboard.py::test_protocol_timeline_edits_preserve_trials_and_imported_groups PASSED [ 53%]
+tests/gui/test_dashboard.py::test_protocol_cards_reflow_and_keep_properties_reachable PASSED [ 53%]
+tests/gui/test_dashboard.py::test_protocol_controls_and_enabled_screen_lanes PASSED [ 53%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_forms_round_trip_every_family[Sine grating] PASSED [ 54%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_forms_round_trip_every_family[Square grating] PASSED [ 54%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_forms_round_trip_every_family[Checkerboard] PASSED [ 54%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_forms_round_trip_every_family[Image tile] PASSED [ 54%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_forms_round_trip_every_family[Image] PASSED [ 54%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_forms_round_trip_every_family[Looming image] PASSED [ 55%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_forms_round_trip_every_family[Video] PASSED [ 55%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_forms_round_trip_every_family[3D arena] PASSED [ 55%]
+tests/gui/test_dashboard.py::test_stimulus_parameter_edit_invalid_guard_and_media_root PASSED [ 55%]
+tests/gui/test_dashboard.py::test_stimulus_animation_variants_reset_and_remove PASSED [ 55%]
+tests/gui/test_dashboard.py::test_prepared_texture_bundle_and_epoch_motion PASSED [ 56%]
+tests/gui/test_dashboard.py::test_prepared_file_change_is_epoch_local PASSED [ 56%]
+tests/gui/test_dashboard.py::test_protocol_epoch_structure_actions PASSED [ 56%]
+tests/gui/test_dashboard.py::test_add_prepared_file_picker_does_not_create_placeholder_on_cancel PASSED [ 56%]
+tests/gui/test_dashboard.py::test_file_first_epoch_insertion_and_history PASSED [ 56%]
+tests/gui/test_dashboard.py::test_screen_overrides_and_layers_preserve_other_epochs PASSED [ 57%]
+tests/gui/test_dashboard.py::test_repeat_variation_uses_canonical_expansion_and_preserves_choreography PASSED [ 57%]
+tests/gui/test_dashboard.py::test_nested_group_edit_and_duplicate_reference_remapping PASSED [ 57%]
+tests/gui/test_dashboard.py::test_group_fields_reject_bad_values_and_lock_on_authority_loss PASSED [ 57%]
+tests/gui/test_dashboard.py::test_motion_auto_commit_and_invalid_edit_undo PASSED [ 57%]
+tests/gui/test_dashboard.py::test_saved_variations_reopen_as_speed_direction_lists PASSED [ 58%]
+tests/gui/test_dashboard.py::test_variation_bounds_and_preview_limit PASSED [ 58%]
+tests/gui/test_dashboard.py::test_stationary_texture_speed_variation_keeps_positive_x_direction PASSED [ 58%]
+tests/gui/test_dashboard.py::test_expanded_close_and_trial_deletion PASSED [ 58%]
+tests/gui/test_dashboard.py::test_recording_checks_stay_next_to_labels PASSED [ 58%]
+tests/gui/test_dashboard.py::test_looming_primary_controls_and_custom_size_fidelity PASSED [ 58%]
+tests/gui/test_dashboard.py::test_batch_create_variations_preview_insert_and_reload PASSED [ 59%]
+tests/gui/test_dashboard.py::test_trial_overview_selects_ranges_and_sources_across_groups PASSED [ 59%]
+tests/gui/test_dashboard.py::test_review_projector_inventory_drives_devices_and_planner PASSED [ 59%]
+tests/gui/test_dashboard.py::test_timeline_overview_colors_and_current_epoch_details PASSED [ 59%]
+tests/gui/test_dashboard.py::test_epoch_parameter_warnings_wait_for_submission[generate] PASSED [ 59%]
+tests/gui/test_dashboard.py::test_epoch_parameter_warnings_wait_for_submission[selection] PASSED [ 60%]
+tests/gui/test_dashboard.py::test_batch_reference_projector_parameters_and_layers PASSED [ 60%]
+tests/gui/test_dashboard.py::test_batch_reference_picker_scope_and_lock PASSED [ 60%]
+tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields PASSED [ 60%]
+tests/gui/test_dashboard.py::test_reference_type_change_clears_asset_and_switches_stimulus_mode PASSED [ 60%]
+tests/gui/test_dashboard.py::test_batch_insertion_positions_are_atomic_and_select_new_epochs[append-expected0] PASSED [ 61%]
+tests/gui/test_dashboard.py::test_batch_insertion_positions_are_atomic_and_select_new_epochs[start-expected1] PASSED [ 61%]
+tests/gui/test_dashboard.py::test_batch_insertion_positions_are_atomic_and_select_new_epochs[before-expected2] PASSED [ 61%]
+tests/gui/test_dashboard.py::test_batch_insertion_positions_are_atomic_and_select_new_epochs[after-expected3] PASSED [ 61%]
+tests/gui/test_dashboard.py::test_batch_insertion_positions_are_atomic_and_select_new_epochs[replace-expected4] PASSED [ 61%]
+tests/gui/test_dashboard.py::test_batch_insertion_positions_are_atomic_and_select_new_epochs[stride-expected5] PASSED [ 62%]
+tests/gui/test_dashboard.py::test_arena_axis_gains_roundtrip_and_editor_spacing PASSED [ 62%]
+tests/gui/test_dashboard.py::test_arena_custom_feedback_is_preserved_and_channel_conflicts_rejected PASSED [ 62%]
+tests/gui/test_dashboard.py::test_front_attached_screens_share_plot_and_prepared_corners PASSED [ 62%]
+tests/gui/test_dashboard.py::test_centered_projection_uses_throw_and_assigned_aspect PASSED [ 62%]
+tests/gui/test_dashboard.py::test_tank_drag_changes_view_only_and_double_click_resets PASSED [ 63%]
+tests/gui/test_dashboard.py::test_bottom_mirror_reflects_cone_and_uses_total_path PASSED [ 63%]
+tests/gui/test_dashboard.py::test_plot_legends_are_view_only_and_survive_refresh PASSED [ 63%]
+tests/gui/test_dashboard.py::test_bottom_optics_survive_disabled_right_output PASSED [ 63%]
+tests/gui/test_dashboard.py::test_label_insertion_repeats_batch_in_original_scope_and_undo PASSED [ 63%]
+tests/gui/test_dashboard.py::test_visible_layer_selector_and_opacity_preserve_prepared_placement PASSED [ 64%]
+tests/gui/test_dashboard.py::test_bottom_center_path_survives_outer_ray_clearance PASSED [ 64%]
+tests/gui/test_dashboard.py::test_projection_group_replaces_individual_visibility_controls PASSED [ 64%]
+tests/gui/test_dashboard.py::test_projector_codec_preserves_file_pacing_and_imported_calibration PASSED [ 64%]
+tests/gui/test_dashboard.py::test_projectors_page_install_collect_keeps_file_owned_pacing_absent[photodiode_only_vsync-False] PASSED [ 64%]
+tests/gui/test_dashboard.py::test_projectors_page_install_collect_keeps_file_owned_pacing_absent[photodiode_only_vsync-True] PASSED [ 65%]
+tests/gui/test_dashboard.py::test_projectors_page_install_collect_keeps_file_owned_pacing_absent[all_outputs_vsync-False] PASSED [ 65%]
+tests/gui/test_dashboard.py::test_projectors_page_install_collect_keeps_file_owned_pacing_absent[all_outputs_vsync-True] PASSED [ 65%]
+tests/gui/test_dashboard.py::test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[2] PASSED [ 65%]
+tests/gui/test_dashboard.py::test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[3] PASSED [ 65%]
+tests/gui/test_dashboard.py::test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[4] PASSED [ 66%]
+tests/gui/test_dashboard.py::test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[5] PASSED [ 66%]
+tests/gui/test_dashboard.py::test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[6] PASSED [ 66%]
+tests/gui/test_dashboard.py::test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile[7] PASSED [ 66%]
+tests/gui/test_dashboard.py::test_calibration_identity_profiles_bind_unique_native_monitors[2] PASSED [ 66%]
+tests/gui/test_dashboard.py::test_calibration_identity_profiles_bind_unique_native_monitors[3] PASSED [ 66%]
+tests/gui/test_dashboard.py::test_calibration_identity_profiles_bind_unique_native_monitors[4] PASSED [ 67%]
+tests/gui/test_dashboard.py::test_calibration_identity_profiles_bind_unique_native_monitors[5] PASSED [ 67%]
+tests/gui/test_dashboard.py::test_calibration_identity_profiles_bind_unique_native_monitors[6] PASSED [ 67%]
+tests/gui/test_dashboard.py::test_calibration_identity_profiles_bind_unique_native_monitors[7] PASSED [ 67%]
+tests/gui/test_dashboard.py::test_calibration_button_reflects_confirmed_managed_output PASSED [ 67%]
+tests/gui/test_dashboard.py::test_managed_first_use_calibration_launches_before_display_initialization PASSED [ 68%]
+tests/gui/test_dashboard.py::test_unified_feedback_input_mapping_and_retain_state PASSED [ 68%]
+tests/gui/test_dashboard.py::test_arena_feedback_and_axis_editors_stay_synchronized PASSED [ 68%]
+tests/gui/test_dashboard.py::test_stimulus_mode_and_duration_use_proportional_header_widths PASSED [ 68%]
+tests/gui/test_dashboard.py::test_new_stimuli_retain_state_without_changing_imported_reset PASSED [ 68%]
+tests/gui/test_dashboard.py::test_reference_advanced_controls_align_to_layer_and_retain_first PASSED [ 69%]
+tests/gui/test_dashboard.py::test_control_dialog_does_not_expand_projector_row_and_cancels PASSED [ 69%]
+tests/gui/test_dashboard.py::test_control_action_is_limited_to_closed_loop_texture_and_looming PASSED [ 69%]
+tests/gui/test_dashboard.py::test_fades_render_and_retime_without_changing_motion PASSED [ 69%]
+tests/gui/test_dashboard.py::test_reference_fades_follow_batch_duration_and_new_rows PASSED [ 69%]
+tests/gui/test_dashboard.py::test_imported_opacity_curve_is_preserved_and_not_editable PASSED [ 70%]
+tests/gui/test_dashboard.py::test_blank_layer_then_family_keeps_each_projector_layer_configuration PASSED [ 70%]
+tests/gui/test_dashboard.py::test_first_source_epoch_fade_does_not_change_rest_of_batch PASSED [ 70%]
+tests/gui/test_dashboard.py::test_200_epoch_timeline_reuses_views_and_metadata_noop PASSED [ 70%]
+tests/gui/test_dashboard.py::test_200_epoch_eight_layer_protocol_round_trip_exceeds_old_gui_limit PASSED [ 70%]
+tests/gui/test_dashboard.py::test_variation_controls_fit_narrow_protocol_without_horizontal_scroll PASSED [ 71%]
+tests/gui/test_dashboard.py::test_batch_variations_target_projectors_and_local_layer_ordinals PASSED [ 71%]
+tests/gui/test_dashboard.py::test_layer_actions_offer_up_down_and_preserve_projector_values PASSED [ 71%]
+tests/gui/test_dashboard.py::test_variations_use_stimulus_columns_and_materialize_looming_and_video PASSED [ 71%]
+tests/gui/test_dashboard.py::test_preview_uses_retained_motion_and_backward_scrubbing PASSED [ 71%]
+tests/gui/test_dashboard.py::test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up PASSED [ 72%]
+tests/gui/test_dashboard.py::test_preview_rejects_setup_resolved_durations_without_mutating_program PASSED [ 72%]
+tests/gui/test_dashboard.py::test_planning_arena_draws_a_bounded_glb_on_a_configured_surface PASSED [ 72%]
+tests/gui/test_dashboard.py::test_arena_variations_change_axis_gains_without_changing_other_axes PASSED [ 72%]
+tests/gui/test_dashboard.py::test_planning_preview_uses_rig_planes_and_only_enabled_projector_frames PASSED [ 72%]
+tests/gui/test_dashboard.py::test_preview_calibration_matches_export_and_uses_display_pixels PASSED [ 73%]
+tests/gui/test_dashboard.py::test_preview_rejects_invalid_corrections_and_unresolved_pixel_sizes PASSED [ 73%]
+tests/gui/test_dashboard.py::test_random_variations_respect_bounds_precision_and_size PASSED [ 73%]
+tests/gui/test_dashboard.py::test_random_batch_values_stay_fixed_across_preview_and_save PASSED [ 73%]
+tests/gui/test_dashboard.py::test_timeline_epoch_shortcuts_and_keyboard_history PASSED [ 73%]
+tests/gui/test_dashboard.py::test_image_fit_and_motion_are_saved_without_texture_phase PASSED [ 74%]
+tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[True-Video] PASSED [ 74%]
+tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[True-Looming image] PASSED [ 74%]
+tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[True-3D arena] PASSED [ 74%]
+tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[False-Video] PASSED [ 74%]
+tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[False-Looming image] PASSED [ 75%]
+tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[False-3D arena] PASSED [ 75%]
+tests/gui/test_dashboard.py::test_image_fit_preview_contains_crops_and_stretches PASSED [ 75%]
+tests/gui/test_dashboard.py::test_batch_fit_choice_and_legacy_image_appearance PASSED [ 75%]
+tests/gui/test_dashboard.py::test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs PASSED [ 75%]
+tests/gui/test_dashboard.py::test_managed_mcu_pending_completion_and_final_status PASSED [ 75%]
+tests/gui/test_dashboard.py::test_managed_camera_batch_checks_continue_after_failure_without_capture PASSED [ 76%]
+tests/gui/test_dashboard.py::test_managed_role_assignment_is_atomic_and_preserves_participation[False] PASSED [ 76%]
+tests/gui/test_dashboard.py::test_managed_role_assignment_is_atomic_and_preserves_participation[True] PASSED [ 76%]
+tests/gui/test_dashboard.py::test_managed_camera_projection_distinguishes_open_capture_and_cleanup PASSED [ 76%]
+tests/gui/test_dashboard.py::test_managed_gui_auto_claims_only_unheld_control_once[] PASSED [ 76%]
+tests/gui/test_dashboard.py::test_managed_gui_auto_claims_only_unheld_control_once[other-client] PASSED [ 77%]
+tests/gui/test_dashboard.py::test_managed_gui_auto_claims_only_unheld_control_once[this-gui] PASSED [ 77%]
+tests/gui/test_dashboard.py::test_managed_gui_waits_for_synchronization_and_warning_acknowledgement PASSED [ 77%]
+tests/gui/test_dashboard.py::test_retained_acknowledgement_cannot_clear_guard_without_current_snapshot PASSED [ 77%]
+tests/gui/test_dashboard.py::test_initial_and_reopened_retained_warnings_gate_auto_claim PASSED [ 77%]
+tests/gui/test_dashboard.py::test_shared_notices_warn_on_action_and_send_status_to_log PASSED [ 78%]
+tests/gui/test_dashboard.py::test_tracking_methods_preserve_fields_and_hide_unrelated_controls PASSED [ 78%]
+tests/gui/test_dashboard.py::test_tracking_draft_roundtrip_and_invalid_load_is_atomic PASSED [ 78%]
+tests/gui/test_dashboard.py::test_tracking_camera_changes_invalidate_reference_and_lock_closes_tool PASSED [ 78%]
+tests/gui/test_dashboard.py::test_tracking_annotation_maps_letterboxed_image_to_source_pixels PASSED [ 78%]
+tests/gui/test_dashboard.py::test_tracking_distance_and_regions_use_original_pixels PASSED [ 79%]
+tests/gui/test_dashboard.py::test_tracking_v1_draft_migrates_without_inventing_calibration PASSED [ 79%]
+tests/gui/test_dashboard.py::test_tracking_preview_stages_retain_settings_and_clear_only_subject_reference PASSED [ 79%]
+tests/gui/test_dashboard.py::test_tracking_region_bounds_and_full_frame_are_validated PASSED [ 79%]
+tests/gui/test_dashboard.py::test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits[Reference points] PASSED [ 79%]
+tests/gui/test_dashboard.py::test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits[Manual pose] PASSED [ 80%]
+tests/gui/test_dashboard.py::test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits[Distance reference] PASSED [ 80%]
+tests/gui/test_dashboard.py::test_older_tracking_crop_fields_migrate_without_losing_annotations[False] PASSED [ 80%]
+tests/gui/test_dashboard.py::test_older_tracking_crop_fields_migrate_without_losing_annotations[True] PASSED [ 80%]
+tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[False-1280] PASSED [ 80%]
+tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[False-720] PASSED [ 81%]
+tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[True-1280] PASSED [ 81%]
+tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[True-720] PASSED [ 81%]
+tests/gui/test_dashboard.py::test_camera_connect_opens_only_the_confirmed_run[True-True] PASSED [ 81%]
+tests/gui/test_dashboard.py::test_camera_connect_opens_only_the_confirmed_run[False-True] PASSED [ 81%]
+tests/gui/test_dashboard.py::test_camera_connect_opens_only_the_confirmed_run[True-False] PASSED [ 82%]
+tests/gui/test_dashboard.py::test_camera_selection_restores_pfs_source_and_frequency PASSED [ 82%]
+tests/gui/test_dashboard.py::test_managed_camera_inventory_restores_selected_configuration[0] PASSED [ 82%]
+tests/gui/test_dashboard.py::test_managed_camera_inventory_restores_selected_configuration[1] PASSED [ 82%]
+tests/gui/test_dashboard.py::test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name[None] PASSED [ 82%]
+tests/gui/test_dashboard.py::test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name[raster_size1] PASSED [ 83%]
+tests/gui/test_dashboard.py::test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name[raster_size2] PASSED [ 83%]
+tests/gui/test_dashboard.py::test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name[raster_size3] PASSED [ 83%]
+tests/gui/test_dashboard.py::test_managed_firmware_controls_require_idle_configuration[hex] PASSED [ 83%]
+tests/gui/test_dashboard.py::test_managed_firmware_controls_require_idle_configuration[ino] PASSED [ 83%]
+tests/gui/test_dashboard.py::test_projector_configuration_json_restores_all_settings_without_screen_mapping PASSED [ 83%]
+tests/gui/test_dashboard.py::test_projector_configuration_invalid_settings_preserve_complete_draft[pulse] PASSED [ 84%]
+tests/gui/test_dashboard.py::test_projector_configuration_invalid_settings_preserve_complete_draft[mapping] PASSED [ 84%]
+tests/gui/test_dashboard.py::test_projector_configuration_invalid_settings_preserve_complete_draft[nonfinite] PASSED [ 84%]
+tests/gui/test_dashboard.py::test_projector_configuration_invalid_settings_preserve_complete_draft[duplicate] PASSED [ 84%]
+tests/gui/test_dashboard.py::test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts PASSED [ 84%]
+tests/gui/test_dashboard.py::test_photodiode_controls_fit_with_growing_blackouts[1280] PASSED [ 85%]
+tests/gui/test_dashboard.py::test_photodiode_controls_fit_with_growing_blackouts[720] PASSED [ 85%]
+tests/gui/test_dashboard.py::test_planning_preview_keeps_square_visible_over_blackout PASSED [ 85%]
+tests/gui/test_dashboard.py::test_authoritative_photodiode_area_installs_relative_square_and_zones PASSED [ 85%]
+tests/gui/test_dashboard.py::test_legacy_numeric_projector_json_preserves_synchronization PASSED [ 85%]
+tests/gui/test_dashboard.py::test_portable_screen_profile_rebinds_native_properties_and_preserves_coverage PASSED [ 86%]
+tests/gui/test_dashboard.py::test_authoritative_projector_install_clears_previous_profile_on_empty_state PASSED [ 86%]
+tests/gui/test_dashboard.py::test_projector_reference_measurements_derive_distance_and_roundtrip PASSED [ 86%]
+tests/gui/test_dashboard.py::test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields PASSED [ 86%]
+tests/gui/test_dashboard.py::test_measured_affine_profiles_preserve_assets_and_match_preview[None-1.0-1.0] PASSED [ 86%]
+tests/gui/test_dashboard.py::test_measured_affine_profiles_preserve_assets_and_match_preview[None-1.1-0.95] PASSED [ 87%]
+tests/gui/test_dashboard.py::test_measured_affine_profiles_preserve_assets_and_match_preview[None-0.9-1.05] PASSED [ 87%]
+tests/gui/test_dashboard.py::test_measured_affine_profiles_preserve_assets_and_match_preview[1.5-1.0-1.0] PASSED [ 87%]
+tests/gui/test_dashboard.py::test_measured_affine_profiles_preserve_assets_and_match_preview[1.5-1.1-0.95] PASSED [ 87%]
+tests/gui/test_dashboard.py::test_measured_affine_profiles_preserve_assets_and_match_preview[1.5-0.9-1.05] PASSED [ 87%]
+tests/gui/test_dashboard.py::test_gui_firmware_dispatch_pins_selected_sketch_or_image[hex] PASSED [ 88%]
+tests/gui/test_dashboard.py::test_gui_firmware_dispatch_pins_selected_sketch_or_image[ino] PASSED [ 88%]
+tests/gui/test_dashboard.py::test_group_actions_preserve_contents_selection_and_history PASSED [ 88%]
+tests/gui/test_dashboard.py::test_group_actions_obey_authority_and_pending_validation PASSED [ 88%]
+tests/gui/test_dashboard.py::test_group_actions_keep_one_group_and_noop_history PASSED [ 88%]
+tests/gui/test_dashboard.py::test_rejected_controller_configuration_restores_edit_tracking[False] PASSED [ 89%]
+tests/gui/test_dashboard.py::test_rejected_controller_configuration_restores_edit_tracking[True] PASSED [ 89%]
+tests/gui/test_dashboard.py::test_calibration_adjustment_steps_preserve_drafts PASSED [ 89%]
+tests/gui/test_dashboard.py::test_live_calibration_coalesces_edits_and_retains_last_valid_projection PASSED [ 89%]
+tests/gui/test_dashboard.py::test_grouped_editor_pair_creation_repeat_scope_and_history PASSED [ 89%]
+tests/gui/test_dashboard.py::test_grouped_batch_insertion_stays_inside_open_group[append] PASSED [ 90%]
+tests/gui/test_dashboard.py::test_grouped_batch_insertion_stays_inside_open_group[start] PASSED [ 90%]
+tests/gui/test_dashboard.py::test_grouped_batch_insertion_stays_inside_open_group[before] PASSED [ 90%]
+tests/gui/test_dashboard.py::test_grouped_batch_insertion_stays_inside_open_group[after] PASSED [ 90%]
+tests/gui/test_dashboard.py::test_grouped_batch_insertion_stays_inside_open_group[replace] PASSED [ 90%]
+tests/gui/test_dashboard.py::test_grouped_batch_insertion_stays_inside_open_group[stride] PASSED [ 91%]
+tests/gui/test_dashboard.py::test_grouped_batch_insertion_stays_inside_open_group[label] PASSED [ 91%]
+tests/gui/test_dashboard.py::test_grouped_timeline_large_repeat_and_visible_paint_are_bounded PASSED [ 91%]
+tests/gui/test_dashboard.py::test_flat_group_initial_trials_and_legacy_imports PASSED [ 91%]
+tests/gui/test_dashboard.py::test_unified_subgroup_template_add_apply_history_and_files PASSED [ 91%]
+tests/gui/test_dashboard.py::test_unified_subgroup_patch_preserves_variants_and_shared_sources PASSED [ 91%]
+tests/gui/test_dashboard.py::test_unified_subgroup_preserves_projector_variants_and_guards_drafts PASSED [ 92%]
+tests/gui/test_dashboard.py::test_unified_subgroup_duration_preserves_each_fade_and_batch_identity PASSED [ 92%]
+tests/gui/test_dashboard.py::test_unified_subgroup_asset_edit_is_projector_local_and_atomic PASSED [ 92%]
+tests/gui/test_dashboard.py::test_direct_group_editor_starts_open_and_uses_only_group_repetitions PASSED [ 92%]
+tests/gui/test_dashboard.py::test_demo_assets_can_be_selected_and_review_path_restores PASSED [ 92%]
+tests/gui/test_dashboard.py::test_empty_variation_blocks_add_group_without_losing_draft[False] PASSED [ 93%]
+tests/gui/test_dashboard.py::test_empty_variation_blocks_add_group_without_losing_draft[True] PASSED [ 93%]
+tests/gui/test_dashboard.py::test_subgroup_rules_persist_and_random_projectors_are_independent PASSED [ 93%]
+tests/gui/test_dashboard.py::test_large_random_group_stays_compact_and_layer_controls_are_indices PASSED [ 93%]
+tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo FAILED [ 93%]
+tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards FAILED [ 94%]
+tests/gui/test_dashboard.py::test_texture_recipe_file_selection_preserves_original_json PASSED [ 94%]
+tests/gui/test_dashboard.py::test_texture_reference_link_keeps_appearance_and_disables_reparented_motion PASSED [ 94%]
+tests/gui/test_dashboard.py::test_epoch_automatic_updates_preserve_focus_validation_and_history PASSED [ 94%]
+tests/gui/test_dashboard.py::test_active_calibration_measurements_are_editable_only_for_reference_bars[reference_bars] PASSED [ 94%]
+tests/gui/test_dashboard.py::test_active_calibration_measurements_are_editable_only_for_reference_bars[frame_grid] PASSED [ 95%]
+tests/gui/test_dashboard.py::test_active_calibration_measurements_are_editable_only_for_reference_bars[] PASSED [ 95%]
+tests/gui/test_dashboard.py::test_shared_tables_tab_between_nested_editors_and_other_controls PASSED [ 95%]
+tests/gui/test_dashboard.py::test_console_tab_leaves_text_view_for_next_control PASSED [ 95%]
+tests/gui/test_dashboard.py::test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors PASSED [ 95%]
+tests/gui/test_dashboard.py::test_review_appearance_switch_preserves_drafts_and_runtime[1440] PASSED [ 96%]
+tests/gui/test_dashboard.py::test_review_appearance_switch_preserves_drafts_and_runtime[720] PASSED [ 96%]
+tests/gui/test_dashboard.py::test_camera_pin_tracks_selected_role_and_table_edits PASSED [ 96%]
+tests/gui/test_dashboard.py::test_camera_pin_obeys_editing_and_diagnostic_locks[authority] PASSED [ 96%]
+tests/gui/test_dashboard.py::test_camera_pin_obeys_editing_and_diagnostic_locks[pending] PASSED [ 96%]
+tests/gui/test_dashboard.py::test_camera_pin_obeys_editing_and_diagnostic_locks[connection] PASSED [ 97%]
+tests/gui/test_dashboard.py::test_camera_pin_obeys_editing_and_diagnostic_locks[upload] PASSED [ 97%]
+tests/gui/test_dashboard.py::test_camera_pin_obeys_editing_and_diagnostic_locks[capture] PASSED [ 97%]
+tests/gui/test_dashboard.py::test_camera_pin_obeys_editing_and_diagnostic_locks[phase] PASSED [ 97%]
+tests/gui/test_dashboard.py::test_reference_bar_lengths_follow_the_output_until_measured PASSED [ 97%]
+tests/gui/test_dashboard.py::test_native_adapter_name_identifies_scaled_displays PASSED [ 98%]
+tests/gui/test_dashboard.py::test_pruning_keeps_referenced_and_newest_reference_profiles PASSED [ 98%]
+tests/gui/test_dashboard.py::test_protocol_arena_limits_default_edit_undo_and_saved_region PASSED [ 98%]
+tests/gui/test_dashboard.py::test_arena_xyz_orientation_default_subject_height_and_alignment PASSED [ 98%]
+tests/gui/test_dashboard.py::test_arena_mode_missing_height_keeps_previous_editor_and_reports_error PASSED [ 98%]
+tests/gui/test_dashboard.py::test_placement_buttons_live_edits_and_unknown_close[photodiode_placement] PASSED [ 99%]
+tests/gui/test_dashboard.py::test_placement_buttons_live_edits_and_unknown_close[blackout_placement] PASSED [ 99%]
+tests/gui/test_dashboard.py::test_placement_bundle_uses_native_pixels_without_reference_measurements[photodiode_placement-False] PASSED [ 99%]
+tests/gui/test_dashboard.py::test_placement_bundle_uses_native_pixels_without_reference_measurements[photodiode_placement-True] PASSED [ 99%]
+tests/gui/test_dashboard.py::test_placement_bundle_uses_native_pixels_without_reference_measurements[blackout_placement-False] PASSED [ 99%]
+tests/gui/test_tracking_live.py::test_tracking_diagnostic_presentation_copies_frame_and_checks_exact_scope PASSED [100%]
+
+================================== FAILURES ===================================
+_____ test_inline_timeline_actions_target_blocks_append_and_preserve_undo _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000024A16E66E60>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000024A108B7640>
+
+    def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, app):
+        from PyQt6.QtTest import QTest
+        from PyQt6.QtWidgets import QPushButton
+    
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        data = grouped_program(review_program()).model_dump(mode="json")
+        data["sequence"][0]["repetitions"] = 10
+        for epoch in data["sequence"][0]["body"][:2]:
+            epoch["batch_id"] = "batch_pair"
+        editor.set_program(validate(data))
+        window.resize(1280, 1100)
+        app.processEvents()
+        contents = editor.hierarchy.contents
+        before = editor.program
+        assert not any(
+            control.text() in ("+ Group", "\u2212 Group", "+ Epoch")
+            for control in editor.findChildren(QPushButton)
+        )
+        # Selection alone has no cross; hovering reveals a standard compact control.
+        QTest.mouseMove(editor.group_editor.name)
+        app.processEvents()
+        assert not any(c.isVisible() for c in contents.block_actions.removers)
+>       _move_mouse_and_wait_for_native_event(
+            contents, contents.batch_hits[0][0].center().toPoint(), app
+        )
+
+tests\gui\test_dashboard.py:15249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+widget = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x0000024A166213F0>
+position = PyQt6.QtCore.QPoint(331, 18)
+app = <PyQt6.QtWidgets.QApplication object at 0x0000024A108B7640>
+timeout_ms = 1000
+
+    def _move_mouse_and_wait_for_native_event(
+        widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+    ) -> None:
+        """Wait for the platform-delivered hover event after moving the real cursor."""
+        from PyQt6.QtCore import QObject
+    
+        target_global = widget.mapToGlobal(position)
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        matched = False
+    
+        class TargetMouseMove(QObject):
+            def eventFilter(self, receiver, event):
+                nonlocal matched
+                if (
+                    receiver is widget
+                    and event.type() == QEvent.Type.MouseMove
+                    and event.globalPosition().toPoint() == target_global
+                ):
+                    matched = True
+                    QTimer.singleShot(0, loop.quit)
+                return False
+    
+        probe = TargetMouseMove(widget)
+        widget.installEventFilter(probe)
+        timer.start(timeout_ms)
+        try:
+            QTest.mouseMove(widget, position)
+            if not matched:
+                loop.exec()
+        finally:
+            timer.stop()
+            widget.removeEventFilter(probe)
+>       assert matched, (
+            f"native MouseMove was not delivered to {type(widget).__name__} at "
+            f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+            f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+            f"{widget.size()}"
+        )
+E       AssertionError: native MouseMove was not delivered to ProgramTimeline at PyQt6.QtCore.QPoint(541, 677) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(210, 659) PyQt6.QtCore.QSize(1042, 126)
+E       assert False
+
+tests\gui\test_dashboard.py:134: AssertionError
+____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000024A15FF3640>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000024A108B7640>
+
+    def test_trial_row_actions_scroll_target_and_align_cards(window, app):
+        from PyQt6.QtWidgets import QMessageBox
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        trials = editor.trials
+        window.resize(1280, 1100)
+        app.processEvents()
+>       assert editor.trial_card.height() < 320
+E       assert 326 < 320
+E        +  where 326 = <built-in method height of Card object at 0x0000024A171D7B50>()
+E        +    where <built-in method height of Card object at 0x0000024A171D7B50> = <cephvr.gui.components.Card object at 0x0000024A171D7B50>.height
+E        +      where <cephvr.gui.components.Card object at 0x0000024A171D7B50> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x0000024A171D4AF0>.trial_card
+
+tests\gui\test_dashboard.py:15319: AssertionError
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\gui\native512-final.xml -
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo - AssertionError: native MouseMove was not delivered to ProgramTimeline at PyQt6.QtCore.QPoint(541, 677) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(210, 659) PyQt6.QtCore.QSize(1042, 126)
+assert False
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards - assert 326 < 320
+ +  where 326 = <built-in method height of Card object at 0x0000024A171D7B50>()
+ +    where <built-in method height of Card object at 0x0000024A171D7B50> = <cephvr.gui.components.Card object at 0x0000024A171D7B50>.height
+ +      where <cephvr.gui.components.Card object at 0x0000024A171D7B50> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x0000024A171D4AF0>.trial_card
+=========== 2 failed, 510 passed, 7 deselected in 207.03s (0:03:27) ===========

@@ -889,8 +889,10 @@ async def test_controller_authorizes_firmware_only_in_idle_configuration(blocked
     "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
 )
 @pytest.mark.asyncio
+@pytest.mark.parametrize("first_reply", ["accepted", "rejected", "unknown"])
 async def test_live_calibration_update_requires_exact_leased_active_grid(
     calibration_view,
+    first_reply,
 ):
     from cephvr.visual_stimulus.v1 import messages_pb2 as messages
 
@@ -905,6 +907,13 @@ async def test_live_calibration_update_requires_exact_leased_active_grid(
         async def update_display_calibration(self, request, *, deadline_ns):
             sent.append(request)
             assert request.deadline_monotonic_ns == deadline_ns
+            if len(sent) == 1 and first_reply == "unknown":
+                raise ConnectionError("renderer reply lost")
+            if len(sent) == 1 and first_reply == "rejected":
+                return pb.CommandAdmission(
+                    result=pb.COMMAND_RESULT_REJECTED,
+                    failure=pb.Failure(message="invalid live adjustment"),
+                )
             return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
 
     backend = Backend()
@@ -983,6 +992,21 @@ async def test_live_calibration_update_requires_exact_leased_active_grid(
         request.adjustments[0].destination_xy[0] = 0.1
     else:
         request.placement_json = placement_json
+    if first_reply != "accepted":
+        assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+        assert env.device.calibration_blocked
+        assert evidence.state == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+        assert evidence.adjustment_sequence == 0
+        assert (env.device.calibration_pending is None) == (first_reply == "rejected")
+        request.command.operator.command_id = _id()
+        retry = await controller.update(request)
+        assert (retry.result == pb.COMMAND_RESULT_ACCEPTED) == (
+            first_reply == "rejected"
+        )
+        assert len(sent) == (2 if first_reply == "rejected" else 1)
+        for task in env.spawned:
+            task.close()
+        return
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_ACCEPTED
     assert sent[0].diagnostic_id == evidence.diagnostic_id
     assert sent[0].adjustment_sequence == 1

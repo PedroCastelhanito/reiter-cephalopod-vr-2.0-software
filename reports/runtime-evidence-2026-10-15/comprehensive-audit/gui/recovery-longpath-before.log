@@ -1,0 +1,87 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\cephvr-python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 3 items
+
+tests/controller/test_startup_recovery.py::test_native_long_quarantine_settlement_preserves_evidence_guards[lock_only] FAILED [ 33%]
+tests/controller/test_startup_recovery.py::test_native_long_quarantine_settlement_preserves_evidence_guards[marker] PASSED [ 66%]
+tests/controller/test_startup_recovery.py::test_native_long_quarantine_settlement_preserves_evidence_guards[user_file] PASSED [100%]
+
+================================== FAILURES ===================================
+_ test_native_long_quarantine_settlement_preserves_evidence_guards[lock_only] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cv-long-recovery-before-20261015/test_native_long_quarantine_se0')
+evidence = 'lock_only'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("evidence", ["lock_only", "marker", "user_file"])
+    async def test_native_long_quarantine_settlement_preserves_evidence_guards(
+        tmp_path: Path, evidence: str
+    ) -> None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        suffix = "20260929_experiment/subject-000000"
+        padding = 205 - len(str(tmp_path / suffix)) - 1
+        assert padding > 0
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        store, reservation, pointer = _pointer(root)
+        session = reservation.session_directory
+        marker = reservation.marker.read_bytes()
+        reservation.protocol_directory.rmdir()
+        reservation.spikeglx_directory.rmdir()
+        if evidence != "marker":
+            reservation.marker.unlink()
+        if evidence == "user_file":
+            (session / "owner-evidence.bin").write_bytes(b"preserve")
+        reservation.release()
+        quarantine = session.with_name(f".{session.name}.{uuid.uuid4()}.cleanup")
+        assert len(str(quarantine / ".cephvr.lock")) > 260
+        session.rename(quarantine)
+        quarantine_io = Path(extended_path(quarantine))
+        if evidence == "lock_only":
+>           recovery = await _prepare(root, pointer, store)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_startup_recovery.py:197: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\controller\test_startup_recovery.py:91: in _prepare
+    assert await recovery.prepare(query) is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\controller\recovery.py:162: in prepare
+    if await run_pipe_io_daemon(
+src\cephvr\platform\windows\bootstrap.py:92: in run_pipe_io_daemon
+    return await asyncio.wait_for(completion, timeout=timeout_s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:489: in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+src\cephvr\platform\windows\bootstrap.py:71: in worker
+    result = operation()
+             ^^^^^^^^^^^
+src\cephvr\controller\recovery.py:163: in <lambda>
+    lambda: _settle_cancelled_namespace(directory),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\controller\recovery.py:101: in _settle_cancelled_namespace
+    leftover.rmdir()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cv-long-recovery-before-20261015/test_native_long_quarantine_se0/p...pppppppppppppppppppppppppppppppppppp/20260929_experiment/.subject-000000.52d1543b-94c3-434b-afd8-41d76c635949.cleanup')
+
+    def rmdir(self):
+        """
+        Remove this directory.  The directory must be empty.
+        """
+>       os.rmdir(self)
+E       OSError: [WinError 145] The directory is not empty: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cv-long-recovery-before-20261015\\test_native_long_quarantine_se0\\pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\.subject-000000.52d1543b-94c3-434b-afd8-41d76c635949.cleanup'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1156: OSError
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\gui\recovery-longpath-before.xml -
+=========================== short test summary info ===========================
+FAILED tests/controller/test_startup_recovery.py::test_native_long_quarantine_settlement_preserves_evidence_guards[lock_only] - OSError: [WinError 145] The directory is not empty: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cv-long-recovery-before-20261015\\test_native_long_quarantine_se0\\pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\.subject-000000.52d1543b-94c3-434b-afd8-41d76c635949.cleanup'
+========================= 1 failed, 2 passed in 0.38s =========================

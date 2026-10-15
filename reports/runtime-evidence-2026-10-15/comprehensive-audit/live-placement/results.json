@@ -1,0 +1,11 @@
+{
+  "scope": "Actual native projector diagnostic Open/Update/reject/Close through authenticated controller; no saved drafts/assets edited, no optical measurement",
+  "events": [
+    {
+      "name": "error",
+      "monotonic_ns": 78815361254900,
+      "value": "ClientError: REJECTED: interrupted Visual Stimulus session is permanently fenced"
+    }
+  ],
+  "generation": "bd053e89-edaf-41c5-9f00-bdfedefef285"
+}

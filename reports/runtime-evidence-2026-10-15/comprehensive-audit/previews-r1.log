@@ -1,0 +1,42 @@
+error "TimeoutError: "
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 500, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\managed_device_commands.py", line 56, in dispatch_device_action
+    await _camera(client, options)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\managed_device_commands.py", line 209, in _camera
+    outcome = await client.execute("ExecuteCameraCommand", request)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 279, in execute
+    return await self.wait_result(admission.command_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 282, in wait_result
+    state = await self._wait(
+            ^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 145, in _wait
+    await self._changed.wait()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py", line 267, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\managed.py", line 90, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\managed.py", line 67, in main
+    result = await asyncio.wait_for(dispatch_device_action(client, "camera", {"role": role, "kind": rpc.CAMERA_COMMAND_KIND_START_PREVIEW, "show_preview": False}, principal), 40)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 502, in wait_for
+    raise exceptions.TimeoutError() from exc
+TimeoutError

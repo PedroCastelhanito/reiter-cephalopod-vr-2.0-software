@@ -1,5 +1,50 @@
 # Visual Stimulus status
 
+Current Oct15 comprehensive recheck confirms fresh managed Idle initialization on
+all four60Hz outputs with8-bit channels and swap interval1. This is software
+submission evidence, not optical timing. The saved program's declared arena texture
+requires715,827,840 GPU-budget bytes versus536,870,912 configured; Setup correctly
+rejects it. Texture-only engineering variants remove unused declared arena
+scene/instance/asset/boundary references; arena/combined variants require an explicit
+smaller fixture rather than a silent budget increase. Failed-Setup long-path
+cleanup/recovery is repaired in generated cancellation paths and lock-only startup
+settlement with native before/after regressions; the original marker was immutably
+backed up and explicitly removed only as this audit's unstarted artifact cleanup.
+This is not general recovery acceptance. Fresh native60-second managed Gaussian
+and mixed Gaussian/arena trials now complete on all four physical projector outputs
+with both recording cameras; the arena uses an explicit512-pixel texture derivative,
+retaining the original asset and budget. Save On→Off→On produces3→0→3 videos;
+detailed frame/scientific logs remain enabled. Interrupted trials retain Interrupted
+outcomes and complete output cleanup, with approximately40.12seconds metadata delay.
+This establishes software submission/lifecycle evidence, not optical timing or
+physical calibration accuracy. Post-session diagnostic reopening remains fenced.
+Fresh native photodiode/blackout placement now pass invalid-bounds rejection then
+valid live updates, move/remove and Close Idle/resourcesclosed with unchanged
+asset/profile hashes. Safe worker prevalidation and typed owner/coordinator
+propagation preserve proven Active state; generic/mismatched failures remain fatal.
+Automated owner361 and managed-interpreter132 cases pass separately. The live
+authenticated diagnostic run supplies native projector evidence; neither source
+establishes GUI button-click or optical acceptance.
+The final isolated60-second managed mixed-scene run completes with3600 decoded
+review frames:3592 real/eight repeats, four capacity drops and two same-slot
+omissions.3598 render groups have no unresolved submission attempts. The
+[cross-owner benchmark](runtime.md) retains active-only CPU/GPU/RSS statistics,
+per-stream saved codecs, three strict decode/count matches and exact restoration.
+The later final Shutdown emits `cleanup returned an unregistered resource` despite
+command success and exact process absence. This separate resource-report finding
+remains open; it is not normal-shutdown acceptance. [Evidence](emergency-80538644376400-cf134742-126d-4fc6-aa22-c7ed8d33f493.json).
+Independent capacity checks render four native-sized offscreen outputs through the
+production layer shader and CPU-resize a review mosaic into a third NVENC stream;
+they bypass calibrated projection/native presentation and the production recording
+queue. Gaussian runs submit/decode3600 frames each at about60Hz; the separate20s
+grating/native4096 case submits/decodes1199. All nine combined camera/stimulus
+outputs fully decode. CQ23 GPU samples show5060Ti3–4%/339MiB and2080Ti encoder
+45–52%/684MiB. CPU samples overlap another automated suite and do not establish
+isolated workload cost/headroom; no CQ18 resource comparison is claimed.
+Live-calibration explicit Update rejection is repaired without clearing the active
+diagnostic block; owning cases cover three views and rejected/unknown outcomes.
+[Fresh audit evidence](runtime-evidence-2026-10-15/comprehensive-audit/).
+
 Oct15 live-pulse follow-up completes the owner-requested photodiode preview: the
 existing GL-owner service loop repeatedly submits the current placement while Active.
 Trial and diagnostic drawing share one pure V22 pattern helper, with separate

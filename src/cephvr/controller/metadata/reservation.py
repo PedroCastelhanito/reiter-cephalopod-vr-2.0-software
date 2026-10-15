@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 from cephvr.controller.metadata.files import atomic_json, safe_component, sync_directory
 from cephvr.controller.metadata.types import ReservationMarker, StorageError
-from cephvr.platform.windows.paths import logical_path
+from cephvr.platform.windows.paths import extended_path, logical_path
 from cephvr.shared.identity import require_uuid4
 
 if TYPE_CHECKING:
@@ -423,6 +423,7 @@ class OutputReservation:
                 f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
             )
             if sys.platform == "win32":
+                quarantine = Path(extended_path(quarantine))
                 self._release_byte_lock()
             try:
                 os.replace(self.session_directory, quarantine)
@@ -456,6 +457,8 @@ class OutputReservation:
                 tombstone = self.lock_path.with_name(
                     f".{self.lock_path.name}.{uuid.uuid4()}.cleanup"
                 )
+                if sys.platform == "win32":
+                    tombstone = Path(extended_path(tombstone))
                 try:
                     os.replace(self.lock_path, tombstone)
                 except OSError as exc:

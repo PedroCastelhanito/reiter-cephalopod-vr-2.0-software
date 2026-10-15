@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: rectangle exceeds output calibration_front
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

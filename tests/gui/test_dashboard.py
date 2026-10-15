@@ -15316,7 +15316,26 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app):
     trials = editor.trials
     window.resize(1280, 1100)
     app.processEvents()
-    assert editor.trial_card.height() < 320
+    assert editor.trial_card.height() == editor.timeline_card.height()
+    for card, controls in (
+        (editor.trial_card, (editor.trial_card.caption, trials)),
+        (
+            editor.timeline_card,
+            (
+                editor.timeline_card.caption,
+                editor.timeline,
+                editor.group_editor,
+                editor.output_preview_button,
+                editor.sequence_summary,
+            ),
+        ),
+    ):
+        assert all(
+            card.rect().contains(
+                control.rect().translated(control.mapTo(card, QPoint()))
+            )
+            for control in controls
+        )
     assert editor.selected_group_label.text() == "Selected group"
     assert editor.group_editor.parentWidget() is editor.timeline_card
     assert editor.sequence_summary.geometry().bottom() < editor.timeline.y()

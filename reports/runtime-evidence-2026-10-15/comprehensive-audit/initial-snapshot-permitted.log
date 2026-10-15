@@ -1,0 +1,33 @@
+endpoint=LauncherEndpoint(controller_generation='e6191c9b-058e-431e-8bcd-fdddd5aacdd5', supervisor_generation='b900c902-9ec8-4bb1-9329-711f2d3c9dab', event_id='6c437561-1d76-440d-b2da-7eaae48e0582', replacement_timeout_ns=92000000000, gui_relaunch_event_id='511f5275-7ce4-499c-a3ea-423a5cda0ee3')
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\snapshot.py", line 39, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\snapshot.py", line 23, in main
+    snapshot = await asyncio.wait_for(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 105, in get_snapshot
+    result = await self.stub.GetSnapshot(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_call.py", line 333, in __await__
+    raise _create_rpc_error(
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+
+ -- 10061)"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+
+ -- 10061)"
+>

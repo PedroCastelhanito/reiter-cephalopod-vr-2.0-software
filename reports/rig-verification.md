@@ -1,6 +1,23 @@
 # Rig verification — outstanding checks
 
-Current status: owner resumed tests Oct15 after explicitly pausing the prior run.
+Latest comprehensive Oct15 audit supersedes the availability limits of earlier
+runs below: owner confirmed an empty rig with cameras and projection available;
+reward/actuator/stimulation remain disabled and firmware unchanged. Current COM8
+firmware is incompatible with request-ID CAPS, so new trials explicitly acknowledge
+unaligned free-running cameras with MCU outputs disabled. Seven managed trials cover
+Gaussian/reduced-texture arena, Save On→Off→On, Abort and immediate reuse across
+the retired boundary; all18 retained videos fully decode/count. This closes that
+bounded reuse regression, not external-trigger/optical acceptance. Abort metadata
+settlement still takes40.12seconds. Two fresh native placement views now pass
+invalid→valid updates and Close with resourcesclosed. Native GUI selection fixtures
+remain blocked;510 native cases pass and the trial-row follow-up passes after
+replacing an unsupported height cap with containment checks. One native hover-input
+assertion remains unresolved. Tracking processing and physical
+calibration remain unverified. [Current runtime scope](runtime.md),
+[camera/accounting assessment](acquisition.md), [rendering limits](visual_stimulus.md),
+[dated raw evidence](runtime-evidence-2026-10-15/comprehensive-audit/).
+
+Earlier Oct15 endurance evidence (historical, not a new run in this audit):
 Sol6.1 completes combined900-final-r1: exact 900 seconds, confirmed cleanup/reuse and
 all four strict video counts/full decodes. Astra accepts this low-loss engineering gate;
 camera CFR repeats are 0.20–0.45%, stimulus 1.13% with one startup capacity drop.
@@ -8,10 +25,11 @@ Earlier failed/owner-interrupted runs retain unknown closure. Bounded prepared-Y
 codec fidelity and a separate 60-second camera-lossless native recording/count/decode
 pass; this is neither raw-sensor fidelity nor 15-minute lossless acceptance. Fresh
 saved files restore byte-exact; camera feature values match with PFS selector-cursor
-serialization differences. All test processes/SDK handles are closed. Native rapid
-post-Abort boundary crossing and interrupted trial-log finalization latency stay open.
+serialization differences. That run did not establish immediate post-Abort boundary
+crossing; the latest comprehensive paired run above does. Interrupted trial-log
+finalization latency remains open.
 
-Current Oct15 scope: owner now confirms projectors/cameras on and requests open-loop
+Earlier Oct15 scope authorized open-loop
 Gaussian linked-screen motion, simple3D arena and all configured camera/stimulus
 recordings, CPU/GPU monitoring and a15-minute trial after shorter checks succeed.
 Use Desktop/Pedro files; projection areas remain uncalibrated, so engineering results
@@ -19,7 +37,7 @@ do not establish physical alignment. Tracking processing is excluded; the config
 Tracking camera remains eligible for recording. Sol6.1 executes tests and Astra reviews
 results. Earlier powered-off and leave-GUI-open limits below describe prior runs,
 not this newly authorized scope. Completed `combined-recording-loss` is recorded in LOG;
-remaining optical, scientific, reuse and headroom checks stay open.
+remaining optical/scientific acceptance and interrupted-finalization checks stay open.
 
 Oct15 synthetic encoder portion of the listed matrix completes31/31 cases with
 external counts/full decodes; direct zero-input finalization also succeeds. Full-path

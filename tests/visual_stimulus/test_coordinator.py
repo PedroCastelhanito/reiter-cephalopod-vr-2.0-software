@@ -193,6 +193,150 @@ async def test_worker_completion_routes_only_setup_to_controller(
     )
 
 
+@pytest.mark.parametrize(
+    "mismatch",
+    [
+        None,
+        "missing",
+        "command",
+        "unknown",
+        "not_presented",
+        "sequence",
+        "diagnostic",
+        "revision",
+        "renderer",
+        "controller",
+        "incomplete",
+        "generic_failure",
+        "wrong_method",
+        "session_work",
+        "setup",
+    ],
+)
+async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+    clock = Clock()
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    state = State()
+    controller, supervisor = Peer(), Peer()
+    ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+    parent = wire.BackendCommand(
+        command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+    )
+    child = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        target=visual_stimulus.WorkerContext(
+            worker=identity.worker, owner=identity.process, configuration_revision=4
+        ),
+    )
+    diagnostic = str(uuid4())
+    link = CommandLink(
+        "UpdateDisplayCalibration",
+        parent,
+        child,
+        clock() + 10**9,
+        diagnostic_id=diagnostic,
+        output_ids=frozenset({"projector/main"}),
+        adjustment_sequence=2,
+    )
+    state.links[child.command_id] = link
+    ledger.admit(
+        parent.command_id,
+        parent.SerializeToString(),
+        clock(),
+        work_key=parent.command_id,
+    )
+    ledger.complete(
+        parent.command_id,
+        pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED).SerializeToString(),
+        clock(),
+    )
+    reports = Reports(identity, state, ledger, controller, supervisor, clock)
+    prior = pb.VisualStimulusDisplayView()
+    prior.calibration.diagnostic_id = diagnostic
+    prior.calibration.adjustment_sequence = 1
+    state.display = prior
+    report = pb.VisualStimulusDisplayView(
+        command_id=child.command_id,
+        source=identity.worker,
+        backend=identity.backend,
+        controller=identity.controller,
+        requested_revision=4,
+        complete=True,
+    )
+    report.outputs.add(output_id="projector/main")
+    report.calibration.CopyFrom(
+        vp.DisplayCalibrationEvidence(
+            diagnostic_id=diagnostic,
+            configuration_revision=4,
+            controller_generation=identity.controller.generation,
+            renderer_generation=identity.worker.generation,
+            state=vp.DISPLAY_CALIBRATION_STATE_ACTIVE,
+            presented=True,
+            adjustment_sequence=1,
+            failure_code="CALIBRATION_ADJUSTMENT_REJECTED",
+        )
+    )
+    await reports.display(report)
+    saved = state.display
+    if mismatch == "missing":
+        state.display = None
+    elif mismatch == "command":
+        saved.command_id = str(uuid4())
+    elif mismatch == "unknown":
+        saved.calibration.state = vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+    elif mismatch == "not_presented":
+        saved.calibration.presented = False
+    elif mismatch == "sequence":
+        saved.calibration.adjustment_sequence = 2
+    elif mismatch == "diagnostic":
+        saved.calibration.diagnostic_id = str(uuid4())
+    elif mismatch == "revision":
+        saved.calibration.configuration_revision = 5
+    elif mismatch == "renderer":
+        saved.calibration.renderer_generation = str(uuid4())
+    elif mismatch == "controller":
+        saved.calibration.controller_generation = str(uuid4())
+    elif mismatch == "incomplete":
+        saved.complete = False
+    elif mismatch == "wrong_method":
+        link.method = "OpenDisplayCalibration"
+    elif mismatch == "session_work":
+        parent.work.session.session_id = str(uuid4())
+    elif mismatch == "setup":
+        state.setup = wire.SetupSessionRequest()
+    operation = pb.OperationState(
+        context=pb.OperationContext(command_id=child.command_id),
+        command=link.method,
+        complete=True,
+        succeeded=False,
+        failure=pb.Failure(
+            code="VISUAL_STIMULUS_OPERATION"
+            if mismatch == "generic_failure"
+            else "CALIBRATION_ADJUSTMENT_REJECTED"
+        ),
+    )
+    await reports.operation(
+        visual_stimulus.WorkerOperation(source=child.target, operation=operation)
+    )
+    assert state.interrupted is (mismatch is not None)
+    assert len(supervisor.reports) == int(mismatch is not None)
+    terminal = pb.OperationState.FromString(
+        ledger.get(parent.command_id).executor_result
+    )
+    assert terminal.complete and not terminal.succeeded
+    assert terminal.context.command_id == parent.command_id
+
+
 async def recipe_fixture(tmp_path):
     clock = Clock()
     identity = Identity(

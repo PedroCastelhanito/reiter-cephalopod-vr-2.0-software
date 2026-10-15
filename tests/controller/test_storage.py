@@ -69,6 +69,53 @@ def test_unexpected_file_blocks_cancel_without_deletion(tmp_path: Path) -> None:
     reservation.release()
 
 
+@pytest.mark.windows
+@pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+@pytest.mark.parametrize("preexisting", [False, True])
+def test_native_cancellation_handles_long_quarantine_paths(
+    tmp_path: Path, preexisting: bool
+) -> None:
+    from cephvr.platform.windows.paths import extended_path
+
+    padding = 205 - len(str(_reservation(tmp_path).session_directory)) - 1
+    assert padding > 0
+    root = tmp_path / ("p" * padding)
+    root.mkdir()
+    reservation = _reservation(root)
+    assert len(str(reservation.marker)) < 260
+    if preexisting:
+        reservation.protocol_directory.mkdir(parents=True)
+        reservation.spikeglx_directory.mkdir()
+        preserved = reservation.session_directory / "owner-data.bin"
+        preserved.write_bytes(b"preserve")
+        cleanup_file = reservation.lock_path.with_name(
+            f".{reservation.lock_path.name}.{uuid.uuid4()}.cleanup"
+        )
+    else:
+        quarantine = reservation.session_directory.with_name(
+            f".{reservation.session_directory.name}.{uuid.uuid4()}.cleanup"
+        )
+        cleanup_file = quarantine / reservation.marker.name
+    assert len(str(cleanup_file)) > 260
+    try:
+        assert reservation.acquire() == []
+        reservation.cancel()
+        assert not reservation.held
+        assert not reservation.marker.exists()
+        assert not reservation.lock_path.exists()
+        if preexisting:
+            assert preserved.read_bytes() == b"preserve"
+            assert reservation.protocol_directory.is_dir()
+            assert reservation.spikeglx_directory.is_dir()
+            assert not list(
+                Path(extended_path(reservation.session_directory)).glob("*.cleanup")
+            )
+        else:
+            assert not reservation.experiment_directory.exists()
+    finally:
+        reservation.release()
+
+
 def test_preexisting_session_cancellation_never_unlinks_new_owners_lock(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

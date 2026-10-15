@@ -1,0 +1,120 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[protocol] {"event": "instrument_fixture_started"}
+{"event": "dialog_factory_called"}
+{"event": "accept_entered"}
+{"event": "selected_files", "value": []}
+{"event": "directory", "value": "C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software"}
+{"event": "visible", "value": false}
+{"event": "native_hidden", "value": false}
+{"event": "timers", "value": [{"active": true, "remaining": 0}]}
+{"event": "accept_returned"}
+{"event": "bounded_reject_fired"}
+FAILED
+
+================================== FAILURES ===================================
+_________ test_tab_config_buttons_roundtrip_into_fresh_gui[protocol] __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001F6CACE1BD0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001F6CAD6FAC0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cv-picker-native-final-20261015/test_tab_config_buttons_roundt0')
+owner = 'protocol'
+
+    @pytest.mark.parametrize(
+        "owner",
+        [
+            "protocol",
+            "cameras",
+            "microcontroller",
+            "projectors",
+            "spikeglx",
+            "tracking",
+            "gui",
+        ],
+    )
+    def test_tab_config_buttons_roundtrip_into_fresh_gui(
+        window: DashboardWindow,
+        app: QApplication,
+        tmp_path: Path,
+        owner: str,
+    ) -> None:
+        from cephvr.gui.camera_inventory import CameraDraft
+    
+        fresh = DashboardWindow(sample=True)
+        for target in (window, fresh):
+            cameras = target.devices.cameras
+            cameras.drafts.append(
+                CameraDraft(
+                    "camera-3",
+                    "Eye tracking",
+                    "REVIEW-003",
+                    "Basler � sample",
+                    values={
+                        "trigger_clock": "External controller",
+                        "trigger_source": "Line3",
+                        "trigger_frequency_hz": "45",
+                    },
+                )
+            )
+            cameras.populate_inventory()
+            cameras.drafts_changed.emit()
+            target.apply_view(review_view(Phase.CONFIGURATION))
+            cameras.managed = target.devices.microcontroller.managed = True
+        window.devices.microcontroller.set_saved_pins("COM88", "D12", True, "D2", True)
+        for key, pin in (("behavioral", "10"), ("tracking", "11"), ("eye_tracking", "8")):
+            window.devices.microcontroller.pin_editors[key].setText(pin)
+        window.dashboard.subject_id.setText("saved-subject")
+        window.tracking.forms.fields["threshold"].setText("123")
+        commands = []
+        for target in (window, fresh):
+            for signal in (
+                target.devices.cameras.enable_requested,
+                target.devices.cameras.role_requested,
+                target.devices.cameras.settings_requested,
+                target.devices.microcontroller.save_requested,
+                target.devices.microcontroller.connection_requested,
+                target.devices.microcontroller.firmware_requested,
+            ):
+                signal.connect(lambda *args: commands.append(args))
+    
+        def files(target):
+            if owner == "gui":
+                return target.config_files
+            panel = getattr(
+                target if owner in ("protocol", "tracking") else target.devices, owner
+            )
+            return panel.calibration_files if owner == "projectors" else panel.config_files
+    
+        def capture(target):
+            selected = files(target)
+            return selected.snapshot() if owner == "projectors" else selected.capture()
+    
+        try:
+            original = capture(window)
+            path = tmp_path / f"{owner}-\u5b9e\u9a8c.json"
+            writer = files(window)
+            assert writer.save_button.isEnabled()
+            writer.save_button.click()
+            assert writer.dialog is not None
+            writer.dialog.selectFile(str(path))
+            writer.dialog.accept()
+            app.processEvents()
+>           assert path.is_file()
+E           AssertionError: assert False
+E            +  where False = is_file()
+E            +    where is_file = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cv-picker-native-final-20261015/test_tab_config_buttons_roundt0/protocol-\u5b9e\u9a8c.json').is_file
+
+tests\gui\test_dashboard.py:476: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[protocol] - AssertionError: assert False
+ +  where False = is_file()
+ +    where is_file = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cv-picker-native-final-20261015/test_tab_config_buttons_roundt0/protocol-\u5b9e\u9a8c.json').is_file
+============================== 1 failed in 3.29s ==============================
+{"event": "pytest_finished", "exitcode": 1}

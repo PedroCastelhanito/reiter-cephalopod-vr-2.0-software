@@ -1,0 +1,96 @@
+{
+  "date": "2026-10-15",
+  "source_revision_at_start": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "scope": "GUI frontend behavior and read-only native inventory; no hardware output or saved configuration mutation by this agent",
+  "native_inventory": {
+    "initial_method": "@oai/sky list_apps and list_windows through node_repl",
+    "initial_result": "Only ChatGPT exposed; no CephVR managed or review window",
+    "during_tests": "CephVR2.0 Dashboard design review window exposed from owned pytest process",
+    "capture_result": "get_window_state request did not complete and was aborted after 419.5 seconds; no visual inspection claimed",
+    "managed_handoff_result": "list_windows exposed managed CephVR2.0 Dashboard window 1246528 and four calibration renderer windows. No input issued.",
+    "managed_capture_result": "Explicit node_repl timeout_ms=10000 did not bound text-only get_window_state; call aborted after 347.2 seconds, returning no state/screenshot. No further get_window_state calls issued."
+  },
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src/cephvr/gui tests/gui",
+      "outcome": "passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff format --check src/cephvr/gui tests/gui",
+      "outcome": "passed; 161 files already formatted"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/gui",
+      "outcome": "passed; 159 source files"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=windows .venv/Scripts/python.exe -m pytest tests/gui -vv -o faulthandler_timeout=60 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/native-full.xml",
+      "outcome": "interrupted; sandbox default pytest temporary directory inaccessible",
+      "evidence": "native-full.log"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=windows .venv/Scripts/python.exe -m pytest tests/gui -vv -o faulthandler_timeout=60 --basetemp=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/native-temp-r1 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/native-full-r1.xml",
+      "outcome": "interrupted; 12 passed before native file-picker test did not complete",
+      "evidence": "native-full-r1.log"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=windows .venv/Scripts/python.exe -m pytest tests/gui -vv -o faulthandler_timeout=60 --basetemp=C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-gui-native-20261015-r2 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/native-full-r2.xml",
+      "execution": "outside restricted sandbox; ordinary asyncio pytest plugin enabled",
+      "outcome": "519 collected, 12 passed, then stalled in first tab_config_buttons_roundtrip_into_fresh_gui[protocol] at test_dashboard.py:475 writer.dialog.accept(); no completed suite result",
+      "evidence": "native-full-r2.log",
+      "cleanup": "Verified exact command lines for owned Python PIDs 20432 and 7992; stopped both and confirmed their absence with a second CIM query",
+      "cleanup_evidence": "native-full-r2-processes.json"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui -vv -k \"not test_tab_config_buttons_roundtrip_into_fresh_gui\" -o faulthandler_timeout=60 --basetemp=C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-gui-offscreen-20261015-r1 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/offscreen-r1.xml",
+      "outcome": "512 passed, 7 explicitly deselected in 197.11 seconds; exit 0",
+      "scope": "Frontend fixtures with Qt offscreen platform. Excludes all seven parameterizations of the reproduced native-picker roundtrip. No native display or hardware acceptance.",
+      "evidence": [
+        "offscreen-r1.log",
+        "offscreen-r1.xml",
+        "offscreen-r1.exitcode"
+      ]
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui -vv -o faulthandler_timeout=30 --basetemp=C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-comprehensive-gui-picker-offscreen-20261015-r1 --junitxml=reports/runtime-evidence-2026-10-15/comprehensive-audit/gui/picker-offscreen-r1.xml",
+      "outcome": "7 passed in 6.33 seconds, exit 0",
+      "scope": "Offscreen control for all seven native-hanging-roundtrip parameterizations; native helper acceptance not established. Across this and offscreen-r1 all 519 existing GUI cases passed offscreen.",
+      "evidence": [
+        "picker-offscreen-r1.log",
+        "picker-offscreen-r1.xml",
+        "picker-offscreen-r1.exitcode"
+      ]
+    }
+  ],
+  "assessment": "All519 existingGUI cases pass offscreen across512+7 runs. Native fullsuite12passes then picker stall; single bounded nativepicker probe safely fails selection/save fixture, so nativepicker7 and fullnativeGUI acceptance remain open. Native state capture twice failed toreturn; no live GUI navigation/screenshot/responsiveness acceptance by this agent. Riglead separately reports both actual placementviews invalid\u2192failedterminal\u2192valid\u2192move/remove\u2192Close pass after reviewed fixes.",
+  "code_changes": [],
+  "picker_probe": {
+    "method": "picker_probe.py wraps only owning test QFileDialog.accept; logs selectedFiles/directory/visibility/native attribute/owned timers; rejects at1.5s if event loop proceeds and process watchdog exits124 at15s. Does not automate another process or any hardware.",
+    "initial_controls": "Three initial offscreen instrumentation attempts exited124: raw Unicode filename tracing could not be encoded by redirected console, then the test finally block processed queued modal. Diagnostic JSON output corrected to ASCII escapes; these failed probes are not product-test evidence.",
+    "corrected_offscreen_control": "picker-probe-offscreen-r4.log:1 passed in1.24s, exit0. Both save/load accept occur with dialog visible=false, native_hidden=false, launch QTimer active/remaining0; selected path and directory correct.",
+    "native_status": "Exactly one native [protocol] probe completed exit1 in3.29s. Owned1.5s Qt reject fired,15s watchdog not needed; exact process command query confirms absence. Beforeaccept selectedFiles=[]/directoryrepo despite selectFile(abs Unicode path), dialog invisible/native_hiddenFalse, launchQTimer active/remaining0. acceptreturned withoutsaving; queuedmodal canceled, expectedpathmissing. Offscreen control selectedFiles anddirectorycorrect andpasses. This establishes fixture/nativehelper selection/sequencing difference, not ordinaryuser picker defect.",
+    "native_evidence": [
+      "picker-probe-native-final.log",
+      "picker-probe-native-final.exitcode"
+    ]
+  },
+  "source_review": {
+    "governing_decisions": [
+      "G01",
+      "G02",
+      "ARCH-002"
+    ],
+    "reviewed": [
+      "file_dialogs.py",
+      "configuration_files.py",
+      "calibration_files.py",
+      "projector_assignments.py",
+      "projector_codec.py",
+      "protocol_controls.py",
+      "window.py",
+      "gui_snapshot.py"
+    ],
+    "finding": "No production defect established. Existing shared cancelable queued-modal helper is concise; do not change it for a synchronous test-only race without user-path evidence. Native trial-card320px assertion has no architecture cap; preserve content fitting rather than shrinking production.",
+    "optional_simplification": "Duplicate JSON duplicate-member hooks and calibration-specific bounded read/QSaveFile routines might reuse configuration_files helpers, but per-format numeric/migration/limit/error behavior needs focused review; Astra agrees defer broad I/O dedup."
+  }
+}

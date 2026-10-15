@@ -1,0 +1,139 @@
+{
+  "revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "disk": {
+    "total": 1999337680896,
+    "used": 603124797440,
+    "free": 1396212883456
+  },
+  "cameras": [
+    {
+      "serial": "40065509",
+      "model": "acA4112-30uc"
+    },
+    {
+      "serial": "40278236",
+      "model": "a2A1920-160ucPRO"
+    },
+    {
+      "serial": "40747103",
+      "model": "a2A2464-77umPRO"
+    }
+  ],
+  "ports": [
+    {
+      "device": "COM8",
+      "description": "Arduino Uno (COM8)"
+    },
+    {
+      "device": "COM3",
+      "description": "Prolific USB-to-Serial Comm Port (COM3)"
+    }
+  ],
+  "displays": [
+    {
+      "interface": "\\\\?\\DISPLAY#DEL41FA#5&1209fbcf&1&UID524#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 1080,
+      "refresh_hz": 60,
+      "rgb_bits": 8,
+      "adapter": "\\\\.\\DISPLAY9"
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4352#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -3840,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8,
+      "adapter": "\\\\.\\DISPLAY1"
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4353#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -2560,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8,
+      "adapter": "\\\\.\\DISPLAY2"
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4355#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -2280,
+      "y": 720,
+      "width": 720,
+      "height": 1280,
+      "refresh_hz": 60,
+      "rgb_bits": 8,
+      "adapter": "\\\\.\\DISPLAY3"
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4357#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -1280,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8,
+      "adapter": "\\\\.\\DISPLAY4"
+    }
+  ],
+  "files": {
+    "config\\last_configuration.json": {
+      "sha256": "9714f21fa0149a1c5a8a9159da0ea9d08b10e52a10cb9fe19e8e1e1f05219479",
+      "bytes": 146671
+    },
+    "config\\runtime_gui.json": {
+      "sha256": "c7ba71b8327a85035a7e777742ccc97fea916a26734bdbc24bd3700f40f029b2",
+      "bytes": 50253
+    },
+    "config\\backends\\acquisition_config.toml": {
+      "sha256": "e924bf37024d519efa02c29f2c3f67c4f571bb897ad18afa781fb9120f449e02",
+      "bytes": 12763
+    },
+    "config\\backends\\experiment_config.toml": {
+      "sha256": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115",
+      "bytes": 6801
+    },
+    "config\\backends\\gui_config.toml": {
+      "sha256": "e5498d0b0864531b98595760ea8cb17880c010fffa57d168c88ceff6d8f53c30",
+      "bytes": 675
+    },
+    "config\\backends\\microcontroller_config.toml": {
+      "sha256": "3fb97389300d23739be336f11226c9471903497820259e153496c9413b518607",
+      "bytes": 1304
+    },
+    "config\\backends\\supervisor_config.toml": {
+      "sha256": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe",
+      "bytes": 2211
+    },
+    "config\\backends\\synchronization_config.toml": {
+      "sha256": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94",
+      "bytes": 2370
+    },
+    "config\\backends\\tracking_config.toml": {
+      "sha256": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c",
+      "bytes": 8347
+    },
+    "config\\backends\\visual_stimulus_config.toml": {
+      "sha256": "63cbe4dd1ed13255868af52e29886a891f1c582f698507c9fd7a40baa94a6d3d",
+      "bytes": 6263
+    }
+  },
+  "nvidia-smi": {
+    "path": "C:\\WINDOWS\\system32\\nvidia-smi.EXE",
+    "returncode": 0,
+    "stdout": "index, name, uuid, driver_version\n0, NVIDIA GeForce RTX 5060 Ti, GPU-77642118-1623-48dd-3686-1014aa86b818, 617.14\n1, NVIDIA GeForce RTX 2080 Ti, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, 617.14\n",
+    "stderr": ""
+  },
+  "ffmpeg": {
+    "path": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+    "returncode": 0,
+    "stdout": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers\nbuilt with gcc 16.2.0 (Rev3, Built by MSYS2 project)\nconfiguration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-cairo --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-openal --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberband\nlibavutil      61.  1.102 / 61.  1.102\nlibavcodec     63.  1.102 / 63.  1.102\nlibavformat    63.  1.102 / 63.  1.102\nlibavdevice    63.  1.102 / 63.  1.102\nlibavfilter    12.  1.102 / 12.  1.102\nlibswscale     10.  1.102 / 10.  1.102\nlibswresample   7.  1.102 /  7.  1.102\n\nExiting with exit code 0\n",
+    "stderr": ""
+  }
+}

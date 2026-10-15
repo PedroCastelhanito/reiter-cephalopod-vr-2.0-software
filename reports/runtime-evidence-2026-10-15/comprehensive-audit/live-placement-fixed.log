@@ -1,0 +1,28 @@
+photodiode_placement-open {"command_id": "0cb95822-2693-48c9-a29b-b5b7b7a95b5e", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+photodiode_placement-active {"diagnostic_id": "c2b02c6c-be90-4faf-821c-b23a4499c05f", "controller_generation": "32ffe742-6248-43a4-a467-4ca24f605c7f", "renderer_generation": "5fdb744e-5248-4837-bb38-323c12945780", "configuration_revision": "1", "state": "DISPLAY_CALIBRATION_STATE_ACTIVE", "observed_monotonic_ns": "79214775919900", "profile_sha256": "44b67393fe6809d3e56ec3185f02a1713a82662f6ba51b48f93fb2d00fd2de09", "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2", "presented": true, "idle": false, "resources_closed": false, "calibration_view": "photodiode_placement"}
+photodiode_placement-admitted-terminal-rejection {"command_id": "46189610-de1f-4ee1-a2b6-91319a884cc1", "complete": true, "succeeded": false, "needs_input": false, "failure": "OPERATION_FAILED: renderer did not confirm the required calibration state"}
+error "ClientError: REJECTED: interrupted Visual Stimulus session is permanently fenced"
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\live_placement.py", line 115, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\live_placement.py", line 86, in main
+    result = await asyncio.wait_for(client.execute("UpdateDisplayCalibration",update(2,value)),60)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 274, in execute
+    admission = await self._admit(
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 173, in _admit
+    raise ClientError(
+cephvr.client.session.ClientError: REJECTED: interrupted Visual Stimulus session is permanently fenced

@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="0.313" timestamp="2026-10-15T18:02:25.192025+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.controller.test_storage" name="test_native_cancellation_handles_long_quarantine_paths[False]" time="0.018"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cv-longpath-before-20261015\\test_native_cancellation_handl0\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\.subject-131415.1d78822c-b6eb-4ece-b008-a5dd001758e2.cleanup\\.cephvr-reservation.json'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cv-longpath-before-20261015/test_native_cancellation_handl0')
+preexisting = False
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("preexisting", [False, True])
+    def test_native_cancellation_handles_long_quarantine_paths(
+        tmp_path: Path, preexisting: bool
+    ) -&gt; None:
+        padding = 205 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert padding &gt; 0
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.marker)) &lt; 260
+        if preexisting:
+            reservation.protocol_directory.mkdir(parents=True)
+            reservation.spikeglx_directory.mkdir()
+            preserved = reservation.session_directory / "owner-data.bin"
+            preserved.write_bytes(b"preserve")
+            cleanup_file = reservation.lock_path.with_name(
+                f".{reservation.lock_path.name}.{uuid.uuid4()}.cleanup"
+            )
+        else:
+            quarantine = reservation.session_directory.with_name(
+                f".{reservation.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            cleanup_file = quarantine / reservation.marker.name
+        assert len(str(cleanup_file)) &gt; 260
+        try:
+            assert reservation.acquire() == []
+&gt;           reservation.cancel()
+
+tests\controller\test_storage.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:437: in cancel
+    (quarantine / self.marker.name).unlink()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cv-longpath-before-20261015/test_native_cancellation_handl0/pppppp...ppppppppppp/20260929_experiment/.subject-131415.1d78822c-b6eb-4ece-b008-a5dd001758e2.cleanup/.cephvr-reservation.json')
+missing_ok = False
+
+    def unlink(self, missing_ok=False):
+        """
+        Remove this file or link.
+        If the path is a directory, use rmdir() instead.
+        """
+        try:
+&gt;           os.unlink(self)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cv-longpath-before-20261015\\test_native_cancellation_handl0\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\.subject-131415.1d78822c-b6eb-4ece-b008-a5dd001758e2.cleanup\\.cephvr-reservation.json'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1147: FileNotFoundError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_native_cancellation_handles_long_quarantine_paths[True]" time="0.012"><failure message="cephvr.controller.metadata.types.StorageError: lock quarantine failed; unfinished marker retained">self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x000001C2ACCC7190&gt;
+
+    def cancel(self) -&gt; None:
+        if self._lock_fd is None and self._path_guard is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if child.exists() and any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        if self._lock_fd is None:
+            if self.lock_path.exists():
+                raise StorageError("session lock ownership is unconfirmed")
+            for path in reversed(self._created):
+                if path.exists():
+                    path.rmdir()
+            self._created.clear()
+            self._release_path_guard()
+            return
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            if sys.platform == "win32":
+                self._release_byte_lock()
+            try:
+                os.replace(self.session_directory, quarantine)
+            except OSError as exc:
+                raise StorageError(
+                    "session quarantine failed; unfinished marker retained"
+                ) from exc
+            _sync(self.experiment_directory)
+            if sys.platform != "win32":
+                self.release()
+            if has_marker:
+                (quarantine / self.marker.name).unlink()
+            (quarantine / self.lock_path.name).unlink()
+            quarantine.rmdir()
+            _sync(self.experiment_directory)
+            remaining = [
+                p
+                for p in reversed(self._created)
+                if p
+                not in {
+                    self.session_directory,
+                    self.protocol_directory,
+                    self.spikeglx_directory,
+                }
+            ]
+        else:
+            tombstone: Path | None = None
+            if sys.platform == "win32":
+                self._release_byte_lock()
+            if self._lock_created:
+                tombstone = self.lock_path.with_name(
+                    f".{self.lock_path.name}.{uuid.uuid4()}.cleanup"
+                )
+                try:
+&gt;                   os.replace(self.lock_path, tombstone)
+E                   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cv-longpath-before-20261015\\test_native_cancellation_handl1\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\.cephvr.lock' -&gt; 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cv-longpath-before-20261015\\test_native_cancellation_handl1\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\..cephvr.lock.8c445ea5-cf20-4b95-84b9-e99c3cb42d47.cleanup'
+
+src\cephvr\controller\metadata\reservation.py:460: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cv-longpath-before-20261015/test_native_cancellation_handl1')
+preexisting = True
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("preexisting", [False, True])
+    def test_native_cancellation_handles_long_quarantine_paths(
+        tmp_path: Path, preexisting: bool
+    ) -&gt; None:
+        padding = 205 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert padding &gt; 0
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.marker)) &lt; 260
+        if preexisting:
+            reservation.protocol_directory.mkdir(parents=True)
+            reservation.spikeglx_directory.mkdir()
+            preserved = reservation.session_directory / "owner-data.bin"
+            preserved.write_bytes(b"preserve")
+            cleanup_file = reservation.lock_path.with_name(
+                f".{reservation.lock_path.name}.{uuid.uuid4()}.cleanup"
+            )
+        else:
+            quarantine = reservation.session_directory.with_name(
+                f".{reservation.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            cleanup_file = quarantine / reservation.marker.name
+        assert len(str(cleanup_file)) &gt; 260
+        try:
+            assert reservation.acquire() == []
+&gt;           reservation.cancel()
+
+tests\controller\test_storage.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x000001C2ACCC7190&gt;
+
+    def cancel(self) -&gt; None:
+        if self._lock_fd is None and self._path_guard is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if child.exists() and any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        if self._lock_fd is None:
+            if self.lock_path.exists():
+                raise StorageError("session lock ownership is unconfirmed")
+            for path in reversed(self._created):
+                if path.exists():
+                    path.rmdir()
+            self._created.clear()
+            self._release_path_guard()
+            return
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            if sys.platform == "win32":
+                self._release_byte_lock()
+            try:
+                os.replace(self.session_directory, quarantine)
+            except OSError as exc:
+                raise StorageError(
+                    "session quarantine failed; unfinished marker retained"
+                ) from exc
+            _sync(self.experiment_directory)
+            if sys.platform != "win32":
+                self.release()
+            if has_marker:
+                (quarantine / self.marker.name).unlink()
+            (quarantine / self.lock_path.name).unlink()
+            quarantine.rmdir()
+            _sync(self.experiment_directory)
+            remaining = [
+                p
+                for p in reversed(self._created)
+                if p
+                not in {
+                    self.session_directory,
+                    self.protocol_directory,
+                    self.spikeglx_directory,
+                }
+            ]
+        else:
+            tombstone: Path | None = None
+            if sys.platform == "win32":
+                self._release_byte_lock()
+            if self._lock_created:
+                tombstone = self.lock_path.with_name(
+                    f".{self.lock_path.name}.{uuid.uuid4()}.cleanup"
+                )
+                try:
+                    os.replace(self.lock_path, tombstone)
+                except OSError as exc:
+&gt;                   raise StorageError(
+                        "lock quarantine failed; unfinished marker retained"
+                    ) from exc
+E                   cephvr.controller.metadata.types.StorageError: lock quarantine failed; unfinished marker retained
+
+src\cephvr\controller\metadata\reservation.py:462: StorageError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-15",
+  "governing_decisions": [
+    "E07",
+    "A10",
+    "E04",
+    "E06",
+    "ARCH-002"
+  ],
+  "source_hashes": {
+    "src/cephvr/acquisition/coordinator/configuration_resolution.py": "a3a2d8f7810a54221b8dc2b029a4db8d60bd8fa6e66b1c22dad595858a8e6c3d",
+    "src/cephvr/controller/metadata/reservation.py": "e282eaac9b1f3e8a875cbc5ebeb838536bf42eae0e0283bc22b0f6c01122b647",
+    "src/cephvr/controller/recovery.py": "f075471d1f1b65da828e8f409275e040cd884ecbec70ddf045cc4608429b2a21",
+    "tests/acquisition/test_manual_devices.py": "4f9226d3a3a8bec30d27492b42dbf7b270aa561b6bc17754f45988556b25a18d",
+    "tests/controller/test_storage.py": "1ffeb04650eda085b9a2a9304c78a93b22c4e75153d867fc4ee59ea4edc1298f",
+    "tests/controller/test_startup_recovery.py": "22c9198054e300282f29da9838e59ec9438273cb73026e8502409a768ad7b62d"
+  },
+  "early_timeout": {
+    "trace": "Exact unchanged real controller fixture: r1 passed withTimeoutError2.6724ms afterdeadline; r2 failed withTimeoutError3.4854ms beforedeadline, lifecycle attempt2.8725ms beforedeadline. Controller correctly rejects missing exact status evidence.",
+    "fix": "ConfigurationResolution.wait_confirmed retries asyncio early TimeoutError only while same min absolute deadline retains self.clock budget; cancellation and confirmation/failure checks unchanged. No policy extension, no fixture assertion changes.",
+    "regression": "Existing owning manual-devices module adds deterministic earlytimeout then confirmation/trueexpiry/cancellation; all3 fail before and pass after, shrinking min-budget40ns\u219230ns.",
+    "review": "Astra approved final diff; no architecture amendment required",
+    "evidence": [
+      "empty_edit_timing_probe.py",
+      "empty-edit-timing-r1.log",
+      "empty-edit-timing-r2.log",
+      "early-wait-before.log",
+      "early-wait-after.log",
+      "early-wait-after.xml"
+    ]
+  },
+  "validation": {
+    "ruff": "pass6files",
+    "format": "pass6files",
+    "mypy_win32": "pass3sources",
+    "boundaries": "699modules/0violations",
+    "whitespace_scoped": "pass"
+  },
+  "suites": {
+    "owner-final": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "4",
+      "tests": "1152",
+      "time": "13.941",
+      "timestamp": "2026-10-15T18:22:02.959334+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "skips": [
+        {
+          "test": "tests.controller.test_configuration_transactions.test_setup_rejects_unset_or_invalid_recording_root[symlink]",
+          "reason": "Windows account lacks symlink creation privilege"
+        },
+        {
+          "test": "tests.controller.test_microcontroller_owner.test_uno_sketch_digest_pins_companions_and_rejects_links",
+          "reason": "Windows symlink privilege or Developer Mode is unavailable"
+        },
+        {
+          "test": "tests.controller.test_storage.test_existing_lock_symlink_is_never_followed",
+          "reason": "symlink creation unavailable on this host"
+        },
+        {
+          "test": "tests.shared.test_recovery.test_unverified_exit_and_unsafe_pointer_cannot_authorize_recovery",
+          "reason": "Windows account lacks symlink creation privilege"
+        }
+      ]
+    },
+    "native-owner-final": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "1",
+      "tests": "71",
+      "time": "1.548",
+      "timestamp": "2026-10-15T18:22:04.185144+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "skips": [
+        {
+          "test": "tests.controller.test_storage.test_existing_lock_symlink_is_never_followed",
+          "reason": "symlink creation unavailable on this host"
+        }
+      ]
+    }
+  },
+  "native_gui_limit": "All519 GUI cases pass offscreen across512+7 runs. Native full suite stops after12 passes at synchronous native dialog.accept. Native state capture hung twice, second ignored explicit10s tooltimeout; no live navigation/screenshot/responsiveness acceptance. No further sky calls.",
+  "runtime_mutation": "Existing rig quarantine, runtime files, device outputs and saved configuration not mutated by this agent; rig lead owns recovery."
+}

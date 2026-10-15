@@ -1,0 +1,583 @@
+{
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "bd053e89-edaf-41c5-9f00-bdfedefef285",
+      "session_id": "5bc5e7fc-d60c-4a51-9e9a-d2688ddf1823"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-boundary-abort60\\DUMMY-182354",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "operator Abort now"
+    },
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "bd053e89-edaf-41c5-9f00-bdfedefef285",
+        "session_id": "5bc5e7fc-d60c-4a51-9e9a-d2688ddf1823"
+      },
+      "trial_id": "7d898c6b-a920-4ee0-9ec7-1c094e03ba91",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_ENDED",
+    "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+    "start_monotonic_ns": "78672536347800",
+    "scheduled_end_monotonic_ns": "78732536347800",
+    "interruption_issued_monotonic_ns": "78677605353900"
+  },
+  "errors": [],
+  "videos": {
+    "protocol-data\\DUMMY_182358_behavioral_cam.mp4": {
+      "size_bytes": 10197478,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f40032",
+            "width": 1760,
+            "height": 1716,
+            "coded_width": 1760,
+            "coded_height": 1728,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "40:39",
+            "pix_fmt": "yuvj444p",
+            "level": 50,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "1000000/33333",
+            "avg_frame_rate": "1000000/33333",
+            "time_base": "1/1000000",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 5099949,
+            "duration": "5.099949",
+            "bit_rate": "15989399",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "153",
+            "nb_read_frames": "153",
+            "extradata_size": 66,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-boundary-abort60\\DUMMY-182354\\protocol-data\\DUMMY_182358_behavioral_cam.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "5.099949",
+          "size": "10197478",
+          "bit_rate": "15996203",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "isom",
+            "minor_version": "512",
+            "compatible_brands": "isomiso6iso2avc1mp41",
+            "cephvr_identity_version": "1",
+            "cephvr_session_id": "5bc5e7fc-d60c-4a51-9e9a-d2688ddf1823",
+            "cephvr_trial_id": "7d898c6b-a920-4ee0-9ec7-1c094e03ba91",
+            "cephvr_camera_role": "behavioral",
+            "cephvr_device_id": "40065509",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    },
+    "protocol-data\\DUMMY_182358_stimulus.mp4": {
+      "size_bytes": 5871393,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f4002a",
+            "width": 1280,
+            "height": 1000,
+            "coded_width": 1280,
+            "coded_height": 1008,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "32:25",
+            "pix_fmt": "yuvj444p",
+            "level": 42,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 78336,
+            "duration": "5.100000",
+            "bit_rate": "9205573",
+            "bits_per_raw_sample": "8",
+            "nb_read_frames": "306",
+            "extradata_size": 66,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-boundary-abort60\\DUMMY-182354\\protocol-data\\DUMMY_182358_stimulus.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "5.100000",
+          "size": "5871393",
+          "bit_rate": "9210028",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "iso5",
+            "minor_version": "512",
+            "compatible_brands": "iso5iso6mp41",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    },
+    "protocol-data\\DUMMY_182358_tracking_cam.mp4": {
+      "size_bytes": 34074,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.64002a",
+            "width": 1588,
+            "height": 1344,
+            "coded_width": 1600,
+            "coded_height": 1344,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "397:336",
+            "pix_fmt": "yuvj420p",
+            "level": 42,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 78080,
+            "duration": "5.083333",
+            "bit_rate": "44946",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "305",
+            "nb_read_frames": "305",
+            "extradata_size": 62,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-boundary-abort60\\DUMMY-182354\\protocol-data\\DUMMY_182358_tracking_cam.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "5.083333",
+          "size": "34074",
+          "bit_rate": "53624",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "isom",
+            "minor_version": "512",
+            "compatible_brands": "isomiso6iso2avc1mp41",
+            "cephvr_identity_version": "1",
+            "cephvr_session_id": "5bc5e7fc-d60c-4a51-9e9a-d2688ddf1823",
+            "cephvr_trial_id": "7d898c6b-a920-4ee0-9ec7-1c094e03ba91",
+            "cephvr_camera_role": "tracking",
+            "cephvr_device_id": "40747103",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    }
+  },
+  "frame_logs": {
+    "protocol-data\\DUMMY_182358_behavioral_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 150,
+        "video_frame": 153,
+        "completion": 1
+      },
+      "received_frames": 150,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {
+        "real": 150
+      },
+      "video_dispositions": {
+        "leading_duplicate": 2,
+        "real": 150,
+        "trailing_duplicate": 1
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 78672630428600,
+      "last_source_ns": 78677597093000,
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 78677608800600,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 150,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 153,
+            "selected_source_frame_count": 150,
+            "duplicate_frame_count": 3
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 0,
+            "last_native_counter": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": [
+            {
+              "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+              "count": 1,
+              "first_observed_monotonic_ns": 78672630428600,
+              "last_observed_monotonic_ns": 78672630428600,
+              "first_frame_id": 0,
+              "details": "optional native timestamp is unavailable"
+            }
+          ]
+        }
+      },
+      "completion_present": true
+    },
+    "protocol-data\\DUMMY_182358_stimulus_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "render_group": 306,
+        "clipping": 1224,
+        "group_update": 546,
+        "encoder_outcome": 1,
+        "completion": 1
+      },
+      "received_frames": 0,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {},
+      "video_dispositions": {},
+      "render_groups": 306,
+      "initial_capture_dispositions": {
+        "admitted": 240,
+        "same_slot_omission": 63,
+        "capacity_drop": 3
+      },
+      "first_source_ns": 78672549964700,
+      "last_source_ns": 78677602751400,
+      "final_records": {
+        "encoder_outcome": {
+          "kind": "encoder_outcome",
+          "admitted_count": 240,
+          "input_submitted_count": 306,
+          "capacity_drop_count": 3,
+          "selected_real_count": 240,
+          "same_slot_omission_count": 63,
+          "encoded_frame_count": 306,
+          "duplicate_frame_count": 66,
+          "final_input_group_id": 305,
+          "cutoff_host_ns": 78677620228200,
+          "exit_code": 0,
+          "eof_sent": true,
+          "drain_confirmed": true
+        },
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 78677620228200,
+          "last_group_id": 305,
+          "state_count": 306,
+          "submission_attempt_count": 1224,
+          "capture_admission_count": 240,
+          "capture_drop_count": 3,
+          "same_slot_omission_count": 63,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        }
+      },
+      "completion_present": true
+    },
+    "protocol-data\\DUMMY_182358_tracking_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 292,
+        "video_frame": 305,
+        "completion": 1
+      },
+      "received_frames": 292,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {
+        "real": 292
+      },
+      "video_dispositions": {
+        "leading_duplicate": 12,
+        "real": 292,
+        "trailing_duplicate": 1
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 78672746962000,
+      "last_source_ns": 78677596907000,
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 78677608840300,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 292,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 305,
+            "selected_source_frame_count": 292,
+            "duplicate_frame_count": 13
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 292
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": [
+            {
+              "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+              "count": 1,
+              "first_observed_monotonic_ns": 78672746962000,
+              "last_observed_monotonic_ns": 78672746962000,
+              "first_frame_id": 0,
+              "details": "optional native timestamp is unavailable"
+            }
+          ]
+        }
+      },
+      "completion_present": true
+    }
+  },
+  "files": [
+    {
+      "path": ".cephvr-reservation.json",
+      "bytes": 151
+    },
+    {
+      "path": ".cephvr.lock",
+      "bytes": 0
+    },
+    {
+      "path": "protocol-data\\DUMMY_182358_behavioral_cam.mp4",
+      "bytes": 10197478
+    },
+    {
+      "path": "protocol-data\\DUMMY_182358_behavioral_cam_frames.jsonl",
+      "bytes": 54702
+    },
+    {
+      "path": "protocol-data\\DUMMY_182358_LOG.json",
+      "bytes": 14218
+    },
+    {
+      "path": "protocol-data\\DUMMY_182358_stimulus.mp4",
+      "bytes": 5871393
+    },
+    {
+      "path": "protocol-data\\DUMMY_182358_stimulus_frames.jsonl",
+      "bytes": 1593425
+    },
+    {
+      "path": "protocol-data\\DUMMY_182358_stimulus_LOG.json",
+      "bytes": 34517
+    },
+    {
+      "path": "protocol-data\\DUMMY_182358_tracking_cam.mp4",
+      "bytes": 34074
+    },
+    {
+      "path": "protocol-data\\DUMMY_182358_tracking_cam_frames.jsonl",
+      "bytes": 106172
+    },
+    {
+      "path": "protocol-data\\SCHEMA.json",
+      "bytes": 8270
+    },
+    {
+      "path": "protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31356
+    },
+    {
+      "path": "protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 754
+    }
+  ]
+}

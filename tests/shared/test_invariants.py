@@ -25,7 +25,6 @@ from cephvr.shared.credentials import (
     default_runtime_root,
 )
 from cephvr.shared.deadlines import (
-    Deadline,
     duration_ns,
     remaining_seconds,
 )
@@ -148,12 +147,7 @@ def test_uuid_requires_canonical_v4() -> None:
         require_uuid4(str(uuid.uuid1()))
 
 
-def test_deadline_does_not_renew_or_round() -> None:
-    deadline = Deadline(100)
-    assert deadline.constrain(Deadline(200)).absolute_ns == 100
-    assert deadline.remaining_ns(now_ns=110) == 0
-    assert not deadline.expired_at(100)
-    assert deadline.expired_at(101)
+def test_duration_conversion_does_not_round() -> None:
     assert duration_ns(0.08, "s") == 80_000_000
     with pytest.raises(ValueError):
         duration_ns(0.0000000001, "s")
@@ -214,8 +208,6 @@ def test_remaining_deadline_helpers_preserve_clamping_and_transport_validation()
     assert remaining_seconds(-1, clock=lambda: 0) == 0.0
     with pytest.raises(ValueError, match="signed int64"):
         transport_remaining_seconds(-1, clock=lambda: 0)
-    with pytest.raises(ValueError, match="signed int64"):
-        Deadline(100).remaining_ns(now_ns=-1)
 
 
 def test_interruption_remains_available_on_ordinary_overload() -> None:

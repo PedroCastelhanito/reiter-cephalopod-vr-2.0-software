@@ -39,7 +39,7 @@ async def update_calibration(
     clock: Callable[[], int],
     dispatch_lock: asyncio.Lock,
     track: Callable[[asyncio.Task[pb.CommandAdmission]], None],
-    failed: Callable[[str, str], Awaitable[None]],
+    failed: Callable[[str, str, bool], Awaitable[None]],
     expire: Callable[[str, int], Coroutine[Any, Any, None]],
 ) -> pb.CommandAdmission:
     command_id = request.command.operator.command_id
@@ -140,11 +140,11 @@ async def update_calibration(
     except asyncio.CancelledError:
         raise
     except Exception as exc:
-        await failed(command_id, str(exc))
+        await failed(command_id, str(exc), False)
         return hooks.admission(command_id, error=str(exc))
     if reply.result != pb.COMMAND_RESULT_ACCEPTED:
         message = reply.failure.message or "Renderer rejected live calibration"
-        await failed(command_id, message)
+        await failed(command_id, message, True)
         return hooks.admission(command_id, error=message)
     hooks.spawn(expire(command_id, deadline))
     return hooks.admission(command_id)

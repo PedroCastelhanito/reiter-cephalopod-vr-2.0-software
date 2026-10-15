@@ -1,5 +1,13 @@
 # Tracking status
 
+Latest comprehensive Oct15 recheck repeats the explicit native CUDA/NVOF same-image
+lease/readback/closure smoke successfully (one test,0.37seconds), alongside the
+1920-pass non-rig backend suite. [Fresh native result](runtime-evidence-2026-10-15/comprehensive-audit/final-tracking-rig.log).
+The authorized two-camera/projector recording workloads include the Tracking camera
+as acquisition input but disable Tracking processing and experiment feedback. Black
+sampled Tracking imagery limits scene representativeness. Neither simultaneous
+Tracking algorithm load nor scientific accuracy/physical units is accepted.
+
 Oct15 real native same-image NVIDIA Optical Flow execution/lease smoke passes in
 the25-pass Windows/rig selection (one privilege skip). All48 owning contract cases and19
 schema comparisons pass. These establish native availability, not scientific accuracy,

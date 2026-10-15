@@ -1,0 +1,6 @@
+SetupSession 653b90a1-0de1-4dc4-9779-41e22f74e639 failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: Setup was cancelled before configuration adoption
+CancelSetup bee1b217-6046-455c-8a92-d3314a9c49ab failed: CLEANUP_UNCONFIRMED: acquisition_behavioral_worker cleanup evidence is incomplete; acquisition_tracking_worker cleanup evidence is incomplete
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_EVIDENCE: session cleanup lacks retained Setup ownership
+InterruptSession 9b107df3-785e-42c9-bc11-78ad82ce9228 failed: SESSION_IDENTITY: no exact live session
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

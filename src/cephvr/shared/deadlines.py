@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
-from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Literal
 
-from cephvr.shared.clock import INT64_MAX, host_time_ns, require_int64_ns
+from cephvr.shared.clock import INT64_MAX, host_time_ns
 
 
 def duration_ns(value: int | float | Decimal, unit: Literal["s", "ms", "ns"]) -> int:
@@ -47,28 +46,3 @@ async def wait_until_ns(
     # This is a timer correction, not state polling that an Event could replace.
     while remaining := remaining_seconds(boundary_ns, clock=clock):  # noqa: ASYNC110
         await asyncio.sleep(remaining)
-
-
-@dataclass(frozen=True)
-class Deadline:
-    absolute_ns: int
-
-    def __post_init__(self) -> None:
-        require_int64_ns(self.absolute_ns)
-
-    @classmethod
-    def after(cls, duration: int, *, now_ns: int | None = None) -> Deadline:
-        require_int64_ns(duration)
-        start = host_time_ns() if now_ns is None else require_int64_ns(now_ns)
-        return cls(require_int64_ns(start + duration))
-
-    def constrain(self, other: Deadline) -> Deadline:
-        return Deadline(min(self.absolute_ns, other.absolute_ns))
-
-    def remaining_ns(self, *, now_ns: int | None = None) -> int:
-        now = host_time_ns() if now_ns is None else require_int64_ns(now_ns)
-        return max(0, self.absolute_ns - now)
-
-    def expired_at(self, ingress_ns: int) -> bool:
-        """The cutoff is inclusive: ingress at the deadline still qualifies."""
-        return require_int64_ns(ingress_ns) > self.absolute_ns

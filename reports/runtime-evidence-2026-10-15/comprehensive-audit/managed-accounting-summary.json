@@ -1,0 +1,1606 @@
+{
+  "managed-textures60-on-r2": {
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "cleanup_confirmed": true,
+    "video_count": 3,
+    "all_count_decode_commands_passed": true,
+    "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-textures60-on-r2\\DUMMY-181401",
+    "video_frame_comparisons": {
+      "protocol-data\\DUMMY_181405_behavioral_cam.mp4": {
+        "decoded_frames": 1801,
+        "declared_frames": 1801,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_181405_stimulus.mp4": {
+        "decoded_frames": 3600,
+        "declared_frames": 3600,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_181405_tracking_cam.mp4": {
+        "decoded_frames": 3600,
+        "declared_frames": 3600,
+        "counts_match": true,
+        "full_decode_exit": 0
+      }
+    },
+    "sources": {
+      "protocol-data\\DUMMY_181405_behavioral_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 1798,
+          "video_frame": 1801,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 1797,
+          "minimum": 32.5759,
+          "mean": 33.33342882582081,
+          "median": 33.3319,
+          "p99": 33.6642,
+          "maximum": 34.1826
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78139708456600,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 1798,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 1801,
+              "selected_source_frame_count": 1798,
+              "duplicate_frame_count": 3
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 1798
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78079799484900,
+                "last_observed_monotonic_ns": 78079799484900,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 1798
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 2,
+          "real": 1798,
+          "trailing_duplicate": 1
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_181405_stimulus_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "render_group": 3598,
+          "clipping": 14392,
+          "group_update": 7189,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3597,
+          "minimum": 6.2831,
+          "mean": 16.67328290241868,
+          "median": 16.6767,
+          "p99": 18.0807,
+          "maximum": 53.9402
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "encoder_outcome": {
+            "kind": "encoder_outcome",
+            "admitted_count": 3589,
+            "input_submitted_count": 3600,
+            "capacity_drop_count": 7,
+            "selected_real_count": 3589,
+            "same_slot_omission_count": 2,
+            "encoded_frame_count": 3600,
+            "duplicate_frame_count": 11,
+            "final_input_group_id": 3597,
+            "cutoff_host_ns": 78139708456600,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          },
+          "completion": {
+            "kind": "completion",
+            "cutoff_host_ns": 78139708456600,
+            "last_group_id": 3597,
+            "state_count": 3598,
+            "submission_attempt_count": 14392,
+            "capture_admission_count": 3589,
+            "capture_drop_count": 7,
+            "same_slot_omission_count": 2,
+            "unresolved_attempt_count": 0,
+            "outcome": "completed"
+          }
+        },
+        "frame_video_dispositions": {},
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_181405_tracking_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 3588,
+          "video_frame": 3600,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3587,
+          "minimum": 16.0548,
+          "mean": 16.667175829383886,
+          "median": 16.6708,
+          "p99": 17.0134,
+          "maximum": 17.3494
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78139708456600,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 3588,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 3600,
+              "selected_source_frame_count": 3588,
+              "duplicate_frame_count": 12
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 3588
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78079916148600,
+                "last_observed_monotonic_ns": 78079916148600,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 3588
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 12,
+          "real": 3588
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      }
+    },
+    "errors": []
+  },
+  "managed-textures60-off-r1": {
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "cleanup_confirmed": true,
+    "video_count": 0,
+    "all_count_decode_commands_passed": true,
+    "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-textures60-off-r\\DUMMY-181727",
+    "video_frame_comparisons": {},
+    "sources": {
+      "protocol-data\\DUMMY_181731_behavioral_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 1798,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 1797,
+          "minimum": 32.8881,
+          "mean": 33.333314190317196,
+          "median": 33.3335,
+          "p99": 33.5768,
+          "maximum": 33.7268
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78345025550200,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 1798,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 1798
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78285108320900,
+                "last_observed_monotonic_ns": 78285108320900,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "video_disabled": 1798
+        },
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_181731_stimulus_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "render_group": 3601,
+          "clipping": 14404,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3600,
+          "minimum": 3.8492,
+          "mean": 16.662436222222222,
+          "median": 16.6648,
+          "p99": 17.164,
+          "maximum": 33.3586
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "kind": "completion",
+            "cutoff_host_ns": 78345025550200,
+            "last_group_id": 3600,
+            "state_count": 3601,
+            "submission_attempt_count": 14404,
+            "capture_admission_count": 0,
+            "capture_drop_count": 0,
+            "same_slot_omission_count": 0,
+            "unresolved_attempt_count": 0,
+            "outcome": "completed"
+          }
+        },
+        "frame_video_dispositions": {},
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_181731_tracking_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 3588,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3587,
+          "minimum": 16.1972,
+          "mean": 16.667129662670757,
+          "median": 16.667,
+          "p99": 16.8784,
+          "maximum": 17.0837
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78345025550200,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 3588,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 3588
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78285224797800,
+                "last_observed_monotonic_ns": 78285224797800,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "video_disabled": 3588
+        },
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      }
+    },
+    "errors": []
+  },
+  "managed-mixed60-on-r1": {
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "cleanup_confirmed": true,
+    "video_count": 3,
+    "all_count_decode_commands_passed": true,
+    "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-mixed60-on-r1\\DUMMY-181946",
+    "video_frame_comparisons": {
+      "protocol-data\\DUMMY_181950_behavioral_cam.mp4": {
+        "decoded_frames": 1801,
+        "declared_frames": 1801,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_181950_stimulus.mp4": {
+        "decoded_frames": 3600,
+        "declared_frames": 3600,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_181950_tracking_cam.mp4": {
+        "decoded_frames": 3600,
+        "declared_frames": 3600,
+        "counts_match": true,
+        "full_decode_exit": 0
+      }
+    },
+    "sources": {
+      "protocol-data\\DUMMY_181950_behavioral_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 1798,
+          "video_frame": 1801,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 1797,
+          "minimum": 29.9952,
+          "mean": 33.33350946021147,
+          "median": 33.3345,
+          "p99": 33.6605,
+          "maximum": 36.7382
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78484159151100,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 1798,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 1801,
+              "selected_source_frame_count": 1798,
+              "duplicate_frame_count": 3
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 1798
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78424252521600,
+                "last_observed_monotonic_ns": 78424252521600,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 1798
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 2,
+          "real": 1798,
+          "trailing_duplicate": 1
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_181950_stimulus_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "render_group": 3601,
+          "clipping": 14404,
+          "group_update": 7195,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3600,
+          "minimum": 5.8891,
+          "mean": 16.662110416666668,
+          "median": 16.6661,
+          "p99": 18.117,
+          "maximum": 35.3235
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "encoder_outcome": {
+            "kind": "encoder_outcome",
+            "admitted_count": 3595,
+            "input_submitted_count": 3600,
+            "capacity_drop_count": 3,
+            "selected_real_count": 3595,
+            "same_slot_omission_count": 3,
+            "encoded_frame_count": 3600,
+            "duplicate_frame_count": 5,
+            "final_input_group_id": 3600,
+            "cutoff_host_ns": 78484159151100,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          },
+          "completion": {
+            "kind": "completion",
+            "cutoff_host_ns": 78484159151100,
+            "last_group_id": 3600,
+            "state_count": 3601,
+            "submission_attempt_count": 14404,
+            "capture_admission_count": 3595,
+            "capture_drop_count": 3,
+            "same_slot_omission_count": 3,
+            "unresolved_attempt_count": 0,
+            "outcome": "completed"
+          }
+        },
+        "frame_video_dispositions": {},
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_181950_tracking_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 3588,
+          "video_frame": 3600,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3587,
+          "minimum": 15.8454,
+          "mean": 16.667129411764705,
+          "median": 16.6661,
+          "p99": 16.9536,
+          "maximum": 17.49
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78484159151100,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 3588,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 3600,
+              "selected_source_frame_count": 3588,
+              "duplicate_frame_count": 12
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 3588
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78424368491900,
+                "last_observed_monotonic_ns": 78424368491900,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 3588
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 12,
+          "real": 3588
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      }
+    },
+    "errors": []
+  },
+  "managed-abort60-r1": {
+    "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+    "cleanup_confirmed": true,
+    "video_count": 3,
+    "all_count_decode_commands_passed": true,
+    "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-abort60-r1\\DUMMY-182205",
+    "video_frame_comparisons": {
+      "protocol-data\\DUMMY_182209_behavioral_cam.mp4": {
+        "decoded_frames": 152,
+        "declared_frames": 152,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_182209_stimulus.mp4": {
+        "decoded_frames": 303,
+        "declared_frames": 303,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_182209_tracking_cam.mp4": {
+        "decoded_frames": 303,
+        "declared_frames": 303,
+        "counts_match": true,
+        "full_decode_exit": 0
+      }
+    },
+    "sources": {
+      "protocol-data\\DUMMY_182209_behavioral_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 149,
+          "video_frame": 152,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 148,
+          "minimum": 24.7556,
+          "mean": 33.33218243243243,
+          "median": 33.3349,
+          "p99": 33.7118,
+          "maximum": 41.5854
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78568482172300,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 149,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 152,
+              "selected_source_frame_count": 149,
+              "duplicate_frame_count": 3
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 149
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78563525150300,
+                "last_observed_monotonic_ns": 78563525150300,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 149
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 2,
+          "real": 149,
+          "trailing_duplicate": 1
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_182209_stimulus_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "render_group": 303,
+          "clipping": 1212,
+          "group_update": 601,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 302,
+          "minimum": 4.0635,
+          "mean": 16.62995,
+          "median": 16.6354,
+          "p99": 19.217,
+          "maximum": 33.0666
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "encoder_outcome": {
+            "kind": "encoder_outcome",
+            "admitted_count": 298,
+            "input_submitted_count": 303,
+            "capacity_drop_count": 3,
+            "selected_real_count": 298,
+            "same_slot_omission_count": 2,
+            "encoded_frame_count": 303,
+            "duplicate_frame_count": 5,
+            "final_input_group_id": 302,
+            "cutoff_host_ns": 78568484954000,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          },
+          "completion": {
+            "kind": "completion",
+            "cutoff_host_ns": 78568484954000,
+            "last_group_id": 302,
+            "state_count": 303,
+            "submission_attempt_count": 1212,
+            "capture_admission_count": 298,
+            "capture_drop_count": 3,
+            "same_slot_omission_count": 2,
+            "unresolved_attempt_count": 0,
+            "outcome": "completed"
+          }
+        },
+        "frame_video_dispositions": {},
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_182209_tracking_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 291,
+          "video_frame": 303,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 290,
+          "minimum": 16.2103,
+          "mean": 16.666717586206897,
+          "median": 16.6691,
+          "p99": 17.0254,
+          "maximum": 17.2778
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78568482445700,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 291,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 303,
+              "selected_source_frame_count": 291,
+              "duplicate_frame_count": 12
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 0,
+              "last_native_counter": null
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78563640865800,
+                "last_observed_monotonic_ns": 78563640865800,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 291
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 11,
+          "real": 291,
+          "trailing_duplicate": 1
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      }
+    },
+    "errors": []
+  },
+  "managed-boundary-abort60-r1": {
+    "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+    "cleanup_confirmed": true,
+    "video_count": 3,
+    "all_count_decode_commands_passed": true,
+    "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-boundary-abort60\\DUMMY-182354",
+    "video_frame_comparisons": {
+      "protocol-data\\DUMMY_182358_behavioral_cam.mp4": {
+        "decoded_frames": 153,
+        "declared_frames": 153,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_182358_stimulus.mp4": {
+        "decoded_frames": 306,
+        "declared_frames": 306,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_182358_tracking_cam.mp4": {
+        "decoded_frames": 305,
+        "declared_frames": 305,
+        "counts_match": true,
+        "full_decode_exit": 0
+      }
+    },
+    "sources": {
+      "protocol-data\\DUMMY_182358_behavioral_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 150,
+          "video_frame": 153,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 149,
+          "minimum": 32.091,
+          "mean": 33.333318120805366,
+          "median": 33.3217,
+          "p99": 33.5434,
+          "maximum": 34.5067
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78677608800600,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 150,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 153,
+              "selected_source_frame_count": 150,
+              "duplicate_frame_count": 3
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 0,
+              "last_native_counter": null
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78672630428600,
+                "last_observed_monotonic_ns": 78672630428600,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 150
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 2,
+          "real": 150,
+          "trailing_duplicate": 1
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_182358_stimulus_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "render_group": 306,
+          "clipping": 1224,
+          "group_update": 546,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 305,
+          "minimum": 5.494,
+          "mean": 16.566513770491802,
+          "median": 16.6171,
+          "p99": 18.5299,
+          "maximum": 19.6737
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "encoder_outcome": {
+            "kind": "encoder_outcome",
+            "admitted_count": 240,
+            "input_submitted_count": 306,
+            "capacity_drop_count": 3,
+            "selected_real_count": 240,
+            "same_slot_omission_count": 63,
+            "encoded_frame_count": 306,
+            "duplicate_frame_count": 66,
+            "final_input_group_id": 305,
+            "cutoff_host_ns": 78677620228200,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          },
+          "completion": {
+            "kind": "completion",
+            "cutoff_host_ns": 78677620228200,
+            "last_group_id": 305,
+            "state_count": 306,
+            "submission_attempt_count": 1224,
+            "capture_admission_count": 240,
+            "capture_drop_count": 3,
+            "same_slot_omission_count": 63,
+            "unresolved_attempt_count": 0,
+            "outcome": "completed"
+          }
+        },
+        "frame_video_dispositions": {},
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_182358_tracking_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 292,
+          "video_frame": 305,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 291,
+          "minimum": 15.9181,
+          "mean": 16.66647766323024,
+          "median": 16.6726,
+          "p99": 17.0781,
+          "maximum": 17.43
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78677608840300,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 292,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 305,
+              "selected_source_frame_count": 292,
+              "duplicate_frame_count": 13
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 292
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78672746962000,
+                "last_observed_monotonic_ns": 78672746962000,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 292
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 12,
+          "real": 292,
+          "trailing_duplicate": 1
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      }
+    },
+    "errors": []
+  },
+  "managed-boundary-reuse60-r1": {
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "cleanup_confirmed": true,
+    "video_count": 3,
+    "all_count_decode_commands_passed": true,
+    "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-boundary-reuse60\\DUMMY-182446",
+    "video_frame_comparisons": {
+      "protocol-data\\DUMMY_182450_behavioral_cam.mp4": {
+        "decoded_frames": 1801,
+        "declared_frames": 1801,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_182450_stimulus.mp4": {
+        "decoded_frames": 3600,
+        "declared_frames": 3600,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_182450_tracking_cam.mp4": {
+        "decoded_frames": 3600,
+        "declared_frames": 3600,
+        "counts_match": true,
+        "full_decode_exit": 0
+      }
+    },
+    "sources": {
+      "protocol-data\\DUMMY_182450_behavioral_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 1798,
+          "video_frame": 1801,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 1797,
+          "minimum": 21.432,
+          "mean": 33.33334101279911,
+          "median": 33.3339,
+          "p99": 33.9264,
+          "maximum": 45.5388
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78784391143000,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 1798,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 1801,
+              "selected_source_frame_count": 1797,
+              "duplicate_frame_count": 4
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 1798
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78724485328200,
+                "last_observed_monotonic_ns": 78724485328200,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 1797,
+          "same_slot_omission": 1
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 2,
+          "real": 1797,
+          "interior_duplicate": 1,
+          "trailing_duplicate": 1
+        },
+        "source_records_marked_dropped": 1,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_182450_stimulus_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "render_group": 3601,
+          "clipping": 14404,
+          "group_update": 7198,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3600,
+          "minimum": 4.5675,
+          "mean": 16.664174916666667,
+          "median": 16.6811,
+          "p99": 18.2096,
+          "maximum": 38.4579
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "encoder_outcome": {
+            "kind": "encoder_outcome",
+            "admitted_count": 3598,
+            "input_submitted_count": 3600,
+            "capacity_drop_count": 1,
+            "selected_real_count": 3598,
+            "same_slot_omission_count": 2,
+            "encoded_frame_count": 3600,
+            "duplicate_frame_count": 2,
+            "final_input_group_id": 3600,
+            "cutoff_host_ns": 78784391143000,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          },
+          "completion": {
+            "kind": "completion",
+            "cutoff_host_ns": 78784391143000,
+            "last_group_id": 3600,
+            "state_count": 3601,
+            "submission_attempt_count": 14404,
+            "capture_admission_count": 3598,
+            "capture_drop_count": 1,
+            "same_slot_omission_count": 2,
+            "unresolved_attempt_count": 0,
+            "outcome": "completed"
+          }
+        },
+        "frame_video_dispositions": {},
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_182450_tracking_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 3588,
+          "video_frame": 3600,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3587,
+          "minimum": 12.9294,
+          "mean": 16.667204711458044,
+          "median": 16.6676,
+          "p99": 17.0282,
+          "maximum": 20.4008
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 78784391143000,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 3588,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 3600,
+              "selected_source_frame_count": 3588,
+              "duplicate_frame_count": 12
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 3588
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 78724603247400,
+                "last_observed_monotonic_ns": 78724603247400,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 3588
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 12,
+          "real": 3588
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      }
+    },
+    "errors": []
+  },
+  "managed-isolated-mixed60-r1": {
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "cleanup_confirmed": true,
+    "video_count": 3,
+    "all_count_decode_commands_passed": true,
+    "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-isolated-mixed60\\DUMMY-185329",
+    "video_frame_comparisons": {
+      "protocol-data\\DUMMY_185334_behavioral_cam.mp4": {
+        "decoded_frames": 1801,
+        "declared_frames": 1801,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_185334_stimulus.mp4": {
+        "decoded_frames": 3600,
+        "declared_frames": 3600,
+        "counts_match": true,
+        "full_decode_exit": 0
+      },
+      "protocol-data\\DUMMY_185334_tracking_cam.mp4": {
+        "decoded_frames": 3600,
+        "declared_frames": 3600,
+        "counts_match": true,
+        "full_decode_exit": 0
+      }
+    },
+    "sources": {
+      "protocol-data\\DUMMY_185334_behavioral_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 1798,
+          "video_frame": 1801,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 1797,
+          "minimum": 32.5787,
+          "mean": 33.33339933222037,
+          "median": 33.3328,
+          "p99": 33.7764,
+          "maximum": 34.0869
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 80508206625400,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 1798,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 1801,
+              "selected_source_frame_count": 1798,
+              "duplicate_frame_count": 3
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 0,
+              "last_native_counter": null
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 80448297543400,
+                "last_observed_monotonic_ns": 80448297543400,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 1798
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 2,
+          "real": 1798,
+          "trailing_duplicate": 1
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_185334_stimulus_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "render_group": 3598,
+          "clipping": 14392,
+          "group_update": 7192,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3597,
+          "minimum": 4.9912,
+          "mean": 16.674471976647204,
+          "median": 16.6588,
+          "p99": 17.9199,
+          "maximum": 33.3807
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "encoder_outcome": {
+            "kind": "encoder_outcome",
+            "admitted_count": 3592,
+            "input_submitted_count": 3600,
+            "capacity_drop_count": 4,
+            "selected_real_count": 3592,
+            "same_slot_omission_count": 2,
+            "encoded_frame_count": 3600,
+            "duplicate_frame_count": 8,
+            "final_input_group_id": 3597,
+            "cutoff_host_ns": 80508206625400,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          },
+          "completion": {
+            "kind": "completion",
+            "cutoff_host_ns": 80508206625400,
+            "last_group_id": 3597,
+            "state_count": 3598,
+            "submission_attempt_count": 14392,
+            "capture_admission_count": 3592,
+            "capture_drop_count": 4,
+            "same_slot_omission_count": 2,
+            "unresolved_attempt_count": 0,
+            "outcome": "completed"
+          }
+        },
+        "frame_video_dispositions": {},
+        "video_frame_dispositions": {},
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      },
+      "protocol-data\\DUMMY_185334_tracking_cam_frames.jsonl": {
+        "record_counts": {
+          "header": 1,
+          "frame": 3588,
+          "video_frame": 3600,
+          "completion": 1
+        },
+        "intervals_ms": {
+          "count": 3587,
+          "minimum": 14.3863,
+          "mean": 16.667162196821856,
+          "median": 16.6664,
+          "p99": 17.0721,
+          "maximum": 18.9458
+        },
+        "noncontiguous_source_ids": [],
+        "native_counter_discontinuities": [],
+        "final_records": {
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 80508206625400,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 3588,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 3600,
+              "selected_source_frame_count": 3588,
+              "duplicate_frame_count": 12
+            },
+            "pulses": {
+              "on_outcome": null,
+              "on_dispatched_monotonic_ns": null,
+              "on_acknowledged_monotonic_ns": null,
+              "off_outcome": null,
+              "off_dispatched_monotonic_ns": null,
+              "off_acknowledged_monotonic_ns": null
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 3588
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": [
+              {
+                "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                "count": 1,
+                "first_observed_monotonic_ns": 80448413361300,
+                "last_observed_monotonic_ns": 80448413361300,
+                "first_frame_id": 0,
+                "details": "optional native timestamp is unavailable"
+              }
+            ]
+          }
+        },
+        "frame_video_dispositions": {
+          "real": 3588
+        },
+        "video_frame_dispositions": {
+          "leading_duplicate": 12,
+          "real": 3588
+        },
+        "source_records_marked_dropped": 0,
+        "invalid_source_records": 0
+      }
+    },
+    "errors": []
+  },
+  "retired_boundary": {
+    "original_boundary_ns": 78732536347800,
+    "new_trial_start_ns": 78724391143000,
+    "new_trial_end_ns": 78784391143000,
+    "boundary_after_new_start_seconds": 8.1452048,
+    "new_trial_beyond_boundary_seconds": 51.8547952
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "scope": "Actual native projector diagnostic Open/Update/reject/Close through authenticated controller; no saved drafts/assets edited, no optical measurement",
+  "events": [
+    {
+      "name": "photodiode_placement-open",
+      "monotonic_ns": 78942439344300,
+      "value": {
+        "command_id": "2bef63b3-1868-434d-b5e6-d392f463fdbb",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "name": "photodiode_placement-active",
+      "monotonic_ns": 78942439950300,
+      "value": {
+        "diagnostic_id": "a25ad701-0c25-4071-a080-cc38295cbb24",
+        "controller_generation": "0f3b1530-ad0f-4ae7-be9e-79e7db0aef0d",
+        "renderer_generation": "bc901d44-cb6f-46de-bf29-512ee6f98651",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_ACTIVE",
+        "observed_monotonic_ns": "78942435128200",
+        "profile_sha256": "44b67393fe6809d3e56ec3185f02a1713a82662f6ba51b48f93fb2d00fd2de09",
+        "arena_sha256": "4d4e3f262b7e215c29c050066a3b95c8cfa5a4cd060ba352575c66d6dc08cde2",
+        "presented": true,
+        "idle": false,
+        "resources_closed": false,
+        "calibration_view": "photodiode_placement"
+      }
+    },
+    {
+      "name": "error",
+      "monotonic_ns": 78942927800400,
+      "value": "AssertionError: Out-of-bounds placement unexpectedly accepted"
+    }
+  ],
+  "generation": "0f3b1530-ad0f-4ae7-be9e-79e7db0aef0d"
+}

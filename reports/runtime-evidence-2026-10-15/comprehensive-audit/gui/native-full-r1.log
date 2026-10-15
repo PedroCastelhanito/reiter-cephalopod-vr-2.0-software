@@ -1,0 +1,21 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 519 items
+
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor0-area0-1.0-expected0] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor1-area1-1.0-expected1] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor2-area2-1.0-expected2] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor3-area3-1.0-expected3] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor4-area4-1.0-expected4] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor5-area5-2.0-expected5] PASSED [  1%]
+tests/gui/test_dashboard.py::test_square_preview_placement_fits_small_work_area PASSED [  1%]
+tests/gui/test_dashboard.py::test_offline_frontend_cannot_request_commands PASSED [  1%]
+tests/gui/test_dashboard.py::test_protocol_config_round_trip_retains_complete_schedule PASSED [  1%]
+tests/gui/test_dashboard.py::test_microcontroller_config_load_is_local_and_collects_for_normal_submission PASSED [  1%]
+tests/gui/test_dashboard.py::test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity PASSED [  2%]
+tests/gui/test_dashboard.py::test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory PASSED [  2%]

@@ -1,0 +1,17 @@
+{
+  "mode": "shutdown",
+  "events": [
+    {
+      "name": "shutdown",
+      "monotonic_ns": 76263521157200,
+      "value": {
+        "command_id": "f7403393-9ca5-443a-88cf-26ad5bd2e743",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    }
+  ],
+  "generation": "60396af4-4079-439b-9201-83481dcd5ec3"
+}

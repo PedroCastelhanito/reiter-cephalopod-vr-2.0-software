@@ -1,0 +1,32 @@
+{
+  "mode": "shutdown",
+  "events": [
+    {
+      "name": "endpoint",
+      "monotonic_ns": 80528423183900,
+      "value": {
+        "controller_generation": "7c3ae0fa-acc1-4949-b3a4-1b446e1e9c51"
+      }
+    },
+    {
+      "name": "control",
+      "monotonic_ns": 80528443206800,
+      "value": {
+        "holder_client_id": "353db1f7-35a0-480d-b6b7-34b2f2c28820",
+        "control_generation": "54bb3bbb-85ab-4efa-8f79-bbee6228e45d"
+      }
+    },
+    {
+      "name": "shutdown",
+      "monotonic_ns": 80528453271100,
+      "value": {
+        "command_id": "68690dfb-8a5e-43d9-9e63-c170a5dba97d",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    }
+  ],
+  "generation": "7c3ae0fa-acc1-4949-b3a4-1b446e1e9c51"
+}

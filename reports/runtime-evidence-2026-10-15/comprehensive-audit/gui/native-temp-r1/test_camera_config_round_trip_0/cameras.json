@@ -1,0 +1,22 @@
+{
+  "format": "cephvr-cameras-config",
+  "version": 1,
+  "cameras": [
+    {
+      "serial": "REVIEW-001",
+      "role": "Behavior cam",
+      "enabled": true,
+      "values": {
+        "trigger_clock": "External controller",
+        "trigger_source": "Line3",
+        "trigger_frequency_hz": "30"
+      }
+    },
+    {
+      "serial": "REVIEW-002",
+      "role": "Tracking cam",
+      "enabled": false,
+      "values": {}
+    }
+  ]
+}

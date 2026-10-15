@@ -1,0 +1,67 @@
+{
+  "source_frames": 3600,
+  "decoded_frames": 3600,
+  "count_matches": true,
+  "stream": {
+    "codec_name": "h264",
+    "width": 1588,
+    "height": 1344,
+    "pix_fmt": "yuvj420p",
+    "avg_frame_rate": "60/1",
+    "duration": "60.000000",
+    "nb_read_frames": "3600"
+  },
+  "full_decode_exit": 0,
+  "full_decode_error": "",
+  "probe_exit": 0,
+  "probe_error": "",
+  "probe_command": [
+    "ffprobe",
+    "-v",
+    "error",
+    "-count_frames",
+    "-select_streams",
+    "v:0",
+    "-show_entries",
+    "stream=codec_name,width,height,pix_fmt,avg_frame_rate,nb_read_frames,duration",
+    "-of",
+    "json",
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\direct-cq18-60-r1\\tracking.mp4"
+  ],
+  "decode_command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-v",
+    "error",
+    "-xerror",
+    "-i",
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\direct-cq18-60-r1\\tracking.mp4",
+    "-map",
+    "0:v:0",
+    "-f",
+    "null",
+    "-"
+  ],
+  "bytes": 325453,
+  "receipt_span_s": 59.986755,
+  "observed_receipt_fps": 59.99657757783364,
+  "block_id_gaps": 0,
+  "block_id_nonincreases": 0,
+  "failed_grabs": 0,
+  "interval_ms": {
+    "mean": 16.667617393720477,
+    "p95": 17.2686,
+    "max": 203.0464
+  },
+  "first_frame_mean_8bit": 0.0,
+  "first_frame_std_8bit": 0.0,
+  "settings": {
+    "width": 1588,
+    "height": 1344,
+    "actual_hz": 60.0,
+    "pixel_format": "Mono8"
+  },
+  "camera_closed": true,
+  "pfs_exact_restored": false,
+  "scope": "Observed SDK receipt IDs and direct encoder frames; no managed CFR/source-selection, physical trigger/timing or scene quality equivalence claim"
+}

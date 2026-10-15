@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-15\comprehensive-audit\camera_baseline.py", line 25, in <module>
+    node = camera.GetNodeMap().GetNode(name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pypylon\genicam.py", line 1121, in GetNode
+    return _genicam.INodeMap_GetNode(self, Name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_genicam.LogicalErrorException: Node not existing (file 'genicam_wrap.cpp', line 16820)

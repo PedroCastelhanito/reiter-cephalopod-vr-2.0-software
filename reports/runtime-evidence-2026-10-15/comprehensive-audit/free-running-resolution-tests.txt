@@ -1,0 +1,136 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+_ test_setup_readback_requires_pulses_only_for_external_cameras[False-False] __
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-276/test_setup_readback_requires_p0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002AF8BCD3B50>
+external = False, pulse_report = False
+
+    @pytest.mark.parametrize("external", [False, True])
+    @pytest.mark.parametrize("pulse_report", [False, True])
+    async def test_setup_readback_requires_pulses_only_for_external_cameras(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, external: bool, pulse_report: bool
+    ) -> None:
+        runtime = _runtime_with_validators(tmp_path)
+        backend = _Acquisition(pb.COMMAND_RESULT_ACCEPTED)
+        attempt = _attempt(runtime, tmp_path, {"acquisition": cast(Any, backend)})
+        attempt.setup_deadline_ns = 10**12
+        operation = _id()
+        attempt.setup_operations["acquisition"] = operation
+        setting = attempt.prepared.configuration.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        setting.pulses.port = "COM8"
+        setting.behavioral.enabled = True
+        setting.behavioral.device.device_id = "camera-serial"
+        setting.behavioral.device.frame_timing = (
+            camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+            if external
+>           else camera_pb.FRAME_TIMING_FREE_RUNNING
+                 ^^^^^^^^^
+        )
+E       NameError: name 'camera_pb' is not defined
+
+tests\controller\test_camera_configuration.py:2060: NameError
+__ test_setup_readback_requires_pulses_only_for_external_cameras[False-True] __
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-276/test_setup_readback_requires_p1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002AF8BCCA6D0>
+external = True, pulse_report = False
+
+    @pytest.mark.parametrize("external", [False, True])
+    @pytest.mark.parametrize("pulse_report", [False, True])
+    async def test_setup_readback_requires_pulses_only_for_external_cameras(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, external: bool, pulse_report: bool
+    ) -> None:
+        runtime = _runtime_with_validators(tmp_path)
+        backend = _Acquisition(pb.COMMAND_RESULT_ACCEPTED)
+        attempt = _attempt(runtime, tmp_path, {"acquisition": cast(Any, backend)})
+        attempt.setup_deadline_ns = 10**12
+        operation = _id()
+        attempt.setup_operations["acquisition"] = operation
+        setting = attempt.prepared.configuration.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        setting.pulses.port = "COM8"
+        setting.behavioral.enabled = True
+        setting.behavioral.device.device_id = "camera-serial"
+        setting.behavioral.device.frame_timing = (
+>           camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+            ^^^^^^^^^
+            if external
+            else camera_pb.FRAME_TIMING_FREE_RUNNING
+        )
+E       NameError: name 'camera_pb' is not defined
+
+tests\controller\test_camera_configuration.py:2058: NameError
+__ test_setup_readback_requires_pulses_only_for_external_cameras[True-False] __
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-276/test_setup_readback_requires_p2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002AF8CFE1A10>
+external = False, pulse_report = True
+
+    @pytest.mark.parametrize("external", [False, True])
+    @pytest.mark.parametrize("pulse_report", [False, True])
+    async def test_setup_readback_requires_pulses_only_for_external_cameras(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, external: bool, pulse_report: bool
+    ) -> None:
+        runtime = _runtime_with_validators(tmp_path)
+        backend = _Acquisition(pb.COMMAND_RESULT_ACCEPTED)
+        attempt = _attempt(runtime, tmp_path, {"acquisition": cast(Any, backend)})
+        attempt.setup_deadline_ns = 10**12
+        operation = _id()
+        attempt.setup_operations["acquisition"] = operation
+        setting = attempt.prepared.configuration.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        setting.pulses.port = "COM8"
+        setting.behavioral.enabled = True
+        setting.behavioral.device.device_id = "camera-serial"
+        setting.behavioral.device.frame_timing = (
+            camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+            if external
+>           else camera_pb.FRAME_TIMING_FREE_RUNNING
+                 ^^^^^^^^^
+        )
+E       NameError: name 'camera_pb' is not defined
+
+tests\controller\test_camera_configuration.py:2060: NameError
+__ test_setup_readback_requires_pulses_only_for_external_cameras[True-True] ___
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-276/test_setup_readback_requires_p3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002AF8CFE8810>
+external = True, pulse_report = True
+
+    @pytest.mark.parametrize("external", [False, True])
+    @pytest.mark.parametrize("pulse_report", [False, True])
+    async def test_setup_readback_requires_pulses_only_for_external_cameras(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, external: bool, pulse_report: bool
+    ) -> None:
+        runtime = _runtime_with_validators(tmp_path)
+        backend = _Acquisition(pb.COMMAND_RESULT_ACCEPTED)
+        attempt = _attempt(runtime, tmp_path, {"acquisition": cast(Any, backend)})
+        attempt.setup_deadline_ns = 10**12
+        operation = _id()
+        attempt.setup_operations["acquisition"] = operation
+        setting = attempt.prepared.configuration.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        setting.pulses.port = "COM8"
+        setting.behavioral.enabled = True
+        setting.behavioral.device.device_id = "camera-serial"
+        setting.behavioral.device.frame_timing = (
+>           camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+            ^^^^^^^^^
+            if external
+            else camera_pb.FRAME_TIMING_FREE_RUNNING
+        )
+E       NameError: name 'camera_pb' is not defined
+
+tests\controller\test_camera_configuration.py:2058: NameError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_camera_configuration.py::test_setup_readback_requires_pulses_only_for_external_cameras[False-False]
+FAILED tests/controller/test_camera_configuration.py::test_setup_readback_requires_pulses_only_for_external_cameras[False-True]
+FAILED tests/controller/test_camera_configuration.py::test_setup_readback_requires_pulses_only_for_external_cameras[True-False]
+FAILED tests/controller/test_camera_configuration.py::test_setup_readback_requires_pulses_only_for_external_cameras[True-True]
+4 failed, 55 deselected in 1.28s

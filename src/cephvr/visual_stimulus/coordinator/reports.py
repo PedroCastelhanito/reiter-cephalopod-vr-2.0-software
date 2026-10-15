@@ -13,7 +13,11 @@ from cephvr.visual_stimulus.recording.recipe import PreparedRecipe
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
-from .display import accept_display_report, recovered_startup_rejection
+from .display import (
+    accept_display_report,
+    recovered_startup_rejection,
+    rejected_calibration_update,
+)
 from .ports import PeerPort
 from .ready import validate_ready
 from .state import Identity, Prepared, State
@@ -232,8 +236,16 @@ class Reports:
                     )
                 )
             unavailable = recovered_startup_rejection(self.state, link, result)
+            rejected_update = rejected_calibration_update(
+                self.identity, self.state, link, result
+            )
             setup_rejection = link.method == "SetupSession"
-            if not result.succeeded and not unavailable and not setup_rejection:
+            if (
+                not result.succeeded
+                and not unavailable
+                and not setup_rejection
+                and not rejected_update
+            ):
                 self.state.interrupted = True
                 deliveries.append(
                     self.supervisor.receipt(

@@ -1,0 +1,31 @@
+{
+  "mode": "previews",
+  "events": [
+    {
+      "name": "endpoint",
+      "monotonic_ns": 76344075578800,
+      "value": {
+        "controller_generation": "bf705876-2632-4ab5-b8c7-453b279680b8"
+      }
+    },
+    {
+      "name": "control",
+      "monotonic_ns": 76344094400600,
+      "value": {
+        "holder_client_id": "1cf36b7b-2d9b-44bb-8cfb-5241c70febf5",
+        "control_generation": "923ce78e-12e0-4a8d-8a4d-44ce31e65fb0"
+      }
+    },
+    {
+      "name": "failure_snapshot_error",
+      "monotonic_ns": 76389120514300,
+      "value": "Channel is closed."
+    },
+    {
+      "name": "error",
+      "monotonic_ns": 76389121041800,
+      "value": "TimeoutError: "
+    }
+  ],
+  "generation": "bf705876-2632-4ab5-b8c7-453b279680b8"
+}

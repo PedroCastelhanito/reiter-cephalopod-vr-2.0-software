@@ -1,0 +1,916 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="15" skipped="0" tests="21" time="0.542" timestamp="2026-10-15T18:40:36.228229+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_render_mailbox_retains_typed_update_rejection_without_failing_driver[UpdateDisplayCalibration-True-True]" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_render_mailbox_retains_typed_update_rejection_without_failing_driver[UpdateDisplayCalibration-False-False]" time="0.002" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_render_mailbox_retains_typed_update_rejection_without_failing_driver[OpenDisplayCalibration-True-False]" time="0.002" /><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[None]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = None
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[missing]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'missing'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[command]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'command'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[unknown]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'unknown'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[not_presented]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'not_presented'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[sequence]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'sequence'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[diagnostic]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'diagnostic'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[revision]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'revision'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[renderer]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'renderer'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[controller]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'controller'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[incomplete]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'incomplete'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[generic_failure]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'generic_failure'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[wrong_method]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'wrong_method'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[session_work]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'session_work'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_coordinator" name="test_rejected_update_requires_exact_retained_active_display_proof[setup]" time="0.001"><failure message="TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'">mismatch = 'setup'
+
+    @pytest.mark.parametrize(
+        "mismatch",
+        [
+            None,
+            "missing",
+            "command",
+            "unknown",
+            "not_presented",
+            "sequence",
+            "diagnostic",
+            "revision",
+            "renderer",
+            "controller",
+            "incomplete",
+            "generic_failure",
+            "wrong_method",
+            "session_work",
+            "setup",
+        ],
+    )
+    async def test_rejected_update_requires_exact_retained_active_display_proof(mismatch):
+        clock = Clock()
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        controller, supervisor = Peer(), Peer()
+        ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+        parent = wire.BackendCommand(
+            command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+        )
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, configuration_revision=4
+            ),
+        )
+        diagnostic = str(uuid4())
+        link = CommandLink(
+            "UpdateDisplayCalibration",
+            parent,
+            child,
+            clock() + 10**9,
+            diagnostic_id=diagnostic,
+            output_ids=frozenset({"projector/main"}),
+            adjustment_sequence=2,
+        )
+        state.links[child.command_id] = link
+&gt;       ledger.admit(parent.command_id, parent.SerializeToString(), clock())
+E       TypeError: CommandLedger.admit() missing 1 required keyword-only argument: 'work_key'
+
+tests\visual_stimulus\test_coordinator.py:252: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_controller_communication" name="test_authenticated_live_calibration_update_transport_and_exact_receipt[frame_grid]" time="0.013" /><testcase classname="tests.visual_stimulus.test_controller_communication" name="test_authenticated_live_calibration_update_transport_and_exact_receipt[photodiode_placement]" time="0.010" /><testcase classname="tests.visual_stimulus.test_controller_communication" name="test_authenticated_live_calibration_update_transport_and_exact_receipt[blackout_placement]" time="0.010" /></testsuite></testsuites>

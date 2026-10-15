@@ -1,0 +1,89 @@
+{
+  "scope": "CQ23 direct workload only; monitor begins after startup, no CQ18 CPU/GPU comparison; system CPU includes unrelated activity",
+  "sample_interval_ns": [
+    77434471121500,
+    77465471433500
+  ],
+  "cpu_percent": {
+    "samples": 31,
+    "mean": 36.7669791986315,
+    "p50": 39.2578125,
+    "p95": 45.85260276177048,
+    "maximum": 47.802734375,
+    "minimum": 16.0
+  },
+  "gpus": {
+    "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization_gpu": {
+        "samples": 31,
+        "mean": 3.096774193548387,
+        "p50": 3.0,
+        "p95": 4.0,
+        "maximum": 4.0,
+        "minimum": 3.0
+      },
+      "utilization_encoder": {
+        "samples": 31,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0,
+        "minimum": 0.0
+      },
+      "memory_mib": {
+        "samples": 31,
+        "mean": 339.0,
+        "p50": 339.0,
+        "p95": 339.0,
+        "maximum": 339.0,
+        "minimum": 339.0
+      },
+      "power_w": {
+        "samples": 31,
+        "mean": 28.864516129032257,
+        "p50": 28.87,
+        "p95": 28.979999999999997,
+        "maximum": 28.99,
+        "minimum": 28.75
+      }
+    },
+    "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 2080 Ti",
+      "utilization_gpu": {
+        "samples": 31,
+        "mean": 26.129032258064516,
+        "p50": 24.0,
+        "p95": 32.5,
+        "maximum": 34.0,
+        "minimum": 22.0
+      },
+      "utilization_encoder": {
+        "samples": 31,
+        "mean": 49.03225806451613,
+        "p50": 49.0,
+        "p95": 51.5,
+        "maximum": 52.0,
+        "minimum": 45.0
+      },
+      "memory_mib": {
+        "samples": 31,
+        "mean": 684.0,
+        "p50": 684.0,
+        "p95": 684.0,
+        "maximum": 684.0,
+        "minimum": 684.0
+      },
+      "power_w": {
+        "samples": 31,
+        "mean": 57.86548387096774,
+        "p50": 61.26,
+        "p95": 61.855000000000004,
+        "maximum": 61.94,
+        "minimum": 39.91
+      }
+    }
+  }
+}

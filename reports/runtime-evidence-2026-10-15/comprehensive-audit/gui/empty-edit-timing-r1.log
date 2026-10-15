@@ -1,0 +1,9 @@
+{"event": "wait_enter", "remaining_ns": 100680500}
+{"event": "wait_exception", "error": "TimeoutError()", "error_type": "TimeoutError", "remaining_ns": -2672400, "loop_time_ns": 78334312000000, "host_time_ns": 78334341914900}
+{"event": "status_failure_enter", "remaining_ns": -2756100, "failure": "TimeoutError"}
+{"event": "status_failure_return", "remaining_ns": -2958100}
+{"event": "lifecycle_failure_enter", "remaining_ns": -2978200, "failure": "TimeoutError"}
+{"event": "lifecycle_failure_return", "accepted": false}
+{"event": "wait_enter", "remaining_ns": 2999658700}
+.
+1 passed in 0.28s

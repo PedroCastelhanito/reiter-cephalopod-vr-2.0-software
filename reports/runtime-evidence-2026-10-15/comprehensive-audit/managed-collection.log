@@ -1,0 +1,49 @@
+{
+  "assessment_source": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\assess.py",
+  "source_sha256": "fb7c3b3a8002c67382fdd41a8aca5ad9fde53f794aaab8b29eb2f0b66b7a159d",
+  "adaptation": "Only event index key label\u2192name; same source/CFR/cadence/CPU/GPU assessment",
+  "runs": {
+    "managed-textures60-on-r2": {
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "cleanup_confirmed": true,
+      "video_count": 3,
+      "all_count_decode_commands_passed": true,
+      "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-textures60-on-r2\\DUMMY-181401"
+    },
+    "managed-textures60-off-r1": {
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "cleanup_confirmed": true,
+      "video_count": 0,
+      "all_count_decode_commands_passed": true,
+      "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-textures60-off-r\\DUMMY-181727"
+    },
+    "managed-mixed60-on-r1": {
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "cleanup_confirmed": true,
+      "video_count": 3,
+      "all_count_decode_commands_passed": true,
+      "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-mixed60-on-r1\\DUMMY-181946"
+    },
+    "managed-abort60-r1": {
+      "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+      "cleanup_confirmed": true,
+      "video_count": 3,
+      "all_count_decode_commands_passed": true,
+      "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-abort60-r1\\DUMMY-182205"
+    },
+    "managed-boundary-abort60-r1": {
+      "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+      "cleanup_confirmed": true,
+      "video_count": 3,
+      "all_count_decode_commands_passed": true,
+      "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-boundary-abort60\\DUMMY-182354"
+    },
+    "managed-boundary-reuse60-r1": {
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "cleanup_confirmed": true,
+      "video_count": 3,
+      "all_count_decode_commands_passed": true,
+      "recording_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\audit-managed-recordings\\20261015_audit_managed-boundary-reuse60\\DUMMY-182446"
+    }
+  }
+}
