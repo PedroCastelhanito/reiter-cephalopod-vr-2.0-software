@@ -314,11 +314,14 @@ class WindowsEncoderProcess:
                 break
             lines: list[bytes] = []
             with self._lock:
-                self._stderr_partial.extend(chunk)
+                # FFmpeg stats update in place with CR; diagnostics also use LF.
+                self._stderr_partial.extend(chunk.replace(b"\r", b"\n"))
                 while b"\n" in self._stderr_partial:
                     line, _, remainder = self._stderr_partial.partition(b"\n")
                     self._stderr_partial[:] = remainder
                     raw_line = bytes(line)
+                    if not raw_line:
+                        continue
                     if len(raw_line) > 16 * 1024:
                         self._reader_error = EncoderLaunchError(
                             "FFmpeg diagnostic line exceeded 16 KiB"

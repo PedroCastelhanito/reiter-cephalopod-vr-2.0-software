@@ -282,17 +282,32 @@ class ManualPreview:
                 "preview camera has no assigned device",
             )
         if role == camera.CAMERA_ROLE_EYE_TRACKING and (
-            setting.device.frame_timing != camera.FRAME_TIMING_EXTERNAL_TRIGGER
-            or not setting.device.settings.trigger_source
-            or not self.configuration.settings.pulses.eye_tracking.HasField("pin")
-            or not self.configuration.settings.pulses.eye_tracking.HasField(
-                "requested_frequency_hz"
+            setting.device.frame_timing
+            not in (
+                camera.FRAME_TIMING_EXTERNAL_TRIGGER,
+                camera.FRAME_TIMING_FREE_RUNNING,
+            )
+            or (
+                setting.device.frame_timing == camera.FRAME_TIMING_FREE_RUNNING
+                and not setting.device.unaligned_free_running
+            )
+            or (
+                setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+                and (
+                    not setting.device.settings.trigger_source
+                    or not self.configuration.settings.pulses.eye_tracking.HasField(
+                        "pin"
+                    )
+                    or not self.configuration.settings.pulses.eye_tracking.HasField(
+                        "requested_frequency_hz"
+                    )
+                )
             )
         ):
             return _rejected(
                 command.command_id,
                 "EYE_TRIGGER_REQUIRED",
-                "Set Eye external FrameStart source, independent pin and rate before capture.",
+                "Set Eye external FrameStart source, independent pin and rate, or explicitly acknowledge free-running capture as unaligned.",
             )
         if not request.HasField(
             "preview_output_bit_depth"

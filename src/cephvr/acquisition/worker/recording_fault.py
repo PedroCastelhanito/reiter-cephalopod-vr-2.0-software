@@ -26,7 +26,6 @@ class RecordingFaultPort(Protocol):
 class RecordingFaultLifecycle:
     """Retain one recording fault episode without owning camera runtime state."""
 
-    warning_occurrence: Callable[[str, str | None, str | None, int, int | None], None]
     report_isolation: Callable[
         [
             control.WorkContext,
@@ -96,9 +95,6 @@ class RecordingFaultLifecycle:
         self.resource_ids = resources
         self._recording = recording
         detach_recording()
-        self.warning_occurrence(
-            "RECORDING_PIPELINE_FAILURE", None, details, observed_ns, None
-        )
         self.report_isolation(
             work,
             command_id,

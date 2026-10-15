@@ -288,7 +288,10 @@ class ManualPreviewStart:
         )
         tracking_attachment = None
         tracking_worker_attachment = None
-        if request.camera == camera.CAMERA_ROLE_TRACKING:
+        if (
+            request.camera == camera.CAMERA_ROLE_TRACKING
+            and self.identity.tracking.generation
+        ):
             capacity = self.configuration.settings.tracking_ring_frames
             if capacity <= 0:
                 raise ValueError("tracking ring capacity must be positive")

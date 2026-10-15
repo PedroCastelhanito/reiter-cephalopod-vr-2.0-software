@@ -1,0 +1,187 @@
+diff --git a/src/cephvr/acquisition/worker/trial_lifecycle.py b/src/cephvr/acquisition/worker/trial_lifecycle.py
+index 4bafc7d..4f68b33 100644
+--- a/src/cephvr/acquisition/worker/trial_lifecycle.py
++++ b/src/cephvr/acquisition/worker/trial_lifecycle.py
+@@ -82,7 +82,7 @@ class WorkerTrialLifecycle:
+         )
+         self.trial_state = WorkerTrialState()
+         self._recording_fault = RecordingFaultLifecycle(
+-            recording_warning_occurrence, recording_isolated, external_wake
++            recording_isolated, external_wake
+         )
+         self.recording_preparation = TrialRecordingPreparation(
+             bootstrap,
+@@ -355,7 +355,9 @@ class WorkerTrialLifecycle:
+             and command.target.HasField("work")
+             and command.target.work == scheduled_work
+             and command.HasField("parent_operation")
+-            and command.parent_operation.command_id == schedule.command.command_id
++            and schedule.command.HasField("parent_operation")
++            and bool(schedule.command.parent_operation.command_id)
++            and command.parent_operation == schedule.command.parent_operation
+         )
+ 
+     def camera_first_frame(self, record: object) -> None:
+diff --git a/tests/acquisition/test_pulse_evidence.py b/tests/acquisition/test_pulse_evidence.py
+index 4f87481..4dc1050 100644
+--- a/tests/acquisition/test_pulse_evidence.py
++++ b/tests/acquisition/test_pulse_evidence.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++from dataclasses import replace
+ from types import SimpleNamespace
+ from typing import cast
+ from uuid import uuid4
+@@ -28,6 +29,8 @@ from cephvr.acquisition.v1 import camera_pb2 as camera
+ from cephvr.acquisition.v1 import messages_pb2 as acq
+ from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+ from cephvr.acquisition.worker.pulse_evidence import TrialPulseEvidence
++from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
++from cephvr.acquisition.worker.trial_state import WorkerTrialState
+ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.shared.commands import CommandLedger
+ 
+@@ -332,8 +335,11 @@ def test_unspecified_terminal_pulse_does_not_mutate_retained_evidence() -> None:
+ 
+ @pytest.mark.asyncio
+ @pytest.mark.parametrize("scheduled", [False, True])
++@pytest.mark.parametrize(
++    "pulse_command", [mcu.PULSE_BOUNDARY_COMMAND_ON, mcu.PULSE_BOUNDARY_COMMAND_OFF]
++)
+ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
+-    scheduled: bool,
++    scheduled: bool, pulse_command: int
+ ) -> None:
+     work = _trial_work()
+     owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+@@ -376,7 +382,7 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
+     async def deliver(
+         request: acq.WorkerPulseEvidence, *, deadline_ns: int
+     ) -> control.CommandAdmission:
+-        child = worker.child_operations[request.command.command_id]
++        child = workers[request.camera].child_operations[request.command.command_id]
+         assert child.work == work and request.command.target.work == work
+         assert child.parent_operation == (schedule or preparation)
+         assert (
+@@ -385,6 +391,21 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
+         assert child.deadline_ns == deadline_ns == 100
+         assert child.retention_key and child.retention_key.endswith(":safety")
+         assert ledger.has_payload(child.retention_key)
++        if scheduled:
++            retained_schedule = _schedule(work)
++            retained_schedule.command.command_id = "distinct-worker-schedule-child"
++            retained_schedule.command.parent_operation.CopyFrom(schedule)
++            interruption = acq.WorkerInterrupt()
++            interruption.command.target.work.session.CopyFrom(work.trial.session)
++            lifecycle = object.__new__(WorkerTrialLifecycle)
++            lifecycle.trial_state = WorkerTrialState(
++                stopped_schedule=retained_schedule, stop_request=interruption
++            )
++            assert lifecycle._interrupted_schedule_matches(request, retained_schedule)
++            retained_schedule.command.parent_operation.command_id = "stale-schedule"
++            assert not lifecycle._interrupted_schedule_matches(
++                request, retained_schedule
++            )
+         observed.append(request)
+         return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+ 
+@@ -395,10 +416,49 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
+         commands=ledger,
+         trial=WorkerTrial(configuration_revision=2),
+     )
++    tracking_context = acq.WorkerContext.FromString(context.SerializeToString())
++    tracking_context.camera = camera.CAMERA_ROLE_TRACKING
++    tracking_context.worker.role = "acquisition_tracking_worker"
++    tracking_context.worker.generation = str(uuid4())
++    tracking_worker = WorkerRecord(
++        context=tracking_context,
++        launch=replace(
++            launch,
++            command_id=str(uuid4()),
++            worker=tracking_context.worker,
++            camera=tracking_context.camera,
++        ),
++        port=cast(WorkerPort, SimpleNamespace(record_pulse_evidence=deliver)),
++        commands=ledger,
++        trial=WorkerTrial(configuration_revision=2),
++    )
++    workers = {context.camera: worker, tracking_context.camera: tracking_worker}
+     boundaries = cast(
+-        TrialPulseBoundaries, SimpleNamespace(workers={context.camera: worker})
++        TrialPulseBoundaries,
++        SimpleNamespace(
++            workers={
++                **workers,
++                camera.CAMERA_ROLE_EYE_TRACKING: SimpleNamespace(
++                    context=SimpleNamespace(camera=camera.CAMERA_ROLE_EYE_TRACKING),
++                    port=object(),
++                    trial=object(),
++                ),
++            }
++        ),
+     )
+     await TrialPulseBoundaries.send_evidence(
+-        boundaries, trial, mcu.PulseCommandEvidence(applied=True), 100
++        boundaries,
++        trial,
++        mcu.PulseCommandEvidence(
++            applied=True,
++            behavioral_selected=True,
++            tracking_selected=True,
++            command=pulse_command,
++        ),
++        100,
+     )
+-    assert len(observed) == 1 and not trial.interrupted
++    assert {request.camera for request in observed} == {
++        camera.CAMERA_ROLE_BEHAVIORAL,
++        camera.CAMERA_ROLE_TRACKING,
++    }
++    assert len(observed) == 2 and not trial.interrupted
+diff --git a/tests/acquisition/test_worker_foundations.py b/tests/acquisition/test_worker_foundations.py
+index d699797..0f5aca7 100644
+--- a/tests/acquisition/test_worker_foundations.py
++++ b/tests/acquisition/test_worker_foundations.py
+@@ -185,7 +185,11 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
+         )
+     )
+     schedule = acq.WorkerSchedule(
+-        command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
++        command=acq.WorkerCommand(
++            command_id=str(uuid4()),
++            target=context,
++            parent_operation=control.OperationContext(command_id=str(uuid4())),
++        ),
+         start_monotonic_ns=100,
+         end_monotonic_ns=200,
+     )
+@@ -258,7 +262,7 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
+             command_id=str(uuid4()),
+             target=context,
+             parent_operation=control.OperationContext(
+-                command_id=schedule.command.command_id
++                command_id=schedule.command.parent_operation.command_id
+             ),
+         ),
+         camera=context.camera,
+@@ -291,6 +295,18 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
+     executor.execute("RecordPulseEvidence", wrong_parent, deadline_ns)
+     assert not state.operations[wrong_parent.command.command_id].succeeded
+ 
++    for missing_parent in (pulse_request.command, schedule.command):
++        original = control.OperationContext.FromString(
++            missing_parent.parent_operation.SerializeToString()
++        )
++        missing_parent.ClearField("parent_operation")
++        assert not trial._interrupted_schedule_matches(pulse_request, schedule)
++        missing_parent.parent_operation.CopyFrom(original)
++
++    pulse_request.command.parent_operation.command_id = ""
++    schedule.command.parent_operation.command_id = ""
++    assert not trial._interrupted_schedule_matches(pulse_request, schedule)
++
+ 
+ def _retain_stopped_schedule(trial_state: WorkerTrialState) -> None:
+     trial_state.stopped_schedule = trial_state.schedule

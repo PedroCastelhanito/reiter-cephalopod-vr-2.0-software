@@ -112,6 +112,7 @@ class WorkerOperationExecutor:
             shutdown=self._request_shutdown,
             recording_reconciled=lambda: self.trial.clear_recording_future(),
             external_wake=external_wake,
+            recording_finish_pending=lambda: self.trial.terminal_pending,
         )
         self.trial = WorkerTrialLifecycle(
             bootstrap,
@@ -201,9 +202,14 @@ class WorkerOperationExecutor:
             elif name == "RecordPulseEvidence":
                 self.trial.record_pulse_evidence(request)
             elif name == "StopTrial":
-                self.trial.stop_request = request
-                self.trial.stop_trial(deadline_ns, report_stopped=True)
-                self.trial.report_camera_finished(request, deadline_ns)
+                self.trial.begin_stop_operation(
+                    request,
+                    deadline_ns,
+                    report,
+                    self._complete_stop_operation,
+                    report_stopped=True,
+                )
+                return
             elif name == "CancelSetup":
                 if self.recording is not None and self.recording.enabled:
                     self.recording.cancel_before_start(deadline_ns=deadline_ns)
@@ -212,13 +218,19 @@ class WorkerOperationExecutor:
                 self.trial.trial_prepared = False
             elif name == "InterruptSession":
                 self._cancelled.set()
-                self.trial.stop_request = request
-                self.trial.stop_trial(deadline_ns)
-                self.trial.report_camera_finished(request, deadline_ns)
                 self.preparation.cancel_setup()
+                self.trial.begin_stop_operation(
+                    request,
+                    deadline_ns,
+                    report,
+                    self._complete_stop_operation,
+                    report_stopped=False,
+                )
+                return
             elif name in {"Cleanup", "Shutdown"}:
                 self._cancelled.set()
-                self.trial.stop_request = request
+                if self.trial.stop_request is None:
+                    self.trial.stop_request = request
                 self.trial.stop_trial(deadline_ns)
                 if not self.cleanup.begin_operation(name, request, deadline_ns, report):
                     return
@@ -260,6 +272,34 @@ class WorkerOperationExecutor:
             self.state.finalize_scope(command.target.work, host_time_ns())
             if name in {"Cleanup", "Shutdown"}:
                 self.state.finalize_terminal_command(command.command_id, host_time_ns())
+
+    def _complete_stop_operation(
+        self,
+        report: acq.WorkerOperationReport,
+        deadline_ns: int,
+        error: BaseException | None,
+    ) -> None:
+        command_id = report.operation.context.command_id
+        if not command_id:
+            raise RuntimeError("stop continuation lost its exact command identity")
+        if error is None and host_time_ns() >= deadline_ns:
+            error = TimeoutError("worker stop completed after its original deadline")
+        failure = (
+            control.Failure(code=_failure_code(error), message=str(error)[:2048])
+            if error is not None
+            else None
+        )
+        self.state.complete_operation(
+            command_id,
+            succeeded=error is None,
+            progress="complete" if error is None else "failed",
+            now_ns=host_time_ns(),
+            failure=failure,
+            retained_result=report,
+        )
+        self._report(report, deadline_ns)
+        if error is None and (self.recording is None or not self.recording.enabled):
+            self.state.finalize_scope(report.source.work, host_time_ns())
 
     def failed(self, name: str, exc: BaseException) -> None:
         """Retain an owner-loop failure without claiming an operation succeeded."""

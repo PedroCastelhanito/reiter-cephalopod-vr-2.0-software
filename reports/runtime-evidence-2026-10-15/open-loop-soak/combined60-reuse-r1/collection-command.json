@@ -1,0 +1,13 @@
+[
+  "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+  "tools/encoding_probe.py",
+  "collect",
+  "--directory",
+  "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-104356",
+  "--diagnostics",
+  "reports\\runtime-evidence-2026-10-15\\open-loop-soak\\combined60-reuse-r1\\owned-renderer-metrics.jsonl",
+  "--timeout",
+  "180",
+  "--output",
+  "reports\\runtime-evidence-2026-10-15\\open-loop-soak\\combined60-reuse-r1\\collection.json"
+]

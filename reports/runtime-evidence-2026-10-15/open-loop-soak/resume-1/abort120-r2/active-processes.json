@@ -1,0 +1,170 @@
+[
+  {
+    "ProcessId": 24372,
+    "ParentProcessId": 29368,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-15T12:19:03.0692+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" scripts/start_runtime_gui.py --no-tracking"
+  },
+  {
+    "ProcessId": 920,
+    "ParentProcessId": 24372,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-15T12:19:03.1578+09:00",
+    "ExecutablePath": "C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" scripts/start_runtime_gui.py --no-tracking"
+  },
+  {
+    "ProcessId": 10876,
+    "ParentProcessId": 920,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-15T12:19:03.288226+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe --no-tracking"
+  },
+  {
+    "ProcessId": 27856,
+    "ParentProcessId": 10876,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-15T12:19:03.40449+09:00",
+    "ExecutablePath": "C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe --no-tracking"
+  },
+  {
+    "ProcessId": 29004,
+    "ParentProcessId": 27856,
+    "Name": "cephvr-python.exe",
+    "CreationDate": "2026-10-15T12:19:03.845788+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.supervisor.main --bootstrap-handle 672 --launcher-control-handle 680 --launcher-controller-control-handle 688 --launcher-ack-handle 744"
+  },
+  {
+    "ProcessId": 28184,
+    "ParentProcessId": 29004,
+    "Name": "cephvr-python.exe",
+    "CreationDate": "2026-10-15T12:19:04.154902+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.controller.main --bootstrap-handle 768"
+  },
+  {
+    "ProcessId": 18712,
+    "ParentProcessId": 29004,
+    "Name": "cephvr-python.exe",
+    "CreationDate": "2026-10-15T12:19:04.162724+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.main --bootstrap-handle 764"
+  },
+  {
+    "ProcessId": 25836,
+    "ParentProcessId": 29004,
+    "Name": "cephvr-python.exe",
+    "CreationDate": "2026-10-15T12:19:04.210153+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.visual_stimulus.main --bootstrap-handle 824"
+  },
+  {
+    "ProcessId": 29476,
+    "ParentProcessId": 29004,
+    "Name": "cephvr-python.exe",
+    "CreationDate": "2026-10-15T12:19:04.260048+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.gui.main --bootstrap-handle 688"
+  },
+  {
+    "ProcessId": 21136,
+    "ParentProcessId": 25836,
+    "Name": "cephvr-renderer.exe",
+    "CreationDate": "2026-10-15T12:19:04.668024+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe -m cephvr.platform.windows.python_entry cephvr.visual_stimulus.worker.main --bootstrap-handle 876"
+  },
+  {
+    "ProcessId": 13780,
+    "ParentProcessId": 26628,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-15T12:19:37.506799+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/run.py combined120 --label abort120-r2 --abort-after 60"
+  },
+  {
+    "ProcessId": 25072,
+    "ParentProcessId": 13780,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-15T12:19:37.686368+09:00",
+    "ExecutablePath": "C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/run.py combined120 --label abort120-r2 --abort-after 60"
+  },
+  {
+    "ProcessId": 12576,
+    "ParentProcessId": 25072,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-15T12:19:38.061356+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\monitor.py --output C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\abort120-r2\\monitor.jsonl --stop C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\abort120-r2\\monitor.stop"
+  },
+  {
+    "ProcessId": 3712,
+    "ParentProcessId": 12576,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-15T12:19:38.373102+09:00",
+    "ExecutablePath": "C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\monitor.py --output C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\abort120-r2\\monitor.jsonl --stop C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\abort120-r2\\monitor.stop"
+  },
+  {
+    "ProcessId": 24056,
+    "ParentProcessId": 18712,
+    "Name": "cephvr-python.exe",
+    "CreationDate": "2026-10-15T12:19:39.60214+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.worker.main --bootstrap-handle 832"
+  },
+  {
+    "ProcessId": 8028,
+    "ParentProcessId": 18712,
+    "Name": "cephvr-python.exe",
+    "CreationDate": "2026-10-15T12:19:39.609173+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.worker.main --bootstrap-handle 400"
+  },
+  {
+    "ProcessId": 26944,
+    "ParentProcessId": 18712,
+    "Name": "cephvr-python.exe",
+    "CreationDate": "2026-10-15T12:19:39.704668+09:00",
+    "ExecutablePath": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.worker.main --bootstrap-handle 840"
+  },
+  {
+    "ProcessId": 13600,
+    "ParentProcessId": 21136,
+    "Name": "ffmpeg.exe",
+    "CreationDate": "2026-10-15T12:19:46.888355+09:00",
+    "ExecutablePath": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe",
+    "CommandLine": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe -hide_banner -nostdin -progress pipe:1 -f rawvideo -pix_fmt rgba -s 1280x1000 -framerate 60/1 -i - -map 0:v:0 -an -sn -dn -c:v h264_nvenc -pix_fmt +yuv444p -vf scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p -color_range pc -colorspace bt709 -preset p4 -rc vbr -cq 18 -b:v 0 -rc-lookahead 0 -gpu 1 -bf 0 -force_key_frames expr:if(isnan(prev_forced_t),1,gte(t,prev_forced_t+1)) -fps_mode:v passthrough -map_metadata -1 -movflags +frag_keyframe+empty_moov+default_base_moof -forced-idr 1 -n -f mp4 C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-121938\\protocol-data\\DUMMY_121947_stimulus.mp4"
+  },
+  {
+    "ProcessId": 28492,
+    "ParentProcessId": 24056,
+    "Name": "ffmpeg.exe",
+    "CreationDate": "2026-10-15T12:19:46.900457+09:00",
+    "ExecutablePath": null,
+    "CommandLine": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe -hide_banner -nostdin -progress pipe:1 -f rawvideo -pix_fmt rgb24 -s 1760x1716 -framerate 30 -i - -map 0:v:0 -an -sn -dn -c:v h264_nvenc -pix_fmt +yuv444p -vf scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p -color_range pc -colorspace bt709 -preset p4 -rc vbr -cq 18 -b:v 0 -rc-lookahead 0 -gpu 1 -bf 0 -force_key_frames expr:if(isnan(prev_forced_t),1,gte(t,prev_forced_t+1)) -fps_mode:v passthrough -map_metadata -1 -movflags +hybrid_fragmented+frag_keyframe+use_metadata_tags -n -forced-idr 1 -metadata:g cephvr_identity_version=1 -metadata:g cephvr_session_id=1204a29c-b4de-4fde-8f4c-1d23994ec4d4 -metadata:g cephvr_trial_id=8efa6dbc-4391-4824-bde6-4006222ab9c8 -metadata:g cephvr_camera_role=behavioral -metadata:g cephvr_device_id=40065509 -f mp4 C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-121938\\protocol-data\\DUMMY_121947_behavioral_cam.mp4"
+  },
+  {
+    "ProcessId": 12960,
+    "ParentProcessId": 26944,
+    "Name": "ffmpeg.exe",
+    "CreationDate": "2026-10-15T12:19:46.910214+09:00",
+    "ExecutablePath": null,
+    "CommandLine": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe -hide_banner -nostdin -progress pipe:1 -f rawvideo -pix_fmt rgb24 -s 1920x1200 -framerate 60 -i - -map 0:v:0 -an -sn -dn -c:v h264_nvenc -pix_fmt +yuv444p -vf scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p -color_range pc -colorspace bt709 -preset p4 -rc vbr -cq 18 -b:v 0 -rc-lookahead 0 -gpu 1 -bf 0 -force_key_frames expr:if(isnan(prev_forced_t),1,gte(t,prev_forced_t+1)) -fps_mode:v passthrough -map_metadata -1 -movflags +hybrid_fragmented+frag_keyframe+use_metadata_tags -n -forced-idr 1 -metadata:g cephvr_identity_version=1 -metadata:g cephvr_session_id=1204a29c-b4de-4fde-8f4c-1d23994ec4d4 -metadata:g cephvr_trial_id=8efa6dbc-4391-4824-bde6-4006222ab9c8 -metadata:g cephvr_camera_role=eye_tracking -metadata:g cephvr_device_id=40278236 -f mp4 C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-121938\\protocol-data\\DUMMY_121947_eye_tracking_cam.mp4"
+  },
+  {
+    "ProcessId": 13424,
+    "ParentProcessId": 8028,
+    "Name": "ffmpeg.exe",
+    "CreationDate": "2026-10-15T12:19:46.915291+09:00",
+    "ExecutablePath": null,
+    "CommandLine": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe -hide_banner -nostdin -progress pipe:1 -f rawvideo -pix_fmt gray -s 1588x1344 -framerate 60 -i - -map 0:v:0 -an -sn -dn -c:v h264_nvenc -pix_fmt +yuv444p -vf scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p -color_range pc -colorspace bt709 -preset p4 -rc vbr -cq 18 -b:v 0 -rc-lookahead 0 -gpu 1 -bf 0 -force_key_frames expr:if(isnan(prev_forced_t),1,gte(t,prev_forced_t+1)) -fps_mode:v passthrough -map_metadata -1 -movflags +hybrid_fragmented+frag_keyframe+use_metadata_tags -n -forced-idr 1 -metadata:g cephvr_identity_version=1 -metadata:g cephvr_session_id=1204a29c-b4de-4fde-8f4c-1d23994ec4d4 -metadata:g cephvr_trial_id=8efa6dbc-4391-4824-bde6-4006222ab9c8 -metadata:g cephvr_camera_role=tracking -metadata:g cephvr_device_id=40747103 -f mp4 C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-121938\\protocol-data\\DUMMY_121947_tracking_cam.mp4"
+  }
+]

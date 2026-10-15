@@ -3,19 +3,27 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from types import SimpleNamespace
 from typing import cast
+from uuid import uuid4
 
 import pytest
 
+from cephvr.acquisition.coordinator.evidence_telemetry import WorkerTelemetryReports
 from cephvr.acquisition.coordinator.session import SessionSetup
 from cephvr.acquisition.coordinator.session_preparation import SessionPreparation
 from cephvr.acquisition.coordinator.session_validation import validate_setup_request
+from cephvr.acquisition.coordinator.trial_preparation import TrialPreparation
 from cephvr.acquisition.state import (
     ChildOperation,
     ConfigurationRecord,
     CoordinatorIdentity,
+    LaunchRecord,
     PulseRecord,
+    SessionRecord,
+    SessionSlot,
+    TrialRecord,
     WorkerRecord,
 )
 from cephvr.acquisition.v1 import camera_pb2 as camera
@@ -24,6 +32,7 @@ from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.v1 import runtime_pb2 as runtime
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.commands import CommandLedger
 
 
 class _SerialOwner:
@@ -308,3 +317,204 @@ def test_trial_preparation_surfaces_exact_worker_failure(
             )
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "change",
+    ["none", "session", "trial", "interrupted", "cancelled", "deadline", "concurrent"],
+)
+async def test_trial_publication_preserves_ready_heartbeat_during_off_preflight(
+    change: str,
+) -> None:
+    setup, _, identity = _setup_request()
+    setup.command.work.session.session_id = str(uuid4())
+    session = SessionRecord(
+        work=setup.command.work,
+        operation=control.OperationContext(command_id="setup"),
+        configuration_revision=1,
+        confirmed_revision=1,
+        required_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
+        ready_report=control.ReadyReport(),
+    )
+    slot = SessionSlot(current=session)
+    lock = asyncio.Lock()
+    clock = [100]
+    entered, release = asyncio.Event(), asyncio.Event()
+    off_calls = []
+    generation = str(uuid4())
+    worker_context = acq.WorkerContext(
+        worker=control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=generation
+        ),
+        owner=identity.process,
+        work=session.work,
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+    )
+    ledger = CommandLedger(
+        generation,
+        60_000,
+        max_records=32,
+        max_bytes=1024 * 1024,
+        result_reservation_bytes=4096,
+    )
+    worker = WorkerRecord(
+        context=worker_context,
+        port=None,
+        launch=LaunchRecord(
+            command_id=str(uuid4()),
+            worker=worker_context.worker,
+            owner=identity.process,
+            work=session.work,
+            camera=worker_context.camera,
+            parent_operation=session.operation,
+            planned_ns=1,
+        ),
+        commands=ledger,
+    )
+    telemetry = WorkerTelemetryReports(
+        backend=identity.backend,
+        workers={worker_context.camera: worker},
+        commands=ledger,
+        current_session=lambda: slot.current,
+        controller=cast(object, object()),
+        lock=lock,
+    )
+
+    async def heartbeat(stamp, *, wrong=False):
+        message = control.HeartbeatReport(
+            source=worker_context.worker,
+            work=session.work,
+            session_phase=control.SESSION_PHASE_READY,
+            sent_monotonic_ns=stamp,
+        )
+        if wrong:
+            message.work.session.session_id = "unowned-session"
+        return await telemetry.report_heartbeat(
+            message, ingress_ns=100, deadline_ns=500
+        )
+
+    async def ensure_off(value, deadline):
+        assert value is session and deadline == 500
+        assert session.trial is None and worker.trial is None
+        off_calls.append(deadline)
+        entered.set()
+        await release.wait()
+
+    async def camera_prepare(payload, *, deadline_ns):
+        assert deadline_ns == 500
+        trial = session.trial
+        assert trial is not None and worker.trial is not None
+        child = worker.child_operations[worker.trial.preparation.command_id]
+        assert child.work == trial.work and child.parent_operation == trial.preparation
+        assert (await heartbeat(200)).result == control.COMMAND_RESULT_ACCEPTED
+        child.report = control.OperationState(
+            context=control.OperationContext(command_id=payload.command.command_id),
+            work=trial.work,
+            complete=True,
+            succeeded=True,
+        )
+        child.report_ingress_ns = 100
+        trial.ready_confirmed.set()
+        return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    worker.port = SimpleNamespace(prepare_trial=camera_prepare)
+
+    async def controller_report(*args, **kwargs):
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    preparation = TrialPreparation(
+        identity=identity,
+        session_slot=slot,
+        workers={worker_context.camera: worker},
+        resources={},
+        controller=SimpleNamespace(report_lifecycle=controller_report),
+        prior_completion_confirmed=lambda previous: True,
+        pulse_boundaries=SimpleNamespace(ensure_outputs_off=ensure_off),
+        lock=lock,
+        clock=lambda: clock[0],
+    )
+    context = control.TrialContext(
+        session=session.work.session, trial_id=str(uuid4()), trial_number=1
+    )
+    request = wire.PrepareTrialRequest(
+        command=wire.BackendCommand(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            work=control.WorkContext(trial=context),
+        ),
+        configuration_revision=1,
+        plan=control.TrialPlan(context=context, resolved_duration_ns=1_000_000_000),
+    )
+    first = asyncio.create_task(preparation.prepare(request, deadline_ns=500))
+    await entered.wait()
+    assert (await heartbeat(100)).result == control.COMMAND_RESULT_ACCEPTED
+    assert (await heartbeat(101, wrong=True)).result == control.COMMAND_RESULT_REJECTED
+    second = None
+    if change == "concurrent":
+        another = wire.PrepareTrialRequest.FromString(request.SerializeToString())
+        another.command.command_id = str(uuid4())
+        another.plan.context.trial_id = str(uuid4())
+        another.command.work.trial.CopyFrom(another.plan.context)
+        second = asyncio.create_task(preparation.prepare(another, deadline_ns=500))
+        await asyncio.sleep(0)
+        assert not second.done() and off_calls == [500]
+    elif change == "session":
+        slot.current = replace(session)
+    elif change == "trial":
+        session.trial = TrialRecord(
+            work=control.WorkContext(trial=context),
+            plan=request.plan,
+            preparation=control.OperationContext(command_id="other"),
+            configuration_revision=1,
+        )
+    elif change == "interrupted":
+        session.interrupted = True
+    elif change == "cancelled":
+        session.setup_cancelled = True
+    elif change == "deadline":
+        clock[0] = 500
+    release.set()
+    result = await first
+    assert result.result == (
+        control.COMMAND_RESULT_ACCEPTED
+        if change in {"none", "concurrent"}
+        else control.COMMAND_RESULT_REJECTED
+    )
+    if change not in {"none", "concurrent"}:
+        assert worker.trial is None and not worker.child_operations
+    if second is not None:
+        assert (await second).result == control.COMMAND_RESULT_REJECTED
+        assert off_calls == [500]
+
+
+def test_setup_rejects_required_tracking_without_a_launched_identity():
+    request, configuration, identity = _setup_request(tracking_backend=True)
+    request.settings.acquisition.tracking.enabled = True
+    identity.tracking.Clear()
+    with pytest.raises(ValueError, match="no launched Tracking identity"):
+        validate_setup_request(
+            request,
+            100,
+            identity=identity,
+            configuration=configuration,
+            clock=lambda: 1,
+        )
+
+
+async def test_required_tracking_identity_is_checked_before_any_ring_allocation():
+    from cephvr.acquisition.coordinator.session_resources import allocate_camera_outputs
+
+    with pytest.raises(ValueError, match="no launched Tracking identity"):
+        await allocate_camera_outputs(
+            session=None,
+            worker=None,
+            resolved=camera.CameraResolvedState(),
+            tracking_consumer=control.ProcessIdentity(),
+            tracking_required=True,
+            settings=control.AcquisitionSettings(),
+            resources={},
+            ledger=None,
+            port=None,
+            declare_resource=None,
+        )

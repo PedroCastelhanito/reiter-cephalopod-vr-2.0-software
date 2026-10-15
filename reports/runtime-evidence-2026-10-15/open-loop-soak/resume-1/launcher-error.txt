@@ -1,0 +1,10 @@
+acquisition_tracking_worker RecordPulseEvidence 19508740-03f7-4383-aa78-d30daaec81d0 failed: RuntimeError: worker session is not prepared
+acquisition_behavioral_worker RecordPulseEvidence 176a0d1d-d6b2-4e13-9f0d-89a47370a165 failed: RuntimeError: worker session is not prepared
+acquisition_behavioral_worker RecordPulseEvidence 32c6fde1-c349-4142-9680-77537f67b253 failed: RuntimeError: worker session is not prepared
+acquisition_tracking_worker RecordPulseEvidence 68ca75e6-cda5-40e2-ade7-ab0a5370979a failed: RuntimeError: worker session is not prepared
+Cleanup 225a077c-638a-42a0-9dbc-097f0807f340 failed: CLEANUP_UNCONFIRMED: acquisition_behavioral_worker cleanup evidence is incomplete; acquisition_tracking_worker cleanup evidence is incomplete
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: heartbeat rejected: INVALID_HEARTBEAT: worker heartbeat carries stale acquisition work
+InterruptSession 5242f41f-ee5a-42be-8b42-459ed22a19ee failed: SESSION_IDENTITY: no exact live session
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -1,0 +1,94 @@
+reports\runtime-evidence-2026-10-15\open-loop-soak\resume-1\lossless60-r1\assessment.json
+{
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "a4c3b63e-24d0-45dd-82ac-0e5e0f1c403d",
+      "session_id": "378ce524-b802-452b-8dbd-3a8232a2c51d"
+    },
+    "outcome": "SESSION_OUTCOME_COMPLETED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-131811",
+    "trial_count": 1,
+    "activated": true,
+    "cleanup_confirmed": true
+  },
+  "errors": [],
+  "stimulus": {
+    "encoder_outcome": {
+      "kind": "encoder_outcome",
+      "admitted_count": 3598,
+      "input_submitted_count": 3600,
+      "capacity_drop_count": 0,
+      "selected_real_count": 3598,
+      "same_slot_omission_count": 3,
+      "encoded_frame_count": 3600,
+      "duplicate_frame_count": 2,
+      "final_input_group_id": 3600,
+      "cutoff_host_ns": 60394575782700,
+      "exit_code": 0,
+      "eof_sent": true,
+      "drain_confirmed": true
+    },
+    "completion": {
+      "kind": "completion",
+      "cutoff_host_ns": 60394575782700,
+      "last_group_id": 3600,
+      "state_count": 3601,
+      "submission_attempt_count": 14404,
+      "capture_admission_count": 3598,
+      "capture_drop_count": 0,
+      "same_slot_omission_count": 3,
+      "unresolved_attempt_count": 0,
+      "outcome": "completed"
+    }
+  },
+  "metrics": [
+    {
+      "active_capture_slots": 0,
+      "cancelled_captures": 0,
+      "event": "recording_metrics",
+      "evidence_path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-131811\\protocol-data\\DUMMY_131820_stimulus_frames.jsonl",
+      "peak_capture_slots": 14,
+      "queued_captures": 0,
+      "stages_ns": {
+        "capture_ready": {
+          "count": 3598,
+          "max": 19654600,
+          "total": 12977596700
+        },
+        "normalization": {
+          "count": 3598,
+          "max": 8644900,
+          "total": 5059235000
+        },
+        "pipe_write": {
+          "count": 7246,
+          "max": 11447900,
+          "total": 6389310600
+        },
+        "queue_wait": {
+          "count": 3598,
+          "max": 208613700,
+          "total": 12038553000
+        },
+        "readback_poll_pending": {
+          "count": 0,
+          "max": 0,
+          "total": 0
+        },
+        "readback_poll_ready": {
+          "count": 3598,
+          "max": 3806400,
+          "total": 4417981700
+        },
+        "slot_hold": {
+          "count": 3598,
+          "max": 232986900,
+          "total": 69785069400
+        }
+      },
+      "submitted_bytes": 18432000000,
+      "zero_progress_writes": 3646
+    }
+  ]
+}

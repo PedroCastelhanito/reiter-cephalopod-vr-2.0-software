@@ -1,0 +1,24 @@
+{
+  "mode": "configure",
+  "label": "configure",
+  "events": [
+    {
+      "label": "initial_session",
+      "host_monotonic_ns": 48443738557300,
+      "value": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      }
+    },
+    {
+      "label": "participants",
+      "host_monotonic_ns": 48443738883600,
+      "value": []
+    },
+    {
+      "label": "error",
+      "host_monotonic_ns": 48443756517300,
+      "value": "ClientError: REJECTED: configuration validation failed: backends.acquisition.eye_tracking: Eye tracking requires explicit external triggering"
+    }
+  ],
+  "controller_generation": "571ee5f9-9628-4d3d-a1f1-69b3787235d1"
+}

@@ -15,7 +15,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="open a fresh GUI in the running application generation",
     )
+    parser.add_argument(
+        "--no-tracking",
+        action="store_true",
+        help="omit Tracking for this launch; enabling it requires a full restart",
+    )
     args = parser.parse_args(argv)
+    if args.reopen_gui and args.no_tracking:
+        parser.error("--no-tracking requires a fresh application launch")
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root / "src"))
     from cephvr.launcher.entrypoint import launcher_command
@@ -31,7 +38,9 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 1
-    command = launcher_command(root, python, reopen_gui=args.reopen_gui)
+    command = launcher_command(
+        root, python, reopen_gui=args.reopen_gui, no_tracking=args.no_tracking
+    )
     try:
         return subprocess.call(command, cwd=root)
     except KeyboardInterrupt:

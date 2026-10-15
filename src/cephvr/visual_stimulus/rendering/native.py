@@ -15,6 +15,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
+from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile, Output
 from cephvr.visual_stimulus.rendering.native_display import (
@@ -565,13 +566,15 @@ class ModernGLPort:
             activities.append(
                 OutputActivity(output_id, entry, returned, output.swap_interval, error)
             )
+        if not any(item.error for item in activities):
+            self._calibration_owner.photodiode_index += 1
         return tuple(activities)
 
     def update_display_calibration(
         self,
         display: DisplayProfile,
         prepared: PreparedDisplayCalibration,
-        adjustments: dict[str, tuple[tuple[float, float], ...]],
+        adjustments: dict[str, tuple[tuple[float, float], ...]] | CalibrationPlacement,
     ) -> tuple[OutputActivity, ...]:
         self._assert_owner()
         if self._display != display or self._calibration_owner is None:

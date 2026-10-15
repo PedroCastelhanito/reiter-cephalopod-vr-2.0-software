@@ -1,0 +1,4 @@
+textures60 {'compiled': True, 'duration_ns': 60000000000, 'epoch_count': 2, 'budget': 'ResourceUsage(cpu_bytes=67115633, gpu_bytes=67109216)', 'source_close_errors': ()}
+arena60 {'compiled': False, 'error': 'GLBError: lit/PBR appearance must be baked into base color'}
+combined60 {'compiled': False, 'error': 'GLBError: lit/PBR appearance must be baked into base color'}
+combined900 {'compiled': False, 'error': 'GLBError: lit/PBR appearance must be baked into base color'}

@@ -1,0 +1,3621 @@
+{
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "fdb717c8-a258-4b3a-aaa1-9493862e12c6",
+      "session_id": "68cbef8b-c6d5-485b-a170-65128373e48b"
+    },
+    "outcome": "SESSION_OUTCOME_COMPLETED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-103636",
+    "trial_count": 1,
+    "activated": true,
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "fdb717c8-a258-4b3a-aaa1-9493862e12c6",
+        "session_id": "68cbef8b-c6d5-485b-a170-65128373e48b"
+      },
+      "trial_id": "59e938ae-353a-4e62-ba11-e9dc3305d30d",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_ENDED",
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "start_monotonic_ns": "50639403960700",
+    "scheduled_end_monotonic_ns": "50699403960700",
+    "actual_end_monotonic_ns": "50699403960700"
+  },
+  "errors": [],
+  "sources": {
+    "protocol-data\\DUMMY_103645_behavioral_cam_frames.jsonl": {
+      "header": {
+        "type": "header",
+        "schema_version": 4,
+        "identity": {
+          "session_id": "68cbef8b-c6d5-485b-a170-65128373e48b",
+          "trial_id": "59e938ae-353a-4e62-ba11-e9dc3305d30d",
+          "trial_number": 1,
+          "camera_role": "behavioral",
+          "device_id": "40065509",
+          "session_config_reference": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-103636",
+          "recording_identity_version": 1
+        },
+        "clocks": {
+          "host_clock": "cephvr.host.perf_counter_ns.v1",
+          "timestamp_unit": "ns",
+          "trial_start_monotonic_ns": 50639403960700,
+          "camera_clock": "cephvr.camera.native.v1",
+          "camera_clock_source": "ChunkTimestamp",
+          "camera_clock_conversion_available": false,
+          "camera_clock_tick_ns_numerator": null,
+          "camera_clock_tick_ns_denominator": null,
+          "camera_clock_timestamp_semantics": "unknown",
+          "camera_clock_reset_semantics": "unknown",
+          "camera_clock_wrap_semantics": "unknown",
+          "camera_clock_unavailable_reason": "timestamp tick frequency unavailable",
+          "camera_counter_source": "CGrabResultData.GetBlockID",
+          "camera_counter_semantics": "frames",
+          "camera_counter_width_bits": 64,
+          "camera_counter_wrap_semantics": "unknown",
+          "camera_counter_unavailable_reason": ""
+        },
+        "video": {
+          "enabled": true,
+          "nominal_frame_rate_hz": 30.0,
+          "nominal_rate_source": "applied_mcu_rate"
+        }
+      },
+      "record_counts": {
+        "header": 1,
+        "frame": 1797,
+        "video_frame": 1800,
+        "completion": 1
+      },
+      "intervals_ms": {
+        "count": 1796,
+        "minimum": 17.5389,
+        "mean": 33.35743513363029,
+        "median": 33.351150000000004,
+        "p99": 33.785,
+        "maximum": 49.0707
+      },
+      "noncontiguous_source_ids": [],
+      "native_counter_discontinuities": [],
+      "native_counter_scope": "raw discontinuities; interpret only with retained header counter semantics",
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 50699403960700,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 1797,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 1800,
+            "selected_source_frame_count": 1795,
+            "duplicate_frame_count": 5
+          },
+          "pulses": {
+            "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "on_dispatched_monotonic_ns": 50639415935100,
+            "on_acknowledged_monotonic_ns": 50639443593600,
+            "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "off_dispatched_monotonic_ns": 50699417244900,
+            "off_acknowledged_monotonic_ns": 50699442155000
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 2,
+            "last_native_counter": 1798
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": [
+            {
+              "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+              "count": 1,
+              "first_observed_monotonic_ns": 50639470373700,
+              "last_observed_monotonic_ns": 50639470373700,
+              "first_frame_id": 0,
+              "details": "optional native timestamp is unavailable"
+            }
+          ]
+        }
+      },
+      "runtime_state_samples": {}
+    },
+    "protocol-data\\DUMMY_103645_eye_tracking_cam_frames.jsonl": {
+      "header": {
+        "type": "header",
+        "schema_version": 4,
+        "identity": {
+          "session_id": "68cbef8b-c6d5-485b-a170-65128373e48b",
+          "trial_id": "59e938ae-353a-4e62-ba11-e9dc3305d30d",
+          "trial_number": 1,
+          "camera_role": "eye_tracking",
+          "device_id": "40278236",
+          "session_config_reference": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-103636",
+          "recording_identity_version": 1
+        },
+        "clocks": {
+          "host_clock": "cephvr.host.perf_counter_ns.v1",
+          "timestamp_unit": "ns",
+          "trial_start_monotonic_ns": 50639403960700,
+          "camera_clock": "cephvr.camera.native.v1",
+          "camera_clock_source": "ChunkTimestamp",
+          "camera_clock_conversion_available": false,
+          "camera_clock_tick_ns_numerator": null,
+          "camera_clock_tick_ns_denominator": null,
+          "camera_clock_timestamp_semantics": "unknown",
+          "camera_clock_reset_semantics": "unknown",
+          "camera_clock_wrap_semantics": "unknown",
+          "camera_clock_unavailable_reason": "timestamp tick frequency unavailable",
+          "camera_counter_source": "CGrabResultData.GetBlockID",
+          "camera_counter_semantics": "frames",
+          "camera_counter_width_bits": 64,
+          "camera_counter_wrap_semantics": "unknown",
+          "camera_counter_unavailable_reason": ""
+        },
+        "video": {
+          "enabled": true,
+          "nominal_frame_rate_hz": 60.0,
+          "nominal_rate_source": "free_running_frame_rate"
+        }
+      },
+      "record_counts": {
+        "header": 1,
+        "frame": 3596,
+        "video_frame": 3600,
+        "completion": 1
+      },
+      "intervals_ms": {
+        "count": 3595,
+        "minimum": 11.8097,
+        "mean": 16.667188623087622,
+        "median": 16.6642,
+        "p99": 17.3082,
+        "maximum": 21.6894
+      },
+      "noncontiguous_source_ids": [],
+      "native_counter_discontinuities": [],
+      "native_counter_scope": "raw discontinuities; interpret only with retained header counter semantics",
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 50699403960700,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3596,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3600,
+            "selected_source_frame_count": 3596,
+            "duplicate_frame_count": 4
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 3,
+            "last_native_counter": 3598
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": [
+            {
+              "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+              "count": 1,
+              "first_observed_monotonic_ns": 50639475567800,
+              "last_observed_monotonic_ns": 50639475567800,
+              "first_frame_id": 0,
+              "details": "optional native timestamp is unavailable"
+            }
+          ]
+        }
+      },
+      "runtime_state_samples": {}
+    },
+    "protocol-data\\DUMMY_103645_stimulus_frames.jsonl": {
+      "header": {
+        "kind": "header",
+        "format_version": 5,
+        "video_enabled": true,
+        "identity": {
+          "session_id": "68cbef8b-c6d5-485b-a170-65128373e48b",
+          "trial_id": "59e938ae-353a-4e62-ba11-e9dc3305d30d",
+          "configuration_revision": 5,
+          "prepared_generation": "9fe5e16d-449f-4252-a08d-800385bf203e",
+          "renderer_generation": "6eac8f05-fb38-4f34-8168-b6dd7f84892e",
+          "resource_generation": "f9d300ee-9ba5-488f-aff3-ffb9c4e3bb66"
+        },
+        "writer_generation": "9e531de2-9231-498a-bd32-ffa6e71bd4d9",
+        "recipe": {
+          "relative_path": "DUMMY_103645_stimulus_LOG.json",
+          "sha256": "316d283f7d4f14064c08aa9aaab937bf8094fe075daa83c241789278fc574859",
+          "byte_length": 11679,
+          "schema_id": "cephvr.visual_stimulus.prepared_trial.v2"
+        },
+        "trial_start_host_ns": 50639403960700,
+        "required_output_ids": [
+          "calibration_front",
+          "calibration_left",
+          "calibration_right",
+          "calibration_bottom"
+        ],
+        "renderer_compatibility": "cephvr-visual-stimulus-renderer-v1"
+      },
+      "record_counts": {
+        "header": 1,
+        "render_group": 3602,
+        "clipping": 14408,
+        "group_update": 7194,
+        "encoder_outcome": 1,
+        "completion": 1
+      },
+      "intervals_ms": {
+        "count": 3601,
+        "minimum": 7.6249,
+        "mean": 16.658427103582337,
+        "median": 16.6516,
+        "p99": 19.2033,
+        "maximum": 31.3057
+      },
+      "noncontiguous_source_ids": [],
+      "native_counter_discontinuities": [],
+      "native_counter_scope": "raw discontinuities; interpret only with retained header counter semantics",
+      "final_records": {
+        "encoder_outcome": {
+          "kind": "encoder_outcome",
+          "admitted_count": 3594,
+          "input_submitted_count": 3600,
+          "capacity_drop_count": 0,
+          "selected_real_count": 3594,
+          "same_slot_omission_count": 8,
+          "encoded_frame_count": 3600,
+          "duplicate_frame_count": 6,
+          "final_input_group_id": 3601,
+          "cutoff_host_ns": 50699403960700,
+          "exit_code": 0,
+          "eof_sent": true,
+          "drain_confirmed": true
+        },
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 50699403960700,
+          "last_group_id": 3601,
+          "state_count": 3602,
+          "submission_attempt_count": 14408,
+          "capture_admission_count": 3594,
+          "capture_drop_count": 0,
+          "same_slot_omission_count": 8,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        }
+      },
+      "runtime_state_samples": {
+        "0": {
+          "first": {
+            "group_id": 0,
+            "state": {
+              "epoch_occurrence": 0,
+              "scene_id": "arena",
+              "evaluation_host_ns": 50639414039000,
+              "active_instance_ids": [
+                "arena"
+              ],
+              "uniforms": [
+                {
+                  "binding_id": "arena-arena-model",
+                  "words": [
+                    1065353179,
+                    990532921,
+                    0,
+                    0,
+                    3138016569,
+                    1065353179,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1065353216,
+                    0,
+                    0,
+                    0,
+                    1112801280,
+                    1065353216
+                  ]
+                }
+              ],
+              "media": [],
+              "images": [],
+              "effective_poses": []
+            },
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 0,
+                "phase": "returned",
+                "entry_host_ns": 50639429418400,
+                "return_host_ns": 50639429437000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 0,
+                "phase": "returned",
+                "entry_host_ns": 50639421426500,
+                "return_host_ns": 50639421847000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 0,
+                "phase": "returned",
+                "entry_host_ns": 50639425541300,
+                "return_host_ns": 50639425560700,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 0,
+                "phase": "returned",
+                "entry_host_ns": 50639427646300,
+                "return_host_ns": 50639427664700,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              }
+            ]
+          },
+          "checkpoints": [
+            {
+              "group_id": 0,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50639414039000,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      1065353179,
+                      990532921,
+                      0,
+                      0,
+                      3138016569,
+                      1065353179,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 0,
+                  "phase": "returned",
+                  "entry_host_ns": 50639429418400,
+                  "return_host_ns": 50639429437000,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 0,
+                  "phase": "returned",
+                  "entry_host_ns": 50639421426500,
+                  "return_host_ns": 50639421847000,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 0,
+                  "phase": "returned",
+                  "entry_host_ns": 50639425541300,
+                  "return_host_ns": 50639425560700,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 0,
+                  "phase": "returned",
+                  "entry_host_ns": 50639427646300,
+                  "return_host_ns": 50639427664700,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 302,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50644417780400,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      1056880430,
+                      1063129714,
+                      0,
+                      0,
+                      3210613362,
+                      1056880430,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 302,
+                  "phase": "returned",
+                  "entry_host_ns": 50644432299300,
+                  "return_host_ns": 50644432652700,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 302,
+                  "phase": "returned",
+                  "entry_host_ns": 50644423269400,
+                  "return_host_ns": 50644431199000,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 302,
+                  "phase": "returned",
+                  "entry_host_ns": 50644431366800,
+                  "return_host_ns": 50644431801900,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 302,
+                  "phase": "returned",
+                  "entry_host_ns": 50644431907500,
+                  "return_host_ns": 50644432144800,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 602,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50649418054300,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      3204491107,
+                      1063080671,
+                      0,
+                      0,
+                      3210564319,
+                      3204491107,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 602,
+                  "phase": "returned",
+                  "entry_host_ns": 50649432041400,
+                  "return_host_ns": 50649432235600,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 602,
+                  "phase": "returned",
+                  "entry_host_ns": 50649423363900,
+                  "return_host_ns": 50649431030300,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 602,
+                  "phase": "returned",
+                  "entry_host_ns": 50649431156200,
+                  "return_host_ns": 50649431622900,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 602,
+                  "phase": "returned",
+                  "entry_host_ns": 50649431683200,
+                  "return_host_ns": 50649431989500,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 903,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50654432807000,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      3212836558,
+                      3150313454,
+                      0,
+                      0,
+                      1002829806,
+                      3212836558,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 903,
+                  "phase": "returned",
+                  "entry_host_ns": 50654448724800,
+                  "return_host_ns": 50654448957000,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 903,
+                  "phase": "returned",
+                  "entry_host_ns": 50654437464100,
+                  "return_host_ns": 50654447660000,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 903,
+                  "phase": "returned",
+                  "entry_host_ns": 50654447749600,
+                  "return_host_ns": 50654448016200,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 903,
+                  "phase": "returned",
+                  "entry_host_ns": 50654448071800,
+                  "return_host_ns": 50654448644300,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 1203,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50659433313700,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      3204269295,
+                      3210640439,
+                      0,
+                      0,
+                      1063156791,
+                      3204269295,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 1203,
+                  "phase": "returned",
+                  "entry_host_ns": 50659448704800,
+                  "return_host_ns": 50659448894500,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 1203,
+                  "phase": "returned",
+                  "entry_host_ns": 50659437615800,
+                  "return_host_ns": 50659447834500,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 1203,
+                  "phase": "returned",
+                  "entry_host_ns": 50659447958400,
+                  "return_host_ns": 50659448273900,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 1203,
+                  "phase": "returned",
+                  "entry_host_ns": 50659448360200,
+                  "return_host_ns": 50659448649200,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 1503,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50664433733000,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      1057055043,
+                      3210536554,
+                      0,
+                      0,
+                      1063052906,
+                      1057055043,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 1503,
+                  "phase": "returned",
+                  "entry_host_ns": 50664448760700,
+                  "return_host_ns": 50664448909600,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 1503,
+                  "phase": "returned",
+                  "entry_host_ns": 50664438549500,
+                  "return_host_ns": 50664447947500,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 1503,
+                  "phase": "returned",
+                  "entry_host_ns": 50664448073000,
+                  "return_host_ns": 50664448330800,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 1503,
+                  "phase": "returned",
+                  "entry_host_ns": 50664448403200,
+                  "return_host_ns": 50664448712600,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 1803,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50669434822800,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      1065352866,
+                      1003736430,
+                      0,
+                      0,
+                      3151220078,
+                      1065352866,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 1803,
+                  "phase": "returned",
+                  "entry_host_ns": 50669449282300,
+                  "return_host_ns": 50669449506400,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 1803,
+                  "phase": "returned",
+                  "entry_host_ns": 50669439536100,
+                  "return_host_ns": 50669448115100,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 1803,
+                  "phase": "returned",
+                  "entry_host_ns": 50669448353700,
+                  "return_host_ns": 50669448716000,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 1803,
+                  "phase": "returned",
+                  "entry_host_ns": 50669448777000,
+                  "return_host_ns": 50669449194300,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 2103,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50674435727700,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      1056770901,
+                      1063160985,
+                      0,
+                      0,
+                      3210644633,
+                      1056770901,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 2103,
+                  "phase": "returned",
+                  "entry_host_ns": 50674449876800,
+                  "return_host_ns": 50674450155400,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 2103,
+                  "phase": "returned",
+                  "entry_host_ns": 50674441330800,
+                  "return_host_ns": 50674448788400,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 2103,
+                  "phase": "returned",
+                  "entry_host_ns": 50674448976200,
+                  "return_host_ns": 50674449365600,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 2103,
+                  "phase": "returned",
+                  "entry_host_ns": 50674449463600,
+                  "return_host_ns": 50674449800100,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 2404,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50679450754000,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      3204590245,
+                      1063022587,
+                      0,
+                      0,
+                      3210506235,
+                      3204590245,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 2404,
+                  "phase": "returned",
+                  "entry_host_ns": 50679466085900,
+                  "return_host_ns": 50679466335200,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 2404,
+                  "phase": "returned",
+                  "entry_host_ns": 50679455840200,
+                  "return_host_ns": 50679464908900,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 2404,
+                  "phase": "returned",
+                  "entry_host_ns": 50679465076700,
+                  "return_host_ns": 50679465624700,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 2404,
+                  "phase": "returned",
+                  "entry_host_ns": 50679465731400,
+                  "return_host_ns": 50679466030700,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 2705,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50684467076600,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      3212835398,
+                      3159921340,
+                      0,
+                      0,
+                      1012437692,
+                      3212835398,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 2705,
+                  "phase": "returned",
+                  "entry_host_ns": 50684482642700,
+                  "return_host_ns": 50684482865900,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 2705,
+                  "phase": "returned",
+                  "entry_host_ns": 50684473268500,
+                  "return_host_ns": 50684481491100,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 2705,
+                  "phase": "returned",
+                  "entry_host_ns": 50684481599800,
+                  "return_host_ns": 50684482012200,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 2705,
+                  "phase": "returned",
+                  "entry_host_ns": 50684482299100,
+                  "return_host_ns": 50684482565100,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 3006,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50689484159000,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      3203957817,
+                      3210727988,
+                      0,
+                      0,
+                      1063244340,
+                      3203957817,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 3006,
+                  "phase": "returned",
+                  "entry_host_ns": 50689499216700,
+                  "return_host_ns": 50689499381400,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 3006,
+                  "phase": "returned",
+                  "entry_host_ns": 50689489272400,
+                  "return_host_ns": 50689498347000,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 3006,
+                  "phase": "returned",
+                  "entry_host_ns": 50689498487400,
+                  "return_host_ns": 50689498770400,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 3006,
+                  "phase": "returned",
+                  "entry_host_ns": 50689498831200,
+                  "return_host_ns": 50689499152500,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            },
+            {
+              "group_id": 3306,
+              "state": {
+                "epoch_occurrence": 0,
+                "scene_id": "arena",
+                "evaluation_host_ns": 50694486659600,
+                "active_instance_ids": [
+                  "arena"
+                ],
+                "uniforms": [
+                  {
+                    "binding_id": "arena-arena-model",
+                    "words": [
+                      1057214994,
+                      3210441677,
+                      0,
+                      0,
+                      1062958029,
+                      1057214994,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1065353216,
+                      0,
+                      0,
+                      0,
+                      1112801280,
+                      1065353216
+                    ]
+                  }
+                ],
+                "media": [],
+                "images": [],
+                "effective_poses": []
+              },
+              "submissions": [
+                {
+                  "output_id": "calibration_bottom",
+                  "attempt_index": 3306,
+                  "phase": "returned",
+                  "entry_host_ns": 50694499824300,
+                  "return_host_ns": 50694500248900,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_front",
+                  "attempt_index": 3306,
+                  "phase": "returned",
+                  "entry_host_ns": 50694492848500,
+                  "return_host_ns": 50694498417200,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_left",
+                  "attempt_index": 3306,
+                  "phase": "returned",
+                  "entry_host_ns": 50694498550100,
+                  "return_host_ns": 50694499082700,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                },
+                {
+                  "output_id": "calibration_right",
+                  "attempt_index": 3306,
+                  "phase": "returned",
+                  "entry_host_ns": 50694499187700,
+                  "return_host_ns": 50694499722500,
+                  "swap_interval": 1,
+                  "marker_index": null,
+                  "marker_high": null,
+                  "failure_code": null
+                }
+              ]
+            }
+          ],
+          "last": {
+            "group_id": 3601,
+            "state": {
+              "epoch_occurrence": 0,
+              "scene_id": "arena",
+              "evaluation_host_ns": 50699401035000,
+              "active_instance_ids": [
+                "arena"
+              ],
+              "uniforms": [
+                {
+                  "binding_id": "arena-arena-model",
+                  "words": [
+                    1065353213,
+                    3122700655,
+                    0,
+                    0,
+                    975217007,
+                    1065353213,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1065353216,
+                    0,
+                    0,
+                    0,
+                    1112801280,
+                    1065353216
+                  ]
+                }
+              ],
+              "media": [],
+              "images": [],
+              "effective_poses": []
+            },
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 3601,
+                "phase": "returned",
+                "entry_host_ns": 50699416356600,
+                "return_host_ns": 50699416648600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 3601,
+                "phase": "returned",
+                "entry_host_ns": 50699405693600,
+                "return_host_ns": 50699414893000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 3601,
+                "phase": "returned",
+                "entry_host_ns": 50699414959700,
+                "return_host_ns": 50699415603700,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 3601,
+                "phase": "returned",
+                "entry_host_ns": 50699415778900,
+                "return_host_ns": 50699416269900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    "protocol-data\\DUMMY_103645_tracking_cam_frames.jsonl": {
+      "header": {
+        "type": "header",
+        "schema_version": 4,
+        "identity": {
+          "session_id": "68cbef8b-c6d5-485b-a170-65128373e48b",
+          "trial_id": "59e938ae-353a-4e62-ba11-e9dc3305d30d",
+          "trial_number": 1,
+          "camera_role": "tracking",
+          "device_id": "40747103",
+          "session_config_reference": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-103636",
+          "recording_identity_version": 1
+        },
+        "clocks": {
+          "host_clock": "cephvr.host.perf_counter_ns.v1",
+          "timestamp_unit": "ns",
+          "trial_start_monotonic_ns": 50639403960700,
+          "camera_clock": "cephvr.camera.native.v1",
+          "camera_clock_source": "ChunkTimestamp",
+          "camera_clock_conversion_available": false,
+          "camera_clock_tick_ns_numerator": null,
+          "camera_clock_tick_ns_denominator": null,
+          "camera_clock_timestamp_semantics": "unknown",
+          "camera_clock_reset_semantics": "unknown",
+          "camera_clock_wrap_semantics": "unknown",
+          "camera_clock_unavailable_reason": "timestamp tick frequency unavailable",
+          "camera_counter_source": "CGrabResultData.GetBlockID",
+          "camera_counter_semantics": "frames",
+          "camera_counter_width_bits": 64,
+          "camera_counter_wrap_semantics": "unknown",
+          "camera_counter_unavailable_reason": ""
+        },
+        "video": {
+          "enabled": true,
+          "nominal_frame_rate_hz": 60.0,
+          "nominal_rate_source": "applied_mcu_rate"
+        }
+      },
+      "record_counts": {
+        "header": 1,
+        "frame": 3596,
+        "video_frame": 3600,
+        "completion": 1
+      },
+      "intervals_ms": {
+        "count": 3595,
+        "minimum": 15.278,
+        "mean": 16.678760778859527,
+        "median": 16.674,
+        "p99": 17.1943,
+        "maximum": 18.3137
+      },
+      "noncontiguous_source_ids": [],
+      "native_counter_discontinuities": [],
+      "native_counter_scope": "raw discontinuities; interpret only with retained header counter semantics",
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 50699403960700,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3596,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3600,
+            "selected_source_frame_count": 3585,
+            "duplicate_frame_count": 15
+          },
+          "pulses": {
+            "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "on_dispatched_monotonic_ns": 50639415935100,
+            "on_acknowledged_monotonic_ns": 50639443593600,
+            "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "off_dispatched_monotonic_ns": 50699417244900,
+            "off_acknowledged_monotonic_ns": 50699442155000
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 2,
+            "last_native_counter": 3597
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": [
+            {
+              "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+              "count": 1,
+              "first_observed_monotonic_ns": 50639438842900,
+              "last_observed_monotonic_ns": 50639438842900,
+              "first_frame_id": 0,
+              "details": "optional native timestamp is unavailable"
+            }
+          ]
+        }
+      },
+      "runtime_state_samples": {}
+    }
+  },
+  "monitor_whole_run": {
+    "sample_count": 69,
+    "overhead_ms": {
+      "count": 69,
+      "minimum": 6.3509,
+      "mean": 10.873965217391305,
+      "median": 10.9253,
+      "p99": 14.1742,
+      "maximum": 14.3374
+    },
+    "system_cpu_percent": {
+      "count": 68,
+      "minimum": 1.0110736639383726,
+      "mean": 14.98889333259186,
+      "median": 15.457878883003946,
+      "p99": 22.580645161290324,
+      "maximum": 24.062347783731123
+    },
+    "processes": {
+      "10140:134365017558799141:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 4325376,
+          "mean": 4325376,
+          "median": 4325376,
+          "p99": 4325376,
+          "maximum": 4325376
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "26040:134365017559608210:C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 15900672,
+          "mean": 15917590.260869564,
+          "median": 15900672,
+          "p99": 15962112,
+          "maximum": 15962112
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "7308:134365017560819897:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 4329472,
+          "mean": 4329472,
+          "median": 4329472,
+          "p99": 4329472,
+          "maximum": 4329472
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "856:134365017561961381:C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 49324032,
+          "mean": 49345402.43478261,
+          "median": 49324032,
+          "p99": 49397760,
+          "maximum": 49397760
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.11487791895269349,
+          "median": 0.0,
+          "p99": 1.562635480496159,
+          "maximum": 1.5629429380286373
+        }
+      },
+      "28988:134365017566338667:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 42766336,
+          "mean": 45561945.04347826,
+          "median": 45756416,
+          "p99": 45867008,
+          "maximum": 45867008
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 8.248692420300548,
+          "median": 4.68978645596187,
+          "p99": 35.9337880396955,
+          "maximum": 67.1924184850331
+        }
+      },
+      "26128:134365017569397252:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 66662400,
+          "mean": 69296662.26086956,
+          "median": 69513216,
+          "p99": 69816320,
+          "maximum": 69853184
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 1.516516407848567,
+          "median": 1.5621688202460926,
+          "p99": 6.250093126387583,
+          "maximum": 7.811928166858186
+        }
+      },
+      "12696:134365017569472247:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 52891648,
+          "mean": 54025587.01449275,
+          "median": 54095872,
+          "p99": 54198272,
+          "maximum": 54198272
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.8271034714138437,
+          "median": 0.0,
+          "p99": 7.8093707851264,
+          "maximum": 9.37403166252926
+        }
+      },
+      "25164:134365017569931352:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 55037952,
+          "mean": 56569143.652173914,
+          "median": 56676352,
+          "p99": 56741888,
+          "maximum": 56741888
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.3676314684299514,
+          "median": 0.0,
+          "p99": 4.687569844790687,
+          "maximum": 6.250457533491452
+        }
+      },
+      "20984:134365017570373887:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 241643520,
+          "mean": 242613797.10144928,
+          "median": 242634752,
+          "p99": 243015680,
+          "maximum": 243044352
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 1.9989631469801818,
+          "median": 1.562177878922928,
+          "p99": 12.499085066973098,
+          "maximum": 20.31398698384722
+        }
+      },
+      "27764:134365017574647980:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe": {
+        "name": "cephvr-renderer.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 211550208,
+          "mean": 341661132.057971,
+          "median": 346693632,
+          "p99": 470728704,
+          "maximum": 520175616
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 58.66289022957887,
+          "median": 60.926292641397026,
+          "p99": 101.57894563129771,
+          "maximum": 114.08125495831514
+        }
+      },
+      "6196:134365017730074114:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 72429568,
+          "mean": 72429568,
+          "median": 72429568,
+          "p99": 72429568,
+          "maximum": 72429568
+        },
+        "cpu_one_core_percent": {}
+      },
+      "4480:134365017961422976:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 4325376,
+          "mean": 4335705.043478261,
+          "median": 4325376,
+          "p99": 4349952,
+          "maximum": 4349952
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "9824:134365017963064447:C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 54120448,
+          "mean": 55220609.85507246,
+          "median": 55377920,
+          "p99": 55386112,
+          "maximum": 55386112
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.41360701727916227,
+          "median": 0.0,
+          "p99": 4.687843150118589,
+          "maximum": 4.688854610096857
+        }
+      },
+      "780:134365017966777717:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 4317184,
+          "mean": 4329650.0869565215,
+          "median": 4317184,
+          "p99": 4345856,
+          "maximum": 4345856
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "16668:134365017969790178:C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 18206720,
+          "mean": 18685417.739130434,
+          "median": 18792448,
+          "p99": 18792448,
+          "maximum": 18792448
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 1.5854571121254257,
+          "median": 1.5625296099617385,
+          "p99": 3.1251293803563467,
+          "maximum": 3.1251378185777994
+        }
+      },
+      "672:134365017972642219:C:\\Windows\\System32\\nvidia-smi.exe": {
+        "name": "nvidia-smi.exe",
+        "rss_bytes": {
+          "count": 69,
+          "minimum": 2699264,
+          "mean": 32149029.101449274,
+          "median": 32555008,
+          "p99": 32616448,
+          "maximum": 32616448
+        },
+        "cpu_one_core_percent": {
+          "count": 68,
+          "minimum": 0.0,
+          "mean": 0.18381579011895538,
+          "median": 0.0,
+          "p99": 1.5629002587562675,
+          "maximum": 1.5629515366989524
+        }
+      },
+      "19780:134365017981983518:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 68,
+          "minimum": 1990656,
+          "mean": 239758215.52941176,
+          "median": 255475712.0,
+          "p99": 267395072,
+          "maximum": 273334272
+        },
+        "cpu_one_core_percent": {
+          "count": 67,
+          "minimum": 0.0,
+          "mean": 33.605261168055904,
+          "median": 35.9301271379113,
+          "p99": 50.00425036128071,
+          "maximum": 50.03432855282009
+        }
+      },
+      "29084:134365017982055029:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 68,
+          "minimum": 1990656,
+          "mean": 193382942.11764705,
+          "median": 204931072.0,
+          "p99": 208842752,
+          "maximum": 209281024
+        },
+        "cpu_one_core_percent": {
+          "count": 67,
+          "minimum": 0.0,
+          "mean": 23.553960320569093,
+          "median": 24.987528724413647,
+          "p99": 32.813947095066894,
+          "maximum": 39.05846526053859
+        }
+      },
+      "12312:134365017982963738:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 68,
+          "minimum": 1982464,
+          "mean": 210423567.05882353,
+          "median": 223397888.0,
+          "p99": 232595456,
+          "maximum": 233410560
+        },
+        "cpu_one_core_percent": {
+          "count": 67,
+          "minimum": 0.0,
+          "mean": 46.711886367498295,
+          "median": 49.97893887515801,
+          "p99": 67.2047111265195,
+          "maximum": 68.77376133454108
+        }
+      },
+      "13176:134365018010060732:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 13787136,
+          "mean": 13787136,
+          "median": 13787136,
+          "p99": 13787136,
+          "maximum": 13787136
+        },
+        "cpu_one_core_percent": {}
+      },
+      "17528:134365018011410462:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 13320192,
+          "mean": 13320192,
+          "median": 13320192,
+          "p99": 13320192,
+          "maximum": 13320192
+        },
+        "cpu_one_core_percent": {}
+      },
+      "29520:134365018011458114:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 13303808,
+          "mean": 13303808,
+          "median": 13303808,
+          "p99": 13303808,
+          "maximum": 13303808
+        },
+        "cpu_one_core_percent": {}
+      },
+      "17180:134365018012447738:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 4263936,
+          "mean": 4263936,
+          "median": 4263936,
+          "p99": 4263936,
+          "maximum": 4263936
+        },
+        "cpu_one_core_percent": {}
+      },
+      "19788:134365018023307112:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 12775424,
+          "mean": 12775424,
+          "median": 12775424,
+          "p99": 12775424,
+          "maximum": 12775424
+        },
+        "cpu_one_core_percent": {}
+      },
+      "10344:134365018051200722:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 61,
+          "minimum": 18771968,
+          "mean": 215875651.147541,
+          "median": 219181056,
+          "p99": 219496448,
+          "maximum": 219824128
+        },
+        "cpu_one_core_percent": {
+          "count": 60,
+          "minimum": 3.1271455345512558,
+          "mean": 33.514804383139264,
+          "median": 32.81329612855678,
+          "p99": 76.54663953628808,
+          "maximum": 81.26624512239997
+        }
+      },
+      "19576:134365018051322194:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 61,
+          "minimum": 20717568,
+          "mean": 295087725.1147541,
+          "median": 299806720,
+          "p99": 300605440,
+          "maximum": 305463296
+        },
+        "cpu_one_core_percent": {
+          "count": 60,
+          "minimum": 10.932892878940814,
+          "mean": 66.27796238077701,
+          "median": 66.39789847772823,
+          "p99": 125.04891913716646,
+          "maximum": 129.73169959005034
+        }
+      },
+      "12700:134365018051436917:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 61,
+          "minimum": 15921152,
+          "mean": 272490025.9672131,
+          "median": 276672512,
+          "p99": 278245376,
+          "maximum": 278278144
+        },
+        "cpu_one_core_percent": {
+          "count": 60,
+          "minimum": 14.055484907482676,
+          "mean": 66.56264278509518,
+          "median": 61.70674709462275,
+          "p99": 128.11473800948545,
+          "maximum": 142.199586964892
+        }
+      },
+      "21984:134365018051522710:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 61,
+          "minimum": 1966080,
+          "mean": 313287931.8032787,
+          "median": 318464000,
+          "p99": 319303680,
+          "maximum": 322322432
+        },
+        "cpu_one_core_percent": {
+          "count": 60,
+          "minimum": 7.813164118950111,
+          "mean": 41.14620461223118,
+          "median": 40.61216056761815,
+          "p99": 81.21577567213177,
+          "maximum": 81.24349239625906
+        }
+      },
+      "26072:134365018351987593:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 2093056,
+          "mean": 2093056,
+          "median": 2093056,
+          "p99": 2093056,
+          "maximum": 2093056
+        },
+        "cpu_one_core_percent": {}
+      },
+      "10248:134365018571099347:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 2093056,
+          "mean": 2093056,
+          "median": 2093056,
+          "p99": 2093056,
+          "maximum": 2093056
+        },
+        "cpu_one_core_percent": {}
+      }
+    },
+    "gpu_samples": [
+      {
+        "observed_monotonic_ns": 50631214526600,
+        "text": "2026/10/15 10:36:37.417, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 0, 0, 507, 26.97"
+      },
+      {
+        "observed_monotonic_ns": 50631216732900,
+        "text": "2026/10/15 10:36:37.418, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 0, 18.28"
+      },
+      {
+        "observed_monotonic_ns": 50632220590500,
+        "text": "2026/10/15 10:36:38.424, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 0, 0, 507, 27.05"
+      },
+      {
+        "observed_monotonic_ns": 50632222655100,
+        "text": "2026/10/15 10:36:38.424, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 0, 18.67"
+      },
+      {
+        "observed_monotonic_ns": 50633235168400,
+        "text": "2026/10/15 10:36:39.439, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 0, 0, 507, 27.13"
+      },
+      {
+        "observed_monotonic_ns": 50633237296200,
+        "text": "2026/10/15 10:36:39.439, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 0, 18.13"
+      },
+      {
+        "observed_monotonic_ns": 50634246291400,
+        "text": "2026/10/15 10:36:40.450, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 0, 0, 507, 27.09"
+      },
+      {
+        "observed_monotonic_ns": 50634248649600,
+        "text": "2026/10/15 10:36:40.450, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 0, 18.19"
+      },
+      {
+        "observed_monotonic_ns": 50635263704700,
+        "text": "2026/10/15 10:36:41.467, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 0, 0, 507, 27.19"
+      },
+      {
+        "observed_monotonic_ns": 50635265853700,
+        "text": "2026/10/15 10:36:41.467, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 0, 18.28"
+      },
+      {
+        "observed_monotonic_ns": 50636269838300,
+        "text": "2026/10/15 10:36:42.473, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 0, 0, 507, 27.22"
+      },
+      {
+        "observed_monotonic_ns": 50636285691500,
+        "text": "2026/10/15 10:36:42.473, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 138, 62.24"
+      },
+      {
+        "observed_monotonic_ns": 50637298780600,
+        "text": "2026/10/15 10:36:43.502, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 6, 0, 665, 28.07"
+      },
+      {
+        "observed_monotonic_ns": 50637300948000,
+        "text": "2026/10/15 10:36:43.502, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 6, 0, 0, 60.71"
+      },
+      {
+        "observed_monotonic_ns": 50638313682700,
+        "text": "2026/10/15 10:36:44.517, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 8, 0, 1092, 29.51"
+      },
+      {
+        "observed_monotonic_ns": 50638315276900,
+        "text": "2026/10/15 10:36:44.517, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 0, 61.25"
+      },
+      {
+        "observed_monotonic_ns": 50639330930400,
+        "text": "2026/10/15 10:36:45.534, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 0, 0, 1352, 28.34"
+      },
+      {
+        "observed_monotonic_ns": 50639333186700,
+        "text": "2026/10/15 10:36:45.534, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 0, 18.58"
+      },
+      {
+        "observed_monotonic_ns": 50640345305100,
+        "text": "2026/10/15 10:36:46.549, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 12, 0, 1350, 32.29"
+      },
+      {
+        "observed_monotonic_ns": 50640347071000,
+        "text": "2026/10/15 10:36:46.549, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 2, 0, 1030, 88.17"
+      },
+      {
+        "observed_monotonic_ns": 50641375705300,
+        "text": "2026/10/15 10:36:47.579, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.34"
+      },
+      {
+        "observed_monotonic_ns": 50641377338700,
+        "text": "2026/10/15 10:36:47.579, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 58, 58, 1030, 88.02"
+      },
+      {
+        "observed_monotonic_ns": 50642380873900,
+        "text": "2026/10/15 10:36:48.584, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.28"
+      },
+      {
+        "observed_monotonic_ns": 50642383571200,
+        "text": "2026/10/15 10:36:48.584, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 87.91"
+      },
+      {
+        "observed_monotonic_ns": 50643398278000,
+        "text": "2026/10/15 10:36:49.602, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.31"
+      },
+      {
+        "observed_monotonic_ns": 50643400021100,
+        "text": "2026/10/15 10:36:49.602, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 88.31"
+      },
+      {
+        "observed_monotonic_ns": 50644407915800,
+        "text": "2026/10/15 10:36:50.611, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.28"
+      },
+      {
+        "observed_monotonic_ns": 50644409631800,
+        "text": "2026/10/15 10:36:50.611, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.20"
+      },
+      {
+        "observed_monotonic_ns": 50645423153700,
+        "text": "2026/10/15 10:36:51.627, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.37"
+      },
+      {
+        "observed_monotonic_ns": 50645425722900,
+        "text": "2026/10/15 10:36:51.627, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.96"
+      },
+      {
+        "observed_monotonic_ns": 50646430694200,
+        "text": "2026/10/15 10:36:52.634, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.45"
+      },
+      {
+        "observed_monotonic_ns": 50646432976700,
+        "text": "2026/10/15 10:36:52.634, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.02"
+      },
+      {
+        "observed_monotonic_ns": 50647446413300,
+        "text": "2026/10/15 10:36:53.650, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.50"
+      },
+      {
+        "observed_monotonic_ns": 50647448336100,
+        "text": "2026/10/15 10:36:53.650, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 88.88"
+      },
+      {
+        "observed_monotonic_ns": 50648453869300,
+        "text": "2026/10/15 10:36:54.657, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.63"
+      },
+      {
+        "observed_monotonic_ns": 50648455842700,
+        "text": "2026/10/15 10:36:54.657, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.35"
+      },
+      {
+        "observed_monotonic_ns": 50649469794600,
+        "text": "2026/10/15 10:36:55.673, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.63"
+      },
+      {
+        "observed_monotonic_ns": 50649471479800,
+        "text": "2026/10/15 10:36:55.673, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.14"
+      },
+      {
+        "observed_monotonic_ns": 50650480937800,
+        "text": "2026/10/15 10:36:56.684, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.77"
+      },
+      {
+        "observed_monotonic_ns": 50650483172000,
+        "text": "2026/10/15 10:36:56.684, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.28"
+      },
+      {
+        "observed_monotonic_ns": 50651497944000,
+        "text": "2026/10/15 10:36:57.701, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.58"
+      },
+      {
+        "observed_monotonic_ns": 50651499722400,
+        "text": "2026/10/15 10:36:57.701, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.63"
+      },
+      {
+        "observed_monotonic_ns": 50652500322300,
+        "text": "2026/10/15 10:36:58.704, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.61"
+      },
+      {
+        "observed_monotonic_ns": 50652501876600,
+        "text": "2026/10/15 10:36:58.704, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.83"
+      },
+      {
+        "observed_monotonic_ns": 50653516813000,
+        "text": "2026/10/15 10:36:59.720, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.42"
+      },
+      {
+        "observed_monotonic_ns": 50653518510200,
+        "text": "2026/10/15 10:36:59.720, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.12"
+      },
+      {
+        "observed_monotonic_ns": 50654531256700,
+        "text": "2026/10/15 10:37:00.734, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.46"
+      },
+      {
+        "observed_monotonic_ns": 50654533099000,
+        "text": "2026/10/15 10:37:00.734, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.54"
+      },
+      {
+        "observed_monotonic_ns": 50655547425600,
+        "text": "2026/10/15 10:37:01.751, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.57"
+      },
+      {
+        "observed_monotonic_ns": 50655549699800,
+        "text": "2026/10/15 10:37:01.751, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 88.37"
+      },
+      {
+        "observed_monotonic_ns": 50656568545500,
+        "text": "2026/10/15 10:37:02.772, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.55"
+      },
+      {
+        "observed_monotonic_ns": 50656570127700,
+        "text": "2026/10/15 10:37:02.772, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.65"
+      },
+      {
+        "observed_monotonic_ns": 50657579658400,
+        "text": "2026/10/15 10:37:03.783, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.55"
+      },
+      {
+        "observed_monotonic_ns": 50657581516500,
+        "text": "2026/10/15 10:37:03.783, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.77"
+      },
+      {
+        "observed_monotonic_ns": 50658594286900,
+        "text": "2026/10/15 10:37:04.798, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.40"
+      },
+      {
+        "observed_monotonic_ns": 50658596054500,
+        "text": "2026/10/15 10:37:04.798, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.39"
+      },
+      {
+        "observed_monotonic_ns": 50659598558900,
+        "text": "2026/10/15 10:37:05.802, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.31"
+      },
+      {
+        "observed_monotonic_ns": 50659600396200,
+        "text": "2026/10/15 10:37:05.802, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.11"
+      },
+      {
+        "observed_monotonic_ns": 50660612092100,
+        "text": "2026/10/15 10:37:06.816, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.21"
+      },
+      {
+        "observed_monotonic_ns": 50660613844900,
+        "text": "2026/10/15 10:37:06.816, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.42"
+      },
+      {
+        "observed_monotonic_ns": 50661626816900,
+        "text": "2026/10/15 10:37:07.830, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.10"
+      },
+      {
+        "observed_monotonic_ns": 50661628667800,
+        "text": "2026/10/15 10:37:07.830, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 89.31"
+      },
+      {
+        "observed_monotonic_ns": 50662631765100,
+        "text": "2026/10/15 10:37:08.835, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.15"
+      },
+      {
+        "observed_monotonic_ns": 50662633597200,
+        "text": "2026/10/15 10:37:08.835, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 89.07"
+      },
+      {
+        "observed_monotonic_ns": 50663648091800,
+        "text": "2026/10/15 10:37:09.851, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.14"
+      },
+      {
+        "observed_monotonic_ns": 50663650332300,
+        "text": "2026/10/15 10:37:09.851, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 89.37"
+      },
+      {
+        "observed_monotonic_ns": 50664657844500,
+        "text": "2026/10/15 10:37:10.861, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.15"
+      },
+      {
+        "observed_monotonic_ns": 50664659380700,
+        "text": "2026/10/15 10:37:10.861, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 89.22"
+      },
+      {
+        "observed_monotonic_ns": 50665674608700,
+        "text": "2026/10/15 10:37:11.878, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.08"
+      },
+      {
+        "observed_monotonic_ns": 50665676114600,
+        "text": "2026/10/15 10:37:11.878, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.76"
+      },
+      {
+        "observed_monotonic_ns": 50666682836000,
+        "text": "2026/10/15 10:37:12.886, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.15"
+      },
+      {
+        "observed_monotonic_ns": 50666684545900,
+        "text": "2026/10/15 10:37:12.886, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.65"
+      },
+      {
+        "observed_monotonic_ns": 50667697402400,
+        "text": "2026/10/15 10:37:13.901, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.37"
+      },
+      {
+        "observed_monotonic_ns": 50667699931400,
+        "text": "2026/10/15 10:37:13.901, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.25"
+      },
+      {
+        "observed_monotonic_ns": 50668704661700,
+        "text": "2026/10/15 10:37:14.908, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.44"
+      },
+      {
+        "observed_monotonic_ns": 50668706400900,
+        "text": "2026/10/15 10:37:14.908, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.85"
+      },
+      {
+        "observed_monotonic_ns": 50669714624300,
+        "text": "2026/10/15 10:37:15.918, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.51"
+      },
+      {
+        "observed_monotonic_ns": 50669716590600,
+        "text": "2026/10/15 10:37:15.918, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 90.34"
+      },
+      {
+        "observed_monotonic_ns": 50670730824000,
+        "text": "2026/10/15 10:37:16.934, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.75"
+      },
+      {
+        "observed_monotonic_ns": 50670733613200,
+        "text": "2026/10/15 10:37:16.934, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.32"
+      },
+      {
+        "observed_monotonic_ns": 50671748520000,
+        "text": "2026/10/15 10:37:17.952, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.71"
+      },
+      {
+        "observed_monotonic_ns": 50671750430200,
+        "text": "2026/10/15 10:37:17.952, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 90.06"
+      },
+      {
+        "observed_monotonic_ns": 50672750849100,
+        "text": "2026/10/15 10:37:18.954, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.65"
+      },
+      {
+        "observed_monotonic_ns": 50672752636000,
+        "text": "2026/10/15 10:37:18.954, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.50"
+      },
+      {
+        "observed_monotonic_ns": 50673765011300,
+        "text": "2026/10/15 10:37:19.968, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.65"
+      },
+      {
+        "observed_monotonic_ns": 50673766897700,
+        "text": "2026/10/15 10:37:19.968, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.38"
+      },
+      {
+        "observed_monotonic_ns": 50674767414000,
+        "text": "2026/10/15 10:37:20.971, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.84"
+      },
+      {
+        "observed_monotonic_ns": 50674769294400,
+        "text": "2026/10/15 10:37:20.971, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.32"
+      },
+      {
+        "observed_monotonic_ns": 50675782347100,
+        "text": "2026/10/15 10:37:21.986, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.80"
+      },
+      {
+        "observed_monotonic_ns": 50675784171600,
+        "text": "2026/10/15 10:37:21.986, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.51"
+      },
+      {
+        "observed_monotonic_ns": 50676799428300,
+        "text": "2026/10/15 10:37:23.003, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.66"
+      },
+      {
+        "observed_monotonic_ns": 50676801303600,
+        "text": "2026/10/15 10:37:23.003, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.58"
+      },
+      {
+        "observed_monotonic_ns": 50677814897400,
+        "text": "2026/10/15 10:37:24.018, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.59"
+      },
+      {
+        "observed_monotonic_ns": 50677818109800,
+        "text": "2026/10/15 10:37:24.018, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.54"
+      },
+      {
+        "observed_monotonic_ns": 50678829167600,
+        "text": "2026/10/15 10:37:25.033, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.76"
+      },
+      {
+        "observed_monotonic_ns": 50678830821300,
+        "text": "2026/10/15 10:37:25.033, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 90.38"
+      },
+      {
+        "observed_monotonic_ns": 50679832277200,
+        "text": "2026/10/15 10:37:26.036, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.89"
+      },
+      {
+        "observed_monotonic_ns": 50679833968400,
+        "text": "2026/10/15 10:37:26.036, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 90.47"
+      },
+      {
+        "observed_monotonic_ns": 50680845547100,
+        "text": "2026/10/15 10:37:27.049, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.76"
+      },
+      {
+        "observed_monotonic_ns": 50680849073000,
+        "text": "2026/10/15 10:37:27.049, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.45"
+      },
+      {
+        "observed_monotonic_ns": 50681865615300,
+        "text": "2026/10/15 10:37:28.069, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.69"
+      },
+      {
+        "observed_monotonic_ns": 50681867355000,
+        "text": "2026/10/15 10:37:28.069, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.52"
+      },
+      {
+        "observed_monotonic_ns": 50682881963300,
+        "text": "2026/10/15 10:37:29.085, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.78"
+      },
+      {
+        "observed_monotonic_ns": 50682883622800,
+        "text": "2026/10/15 10:37:29.085, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 91.04"
+      },
+      {
+        "observed_monotonic_ns": 50683884090000,
+        "text": "2026/10/15 10:37:30.088, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.60"
+      },
+      {
+        "observed_monotonic_ns": 50683885836800,
+        "text": "2026/10/15 10:37:30.088, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 91.05"
+      },
+      {
+        "observed_monotonic_ns": 50684898766600,
+        "text": "2026/10/15 10:37:31.102, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.51"
+      },
+      {
+        "observed_monotonic_ns": 50684900391600,
+        "text": "2026/10/15 10:37:31.102, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 91.20"
+      },
+      {
+        "observed_monotonic_ns": 50685914185800,
+        "text": "2026/10/15 10:37:32.118, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.67"
+      },
+      {
+        "observed_monotonic_ns": 50685917228200,
+        "text": "2026/10/15 10:37:32.118, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.91"
+      },
+      {
+        "observed_monotonic_ns": 50686929067100,
+        "text": "2026/10/15 10:37:33.133, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.62"
+      },
+      {
+        "observed_monotonic_ns": 50686930716800,
+        "text": "2026/10/15 10:37:33.133, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 90.02"
+      },
+      {
+        "observed_monotonic_ns": 50687932342200,
+        "text": "2026/10/15 10:37:34.136, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.62"
+      },
+      {
+        "observed_monotonic_ns": 50687934296800,
+        "text": "2026/10/15 10:37:34.136, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.55"
+      },
+      {
+        "observed_monotonic_ns": 50688947534100,
+        "text": "2026/10/15 10:37:35.151, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.56"
+      },
+      {
+        "observed_monotonic_ns": 50688950037800,
+        "text": "2026/10/15 10:37:35.151, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.43"
+      },
+      {
+        "observed_monotonic_ns": 50689965882300,
+        "text": "2026/10/15 10:37:36.169, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.63"
+      },
+      {
+        "observed_monotonic_ns": 50689967718200,
+        "text": "2026/10/15 10:37:36.169, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.78"
+      },
+      {
+        "observed_monotonic_ns": 50690982714500,
+        "text": "2026/10/15 10:37:37.186, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.88"
+      },
+      {
+        "observed_monotonic_ns": 50690985327500,
+        "text": "2026/10/15 10:37:37.186, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 89.28"
+      },
+      {
+        "observed_monotonic_ns": 50691994651700,
+        "text": "2026/10/15 10:37:38.198, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.97"
+      },
+      {
+        "observed_monotonic_ns": 50691996371400,
+        "text": "2026/10/15 10:37:38.198, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 90.25"
+      },
+      {
+        "observed_monotonic_ns": 50693001774700,
+        "text": "2026/10/15 10:37:39.205, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 34.02"
+      },
+      {
+        "observed_monotonic_ns": 50693003453600,
+        "text": "2026/10/15 10:37:39.205, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 91.00"
+      },
+      {
+        "observed_monotonic_ns": 50694014940200,
+        "text": "2026/10/15 10:37:40.218, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.81"
+      },
+      {
+        "observed_monotonic_ns": 50694016896000,
+        "text": "2026/10/15 10:37:40.218, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.98"
+      },
+      {
+        "observed_monotonic_ns": 50695017991200,
+        "text": "2026/10/15 10:37:41.221, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.91"
+      },
+      {
+        "observed_monotonic_ns": 50695019965900,
+        "text": "2026/10/15 10:37:41.221, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.94"
+      },
+      {
+        "observed_monotonic_ns": 50696030040800,
+        "text": "2026/10/15 10:37:42.233, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.94"
+      },
+      {
+        "observed_monotonic_ns": 50696032446400,
+        "text": "2026/10/15 10:37:42.233, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 91.02"
+      },
+      {
+        "observed_monotonic_ns": 50697049174900,
+        "text": "2026/10/15 10:37:43.252, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.93"
+      },
+      {
+        "observed_monotonic_ns": 50697050802300,
+        "text": "2026/10/15 10:37:43.252, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 91.24"
+      },
+      {
+        "observed_monotonic_ns": 50698062840100,
+        "text": "2026/10/15 10:37:44.266, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.93"
+      },
+      {
+        "observed_monotonic_ns": 50698064735300,
+        "text": "2026/10/15 10:37:44.266, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 91.15"
+      },
+      {
+        "observed_monotonic_ns": 50699083011300,
+        "text": "2026/10/15 10:37:45.286, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 34.07"
+      },
+      {
+        "observed_monotonic_ns": 50699084684000,
+        "text": "2026/10/15 10:37:45.286, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 90.84"
+      }
+    ],
+    "minimum_free_bytes": 1406320877568
+  },
+  "monitor_active_trial": {
+    "sample_count": 60,
+    "overhead_ms": {
+      "count": 60,
+      "minimum": 7.08,
+      "mean": 11.322726666666666,
+      "median": 11.178550000000001,
+      "p99": 14.1742,
+      "maximum": 14.3374
+    },
+    "system_cpu_percent": {
+      "count": 59,
+      "minimum": 9.35672514619883,
+      "mean": 15.965207079831059,
+      "median": 15.673828125,
+      "p99": 21.5158924205379,
+      "maximum": 22.580645161290324
+    },
+    "processes": {
+      "10140:134365017558799141:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 4325376,
+          "mean": 4325376,
+          "median": 4325376.0,
+          "p99": 4325376,
+          "maximum": 4325376
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "26040:134365017559608210:C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 15900672,
+          "mean": 15910912,
+          "median": 15900672.0,
+          "p99": 15962112,
+          "maximum": 15962112
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "7308:134365017560819897:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 4329472,
+          "mean": 4329472,
+          "median": 4329472.0,
+          "p99": 4329472,
+          "maximum": 4329472
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "856:134365017561961381:C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 49324032,
+          "mean": 49337548.8,
+          "median": 49324032.0,
+          "p99": 49397760,
+          "maximum": 49397760
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.13240166930140945,
+          "median": 0.0,
+          "p99": 1.562635480496159,
+          "maximum": 1.5629429380286373
+        }
+      },
+      "28988:134365017566338667:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 45617152,
+          "mean": 45778261.333333336,
+          "median": 45789184.0,
+          "p99": 45867008,
+          "maximum": 45867008
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 1.5624246911298876,
+          "mean": 6.408699619200112,
+          "median": 4.688854610096857,
+          "p99": 17.185889682136782,
+          "maximum": 17.191610514073915
+        }
+      },
+      "26128:134365017569397252:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 69054464,
+          "mean": 69536904.53333333,
+          "median": 69525504.0,
+          "p99": 69816320,
+          "maximum": 69853184
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 1.2712119686798462,
+          "median": 1.561648277029708,
+          "p99": 6.249456297302134,
+          "maximum": 6.250093126387583
+        }
+      },
+      "12696:134365017569472247:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 54026240,
+          "mean": 54098124.8,
+          "median": 54095872.0,
+          "p99": 54198272,
+          "maximum": 54198272
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.5296142966367864,
+          "median": 0.0,
+          "p99": 4.687800956821428,
+          "maximum": 6.250531295160089
+        }
+      },
+      "25164:134365017569931352:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 56676352,
+          "mean": 56687820.8,
+          "median": 56676352.0,
+          "p99": 56741888,
+          "maximum": 56741888
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.15890048501279475,
+          "median": 0.0,
+          "p99": 1.5629429380286373,
+          "maximum": 4.687569844790687
+        }
+      },
+      "20984:134365017570373887:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 242491392,
+          "mean": 242698240,
+          "median": 242634752.0,
+          "p99": 243015680,
+          "maximum": 243044352
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 1.2976308888830244,
+          "median": 1.5620029706547376,
+          "p99": 6.2518061467958095,
+          "maximum": 12.498828859735843
+        }
+      },
+      "27764:134365017574647980:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe": {
+        "name": "cephvr-renderer.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 314953728,
+          "mean": 349413239.46666664,
+          "median": 351090688.0,
+          "p99": 382750720,
+          "maximum": 393416704
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 48.45424094024485,
+          "mean": 61.81144982313363,
+          "median": 60.93815203822681,
+          "p99": 78.11736012218005,
+          "maximum": 81.26943152107668
+        }
+      },
+      "4480:134365017961422976:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 4325376,
+          "mean": 4333568,
+          "median": 4325376.0,
+          "p99": 4349952,
+          "maximum": 4349952
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "9824:134365017963064447:C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 55324672,
+          "mean": 55364676.266666666,
+          "median": 55377920.0,
+          "p99": 55386112,
+          "maximum": 55386112
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.34429489058328955,
+          "median": 0.0,
+          "p99": 4.687060822400941,
+          "maximum": 4.688854610096857
+        }
+      },
+      "780:134365017966777717:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 4317184,
+          "mean": 4327219.2,
+          "median": 4317184.0,
+          "p99": 4345856,
+          "maximum": 4345856
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "p99": 0.0,
+          "maximum": 0.0
+        }
+      },
+      "16668:134365017969790178:C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 18313216,
+          "mean": 18743910.4,
+          "median": 18792448.0,
+          "p99": 18792448,
+          "maximum": 18792448
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 1.5889767401829784,
+          "median": 1.5625206252722537,
+          "p99": 3.1251293803563467,
+          "maximum": 3.1251378185777994
+        }
+      },
+      "672:134365017972642219:C:\\Windows\\System32\\nvidia-smi.exe": {
+        "name": "nvidia-smi.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 32555008,
+          "mean": 32577536,
+          "median": 32555008.0,
+          "p99": 32616448,
+          "maximum": 32616448
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 0.0,
+          "mean": 0.13242271324678617,
+          "median": 0.0,
+          "p99": 1.5629002587562675,
+          "maximum": 1.5629515366989524
+        }
+      },
+      "19780:134365017981983518:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 254017536,
+          "mean": 255966958.93333334,
+          "median": 255832064.0,
+          "p99": 267395072,
+          "maximum": 273334272
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 24.995983145508518,
+          "mean": 36.2288994464067,
+          "median": 35.93576789598741,
+          "p99": 50.00425036128071,
+          "maximum": 50.03432855282009
+        }
+      },
+      "29084:134365017982055029:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 203522048,
+          "mean": 204963089.06666666,
+          "median": 204931072.0,
+          "p99": 208842752,
+          "maximum": 209281024
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 18.75300610687893,
+          "mean": 25.132446288495846,
+          "median": 24.99328680316467,
+          "p99": 31.254353731474794,
+          "maximum": 32.813947095066894
+        }
+      },
+      "12312:134365017982963738:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe": {
+        "name": "cephvr-python.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 220381184,
+          "mean": 224338807.46666667,
+          "median": 223639552.0,
+          "p99": 232595456,
+          "maximum": 233410560
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 28.125419068744126,
+          "mean": 51.08626169484561,
+          "median": 50.00433537587709,
+          "p99": 67.2047111265195,
+          "maximum": 68.77376133454108
+        }
+      },
+      "10344:134365018051200722:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 218734592,
+          "mean": 219160712.53333333,
+          "median": 219181056.0,
+          "p99": 219496448,
+          "maximum": 219824128
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 3.1271455345512558,
+          "mean": 33.182623355794966,
+          "median": 32.80964556083621,
+          "p99": 76.54663953628808,
+          "maximum": 81.26624512239997
+        }
+      },
+      "19576:134365018051322194:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 287133696,
+          "mean": 299660561.06666666,
+          "median": 299806720.0,
+          "p99": 300605440,
+          "maximum": 305463296
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 10.932892878940814,
+          "mean": 65.78620173080832,
+          "median": 65.62837329838754,
+          "p99": 125.04891913716646,
+          "maximum": 129.73169959005034
+        }
+      },
+      "12700:134365018051436917:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 275939328,
+          "mean": 276766173.8666667,
+          "median": 276674560.0,
+          "p99": 278245376,
+          "maximum": 278278144
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 14.055484907482676,
+          "mean": 65.75797949992678,
+          "median": 60.9235363254742,
+          "p99": 128.11473800948545,
+          "maximum": 142.199586964892
+        }
+      },
+      "21984:134365018051522710:C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe": {
+        "name": "ffmpeg.exe",
+        "rss_bytes": {
+          "count": 60,
+          "minimum": 317267968,
+          "mean": 318476629.3333333,
+          "median": 318464000.0,
+          "p99": 319303680,
+          "maximum": 322322432
+        },
+        "cpu_one_core_percent": {
+          "count": 59,
+          "minimum": 7.813164118950111,
+          "mean": 40.678596245816394,
+          "median": 40.60285520277241,
+          "p99": 81.21577567213177,
+          "maximum": 81.24349239625906
+        }
+      },
+      "26072:134365018351987593:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 2093056,
+          "mean": 2093056,
+          "median": 2093056,
+          "p99": 2093056,
+          "maximum": 2093056
+        },
+        "cpu_one_core_percent": {}
+      },
+      "10248:134365018571099347:C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe": {
+        "name": "python.exe",
+        "rss_bytes": {
+          "count": 1,
+          "minimum": 2093056,
+          "mean": 2093056,
+          "median": 2093056,
+          "p99": 2093056,
+          "maximum": 2093056
+        },
+        "cpu_one_core_percent": {}
+      }
+    },
+    "gpu_samples": [
+      {
+        "observed_monotonic_ns": 50639330930400,
+        "text": "2026/10/15 10:36:45.534, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 0, 0, 1352, 28.34"
+      },
+      {
+        "observed_monotonic_ns": 50639333186700,
+        "text": "2026/10/15 10:36:45.534, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 0, 0, 0, 18.58"
+      },
+      {
+        "observed_monotonic_ns": 50640345305100,
+        "text": "2026/10/15 10:36:46.549, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 12, 0, 1350, 32.29"
+      },
+      {
+        "observed_monotonic_ns": 50640347071000,
+        "text": "2026/10/15 10:36:46.549, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 2, 0, 1030, 88.17"
+      },
+      {
+        "observed_monotonic_ns": 50641375705300,
+        "text": "2026/10/15 10:36:47.579, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.34"
+      },
+      {
+        "observed_monotonic_ns": 50641377338700,
+        "text": "2026/10/15 10:36:47.579, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 58, 58, 1030, 88.02"
+      },
+      {
+        "observed_monotonic_ns": 50642380873900,
+        "text": "2026/10/15 10:36:48.584, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.28"
+      },
+      {
+        "observed_monotonic_ns": 50642383571200,
+        "text": "2026/10/15 10:36:48.584, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 87.91"
+      },
+      {
+        "observed_monotonic_ns": 50643398278000,
+        "text": "2026/10/15 10:36:49.602, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.31"
+      },
+      {
+        "observed_monotonic_ns": 50643400021100,
+        "text": "2026/10/15 10:36:49.602, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 88.31"
+      },
+      {
+        "observed_monotonic_ns": 50644407915800,
+        "text": "2026/10/15 10:36:50.611, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.28"
+      },
+      {
+        "observed_monotonic_ns": 50644409631800,
+        "text": "2026/10/15 10:36:50.611, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.20"
+      },
+      {
+        "observed_monotonic_ns": 50645423153700,
+        "text": "2026/10/15 10:36:51.627, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.37"
+      },
+      {
+        "observed_monotonic_ns": 50645425722900,
+        "text": "2026/10/15 10:36:51.627, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.96"
+      },
+      {
+        "observed_monotonic_ns": 50646430694200,
+        "text": "2026/10/15 10:36:52.634, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.45"
+      },
+      {
+        "observed_monotonic_ns": 50646432976700,
+        "text": "2026/10/15 10:36:52.634, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.02"
+      },
+      {
+        "observed_monotonic_ns": 50647446413300,
+        "text": "2026/10/15 10:36:53.650, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.50"
+      },
+      {
+        "observed_monotonic_ns": 50647448336100,
+        "text": "2026/10/15 10:36:53.650, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 88.88"
+      },
+      {
+        "observed_monotonic_ns": 50648453869300,
+        "text": "2026/10/15 10:36:54.657, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.63"
+      },
+      {
+        "observed_monotonic_ns": 50648455842700,
+        "text": "2026/10/15 10:36:54.657, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.35"
+      },
+      {
+        "observed_monotonic_ns": 50649469794600,
+        "text": "2026/10/15 10:36:55.673, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.63"
+      },
+      {
+        "observed_monotonic_ns": 50649471479800,
+        "text": "2026/10/15 10:36:55.673, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.14"
+      },
+      {
+        "observed_monotonic_ns": 50650480937800,
+        "text": "2026/10/15 10:36:56.684, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.77"
+      },
+      {
+        "observed_monotonic_ns": 50650483172000,
+        "text": "2026/10/15 10:36:56.684, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.28"
+      },
+      {
+        "observed_monotonic_ns": 50651497944000,
+        "text": "2026/10/15 10:36:57.701, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.58"
+      },
+      {
+        "observed_monotonic_ns": 50651499722400,
+        "text": "2026/10/15 10:36:57.701, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.63"
+      },
+      {
+        "observed_monotonic_ns": 50652500322300,
+        "text": "2026/10/15 10:36:58.704, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.61"
+      },
+      {
+        "observed_monotonic_ns": 50652501876600,
+        "text": "2026/10/15 10:36:58.704, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.83"
+      },
+      {
+        "observed_monotonic_ns": 50653516813000,
+        "text": "2026/10/15 10:36:59.720, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.42"
+      },
+      {
+        "observed_monotonic_ns": 50653518510200,
+        "text": "2026/10/15 10:36:59.720, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.12"
+      },
+      {
+        "observed_monotonic_ns": 50654531256700,
+        "text": "2026/10/15 10:37:00.734, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.46"
+      },
+      {
+        "observed_monotonic_ns": 50654533099000,
+        "text": "2026/10/15 10:37:00.734, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.54"
+      },
+      {
+        "observed_monotonic_ns": 50655547425600,
+        "text": "2026/10/15 10:37:01.751, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.57"
+      },
+      {
+        "observed_monotonic_ns": 50655549699800,
+        "text": "2026/10/15 10:37:01.751, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 88.37"
+      },
+      {
+        "observed_monotonic_ns": 50656568545500,
+        "text": "2026/10/15 10:37:02.772, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.55"
+      },
+      {
+        "observed_monotonic_ns": 50656570127700,
+        "text": "2026/10/15 10:37:02.772, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.65"
+      },
+      {
+        "observed_monotonic_ns": 50657579658400,
+        "text": "2026/10/15 10:37:03.783, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.55"
+      },
+      {
+        "observed_monotonic_ns": 50657581516500,
+        "text": "2026/10/15 10:37:03.783, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 88.77"
+      },
+      {
+        "observed_monotonic_ns": 50658594286900,
+        "text": "2026/10/15 10:37:04.798, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.40"
+      },
+      {
+        "observed_monotonic_ns": 50658596054500,
+        "text": "2026/10/15 10:37:04.798, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.39"
+      },
+      {
+        "observed_monotonic_ns": 50659598558900,
+        "text": "2026/10/15 10:37:05.802, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.31"
+      },
+      {
+        "observed_monotonic_ns": 50659600396200,
+        "text": "2026/10/15 10:37:05.802, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.11"
+      },
+      {
+        "observed_monotonic_ns": 50660612092100,
+        "text": "2026/10/15 10:37:06.816, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.21"
+      },
+      {
+        "observed_monotonic_ns": 50660613844900,
+        "text": "2026/10/15 10:37:06.816, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 89.42"
+      },
+      {
+        "observed_monotonic_ns": 50661626816900,
+        "text": "2026/10/15 10:37:07.830, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.10"
+      },
+      {
+        "observed_monotonic_ns": 50661628667800,
+        "text": "2026/10/15 10:37:07.830, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 89.31"
+      },
+      {
+        "observed_monotonic_ns": 50662631765100,
+        "text": "2026/10/15 10:37:08.835, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.15"
+      },
+      {
+        "observed_monotonic_ns": 50662633597200,
+        "text": "2026/10/15 10:37:08.835, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 89.07"
+      },
+      {
+        "observed_monotonic_ns": 50663648091800,
+        "text": "2026/10/15 10:37:09.851, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.14"
+      },
+      {
+        "observed_monotonic_ns": 50663650332300,
+        "text": "2026/10/15 10:37:09.851, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 89.37"
+      },
+      {
+        "observed_monotonic_ns": 50664657844500,
+        "text": "2026/10/15 10:37:10.861, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.15"
+      },
+      {
+        "observed_monotonic_ns": 50664659380700,
+        "text": "2026/10/15 10:37:10.861, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 89.22"
+      },
+      {
+        "observed_monotonic_ns": 50665674608700,
+        "text": "2026/10/15 10:37:11.878, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.08"
+      },
+      {
+        "observed_monotonic_ns": 50665676114600,
+        "text": "2026/10/15 10:37:11.878, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.76"
+      },
+      {
+        "observed_monotonic_ns": 50666682836000,
+        "text": "2026/10/15 10:37:12.886, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.15"
+      },
+      {
+        "observed_monotonic_ns": 50666684545900,
+        "text": "2026/10/15 10:37:12.886, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.65"
+      },
+      {
+        "observed_monotonic_ns": 50667697402400,
+        "text": "2026/10/15 10:37:13.901, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.37"
+      },
+      {
+        "observed_monotonic_ns": 50667699931400,
+        "text": "2026/10/15 10:37:13.901, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.25"
+      },
+      {
+        "observed_monotonic_ns": 50668704661700,
+        "text": "2026/10/15 10:37:14.908, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.44"
+      },
+      {
+        "observed_monotonic_ns": 50668706400900,
+        "text": "2026/10/15 10:37:14.908, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.85"
+      },
+      {
+        "observed_monotonic_ns": 50669714624300,
+        "text": "2026/10/15 10:37:15.918, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.51"
+      },
+      {
+        "observed_monotonic_ns": 50669716590600,
+        "text": "2026/10/15 10:37:15.918, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 90.34"
+      },
+      {
+        "observed_monotonic_ns": 50670730824000,
+        "text": "2026/10/15 10:37:16.934, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.75"
+      },
+      {
+        "observed_monotonic_ns": 50670733613200,
+        "text": "2026/10/15 10:37:16.934, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.32"
+      },
+      {
+        "observed_monotonic_ns": 50671748520000,
+        "text": "2026/10/15 10:37:17.952, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.71"
+      },
+      {
+        "observed_monotonic_ns": 50671750430200,
+        "text": "2026/10/15 10:37:17.952, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 90.06"
+      },
+      {
+        "observed_monotonic_ns": 50672750849100,
+        "text": "2026/10/15 10:37:18.954, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.65"
+      },
+      {
+        "observed_monotonic_ns": 50672752636000,
+        "text": "2026/10/15 10:37:18.954, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.50"
+      },
+      {
+        "observed_monotonic_ns": 50673765011300,
+        "text": "2026/10/15 10:37:19.968, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.65"
+      },
+      {
+        "observed_monotonic_ns": 50673766897700,
+        "text": "2026/10/15 10:37:19.968, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.38"
+      },
+      {
+        "observed_monotonic_ns": 50674767414000,
+        "text": "2026/10/15 10:37:20.971, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.84"
+      },
+      {
+        "observed_monotonic_ns": 50674769294400,
+        "text": "2026/10/15 10:37:20.971, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.32"
+      },
+      {
+        "observed_monotonic_ns": 50675782347100,
+        "text": "2026/10/15 10:37:21.986, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.80"
+      },
+      {
+        "observed_monotonic_ns": 50675784171600,
+        "text": "2026/10/15 10:37:21.986, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.51"
+      },
+      {
+        "observed_monotonic_ns": 50676799428300,
+        "text": "2026/10/15 10:37:23.003, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.66"
+      },
+      {
+        "observed_monotonic_ns": 50676801303600,
+        "text": "2026/10/15 10:37:23.003, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.58"
+      },
+      {
+        "observed_monotonic_ns": 50677814897400,
+        "text": "2026/10/15 10:37:24.018, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.59"
+      },
+      {
+        "observed_monotonic_ns": 50677818109800,
+        "text": "2026/10/15 10:37:24.018, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.54"
+      },
+      {
+        "observed_monotonic_ns": 50678829167600,
+        "text": "2026/10/15 10:37:25.033, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.76"
+      },
+      {
+        "observed_monotonic_ns": 50678830821300,
+        "text": "2026/10/15 10:37:25.033, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 90.38"
+      },
+      {
+        "observed_monotonic_ns": 50679832277200,
+        "text": "2026/10/15 10:37:26.036, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.89"
+      },
+      {
+        "observed_monotonic_ns": 50679833968400,
+        "text": "2026/10/15 10:37:26.036, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 90.47"
+      },
+      {
+        "observed_monotonic_ns": 50680845547100,
+        "text": "2026/10/15 10:37:27.049, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.76"
+      },
+      {
+        "observed_monotonic_ns": 50680849073000,
+        "text": "2026/10/15 10:37:27.049, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.45"
+      },
+      {
+        "observed_monotonic_ns": 50681865615300,
+        "text": "2026/10/15 10:37:28.069, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.69"
+      },
+      {
+        "observed_monotonic_ns": 50681867355000,
+        "text": "2026/10/15 10:37:28.069, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.52"
+      },
+      {
+        "observed_monotonic_ns": 50682881963300,
+        "text": "2026/10/15 10:37:29.085, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.78"
+      },
+      {
+        "observed_monotonic_ns": 50682883622800,
+        "text": "2026/10/15 10:37:29.085, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 91.04"
+      },
+      {
+        "observed_monotonic_ns": 50683884090000,
+        "text": "2026/10/15 10:37:30.088, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.60"
+      },
+      {
+        "observed_monotonic_ns": 50683885836800,
+        "text": "2026/10/15 10:37:30.088, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 91.05"
+      },
+      {
+        "observed_monotonic_ns": 50684898766600,
+        "text": "2026/10/15 10:37:31.102, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.51"
+      },
+      {
+        "observed_monotonic_ns": 50684900391600,
+        "text": "2026/10/15 10:37:31.102, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 91.20"
+      },
+      {
+        "observed_monotonic_ns": 50685914185800,
+        "text": "2026/10/15 10:37:32.118, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.67"
+      },
+      {
+        "observed_monotonic_ns": 50685917228200,
+        "text": "2026/10/15 10:37:32.118, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.91"
+      },
+      {
+        "observed_monotonic_ns": 50686929067100,
+        "text": "2026/10/15 10:37:33.133, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.62"
+      },
+      {
+        "observed_monotonic_ns": 50686930716800,
+        "text": "2026/10/15 10:37:33.133, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 90.02"
+      },
+      {
+        "observed_monotonic_ns": 50687932342200,
+        "text": "2026/10/15 10:37:34.136, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.62"
+      },
+      {
+        "observed_monotonic_ns": 50687934296800,
+        "text": "2026/10/15 10:37:34.136, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.55"
+      },
+      {
+        "observed_monotonic_ns": 50688947534100,
+        "text": "2026/10/15 10:37:35.151, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.56"
+      },
+      {
+        "observed_monotonic_ns": 50688950037800,
+        "text": "2026/10/15 10:37:35.151, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 43, 1030, 90.43"
+      },
+      {
+        "observed_monotonic_ns": 50689965882300,
+        "text": "2026/10/15 10:37:36.169, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.63"
+      },
+      {
+        "observed_monotonic_ns": 50689967718200,
+        "text": "2026/10/15 10:37:36.169, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 43, 1030, 89.78"
+      },
+      {
+        "observed_monotonic_ns": 50690982714500,
+        "text": "2026/10/15 10:37:37.186, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.88"
+      },
+      {
+        "observed_monotonic_ns": 50690985327500,
+        "text": "2026/10/15 10:37:37.186, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 89.28"
+      },
+      {
+        "observed_monotonic_ns": 50691994651700,
+        "text": "2026/10/15 10:37:38.198, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.97"
+      },
+      {
+        "observed_monotonic_ns": 50691996371400,
+        "text": "2026/10/15 10:37:38.198, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 90.25"
+      },
+      {
+        "observed_monotonic_ns": 50693001774700,
+        "text": "2026/10/15 10:37:39.205, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 34.02"
+      },
+      {
+        "observed_monotonic_ns": 50693003453600,
+        "text": "2026/10/15 10:37:39.205, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 91.00"
+      },
+      {
+        "observed_monotonic_ns": 50694014940200,
+        "text": "2026/10/15 10:37:40.218, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.81"
+      },
+      {
+        "observed_monotonic_ns": 50694016896000,
+        "text": "2026/10/15 10:37:40.218, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.98"
+      },
+      {
+        "observed_monotonic_ns": 50695017991200,
+        "text": "2026/10/15 10:37:41.221, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 10, 0, 1350, 33.91"
+      },
+      {
+        "observed_monotonic_ns": 50695019965900,
+        "text": "2026/10/15 10:37:41.221, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 90.94"
+      },
+      {
+        "observed_monotonic_ns": 50696030040800,
+        "text": "2026/10/15 10:37:42.233, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.94"
+      },
+      {
+        "observed_monotonic_ns": 50696032446400,
+        "text": "2026/10/15 10:37:42.233, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 91.02"
+      },
+      {
+        "observed_monotonic_ns": 50697049174900,
+        "text": "2026/10/15 10:37:43.252, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.93"
+      },
+      {
+        "observed_monotonic_ns": 50697050802300,
+        "text": "2026/10/15 10:37:43.252, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 91.24"
+      },
+      {
+        "observed_monotonic_ns": 50698062840100,
+        "text": "2026/10/15 10:37:44.266, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 33.93"
+      },
+      {
+        "observed_monotonic_ns": 50698064735300,
+        "text": "2026/10/15 10:37:44.266, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 42, 44, 1030, 91.15"
+      },
+      {
+        "observed_monotonic_ns": 50699083011300,
+        "text": "2026/10/15 10:37:45.286, 0, GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 9, 0, 1350, 34.07"
+      },
+      {
+        "observed_monotonic_ns": 50699084684000,
+        "text": "2026/10/15 10:37:45.286, 1, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 43, 44, 1030, 90.84"
+      }
+    ],
+    "minimum_free_bytes": 1406320877568
+  }
+}

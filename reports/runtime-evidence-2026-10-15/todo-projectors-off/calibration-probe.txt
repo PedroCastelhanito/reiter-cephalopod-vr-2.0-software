@@ -1,0 +1,1 @@
+{"backend_dispatches": 1, "blocked_after_rejection": true, "first_result": "COMMAND_RESULT_REJECTED", "pending_after_rejection": true, "second_reason": "Live calibration targets a stale or unavailable grid", "second_result": "COMMAND_RESULT_REJECTED"}

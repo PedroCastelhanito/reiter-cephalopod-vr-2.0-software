@@ -1,5 +1,197 @@
 # Visual Stimulus status
 
+Oct15 live-pulse follow-up completes the owner-requested photodiode preview: the
+existing GL-owner service loop repeatedly submits the current placement while Active.
+Trial and diagnostic drawing share one pure V22 pattern helper, with separate
+submission indices. Diagnostic Open starts at zero; successful all-output swaps
+advance the index; live Frame/Pulse/target edits preserve it. Unknown and Close
+stop repetition. Failed presentation marks Unknown and uses existing renderer
+failure handling; no trial clock, marker log, recording or new resource owner is added.
+
+Current pulse checks: affected backend/controller193 pass; the focused combined
+GUI/rendering selection85 passes, including live edits to all Pulse fields, geometry
+changes during a dark landmark, cycle wrap/reopen reset, failed swaps without index
+advancement, Unknown cessation and Close/Idle. Ruff/format9, Win32 mypy50 and
+boundaries699/zero violations pass. Two initial test-fixture errors (strict JSON
+parsing and field-key names) were corrected before the final runs. RTX5060Ti
+offscreen production drawing matches every pixel in66 frames across a live move/resize.
+[Pulse evidence](runtime-evidence-2026-10-15/output-placement/pulse-native.json) and
+[check context](runtime-evidence-2026-10-15/output-placement/pulse-validation.json)
+retain method/source scope. No running GUI/projector or optical timing acceptance
+was performed. Existing renderer-native and calibration-worker size advisories
+remain cohesive owner exceptions: repetition stays with diagnostic lifecycle state;
+the shared pattern is extracted rather than duplicating trial logic (ARCH-002).
+
+Oct15 screenshot follow-up fixes `live-output-placement` launch incorrectly
+requiring a pre-existing Frame/Pulse. Empty/incomplete initial definitions now
+open black without inventing a rectangle or changing the draft. A complete
+in-bounds live definition draws the pulse; later incomplete updates still retain
+the confirmed image. The initial-only empty allowance stays with the existing
+preparation validator; live-update validation remains strict. Existing GUI bundle,
+initial draft and renderer-owner tests now cover empty-start-to-first-pulse and
+unchanged cleanup. Follow-up GUI14/backend135, scoped Ruff/format7, Win32 mypy5,
+schemas11 and boundaries698/zero violations pass. RTX5060Ti offscreen pixels are
+exactly black initially, then show only the first valid white pulse. An initial
+parameterized-test signature collection error was corrected before final execution.
+[Follow-up native evidence](runtime-evidence-2026-10-15/output-placement/empty-start-native.json)
+and [GUI transcript](runtime-evidence-2026-10-15/output-placement/empty-start-gui-tests-final.txt)
+retain the scope; no running application/projector was operated.
+
+`live-output-placement` is implemented under
+[G01 revision208](../docs/architecture/gui.md#g01),
+[V01 revision25](../docs/architecture/visual_stimulus.md#v01) and
+[V22 revision7](../docs/architecture/visual_stimulus.md#v22). Synchronization adds
+Launch photodiode placement (repeating bright/dark configured pulse on black) and Launch
+blackout placement (black zones on neutral gray). Relevant pixel fields/target or
+zone add/remove controls update the actual diagnostic via the existing debounced,
+sequenced command path. Complete snapshots validate before replacing placement;
+invalid/incomplete edits preserve the prior image. Unknown remains closable with
+tuning disabled. Close restores Idle through existing exact resource ownership.
+No trial clock or recording runs in these previews; V22 owns the diagnostic pulse sequence.
+
+ARCH-002 keeps pixel drawing, strict placement records and GUI gating/conversion in
+three focused helpers; existing lifecycle/GL/output owners remain authoritative.
+One shared pattern allowlist covers all four views. Protobuf adds one placement JSON
+field to the three existing update envelopes; regeneration preserves previous tags.
+Only the display/profile-bearing derived schemas change. No dependency, process,
+operator default or policy value is added. Cohesion advisories for the existing
+Projectors composition, controller calibration dispatch and renderer owners remain
+reviewed exceptions; no feature helper retains a whole runtime reference.
+
+Final affected GUI52 and backend/controller362 pass (one Windows/rig case deselected),
+including authenticated forwarding, stale/lease/sequence rejection, worker actual
+presentation/Unknown, atomic invalid-rectangle rejection, resource closure and the
+two new bundle/GUI paths. Contract42/79 subtests, schemas11, scoped Ruff/format342,
+Win32 mypy336 and boundaries698/zero violations pass. Initial restricted communication
+stalls, one legacy Close fixture, mixed-pacing fixture setup and screen-resource
+ownership assertions were resolved or replaced by permitted final checks. Broad
+repository-local temp runs reached GUI90/backend353 passes but failed the existing
+external-demo-assets guard; final normal-temp executions pass without weakening it.
+The offscreen Qt inspection required explicit test-only Segoe UI registration.
+
+RTX5060Ti offscreen native pixels match complete expected images before/after pulse
+movement and zone removal. This does not establish projector submission, physical
+placement or optical timing acceptance. Restart the application to load all updated
+clients/backends and use the new Synchronization actions. Existing local drafts hold
+the edits for normal Apply; previews do not publish an experiment configuration.
+[Native pixels, controls and final check transcripts](runtime-evidence-2026-10-15/output-placement/)
+retain evidence; physical/fault checks stay in the
+[single rig checklist](rig-verification.md).
+
+Oct15 `bottom-calibration-grid-distortion` software fix completed under
+[G01](../docs/architecture/gui.md#g01)/[V15](../docs/architecture/visual_stimulus.md#v15),
+with no architecture/policy change. The existing diagnostic GLB builder now passes
+native per-face raster sizes to its guide helper. Grey strokes cover at least two
+source pixels on each axis; fixed10mm/world-phase line centers and measured
+geometry/corrections remain unchanged. No new dependency, state owner or render
+path was added under ARCH-002. Exports without a known raster retain their physical
+stroke defaults. Source review found no separable responsibility requiring extraction.
+
+An isolated RTX5060Ti render of production arena/warp shaders reproduces the latest
+saved bundle's122px middle gap against ordinary41px gaps. The fixed generator
+restores17 visible columns with40–41px gaps. Earlier inputs produced a163px gap;
+their dated evidence remains separate. This corrects the initial CPU-only assessment:
+uniform mesh centers do not establish visible raster coverage. All four generated
+meshes retain exact10mm spacing on both axes. Existing owning GUI coverage is
+extended for portrait/landscape/low-resolution strokes, mirrored world phase,
+fractional sample coverage and bundle raster propagation. Focused GUI17 and
+rendering74 pass; scoped Ruff/format4, Win32 mypy3 and boundaries695/zero violations
+pass, with existing unrelated cohesion advisories. Broad restricted GUI selections
+were interrupted after stalling; initial default/temp-root failures are not test passes.
+The native probe initially supplied a full GUI configuration to the numeric-only
+parser; corrected fixture construction uses the retained dimensions directly.
+
+Physical cell-size equivalence remains open. Saved Bottom bars are44/24mm for
+180/320px in portrait720×1280 mode:0.244444/0.075mm-per-pixel, yielding nominal
+10mm cells of40.91×133.33px. Other screens use40/22mm for320/180px:
+0.125/0.122222mm-per-pixel and80×81.82px cells. No extra Bottom grid spacing
+factor exists. The owner is unsure whether Bottom measurements belong to the
+current orientation; retain them pending remeasurement of the current orange X
+and green Y bars. This establishes the different software scale assumptions,
+not an optical diagnosis. Saved measurements and the running application were
+not modified. Restart the GUI and relaunch projection calibration to regenerate
+the fixed grid. Border cropping still creates partial edge cells by design.
+[Native before/after, source hashes and input snapshots](runtime-evidence-2026-10-15/bottom-grid/fix-verification/summary.json),
+[scale audit](runtime-evidence-2026-10-15/bottom-grid/fix-verification/scale-audit.json)
+and [fixed render](runtime-evidence-2026-10-15/bottom-grid/fix-verification/after/bottom-offscreen.png)
+retain the evidence. No projector presentation or optical acceptance is claimed.
+
+Current Oct15 open-loop engineering gates pass linked Gaussian translation/spin,
+visible rotating circular floor and combined60s reuse, with all four videos externally
+counted/full-decoded and normal cleanup. Actual common-group state and four submitted
+outputs support software motion linking; projection areas remain uncalibrated. The
+original arena has only a textured circular floor, despite its directory name. A unique
+unlit derivative preserves geometry/BIN/source; its explicit height0 test placement
+corrects a failed black-frame trial at height53 without altering observer calibration.
+Full resource preparation exposed invalid colon-containing generated arena IDs; bounded
+deterministic valid IDs now agree across dependency manifests and GPU lookup, preserving
+strict schemas. Embedded/external owning regressions and329 Visual Stimulus cases pass.
+
+Controlled startup tuning changes capture slots3→15:25 capacity drops in the first0.739s
+become zero in repeated60s and120s runs. Keep same-slot omissions/CFR duplicates distinct.
+The source2048 texture requires a temporary GPU asset limit512MiB→1GiB; combined prepared
+GPU usage is784,080,416bytes and CPU346,219,117bytes. Camera/codec settings and review
+scale2 remain fixed. Both TOML overrides have exact originals retained for restoration.
+The first900s interruption and reviewed shared-reader/fatal-error repairs are assessed
+in [Acquisition](acquisition.md);120s passed afterward. The owner stopped the900s retry
+at883.852s; outcome is Interrupted with recording cleanup unconfirmed. The owner has
+resumed tests; those partial recordings remain retained. Original Visual Stimulus
+TOML and last configuration were restored exactly
+after all owned processes exited. Resumed trials use unique copies of the newer GUI
+calibration (Bottom685x940; derived linked-spin pivot23,0). Current normal120s recording
+passes four full decodes/counts, with7201 stimulus states/7168 real selected frames,
+zero capacity drops,33 same-slot omissions and32 CFR duplicates. Fresh combined900-final-r1
+now completes exactly 900 seconds with confirmed cleanup and four full video decodes.
+Its 53,988 contiguous render groups retain four returned output submissions each;
+there are no unresolved submissions/captures. Stimulus records 54,000 CFR frames:
+53,389 real frames, 598 same-slot omissions, one capacity drop and 611 duplicates
+(1.131%). The capacity drop is group 17 at T+0.2947451 seconds, with none thereafter.
+Peak capture occupancy reaches 15/15 and maximum slot hold is 261.51 ms; burst headroom
+and zero-loss capture are not established. Active GPU means by translation/spin/arena
+are 10.99/11.28/10.21% rendering and 42.36/42.76/42.56% encoding; memory stays constant.
+Six nonaliasing snapshots at 15/17, 315/322 and 615/622 seconds show changing content
+in all four tiles. Astra accepts software-linked motion/endurance, with physical
+alignment still uncalibrated and stimulus review still lossy under E13.
+[Final recording accounting](runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/completion-summary.json),
+[active resource measurements](runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/monitor-analysis.json).
+The separate 60-second camera-lossless workload also completes/counts/decodes, with
+zero stimulus capacity drops, three same-slot omissions and two CFR repeats. Stimulus
+review encoding is unchanged. Fresh resume-1 GUI/configuration/TOML baselines are now
+restored, with the tested overrides retained only in the separate reusable packages.
+All runtime processes are absent and camera handles are closed; Acquisition records
+the camera PFS selector-cursor restoration limitation. Cleanup removes only 51 passed
+regenerable synthetic MP4s (13.504 GiB), retaining their commands/counts/decode results,
+all real/failed recordings and unique evidence.
+[Cleanup manifest](runtime-evidence-2026-10-15/projector-free-rig/synthetic-media-cleanup.json).
+An observed V16 evidence gap remains: arena effective_poses is empty although the exact
+model matrix is retained. Do not infer scientific virtual-camera pose acceptance.
+[Raw attempts, fixes and native evidence](runtime-evidence-2026-10-15/open-loop-soak/)
+
+Oct15 encoder matrix completes31/31 cases:10s all-source warm-up plus three
+repetitions of five source combinations at CQ16/CQ23, each requesting60s of frames;
+all external counts and full decodes pass. Enabled camera dimensions/rates are
+Behavior1760x3000RGB24/30Hz and Tracking1588x1344gray/60Hz; synthetic Stimulus is
+1280x1000RGBA/60Hz. Actual FFmpeg GPU UUID is RTX2080Ti; matched FFmpeg/ffprobe9.0.2
+is selected process-locally, leaving default PATH4.3.2 unchanged. A separately opened
+application renderer appears on RTX5060Ti during r1-cameras-cq23 and thereafter;
+later cases are not an otherwise idle-machine benchmark. Raw commands, versions,
+formats, sizes and per-case timing are retained. Synthetic generation/conversion/NVENC
+does not prove live capture, cross-GPU readback/stdin, sustained synchronized full-path
+headroom, real-frame losses or animal-image quality. Eye remains disabled. CQ decisions
+and saved argument lists are unchanged. Direct zero-byte raw-input probes for both
+camera formats exit0 and finalize/synchronize small MP4s; these are not playable-video
+or runtime NO_FRAMES ownership/accounting acceptance. Initial read-only-handle fsync
+probe failure is retained; the corrected probe uses fresh paths.
+[Results and actual workload](runtime-evidence-2026-10-15/projector-free-rig/context.json).
+
+Oct15 projector-free verification finds stale derived prepared-trial JSON Schema
+still embedding superseded seam_check and reference-bar guide Width/Height fields. Regenerating from
+the retained canonical models under G01/V15 changes only that schema; all11 generated
+schemas match afterward and42 contract cases pass. No policy or calibration behavior
+changes. Native/source packages build; source archive contains both calibration GLBs.
+[Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). Projector rendering, readback, optical alignment and real-frame recording/drop
+acceptance remain deferred while outputs are powered off; synthetic encoding is separate.
+
 Oct15 Git-sync integration retains the owner-approved local pixel-size/offset calibration
 under [G01](../docs/architecture/gui.md#g01)/[V15](../docs/architecture/visual_stimulus.md#v15),
 while preserving independent required scientific evidence, optional reduced review video,

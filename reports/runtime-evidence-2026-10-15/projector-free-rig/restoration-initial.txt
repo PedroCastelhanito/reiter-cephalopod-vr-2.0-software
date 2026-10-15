@@ -1,0 +1,44 @@
+{
+  "behavioral": {
+    "pfs_exact_match": false,
+    "readback": {
+      "Width": "4096",
+      "Height": "3000",
+      "OffsetX": "8",
+      "OffsetY": "4",
+      "PixelFormat": "BayerRG8",
+      "ExposureTime": "3000.0",
+      "Gain": "0.00000",
+      "AcquisitionFrameRateEnable": "0",
+      "AcquisitionFrameRate": "30.00030",
+      "TriggerSelector": "FrameStart",
+      "TriggerMode": "Off",
+      "TriggerSource": "Line1",
+      "TriggerActivation": "RisingEdge",
+      "DeviceLinkThroughputLimit": "360000000"
+    },
+    "values_match": true,
+    "closed": true
+  },
+  "tracking": {
+    "pfs_exact_match": false,
+    "readback": {
+      "Width": "2448",
+      "Height": "2048",
+      "OffsetX": "0",
+      "OffsetY": "0",
+      "PixelFormat": "Mono8",
+      "ExposureTime": "5000.0",
+      "Gain": "0.000",
+      "AcquisitionFrameRateEnable": "0",
+      "AcquisitionFrameRate": "100.0",
+      "TriggerSelector": "FrameStart",
+      "TriggerMode": "Off",
+      "TriggerSource": "Software",
+      "DeviceLinkThroughputLimit": "360000000"
+    },
+    "values_match": true,
+    "closed": true
+  },
+  "saved_configuration_bytes_unchanged": true
+}

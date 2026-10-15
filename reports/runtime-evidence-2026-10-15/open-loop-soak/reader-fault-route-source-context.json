@@ -1,0 +1,26 @@
+{
+  "head": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "scope": "Reviewed uncommitted increment; parent changes preserved; includes already-reviewed earlier work in diff",
+  "files": [
+    {
+      "path": "src/cephvr/platform/windows/encoder_process.py",
+      "sha256": "ad216bb6062870817089ac4a407ce565816b87eb5e298445fcfaa1cfc33b4731"
+    },
+    {
+      "path": "src/cephvr/acquisition/worker/recording_fault.py",
+      "sha256": "9057100d491266d752565747efa4a773cd61ed502361a98e4ec455efbb2734bd"
+    },
+    {
+      "path": "src/cephvr/acquisition/worker/trial_lifecycle.py",
+      "sha256": "788c48e505eac2e3a6923a3e0e1e0741280205f0c93b391d0fde0712b9283c80"
+    },
+    {
+      "path": "tests/acquisition/test_recording_negotiation.py",
+      "sha256": "ad3c2184daaa8c1d875870acf7a736ae4c8d93725dc4d21be2c169c2fc2a7228"
+    },
+    {
+      "path": "tests/acquisition/test_recording_cleanup.py",
+      "sha256": "09c2352a667448ac1757c0d37bbb69daa5d76441d41cf98ff353e0968293e349"
+    }
+  ]
+}

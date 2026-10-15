@@ -699,3 +699,139 @@ def test_controller_capability_can_declare_non_lifecycle_function(
     )
     topology = IncidentTopology.from_registered(context)
     assert topology.functions["controller-watchdog"].owner == runtime.controller
+
+
+@pytest.mark.parametrize("no_tracking", [False, True])
+@pytest.mark.parametrize(
+    "missing", [None, "acquisition", "visual_stimulus", "tracking"]
+)
+def test_supervisor_bootstrap_ports_match_exact_launch_declaration(
+    monkeypatch, no_tracking, missing
+):
+    monkeypatch.setattr(startup.sys, "platform", "win32")
+    monkeypatch.setattr(startup, "resolve_python_executable", lambda value: value)
+    monkeypatch.setattr(startup, "missing_roles", lambda **kwargs: [])
+    bootstrap = dict.fromkeys(
+        (
+            "software_root",
+            "supervisor_generation",
+            "controller_generation",
+            "supervisor_token",
+            "controller_token",
+            "supervisor_port",
+            "controller_port",
+            "supervisor_config",
+            "interpreter",
+            "backend_ports",
+            "max_message_bytes",
+            "max_retained_incidents",
+            "command_retention_ns",
+            "control_policies",
+            "silence_timeout_ns",
+            "emergency_timeout_ns",
+            "graceful_exit_ns",
+            "terminate_exit_ns",
+            "application_backstop_ns",
+            "heartbeat_interval_ns",
+        ),
+        "present",
+    )
+    bootstrap["no_tracking"] = no_tracking
+    bootstrap["backend_ports"] = {
+        name: number
+        for number, name in enumerate(("acquisition", "visual_stimulus", "tracking"), 1)
+        if name != missing
+    }
+    expected = {"acquisition", "visual_stimulus"} | (
+        set() if no_tracking else {"tracking"}
+    )
+    if set(bootstrap["backend_ports"]) == expected:
+        assert set(startup.validate_bootstrap(bootstrap)) == expected | {"gui"}
+    else:
+        with pytest.raises(startup.WindowsLaunchError, match="declared launch roles"):
+            startup.validate_bootstrap(bootstrap)
+
+
+@pytest.mark.parametrize("no_tracking", [False, True])
+async def test_launch_descriptors_retain_only_selected_role_identities(
+    monkeypatch, no_tracking
+):
+    from cephvr.shared.managed_modules import managed_modules
+
+    descriptors = []
+    monkeypatch.setattr(startup, "create_bootstrap_pipe", lambda: (1, 2))
+    monkeypatch.setattr(startup, "close_handle", lambda handle: None)
+    monkeypatch.setattr(
+        startup, "write_bootstrap", lambda handle, value: descriptors.append(value)
+    )
+
+    async def pipe_io(operation, **kwargs):
+        return operation()
+
+    monkeypatch.setattr(startup, "run_pipe_io_daemon", pipe_io)
+    roles = managed_modules(no_tracking=no_tracking)
+    child = SimpleNamespace(pid=10, creation_time_100ns=20)
+    states = {
+        role: wire.LaunchState(containment_job_name=f"job-{role}") for role in roles
+    }
+    registry = SimpleNamespace(
+        plan=lambda request: wire.LaunchState(containment_job_name="controller-job"),
+        confirm=lambda *args: None,
+    )
+    native = SimpleNamespace(
+        launch_suspended=lambda *args: child, resume=lambda process: None
+    )
+    bootstrap = {
+        "interpreter": EXE,
+        "controller_token": "controller-token",
+        "supervisor_token": "supervisor-token",
+        "supervisor_port": 1,
+        "controller_port": 2,
+        "supervisor_pid": 3,
+        "supervisor_creation_time_100ns": 4,
+        "heartbeat_interval_ns": 5,
+        "silence_timeout_ns": 15,
+        "control_policies": "protected-policy",
+        "no_tracking": no_tracking,
+    }
+    inputs = startup.LaunchInputs(
+        bootstrap=bootstrap,
+        native=native,
+        registry=registry,
+        clock=object(),
+        outbound=SimpleNamespace(
+            backend_ports={
+                role: 100 + i for i, role in enumerate(roles) if role != "gui"
+            }
+        ),
+        identity=_identity("supervisor"),
+        controller=_identity("controller"),
+        software_root=Path.cwd(),
+        max_message_bytes=1000000,
+        role_bootstrap={role: (str(uuid4()), "token") for role in roles},
+        role_plans={
+            role: wire.PlanLaunchRequest(command_id=str(uuid4())) for role in roles
+        },
+        role_states=states,
+    )
+    await startup.launch_controller(inputs, 3)
+    descriptor = descriptors.pop()
+    assert descriptor["no_tracking"] is no_tracking
+    assert {item["role"] for item in descriptor["managed_jobs"]} == set(roles)
+    assert {item["backend_name"] for item in descriptor["backends"]} == set(roles) - {
+        "gui"
+    }
+    await startup._launch_role_plan(
+        inputs,
+        "acquisition",
+        roles["acquisition"],
+        child,
+        *inputs.role_bootstrap["acquisition"],
+        inputs.role_plans["acquisition"],
+        states["acquisition"],
+    )
+    descriptor = descriptors.pop()
+    assert descriptor["no_tracking"] is no_tracking
+    assert ("tracking_generation" in descriptor) is not no_tracking
+    if not no_tracking:
+        assert descriptor["tracking_generation"] == inputs.role_bootstrap["tracking"][0]

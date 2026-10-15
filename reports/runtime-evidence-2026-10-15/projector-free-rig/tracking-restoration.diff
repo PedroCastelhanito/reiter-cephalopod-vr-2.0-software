@@ -1,0 +1,34 @@
+--- 
+
++++ 
+
+@@ -112,5 +112,6 @@
+
+ LineInverter	{LineSelector=Line3}	0
+-LineSelector	Line1
++LineSelector	Line3
+ BslLineConnection	{LineSelector=Line2}	ConnectionOff
+ BslLineConnection	{LineSelector=Line3}	ConnectionOff
++LineSelector	Line3
+ LineMode	{LineSelector=Line1}	Input
+@@ -118,3 +119,3 @@
+
+ LineMode	{LineSelector=Line3}	Input
+-LineSelector	Line1
++LineSelector	Line3
+ BslInputFilterTime	{LineSelector=Line1}	0.00
+@@ -122,3 +123,3 @@
+
+ BslInputFilterTime	{LineSelector=Line3}	0.00
+-LineSelector	Line1
++LineSelector	Line3
+ BslInputHoldOffTime	{LineSelector=Line1}	0.00
+@@ -126,5 +127,6 @@
+
+ BslInputHoldOffTime	{LineSelector=Line3}	0.00
+-LineSelector	Line1
++LineSelector	Line3
+ LineSource	{LineSelector=Line2}	Off
+ LineSource	{LineSelector=Line3}	Off
++LineSelector	Line3
+ UserOutputValue	{UserOutputSelector=UserOutput1}	0

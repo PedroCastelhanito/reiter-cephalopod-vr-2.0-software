@@ -1,0 +1,109 @@
+{
+  "outcome": "FAILED before900s; firstobservedfatalcameraownerfailureT+71.383s",
+  "closure": "All4recorders lack terminalcompletion; alloutputclosureunknown; automaticprocessabsence not outputclosure",
+  "process_exit_receipt": "soak-failure-exit-receipt.json",
+  "collection_errors": [
+    "protocol-data\\DUMMY_104743_behavioral_cam.mp4: probe/decode failed; inspect video diagnostics",
+    "protocol-data\\DUMMY_104743_eye_tracking_cam.mp4: probe/decode failed; inspect video diagnostics"
+  ],
+  "frame_logs": {
+    "protocol-data\\DUMMY_104743_behavioral_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 2137,
+        "video_frame": 2140
+      },
+      "received_frames": 2137,
+      "invalid_images": 0,
+      "source_dropped_flags": 7,
+      "source_dispositions": {
+        "real": 2130,
+        "same_slot_omission": 7
+      },
+      "video_dispositions": {
+        "leading_duplicate": 1,
+        "real": 2130,
+        "interior_duplicate": 9
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 51297683263900,
+      "last_source_ns": 51368934563400,
+      "final_records": {},
+      "completion_present": false
+    },
+    "protocol-data\\DUMMY_104743_eye_tracking_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 4275,
+        "video_frame": 4278
+      },
+      "received_frames": 4275,
+      "invalid_images": 0,
+      "source_dropped_flags": 2,
+      "source_dispositions": {
+        "real": 4273,
+        "same_slot_omission": 2
+      },
+      "video_dispositions": {
+        "leading_duplicate": 3,
+        "real": 4273,
+        "interior_duplicate": 2
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 51297687017100,
+      "last_source_ns": 51368922993500,
+      "final_records": {},
+      "completion_present": false
+    },
+    "protocol-data\\DUMMY_104743_stimulus_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "render_group": 4304,
+        "clipping": 17216,
+        "group_update": 8606
+      },
+      "received_frames": 0,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {},
+      "video_dispositions": {},
+      "render_groups": 4304,
+      "initial_capture_dispositions": {
+        "admitted": 4302,
+        "same_slot_omission": 2
+      },
+      "first_source_ns": 51297626797900,
+      "last_source_ns": 51369325887700,
+      "final_records": {},
+      "completion_present": false
+    },
+    "protocol-data\\DUMMY_104743_tracking_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 4298,
+        "video_frame": 4302
+      },
+      "received_frames": 4298,
+      "invalid_images": 0,
+      "source_dropped_flags": 14,
+      "source_dispositions": {
+        "real": 4284,
+        "same_slot_omission": 14
+      },
+      "video_dispositions": {
+        "leading_duplicate": 1,
+        "real": 4284,
+        "interior_duplicate": 17
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 51297651801600,
+      "last_source_ns": 51369320014800,
+      "final_records": {},
+      "completion_present": false
+    }
+  },
+  "cause_scope": "CR-onlydiagnostic accumulation reproduced; originalfutureexception maskedbyinvalidfatalwarningroute and not recovered; native regression pending"
+}

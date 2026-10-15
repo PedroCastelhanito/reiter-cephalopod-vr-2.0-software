@@ -1,0 +1,30 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 508 items / 502 deselected / 6 selected
+
+tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[720] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[1175] PASSED [ 33%]
+tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud PASSED [ 50%]
+tests/gui/test_dashboard.py::test_variation_controls_fit_narrow_protocol_without_horizontal_scroll PASSED [ 66%]
+tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo PASSED [ 83%]
+tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards FAILED [100%]
+
+================================== FAILURES ===================================
+____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+tests\gui\test_dashboard.py:15255: in test_trial_row_actions_scroll_target_and_align_cards
+    assert editor.trial_card.height() < 320
+E   assert 326 < 320
+E    +  where 326 = <built-in method height of Card object at 0x00000221A33A9C60>()
+E    +    where <built-in method height of Card object at 0x00000221A33A9C60> = <cephvr.gui.components.Card object at 0x00000221A33A9C60>.height
+E    +      where <cephvr.gui.components.Card object at 0x00000221A33A9C60> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x00000221A33A9B40>.trial_card
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards - assert 326 < 320
+ +  where 326 = <built-in method height of Card object at 0x00000221A33A9C60>()
+ +    where <built-in method height of Card object at 0x00000221A33A9C60> = <cephvr.gui.components.Card object at 0x00000221A33A9C60>.height
+ +      where <cephvr.gui.components.Card object at 0x00000221A33A9C60> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x00000221A33A9B40>.trial_card
+================= 1 failed, 5 passed, 502 deselected in 4.11s =================

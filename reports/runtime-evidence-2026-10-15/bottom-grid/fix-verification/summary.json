@@ -1,0 +1,58 @@
+{
+  "before": {
+    "sample_y_px": 320,
+    "line_centers_px": [
+      22.0,
+      63.0,
+      104.0,
+      145.0,
+      186.0,
+      227.0,
+      268.0,
+      390.0,
+      431.0,
+      472.0,
+      513.0,
+      554.0,
+      595.0,
+      636.0,
+      677.0
+    ],
+    "gap_range_px": [
+      41.0,
+      122.0
+    ]
+  },
+  "after": {
+    "sample_y_px": 320,
+    "line_centers_px": [
+      22.5,
+      62.5,
+      103.5,
+      144.5,
+      185.5,
+      226.5,
+      267.5,
+      308.5,
+      349.5,
+      390.5,
+      431.5,
+      472.5,
+      513.5,
+      554.5,
+      595.5,
+      635.5,
+      676.5
+    ],
+    "gap_range_px": [
+      40.0,
+      41.0
+    ]
+  },
+  "source_hashes": {
+    "src\\cephvr\\gui\\calibration_arena.py": "3c72da6a498af27d57792e6177404125580f06c62aef0ded2de5f73772a4a81c",
+    "src\\cephvr\\gui\\calibration_guides.py": "0a55cc311419aeeac7f03574fddea51350562c604799fa8de565c7da71f0c113",
+    "src\\cephvr\\gui\\calibration_profile.py": "b930aaecd420ce0675865b402443344b964bfc9e5cfbf04e77832e006fb87b03"
+  },
+  "scope": "Isolated offscreen production shaders and fixed GLB generator; no projector presentation or calibration measurement"
+}

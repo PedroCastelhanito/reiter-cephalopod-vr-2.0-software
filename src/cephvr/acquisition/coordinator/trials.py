@@ -58,6 +58,7 @@ class TrialCoordinator:
         ):
             raise ValueError("trial timing allowances must be positive")
         boundaries = TrialPulseBoundaries(
+            session_slot=session_slot,
             identity=identity,
             workers=workers,
             serial=serial,

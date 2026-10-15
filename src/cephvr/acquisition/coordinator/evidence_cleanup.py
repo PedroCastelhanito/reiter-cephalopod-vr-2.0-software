@@ -22,6 +22,63 @@ class WorkerCleanupEvidence:
         self.resource_ledger = resource_ledger
         self.commands = commands
 
+    def retain_interrupted_finished(
+        self,
+        session: SessionRecord,
+        worker: WorkerRecord,
+        evidence: acq.WorkerLifecycleEvidence,
+    ) -> None:
+        """Keep exact interrupted output closure without a normal trial Finished."""
+        child = worker.child_operations.get(evidence.operation.command_id)
+        trial = session.trial
+        if (
+            child is None
+            or child.kind != "interrupt_session"
+            or child.command_id != evidence.operation.command_id
+            or child.camera != worker.context.camera
+            or child.work != session.work
+            or evidence.source.work != session.work
+            or session.work.WhichOneof("work") != "session"
+            or not session.interrupted
+            or trial is None
+            or not trial.interrupted
+            or worker.trial is None
+            or worker.context.camera not in session.required_cameras
+            or worker.commands is None
+            or not evidence.finished.HasField("activity_stopped")
+            or not evidence.finished.activity_stopped
+        ):
+            raise ValueError("interrupted Finished lacks its exact session command")
+        prefix = f"{camera_role_name(worker.context.camera)}_cam"
+        expected = {
+            plan.output_key: plan
+            for plan in trial.outputs
+            if plan.backend.backend_name == "acquisition"
+            and plan.output_tag in {prefix, f"{prefix}_frames"}
+        }
+        outputs = tuple(evidence.finished.outputs)
+        keys = [result.output_key for result in outputs]
+        if (
+            len(keys) != len(set(keys))
+            or set(keys) != set(expected)
+            or any(
+                not expected[result.output_key].HasField("path")
+                or result.path != expected[result.output_key].path
+                or not result.HasField("artifact_present")
+                or result.closure
+                not in {
+                    control.OUTPUT_CLOSURE_CLOSED,
+                    control.OUTPUT_CLOSURE_FAILED,
+                    control.OUTPUT_CLOSURE_NOT_STARTED,
+                }
+                for result in outputs
+            )
+        ):
+            raise ValueError("interrupted Finished differs from exact trial outputs")
+        session.preflight_output_results(outputs, worker.commands)
+        for result in outputs:
+            session.retain_output_result(result, worker.commands)
+
     def retain(
         self,
         session: SessionRecord,

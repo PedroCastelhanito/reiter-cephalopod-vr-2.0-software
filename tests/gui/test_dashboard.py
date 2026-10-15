@@ -10490,6 +10490,25 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
         runtime_root=runtime,
     )
     assert arena_path.is_file()
+    from cephvr.visual_stimulus.resources.glb import parse_glb
+
+    grid_scene = parse_glb(
+        arena_path.read_bytes(), max_bytes=1_000_000, max_elements=200_000
+    )
+    grid_primitive = grid_scene.nodes[0].primitives[0]
+    assert grid_primitive.colors is not None
+    grey_quads = [
+        grid_primitive.positions[start : start + 4]
+        for start in range(0, len(grid_primitive.positions), 4)
+        if grid_primitive.colors[start] == pytest.approx((0.35, 0.4, 0.45, 1))
+    ]
+    assert grey_quads
+    # This fixture's vertical pitch is 80/720 mm/px: the old .2mm stroke
+    # is too thin, so exporting must propagate native resolution to the mesh.
+    import math
+
+    assert all(math.dist(q[0], q[1]) >= 0.2 - 1e-5 for q in grey_quads)
+    assert max(math.dist(q[0], q[1]) for q in grey_quads) > 0.22
     assert not (arena_path.parent / "rig_geometry_grid.program.json").exists()
     assert not list(arena_path.parent.glob("*.json"))
     assert (
@@ -13339,7 +13358,8 @@ def test_managed_camera_inventory_restores_selected_configuration(
     assert not requests
 
 
-def test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name():
+@pytest.mark.parametrize("raster_size", [None, (720, 1280), (1280, 720), (320, 180)])
+def test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name(raster_size):
     from cephvr.gui.calibration_guides import GRID, WHITE, add_face_guides
 
     class Mesh:
@@ -13371,6 +13391,7 @@ def test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name():
                 180,
                 130,
                 10,
+                raster_size=raster_size,
             )
             grid = [line for line in mesh.lines if line[3] == GRID]
             vertical = [line for line in grid if line[0][0] == line[1][0]]
@@ -13379,7 +13400,21 @@ def test_calibration_guides_keep_world_phase_with_solid_lines_and_one_name():
             assert all(start[0] % 10 == 0 for start, end, width, color in vertical)
             assert all(start[1] == 0 and end[1] == 130 for start, end, _, _ in vertical)
             assert all(abs(end[0] - start[0]) == 180 for start, end, _, _ in horizontal)
-            assert all(width == 0.2 for _, _, width, _ in grid)
+            for lines, extent, pixels in (
+                (vertical, 180, None if raster_size is None else raster_size[0]),
+                (horizontal, 130, None if raster_size is None else raster_size[1]),
+            ):
+                expected = 0.2 if pixels is None else max(0.2, 2 * extent / pixels)
+                assert all(width == expected for _, _, width, _ in lines)
+                if pixels is not None:
+                    # Even the worst subpixel phase covers native sample centers.
+                    pixel_width = expected * pixels / extent
+                    assert pixel_width >= 2
+                    for phase in (0, 0.25, 0.5, 0.75):
+                        assert any(
+                            abs(sample + 0.5 - phase) < pixel_width / 2
+                            for sample in range(-2, 3)
+                        )
             assert len([line for line in mesh.lines if line[3] == WHITE]) == 4
             assert len(mesh.lines) == len(grid) + 4
             backgrounds = [quad for quad in mesh.quads if quad[1] == (0, 0, 0, 1)]
@@ -14952,6 +14987,35 @@ def test_demo_assets_can_be_selected_and_review_path_restores(window, demo_asset
     assert editor.program.assets[0].logical_path == "textures/checkerboard.texture.json"
 
 
+@pytest.mark.parametrize("sample", [False, True])
+def test_empty_variation_blocks_add_group_without_losing_draft(window, app, sample):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program, review_program
+
+    editor = window.protocol.editor
+    window.page_buttons[1].click()
+    editor.set_program(grouped_program(review_program() if sample else blank_program()))
+    form = editor.subgroup
+    form.add_variation()
+    app.processEvents()
+    row = form.rows[0]
+    assert row.values.text() == ""
+    row.values.setFocus()
+    app.processEvents()
+    before = editor.snapshot()
+    QTest.mouseClick(editor.timeline.block_actions.add, Qt.MouseButton.LeftButton)
+    app.processEvents()
+    assert editor.snapshot() == before
+    assert form.rows == [row] and form.dirty
+    assert form.notice.dialog is not None
+    form.notice.dialog.accept()
+    app.processEvents()
+    row.remove.click()
+    app.processEvents()
+    editor.timeline.block_actions.add.click()
+    assert len(editor.program.sequence) == len(before.program.sequence) + 1
+
+
 def test_subgroup_rules_persist_and_random_projectors_are_independent(
     window, app, demo_assets
 ):
@@ -16184,3 +16248,219 @@ def test_arena_mode_missing_height_keeps_previous_editor_and_reports_error(windo
     composer.mode.setCurrentIndex(0)
     assert composer.mode.currentIndex() == composer.active_mode == 0
     assert not composer.rows["Front"].isHidden()
+
+
+@pytest.mark.parametrize("view", ["photodiode_placement", "blackout_placement"])
+def test_placement_buttons_live_edits_and_unknown_close(
+    window, monkeypatch, tmp_path, view
+):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.live_calibration import LiveCalibration
+    from cephvr.gui.projector_geometry import FACES
+    from cephvr.visual_stimulus.config.calibration_placement import parse_placement
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+    panel = window.devices.projectors
+    panel.apply_view(review_view(Phase.CONFIGURATION))
+    for i, face in enumerate(FACES):
+        panel.assignments[f"screen{i}"] = face
+        panel.display_pixels[f"screen{i}"] = (1280, 720)
+    panel.select_pulse_face("Front")
+    from cephvr.gui.placement_calibration import initial_photodiode_patch
+
+    for control in (*panel.timing.fields.values(), *panel.timing.pulse_fields.values()):
+        control.clear()
+    assert initial_photodiode_patch(panel) is None
+    panel.timing.fields["X"].setText("5")
+    assert initial_photodiode_patch(panel) is None
+    for key, value in (("X", "10"), ("Y", "20"), ("Width", "100"), ("Height", "80")):
+        panel.timing.fields[key].setText(value)
+    for key, value in (("X", "5"), ("Y", "6"), ("Width", "20"), ("Height", "10")):
+        panel.timing.pulse_fields[key].setText(value)
+    panel.timing.blackouts.add(dict(face="Front", x=2, y=3, width=40, height=50))
+    launch = (
+        panel.timing.placement_button
+        if view == "photodiode_placement"
+        else panel.timing.blackouts.placement_button
+    )
+    other = (
+        panel.timing.blackouts.placement_button
+        if view == "photodiode_placement"
+        else panel.timing.placement_button
+    )
+    prepared = []
+    launched = []
+    closed = []
+    monkeypatch.setattr(
+        panel,
+        "prepare_calibration",
+        lambda **kw: prepared.append(kw) or tmp_path / "placement.glb",
+    )
+    panel.calibration_launch_requested.connect(launched.append)
+    panel.calibration_close_requested.connect(lambda: closed.append(True))
+    panel.set_calibration_presentation_state(active=False, available=True)
+    launch.click()
+    assert prepared == [dict(view=view)] and len(launched) == 1
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 4
+    evidence = state.visual_stimulus_display.calibration
+    evidence.controller_generation = state.controller_generation
+    evidence.configuration_revision = 4
+    evidence.diagnostic_id = str(uuid4())
+    evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+    evidence.calibration_view = view
+    sent = []
+    live = LiveCalibration(
+        panel, snapshot=lambda: state, send=lambda action, **kw: sent.append(kw) or True
+    )
+    live.install(state)
+    panel.set_calibration_presentation_state(active=True, available=True, view=view)
+    assert launch.text() == "Close" and launch.isEnabled() and not other.isEnabled()
+    assert not panel.calibration.presentation_button.isEnabled()
+    assert not panel.timing.mode.isEnabled() and not panel.rig_editor.isEnabled()
+    editor = (
+        panel.timing.fields["X"]
+        if view == "photodiode_placement"
+        else panel.timing.blackouts.rows[0][1][0]
+    )
+    assert editor.isEnabled()
+    editor.setText("30")
+    editor.textEdited.emit("30")
+    live.flush()
+    assert len(sent) == 1 and not sent[0]["adjustments"]
+    parsed = parse_placement(sent[0]["placement_json"])
+    assert (
+        parsed.photodiode_patch.rect.x
+        if view == "photodiode_placement"
+        else parsed.outputs[0].blackout_zones[0].x
+    ) == (35 if view == "photodiode_placement" else 30)
+    editor.setText("40")
+    editor.textEdited.emit("40")
+    live.flush()
+    assert len(sent) == 1
+    evidence.adjustment_sequence = 1
+    live.install(state)
+    live.flush()
+    assert len(sent) == 2 and sent[-1]["adjustment_sequence"] == 2
+    evidence.adjustment_sequence = 2
+    live.install(state)
+    for invalid in ("-", "10000"):
+        editor.setText(invalid)
+        editor.textEdited.emit(invalid)
+        live.flush()
+        assert len(sent) == 2
+    if view == "photodiode_placement":
+        editor.setText("40")
+        for key, value in (
+            ("X", "7"),
+            ("Y", "8"),
+            ("Width", "21"),
+            ("Height", "11"),
+        ):
+            control = panel.timing.pulse_fields[key]
+            control.setText(value)
+            control.textEdited.emit(value)
+        live.flush()
+        assert len(sent) == 3
+        patch = parse_placement(sent[-1]["placement_json"]).photodiode_patch
+        assert (patch.rect.x, patch.rect.y, patch.rect.width, patch.rect.height) == (
+            47,
+            28,
+            21,
+            11,
+        )
+    panel.set_calibration_presentation_state(
+        active=True, available=True, view=view, tunable=False
+    )
+    assert not editor.isEnabled() and launch.isEnabled()
+    launch.click()
+    assert closed == [True]
+    live.reset()
+
+
+@pytest.mark.parametrize(
+    "view, empty",
+    [
+        ("photodiode_placement", False),
+        ("photodiode_placement", True),
+        ("blackout_placement", False),
+    ],
+)
+def test_placement_bundle_uses_native_pixels_without_reference_measurements(
+    tmp_path, view, empty
+):
+    import json
+
+    from cephvr.gui.calibration_profile import (
+        AssignedDisplay,
+        MonitorBinding,
+        write_diagnostic_bundle,
+    )
+    from cephvr.gui.projector_geometry import FACES
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+
+    values = dict(
+        zip(
+            (
+                "rig.width",
+                "rig.depth",
+                "rig.height",
+                "rig.subject_x",
+                "rig.subject_y",
+                "rig.subject_z",
+            ),
+            (120, 166, 110, 60, 93, 53),
+            strict=True,
+        )
+    )
+    monitors = []
+    assignments = []
+    for index, face in enumerate(FACES):
+        values[f"screens.{face}.width"] = 90
+        values[f"screens.{face}.height"] = 80
+        if face != "Right":
+            values[f"screens.{face}.subject_distance"] = 50
+        w, h = (720, 1280) if face == "Bottom" else (1280, 720)
+        monitors.append(MonitorBinding(f"native{index}", index * 1280, 0, w, h, 60, 8))
+        assignments.append(AssignedDisplay(face, index * 1280, 0, w, h, True))
+    calibration = dict(format="cephvr-rig-calibration", version=8, values=values)
+    zones = [dict(face="Bottom", x=5, y=6, width=10, height=20)]
+    pulse = dict(
+        rect=dict(x=15, y=26, width=10, height=11),
+        background_rect=dict(x=10, y=20, width=100, height=80),
+    )
+    path = write_diagnostic_bundle(
+        tmp_path,
+        calibration,
+        tuple(assignments),
+        tuple(monitors),
+        view=view,
+        runtime_root=tmp_path / "runtime",
+        blackout_zones=zones if view == "blackout_placement" else None,
+        photodiode_face="Bottom",
+        photodiode_patch=None if empty else pulse,
+    )
+    assert path.name == f"{view}.glb"
+    profile = DisplayProfile.model_validate_json(
+        (tmp_path / "runtime/calibration/diagnostic_display_profile.json").read_text()
+    )
+    assert profile.calibration_view == view
+    assert (
+        tmp_path / "runtime/calibration" / path.name
+    ).read_bytes() == path.read_bytes()
+    assert profile.photodiode_enabled == (view == "photodiode_placement" and not empty)
+    if view == "photodiode_placement" and not empty:
+        assert profile.photodiode_output_id == "calibration_bottom"
+        assert profile.photodiode_patch.rect.x == 15
+    elif view == "blackout_placement":
+        assert profile.outputs[-1].blackout_zones[0].x == 5
+    else:
+        assert profile.photodiode_output_id is None
+        assert profile.photodiode_patch is None
+    for mapping in profile.mappings:
+        data = json.loads(
+            (tmp_path / "runtime" / mapping.geometric_profile.logical_path).read_text()
+        )
+        assert data["valid_area"] is None
+        assert all(vertex["uv"] == vertex["xy"] for vertex in data["vertices"])

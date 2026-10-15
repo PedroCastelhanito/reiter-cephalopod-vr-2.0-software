@@ -1,0 +1,42 @@
+{
+  "textures60": {
+    "compiled": true,
+    "duration_ns": 60000000000,
+    "epoch_count": 2,
+    "budget": "ResourceUsage(cpu_bytes=67115633, gpu_bytes=67109216)",
+    "source_close_errors": [],
+    "gpu_limit_bytes": 1073741824
+  },
+  "arena60": {
+    "compiled": true,
+    "duration_ns": 60000000000,
+    "epoch_count": 1,
+    "budget": "ResourceUsage(cpu_bytes=279109668, gpu_bytes=716971552)",
+    "source_close_errors": [],
+    "gpu_limit_bytes": 1073741824
+  },
+  "combined60": {
+    "compiled": true,
+    "duration_ns": 60000000000,
+    "epoch_count": 3,
+    "budget": "ResourceUsage(cpu_bytes=346219117, gpu_bytes=784080416)",
+    "source_close_errors": [],
+    "gpu_limit_bytes": 1073741824
+  },
+  "combined120": {
+    "compiled": true,
+    "duration_ns": 120000000000,
+    "epoch_count": 3,
+    "budget": "ResourceUsage(cpu_bytes=346219117, gpu_bytes=784080416)",
+    "source_close_errors": [],
+    "gpu_limit_bytes": 1073741824
+  },
+  "combined900": {
+    "compiled": true,
+    "duration_ns": 900000000000,
+    "epoch_count": 3,
+    "budget": "ResourceUsage(cpu_bytes=346219117, gpu_bytes=784080416)",
+    "source_close_errors": [],
+    "gpu_limit_bytes": 1073741824
+  }
+}

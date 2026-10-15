@@ -3,7 +3,11 @@
 from pathlib import Path
 
 
-def launcher_command(root: Path, python: Path, *, reopen_gui: bool) -> list[str]:
+def launcher_command(
+    root: Path, python: Path, *, reopen_gui: bool, no_tracking: bool = False
+) -> list[str]:
+    if reopen_gui and no_tracking:
+        raise ValueError("--no-tracking requires a fresh application launch")
     command = [str(python), "-m", "cephvr.launcher.main"]
     if reopen_gui:
         return [*command, "--reopen-gui"]
@@ -15,4 +19,5 @@ def launcher_command(root: Path, python: Path, *, reopen_gui: bool) -> list[str]
         str(root / "config" / "backends" / "supervisor_config.toml"),
         "--python",
         str(python),
+        *(["--no-tracking"] if no_tracking else []),
     ]

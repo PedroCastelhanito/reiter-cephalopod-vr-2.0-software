@@ -1,0 +1,12 @@
+[
+  "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+  "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\collect_parallel.py",
+  "--directory",
+  "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-123821",
+  "--diagnostics",
+  "reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined120-phased-r1\\owned-renderer-metrics.jsonl",
+  "--timeout",
+  "300",
+  "--output",
+  "reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined120-phased-r1\\collection.json"
+]

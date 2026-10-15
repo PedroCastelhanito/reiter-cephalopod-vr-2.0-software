@@ -1,0 +1,25 @@
+{
+  "trigger": "Owner screenshot: launch rejected because Frame/Pulse were blank",
+  "date": "2026-10-15",
+  "behavior": "Initial incomplete placement opens black without a synthesized rectangle; complete in-bounds live edits show the pulse; later incomplete edits retain prior presentation",
+  "source_sha256": {
+    "src/cephvr/gui/calibration_profile.py": "6b0ce73bf4f322746d47033ba9191822de752bf1cda6de0b623ec004b9f80134",
+    "src/cephvr/gui/placement_calibration.py": "7959179f0be83a93ab8e578340f4b4d6513a113ce3aae2db416f3241c40ea2a3",
+    "src/cephvr/gui/projectors.py": "c9d21f5ca62ca3651d05ceef2c3e9cc3ad026c6cd8fe4cce9ed72ef9995d3e67",
+    "src/cephvr/visual_stimulus/config/calibration_placement.py": "5272e25f3ac7369883e850483bda212153db79fa05b265f7a4a4ea9270f2b497",
+    "src/cephvr/visual_stimulus/rendering/display_calibration.py": "8b82c838023974046ba77dec2f8b690e0e4521e4274e896cfee244d81b9a9b6b"
+  },
+  "validation": {
+    "gui": "14 passed, 504 deselected; normal permitted local temp execution",
+    "backend": "135 passed; calibration rendering/lifecycle/authenticated transport/coordinator/controller admission",
+    "ruff": "7 scoped files clean/formatted",
+    "mypy": "5 source files win32 clean",
+    "boundaries": "698 modules, zero violations",
+    "schemas": "11 unchanged"
+  },
+  "limits": [
+    "Initial GUI test collection failed due missing parameter; final owning signature corrected and tests pass",
+    "No running application or projector operated",
+    "Native evidence is isolated offscreen pixel verification"
+  ]
+}

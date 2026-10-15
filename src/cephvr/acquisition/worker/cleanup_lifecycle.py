@@ -42,6 +42,7 @@ class WorkerCleanupLifecycle:
         shutdown: Callable[[int], None],
         recording_reconciled: Callable[[], None],
         external_wake: Callable[[], None],
+        recording_finish_pending: Callable[[], bool] = lambda: False,
     ) -> None:
         if capacity <= 0:
             raise ValueError("cleanup continuation capacity must be positive")
@@ -56,12 +57,17 @@ class WorkerCleanupLifecycle:
         self.shutdown = shutdown
         self.recording_reconciled = recording_reconciled
         self.external_wake = external_wake
+        self.recording_finish_pending = recording_finish_pending
         self._pending: list[PendingWorkerCleanup] = []
         self._future: Future[list[control.OutputResult]] | None = None
         self.outputs: list[control.OutputResult] = []
         self._ambient_deadline_ns: int | None = None
 
     def begin(self, deadline_ns: int) -> None:
+        if self.captures.active:
+            return
+        if self.recording_finish_pending() and host_time_ns() < deadline_ns:
+            return
         runtime = self.recording
         if (
             runtime is None
@@ -141,6 +147,10 @@ class WorkerCleanupLifecycle:
         self._ambient_deadline_ns = None
 
     def _reconcile(self, deadline_ns: int) -> bool:
+        if self.captures.active:
+            return False
+        if self.recording_finish_pending() and host_time_ns() < deadline_ns:
+            return False
         runtime = self.recording
         if runtime is None or not runtime.enabled or runtime.recording_queue is None:
             return True

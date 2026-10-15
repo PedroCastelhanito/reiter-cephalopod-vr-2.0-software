@@ -25,7 +25,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 22
+**Status:** Accepted · **Revision:** 25
+
+- Sessionless photodiode_placement and blackout_placement views use the same protected diagnostic ownership and native output pixel coordinates. Photodiode placement starts black when no complete initial pulse exists, then continuously presents a valid configured pulse bright/dark on black using V22; blackout placement shows black zones on neutral gray (0.25), without a photodiode. Bounded complete output snapshots update rectangles atomically after validation against the prepared active outputs, retaining exact identity/revision/deadline and increasing-sequence presentation evidence. Close restores Idle and releases diagnostic resources. These previews have no trial clock or recording. The existing GL-owner service loop repeats photodiode submissions while Active; presentation failure marks Unknown and enters existing renderer failure handling.
 
 - The backend is named **Visual Stimulus**, with `visual_stimulus` as its canonical
   configuration, registration, package and protocol identifier. Use
@@ -67,10 +69,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   retain rounded 3/8-to-5/8 spans. Draw them directly in native device-pixel space
   so measurement is independent of geometric/color correction; no trial timing,
   recording or extra persistent GPU resource is added. The protected display profile
-  selects reference_bars (raw bars and a white native output-boundary frame on black)
-  or frame_grid (arena through the existing
-  V15 pipeline without reference bars); omitted selection defaults to frame_grid.
-  Both use the same diagnostic ownership, actual-presentation and cleanup guarantees.
+  selects reference_bars (raw bars and a white native output-boundary frame on black),
+  frame_grid (arena through the existing V15 pipeline without reference bars),
+  or either placement view above; omitted selection defaults to frame_grid.
+  All use the same diagnostic ownership, actual-presentation and cleanup guarantees.
   Controller-leased frame/grid adjustment accepts bounded GUI valid-area rectangles
   under the exact active diagnostic/revision and increasing sequence. The GL owner
   validates the entire update before writing existing warp vertex buffers, retaining
@@ -895,7 +897,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v22"></a>
 ### V22 — Photodiode frame alternation with landmarks
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 7
 
 - Pulse enablement and target/rectangle are operator settings independent of V20
   pacing. When disabled, retain placement but require neither target participation
@@ -905,7 +907,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   pulse rectangle with independently configured relative origin, width and height. Composite the black
   frame after spatial mapping/blackout zones and then the pulse rectangle before V23
   correction. Preserve legacy standalone rectangles; new pulse/frame geometry
-  rejects overflow instead of clipping. The frame is trial-only and hidden with
+  rejects overflow instead of clipping. Outside V01's explicit spatial placement diagnostic, the frame is trial-only and hidden with
   the pulse; independent V15 blackout zones persist into Idle.
 - The enabled designated photodiode output shows a bright/dark frame-alternating patch with
   periodic distinctive markers. Detailed E13/V13 evidence associates intended states
@@ -913,6 +915,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Each 60-submission cycle starts with six marker frames (three bright, then three
   dark), then alternates bright/dark for the other 54 frames. Restart at trial index
   zero, not at epoch changes; physical placement/levels remain unset.
+- V01 photodiode placement repeats this same pattern with a separate diagnostic submission index, starting at zero on Open. Live target/Frame/Pulse edits preserve that index. Advance only after successful all-output submission; Unknown/Close stops repetition. It emits no trial marker evidence or recording and establishes no optical timing guarantee.
 - The renderer owns the patch and sequence, synchronized with that output's submitted
   image under V20 and independent of epoch changes and video frame holds.
 - Match measured traces to the recorded intended sequence and available trial/timing

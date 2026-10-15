@@ -1,0 +1,472 @@
+diff --git a/LOG.md b/LOG.md
+index b829635..cb8acf9 100644
+--- a/LOG.md
++++ b/LOG.md
+@@ -3423,3 +3423,41 @@ Do not condense entries again except on an owner request.
+ ## 2026-10-15 - Git sync repaired and verified
+ 
+ - `git-sync-repair` completed [repo] [gui] [visual_stimulus]: merge763fcb013e2cad20f050dd2935b31aa003d281bf preserves parents8a51da4/cd49658 and pushed successfully to GitHub main. Verified clean working tree, HEAD=origin/main and ahead/behind0/0; MERGE_HEAD is absent. Final validation remains1737 backend passes and509 GUI passes with the recorded exclusions/limits. Removed the completed TODO entry after recording this outcome. Evidence context records the verified merge; this bookkeeping increment changes no implementation.
++
++
++## 2026-10-15 - TODO checks with projectors off started
++
++- `todo-checks-projectors-off` [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] Owner requests TODO review/checks and explicitly defers any projector-dependent testing. Initial tree clean at b68c4ee. Found52 task entries/36 unique IDs, duplicated status sections, superseded calibration workflow references and an apparently completed mixed-subgroup guard. Checking current owning tests/source before closing or reclassifying tasks; no device launch or hardware mutation requested.
++
++
++## 2026-10-15 - Projector-independent TODO checks and reproduced findings
++
++- `todo-checks-projectors-off` [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] Fresh projector-independent backend run1737 passed/4 skipped/26 deselected; targeted offscreen GUI38 passed/470 deselected. Ruff, format911, Win32 mypy791, boundaries695/zero violations and pip dependency checks pass;44 existing cohesion advisories remain. Existing mixed-subgroup guard/regression verifies a rejected multi-identity rule edit keeps the draft dirty: `mixed-subgroup-random-rule-edit` is completed, so remove its stale TODO entry.
++- Local probes confirm two already-listed defects: a rejected renderer calibration update retains ACTIVE pending state and blocks the next update (only one backend dispatch), and invalid acquisition TOML aborts controller configuration loading with acquisition disabled. No source fix made. The first temporary calibration script could not import tests; corrected its root import path before final probe. Dated commands, outputs, fixture/source fingerprints and limits are in reports/runtime-evidence-2026-10-15/todo-projectors-off/context.json.
++- Reconcile16 duplicate IDs and status sections using current accepted G01/V15 pixel-size/offset rules and later local evidence; preserve all unique open task scopes and existing deferrals. Projector-dependent calibration, full-session, optical, timing and combined-load acceptance remains owner-deferred while powered off. No device launch, capture, flash or external mutation ran; no native/rig acceptance claimed.
++
++
++## 2026-10-15 - Projector-off TODO audit completed
++
++- `todo-checks-projectors-off` completed [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus]: reconciled52 original entries/36 IDs to35 unique open tasks after closing the already-fixed mixed-subgroup item. One each of In progress/Next/Blocked/Deferred; six local software tasks remain Next, pulse mapping remains Blocked, and28 rig/owner-deferred scopes remain Deferred. Projector-dependent tests explicitly deferred; corrected the single rig checklist to the retained pixel Width/Height/Offset workflow and distinguished earlier SaveOff evidence from current post-integration acceptance.
++- Fresh results:1737 backend passes/4 skips/26 deselections;38 targeted offscreen GUI passes; Ruff, format911, Win32 mypy791, dependencies and boundaries695/zero violations pass (44 existing advisories). Confirmed the two existing calibration-rejection/inactive-config defects with local probes; other listed race/logging/MCU concerns remain open, not silently closed.602 report/TODO Markdown targets/anchors and whitespace pass. No implementation/configuration changes, projector output, hardware mutation, commit or push. Current assessment and dated evidence linked from TODO/reports. Removed this audit task only after recording completion.
++
++
++## 2026-10-15 - Native rig checks without projectors started
++
++- `rig-checks-projectors-off` [gui] [launcher] [controller] [supervisor] [acquisition] [tracking] [visual_stimulus] [spikeglx] Owner confirms this is the rig and explicitly requests listed rig checks that do not require projectors. Preserve prior documentation/evidence edits. Native Windows/hardware selection25 passed/1 symlink-privilege skip (1741 deselected), including real NVOF execution. Prepared interpreter verifies; NVIDIA inventory reports RTX5060Ti ordinal0 and RTX2080Ti ordinal1. Current PATH FFmpeg/ffprobe resolve to4.3.2-2021. Inspect actual readiness/settings before camera/encoder checks; no firmware/wiring change or paired recording intended.
++
++
++## 2026-10-15 - Native camera reuse finding and controller-loss check
++
++- `rig-checks-projectors-off` [gui] [controller] [supervisor] [acquisition] Completed4 real managed preview start/stop/release cycles per enabled Behavior/Tracking camera in generation98a16b56-d012-4fb6-b906-7652b6d84580; first-cycle native viewers reported visible and all8 releases/configuration equality passed. COM8 reports protocol4/cephvr2_uno_4; Eye stays disabled. Saved runtime pins/rates differ from default TOML and were retained (Behavior D11/30Hz, Tracking D10/60Hz; Eye D9/60Hz present but disabled).
++- New observed `camera-preview-sdk-discard-reuse`: a further Behavior preview/Stop completed, but the following Start failed before capture with prior capture has unknown SDK-buffer discard accounting. Recorded in TODO and raw managed JSON/log; no source fix or fabricated cleanup proof. The first active-controller-loss attempt safely refused a rounded CIM creation time; its bounded fallback Stop completed. Repeating with precise native time hit the new Start failure before fault injection.
++- Then verified all cameras released and terminated only the owned idle controller by exact generation/PID/creation time/image. Supervisor/acquisition automatically shut down; all inspected owned role/worker PIDs disappeared without traceback. Acquisition truthfully reports MCU claim release unconfirmed because the controller had exited. This is idle native departure/containment evidence, not active-capture interruption, physical LOW or full-session acceptance. Camera settings restoration remains to be checked.
++
++
++## 2026-10-15 - Projector-free native validation and encoder matrix recorded
++
++- `rig-checks-projectors-off` [gui] [launcher] [controller] [supervisor] [acquisition] [tracking] [visual_stimulus] [spikeglx] Native selection25 passed/one privilege skip;22 actual Windows picker cases pass with ordinary pytest plugins. Native layout selection5 pass/one failed: trial-card326px against <320 assertion, not a proven clipping cause. Broad native GUI run interrupted after about two minutes without recorded progress; no full-suite pass. Prepared interpreter,90 contracts,19 Tracking schemas and native/source package build pass. Regenerated only stale prepared-trial derived schema (seam_check and guide Width/Height removed to match retained canonical models);11 schemas match. No production Python or policy edit.
++- Both baseline full camera PFS snapshots restore exactly including selector cursors, cameras close, and saved configuration bytes remain unchanged after the owned fault-test generation. Native idle containment receipt confirms owned processes absent; MCU claim release remains unconfirmed and active-capture loss remains blocked by the observed SDK-discard reuse finding. SDK SpikeGLX read-only check times out; remote state unknown. Initial readback harness used an incorrect pulse field and was corrected before capture; saved runtime pin/rates were later verified rather than assumed from TOML defaults.
++- Encoder matrix completes31/31: separate10s warmup and three repetitions of five enabled-source combinations/CQ16-CQ23 with60s requested frames. External counts and full decodes pass. Actual encoding UUID is RTX2080Ti; matching FFmpeg/ffprobe9.0.2 selected process-locally. Separately launched renderer appears on RTX5060Ti from r1-cameras-cq23, so later measurements retain that background-workload caveat. Full commands/size/format/timing and GPU samples retained; this is not live capture/drop, cross-GPU readback, quality or full-session acceptance. Eye remains disabled; CQ/settings unchanged.
++- Direct native empty raw-input probes exit0 and finalize/synchronize small MP4s for both camera formats; not playable-video or runtime NO_FRAMES accounting proof. Initial harness fsync on read-only handle failed; retain its artifact/log and use corrected writable handle with fresh paths. Documentation checker initially misread PowerShell examples as Markdown links; exclude fenced blocks, then all1137 local file targets resolve and TODO IDs are unique. Report consolidation initially failed before writes on Windows default text encoding; explicit UTF-8 completed it. Final11-schema and whitespace checks pass. Camera Tracking diagnostic script is prepared but unexecuted: separate GUI now owns the live generation, pending user permission to use/shut it down. No takeover, flash, wiring change, projector trial, commit or push. Keep current task open for that remaining scope; owning reports/TODO link dated raw evidence.
+diff --git a/TODO.md b/TODO.md
+index 78730a9..5656ed1 100644
+--- a/TODO.md
++++ b/TODO.md
+@@ -10,95 +10,91 @@ Blocked and Deferred entries name their reason.
+ 
+ ## In progress
+ 
++- [ ] `rig-checks-projectors-off` [gui] [launcher] [controller] [supervisor] [acquisition] [tracking] [visual_stimulus] [spikeglx] Execute listed available native/device checks on this rig without powered projectors. Done when: actual native/device results and blockers are recorded; settings and device ownership are restored. Owner: current Codex chat. Status: completed native/device/31-case encoder checks recorded; live-camera Tracking diagnostics pending permission to use/shut down the separately opened GUI. No takeover performed.
++
+ 
+ ## Next
+ 
+-- [ ] `screen-frame-lateral-distance` [gui] [visual_stimulus] Reconcile retained51mm side distances (4mm lateral Bottom clearance) with owner-described5mm frame gaps;52mm fits centered94mm cross-span but requires measurement confirmation. Source-input discrepancy, optics unverified. — [Plot/assessment](reports/visual_stimulus.md)
++- [ ] `native-picker-pytest-exception-hook` [gui] Complete ordinary-plugin full native suite after historical native picker exit 0xC0000409. Done when: full native execution finishes without the exception-hook fault. Status: Oct15 real Windows picker selection22 passes with ordinary plugins; broad GUI run interrupted after approximately two minutes without recorded progress, so full-suite cause/acceptance remains open. — [Assessment](reports/runtime.md)
++
++- [ ] `native-protocol-hover-tests` [gui] Diagnose native Protocol card geometry/input. Done when: native input/geometry versus fixture timing is established and owning regressions pass. Status: Oct15 inline timeline action test passes; trial-row action test now fails card height326 versus <320, rather than the historical StopIteration; no confirmed visual clipping diagnosis. Five other selected native cases pass. — [Assessment](reports/runtime.md)
+ 
+-- [ ] `mixed-subgroup-random-rule-edit` [gui] Reject or correctly apply random-rule edits across multiple batch identities; source inspection and local invalid-input probe show stored rules remain unchanged while the draft is cleared. — [Assessment](reports/runtime.md)
++- [ ] `manual-camera-repeat-admission` [controller] [acquisition] [gui] [shared] Complete repeat preview reuse acceptance after terminal-result compaction. Status: Oct15 four cycles each Behavior/Tracking pass start/stop/release; extra Behavior cycle completes, following Start is blocked by unknown SDK-buffer discard accounting. Investigate via camera-preview-sdk-discard-reuse; no confirmed renewed reservation-capacity failure. — [Assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
+ 
+-Source: [audit](reports/runtime.md#controllersupervisor-audit-2026-10-14). Reproduce every finding before changing code; add the regression test with the fix.
++- [ ] `camera-preview-sdk-discard-reuse` [acquisition] [controller] [gui] Investigate native manual-preview reuse blocked by unknown SDK-buffer discard accounting after a completed Stop; preserve the safety guard. Done when: repeated real preview cycles retain truthful discard/release evidence and later Start succeeds. Status: Oct15 rig run passed4 cycles per Behavior/Tracking; after one additional Behavior cycle, its next Start failed with prior capture has unknown SDK-buffer discard accounting despite Stop reporting Completed. — [Assessment](reports/acquisition.md), [Evidence](reports/runtime-evidence-2026-10-15/projector-free-rig/)
++
++Local software work and reproduced native findings; establish causes before changing implementation.
+ 
+-- [ ] `projector-calibration-retention` [gui] Diagnose owner-reported calibration loss after closure using the actual closure path and saved/restored values; current normal-close regressions and all16 nonzero field roundtrips pass, so production cause is unverified. — [Investigation](reports/runtime.md)
+-- [ ] `gui-backend-dummy-experiment` [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Complete remaining Eye/locomotion Tracking/paired/optical/electrical scientific acceptance within owner-approved scope and existing deferrals. Combined Behavior/Tracking recording now verifies nominal60fps/GPU placement and repeated reset; uniform frame time and zero-loss recording are not established. — [Current assessment](reports/runtime-evidence-2026-10-13/combined-camera-stimulus/context.json)
+-- [ ] `combined-recording-loss` [acquisition] [visual_stimulus] Resolve sustained review throughput when projector tests resume: Oct14 camera queues17 have zero overflows but nominal-slot omissions remain; review21 saturates3078capacity drops/3098CFRduplicates. Original precision/quality/rates preserved and visual defaults restored. - [Assessment](reports/visual_stimulus.md)
+ - [ ] `e04-session-log-completeness` [controller] Write the accepted E04/E03 records that are still missing. Done when each has a regression test: (1) `command_accepted` for accepted Stop after trial, withdrawal and Abort; (2) `incident_decision` for automatic-stop and unanswered dispositions, plus the `error` message text, sequenced so no append races the writer seal; (3) SESSION_CONFIG provenance; (4) trial-LOG output index built from reservations (counts need an `OutputResult` field); (5) Snapshot `retained_truncated` / `retained_since`, set where the bounded lists are trimmed. Status: `setup_override` is done. — [E04](docs/architecture/supervisor.md#e04)
++
+ - [ ] `controller-cleanup-and-race-hardening` [controller] [supervisor] Reproduce, then fix or close, each unproven audit concern: `late_cleanup` ignoring unclean metadata results; Setup's `wait_for(to_thread)` reservation leak; a missing data root treated as cleaned at recovery; `spikeglx_stopped` log-failure labelling; `begin()` holding the lifecycle lock across a policy load; recheck gaps in display initialize and camera dispatch; configuration commit rejected by any unrelated publish (keep the `configuration_edit` guard); command replay identity depending on live scope; sessionless warning views never evicted; supervisor error/recovery accounting never evicted; RegisterContext failing after admit; `relaunch_gui` advancing its command early; preview-consumer receipt that stores nothing. Done when each is fixed with a test or recorded as not reproducible in the audit section.
+-- [ ] `controller-config-inactive-backend-defaults` [controller] [acquisition] Make an invalid acquisition TOML a startup warning, not a startup failure, when that backend is inactive, and have Setup reload limits only. Done when: an inactive backend's bad TOML warns without blocking startup or Setup, and an active backend's still blocks (E07). — [E07](docs/architecture/experiment.md#e07)
+-- [ ] `calibration-live-update-rejection` [controller] [gui] Clear the ACTIVE pending state (keep the blocked flag) when the renderer rejects a live calibration Update, so later Updates are not refused until Close and reopen. Done when: a test shows Update after a rejected Update is admitted. Status: wait until the GUI calibration rework in `display_adjustments.py` settles.
++
++- [ ] `controller-config-inactive-backend-defaults` [controller] [acquisition] Make invalid acquisition TOML a startup warning when acquisition is inactive; keep active-backend validation strict and Setup limited to reloading limits. Done when: inactive startup/Setup succeeds with warning and active loading fails. Status: Oct15 local probe confirms disabled acquisition still raises ConfigurationError on malformed TOML. — [E07](docs/architecture/experiment.md#e07), [Current findings](reports/runtime.md#unresolved-findings-and-limitations)
++
++- [ ] `calibration-live-update-rejection` [controller] [gui] Clear ACTIVE pending state on explicit renderer Update rejection while retaining the required diagnostic block. Done when: a real controller regression admits a subsequent valid Update. Status: reproduced locally Oct15; pending stays set, second Update is rejected and only one backend dispatch occurs. — [Current findings](reports/runtime.md#unresolved-findings-and-limitations)
++
+ - [ ] `mcu-owner-residual-hardening` [controller] [acquisition] Remaining microcontroller audit items: an unconsumed OFF reservation blocks routine traffic (trace acquisition's Schedule rejection first); SpikeGLX observation failures all published as `DEADLINE`; `probe()` retries hard transport failures without backoff; ERR context dropped; mismatch counters unread. Done when each is fixed with a test or recorded as not reproducible. — [Rig checks](reports/rig-verification.md)
++
+ - [ ] `controller-supervisor-residual-simplification` [controller] [supervisor] [shared] Apply the audit's behavior-preserving cleanups, writing the pinning tests first: calibration pending tuples to a dataclass and one dispatch helper; one camera role-name map; one acquisition-settings lookup and safety-kind set; duplicate pacing and serialized-byte accounting; shared owner-loss plumbing; untrimmed warning retention; write-only supervisor/lifecycle state; dead shared `Deadline`. Also add tests for the cleanup fences, `late_cleanup`, T-100/T-50 ms cutoffs, writer capacity/deadline branches, the tracking-diagnostic begin matrix, ExecuteRecoveryAction and the production auth factory. Done when each cleanup lands with unchanged behavior and the boundary check is clean.
+ 
+-### Rig verification and acceptance
++## Blocked
+ 
+-All items need the Windows rig; local results never close them ([rig checklist](reports/rig-verification.md)).
++Missing pulse mappings remain an owner-input prerequisite; projector-dependent portions also stay deferred.
+ 
+-- [ ] `mcu-managed-connection-and-io` [gui] [controller] [acquisition] Installed COM8 protocol4/cephvr2_uno_4 readback and all3 configured triggers verified in combined run and12 preview cycles; no flashing. Complete electrical edge/LOW, watchdog-load/lease-expiry and interrupted-upload acceptance with instruments; preserve deferred physical mappings. Historical ON rejection cause remains unproven. - [Findings](reports/runtime-evidence-2026-10-14/rig-timing-audit/lifecycle-findings.json)
++- [ ] `spikeglx-controller-integration` [spikeglx] [controller] [gui] Verify installed-version mapping and paired Setup/writing/monitor/stop after pulse inventory and remote availability are supplied. Status: Oct15 saved-endpoint read-only SDK check times out; remote state unknown. Earlier Oct13 reachability is historical, not current readiness. Pulse mapping remains owner-deferred; no remote mutation or paired acceptance ran. — [Current assessment](reports/runtime.md), [Rig checks](reports/rig-verification.md)
+ 
+-- [ ] `visual-renderer-startup-deadline` [visual_stimulus] [supervisor] Verify remaining renderer fault/deadline/catalogue cleanup cases on the rig. Retained run43 now exercises post-Setup recording, normal cleanup and shutdown; older intermittent native faults remain historical unresolved findings, not evidence that post-Setup has never run. — [Current assessment](reports/runtime.md#current-scope-and-review)
++## Deferred
+ 
+-- [ ] `spikeglx-controller-integration` [spikeglx] [controller] [gui] Verify installed-version mapping and paired Setup/writing/monitor/stop after actual pulse inventory is supplied. Oct13 read-only reachability is restored at the saved endpoint, reporting idle SpikeGLX v20251218 api v4.1.3. Owner defers pulse mapping today; no remote mutation or paired acceptance ran. — [Current assessment](reports/runtime.md), [Rig checks](reports/rig-verification.md)
+-- [ ] `projector-calibration-launch` [gui] [visual_stimulus] Complete remaining frame/grid live-adjustment/physical/optical/fault acceptance with separate repository bars/frame-grid sources and per-step runtime copies. Oct14 repaired reference bars are visibly verified on all four outputs with GUI Close/reopen and authenticated state; digital visibility is not measured optics. Local source/copy/pixel-length/digest/cleanup regressions and GLB parsing pass; historical all-output-VSync Open/two adjustments/Close remains separate evidence, and dummy geometry is not measured calibration. — [Current assessment](reports/visual_stimulus.md), [V01](docs/architecture/visual_stimulus.md#v01)
++Projectors are powered off (owner instruction, Oct15). Do not run projector output, combined-session, optical or projector fault/throughput acceptance until available. The owner now authorizes available projector-free native/device checks on this rig. Preserve explicit blockers for disabled/unready devices, missing mappings/instruments, legacy comparison and firmware/wiring changes; never infer full-session or scientific acceptance from narrower checks. Local/offscreen passes do not close these checks; use the [single rig checklist](reports/rig-verification.md).
+ 
+-- [ ] `devices-narrow-overflow` [gui] Camera action-row minimum width, wrapped projector timing caption and deferred table cell geometry fixed; nine focused native layout cases pass Oct14. Complete physical alternate-DPI/narrow inspection and MCU dropdown/add/remove checks; the app capture approval timed out, so no new visual inspection is claimed. — [Current assessment](reports/runtime.md), [G02](docs/architecture/gui.md#g02)
++- [ ] `screen-frame-lateral-distance` [gui] [visual_stimulus] Reconcile retained51mm side distances (4mm lateral Bottom clearance) with owner-described5mm frame gaps;52mm fits centered94mm cross-span but requires measurement confirmation. Source-input discrepancy, optics unverified. — [Plot/assessment](reports/visual_stimulus.md) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
+ 
+-## Blocked
++- [ ] `projector-calibration-retention` [gui] Diagnose reported calibration loss using the actual closure path and saved/restored values. Done when: the production cause is reproduced or bounded with evidence. Status: offline persistence/normal-close regressions pass; cause remains unverified and powered-projector reproduction is owner-deferred Oct15. — [Investigation](reports/runtime.md), [Rig checks](reports/rig-verification.md)
+ 
+-- [ ] `mcu-optional-io-and-all-vsync` [gui] [controller] [acquisition] [visual_stimulus] Complete disconnected/reconnected V19 startup, native MCU Apply and combined acceptance. Oct13 owner125ms margins/real Behavior+Tracking+stimulus Setup/recording/closure and actual GPU0-render/GPU1-encoding pass; two final combined sessions reach60.0333/60.0167 real groups/s and reset/restore passes. Recording drops and uniform/optical timing remain unverified acceptance items. Eye/electrical/full scientific acceptance remains deferred. — [Current evidence](reports/runtime.md), [Rig checks](reports/rig-verification.md)
++- [ ] `gui-backend-dummy-experiment` [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Complete remaining Eye/locomotion Tracking/paired/optical/electrical scientific acceptance within owner-approved scope and existing deferrals. Combined Behavior/Tracking recording now verifies nominal60fps/GPU placement and repeated reset; uniform frame time and zero-loss recording are not established. — [Current assessment](reports/runtime-evidence-2026-10-13/combined-camera-stimulus/context.json) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
+ 
+-- [ ] `eye-camera-and-connect-recovery` [gui] [controller] [supervisor] [acquisition] [shared] [visual_stimulus] Triggered Eye60Hz video/drain and four preview cycles now verified Oct14; complete full-session interrupted reuse after source repairs when projectors return, plus separate physical/GUI acceptance. Firmware upload manual; Tracking processing/photodiode/paired mappings deferred. - [Assessment](reports/acquisition.md)
++- [ ] `combined-recording-loss` [acquisition] [visual_stimulus] Resolve sustained review throughput when projector tests resume: Oct14 camera queues17 have zero overflows but nominal-slot omissions remain; review21 saturates3078capacity drops/3098CFRduplicates. Original precision/quality/rates preserved and visual defaults restored. - [Assessment](reports/visual_stimulus.md) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
+ 
+-- [ ] `runtime-gui-rig-wiring-acceptance` [gui] [launcher] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Complete combined/paired/Tracking scientific workload and native narrow/DPI/optical/electrical/full-load checks. Oct13 final two-camera+stimulus sessions pass nominal60fps, Setup/recording/closure and repeated reset with125ms margins; recording drops and timing jitter remain. Failed-Setup/Save-switch cleanup, Protocol hover failures and projector overflow remain open; Eye, locomotion Tracking, paired and full scientific acceptance remain rig-dependent. — [Current assessment](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
++- [ ] `mcu-managed-connection-and-io` [gui] [controller] [acquisition] Installed COM8 protocol4/cephvr2_uno_4 readback and all3 configured triggers verified in combined run and12 preview cycles; no flashing. Complete electrical edge/LOW, watchdog-load/lease-expiry and interrupted-upload acceptance with instruments; preserve deferred physical mappings. Historical ON rejection cause remains unproven. - [Findings](reports/runtime-evidence-2026-10-14/rig-timing-audit/lifecycle-findings.json)
+ 
+-- [ ] `rig-acceptance` [gui] [launcher] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] [shared] Complete remaining managed device/fault/full-workload acceptance. Oct13 static/contracts/schema/package, 1520 backend/native cases (five privilege skips), four-output Idle/grid live-update/closure and final exact shutdown/COM release pass. The native chooser crash is repaired; Protocol hover-test failures and projector overflow remain unresolved; matched 9.0.2 tool compatibility/synthetic closure pass; camera/Eye/pulse/electrical checks are owner-deferred today. — [Current assessment](reports/runtime.md), [Rig worklist](reports/rig-verification.md)
++- [ ] `visual-renderer-startup-deadline` [visual_stimulus] [supervisor] Verify remaining renderer fault/deadline/catalogue cleanup cases on the rig. Retained run43 now exercises post-Setup recording, normal cleanup and shutdown; older intermittent native faults remain historical unresolved findings, not evidence that post-Setup has never run. — [Current assessment](reports/runtime.md#current-scope-and-review) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
+ 
+-## Deferred
++- [ ] `projector-calibration-launch` [gui] [visual_stimulus] Complete remaining reference-bars/frame-grid launch, live pixel Width/Height/Offset updates, scaled native binding, late-Open cleanup and physical/optical/fault acceptance under current G01/V15. Done when: exact ownership/evidence and measured output checks pass on powered projectors. Status: owner-deferred Oct15 while projectors are off; offline regressions pass, actual acceptance remains open. — [Assessment](reports/visual_stimulus.md), [Rig checks](reports/rig-verification.md)
++
++- [ ] `devices-narrow-overflow` [gui] Camera action-row minimum width, wrapped projector timing caption and deferred table cell geometry fixed; nine focused native layout cases pass Oct14. Complete physical alternate-DPI/narrow inspection and MCU dropdown/add/remove checks; the app capture approval timed out, so no new visual inspection is claimed. — [Current assessment](reports/runtime.md), [G02](docs/architecture/gui.md#g02) Oct15 native device reflow at720/1175px and tab/variation layout tests pass; alternate-DPI and physical inspection remain open.
++
++- [ ] `mcu-optional-io-and-all-vsync` [gui] [controller] [acquisition] [visual_stimulus] Complete disconnected/reconnected V19 startup, native MCU Apply and combined acceptance. Oct13 owner125ms margins/real Behavior+Tracking+stimulus Setup/recording/closure and actual GPU0-render/GPU1-encoding pass; two final combined sessions reach60.0333/60.0167 real groups/s and reset/restore passes. Recording drops and uniform/optical timing remain unverified acceptance items. Eye/electrical/full scientific acceptance remains deferred. — [Current evidence](reports/runtime.md), [Rig checks](reports/rig-verification.md) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
++
++- [ ] `eye-camera-and-connect-recovery` [gui] [controller] [supervisor] [acquisition] [shared] [visual_stimulus] Triggered Eye60Hz video/drain and four preview cycles now verified Oct14; complete full-session interrupted reuse after source repairs when projectors return, plus separate physical/GUI acceptance. Firmware upload manual; Tracking processing/photodiode/paired mappings deferred. - [Assessment](reports/acquisition.md) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
++
++- [ ] `runtime-gui-rig-wiring-acceptance` [gui] [launcher] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Complete combined/paired/Tracking scientific workload and native narrow/DPI/optical/electrical/full-load checks. Oct13 final two-camera+stimulus sessions pass nominal60fps, Setup/recording/closure and repeated reset with125ms margins; recording drops and timing jitter remain. Failed-Setup/Save-switch cleanup, Protocol hover failures and projector overflow remain open; Eye, locomotion Tracking, paired and full scientific acceptance remain rig-dependent. — [Current assessment](reports/runtime.md), [Rig checklist](reports/rig-verification.md) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
++
++- [ ] `rig-acceptance` [gui] [launcher] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] [shared] Complete remaining managed device/fault/full-workload acceptance. Oct13 static/contracts/schema/package, 1520 backend/native cases (five privilege skips), four-output Idle/grid live-update/closure and final exact shutdown/COM release pass. The native chooser crash is repaired; Protocol hover-test failures and projector overflow remain unresolved; matched 9.0.2 tool compatibility/synthetic closure pass; camera/Eye/pulse/electrical checks are owner-deferred today. — [Current assessment](reports/runtime.md), [Rig worklist](reports/rig-verification.md) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
+ 
+ - [ ] `rig-timing-buffer-audit` [controller] [supervisor] [acquisition] [visual_stimulus] [spikeglx] [shared] [gui] Owner-deferred after projectors powered off Oct14: resume required full-session Abort/idle300s reuse, lifecycle receipt margins and sustained stimulus throughput. Owner queue20/SDK15/drain150 saved; prior queue17 measured with20% burst margin, full combined/SaveOff/preview checks pass; preserve Tracking/photodiode/paired mapping deferrals. - [Assessment](reports/runtime-evidence-2026-10-14/rig-timing-audit/configuration-assessment.json)
++
+ - [ ] `renderer-failed-setup-cleanup-link` [visual_stimulus] [controller] [supervisor] [acquisition] Projector-dependent native retest deferred by owner: verify complete failed Setup cancellation and fresh reuse after strict cleanup, bounded warning scope and release-receipt repairs. Fault6 backend proofs accepted but aggregate failed; latest local311 Visual/1229 other backend tests pass, native complete cancellation unproven. - [Findings](reports/runtime-evidence-2026-10-14/rig-timing-audit/lifecycle-findings.json)
+ 
+ - [ ] `projector-flip-input` [gui] [controller] [acquisition] Owner-deferred Oct14: no Projector flip input, diagnostics or camera-trigger phase-offset implementation until explicitly requested. — [A11](docs/architecture/acquisition.md#a11)
+ 
+-- [ ] `acquisition-shutdown-controller-rpc` [acquisition] [controller] Rig-deferred by owner: verify orderly teardown after exact controller departure without traceback and with truthful release evidence. Local handling/tests pass; live/unknown-controller failures still propagate. — [Current assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
++- [ ] `acquisition-shutdown-controller-rpc` [acquisition] [controller] Rig-deferred by owner: verify orderly teardown after exact controller departure without traceback and with truthful release evidence. Local handling/tests pass; live/unknown-controller failures still propagate. — [Current assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md) Oct15 idle exact-controller loss yields automatic exit/all-owned-absent receipt without traceback; MCU claim release is unconfirmed, and active-capture fault injection is blocked by the preview reuse finding.
+ 
+ - [ ] `legacy-camera-trigger-rate` [acquisition] [gui] Owner-deferred camera capture today (Oct13); later verify Behavior camera trigger acceptance with frame-rate limiter disabled and measured pulse/readiness correlation. Legacy logs confirm 17.44–17.75 fps with consecutive hardware IDs; limiter timing is a hypothesis, not proven causality. Forced limiter enable on startup/reload is fixed in the installed Basler dependency with 19 focused tests passing; selected PFS now stores enable=0. Restart legacy GUI before the bounded comparison; preserve scientific exposure settings. — [Evidence](reports/acquisition.md)
+ 
+ - [ ] `camera-preview-gui-binding` [gui] [controller] [acquisition] Complete GUI selector/button, alternate-monitor/DPI/fallback and repeated release/reuse acceptance when requested. Fresh Oct13 bounded audit passes real Behavior/Tracking identity, usable visible previews, Stop and exact release; earlier no-frame failure does not reproduce. Eye disabled/untested; broader physical checks remain deferred. — [Current assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
+ 
+-Owner-deferred scientific settings and firmware remain in their owning architecture/worklist records.
+-- [ ] `scientific-evidence-rig` [acquisition] [visual_stimulus] [controller] [gui] Verify always-saved scientific evidence with video On→Off→On: native resource absence, exact counters, state and cutoffs, cancellation, storage failure. Status: local implementation and tests complete; wiring, cadence and Eye/physical/paired deferrals unchanged. — [Rig checks](reports/rig-verification.md#always-saved-scientific-evidence)
++- [ ] `scientific-evidence-rig` [acquisition] [visual_stimulus] [controller] [gui] Verify always-saved scientific evidence with video On→Off→On: native resource absence, exact counters, state and cutoffs, cancellation, storage failure. Status: local implementation and tests complete; wiring, cadence and Eye/physical/paired deferrals unchanged. — [Rig checks](reports/rig-verification.md#always-saved-scientific-evidence) Projector-dependent remaining checks are owner-deferred Oct15 while outputs are powered off.
++
+ - [ ] `camera-no-wiring-anchor` [acquisition] [spikeglx] Check the accepted first-trigger/first-video-source assumption with saved source/video mappings, native timing and leading-loss diagnostics; label it assumed and report mismatches. Done when: mismatches (if any) are recorded. Status: stronger anchoring deferred unless needed; wiring and cadence unchanged. — [Rig checks](reports/rig-verification.md#camera-no-wiring-anchoring), [Assessment](reports/acquisition.md#camera-trigger-anchor-capability-assessment)
+-- [ ] `combined-recording-loss` [acquisition] [visual_stimulus] Find the cause of recording loss under combined load while keeping nominal 60 fps presentation. Done when: remaining `capture_slots=3` pressure, conversion and encoder contention are measured and drops reduced with exact accounting, ownership and bounds intact. Status: final 60 s repeat had camera queue drops 6/19 and review 2367 capacity drops / 2424 padding duplicates; the owner calls stimulus-video loss unacceptable (Oct 14); owned-buffer handoff, bounded metrics and a half-size review composite are implemented locally, rig gain unverified. — [Evidence](reports/runtime-evidence-2026-10-13/combined-camera-stimulus/context.json)
+-- [ ] `stimulus-encode-benchmark` [visual_stimulus] Benchmark the reduced RGBA composite (1280×1000) at 60 fps alone and with camera encoders; keep the actual recipe and renderer `recording_metrics` summaries (verify collection first). Done when: the bottleneck and real-frame drops/padding are recorded; correctness passes do not prove throughput. — [Implementation](reports/visual_stimulus.md), [Test plan (15 offline tests; native run pending)](reports/rig-verification.md#encoding-test-plan)
+-- [ ] `stimulus-capture-slots-trial` [visual_stimulus] After the benchmark, decide the capture slot count from real reduced-frame bytes and full scratch/retained accounting within `recording_bytes_total`. Done when: slots increase only for measured burst stalls, memory stays bounded and admission/drop accounting is exact. — [V12](docs/architecture/visual_stimulus.md#v12)
+-- [ ] `stimulus-review-encoding-cost` [visual_stimulus] [acquisition] Compare encoding for all four sources: Behavior CQ16 4:4:4, Tracking CQ16 mono, Eye and Stimulus CQ23 mono test overrides vs standard CQ16 (all p4, original camera dimensions, half-size review composite). Done when: dated build/GPU/settings/workload evidence covers saved arguments, decoded format, detail, size, throughput and real-frame drops separately and under combined load, and the owner keeps or reverts CQ23. Status: color Stimulus must keep 4:4:4; Eye readiness and saved argument lists untouched. — [E13](docs/architecture/visual_stimulus.md#e13), [Test plan](reports/rig-verification.md#encoding-test-plan)
+-- [ ] `stimulus-save-switch-cleanup` [visual_stimulus] Verify the native Save On→Off transition after the preparation receipt-scope repair. Done when: ownership, catalogue and deadlines are exact on that transition. Status: repeated Save On→On cleanup passes; that does not show Save Off. — [Assessment](reports/visual_stimulus.md), [Failure](reports/runtime-evidence-2026-10-13/throughput/baseline-off.json)
+-- [ ] `visual-renderer-startup-deadline` [visual_stimulus] [supervisor] Verify the remaining renderer fault, deadline and catalogue-cleanup cases. Status: run 43 exercises post-Setup recording, cleanup and shutdown; older intermittent native faults stay open historical findings. — [Assessment](reports/runtime.md#current-scope-and-review)
+-- [ ] `projector-calibration-launch` [gui] [visual_stimulus] Test the reworked workflow: per-projector reference view (frame, ticks, guide), edge margins with live updates, seam check, native binding above 100 % Windows scaling, a late-completing Open, then physical, optical and fault acceptance. Status: the old mixed-pacing failure was an older bundle; dummy geometry is not measured calibration. — [Assessment](reports/visual_stimulus.md), [V01](docs/architecture/visual_stimulus.md#v01)
+-- [ ] `projector-calibration-retention` [gui] Find why calibration is lost after closing. Done when: the cause is reproduced through the owner's actual closure path with saved/restored values. Status: normal-close tests, a launch/adjust/close cycle and old-file (v4/v7) loading pass, so the production cause is unverified. — [Investigation](reports/runtime.md), [Rework](reports/visual_stimulus.md#calibration-arena-asset)
+-- [ ] `devices-narrow-overflow` [gui] Fix and retest the Windows projector configuration horizontal overflow (15 px at width 1175 in three offscreen cases), then inspect native narrow/DPI and MCU dropdown/add/remove. Status: offscreen 396 passes / 3 failures on the rig; native wide cards inspected, resize drag ineffective. — [G02](docs/architecture/gui.md#g02), [Assessment](reports/runtime.md)
+-- [ ] `native-picker-pytest-exception-hook` [gui] Diagnose native picker exit `0xC0000409` under pytest's default faulthandler. Done when: the native suite runs with ordinary plugins. Status: the same 23-case regression passes without that plugin; cause unverified. — [Assessment](reports/runtime.md)
+-- [ ] `native-protocol-hover-tests` [gui] Diagnose two real-Windows Protocol hover-control tests failing with `StopIteration`. Done when: native input/geometry vs fixture timing is established before any native GUI acceptance claim. Status: isolated repeats construct zero file dialogs. — [Assessment](reports/runtime.md), [Evidence](reports/runtime-evidence-2026-10-13/native-chooser/context.json)
+-- [ ] `mcu-managed-connection-and-io` [gui] [controller] [acquisition] Verify the fresh-GUI Eye pin 9 / 60 Hz diagnostic and installed protocol compatibility; measure boundary/watchdog latency under load; inject interrupted upload and uncertain cleanup. Status: Oct 13 COM8 Connect confirmed protocol 3, `cephvr2_uno_2`, outputs stopped, COM released; electrical D2/source/receiver/LOW measurements are owner-deferred. — [Repair](reports/runtime.md), [Acquisition](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
+-- [ ] `spikeglx-controller-integration` [spikeglx] [controller] [gui] Verify the installed-version mapping and paired Setup/writing/monitor/stop once the Behavioral/Tracking/Eye pulse channel/bit inventory is checked on the rig and supplied. Status: Eye support is complete locally; the saved endpoint is reachable read-only (SpikeGLX v20251218, API v4.1.3); the owner defers pulse mapping; no remote mutation or paired run happened. See `camera-no-wiring-anchor`. — [Assessment](reports/runtime.md), [Rig checks](reports/rig-verification.md)
+-- [ ] `gui-backend-dummy-experiment` [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Finish Eye, locomotion Tracking, paired, optical and electrical scientific acceptance within the owner's scope and deferrals. Status: combined Behavior/Tracking recording verifies nominal 60 fps, GPU placement and repeated reset; uniform frame time and zero loss are not established. — [Evidence](reports/runtime-evidence-2026-10-13/combined-camera-stimulus/context.json)
+ 
+-## Blocked
++- [ ] `stimulus-encode-benchmark` [visual_stimulus] Benchmark the reduced RGBA composite (1280×1000) at 60 fps alone and with camera encoders; keep the actual recipe and renderer `recording_metrics` summaries (verify collection first). Done when: the bottleneck and real-frame drops/padding are recorded; correctness passes do not prove throughput. — [Implementation](reports/visual_stimulus.md), [Test plan (15 offline tests; Oct15 synthetic matrix evidence; full capture pending)](reports/rig-verification.md#encoding-test-plan) Status: native synthetic CQ16/CQ23 isolation is recorded in current evidence; renderer recording_metrics, real-frame drops/padding and full-path bottleneck remain pending powered projectors.
+ 
+-All four are umbrella acceptance items blocked on rig access and owner-deferred physical checks; each keeps its own scope.
++- [ ] `stimulus-capture-slots-trial` [visual_stimulus] After the benchmark, decide the capture slot count from real reduced-frame bytes and full scratch/retained accounting within `recording_bytes_total`. Done when: slots increase only for measured burst stalls, memory stays bounded and admission/drop accounting is exact. — [V12](docs/architecture/visual_stimulus.md#v12)
+ 
+-- [ ] `mcu-optional-io-and-all-vsync` [gui] [controller] [acquisition] [visual_stimulus] Scope: disconnected/reconnected V19 startup, native MCU Apply and combined acceptance. Status: Oct 13 combined Behavior+Tracking+stimulus Setup/recording/closure passes with 125 ms margins on GPU0 render / GPU1 encode (60.0333 / 60.0167 groups/s, reset/restore passes); recording drops and uniform/optical timing unverified; Eye, electrical and full scientific acceptance deferred. — [Evidence](reports/runtime.md), [Rig checks](reports/rig-verification.md)
+-- [ ] `eye-camera-and-connect-recovery` [gui] [controller] [supervisor] [acquisition] [shared] [visual_stimulus] Scope: protocol 4 Eye output acceptance. Needs the manual firmware upgrade, an explicit physical Eye pin / FrameStart source / rate, and triggered capture, video and cleanup checks. Status: the protocol 4 output and Add-pin workflow are implemented and compiled locally; earlier protocol 3 and four-output VSync checks are history, not protocol 4 or three-camera acceptance; canceled-Connect recovery checks stay valid. — [Acquisition](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
+-- [ ] `runtime-gui-rig-wiring-acceptance` [gui] [launcher] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Scope: combined/paired/Tracking scientific workload and native narrow/DPI/optical/electrical/full-load checks. Status: Oct 13 two-camera+stimulus sessions pass 60 fps with 125 ms margins; recording drops and timing jitter remain; failed-Setup/Save-switch cleanup, Protocol hover failures and projector overflow are open. — [Assessment](reports/runtime.md), [Checklist](reports/rig-verification.md)
+-- [ ] `rig-acceptance` [gui] [launcher] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] [shared] Scope: remaining managed device, fault and full-workload acceptance. Status: Oct 13 static/contract/package checks, 1520 backend/native cases (5 privilege skips), four-output Idle/grid/closure and exact shutdown with COM release pass; the native chooser crash is repaired; hover-test failures and projector overflow open; camera/Eye/pulse/electrical checks owner-deferred. — [Assessment](reports/runtime.md), [Worklist](reports/rig-verification.md)
++- [ ] `stimulus-review-encoding-cost` [visual_stimulus] [acquisition] Compare encoding for all four sources: Behavior CQ16 4:4:4, Tracking CQ16 mono, Eye and Stimulus CQ23 mono test overrides vs standard CQ16 (all p4, original camera dimensions, half-size review composite). Done when: dated build/GPU/settings/workload evidence covers saved arguments, decoded format, detail, size, throughput and real-frame drops separately and under combined load, and the owner keeps or reverts CQ23. Status: color Stimulus must keep 4:4:4; Eye readiness and saved argument lists untouched. — [E13](docs/architecture/visual_stimulus.md#e13), [Test plan](reports/rig-verification.md#encoding-test-plan)
++
++- [ ] `stimulus-save-switch-cleanup` [visual_stimulus] Verify video On→Off→On reuse after the required-scientific-evidence integration, with exact catalogue ownership/deadlines and evidence retained while video is Off. Done when: current native transition/closure passes. Status: earlier Oct14 SaveOff cleanup/count/decode passed before this integration; current acceptance is owner-deferred with projectors off and overlaps scientific-evidence-rig. — [Assessment](reports/visual_stimulus.md), [Rig checks](reports/rig-verification.md#always-saved-scientific-evidence)
+ 
+-## Deferred
+ 
+-Owner-deferred scientific settings and firmware stay in their owning architecture and worklist records.
+ 
+ - [ ] `stimulus-readback-off-gl-thread` [visual_stimulus] Reason: wait for rig measurements that justify more optimization. Scope: PBO map/copy off the GL thread, bounded PBO reuse, CPU row-flip removal, RGB/mono capture layouts. Done when: ownership, ordered identity, deadlines/cleanup and the pixel ABI are preserved, with a V12 amendment before any GL ownership change. — [Implementation](reports/visual_stimulus.md), [V12](docs/architecture/visual_stimulus.md#v12)
+-- [ ] `renderer-failed-setup-cleanup-link` [visual_stimulus] [controller] [supervisor] Reason: rig-deferred by the owner. Repeat a failed Setup after a prior closed calibration: exact cleanup, recovery and permitted reuse. Status: local worker-recovery routing and endpoint teardown are repaired and tested; the historical workflow is unverified; the missing-config SpikeGLX warning stays conservative. — [Assessment](reports/visual_stimulus.md), [Rig checks](reports/rig-verification.md)
+-- [ ] `acquisition-shutdown-controller-rpc` [acquisition] [controller] Reason: rig-deferred by the owner. Verify orderly teardown after the controller departs: no traceback, truthful release evidence. Status: local handling passes; live/unknown-controller failures still propagate. — [Assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
+-- [ ] `manual-camera-repeat-admission` [controller] [acquisition] [gui] [shared] Reason: rig-deferred by the owner. Repeat real preview start/stop in one generation after terminal-result reservation compaction, capturing lease/claim state for the unproven MCU pending/unavailable case. Status: the fourth-readback capacity defect is fixed locally with budgets and replay retention unchanged. — [Assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
+-- [ ] `legacy-camera-trigger-rate` [acquisition] [gui] Reason: camera capture deferred by the owner (Oct 13). Later: verify Behavior trigger acceptance with the frame-rate limiter disabled and measured pulse/readiness correlation. Status: legacy logs show 17.44–17.75 fps with consecutive hardware IDs; limiter timing is a hypothesis, not proven; forced limiter enable is fixed in the installed Basler dependency (19 tests) and the selected PFS stores enable=0. Restart the legacy GUI first; keep scientific exposure settings. — [Evidence](reports/acquisition.md)
+-- [ ] `camera-preview-gui-binding` [gui] [controller] [acquisition] Reason: do when requested. Scope: GUI selector/button, alternate-monitor/DPI/fallback and repeated release/reuse acceptance. Status: the Oct 13 audit passes real Behavior/Tracking identity, usable previews, Stop and exact release; the earlier no-frame failure does not reproduce; Eye disabled/untested. — [Assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
+diff --git a/contracts/visual_stimulus/prepared-trial.schema.json b/contracts/visual_stimulus/prepared-trial.schema.json
+index 1d135f8..032ab34 100644
+--- a/contracts/visual_stimulus/prepared-trial.schema.json
++++ b/contracts/visual_stimulus/prepared-trial.schema.json
+@@ -1091,8 +1091,7 @@
+           "default": "frame_grid",
+           "enum": [
+             "reference_bars",
+-            "frame_grid",
+-            "seam_check"
++            "frame_grid"
+           ],
+           "title": "Calibration View",
+           "type": "string"
+@@ -3257,32 +3256,6 @@
+           "exclusiveMinimum": 0,
+           "title": "Y Length Px",
+           "type": "integer"
+-        },
+-        "guide_width_px": {
+-          "anyOf": [
+-            {
+-              "exclusiveMinimum": 0,
+-              "type": "integer"
+-            },
+-            {
+-              "type": "null"
+-            }
+-          ],
+-          "default": null,
+-          "title": "Guide Width Px"
+-        },
+-        "guide_height_px": {
+-          "anyOf": [
+-            {
+-              "exclusiveMinimum": 0,
+-              "type": "integer"
+-            },
+-            {
+-              "type": "null"
+-            }
+-          ],
+-          "default": null,
+-          "title": "Guide Height Px"
+         }
+       },
+       "required": [
+diff --git a/reports/acquisition.md b/reports/acquisition.md
+index 11fa4c2..b587696 100644
+--- a/reports/acquisition.md
++++ b/reports/acquisition.md
+@@ -1,5 +1,32 @@
+ # Acquisition status
+ 
++Oct15 direct zero-byte raw-input probes using the production-shaped camera options
++and FFmpeg9.0.2 on RTX2080Ti exit0 for both enabled camera formats and finalize small
++MP4s (1614/1606 bytes), with writable-handle synchronization and close. Identity tags
++are omitted for this standalone probe. This establishes muxer capability only, not
++playable video or runtime A07 NO_FRAMES accounting/ownership acceptance. The initial
++probe failed while synchronizing a read-only Windows handle; artifact/log retained,
++then corrected to a writable handle and fresh paths. No failure exit was ignored.
++The [Visual Stimulus report](visual_stimulus.md) owns the completed synthetic31-case
++encoder matrix and its full-path limits.
++[Raw empty-input results](runtime-evidence-2026-10-15/projector-free-rig/empty-video.json).
++
++Oct15 actual projector-free rig checks: COM8 reports protocol4/cephvr2_uno_4;
++saved Behavior D11/30Hz and Tracking D10/60Hz settings are retained. Eye remains disabled
++with saved D9/60Hz configuration; it is not enabled for this test. Four native managed
++preview cycles per enabled camera complete with confirmed device release and unchanged
++adopted configuration. One extra Behavior preview/Stop succeeds, but the following Start
++fails with `prior capture has unknown SDK-buffer discard accounting`. This is an observed
++reuse blocker, not evidence that the accounting guard itself is defective; its source
++cause is unverified. Follow `camera-preview-sdk-discard-reuse` without bypassing safety.
++
++Exact idle controller departure stops owned supervisor/acquisition processes and yields
++an all-owned-absent receipt. Acquisition reports MCU claim release unconfirmed after
++controller departure. Active-capture loss, electrical LOW, watchdog under load and
++combined recording acceptance remain open. Initial full PFS snapshots, including selector
++cursors, restore exactly and cameras close; saved configuration bytes remain unchanged.
++[Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). This does not remeasure adopted queue20/SDK15/drain150 under full recording load.
++
+ Oct14 working-tree verification corrects the owning configuration test to the
+ owner-selected 150 ms drain and retains its missing-field assertion. The controller
+ integration fixture's status gate now honors its original RPC deadline, resolving
+diff --git a/reports/rig-verification.md b/reports/rig-verification.md
+index ac80862..e84fc8e 100644
+--- a/reports/rig-verification.md
++++ b/reports/rig-verification.md
+@@ -1,6 +1,33 @@
+ # Rig verification — outstanding checks
+ 
+-Oct14 owner powers projectors off and defers projector-dependent checks. Final combined three-camera and SaveOff recordings count/full-decode; queue17 saved with measured20% burst margin. Review throughput, full CancelSetup/Abort/idle300s reuse and lifecycle receipt margins remain open. Source/local repairs are not native acceptance. [Current assessment](runtime-evidence-2026-10-14/rig-timing-audit/configuration-assessment.json).
++Oct15 synthetic encoder portion of the listed matrix completes31/31 cases with
++external counts/full decodes; direct zero-input finalization also succeeds. Full-path
++capture/drop, scientific quality and projector readback acceptance remain open.
++Live-camera Tracking diagnostics await permission to use the separately opened GUI.
++[Workload/results](visual_stimulus.md), [empty-output scope](acquisition.md),
++[raw evidence](runtime-evidence-2026-10-15/projector-free-rig/context.json).
++
++Oct15 owner explicitly authorizes available native/device checks on this rig with
++projectors off. Completed portions:25 native/rig tests with one privilege skip,22 native
++picker tests, five native layout cases,90 contract cases, schema consistency and native
++package build. One layout assertion fails (326px versus less than320px); broad native GUI
++run was interrupted and is not a pass. COM8 protocol4 Connect and four preview cycles
++per enabled Behavior/Tracking camera pass. A later Behavior restart is blocked by unknown
++SDK-buffer discard accounting. Exact idle-controller containment/all-owned-absent receipt
++passes; active capture-loss remains unexecuted and MCU release remains unconfirmed.
++Saved configuration and baseline full camera PFS restore exactly after that generation.
++SpikeGLX read-only check times out. [Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). These partial results do not close remaining
++full-session, scientific, electrical, alternate-DPI or projector-dependent acceptance.
++
++Oct15 owner confirms projectors are powered off: defer all powered-projector,
++combined-session, optical, presentation-timing and projector fault/throughput tests.
++Offline/local checks may continue and never close rig acceptance. Oct14 combined
++three-camera and SaveOff recordings counted/full-decoded with queue17 measured;
++owner-selected queue20/SDK15/drain150 remain saved but not remeasured. Required
++scientific-evidence/video On→Off→On reuse after the later integration, full
++CancelSetup/Abort/idle300s reuse and lifecycle receipt margins remain open.
++[Current TODO audit](runtime-evidence-2026-10-15/todo-projectors-off/context.json),
++[configuration assessment](runtime-evidence-2026-10-14/rig-timing-audit/configuration-assessment.json).
+ 
+ Owner defers Projector flip input/diagnostics and camera-trigger phase offsets on
+ Oct14 under A11 revision46. Do not run former passive input checks; retained D2
+@@ -513,7 +540,7 @@ Existing operating-point/throughput deferrals below remain separate.
+ | GUI authoring and planning preview | Install `.[dev,gui]` and launch `python scripts/start_gui.py`; follow [frontend review commands](../docs/development.md#dashboard-frontend-review). Check Windows DPI/narrow-window layouts, discovered cameras/COM ports, enabled projector combinations, calibration JSON load/save and pixel offsets/inversions. Build and reload a 200-epoch trial with independent per-projector layers and random/ordered batch values; use Shuffle trial on nested repeat/condition groups, verify intact blocks and selection through undo/redo/save/load, and check readable timeline actions at narrow DPI; switch trials and rotate/scrub the two-sided rig preview using local assets. Record latency and errors. This is frontend acceptance, not physical output or live Tracking validation. Typed pacing configuration and exact held-policy checks now pass locally; physical output acceptance remains open. |
+ | Managed GUI configuration and authority | After local wiring acceptance, use the installed managed entry point and current review layout at wide/narrow Windows DPI. Submit subject metadata, ordered trials/seeds/gaps, recording selections, Tracking settings and projector mappings; compare accepted revision/history/session metadata. Exercise first-run display-profile import separately from calibration-value JSON. Invalid or stale visible drafts must block Setup with a useful explanation. Exercise pending Setup cancellation, Abort, lease loss/takeover, pending prompt updates, disconnect/reopen with retained warnings and GUI close/relaunch with `python scripts/start_runtime_gui.py --reopen-gui` for the same application generation. Exercise delayed/lost relaunch replies and shutdown during the request; containment deadlines must remain unchanged. Cancel a proposed discard or dismiss a save-error dialog and confirm unsent edits remain. No stale intent replay or silent draft replacement. |
+ | Tracking configuration diagnostics | Under T08/A03/A10, attach to the selected owned camera preview with exact source identity, including when experiment Tracking is disabled. Start with an empty stage mask, then flow-only without pose annotations, and verify unavailable dependent stages. Verify crop/downscale annotations stay in acquired coordinates and enabled stages produce live overlays/timings. Confirm ordered Tracking consumption, bounded viewer latency, explicit viewer detach/reopen versus actual processing closure, and cleanup after source/authority loss and before Setup. Use **Use this frame for annotation** to freeze an exact acquired image; confirm source changes reset annotations and stale frames are rejected. Pending or failed Close must keep settings locked and must not enable another Begin. Changed diagnostic settings require confirmed Close and fresh Begin. Verify no scientific files or Visual Stimulus feedback arise from diagnostics. Under T20/T38, confirm missing/invalid camera calibration blocks experiment/runnable locomotion, early diagnostics still run, acquired-image scale survives crop/downscale, and known motion produces correctly converted mm/s/deg/s feedback/file values with retained pixel-space evidence. Verify explicit old gain/unit rejection; scale is not animal swimming-speed validation. Scientific accuracy/full-load acceptance remains separate. |
+-| Untimed projector calibration | Under V01/G01/V15, before Setup and with no initialized experiment display, launch each projector on its own (tick only its Use box; all four faces stay assigned) with Show reference bars: check the output frame, 100 px ticks (yellow every 500 px) and the cyan screen-aspect guide on the real screen, position the projector (centre, distance, lens) until the guide meets the screen edges, then measure both bars per screen and confirm the mm/px estimate and config-only throw-based distance with current zoom/keystone/Bottom fold. Close must return to Idle with resources confirmed closed. Show frame and grid: verify automatic margins centre the screen from the measurement, a blank/entered margin per edge, Reset valid areas, live margin updates without Close/relaunch (1 px, Shift 10 px), status line outcomes for invalid/rejected edits, last-valid retention, resource stability, visible latency, stale-edit rejection, lease loss/disconnect and exact cleanup; compare the grid with a ruler on every screen, including the hard-to-see Bottom edges, and a projection smaller than the screen. Keystone H / V: with a visibly trapezoidal grid (squares shrinking toward one edge), enter pixels until squares are uniform top to bottom and left to right on each screen, including the Bottom fold; confirm the sign convention (positive H narrows the top, positive V shortens the right edge, in projector output space) and that residual curvature, if any, is lens distortion that keystone does not model. Show seam check: the eye-level ring, tank-corner and meridian lines must continue unbroken across adjacent screens. Exercise changed assets, stale revisions/generations, failed presentation, an Open that misses its deadline, control loss, renderer loss and Shutdown during active or still-preparing calibration; unknown cleanup must block Setup. Repeat Open/Close and verify restoration of the prior display or known uninitialized state. Check at Windows scaling above 100 % that native identity binds every display. Invalidate changed modes/optics; imported nonlinear/masked/weighted corrections stay preserved. Local rendered checks do not establish alignment. |
++| Untimed projector calibration | Deferred while projectors are off. Under current G01/V01/V15, use Launch reference calibration and Launch projection calibration with all four assigned/enabled outputs, separate repository bars/frame-grid sources and per-step runtime copies. Verify native output-boundary frame/raw pixel bars; measure both bar lengths per screen in the current native mode. Frame/grid uses the measured per-axis mm/px: compare physical spacing with a ruler, whole-pixel Width/Height capped at native dimensions, blank measured sizes, center-relative Offset X/Y limits/reclamping and retained fixed pitch during live crop/translation. Verify load/save/actual close/reopen persistence, invalid/partial edits retaining the last applied output, exact sequence/revision/lease fences, late Open, rejection, loss and shutdown cleanup. Repeat after Windows scaling above100% using native identities. Preserve imported nonlinear/masked/weighted corrections. No margin/keystone/seam controls belong to this retained workflow; local/offscreen passes do not establish measured alignment or actual output closure. — [G01](../docs/architecture/gui.md#g01), [V15](../docs/architecture/visual_stimulus.md#v15) |
+ | GUI Windows display inventory | Compare Projectors table/diagram indices against Windows Settings → Identify on the actual multi-GPU rig, including reconnect, clone mode and changed topology. Verify pixel resolution, retained assignments and explicit query failures. Oct8 isolated Qt retention checks cover immediate saving, restart, reordered/missing/returning identities and local-draft/controller isolation; repeat actual GUI restart and physical unplug/reconnect with stable native identity. macOS inspection and mocked native API calls do not establish equivalence. See [G01](../docs/architecture/gui.md#g01). |
+ | Windows venv interpreter process tree | Prepared-image native regression now verifies one live job member, exact launched/executing PID and OS image, fresh venv imports and inherited bootstrap. Verify real managed registration and shutdown after GUI implementation; focused evidence does not establish full application behavior. |
+ | Runtime finalization boundary | Under A07/E05, verify bounded online accounting, encoder finalization, sync and close without a separate file-validation pass. Measure drain/closure delay before the next trial. Output-content inspection belongs to external post hoc or development verification, never an automatic runtime validator. |
+@@ -935,7 +962,7 @@ these checks remain native acceptance, without wiring or trigger-cadence changes
+ Prepared Oct14 for the owned-buffer/half-size review changes under
+ [A08](../docs/architecture/acquisition.md#a08),
+ [V12](../docs/architecture/visual_stimulus.md#v12) and
+-[E13](../docs/architecture/visual_stimulus.md#e13). This is a plan, not rig evidence.
++[E13](../docs/architecture/visual_stimulus.md#e13). The synthetic encoder portion now has Oct15 dated evidence above; full-path recording/drop and quality acceptance below remain a plan.
+ Use `tools/encoding_probe.py` for synthetic encoder isolation and read-only collection.
+ It does not acquire cameras, pulse the MCU, change application configuration or start
+ an experiment. Full-path capture/drop testing below uses the normal managed app.
+diff --git a/reports/runtime.md b/reports/runtime.md
+index e2a3988..7fd65d4 100644
+--- a/reports/runtime.md
++++ b/reports/runtime.md
+@@ -1,5 +1,33 @@
+ # Controller and supervisor status
+ 
++Oct15 synthetic encoder matrix31/31 cases passes external counts/full decodes,
++with actual RTX2080Ti evidence; direct empty raw-input finalization also succeeds.
++The [Visual Stimulus report](visual_stimulus.md) owns the workload and performance
++limits; [Acquisition](acquisition.md) owns the empty-output capability assessment.
++
++Oct15 projector-free rig verification under [E15](../docs/architecture/system-contracts.md#e15):
++native Windows/rig selection25 passed/one symlink-privilege skip; actual Windows picker
++selection22 passed with ordinary pytest plugins. Native layout/hover selection5 passed,
++one failed because the trial card is326px against a less-than320px assertion; this is
++not a confirmed clipping diagnosis. Broad native GUI execution was interrupted after
++approximately two minutes without recorded progress; no full-suite pass is claimed.
++Prepared native interpreter,90 contract cases,19 Tracking schemas and11 Visual Stimulus
++schemas pass. Regenerated the sole stale prepared-trial JSON schema from its canonical
++model, removing superseded calibration fields under G01/V15. Native wheel/source build
++passes; native binaries and source GLBs are present, without standalone-install proof.
++
++Real COM8 Connect reads protocol4/cephvr2_uno_4 without flashing. Four preview cycles
++per enabled Behavior/Tracking camera pass start/stop/release; first-cycle viewers report
++visible. An extra Behavior cycle completes, then its next Start is blocked by unknown
++SDK-buffer discard accounting. Cause remains unverified; preserve the safety guard.
++An exact owned idle-controller fault produces automatic containment and an all-owned-
++processes-absent exit receipt; MCU claim release remains truthfully unconfirmed. Active
++capture-loss injection did not run: rounded-time identity was safely refused first,
++and retry capture was blocked by the reuse finding. Both baseline full camera PFS
++snapshots and saved configuration bytes were verified restored after this generation.
++SpikeGLX read-only SDK check times out at its saved endpoint; remote state is unknown.
++[Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). Camera Tracking diagnostics remain pending authorization to use the separately opened application; no takeover was performed.
++
+ Git-sync integration (2026-10-15) preserves local pixel-size/offset calibration
+ under [G01](../docs/architecture/gui.md#g01)/[V15](../docs/architecture/visual_stimulus.md#v15)
+ and independent incoming camera, arena, appearance and scientific-evidence changes.
+@@ -1977,6 +2005,19 @@ and SpikeGLX pairing were disabled. Remaining acceptance lives in the
+ 
+ ## Current scope and review
+ 
++Oct15 projector-off TODO audit at `b68c4ee` runs1,737 projector-independent backend
++cases (four skips,26 native/rig deselections) and38 targeted offscreen GUI cases
++(470 deselected). Ruff/format911 files, Win32 mypy791 sources, dependencies and
++boundaries695 modules/zero violations pass;44 existing cohesion advisories remain.
++The existing subgroup regression confirms mixed-identity rule edits are rejected
++without discarding the dirty draft, closing the stale `mixed-subgroup-random-rule-edit`
++entry. Duplicate task IDs/status sections are consolidated, later evidence is kept,
++and obsolete margin/keystone/seam acceptance instructions are replaced by current
++G01/V15 pixel-size/offset checks. All projector-dependent and pre-existing hardware
++acceptance deferrals remain. No implementation or device settings changed.
++[Commands, probes, source fingerprints and limitations](runtime-evidence-2026-10-15/todo-projectors-off/context.json).
++
++
+ Current model-hierarchy audit (`hierarchy-audit-20261012`) starts from
+ `f96286e86dc9af334da78ab55a8c14ec111c6184` plus existing uncommitted source,
+ contracts and reports. Concurrent unified subgroup work is preserved and has its
+@@ -3064,6 +3105,28 @@ fail-closed dependencies were intentionally left alone.
+ 
+ ## Unresolved findings and limitations
+ 
++Oct15 local probes confirm two existing TODO defects despite the passing suites:
++
++- `calibration-live-update-rejection`: real `DisplayCalibrationController.update`
++  with the owning fixture's rejecting backend returns Rejected but retains ACTIVE
++  `calibration_pending` and the diagnostic block. A second valid command is refused
++  before dispatch (one backend call total). `display_adjustments.update_calibration`
++  passes the admission-failure callback without its explicit-rejection flag, so no
++  Update timeout is scheduled or pending state retired. Keep this open under
++  [E06](../docs/architecture/system-contracts.md#e06)/[V01](../docs/architecture/visual_stimulus.md#v01);
++  this is local controller-state evidence, not projector output acceptance.
++- `controller-config-inactive-backend-defaults`: a disposable copied configuration
++  loads with acquisition disabled; making only its acquisition TOML malformed then
++  raises `ConfigurationError` from controller startup configuration loading.
++  `_load_reusable_configuration` unconditionally calls `_fill_acquisition_defaults`,
++  whose loader runs before checking backend participation. The inactive warning
++  behavior remains open under [E07](../docs/architecture/experiment.md#e07).
++
++Both probes use local fixture adapters/config copies. No production fix was made;
++remaining audit/race/logging concerns keep their prior unverified status.
++[Reproduction outputs and exact scope](runtime-evidence-2026-10-15/todo-projectors-off/context.json).
++
++
+ Current dev-machine triage (2026-10-13, source `4a62844`, macOS/Python3.11.15):
+ latest combined evidence verifies nominal60fps and repeated reset; the old39.47fps/
+ warning-shutdown statements in TODO and the outstanding rig checklist are corrected.
+diff --git a/reports/tracking.md b/reports/tracking.md
+index 4e106dd..bd6e88d 100644
+--- a/reports/tracking.md
++++ b/reports/tracking.md
+@@ -1,5 +1,11 @@
+ # Tracking status
+ 
++Oct15 real native same-image NVIDIA Optical Flow execution/lease smoke passes in
++the25-pass Windows/rig selection (one privilege skip). All48 owning contract cases and19
++schema comparisons pass. These establish native availability, not scientific accuracy,
++known-motion physical units or simultaneous experiment feedback acceptance.
++[Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). Live-camera diagnostics were prepared but not run: a separately opened GUI owns the current generation and permission to use/shut it down is pending. Native image-only/flow-only and missing-dependency camera cases remain open; no scientific accuracy or feedback claim.
++
+ Oct13 native NVIDIA same-image flow/lease smoke passes within the Windows backend
+ selection (1,520 passes/five symlink-privilege skips across owners). This checks native
+ lease/readback/closure, not scientific accuracy or camera/full-load feedback. Further
+diff --git a/reports/visual_stimulus.md b/reports/visual_stimulus.md
+index 2f87289..530c200 100644
+--- a/reports/visual_stimulus.md
++++ b/reports/visual_stimulus.md
+@@ -1,5 +1,30 @@
+ # Visual Stimulus status
+ 
++Oct15 encoder matrix completes31/31 cases:10s all-source warm-up plus three
++repetitions of five source combinations at CQ16/CQ23, each requesting60s of frames;
++all external counts and full decodes pass. Enabled camera dimensions/rates are
++Behavior1760x3000RGB24/30Hz and Tracking1588x1344gray/60Hz; synthetic Stimulus is
++1280x1000RGBA/60Hz. Actual FFmpeg GPU UUID is RTX2080Ti; matched FFmpeg/ffprobe9.0.2
++is selected process-locally, leaving default PATH4.3.2 unchanged. A separately opened
++application renderer appears on RTX5060Ti during r1-cameras-cq23 and thereafter;
++later cases are not an otherwise idle-machine benchmark. Raw commands, versions,
++formats, sizes and per-case timing are retained. Synthetic generation/conversion/NVENC
++does not prove live capture, cross-GPU readback/stdin, sustained synchronized full-path
++headroom, real-frame losses or animal-image quality. Eye remains disabled. CQ decisions
++and saved argument lists are unchanged. Direct zero-byte raw-input probes for both
++camera formats exit0 and finalize/synchronize small MP4s; these are not playable-video
++or runtime NO_FRAMES ownership/accounting acceptance. Initial read-only-handle fsync
++probe failure is retained; the corrected probe uses fresh paths.
++[Results and actual workload](runtime-evidence-2026-10-15/projector-free-rig/context.json).
++
++Oct15 projector-free verification finds stale derived prepared-trial JSON Schema
++still embedding superseded seam_check and reference-bar guide Width/Height fields. Regenerating from
++the retained canonical models under G01/V15 changes only that schema; all11 generated
++schemas match afterward and42 contract cases pass. No policy or calibration behavior
++changes. Native/source packages build; source archive contains both calibration GLBs.
++[Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). Projector rendering, readback, optical alignment and real-frame recording/drop
++acceptance remain deferred while outputs are powered off; synthetic encoding is separate.
++
+ Oct15 Git-sync integration retains the owner-approved local pixel-size/offset calibration
+ under [G01](../docs/architecture/gui.md#g01)/[V15](../docs/architecture/visual_stimulus.md#v15),
+ while preserving independent required scientific evidence, optional reduced review video,

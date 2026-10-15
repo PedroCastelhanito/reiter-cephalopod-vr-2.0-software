@@ -1092,7 +1092,8 @@
           "enum": [
             "reference_bars",
             "frame_grid",
-            "seam_check"
+            "photodiode_placement",
+            "blackout_placement"
           ],
           "title": "Calibration View",
           "type": "string"
@@ -3257,32 +3258,6 @@
           "exclusiveMinimum": 0,
           "title": "Y Length Px",
           "type": "integer"
-        },
-        "guide_width_px": {
-          "anyOf": [
-            {
-              "exclusiveMinimum": 0,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Guide Width Px"
-        },
-        "guide_height_px": {
-          "anyOf": [
-            {
-              "exclusiveMinimum": 0,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Guide Height Px"
         }
       },
       "required": [

@@ -51,6 +51,10 @@ def validate_setup_request(
     if not active:
         raise ValueError("acquisition Setup requires at least one enabled camera")
     tracking_required = tracking_backend_enabled(request.plan)
+    if tracking_required and (
+        identity.tracking.role != "tracking" or not identity.tracking.generation
+    ):
+        raise ValueError("enabled tracking backend has no launched Tracking identity")
     if tracking_required and camera.CAMERA_ROLE_TRACKING not in active:
         raise ValueError("enabled tracking backend requires the tracking camera")
     reserved_outputs = _acquisition_outputs(request, identity)

@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal, Protocol
 
+from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 from cephvr.visual_stimulus.config.models.program_model import Settings
 from cephvr.visual_stimulus.resources.media import ImagePixels
 
@@ -232,7 +233,7 @@ class RenderPort(Protocol):
         self,
         display: DisplayProfile,
         prepared: PreparedDisplayCalibration,
-        adjustments: dict[str, tuple[tuple[float, float], ...]],
+        adjustments: dict[str, tuple[tuple[float, float], ...]] | CalibrationPlacement,
     ) -> tuple[OutputActivity, ...]: ...
 
     def close_display_calibration(

@@ -1,0 +1,9 @@
+
+=================================== ERRORS ====================================
+________________ ERROR collecting tests/gui/test_dashboard.py _________________
+In tests/gui/test_dashboard.py::test_placement_bundle_uses_native_pixels_without_reference_measurements: function uses no argument 'empty'
+=========================== short test summary info ===========================
+ERROR tests/gui/test_dashboard.py - Failed: In tests/gui/test_dashboard.py::t...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 2.07s

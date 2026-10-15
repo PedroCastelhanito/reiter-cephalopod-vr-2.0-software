@@ -16,20 +16,6 @@ def validate_pulse_role(
 ) -> bool:
     camera = getattr(settings, role)
     enabled = camera.HasField("enabled") and camera.enabled
-    if (
-        role == "eye_tracking"
-        and enabled
-        and (
-            not camera.device.HasField("frame_timing")
-            or camera.device.frame_timing != camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
-        )
-    ):
-        issue(
-            result,
-            "backends.acquisition.eye_tracking",
-            "EYE_EXTERNAL_TRIGGER_REQUIRED",
-            "Eye tracking requires explicit external triggering",
-        )
     external = bool(
         enabled
         and camera.device.HasField("frame_timing")

@@ -1,0 +1,368 @@
+{
+  "scope": "Actual active trial only; GPU sampled1s; RSS growth is observed variation, not a leak diagnosis; processIO retained raw, physicaldiskthroughput unavailable",
+  "start_ns": 51079445712100,
+  "end_ns": 51139445712100,
+  "sample_count": 60,
+  "gpus": {
+    "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "epochs": {
+        "0": {
+          "gpu_percent": {
+            "count": 59,
+            "minimum": 10.0,
+            "mean": 10.779661016949152,
+            "maximum": 13.0,
+            "first": 11.0,
+            "last": 10.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "minimum": 0.0,
+            "mean": 0.0,
+            "maximum": 0.0,
+            "first": 0.0,
+            "last": 0.0
+          },
+          "memory_mib": {
+            "count": 59,
+            "minimum": 1414.0,
+            "mean": 1435.5762711864406,
+            "maximum": 1452.0,
+            "first": 1452.0,
+            "last": 1415.0
+          },
+          "power_w": {
+            "count": 59,
+            "minimum": 29.55,
+            "mean": 35.067966101694914,
+            "maximum": 35.57,
+            "first": 29.55,
+            "last": 35.51
+          }
+        }
+      }
+    },
+    "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+      "name": "NVIDIA GeForce RTX 2080 Ti",
+      "epochs": {
+        "0": {
+          "gpu_percent": {
+            "count": 59,
+            "minimum": 11.0,
+            "mean": 42.05084745762712,
+            "maximum": 54.0,
+            "first": 11.0,
+            "last": 42.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "minimum": 1.0,
+            "mean": 43.644067796610166,
+            "maximum": 60.0,
+            "first": 1.0,
+            "last": 44.0
+          },
+          "memory_mib": {
+            "count": 59,
+            "minimum": 1030.0,
+            "mean": 1030.0,
+            "maximum": 1030.0,
+            "first": 1030.0,
+            "last": 1030.0
+          },
+          "power_w": {
+            "count": 59,
+            "minimum": 89.45,
+            "mean": 91.60694915254237,
+            "maximum": 93.74,
+            "first": 89.79,
+            "last": 92.29
+          }
+        }
+      }
+    }
+  },
+  "processes": {
+    "10140:134365017558799141": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "name": "python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 4407296,
+        "mean": 4407296,
+        "maximum": 4407296,
+        "first": 4407296,
+        "last": 4407296
+      }
+    },
+    "26040:134365017559608210": {
+      "image": "C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe",
+      "name": "python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 15990784,
+        "mean": 15990784,
+        "maximum": 15990784,
+        "first": 15990784,
+        "last": 15990784
+      }
+    },
+    "7308:134365017560819897": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "name": "python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 4411392,
+        "mean": 4411392,
+        "maximum": 4411392,
+        "first": 4411392,
+        "last": 4411392
+      }
+    },
+    "856:134365017561961381": {
+      "image": "C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe",
+      "name": "python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 49684480,
+        "mean": 49684480,
+        "maximum": 49684480,
+        "first": 49684480,
+        "last": 49684480
+      }
+    },
+    "28988:134365017566338667": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+      "name": "cephvr-python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 48410624,
+        "mean": 48834150.4,
+        "maximum": 49029120,
+        "first": 49029120,
+        "last": 48467968
+      }
+    },
+    "26128:134365017569397252": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+      "name": "cephvr-python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 71106560,
+        "mean": 71895313.06666666,
+        "maximum": 71966720,
+        "first": 71966720,
+        "last": 71962624
+      }
+    },
+    "12696:134365017569472247": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+      "name": "cephvr-python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 57798656,
+        "mean": 57801523.2,
+        "maximum": 57802752,
+        "first": 57798656,
+        "last": 57802752
+      }
+    },
+    "25164:134365017569931352": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+      "name": "cephvr-python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 58675200,
+        "mean": 58675268.266666666,
+        "maximum": 58679296,
+        "first": 58675200,
+        "last": 58679296
+      }
+    },
+    "20984:134365017570373887": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+      "name": "cephvr-python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 243113984,
+        "mean": 243587072,
+        "maximum": 243810304,
+        "first": 243728384,
+        "last": 243523584
+      }
+    },
+    "27764:134365017574647980": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe",
+      "name": "cephvr-renderer.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 352866304,
+        "mean": 442637175.46666664,
+        "maximum": 625115136,
+        "first": 625115136,
+        "last": 389906432
+      }
+    },
+    "27216:134365022360317152": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "name": "python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 4321280,
+        "mean": 4329472,
+        "maximum": 4345856,
+        "first": 4345856,
+        "last": 4321280
+      }
+    },
+    "27780:134365022361998334": {
+      "image": "C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe",
+      "name": "python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 55668736,
+        "mean": 55819673.6,
+        "maximum": 55861248,
+        "first": 55668736,
+        "last": 55791616
+      }
+    },
+    "27988:134365022365686624": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "name": "python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 4321280,
+        "mean": 4329881.6,
+        "maximum": 4345856,
+        "first": 4345856,
+        "last": 4321280
+      }
+    },
+    "27524:134365022368747550": {
+      "image": "C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe",
+      "name": "python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 18821120,
+        "mean": 18985369.6,
+        "maximum": 19013632,
+        "first": 18821120,
+        "last": 18948096
+      }
+    },
+    "13776:134365022371621032": {
+      "image": "C:\\Windows\\System32\\nvidia-smi.exe",
+      "name": "nvidia-smi.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 32559104,
+        "mean": 32581632,
+        "maximum": 32620544,
+        "first": 32620544,
+        "last": 32559104
+      }
+    },
+    "16628:134365022380778502": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+      "name": "cephvr-python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 254328832,
+        "mean": 256455406.93333334,
+        "maximum": 270786560,
+        "first": 254328832,
+        "last": 256684032
+      }
+    },
+    "23696:134365022380850829": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+      "name": "cephvr-python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 203284480,
+        "mean": 204509798.4,
+        "maximum": 208683008,
+        "first": 205873152,
+        "last": 204505088
+      }
+    },
+    "5664:134365022381790587": {
+      "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+      "name": "cephvr-python.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 219303936,
+        "mean": 220626193.06666666,
+        "maximum": 222658560,
+        "first": 219303936,
+        "last": 221032448
+      }
+    },
+    "29376:134365022451615090": {
+      "image": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe",
+      "name": "ffmpeg.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 219844608,
+        "mean": 222183424,
+        "maximum": 225763328,
+        "first": 219844608,
+        "last": 225763328
+      }
+    },
+    "29564:134365022451724629": {
+      "image": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe",
+      "name": "ffmpeg.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 275943424,
+        "mean": 276724462.93333334,
+        "maximum": 277147648,
+        "first": 275943424,
+        "last": 277147648
+      }
+    },
+    "9764:134365022451805007": {
+      "image": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe",
+      "name": "ffmpeg.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 319053824,
+        "mean": 321712674.1333333,
+        "maximum": 322023424,
+        "first": 319053824,
+        "last": 321904640
+      }
+    },
+    "8764:134365022451925830": {
+      "image": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe",
+      "name": "ffmpeg.exe",
+      "rss_bytes": {
+        "count": 60,
+        "minimum": 286015488,
+        "mean": 299716198.4,
+        "maximum": 300040192,
+        "first": 286015488,
+        "last": 300040192
+      }
+    }
+  },
+  "free_bytes": {
+    "count": 60,
+    "minimum": 1404919558144,
+    "mean": 1405269820074.6667,
+    "maximum": 1405633216512,
+    "first": 1405633216512,
+    "last": 1404919558144
+  },
+  "sampling_ms": {
+    "count": 60,
+    "minimum": 9.5197,
+    "mean": 11.558178333333334,
+    "maximum": 13.8339,
+    "first": 12.3677,
+    "last": 13.8339
+  }
+}

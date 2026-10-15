@@ -1,0 +1,930 @@
+{
+  "format_version": 2,
+  "assets": [
+    {
+      "asset_id": "gaussian35",
+      "logical_path": "media/textures/gaussian-noise/GaussianNoise_scale_35_primary_color_0.7_secondary_color_0.00.texture.json",
+      "color_override": null,
+      "profile": "cephvr1_texture_json_v1"
+    },
+    {
+      "asset_id": "circular",
+      "logical_path": "media/arenas/open-loop-engineering/arena-unlit-engineering.glb",
+      "color_override": null,
+      "profile": "glb2_static_unlit_v1"
+    }
+  ],
+  "instances": [
+    {
+      "instance_id": "front",
+      "family": "texture"
+    },
+    {
+      "instance_id": "left",
+      "family": "texture"
+    },
+    {
+      "instance_id": "right",
+      "family": "texture"
+    },
+    {
+      "instance_id": "bottom",
+      "family": "texture"
+    },
+    {
+      "instance_id": "arena",
+      "family": "arena"
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "textures",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": [
+        "front",
+        "left",
+        "right",
+        "bottom"
+      ]
+    },
+    {
+      "scene_id": "arena",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": "arena",
+      "layer_instance_ids": []
+    }
+  ],
+  "input_channels": [],
+  "duration": {
+    "kind": "explicit_epochs"
+  },
+  "sequence": [
+    {
+      "kind": "epoch",
+      "epoch_id": "linked_translation",
+      "batch_label": "",
+      "batch_id": null,
+      "subgroup_draft": null,
+      "scene_id": "textures",
+      "duration": {
+        "kind": "fixed",
+        "duration": {
+          "seconds": "40"
+        }
+      },
+      "settings": [
+        {
+          "instance_id": "front",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "front",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 0.0,
+            "y": 0.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "linked_to": "bottom",
+          "kind": "texture",
+          "pattern": {
+            "kind": "image_tile",
+            "asset_id": "gaussian35",
+            "period_x": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "period_y": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "sampling": "linear"
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "hold"
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "left",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "left",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 0.0,
+            "y": 0.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "linked_to": "bottom",
+          "kind": "texture",
+          "pattern": {
+            "kind": "image_tile",
+            "asset_id": "gaussian35",
+            "period_x": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "period_y": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "sampling": "linear"
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "hold"
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "right",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "right",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 0.0,
+            "y": 0.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "linked_to": "bottom",
+          "kind": "texture",
+          "pattern": {
+            "kind": "image_tile",
+            "asset_id": "gaussian35",
+            "period_x": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "period_y": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "sampling": "linear"
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "hold"
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "bottom",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "bottom",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 0.0,
+            "y": 0.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "linked_to": null,
+          "kind": "texture",
+          "pattern": {
+            "kind": "image_tile",
+            "asset_id": "gaussian35",
+            "period_x": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "period_y": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "sampling": "linear"
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "hold"
+          },
+          "phase_y": {
+            "kind": "rate",
+            "function": {
+              "kind": "constant",
+              "value": -0.2
+            }
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        }
+      ],
+      "repetition_rules": [],
+      "repetition_settings": []
+    },
+    {
+      "kind": "epoch",
+      "epoch_id": "linked_rotation",
+      "batch_label": "",
+      "batch_id": null,
+      "subgroup_draft": null,
+      "scene_id": "textures",
+      "duration": {
+        "kind": "fixed",
+        "duration": {
+          "seconds": "40"
+        }
+      },
+      "settings": [
+        {
+          "instance_id": "front",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "front",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 0.0,
+            "y": 0.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "linked_to": "bottom",
+          "kind": "texture",
+          "pattern": {
+            "kind": "image_tile",
+            "asset_id": "gaussian35",
+            "period_x": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "period_y": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "sampling": "linear"
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "hold"
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "left",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "left",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 0.0,
+            "y": 0.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "linked_to": "bottom",
+          "kind": "texture",
+          "pattern": {
+            "kind": "image_tile",
+            "asset_id": "gaussian35",
+            "period_x": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "period_y": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "sampling": "linear"
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "hold"
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "right",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "right",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 0.0,
+            "y": 0.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "linked_to": "bottom",
+          "kind": "texture",
+          "pattern": {
+            "kind": "image_tile",
+            "asset_id": "gaussian35",
+            "period_x": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "period_y": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "sampling": "linear"
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "hold"
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "bottom",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "bottom",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 6.499999999999986,
+            "y": 0.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 1000.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "rate",
+              "function": {
+                "kind": "constant",
+                "value": 8.0
+              }
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "linked_to": null,
+          "kind": "texture",
+          "pattern": {
+            "kind": "image_tile",
+            "asset_id": "gaussian35",
+            "period_x": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "period_y": {
+              "kind": "constant",
+              "value": 104.0
+            },
+            "sampling": "linear"
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "hold"
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        }
+      ],
+      "repetition_rules": [],
+      "repetition_settings": []
+    },
+    {
+      "kind": "epoch",
+      "epoch_id": "arena_rotation",
+      "batch_label": "",
+      "batch_id": null,
+      "subgroup_draft": null,
+      "scene_id": "arena",
+      "duration": {
+        "kind": "fixed",
+        "duration": {
+          "seconds": "40"
+        }
+      },
+      "settings": [
+        {
+          "kind": "arena",
+          "instance_id": "arena",
+          "asset_id": "circular",
+          "world_frame_id": "arena-mm",
+          "asset_to_world": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "initial": {
+            "position_mm": [
+              0.0,
+              0.0
+            ],
+            "yaw_deg": 0.0
+          },
+          "fixed_height_mm": 0.0,
+          "fixed_pitch_deg": 0.0,
+          "fixed_roll_deg": 0.0,
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "yaw": {
+              "kind": "rate",
+              "function": {
+                "kind": "constant",
+                "value": 12.0
+              }
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": []
+        }
+      ],
+      "repetition_rules": [],
+      "repetition_settings": []
+    }
+  ]
+}

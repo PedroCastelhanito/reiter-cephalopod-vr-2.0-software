@@ -169,6 +169,7 @@ def make_calibration_glb(
     screens: Mapping[str, list[Point]],
     *,
     spacing_mm: float = 10.0,
+    raster_sizes: Mapping[str, tuple[int, int]] | None = None,
 ) -> bytes:
     """Create a solid physical grid, border and screen name for each rig surface."""
     if not math.isfinite(spacing_mm) or spacing_mm <= 0:
@@ -207,7 +208,19 @@ def make_calibration_glb(
             )
 
         mesh.quad(tuple(corners), dark)  # type: ignore[arg-type]
-        add_face_guides(mesh, face, at, origin, u, v, normal, width, height, spacing_mm)
+        add_face_guides(
+            mesh,
+            face,
+            at,
+            origin,
+            u,
+            v,
+            normal,
+            width,
+            height,
+            spacing_mm,
+            raster_size=None if raster_sizes is None else raster_sizes[face],
+        )
 
     return _pack_glb(mesh)
 

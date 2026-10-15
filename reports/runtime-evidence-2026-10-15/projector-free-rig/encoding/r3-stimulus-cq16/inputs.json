@@ -1,0 +1,34 @@
+{
+  "profiles": {
+    "behavioral": {
+      "width": 1760,
+      "height": 3000,
+      "fps": 30.0,
+      "input_pixel_format": "rgb24"
+    },
+    "tracking": {
+      "width": 1588,
+      "height": 1344,
+      "fps": 60.0,
+      "input_pixel_format": "gray"
+    },
+    "stimulus": {
+      "width": 1280,
+      "height": 1000,
+      "fps": 60,
+      "input_pixel_format": "rgba"
+    }
+  },
+  "sources": [
+    "stimulus"
+  ],
+  "cq": 16,
+  "gpu_ordinal": 1,
+  "seconds": 60,
+  "scope": "synthetic lavfi encoder throughput, not capture/pipes or scientific fidelity",
+  "tool_paths": {
+    "ffmpeg": "C:\\Dev\\software\\ffmpeg-9.0.2-essentials_build\\bin\\ffmpeg.EXE",
+    "ffprobe": "C:\\Dev\\software\\ffmpeg-9.0.2-essentials_build\\bin\\ffprobe.EXE",
+    "nvidia-smi": "C:\\WINDOWS\\system32\\nvidia-smi.EXE"
+  }
+}

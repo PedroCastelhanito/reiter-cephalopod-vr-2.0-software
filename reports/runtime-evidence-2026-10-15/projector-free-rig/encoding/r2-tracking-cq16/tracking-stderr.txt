@@ -1,0 +1,15 @@
+Input #0, lavfi, from 'testsrc2=size=1588x1344:rate=60.0,format=gray':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, gray, 1588x1344 [SAR 1:1 DAR 397:336], 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\rig-encoding-current\r2-tracking-cq16\tracking.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High) (avc1 / 0x31637661), yuv420p(pc, bt709/unknown/unknown, progressive), 1588x1344 [SAR 1:1 DAR 397:336], q=2-31, 60 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=  129 fps=0.0 q=9.0 size=       0KiB time=00:00:02.15 bitrate=   0.1kbits/s speed=4.14x elapsed=0:00:00.51    frame=  359 fps=350 q=9.0 size=   14080KiB time=00:00:05.98 bitrate=19277.5kbits/s speed=5.84x elapsed=0:00:01.02    frame=  600 fps=386 q=9.0 size=   28160KiB time=00:00:10.00 bitrate=23068.7kbits/s speed=6.43x elapsed=0:00:01.55    frame=  837 fps=403 q=9.0 size=   42496KiB time=00:00:13.95 bitrate=24955.4kbits/s speed=6.72x elapsed=0:00:02.07    frame= 1076 fps=414 q=9.0 size=   56832KiB time=00:00:17.93 bitrate=25961.0kbits/s speed=6.89x elapsed=0:00:02.60    frame= 1307 fps=420 q=9.0 size=   71168KiB time=00:00:21.78 bitrate=26764.0kbits/s speed=7.01x elapsed=0:00:03.10    frame= 1538 fps=425 q=9.0 size=   85248KiB time=00:00:25.63 bitrate=27243.9kbits/s speed=7.09x elapsed=0:00:03.61    frame= 1776 fps=429 q=9.0 size=   99584KiB time=00:00:29.60 bitrate=27560.6kbits/s speed=7.15x elapsed=0:00:04.14    frame= 2008 fps=432 q=9.0 size=  113920KiB time=00:00:33.46 bitrate=27885.4kbits/s speed= 7.2x elapsed=0:00:04.65    frame= 2245 fps=434 q=9.0 size=  113920KiB time=00:00:37.41 bitrate=24941.6kbits/s speed=7.23x elapsed=0:00:05.17    frame= 2477 fps=436 q=9.0 size=  128256KiB time=00:00:41.28 bitrate=25450.3kbits/s speed=7.27x elapsed=0:00:05.68    frame= 2715 fps=438 q=9.0 size=  142336KiB time=00:00:45.25 bitrate=25768.3kbits/s speed=7.29x elapsed=0:00:06.20    frame= 2952 fps=439 q=9.0 size=  156672KiB time=00:00:49.20 bitrate=26086.5kbits/s speed=7.31x elapsed=0:00:06.72    frame= 3183 fps=440 q=9.0 size=  171008KiB time=00:00:53.05 bitrate=26407.1kbits/s speed=7.33x elapsed=0:00:07.23    frame= 3415 fps=441 q=9.0 size=  185088KiB time=00:00:56.91 bitrate=26639.7kbits/s speed=7.35x elapsed=0:00:07.74    [out#0/mp4 @ 0000021df4d8adc0] video:205277KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.008186%
+frame= 3600 fps=442 q=9.0 Lsize=  205294KiB time=00:01:00.00 bitrate=28029.5kbits/s speed=7.36x elapsed=0:00:08.15    

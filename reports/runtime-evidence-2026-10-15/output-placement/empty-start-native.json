@@ -1,0 +1,7 @@
+{
+  "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "initial_black_exact": true,
+  "first_complete_pulse_exact": true,
+  "scope": "Isolated production output-pixel helper; no application/projector interaction",
+  "method": "Draw initial snapshot with no pulse, verify all RGB bytes zero; validate complete update, verify exact white30x20 rectangle at80,60 and black elsewhere"
+}

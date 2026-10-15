@@ -1,0 +1,29 @@
+{
+  "observed_utc": "2026-10-15T03:12:26.452872+00:00",
+  "head": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "checks": {
+    "acquisition_passed": 486,
+    "deselected": 2,
+    "focused_passed": 18,
+    "ruff": "pass3files",
+    "format": "pass3files",
+    "mypy_win32": "pass2sources",
+    "boundaries": "695modules0violations",
+    "diff_check": "pass"
+  },
+  "review": "Astra accepted exact interrupt route and latestGUIcalibration; nativegate pending",
+  "files": [
+    {
+      "path": "src/cephvr/acquisition/coordinator/evidence_cleanup.py",
+      "sha256": "14da4b86b1c8f82cd55de780aeedbd90e5d5ee7107f2742bfd52c9c4d62a831f"
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/evidence_lifecycle.py",
+      "sha256": "222dc0419ad4bc7aafd3d4b1969436f356abed9cde45dda2473365392ce778cd"
+    },
+    {
+      "path": "tests/acquisition/test_trial_lifecycle.py",
+      "sha256": "5ae70a4fd8bf2511a9748511808cde221b5180da0a6214531723c340098f04ed"
+    }
+  ]
+}

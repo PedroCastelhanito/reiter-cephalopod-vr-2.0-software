@@ -1,0 +1,63 @@
+START warmup
+DONE warmup exit 0
+START r1-behavioral-cq16
+DONE r1-behavioral-cq16 exit 0
+START r1-behavioral-cq23
+DONE r1-behavioral-cq23 exit 0
+START r1-tracking-cq16
+DONE r1-tracking-cq16 exit 0
+START r1-tracking-cq23
+DONE r1-tracking-cq23 exit 0
+START r1-stimulus-cq16
+DONE r1-stimulus-cq16 exit 0
+START r1-stimulus-cq23
+DONE r1-stimulus-cq23 exit 0
+START r1-cameras-cq16
+DONE r1-cameras-cq16 exit 0
+START r1-cameras-cq23
+DONE r1-cameras-cq23 exit 0
+START r1-all-cq16
+DONE r1-all-cq16 exit 0
+START r1-all-cq23
+DONE r1-all-cq23 exit 0
+START r2-behavioral-cq23
+DONE r2-behavioral-cq23 exit 0
+START r2-behavioral-cq16
+DONE r2-behavioral-cq16 exit 0
+START r2-tracking-cq23
+DONE r2-tracking-cq23 exit 0
+START r2-tracking-cq16
+DONE r2-tracking-cq16 exit 0
+START r2-stimulus-cq23
+DONE r2-stimulus-cq23 exit 0
+START r2-stimulus-cq16
+DONE r2-stimulus-cq16 exit 0
+START r2-cameras-cq23
+DONE r2-cameras-cq23 exit 0
+START r2-cameras-cq16
+DONE r2-cameras-cq16 exit 0
+START r2-all-cq23
+DONE r2-all-cq23 exit 0
+START r2-all-cq16
+DONE r2-all-cq16 exit 0
+START r3-behavioral-cq16
+DONE r3-behavioral-cq16 exit 0
+START r3-behavioral-cq23
+DONE r3-behavioral-cq23 exit 0
+START r3-tracking-cq16
+DONE r3-tracking-cq16 exit 0
+START r3-tracking-cq23
+DONE r3-tracking-cq23 exit 0
+START r3-stimulus-cq16
+DONE r3-stimulus-cq16 exit 0
+START r3-stimulus-cq23
+DONE r3-stimulus-cq23 exit 0
+START r3-cameras-cq16
+DONE r3-cameras-cq16 exit 0
+START r3-cameras-cq23
+DONE r3-cameras-cq23 exit 0
+START r3-all-cq16
+DONE r3-all-cq16 exit 0
+START r3-all-cq23
+DONE r3-all-cq23 exit 0
+MATRIX COMPLETE

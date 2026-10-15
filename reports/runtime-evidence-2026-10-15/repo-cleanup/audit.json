@@ -1,0 +1,24 @@
+{
+  "files": 2064,
+  "bytes": 276810965.0,
+  "categories": [
+    {
+      "Name": "Completed regenerable test fixture",
+      "Count": 1653
+    },
+    {
+      "Name": "Exact duplicate of retained dated evidence/package",
+      "Count": 395
+    },
+    {
+      "Name": "Obsolete completed one-shot documentation editor; final documents and LOG retained",
+      "Count": 13
+    },
+    {
+      "Name": "Passed regenerable 10-second lavfi warm-up; original command/count/decode metadata retained",
+      "Count": 3
+    }
+  ],
+  "warmup_metadata_to_retain": 14,
+  "preserved": "Source, config, .git, .venv, generated/native runtime components, FFmpeg toolchain, merge backup, real recordings/emergency reports, recent root caches and active placement artifacts"
+}

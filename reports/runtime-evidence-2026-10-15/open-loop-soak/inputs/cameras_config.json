@@ -1,0 +1,42 @@
+{
+  "format": "cephvr-cameras-config",
+  "version": 1,
+  "cameras": [
+    {
+      "serial": "40065509",
+      "role": "Behavior cam",
+      "enabled": true,
+      "values": {
+        "trigger_clock": "External controller",
+        "trigger_source": "Line4",
+        "pfs_imported": "yes",
+        "preset": "C:/Data/projects/reiter-cephalopod-vr/cephvr-assets/camera-configs/a2A1920-160ucPRO_40065509_BehavCam_HeadFixed.pfs",
+        "trigger_frequency_hz": "30"
+      }
+    },
+    {
+      "serial": "40278236",
+      "role": "Eye tracking",
+      "enabled": true,
+      "values": {
+        "trigger_frequency_hz": "60",
+        "preset": "C:/Data/projects/reiter-cephalopod-vr/cephvr-assets/camera-configs/a2A1920-160ucPRO_40278236_Eye.pfs",
+        "pfs_imported": "no",
+        "trigger_source": "Software",
+        "trigger_clock": "Internal clock"
+      }
+    },
+    {
+      "serial": "40747103",
+      "role": "Tracking cam",
+      "enabled": true,
+      "values": {
+        "trigger_clock": "External controller",
+        "trigger_source": "Line2",
+        "pfs_imported": "yes",
+        "preset": "C:/Data/projects/reiter-cephalopod-vr/cephvr-assets/camera-configs/a2A2464-77umPRO_40747103_BehaviorSquid.pfs",
+        "trigger_frequency_hz": "60"
+      }
+    }
+  ]
+}

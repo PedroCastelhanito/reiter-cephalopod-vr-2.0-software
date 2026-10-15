@@ -1,0 +1,503 @@
+{
+  "directory": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-104735",
+  "videos": {
+    "protocol-data\\DUMMY_104743_behavioral_cam.mp4": {
+      "size_bytes": 103809112,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f40032",
+            "width": 1760,
+            "height": 1716,
+            "coded_width": 1760,
+            "coded_height": 1728,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "40:39",
+            "pix_fmt": "yuvj444p",
+            "level": 50,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 1090560,
+            "duration": "71.000000",
+            "bit_rate": "11704946",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "30",
+            "nb_read_frames": "2128",
+            "extradata_size": 66,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-104735\\protocol-data\\DUMMY_104743_behavioral_cam.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "71.000000",
+          "size": "103809112",
+          "bit_rate": "11696801",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "isom",
+            "minor_version": "512",
+            "compatible_brands": "isomiso6iso2avc1mp41",
+            "cephvr_identity_version": "1",
+            "cephvr_session_id": "2b6f8c39-5a11-42ad-8346-5488cdebcf50",
+            "cephvr_trial_id": "dfc14cfd-d0da-46b5-8554-a06104a671c6",
+            "cephvr_camera_role": "behavioral",
+            "cephvr_device_id": "40065509",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "[h264 @ 000001bfc7a6a400] Invalid NAL unit size (46100 > 1182).\n[h264 @ 000001bfc7a6a400] missing picture in access unit with size 1198\n[h264 @ 000001bfc7a665c0] Invalid NAL unit size (46100 > 1182).\n[h264 @ 000001bfc7a665c0] Error splitting the input into NAL units.\n",
+      "decode_exit": 0,
+      "decode_error": "[h264 @ 0000020aa41723c0] Invalid NAL unit size (46100 > 1182).\n[h264 @ 0000020aa41723c0] missing picture in access unit with size 1198\n[h264 @ 0000020aa5e900c0] Invalid NAL unit size (46100 > 1182).\n[h264 @ 0000020aa5e900c0] Error splitting the input into NAL units.\n[vist#0:0/h264 @ 0000020aa416e480] [dec:h264 @ 0000020aa4174a00] Decoding error: Invalid data found when processing input\n"
+    },
+    "protocol-data\\DUMMY_104743_eye_tracking_cam.mp4": {
+      "size_bytes": 632553560,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f40032",
+            "width": 1920,
+            "height": 1200,
+            "coded_width": 1920,
+            "coded_height": 1200,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "8:5",
+            "pix_fmt": "yuvj444p",
+            "level": 50,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 1090560,
+            "duration": "71.000000",
+            "bit_rate": "71286668",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "60",
+            "nb_read_frames": "4259",
+            "extradata_size": 65,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-104735\\protocol-data\\DUMMY_104743_eye_tracking_cam.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "71.000000",
+          "size": "632553560",
+          "bit_rate": "71273640",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "isom",
+            "minor_version": "512",
+            "compatible_brands": "isomiso6iso2avc1mp41",
+            "cephvr_identity_version": "1",
+            "cephvr_session_id": "2b6f8c39-5a11-42ad-8346-5488cdebcf50",
+            "cephvr_trial_id": "dfc14cfd-d0da-46b5-8554-a06104a671c6",
+            "cephvr_camera_role": "eye_tracking",
+            "cephvr_device_id": "40278236",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "[h264 @ 000001efea30dc40] Invalid NAL unit size (148055 > 5596).\n[h264 @ 000001efea30dc40] missing picture in access unit with size 5612\n[h264 @ 000001efea2913c0] Invalid NAL unit size (148055 > 5596).\n[h264 @ 000001efea2913c0] Error splitting the input into NAL units.\n",
+      "decode_exit": 0,
+      "decode_error": "[h264 @ 000002acdae1da40] Invalid NAL unit size (148055 > 5596).\n[h264 @ 000002acdae1da40] missing picture in access unit with size 5612\n[h264 @ 000002acd86fe740] Invalid NAL unit size (148055 > 5596).\n[h264 @ 000002acd86fe740] Error splitting the input into NAL units.\n[vist#0:0/h264 @ 000002acd8681c80] [dec:h264 @ 000002acdae1e200] Decoding error: Invalid data found when processing input\n"
+    },
+    "protocol-data\\DUMMY_104743_stimulus.mp4": {
+      "size_bytes": 92504409,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f4002a",
+            "width": 1280,
+            "height": 1000,
+            "coded_width": 1280,
+            "coded_height": 1008,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "32:25",
+            "pix_fmt": "yuvj444p",
+            "level": 42,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 1101824,
+            "duration": "71.733333",
+            "bit_rate": "10313412",
+            "bits_per_raw_sample": "8",
+            "nb_read_frames": "4304",
+            "extradata_size": 66,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-104735\\protocol-data\\DUMMY_104743_stimulus.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "71.733333",
+          "size": "92504409",
+          "bit_rate": "10316476",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "iso5",
+            "minor_version": "512",
+            "compatible_brands": "iso5iso6mp41",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    },
+    "protocol-data\\DUMMY_104743_tracking_cam.mp4": {
+      "size_bytes": 1159614,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f4002a",
+            "width": 1588,
+            "height": 1344,
+            "coded_width": 1600,
+            "coded_height": 1344,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "397:336",
+            "pix_fmt": "yuvj444p",
+            "level": 42,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 1101312,
+            "duration": "71.700000",
+            "bit_rate": "124258",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "4302",
+            "nb_read_frames": "4302",
+            "extradata_size": 66,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-104735\\protocol-data\\DUMMY_104743_tracking_cam.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "71.700000",
+          "size": "1159614",
+          "bit_rate": "129385",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "isom",
+            "minor_version": "512",
+            "compatible_brands": "isomiso6iso2avc1mp41",
+            "cephvr_identity_version": "1",
+            "cephvr_session_id": "2b6f8c39-5a11-42ad-8346-5488cdebcf50",
+            "cephvr_trial_id": "dfc14cfd-d0da-46b5-8554-a06104a671c6",
+            "cephvr_camera_role": "tracking",
+            "cephvr_device_id": "40747103",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    }
+  },
+  "frame_logs": {
+    "protocol-data\\DUMMY_104743_behavioral_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 2137,
+        "video_frame": 2140
+      },
+      "received_frames": 2137,
+      "invalid_images": 0,
+      "source_dropped_flags": 7,
+      "source_dispositions": {
+        "real": 2130,
+        "same_slot_omission": 7
+      },
+      "video_dispositions": {
+        "leading_duplicate": 1,
+        "real": 2130,
+        "interior_duplicate": 9
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 51297683263900,
+      "last_source_ns": 51368934563400,
+      "final_records": {},
+      "completion_present": false
+    },
+    "protocol-data\\DUMMY_104743_eye_tracking_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 4275,
+        "video_frame": 4278
+      },
+      "received_frames": 4275,
+      "invalid_images": 0,
+      "source_dropped_flags": 2,
+      "source_dispositions": {
+        "real": 4273,
+        "same_slot_omission": 2
+      },
+      "video_dispositions": {
+        "leading_duplicate": 3,
+        "real": 4273,
+        "interior_duplicate": 2
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 51297687017100,
+      "last_source_ns": 51368922993500,
+      "final_records": {},
+      "completion_present": false
+    },
+    "protocol-data\\DUMMY_104743_stimulus_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "render_group": 4304,
+        "clipping": 17216,
+        "group_update": 8606
+      },
+      "received_frames": 0,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {},
+      "video_dispositions": {},
+      "render_groups": 4304,
+      "initial_capture_dispositions": {
+        "admitted": 4302,
+        "same_slot_omission": 2
+      },
+      "first_source_ns": 51297626797900,
+      "last_source_ns": 51369325887700,
+      "final_records": {},
+      "completion_present": false
+    },
+    "protocol-data\\DUMMY_104743_tracking_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 4298,
+        "video_frame": 4302
+      },
+      "received_frames": 4298,
+      "invalid_images": 0,
+      "source_dropped_flags": 14,
+      "source_dispositions": {
+        "real": 4284,
+        "same_slot_omission": 14
+      },
+      "video_dispositions": {
+        "leading_duplicate": 1,
+        "real": 4284,
+        "interior_duplicate": 17
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 51297651801600,
+      "last_source_ns": 51369320014800,
+      "final_records": {},
+      "completion_present": false
+    }
+  },
+  "recording_metrics": [],
+  "errors": [
+    "protocol-data\\DUMMY_104743_behavioral_cam.mp4: probe/decode failed; inspect video diagnostics",
+    "protocol-data\\DUMMY_104743_eye_tracking_cam.mp4: probe/decode failed; inspect video diagnostics"
+  ]
+}

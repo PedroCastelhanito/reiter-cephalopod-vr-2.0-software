@@ -1,0 +1,11 @@
+ M LOG.md
+ M TODO.md
+ M contracts/visual_stimulus/prepared-trial.schema.json
+ M reports/acquisition.md
+ M reports/rig-verification.md
+ M reports/runtime.md
+ M reports/tracking.md
+ M reports/visual_stimulus.md
+?? reports/emergency-45402761645100-db999d84-70d7-4a14-88ca-af2dc56df950.json
+?? reports/runtime-evidence-2026-10-15/projector-free-rig/
+?? reports/runtime-evidence-2026-10-15/todo-projectors-off/

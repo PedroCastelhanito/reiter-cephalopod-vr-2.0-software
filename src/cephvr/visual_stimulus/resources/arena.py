@@ -14,7 +14,13 @@ from cephvr.visual_stimulus.config.models.artifact_models import (
 )
 from cephvr.visual_stimulus.config.models.program_model import Asset, ColorOverride
 
-from .assets import PreparedAsset, PreparedAssetSet, ProtectedSource, prepare_assets
+from .assets import (
+    PreparedAsset,
+    PreparedAssetSet,
+    ProtectedSource,
+    arena_subresource_id,
+    prepare_assets,
+)
 from .budget import PreparationBudget, arena_texture_bytes
 from .glb import GLBScene, parse_glb
 from .media import ImagePixels, decode_image
@@ -73,7 +79,9 @@ def prepare_arena(
             data = dependencies[logical].data
             assert data is not None
             return data
-        resource_id = f"{authored.asset_id}:dependency:{len(dependencies)}"
+        resource_id = arena_subresource_id(
+            authored.asset_id, "dependency", len(dependencies)
+        )
         dependency = Asset(
             asset_id=resource_id,
             logical_path=logical,
@@ -127,7 +135,7 @@ def prepare_arena(
         textures = {}
         for index, texture in enumerate(scene.textures):
             budget.check_cancelled_or_expired()
-            key = f"{authored.asset_id}:texture:{index}"
+            key = arena_subresource_id(authored.asset_id, "texture", index)
 
             def reserve(
                 width: int,
@@ -179,7 +187,7 @@ def prepare_arena(
                     profile_id=profile,
                     dependencies=tuple(item.asset_id for item in dependencies.values()),
                     interpretation=Interpretation(
-                        interpretation_id=f"{key}:source",
+                        interpretation_id=f"{key}-source",
                         width=pixels.width,
                         height=pixels.height,
                         source_component_bits=tuple(

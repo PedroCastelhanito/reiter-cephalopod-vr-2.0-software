@@ -1,0 +1,41 @@
+{
+  "mode": "textures60",
+  "label": "textures60-r1",
+  "events": [
+    {
+      "label": "initial_session",
+      "host_monotonic_ns": 49195907876700,
+      "value": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      }
+    },
+    {
+      "label": "participants",
+      "host_monotonic_ns": 49195908294300,
+      "value": []
+    },
+    {
+      "label": "UpdateConfiguration",
+      "host_monotonic_ns": 49195924399000,
+      "value": {
+        "command_id": "c64c10e7-1605-4988-96bb-0983eae331d2",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": "",
+        "elapsed_ns": 13813100
+      }
+    },
+    {
+      "label": "error",
+      "host_monotonic_ns": 49196162256000,
+      "value": "ClientError: REJECTED: recording root must be an existing non-symlink directory"
+    },
+    {
+      "label": "monitor_exit",
+      "host_monotonic_ns": 49196514633900,
+      "value": 0
+    }
+  ],
+  "controller_generation": "2075ad30-6c12-4a8b-8d94-99d592320474"
+}

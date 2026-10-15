@@ -238,3 +238,20 @@ the frame/grid is active. Invalid partial input is retained; legacy fractional v
 sizes are rounded on migration and raw measurements retain full precision.
 
 The draft valid-area values continue to save through the existing Projectors file.
+
+
+Live output placement uses V01's sessionless diagnostic commands, without changing
+this portable file format. Synchronization exposes Launch photodiode placement
+(V22 bright/dark pulse sequence on black) and Launch blackout placement (black zones on gray).
+Only one calibration view may be open. Relevant target/rectangle fields or zone
+add/remove edits are debounced while visible; incomplete or out-of-bounds input
+retains the last confirmed image. Closing restores Idle; the accepted configuration
+revision stays fixed while edits remain in the existing local draft for later Apply.
+Live Frame/Pulse edits preserve the running diagnostic sequence; reopening restarts it.
+Unknown state leaves Close available with tuning disabled. These previews check
+placement, not optical timing or signal levels.
+
+An empty/incomplete initial photodiode definition does not block placement launch:
+open on black with no marker, enable its existing target/Frame/Pulse fields, and
+show the pulse once the draft is complete and in bounds. Do not invent or persist
+a default rectangle. Later incomplete edits retain the last confirmed projection.

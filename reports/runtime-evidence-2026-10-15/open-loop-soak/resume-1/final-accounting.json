@@ -1,0 +1,547 @@
+{
+  "scope": "Observed baseline900 versus camera-lossless60; different scene duration and time, not a controlled bitrate comparison",
+  "runs": {
+    "combined900-final-r1": {
+      "seconds": 900,
+      "sources": {
+        "protocol-data\\DUMMY_125417_behavioral_cam_frames.jsonl": {
+          "completion": {
+            "completion": {
+              "type": "completion",
+              "outcome": "completed",
+              "timing": {
+                "recording_end_monotonic_ns": 59790835301100,
+                "first_recorded_frame_id": 0,
+                "final_received_frame_count": 26979,
+                "accounting_complete": true
+              },
+              "video": {
+                "recorded_frame_count": 27000,
+                "selected_source_frame_count": 26945,
+                "duplicate_frame_count": 55
+              },
+              "pulses": {
+                "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+                "on_dispatched_monotonic_ns": 58890847815100,
+                "on_acknowledged_monotonic_ns": 58890874356900,
+                "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+                "off_dispatched_monotonic_ns": 59790841361000,
+                "off_acknowledged_monotonic_ns": 59790867169800
+              },
+              "post_cutoff": {
+                "accounting_complete": true,
+                "excluded_frame_count": 2,
+                "last_native_counter": 26980
+              },
+              "transport_summary": {
+                "buffer_underruns": null,
+                "failed_buffers": 0,
+                "missed_frames": 0,
+                "resend_requests": null,
+                "resend_packets": null,
+                "resynchronizations": 0
+              },
+              "diagnostics": [
+                {
+                  "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                  "count": 1,
+                  "first_observed_monotonic_ns": 58890902636500,
+                  "last_observed_monotonic_ns": 58890902636500,
+                  "first_frame_id": 0,
+                  "details": "optional native timestamp is unavailable"
+                }
+              ]
+            }
+          },
+          "dispositions": {
+            "real": 26945,
+            "same_slot_omission": 34
+          },
+          "source_id_gaps": [],
+          "native_counter_gaps": [],
+          "invalid": 0,
+          "submissions": {},
+          "render_group_gaps": []
+        },
+        "protocol-data\\DUMMY_125417_eye_tracking_cam_frames.jsonl": {
+          "completion": {
+            "completion": {
+              "type": "completion",
+              "outcome": "completed",
+              "timing": {
+                "recording_end_monotonic_ns": 59790835301100,
+                "first_recorded_frame_id": 0,
+                "final_received_frame_count": 53994,
+                "accounting_complete": true
+              },
+              "video": {
+                "recorded_frame_count": 54000,
+                "selected_source_frame_count": 53807,
+                "duplicate_frame_count": 193
+              },
+              "pulses": {
+                "on_outcome": null,
+                "on_dispatched_monotonic_ns": null,
+                "on_acknowledged_monotonic_ns": null,
+                "off_outcome": null,
+                "off_dispatched_monotonic_ns": null,
+                "off_acknowledged_monotonic_ns": null
+              },
+              "post_cutoff": {
+                "accounting_complete": true,
+                "excluded_frame_count": 3,
+                "last_native_counter": 53996
+              },
+              "transport_summary": {
+                "buffer_underruns": null,
+                "failed_buffers": 0,
+                "missed_frames": 0,
+                "resend_requests": null,
+                "resend_packets": null,
+                "resynchronizations": 0
+              },
+              "diagnostics": [
+                {
+                  "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                  "count": 1,
+                  "first_observed_monotonic_ns": 58890907687500,
+                  "last_observed_monotonic_ns": 58890907687500,
+                  "first_frame_id": 0,
+                  "details": "optional native timestamp is unavailable"
+                }
+              ]
+            }
+          },
+          "dispositions": {
+            "real": 53807,
+            "same_slot_omission": 187
+          },
+          "source_id_gaps": [],
+          "native_counter_gaps": [],
+          "invalid": 0,
+          "submissions": {},
+          "render_group_gaps": []
+        },
+        "protocol-data\\DUMMY_125417_stimulus_frames.jsonl": {
+          "completion": {
+            "encoder_outcome": {
+              "kind": "encoder_outcome",
+              "admitted_count": 53389,
+              "input_submitted_count": 54000,
+              "capacity_drop_count": 1,
+              "selected_real_count": 53389,
+              "same_slot_omission_count": 598,
+              "encoded_frame_count": 54000,
+              "duplicate_frame_count": 611,
+              "final_input_group_id": 53987,
+              "cutoff_host_ns": 59790835301100,
+              "exit_code": 0,
+              "eof_sent": true,
+              "drain_confirmed": true
+            },
+            "completion": {
+              "kind": "completion",
+              "cutoff_host_ns": 59790835301100,
+              "last_group_id": 53987,
+              "state_count": 53988,
+              "submission_attempt_count": 215952,
+              "capture_admission_count": 53389,
+              "capture_drop_count": 1,
+              "same_slot_omission_count": 598,
+              "unresolved_attempt_count": 0,
+              "outcome": "completed"
+            }
+          },
+          "dispositions": {},
+          "source_id_gaps": [],
+          "native_counter_gaps": [],
+          "invalid": 0,
+          "submissions": {
+            "calibration_bottom:returned": 53988,
+            "calibration_front:returned": 53988,
+            "calibration_left:returned": 53988,
+            "calibration_right:returned": 53988
+          },
+          "render_group_gaps": []
+        },
+        "protocol-data\\DUMMY_125417_tracking_cam_frames.jsonl": {
+          "completion": {
+            "completion": {
+              "type": "completion",
+              "outcome": "completed",
+              "timing": {
+                "recording_end_monotonic_ns": 59790835301100,
+                "first_recorded_frame_id": 0,
+                "final_received_frame_count": 53959,
+                "accounting_complete": true
+              },
+              "video": {
+                "recorded_frame_count": 54000,
+                "selected_source_frame_count": 53759,
+                "duplicate_frame_count": 241
+              },
+              "pulses": {
+                "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+                "on_dispatched_monotonic_ns": 58890847815100,
+                "on_acknowledged_monotonic_ns": 58890874356900,
+                "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+                "off_dispatched_monotonic_ns": 59790841361000,
+                "off_acknowledged_monotonic_ns": 59790867169800
+              },
+              "post_cutoff": {
+                "accounting_complete": true,
+                "excluded_frame_count": 2,
+                "last_native_counter": 53960
+              },
+              "transport_summary": {
+                "buffer_underruns": null,
+                "failed_buffers": 0,
+                "missed_frames": 0,
+                "resend_requests": null,
+                "resend_packets": null,
+                "resynchronizations": 0
+              },
+              "diagnostics": [
+                {
+                  "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                  "count": 1,
+                  "first_observed_monotonic_ns": 58890870853100,
+                  "last_observed_monotonic_ns": 58890870853100,
+                  "first_frame_id": 0,
+                  "details": "optional native timestamp is unavailable"
+                }
+              ]
+            }
+          },
+          "dispositions": {
+            "real": 53759,
+            "same_slot_omission": 200
+          },
+          "source_id_gaps": [],
+          "native_counter_gaps": [],
+          "invalid": 0,
+          "submissions": {},
+          "render_group_gaps": []
+        }
+      },
+      "videos": {
+        "protocol-data\\DUMMY_125417_tracking_cam.mp4": {
+          "bytes": 33740785,
+          "bytes_per_second": 37489.76111111111,
+          "mbps": 0.2999180888888889,
+          "gib_per_hour": 0.12569421902298927,
+          "frames": "54000",
+          "probe_exit": 0,
+          "decode_exit": 0
+        },
+        "protocol-data\\DUMMY_125417_stimulus.mp4": {
+          "bytes": 1126007748,
+          "bytes_per_second": 1251119.72,
+          "mbps": 10.00895776,
+          "gib_per_hour": 4.194705739617348,
+          "frames": "54000",
+          "probe_exit": 0,
+          "decode_exit": 0
+        },
+        "protocol-data\\DUMMY_125417_eye_tracking_cam.mp4": {
+          "bytes": 1594995850,
+          "bytes_per_second": 1772217.611111111,
+          "mbps": 14.177740888888888,
+          "gib_per_hour": 5.941822566092014,
+          "frames": "54000",
+          "probe_exit": 0,
+          "decode_exit": 0
+        },
+        "protocol-data\\DUMMY_125417_behavioral_cam.mp4": {
+          "bytes": 1880338787,
+          "bytes_per_second": 2089265.318888889,
+          "mbps": 16.71412255111111,
+          "gib_per_hour": 7.0048078410327435,
+          "frames": "27000",
+          "probe_exit": 0,
+          "decode_exit": 0
+        }
+      },
+      "active_cpu": {
+        "count": 899,
+        "minimum": 9.86328125,
+        "mean": 17.02321985556145,
+        "median": 16.6015625,
+        "p99": 29.58984375,
+        "maximum": 36.62109375
+      },
+      "monitor_analysis": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined900-final-r1\\monitor-analysis.json"
+    },
+    "lossless60-r1": {
+      "seconds": 60,
+      "sources": {
+        "protocol-data\\DUMMY_131820_behavioral_cam_frames.jsonl": {
+          "completion": {
+            "completion": {
+              "type": "completion",
+              "outcome": "completed",
+              "timing": {
+                "recording_end_monotonic_ns": 60394575782700,
+                "first_recorded_frame_id": 0,
+                "final_received_frame_count": 1797,
+                "accounting_complete": true
+              },
+              "video": {
+                "recorded_frame_count": 1800,
+                "selected_source_frame_count": 1786,
+                "duplicate_frame_count": 14
+              },
+              "pulses": {
+                "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+                "on_dispatched_monotonic_ns": 60334579424400,
+                "on_acknowledged_monotonic_ns": 60334603652100,
+                "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+                "off_dispatched_monotonic_ns": 60394588384500,
+                "off_acknowledged_monotonic_ns": 60394614658300
+              },
+              "post_cutoff": {
+                "accounting_complete": true,
+                "excluded_frame_count": 2,
+                "last_native_counter": 1798
+              },
+              "transport_summary": {
+                "buffer_underruns": null,
+                "failed_buffers": 0,
+                "missed_frames": 0,
+                "resend_requests": null,
+                "resend_packets": null,
+                "resynchronizations": 0
+              },
+              "diagnostics": [
+                {
+                  "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                  "count": 1,
+                  "first_observed_monotonic_ns": 60334634111100,
+                  "last_observed_monotonic_ns": 60334634111100,
+                  "first_frame_id": 0,
+                  "details": "optional native timestamp is unavailable"
+                }
+              ]
+            }
+          },
+          "dispositions": {
+            "real": 1786,
+            "same_slot_omission": 11
+          },
+          "source_id_gaps": [],
+          "native_counter_gaps": [],
+          "invalid": 0,
+          "submissions": {},
+          "render_group_gaps": []
+        },
+        "protocol-data\\DUMMY_131820_eye_tracking_cam_frames.jsonl": {
+          "completion": {
+            "completion": {
+              "type": "completion",
+              "outcome": "completed",
+              "timing": {
+                "recording_end_monotonic_ns": 60394575782700,
+                "first_recorded_frame_id": 0,
+                "final_received_frame_count": 3597,
+                "accounting_complete": true
+              },
+              "video": {
+                "recorded_frame_count": 3600,
+                "selected_source_frame_count": 3596,
+                "duplicate_frame_count": 4
+              },
+              "pulses": {
+                "on_outcome": null,
+                "on_dispatched_monotonic_ns": null,
+                "on_acknowledged_monotonic_ns": null,
+                "off_outcome": null,
+                "off_dispatched_monotonic_ns": null,
+                "off_acknowledged_monotonic_ns": null
+              },
+              "post_cutoff": {
+                "accounting_complete": true,
+                "excluded_frame_count": 3,
+                "last_native_counter": 3599
+              },
+              "transport_summary": {
+                "buffer_underruns": null,
+                "failed_buffers": 0,
+                "missed_frames": 0,
+                "resend_requests": null,
+                "resend_packets": null,
+                "resynchronizations": 0
+              },
+              "diagnostics": [
+                {
+                  "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                  "count": 1,
+                  "first_observed_monotonic_ns": 60334637842900,
+                  "last_observed_monotonic_ns": 60334637842900,
+                  "first_frame_id": 0,
+                  "details": "optional native timestamp is unavailable"
+                }
+              ]
+            }
+          },
+          "dispositions": {
+            "real": 3596,
+            "same_slot_omission": 1
+          },
+          "source_id_gaps": [],
+          "native_counter_gaps": [],
+          "invalid": 0,
+          "submissions": {},
+          "render_group_gaps": []
+        },
+        "protocol-data\\DUMMY_131820_stimulus_frames.jsonl": {
+          "completion": {
+            "encoder_outcome": {
+              "kind": "encoder_outcome",
+              "admitted_count": 3598,
+              "input_submitted_count": 3600,
+              "capacity_drop_count": 0,
+              "selected_real_count": 3598,
+              "same_slot_omission_count": 3,
+              "encoded_frame_count": 3600,
+              "duplicate_frame_count": 2,
+              "final_input_group_id": 3600,
+              "cutoff_host_ns": 60394575782700,
+              "exit_code": 0,
+              "eof_sent": true,
+              "drain_confirmed": true
+            },
+            "completion": {
+              "kind": "completion",
+              "cutoff_host_ns": 60394575782700,
+              "last_group_id": 3600,
+              "state_count": 3601,
+              "submission_attempt_count": 14404,
+              "capture_admission_count": 3598,
+              "capture_drop_count": 0,
+              "same_slot_omission_count": 3,
+              "unresolved_attempt_count": 0,
+              "outcome": "completed"
+            }
+          },
+          "dispositions": {},
+          "source_id_gaps": [],
+          "native_counter_gaps": [],
+          "invalid": 0,
+          "submissions": {
+            "calibration_bottom:returned": 3601,
+            "calibration_front:returned": 3601,
+            "calibration_left:returned": 3601,
+            "calibration_right:returned": 3601
+          },
+          "render_group_gaps": []
+        },
+        "protocol-data\\DUMMY_131820_tracking_cam_frames.jsonl": {
+          "completion": {
+            "completion": {
+              "type": "completion",
+              "outcome": "completed",
+              "timing": {
+                "recording_end_monotonic_ns": 60394575782700,
+                "first_recorded_frame_id": 0,
+                "final_received_frame_count": 3596,
+                "accounting_complete": true
+              },
+              "video": {
+                "recorded_frame_count": 3600,
+                "selected_source_frame_count": 3582,
+                "duplicate_frame_count": 18
+              },
+              "pulses": {
+                "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+                "on_dispatched_monotonic_ns": 60334579424400,
+                "on_acknowledged_monotonic_ns": 60334603652100,
+                "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+                "off_dispatched_monotonic_ns": 60394588384500,
+                "off_acknowledged_monotonic_ns": 60394614658300
+              },
+              "post_cutoff": {
+                "accounting_complete": true,
+                "excluded_frame_count": 2,
+                "last_native_counter": 3597
+              },
+              "transport_summary": {
+                "buffer_underruns": null,
+                "failed_buffers": 0,
+                "missed_frames": 0,
+                "resend_requests": null,
+                "resend_packets": null,
+                "resynchronizations": 0
+              },
+              "diagnostics": [
+                {
+                  "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+                  "count": 1,
+                  "first_observed_monotonic_ns": 60334602528900,
+                  "last_observed_monotonic_ns": 60334602528900,
+                  "first_frame_id": 0,
+                  "details": "optional native timestamp is unavailable"
+                }
+              ]
+            }
+          },
+          "dispositions": {
+            "real": 3582,
+            "same_slot_omission": 14
+          },
+          "source_id_gaps": [],
+          "native_counter_gaps": [],
+          "invalid": 0,
+          "submissions": {},
+          "render_group_gaps": []
+        }
+      },
+      "videos": {
+        "protocol-data\\DUMMY_131820_stimulus.mp4": {
+          "bytes": 75782549,
+          "bytes_per_second": 1263042.4833333334,
+          "mbps": 10.104339866666667,
+          "gib_per_hour": 4.234679918736219,
+          "frames": "3600",
+          "probe_exit": 0,
+          "decode_exit": 0
+        },
+        "protocol-data\\DUMMY_131820_tracking_cam.mp4": {
+          "bytes": 181207314,
+          "bytes_per_second": 3020121.9,
+          "mbps": 24.1609752,
+          "gib_per_hour": 10.125747732818127,
+          "frames": "3600",
+          "probe_exit": 0,
+          "decode_exit": 0
+        },
+        "protocol-data\\DUMMY_131820_eye_tracking_cam.mp4": {
+          "bytes": 1482450876,
+          "bytes_per_second": 24707514.6,
+          "mbps": 197.66011680000003,
+          "gib_per_hour": 82.83839799463749,
+          "frames": "3600",
+          "probe_exit": 0,
+          "decode_exit": 0
+        },
+        "protocol-data\\DUMMY_131820_behavioral_cam.mp4": {
+          "bytes": 1759620651,
+          "bytes_per_second": 29327010.85,
+          "mbps": 234.6160868,
+          "gib_per_hour": 98.32646610215306,
+          "frames": "1800",
+          "probe_exit": 0,
+          "decode_exit": 0
+        }
+      },
+      "active_cpu": {
+        "count": 59,
+        "minimum": 11.388074291300098,
+        "mean": 19.640981435940834,
+        "median": 18.85046273745738,
+        "p99": 28.29268292682927,
+        "maximum": 30.073710073710075
+      },
+      "monitor_analysis": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\lossless60-r1\\monitor-analysis.json"
+    }
+  }
+}

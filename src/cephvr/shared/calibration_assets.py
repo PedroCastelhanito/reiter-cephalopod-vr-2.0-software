@@ -5,6 +5,13 @@ import os
 import tempfile
 from pathlib import Path
 
+CALIBRATION_VIEWS = frozenset(
+    {"reference_bars", "frame_grid", "photodiode_placement", "blackout_placement"}
+)
+CALIBRATION_REFERENCES = frozenset(
+    f"calibration/{view}.glb" for view in CALIBRATION_VIEWS
+)
+
 
 def calibration_asset_root() -> Path:
     """Resolve the calibration bundle independently of Protocol Assets."""
@@ -16,7 +23,7 @@ def calibration_asset_root() -> Path:
 
 def calibration_runtime_root(view: str) -> Path:
     """Keep each step's generated mappings and protected copy in user runtime data."""
-    if view not in ("reference_bars", "frame_grid"):
+    if view not in CALIBRATION_VIEWS:
         raise ValueError("Unknown calibration step")
     repository = Path(__file__).resolve().parents[3]
     identity = hashlib.sha256(str(repository).casefold().encode()).hexdigest()[:16]

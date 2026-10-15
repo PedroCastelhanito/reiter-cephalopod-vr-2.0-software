@@ -1,0 +1,199 @@
+diff --git a/src/cephvr/acquisition/worker/recording_fault.py b/src/cephvr/acquisition/worker/recording_fault.py
+index dfbe086..139e624 100644
+--- a/src/cephvr/acquisition/worker/recording_fault.py
++++ b/src/cephvr/acquisition/worker/recording_fault.py
+@@ -26,7 +26,6 @@ class RecordingFaultPort(Protocol):
+ class RecordingFaultLifecycle:
+     """Retain one recording fault episode without owning camera runtime state."""
+ 
+-    warning_occurrence: Callable[[str, str | None, str | None, int, int | None], None]
+     report_isolation: Callable[
+         [
+             control.WorkContext,
+@@ -96,9 +95,6 @@ class RecordingFaultLifecycle:
+         self.resource_ids = resources
+         self._recording = recording
+         detach_recording()
+-        self.warning_occurrence(
+-            "RECORDING_PIPELINE_FAILURE", None, details, observed_ns, None
+-        )
+         self.report_isolation(
+             work,
+             command_id,
+diff --git a/src/cephvr/acquisition/worker/trial_lifecycle.py b/src/cephvr/acquisition/worker/trial_lifecycle.py
+index 4bafc7d..a85f66b 100644
+--- a/src/cephvr/acquisition/worker/trial_lifecycle.py
++++ b/src/cephvr/acquisition/worker/trial_lifecycle.py
+@@ -82,7 +82,7 @@ class WorkerTrialLifecycle:
+         )
+         self.trial_state = WorkerTrialState()
+         self._recording_fault = RecordingFaultLifecycle(
+-            recording_warning_occurrence, recording_isolated, external_wake
++            recording_isolated, external_wake
+         )
+         self.recording_preparation = TrialRecordingPreparation(
+             bootstrap,
+diff --git a/src/cephvr/platform/windows/encoder_process.py b/src/cephvr/platform/windows/encoder_process.py
+index 0137eff..943b705 100644
+--- a/src/cephvr/platform/windows/encoder_process.py
++++ b/src/cephvr/platform/windows/encoder_process.py
+@@ -314,11 +314,14 @@ class WindowsEncoderProcess:
+                 break
+             lines: list[bytes] = []
+             with self._lock:
+-                self._stderr_partial.extend(chunk)
++                # FFmpeg stats update in place with CR; diagnostics also use LF.
++                self._stderr_partial.extend(chunk.replace(b"\r", b"\n"))
+                 while b"\n" in self._stderr_partial:
+                     line, _, remainder = self._stderr_partial.partition(b"\n")
+                     self._stderr_partial[:] = remainder
+                     raw_line = bytes(line)
++                    if not raw_line:
++                        continue
+                     if len(raw_line) > 16 * 1024:
+                         self._reader_error = EncoderLaunchError(
+                             "FFmpeg diagnostic line exceeded 16 KiB"
+diff --git a/tests/acquisition/test_recording_cleanup.py b/tests/acquisition/test_recording_cleanup.py
+index 95b1db7..bdfcaff 100644
+--- a/tests/acquisition/test_recording_cleanup.py
++++ b/tests/acquisition/test_recording_cleanup.py
+@@ -885,7 +885,9 @@ class _Runtime:
+         self.recycled_deadline_ns = deadline_ns
+ 
+ 
+-def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() -> None:
++def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline(
++    monkeypatch,
++) -> None:
+     work = control.WorkContext(
+         trial=control.TrialContext(
+             session=control.SessionContext(session_id="session"),
+@@ -915,20 +917,33 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
+     )
+     reports: list[tuple[tuple[str, ...], int, bool]] = []
+     wake_count: list[int] = []
++    ordering: list[str] = []
++    details: list[str] = []
++    original_cleanup = run.fail_cleanup
++
++    def fail_cleanup(*, deadline_ns):
++        ordering.append("cleanup")
++        return original_cleanup(deadline_ns=deadline_ns)
++
++    monkeypatch.setattr(run, "fail_cleanup", fail_cleanup)
+ 
+     def report_isolation(
+-        _work: control.WorkContext,
+-        _operation: str,
++        actual_work: control.WorkContext,
++        operation: str,
+         observed_ns: int,
+         resource_ids: tuple[str, ...],
+-        _detail: str,
++        detail: str,
+         confirmed: bool,
+-        _capture: control.ContinuingFunctionEvidence,
++        actual_capture: control.ContinuingFunctionEvidence,
+     ) -> None:
++        assert actual_work == work
++        assert operation == "schedule-command"
++        assert actual_capture == capture
++        ordering.append("report")
++        details.append(detail)
+         reports.append((resource_ids, observed_ns, confirmed))
+ 
+     tracker = RecordingFaultLifecycle(
+-        warning_occurrence=lambda *_args: None,
+         report_isolation=report_isolation,
+         external_wake=lambda: wake_count.append(1),
+     )
+@@ -948,7 +963,7 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
+             "behavioral_video",
+             "behavioral_depth",
+         ),
+-        detach_recording=lambda: None,
++        detach_recording=lambda: ordering.append("detach"),
+     )
+     assert future is run.cleanup
+     assert tracker.cleanup_pending
+@@ -959,6 +974,8 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
+         "behavioral_depth",
+     )
+     assert reports == [(expected_closure, 250, False)]
++    assert details == ["stdin write failed"]
++    assert ordering == ["detach", "report", "cleanup"]
+     assert wake_count == [1]
+ 
+     assert tracker.reconcile(
+diff --git a/tests/acquisition/test_recording_negotiation.py b/tests/acquisition/test_recording_negotiation.py
+index 0d1fe79..9c0e1b0 100644
+--- a/tests/acquisition/test_recording_negotiation.py
++++ b/tests/acquisition/test_recording_negotiation.py
+@@ -6,6 +6,8 @@ import threading
+ from collections import deque
+ from typing import cast
+ 
++import pytest
++
+ from cephvr.acquisition.recording.encoder_process import WindowsEncoderProcess
+ from cephvr.acquisition.recording.negotiation import (
+     NegotiatedVideo,
+@@ -99,10 +101,41 @@ class _DeferredPipe:
+         return value
+ 
+ 
+-def test_reader_drains_terminal_stream_data_after_idle_timeout() -> None:
++@pytest.mark.parametrize(
++    ("separator", "oversized"),
++    [
++        (None, False),
++        (b"\r", False),
++        (b"\n", False),
++        (b"\r\n", False),
++        ("mixed", False),
++        (b"", True),
++        (b"\n", True),
++    ],
++)
++def test_reader_drains_terminal_stream_data_after_idle_timeout(
++    separator, oversized
++) -> None:
+     """A late final stream line is parsed before EOF/cleanup is accepted."""
+     process = object.__new__(WindowsEncoderProcess)
+-    process.stderr_pipe = cast(OverlappedPipe, _DeferredPipe())
++    pipe = _DeferredPipe()
++    if separator is not None:
++        pipe.chunks.pop()
++        pipe.chunks.append(b"\n")
++        if oversized:
++            pipe.chunks.append(b"x" * (16 * 1024 + 1) + separator)
++        else:
++            for index in range(200):
++                stats = f"frame={index:6d} fps=60 q=18.0 size=123456kB time=00:01:10.00 bitrate=10000kbits/s speed=1.0x".encode()
++                ending = (
++                    (b"\r", b"\n", b"\r\n")[index % 3]
++                    if separator == "mixed"
++                    else separator
++                )
++                # Include delimiter boundaries split across reads.
++                pipe.chunks.extend([stats + ending[:1], ending[1:]])
++        pipe.chunks.append(None)
++    process.stderr_pipe = cast(OverlappedPipe, pipe)
+     process._reader_drain_deadline_ns = 100
+     process.clock_ns = lambda: 50
+     process._stderr_partial = bytearray()
+@@ -132,7 +165,14 @@ def test_reader_drains_terminal_stream_data_after_idle_timeout() -> None:
+     process._read_stderr()
+ 
+     assert process._negotiation.complete
++    if oversized:
++        assert "diagnostic line exceeded 16 KiB" in str(process._reader_error)
++        return
+     assert process._reader_error is None
++    assert process._stderr_bytes <= process.tail_max_bytes
++    assert len(process.diagnostic_tail) <= process.tail_max_lines
++    if separator is not None:
++        assert process.diagnostic_tail[-1].startswith("frame=   199")
+     process._read_progress()
+     assert process.progress_frame == 17
+ 

@@ -1,5 +1,78 @@
 # Controller and supervisor status
 
+Oct15 photodiode placement now repeats V22 pulses while accepting live Frame/Pulse
+edits. The preview uses a separate submission index and retains the existing
+controller fences; see the [current checks and limits](visual_stimulus.md).
+
+Oct15 `live-output-placement` extends the existing authenticated display-calibration
+update envelope with a bounded strict output-space placement snapshot under
+[G01](../docs/architecture/gui.md#g01)/[V01](../docs/architecture/visual_stimulus.md#v01).
+Controller lease, diagnostic/generation/revision, original deadline and increasing
+sequence fences are retained; no new controller state owner or command lifecycle
+is introduced. The renderer validates complete placement against prepared outputs
+and confirms after presentation. Current affected backend/controller362 and GUI52
+checks pass, including authenticated placement forwarding/rejection; physical
+acceptance remains separate. [Owning assessment/evidence](visual_stimulus.md).
+
+Owner-requested no-Tracking launch is implemented under
+[E08 revision173](../docs/architecture/system-contracts.md#e08). Normal launcher and
+GUI wrapper accept `--no-tracking`; exactly that role is omitted for the application
+lifetime. Ports, credentials, jobs, process descriptors and preview-consumer rings
+follow one protected declaration. Contradictory/missing required identities reject;
+Tracking-dependent Setup/diagnostics remain unavailable until a full restart.
+Configured Tracking-camera preview/recording remains acquisition-owned. Default full
+launch is unchanged. ARCH-002 review reuses focused launch/bootstrap helpers without
+new dependencies or general optional-backend machinery. Sol6.1 reports1163 affected
+owner tests passing (three skips/two native deselections), scoped Ruff/format/mypy and
+boundary checks passing. Astra's final review finds nothing actionable. Native process inventories now confirm Tracking absent across controlled launches.
+Short recorded trials and120s post-repair reuse pass. The owner stopped the900s retry;
+AbortNow at883.852s left it Interrupted, with recording cleanup unconfirmed. The exact
+generation's exit receipt confirms all owned processes absent; this does not confirm
+recording closure. After the owner resumed testing, a fresh strict no-Tracking run
+completes exactly 900 seconds with confirmed cleanup/reuse and all four video counts/
+full decodes passing. Reviewed acquisition start/stop repairs pass 523 owner tests.
+This is low-loss engineering acceptance: source accounting and remaining CFR repeats
+are recorded in Acquisition; zero-loss and physical calibration are not established.
+During the pause, original TOML/last configuration were restored and a separate runtime
+blocked camera restoration. On resume the rig was idle; fresh configuration, GUI
+calibration and camera baselines govern completed restoration: three saved files are
+byte-exact, camera feature settings match with only PFS selector-cursor serialization
+differences, all camera handles close and the final runtime inventory is empty.
+Separate camera-lossless 60-second recording/count/decode and prepared-YUV fidelity
+checks pass; source/CFR and fidelity limits remain explicit in Acquisition. Interrupted trial-log
+latency and native rapid-Abort reuse remain open as recorded in [Acquisition](acquisition.md).
+[Acquisition](acquisition.md) and [Visual Stimulus](visual_stimulus.md) own current
+source fixes, failed-attempt assessment, measurements and limitations.
+[Commands, attempts and source fingerprints](runtime-evidence-2026-10-15/open-loop-soak/no-tracking-implementation.json).
+
+Oct15 synthetic encoder matrix31/31 cases passes external counts/full decodes,
+with actual RTX2080Ti evidence; direct empty raw-input finalization also succeeds.
+The [Visual Stimulus report](visual_stimulus.md) owns the workload and performance
+limits; [Acquisition](acquisition.md) owns the empty-output capability assessment.
+
+Oct15 projector-free rig verification under [E15](../docs/architecture/system-contracts.md#e15):
+native Windows/rig selection25 passed/one symlink-privilege skip; actual Windows picker
+selection22 passed with ordinary pytest plugins. Native layout/hover selection5 passed,
+one failed because the trial card is326px against a less-than320px assertion; this is
+not a confirmed clipping diagnosis. Broad native GUI execution was interrupted after
+approximately two minutes without recorded progress; no full-suite pass is claimed.
+Prepared native interpreter,90 contract cases,19 Tracking schemas and11 Visual Stimulus
+schemas pass. Regenerated the sole stale prepared-trial JSON schema from its canonical
+model, removing superseded calibration fields under G01/V15. Native wheel/source build
+passes; native binaries and source GLBs are present, without standalone-install proof.
+
+Real COM8 Connect reads protocol4/cephvr2_uno_4 without flashing. Four preview cycles
+per enabled Behavior/Tracking camera pass start/stop/release; first-cycle viewers report
+visible. An extra Behavior cycle completes, then its next Start is blocked by unknown
+SDK-buffer discard accounting. Cause remains unverified; preserve the safety guard.
+An exact owned idle-controller fault produces automatic containment and an all-owned-
+processes-absent exit receipt; MCU claim release remains truthfully unconfirmed. Active
+capture-loss injection did not run: rounded-time identity was safely refused first,
+and retry capture was blocked by the reuse finding. Both baseline full camera PFS
+snapshots and saved configuration bytes were verified restored after this generation.
+SpikeGLX read-only SDK check times out at its saved endpoint; remote state is unknown.
+[Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). Owner defers live-camera Tracking diagnostics and requests leaving the separately opened GUI running; no takeover or shutdown was performed against it.
+
 Git-sync integration (2026-10-15) preserves local pixel-size/offset calibration
 under [G01](../docs/architecture/gui.md#g01)/[V15](../docs/architecture/visual_stimulus.md#v15)
 and independent incoming camera, arena, appearance and scientific-evidence changes.
@@ -1977,6 +2050,19 @@ and SpikeGLX pairing were disabled. Remaining acceptance lives in the
 
 ## Current scope and review
 
+Oct15 projector-off TODO audit at `b68c4ee` runs1,737 projector-independent backend
+cases (four skips,26 native/rig deselections) and38 targeted offscreen GUI cases
+(470 deselected). Ruff/format911 files, Win32 mypy791 sources, dependencies and
+boundaries695 modules/zero violations pass;44 existing cohesion advisories remain.
+The existing subgroup regression confirms mixed-identity rule edits are rejected
+without discarding the dirty draft, closing the stale `mixed-subgroup-random-rule-edit`
+entry. Duplicate task IDs/status sections are consolidated, later evidence is kept,
+and obsolete margin/keystone/seam acceptance instructions are replaced by current
+G01/V15 pixel-size/offset checks. All projector-dependent and pre-existing hardware
+acceptance deferrals remain. No implementation or device settings changed.
+[Commands, probes, source fingerprints and limitations](runtime-evidence-2026-10-15/todo-projectors-off/context.json).
+
+
 Current model-hierarchy audit (`hierarchy-audit-20261012`) starts from
 `f96286e86dc9af334da78ab55a8c14ec111c6184` plus existing uncommitted source,
 contracts and reports. Concurrent unified subgroup work is preserved and has its
@@ -3063,6 +3149,40 @@ test), the authority-loss/evidence/recovery-inspection state machines and the Op
 fail-closed dependencies were intentionally left alone.
 
 ## Unresolved findings and limitations
+
+Oct15 `gui-empty-variation-group` [gui]: owner reports GUI exit after adding a
+group with an untouched empty variation row; an error was shown, text unavailable.
+Under [G01/G02](../docs/architecture/gui.md#g01), invalid input must preserve the
+draft and block mutation with an action-time warning. New owning dashboard cases
+exercise native Windows button clicks/focus changes for blank and sample programs,
+warning dismissal, row removal and successful subsequent group creation. Both pass;
+related persisted-rule/random-group cases also pass (four total). No production
+defect or fix is established. Initial suspicion of an exception in dirty checking
+was not reproduced. Read-only Windows Application events show only an older
+09:45 cephvr-python AppHangTransient, not a matching crash. Runtime traceback/error
+text remains needed; local widget tests do not establish live controller equivalence.
+
+Oct15 local probes confirm two existing TODO defects despite the passing suites:
+
+- `calibration-live-update-rejection`: real `DisplayCalibrationController.update`
+  with the owning fixture's rejecting backend returns Rejected but retains ACTIVE
+  `calibration_pending` and the diagnostic block. A second valid command is refused
+  before dispatch (one backend call total). `display_adjustments.update_calibration`
+  passes the admission-failure callback without its explicit-rejection flag, so no
+  Update timeout is scheduled or pending state retired. Keep this open under
+  [E06](../docs/architecture/system-contracts.md#e06)/[V01](../docs/architecture/visual_stimulus.md#v01);
+  this is local controller-state evidence, not projector output acceptance.
+- `controller-config-inactive-backend-defaults`: a disposable copied configuration
+  loads with acquisition disabled; making only its acquisition TOML malformed then
+  raises `ConfigurationError` from controller startup configuration loading.
+  `_load_reusable_configuration` unconditionally calls `_fill_acquisition_defaults`,
+  whose loader runs before checking backend participation. The inactive warning
+  behavior remains open under [E07](../docs/architecture/experiment.md#e07).
+
+Both probes use local fixture adapters/config copies. No production fix was made;
+remaining audit/race/logging concerns keep their prior unverified status.
+[Reproduction outputs and exact scope](runtime-evidence-2026-10-15/todo-projectors-off/context.json).
+
 
 Current dev-machine triage (2026-10-13, source `4a62844`, macOS/Python3.11.15):
 latest combined evidence verifies nominal60fps and repeated reset; the old39.47fps/

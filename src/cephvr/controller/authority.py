@@ -24,6 +24,7 @@ from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
+from cephvr.shared.managed_modules import managed_modules
 
 
 @dataclass(frozen=True)
@@ -47,16 +48,21 @@ class ManagedJob:
     job_name: str
 
 
-def managed_jobs_from_bootstrap(value: object) -> tuple[ManagedJob, ...]:
-    if not isinstance(value, list) or len(value) != 4:
-        raise ValueError("bootstrap must identify four exact top-level inner jobs")
+def managed_jobs_from_bootstrap(
+    value: object, *, no_tracking: bool = False
+) -> tuple[ManagedJob, ...]:
+    roles = set(managed_modules(no_tracking=no_tracking))
+    if not isinstance(value, list) or len(value) != len(roles):
+        raise ValueError(
+            "bootstrap must identify the declared exact top-level inner jobs"
+        )
     jobs = []
     for item in value:
         if (
             not isinstance(item, dict)
             or set(item) != {"role", "generation", "job_name"}
             or any(not isinstance(v, str) for v in item.values())
-            or item["role"] not in BACKEND_NAMES | {"gui"}
+            or item["role"] not in roles
         ):
             raise ValueError("managed job descriptor is invalid")
         require_uuid4(item["generation"])
@@ -65,7 +71,9 @@ def managed_jobs_from_bootstrap(value: object) -> tuple[ManagedJob, ...]:
             raise ValueError("managed job is not a registered CephVR inner job")
         require_uuid4(item["job_name"][len(prefix) :])
         jobs.append(ManagedJob(**item))
-    if len({job.role for job in jobs}) != 4 or len({job.job_name for job in jobs}) != 4:
+    if {job.role for job in jobs} != roles or len(
+        {job.job_name for job in jobs}
+    ) != len(roles):
         raise ValueError("managed job descriptors repeat a role or native job")
     return tuple(jobs)
 

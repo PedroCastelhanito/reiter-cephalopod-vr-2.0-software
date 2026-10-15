@@ -1,0 +1,86 @@
+{
+  "revision": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "working_tree": " M LOG.md\n M TODO.md\n M architecture.md\n M contracts/visual_stimulus/prepared-trial.schema.json\n M docs/architecture/acquisition.md\n M docs/architecture/system-contracts.md\n M docs/development.md\n M reports/acquisition.md\n M reports/rig-verification.md\n M reports/runtime.md\n M reports/tracking.md\n M reports/visual_stimulus.md\n M scripts/start_runtime_gui.py\n M src/cephvr/acquisition/coordinator/manual_preview_pulse.py\n M src/cephvr/acquisition/coordinator/manual_preview_start.py\n M src/cephvr/acquisition/coordinator/session_resources.py\n M src/cephvr/acquisition/coordinator/session_validation.py\n M src/cephvr/controller/authority.py\n M src/cephvr/controller/startup/application.py\n M src/cephvr/controller/startup/bootstrap.py\n M src/cephvr/launcher/entrypoint.py\n M src/cephvr/launcher/main.py\n M src/cephvr/shared/backend_bootstrap.py\n M src/cephvr/shared/managed_modules.py\n M src/cephvr/supervisor/startup.py\n M tests/acquisition/test_coordinator.py\n M tests/acquisition/test_manual_preview.py\n M tests/acquisition/test_session_preparation.py\n M tests/controller/test_authority.py\n M tests/launcher/test_lifecycle.py\n M tests/launcher/test_preflight.py\n M tests/supervisor/test_registration.py\n?? reports/emergency-45402761645100-db999d84-70d7-4a14-88ca-af2dc56df950.json\n?? reports/emergency-46945437287400-7e65da83-af1b-4f16-a113-b24b72be5456.json\n?? reports/runtime-evidence-2026-10-15/open-loop-soak/\n?? reports/runtime-evidence-2026-10-15/projector-free-rig/\n?? reports/runtime-evidence-2026-10-15/todo-projectors-off/\n",
+  "tracked_changed_source": [
+    {
+      "path": "scripts\\start_runtime_gui.py",
+      "sha256": "3c058035f62dd34d84edf350f9403e647fa37597715b0795828c34d27f912a66"
+    },
+    {
+      "path": "src\\cephvr\\acquisition\\coordinator\\manual_preview_pulse.py",
+      "sha256": "f6eb9d10be9989fb81d78d1b59bfaa915567910b4c7e529555aa3b959af17cd9"
+    },
+    {
+      "path": "src\\cephvr\\acquisition\\coordinator\\manual_preview_start.py",
+      "sha256": "a6466d5009f78bd331c183fcee79cb05865be007d2f4e6c8e4016fbc815ef4f6"
+    },
+    {
+      "path": "src\\cephvr\\acquisition\\coordinator\\session_resources.py",
+      "sha256": "948385d00f94dd7fbfd98912604fea875bdafe5960ecc1055c2d679493f810a2"
+    },
+    {
+      "path": "src\\cephvr\\acquisition\\coordinator\\session_validation.py",
+      "sha256": "c86b2ecb99f4e37d56aee7571336caaa821e948a708c41fc403d089cf5e6f1b0"
+    },
+    {
+      "path": "src\\cephvr\\controller\\authority.py",
+      "sha256": "f21f74e7ad788d872cc60dc36319e8a9b79167f938fa148aa6e9790a06b14264"
+    },
+    {
+      "path": "src\\cephvr\\controller\\startup\\application.py",
+      "sha256": "b47a34dd3fd25d5e27b38fa6c95661a6c045a8a3c39c30244e0cb31d1fd66cc6"
+    },
+    {
+      "path": "src\\cephvr\\controller\\startup\\bootstrap.py",
+      "sha256": "2a89caca604c7e37a091664a5ce35e1e9b101b73873c693343d5e5aad01afbb5"
+    },
+    {
+      "path": "src\\cephvr\\launcher\\entrypoint.py",
+      "sha256": "056b2dcad9a80674a6a04b657dc8c567af92b0abf503f8f7f67f58cef69b5815"
+    },
+    {
+      "path": "src\\cephvr\\launcher\\main.py",
+      "sha256": "d6557a181e1564eb4bde0c318e064cc114eb346449dd8c6f9583dfa5131b22b1"
+    },
+    {
+      "path": "src\\cephvr\\shared\\backend_bootstrap.py",
+      "sha256": "779c7acd5570b5ada5b4b369f9ba0e0d790e0ec03903d4607822fe56fcf92b60"
+    },
+    {
+      "path": "src\\cephvr\\shared\\managed_modules.py",
+      "sha256": "92a0beb15bc95d6f9573a7653718b2ab94c0c1ec815b9a2bfe4a6bc0cd1834f8"
+    },
+    {
+      "path": "src\\cephvr\\supervisor\\startup.py",
+      "sha256": "310f65758184836ff1efc4ed94567e750d2c08ee6c24c513e02a9a95033d12ad"
+    },
+    {
+      "path": "tests\\acquisition\\test_coordinator.py",
+      "sha256": "3cd2fd4b46652e3ccf5d7d8440e4407eabae6c5634cf65d9629815e02c9b34c6"
+    },
+    {
+      "path": "tests\\acquisition\\test_manual_preview.py",
+      "sha256": "1cd9c2d8757fe36959b48d20abd1aeb6700a27c2d9a3fb18d65cd5f3e8c46da2"
+    },
+    {
+      "path": "tests\\acquisition\\test_session_preparation.py",
+      "sha256": "793fbb9b582f6fddcf780b7389146cfa02a6f5681ebeeb38de58d5b11aa766f3"
+    },
+    {
+      "path": "tests\\controller\\test_authority.py",
+      "sha256": "3d64f41ac3c82cc450f1dd0e7189df6e3b7f25a2c86dc975b907f2a1e947d2ca"
+    },
+    {
+      "path": "tests\\launcher\\test_lifecycle.py",
+      "sha256": "25c8a0ae857642f6b157213cfd77cba2d51be9b9fa4162eb31a11be54e4e2851"
+    },
+    {
+      "path": "tests\\launcher\\test_preflight.py",
+      "sha256": "9c5da34c790a4794292afb47fa91224467c987910b9d4814204510e7698468f7"
+    },
+    {
+      "path": "tests\\supervisor\\test_registration.py",
+      "sha256": "5356ca55019e99695698eec792b453c694ba4fa3fdef352b6ec5eb931058d7da"
+    }
+  ]
+}

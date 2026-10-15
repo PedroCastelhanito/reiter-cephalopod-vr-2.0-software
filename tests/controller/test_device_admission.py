@@ -885,8 +885,13 @@ async def test_controller_authorizes_firmware_only_in_idle_configuration(blocked
             coroutine.close()
 
 
+@pytest.mark.parametrize(
+    "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+)
 @pytest.mark.asyncio
-async def test_live_calibration_update_requires_exact_leased_active_grid():
+async def test_live_calibration_update_requires_exact_leased_active_grid(
+    calibration_view,
+):
     from cephvr.visual_stimulus.v1 import messages_pb2 as messages
 
     env = _Env()
@@ -910,7 +915,7 @@ async def test_live_calibration_update_requires_exact_leased_active_grid():
     evidence.diagnostic_id = _id()
     evidence.configuration_revision = env.configuration.revision
     evidence.controller_generation = generation
-    evidence.calibration_view = "frame_grid"
+    evidence.calibration_view = calibration_view
     evidence.state = visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
     projections = type("Projection", (), {"display": display})()
     projections.expect_display = lambda *_args: None
@@ -943,16 +948,45 @@ async def test_live_calibration_update_requires_exact_leased_active_grid():
             destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
         )
     )
+    import json
+
+    placement_json = json.dumps(
+        dict(
+            outputs=[dict(output_id="projector/main", blackout_zones=[])],
+            **(
+                dict(
+                    photodiode_output_id="projector/main",
+                    photodiode_patch=dict(
+                        rect=dict(x=1, y=1, width=2, height=2),
+                        high_linear_rgb=[1, 1, 1],
+                        low_linear_rgb=[0, 0, 0],
+                    ),
+                )
+                if calibration_view == "photodiode_placement"
+                else {}
+            ),
+        )
+    )
+    if calibration_view != "frame_grid":
+        request.ClearField("adjustments")
+        request.placement_json = placement_json
     request.diagnostic_id = _id()
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
     request.diagnostic_id = evidence.diagnostic_id
-    request.adjustments[0].destination_xy[0] = float("nan")
+    if calibration_view == "frame_grid":
+        request.adjustments[0].destination_xy[0] = float("nan")
+    else:
+        request.placement_json = "{}"
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
     assert not sent and env.device.calibration_pending is None
-    request.adjustments[0].destination_xy[0] = 0.1
+    if calibration_view == "frame_grid":
+        request.adjustments[0].destination_xy[0] = 0.1
+    else:
+        request.placement_json = placement_json
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_ACCEPTED
     assert sent[0].diagnostic_id == evidence.diagnostic_id
     assert sent[0].adjustment_sequence == 1
+    assert sent[0].placement_json == request.placement_json
     assert (
         env.device.calibration_pending[4]
         == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
@@ -965,7 +999,7 @@ async def test_live_calibration_update_requires_exact_leased_active_grid():
     request.adjustment_sequence = 2
     evidence.calibration_view = "reference_bars"
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
-    evidence.calibration_view = "frame_grid"
+    evidence.calibration_view = calibration_view
     env.lifecycle.session.shutdown_requested = True
     request.command.operator.command_id = _id()
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED

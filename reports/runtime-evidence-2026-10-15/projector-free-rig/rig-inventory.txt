@@ -1,0 +1,58 @@
+{
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "storage": {
+    "total": 1999337680896,
+    "used": 575842881536,
+    "free": 1423494799360
+  },
+  "cameras": [
+    {
+      "serial": "40065509",
+      "model": "acA4112-30uc",
+      "device_class": "BaslerUsb"
+    },
+    {
+      "serial": "40278236",
+      "model": "a2A1920-160ucPRO",
+      "device_class": "BaslerUsb"
+    },
+    {
+      "serial": "40747103",
+      "model": "a2A2464-77umPRO",
+      "device_class": "BaslerUsb"
+    }
+  ],
+  "ports": [
+    {
+      "device": "COM8",
+      "description": "Arduino Uno (COM8)"
+    },
+    {
+      "device": "COM3",
+      "description": "Prolific USB-to-Serial Comm Port (COM3)"
+    }
+  ],
+  "displays": [
+    {
+      "interface": "\\\\?\\DISPLAY#DEL41FA#5&1209fbcf&1&UID524#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 1080,
+      "refresh_hz": 60,
+      "rgb_bits": 8,
+      "adapter": "\\\\.\\DISPLAY9"
+    }
+  ],
+  "spikeglx": {
+    "error": "SpikeGLX diagnostic timed out; remote state is unknown"
+  },
+  "nvidia-smi": {
+    "path": "C:\\WINDOWS\\system32\\nvidia-smi.EXE",
+    "exit_code": 0,
+    "stdout": "0, NVIDIA GeForce RTX 5060 Ti, GPU-77642118-1623-48dd-3686-1014aa86b818, 617.14\n1, NVIDIA GeForce RTX 2080 Ti, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, 617.14\n",
+    "stderr": ""
+  },
+  "saved_configuration_present": true
+}

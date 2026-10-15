@@ -63,3 +63,33 @@ def test_every_required_role_has_an_entry_point_module() -> None:
     }
     # gui.main may be absent while that package is unfinished; the rest must exist.
     assert set(missing_roles()) <= {"gui"}
+
+
+@pytest.mark.parametrize("no_tracking", [False, True])
+def test_launch_roles_skip_only_tracking_when_explicit(monkeypatch, no_tracking):
+    from cephvr.shared import managed_modules as modules
+
+    inspected = []
+
+    def find(module):
+        inspected.append(module)
+        return object()
+
+    monkeypatch.setattr(modules.importlib.util, "find_spec", find)
+    assert modules.missing_roles(no_tracking=no_tracking) == []
+    assert set(inspected) == set(
+        modules.managed_modules(no_tracking=no_tracking).values()
+    )
+    assert ("cephvr.tracking.main" in inspected) is not no_tracking
+    assert set(modules.managed_modules(no_tracking=no_tracking)) == (
+        {"acquisition", "visual_stimulus", "gui"}
+        | (set() if no_tracking else {"tracking"})
+    )
+
+
+@pytest.mark.parametrize("value", [None, 0, 1, "true", [], {}])
+def test_no_tracking_declaration_rejects_non_booleans(value):
+    from cephvr.shared.managed_modules import no_tracking_from_bootstrap
+
+    with pytest.raises(ValueError, match="boolean"):
+        no_tracking_from_bootstrap({"no_tracking": value})

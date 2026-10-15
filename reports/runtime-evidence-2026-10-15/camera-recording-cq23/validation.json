@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-15",
+  "checks": [
+    {
+      "method": "Python3.11 TOML parsing, load_defaults/load_file_policies, strict protobuf ParseDict of saved configuration, equality/options assertions for each camera",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_configuration.py tests/acquisition/test_recording_capabilities.py tests/acquisition/test_recording_filter_expressions.py -q -m 'not windows and not rig' -k 'defaults or pixel_format or encoder or filter or argument or capability or device or probe'",
+      "result": "23 passed, 24 deselected in 0.22s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_configuration.py tests/acquisition/test_recording_capabilities.py tests/acquisition/test_recording_filter_expressions.py -q -m 'not windows and not rig'",
+      "result": "Interrupted after three progress dots and no further output; exit1, no completed result or established cause."
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed; existing line-ending warnings"
+    }
+  ],
+  "limits": "Configuration-only changes. No runtime code/dependencies added under ARCH-002. No PFS, device, acquisition or encoder run; no image-quality/file-size/throughput claim. Follow-up stimulus-review-encoding-cost remains open."
+}

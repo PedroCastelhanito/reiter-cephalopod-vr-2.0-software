@@ -28,7 +28,11 @@ from cephvr.platform.windows.python_runtime import (
     resolve_python_executable,
 )
 from cephvr.shared.clock import HostClockDescriptor
-from cephvr.shared.managed_modules import REQUIRED_MODULES, missing_roles
+from cephvr.shared.managed_modules import (
+    managed_modules,
+    missing_roles,
+    no_tracking_from_bootstrap,
+)
 from cephvr.shared.transport_deadlines import remaining_seconds
 from cephvr.supervisor.outbound import GrpcOutbound
 from cephvr.supervisor.registry import LaunchRegistry
@@ -99,6 +103,7 @@ async def launch_controller(
         "supervisor_port": int(str(inputs.bootstrap["supervisor_port"])),
         "controller_port": int(str(inputs.bootstrap["controller_port"])),
         "max_message_bytes": inputs.max_message_bytes,
+        "no_tracking": no_tracking_from_bootstrap(inputs.bootstrap),
         "backends": [
             {
                 "backend_name": role,
@@ -107,7 +112,8 @@ async def launch_controller(
                 "token": inputs.role_bootstrap[role][1],
                 "launch_confirmed": False,
             }
-            for role in ("acquisition", "visual_stimulus", "tracking")
+            for role in inputs.role_bootstrap
+            if role != "gui"
         ],
         "launch_command_id": plan.command_id,
         "pid": child.pid,
@@ -123,7 +129,7 @@ async def launch_controller(
                 "generation": inputs.role_bootstrap[role][0],
                 "job_name": inputs.role_states[role].containment_job_name,
             }
-            for role in ("acquisition", "visual_stimulus", "tracking", "gui")
+            for role in inputs.role_bootstrap
         ],
     }
     await run_pipe_io_daemon(
@@ -191,6 +197,7 @@ async def _launch_role_plan(
         "supervisor_port": int(str(inputs.bootstrap["supervisor_port"])),
         "endpoint_port": inputs.outbound.backend_ports.get(role),
         "max_message_bytes": inputs.max_message_bytes,
+        "no_tracking": no_tracking_from_bootstrap(inputs.bootstrap),
         "heartbeat_interval_ns": int(str(inputs.bootstrap["heartbeat_interval_ns"])),
         "health_silence_ns": int(str(inputs.bootstrap["silence_timeout_ns"])),
         "launch_command_id": role_plan.command_id,
@@ -219,7 +226,10 @@ async def _launch_role_plan(
         # Tracking's exact process generation is created and owned by this
         # supervisor launch plan. Acquisition needs only this identity to set the
         # TRACKING ring consumer; no token or second lookup authority is needed.
-        role_descriptor["tracking_generation"] = inputs.role_bootstrap["tracking"][0]
+        if "tracking" in inputs.role_bootstrap:
+            role_descriptor["tracking_generation"] = inputs.role_bootstrap["tracking"][
+                0
+            ]
     await run_pipe_io_daemon(
         lambda: write_bootstrap(role_write, role_descriptor),
         timeout_s=timeout(),
@@ -286,7 +296,8 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
         or not bootstrap["control_policies"]
     ):
         raise WindowsLaunchError("resolved control policies are missing")
-    missing = missing_roles()
+    no_tracking = no_tracking_from_bootstrap(bootstrap)
+    missing = missing_roles(no_tracking=no_tracking)
     if missing:
         raise WindowsLaunchError(
             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
@@ -294,7 +305,13 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
     bootstrap["interpreter"] = str(
         resolve_python_executable(Path(str(bootstrap["interpreter"])))
     )
-    return REQUIRED_MODULES
+    modules = managed_modules(no_tracking=no_tracking)
+    raw_ports = bootstrap["backend_ports"]
+    if not isinstance(raw_ports, dict) or set(raw_ports) != set(modules) - {"gui"}:
+        raise WindowsLaunchError(
+            "backend port registry differs from declared launch roles"
+        )
+    return modules
 
 
 async def run_supervisor(
@@ -313,10 +330,8 @@ async def run_supervisor(
     )
     native = WindowsJobs()
     raw_ports = bootstrap["backend_ports"]
-    if not isinstance(raw_ports, dict) or set(raw_ports) != {
-        "acquisition",
-        "visual_stimulus",
-        "tracking",
+    if not isinstance(raw_ports, dict) or set(raw_ports) != set(required_modules) - {
+        "gui"
     }:
         raise WindowsLaunchError("backend port registry is invalid")
     backend_ports = {key: int(str(value)) for key, value in raw_ports.items()}

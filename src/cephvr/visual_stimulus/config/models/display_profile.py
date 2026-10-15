@@ -190,7 +190,9 @@ class PhotodiodePatch(Model):
 
 
 class DisplayProfile(Model):
-    calibration_view: Literal["reference_bars", "frame_grid"] = "frame_grid"
+    calibration_view: Literal[
+        "reference_bars", "frame_grid", "photodiode_placement", "blackout_placement"
+    ] = "frame_grid"
     format_version: Version1
     geometry: Geometry
     outputs: Annotated[tuple[Output, ...], Field(min_length=1)]

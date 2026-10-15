@@ -1,0 +1,47 @@
+{
+  "frame15_extrema": [
+    [
+      0,
+      255
+    ],
+    [
+      0,
+      255
+    ],
+    [
+      0,
+      255
+    ]
+  ],
+  "frame22_extrema": [
+    [
+      0,
+      255
+    ],
+    [
+      0,
+      255
+    ],
+    [
+      0,
+      255
+    ]
+  ],
+  "mean15": [
+    37.08755078125,
+    37.08755078125,
+    37.08755078125
+  ],
+  "mean22": [
+    31.74619609375,
+    31.74619609375,
+    31.74619609375
+  ],
+  "difference_bbox": [
+    52,
+    200,
+    1188,
+    896
+  ],
+  "viewed": "Textured floor visible in all four outputs; distinct orientation15s versus22s; no walls in source; physical seams/calibration unverified"
+}

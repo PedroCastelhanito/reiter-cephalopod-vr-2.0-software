@@ -4,7 +4,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.visual_stimulus.config.calibration_adjustments import (
     LIVE_ADJUSTABLE_VIEWS,
-    validated_adjustments,
+    validated_update,
 )
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
@@ -32,6 +32,8 @@ def validate_live_update(
         raise ValueError(
             "Live calibration update targets a stale or inactive diagnostic"
         )
-    validated_adjustments(
-        (item.mapping_id, item.destination_xy) for item in request.adjustments
+    validated_update(
+        evidence.calibration_view,
+        ((item.mapping_id, item.destination_xy) for item in request.adjustments),
+        request.placement_json,
     )

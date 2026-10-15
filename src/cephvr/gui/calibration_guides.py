@@ -49,15 +49,19 @@ def add_face_guides(
     width: float,
     height: float,
     spacing: float,
+    *,
+    raster_size: tuple[int, int] | None = None,
 ) -> None:
     """Solid world-phase grid, a face border and one readable screen name."""
     if int(width / spacing) + int(height / spacing) > 1000:
         raise ValueError(f"{face} grid exceeds 1000 lines; increase spacing")
     stroke = min(0.2, spacing / 50)
-    for vertical, direction, extent, length in (
-        (True, u, width, height),
-        (False, v, height, width),
+    for vertical, direction, extent, length, pixels in (
+        (True, u, width, height, None if raster_size is None else raster_size[0]),
+        (False, v, height, width, None if raster_size is None else raster_size[1]),
     ):
+        # Two source pixels survive fractional output translations and filtering.
+        line_stroke = stroke if pixels is None else max(stroke, 2 * extent / pixels)
         axis = max(range(3), key=lambda index: abs(direction[index]))
         low, high = sorted((origin[axis], origin[axis] + direction[axis] * extent))
         for index in range(math.ceil(low / spacing), math.floor(high / spacing) + 1):
@@ -66,7 +70,7 @@ def add_face_guides(
                 continue
             start = at(offset, 0, 0.02) if vertical else at(0, offset, 0.02)
             end = at(offset, length, 0.02) if vertical else at(length, offset, 0.02)
-            mesh.line(start, end, stroke, normal, GRID)
+            mesh.line(start, end, line_stroke, normal, GRID)
     for corner_a, corner_b in (
         ((0, 0), (width, 0)),
         ((width, 0), (width, height)),

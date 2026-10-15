@@ -1,5 +1,11 @@
 # Tracking status
 
+Oct15 real native same-image NVIDIA Optical Flow execution/lease smoke passes in
+the25-pass Windows/rig selection (one privilege skip). All48 owning contract cases and19
+schema comparisons pass. These establish native availability, not scientific accuracy,
+known-motion physical units or simultaneous experiment feedback acceptance.
+[Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). Live-camera diagnostics were prepared but not run: owner explicitly requests leaving the separately opened GUI running and finishing current checks only. No takeover, diagnostic start or shutdown was performed against it. Native image-only/flow-only and missing-dependency camera cases remain open; no scientific accuracy or feedback claim.
+
 Oct13 native NVIDIA same-image flow/lease smoke passes within the Windows backend
 selection (1,520 passes/five symlink-privilege skips across owners). This checks native
 lease/readback/closure, not scientific accuracy or camera/full-load feedback. Further

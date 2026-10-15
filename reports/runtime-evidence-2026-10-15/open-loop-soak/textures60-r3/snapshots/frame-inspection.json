@@ -1,0 +1,152 @@
+[
+  {
+    "video": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-101911\\protocol-data\\DUMMY_101918_behavioral_cam.mp4",
+    "second": 20,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\textures60-r3\\snapshots\\DUMMY_101918_behavioral_cam-20s.png",
+    "exit": 0,
+    "stderr": "",
+    "dimensions": [
+      1760,
+      1716
+    ],
+    "mean": [
+      0.08431606272515363,
+      0.10411898707353252,
+      0.24397217365967366
+    ],
+    "extrema": [
+      [
+        0,
+        50
+      ],
+      [
+        0,
+        23
+      ],
+      [
+        0,
+        34
+      ]
+    ]
+  },
+  {
+    "video": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-101911\\protocol-data\\DUMMY_101918_eye_tracking_cam.mp4",
+    "second": 20,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\textures60-r3\\snapshots\\DUMMY_101918_eye_tracking_cam-20s.png",
+    "exit": 0,
+    "stderr": "",
+    "dimensions": [
+      1920,
+      1200
+    ],
+    "mean": [
+      9.253644965277777,
+      9.805723524305556,
+      9.159668402777777
+    ],
+    "extrema": [
+      [
+        0,
+        48
+      ],
+      [
+        0,
+        48
+      ],
+      [
+        0,
+        48
+      ]
+    ]
+  },
+  {
+    "video": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-101911\\protocol-data\\DUMMY_101918_stimulus.mp4",
+    "second": 15,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\textures60-r3\\snapshots\\DUMMY_101918_stimulus-15s.png",
+    "exit": 0,
+    "stderr": "",
+    "dimensions": [
+      1280,
+      1000
+    ],
+    "mean": [
+      55.398890625,
+      55.398890625,
+      55.398890625
+    ],
+    "extrema": [
+      [
+        0,
+        220
+      ],
+      [
+        0,
+        220
+      ],
+      [
+        0,
+        220
+      ]
+    ]
+  },
+  {
+    "video": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-101911\\protocol-data\\DUMMY_101918_stimulus.mp4",
+    "second": 45,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\textures60-r3\\snapshots\\DUMMY_101918_stimulus-45s.png",
+    "exit": 0,
+    "stderr": "",
+    "dimensions": [
+      1280,
+      1000
+    ],
+    "mean": [
+      56.33643515625,
+      56.33643515625,
+      56.33643515625
+    ],
+    "extrema": [
+      [
+        0,
+        221
+      ],
+      [
+        0,
+        221
+      ],
+      [
+        0,
+        221
+      ]
+    ]
+  },
+  {
+    "video": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_soak_20261015\\DUMMY-101911\\protocol-data\\DUMMY_101918_tracking_cam.mp4",
+    "second": 20,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\textures60-r3\\snapshots\\DUMMY_101918_tracking_cam-20s.png",
+    "exit": 0,
+    "stderr": "",
+    "dimensions": [
+      1588,
+      1344
+    ],
+    "mean": [
+      0.011978323287753388,
+      0.011978323287753388,
+      0.011978323287753388
+    ],
+    "extrema": [
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  }
+]

@@ -149,9 +149,16 @@ the complete package's native DLLs are intentionally restricted to AMD64 Windows
 python scripts/start_gui.py
 # Windows managed runtime: launcher, controller, backends and GUI.
 python scripts/start_runtime_gui.py
+# Open-loop application without a Tracking backend process for this launch.
+python scripts/start_runtime_gui.py --no-tracking
 # Reopen only the GUI after closing it in the still-running application.
 python scripts/start_runtime_gui.py --reopen-gui
 ```
+
+`--no-tracking` fixes the application's role set until shutdown. The configured
+Tracking camera can still preview and record, but Tracking processing, velocity
+saving and Tracking diagnostics require a fresh full launch. Reopening the GUI
+preserves its application's role set; do not combine the two flags.
 
 Images and videos are local assets and are excluded from Git. To create the optional
 dummy authoring samples outside the repository, run

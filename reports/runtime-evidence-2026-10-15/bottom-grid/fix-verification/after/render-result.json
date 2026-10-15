@@ -1,0 +1,74 @@
+{
+  "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "scope": "Isolated offscreen production arena and warp shaders, saved GLB/profile; no live application, display submission or optical test",
+  "artifact_identity": {
+    "diagnostic_display_profile.json": {
+      "sha256": "c1eb5db9560f0342eae15277618219b2a54f200fbf9661b2d5a10d9300cd3523",
+      "mtime_ns": 1792039024408480600
+    },
+    "diagnostic_bottom.json": {
+      "sha256": "7de2e560fef91d3def1969ccb82e166352e489110cb7cd01d9d9986344bc224d",
+      "mtime_ns": 1792039024408480600
+    },
+    "frame_grid.glb": {
+      "sha256": "cded3e858dfd3df5e2bed0bdb4df9261819897bcd842f1fa3905c721c9dab4ba",
+      "mtime_ns": 1792039024425767100
+    }
+  },
+  "size_px": [
+    720,
+    1280
+  ],
+  "baseline": {
+    "sample_y_px": 320,
+    "line_centers_px": [
+      22.5,
+      62.5,
+      103.5,
+      144.5,
+      185.5,
+      226.5,
+      267.5,
+      308.5,
+      349.5,
+      390.5,
+      431.5,
+      472.5,
+      513.5,
+      554.5,
+      595.5,
+      635.5,
+      676.5
+    ],
+    "gap_range_px": [
+      40.0,
+      41.0
+    ]
+  },
+  "wider_stroke_experiment": {
+    "sample_y_px": 320,
+    "line_centers_px": [
+      22.5,
+      62.5,
+      103.5,
+      144.5,
+      185.5,
+      226.5,
+      267.5,
+      308.5,
+      349.5,
+      390.5,
+      431.5,
+      472.5,
+      513.5,
+      554.5,
+      595.5,
+      635.5,
+      676.5
+    ],
+    "gap_range_px": [
+      40.0,
+      41.0
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "format_version": 1,
+  "calibration_id": "diagnostic_left",
+  "mapping_id": "diagnostic_left",
+  "surface_id": "left",
+  "output_id": "calibration_left",
+  "output_width": 1280,
+  "output_height": 720,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "width": 1280,
+    "height": 720
+  },
+  "rows": 2,
+  "columns": 2,
+  "vertices": [
+    {
+      "uv": [
+        0.059374999999999956,
+        0.015277777777777779
+      ],
+      "xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "uv": [
+        1.0,
+        0.015277777777777779
+      ],
+      "xy": [
+        0.940625,
+        0.0
+      ]
+    },
+    {
+      "uv": [
+        0.059374999999999956,
+        1.0
+      ],
+      "xy": [
+        0.0,
+        0.9847222222222223
+      ]
+    },
+    {
+      "uv": [
+        1.0,
+        1.0
+      ],
+      "xy": [
+        0.940625,
+        0.9847222222222223
+      ]
+    }
+  ],
+  "orientation": "preserving",
+  "diagonal": "bottom_left_to_top_right",
+  "mask": null,
+  "weight": null,
+  "overlap_group": null,
+  "valid_area": [
+    0.024609375,
+    0.0020833333333333333,
+    0.856640625,
+    0.9673611111111111
+  ],
+  "intended_coverage": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.940625,
+      0.0
+    ],
+    [
+      0.940625,
+      0.9847222222222223
+    ],
+    [
+      0.0,
+      0.9847222222222223
+    ]
+  ],
+  "coverage_tolerance": 1e-6,
+  "triangle_area_tolerance": 1e-9
+}

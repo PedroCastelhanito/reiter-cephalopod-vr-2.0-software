@@ -1,0 +1,15 @@
+Input #0, lavfi, from 'testsrc2=size=1280x1000:rate=60,format=rgba':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, rgba, 1280x1000 [SAR 1:1 DAR 32:25], 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\rig-encoding-current\warmup\stimulus.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High) (avc1 / 0x31637661), yuv420p(pc, bt709/unknown/unknown, progressive), 1280x1000 [SAR 1:1 DAR 32:25], q=2-31, 60 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   54 fps=0.0 q=10.0 size=       0KiB time=00:00:00.90 bitrate=   0.2kbits/s speed=1.71x elapsed=0:00:00.52    frame=  140 fps=135 q=9.0 size=       0KiB time=00:00:02.33 bitrate=   0.1kbits/s speed=2.26x elapsed=0:00:01.03    frame=  228 fps=146 q=9.0 size=       0KiB time=00:00:03.80 bitrate=   0.1kbits/s speed=2.44x elapsed=0:00:01.55    frame=  317 fps=153 q=9.0 size=    8192KiB time=00:00:05.28 bitrate=12702.0kbits/s speed=2.56x elapsed=0:00:02.06    frame=  401 fps=156 q=9.0 size=    8192KiB time=00:00:06.68 bitrate=10041.3kbits/s speed=2.59x elapsed=0:00:02.57    frame=  489 fps=158 q=9.0 size=    8192KiB time=00:00:08.15 bitrate=8234.2kbits/s speed=2.63x elapsed=0:00:03.09    frame=  579 fps=160 q=9.0 size=   16640KiB time=00:00:09.65 bitrate=14125.9kbits/s speed=2.67x elapsed=0:00:03.62    [out#0/mp4 @ 000002b07a904740] video:20237KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.017546%
+frame=  600 fps=161 q=9.0 Lsize=   20240KiB time=00:00:10.00 bitrate=16581.0kbits/s speed=2.68x elapsed=0:00:03.73    

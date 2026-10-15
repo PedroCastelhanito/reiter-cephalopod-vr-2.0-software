@@ -1,0 +1,1 @@
+{"acquisition_enabled": false, "result": "startup_configuration_load_raises", "exception": "ConfigurationError", "message": "invalid TOML in .tmp\\tmp2va741k_\\config\\backends\\acquisition_config.toml: Invalid value (at end of document)"}

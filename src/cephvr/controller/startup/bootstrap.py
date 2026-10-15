@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from cephvr.controller.backend import BackendRegistration
+from cephvr.shared.managed_modules import managed_modules, no_tracking_from_bootstrap
 
 
 def _bootstrap_value(bootstrap: Mapping[str, object], key: str, kind: type) -> object:
@@ -44,4 +45,11 @@ def _backend_descriptors(bootstrap: Mapping[str, object]) -> list[BackendRegistr
             raise ValueError("duplicate backend bootstrap role")
         seen.add(registration.backend_name)
         result.append(registration)
+    expected = set(
+        managed_modules(no_tracking=no_tracking_from_bootstrap(bootstrap))
+    ) - {"gui"}
+    if seen != expected:
+        raise ValueError(
+            "bootstrap backend registry differs from declared launch roles"
+        )
     return result

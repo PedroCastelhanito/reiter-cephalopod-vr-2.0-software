@@ -1,0 +1,25 @@
+--- 
+
++++ 
+
+@@ -143,4 +143,5 @@
+
+ LineMode	{LineSelector=Line4}	Input
+-LineSelector	Line1
++LineSelector	Line2
+ LineSource	{LineSelector=Line2}	UserOutput1
++LineSelector	Line2
+ LineInverter	{LineSelector=Line1}	0
+@@ -149,3 +150,3 @@
+
+ LineInverter	{LineSelector=Line4}	0
+-LineSelector	Line1
++LineSelector	Line2
+ LineDebouncerTime	{LineSelector=Line1}	0.00000
+@@ -153,4 +154,4 @@
+
+ LineDebouncerTime	{LineSelector=Line4}	0.00000
+-LineSelector	Line1
+ LineMinimumOutputPulseWidth	{LineSelector=Line2}	0.000
++LineSelector	Line2
+ UserOutputValueAll	0x0

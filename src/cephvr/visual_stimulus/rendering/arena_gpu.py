@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from functools import partial
 from typing import Any
 
+from cephvr.visual_stimulus.resources.assets import arena_subresource_id
 from cephvr.visual_stimulus.resources.glb import GLBPrimitive, GLBScene
 from cephvr.visual_stimulus.resources.media import ImagePixels
 
@@ -104,7 +105,9 @@ def upload_arena(
             if callable(activate):
                 activate()
             for index, _texture in enumerate(scene.textures):
-                pixels = prepared_content.get(f"{asset_id}:texture:{index}")
+                pixels = prepared_content.get(
+                    arena_subresource_id(asset_id, "texture", index)
+                )
                 if not isinstance(pixels, ImagePixels):
                     raise ValueError(f"prepared arena texture {index} is missing")
                 variants = ArenaMaterialTextures()

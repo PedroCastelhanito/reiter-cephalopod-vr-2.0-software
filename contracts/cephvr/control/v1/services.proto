@@ -102,6 +102,7 @@ message UpdateDisplayCalibrationRequest {
   string diagnostic_id = 3;
   uint64 adjustment_sequence = 4;
   repeated cephvr.visual_stimulus.v1.DisplayCalibrationAdjustment adjustments = 5;
+  string placement_json = 6;
 }
 message VisualStimulusDisplayCalibrationUpdateRequest {
   string command_id = 1;
@@ -112,6 +113,7 @@ message VisualStimulusDisplayCalibrationUpdateRequest {
   int64 deadline_monotonic_ns = 6;
   uint64 adjustment_sequence = 7;
   repeated cephvr.visual_stimulus.v1.DisplayCalibrationAdjustment adjustments = 8;
+  string placement_json = 9;
 }
 message CloseDisplayCalibrationRequest {
   OperatorCommand command = 1;

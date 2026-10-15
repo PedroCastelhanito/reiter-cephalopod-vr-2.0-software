@@ -1,0 +1,23 @@
+{
+  "mode": "controller_loss",
+  "events": [
+    {
+      "label": "initial_session",
+      "value": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      }
+    },
+    {
+      "label": "cleanup_with_live_controller",
+      "value": [
+        true,
+        "Completed"
+      ]
+    },
+    {
+      "label": "error",
+      "value": "OPERATION_FAILED: prior capture has unknown SDK-buffer discard accounting"
+    }
+  ],
+  "controller_generation": "98a16b56-d012-4fb6-b906-7652b6d84580"
+}

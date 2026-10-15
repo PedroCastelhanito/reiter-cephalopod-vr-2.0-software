@@ -1,0 +1,14 @@
+{
+  "scope": "Separate engineering unlit derivative of supplied circular floor only; no walls present; no physical calibration or bake claim",
+  "source": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\arenas\\circular_blackwalls_filterednoisefloor\\arena.glb",
+  "source_sha256": "19998cdd594824391f926e331cb966b590a7856aecd2179fdb1d4f0980a141fb",
+  "destination": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\derived-assets\\arena-unlit-engineering.glb",
+  "derived_sha256": "ee2e22d95cdbe3c835162a15b2f494d89399d7ca2b75f64bf81e4bbd94064f70",
+  "bin_chunk_and_tail_sha256": "16b374fc21ddc4db21197af370d0e756effa09dbb0a84e65a820716ffcfb8519",
+  "bin_and_tail_identical": true,
+  "only_semantic_changes": [
+    "KHR_materials_unlit on existing materials",
+    "extensionsUsed/Required declaration"
+  ],
+  "material_count": 1
+}

@@ -727,9 +727,13 @@ def test_session_cleanup_delivery_failure_keeps_setup_unresolved():
     assert not driver.state.cleaned
 
 
+@pytest.mark.parametrize(
+    "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+)
 @pytest.mark.parametrize("fail_update", [False, True])
 def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
     fail_update,
+    calibration_view,
 ):
     import hashlib
     from types import SimpleNamespace
@@ -743,6 +747,7 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
 
     clock = Clock()
     profile = parse_display_json(valid_display_json(), max_bytes=1_000_000)
+    profile = profile.model_copy(update=dict(calibration_view=calibration_view))
     profile_json = profile.model_dump_json()
     worker = pb.ProcessIdentity(
         role="visual_stimulus_renderer", generation=str(uuid4())
@@ -762,14 +767,30 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
             assert asset is prepared
             return True
 
+    presentations = []
+    pulse_failure = [False]
+
     class EngineStub:
         def present_display_calibration(self, selected, asset):
             assert selected == profile and asset is prepared
-            return (OutputActivity("projector/main", 10, 11, 1),)
+            presentations.append(selected)
+            return (
+                OutputActivity(
+                    "projector/main", 10, 11, 1, "failed" if pulse_failure[0] else None
+                ),
+            )
 
         def update_display_calibration(self, selected, asset, adjustments):
             assert selected == profile and asset is prepared
-            assert "front" in adjustments
+            if calibration_view == "frame_grid":
+                assert "front" in adjustments
+            else:
+                from cephvr.visual_stimulus.config.calibration_placement import (
+                    CalibrationPlacement,
+                )
+
+                assert isinstance(adjustments, CalibrationPlacement)
+                assert adjustments.outputs[0].output_id == "projector/main"
             return (
                 OutputActivity(
                     "projector/main", 11, 12, 1, "swap failed" if fail_update else None
@@ -835,12 +856,41 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
     assert reports.records[-1][1].calibration.diagnostic_id == opened.diagnostic_id
     assert reports.records[-1][1].calibration.renderer_generation == worker.generation
 
+    for _ in range(3):
+        owner.advance(clock())
+    assert len(presentations) == (
+        4 if calibration_view == "photodiode_placement" else 1
+    )
+    assert owner.evidence.adjustment_sequence == 0
+
     update = visual_stimulus.UpdateDisplayCalibrationCommand(
         command=command, diagnostic_id=opened.diagnostic_id, adjustment_sequence=1
     )
     update.adjustments.add(
         mapping_id="front", destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9]
     )
+    import json
+
+    placement_json = json.dumps(
+        dict(
+            outputs=[dict(output_id="projector/main", blackout_zones=[])],
+            **(
+                dict(
+                    photodiode_output_id="projector/main",
+                    photodiode_patch=dict(
+                        rect=dict(x=1, y=1, width=2, height=2),
+                        high_linear_rgb=[1, 1, 1],
+                        low_linear_rgb=[0, 0, 0],
+                    ),
+                )
+                if calibration_view == "photodiode_placement"
+                else {}
+            ),
+        )
+    )
+    if calibration_view != "frame_grid":
+        update.ClearField("adjustments")
+        update.placement_json = placement_json
     if fail_update:
         with pytest.raises(RuntimeError, match="presentation evidence"):
             owner.update(update, command.deadline_monotonic_ns)
@@ -860,16 +910,33 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
         with pytest.raises(ValueError, match="stale"):
             owner.update(update, command.deadline_monotonic_ns)
         update.diagnostic_id = opened.diagnostic_id
-        update.adjustments[0].destination_xy[0] = -1
+        if calibration_view == "frame_grid":
+            update.adjustments[0].destination_xy[0] = -1
+        else:
+            update.placement_json = "{}"
         with pytest.raises(ValueError):
             owner.update(update, command.deadline_monotonic_ns)
         assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
         assert owner.evidence.adjustment_sequence == 1
         assert owner.evidence.failure_code == "CALIBRATION_ADJUSTMENT_REJECTED"
-        update.adjustments[0].destination_xy[0] = 0.1
+        if calibration_view == "frame_grid":
+            update.adjustments[0].destination_xy[0] = 0.1
+        else:
+            update.placement_json = placement_json
         owner.update(update, command.deadline_monotonic_ns)
         assert owner.evidence.adjustment_sequence == 2
         assert not owner.evidence.failure_code
+    if calibration_view == "photodiode_placement":
+        if not fail_update:
+            pulse_failure[0] = True
+            with pytest.raises(RuntimeError, match="preview presentation failed"):
+                owner.advance(clock())
+            assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+            assert owner.evidence.failure_code == "CALIBRATION_PULSE"
+        count = len(presentations)
+        owner.advance(clock())
+        assert len(presentations) == count
+
     close_command = visual_stimulus.WorkerCommand(
         command_id=str(uuid4()),
         issuer=coordinator,
@@ -888,6 +955,9 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
     assert owner.evidence.resources_closed is True
     assert retained_profile[0] is None
     assert reports.records[-1][1].command_id == close_command.command_id
+    count = len(presentations)
+    owner.advance(clock())
+    assert len(presentations) == count
 
     with pytest.raises(ValueError, match="inactive"):
         owner.update(update, command.deadline_monotonic_ns)

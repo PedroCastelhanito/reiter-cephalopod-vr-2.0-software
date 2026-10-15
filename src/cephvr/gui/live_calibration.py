@@ -9,7 +9,10 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.calibration_profile import MonitorBinding, face_valid_area
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.projectors import ProjectorsPanel
-from cephvr.visual_stimulus.config.calibration_adjustments import validated_adjustments
+from cephvr.visual_stimulus.config.calibration_adjustments import (
+    LIVE_ADJUSTABLE_VIEWS,
+    validated_adjustments,
+)
 from cephvr.visual_stimulus.v1 import messages_pb2 as messages
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
@@ -35,6 +38,13 @@ class LiveCalibration(QObject):
         self.inflight = 0
         self.identity: tuple[str, str, int] | None = None
         projectors.calibration.adjustments_changed.connect(self.edited)
+        for control in (
+            *projectors.timing.fields.values(),
+            *projectors.timing.pulse_fields.values(),
+        ):
+            control.textEdited.connect(lambda *_: self.edited())
+        projectors.timing.target.currentIndexChanged.connect(lambda *_: self.edited())
+        projectors.timing.blackouts.changed.connect(lambda *_: self.edited())
 
     def eligible(self, state: pb.Snapshot | None) -> bool:
         return bool(
@@ -46,7 +56,7 @@ class LiveCalibration(QObject):
             and state.visual_stimulus_display.calibration.state
             == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
             and state.visual_stimulus_display.calibration.calibration_view
-            == "frame_grid"
+            in LIVE_ADJUSTABLE_VIEWS
             and state.visual_stimulus_display.calibration.controller_generation
             == state.controller_generation
             and state.visual_stimulus_display.calibration.configuration_revision
@@ -87,6 +97,18 @@ class LiveCalibration(QObject):
             return
         assert state is not None
         evidence = state.visual_stimulus_display.calibration
+        if evidence.calibration_view != "frame_grid":
+            from cephvr.gui.placement_calibration import placement_snapshot
+
+            try:
+                placement = placement_snapshot(
+                    self.projectors, evidence.calibration_view
+                )
+            except (ValueError, TypeError, KeyError):
+                self.dirty = False
+                return
+            self.dispatch(state, placement_json=placement.model_dump_json())
+            return
         try:
             for field_key in self.edited_fields:
                 control = self.projectors.calibration.controls[field_key]
@@ -128,20 +150,34 @@ class LiveCalibration(QObject):
             # Partial/invalid typing leaves the last confirmed projection visible.
             self.dirty = False
             return
+        self.dispatch(
+            state, adjustments=tuple(item.SerializeToString() for item in adjustments)
+        )
+
+    def dispatch(
+        self,
+        state: pb.Snapshot,
+        *,
+        adjustments: tuple[bytes, ...] = (),
+        placement_json: str = "",
+    ) -> None:
+        evidence = state.visual_stimulus_display.calibration
         sequence = evidence.adjustment_sequence + 1
+        options = dict(placement_json=placement_json) if placement_json else {}
         if self.send(
             "update_display_calibration",
             expected_revision=state.configuration.revision,
             diagnostic_id=evidence.diagnostic_id,
             adjustment_sequence=sequence,
-            adjustments=tuple(item.SerializeToString() for item in adjustments),
+            adjustments=adjustments,
+            **options,
         ):
             self.inflight = sequence
             self.dirty = False
         else:
             self.dirty = False
             self.projectors.console.appendPlainText(
-                "Live grid update was not sent: controller queue unavailable."
+                "Live calibration update was not sent: controller queue unavailable."
             )
 
     def reset(self) -> None:

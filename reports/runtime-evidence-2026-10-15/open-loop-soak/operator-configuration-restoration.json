@@ -1,0 +1,19 @@
+{
+  "reason": "Explicit user stop; restore only own temporary operator/autosaved configuration after all owned processes exited",
+  "files": [
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\visual_stimulus_config.toml",
+      "before_sha256": "f0cea2fd5c1d4805a921071fc564109bf62ee063922839235c5458d887d4c922",
+      "original_sha256": "63cbe4dd1ed13255868af52e29886a891f1c582f698507c9fd7a40baa94a6d3d",
+      "restored_sha256": "63cbe4dd1ed13255868af52e29886a891f1c582f698507c9fd7a40baa94a6d3d",
+      "exact_match": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\last_configuration.json",
+      "before_sha256": "a8b3e3828c27e275bc6183901c2ad821382e21e735905f03644adc62a6b09e9b",
+      "original_sha256": "ca1b1353cb55d75dc127e5210fbc9eb94213a50b2e851200fb3b61421e3d90e7",
+      "restored_sha256": "ca1b1353cb55d75dc127e5210fbc9eb94213a50b2e851200fb3b61421e3d90e7",
+      "exact_match": true
+    }
+  ]
+}

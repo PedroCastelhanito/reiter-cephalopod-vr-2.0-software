@@ -1,6 +1,54 @@
 # Rig verification — outstanding checks
 
-Oct14 owner powers projectors off and defers projector-dependent checks. Final combined three-camera and SaveOff recordings count/full-decode; queue17 saved with measured20% burst margin. Review throughput, full CancelSetup/Abort/idle300s reuse and lifecycle receipt margins remain open. Source/local repairs are not native acceptance. [Current assessment](runtime-evidence-2026-10-14/rig-timing-audit/configuration-assessment.json).
+Current status: owner resumed tests Oct15 after explicitly pausing the prior run.
+Sol6.1 completes combined900-final-r1: exact 900 seconds, confirmed cleanup/reuse and
+all four strict video counts/full decodes. Astra accepts this low-loss engineering gate;
+camera CFR repeats are 0.20–0.45%, stimulus 1.13% with one startup capacity drop.
+Earlier failed/owner-interrupted runs retain unknown closure. Bounded prepared-YUV
+codec fidelity and a separate 60-second camera-lossless native recording/count/decode
+pass; this is neither raw-sensor fidelity nor 15-minute lossless acceptance. Fresh
+saved files restore byte-exact; camera feature values match with PFS selector-cursor
+serialization differences. All test processes/SDK handles are closed. Native rapid
+post-Abort boundary crossing and interrupted trial-log finalization latency stay open.
+
+Current Oct15 scope: owner now confirms projectors/cameras on and requests open-loop
+Gaussian linked-screen motion, simple3D arena and all configured camera/stimulus
+recordings, CPU/GPU monitoring and a15-minute trial after shorter checks succeed.
+Use Desktop/Pedro files; projection areas remain uncalibrated, so engineering results
+do not establish physical alignment. Tracking processing is excluded; the configured
+Tracking camera remains eligible for recording. Sol6.1 executes tests and Astra reviews
+results. Earlier powered-off and leave-GUI-open limits below describe prior runs,
+not this newly authorized scope. Completed `combined-recording-loss` is recorded in LOG;
+remaining optical, scientific, reuse and headroom checks stay open.
+
+Oct15 synthetic encoder portion of the listed matrix completes31/31 cases with
+external counts/full decodes; direct zero-input finalization also succeeds. Full-path
+capture/drop, scientific quality and projector readback acceptance remain open.
+Live-camera Tracking diagnostics are owner-deferred Oct15: leave the separately opened GUI running and finish current checks only.
+[Workload/results](visual_stimulus.md), [empty-output scope](acquisition.md),
+[raw evidence](runtime-evidence-2026-10-15/projector-free-rig/context.json).
+
+Oct15 owner explicitly authorizes available native/device checks on this rig with
+projectors off. Completed portions:25 native/rig tests with one privilege skip,22 native
+picker tests, five native layout cases,90 contract cases, schema consistency and native
+package build. One layout assertion fails (326px versus less than320px); broad native GUI
+run was interrupted and is not a pass. COM8 protocol4 Connect and four preview cycles
+per enabled Behavior/Tracking camera pass. A later Behavior restart is blocked by unknown
+SDK-buffer discard accounting. Exact idle-controller containment/all-owned-absent receipt
+passes; active capture-loss remains unexecuted and MCU release remains unconfirmed.
+Saved configuration and baseline full camera PFS restore exactly after that generation.
+SpikeGLX read-only check times out. [Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). These partial results do not close remaining
+full-session, scientific, electrical, alternate-DPI or projector-dependent acceptance.
+
+Oct15 owner confirms projectors are powered off: defer all powered-projector,
+combined-session, optical, presentation-timing and projector fault/throughput tests.
+Offline/local checks may continue and never close rig acceptance. Oct14 combined
+three-camera and SaveOff recordings counted/full-decoded with queue17 measured;
+owner-selected queue20/SDK15/drain150 remain saved but not remeasured. Required
+scientific-evidence/video On→Off→On reuse after the later integration, full
+CancelSetup/Abort/idle300s reuse and lifecycle receipt margins remain open.
+[Current TODO audit](runtime-evidence-2026-10-15/todo-projectors-off/context.json),
+[configuration assessment](runtime-evidence-2026-10-14/rig-timing-audit/configuration-assessment.json).
 
 Owner defers Projector flip input/diagnostics and camera-trigger phase offsets on
 Oct14 under A11 revision46. Do not run former passive input checks; retained D2
@@ -513,7 +561,7 @@ Existing operating-point/throughput deferrals below remain separate.
 | GUI authoring and planning preview | Install `.[dev,gui]` and launch `python scripts/start_gui.py`; follow [frontend review commands](../docs/development.md#dashboard-frontend-review). Check Windows DPI/narrow-window layouts, discovered cameras/COM ports, enabled projector combinations, calibration JSON load/save and pixel offsets/inversions. Build and reload a 200-epoch trial with independent per-projector layers and random/ordered batch values; use Shuffle trial on nested repeat/condition groups, verify intact blocks and selection through undo/redo/save/load, and check readable timeline actions at narrow DPI; switch trials and rotate/scrub the two-sided rig preview using local assets. Record latency and errors. This is frontend acceptance, not physical output or live Tracking validation. Typed pacing configuration and exact held-policy checks now pass locally; physical output acceptance remains open. |
 | Managed GUI configuration and authority | After local wiring acceptance, use the installed managed entry point and current review layout at wide/narrow Windows DPI. Submit subject metadata, ordered trials/seeds/gaps, recording selections, Tracking settings and projector mappings; compare accepted revision/history/session metadata. Exercise first-run display-profile import separately from calibration-value JSON. Invalid or stale visible drafts must block Setup with a useful explanation. Exercise pending Setup cancellation, Abort, lease loss/takeover, pending prompt updates, disconnect/reopen with retained warnings and GUI close/relaunch with `python scripts/start_runtime_gui.py --reopen-gui` for the same application generation. Exercise delayed/lost relaunch replies and shutdown during the request; containment deadlines must remain unchanged. Cancel a proposed discard or dismiss a save-error dialog and confirm unsent edits remain. No stale intent replay or silent draft replacement. |
 | Tracking configuration diagnostics | Under T08/A03/A10, attach to the selected owned camera preview with exact source identity, including when experiment Tracking is disabled. Start with an empty stage mask, then flow-only without pose annotations, and verify unavailable dependent stages. Verify crop/downscale annotations stay in acquired coordinates and enabled stages produce live overlays/timings. Confirm ordered Tracking consumption, bounded viewer latency, explicit viewer detach/reopen versus actual processing closure, and cleanup after source/authority loss and before Setup. Use **Use this frame for annotation** to freeze an exact acquired image; confirm source changes reset annotations and stale frames are rejected. Pending or failed Close must keep settings locked and must not enable another Begin. Changed diagnostic settings require confirmed Close and fresh Begin. Verify no scientific files or Visual Stimulus feedback arise from diagnostics. Under T20/T38, confirm missing/invalid camera calibration blocks experiment/runnable locomotion, early diagnostics still run, acquired-image scale survives crop/downscale, and known motion produces correctly converted mm/s/deg/s feedback/file values with retained pixel-space evidence. Verify explicit old gain/unit rejection; scale is not animal swimming-speed validation. Scientific accuracy/full-load acceptance remains separate. |
-| Untimed projector calibration | Under V01/G01/V15, before Setup and with no initialized experiment display, launch each projector on its own (tick only its Use box; all four faces stay assigned) with Show reference bars: check the output frame, 100 px ticks (yellow every 500 px) and the cyan screen-aspect guide on the real screen, position the projector (centre, distance, lens) until the guide meets the screen edges, then measure both bars per screen and confirm the mm/px estimate and config-only throw-based distance with current zoom/keystone/Bottom fold. Close must return to Idle with resources confirmed closed. Show frame and grid: verify automatic margins centre the screen from the measurement, a blank/entered margin per edge, Reset valid areas, live margin updates without Close/relaunch (1 px, Shift 10 px), status line outcomes for invalid/rejected edits, last-valid retention, resource stability, visible latency, stale-edit rejection, lease loss/disconnect and exact cleanup; compare the grid with a ruler on every screen, including the hard-to-see Bottom edges, and a projection smaller than the screen. Keystone H / V: with a visibly trapezoidal grid (squares shrinking toward one edge), enter pixels until squares are uniform top to bottom and left to right on each screen, including the Bottom fold; confirm the sign convention (positive H narrows the top, positive V shortens the right edge, in projector output space) and that residual curvature, if any, is lens distortion that keystone does not model. Show seam check: the eye-level ring, tank-corner and meridian lines must continue unbroken across adjacent screens. Exercise changed assets, stale revisions/generations, failed presentation, an Open that misses its deadline, control loss, renderer loss and Shutdown during active or still-preparing calibration; unknown cleanup must block Setup. Repeat Open/Close and verify restoration of the prior display or known uninitialized state. Check at Windows scaling above 100 % that native identity binds every display. Invalidate changed modes/optics; imported nonlinear/masked/weighted corrections stay preserved. Local rendered checks do not establish alignment. |
+| Untimed projector calibration | Dedicated physical/fault acceptance remains pending. Under current G01/V01/V15/V22, use Launch reference calibration, Launch projection calibration, Launch photodiode placement and Launch blackout placement with all four assigned/enabled outputs, separate protected per-view sources and per-step runtime copies. Check repeating V22 bright/dark pulse placement on black and black zones on neutral gray, live target/Frame/Pulse/zone add/remove, partial/out-of-bounds edits retaining prior output, selected Close and Unknown tuning locks; check pulse continuation after live edits, sequence restart on reopen, and cessation on Unknown/Close. Diagnostic submissions do not establish optical timing. Verify native output-boundary frame/raw pixel bars; measure both bar lengths per screen in the current native mode. Frame/grid uses the measured per-axis mm/px: compare physical spacing with a ruler, whole-pixel Width/Height capped at native dimensions, blank measured sizes, center-relative Offset X/Y limits/reclamping and retained fixed pitch during live crop/translation. Verify load/save/actual close/reopen persistence, invalid/partial edits retaining the last applied output, exact sequence/revision/lease fences, late Open, rejection, loss and shutdown cleanup. Repeat after Windows scaling above100% using native identities. Preserve imported nonlinear/masked/weighted corrections. No margin/keystone/seam controls belong to this retained workflow; local/offscreen passes do not establish measured alignment or actual output closure. — [G01](../docs/architecture/gui.md#g01), [V15](../docs/architecture/visual_stimulus.md#v15) |
 | GUI Windows display inventory | Compare Projectors table/diagram indices against Windows Settings → Identify on the actual multi-GPU rig, including reconnect, clone mode and changed topology. Verify pixel resolution, retained assignments and explicit query failures. Oct8 isolated Qt retention checks cover immediate saving, restart, reordered/missing/returning identities and local-draft/controller isolation; repeat actual GUI restart and physical unplug/reconnect with stable native identity. macOS inspection and mocked native API calls do not establish equivalence. See [G01](../docs/architecture/gui.md#g01). |
 | Windows venv interpreter process tree | Prepared-image native regression now verifies one live job member, exact launched/executing PID and OS image, fresh venv imports and inherited bootstrap. Verify real managed registration and shutdown after GUI implementation; focused evidence does not establish full application behavior. |
 | Runtime finalization boundary | Under A07/E05, verify bounded online accounting, encoder finalization, sync and close without a separate file-validation pass. Measure drain/closure delay before the next trial. Output-content inspection belongs to external post hoc or development verification, never an automatic runtime validator. |
@@ -935,7 +983,7 @@ these checks remain native acceptance, without wiring or trigger-cadence changes
 Prepared Oct14 for the owned-buffer/half-size review changes under
 [A08](../docs/architecture/acquisition.md#a08),
 [V12](../docs/architecture/visual_stimulus.md#v12) and
-[E13](../docs/architecture/visual_stimulus.md#e13). This is a plan, not rig evidence.
+[E13](../docs/architecture/visual_stimulus.md#e13). The synthetic encoder portion now has Oct15 dated evidence above; full-path recording/drop and quality acceptance below remain a plan.
 Use `tools/encoding_probe.py` for synthetic encoder isolation and read-only collection.
 It does not acquire cameras, pulse the MCU, change application configuration or start
 an experiment. Full-path capture/drop testing below uses the normal managed app.
@@ -1158,7 +1206,12 @@ For each source/row/CQ/repeat, record these columns in the owning report:
 Target zero recording capacity drops/unresolved captures, truthful duplicate accounting,
 normal closure and preserved nominal presentation. Throughput below nominal is a clear
 failure; throughput above nominal does not itself establish adequate full-workload
-headroom. Compare all three repetitions and visual crops at identical display scale,
+headroom. Oct15 current-calibration 900-second recording has one startup capacity drop
+at 0.2947451 seconds, peak slots 15/15 and maximum slot hold 261.51 ms, with none
+unresolved and no later capacity drop. The separate lossless-camera 60-second run has
+zero stimulus capacity drops. These results do not close zero-drop/burst-headroom
+acceptance; any future claim requires measured evidence, not a speculative queue increase.
+Compare all three repetitions and visual crops at identical display scale,
 including motion/edges/low contrast. CQ16/CQ23 file size and acceptability are measured,
 not assumed. Owner evaluates whether to retain the temporary Eye/Stimulus CQ23 values;
 CQ16 remains the standard. Keep existing buffer sizes and remaining optimizations

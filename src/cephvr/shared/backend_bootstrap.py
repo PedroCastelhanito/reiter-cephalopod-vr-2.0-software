@@ -10,6 +10,7 @@ from pathlib import Path
 
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.identity import require_uuid4
+from cephvr.shared.managed_modules import no_tracking_from_bootstrap
 
 
 @dataclass(frozen=True)
@@ -48,9 +49,14 @@ def decode_backend_bootstrap(
     generation = require_uuid4(_string(document, "generation"))
     controller_generation = require_uuid4(_string(document, "controller_generation"))
     supervisor_generation = require_uuid4(_string(document, "supervisor_generation"))
+    no_tracking = no_tracking_from_bootstrap(document)
+    if no_tracking and (
+        expected_role == "tracking" or "tracking_generation" in document
+    ):
+        raise ValueError("Tracking identity contradicts no_tracking launch declaration")
     tracking_generation = (
         require_uuid4(_string(document, "tracking_generation"))
-        if expected_role == "acquisition"
+        if expected_role == "acquisition" and not no_tracking
         else ""
     )
     if role != expected_role:
@@ -83,8 +89,10 @@ def decode_backend_bootstrap(
         supervisor=control.ProcessIdentity(
             role="supervisor", generation=supervisor_generation
         ),
-        tracking=control.ProcessIdentity(
-            role="tracking", generation=tracking_generation
+        tracking=(
+            control.ProcessIdentity(role="tracking", generation=tracking_generation)
+            if tracking_generation
+            else control.ProcessIdentity()
         ),
         token=_string(document, "token"),
         controller_token=_string(document, "controller_token"),

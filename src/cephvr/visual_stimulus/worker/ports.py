@@ -9,6 +9,7 @@ from typing import Protocol
 from google.protobuf.message import Message
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.rendering.types import (
@@ -39,7 +40,7 @@ class EnginePort(Protocol):
         self,
         display: DisplayProfile,
         prepared: PreparedDisplayCalibration,
-        adjustments: dict[str, tuple[tuple[float, float], ...]],
+        adjustments: dict[str, tuple[tuple[float, float], ...]] | CalibrationPlacement,
     ) -> tuple[OutputActivity, ...]: ...
 
     def close_display_calibration(

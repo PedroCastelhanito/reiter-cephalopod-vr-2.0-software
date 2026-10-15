@@ -27,7 +27,7 @@ is not runtime or rig validation (E15).
 <a id="a01"></a>
 ### A01 — Camera acquisition and recording ownership
 
-**Status:** Accepted · **Revision:** 18
+**Status:** Accepted · **Revision:** 19
 
 - The acquisition backend owns camera capture, video encoding and camera video files,
   including trial-bound recording and verified file closure under E05/E11. The
@@ -74,9 +74,10 @@ is not runtime or rig validation (E15).
   order. With multiple roles enabled, require distinct physical devices and reject
   duplicate assignments before capture; initially no camera stream is shared across
   behavioral/tracking/eye-tracking roles. Eye tracking is a third preview/video role;
-  it supplies no eye-position analysis or locomotion input. Its required external
-  trigger wiring/source/rate remain explicit operator inputs; missing inputs block
-  capture. A11 supplies its independent protocol-4 MCU output; electrical/timing
+  it supplies no eye-position analysis or locomotion input. When externally triggered,
+  its wiring/source/rate remain explicit operator inputs; missing inputs block
+  capture. A10's acknowledged free-running mode needs no MCU pin or pulse alignment.
+  A11 supplies its independent protocol-4 external output; electrical/timing
   and actual camera acceptance remain separate rig checks under E15.
 - Assignments are configurable under E07 before the session and locked during it;
   changing a prepared assignment invalidates Ready and requires fresh Setup. Supplied
@@ -915,7 +916,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 46
+**Status:** Accepted · **Revision:** 47
 
 **Board and firmware**
 
@@ -944,7 +945,7 @@ hardware information and later implementation; no new deferral is implied.
   match exactly at Setup; future wire changes increment published versions. Firmware,
   not host monitoring alone, implements A10's watchdog.
 - Version 4 controls independent Behavioral, Tracking and Eye tracking outputs.
-  Eye requires an explicit unique pin, camera FrameStart line and rate; never map
+  Externally triggered Eye requires an explicit unique pin, camera FrameStart line and rate; never map
   it onto another camera output or choose these values by discovery. Host masks,
   readback, diagnostic identity, boundary evidence and cleanup include Eye.
   Firmware upload remains explicit/manual; protocol-3 firmware rejects until

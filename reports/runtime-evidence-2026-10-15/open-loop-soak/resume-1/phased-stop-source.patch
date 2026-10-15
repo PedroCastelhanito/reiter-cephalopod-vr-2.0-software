@@ -1,0 +1,1042 @@
+diff --git a/src/cephvr/acquisition/worker/capture_runtime.py b/src/cephvr/acquisition/worker/capture_runtime.py
+index 030f58e..ff4ad9b 100644
+--- a/src/cephvr/acquisition/worker/capture_runtime.py
++++ b/src/cephvr/acquisition/worker/capture_runtime.py
+@@ -342,6 +342,8 @@ class WorkerCaptureResources:
+         self._window = None
+ 
+     def next_deadline_ns(self) -> int | None:
++        if self._active and self._admission_stop_ns is not None:
++            return self._stop_deadline_ns
+         if self._scheduled_start_ns is not None and not self._active:
+             return self._scheduled_start_ns
+         if (
+@@ -378,16 +380,8 @@ class WorkerCaptureResources:
+             return False
+         return capture.capture_once(handoff)
+ 
+-    def stop(
+-        self,
+-        deadline_ns: int,
+-        *,
+-        drain_margin_ns: int = 0,
+-        terminal_off_confirmed: bool = True,
+-        activity_stopped: Callable[[int], None] | None = None,
+-    ) -> object:
+-        if drain_margin_ns < 0:
+-            raise ValueError("post-cutoff drain margin cannot be negative")
++    def seal_admission(self, deadline_ns: int) -> int:
++        """Seal the first cutoff while the owner remains available for OFF evidence."""
+         if self._admission_stop_ns is None:
+             self._admission_stop_ns = host_time_ns()
+         admission_stop_ns = self._admission_stop_ns
+@@ -395,6 +389,7 @@ class WorkerCaptureResources:
+             self._stop_deadline_ns = deadline_ns
+         else:
+             deadline_ns = min(deadline_ns, self._stop_deadline_ns)
++            self._stop_deadline_ns = deadline_ns
+         window = self._window
+         if window is not None:
+             self.set_window(
+@@ -403,6 +398,21 @@ class WorkerCaptureResources:
+         self._cutoff_reached = True
+         for ring in self._rings.values():
+             ring.seal()
++        return deadline_ns
++
++    def stop(
++        self,
++        deadline_ns: int,
++        *,
++        drain_margin_ns: int = 0,
++        terminal_off_confirmed: bool = True,
++        activity_stopped: Callable[[int], None] | None = None,
++    ) -> object:
++        if drain_margin_ns < 0:
++            raise ValueError("post-cutoff drain margin cannot be negative")
++        deadline_ns = self.seal_admission(deadline_ns)
++        admission_stop_ns = self._admission_stop_ns
++        assert admission_stop_ns is not None
+         timing = self._timing
+         generation_stopped = False
+         if self._active:
+@@ -510,7 +520,11 @@ class WorkerCaptureResources:
+     def _wait_timeout(self) -> int:
+         timeout = self._frame_timeout_ns
+         capture = self.capture
+-        if capture is not None and self._drain_until_ns is None:
++        if (
++            capture is not None
++            and self._drain_until_ns is None
++            and self._admission_stop_ns is None
++        ):
+             window = self._window
+             baseline = capture.last_usable_ns
+             if window is not None:
+diff --git a/src/cephvr/acquisition/worker/cleanup_lifecycle.py b/src/cephvr/acquisition/worker/cleanup_lifecycle.py
+index 9bde73c..ca9a5e4 100644
+--- a/src/cephvr/acquisition/worker/cleanup_lifecycle.py
++++ b/src/cephvr/acquisition/worker/cleanup_lifecycle.py
+@@ -42,6 +42,7 @@ class WorkerCleanupLifecycle:
+         shutdown: Callable[[int], None],
+         recording_reconciled: Callable[[], None],
+         external_wake: Callable[[], None],
++        recording_finish_pending: Callable[[], bool] = lambda: False,
+     ) -> None:
+         if capacity <= 0:
+             raise ValueError("cleanup continuation capacity must be positive")
+@@ -56,12 +57,17 @@ class WorkerCleanupLifecycle:
+         self.shutdown = shutdown
+         self.recording_reconciled = recording_reconciled
+         self.external_wake = external_wake
++        self.recording_finish_pending = recording_finish_pending
+         self._pending: list[PendingWorkerCleanup] = []
+         self._future: Future[list[control.OutputResult]] | None = None
+         self.outputs: list[control.OutputResult] = []
+         self._ambient_deadline_ns: int | None = None
+ 
+     def begin(self, deadline_ns: int) -> None:
++        if self.captures.active:
++            return
++        if self.recording_finish_pending() and host_time_ns() < deadline_ns:
++            return
+         runtime = self.recording
+         if (
+             runtime is None
+@@ -141,6 +147,10 @@ class WorkerCleanupLifecycle:
+         self._ambient_deadline_ns = None
+ 
+     def _reconcile(self, deadline_ns: int) -> bool:
++        if self.captures.active:
++            return False
++        if self.recording_finish_pending() and host_time_ns() < deadline_ns:
++            return False
+         runtime = self.recording
+         if runtime is None or not runtime.enabled or runtime.recording_queue is None:
+             return True
+diff --git a/src/cephvr/acquisition/worker/execution.py b/src/cephvr/acquisition/worker/execution.py
+index 1327703..4ce6cf9 100644
+--- a/src/cephvr/acquisition/worker/execution.py
++++ b/src/cephvr/acquisition/worker/execution.py
+@@ -112,6 +112,7 @@ class WorkerOperationExecutor:
+             shutdown=self._request_shutdown,
+             recording_reconciled=lambda: self.trial.clear_recording_future(),
+             external_wake=external_wake,
++            recording_finish_pending=lambda: self.trial.terminal_pending,
+         )
+         self.trial = WorkerTrialLifecycle(
+             bootstrap,
+@@ -201,9 +202,14 @@ class WorkerOperationExecutor:
+             elif name == "RecordPulseEvidence":
+                 self.trial.record_pulse_evidence(request)
+             elif name == "StopTrial":
+-                self.trial.stop_request = request
+-                self.trial.stop_trial(deadline_ns, report_stopped=True)
+-                self.trial.report_camera_finished(request, deadline_ns)
++                self.trial.begin_stop_operation(
++                    request,
++                    deadline_ns,
++                    report,
++                    self._complete_stop_operation,
++                    report_stopped=True,
++                )
++                return
+             elif name == "CancelSetup":
+                 if self.recording is not None and self.recording.enabled:
+                     self.recording.cancel_before_start(deadline_ns=deadline_ns)
+@@ -212,13 +218,19 @@ class WorkerOperationExecutor:
+                 self.trial.trial_prepared = False
+             elif name == "InterruptSession":
+                 self._cancelled.set()
+-                self.trial.stop_request = request
+-                self.trial.stop_trial(deadline_ns)
+-                self.trial.report_camera_finished(request, deadline_ns)
+                 self.preparation.cancel_setup()
++                self.trial.begin_stop_operation(
++                    request,
++                    deadline_ns,
++                    report,
++                    self._complete_stop_operation,
++                    report_stopped=False,
++                )
++                return
+             elif name in {"Cleanup", "Shutdown"}:
+                 self._cancelled.set()
+-                self.trial.stop_request = request
++                if self.trial.stop_request is None:
++                    self.trial.stop_request = request
+                 self.trial.stop_trial(deadline_ns)
+                 if not self.cleanup.begin_operation(name, request, deadline_ns, report):
+                     return
+@@ -261,6 +273,34 @@ class WorkerOperationExecutor:
+             if name in {"Cleanup", "Shutdown"}:
+                 self.state.finalize_terminal_command(command.command_id, host_time_ns())
+ 
++    def _complete_stop_operation(
++        self,
++        report: acq.WorkerOperationReport,
++        deadline_ns: int,
++        error: BaseException | None,
++    ) -> None:
++        command_id = report.operation.context.command_id
++        if not command_id:
++            raise RuntimeError("stop continuation lost its exact command identity")
++        if error is None and host_time_ns() >= deadline_ns:
++            error = TimeoutError("worker stop completed after its original deadline")
++        failure = (
++            control.Failure(code=_failure_code(error), message=str(error)[:2048])
++            if error is not None
++            else None
++        )
++        self.state.complete_operation(
++            command_id,
++            succeeded=error is None,
++            progress="complete" if error is None else "failed",
++            now_ns=host_time_ns(),
++            failure=failure,
++            retained_result=report,
++        )
++        self._report(report, deadline_ns)
++        if error is None and (self.recording is None or not self.recording.enabled):
++            self.state.finalize_scope(report.source.work, host_time_ns())
++
+     def failed(self, name: str, exc: BaseException) -> None:
+         """Retain an owner-loop failure without claiming an operation succeeded."""
+         for operation in tuple(self.state.operations.values()):
+diff --git a/src/cephvr/acquisition/worker/trial_lifecycle.py b/src/cephvr/acquisition/worker/trial_lifecycle.py
+index 4bafc7d..09a0a2e 100644
+--- a/src/cephvr/acquisition/worker/trial_lifecycle.py
++++ b/src/cephvr/acquisition/worker/trial_lifecycle.py
+@@ -82,7 +82,7 @@ class WorkerTrialLifecycle:
+         )
+         self.trial_state = WorkerTrialState()
+         self._recording_fault = RecordingFaultLifecycle(
+-            recording_warning_occurrence, recording_isolated, external_wake
++            recording_isolated, external_wake
+         )
+         self.recording_preparation = TrialRecordingPreparation(
+             bootstrap,
+@@ -239,8 +239,30 @@ class WorkerTrialLifecycle:
+         ):
+             self.recording.release(request, deadline_ns=deadline_ns)
+ 
+-    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> None:
+-        self.stop_finalizer.stop_trial(deadline_ns, report_stopped=report_stopped)
++    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> bool:
++        return self.stop_finalizer.stop_trial(
++            deadline_ns, report_stopped=report_stopped
++        )
++
++    def begin_stop_operation(
++        self,
++        request: object,
++        deadline_ns: int,
++        report: acq.WorkerOperationReport,
++        complete: Callable[
++            [acq.WorkerOperationReport, int, BaseException | None], None
++        ],
++        *,
++        report_stopped: bool,
++    ) -> None:
++        self.stop_finalizer.begin_operation(
++            request,
++            deadline_ns,
++            report,
++            complete=complete,
++            capture_finished=self.report_camera_finished,
++            report_stopped=report_stopped,
++        )
+ 
+     def advance_due_stages(self) -> None:
+         self.stop_finalizer.advance_due_stages()
+@@ -340,7 +362,7 @@ class WorkerTrialLifecycle:
+     ) -> bool:
+         interruption = self.trial_state.stop_request
+         if (
+-            not isinstance(interruption, acq.WorkerInterrupt)
++            not isinstance(interruption, (acq.WorkerInterrupt, acq.WorkerStop))
+             or schedule is None
+             or self.trial_state.stopped_schedule is not schedule
+         ):
+@@ -350,12 +372,23 @@ class WorkerTrialLifecycle:
+         interrupted_work = interruption.command.target.work
+         return bool(
+             scheduled_work.WhichOneof("work") == "trial"
+-            and interrupted_work.WhichOneof("work") == "session"
+-            and interrupted_work.session == scheduled_work.trial.session
++            and (
++                (
++                    isinstance(interruption, acq.WorkerInterrupt)
++                    and interrupted_work.WhichOneof("work") == "session"
++                    and interrupted_work.session == scheduled_work.trial.session
++                )
++                or (
++                    isinstance(interruption, acq.WorkerStop)
++                    and interrupted_work == scheduled_work
++                )
++            )
+             and command.target.HasField("work")
+             and command.target.work == scheduled_work
+             and command.HasField("parent_operation")
+-            and command.parent_operation.command_id == schedule.command.command_id
++            and schedule.command.HasField("parent_operation")
++            and bool(schedule.command.parent_operation.command_id)
++            and command.parent_operation == schedule.command.parent_operation
+         )
+ 
+     def camera_first_frame(self, record: object) -> None:
+diff --git a/src/cephvr/acquisition/worker/trial_stop.py b/src/cephvr/acquisition/worker/trial_stop.py
+index 138d95d..604cd58 100644
+--- a/src/cephvr/acquisition/worker/trial_stop.py
++++ b/src/cephvr/acquisition/worker/trial_stop.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ 
+ from collections.abc import Callable
+ from concurrent.futures import Future
++from dataclasses import dataclass
+ 
+ from cephvr.acquisition.camera.basler import BaslerCameraAdapter
+ from cephvr.acquisition.camera.types import PurgeEvidence
+@@ -22,6 +23,14 @@ from .trial_recording_terminal import TrialRecordingTerminal
+ from .trial_state import WorkerTrialState
+ 
+ 
++@dataclass(slots=True)
++class PendingStopOperation:
++    request: object
++    deadline_ns: int
++    report: acq.WorkerOperationReport
++    complete: Callable[[acq.WorkerOperationReport, int, BaseException | None], None]
++
++
+ class TrialStopFinalizer:
+     """Own local cutoff, drain evidence and asynchronous terminal report handoff."""
+ 
+@@ -70,6 +79,10 @@ class TrialStopFinalizer:
+         self._recording_isolated = recording_isolated
+         self._warning_occurrence = warning_occurrence
+         self._recording_fault_observed = recording_fault_observed
++        self._pending: list[PendingStopOperation] = []
++        self._stop_deadline_ns: int | None = None
++        self._report_stopped = False
++        self._capture_finished: Callable[[object, int], None] | None = None
+         self.terminal = TrialRecordingTerminal(
+             bootstrap,
+             state,
+@@ -87,8 +100,76 @@ class TrialStopFinalizer:
+             recording_fault_observed=recording_fault_observed,
+         )
+ 
+-    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> None:
+-        scheduled = self.trial.schedule
++    def begin_operation(
++        self,
++        request: object,
++        deadline_ns: int,
++        report: acq.WorkerOperationReport,
++        *,
++        complete: Callable[
++            [acq.WorkerOperationReport, int, BaseException | None], None
++        ],
++        capture_finished: Callable[[object, int], None],
++        report_stopped: bool,
++    ) -> None:
++        limits = self.state.limits
++        if limits is None or len(self._pending) >= limits.safety_reserve_records:
++            raise RuntimeError("retained stop continuation capacity is unavailable")
++        if not isinstance(request, (acq.WorkerStop, acq.WorkerInterrupt)):
++            raise TypeError("stop continuation requires an exact Stop or Interrupt")
++        report.operation.context.command_id = request.command.command_id
++        first_stop = self.trial.stop_request is None
++        if first_stop:
++            self.trial.stop_request = request
++        self._pending.append(
++            PendingStopOperation(request, deadline_ns, report, complete)
++        )
++        if first_stop:
++            self._capture_finished = capture_finished
++            self._report_stopped = report_stopped
++        self._stop_deadline_ns = (
++            deadline_ns
++            if self._stop_deadline_ns is None
++            else min(self._stop_deadline_ns, deadline_ns)
++        )
++        self._advance_stop()
++
++    def _advance_stop(self) -> None:
++        deadline = self._stop_deadline_ns
++        if deadline is None:
++            return
++        failure: BaseException | None = None
++        try:
++            if not self.stop_trial(deadline, report_stopped=self._report_stopped):
++                return
++            if (
++                self._capture_finished is not None
++                and self.trial.stop_request is not None
++            ):
++                self._capture_finished(self.trial.stop_request, deadline)
++        except BaseException as exc:
++            failure = exc
++        pending, self._pending = self._pending, []
++        self._stop_deadline_ns = None
++        self._capture_finished = None
++        self._report_stopped = False
++        for item in pending:
++            item.complete(item.report, item.deadline_ns, failure)
++
++    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> bool:
++        scheduled = self.trial.schedule or self.trial.stopped_schedule
++        if not self.captures.active and self.trial.end_marker is not None:
++            return True
++        if self.captures.active:
++            deadline_ns = self.captures.seal_admission(deadline_ns)
++            if (
++                self.captures.requires_external_trigger
++                and self.trial.pulses.off is None
++                and host_time_ns() < deadline_ns
++            ):
++                self.trial.stopped_schedule = scheduled
++                self._stop_deadline_ns = deadline_ns
++                return False
+         if not self.captures.active and scheduled is not None:
+             self.captures.cancel_schedule()
+             if self.terminal.recording_trial_installed():
+@@ -107,9 +188,7 @@ class TrialStopFinalizer:
+             self.trial.released = False
+             self.trial.prepared = False
+             self._complete_warning_scope()
+-            return
+-        if not self.captures.active and self.trial.end_marker is not None:
+-            return
++            return True
+ 
+         scheduled_end = (
+             scheduled.end_monotonic_ns
+@@ -237,6 +316,7 @@ class TrialStopFinalizer:
+         self.trial.released = False
+         self.trial.prepared = False
+         self._complete_warning_scope()
++        return True
+ 
+     def _publish_stopped(self, actual_ns: int, end_ns: int, deadline_ns: int) -> None:
+         request = self.trial.stop_request
+@@ -250,6 +330,7 @@ class TrialStopFinalizer:
+         self._report_lifecycle(request, evidence, deadline_ns)
+ 
+     def advance_due_stages(self) -> None:
++        self._advance_stop()
+         self.terminal.advance_due_stages()
+ 
+     def publish_if_ready(self, deadline_ns: int | None) -> None:
+diff --git a/tests/acquisition/test_recording_cleanup.py b/tests/acquisition/test_recording_cleanup.py
+index 95b1db7..fb28d92 100644
+--- a/tests/acquisition/test_recording_cleanup.py
++++ b/tests/acquisition/test_recording_cleanup.py
+@@ -38,6 +38,7 @@ from cephvr.acquisition.worker.recording_fault import RecordingFaultLifecycle
+ from cephvr.acquisition.worker.recording_preparation import TrialRecordingPreparation
+ from cephvr.acquisition.worker.recording_runtime import WorkerRecordingRuntime
+ from cephvr.acquisition.worker.trial_recording_terminal import TrialRecordingTerminal
++from cephvr.acquisition.worker.trial_state import WorkerTrialState
+ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.shared.nominal_video_grid import NominalVideoGrid
+ 
+@@ -75,6 +76,8 @@ def test_setup_cleanup_does_not_submit_to_an_uninstalled_recording_thread() -> N
+     cleanup = cast(
+         WorkerCleanupLifecycle,
+         SimpleNamespace(
++            captures=SimpleNamespace(active=False),
++            recording_finish_pending=lambda: False,
+             recording=SimpleNamespace(
+                 enabled=True, recording_queue=None, fail_cleanup=fail_cleanup
+             ),
+@@ -86,6 +89,107 @@ def test_setup_cleanup_does_not_submit_to_an_uninstalled_recording_thread() -> N
+     assert cleanup._future is None
+ 
+ 
++@pytest.mark.parametrize("expired", [False, True])
++def test_cleanup_preserves_pending_terminal_writer_until_original_bound(
++    monkeypatch: pytest.MonkeyPatch, expired: bool
++) -> None:
++    from cephvr.acquisition.worker import cleanup_lifecycle
++
++    now = [100]
++    monkeypatch.setattr(cleanup_lifecycle, "host_time_ns", lambda: now[0])
++    events = []
++    future = Future()
++    request = acq.WorkerInterrupt(command=acq.WorkerCommand(command_id="interrupt"))
++    request.command.target.work.session.session_id = "session"
++    trial = WorkerTrialState(
++        finished_future=future, stop_request=request, finish_deadline_ns=500
++    )
++    output = control.OutputResult(
++        output_key="owned-video",
++        path="owned.mp4",
++        closure=control.OUTPUT_CLOSURE_CLOSED,
++        artifact_present=True,
++    )
++
++    class Recording:
++        enabled = True
++        recording_queue = object()
++
++        def completed_results(self):
++            return future.result()
++
++        def recycle_finished(self, deadline):
++            events.append(("recycle", deadline))
++            self.recording_queue = None
++
++        def fail_cleanup(self, *, deadline_ns):
++            assert now[0] >= deadline_ns
++            events.append(("abort-after-bound", deadline_ns))
++            result = Future()
++            result.set_result([])
++            return result
++
++    recording = Recording()
++    captures = SimpleNamespace(
++        active=False,
++        advance_due_stage=lambda: None,
++        release=lambda: events.append("release-buffers") or (),
++    )
++    state = SimpleNamespace(
++        context=acq.WorkerContext(worker=control.ProcessIdentity(generation="worker")),
++        state_revision=0,
++        complete_operation=lambda *args, **kwargs: events.append("complete-cleanup"),
++        finalize_scope=lambda *args: None,
++        finalize_terminal_command=lambda *args: None,
++    )
++    terminal = object.__new__(TrialRecordingTerminal)
++    terminal.trial = trial
++    terminal.recording = recording
++    terminal.captures = captures
++    terminal.state = state
++    terminal.recording_fault = SimpleNamespace(
++        cleanup_pending=False, faulted_session=False
++    )
++    terminal._source = lambda target: target
++    terminal._report_lifecycle = lambda request, evidence, deadline: events.append(
++        ("finished", evidence.operation.command_id, tuple(evidence.finished.outputs))
++    )
++    terminal._operation_deadline = lambda command: 500
++    cleanup = WorkerCleanupLifecycle(
++        state,
++        SimpleNamespace(release_device=lambda: events.append("release-device")),
++        captures,
++        recording,  # type: ignore[arg-type]
++        capacity=2,
++        extra_resources=lambda: {},
++        report_lifecycle=lambda *args: events.append("cleanup-evidence"),
++        report_operation=lambda *args: events.append("cleanup-operation"),
++        shutdown=lambda deadline: None,
++        recording_reconciled=lambda: setattr(trial, "finished_future", None),
++        external_wake=lambda: None,
++        recording_finish_pending=lambda: trial.finished_future is not None,
++    )
++    command = acq.WorkerCommand(command_id="cleanup", target=request.command.target)
++    assert not cleanup.begin_operation(
++        "Cleanup", command, 400, acq.WorkerOperationReport()
++    )
++    cleanup.advance()
++    assert events == [] and not future.done()
++    if expired:
++        now[0] = 400
++        cleanup.advance()
++        assert events[0] == ("abort-after-bound", 400)
++        assert not future.done()
++    else:
++        future.set_result([output])
++        terminal.advance_due_stages()
++        cleanup.advance()
++        assert events[0] == ("finished", "interrupt", (output,))
++        assert events[1] == ("recycle", 500)
++        assert "abort-after-bound" not in str(events)
++        assert events.index("release-device") > events.index("release-buffers")
++
++
+ def test_cancel_setup_before_trial_recording_is_installed_is_confirmed() -> None:
+     runtime = object.__new__(WorkerRecordingRuntime)
+     runtime._settings = acq.RecordingSettings()
+@@ -885,7 +989,9 @@ class _Runtime:
+         self.recycled_deadline_ns = deadline_ns
+ 
+ 
+-def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() -> None:
++def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline(
++    monkeypatch,
++) -> None:
+     work = control.WorkContext(
+         trial=control.TrialContext(
+             session=control.SessionContext(session_id="session"),
+@@ -915,20 +1021,33 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
+     )
+     reports: list[tuple[tuple[str, ...], int, bool]] = []
+     wake_count: list[int] = []
++    ordering: list[str] = []
++    details: list[str] = []
++    original_cleanup = run.fail_cleanup
++
++    def fail_cleanup(*, deadline_ns):
++        ordering.append("cleanup")
++        return original_cleanup(deadline_ns=deadline_ns)
++
++    monkeypatch.setattr(run, "fail_cleanup", fail_cleanup)
+ 
+     def report_isolation(
+-        _work: control.WorkContext,
+-        _operation: str,
++        actual_work: control.WorkContext,
++        operation: str,
+         observed_ns: int,
+         resource_ids: tuple[str, ...],
+-        _detail: str,
++        detail: str,
+         confirmed: bool,
+-        _capture: control.ContinuingFunctionEvidence,
++        actual_capture: control.ContinuingFunctionEvidence,
+     ) -> None:
++        assert actual_work == work
++        assert operation == "schedule-command"
++        assert actual_capture == capture
++        ordering.append("report")
++        details.append(detail)
+         reports.append((resource_ids, observed_ns, confirmed))
+ 
+     tracker = RecordingFaultLifecycle(
+-        warning_occurrence=lambda *_args: None,
+         report_isolation=report_isolation,
+         external_wake=lambda: wake_count.append(1),
+     )
+@@ -948,7 +1067,7 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
+             "behavioral_video",
+             "behavioral_depth",
+         ),
+-        detach_recording=lambda: None,
++        detach_recording=lambda: ordering.append("detach"),
+     )
+     assert future is run.cleanup
+     assert tracker.cleanup_pending
+@@ -959,6 +1078,8 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
+         "behavioral_depth",
+     )
+     assert reports == [(expected_closure, 250, False)]
++    assert details == ["stdin write failed"]
++    assert ordering == ["detach", "report", "cleanup"]
+     assert wake_count == [1]
+ 
+     assert tracker.reconcile(
+diff --git a/tests/acquisition/test_worker_admission.py b/tests/acquisition/test_worker_admission.py
+index 4778daf..775edac 100644
+--- a/tests/acquisition/test_worker_admission.py
++++ b/tests/acquisition/test_worker_admission.py
+@@ -507,7 +507,7 @@ async def test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal
+     executor.cleanup = WorkerCleanupLifecycle(
+         state,
+         SimpleNamespace(release_device=lambda: releases.append("camera")),
+-        SimpleNamespace(release=lambda: releases.append("buffers") or ()),
++        SimpleNamespace(active=False, release=lambda: releases.append("buffers") or ()),
+         None,
+         capacity=16,
+         extra_resources=lambda: {},
+diff --git a/tests/acquisition/test_worker_foundations.py b/tests/acquisition/test_worker_foundations.py
+index d699797..f0488a9 100644
+--- a/tests/acquisition/test_worker_foundations.py
++++ b/tests/acquisition/test_worker_foundations.py
+@@ -41,8 +41,10 @@ from cephvr.acquisition.worker.session_preparation import WorkerSessionPreparati
+ from cephvr.acquisition.worker.state import WorkerBootstrap, WorkerState
+ from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
+ from cephvr.acquisition.worker.trial_state import WorkerTrialState
++from cephvr.acquisition.worker.trial_stop import TrialStopFinalizer
+ from cephvr.acquisition.worker.warnings import WarningOccurrence, WorkerWarningLedger
+ from cephvr.control.v1 import types_pb2 as control
++from cephvr.shared.clock import host_time_ns
+ from cephvr.shared.commands import CommandLedger
+ from cephvr.shared.pixels.types import NativePixelFormat, PixelLayout
+ 
+@@ -175,6 +177,7 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
+     context.work.CopyFrom(session_work)
+     state = _worker_state(context)
+     state.confirmed_configuration_revision = 7
++    state.limits = AcquisitionControlLimits.from_message_limit(1024 * 1024)
+     preparation = object.__new__(WorkerSessionPreparation)
+     preparation.state = state
+     preparation.session_ready = True
+@@ -185,7 +188,11 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
+         )
+     )
+     schedule = acq.WorkerSchedule(
+-        command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
++        command=acq.WorkerCommand(
++            command_id=str(uuid4()),
++            target=context,
++            parent_operation=control.OperationContext(command_id=str(uuid4())),
++        ),
+         start_monotonic_ns=100,
+         end_monotonic_ns=200,
+     )
+@@ -196,9 +203,17 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
+     trial.bootstrap = SimpleNamespace(context=context)
+     trial.recording = None
+     trial._require_ready_session_callback = preparation.require_ready_session
+-    trial.stop_finalizer = SimpleNamespace(
+-        stop_trial=lambda _deadline, **_kwargs: _retain_stopped_schedule(trial_state)
+-    )
++    finalizer = object.__new__(TrialStopFinalizer)
++    finalizer.state = state
++    finalizer.trial = trial_state
++    finalizer._pending = []
++    finalizer._stop_deadline_ns = None
++    finalizer._capture_finished = None
++    finalizer._report_stopped = False
++    finalizer.stop_trial = lambda _deadline, **_kwargs: (  # type: ignore[method-assign]
++        _retain_stopped_schedule(trial_state) or True
++    )
++    trial.stop_finalizer = finalizer
+ 
+     def admit(name: str, request: object, deadline_ns: int) -> None:
+         command = request.command
+@@ -258,7 +273,7 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
+             command_id=str(uuid4()),
+             target=context,
+             parent_operation=control.OperationContext(
+-                command_id=schedule.command.command_id
++                command_id=schedule.command.parent_operation.command_id
+             ),
+         ),
+         camera=context.camera,
+@@ -291,12 +306,307 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
+     executor.execute("RecordPulseEvidence", wrong_parent, deadline_ns)
+     assert not state.operations[wrong_parent.command.command_id].succeeded
+ 
++    for missing_parent in (pulse_request.command, schedule.command):
++        original = control.OperationContext.FromString(
++            missing_parent.parent_operation.SerializeToString()
++        )
++        missing_parent.ClearField("parent_operation")
++        assert not trial._interrupted_schedule_matches(pulse_request, schedule)
++        missing_parent.parent_operation.CopyFrom(original)
++
++    pulse_request.command.parent_operation.command_id = ""
++    schedule.command.parent_operation.command_id = ""
++    assert not trial._interrupted_schedule_matches(pulse_request, schedule)
++
+ 
+ def _retain_stopped_schedule(trial_state: WorkerTrialState) -> None:
+     trial_state.stopped_schedule = trial_state.schedule
+     trial_state.schedule = None
+ 
+ 
++@pytest.mark.parametrize("stop_kind", ["StopTrial", "InterruptSession"])
++@pytest.mark.parametrize(
++    "off_timing", ["before", "after", "missing", "failed", "free", "overlap"]
++)
++def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
++    monkeypatch: pytest.MonkeyPatch, stop_kind: str, off_timing: str
++) -> None:
++    from cephvr.acquisition.worker import capture_runtime, execution, trial_stop
++
++    base = host_time_ns()
++    clock = [base]
++    for module in (capture_runtime, execution, trial_stop):
++        monkeypatch.setattr(module, "host_time_ns", lambda: clock[0])
++    context = _worker_context()
++    context.work.session.session_id = str(uuid4())
++    work = control.WorkContext(
++        trial=control.TrialContext(session=context.work.session, trial_id=str(uuid4()))
++    )
++    state = _worker_state(context)
++    state.limits = AcquisitionControlLimits.from_message_limit(1024 * 1024)
++    state.confirmed_configuration_revision = 7
++    wake, sealed, completed, stopped, overlapped, released = (Event() for _ in range(6))
++    errors: list[BaseException] = []
++    delivered: list[acq.WorkerLifecycleEvidence] = []
++    operations: list[acq.WorkerOperationReport] = []
++    sdk: list[object] = []
++
++    class Adapter:
++        margin = False
++
++        def begin_terminal_drain(self):
++            sdk.append("generation-stop")
++            return True
++
++        def confirm_drain_margin(self):
++            self.margin = True
++            sdk.append("margin")
++
++        def stop_capture(self, deadline_ns, **kwargs):
++            sdk.append(("sdk-stop", deadline_ns))
++            return PurgeEvidence(0 if self.margin else None, None, self.margin)
++
++        def read_transport_counters(self):
++            return None
++
++        def release_device(self):
++            released.set()
++
++    adapter = Adapter()
++    captures = WorkerCaptureResources(adapter, context, lambda _: None)  # type: ignore[arg-type]
++    captures._active = True
++    captures._timing = "free_running" if off_timing == "free" else "external_trigger"
++    captures._frame_timeout_ns = 1_000_000_000
++    captures.capture = SimpleNamespace(  # type: ignore[assignment]
++        received_frame_count=3,
++        excluded_frame_count=2,
++        last_excluded_counter=None,
++        recording_queue=None,
++        pixel_pool=None,
++    )
++    captures._window = CaptureWindow(base - 100, base + 60_000_000_000)
++    captures._scheduled_start_ns = base - 100
++    captures._scheduled_end_ns = base + 60_000_000_000
++    bootstrap = SimpleNamespace(
++        context=context,
++        file_policy=SimpleNamespace(post_cutoff_drain_margin_ns=0),
++        control_policies=control.ControlPolicies(
++            trial_finished=control.WaitPolicy(initial_ns=1_000_000_000)
++        ),
++    )
++    preparation = object.__new__(WorkerSessionPreparation)
++    preparation.state = state
++    preparation.session_ready = True
++    lifecycle = WorkerTrialLifecycle(
++        bootstrap,
++        state,
++        adapter,
++        captures,
++        None,  # type: ignore[arg-type]
++        report_lifecycle=lambda request, evidence, deadline: executor._report_lifecycle(
++            request, evidence, deadline
++        ),
++        source=lambda target: target,
++        warning_occurrence=lambda _: None,
++        recording_warning_occurrence=lambda *args: None,
++        begin_warning_scope=lambda *args, **kwargs: None,
++        complete_warning_scope=lambda: None,
++        external_wake=lambda: None,
++        recording_first_frame=lambda _: None,
++        recording_isolated=lambda *args: None,
++        require_ready_session=preparation.require_ready_session,
++        capability_resource_released=lambda *args: None,
++    )
++    schedule = acq.WorkerSchedule(
++        command=acq.WorkerCommand(
++            command_id=str(uuid4()),
++            target=context,
++            parent_operation=control.OperationContext(command_id=str(uuid4())),
++        ),
++        start_monotonic_ns=base - 100,
++        end_monotonic_ns=base + 60_000_000_000,
++    )
++    schedule.command.target.work.CopyFrom(work)
++    lifecycle.trial_state.schedule = schedule
++    executor = object.__new__(WorkerOperationExecutor)
++    executor.state = state
++    executor.bootstrap = bootstrap
++    executor._coordinator_loss_handled = False
++    executor._cancelled = Event()
++    executor._latest_work = None
++    executor.trial = lifecycle
++    executor.recording = None
++    executor.preparation = preparation
++    executor.health = SimpleNamespace(flush=lambda deadline: None)
++    executor._source = lambda target: target
++    executor.report_dispatcher = SimpleNamespace(
++        operation=lambda report, deadline: (
++            operations.append(
++                acq.WorkerOperationReport.FromString(report.SerializeToString())
++            ),
++            completed.set(),
++            stopped.set()
++            if report.operation.context.command_id == stop.command.command_id
++            else None,
++        ),
++        lifecycle=lambda report, deadline: delivered.append(report),
++    )
++    stop = (
++        acq.WorkerStop(issued_monotonic_ns=base)
++        if stop_kind == "StopTrial"
++        else acq.WorkerInterrupt(issued_monotonic_ns=base)
++    )
++    stop.command.command_id = str(uuid4())
++    stop.command.target.CopyFrom(context)
++    if stop_kind == "StopTrial":
++        stop.command.target.work.CopyFrom(work)
++    deadline = base + 2_000_000_000
++    off = acq.WorkerPulseEvidence(
++        command=acq.WorkerCommand(
++            command_id=str(uuid4()),
++            target=context,
++            parent_operation=schedule.command.parent_operation,
++        ),
++        camera=context.camera,
++        evidence=mcu.PulseCommandEvidence(
++            command=mcu.PULSE_BOUNDARY_COMMAND_OFF,
++            connection_id="connection",
++            request_id=str(uuid4()),
++            behavioral_selected=True,
++            stop_issued_monotonic_ns=base,
++            dispatched_monotonic_ns=base + 1,
++            acknowledged_monotonic_ns=base + 2,
++            outcome=mcu.PULSE_COMMAND_OUTCOME_REJECTED
++            if off_timing == "failed"
++            else mcu.PULSE_COMMAND_OUTCOME_APPLIED,
++            applied=off_timing != "failed",
++        ),
++    )
++    executor.cleanup = WorkerCleanupLifecycle(
++        state,
++        adapter,
++        captures,
++        None,  # type: ignore[arg-type]
++        capacity=state.limits.safety_reserve_records,
++        extra_resources=lambda: {},
++        report_lifecycle=executor._report_lifecycle,
++        report_operation=executor._report,
++        shutdown=lambda deadline: None,
++        recording_reconciled=lambda: None,
++        external_wake=wake.set,
++    )
++    off.command.target.work.CopyFrom(work)
++
++    def execute(name, request, bound):
++        executor.execute(name, request, bound)
++        if name == stop_kind:
++            sealed.set()
++        if name == "Cleanup":
++            overlapped.set()
++
++    def advance():
++        lifecycle.advance_due_stages()
++        executor.cleanup.advance()
++
++    owner = SerializedCameraOwner(
++        capacity=8,
++        safety_capacity=8,
++        execute=execute,
++        capture_once=lambda handoff: wake.wait(0.01) and handoff(),
++        capture_active=lambda: captures.active,
++        next_deadline_ns=lifecycle.next_deadline_ns,
++        advance_due_stages=advance,
++        wait_control=lambda timeout: wake.wait(timeout / 1e9),
++        wake_control=wake.set,
++        clear_control=wake.clear,
++        operation_failed=lambda name, error: errors.append(error),
++        owner_failed=errors.append,
++        idle_maintenance_interval_ns=100_000_000,
++    )
++
++    def send(name, request, bound=deadline):
++        command = request if isinstance(request, acq.WorkerCommand) else request.command
++        state.commands.admit(
++            command.command_id,
++            request.SerializeToString(),
++            base,
++            work_key=(
++                command.target.work.trial.trial_id
++                if command.target.work.WhichOneof("work") == "trial"
++                else command.target.work.session.session_id
++            ),
++            deadline_ns=bound,
++        )
++        state.operations[command.command_id] = control.OperationState(
++            context=control.OperationContext(command_id=command.command_id),
++            command=name,
++            work=command.target.work,
++        )
++        owner.reserve(name, request, bound).commit()
++
++    owner.start()
++    try:
++        if off_timing == "before":
++            send("RecordPulseEvidence", off)
++            assert completed.wait(1)
++            completed.clear()
++        send(stop_kind, stop)
++        assert sealed.wait(1)
++        assert captures.admission_stop_ns == base
++        effective_deadline = deadline
++        if off_timing not in {"before", "free"}:
++            assert captures.active and not sdk
++            assert not state.operations[stop.command.command_id].complete
++            assert captures.next_deadline_ns() == deadline
++            if off_timing == "overlap":
++                second = acq.WorkerInterrupt(
++                    command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
++                    issued_monotonic_ns=base + 1,
++                )
++                send("InterruptSession", second, deadline + 1_000_000_000)
++                cleanup = acq.WorkerCommand(command_id=str(uuid4()), target=context)
++                effective_deadline = deadline - 500_000_000
++                send("Cleanup", cleanup, effective_deadline)
++                assert overlapped.wait(1)
++                assert not released.is_set() and captures.active
++                assert lifecycle.stop_request is stop
++                assert captures.admission_stop_ns == base
++                assert captures.next_deadline_ns() == effective_deadline
++            if off_timing == "missing":
++                clock[0] = deadline
++                owner.external_wake()
++            else:
++                send("RecordPulseEvidence", off)
++        assert stopped.wait(1)
++        assert not captures.active
++        assert lifecycle.trial_state.end_marker is not None
++        assert lifecycle.trial_state.end_marker.excluded_accounting_complete == (
++            off_timing in {"before", "after", "free", "overlap"}
++        )
++        operation_results = {
++            item.operation.context.command_id: item.operation for item in operations
++        }
++        assert operation_results[stop.command.command_id].succeeded == (
++            off_timing != "missing"
++        )
++        assert lifecycle.stop_request is stop
++        assert sdk[-1] == ("sdk-stop", effective_deadline)
++        assert len([item for item in delivered if item.HasField("finished")]) == 1
++        finished = next(item for item in delivered if item.HasField("finished"))
++        assert finished.operation.command_id == stop.command.command_id
++        assert finished.source.work == stop.command.target.work
++        if off_timing == "overlap":
++            assert released.wait(1)
++            operation_results = {
++                item.operation.context.command_id: item.operation for item in operations
++            }
++            assert operation_results[second.command.command_id].succeeded
++            assert operation_results[cleanup.command_id].succeeded
++    finally:
++        assert owner.stop(1)
++    assert not errors
++
++
+ def test_blocking_wait_wakeup_verification_uses_loop_and_respects_deadline() -> None:
+     async def run() -> list[int]:
+         loop = asyncio.get_running_loop()
+@@ -1289,6 +1599,8 @@ def test_cleanup_releases_owned_resources_before_reporting_exact_evidence() -> N
+     reports: list[acq.WorkerLifecycleEvidence] = []
+ 
+     class Captures:
++        active = False
++
+         def release(self) -> tuple[object, ...]:
+             events.append("capture-release")
+             return (SimpleNamespace(resource_id="ring:preview"),)
+@@ -1368,6 +1680,8 @@ def test_cleanup_continuation_fails_at_original_deadline_without_releasing_camer
+             return recording_cleanup
+ 
+     class Captures:
++        active = False
++
+         def release(self) -> tuple[object, ...]:
+             events.append("capture-release")
+             return ()
+@@ -1429,6 +1743,8 @@ def test_ambient_cleanup_waits_for_recording_proof_then_wakes_and_releases() ->
+             events.append(("recording-reconciled", deadline_ns))
+ 
+     class Captures:
++        active = False
++
+         def release(self) -> tuple[object, ...]:
+             events.append("capture-release")
+             return ()

@@ -1,0 +1,52 @@
+[
+  {
+    "interface": "\\\\?\\DISPLAY#DEL41FA#5&1209fbcf&1&UID524#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+    "x": 0,
+    "y": 0,
+    "width": 1920,
+    "height": 1080,
+    "refresh_hz": 60,
+    "rgb_bits": 8,
+    "adapter": "\\\\.\\DISPLAY9"
+  },
+  {
+    "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4352#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+    "x": -3840,
+    "y": 0,
+    "width": 1280,
+    "height": 720,
+    "refresh_hz": 60,
+    "rgb_bits": 8,
+    "adapter": "\\\\.\\DISPLAY1"
+  },
+  {
+    "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4353#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+    "x": -2560,
+    "y": 0,
+    "width": 1280,
+    "height": 720,
+    "refresh_hz": 60,
+    "rgb_bits": 8,
+    "adapter": "\\\\.\\DISPLAY2"
+  },
+  {
+    "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4355#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+    "x": -2280,
+    "y": 720,
+    "width": 720,
+    "height": 1280,
+    "refresh_hz": 60,
+    "rgb_bits": 8,
+    "adapter": "\\\\.\\DISPLAY3"
+  },
+  {
+    "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4357#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+    "x": -1280,
+    "y": 0,
+    "width": 1280,
+    "height": 720,
+    "refresh_hz": 60,
+    "rgb_bits": 8,
+    "adapter": "\\\\.\\DISPLAY4"
+  }
+]

@@ -1,0 +1,15 @@
+Input #0, lavfi, from 'testsrc2=size=1280x1000:rate=60,format=rgba':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, rgba, 1280x1000 [SAR 1:1 DAR 32:25], 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\rig-encoding-current\r2-stimulus-cq23\stimulus.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High) (avc1 / 0x31637661), yuv420p(pc, bt709/unknown/unknown, progressive), 1280x1000 [SAR 1:1 DAR 32:25], q=2-31, 60 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=  218 fps=0.0 q=17.0 size=       0KiB time=00:00:03.63 bitrate=   0.1kbits/s speed=7.17x elapsed=0:00:00.50    frame=  623 fps=606 q=17.0 size=   11264KiB time=00:00:10.38 bitrate=8886.8kbits/s speed=10.1x elapsed=0:00:01.02    frame= 1014 fps=662 q=17.0 size=   22528KiB time=00:00:16.90 bitrate=10920.1kbits/s speed=  11x elapsed=0:00:01.53    frame= 1418 fps=691 q=17.0 size=   28160KiB time=00:00:23.63 bitrate=9761.1kbits/s speed=11.5x elapsed=0:00:02.05    frame= 1820 fps=708 q=17.0 size=   39680KiB time=00:00:30.33 bitrate=10716.2kbits/s speed=11.8x elapsed=0:00:02.56    frame= 2224 fps=720 q=17.0 size=   45312KiB time=00:00:37.06 bitrate=10014.3kbits/s speed=  12x elapsed=0:00:03.09    frame= 2621 fps=728 q=17.0 size=   56576KiB time=00:00:43.68 bitrate=10609.8kbits/s speed=12.1x elapsed=0:00:03.60    frame= 3025 fps=734 q=17.0 size=   68096KiB time=00:00:50.41 bitrate=11064.6kbits/s speed=12.2x elapsed=0:00:04.12    frame= 3420 fps=738 q=17.0 size=   73728KiB time=00:00:57.00 bitrate=10596.1kbits/s speed=12.3x elapsed=0:00:04.63    [out#0/mp4 @ 000002b39fcf8100] video:81753KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.020555%
+frame= 3600 fps=740 q=17.0 Lsize=   81770KiB time=00:01:00.00 bitrate=11164.3kbits/s speed=12.3x elapsed=0:00:04.86    

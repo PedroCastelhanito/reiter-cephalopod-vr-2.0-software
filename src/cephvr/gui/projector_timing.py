@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card, combo, field
+from cephvr.gui.components import Card, button, combo, field
 from cephvr.gui.device_panel import entry
 from cephvr.gui.projector_blackouts import BlackoutZones
 from cephvr.gui.projector_geometry import FACES
@@ -81,6 +81,8 @@ class ProjectorTiming(Card):
         grid.addWidget(self.definition, 1, 0, 1, 2)
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 1)
+        self.placement_button = button("Launch photodiode placement")
+        self.body.addWidget(self.placement_button)
         self.body.addWidget(self.options)
         self.blackouts = BlackoutZones()
         self.pulse.toggled.connect(self.refresh_controls)

@@ -1,0 +1,29 @@
+{
+  "encoder_outcome": {
+    "kind": "encoder_outcome",
+    "admitted_count": 7198,
+    "input_submitted_count": 7200,
+    "capacity_drop_count": 0,
+    "selected_real_count": 7198,
+    "same_slot_omission_count": 2,
+    "encoded_frame_count": 7200,
+    "duplicate_frame_count": 2,
+    "final_input_group_id": 7199,
+    "cutoff_host_ns": 51949677043300,
+    "exit_code": 0,
+    "eof_sent": true,
+    "drain_confirmed": true
+  },
+  "completion": {
+    "kind": "completion",
+    "cutoff_host_ns": 51949677043300,
+    "last_group_id": 7199,
+    "state_count": 7200,
+    "submission_attempt_count": 28800,
+    "capture_admission_count": 7198,
+    "capture_drop_count": 0,
+    "same_slot_omission_count": 2,
+    "unresolved_attempt_count": 0,
+    "outcome": "completed"
+  }
+}

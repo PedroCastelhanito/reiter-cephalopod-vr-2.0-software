@@ -525,7 +525,8 @@ class ControllerBridge(QThread):
                 expected_revision=int(options["expected_revision"]),
                 diagnostic_id=str(options["diagnostic_id"]),
                 adjustment_sequence=int(options["adjustment_sequence"]),
-                adjustments=tuple(options["adjustments"]),
+                adjustments=tuple(options.get("adjustments", ())),
+                placement_json=str(options.get("placement_json", "")),
             )
             await self._track_request(
                 client, action, "UpdateDisplayCalibration", calibration_update_request

@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-15",
+  "source_revision": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "scope": "TODO audit, projector-independent tests and local reproduction probes; documentation/evidence changes only. Projectors off by owner instruction; existing hardware, electrical, capture, firmware, mapping and encoder deferrals preserved.",
+  "results": {
+    "backend": "1737 passed, 4 skipped, 26 deselected",
+    "targeted_offscreen_gui": "38 passed, 470 deselected",
+    "ruff": "passed",
+    "format": "911 files already formatted",
+    "mypy_win32": "791 sources passed",
+    "boundaries": "695 modules, zero violations; 44 existing cohesion advisories",
+    "dependencies": "No broken requirements found",
+    "mixed_subgroup": "Existing owning regression verifies rejection and dirty-draft retention; stale task closed.",
+    "calibration_rejection": "Reproduced: explicit backend rejection retains pending/blocked state; next valid update rejected; exactly one backend dispatch.",
+    "inactive_acquisition_config": "Reproduced: acquisition.enabled=false but malformed owning TOML raises ConfigurationError from controller configuration load."
+  },
+  "commands": {
+    "backend.txt": ".venv/Scripts/python.exe -u -m pytest tests --ignore=tests/gui -q -m \"not windows and not rig\" -p no:faulthandler --tb=short",
+    "gui.txt": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -u -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler --tb=short -k \"subgroup_rules_persist or calibration or projectors_page or no_projector or offline or narrow or variation_controls_fit or hover or row_actions or arena_mode_missing_height\"",
+    "calibration-probe.txt": "From repo root: .venv/Scripts/python.exe reports/runtime-evidence-2026-10-15/todo-projectors-off/calibration-probe.py; derives only setup from owning test_live_calibration_update_requires_exact_leased_active_grid fixture, replaces its fake backend admission with rejection, invokes real controller update twice.",
+    "inactive-config-probe.txt": "runpy loads tests/controller/test_configuration.py _copy_pairs; copy configs into TemporaryDirectory under .tmp; load to establish acquisition.enabled=false; replace only disposable acquisition TOML with invalid=[; call load_controller_configuration and retain exception.",
+    "static": "python -m ruff check src tests tools; python -m ruff format --check src tests tools; python -m mypy --platform win32 src; python tools/check_backend_boundaries.py; python -m pip check"
+  },
+  "limits": "No powered projector, native hardware, measured optics, electrical, full-load or scientific acceptance. Offscreen persistence/layout checks do not reproduce the owner actual projector closure path. Existing suites do not cover the two reproduced defects. No implementation fixes made. First calibration probe attempt had a temporary-script tests import-path failure, corrected before recorded final result.",
+  "source_fingerprints": {
+    "src/cephvr/controller/device/display_adjustments.py": "a3c14067104622278f30633d4ed86c1c738610ba2fa789812de2aecc096a273b",
+    "src/cephvr/controller/device/display_calibration.py": "861ab5b55981ff5f7905e5b0616c8b3a74da22a2a137fdc2105efd186fd5d0dc",
+    "src/cephvr/controller/configuration.py": "c01e9f7a0a8f58d0ce1a4b51829131d75c66cdeeddbb276d0ae5c44913323576",
+    "src/cephvr/gui/subgroup_editor.py": "e5b48fad0098f9b71980c78d11baa0dd1a2332bbf5c28f68d4714b455e14d7f6",
+    "tests/gui/test_dashboard.py": "d7c402e6baaa4124681c0855739b4146f283ed03608306030506c3dd12067b7f"
+  },
+  "documentation_checks": {
+    "unique_tasks_including_audit": 36,
+    "duplicate_task_ids": 0,
+    "sections": [
+      "In progress",
+      "Next",
+      "Blocked",
+      "Deferred"
+    ],
+    "markdown_targets_and_anchors": 602,
+    "broken_links": 0,
+    "production_source_changes": 0,
+    "final_open_tasks": 35,
+    "final_status_counts": {
+      "Next": 6,
+      "Blocked": 1,
+      "Deferred": 28
+    }
+  },
+  "task_outcome": "Complete: checks/report/queue reconciliation only; confirmed defects remain open and projector-dependent acceptance is deferred."
+}

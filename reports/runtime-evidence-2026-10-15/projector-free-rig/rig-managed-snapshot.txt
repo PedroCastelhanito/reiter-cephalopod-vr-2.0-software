@@ -1,0 +1,11 @@
+{
+  "generation": "98a16b56-d012-4fb6-b906-7652b6d84580",
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "warnings": 0,
+  "prompts": 0,
+  "errors": 0,
+  "mcu": {},
+  "acquisition": {}
+}

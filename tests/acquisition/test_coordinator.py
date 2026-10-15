@@ -1368,3 +1368,23 @@ async def test_retained_late_ready_is_skipped_but_prepare_terminal_is_retained()
     assert repeated
     assert owner.child.report is not None
     assert owner.resolution._pending is not None
+
+
+@pytest.mark.parametrize("declaration", [False, True])
+@pytest.mark.parametrize("has_identity", [False, True])
+def test_tracking_bootstrap_omission_requires_explicit_declaration(
+    declaration, has_identity
+):
+    document = _document()
+    document["no_tracking"] = declaration
+    if not has_identity:
+        del document["tracking_generation"]
+    if declaration == has_identity:
+        with pytest.raises(ValueError):
+            decode_acquisition_bootstrap(document)
+    else:
+        decoded = decode_acquisition_bootstrap(document)
+        if declaration:
+            assert decoded.tracking == control.ProcessIdentity()
+        else:
+            assert decoded.tracking.generation == document["tracking_generation"]

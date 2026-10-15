@@ -24,6 +24,7 @@ from cephvr.controller.state import (
     LimitsState,
 )
 from cephvr.shared.calibration_assets import (
+    CALIBRATION_REFERENCES,
     calibration_asset_root,
     calibration_runtime_root,
 )
@@ -164,10 +165,7 @@ class DisplayCalibrationController:
             self._owner_loss_deadline_ns = None
             self.hooks.publish()
         try:
-            if request.arena_asset_reference not in (
-                "calibration/reference_bars.glb",
-                "calibration/frame_grid.glb",
-            ):
+            if request.arena_asset_reference not in CALIBRATION_REFERENCES:
                 raise ValueError(
                     "calibration requires its selected repository step file"
                 )

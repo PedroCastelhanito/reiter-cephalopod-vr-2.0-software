@@ -47,6 +47,7 @@ message UpdateDisplayCalibrationCommand {
   string diagnostic_id = 2;
   uint64 adjustment_sequence = 3;
   repeated DisplayCalibrationAdjustment adjustments = 4;
+  string placement_json = 5; // Strict bounded output-space snapshot; exclusive with adjustments.
 }
 message CloseDisplayCalibrationCommand {
   WorkerCommand command = 1;

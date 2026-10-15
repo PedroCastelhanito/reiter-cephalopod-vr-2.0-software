@@ -1,0 +1,513 @@
+........................................................................ [ 14%]
+........................................................................ [ 29%]
+........................................................................ [ 44%]
+........................................................................ [ 59%]
+........................................................................ [ 74%]
+....................................................................FF.. [ 88%]
+.................F.......................FFF..........                   [100%]
+================================== FAILURES ===================================
+_ test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work[False] _
+
+supervisor_cleanup = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("supervisor_cleanup", [False, True])
+    async def test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work(
+        supervisor_cleanup: bool,
+    ) -> None:
+        generation = str(uuid4())
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        supervisor = control.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+        session_id = str(uuid4())
+        work = control.WorkContext(session=control.SessionContext(session_id=session_id))
+        context = acq.WorkerContext(
+            worker=control.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=generation
+            ),
+            owner=owner,
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+            work=work,
+        )
+        limits = AcquisitionControlLimits.from_message_limit(1024 * 1024)
+        commands = CommandLedger(
+            generation,
+            60_000_000_000,
+            max_records=limits.max_records,
+            max_bytes=limits.max_bytes,
+            result_reservation_bytes=limits.normal_result_reservation_bytes,
+            safety_reserve_records=limits.safety_reserve_records,
+            safety_reserve_bytes=limits.safety_reserve_bytes,
+        )
+        state = WorkerState(
+            context,
+            supervisor,
+            commands,
+            max_retained_views=limits.max_records,
+            limits=limits,
+            registered=True,
+        )
+        queue = _QueueOwner()
+        service = _AdmissionService(state, queue, {})
+        grpc_context = cast(grpc.aio.ServicerContext, object())
+    
+        initial = _command(context, owner)
+        initial_admission = await service._admit(
+            "ResolveCameraConfiguration", initial, initial, grpc_context
+        )
+        assert initial_admission.result == control.COMMAND_RESULT_ACCEPTED
+        initial_ns = host_time_ns()
+        state.complete_operation(
+            initial.command_id,
+            succeeded=True,
+            progress="complete",
+            now_ns=initial_ns,
+        )
+        retained_initial = commands.get(initial.command_id)
+        assert retained_initial is not None and retained_initial.result is not None
+        initial_report = acq.WorkerOperationReport.FromString(retained_initial.result)
+        assert initial_report.source == context
+        assert initial_report.operation == state.operations[initial.command_id]
+    
+        cleanup = _command(context, supervisor if supervisor_cleanup else owner)
+        cleanup_admission = await service._admit("Cleanup", cleanup, cleanup, grpc_context)
+        assert cleanup_admission.result == control.COMMAND_RESULT_ACCEPTED
+        cleanup_ns = host_time_ns()
+        assert (cleanup.command_id in state.supervisor_command_ids) == supervisor_cleanup
+        deliveries: list[object] = []
+        releases = []
+        trial = object.__new__(WorkerTrialLifecycle)
+        trial.trial_state = WorkerTrialState()
+        trial.stop_finalizer = SimpleNamespace(stop_trial=lambda *args, **kwargs: None)
+        executor = object.__new__(WorkerOperationExecutor)
+        executor.state = state
+        executor.bootstrap = SimpleNamespace(context=context)
+        executor._coordinator_loss_handled = False
+        executor._cancelled = Event()
+        executor.trial = trial
+        executor.report_dispatcher = SimpleNamespace(
+            operation=lambda report, deadline: deliveries.append(report),
+            lifecycle=lambda report, deadline: deliveries.append(report),
+        )
+        executor.cleanup = WorkerCleanupLifecycle(
+            state,
+            SimpleNamespace(release_device=lambda: releases.append("camera")),
+            SimpleNamespace(release=lambda: releases.append("buffers") or ()),
+            None,
+            capacity=16,
+            extra_resources=lambda: {},
+            report_lifecycle=executor._report_lifecycle,
+            report_operation=executor._report,
+            shutdown=lambda deadline: None,
+            recording_reconciled=lambda: None,
+            external_wake=lambda: None,
+        )
+        executor.execute("Cleanup", cleanup, cleanup_ns + 1_000_000_000)
+>       assert state.operations[cleanup.command_id].succeeded
+E       assert False
+E        +  where False = context {\n  command_id: "0bbc39f5-8eac-443f-8cdb-cac39e5f232f"\n}\ncommand: "Cleanup"\nwork {\n  session {\n    session_id:...ailure {\n  code: "WORKER_OPERATION_FAILED"\n  message: "\'types.SimpleNamespace\' object has no attribute \'active\'"\n}\n.succeeded
+
+tests\acquisition\test_worker_admission.py:521: AssertionError
+------------------------------ Captured log call ------------------------------
+ERROR    cephvr.acquisition.worker.execution:execution.py:244 acquisition_behavioral_worker Cleanup 0bbc39f5-8eac-443f-8cdb-cac39e5f232f failed: AttributeError: 'types.SimpleNamespace' object has no attribute 'active'
+_ test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work[True] _
+
+supervisor_cleanup = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("supervisor_cleanup", [False, True])
+    async def test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work(
+        supervisor_cleanup: bool,
+    ) -> None:
+        generation = str(uuid4())
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        supervisor = control.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+        session_id = str(uuid4())
+        work = control.WorkContext(session=control.SessionContext(session_id=session_id))
+        context = acq.WorkerContext(
+            worker=control.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=generation
+            ),
+            owner=owner,
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+            work=work,
+        )
+        limits = AcquisitionControlLimits.from_message_limit(1024 * 1024)
+        commands = CommandLedger(
+            generation,
+            60_000_000_000,
+            max_records=limits.max_records,
+            max_bytes=limits.max_bytes,
+            result_reservation_bytes=limits.normal_result_reservation_bytes,
+            safety_reserve_records=limits.safety_reserve_records,
+            safety_reserve_bytes=limits.safety_reserve_bytes,
+        )
+        state = WorkerState(
+            context,
+            supervisor,
+            commands,
+            max_retained_views=limits.max_records,
+            limits=limits,
+            registered=True,
+        )
+        queue = _QueueOwner()
+        service = _AdmissionService(state, queue, {})
+        grpc_context = cast(grpc.aio.ServicerContext, object())
+    
+        initial = _command(context, owner)
+        initial_admission = await service._admit(
+            "ResolveCameraConfiguration", initial, initial, grpc_context
+        )
+        assert initial_admission.result == control.COMMAND_RESULT_ACCEPTED
+        initial_ns = host_time_ns()
+        state.complete_operation(
+            initial.command_id,
+            succeeded=True,
+            progress="complete",
+            now_ns=initial_ns,
+        )
+        retained_initial = commands.get(initial.command_id)
+        assert retained_initial is not None and retained_initial.result is not None
+        initial_report = acq.WorkerOperationReport.FromString(retained_initial.result)
+        assert initial_report.source == context
+        assert initial_report.operation == state.operations[initial.command_id]
+    
+        cleanup = _command(context, supervisor if supervisor_cleanup else owner)
+        cleanup_admission = await service._admit("Cleanup", cleanup, cleanup, grpc_context)
+        assert cleanup_admission.result == control.COMMAND_RESULT_ACCEPTED
+        cleanup_ns = host_time_ns()
+        assert (cleanup.command_id in state.supervisor_command_ids) == supervisor_cleanup
+        deliveries: list[object] = []
+        releases = []
+        trial = object.__new__(WorkerTrialLifecycle)
+        trial.trial_state = WorkerTrialState()
+        trial.stop_finalizer = SimpleNamespace(stop_trial=lambda *args, **kwargs: None)
+        executor = object.__new__(WorkerOperationExecutor)
+        executor.state = state
+        executor.bootstrap = SimpleNamespace(context=context)
+        executor._coordinator_loss_handled = False
+        executor._cancelled = Event()
+        executor.trial = trial
+        executor.report_dispatcher = SimpleNamespace(
+            operation=lambda report, deadline: deliveries.append(report),
+            lifecycle=lambda report, deadline: deliveries.append(report),
+        )
+        executor.cleanup = WorkerCleanupLifecycle(
+            state,
+            SimpleNamespace(release_device=lambda: releases.append("camera")),
+            SimpleNamespace(release=lambda: releases.append("buffers") or ()),
+            None,
+            capacity=16,
+            extra_resources=lambda: {},
+            report_lifecycle=executor._report_lifecycle,
+            report_operation=executor._report,
+            shutdown=lambda deadline: None,
+            recording_reconciled=lambda: None,
+            external_wake=lambda: None,
+        )
+        executor.execute("Cleanup", cleanup, cleanup_ns + 1_000_000_000)
+>       assert state.operations[cleanup.command_id].succeeded
+E       assert False
+E        +  where False = context {\n  command_id: "6e92e987-c85f-4dd7-85c4-de7ee74d30ac"\n}\ncommand: "Cleanup"\nwork {\n  session {\n    session_id:...ailure {\n  code: "WORKER_OPERATION_FAILED"\n  message: "\'types.SimpleNamespace\' object has no attribute \'active\'"\n}\n.succeeded
+
+tests\acquisition\test_worker_admission.py:521: AssertionError
+------------------------------ Captured log call ------------------------------
+ERROR    cephvr.acquisition.worker.execution:execution.py:244 acquisition_behavioral_worker Cleanup 6e92e987-c85f-4dd7-85c4-de7ee74d30ac failed: AttributeError: 'types.SimpleNamespace' object has no attribute 'active'
+__ test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse ___
+
+    def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -> None:
+        context = _worker_context()
+        session_work = control.WorkContext(
+            session=control.SessionContext(
+                controller_generation=str(uuid4()), session_id=str(uuid4())
+            )
+        )
+        context.work.CopyFrom(session_work)
+        state = _worker_state(context)
+        state.confirmed_configuration_revision = 7
+        preparation = object.__new__(WorkerSessionPreparation)
+        preparation.state = state
+        preparation.session_ready = True
+    
+        trial_work = control.WorkContext(
+            trial=control.TrialContext(
+                session=session_work.session, trial_id=str(uuid4()), trial_number=1
+            )
+        )
+        schedule = acq.WorkerSchedule(
+            command=acq.WorkerCommand(
+                command_id=str(uuid4()),
+                target=context,
+                parent_operation=control.OperationContext(command_id=str(uuid4())),
+            ),
+            start_monotonic_ns=100,
+            end_monotonic_ns=200,
+        )
+        schedule.command.target.work.CopyFrom(trial_work)
+        trial_state = WorkerTrialState(schedule=schedule)
+        trial = object.__new__(WorkerTrialLifecycle)
+        trial.trial_state = trial_state
+        trial.bootstrap = SimpleNamespace(context=context)
+        trial.recording = None
+        trial._require_ready_session_callback = preparation.require_ready_session
+        trial.stop_finalizer = SimpleNamespace(
+            stop_trial=lambda _deadline, **_kwargs: _retain_stopped_schedule(trial_state)
+        )
+    
+        def admit(name: str, request: object, deadline_ns: int) -> None:
+            command = request.command
+            work_kind = command.target.work.WhichOneof("work")
+            work_key = (
+                command.target.work.trial.trial_id
+                if work_kind == "trial"
+                else command.target.work.session.session_id
+                if work_kind == "session"
+                else context.worker.generation
+            )
+            state.commands.admit(
+                command.command_id,
+                request.SerializeToString(deterministic=True),
+                1,
+                work_key=work_key,
+                deadline_ns=deadline_ns,
+            )
+            state.operations[command.command_id] = control.OperationState(
+                context=control.OperationContext(command_id=command.command_id),
+                command=name,
+                work=command.target.work,
+            )
+    
+        deadline_ns = 10**18
+        interrupt = acq.WorkerInterrupt(
+            command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
+            issued_monotonic_ns=150,
+        )
+        interrupt.command.target.work.CopyFrom(session_work)
+        admit("InterruptSession", interrupt, deadline_ns)
+        reports: list[acq.WorkerOperationReport] = []
+        executor = object.__new__(WorkerOperationExecutor)
+        executor.bootstrap = SimpleNamespace(context=context)
+        executor.state = state
+        executor.preparation = preparation
+        executor.trial = trial
+        executor.recording = None
+        executor._cancelled = Event()
+        executor._coordinator_loss_handled = False
+        executor._latest_work = None
+        executor._source = lambda target: acq.WorkerContext.FromString(
+            target.SerializeToString(deterministic=True)
+        )
+        executor.report_dispatcher = SimpleNamespace(
+            operation=lambda report, _deadline: reports.append(report)
+        )
+    
+        executor.execute("InterruptSession", interrupt, deadline_ns)
+    
+        assert not preparation.session_ready
+>       assert trial_state.schedule is None
+E       assert command {\n  command_id: "1dae9c9d-17a1-4aa4-8aad-b4ee99c0b18e"\n  target {\n    worker {\n      role: "acquisition_behavi...operation {\n    command_id: "c65629da-1862-45bc-a6d4-a686c05a7e40"\n  }\n}\nstart_monotonic_ns: 100\nend_monotonic_ns: 200\n is None
+E        +  where command {\n  command_id: "1dae9c9d-17a1-4aa4-8aad-b4ee99c0b18e"\n  target {\n    worker {\n      role: "acquisition_behavi...operation {\n    command_id: "c65629da-1862-45bc-a6d4-a686c05a7e40"\n  }\n}\nstart_monotonic_ns: 100\nend_monotonic_ns: 200\n = WorkerTrialState(prepared=False, schedule=command {\n  command_id: "1dae9c9d-17a1-4aa4-8aad-b4ee99c0b18e"\n  target {\n  ...dline_ns=None, transport_start=None, transport_summary=None, transport_observed_ns=None, camera_first_frame_seen=False).schedule
+
+tests\acquisition\test_worker_foundations.py:257: AssertionError
+------------------------------ Captured log call ------------------------------
+ERROR    cephvr.acquisition.worker.execution:execution.py:244 acquisition_behavioral_worker InterruptSession 856efbfc-57b3-4c5c-8ad0-229af907f6df failed: AttributeError: 'types.SimpleNamespace' object has no attribute 'begin_operation'
+____ test_cleanup_releases_owned_resources_before_reporting_exact_evidence ____
+
+    def test_cleanup_releases_owned_resources_before_reporting_exact_evidence() -> None:
+        state = _worker_state()
+        events: list[str] = []
+        reports: list[acq.WorkerLifecycleEvidence] = []
+    
+        class Captures:
+            def release(self) -> tuple[object, ...]:
+                events.append("capture-release")
+                return (SimpleNamespace(resource_id="ring:preview"),)
+    
+        class Adapter:
+            def release_device(self) -> None:
+                events.append("device-release")
+    
+        request = acq.WorkerCommand(command_id=str(uuid4()))
+        cleanup = WorkerCleanupLifecycle(
+            state,
+            Adapter(),  # type: ignore[arg-type]
+            Captures(),  # type: ignore[arg-type]
+            None,
+            capacity=2,
+            extra_resources=lambda: {"ring:tracking": True, "ring:other": False},
+            report_lifecycle=lambda _request, evidence, _deadline: (
+                events.append("report"),
+                reports.append(evidence),
+            ),
+            report_operation=lambda *_args: None,
+            shutdown=lambda _deadline: events.append("shutdown"),
+            recording_reconciled=lambda: None,
+            external_wake=lambda: None,
+        )
+    
+>       assert cleanup.begin_operation(
+            "Cleanup", request, 1_000, acq.WorkerOperationReport()
+        )
+
+tests\acquisition\test_worker_foundations.py:1334: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\worker\cleanup_lifecycle.py:91: in begin_operation
+    if not self._reconcile(deadline_ns):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.acquisition.worker.cleanup_lifecycle.WorkerCleanupLifecycle object at 0x000001B2B6DF6A90>
+deadline_ns = 1000
+
+    def _reconcile(self, deadline_ns: int) -> bool:
+>       if self.captures.active:
+           ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Captures' object has no attribute 'active'
+
+src\cephvr\acquisition\worker\cleanup_lifecycle.py:146: AttributeError
+_ test_cleanup_continuation_fails_at_original_deadline_without_releasing_camera _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B2B6AA2350>
+
+    def test_cleanup_continuation_fails_at_original_deadline_without_releasing_camera(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        state = _worker_state()
+        command_id = str(uuid4())
+        deadline_ns = 500
+        request = acq.WorkerCommand(command_id=command_id, target=state.context)
+        state.commands.admit(
+            command_id,
+            b"cleanup",
+            1,
+            work_key=state.context.worker.generation,
+            deadline_ns=deadline_ns,
+        )
+        state.operations[command_id] = control.OperationState(
+            context=control.OperationContext(command_id=command_id), command="Cleanup"
+        )
+        recording_cleanup: Future[list[control.OutputResult]] = Future()
+        events: list[object] = []
+    
+        class Recording:
+            enabled = True
+            recording_queue = object()
+    
+            def fail_cleanup(
+                self, *, deadline_ns: int
+            ) -> Future[list[control.OutputResult]]:
+                events.append(("recording-cleanup", deadline_ns))
+                return recording_cleanup
+    
+        class Captures:
+            def release(self) -> tuple[object, ...]:
+                events.append("capture-release")
+                return ()
+    
+        class Adapter:
+            def release_device(self) -> None:
+                events.append("device-release")
+    
+        cleanup = WorkerCleanupLifecycle(
+            state,
+            Adapter(),  # type: ignore[arg-type]
+            Captures(),  # type: ignore[arg-type]
+            Recording(),  # type: ignore[arg-type]
+            capacity=2,
+            extra_resources=lambda: {},
+            report_lifecycle=lambda *_args: events.append("lifecycle-report"),
+            report_operation=lambda _report, bound: events.append(
+                ("operation-report", bound)
+            ),
+            shutdown=lambda _deadline: None,
+            recording_reconciled=lambda: None,
+            external_wake=lambda: None,
+        )
+>       assert not cleanup.begin_operation(
+            "Cleanup", request, deadline_ns, acq.WorkerOperationReport()
+        )
+
+tests\acquisition\test_worker_foundations.py:1410: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\worker\cleanup_lifecycle.py:91: in begin_operation
+    if not self._reconcile(deadline_ns):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.acquisition.worker.cleanup_lifecycle.WorkerCleanupLifecycle object at 0x000001B2B6AA3550>
+deadline_ns = 500
+
+    def _reconcile(self, deadline_ns: int) -> bool:
+>       if self.captures.active:
+           ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Captures' object has no attribute 'active'
+
+src\cephvr\acquisition\worker\cleanup_lifecycle.py:146: AttributeError
+___ test_ambient_cleanup_waits_for_recording_proof_then_wakes_and_releases ____
+
+    def test_ambient_cleanup_waits_for_recording_proof_then_wakes_and_releases() -> None:
+        state = _worker_state()
+        recording_cleanup: Future[list[control.OutputResult]] = Future()
+        wake = Event()
+        events: list[object] = []
+    
+        class Recording:
+            enabled = True
+            recording_queue = object()
+    
+            def fail_cleanup(
+                self, *, deadline_ns: int
+            ) -> Future[list[control.OutputResult]]:
+                events.append(("recording-cleanup", deadline_ns))
+                return recording_cleanup
+    
+            def recycle_finished(self, deadline_ns: int) -> None:
+                events.append(("recording-reconciled", deadline_ns))
+    
+        class Captures:
+            def release(self) -> tuple[object, ...]:
+                events.append("capture-release")
+                return ()
+    
+        class Adapter:
+            def release_device(self) -> None:
+                events.append("device-release")
+    
+        cleanup = WorkerCleanupLifecycle(
+            state,
+            Adapter(),  # type: ignore[arg-type]
+            Captures(),  # type: ignore[arg-type]
+            Recording(),  # type: ignore[arg-type]
+            capacity=2,
+            extra_resources=lambda: {},
+            report_lifecycle=lambda *_args: events.append("lifecycle-report"),
+            report_operation=lambda *_args: None,
+            shutdown=lambda _deadline: None,
+            recording_reconciled=lambda: events.append("reconciliation-callback"),
+            external_wake=wake.set,
+        )
+    
+>       cleanup.begin_ambient_release(700)
+
+tests\acquisition\test_worker_foundations.py:1470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\worker\cleanup_lifecycle.py:82: in begin_ambient_release
+    self.begin(self._ambient_deadline_ns)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.acquisition.worker.cleanup_lifecycle.WorkerCleanupLifecycle object at 0x000001B2B7053690>
+deadline_ns = 700
+
+    def begin(self, deadline_ns: int) -> None:
+>       if self.captures.active:
+           ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Captures' object has no attribute 'active'
+
+src\cephvr\acquisition\worker\cleanup_lifecycle.py:65: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_worker_admission.py::test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work[False]
+FAILED tests/acquisition/test_worker_admission.py::test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work[True]
+FAILED tests/acquisition/test_worker_foundations.py::test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse
+FAILED tests/acquisition/test_worker_foundations.py::test_cleanup_releases_owned_resources_before_reporting_exact_evidence
+FAILED tests/acquisition/test_worker_foundations.py::test_cleanup_continuation_fails_at_original_deadline_without_releasing_camera
+FAILED tests/acquisition/test_worker_foundations.py::test_ambient_cleanup_waits_for_recording_proof_then_wakes_and_releases
+6 failed, 480 passed, 2 deselected in 2.50s

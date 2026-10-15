@@ -1,5 +1,162 @@
 # Acquisition status
 
+Owner-selected Oct15 recording tuning now uses CQ23/p4 H.264 NVENC VBR with
+zero target bitrate, zero lookahead and both AQ modes explicitly disabled for
+all three cameras. Behavioral retains full-range BT.709 YUV444; Tracking and Eye
+use explicit grayscale conversion with neutral-chroma YUV420 and unchanged
+dimensions. Both repository defaults and saved camera argument overrides match;
+other saved configuration, camera features/PFS, rates and recording depths are
+unchanged. This is operator tuning within [A08](../docs/architecture/acquisition.md#a08)
+and [E14](../docs/architecture/system-contracts.md#e14), not a policy revision or
+quality/throughput pass. Owner will update PFS files before representative-scene
+evaluation under the [existing rig plan](rig-verification.md#encoding-test-plan).
+Full-width 4112-pixel Behavioral H.264 incompatibility remains; these settings
+do not select an ROI or automatically switch codecs. [Exact argument changes](runtime-evidence-2026-10-15/camera-recording-cq23/settings.json).
+Configuration loaders, strict saved Protobuf parsing and saved/default equality
+checks pass; focused existing configuration/capability/filter coverage passes
+23 cases (24 deselected). The broader three-module invocation was interrupted
+without a completed result. No device or encoder execution was performed for
+this tuning. [Validation and limits](runtime-evidence-2026-10-15/camera-recording-cq23/validation.json).
+
+Current Oct15 open-loop verification uses all three supplied Pedro camera presets,
+the latest GUI projector calibration and a strict no-Tracking runtime. The configured
+Tracking camera still records. Eye uses acknowledged free-running60Hz, verified from
+actual trigger-off/limiter-on readback. Camera imaging values remain unchanged;
+Behavior/Tracking images are nearly black and Eye is dim, limiting scientific image
+quality and realistic scene-load acceptance. CQ18 camera encoding is lossy; source
+continuity, CFR substitutions and codec-input fidelity are separate measurements.
+
+The current-calibration normal120s trial completes with confirmed cleanup/reuse and
+four strict count/full-decode passes (3600 Behavior frames,7200 each other stream).
+The requested 900-second trial also completes exactly, with confirmed cleanup,
+successful NewSession and four strict external counts/full software decodes. Behavior
+has 27,000 frames; Tracking camera, Eye and stimulus each have 54,000. Collection and
+runtime errors are empty. All camera source/native counters are continuous, invalid
+records are zero, pre/post-cutoff accounting is complete, and available SDK failed,
+missed and resynchronization counters are zero. Camera CFR duplicates are respectively
+55 (0.204%), 241 (0.446%) and 193 (0.357%); received but unselected same-slot frames are
+34, 200 and 187. Nominal video counts do not imply every source frame was retained.
+Active-only CPU averages 17.02% (maximum 36.62%); GPU memory stays at 1460 MiB for
+rendering and 1030 MiB for encoding. Astra accepts endurance and closure as low-loss
+engineering evidence, with dim/black scene limitations. Native camera timestamps lack
+tick-frequency conversion; uniform physical exposure timing is not established.
+[Final collection](runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/collection.json),
+[source accounting](runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/assessment.json).
+A bounded camera-lossless check also passes on the RTX 2080 Ti. Three six-frame,
+full-ROI fixtures decode byte-for-byte to identical prepared 8-bit full-range YUV444
+planes using H.264 NVENC `-rc constqp -qp 0 -tune lossless`, retaining the conversion
+filters and removing CQ controls. This proves codec-input fidelity; Bayer demosaicing
+and RGB/YUV conversion are not raw-sensor lossless. A separate 60-second native run
+with only camera encoding changed completes and cleans up normally; all four strict
+counts/full decodes pass (1800 Behavior, 3600 each remaining stream). Camera source/
+native counters stay continuous and available SDK loss counters are zero. CFR repeats
+are 14/18/4 (0.778%/0.500%/0.111%); same-slot omissions are 11/14/1. Stimulus has zero
+capacity drops, three same-slot omissions and two repeats. CPU averages 19.64%
+(maximum 30.07%); encoding GPU averages 42.34%, encoder engine 44.47%, memory 1030 MiB.
+Measured camera storage is 191.29 GiB/hour plus 4.23 GiB/hour stimulus, extrapolated
+from this short dim-scene run. This is not a controlled comparison with the 900-second
+CQ18 run, a realistic-scene guarantee, or 15-minute lossless endurance acceptance.
+Stimulus review remains lossy under [E13](../docs/architecture/visual_stimulus.md#e13).
+[Codec fidelity](runtime-evidence-2026-10-15/open-loop-soak/resume-1/lossless-feasibility.json),
+[native collection](runtime-evidence-2026-10-15/open-loop-soak/resume-1/lossless60-r1/collection.json),
+[recording/storage accounting](runtime-evidence-2026-10-15/open-loop-soak/resume-1/final-accounting.json).
+
+Reviewed repairs under [E06](../docs/architecture/system-contracts.md#e06),
+[A10](../docs/architecture/acquisition.md#a10) and
+[A11](../docs/architecture/acquisition.md#a11) retain strict ownership and deadlines:
+
+- Allow acknowledged Eye free-running configuration; deliver MCU pulse evidence only
+  to selected external cameras. Keep worker validation and first-frame deadlines.
+- Route exact session-scoped interrupted Finished output evidence into the existing
+  session ledger without fabricating normal trial completion. Missing/stale sessions
+  and mismatched output batches reject before retention.
+- Match retained backend parent identity for late pulse evidence. Seal admission
+  immediately, then service exact terminal OFF evidence through the serialized owner
+  loop before bounded SDK drain. Overlapping safety commands preserve the first output
+  owner and earliest deadline; cleanup waits for a pending writer finish.
+- Cancel retired scheduled ON/OFF/end tasks and fence current session/trial authority
+  before actuation, after awaited results and before fallback Stop.
+- Perform MCU OFF preflight before publishing a new trial. Revalidate prior authority
+  and retain worker preparation children before yielding; serialize preparation without
+  holding the telemetry lock across serial I/O. Heartbeat validation stays strict.
+
+Final acquisition owner validation passes523 cases (two deselected), including actual
+serialized-owner stop ordering, pending-writer bounds, retired-boundary races and real
+READY heartbeats during blocked preflight. Scoped Ruff/format/Win32 mypy and695-module
+boundary checks pass. Astra reviews the frozen increments. ARCH-002 cohesion review
+retains capture_runtime623 and execution514 lines as focused SDK-resource and operation
+dispatch/completion owners; no new policy or dependency. Source patches, hashes and
+commands are retained in [resume-1 evidence](runtime-evidence-2026-10-15/open-loop-soak/resume-1/).
+
+Abort120-r3 and Abort180 confirm actual camera pre/post-cutoff accounting, external
+ON/OFF APPLIED, session cleanup and NewSession. All four r3 videos pass strict count/
+decode. Interrupted finalization still takes about40s and emits lifecycle_recovery;
+earlier trial-log closure can remain unknown even though later session cleanup confirms
+actual outputs. Immediate capture cutoff is distinct from command return latency.
+Follow `interrupt-trial-log-closure` without retroactively relabelling trial records.
+
+Rapid post-Abort reuse remains unaccepted: rapid120-boundary-r1 accepts Setup/StartSession
+but fails PrepareTrial before scheduledT with stale-work heartbeat rejection and ensuing
+cleanup errors. The generic publication race is repaired and locally covered, but no
+native rapid-reuse interval crossed the retired deadline. Astra selected a fresh900s
+generation using the already verified normal120s gate, preserving that separate open
+finding in `rapid-abort-setup-heartbeat`.
+
+Earlier failed attempts remain evidence, not upgraded passes: the first900s failed
+around71.4s with truncated Behavior/Eye tails; the owner stopped the next at883.852s
+with unknown closure. CR-only FFmpeg statistics framing and a fatal-error route that
+masked the original exception were repaired (947 relevant tests and Astra30 focused
+checks), but the original masked cause is not conclusively recoverable. Resumed Abort
+r1 exposed wrong pulse-parent identity; r2 correctly reported unconfirmed SDK drain.
+All partial recordings and emergency reports are retained. Process-exit receipts alone
+never establish file closure.
+
+Fresh saved configuration/TOML, GUI calibration/cache and all three full camera PFS
+baselines are retained in resume-1. Test warps use unique copies of the newer GUI
+mapping (Bottom685x940; derived spin pivot23,0), because the old experiment profile
+references older geometry. Do not restore historical pre-pause snapshots over these
+later settings. Final owned runtime exit and empty native process inventory are verified.
+Fresh saved experiment, GUI settings and Visual Stimulus TOML restore byte-exact under
+compare-before-write guards. All three validated camera PFS loads and closes succeed;
+their exact-text guard correctly fails because standalone LineSelector cursor records
+differ (baseline Line1, restored Behavior Line2 and Tracking/Eye Line3). Astra's ordered
+full diff confirms every selector-qualified feature value matches. Functional camera
+settings are restored; byte-identical PFS serialization is not claimed or retried.
+Separate reusable CQ18 endurance and camera-lossless 60-second packages retain actual
+adopted settings and tested TOML overrides under Desktop/Pedro/media/protocols. Those
+overrides are not left active. After all recording work ended, only 51 verified synthetic
+MP4s (13.504 GiB) were deleted; real/failed recordings and raw evidence remain.
+[Restoration and package index](runtime-evidence-2026-10-15/open-loop-soak/resume-1/final-cleanup.json),
+[cleanup manifest](runtime-evidence-2026-10-15/projector-free-rig/synthetic-media-cleanup.json).
+[All raw attempts and fixes](runtime-evidence-2026-10-15/open-loop-soak/).
+
+Oct15 direct zero-byte raw-input probes using the production-shaped camera options
+and FFmpeg9.0.2 on RTX2080Ti exit0 for both enabled camera formats and finalize small
+MP4s (1614/1606 bytes), with writable-handle synchronization and close. Identity tags
+are omitted for this standalone probe. This establishes muxer capability only, not
+playable video or runtime A07 NO_FRAMES accounting/ownership acceptance. The initial
+probe failed while synchronizing a read-only Windows handle; artifact/log retained,
+then corrected to a writable handle and fresh paths. No failure exit was ignored.
+The [Visual Stimulus report](visual_stimulus.md) owns the completed synthetic31-case
+encoder matrix and its full-path limits.
+[Raw empty-input results](runtime-evidence-2026-10-15/projector-free-rig/empty-video.json).
+
+Oct15 actual projector-free rig checks: COM8 reports protocol4/cephvr2_uno_4;
+saved Behavior D11/30Hz and Tracking D10/60Hz settings are retained. Eye remains disabled
+with saved D9/60Hz configuration; it is not enabled for this test. Four native managed
+preview cycles per enabled camera complete with confirmed device release and unchanged
+adopted configuration. One extra Behavior preview/Stop succeeds, but the following Start
+fails with `prior capture has unknown SDK-buffer discard accounting`. This is an observed
+reuse blocker, not evidence that the accounting guard itself is defective; its source
+cause is unverified. Follow `camera-preview-sdk-discard-reuse` without bypassing safety.
+
+Exact idle controller departure stops owned supervisor/acquisition processes and yields
+an all-owned-absent receipt. Acquisition reports MCU claim release unconfirmed after
+controller departure. Active-capture loss, electrical LOW, watchdog under load and
+combined recording acceptance remain open. Initial full PFS snapshots, including selector
+cursors, restore exactly and cameras close; saved configuration bytes remain unchanged.
+[Dated commands, raw results and limits](runtime-evidence-2026-10-15/projector-free-rig/context.json). This does not remeasure adopted queue20/SDK15/drain150 under full recording load.
+
 Oct14 working-tree verification corrects the owning configuration test to the
 owner-selected 150 ms drain and retains its missing-field assertion. The controller
 integration fixture's status gate now honors its original RPC deadline, resolving

@@ -151,10 +151,21 @@ class WorkerLifecycleReports:
                 self.trial_lifecycle.validate_stopped(
                     record, evidence, ingress_ns=ingress_ns
                 )
+        elif (
+            kind == "finished"
+            and child.kind == "interrupt_session"
+            and session_for_deadline is None
+        ):
+            raise ValueError("interrupted Finished has no exact current session")
         elif kind == "finished" and session_for_deadline is not None:
-            if self.trial_lifecycle is None:
-                raise RuntimeError("trial lifecycle validator is not assembled")
-            self.trial_lifecycle.validate_finished(record, evidence)
+            if child.kind == "interrupt_session":
+                self.cleanup_reports.retain_interrupted_finished(
+                    session_for_deadline, record, evidence
+                )
+            else:
+                if self.trial_lifecycle is None:
+                    raise RuntimeError("trial lifecycle validator is not assembled")
+                self.trial_lifecycle.validate_finished(record, evidence)
         elif kind == "cleanup" and session_for_deadline is None:
             preview = record.preview
             if child.kind == "stop_preview":
@@ -348,6 +359,8 @@ class WorkerLifecycleReports:
                     trial_ready_session, ingress_ns
                 )
             if manual_preview_event:
+                return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+            if kind == "finished" and child.kind == "interrupt_session":
                 return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
             if kind in {"started", "stopped", "finished"}:
                 if self.trial_lifecycle is None:

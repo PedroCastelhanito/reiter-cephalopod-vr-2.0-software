@@ -1,0 +1,6 @@
+{
+  "time": "2026-10-15T13:17:28.6193311+09:00",
+  "prior_generation": "974ec661-1819-4079-ba01-a92d22ce160a",
+  "command": "scripts/start_runtime_gui.py --no-tracking",
+  "pid": 25868
+}

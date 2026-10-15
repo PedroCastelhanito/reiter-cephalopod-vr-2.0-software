@@ -9,6 +9,8 @@ from uuid import uuid4
 
 import pytest
 
+from cephvr.acquisition.coordinator.cleanup_report import CleanupReportBuilder
+from cephvr.acquisition.coordinator.evidence import WorkerEvidenceCoordinator
 from cephvr.acquisition.coordinator.trial_delivery import TrialReportDelivery
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
 from cephvr.acquisition.coordinator.trial_pulses import TrialPulseBoundaries
@@ -39,6 +41,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 
@@ -195,9 +198,19 @@ def test_safety_fanout_survives_off_failure_and_missing_worker(
         interrupt_request = wire.InterruptSessionRequest(
             command=command, issued_monotonic_ns=10
         )
-        admission = asyncio.run(
-            termination.interrupt_session(interrupt_request, deadline_ns=100)
-        )
+
+        async def interrupt_with_boundaries():
+            tasks = [asyncio.create_task(asyncio.Event().wait()) for _ in range(3)]
+            trial.pulse_on_task, trial.pulse_off_task, trial.normal_end_task = tasks
+            await asyncio.sleep(0)
+            result = await termination.interrupt_session(
+                interrupt_request, deadline_ns=100
+            )
+            await asyncio.gather(*tasks, return_exceptions=True)
+            assert all(task.cancelled() for task in tasks)
+            return result
+
+        admission = asyncio.run(interrupt_with_boundaries())
     else:
         command.work.CopyFrom(trial_work)
         stop_request = wire.StopTrialRequest(
@@ -381,6 +394,191 @@ def _started_case(
     activity.device_evidence.camera = role
     activity.device_evidence.producer.CopyFrom(worker_identity)
     return TrialLifecycleValidation(), worker, evidence, session, trial
+
+
+def _interrupted_finished_case(save_video: bool):
+    _, worker, evidence, session, trial = _started_case(recording_unavailable=False)
+    worker.context.work.CopyFrom(session.work)
+    worker.launch.work.CopyFrom(session.work)
+    evidence.source.work.CopyFrom(session.work)
+    child = worker.child_operations[evidence.operation.command_id]
+    child.work.CopyFrom(session.work)
+    child.kind = "interrupt_session"
+    child.deadline_ns = 200
+    child.report = control.OperationState(
+        command="InterruptSession", complete=True, succeeded=False
+    )
+    child.report.work.CopyFrom(session.work)
+    session.interrupted = trial.interrupted = True
+    backend = control.BackendContext(
+        backend_name="acquisition", backend_generation=str(uuid4())
+    )
+    evidence.ClearField("started")
+    evidence.finished.activity_stopped = True
+    for tag, extension in (
+        ("behavioral_cam_frames", "jsonl"),
+        ("behavioral_cam", "mp4"),
+    ):
+        if extension == "mp4" and not save_video:
+            continue
+        plan = control.OutputPlan(
+            output_key=tag,
+            output_tag=tag,
+            extension=extension,
+            path=f"C:/data/{tag}.{extension}",
+            backend=backend,
+            trial=trial.work.trial,
+        )
+        trial.outputs.append(plan)
+        session.reserved_outputs.append(plan)
+        session.dispatched_output_keys.add(plan.output_key)
+        evidence.finished.outputs.add(
+            output_key=plan.output_key,
+            path=plan.path,
+            closure=control.OUTPUT_CLOSURE_CLOSED,
+            artifact_present=True,
+        )
+    ledger = CommandLedger(
+        str(uuid4()),
+        10_000,
+        max_records=32,
+        max_bytes=1_000_000,
+        result_reservation_bytes=4096,
+    )
+    worker.commands = ledger
+    owner = WorkerEvidenceCoordinator(
+        backend=backend,
+        owner=worker.context.owner,
+        settings=session.confirmed_settings,
+        workers={worker.context.camera: worker},
+        resources={},
+        resource_ledger=NativeResourceLedger(
+            max_resources=8, max_transfers_per_resource=4
+        ),
+        commands=ledger,
+        current_session=lambda: session,
+        controller=cast(ControllerPort, object()),
+        lock=asyncio.Lock(),
+    )
+    return owner, worker, evidence, session, trial, backend
+
+
+@pytest.mark.parametrize("save_video", [False, True])
+@pytest.mark.parametrize("late", [False, True])
+async def test_interrupted_finished_retains_outputs_for_cleanup_without_normal_aggregate(
+    save_video, late
+):
+    owner, worker, evidence, session, trial, backend = _interrupted_finished_case(
+        save_video
+    )
+    child = worker.child_operations[evidence.operation.command_id]
+    original_report = child.report.SerializeToString()
+    receipt = await owner.lifecycle.report_lifecycle(
+        evidence, ingress_ns=1000 if late else 150, deadline_ns=1100
+    )
+    assert receipt.result == control.COMMAND_RESULT_ACCEPTED
+    assert set(session.output_results) == {plan.output_key for plan in trial.outputs}
+    assert child.report.SerializeToString() == original_report
+    assert child.deadline_ns == 200
+    assert trial.finished_report is None and trial.pending_finished_report is None
+    assert session.interrupted and trial.interrupted
+    builder = CleanupReportBuilder(
+        identity=CoordinatorIdentity(
+            backend,
+            worker.context.owner,
+            control.ProcessIdentity(),
+            control.ProcessIdentity(),
+            control.ProcessIdentity(),
+        ),
+        workers={worker.context.camera: worker},
+        resources={},
+        resource_ledger=NativeResourceLedger(
+            max_resources=8, max_transfers_per_resource=4
+        ),
+        resource_port=cast(object, object()),
+        clock=lambda: 1200,
+    )
+    # The recycled writer can return no outputs; the session must retain closure.
+    report = builder.build(
+        session,
+        str(uuid4()),
+        {worker.context.camera: acq.WorkerCleanupEvidence()},
+        True,
+    )
+    assert set(output.output_key for output in report.outputs) == set(
+        session.output_results
+    )
+    assert all(
+        output.closure == control.OUTPUT_CLOSURE_CLOSED for output in report.outputs
+    )
+    evidence.finished.outputs[0].path = "mutated caller"
+    assert all(
+        result.path != "mutated caller" for result in session.output_results.values()
+    )
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        "session",
+        "command",
+        "role",
+        "kind",
+        "not_interrupted",
+        "trial_not_interrupted",
+        "activity",
+        "missing",
+        "duplicate",
+        "path",
+        "presence",
+        "unknown_closure",
+        "no_session",
+        "replaced_session",
+    ],
+)
+async def test_interrupted_finished_rejects_mismatched_scope_or_output_batch(invalid):
+    owner, worker, evidence, session, trial, _ = _interrupted_finished_case(True)
+    if invalid == "session":
+        evidence.source.work.session.session_id = str(uuid4())
+    elif invalid == "command":
+        evidence.operation.command_id = str(uuid4())
+    elif invalid == "role":
+        evidence.source.camera = camera_pb2.CAMERA_ROLE_TRACKING
+    elif invalid == "kind":
+        worker.child_operations[evidence.operation.command_id].kind = "stop_trial"
+    elif invalid == "not_interrupted":
+        session.interrupted = False
+    elif invalid == "trial_not_interrupted":
+        trial.interrupted = False
+    elif invalid == "activity":
+        evidence.finished.activity_stopped = False
+    elif invalid == "missing":
+        del evidence.finished.outputs[-1]
+    elif invalid == "duplicate":
+        evidence.finished.outputs.add().CopyFrom(evidence.finished.outputs[0])
+    elif invalid == "path":
+        evidence.finished.outputs[-1].path = "C:/different.mp4"
+    elif invalid == "presence":
+        evidence.finished.outputs[-1].ClearField("artifact_present")
+    elif invalid == "no_session":
+        owner.lifecycle.current_session = lambda: None
+    elif invalid == "replaced_session":
+        replacement = SessionRecord(
+            work=control.WorkContext(
+                session=control.SessionContext(session_id=str(uuid4()))
+            ),
+            operation=control.OperationContext(command_id=str(uuid4())),
+            configuration_revision=1,
+            required_cameras=set(),
+        )
+        owner.lifecycle.current_session = lambda: replacement
+    else:
+        evidence.finished.outputs[-1].closure = control.OUTPUT_CLOSURE_UNCONFIRMED
+    receipt = await owner.lifecycle.report_lifecycle(
+        evidence, ingress_ns=150, deadline_ns=200
+    )
+    assert receipt.result == control.COMMAND_RESULT_REJECTED
+    assert not session.output_results and not worker.lifecycle_evidence
 
 
 def test_saved_started_requires_recording_activity_until_exact_scope_is_fenced() -> (
@@ -741,3 +939,47 @@ async def test_normal_end_waits_original_off_then_dispatches_one_stop() -> None:
     await task
     await TrialTermination.run_normal_end(owner, session, trial)
     assert len(requests) == 1
+
+
+@pytest.mark.parametrize("replacement", [False, True])
+async def test_retired_boundary_failure_cannot_stop_reused_session(
+    replacement: bool,
+) -> None:
+    _, _, _, session, trial = _started_case(recording_unavailable=False)
+    slot = SessionSlot(current=session)
+
+    async def execute(*args, **kwargs):
+        trial.interrupted = True
+        slot.current = (
+            SessionRecord(
+                work=control.WorkContext(
+                    session=control.SessionContext(session_id=str(uuid4()))
+                ),
+                operation=control.OperationContext(command_id=str(uuid4())),
+                configuration_revision=1,
+                required_cameras=set(),
+            )
+            if replacement
+            else None
+        )
+
+    async def stop(*args, **kwargs):
+        pytest.fail("retired boundary must not stop the replacement session")
+
+    owner = cast(
+        TrialTermination,
+        SimpleNamespace(
+            session_slot=slot,
+            pulse_boundaries=SimpleNamespace(execute=execute),
+            stop=stop,
+        ),
+    )
+    await TrialTermination.run_pulse_boundary(
+        owner,
+        session,
+        trial,
+        (),
+        command=mcu.PULSE_BOUNDARY_COMMAND_OFF,
+        boundary_ns=100,
+    )
+    assert trial.stop is None

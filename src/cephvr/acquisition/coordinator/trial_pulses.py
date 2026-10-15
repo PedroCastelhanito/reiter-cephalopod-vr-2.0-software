@@ -13,11 +13,13 @@ from cephvr.acquisition.coordinator.manual_pulse_observation import (
 )
 from cephvr.acquisition.coordinator.trial_helpers import _external_roles
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.ports import SerialOwnerPort
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
     PulseRecord,
     SessionRecord,
+    SessionSlot,
     TrialRecord,
     WorkerRecord,
 )
@@ -40,6 +42,7 @@ class TrialPulseBoundaries:
         serial: SerialOwnerPort,
         pulse: PulseRecord,
         lifecycle: TrialLifecycleReports,
+        session_slot: SessionSlot,
         serial_ack_timeout_ns: int,
         start_evidence_allowance_ns: int,
         lifecycle_delivery_ns: int,
@@ -50,6 +53,7 @@ class TrialPulseBoundaries:
         self.serial = serial
         self.pulse = pulse
         self.lifecycle = lifecycle
+        self.session_slot = session_slot
         self.serial_ack_timeout_ns = serial_ack_timeout_ns
         self.start_evidence_allowance_ns = start_evidence_allowance_ns
         self.lifecycle_delivery_ns = lifecycle_delivery_ns
@@ -106,34 +110,22 @@ class TrialPulseBoundaries:
         boundary_ns: int,
     ) -> None:
         await wait_until_ns(boundary_ns, clock=self.clock)
-        cancelled_on = command == mcu.PULSE_BOUNDARY_COMMAND_ON and (
-            session.interrupted or trial.interrupted or session.setup_cancelled
-        )
+        if not self._current_boundary(session, trial):
+            return
         ack_deadline_ns = boundary_ns + self.serial_ack_timeout_ns
         delivery_deadline_ns = boundary_ns + (
             self.start_evidence_allowance_ns
             if command == mcu.PULSE_BOUNDARY_COMMAND_ON
             else self.lifecycle_delivery_ns
         )
-        if command == mcu.PULSE_BOUNDARY_COMMAND_OFF:
-            trial.pulse_delivery_deadline_ns = delivery_deadline_ns
         try:
-            if cancelled_on:
-                evidence = _failure_evidence(
-                    selected_roles,
-                    command,
-                    boundary_ns,
-                    mcu.PULSE_COMMAND_OUTCOME_NOT_DISPATCHED,
-                )
-                trial.pulse_on = evidence
-            elif command == mcu.PULSE_BOUNDARY_COMMAND_ON:
+            if command == mcu.PULSE_BOUNDARY_COMMAND_ON:
                 invalidate_released_idle_proof(self.pulse)
                 evidence = await self.serial.on(
                     selected_roles,
                     scheduled_boundary_ns=boundary_ns,
                     deadline_ns=ack_deadline_ns,
                 )
-                trial.pulse_on = evidence
             else:
                 invalidate_released_idle_proof(self.pulse)
                 evidence = await self.serial.off(
@@ -142,7 +134,6 @@ class TrialPulseBoundaries:
                     stop_issued_ns=None,
                     deadline_ns=ack_deadline_ns,
                 )
-                trial.pulse_off = evidence
         except TimeoutError:
             evidence = _failure_evidence(
                 selected_roles,
@@ -150,8 +141,6 @@ class TrialPulseBoundaries:
                 boundary_ns,
                 mcu.PULSE_COMMAND_OUTCOME_TIMED_OUT,
             )
-            _retain_boundary_result(trial, command, evidence)
-            trial.interrupted = True
         except Exception:
             evidence = _failure_evidence(
                 selected_roles,
@@ -159,8 +148,12 @@ class TrialPulseBoundaries:
                 boundary_ns,
                 mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
             )
-            _retain_boundary_result(trial, command, evidence)
-            trial.interrupted = True
+
+        if not self._current_boundary(session, trial):
+            return
+        if command == mcu.PULSE_BOUNDARY_COMMAND_OFF:
+            trial.pulse_delivery_deadline_ns = delivery_deadline_ns
+        _retain_boundary_result(trial, command, evidence)
 
         if evidence.outcome == mcu.PULSE_COMMAND_OUTCOME_APPLIED:
             retain_applied_pulse_state(
@@ -175,6 +168,16 @@ class TrialPulseBoundaries:
             trial.pulse_off_ready.set()
         await self.lifecycle.pulse_evidence_changed(trial)
 
+    def _current_boundary(self, session: SessionRecord, trial: TrialRecord) -> bool:
+        return bool(
+            self.session_slot.current is session
+            and session.trial is trial
+            and not session.interrupted
+            and not session.setup_cancelled
+            and not trial.interrupted
+            and trial.stop is None
+        )
+
     async def send_evidence(
         self,
         trial: TrialRecord,
@@ -183,7 +186,13 @@ class TrialPulseBoundaries:
     ) -> None:
         calls = []
         for worker in self.workers.values():
-            if worker.port is None or worker.trial is None:
+            if (
+                worker.port is None
+                or worker.trial is None
+                or not getattr(
+                    evidence, f"{camera_role_name(worker.context.camera)}_selected"
+                )
+            ):
                 continue
             command, _operation, port = retain_worker_command(
                 worker,

@@ -1,0 +1,26 @@
+{
+  "observed_utc": "2026-10-15T01:56:15.932422+00:00",
+  "scope": "Local implementation regression, no claim of completed15minute trial",
+  "tests": {
+    "passed": 947,
+    "skipped": 1,
+    "deselected": 25,
+    "owners": [
+      "acquisition",
+      "visual_stimulus",
+      "platform",
+      "shared"
+    ]
+  },
+  "checks": {
+    "ruff": "pass5files",
+    "format": "pass5files",
+    "mypy_win32": "pass3sources",
+    "boundaries": "695modules0violations",
+    "diff_check": "pass"
+  },
+  "before_fix": "CR-only200stats regression failed16KiB line limit; LF/CRLF passed",
+  "after_fix": "7EOF/framing/oversized scenarios pass; 30focusedtests pass",
+  "review": "Astra accepted source freeze and120s regression gate",
+  "cause_limit": "InstalledFFmpeg native rawCR fixture confirms behavior; originalfailedfuture details masked and not recovered"
+}

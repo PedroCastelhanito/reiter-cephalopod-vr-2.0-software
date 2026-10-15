@@ -1,0 +1,10 @@
+{
+  "combined180": {
+    "compiled": true,
+    "duration_ns": 180000000000,
+    "epoch_count": 3,
+    "budget": "ResourceUsage(cpu_bytes=346219410, gpu_bytes=784080416)",
+    "source_close_errors": [],
+    "gpu_limit_bytes": 1073741824
+  }
+}

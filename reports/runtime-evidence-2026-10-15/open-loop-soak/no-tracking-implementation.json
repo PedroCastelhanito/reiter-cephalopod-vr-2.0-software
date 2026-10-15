@@ -1,0 +1,33 @@
+{
+  "source_revision": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "working_tree": "Uncommitted implementation; fingerprints below distinguish tested source from HEAD",
+  "executor": "Sol6.1 delegated agent sol_no_tracking",
+  "reviewer": "Astra delegated agent astra_review; source and wrapper review accepted, no actionable findings",
+  "command": "python -m pytest tests/launcher tests/controller tests/supervisor tests/acquisition -q -m \"not windows and not rig\" --basetemp=.tmp/no-tracking-owners",
+  "result": "1163 passed,3 skipped,2 deselected in14.01s; permitted execution after restricted async/temp failures",
+  "static": "Ruff pass; format30files pass; Win32mypy22 pass; boundaries695/zero violations/44 existing cohesion warnings; git diff --check pass",
+  "scope": "Implementation tests only; native no-Tracking launch verification pending",
+  "initial_attempts": "Two restricted focused runs stalled at asyncio; one also default temp errors. Exact owned sessions interrupted. Permitted focused257 and broad1163 authoritative.",
+  "files": {
+    "scripts/start_runtime_gui.py": "3c058035f62dd34d84edf350f9403e647fa37597715b0795828c34d27f912a66",
+    "src/cephvr/acquisition/coordinator/manual_preview_pulse.py": "f6eb9d10be9989fb81d78d1b59bfaa915567910b4c7e529555aa3b959af17cd9",
+    "src/cephvr/acquisition/coordinator/manual_preview_start.py": "a6466d5009f78bd331c183fcee79cb05865be007d2f4e6c8e4016fbc815ef4f6",
+    "src/cephvr/acquisition/coordinator/session_resources.py": "948385d00f94dd7fbfd98912604fea875bdafe5960ecc1055c2d679493f810a2",
+    "src/cephvr/acquisition/coordinator/session_validation.py": "c86b2ecb99f4e37d56aee7571336caaa821e948a708c41fc403d089cf5e6f1b0",
+    "src/cephvr/controller/authority.py": "f21f74e7ad788d872cc60dc36319e8a9b79167f938fa148aa6e9790a06b14264",
+    "src/cephvr/controller/startup/application.py": "b47a34dd3fd25d5e27b38fa6c95661a6c045a8a3c39c30244e0cb31d1fd66cc6",
+    "src/cephvr/controller/startup/bootstrap.py": "2a89caca604c7e37a091664a5ce35e1e9b101b73873c693343d5e5aad01afbb5",
+    "src/cephvr/launcher/entrypoint.py": "056b2dcad9a80674a6a04b657dc8c567af92b0abf503f8f7f67f58cef69b5815",
+    "src/cephvr/launcher/main.py": "d6557a181e1564eb4bde0c318e064cc114eb346449dd8c6f9583dfa5131b22b1",
+    "src/cephvr/shared/backend_bootstrap.py": "779c7acd5570b5ada5b4b369f9ba0e0d790e0ec03903d4607822fe56fcf92b60",
+    "src/cephvr/shared/managed_modules.py": "92a0beb15bc95d6f9573a7653718b2ab94c0c1ec815b9a2bfe4a6bc0cd1834f8",
+    "src/cephvr/supervisor/startup.py": "310f65758184836ff1efc4ed94567e750d2c08ee6c24c513e02a9a95033d12ad",
+    "tests/acquisition/test_coordinator.py": "3cd2fd4b46652e3ccf5d7d8440e4407eabae6c5634cf65d9629815e02c9b34c6",
+    "tests/acquisition/test_manual_preview.py": "1cd9c2d8757fe36959b48d20abd1aeb6700a27c2d9a3fb18d65cd5f3e8c46da2",
+    "tests/acquisition/test_session_preparation.py": "793fbb9b582f6fddcf780b7389146cfa02a6f5681ebeeb38de58d5b11aa766f3",
+    "tests/controller/test_authority.py": "3d64f41ac3c82cc450f1dd0e7189df6e3b7f25a2c86dc975b907f2a1e947d2ca",
+    "tests/launcher/test_lifecycle.py": "25c8a0ae857642f6b157213cfd77cba2d51be9b9fa4162eb31a11be54e4e2851",
+    "tests/launcher/test_preflight.py": "9c5da34c790a4794292afb47fa91224467c987910b9d4814204510e7698468f7",
+    "tests/supervisor/test_registration.py": "5356ca55019e99695698eec792b453c694ba4fa3fdef352b6ec5eb931058d7da"
+  }
+}

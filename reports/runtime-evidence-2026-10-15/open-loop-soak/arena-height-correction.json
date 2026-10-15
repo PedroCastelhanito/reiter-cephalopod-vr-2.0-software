@@ -1,0 +1,7 @@
+{
+  "before_mm": 53,
+  "after_mm": 0,
+  "source_floor_z": 0,
+  "display_observer_z": 53,
+  "cause": "authoring placed floor coplanar with observer; arena model translates source by fixed_height_mm; preserve sourcefloor at rigz0"
+}

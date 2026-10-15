@@ -579,7 +579,12 @@ async def test_started_evidence_preserves_exact_trial_preparation_parent():
     assert ("started", schedule_id) not in state.reports
 
 
-def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates():
+@pytest.mark.parametrize(
+    "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+)
+def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates(
+    calibration_view,
+):
     from cephvr.visual_stimulus.transport.messages import worker_command
 
     identity = Identity(
@@ -600,7 +605,7 @@ def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates():
     evidence.diagnostic_id = str(uuid4())
     evidence.configuration_revision = 4
     evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
-    evidence.calibration_view = "frame_grid"
+    evidence.calibration_view = calibration_view
     request = wire.VisualStimulusDisplayCalibrationUpdateRequest(
         command_id=str(uuid4()),
         issuer=identity.controller,
@@ -613,12 +618,34 @@ def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates():
         mapping_id="diagnostic_front",
         destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
     )
+    import json
+
+    if calibration_view != "frame_grid":
+        request.ClearField("adjustments")
+        request.placement_json = json.dumps(
+            dict(
+                outputs=[dict(output_id="projector/main", blackout_zones=[])],
+                **(
+                    dict(
+                        photodiode_output_id="projector/main",
+                        photodiode_patch=dict(
+                            rect=dict(x=1, y=1, width=2, height=2),
+                            high_linear_rgb=[1, 1, 1],
+                            low_linear_rgb=[0, 0, 0],
+                        ),
+                    )
+                    if calibration_view == "photodiode_placement"
+                    else {}
+                ),
+            )
+        )
     validate(identity, state, "UpdateDisplayCalibration", request)
     child, link = bind_command(
         identity, state, "UpdateDisplayCalibration", request, 123456
     )
     assert isinstance(child, visual_stimulus.UpdateDisplayCalibrationCommand)
     assert child.diagnostic_id == evidence.diagnostic_id
+    assert child.placement_json == request.placement_json
     assert worker_command(child).target.configuration_revision == 4
     assert link.deadline_ns == 123456 and link.adjustment_sequence == 1
     assert link.output_ids == frozenset({"projector/main"})
@@ -633,7 +660,7 @@ def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates():
     evidence.calibration_view = "reference_bars"
     with pytest.raises(ValueError, match="inactive"):
         bind_command(identity, state, "UpdateDisplayCalibration", request, 123456)
-    evidence.calibration_view = "frame_grid"
+    evidence.calibration_view = calibration_view
     state.interrupted = True
     with pytest.raises(ValueError, match="fenced"):
         validate(identity, state, "UpdateDisplayCalibration", request)

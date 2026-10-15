@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-15",
+  "base_head": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "provenance": "Existing dirty tree preserved; hashes establish current bytes, not exclusive authorship",
+  "sha256": {
+    "src/cephvr/gui/placement_calibration.py": "25e14b1edb6d3658912660256892f635af1c4de7cf0b174c60292e945413758a",
+    "src/cephvr/gui/live_calibration.py": "41e4ef609a77f7948c2eac38360a52ff105ae176c18258d23293927103af892d",
+    "src/cephvr/gui/projectors.py": "6ec178835ddb263ffe25f0749d587e061f0719111dc37042be4e3aabfb419cfd",
+    "src/cephvr/gui/calibration_profile.py": "6b2a67a31e5d457118245ab1ff94e161b8c4199a1827d05885cc0b479c4f2a72",
+    "src/cephvr/gui/managed_display_operations.py": "02ed317d7aa403dd8c98dbb359558638955c877f586b14f3b2637a769a43ae39",
+    "src/cephvr/visual_stimulus/config/calibration_placement.py": "c3f396f661fcdfec093f06562b870ead5f0e224f2968191ae04591030f881897",
+    "src/cephvr/visual_stimulus/config/calibration_adjustments.py": "6615c59cbd9086b12bb31f9014ce475892de67895dd2ecc94b2671280a22c1ca",
+    "src/cephvr/visual_stimulus/rendering/calibration_placement.py": "26b01c756a9964bc84a230f6acfa93d214db9b64962ba09598dedeec006649d5",
+    "src/cephvr/visual_stimulus/rendering/display_calibration.py": "2431683b94855ba6cb4a3651c313a518cc1ffadec8e23d1394ad4aee3ca020ad",
+    "src/cephvr/visual_stimulus/worker/calibration_adjustments.py": "a8ddc832f5ddf1b397f526522b3a138b60a8c416c600f35a091f8e405144f91a",
+    "src/cephvr/controller/device/display_adjustments.py": "581fe5d0748837599f50efa823427babe4997346a3e112bfab4b0b472d1b3d59",
+    "contracts/cephvr/control/v1/services.proto": "e98068a345fb90eb17b9e92667092632f622055e05f2e59b99955e2e6b22994d",
+    "contracts/cephvr/visual_stimulus/v1/messages.proto": "c2ce5dfa651a0d09d197d4752280e5392781a25146f3676241762beeaa06c96b"
+  },
+  "gui_command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -x -k \"calibration or photodiode or blackout or placement\"",
+  "backend_command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus tests/controller/test_device_admission.py -q -m \"not windows and not rig\"",
+  "results": {
+    "gui_passed": 52,
+    "backend_passed": 362,
+    "backend_deselected": 1,
+    "contract_passed": 42,
+    "contract_subtests": 79,
+    "native": "RTX5060Ti exact offscreen pixel equality before/after"
+  },
+  "limits": [
+    "No running application/projector/saved measurement changes",
+    "No temporal pulse test or optical acceptance",
+    "Restricted communication stalls; normal permitted execution passed",
+    "Repository-local temp caused existing external-demo-assets guard errors; normal external temp passed",
+    "Offscreen font lookup required explicit test-only Segoe UI registration"
+  ]
+}

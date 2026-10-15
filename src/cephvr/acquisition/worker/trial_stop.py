@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from concurrent.futures import Future
+from dataclasses import dataclass
 
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.acquisition.camera.types import PurgeEvidence
@@ -20,6 +21,14 @@ from .recording_ports import TrialRecordingPort
 from .state import WorkerBootstrap, WorkerState
 from .trial_recording_terminal import TrialRecordingTerminal
 from .trial_state import WorkerTrialState
+
+
+@dataclass(slots=True)
+class PendingStopOperation:
+    request: object
+    deadline_ns: int
+    report: acq.WorkerOperationReport
+    complete: Callable[[acq.WorkerOperationReport, int, BaseException | None], None]
 
 
 class TrialStopFinalizer:
@@ -70,6 +79,10 @@ class TrialStopFinalizer:
         self._recording_isolated = recording_isolated
         self._warning_occurrence = warning_occurrence
         self._recording_fault_observed = recording_fault_observed
+        self._pending: list[PendingStopOperation] = []
+        self._stop_deadline_ns: int | None = None
+        self._report_stopped = False
+        self._capture_finished: Callable[[object, int], None] | None = None
         self.terminal = TrialRecordingTerminal(
             bootstrap,
             state,
@@ -87,8 +100,76 @@ class TrialStopFinalizer:
             recording_fault_observed=recording_fault_observed,
         )
 
-    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> None:
-        scheduled = self.trial.schedule
+    def begin_operation(
+        self,
+        request: object,
+        deadline_ns: int,
+        report: acq.WorkerOperationReport,
+        *,
+        complete: Callable[
+            [acq.WorkerOperationReport, int, BaseException | None], None
+        ],
+        capture_finished: Callable[[object, int], None],
+        report_stopped: bool,
+    ) -> None:
+        limits = self.state.limits
+        if limits is None or len(self._pending) >= limits.safety_reserve_records:
+            raise RuntimeError("retained stop continuation capacity is unavailable")
+        if not isinstance(request, (acq.WorkerStop, acq.WorkerInterrupt)):
+            raise TypeError("stop continuation requires an exact Stop or Interrupt")
+        report.operation.context.command_id = request.command.command_id
+        first_stop = self.trial.stop_request is None
+        if first_stop:
+            self.trial.stop_request = request
+        self._pending.append(
+            PendingStopOperation(request, deadline_ns, report, complete)
+        )
+        if first_stop:
+            self._capture_finished = capture_finished
+            self._report_stopped = report_stopped
+        self._stop_deadline_ns = (
+            deadline_ns
+            if self._stop_deadline_ns is None
+            else min(self._stop_deadline_ns, deadline_ns)
+        )
+        self._advance_stop()
+
+    def _advance_stop(self) -> None:
+        deadline = self._stop_deadline_ns
+        if deadline is None:
+            return
+        failure: BaseException | None = None
+        try:
+            if not self.stop_trial(deadline, report_stopped=self._report_stopped):
+                return
+            if (
+                self._capture_finished is not None
+                and self.trial.stop_request is not None
+            ):
+                self._capture_finished(self.trial.stop_request, deadline)
+        except BaseException as exc:
+            failure = exc
+        pending, self._pending = self._pending, []
+        self._stop_deadline_ns = None
+        self._capture_finished = None
+        self._report_stopped = False
+        for item in pending:
+            item.complete(item.report, item.deadline_ns, failure)
+
+    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> bool:
+        scheduled = self.trial.schedule or self.trial.stopped_schedule
+        if not self.captures.active and self.trial.end_marker is not None:
+            return True
+        if self.captures.active:
+            deadline_ns = self.captures.seal_admission(deadline_ns)
+            if (
+                self.captures.requires_external_trigger
+                and self.trial.pulses.off is None
+                and host_time_ns() < deadline_ns
+            ):
+                self.trial.stopped_schedule = scheduled
+                self._stop_deadline_ns = deadline_ns
+                return False
         if not self.captures.active and scheduled is not None:
             self.captures.cancel_schedule()
             if self.terminal.recording_trial_installed():
@@ -107,9 +188,7 @@ class TrialStopFinalizer:
             self.trial.released = False
             self.trial.prepared = False
             self._complete_warning_scope()
-            return
-        if not self.captures.active and self.trial.end_marker is not None:
-            return
+            return True
 
         scheduled_end = (
             scheduled.end_monotonic_ns
@@ -237,6 +316,7 @@ class TrialStopFinalizer:
         self.trial.released = False
         self.trial.prepared = False
         self._complete_warning_scope()
+        return True
 
     def _publish_stopped(self, actual_ns: int, end_ns: int, deadline_ns: int) -> None:
         request = self.trial.stop_request
@@ -250,6 +330,7 @@ class TrialStopFinalizer:
         self._report_lifecycle(request, evidence, deadline_ns)
 
     def advance_due_stages(self) -> None:
+        self._advance_stop()
         self.terminal.advance_due_stages()
 
     def publish_if_ready(self, deadline_ns: int | None) -> None:

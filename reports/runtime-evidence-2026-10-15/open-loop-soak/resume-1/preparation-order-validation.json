@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-15T12:53:12.1165319+09:00",
+  "scope": "E06/A10 exact trial preparation authority publication after OFF preflight, original deadline and strict telemetry retained",
+  "validation": "523 passed, 2 deselected in 2.36s",
+  "static": "Ruff/format2;win32mypy1;695boundarieszero;gitdiffcheck",
+  "files": [
+    {
+      "path": "src/cephvr/acquisition/coordinator/trial_preparation.py",
+      "sha256": "0549516EDE2811C827C0073994A0810E72583C8E597EA485FC5AD3042C4B0A76"
+    },
+    {
+      "path": "tests/acquisition/test_session_preparation.py",
+      "sha256": "1786DB3F25A621EF02559DF1AAD9ED382B22DD9EBF928AEA2A65047ED518FD9B"
+    }
+  ],
+  "native": "Fresh900direct pending freeze; rapid180retired-boundary crossing remains unproven due prior preT failure"
+}

@@ -1,0 +1,138 @@
+{
+  "screens": [
+    {
+      "face": "Front",
+      "raster_px": [
+        1280,
+        720
+      ],
+      "bar_length_px": [
+        320.0,
+        180.0
+      ],
+      "measured_bar_mm": [
+        40.0,
+        22.0
+      ],
+      "pitch_mm_per_pixel": [
+        0.125,
+        0.12222222222222222
+      ],
+      "nominal_10mm_cell_px": [
+        80.0,
+        81.81818181818183
+      ],
+      "actual_generated_grid_pitch_mm": [
+        [
+          10.0,
+          10.0
+        ],
+        [
+          10.0,
+          10.0
+        ]
+      ]
+    },
+    {
+      "face": "Left",
+      "raster_px": [
+        1280,
+        720
+      ],
+      "bar_length_px": [
+        320.0,
+        180.0
+      ],
+      "measured_bar_mm": [
+        40.0,
+        22.0
+      ],
+      "pitch_mm_per_pixel": [
+        0.125,
+        0.12222222222222222
+      ],
+      "nominal_10mm_cell_px": [
+        80.0,
+        81.81818181818183
+      ],
+      "actual_generated_grid_pitch_mm": [
+        [
+          10.0,
+          10.0
+        ],
+        [
+          10.0,
+          10.0
+        ]
+      ]
+    },
+    {
+      "face": "Right",
+      "raster_px": [
+        1280,
+        720
+      ],
+      "bar_length_px": [
+        320.0,
+        180.0
+      ],
+      "measured_bar_mm": [
+        40.0,
+        22.0
+      ],
+      "pitch_mm_per_pixel": [
+        0.125,
+        0.12222222222222222
+      ],
+      "nominal_10mm_cell_px": [
+        80.0,
+        81.81818181818183
+      ],
+      "actual_generated_grid_pitch_mm": [
+        [
+          10.0,
+          10.0
+        ],
+        [
+          10.0,
+          10.0
+        ]
+      ]
+    },
+    {
+      "face": "Bottom",
+      "raster_px": [
+        720,
+        1280
+      ],
+      "bar_length_px": [
+        180.0,
+        320.0
+      ],
+      "measured_bar_mm": [
+        44.0,
+        24.0
+      ],
+      "pitch_mm_per_pixel": [
+        0.24444444444444444,
+        0.075
+      ],
+      "nominal_10mm_cell_px": [
+        40.909090909090914,
+        133.33333333333334
+      ],
+      "actual_generated_grid_pitch_mm": [
+        [
+          10.0,
+          10.0
+        ],
+        [
+          10.0,
+          10.0
+        ]
+      ]
+    }
+  ],
+  "measurement_status": "Owner is unsure whether Bottom bars were measured in the current portrait orientation; no replacement measurements available. Values preserved.",
+  "conclusion": "All four fixed meshes retain 10mm spacing. Different pixel cell sizes follow saved bar measurements; physical size equivalence needs current-orientation bar measurements."
+}

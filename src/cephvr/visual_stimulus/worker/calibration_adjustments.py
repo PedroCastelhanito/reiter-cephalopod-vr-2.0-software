@@ -25,7 +25,7 @@ def update_presentation(
     from cephvr.visual_stimulus.config.calibration_adjustments import (
         LIVE_ADJUSTABLE_VIEWS,
         CalibrationAdjustmentRejected,
-        validated_adjustments,
+        validated_update,
     )
 
     if (
@@ -44,8 +44,10 @@ def update_presentation(
     if clock() >= deadline_ns:
         raise TimeoutError("Live update missed its original deadline")
     try:
-        adjustments = validated_adjustments(
-            (item.mapping_id, item.destination_xy) for item in request.adjustments
+        adjustments = validated_update(
+            display.calibration_view,
+            ((item.mapping_id, item.destination_xy) for item in request.adjustments),
+            request.placement_json,
         )
         activities = engine.update_display_calibration(display, prepared, adjustments)
         expected = {output.output_id for output in display.active_outputs}

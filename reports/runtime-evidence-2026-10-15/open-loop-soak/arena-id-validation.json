@@ -1,0 +1,18 @@
+{
+  "observed_utc": "2026-10-15T01:41:25.158938+00:00",
+  "scope": "local implementation and protected resource compile; does not establish native visualacceptance",
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus -q -m not-windows-and-not-rig",
+    "passed": 329,
+    "deselected": 1
+  },
+  "checks": {
+    "ruff": "passed fouraffectedfiles",
+    "format": "fourfilesalreadyformatted",
+    "mypy_win32": "success threeaffectedsourcefiles",
+    "backend_boundaries": "695modules0violations; existingcohesionwarningsunchanged",
+    "diff_check": "passed; parentCRLFwarnings"
+  },
+  "sandbox_attempt": "initialtmp_pathsetupfailedinmanagedtemp; permittednative rerunpassed",
+  "review": "Astra source/derivative/operator1GiBbudgetaccepted; height0authoringaccepted"
+}

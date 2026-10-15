@@ -32,6 +32,10 @@ async def allocate_camera_outputs(
     declare_resource: Callable[[control.ProcessIdentity, str], Awaitable[None]],
 ) -> tuple[tuple[acq.FrameBufferAttachment, ...], acq.FrameBufferAttachment | None]:
     """Create only this camera's locked-session tracking/preview rings."""
+    if tracking_required and (
+        tracking_consumer.role != "tracking" or not tracking_consumer.generation
+    ):
+        raise ValueError("enabled tracking backend has no launched Tracking identity")
     layout = _layout(resolved)
     if not settings.HasField("session_preview_max_hz"):
         raise ValueError("session preview rate cap is unresolved")

@@ -68,6 +68,28 @@ def test_eye_capture_requires_explicit_external_trigger_settings() -> None:
     assert {"TRIGGER_SOURCE_REQUIRED", "PIN_REQUIRED", "RATE_REQUIRED"} <= codes
 
 
+def test_eye_free_running_requires_acknowledgment_without_mcu_output() -> None:
+    candidate = types_pb2.ExperimentConfiguration()
+    backend = candidate.backends.add(backend_name="acquisition", enabled=True)
+    backend.acquisition.CopyFrom(load_defaults(_ROOT))
+    backend.acquisition.behavioral.enabled = False
+    backend.acquisition.tracking.enabled = False
+    eye = backend.acquisition.eye_tracking
+    eye.enabled = True
+    eye.device.device_id = "eye-serial"
+    eye.device.frame_timing = camera.FRAME_TIMING_FREE_RUNNING
+    eye.device.settings.frame_rate_hz = 60
+    backend.acquisition.pulses.eye_tracking.Clear()
+    result = validate_configuration(candidate)
+    assert {entry.failure.code for entry in result.issues} == {"UNALIGNED_ACK_REQUIRED"}
+    eye.device.unaligned_free_running = True
+    assert validate_configuration(candidate).valid
+    eye.device.ClearField("frame_timing")
+    assert "FRAME_TIMING_REQUIRED" in {
+        entry.failure.code for entry in validate_configuration(candidate).issues
+    }
+
+
 async def test_eye_setup_uses_independent_pulse_mask_and_applied_rate() -> None:
     from types import SimpleNamespace
     from unittest.mock import AsyncMock

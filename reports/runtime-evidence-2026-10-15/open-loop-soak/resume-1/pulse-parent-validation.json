@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-15T12:18:48.12014+09:00",
+  "scope": "E06/A10/A11 exact retained backend schedule parent for interrupted terminal pulse evidence",
+  "files": [
+    {
+      "path": "src/cephvr/acquisition/worker/trial_lifecycle.py",
+      "sha256": "E54D2BD0DC16128FA309BA39DEC4344A2DE6B9C14A66BAA80C20A0D7BDAB9078"
+    },
+    {
+      "path": "tests/acquisition/test_worker_foundations.py",
+      "sha256": "75F72F93D3A38F35CC165407438D10C4D54866DF7918986A1F03527E30CECEEE"
+    },
+    {
+      "path": "tests/acquisition/test_pulse_evidence.py",
+      "sha256": "EDBE0029BBB8CFAF2D2444508AF432804DFD23F3647513188F4C7D5024192EE7"
+    }
+  ],
+  "pytest": "486 passed, 2 deselected in 2.28s; tests/acquisition -q -m not_windows_and_not_rig; require_escalated",
+  "static": "Ruff check/format 3 files; win32 mypy 1 file; boundaries 695 modules zero violations; git diff --check passed",
+  "limits": "Native retry pending; previous abort Interrupted and cleanup unconfirmed; restricted focused invocation stalled and exact test process stopped before successful elevated full-owner rerun"
+}

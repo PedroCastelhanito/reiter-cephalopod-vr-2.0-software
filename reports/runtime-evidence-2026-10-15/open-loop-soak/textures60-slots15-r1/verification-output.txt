@@ -1,0 +1,3 @@
+reports\runtime-evidence-2026-10-15\open-loop-soak\textures60-slots15-r1\collection.json
+reports\runtime-evidence-2026-10-15\open-loop-soak\textures60-slots15-r1\assessment.json
+collector_exit 0

@@ -1,0 +1,7 @@
+{
+  "before_sha256": "63cbe4dd1ed13255868af52e29886a891f1c582f698507c9fd7a40baa94a6d3d",
+  "after_sha256": "f0cea2fd5c1d4805a921071fc564109bf62ee063922839235c5458d887d4c922",
+  "capture_slots": 15,
+  "max_asset_gpu_bytes": 1073741824,
+  "scope": "Scoped previouslyreviewedlimits;freshbaselinepreserved;restorefreshbaselineonly"
+}

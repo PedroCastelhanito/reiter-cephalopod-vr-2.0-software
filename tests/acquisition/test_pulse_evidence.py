@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+from dataclasses import replace
 from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
@@ -20,6 +22,7 @@ from cephvr.acquisition.state import (
     LaunchRecord,
     PulseRecord,
     SessionRecord,
+    SessionSlot,
     TrialRecord,
     WorkerRecord,
     WorkerTrial,
@@ -28,6 +31,8 @@ from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.worker.pulse_evidence import TrialPulseEvidence
+from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
+from cephvr.acquisition.worker.trial_state import WorkerTrialState
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.commands import CommandLedger
 
@@ -200,6 +205,7 @@ async def test_off_ack_does_not_forge_a_full_status_timestamp() -> None:
         tracking=control.ProcessIdentity(role="tracking", generation="t-1"),
     )
     boundaries = TrialPulseBoundaries(
+        session_slot=SessionSlot(),
         identity=identity,
         workers={},
         serial=cast(SerialOwnerPort, serial),
@@ -235,6 +241,126 @@ def _trial_work() -> control.WorkContext:
     work.trial.trial_id = str(uuid4())
     work.trial.trial_number = 1
     return work
+
+
+@pytest.mark.parametrize(
+    "command", [mcu.PULSE_BOUNDARY_COMMAND_ON, mcu.PULSE_BOUNDARY_COMMAND_OFF]
+)
+@pytest.mark.parametrize(
+    "retired",
+    [
+        "live",
+        "interrupted",
+        "replaced_session",
+        "replaced_trial",
+        "cancelled",
+        "stopped",
+        "during_io",
+    ],
+)
+async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
+    monkeypatch: pytest.MonkeyPatch, command: int, retired: str
+) -> None:
+    from cephvr.acquisition.coordinator import trial_pulses
+
+    wake, entered, release = asyncio.Event(), asyncio.Event(), asyncio.Event()
+
+    async def wait_boundary(boundary, *, clock):
+        await wake.wait()
+
+    monkeypatch.setattr(trial_pulses, "wait_until_ns", wait_boundary)
+    work = _trial_work()
+    trial = TrialRecord(
+        work=work,
+        plan=control.TrialPlan(),
+        preparation=control.OperationContext(command_id="prepare"),
+        schedule=control.OperationContext(command_id="schedule"),
+        configuration_revision=1,
+    )
+    session = SessionRecord(
+        work=control.WorkContext(session=work.trial.session),
+        operation=control.OperationContext(command_id="setup"),
+        configuration_revision=1,
+        required_cameras=set(),
+        trial=trial,
+    )
+    slot = SessionSlot(current=session)
+    calls, changes = [], []
+
+    async def serial_call(roles, *, scheduled_boundary_ns, deadline_ns, **kwargs):
+        calls.append((command, scheduled_boundary_ns, deadline_ns))
+        entered.set()
+        if retired == "during_io":
+            await release.wait()
+        return mcu.PulseCommandEvidence(
+            command=command,
+            connection_id="connection-1",
+            request_id="boundary",
+            outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+            applied=True,
+            dispatched_monotonic_ns=100,
+            acknowledged_monotonic_ns=101,
+            resulting_state=mcu.MicrocontrollerState(),
+        )
+
+    async def changed(value):
+        changes.append(value)
+
+    observation = mcu.MicrocontrollerObservation(connection_id="connection-1")
+    pulse = PulseRecord(observation=observation)
+    owner = TrialPulseBoundaries(
+        identity=cast(CoordinatorIdentity, object()),
+        workers={},
+        serial=cast(SerialOwnerPort, SimpleNamespace(on=serial_call, off=serial_call)),
+        pulse=pulse,
+        lifecycle=cast(
+            TrialLifecycleReports, SimpleNamespace(pulse_evidence_changed=changed)
+        ),
+        session_slot=slot,
+        serial_ack_timeout_ns=10,
+        start_evidence_allowance_ns=20,
+        lifecycle_delivery_ns=30,
+        clock=lambda: 100,
+    )
+    task = asyncio.create_task(
+        owner.execute(session, trial, (), command=command, boundary_ns=100)
+    )
+    await asyncio.sleep(0)
+    if retired == "interrupted":
+        session.interrupted = trial.interrupted = True
+    elif retired == "replaced_session":
+        slot.current = replace(session)
+    elif retired == "replaced_trial":
+        session.trial = replace(trial)
+    elif retired == "cancelled":
+        session.setup_cancelled = True
+    elif retired == "stopped":
+        trial.stop = control.OperationContext(command_id="stop")
+    wake.set()
+    if retired == "during_io":
+        await entered.wait()
+        slot.current = replace(session)
+        release.set()
+    await task
+    assert calls == ([(command, 100, 110)] if retired in {"live", "during_io"} else [])
+    assert changes == ([trial] if retired == "live" else [])
+    assert (trial.pulse_on is not None) == (
+        retired == "live" and command == mcu.PULSE_BOUNDARY_COMMAND_ON
+    )
+    assert (trial.pulse_off is not None) == (
+        retired == "live" and command == mcu.PULSE_BOUNDARY_COMMAND_OFF
+    )
+    assert trial.pulse_on_ready.is_set() == (
+        retired == "live" and command == mcu.PULSE_BOUNDARY_COMMAND_ON
+    )
+    assert trial.pulse_off_ready.is_set() == (
+        retired == "live" and command == mcu.PULSE_BOUNDARY_COMMAND_OFF
+    )
+    if retired != "live":
+        assert (
+            pulse.observation == observation
+            and trial.pulse_delivery_deadline_ns is None
+        )
 
 
 def _schedule(work: control.WorkContext) -> acq.WorkerSchedule:
@@ -332,8 +458,11 @@ def test_unspecified_terminal_pulse_does_not_mutate_retained_evidence() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("scheduled", [False, True])
+@pytest.mark.parametrize(
+    "pulse_command", [mcu.PULSE_BOUNDARY_COMMAND_ON, mcu.PULSE_BOUNDARY_COMMAND_OFF]
+)
 async def test_pulse_delivery_retains_exact_child_before_worker_ack(
-    scheduled: bool,
+    scheduled: bool, pulse_command: int
 ) -> None:
     work = _trial_work()
     owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
@@ -376,7 +505,7 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
     async def deliver(
         request: acq.WorkerPulseEvidence, *, deadline_ns: int
     ) -> control.CommandAdmission:
-        child = worker.child_operations[request.command.command_id]
+        child = workers[request.camera].child_operations[request.command.command_id]
         assert child.work == work and request.command.target.work == work
         assert child.parent_operation == (schedule or preparation)
         assert (
@@ -385,6 +514,21 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
         assert child.deadline_ns == deadline_ns == 100
         assert child.retention_key and child.retention_key.endswith(":safety")
         assert ledger.has_payload(child.retention_key)
+        if scheduled:
+            retained_schedule = _schedule(work)
+            retained_schedule.command.command_id = "distinct-worker-schedule-child"
+            retained_schedule.command.parent_operation.CopyFrom(schedule)
+            interruption = acq.WorkerInterrupt()
+            interruption.command.target.work.session.CopyFrom(work.trial.session)
+            lifecycle = object.__new__(WorkerTrialLifecycle)
+            lifecycle.trial_state = WorkerTrialState(
+                stopped_schedule=retained_schedule, stop_request=interruption
+            )
+            assert lifecycle._interrupted_schedule_matches(request, retained_schedule)
+            retained_schedule.command.parent_operation.command_id = "stale-schedule"
+            assert not lifecycle._interrupted_schedule_matches(
+                request, retained_schedule
+            )
         observed.append(request)
         return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
 
@@ -395,10 +539,49 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
         commands=ledger,
         trial=WorkerTrial(configuration_revision=2),
     )
+    tracking_context = acq.WorkerContext.FromString(context.SerializeToString())
+    tracking_context.camera = camera.CAMERA_ROLE_TRACKING
+    tracking_context.worker.role = "acquisition_tracking_worker"
+    tracking_context.worker.generation = str(uuid4())
+    tracking_worker = WorkerRecord(
+        context=tracking_context,
+        launch=replace(
+            launch,
+            command_id=str(uuid4()),
+            worker=tracking_context.worker,
+            camera=tracking_context.camera,
+        ),
+        port=cast(WorkerPort, SimpleNamespace(record_pulse_evidence=deliver)),
+        commands=ledger,
+        trial=WorkerTrial(configuration_revision=2),
+    )
+    workers = {context.camera: worker, tracking_context.camera: tracking_worker}
     boundaries = cast(
-        TrialPulseBoundaries, SimpleNamespace(workers={context.camera: worker})
+        TrialPulseBoundaries,
+        SimpleNamespace(
+            workers={
+                **workers,
+                camera.CAMERA_ROLE_EYE_TRACKING: SimpleNamespace(
+                    context=SimpleNamespace(camera=camera.CAMERA_ROLE_EYE_TRACKING),
+                    port=object(),
+                    trial=object(),
+                ),
+            }
+        ),
     )
     await TrialPulseBoundaries.send_evidence(
-        boundaries, trial, mcu.PulseCommandEvidence(applied=True), 100
+        boundaries,
+        trial,
+        mcu.PulseCommandEvidence(
+            applied=True,
+            behavioral_selected=True,
+            tracking_selected=True,
+            command=pulse_command,
+        ),
+        100,
     )
-    assert len(observed) == 1 and not trial.interrupted
+    assert {request.camera for request in observed} == {
+        camera.CAMERA_ROLE_BEHAVIORAL,
+        camera.CAMERA_ROLE_TRACKING,
+    }
+    assert len(observed) == 2 and not trial.interrupted

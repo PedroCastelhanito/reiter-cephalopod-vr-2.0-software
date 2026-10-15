@@ -243,7 +243,7 @@ class CalibrationTable(Card):
         self.presentation_available = available
         self.presentation_pending = pending
         reference_active = active and view == "reference_bars"
-        projection_active = active and not reference_active
+        projection_active = active and view in ("", "frame_grid")
         self.presentation_button.setText(
             "Close" if projection_active else "Launch projection calibration"
         )
@@ -251,8 +251,8 @@ class CalibrationTable(Card):
             "Close" if reference_active else "Launch reference calibration"
         )
         self.presentation_button.setEnabled(
-            available and not pending and not reference_active
+            available and not pending and (not active or projection_active)
         )
         self.measurement_button.setEnabled(
-            available and not pending and not projection_active
+            available and not pending and (not active or reference_active)
         )

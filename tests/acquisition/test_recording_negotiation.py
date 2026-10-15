@@ -6,6 +6,8 @@ import threading
 from collections import deque
 from typing import cast
 
+import pytest
+
 from cephvr.acquisition.recording.encoder_process import WindowsEncoderProcess
 from cephvr.acquisition.recording.negotiation import (
     NegotiatedVideo,
@@ -99,10 +101,41 @@ class _DeferredPipe:
         return value
 
 
-def test_reader_drains_terminal_stream_data_after_idle_timeout() -> None:
+@pytest.mark.parametrize(
+    ("separator", "oversized"),
+    [
+        (None, False),
+        (b"\r", False),
+        (b"\n", False),
+        (b"\r\n", False),
+        ("mixed", False),
+        (b"", True),
+        (b"\n", True),
+    ],
+)
+def test_reader_drains_terminal_stream_data_after_idle_timeout(
+    separator, oversized
+) -> None:
     """A late final stream line is parsed before EOF/cleanup is accepted."""
     process = object.__new__(WindowsEncoderProcess)
-    process.stderr_pipe = cast(OverlappedPipe, _DeferredPipe())
+    pipe = _DeferredPipe()
+    if separator is not None:
+        pipe.chunks.pop()
+        pipe.chunks.append(b"\n")
+        if oversized:
+            pipe.chunks.append(b"x" * (16 * 1024 + 1) + separator)
+        else:
+            for index in range(200):
+                stats = f"frame={index:6d} fps=60 q=18.0 size=123456kB time=00:01:10.00 bitrate=10000kbits/s speed=1.0x".encode()
+                ending = (
+                    (b"\r", b"\n", b"\r\n")[index % 3]
+                    if separator == "mixed"
+                    else separator
+                )
+                # Include delimiter boundaries split across reads.
+                pipe.chunks.extend([stats + ending[:1], ending[1:]])
+        pipe.chunks.append(None)
+    process.stderr_pipe = cast(OverlappedPipe, pipe)
     process._reader_drain_deadline_ns = 100
     process.clock_ns = lambda: 50
     process._stderr_partial = bytearray()
@@ -132,7 +165,14 @@ def test_reader_drains_terminal_stream_data_after_idle_timeout() -> None:
     process._read_stderr()
 
     assert process._negotiation.complete
+    if oversized:
+        assert "diagnostic line exceeded 16 KiB" in str(process._reader_error)
+        return
     assert process._reader_error is None
+    assert process._stderr_bytes <= process.tail_max_bytes
+    assert len(process.diagnostic_tail) <= process.tail_max_lines
+    if separator is not None:
+        assert process.diagnostic_tail[-1].startswith("frame=   199")
     process._read_progress()
     assert process.progress_frame == 17
 

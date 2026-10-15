@@ -300,6 +300,13 @@ class TrialTermination:
             self.session_slot.interrupted = True
             if session.trial is not None:
                 session.trial.interrupted = True
+                for task in (
+                    session.trial.pulse_on_task,
+                    session.trial.pulse_off_task,
+                    session.trial.normal_end_task,
+                ):
+                    if task is not None and task is not asyncio.current_task():
+                        task.cancel()
         selected = _external_roles(session)
         serial_task = asyncio.create_task(
             self._force_outputs_off(
@@ -375,7 +382,14 @@ class TrialTermination:
             command=command,
             boundary_ns=boundary_ns,
         )
-        if trial.interrupted and trial.stop is None and not session.setup_cancelled:
+        if (
+            self.session_slot.current is session
+            and session.trial is trial
+            and not session.interrupted
+            and trial.interrupted
+            and trial.stop is None
+            and not session.setup_cancelled
+        ):
             stop_deadline = boundary_ns + self.control_pulse_failure_allowance(command)
             command_id = str(uuid4())
             await self.stop(

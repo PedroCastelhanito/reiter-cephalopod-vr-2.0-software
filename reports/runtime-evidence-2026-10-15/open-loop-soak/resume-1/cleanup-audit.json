@@ -1,0 +1,50 @@
+{
+  "observed_utc": "2026-10-15T03:11:18.945478+00:00",
+  "source_revision": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "scope": "Read-only cleanup audit and safe deletion-plan revision; no media hashing, deletion, device access or benchmark.",
+  "method": {
+    "command": "& .tmp/cleanup-passed-synthetic-media.ps1 -AuditOnly",
+    "guards": [
+      "Exact 31 warmup/repetition/case/CQ labels and case exit0",
+      "All51 source results require successful ffprobe, full decode, empty error fields and exact external frame count",
+      "Exactly one lavfi testsrc2 input per saved command, frame limit and exact case/source output path",
+      "Exact51 recorded-path allowlist equals current recursive MP4 set; all saved sizes match",
+      "Reject reparse points in source descendants and source/retained parent chains",
+      "Compare every342 local metadata file SHA256 with retained dated counterpart before any media hash",
+      "Deletion path uses explicit allowlist only and records per-file hashes/removal receipts when root later executes it"
+    ]
+  },
+  "results": {
+    "audit_only_passed": true,
+    "cases": 31,
+    "source_results": 51,
+    "metadata_files": 342,
+    "media_files": 51,
+    "media_bytes": 14499890925,
+    "metadata_mismatches": [],
+    "media_missing_extra_or_size_mismatch": [],
+    "media_hashed": false,
+    "deleted": false
+  },
+  "metadata_hash_proof": {
+    "algorithm": "SHA256 of ASCII compact JSON array of [relative POSIX path, byte count, lowercase SHA256] for all342 metadata files sorted by Windows Path ordering, separators comma/colon, ensure_ascii true",
+    "source_root": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current",
+    "retained_root": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\projector-free-rig\\encoding",
+    "source_tree_sha256": "a542b5c2713ceb18f9f2048fb55a6f947461518e056ca494e878123ea31deecd",
+    "retained_tree_sha256": "a542b5c2713ceb18f9f2048fb55a6f947461518e056ca494e878123ea31deecd",
+    "matrix_summary_sha256": "6f88e8ecba7a4cd4d710f05f8526673139c4016d3081eb40384939c6b51cab4c",
+    "cleanup_script_sha256": "4f83a47b128c7161fa4433fbfae62efe25ea6a241fe62057a6f23d68048872cf"
+  },
+  "assets": {
+    "manifest": "reports\\runtime-evidence-2026-10-15\\open-loop-soak\\asset-manifest.json",
+    "manifest_sha256": "13fd0bbfa7b51808b4d29dd1585311c6b0dcaa30a97841b2d5e8be17e5301a2a",
+    "entries": 20,
+    "source_destination_sha256_and_size_comparisons": 40,
+    "mismatches": [],
+    "file_validation": "Prior read-only audit in this turn verified8 RGB1024x1024 PNGs with Pillow verify,11 JSON sidecars with json.loads, and GLB2 header/length+JSON chunk, one mesh/embedded image/no external URIs; rendering acceptance remains rig-owned."
+  },
+  "limits": [
+    "Existing51 MP4s were checked against recorded output paths and byte counts only; no fresh full decode or media hash was run during current recordings.",
+    "Execute deletion only after final recording, as authorized by root; this audit did not execute that path."
+  ]
+}

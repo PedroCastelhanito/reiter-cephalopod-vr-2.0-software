@@ -1,0 +1,9 @@
+acquisition_tracking_worker RecordPulseEvidence 62c8a35f-d4bf-462f-816c-d10e27a2d617 failed: ValueError: terminal pulse evidence changed after retention
+acquisition_behavioral_worker RecordPulseEvidence 5d746fdc-e5ad-4a0c-9b73-a648bc231a68 failed: ValueError: terminal pulse evidence changed after retention
+PrepareTrial 869cf2a8-3f99-4ba1-8791-17f75edc3c23 failed: TRIAL_PREPARATION_FAILED: one or more camera workers rejected trial preparation
+acquisition_behavioral_worker RecordPulseEvidence bfe4e2f7-0d33-427c-aae8-b01b8cfa7180 failed: RuntimeError: worker session is not prepared
+acquisition_tracking_worker RecordPulseEvidence bc92bdf5-58ab-4919-83f4-0edae101f729 failed: RuntimeError: worker session is not prepared
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: heartbeat rejected: INVALID_HEARTBEAT: worker heartbeat carries stale acquisition work
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

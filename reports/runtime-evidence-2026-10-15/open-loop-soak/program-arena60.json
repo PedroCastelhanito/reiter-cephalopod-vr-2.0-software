@@ -1,0 +1,113 @@
+{
+  "format_version": 2,
+  "assets": [
+    {
+      "asset_id": "circular",
+      "logical_path": "media/arenas/open-loop-engineering/arena-unlit-engineering.glb",
+      "color_override": null,
+      "profile": "glb2_static_unlit_v1"
+    }
+  ],
+  "instances": [
+    {
+      "instance_id": "arena",
+      "family": "arena"
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "arena",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": "arena",
+      "layer_instance_ids": []
+    }
+  ],
+  "input_channels": [],
+  "duration": {
+    "kind": "explicit_epochs"
+  },
+  "sequence": [
+    {
+      "kind": "epoch",
+      "epoch_id": "arena_rotation",
+      "batch_label": "",
+      "batch_id": null,
+      "subgroup_draft": null,
+      "scene_id": "arena",
+      "duration": {
+        "kind": "fixed",
+        "duration": {
+          "seconds": "60"
+        }
+      },
+      "settings": [
+        {
+          "kind": "arena",
+          "instance_id": "arena",
+          "asset_id": "circular",
+          "world_frame_id": "arena-mm",
+          "asset_to_world": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "initial": {
+            "position_mm": [
+              0.0,
+              0.0
+            ],
+            "yaw_deg": 0.0
+          },
+          "fixed_height_mm": 0.0,
+          "fixed_pitch_deg": 0.0,
+          "fixed_roll_deg": 0.0,
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "yaw": {
+              "kind": "rate",
+              "function": {
+                "kind": "constant",
+                "value": 12.0
+              }
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": []
+        }
+      ],
+      "repetition_rules": [],
+      "repetition_settings": []
+    }
+  ]
+}

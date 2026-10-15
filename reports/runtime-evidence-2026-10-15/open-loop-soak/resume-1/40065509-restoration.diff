@@ -1,0 +1,28 @@
+--- fresh-baseline
+
++++ restored-readback
+
+@@ -141,18 +141,19 @@
+
+ LineMode	{LineSelector=Line2}	Output
+ LineMode	{LineSelector=Line3}	Input
+ LineMode	{LineSelector=Line4}	Input
+-LineSelector	Line1
++LineSelector	Line2
+ LineSource	{LineSelector=Line2}	UserOutput1
++LineSelector	Line2
+ LineInverter	{LineSelector=Line1}	0
+ LineInverter	{LineSelector=Line2}	0
+ LineInverter	{LineSelector=Line3}	0
+ LineInverter	{LineSelector=Line4}	0
+-LineSelector	Line1
++LineSelector	Line2
+ LineDebouncerTime	{LineSelector=Line1}	0.00000
+ LineDebouncerTime	{LineSelector=Line3}	0.00000
+ LineDebouncerTime	{LineSelector=Line4}	0.00000
+-LineSelector	Line1
+ LineMinimumOutputPulseWidth	{LineSelector=Line2}	0.000
++LineSelector	Line2
+ UserOutputValueAll	0x0
+ BslLightControlMode	Off
+ TimerDuration	{TimerSelector=Timer1}	10.0

@@ -342,6 +342,8 @@ class WorkerCaptureResources:
         self._window = None
 
     def next_deadline_ns(self) -> int | None:
+        if self._active and self._admission_stop_ns is not None:
+            return self._stop_deadline_ns
         if self._scheduled_start_ns is not None and not self._active:
             return self._scheduled_start_ns
         if (
@@ -378,6 +380,26 @@ class WorkerCaptureResources:
             return False
         return capture.capture_once(handoff)
 
+    def seal_admission(self, deadline_ns: int) -> int:
+        """Seal the first cutoff while the owner remains available for OFF evidence."""
+        if self._admission_stop_ns is None:
+            self._admission_stop_ns = host_time_ns()
+        admission_stop_ns = self._admission_stop_ns
+        if self._stop_deadline_ns is None:
+            self._stop_deadline_ns = deadline_ns
+        else:
+            deadline_ns = min(deadline_ns, self._stop_deadline_ns)
+            self._stop_deadline_ns = deadline_ns
+        window = self._window
+        if window is not None:
+            self.set_window(
+                CaptureWindow(window.start_ns, min(window.end_ns, admission_stop_ns))
+            )
+        self._cutoff_reached = True
+        for ring in self._rings.values():
+            ring.seal()
+        return deadline_ns
+
     def stop(
         self,
         deadline_ns: int,
@@ -388,21 +410,9 @@ class WorkerCaptureResources:
     ) -> object:
         if drain_margin_ns < 0:
             raise ValueError("post-cutoff drain margin cannot be negative")
-        if self._admission_stop_ns is None:
-            self._admission_stop_ns = host_time_ns()
+        deadline_ns = self.seal_admission(deadline_ns)
         admission_stop_ns = self._admission_stop_ns
-        if self._stop_deadline_ns is None:
-            self._stop_deadline_ns = deadline_ns
-        else:
-            deadline_ns = min(deadline_ns, self._stop_deadline_ns)
-        window = self._window
-        if window is not None:
-            self.set_window(
-                CaptureWindow(window.start_ns, min(window.end_ns, admission_stop_ns))
-            )
-        self._cutoff_reached = True
-        for ring in self._rings.values():
-            ring.seal()
+        assert admission_stop_ns is not None
         timing = self._timing
         generation_stopped = False
         if self._active:
@@ -510,7 +520,11 @@ class WorkerCaptureResources:
     def _wait_timeout(self) -> int:
         timeout = self._frame_timeout_ns
         capture = self.capture
-        if capture is not None and self._drain_until_ns is None:
+        if (
+            capture is not None
+            and self._drain_until_ns is None
+            and self._admission_stop_ns is None
+        ):
             window = self._window
             baseline = capture.last_usable_ns
             if window is not None:

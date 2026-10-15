@@ -1,0 +1,935 @@
+diff --git a/scripts/start_runtime_gui.py b/scripts/start_runtime_gui.py
+index d472a11..d1e4a98 100644
+--- a/scripts/start_runtime_gui.py
++++ b/scripts/start_runtime_gui.py
+@@ -15,7 +15,14 @@ def main(argv: list[str] | None = None) -> int:
+         action="store_true",
+         help="open a fresh GUI in the running application generation",
+     )
++    parser.add_argument(
++        "--no-tracking",
++        action="store_true",
++        help="omit Tracking for this launch; enabling it requires a full restart",
++    )
+     args = parser.parse_args(argv)
++    if args.reopen_gui and args.no_tracking:
++        parser.error("--no-tracking requires a fresh application launch")
+     root = Path(__file__).resolve().parents[1]
+     sys.path.insert(0, str(root / "src"))
+     from cephvr.launcher.entrypoint import launcher_command
+@@ -31,7 +38,9 @@ def main(argv: list[str] | None = None) -> int:
+             file=sys.stderr,
+         )
+         return 1
+-    command = launcher_command(root, python, reopen_gui=args.reopen_gui)
++    command = launcher_command(
++        root, python, reopen_gui=args.reopen_gui, no_tracking=args.no_tracking
++    )
+     try:
+         return subprocess.call(command, cwd=root)
+     except KeyboardInterrupt:
+diff --git a/src/cephvr/acquisition/coordinator/manual_preview_pulse.py b/src/cephvr/acquisition/coordinator/manual_preview_pulse.py
+index 7765952..630fd7a 100644
+--- a/src/cephvr/acquisition/coordinator/manual_preview_pulse.py
++++ b/src/cephvr/acquisition/coordinator/manual_preview_pulse.py
+@@ -233,7 +233,10 @@ class ManualPreviewPulseLifecycle:
+         )
+         tracking_attachment = None
+         tracking_worker_attachment = None
+-        if paused.role == camera.CAMERA_ROLE_TRACKING:
++        if (
++            paused.role == camera.CAMERA_ROLE_TRACKING
++            and self.identity.tracking.generation
++        ):
+             capacity = self.configuration.settings.tracking_ring_frames
+             if capacity <= 0:
+                 raise ValueError("tracking ring capacity must be positive")
+diff --git a/src/cephvr/acquisition/coordinator/manual_preview_start.py b/src/cephvr/acquisition/coordinator/manual_preview_start.py
+index b971d1b..2f8290c 100644
+--- a/src/cephvr/acquisition/coordinator/manual_preview_start.py
++++ b/src/cephvr/acquisition/coordinator/manual_preview_start.py
+@@ -288,7 +288,10 @@ class ManualPreviewStart:
+         )
+         tracking_attachment = None
+         tracking_worker_attachment = None
+-        if request.camera == camera.CAMERA_ROLE_TRACKING:
++        if (
++            request.camera == camera.CAMERA_ROLE_TRACKING
++            and self.identity.tracking.generation
++        ):
+             capacity = self.configuration.settings.tracking_ring_frames
+             if capacity <= 0:
+                 raise ValueError("tracking ring capacity must be positive")
+diff --git a/src/cephvr/acquisition/coordinator/session_resources.py b/src/cephvr/acquisition/coordinator/session_resources.py
+index e04d47d..b5156cc 100644
+--- a/src/cephvr/acquisition/coordinator/session_resources.py
++++ b/src/cephvr/acquisition/coordinator/session_resources.py
+@@ -32,6 +32,10 @@ async def allocate_camera_outputs(
+     declare_resource: Callable[[control.ProcessIdentity, str], Awaitable[None]],
+ ) -> tuple[tuple[acq.FrameBufferAttachment, ...], acq.FrameBufferAttachment | None]:
+     """Create only this camera's locked-session tracking/preview rings."""
++    if tracking_required and (
++        tracking_consumer.role != "tracking" or not tracking_consumer.generation
++    ):
++        raise ValueError("enabled tracking backend has no launched Tracking identity")
+     layout = _layout(resolved)
+     if not settings.HasField("session_preview_max_hz"):
+         raise ValueError("session preview rate cap is unresolved")
+diff --git a/src/cephvr/acquisition/coordinator/session_validation.py b/src/cephvr/acquisition/coordinator/session_validation.py
+index 0e9c3e5..ec70a07 100644
+--- a/src/cephvr/acquisition/coordinator/session_validation.py
++++ b/src/cephvr/acquisition/coordinator/session_validation.py
+@@ -51,6 +51,10 @@ def validate_setup_request(
+     if not active:
+         raise ValueError("acquisition Setup requires at least one enabled camera")
+     tracking_required = tracking_backend_enabled(request.plan)
++    if tracking_required and (
++        identity.tracking.role != "tracking" or not identity.tracking.generation
++    ):
++        raise ValueError("enabled tracking backend has no launched Tracking identity")
+     if tracking_required and camera.CAMERA_ROLE_TRACKING not in active:
+         raise ValueError("enabled tracking backend requires the tracking camera")
+     reserved_outputs = _acquisition_outputs(request, identity)
+diff --git a/src/cephvr/controller/authority.py b/src/cephvr/controller/authority.py
+index b43b865..7f0af1e 100644
+--- a/src/cephvr/controller/authority.py
++++ b/src/cephvr/controller/authority.py
+@@ -24,6 +24,7 @@ from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
+ from cephvr.shared.clock import host_time_ns
+ from cephvr.shared.deadlines import remaining_seconds
+ from cephvr.shared.identity import require_uuid4
++from cephvr.shared.managed_modules import managed_modules
+ 
+ 
+ @dataclass(frozen=True)
+@@ -47,16 +48,21 @@ class ManagedJob:
+     job_name: str
+ 
+ 
+-def managed_jobs_from_bootstrap(value: object) -> tuple[ManagedJob, ...]:
+-    if not isinstance(value, list) or len(value) != 4:
+-        raise ValueError("bootstrap must identify four exact top-level inner jobs")
++def managed_jobs_from_bootstrap(
++    value: object, *, no_tracking: bool = False
++) -> tuple[ManagedJob, ...]:
++    roles = set(managed_modules(no_tracking=no_tracking))
++    if not isinstance(value, list) or len(value) != len(roles):
++        raise ValueError(
++            "bootstrap must identify the declared exact top-level inner jobs"
++        )
+     jobs = []
+     for item in value:
+         if (
+             not isinstance(item, dict)
+             or set(item) != {"role", "generation", "job_name"}
+             or any(not isinstance(v, str) for v in item.values())
+-            or item["role"] not in BACKEND_NAMES | {"gui"}
++            or item["role"] not in roles
+         ):
+             raise ValueError("managed job descriptor is invalid")
+         require_uuid4(item["generation"])
+@@ -65,7 +71,9 @@ def managed_jobs_from_bootstrap(value: object) -> tuple[ManagedJob, ...]:
+             raise ValueError("managed job is not a registered CephVR inner job")
+         require_uuid4(item["job_name"][len(prefix) :])
+         jobs.append(ManagedJob(**item))
+-    if len({job.role for job in jobs}) != 4 or len({job.job_name for job in jobs}) != 4:
++    if {job.role for job in jobs} != roles or len(
++        {job.job_name for job in jobs}
++    ) != len(roles):
+         raise ValueError("managed job descriptors repeat a role or native job")
+     return tuple(jobs)
+ 
+diff --git a/src/cephvr/controller/startup/application.py b/src/cephvr/controller/startup/application.py
+index 9db0941..b8b2c39 100644
+--- a/src/cephvr/controller/startup/application.py
++++ b/src/cephvr/controller/startup/application.py
+@@ -31,7 +31,6 @@ from cephvr.controller.microcontroller.bootstrap import create_microcontroller
+ from cephvr.controller.planning import (
+     plan_outputs,
+ )
+-from cephvr.controller.ports import BACKEND_NAMES
+ from cephvr.controller.recovery import StartupRecovery
+ from cephvr.controller.runtime import ControllerRuntime
+ from cephvr.controller.service import (
+@@ -57,6 +56,7 @@ from cephvr.shared.auth import Principal
+ from cephvr.shared.clock import describe_host_clock
+ from cephvr.shared.credentials import CredentialStore, default_runtime_root
+ from cephvr.shared.identity import require_uuid4
++from cephvr.shared.managed_modules import no_tracking_from_bootstrap
+ from cephvr.shared.recovery import RecoveryStore, UnfinishedSessionPointer
+ 
+ 
+@@ -98,15 +98,15 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
+         raise ValueError("bootstrap ports disagree with the versioned configuration")
+     principal = Principal("controller", controller_generation, controller_token)
+     descriptors = _backend_descriptors(bootstrap)
+-    managed_jobs = managed_jobs_from_bootstrap(bootstrap.get("managed_jobs"))
++    managed_jobs = managed_jobs_from_bootstrap(
++        bootstrap.get("managed_jobs"), no_tracking=no_tracking_from_bootstrap(bootstrap)
++    )
+     managed_generations = {job.role: job.generation for job in managed_jobs}
+     if any(
+         managed_generations.get(entry.backend_name) != entry.backend_generation
+         for entry in descriptors
+     ):
+         raise ValueError("backend credentials and managed job generations disagree")
+-    if {entry.backend_name for entry in descriptors} != BACKEND_NAMES:
+-        raise ValueError("bootstrap omits a required top-level backend identity")
+     launcher_handle = cast(
+         int, _bootstrap_value(bootstrap, "launcher_control_handle", int)
+     )
+diff --git a/src/cephvr/controller/startup/bootstrap.py b/src/cephvr/controller/startup/bootstrap.py
+index 4613273..c51263b 100644
+--- a/src/cephvr/controller/startup/bootstrap.py
++++ b/src/cephvr/controller/startup/bootstrap.py
+@@ -5,6 +5,7 @@ from __future__ import annotations
+ from collections.abc import Mapping
+ 
+ from cephvr.controller.backend import BackendRegistration
++from cephvr.shared.managed_modules import managed_modules, no_tracking_from_bootstrap
+ 
+ 
+ def _bootstrap_value(bootstrap: Mapping[str, object], key: str, kind: type) -> object:
+@@ -44,4 +45,11 @@ def _backend_descriptors(bootstrap: Mapping[str, object]) -> list[BackendRegistr
+             raise ValueError("duplicate backend bootstrap role")
+         seen.add(registration.backend_name)
+         result.append(registration)
++    expected = set(
++        managed_modules(no_tracking=no_tracking_from_bootstrap(bootstrap))
++    ) - {"gui"}
++    if seen != expected:
++        raise ValueError(
++            "bootstrap backend registry differs from declared launch roles"
++        )
+     return result
+diff --git a/src/cephvr/launcher/entrypoint.py b/src/cephvr/launcher/entrypoint.py
+index 336b5c1..c724cc5 100644
+--- a/src/cephvr/launcher/entrypoint.py
++++ b/src/cephvr/launcher/entrypoint.py
+@@ -3,7 +3,11 @@
+ from pathlib import Path
+ 
+ 
+-def launcher_command(root: Path, python: Path, *, reopen_gui: bool) -> list[str]:
++def launcher_command(
++    root: Path, python: Path, *, reopen_gui: bool, no_tracking: bool = False
++) -> list[str]:
++    if reopen_gui and no_tracking:
++        raise ValueError("--no-tracking requires a fresh application launch")
+     command = [str(python), "-m", "cephvr.launcher.main"]
+     if reopen_gui:
+         return [*command, "--reopen-gui"]
+@@ -15,4 +19,5 @@ def launcher_command(root: Path, python: Path, *, reopen_gui: bool) -> list[str]
+         str(root / "config" / "backends" / "supervisor_config.toml"),
+         "--python",
+         str(python),
++        *(["--no-tracking"] if no_tracking else []),
+     ]
+diff --git a/src/cephvr/launcher/main.py b/src/cephvr/launcher/main.py
+index 4558c02..d471824 100644
+--- a/src/cephvr/launcher/main.py
++++ b/src/cephvr/launcher/main.py
+@@ -48,7 +48,7 @@ from cephvr.platform.windows.python_runtime import (
+ )
+ from cephvr.shared.clock import host_time_ns
+ from cephvr.shared.credentials import default_runtime_root
+-from cephvr.shared.managed_modules import missing_roles
++from cephvr.shared.managed_modules import managed_modules, missing_roles
+ from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
+ 
+ 
+@@ -81,11 +81,15 @@ def _retain_until_empty(
+ 
+ 
+ def run_launcher(
+-    *, software_root: Path, supervisor_config: Path, interpreter: Path
++    *,
++    software_root: Path,
++    supervisor_config: Path,
++    interpreter: Path,
++    no_tracking: bool = False,
+ ) -> None:
+     if sys.platform != "win32":
+         raise WindowsLaunchError("CephVR managed launch requires Windows")
+-    missing = missing_roles()
++    missing = missing_roles(no_tracking=no_tracking)
+     if missing:
+         raise WindowsLaunchError(
+             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
+@@ -101,7 +105,8 @@ def run_launcher(
+     policy_root = supervisor_config.parents[2] / "contracts" / "policy"
+     backend_ports = {
+         role: read_backend_port(supervisor_config.parent, policy_root, role)
+-        for role in ("acquisition", "visual_stimulus", "tracking")
++        for role in managed_modules(no_tracking=no_tracking)
++        if role != "gui"
+     }
+     require_distinct_ports(
+         (
+@@ -178,6 +183,7 @@ def run_launcher(
+                 "supervisor_port": port,
+                 "controller_port": resolved.controller_port,
+                 "backend_ports": backend_ports,
++                "no_tracking": no_tracking,
+                 "max_message_bytes": resolved.max_message_bytes,
+                 "max_retained_incidents": resolved.max_retained_incidents,
+                 "command_retention_ns": resolved.policies.command_retention_after_finalization_ns,
+@@ -439,7 +445,14 @@ def main() -> None:
+         action="store_true",
+         help="open a fresh GUI in the running application generation",
+     )
++    parser.add_argument(
++        "--no-tracking",
++        action="store_true",
++        help="omit the Tracking process for this launch; enabling it requires a full restart",
++    )
+     args = parser.parse_args()
++    if args.reopen_gui and args.no_tracking:
++        parser.error("--no-tracking requires a fresh application launch")
+     if args.reopen_gui:
+         if sys.platform != "win32":
+             parser.error("managed GUI relaunch requires Windows")
+@@ -456,6 +469,7 @@ def main() -> None:
+             software_root=args.software_root.resolve(),
+             supervisor_config=supervisor_config.resolve(),
+             interpreter=args.python.resolve(),
++            no_tracking=args.no_tracking,
+         )
+     except ReplacementDeclined as exc:
+         print(exc)
+diff --git a/src/cephvr/shared/backend_bootstrap.py b/src/cephvr/shared/backend_bootstrap.py
+index 56aeffe..290dee2 100644
+--- a/src/cephvr/shared/backend_bootstrap.py
++++ b/src/cephvr/shared/backend_bootstrap.py
+@@ -10,6 +10,7 @@ from pathlib import Path
+ 
+ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.shared.identity import require_uuid4
++from cephvr.shared.managed_modules import no_tracking_from_bootstrap
+ 
+ 
+ @dataclass(frozen=True)
+@@ -48,9 +49,14 @@ def decode_backend_bootstrap(
+     generation = require_uuid4(_string(document, "generation"))
+     controller_generation = require_uuid4(_string(document, "controller_generation"))
+     supervisor_generation = require_uuid4(_string(document, "supervisor_generation"))
++    no_tracking = no_tracking_from_bootstrap(document)
++    if no_tracking and (
++        expected_role == "tracking" or "tracking_generation" in document
++    ):
++        raise ValueError("Tracking identity contradicts no_tracking launch declaration")
+     tracking_generation = (
+         require_uuid4(_string(document, "tracking_generation"))
+-        if expected_role == "acquisition"
++        if expected_role == "acquisition" and not no_tracking
+         else ""
+     )
+     if role != expected_role:
+@@ -83,8 +89,10 @@ def decode_backend_bootstrap(
+         supervisor=control.ProcessIdentity(
+             role="supervisor", generation=supervisor_generation
+         ),
+-        tracking=control.ProcessIdentity(
+-            role="tracking", generation=tracking_generation
++        tracking=(
++            control.ProcessIdentity(role="tracking", generation=tracking_generation)
++            if tracking_generation
++            else control.ProcessIdentity()
+         ),
+         token=_string(document, "token"),
+         controller_token=_string(document, "controller_token"),
+diff --git a/src/cephvr/shared/managed_modules.py b/src/cephvr/shared/managed_modules.py
+index 712004d..f39223c 100644
+--- a/src/cephvr/shared/managed_modules.py
++++ b/src/cephvr/shared/managed_modules.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import importlib.util
++from collections.abc import Mapping
+ 
+ REQUIRED_MODULES = {
+     "acquisition": "cephvr.acquisition.main",
+@@ -12,10 +13,27 @@ REQUIRED_MODULES = {
+ }
+ 
+ 
+-def missing_roles() -> list[str]:
++def no_tracking_from_bootstrap(document: Mapping[str, object]) -> bool:
++    """Only an explicit protected boolean permits omitting the Tracking process."""
++    value = document.get("no_tracking", False)
++    if type(value) is not bool:
++        raise ValueError("bootstrap no_tracking must be a boolean")
++    return value
++
++
++def managed_modules(*, no_tracking: bool = False) -> dict[str, str]:
++    """The two supported process sets; camera roles are independent of these roles."""
++    return {
++        role: module
++        for role, module in REQUIRED_MODULES.items()
++        if not (no_tracking and role == "tracking")
++    }
++
++
++def missing_roles(*, no_tracking: bool = False) -> list[str]:
+     """Roles whose entry-point module cannot be found; callers raise their own error."""
+     missing = []
+-    for role, module in REQUIRED_MODULES.items():
++    for role, module in managed_modules(no_tracking=no_tracking).items():
+         try:
+             present = importlib.util.find_spec(module) is not None
+         except ModuleNotFoundError:
+diff --git a/src/cephvr/supervisor/startup.py b/src/cephvr/supervisor/startup.py
+index 19d5dd3..5913595 100644
+--- a/src/cephvr/supervisor/startup.py
++++ b/src/cephvr/supervisor/startup.py
+@@ -28,7 +28,11 @@ from cephvr.platform.windows.python_runtime import (
+     resolve_python_executable,
+ )
+ from cephvr.shared.clock import HostClockDescriptor
+-from cephvr.shared.managed_modules import REQUIRED_MODULES, missing_roles
++from cephvr.shared.managed_modules import (
++    managed_modules,
++    missing_roles,
++    no_tracking_from_bootstrap,
++)
+ from cephvr.shared.transport_deadlines import remaining_seconds
+ from cephvr.supervisor.outbound import GrpcOutbound
+ from cephvr.supervisor.registry import LaunchRegistry
+@@ -99,6 +103,7 @@ async def launch_controller(
+         "supervisor_port": int(str(inputs.bootstrap["supervisor_port"])),
+         "controller_port": int(str(inputs.bootstrap["controller_port"])),
+         "max_message_bytes": inputs.max_message_bytes,
++        "no_tracking": no_tracking_from_bootstrap(inputs.bootstrap),
+         "backends": [
+             {
+                 "backend_name": role,
+@@ -107,7 +112,8 @@ async def launch_controller(
+                 "token": inputs.role_bootstrap[role][1],
+                 "launch_confirmed": False,
+             }
+-            for role in ("acquisition", "visual_stimulus", "tracking")
++            for role in inputs.role_bootstrap
++            if role != "gui"
+         ],
+         "launch_command_id": plan.command_id,
+         "pid": child.pid,
+@@ -123,7 +129,7 @@ async def launch_controller(
+                 "generation": inputs.role_bootstrap[role][0],
+                 "job_name": inputs.role_states[role].containment_job_name,
+             }
+-            for role in ("acquisition", "visual_stimulus", "tracking", "gui")
++            for role in inputs.role_bootstrap
+         ],
+     }
+     await run_pipe_io_daemon(
+@@ -191,6 +197,7 @@ async def _launch_role_plan(
+         "supervisor_port": int(str(inputs.bootstrap["supervisor_port"])),
+         "endpoint_port": inputs.outbound.backend_ports.get(role),
+         "max_message_bytes": inputs.max_message_bytes,
++        "no_tracking": no_tracking_from_bootstrap(inputs.bootstrap),
+         "heartbeat_interval_ns": int(str(inputs.bootstrap["heartbeat_interval_ns"])),
+         "health_silence_ns": int(str(inputs.bootstrap["silence_timeout_ns"])),
+         "launch_command_id": role_plan.command_id,
+@@ -219,7 +226,10 @@ async def _launch_role_plan(
+         # Tracking's exact process generation is created and owned by this
+         # supervisor launch plan. Acquisition needs only this identity to set the
+         # TRACKING ring consumer; no token or second lookup authority is needed.
+-        role_descriptor["tracking_generation"] = inputs.role_bootstrap["tracking"][0]
++        if "tracking" in inputs.role_bootstrap:
++            role_descriptor["tracking_generation"] = inputs.role_bootstrap["tracking"][
++                0
++            ]
+     await run_pipe_io_daemon(
+         lambda: write_bootstrap(role_write, role_descriptor),
+         timeout_s=timeout(),
+@@ -286,7 +296,8 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
+         or not bootstrap["control_policies"]
+     ):
+         raise WindowsLaunchError("resolved control policies are missing")
+-    missing = missing_roles()
++    no_tracking = no_tracking_from_bootstrap(bootstrap)
++    missing = missing_roles(no_tracking=no_tracking)
+     if missing:
+         raise WindowsLaunchError(
+             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
+@@ -294,7 +305,13 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
+     bootstrap["interpreter"] = str(
+         resolve_python_executable(Path(str(bootstrap["interpreter"])))
+     )
+-    return REQUIRED_MODULES
++    modules = managed_modules(no_tracking=no_tracking)
++    raw_ports = bootstrap["backend_ports"]
++    if not isinstance(raw_ports, dict) or set(raw_ports) != set(modules) - {"gui"}:
++        raise WindowsLaunchError(
++            "backend port registry differs from declared launch roles"
++        )
++    return modules
+ 
+ 
+ async def run_supervisor(
+@@ -313,10 +330,8 @@ async def run_supervisor(
+     )
+     native = WindowsJobs()
+     raw_ports = bootstrap["backend_ports"]
+-    if not isinstance(raw_ports, dict) or set(raw_ports) != {
+-        "acquisition",
+-        "visual_stimulus",
+-        "tracking",
++    if not isinstance(raw_ports, dict) or set(raw_ports) != set(required_modules) - {
++        "gui"
+     }:
+         raise WindowsLaunchError("backend port registry is invalid")
+     backend_ports = {key: int(str(value)) for key, value in raw_ports.items()}
+diff --git a/tests/acquisition/test_coordinator.py b/tests/acquisition/test_coordinator.py
+index b88ca31..bd8b865 100644
+--- a/tests/acquisition/test_coordinator.py
++++ b/tests/acquisition/test_coordinator.py
+@@ -1368,3 +1368,23 @@ async def test_retained_late_ready_is_skipped_but_prepare_terminal_is_retained()
+     assert repeated
+     assert owner.child.report is not None
+     assert owner.resolution._pending is not None
++
++
++@pytest.mark.parametrize("declaration", [False, True])
++@pytest.mark.parametrize("has_identity", [False, True])
++def test_tracking_bootstrap_omission_requires_explicit_declaration(
++    declaration, has_identity
++):
++    document = _document()
++    document["no_tracking"] = declaration
++    if not has_identity:
++        del document["tracking_generation"]
++    if declaration == has_identity:
++        with pytest.raises(ValueError):
++            decode_acquisition_bootstrap(document)
++    else:
++        decoded = decode_acquisition_bootstrap(document)
++        if declaration:
++            assert decoded.tracking == control.ProcessIdentity()
++        else:
++            assert decoded.tracking.generation == document["tracking_generation"]
+diff --git a/tests/acquisition/test_manual_preview.py b/tests/acquisition/test_manual_preview.py
+index 18435ab..a0e6fb8 100644
+--- a/tests/acquisition/test_manual_preview.py
++++ b/tests/acquisition/test_manual_preview.py
+@@ -2534,3 +2534,90 @@ async def test_pulse_pause_retains_stopping_preview_until_tracking_release(
+         await task
+     assert worker.preview is preview and preview.stopping
+     assert tracking_id in resources
++
++
++@pytest.mark.parametrize("restart", [False, True])
++@pytest.mark.parametrize("tracking_present", [False, True])
++async def test_tracking_camera_preview_allocates_consumer_ring_only_for_launched_tracking(
++    monkeypatch, restart, tracking_present
++):
++    module = pulse_module if restart else start_module
++    role = camera.CAMERA_ROLE_TRACKING
++    attachment = acq.FrameBufferAttachment()
++    attachment.buffer.camera = role
++    attachment.buffer.kind = acq.FRAME_BUFFER_KIND_PREVIEW
++    attachment.buffer.allocation_id = "preview-ring"
++    preview_slot = AsyncMock(return_value=(attachment, object()))
++    tracking_slot = AsyncMock(
++        return_value=(acq.FrameBufferAttachment(), acq.FrameBufferAttachment())
++    )
++    monkeypatch.setattr(module, "allocate_manual_preview_slot", preview_slot)
++    monkeypatch.setattr(module, "allocate_manual_tracking_slot", tracking_slot)
++    port = SimpleNamespace(
++        prepare_preview=AsyncMock(
++            return_value=control.CommandAdmission(
++                result=control.COMMAND_RESULT_REJECTED
++            )
++        )
++    )
++    monkeypatch.setattr(
++        module,
++        "retain_worker_command",
++        lambda *args, **kwargs: (
++            acq.WorkerCommand(),
++            SimpleNamespace(command_id="child"),
++            port,
++        ),
++    )
++    settings = control.AcquisitionSettings(tracking_ring_frames=3)
++    settings.tracking.sdk_buffer_count = 4
++    policies = runtime.AcquisitionFilePolicies()
++    policy = policies.cameras.add(camera=role, frame_silence_timeout_ns=100)
++    worker = SimpleNamespace(preview=None)
++    owner = SimpleNamespace(
++        identity=SimpleNamespace(
++            controller=control.ProcessIdentity(role="controller"),
++            tracking=control.ProcessIdentity(
++                role="tracking", generation="tracking-generation"
++            )
++            if tracking_present
++            else control.ProcessIdentity(),
++        ),
++        configuration=ConfigurationRecord(settings, policies, revision=7),
++        resources={},
++        resource_ledger=object(),
++        resource_port=object(),
++        device_status=SimpleNamespace(resolve_camera=lambda *args, **kwargs: None),
++    )
++    with pytest.raises(
++        RuntimeError, match="preparation.*rejected|re-preparation.*admitted"
++    ):
++        if restart:
++            await ManualPreviewPulseLifecycle._prepare_restart(
++                owner,
++                worker,
++                PausedPreview(role, camera.CameraResolvedState(), 8),
++                1000,
++                control.OperationContext(command_id="parent"),
++            )
++        else:
++            await ManualPreviewStart._prepare_preview_run(
++                owner,
++                wire.AcquisitionCameraCommand(camera=role),
++                worker,
++                settings.tracking,
++                policy,
++                camera.CameraResolvedState(),
++                "run",
++                7,
++                1000,
++            )
++    assert preview_slot.await_count == 1
++    assert tracking_slot.await_count == int(tracking_present)
++    payload = port.prepare_preview.call_args.args[0].camera
++    assert [output.buffer.kind for output in payload.outputs] == (
++        [acq.FRAME_BUFFER_KIND_PREVIEW, 0]
++        if tracking_present
++        else [acq.FRAME_BUFFER_KIND_PREVIEW]
++    )
++    assert (worker.preview.tracking_attachment is not None) == tracking_present
+diff --git a/tests/acquisition/test_session_preparation.py b/tests/acquisition/test_session_preparation.py
+index 35f1278..deab888 100644
+--- a/tests/acquisition/test_session_preparation.py
++++ b/tests/acquisition/test_session_preparation.py
+@@ -308,3 +308,35 @@ def test_trial_preparation_surfaces_exact_worker_failure(
+             )
+ 
+     asyncio.run(scenario())
++
++
++def test_setup_rejects_required_tracking_without_a_launched_identity():
++    request, configuration, identity = _setup_request(tracking_backend=True)
++    request.settings.acquisition.tracking.enabled = True
++    identity.tracking.Clear()
++    with pytest.raises(ValueError, match="no launched Tracking identity"):
++        validate_setup_request(
++            request,
++            100,
++            identity=identity,
++            configuration=configuration,
++            clock=lambda: 1,
++        )
++
++
++async def test_required_tracking_identity_is_checked_before_any_ring_allocation():
++    from cephvr.acquisition.coordinator.session_resources import allocate_camera_outputs
++
++    with pytest.raises(ValueError, match="no launched Tracking identity"):
++        await allocate_camera_outputs(
++            session=None,
++            worker=None,
++            resolved=camera.CameraResolvedState(),
++            tracking_consumer=control.ProcessIdentity(),
++            tracking_required=True,
++            settings=control.AcquisitionSettings(),
++            resources={},
++            ledger=None,
++            port=None,
++            declare_resource=None,
++        )
+diff --git a/tests/controller/test_authority.py b/tests/controller/test_authority.py
+index d058bac..96a380d 100644
+--- a/tests/controller/test_authority.py
++++ b/tests/controller/test_authority.py
+@@ -116,3 +116,53 @@ def test_bootstrap_job_inventory_is_exact_and_never_accepts_outer_job() -> None:
+     values[0]["job_name"] = "application-123"
+     with pytest.raises(ValueError):
+         managed_jobs_from_bootstrap(values)
++
++
++@pytest.mark.parametrize("no_tracking", [False, True])
++@pytest.mark.parametrize(
++    "missing", [None, "tracking", "acquisition", "visual_stimulus", "gui"]
++)
++def test_bootstrap_requires_exact_declared_role_set(no_tracking, missing):
++    from cephvr.controller.startup.bootstrap import _backend_descriptors
++
++    roles = {"acquisition", "visual_stimulus", "tracking", "gui"} - {missing}
++    values = [
++        {
++            "role": role,
++            "generation": str(uuid.uuid4()),
++            "job_name": f"Local\\CephVR2-{uuid.uuid4()}",
++        }
++        for role in roles
++    ]
++    bootstrap = {
++        "no_tracking": no_tracking,
++        "backends": [
++            {
++                "backend_name": value["role"],
++                "backend_generation": value["generation"],
++                "endpoint": "127.0.0.1:50100",
++                "token": "secret",
++                "launch_confirmed": False,
++            }
++            for value in values
++            if value["role"] != "gui"
++        ],
++    }
++    expected = {"acquisition", "visual_stimulus", "gui"} | (
++        set() if no_tracking else {"tracking"}
++    )
++    if roles == expected:
++        assert {
++            job.role
++            for job in managed_jobs_from_bootstrap(values, no_tracking=no_tracking)
++        } == expected
++    else:
++        with pytest.raises(ValueError):
++            managed_jobs_from_bootstrap(values, no_tracking=no_tracking)
++    if roles - {"gui"} == expected - {"gui"}:
++        assert {
++            item.backend_name for item in _backend_descriptors(bootstrap)
++        } == expected - {"gui"}
++    else:
++        with pytest.raises(ValueError, match="declared launch roles"):
++            _backend_descriptors(bootstrap)
+diff --git a/tests/launcher/test_lifecycle.py b/tests/launcher/test_lifecycle.py
+index 47d18b9..30707ba 100644
+--- a/tests/launcher/test_lifecycle.py
++++ b/tests/launcher/test_lifecycle.py
+@@ -615,6 +615,7 @@ def test_runtime_gui_script_bootstraps_from_outside_repo_without_installed_packa
+     )
+     assert result.returncode == 0
+     assert "--reopen-gui" in result.stdout
++    assert "--no-tracking" in result.stdout
+ 
+ 
+ class Native:
+@@ -930,3 +931,35 @@ def test_old_launcher_without_endpoint_requires_manual_shutdown(tmp_path) -> Non
+     _ensure_directory(root)
+     with pytest.raises(WindowsLaunchError, match="no replacement endpoint"):
+         _existing_endpoint(root)
++
++
++def test_project_launcher_no_tracking_is_explicit_and_cannot_reopen_existing_runtime(
++    tmp_path,
++):
++    root = tmp_path / "repo"
++    python = root / "python.exe"
++    default = launcher_command(root, python, reopen_gui=False)
++    assert "--no-tracking" not in default
++    assert launcher_command(root, python, reopen_gui=False, no_tracking=True) == [
++        *default,
++        "--no-tracking",
++    ]
++    with pytest.raises(ValueError, match="fresh application launch"):
++        launcher_command(root, python, reopen_gui=True, no_tracking=True)
++
++
++def test_runtime_gui_script_rejects_changing_roles_on_reopen(tmp_path):
++    import subprocess
++    import sys
++    from pathlib import Path
++
++    script = Path(__file__).resolve().parents[2] / "scripts" / "start_runtime_gui.py"
++    result = subprocess.run(
++        [sys.executable, str(script), "--reopen-gui", "--no-tracking"],
++        cwd=tmp_path,
++        capture_output=True,
++        text=True,
++        check=False,
++    )
++    assert result.returncode == 2
++    assert "fresh application launch" in result.stderr
+diff --git a/tests/launcher/test_preflight.py b/tests/launcher/test_preflight.py
+index bc5f0ff..5c61970 100644
+--- a/tests/launcher/test_preflight.py
++++ b/tests/launcher/test_preflight.py
+@@ -63,3 +63,33 @@ def test_every_required_role_has_an_entry_point_module() -> None:
+     }
+     # gui.main may be absent while that package is unfinished; the rest must exist.
+     assert set(missing_roles()) <= {"gui"}
++
++
++@pytest.mark.parametrize("no_tracking", [False, True])
++def test_launch_roles_skip_only_tracking_when_explicit(monkeypatch, no_tracking):
++    from cephvr.shared import managed_modules as modules
++
++    inspected = []
++
++    def find(module):
++        inspected.append(module)
++        return object()
++
++    monkeypatch.setattr(modules.importlib.util, "find_spec", find)
++    assert modules.missing_roles(no_tracking=no_tracking) == []
++    assert set(inspected) == set(
++        modules.managed_modules(no_tracking=no_tracking).values()
++    )
++    assert ("cephvr.tracking.main" in inspected) is not no_tracking
++    assert set(modules.managed_modules(no_tracking=no_tracking)) == (
++        {"acquisition", "visual_stimulus", "gui"}
++        | (set() if no_tracking else {"tracking"})
++    )
++
++
++@pytest.mark.parametrize("value", [None, 0, 1, "true", [], {}])
++def test_no_tracking_declaration_rejects_non_booleans(value):
++    from cephvr.shared.managed_modules import no_tracking_from_bootstrap
++
++    with pytest.raises(ValueError, match="boolean"):
++        no_tracking_from_bootstrap({"no_tracking": value})
+diff --git a/tests/supervisor/test_registration.py b/tests/supervisor/test_registration.py
+index 22f385a..152f70d 100644
+--- a/tests/supervisor/test_registration.py
++++ b/tests/supervisor/test_registration.py
+@@ -699,3 +699,139 @@ def test_controller_capability_can_declare_non_lifecycle_function(
+     )
+     topology = IncidentTopology.from_registered(context)
+     assert topology.functions["controller-watchdog"].owner == runtime.controller
++
++
++@pytest.mark.parametrize("no_tracking", [False, True])
++@pytest.mark.parametrize(
++    "missing", [None, "acquisition", "visual_stimulus", "tracking"]
++)
++def test_supervisor_bootstrap_ports_match_exact_launch_declaration(
++    monkeypatch, no_tracking, missing
++):
++    monkeypatch.setattr(startup.sys, "platform", "win32")
++    monkeypatch.setattr(startup, "resolve_python_executable", lambda value: value)
++    monkeypatch.setattr(startup, "missing_roles", lambda **kwargs: [])
++    bootstrap = dict.fromkeys(
++        (
++            "software_root",
++            "supervisor_generation",
++            "controller_generation",
++            "supervisor_token",
++            "controller_token",
++            "supervisor_port",
++            "controller_port",
++            "supervisor_config",
++            "interpreter",
++            "backend_ports",
++            "max_message_bytes",
++            "max_retained_incidents",
++            "command_retention_ns",
++            "control_policies",
++            "silence_timeout_ns",
++            "emergency_timeout_ns",
++            "graceful_exit_ns",
++            "terminate_exit_ns",
++            "application_backstop_ns",
++            "heartbeat_interval_ns",
++        ),
++        "present",
++    )
++    bootstrap["no_tracking"] = no_tracking
++    bootstrap["backend_ports"] = {
++        name: number
++        for number, name in enumerate(("acquisition", "visual_stimulus", "tracking"), 1)
++        if name != missing
++    }
++    expected = {"acquisition", "visual_stimulus"} | (
++        set() if no_tracking else {"tracking"}
++    )
++    if set(bootstrap["backend_ports"]) == expected:
++        assert set(startup.validate_bootstrap(bootstrap)) == expected | {"gui"}
++    else:
++        with pytest.raises(startup.WindowsLaunchError, match="declared launch roles"):
++            startup.validate_bootstrap(bootstrap)
++
++
++@pytest.mark.parametrize("no_tracking", [False, True])
++async def test_launch_descriptors_retain_only_selected_role_identities(
++    monkeypatch, no_tracking
++):
++    from cephvr.shared.managed_modules import managed_modules
++
++    descriptors = []
++    monkeypatch.setattr(startup, "create_bootstrap_pipe", lambda: (1, 2))
++    monkeypatch.setattr(startup, "close_handle", lambda handle: None)
++    monkeypatch.setattr(
++        startup, "write_bootstrap", lambda handle, value: descriptors.append(value)
++    )
++
++    async def pipe_io(operation, **kwargs):
++        return operation()
++
++    monkeypatch.setattr(startup, "run_pipe_io_daemon", pipe_io)
++    roles = managed_modules(no_tracking=no_tracking)
++    child = SimpleNamespace(pid=10, creation_time_100ns=20)
++    states = {
++        role: wire.LaunchState(containment_job_name=f"job-{role}") for role in roles
++    }
++    registry = SimpleNamespace(
++        plan=lambda request: wire.LaunchState(containment_job_name="controller-job"),
++        confirm=lambda *args: None,
++    )
++    native = SimpleNamespace(
++        launch_suspended=lambda *args: child, resume=lambda process: None
++    )
++    bootstrap = {
++        "interpreter": EXE,
++        "controller_token": "controller-token",
++        "supervisor_token": "supervisor-token",
++        "supervisor_port": 1,
++        "controller_port": 2,
++        "supervisor_pid": 3,
++        "supervisor_creation_time_100ns": 4,
++        "heartbeat_interval_ns": 5,
++        "silence_timeout_ns": 15,
++        "control_policies": "protected-policy",
++        "no_tracking": no_tracking,
++    }
++    inputs = startup.LaunchInputs(
++        bootstrap=bootstrap,
++        native=native,
++        registry=registry,
++        clock=object(),
++        outbound=SimpleNamespace(
++            backend_ports={
++                role: 100 + i for i, role in enumerate(roles) if role != "gui"
++            }
++        ),
++        identity=_identity("supervisor"),
++        controller=_identity("controller"),
++        software_root=Path.cwd(),
++        max_message_bytes=1000000,
++        role_bootstrap={role: (str(uuid4()), "token") for role in roles},
++        role_plans={
++            role: wire.PlanLaunchRequest(command_id=str(uuid4())) for role in roles
++        },
++        role_states=states,
++    )
++    await startup.launch_controller(inputs, 3)
++    descriptor = descriptors.pop()
++    assert descriptor["no_tracking"] is no_tracking
++    assert {item["role"] for item in descriptor["managed_jobs"]} == set(roles)
++    assert {item["backend_name"] for item in descriptor["backends"]} == set(roles) - {
++        "gui"
++    }
++    await startup._launch_role_plan(
++        inputs,
++        "acquisition",
++        roles["acquisition"],
++        child,
++        *inputs.role_bootstrap["acquisition"],
++        inputs.role_plans["acquisition"],
++        states["acquisition"],
++    )
++    descriptor = descriptors.pop()
++    assert descriptor["no_tracking"] is no_tracking
++    assert ("tracking_generation" in descriptor) is not no_tracking
++    if not no_tracking:
++        assert descriptor["tracking_generation"] == inputs.role_bootstrap["tracking"][0]

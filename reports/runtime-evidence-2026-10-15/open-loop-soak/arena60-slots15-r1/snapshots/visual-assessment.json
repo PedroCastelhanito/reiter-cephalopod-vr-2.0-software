@@ -1,0 +1,42 @@
+{
+  "frame15_extrema": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ]
+  ],
+  "frame45_extrema": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ]
+  ],
+  "frame15_mean": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "frame45_mean": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "difference_bbox": null,
+  "scope": "uniformlyblack; visualarena/yawgatefailed despite completedrecording"
+}

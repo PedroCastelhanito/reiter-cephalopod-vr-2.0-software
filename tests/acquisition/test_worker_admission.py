@@ -507,7 +507,7 @@ async def test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal
     executor.cleanup = WorkerCleanupLifecycle(
         state,
         SimpleNamespace(release_device=lambda: releases.append("camera")),
-        SimpleNamespace(release=lambda: releases.append("buffers") or ()),
+        SimpleNamespace(active=False, release=lambda: releases.append("buffers") or ()),
         None,
         capacity=16,
         extra_resources=lambda: {},

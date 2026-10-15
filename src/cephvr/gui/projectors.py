@@ -171,7 +171,14 @@ class ProjectorsPanel(DevicePanel):
                     f, "subject_distance", value
                 )
             )
+        self.live_tuning_available = True
         self.timing = ProjectorTiming()
+        self.timing.placement_button.clicked.connect(
+            lambda: self.request_placement("photodiode_placement")
+        )
+        self.timing.blackouts.placement_button.clicked.connect(
+            lambda: self.request_placement("blackout_placement")
+        )
         self.calibration = CalibrationTable(self.screen_editor.drafts)
         self.measurements = ProjectorMeasurements(self.screen_editor.drafts)
         self.measurements.body.insertWidget(1, self.calibration.measurement_button)
@@ -639,7 +646,11 @@ class ProjectorsPanel(DevicePanel):
         self.update_participation()
 
     def prepare_calibration(
-        self, *, view: Literal["reference_bars", "frame_grid"] = "frame_grid"
+        self,
+        *,
+        view: Literal[
+            "reference_bars", "frame_grid", "photodiode_placement", "blackout_placement"
+        ] = "frame_grid",
     ) -> Path | None:
         if not self.can_review:
             return None
@@ -666,14 +677,22 @@ class ProjectorsPanel(DevicePanel):
                     self.keys, self.diagram.outputs, strict=True
                 )
             )
+            from cephvr.gui.placement_calibration import initial_photodiode_patch
+
             path = write_diagnostic_bundle(
                 calibration_asset_root(),
                 self.calibration_files.calibration_snapshot(),
                 rows,
                 monitors,
                 view=view,
+                photodiode_face=self.pulse_face(),
+                photodiode_patch=initial_photodiode_patch(self)
+                if view == "photodiode_placement"
+                else None,
                 blackout_zones=(
-                    self.timing.blackouts.snapshot() if view == "frame_grid" else None
+                    self.timing.blackouts.snapshot()
+                    if view in ("frame_grid", "blackout_placement")
+                    else None
                 ),
             )
             self.console.appendPlainText(
@@ -695,12 +714,24 @@ class ProjectorsPanel(DevicePanel):
             self.calibration_launch_requested.emit(str(arena_path))
 
     def set_calibration_presentation_state(
-        self, *, active: bool, available: bool, pending: bool = False, view: str = ""
+        self,
+        *,
+        active: bool,
+        available: bool,
+        pending: bool = False,
+        view: str = "",
+        tunable: bool = True,
     ) -> None:
+        self.live_tuning_available = tunable
         self.calibration.set_presentation_state(
             active=active, available=available, pending=pending, view=view
         )
         self.refresh_calibration_editability()
+
+    def request_placement(self, view: str) -> None:
+        from cephvr.gui.placement_calibration import request_placement
+
+        request_placement(self, view)
 
     def refresh_calibration_editability(self) -> None:
         active = self.calibration.presentation_active
@@ -710,6 +741,7 @@ class ProjectorsPanel(DevicePanel):
         live = (
             self.can_review
             and active
+            and self.live_tuning_available
             and self.calibration.presentation_view == "frame_grid"
             and not self.calibration.presentation_pending
         )
@@ -730,6 +762,7 @@ class ProjectorsPanel(DevicePanel):
         measuring = (
             self.can_review
             and active
+            and self.live_tuning_available
             and self.calibration.presentation_view == "reference_bars"
             and not self.calibration.presentation_pending
         )
@@ -740,7 +773,9 @@ class ProjectorsPanel(DevicePanel):
         self.screen_editor.setEnabled(editable)
         self.calibration_files.setEnabled(editable)
         self.table.setEnabled(editable)
-        self.timing.setEnabled(editable)
+        from cephvr.gui.placement_calibration import refresh_placement_controls
+
+        refresh_placement_controls(self, editable=editable)
 
     def update_participation(self) -> None:
         self.diagram.disabled_indices = {

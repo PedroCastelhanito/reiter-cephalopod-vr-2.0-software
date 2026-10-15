@@ -1,0 +1,243 @@
+{
+  "old_geometry": {
+    "frame_id": "rig-mm",
+    "observer_mm": [
+      60.0,
+      93.0,
+      53.0
+    ],
+    "near_mm": 1.0,
+    "far_mm": 250.0,
+    "positional_tolerance_mm": 0.000166,
+    "orthogonality_tolerance": 1e-06,
+    "surfaces": [
+      {
+        "surface_id": "front",
+        "bottom_left_mm": [
+          136.0,
+          18.5,
+          -10.5
+        ],
+        "bottom_right_mm": [
+          -16.0,
+          18.5,
+          -10.5
+        ],
+        "top_right_mm": [
+          -16.0,
+          18.5,
+          109.5
+        ],
+        "top_left_mm": [
+          136.0,
+          18.5,
+          109.5
+        ]
+      },
+      {
+        "surface_id": "left",
+        "bottom_left_mm": [
+          9.0,
+          6.5,
+          -12.5
+        ],
+        "bottom_right_mm": [
+          9.0,
+          166.5,
+          -12.5
+        ],
+        "top_right_mm": [
+          9.0,
+          166.5,
+          111.5
+        ],
+        "top_left_mm": [
+          9.0,
+          6.5,
+          111.5
+        ]
+      },
+      {
+        "surface_id": "right",
+        "bottom_left_mm": [
+          111.0,
+          166.5,
+          -12.5
+        ],
+        "bottom_right_mm": [
+          111.0,
+          6.5,
+          -12.5
+        ],
+        "top_right_mm": [
+          111.0,
+          6.5,
+          111.5
+        ],
+        "top_left_mm": [
+          111.0,
+          166.5,
+          111.5
+        ]
+      },
+      {
+        "surface_id": "bottom",
+        "bottom_left_mm": [
+          134.0,
+          -11.499999999999986,
+          2.0
+        ],
+        "bottom_right_mm": [
+          134.0,
+          184.5,
+          2.0
+        ],
+        "top_right_mm": [
+          -14.0,
+          184.5,
+          2.0
+        ],
+        "top_left_mm": [
+          -14.0,
+          -11.499999999999986,
+          2.0
+        ]
+      }
+    ]
+  },
+  "new_geometry": {
+    "frame_id": "rig-mm",
+    "observer_mm": [
+      60.0,
+      93.0,
+      53.0
+    ],
+    "near_mm": 1.0,
+    "far_mm": 250.0,
+    "positional_tolerance_mm": 0.000166,
+    "orthogonality_tolerance": 1e-06,
+    "surfaces": [
+      {
+        "surface_id": "front",
+        "bottom_left_mm": [
+          140.0,
+          2.0,
+          5.5
+        ],
+        "bottom_right_mm": [
+          -20.0,
+          2.0,
+          5.5
+        ],
+        "top_right_mm": [
+          -20.0,
+          2.0,
+          93.5
+        ],
+        "top_left_mm": [
+          140.0,
+          2.0,
+          93.5
+        ]
+      },
+      {
+        "surface_id": "left",
+        "bottom_left_mm": [
+          4.0,
+          -10.0,
+          5.5
+        ],
+        "bottom_right_mm": [
+          4.0,
+          150.0,
+          5.5
+        ],
+        "top_right_mm": [
+          4.0,
+          150.0,
+          93.5
+        ],
+        "top_left_mm": [
+          4.0,
+          -10.0,
+          93.5
+        ]
+      },
+      {
+        "surface_id": "right",
+        "bottom_left_mm": [
+          116.0,
+          150.0,
+          5.5
+        ],
+        "bottom_right_mm": [
+          116.0,
+          -10.0,
+          5.5
+        ],
+        "top_right_mm": [
+          116.0,
+          -10.0,
+          93.5
+        ],
+        "top_left_mm": [
+          116.0,
+          150.0,
+          93.5
+        ]
+      },
+      {
+        "surface_id": "bottom",
+        "bottom_left_mm": [
+          108.0,
+          -18.0,
+          2.0
+        ],
+        "bottom_right_mm": [
+          108.0,
+          158.0,
+          2.0
+        ],
+        "top_right_mm": [
+          12.0,
+          158.0,
+          2.0
+        ],
+        "top_left_mm": [
+          12.0,
+          -18.0,
+          2.0
+        ]
+      }
+    ]
+  },
+  "old_mapping_paths": [
+    {
+      "logical_path": "calibration/diagnostic_front.json"
+    },
+    {
+      "logical_path": "calibration/diagnostic_left.json"
+    },
+    {
+      "logical_path": "calibration/diagnostic_right.json"
+    },
+    {
+      "logical_path": "calibration/diagnostic_bottom.json"
+    }
+  ],
+  "new_mapping_paths": [
+    {
+      "logical_path": "media/calibration/open-loop-resume-1/diagnostic_front.json"
+    },
+    {
+      "logical_path": "media/calibration/open-loop-resume-1/diagnostic_left.json"
+    },
+    {
+      "logical_path": "media/calibration/open-loop-resume-1/diagnostic_right.json"
+    },
+    {
+      "logical_path": "media/calibration/open-loop-resume-1/diagnostic_bottom.json"
+    }
+  ],
+  "scope": "Current GUI values and native display identities; preserve unverified calibration, no invented measurements"
+}

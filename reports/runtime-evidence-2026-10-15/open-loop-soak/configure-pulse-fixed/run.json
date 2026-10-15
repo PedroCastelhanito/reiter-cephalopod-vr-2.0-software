@@ -1,0 +1,24 @@
+{
+  "mode": "configure",
+  "label": "configure-pulse-fixed",
+  "events": [
+    {
+      "label": "initial_session",
+      "host_monotonic_ns": 49513589841900,
+      "value": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      }
+    },
+    {
+      "label": "participants",
+      "host_monotonic_ns": 49513590224500,
+      "value": []
+    },
+    {
+      "label": "error",
+      "host_monotonic_ns": 49513594644700,
+      "value": "RuntimeError: Idle Configuration without prompts required"
+    }
+  ],
+  "controller_generation": "8a642a31-cb89-42bc-8db8-1a2b6298a733"
+}

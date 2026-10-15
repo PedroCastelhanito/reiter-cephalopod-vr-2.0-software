@@ -1,0 +1,10 @@
+{
+  "command": [
+    "pwsh",
+    "-NoProfile",
+    "-Command",
+    "ConvertTo-Json -InputObject @(Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'python' -and $_.CommandLine -match 'cephvr\\.|start_runtime_gui' } | Select-Object ProcessId,CreationDate,ExecutablePath,CommandLine) -Depth 3"
+  ],
+  "observed_ns": 60528434176100,
+  "processes": []
+}

@@ -1,0 +1,52 @@
+{
+  "scope": "Single bounded restoration to fresh resume-1 baselines; historical earlier baseline restoration remains separate",
+  "receipt": {
+    "all_owned_processes_absent": true,
+    "controller_channel_loss": "eof",
+    "controller_generation": "a4c3b63e-24d0-45dd-82ac-0e5e0f1c403d",
+    "format_version": 1,
+    "observed_monotonic_ns": 60525429920300,
+    "supervisor_generation": "93ffd6ac-cd8d-4c03-867f-ba36ef64969f"
+  },
+  "cameras": [
+    {
+      "serial": "40065509",
+      "begin_ns": 60528720609900,
+      "original_sha256": "931716fc6a894081c3102c89e6869222b9312ad871d93c9270a67d295349f05b",
+      "actual_sha256": "0d5d79b78543a8ca64c528852d6b6951ba904c819956abef87eeca9cae48d450",
+      "exact_persistent_text_match": false,
+      "differences": [
+        "LineSelector\tLine1",
+        "LineSelector\tLine2"
+      ],
+      "closed": true,
+      "end_ns": 60529961680400
+    },
+    {
+      "serial": "40747103",
+      "begin_ns": 60529962072100,
+      "original_sha256": "775b5b3f92e4e305c705f2a161c2b0b47b0f7f39dd3906fe86ded382e7158886",
+      "actual_sha256": "8ee720331f6a2e0912fd2dc5904e8888371dc84163c4da2f9dbd28d5f45f1438",
+      "exact_persistent_text_match": false,
+      "differences": [
+        "LineSelector\tLine1",
+        "LineSelector\tLine3"
+      ],
+      "closed": true,
+      "end_ns": 60531268024700
+    },
+    {
+      "serial": "40278236",
+      "begin_ns": 60531268379600,
+      "original_sha256": "de80b607b52567e2e24012c29e914a333a1f18877b1f689e5cddaec45a3f8c31",
+      "actual_sha256": "174afd201978531a0d565baa4e7330cf110ca44e95ee92553ce635eefeb4f95d",
+      "exact_persistent_text_match": false,
+      "differences": [
+        "LineSelector\tLine1",
+        "LineSelector\tLine3"
+      ],
+      "closed": true,
+      "end_ns": 60532765402200
+    }
+  ]
+}

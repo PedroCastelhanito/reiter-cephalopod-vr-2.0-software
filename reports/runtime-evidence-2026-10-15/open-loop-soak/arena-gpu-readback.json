@@ -1,0 +1,6 @@
+{
+  "method": "nvidia-smi --query-gpu=uuid,name,memory.total,memory.used --format=csv,noheader,nounits",
+  "observed_utc": "2026-10-15T01:40:35.470925+00:00",
+  "observed_monotonic_ns": 50869273117000,
+  "raw": "GPU-77642118-1623-48dd-3686-1014aa86b818, NVIDIA GeForce RTX 5060 Ti, 16311, 349\nGPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, NVIDIA GeForce RTX 2080 Ti, 11264, 0\n"
+}

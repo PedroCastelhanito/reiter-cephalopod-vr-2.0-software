@@ -1,0 +1,1 @@
+{"passed": true, "device": {"ordinal": 1, "uuid": "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc", "name": "NVIDIA GeForce RTX 2080 Ti"}, "cases": [{"camera": "behavioral", "identical_prepared_yuv_planes": true}, {"camera": "tracking", "identical_prepared_yuv_planes": true}, {"camera": "eye_tracking", "identical_prepared_yuv_planes": true}]}

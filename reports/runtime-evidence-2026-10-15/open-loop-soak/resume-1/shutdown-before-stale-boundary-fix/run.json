@@ -1,0 +1,31 @@
+{
+  "mode": "shutdown",
+  "label": "shutdown-before-stale-boundary-fix",
+  "events": [
+    {
+      "label": "initial_session",
+      "host_monotonic_ns": 58211180405400,
+      "value": {
+        "phase": "SESSION_PHASE_CONFIGURATION",
+        "cleanup_confirmed": true
+      }
+    },
+    {
+      "label": "participants",
+      "host_monotonic_ns": 58211180735900,
+      "value": []
+    },
+    {
+      "label": "shutdown",
+      "host_monotonic_ns": 58211189634100,
+      "value": {
+        "command_id": "36d8d60e-6d6f-4dce-833e-e24c9429e11e",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    }
+  ],
+  "controller_generation": "f9af6aa2-d273-4cda-8bf3-840f98158d09"
+}

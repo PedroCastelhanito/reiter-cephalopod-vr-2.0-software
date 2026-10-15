@@ -57,9 +57,16 @@ class TrialPreparation:
         self.prior_completion_confirmed = prior_completion_confirmed
         self.pulse_boundaries = pulse_boundaries
         self.lock = lock
+        self._preparation_lock = asyncio.Lock()
         self.clock = clock
 
     async def prepare(
+        self, request: wire.PrepareTrialRequest, *, deadline_ns: int
+    ) -> control.CommandAdmission:
+        async with self._preparation_lock:
+            return await self._prepare(request, deadline_ns=deadline_ns)
+
+    async def _prepare(
         self, request: wire.PrepareTrialRequest, *, deadline_ns: int
     ) -> control.CommandAdmission:
         session = self.session_slot.current
@@ -136,10 +143,18 @@ class TrialPreparation:
                 ],
                 ready_deadline_ns=deadline_ns,
             )
-            session.trial = trial
         try:
             await self.pulse_boundaries.ensure_outputs_off(session, deadline_ns)
-            self._bind_session_rings(session, trial, deadline_ns, prior_complete)
+            async with self.lock:
+                if (
+                    self.session_slot.current is not session
+                    or session.trial is not previous
+                    or not self.valid_command(request.command, session, deadline_ns)
+                    or request.configuration_revision != session.confirmed_revision
+                ):
+                    raise RuntimeError("trial admission changed during OFF preflight")
+                session.trial = trial
+                self._bind_session_rings(session, trial, deadline_ns, prior_complete)
             await self._prepare_workers(session, trial, request, deadline_ns)
             remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:

@@ -197,8 +197,7 @@ class ManagedDisplayOperations:
             active=active,
             available=available,
             pending=pending,
-            view=evidence.calibration_view
-            if evidence is not None
-            and evidence.state == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
-            else "",
+            view=evidence.calibration_view,
+            tunable=evidence.state
+            == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE,
         )

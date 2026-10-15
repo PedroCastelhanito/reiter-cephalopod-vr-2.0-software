@@ -1,0 +1,35 @@
+--- fresh-baseline
+
++++ restored-readback
+
+@@ -112,23 +112,25 @@
+
+ LineInverter	{LineSelector=Line1}	0
+ LineInverter	{LineSelector=Line2}	0
+ LineInverter	{LineSelector=Line3}	0
+-LineSelector	Line1
++LineSelector	Line3
+ BslLineConnection	{LineSelector=Line2}	ConnectionOff
+ BslLineConnection	{LineSelector=Line3}	ConnectionOff
++LineSelector	Line3
+ LineMode	{LineSelector=Line1}	Input
+ LineMode	{LineSelector=Line2}	Input
+ LineMode	{LineSelector=Line3}	Input
+-LineSelector	Line1
++LineSelector	Line3
+ BslInputFilterTime	{LineSelector=Line1}	0.00
+ BslInputFilterTime	{LineSelector=Line2}	0.00
+ BslInputFilterTime	{LineSelector=Line3}	0.00
+-LineSelector	Line1
++LineSelector	Line3
+ BslInputHoldOffTime	{LineSelector=Line1}	0.00
+ BslInputHoldOffTime	{LineSelector=Line2}	0.00
+ BslInputHoldOffTime	{LineSelector=Line3}	0.00
+-LineSelector	Line1
++LineSelector	Line3
+ LineSource	{LineSelector=Line2}	Off
+ LineSource	{LineSelector=Line3}	Off
++LineSelector	Line3
+ UserOutputValue	{UserOutputSelector=UserOutput1}	0
+ UserOutputValue	{UserOutputSelector=UserOutput2}	0
+ UserOutputValue	{UserOutputSelector=UserOutput3}	0

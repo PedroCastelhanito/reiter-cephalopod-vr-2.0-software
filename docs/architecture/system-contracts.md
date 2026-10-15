@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 172
+**Status:** Accepted · **Revision:** 173
 
 **Processes and startup**
 
@@ -235,6 +235,13 @@ design; runtime monitoring remains unimplemented.
   concurrently. Backends own workers, workers own helpers; the supervisor watches
   all descendants. Visual Stimulus registration and containment use the canonical
   backend identifier owned by [V01](visual_stimulus.md#v01).
+- An explicit no-Tracking launch omits the Tracking process, credentials, jobs and
+  diagnostic consumer rings for that application lifetime. Only the full role set
+  or this exact omission is supported; acquisition, Visual Stimulus and GUI retain
+  their required identities, containment and cleanup. Tracking-dependent Setup or
+  diagnostics reject unavailable participation; enabling Tracking requires a full
+  application restart. The configured Tracking camera may still preview and record
+  under acquisition ownership without a Tracking consumer.
 - One shared launch helper registers planned ownership before creation, then
   confirms exact process generation/identity, endpoint and stop information before
   operational work, covering partial launches and owner failure. Unconfirmed

@@ -861,8 +861,10 @@ def test_native_calibration_owner_retains_failed_context_resource_for_retry(
     assert owner.release() == ()
 
 
+@pytest.mark.parametrize("view", ["frame_grid", "photodiode_placement"])
 def test_native_port_releases_owner_and_accepts_a_later_calibration(
     monkeypatch: pytest.MonkeyPatch,
+    view: str,
 ) -> None:
     _install_fake_gl_binding(monkeypatch)
     gl = _FakeGL()
@@ -875,6 +877,9 @@ def test_native_port_releases_owner_and_accepts_a_later_calibration(
         TRIANGLE_STRIP=6,
     )
     display, prepared, outputs = _native_calibration_inputs(gl)
+    if view == "photodiode_placement":
+        display = display.model_copy(update={"calibration_view": view})
+        prepared.display = display
     port = ModernGLPort.__new__(ModernGLPort)
     port._owner = __import__("threading").get_ident()
     port._display = display
@@ -904,12 +909,59 @@ def test_native_port_releases_owner_and_accepts_a_later_calibration(
     port._window_obligations = set()
     port._released = []
     port.announce = lambda *_args: None
-    ticks = iter(range(10, 1000))
+    ticks = iter(range(10, 10000))
     port.clock_ns = lambda: next(ticks)
 
     for index in range(2):
         activities = port.present_display_calibration(display, prepared)
         assert {item.output_id for item in activities} == set(outputs)
+        assert port._calibration_owner.photodiode_index == 1
+        if view == "photodiode_placement":
+            from cephvr.visual_stimulus.rendering.photodiode import photodiode_level
+
+            for submission in range(1, 65):
+                gl.events.clear()
+                if submission == 3:
+                    from cephvr.visual_stimulus.config.calibration_placement import (
+                        CalibrationPlacement,
+                    )
+
+                    payload = port._calibration_owner.placement.model_dump(mode="json")
+                    payload["photodiode_patch"]["rect"] = dict(
+                        x=2, y=3, width=6, height=7
+                    )
+                    port.update_display_calibration(
+                        display,
+                        prepared,
+                        CalibrationPlacement.model_validate_json(json.dumps(payload)),
+                    )
+                else:
+                    port.present_display_calibration(display, prepared)
+                assert port._calibration_owner.photodiode_index == submission + 1
+                white = [
+                    e
+                    for e in gl.events
+                    if e[0] == "mask" and e[2] == (1.0, 1.0, 1.0, 1.0)
+                ]
+                assert bool(white) == photodiode_level(submission)
+                if submission >= 3:
+                    pulse = [
+                        e for e in gl.events if e[0] == "mask" and e[3] == (2, 3, 6, 7)
+                    ]
+                    assert len(pulse) == 1
+                    level = float(photodiode_level(submission))
+                    assert pulse[0][2] == (level, level, level, 1.0)
+        if view == "photodiode_placement":
+
+            def fail_swap(_window):
+                raise RuntimeError("swap failed")
+
+            previous_swap = port._glfw.swap_buffers
+            port._glfw.swap_buffers = fail_swap
+            failed = port.present_display_calibration(display, prepared)
+            assert all(item.error for item in failed)
+            assert port._calibration_owner.photodiode_index == 65
+            port._glfw.swap_buffers = previous_swap
         if index == 0:
             next(
                 resource
@@ -971,7 +1023,7 @@ def test_native_generic_release_clears_calibration_owner_before_reinitialize(
     port._window_obligations = set()
     port._released = []
     port.announce = lambda *_args: None
-    ticks = iter(range(10, 1000))
+    ticks = iter(range(10, 10000))
     port.clock_ns = lambda: next(ticks)
     port._release_partial = lambda _created: port._outputs.clear() or []
 
@@ -1087,3 +1139,135 @@ def test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported
         frame.activate()
         for resource in reversed(frame.owned_resources):
             resource.release()
+
+
+@pytest.mark.parametrize(
+    "view, empty",
+    [
+        ("photodiode_placement", False),
+        ("photodiode_placement", True),
+        ("blackout_placement", False),
+    ],
+)
+def test_placement_preview_retains_outputs_and_rejects_invalid_live_rectangles(
+    monkeypatch, view, empty
+):
+    from cephvr.visual_stimulus.config.calibration_adjustments import (
+        CalibrationAdjustmentRejected,
+        validated_update,
+    )
+    from cephvr.visual_stimulus.config.calibration_placement import (
+        CalibrationPlacement,
+        parse_placement,
+    )
+
+    gl = _FakeGL()
+    raw = _two_output_display().model_dump(mode="json")
+    raw["presentation_mode"] = "all_outputs_vsync"
+    raw["calibration_view"] = view
+    raw["photodiode_enabled"] = view == "photodiode_placement"
+    if view == "photodiode_placement":
+        raw["photodiode_output_id"] = raw["outputs"][0]["output_id"]
+        raw["photodiode_patch"] = dict(
+            rect=dict(x=12, y=14, width=8, height=6),
+            background_rect=dict(x=10, y=10, width=20, height=20),
+            high_linear_rgb=[1, 1, 1],
+            low_linear_rgb=[0, 0, 0],
+        )
+    else:
+        raw["photodiode_output_id"] = None
+        raw["photodiode_patch"] = None
+    if empty:
+        raw["photodiode_enabled"] = False
+        raw["photodiode_output_id"] = None
+        raw["photodiode_patch"] = None
+    for output in raw["outputs"]:
+        output["blackout_zones"] = [dict(x=2, y=3, width=4, height=5)]
+    display, prepared, outputs = _native_calibration_inputs(
+        gl, parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+    )
+    owner = DisplayCalibrationRenderer(
+        outputs,
+        SimpleNamespace(
+            DEPTH_TEST=1, CULL_FACE=2, BLEND=4, ONE=1, TRIANGLES=5, TRIANGLE_STRIP=6
+        ),
+        lambda *_: None,
+        lambda *a, **kw: None,
+    )
+    owner.present(display, prepared)
+    assert not [event for event in gl.events if event[0] == "draw"]
+    assert len([event for event in gl.events if event[0] == "copy"]) == len(outputs)
+    masks = [event for event in gl.events if event[0] == "mask"]
+    assert len([event for event in masks if event[2] == (1.0, 1.0, 1.0, 1.0)]) == (
+        1 if view == "photodiode_placement" and not empty else 0
+    )
+    previous = owner.placement
+    assert previous is not None
+    payload = previous.model_dump(mode="json")
+    if empty:
+        assert previous.photodiode_patch is None
+        with pytest.raises(CalibrationAdjustmentRejected):
+            validated_update(view, (), json.dumps(payload))
+        payload["photodiode_output_id"] = raw["outputs"][0]["output_id"]
+        payload["photodiode_patch"] = dict(
+            rect=dict(x=12, y=14, width=8, height=6),
+            high_linear_rgb=[1, 1, 1],
+            low_linear_rgb=[0, 0, 0],
+        )
+    payload["outputs"][0]["blackout_zones"] = [dict(x=1, y=1, width=10_000, height=2)]
+    with pytest.raises(CalibrationAdjustmentRejected):
+        owner.update(parse_placement(json.dumps(payload)))
+    assert owner.placement is previous
+    payload["outputs"][0]["blackout_zones"] = []
+    placement = validated_update(view, (), json.dumps(payload))
+    assert isinstance(placement, CalibrationPlacement)
+    allocated = len(gl.resources)
+    owner.update(placement)
+    owner.present(display, prepared)
+    assert len(gl.resources) == allocated
+    assert not owner.placement.outputs[0].blackout_zones
+    if empty:
+        assert owner.placement.photodiode_patch.rect.x == 12
+    with pytest.raises(CalibrationAdjustmentRejected):
+        validated_update(
+            view, (("diagnostic_front", (0, 0, 1, 0, 0, 1, 1, 1)),), json.dumps(payload)
+        )
+    with pytest.raises(CalibrationAdjustmentRejected):
+        parse_placement('{"outputs":[],"outputs":[]}')
+    with pytest.raises(CalibrationAdjustmentRejected):
+        parse_placement(" " * 65_537)
+    assert owner.release() == ()
+    assert all(
+        resource.released for resource in gl.resources if resource.label != "screen"
+    )
+
+
+def test_placement_native_pixels_use_gray_and_black():
+    from cephvr.visual_stimulus.config.calibration_placement import parse_placement
+    from cephvr.visual_stimulus.rendering.calibration_placement import draw_placement
+
+    clears = []
+    frame = SimpleNamespace(
+        width=120,
+        height=100,
+        device_fbo=SimpleNamespace(
+            use=lambda: None, clear=lambda *args, **kw: clears.append((args, kw))
+        ),
+    )
+    context = SimpleNamespace(screen=None, scissor=None)
+    placement = parse_placement(
+        json.dumps(
+            dict(
+                outputs=[
+                    dict(
+                        output_id="screen",
+                        blackout_zones=[dict(x=4, y=5, width=10, height=12)],
+                    )
+                ]
+            )
+        )
+    )
+    draw_placement(context, frame, "blackout_placement", "screen", placement)
+    assert clears[0][0] == (0.25, 0.25, 0.25, 1.0)
+    assert clears[1] == ((0.0, 0.0, 0.0, 1.0), {"viewport": (4, 5, 10, 12)})
+    assert context.scissor is None

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\rig-empty-video.py", line 11, in <module>
+    with path.open('rb') as file:os.fsync(file.fileno())
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 9] Bad file descriptor

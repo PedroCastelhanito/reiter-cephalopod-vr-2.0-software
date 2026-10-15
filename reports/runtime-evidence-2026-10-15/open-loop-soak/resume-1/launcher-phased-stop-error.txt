@@ -1,0 +1,6 @@
+acquisition_behavioral_worker RecordPulseEvidence 5bd50202-8fde-4972-8644-95953406724b failed: ValueError: terminal pulse evidence changed after retention
+acquisition_tracking_worker RecordPulseEvidence 127cc6cb-9308-4b5c-94f8-1c1fc1293f3c failed: ValueError: terminal pulse evidence changed after retention
+acquisition_behavioral_worker RecordPulseEvidence 61125214-e712-47e5-b667-d73f797eef88 failed: ValueError: pulse evidence lacks exact selected terminal outcome
+acquisition_tracking_worker RecordPulseEvidence 6a1ec4bf-317d-40f9-99c8-533d365a0431 failed: ValueError: pulse evidence lacks exact selected terminal outcome
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

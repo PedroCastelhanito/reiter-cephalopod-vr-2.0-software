@@ -1,0 +1,22 @@
+acquisition_tracking_worker RecordPulseEvidence 44dc9cf8-fd61-4961-854b-6597380728b5 failed: RuntimeError: worker session is not prepared
+InterruptSession c5e0b05b-59ef-4c5b-86b3-bad84e5b6dee failed: SESSION_INTERRUPT_UNCONFIRMED: camera worker rejected Interrupt; camera worker rejected Interrupt
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 27764 exited; cleanup evidence remains required
+InterruptSession e26f982c-b2c2-4fb7-bcb9-d63d7f44c75f failed: SESSION_IDENTITY: no exact live session
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_tracking_worker stopped reporting before its silence bound
+acquisition_tracking_worker RecordPulseEvidence 4b90d091-a3e1-45e2-9a4e-57b32a0e4308 failed: RuntimeError: worker session is not prepared
+Exception ignored in: <function SharedMemory.__del__ at 0x000002E398996160>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 187, in __del__
+    self.close()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 230, in close
+    self._mmap.close()
+BufferError: cannot close exported pointers exist
+Exception ignored in: <function SharedMemory.__del__ at 0x000002E398996160>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 187, in __del__
+    self.close()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 230, in close
+    self._mmap.close()
+BufferError: cannot close exported pointers exist
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

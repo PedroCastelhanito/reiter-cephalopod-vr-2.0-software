@@ -188,6 +188,7 @@ def bind_command(
             diagnostic_id=request.diagnostic_id,
             adjustment_sequence=request.adjustment_sequence,
             adjustments=request.adjustments,
+            placement_json=request.placement_json,
         ), link
     if isinstance(request, wire.VisualStimulusDisplayCalibrationCloseRequest):
         if state.setup is not None:

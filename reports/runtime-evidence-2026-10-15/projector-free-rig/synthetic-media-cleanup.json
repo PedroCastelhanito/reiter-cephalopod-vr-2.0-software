@@ -1,0 +1,312 @@
+{
+  "reason": "Owner requested removal of unnecessary files; exact 51 passed regenerable synthetic MP4s only. All commands, counts, full-decode evidence and metadata retained; all real camera and interrupted recordings preserved.",
+  "observed_utc": "2026-10-15T04:22:19.5052757Z",
+  "files": [
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-all-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-all-cq16\\stimulus.mp4",
+      "bytes": 124910632,
+      "sha256": "A8AE0DC7D8C8C644E45622C80B272017E1538C549F3A1B93C633A0E959F784C3",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-all-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-all-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-all-cq23\\stimulus.mp4",
+      "bytes": 83732065,
+      "sha256": "AFC56FA4828C9145E6002CD769C98908FA2CCA4F4B28433A6BAE25100A1715BB",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-all-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-behavioral-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-behavioral-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-cameras-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-cameras-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-cameras-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-cameras-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-stimulus-cq16\\stimulus.mp4",
+      "bytes": 124910632,
+      "sha256": "A8AE0DC7D8C8C644E45622C80B272017E1538C549F3A1B93C633A0E959F784C3",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-stimulus-cq23\\stimulus.mp4",
+      "bytes": 83732065,
+      "sha256": "AFC56FA4828C9145E6002CD769C98908FA2CCA4F4B28433A6BAE25100A1715BB",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-tracking-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r1-tracking-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-all-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-all-cq16\\stimulus.mp4",
+      "bytes": 124910632,
+      "sha256": "A8AE0DC7D8C8C644E45622C80B272017E1538C549F3A1B93C633A0E959F784C3",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-all-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-all-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-all-cq23\\stimulus.mp4",
+      "bytes": 83732065,
+      "sha256": "AFC56FA4828C9145E6002CD769C98908FA2CCA4F4B28433A6BAE25100A1715BB",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-all-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-behavioral-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-behavioral-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-cameras-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-cameras-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-cameras-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-cameras-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-stimulus-cq16\\stimulus.mp4",
+      "bytes": 124910632,
+      "sha256": "A8AE0DC7D8C8C644E45622C80B272017E1538C549F3A1B93C633A0E959F784C3",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-stimulus-cq23\\stimulus.mp4",
+      "bytes": 83732065,
+      "sha256": "AFC56FA4828C9145E6002CD769C98908FA2CCA4F4B28433A6BAE25100A1715BB",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-tracking-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r2-tracking-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-all-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-all-cq16\\stimulus.mp4",
+      "bytes": 124910632,
+      "sha256": "A8AE0DC7D8C8C644E45622C80B272017E1538C549F3A1B93C633A0E959F784C3",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-all-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-all-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-all-cq23\\stimulus.mp4",
+      "bytes": 83732065,
+      "sha256": "AFC56FA4828C9145E6002CD769C98908FA2CCA4F4B28433A6BAE25100A1715BB",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-all-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-behavioral-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-behavioral-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-cameras-cq16\\behavioral.mp4",
+      "bytes": 682584625,
+      "sha256": "827C66ED268D9274CA1ED56BA6BA010C6718F0F22EA63B3C4019B7FAE852D266",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-cameras-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-cameras-cq23\\behavioral.mp4",
+      "bytes": 417937410,
+      "sha256": "37AAB3D77099D998AFB2B447FD668D8879DDF910790E9F417837AB0D7F7E6531",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-cameras-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-stimulus-cq16\\stimulus.mp4",
+      "bytes": 124910632,
+      "sha256": "A8AE0DC7D8C8C644E45622C80B272017E1538C549F3A1B93C633A0E959F784C3",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-stimulus-cq23\\stimulus.mp4",
+      "bytes": 83732065,
+      "sha256": "AFC56FA4828C9145E6002CD769C98908FA2CCA4F4B28433A6BAE25100A1715BB",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-tracking-cq16\\tracking.mp4",
+      "bytes": 210221288,
+      "sha256": "80EE55005BF09CE1046A7C1498633C1EE7B44FE86AB0C98D2FD19D21EADBD5A9",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\r3-tracking-cq23\\tracking.mp4",
+      "bytes": 142371041,
+      "sha256": "05C3CA30E3545255724065994420CAE7624A31C974FC35A4999B38BF31053CCD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\warmup\\behavioral.mp4",
+      "bytes": 114377546,
+      "sha256": "390C778E2860E9C63691DE5FB5913526411D56A9C274587A730992C5587CC5ED",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\warmup\\stimulus.mp4",
+      "bytes": 20726270,
+      "sha256": "2C0CB10B3AE364396CF5DC921B76DEB4D813635F3D4144EE02C7FACF1057795C",
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current\\warmup\\tracking.mp4",
+      "bytes": 34901651,
+      "sha256": "EC4F8C2B52691E38252CE61AD2292B2FEB39CDB2148764DB2B652F3BAED03CBA",
+      "removed": true
+    }
+  ]
+}

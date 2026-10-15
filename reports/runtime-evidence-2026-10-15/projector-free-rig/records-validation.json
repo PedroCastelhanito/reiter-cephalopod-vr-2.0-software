@@ -1,0 +1,7 @@
+{
+  "file_link_targets": 1137,
+  "unique_tasks": 37,
+  "errors": [
+    "reports\\runtime-evidence-2026-10-15\\projector-free-rig\\records-validation.json: Expecting value: line 1 column 1 (char 0)"
+  ]
+}

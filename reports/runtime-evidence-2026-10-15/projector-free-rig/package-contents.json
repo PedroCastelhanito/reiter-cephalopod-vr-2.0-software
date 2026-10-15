@@ -1,0 +1,15 @@
+{
+  "wheel": "cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl",
+  "sdist": "cephvr-2.0.0.dev0.tar.gz",
+  "native_members": [
+    "cephvr/acquisition/camera/_pylon_wait_binding.cp311-win_amd64.pyd",
+    "cephvr/platform/windows/cephvr_atomics.dll",
+    "cephvr/tracking/native/cephvr_nvof.dll"
+  ],
+  "source_calibration_assets": [
+    "cephvr-2.0.0.dev0/assets/calibration/frame_grid.glb",
+    "cephvr-2.0.0.dev0/assets/calibration/reference_bars.glb"
+  ],
+  "wheel_calibration_assets": [],
+  "scope": "Archive structure only, not standalone-install acceptance; runtime uses the configured source checkout."
+}

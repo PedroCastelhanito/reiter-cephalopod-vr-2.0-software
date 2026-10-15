@@ -1,0 +1,63 @@
+{
+  "observed_utc": "2026-10-15T05:07:03.5365229Z",
+  "removed_files": 2078,
+  "removed_bytes": 276845108.0,
+  "empty_directories": 1015,
+  "remaining_targets": 0,
+  "retained_copy_errors": 0,
+  "preserved_paths": [
+    ".git",
+    ".venv",
+    "config",
+    "cephvr-data",
+    ".tmp/ffmpeg-toolchain",
+    ".tmp/git-sync-original-conflicts",
+    ".tmp/variation-related-pytest",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache"
+  ],
+  "verified_real_recordings": [
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_tracking_cam.mp4",
+      "bytes": 33740785,
+      "preserved": true
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_stimulus.mp4",
+      "bytes": 1126007748,
+      "preserved": true
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_eye_tracking_cam.mp4",
+      "bytes": 1594995850,
+      "preserved": true
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_behavioral_cam.mp4",
+      "bytes": 1880338787,
+      "preserved": true
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-131811\\protocol-data\\DUMMY_131820_stimulus.mp4",
+      "bytes": 75782549,
+      "preserved": true
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-131811\\protocol-data\\DUMMY_131820_tracking_cam.mp4",
+      "bytes": 181207314,
+      "preserved": true
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-131811\\protocol-data\\DUMMY_131820_eye_tracking_cam.mp4",
+      "bytes": 1482450876,
+      "preserved": true
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-131811\\protocol-data\\DUMMY_131820_behavioral_cam.mp4",
+      "bytes": 1759620651,
+      "preserved": true
+    }
+  ],
+  "scope": "Explicit .tmp targets only. No source/config/runtime or unique evidence deletion; protected files may be independently edited by concurrent chats."
+}

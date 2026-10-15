@@ -1,0 +1,15 @@
+Input #0, lavfi, from 'testsrc2=size=4096x3000:rate=30.0,format=rgb24':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, rgb24, 4096x3000 [SAR 1:1 DAR 512:375], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (h264_nvenc))
+Output #0, mp4, to '.tmp\rig-encoding-warmup\behavioral.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High 4:4:4 Predictive) (avc1 / 0x31637661), yuv444p(pc, bt709/unknown/unknown, progressive), 4096x3000 [SAR 1:1 DAR 512:375], q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=    2 fps=0.0 q=13.0 size=       0KiB time=00:00:00.06 bitrate=   3.4kbits/s speed=0.131x elapsed=0:00:00.50    frame=   24 fps= 23 q=24.0 size=       0KiB time=00:00:00.80 bitrate=   0.3kbits/s speed=0.78x elapsed=0:00:01.02    frame=   45 fps= 29 q=26.0 size=       0KiB time=00:00:01.50 bitrate=   0.1kbits/s speed=0.982x elapsed=0:00:01.52    frame=   66 fps= 32 q=28.0 size=       0KiB time=00:00:02.20 bitrate=   0.1kbits/s speed=1.08x elapsed=0:00:02.04    frame=   86 fps= 34 q=28.0 size=       0KiB time=00:00:02.86 bitrate=   0.1kbits/s speed=1.12x elapsed=0:00:02.55    frame=  106 fps= 34 q=28.0 size=       0KiB time=00:00:03.53 bitrate=   0.1kbits/s speed=1.15x elapsed=0:00:03.07    frame=  126 fps= 35 q=29.0 size=       0KiB time=00:00:04.20 bitrate=   0.1kbits/s speed=1.17x elapsed=0:00:03.59    frame=  147 fps= 36 q=29.0 size=       0KiB time=00:00:04.90 bitrate=   0.0kbits/s speed=1.19x elapsed=0:00:04.11    frame=  168 fps= 36 q=29.0 size=       0KiB time=00:00:05.60 bitrate=   0.0kbits/s speed=1.21x elapsed=0:00:04.62    frame=  188 fps= 37 q=29.0 size=       0KiB time=00:00:06.26 bitrate=   0.0kbits/s speed=1.22x elapsed=0:00:05.14    frame=  208 fps= 37 q=29.0 size=       0KiB time=00:00:06.93 bitrate=   0.0kbits/s speed=1.23x elapsed=0:00:05.65    frame=  228 fps= 37 q=29.0 size=       0KiB time=00:00:07.60 bitrate=   0.0kbits/s speed=1.23x elapsed=0:00:06.17    frame=  248 fps= 37 q=29.0 size=       0KiB time=00:00:08.26 bitrate=   0.0kbits/s speed=1.24x elapsed=0:00:06.69    frame=  269 fps= 37 q=28.0 size=  130560KiB time=00:00:08.96 bitrate=119280.4kbits/s speed=1.24x elapsed=0:00:07.20    frame=  291 fps= 38 q=28.0 size=  130560KiB time=00:00:09.70 bitrate=110262.7kbits/s speed=1.26x elapsed=0:00:07.72    [out#0/mp4 @ 0000017a22c18a80] video:155262KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.001452%
+frame=  300 fps= 38 q=28.0 Lsize=  155265KiB time=00:00:10.00 bitrate=127192.8kbits/s speed=1.27x elapsed=0:00:07.88    

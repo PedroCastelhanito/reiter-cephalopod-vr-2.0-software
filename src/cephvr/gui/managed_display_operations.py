@@ -11,6 +11,7 @@ from cephvr.client.session import ClientError, HeadlessClient
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.calibration_assets import (
+    CALIBRATION_REFERENCES,
     calibration_asset_root,
     calibration_runtime_root,
 )
@@ -73,10 +74,7 @@ def open_display_calibration_request(
         raise ClientError(
             "The prepared calibration arena is outside the repository calibration asset root."
         ) from exc
-    if arena_reference not in (
-        "calibration/reference_bars.glb",
-        "calibration/frame_grid.glb",
-    ):
+    if arena_reference not in CALIBRATION_REFERENCES:
         raise ClientError("Calibration requires its selected repository step file.")
     runtime_root = calibration_runtime_root(arena.stem).resolve(strict=True)
     profile = (
@@ -124,10 +122,7 @@ def capture_display_calibration_intent(
         raise ValueError(
             "Calibration asset is outside the repository calibration asset root."
         )
-    if arena.relative_to(root).as_posix() not in (
-        "calibration/reference_bars.glb",
-        "calibration/frame_grid.glb",
-    ):
+    if arena.relative_to(root).as_posix() not in CALIBRATION_REFERENCES:
         raise ValueError("Calibration requires its selected repository step file.")
     runtime_root = calibration_runtime_root(arena.stem).resolve(strict=True)
     profile = (
@@ -187,11 +182,12 @@ def update_display_calibration_request(
     expected_revision: int,
     diagnostic_id: str,
     adjustment_sequence: int,
-    adjustments: tuple[bytes, ...],
+    adjustments: tuple[bytes, ...] = (),
+    placement_json: str = "",
 ) -> rpc.UpdateDisplayCalibrationRequest:
     from cephvr.visual_stimulus.config.calibration_adjustments import (
         LIVE_ADJUSTABLE_VIEWS,
-        validated_adjustments,
+        validated_update,
     )
     from cephvr.visual_stimulus.v1 import messages_pb2 as messages
     from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
@@ -209,13 +205,18 @@ def update_display_calibration_request(
     values = tuple(
         messages.DisplayCalibrationAdjustment.FromString(raw) for raw in adjustments
     )
-    validated_adjustments((item.mapping_id, item.destination_xy) for item in values)
+    validated_update(
+        evidence.calibration_view,
+        ((item.mapping_id, item.destination_xy) for item in values),
+        placement_json,
+    )
     return rpc.UpdateDisplayCalibrationRequest(
         command=close.command,
         expected_configuration_revision=expected_revision,
         diagnostic_id=diagnostic_id,
         adjustment_sequence=adjustment_sequence,
         adjustments=values,
+        placement_json=placement_json,
     )
 
 

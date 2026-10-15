@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, BinaryIO, Protocol
+from typing import TYPE_CHECKING, BinaryIO, Literal, Protocol
 
 from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.visual_stimulus.config.models.artifact_models import ResourceManifest
@@ -21,6 +21,14 @@ if TYPE_CHECKING:
 RELOADABLE_IMAGE_PROFILES = frozenset(
     ("png_uint_v1", "tiff_uint_v1", "jpeg8_v1", "cephvr1_texture_json_v1")
 )
+
+
+def arena_subresource_id(
+    asset_id: str, kind: Literal["texture", "dependency"], index: int
+) -> str:
+    """Keep generated arena IDs valid and bounded for any authored parent ID."""
+    digest = hashlib.sha256(f"{asset_id}\0{kind}\0{index}".encode()).hexdigest()
+    return f"arena-{kind}-{digest}"
 
 
 class ProtectedSource(Protocol):

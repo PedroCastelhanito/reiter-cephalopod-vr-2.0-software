@@ -82,7 +82,7 @@ class WorkerTrialLifecycle:
         )
         self.trial_state = WorkerTrialState()
         self._recording_fault = RecordingFaultLifecycle(
-            recording_warning_occurrence, recording_isolated, external_wake
+            recording_isolated, external_wake
         )
         self.recording_preparation = TrialRecordingPreparation(
             bootstrap,
@@ -239,8 +239,30 @@ class WorkerTrialLifecycle:
         ):
             self.recording.release(request, deadline_ns=deadline_ns)
 
-    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> None:
-        self.stop_finalizer.stop_trial(deadline_ns, report_stopped=report_stopped)
+    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> bool:
+        return self.stop_finalizer.stop_trial(
+            deadline_ns, report_stopped=report_stopped
+        )
+
+    def begin_stop_operation(
+        self,
+        request: object,
+        deadline_ns: int,
+        report: acq.WorkerOperationReport,
+        complete: Callable[
+            [acq.WorkerOperationReport, int, BaseException | None], None
+        ],
+        *,
+        report_stopped: bool,
+    ) -> None:
+        self.stop_finalizer.begin_operation(
+            request,
+            deadline_ns,
+            report,
+            complete=complete,
+            capture_finished=self.report_camera_finished,
+            report_stopped=report_stopped,
+        )
 
     def advance_due_stages(self) -> None:
         self.stop_finalizer.advance_due_stages()
@@ -340,7 +362,7 @@ class WorkerTrialLifecycle:
     ) -> bool:
         interruption = self.trial_state.stop_request
         if (
-            not isinstance(interruption, acq.WorkerInterrupt)
+            not isinstance(interruption, (acq.WorkerInterrupt, acq.WorkerStop))
             or schedule is None
             or self.trial_state.stopped_schedule is not schedule
         ):
@@ -350,12 +372,23 @@ class WorkerTrialLifecycle:
         interrupted_work = interruption.command.target.work
         return bool(
             scheduled_work.WhichOneof("work") == "trial"
-            and interrupted_work.WhichOneof("work") == "session"
-            and interrupted_work.session == scheduled_work.trial.session
+            and (
+                (
+                    isinstance(interruption, acq.WorkerInterrupt)
+                    and interrupted_work.WhichOneof("work") == "session"
+                    and interrupted_work.session == scheduled_work.trial.session
+                )
+                or (
+                    isinstance(interruption, acq.WorkerStop)
+                    and interrupted_work == scheduled_work
+                )
+            )
             and command.target.HasField("work")
             and command.target.work == scheduled_work
             and command.HasField("parent_operation")
-            and command.parent_operation.command_id == schedule.command.command_id
+            and schedule.command.HasField("parent_operation")
+            and bool(schedule.command.parent_operation.command_id)
+            and command.parent_operation == schedule.command.parent_operation
         )
 
     def camera_first_frame(self, record: object) -> None:

@@ -1,0 +1,146 @@
+{
+  "method": "Post-closure source records and nonaliasing video seeks; software review is not optical alignment evidence",
+  "drop_updates": [
+    {
+      "group_id": 17,
+      "captures": [
+        {
+          "disposition": "capacity_drop",
+          "video_frame_index": null,
+          "source_pixel_format": "rgba8_bottom_up",
+          "encoder_pixel_format": "yuv444p",
+          "failure_code": null
+        }
+      ],
+      "evaluation_elapsed_s": 0.2947451
+    }
+  ],
+  "snapshot_commands": [
+    {
+      "command": [
+        "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+        "-v",
+        "error",
+        "-nostdin",
+        "-ss",
+        "15",
+        "-i",
+        "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_stimulus.mp4",
+        "-frames:v",
+        "1",
+        "-y",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined900-final-r1\\stimulus-15s.png"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+        "-v",
+        "error",
+        "-nostdin",
+        "-ss",
+        "17",
+        "-i",
+        "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_stimulus.mp4",
+        "-frames:v",
+        "1",
+        "-y",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined900-final-r1\\stimulus-17s.png"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+        "-v",
+        "error",
+        "-nostdin",
+        "-ss",
+        "315",
+        "-i",
+        "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_stimulus.mp4",
+        "-frames:v",
+        "1",
+        "-y",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined900-final-r1\\stimulus-315s.png"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+        "-v",
+        "error",
+        "-nostdin",
+        "-ss",
+        "322",
+        "-i",
+        "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_stimulus.mp4",
+        "-frames:v",
+        "1",
+        "-y",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined900-final-r1\\stimulus-322s.png"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+        "-v",
+        "error",
+        "-nostdin",
+        "-ss",
+        "615",
+        "-i",
+        "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_stimulus.mp4",
+        "-frames:v",
+        "1",
+        "-y",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined900-final-r1\\stimulus-615s.png"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+        "-v",
+        "error",
+        "-nostdin",
+        "-ss",
+        "622",
+        "-i",
+        "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_stimulus.mp4",
+        "-frames:v",
+        "1",
+        "-y",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined900-final-r1\\stimulus-622s.png"
+      ],
+      "exit": 0,
+      "stderr": ""
+    }
+  ],
+  "human_visual_review": {
+    "executor": "Sol6.1",
+    "pairs_seconds": [
+      [
+        15,
+        17
+      ],
+      [
+        315,
+        322
+      ],
+      [
+        615,
+        622
+      ]
+    ],
+    "result": "All four tiles visible and changing within each epoch; software mosaic only, physical alignment not assessed"
+  }
+}

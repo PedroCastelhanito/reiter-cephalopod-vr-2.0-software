@@ -1,0 +1,90 @@
+{
+  "format_version": 1,
+  "calibration_id": "diagnostic_bottom",
+  "mapping_id": "diagnostic_bottom",
+  "surface_id": "bottom",
+  "output_id": "calibration_bottom",
+  "output_width": 720,
+  "output_height": 1280,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "width": 720,
+    "height": 1280
+  },
+  "rows": 2,
+  "columns": 2,
+  "vertices": [
+    {
+      "uv": [
+        0.013888888888888895,
+        0.005468749999999911
+      ],
+      "xy": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "uv": [
+        1.0,
+        0.005468749999999911
+      ],
+      "xy": [
+        0.9861111111111112,
+        1.0
+      ]
+    },
+    {
+      "uv": [
+        0.013888888888888895,
+        0.9999999999999999
+      ],
+      "xy": [
+        0.0,
+        0.005468750000000022
+      ]
+    },
+    {
+      "uv": [
+        1.0,
+        0.9999999999999999
+      ],
+      "xy": [
+        0.9861111111111112,
+        0.005468750000000022
+      ]
+    }
+  ],
+  "orientation": "mirrored",
+  "diagonal": "bottom_left_to_top_right",
+  "mask": null,
+  "weight": null,
+  "overlap_group": null,
+  "valid_area": [
+    0.010416666666666666,
+    0.13828125,
+    0.9618055555555556,
+    0.87265625
+  ],
+  "intended_coverage": [
+    [
+      0.0,
+      0.005468750000000022
+    ],
+    [
+      0.9861111111111112,
+      0.005468750000000022
+    ],
+    [
+      0.9861111111111112,
+      1.0
+    ],
+    [
+      0.0,
+      1.0
+    ]
+  ],
+  "coverage_tolerance": 1e-6,
+  "triangle_area_tolerance": 1e-9
+}

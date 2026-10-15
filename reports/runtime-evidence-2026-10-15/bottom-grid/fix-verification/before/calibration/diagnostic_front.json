@@ -1,0 +1,90 @@
+{
+  "format_version": 1,
+  "calibration_id": "diagnostic_front",
+  "mapping_id": "diagnostic_front",
+  "surface_id": "front",
+  "output_id": "calibration_front",
+  "output_width": 1280,
+  "output_height": 720,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "width": 1280,
+    "height": 720
+  },
+  "rows": 2,
+  "columns": 2,
+  "vertices": [
+    {
+      "uv": [
+        0.00390625,
+        0.011111111111111127
+      ],
+      "xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "uv": [
+        1.0,
+        0.011111111111111127
+      ],
+      "xy": [
+        0.99609375,
+        0.0
+      ]
+    },
+    {
+      "uv": [
+        0.00390625,
+        1.0
+      ],
+      "xy": [
+        0.0,
+        0.9888888888888889
+      ]
+    },
+    {
+      "uv": [
+        1.0,
+        1.0
+      ],
+      "xy": [
+        0.99609375,
+        0.9888888888888889
+      ]
+    }
+  ],
+  "orientation": "preserving",
+  "diagonal": "bottom_left_to_top_right",
+  "mask": null,
+  "weight": null,
+  "overlap_group": null,
+  "valid_area": [
+    0.19921875,
+    0.009722222222222222,
+    0.79296875,
+    0.9680555555555556
+  ],
+  "intended_coverage": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.99609375,
+      0.0
+    ],
+    [
+      0.99609375,
+      0.9888888888888889
+    ],
+    [
+      0.0,
+      0.9888888888888889
+    ]
+  ],
+  "coverage_tolerance": 1e-6,
+  "triangle_area_tolerance": 1e-9
+}

@@ -448,8 +448,13 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
             await peer.close()
 
 
+@pytest.mark.parametrize(
+    "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+)
 @pytest.mark.asyncio
-async def test_authenticated_live_calibration_update_transport_and_exact_receipt():
+async def test_authenticated_live_calibration_update_transport_and_exact_receipt(
+    calibration_view,
+):
     identity = Identity(
         *(
             pb.ProcessIdentity(role=role, generation=str(uuid4()))
@@ -471,7 +476,9 @@ async def test_authenticated_live_calibration_update_transport_and_exact_receipt
 
         async def submit(self, method, request, deadline_ns):
             calls.append((method, request, deadline_ns))
-            if request.adjustments[0].mapping_id == "reject":
+            if (
+                request.adjustments and request.adjustments[0].mapping_id == "reject"
+            ) or '"x": 999' in request.placement_json:
                 from cephvr.visual_stimulus.config.calibration_adjustments import (
                     CalibrationAdjustmentRejected,
                 )
@@ -523,7 +530,7 @@ async def test_authenticated_live_calibration_update_transport_and_exact_receipt
     evidence.controller_generation = identity.controller.generation
     evidence.renderer_generation = identity.worker.generation
     evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
-    evidence.calibration_view = "frame_grid"
+    evidence.calibration_view = calibration_view
     token = "live-calibration-transport-test"
     listener = await serve(
         runtime,
@@ -563,6 +570,26 @@ async def test_authenticated_live_calibration_update_transport_and_exact_receipt
         mapping_id="diagnostic_front",
         destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
     )
+    import json
+
+    placement_value = dict(
+        outputs=[dict(output_id="projector/main", blackout_zones=[])],
+        **(
+            dict(
+                photodiode_output_id="projector/main",
+                photodiode_patch=dict(
+                    rect=dict(x=1, y=1, width=2, height=2),
+                    high_linear_rgb=[1, 1, 1],
+                    low_linear_rgb=[0, 0, 0],
+                ),
+            )
+            if calibration_view == "photodiode_placement"
+            else {}
+        ),
+    )
+    if calibration_view != "frame_grid":
+        request.ClearField("adjustments")
+        request.placement_json = json.dumps(placement_value)
     try:
         with pytest.raises(grpc.aio.AioRpcError) as wrong:
             await wrong_port.update_display_calibration(request, deadline_ns=deadline)
@@ -578,6 +605,7 @@ async def test_authenticated_live_calibration_update_transport_and_exact_receipt
         assert method == "UpdateDisplayCalibration"
         assert child.diagnostic_id == request.diagnostic_id
         assert child.adjustment_sequence == 1
+        assert child.placement_json == request.placement_json
         assert child_deadline <= deadline
         report = pb.VisualStimulusDisplayView(
             command_id=child.command.command_id,
@@ -614,7 +642,13 @@ async def test_authenticated_live_calibration_update_transport_and_exact_receipt
         assert len(calls) == 1
         request.command_id = str(uuid4())
         request.adjustment_sequence = 2
-        request.adjustments[0].mapping_id = "reject"
+        if calibration_view == "frame_grid":
+            request.adjustments[0].mapping_id = "reject"
+        else:
+            placement_value["outputs"][0]["blackout_zones"] = [
+                dict(x=999, y=1, width=2, height=2)
+            ]
+            request.placement_json = json.dumps(placement_value)
         await port.update_display_calibration(request, deadline_ns=deadline)
         for _ in range(200):
             if len(calls) == 2:

@@ -430,7 +430,9 @@
       "default": "frame_grid",
       "enum": [
         "reference_bars",
-        "frame_grid"
+        "frame_grid",
+        "photodiode_placement",
+        "blackout_placement"
       ],
       "title": "Calibration View",
       "type": "string"

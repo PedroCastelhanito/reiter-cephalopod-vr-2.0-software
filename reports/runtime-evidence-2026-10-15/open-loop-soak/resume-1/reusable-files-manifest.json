@@ -1,0 +1,51 @@
+{
+  "scope": "Verified current-calibration open-loop engineering protocols",
+  "launch": ".venv/Scripts/python.exe scripts/start_runtime_gui.py --no-tracking",
+  "durations_seconds": {
+    "combined120": 120,
+    "combined900": 900
+  },
+  "configuration_source": "Actual successful900 final adopted configuration; duration variants reuse its device/display settings",
+  "submitted_matches_adopted": false,
+  "required_operator_overrides": {
+    "capture_slots": 15,
+    "max_asset_gpu_bytes": 1073741824
+  },
+  "presentation": "Current saved GUI calibration retained; all_outputs_vsync",
+  "media_root": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro",
+  "recording_root": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015",
+  "evidence": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1\\combined900-final-r1",
+  "recordings": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408",
+  "preserved_fresh_baseline": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\resume-1",
+  "limitations": [
+    "900s completed and decoded; one stimulus capacity drop at T+0.2947451s, 598 same-slot omissions and 611 CFR duplicates; zero-loss acceptance remains open",
+    "Software linking tested; physical projection alignment/photometry not accepted",
+    "Camera CFR selection omissions/duplicates differ from capacity loss and native counter continuity",
+    "Arena source is a textured circular floor only; structured arena effective_poses empty",
+    "Scientific imagery quality and realistic scene-complexity encoding load not established",
+    "Rapid reuse crossing retired interrupted boundary remains unproven; local ordering guards tested",
+    "Original CQ18 baseline encoders are lossy; any later camera-lossless feasibility is separate evidence"
+  ],
+  "files": [
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\protocols\\open-loop-resume1-verified-20261015\\program-combined120.json",
+      "sha256": "7ede668ed09a3511a581501315df66b07ee5d1f64f005dbfc32ccb9cdc753c07"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\protocols\\open-loop-resume1-verified-20261015\\configuration-combined120.json",
+      "sha256": "d1cd51ae7e9732d9949ba73cc43410ac8c577dec3dc74c2457b251457c799fc8"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\protocols\\open-loop-resume1-verified-20261015\\program-combined900.json",
+      "sha256": "54b3f494a567793d5d905c6be9a15ed3d82efbf8b17ca01c412acea6094876db"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\protocols\\open-loop-resume1-verified-20261015\\configuration-combined900.json",
+      "sha256": "f812f83dba6a0e9815f1fa5573e4dbc72fdde6c30936100286f16008df4a7616"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\protocols\\open-loop-resume1-verified-20261015\\visual_stimulus_config.test.toml",
+      "sha256": "f0cea2fd5c1d4805a921071fc564109bf62ee063922839235c5458d887d4c922"
+    }
+  ]
+}

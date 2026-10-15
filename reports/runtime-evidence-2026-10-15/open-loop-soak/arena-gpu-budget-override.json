@@ -1,0 +1,7 @@
+{
+  "before_sha256": "1c71c701819623b342b2327897fc9023065eecbcaec6aa398103c4df29dfb427",
+  "after_sha256": "f0cea2fd5c1d4805a921071fc564109bf62ee063922839235c5458d887d4c922",
+  "gpu_limit_before": 536870912,
+  "gpu_limit_after": 1073741824,
+  "scope": "temporary reviewed operator allocation budget; source texture unchanged; original backup preserved"
+}

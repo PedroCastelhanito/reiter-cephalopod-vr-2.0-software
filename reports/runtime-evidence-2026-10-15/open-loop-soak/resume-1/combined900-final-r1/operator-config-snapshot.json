@@ -1,0 +1,6 @@
+{
+  "observed": "2026-10-15T12:56:54.4375766+09:00",
+  "source": "config/backends/visual_stimulus_config.toml",
+  "sha256": "f0cea2fd5c1d4805a921071fc564109bf62ee063922839235c5458d887d4c922",
+  "scope": "Small read-only snapshot during frozen900;matches prelaunch operator override hash"
+}

@@ -41,8 +41,10 @@ from cephvr.acquisition.worker.session_preparation import WorkerSessionPreparati
 from cephvr.acquisition.worker.state import WorkerBootstrap, WorkerState
 from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
 from cephvr.acquisition.worker.trial_state import WorkerTrialState
+from cephvr.acquisition.worker.trial_stop import TrialStopFinalizer
 from cephvr.acquisition.worker.warnings import WarningOccurrence, WorkerWarningLedger
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 from cephvr.shared.pixels.types import NativePixelFormat, PixelLayout
 
@@ -175,6 +177,7 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
     context.work.CopyFrom(session_work)
     state = _worker_state(context)
     state.confirmed_configuration_revision = 7
+    state.limits = AcquisitionControlLimits.from_message_limit(1024 * 1024)
     preparation = object.__new__(WorkerSessionPreparation)
     preparation.state = state
     preparation.session_ready = True
@@ -185,7 +188,11 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
         )
     )
     schedule = acq.WorkerSchedule(
-        command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
+        command=acq.WorkerCommand(
+            command_id=str(uuid4()),
+            target=context,
+            parent_operation=control.OperationContext(command_id=str(uuid4())),
+        ),
         start_monotonic_ns=100,
         end_monotonic_ns=200,
     )
@@ -196,9 +203,17 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
     trial.bootstrap = SimpleNamespace(context=context)
     trial.recording = None
     trial._require_ready_session_callback = preparation.require_ready_session
-    trial.stop_finalizer = SimpleNamespace(
-        stop_trial=lambda _deadline, **_kwargs: _retain_stopped_schedule(trial_state)
+    finalizer = object.__new__(TrialStopFinalizer)
+    finalizer.state = state
+    finalizer.trial = trial_state
+    finalizer._pending = []
+    finalizer._stop_deadline_ns = None
+    finalizer._capture_finished = None
+    finalizer._report_stopped = False
+    finalizer.stop_trial = lambda _deadline, **_kwargs: (  # type: ignore[method-assign]
+        _retain_stopped_schedule(trial_state) or True
     )
+    trial.stop_finalizer = finalizer
 
     def admit(name: str, request: object, deadline_ns: int) -> None:
         command = request.command
@@ -258,7 +273,7 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
             command_id=str(uuid4()),
             target=context,
             parent_operation=control.OperationContext(
-                command_id=schedule.command.command_id
+                command_id=schedule.command.parent_operation.command_id
             ),
         ),
         camera=context.camera,
@@ -291,10 +306,305 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
     executor.execute("RecordPulseEvidence", wrong_parent, deadline_ns)
     assert not state.operations[wrong_parent.command.command_id].succeeded
 
+    for missing_parent in (pulse_request.command, schedule.command):
+        original = control.OperationContext.FromString(
+            missing_parent.parent_operation.SerializeToString()
+        )
+        missing_parent.ClearField("parent_operation")
+        assert not trial._interrupted_schedule_matches(pulse_request, schedule)
+        missing_parent.parent_operation.CopyFrom(original)
+
+    pulse_request.command.parent_operation.command_id = ""
+    schedule.command.parent_operation.command_id = ""
+    assert not trial._interrupted_schedule_matches(pulse_request, schedule)
+
 
 def _retain_stopped_schedule(trial_state: WorkerTrialState) -> None:
     trial_state.stopped_schedule = trial_state.schedule
     trial_state.schedule = None
+
+
+@pytest.mark.parametrize("stop_kind", ["StopTrial", "InterruptSession"])
+@pytest.mark.parametrize(
+    "off_timing", ["before", "after", "missing", "failed", "free", "overlap"]
+)
+def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
+    monkeypatch: pytest.MonkeyPatch, stop_kind: str, off_timing: str
+) -> None:
+    from cephvr.acquisition.worker import capture_runtime, execution, trial_stop
+
+    base = host_time_ns()
+    clock = [base]
+    for module in (capture_runtime, execution, trial_stop):
+        monkeypatch.setattr(module, "host_time_ns", lambda: clock[0])
+    context = _worker_context()
+    context.work.session.session_id = str(uuid4())
+    work = control.WorkContext(
+        trial=control.TrialContext(session=context.work.session, trial_id=str(uuid4()))
+    )
+    state = _worker_state(context)
+    state.limits = AcquisitionControlLimits.from_message_limit(1024 * 1024)
+    state.confirmed_configuration_revision = 7
+    wake, sealed, completed, stopped, overlapped, released = (Event() for _ in range(6))
+    errors: list[BaseException] = []
+    delivered: list[acq.WorkerLifecycleEvidence] = []
+    operations: list[acq.WorkerOperationReport] = []
+    sdk: list[object] = []
+
+    class Adapter:
+        margin = False
+
+        def begin_terminal_drain(self):
+            sdk.append("generation-stop")
+            return True
+
+        def confirm_drain_margin(self):
+            self.margin = True
+            sdk.append("margin")
+
+        def stop_capture(self, deadline_ns, **kwargs):
+            sdk.append(("sdk-stop", deadline_ns))
+            return PurgeEvidence(0 if self.margin else None, None, self.margin)
+
+        def read_transport_counters(self):
+            return None
+
+        def release_device(self):
+            released.set()
+
+    adapter = Adapter()
+    captures = WorkerCaptureResources(adapter, context, lambda _: None)  # type: ignore[arg-type]
+    captures._active = True
+    captures._timing = "free_running" if off_timing == "free" else "external_trigger"
+    captures._frame_timeout_ns = 1_000_000_000
+    captures.capture = SimpleNamespace(  # type: ignore[assignment]
+        received_frame_count=3,
+        excluded_frame_count=2,
+        last_excluded_counter=None,
+        recording_queue=None,
+        pixel_pool=None,
+    )
+    captures._window = CaptureWindow(base - 100, base + 60_000_000_000)
+    captures._scheduled_start_ns = base - 100
+    captures._scheduled_end_ns = base + 60_000_000_000
+    bootstrap = SimpleNamespace(
+        context=context,
+        file_policy=SimpleNamespace(post_cutoff_drain_margin_ns=0),
+        control_policies=control.ControlPolicies(
+            trial_finished=control.WaitPolicy(initial_ns=1_000_000_000)
+        ),
+    )
+    preparation = object.__new__(WorkerSessionPreparation)
+    preparation.state = state
+    preparation.session_ready = True
+    lifecycle = WorkerTrialLifecycle(
+        bootstrap,
+        state,
+        adapter,
+        captures,
+        None,  # type: ignore[arg-type]
+        report_lifecycle=lambda request, evidence, deadline: executor._report_lifecycle(
+            request, evidence, deadline
+        ),
+        source=lambda target: target,
+        warning_occurrence=lambda _: None,
+        recording_warning_occurrence=lambda *args: None,
+        begin_warning_scope=lambda *args, **kwargs: None,
+        complete_warning_scope=lambda: None,
+        external_wake=lambda: None,
+        recording_first_frame=lambda _: None,
+        recording_isolated=lambda *args: None,
+        require_ready_session=preparation.require_ready_session,
+        capability_resource_released=lambda *args: None,
+    )
+    schedule = acq.WorkerSchedule(
+        command=acq.WorkerCommand(
+            command_id=str(uuid4()),
+            target=context,
+            parent_operation=control.OperationContext(command_id=str(uuid4())),
+        ),
+        start_monotonic_ns=base - 100,
+        end_monotonic_ns=base + 60_000_000_000,
+    )
+    schedule.command.target.work.CopyFrom(work)
+    lifecycle.trial_state.schedule = schedule
+    executor = object.__new__(WorkerOperationExecutor)
+    executor.state = state
+    executor.bootstrap = bootstrap
+    executor._coordinator_loss_handled = False
+    executor._cancelled = Event()
+    executor._latest_work = None
+    executor.trial = lifecycle
+    executor.recording = None
+    executor.preparation = preparation
+    executor.health = SimpleNamespace(flush=lambda deadline: None)
+    executor._source = lambda target: target
+    executor.report_dispatcher = SimpleNamespace(
+        operation=lambda report, deadline: (
+            operations.append(
+                acq.WorkerOperationReport.FromString(report.SerializeToString())
+            ),
+            completed.set(),
+            stopped.set()
+            if report.operation.context.command_id == stop.command.command_id
+            else None,
+        ),
+        lifecycle=lambda report, deadline: delivered.append(report),
+    )
+    stop = (
+        acq.WorkerStop(issued_monotonic_ns=base)
+        if stop_kind == "StopTrial"
+        else acq.WorkerInterrupt(issued_monotonic_ns=base)
+    )
+    stop.command.command_id = str(uuid4())
+    stop.command.target.CopyFrom(context)
+    if stop_kind == "StopTrial":
+        stop.command.target.work.CopyFrom(work)
+    deadline = base + 2_000_000_000
+    off = acq.WorkerPulseEvidence(
+        command=acq.WorkerCommand(
+            command_id=str(uuid4()),
+            target=context,
+            parent_operation=schedule.command.parent_operation,
+        ),
+        camera=context.camera,
+        evidence=mcu.PulseCommandEvidence(
+            command=mcu.PULSE_BOUNDARY_COMMAND_OFF,
+            connection_id="connection",
+            request_id=str(uuid4()),
+            behavioral_selected=True,
+            stop_issued_monotonic_ns=base,
+            dispatched_monotonic_ns=base + 1,
+            acknowledged_monotonic_ns=base + 2,
+            outcome=mcu.PULSE_COMMAND_OUTCOME_REJECTED
+            if off_timing == "failed"
+            else mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+            applied=off_timing != "failed",
+        ),
+    )
+    executor.cleanup = WorkerCleanupLifecycle(
+        state,
+        adapter,
+        captures,
+        None,  # type: ignore[arg-type]
+        capacity=state.limits.safety_reserve_records,
+        extra_resources=lambda: {},
+        report_lifecycle=executor._report_lifecycle,
+        report_operation=executor._report,
+        shutdown=lambda deadline: None,
+        recording_reconciled=lambda: None,
+        external_wake=wake.set,
+    )
+    off.command.target.work.CopyFrom(work)
+
+    def execute(name, request, bound):
+        executor.execute(name, request, bound)
+        if name == stop_kind:
+            sealed.set()
+        if name == "Cleanup":
+            overlapped.set()
+
+    def advance():
+        lifecycle.advance_due_stages()
+        executor.cleanup.advance()
+
+    owner = SerializedCameraOwner(
+        capacity=8,
+        safety_capacity=8,
+        execute=execute,
+        capture_once=lambda handoff: wake.wait(0.01) and handoff(),
+        capture_active=lambda: captures.active,
+        next_deadline_ns=lifecycle.next_deadline_ns,
+        advance_due_stages=advance,
+        wait_control=lambda timeout: wake.wait(timeout / 1e9),
+        wake_control=wake.set,
+        clear_control=wake.clear,
+        operation_failed=lambda name, error: errors.append(error),
+        owner_failed=errors.append,
+        idle_maintenance_interval_ns=100_000_000,
+    )
+
+    def send(name, request, bound=deadline):
+        command = request if isinstance(request, acq.WorkerCommand) else request.command
+        state.commands.admit(
+            command.command_id,
+            request.SerializeToString(),
+            base,
+            work_key=(
+                command.target.work.trial.trial_id
+                if command.target.work.WhichOneof("work") == "trial"
+                else command.target.work.session.session_id
+            ),
+            deadline_ns=bound,
+        )
+        state.operations[command.command_id] = control.OperationState(
+            context=control.OperationContext(command_id=command.command_id),
+            command=name,
+            work=command.target.work,
+        )
+        owner.reserve(name, request, bound).commit()
+
+    owner.start()
+    try:
+        if off_timing == "before":
+            send("RecordPulseEvidence", off)
+            assert completed.wait(1)
+            completed.clear()
+        send(stop_kind, stop)
+        assert sealed.wait(1)
+        assert captures.admission_stop_ns == base
+        effective_deadline = deadline
+        if off_timing not in {"before", "free"}:
+            assert captures.active and not sdk
+            assert not state.operations[stop.command.command_id].complete
+            assert captures.next_deadline_ns() == deadline
+            if off_timing == "overlap":
+                second = acq.WorkerInterrupt(
+                    command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
+                    issued_monotonic_ns=base + 1,
+                )
+                send("InterruptSession", second, deadline + 1_000_000_000)
+                cleanup = acq.WorkerCommand(command_id=str(uuid4()), target=context)
+                effective_deadline = deadline - 500_000_000
+                send("Cleanup", cleanup, effective_deadline)
+                assert overlapped.wait(1)
+                assert not released.is_set() and captures.active
+                assert lifecycle.stop_request is stop
+                assert captures.admission_stop_ns == base
+                assert captures.next_deadline_ns() == effective_deadline
+            if off_timing == "missing":
+                clock[0] = deadline
+                owner.external_wake()
+            else:
+                send("RecordPulseEvidence", off)
+        assert stopped.wait(1)
+        assert not captures.active
+        assert lifecycle.trial_state.end_marker is not None
+        assert lifecycle.trial_state.end_marker.excluded_accounting_complete == (
+            off_timing in {"before", "after", "free", "overlap"}
+        )
+        operation_results = {
+            item.operation.context.command_id: item.operation for item in operations
+        }
+        assert operation_results[stop.command.command_id].succeeded == (
+            off_timing != "missing"
+        )
+        assert lifecycle.stop_request is stop
+        assert sdk[-1] == ("sdk-stop", effective_deadline)
+        assert len([item for item in delivered if item.HasField("finished")]) == 1
+        finished = next(item for item in delivered if item.HasField("finished"))
+        assert finished.operation.command_id == stop.command.command_id
+        assert finished.source.work == stop.command.target.work
+        if off_timing == "overlap":
+            assert released.wait(1)
+            operation_results = {
+                item.operation.context.command_id: item.operation for item in operations
+            }
+            assert operation_results[second.command.command_id].succeeded
+            assert operation_results[cleanup.command_id].succeeded
+    finally:
+        assert owner.stop(1)
+    assert not errors
 
 
 def test_blocking_wait_wakeup_verification_uses_loop_and_respects_deadline() -> None:
@@ -1289,6 +1599,8 @@ def test_cleanup_releases_owned_resources_before_reporting_exact_evidence() -> N
     reports: list[acq.WorkerLifecycleEvidence] = []
 
     class Captures:
+        active = False
+
         def release(self) -> tuple[object, ...]:
             events.append("capture-release")
             return (SimpleNamespace(resource_id="ring:preview"),)
@@ -1368,6 +1680,8 @@ def test_cleanup_continuation_fails_at_original_deadline_without_releasing_camer
             return recording_cleanup
 
     class Captures:
+        active = False
+
         def release(self) -> tuple[object, ...]:
             events.append("capture-release")
             return ()
@@ -1429,6 +1743,8 @@ def test_ambient_cleanup_waits_for_recording_proof_then_wakes_and_releases() -> 
             events.append(("recording-reconciled", deadline_ns))
 
     class Captures:
+        active = False
+
         def release(self) -> tuple[object, ...]:
             events.append("capture-release")
             return ()

@@ -1,0 +1,13 @@
+{
+  "pid": 948,
+  "time": "2026-10-15T12:53:43.8064861+09:00",
+  "command": "scripts/start_runtime_gui.py --no-tracking",
+  "prior_exit": {
+    "all_owned_processes_absent": true,
+    "controller_channel_loss": "eof",
+    "controller_generation": "e304e9ee-5b88-49ef-9306-15c618bbb053",
+    "format_version": 1,
+    "observed_monotonic_ns": 58535546324100,
+    "supervisor_generation": "0540b1e3-4fe8-4281-86aa-3d1aa193b9e7"
+  }
+}

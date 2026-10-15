@@ -38,6 +38,7 @@ from cephvr.acquisition.worker.recording_fault import RecordingFaultLifecycle
 from cephvr.acquisition.worker.recording_preparation import TrialRecordingPreparation
 from cephvr.acquisition.worker.recording_runtime import WorkerRecordingRuntime
 from cephvr.acquisition.worker.trial_recording_terminal import TrialRecordingTerminal
+from cephvr.acquisition.worker.trial_state import WorkerTrialState
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.nominal_video_grid import NominalVideoGrid
 
@@ -75,6 +76,8 @@ def test_setup_cleanup_does_not_submit_to_an_uninstalled_recording_thread() -> N
     cleanup = cast(
         WorkerCleanupLifecycle,
         SimpleNamespace(
+            captures=SimpleNamespace(active=False),
+            recording_finish_pending=lambda: False,
             recording=SimpleNamespace(
                 enabled=True, recording_queue=None, fail_cleanup=fail_cleanup
             ),
@@ -84,6 +87,107 @@ def test_setup_cleanup_does_not_submit_to_an_uninstalled_recording_thread() -> N
     WorkerCleanupLifecycle.begin(cleanup, 100)
     assert WorkerCleanupLifecycle._reconcile(cleanup, 100)
     assert cleanup._future is None
+
+
+@pytest.mark.parametrize("expired", [False, True])
+def test_cleanup_preserves_pending_terminal_writer_until_original_bound(
+    monkeypatch: pytest.MonkeyPatch, expired: bool
+) -> None:
+    from cephvr.acquisition.worker import cleanup_lifecycle
+
+    now = [100]
+    monkeypatch.setattr(cleanup_lifecycle, "host_time_ns", lambda: now[0])
+    events = []
+    future = Future()
+    request = acq.WorkerInterrupt(command=acq.WorkerCommand(command_id="interrupt"))
+    request.command.target.work.session.session_id = "session"
+    trial = WorkerTrialState(
+        finished_future=future, stop_request=request, finish_deadline_ns=500
+    )
+    output = control.OutputResult(
+        output_key="owned-video",
+        path="owned.mp4",
+        closure=control.OUTPUT_CLOSURE_CLOSED,
+        artifact_present=True,
+    )
+
+    class Recording:
+        enabled = True
+        recording_queue = object()
+
+        def completed_results(self):
+            return future.result()
+
+        def recycle_finished(self, deadline):
+            events.append(("recycle", deadline))
+            self.recording_queue = None
+
+        def fail_cleanup(self, *, deadline_ns):
+            assert now[0] >= deadline_ns
+            events.append(("abort-after-bound", deadline_ns))
+            result = Future()
+            result.set_result([])
+            return result
+
+    recording = Recording()
+    captures = SimpleNamespace(
+        active=False,
+        advance_due_stage=lambda: None,
+        release=lambda: events.append("release-buffers") or (),
+    )
+    state = SimpleNamespace(
+        context=acq.WorkerContext(worker=control.ProcessIdentity(generation="worker")),
+        state_revision=0,
+        complete_operation=lambda *args, **kwargs: events.append("complete-cleanup"),
+        finalize_scope=lambda *args: None,
+        finalize_terminal_command=lambda *args: None,
+    )
+    terminal = object.__new__(TrialRecordingTerminal)
+    terminal.trial = trial
+    terminal.recording = recording
+    terminal.captures = captures
+    terminal.state = state
+    terminal.recording_fault = SimpleNamespace(
+        cleanup_pending=False, faulted_session=False
+    )
+    terminal._source = lambda target: target
+    terminal._report_lifecycle = lambda request, evidence, deadline: events.append(
+        ("finished", evidence.operation.command_id, tuple(evidence.finished.outputs))
+    )
+    terminal._operation_deadline = lambda command: 500
+    cleanup = WorkerCleanupLifecycle(
+        state,
+        SimpleNamespace(release_device=lambda: events.append("release-device")),
+        captures,
+        recording,  # type: ignore[arg-type]
+        capacity=2,
+        extra_resources=lambda: {},
+        report_lifecycle=lambda *args: events.append("cleanup-evidence"),
+        report_operation=lambda *args: events.append("cleanup-operation"),
+        shutdown=lambda deadline: None,
+        recording_reconciled=lambda: setattr(trial, "finished_future", None),
+        external_wake=lambda: None,
+        recording_finish_pending=lambda: trial.finished_future is not None,
+    )
+    command = acq.WorkerCommand(command_id="cleanup", target=request.command.target)
+    assert not cleanup.begin_operation(
+        "Cleanup", command, 400, acq.WorkerOperationReport()
+    )
+    cleanup.advance()
+    assert events == [] and not future.done()
+    if expired:
+        now[0] = 400
+        cleanup.advance()
+        assert events[0] == ("abort-after-bound", 400)
+        assert not future.done()
+    else:
+        future.set_result([output])
+        terminal.advance_due_stages()
+        cleanup.advance()
+        assert events[0] == ("finished", "interrupt", (output,))
+        assert events[1] == ("recycle", 500)
+        assert "abort-after-bound" not in str(events)
+        assert events.index("release-device") > events.index("release-buffers")
 
 
 def test_cancel_setup_before_trial_recording_is_installed_is_confirmed() -> None:
@@ -885,7 +989,9 @@ class _Runtime:
         self.recycled_deadline_ns = deadline_ns
 
 
-def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() -> None:
+def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline(
+    monkeypatch,
+) -> None:
     work = control.WorkContext(
         trial=control.TrialContext(
             session=control.SessionContext(session_id="session"),
@@ -915,20 +1021,33 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
     )
     reports: list[tuple[tuple[str, ...], int, bool]] = []
     wake_count: list[int] = []
+    ordering: list[str] = []
+    details: list[str] = []
+    original_cleanup = run.fail_cleanup
+
+    def fail_cleanup(*, deadline_ns):
+        ordering.append("cleanup")
+        return original_cleanup(deadline_ns=deadline_ns)
+
+    monkeypatch.setattr(run, "fail_cleanup", fail_cleanup)
 
     def report_isolation(
-        _work: control.WorkContext,
-        _operation: str,
+        actual_work: control.WorkContext,
+        operation: str,
         observed_ns: int,
         resource_ids: tuple[str, ...],
-        _detail: str,
+        detail: str,
         confirmed: bool,
-        _capture: control.ContinuingFunctionEvidence,
+        actual_capture: control.ContinuingFunctionEvidence,
     ) -> None:
+        assert actual_work == work
+        assert operation == "schedule-command"
+        assert actual_capture == capture
+        ordering.append("report")
+        details.append(detail)
         reports.append((resource_ids, observed_ns, confirmed))
 
     tracker = RecordingFaultLifecycle(
-        warning_occurrence=lambda *_args: None,
         report_isolation=report_isolation,
         external_wake=lambda: wake_count.append(1),
     )
@@ -948,7 +1067,7 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
             "behavioral_video",
             "behavioral_depth",
         ),
-        detach_recording=lambda: None,
+        detach_recording=lambda: ordering.append("detach"),
     )
     assert future is run.cleanup
     assert tracker.cleanup_pending
@@ -959,6 +1078,8 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline() ->
         "behavioral_depth",
     )
     assert reports == [(expected_closure, 250, False)]
+    assert details == ["stdin write failed"]
+    assert ordering == ["detach", "report", "cleanup"]
     assert wake_count == [1]
 
     assert tracker.reconcile(

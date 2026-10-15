@@ -1,9 +1,38 @@
 """Bounded normalized rectangles for live GUI affine calibration updates."""
 
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .calibration_placement import CalibrationPlacement
 from collections.abc import Iterable, Sequence
 
-LIVE_ADJUSTABLE_VIEWS = frozenset({"frame_grid"})
+LIVE_ADJUSTABLE_VIEWS = frozenset(
+    {"frame_grid", "photodiode_placement", "blackout_placement"}
+)
+
+
+def validated_update(
+    view: str, items: Iterable[tuple[str, Sequence[float]]], placement_json: str = ""
+) -> dict[str, tuple[tuple[float, float], ...]] | CalibrationPlacement:
+    from .calibration_placement import PLACEMENT_VIEWS, parse_placement
+
+    items = tuple(items)
+    if view in PLACEMENT_VIEWS:
+        if items or not placement_json:
+            raise CalibrationAdjustmentRejected(
+                "Placement requires one complete output snapshot"
+            )
+        placement = parse_placement(placement_json)
+        placement.validate_view(view)
+        return placement
+    if view != "frame_grid" or placement_json:
+        raise CalibrationAdjustmentRejected(
+            "Update does not match the active calibration view"
+        )
+    return validated_adjustments(items)
 
 
 class CalibrationAdjustmentRejected(ValueError):

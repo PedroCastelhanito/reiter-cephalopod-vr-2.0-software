@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-15T12:45:27.7827455+09:00",
+  "scope": "E06/A10/A11 exact retired scheduled boundary authority",
+  "validation": "516 passed/2 deselected;Ruff format5/win32mypy3/695boundaryzero/diffcheck",
+  "files": [
+    {
+      "path": "src/cephvr/acquisition/coordinator/trial_pulses.py",
+      "sha256": "D1CF6C8B3B6A070889A46C59870CAFCEEF4377CFB10494D7905C7C47746E7894"
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/trials.py",
+      "sha256": "5212BD0D3A3329CF139EACBE493A4DEE333E94B0240D6AC9743EBAA39506C17A"
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/trial_termination.py",
+      "sha256": "D722700E014FD2F827C40EFD520BFDC7336DF3CA06CC639B5ED21BA830993AE8"
+    },
+    {
+      "path": "tests/acquisition/test_pulse_evidence.py",
+      "sha256": "B554312FC98732C552520D3BE87B00F057F19E1D1D86A4F5C496E089D11DCAE8"
+    },
+    {
+      "path": "tests/acquisition/test_trial_lifecycle.py",
+      "sha256": "C91050450E9F7EEB6B77F4A285F92A172CD997F63ADF28F48D2779E8AEFE8888"
+    }
+  ],
+  "native": "Astra frozen;180Abort60 followed immediately by120 crossing old boundary pending",
+  "stderr_attribution": "Prior4 errors file LastWriteTime12:37:37, before natural12012:38:31; exact worker command detail not recoverable from operatorview"
+}

@@ -1,0 +1,176 @@
+{
+  "method": "Saved GLB vertex centers through production CPU off-axis matrix and saved affine mapping; no GPU or projector action",
+  "artifact_identity": {
+    "diagnostic_display_profile.json": {
+      "sha256": "37e5f4b68f8bf3634eb667864564807b27abacbf6dcbd175ce48f4e591953955",
+      "mtime_ns": 1792032733678300100
+    },
+    "diagnostic_bottom.json": {
+      "sha256": "7de2e560fef91d3def1969ccb82e166352e489110cb7cd01d9d9986344bc224d",
+      "mtime_ns": 1792032733678300100
+    },
+    "frame_grid.glb": {
+      "sha256": "70f2c83c5cd00a309ad0a6f178a1e798132b9e30a92afd3425e84ac14a2a5789",
+      "mtime_ns": 1792032733679300100
+    }
+  },
+  "output_px": [
+    720,
+    1280
+  ],
+  "full_raster_extent_mm": [
+    176.0,
+    96.0
+  ],
+  "implied_pitch_mm_per_pixel": [
+    0.24444444444444444,
+    0.075
+  ],
+  "valid_area": [
+    0.010416666666666666,
+    0.13828125,
+    0.9618055555555556,
+    0.87265625
+  ],
+  "valid_pixels": [
+    685.0,
+    940.0
+  ],
+  "grid": {
+    "image_x": {
+      "line_count": 18,
+      "world_pitch_range_mm": [
+        10.0,
+        10.0
+      ],
+      "output_pitch_range_px": [
+        40.356735246500875,
+        40.3567352465011
+      ],
+      "lines": [
+        {
+          "world_mm": 0.0,
+          "pixel": 5.9039531166318655
+        },
+        {
+          "world_mm": 10.0,
+          "pixel": 46.26068836313284
+        },
+        {
+          "world_mm": 20.0,
+          "pixel": 86.6174236096338
+        },
+        {
+          "world_mm": 30.0,
+          "pixel": 126.97415885613478
+        },
+        {
+          "world_mm": 40.0,
+          "pixel": 167.3308941026358
+        },
+        {
+          "world_mm": 50.0,
+          "pixel": 207.68762934913673
+        },
+        {
+          "world_mm": 60.0,
+          "pixel": 248.04436459563772
+        },
+        {
+          "world_mm": 70.0,
+          "pixel": 288.4010998421387
+        },
+        {
+          "world_mm": 80.0,
+          "pixel": 328.7578350886397
+        },
+        {
+          "world_mm": 90.0,
+          "pixel": 369.1145703351406
+        },
+        {
+          "world_mm": 100.0,
+          "pixel": 409.47130558164173
+        },
+        {
+          "world_mm": 110.0,
+          "pixel": 449.8280408281426
+        },
+        {
+          "world_mm": 120.0,
+          "pixel": 490.1847760746436
+        },
+        {
+          "world_mm": 130.0,
+          "pixel": 530.5415113211446
+        },
+        {
+          "world_mm": 140.0,
+          "pixel": 570.8982465676456
+        },
+        {
+          "world_mm": 150.0,
+          "pixel": 611.2549818141466
+        },
+        {
+          "world_mm": 160.0,
+          "pixel": 651.6117170606476
+        },
+        {
+          "world_mm": 170.0,
+          "pixel": 691.9684523071486
+        }
+      ]
+    },
+    "image_y": {
+      "line_count": 9,
+      "world_pitch_range_mm": [
+        10.0,
+        10.0
+      ],
+      "output_pitch_range_px": [
+        132.6561886518199,
+        132.6561886518202
+      ],
+      "lines": [
+        {
+          "world_mm": 20.0,
+          "pixel": 112.87524539271999
+        },
+        {
+          "world_mm": 30.0,
+          "pixel": 245.5314340445399
+        },
+        {
+          "world_mm": 40.0,
+          "pixel": 378.1876226963601
+        },
+        {
+          "world_mm": 50.0,
+          "pixel": 510.84381134818
+        },
+        {
+          "world_mm": 60.0,
+          "pixel": 643.5
+        },
+        {
+          "world_mm": 70.0,
+          "pixel": 776.15618865182
+        },
+        {
+          "world_mm": 80.0,
+          "pixel": 908.81237730364
+        },
+        {
+          "world_mm": 90.0,
+          "pixel": 1041.46856595546
+        },
+        {
+          "world_mm": 100.0,
+          "pixel": 1174.12475460728
+        }
+      ]
+    }
+  },
+  "limits": "Latest saved launch bundle is not a live resource/evidence snapshot. Live adjustments, physical measurements, optics, projector settings and observer perspective remain unverified."
+}

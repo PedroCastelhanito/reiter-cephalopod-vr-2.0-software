@@ -1,0 +1,47 @@
+{
+  "scope": "three Eye native StartGrabbing latency probes after managed application exit; no acceptance or deadline changes",
+  "attempts": [
+    {
+      "repeat": 0,
+      "start_call_ns": 49363357259000,
+      "start_return_ns": 49363399055200,
+      "first_result_ns": 49363410181500,
+      "valid": true,
+      "width": 1920,
+      "height": 1200,
+      "stopped_ns": 49363446529500
+    },
+    {
+      "repeat": 1,
+      "start_call_ns": 49363447134300,
+      "start_return_ns": 49363483253800,
+      "first_result_ns": 49363494323000,
+      "valid": true,
+      "width": 1920,
+      "height": 1200,
+      "stopped_ns": 49363530063700
+    },
+    {
+      "repeat": 2,
+      "start_call_ns": 49363530488900,
+      "start_return_ns": 49363566471300,
+      "first_result_ns": 49363577550900,
+      "valid": true,
+      "width": 1920,
+      "height": 1200,
+      "stopped_ns": 49363613129200
+    }
+  ],
+  "settings": {
+    "TriggerSelector": "FrameStart",
+    "TriggerMode": "Off",
+    "AcquisitionFrameRateEnable": "1",
+    "AcquisitionFrameRate": "60.0",
+    "Width": "1920",
+    "Height": "1200",
+    "PixelFormat": "BayerRG8",
+    "ExposureTime": "5000.0"
+  },
+  "persistent_settings_unchanged": false,
+  "closed": true
+}

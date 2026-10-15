@@ -24,6 +24,8 @@ class BlackoutZones(Card):
         assert header is not None
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        self.placement_button = button("Launch blackout placement")
+        self.body.addWidget(self.placement_button)
         self.body.addWidget(self.table)
         self.rows: list[tuple[QComboBox, list[QLineEdit]]] = []
         self.add_button = button("Add zone")

@@ -924,6 +924,127 @@ def pack_glb(document, binary):
     return struct.pack("<4sII", b"glTF", 2, 12 + len(chunks)) + chunks
 
 
+@pytest.mark.parametrize("external", [False, True])
+def test_arena_bundle_subresource_ids_validate_and_bind_gpu_textures(
+    tmp_path, monkeypatch, external
+):
+    from types import SimpleNamespace
+
+    from PIL import Image
+
+    from cephvr.visual_stimulus.config.models.artifact_models import ResourceManifest
+    from cephvr.visual_stimulus.rendering import arena_gpu
+    from cephvr.visual_stimulus.resources.assets import arena_subresource_id
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    document, binary = glb_fixture(texture=True, external=external)
+    binary += b"\0" * (-len(binary) % 4)
+    offset = len(binary)
+    binary += struct.pack("<6f", 0, 0, 1, 0, 0, 1)
+    document["bufferViews"].append(
+        {"buffer": 0, "byteOffset": offset, "byteLength": 24}
+    )
+    document["accessors"].append(
+        {"bufferView": 2, "componentType": 5126, "type": "VEC2", "count": 3}
+    )
+    document["meshes"][0]["primitives"][0]["attributes"]["TEXCOORD_0"] = 2
+    document["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"] = {"index": 0}
+    image = io.BytesIO()
+    Image.new("RGB", (2, 2), (123, 45, 67)).save(image, format="PNG")
+    if external:
+        (tmp_path / "mesh.bin").write_bytes(binary)
+        (tmp_path / "textures").mkdir()
+        (tmp_path / "textures/fish.png").write_bytes(image.getvalue())
+    else:
+        offset = len(binary)
+        binary += image.getvalue()
+        document["bufferViews"].append(
+            {"buffer": 0, "byteOffset": offset, "byteLength": len(image.getvalue())}
+        )
+        document["images"] = [{"bufferView": 3, "mimeType": "image/png"}]
+    document["buffers"][0]["byteLength"] = len(binary)
+    (tmp_path / "arena.glb").write_bytes(pack_glb(document, binary))
+    sources = []
+
+    class Source:
+        def __init__(self, path):
+            self.path, self.closed = path, False
+            sources.append(self)
+
+        def independent_reader(self):
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    asset_id = "a" * 128
+    program = SimpleNamespace(
+        assets=(
+            Asset(
+                asset_id=asset_id,
+                logical_path="arena.glb",
+                profile="glb2_static_unlit_v1",
+                color_override=None,
+            ),
+        ),
+        instances=(),
+        sequence=(),
+    )
+    bundle = prepare_resources(
+        program,
+        tmp_path,
+        BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000),
+        announce=lambda *_: None,
+        source_factory=Source,
+        snapshot_limit_bytes=100_000,
+        video_index_limit_bytes=1000,
+        glb_element_limit=1000,
+        output_count=4,
+    )
+    manifest = ResourceManifest.model_validate_json(bundle.manifest.model_dump_json())
+    ids = {item.fingerprint.resource_id for item in manifest.resources}
+    texture_id = arena_subresource_id(asset_id, "texture", 0)
+    assert texture_id in ids
+    assert all(len(identifier) <= 128 and ":" not in identifier for identifier in ids)
+    assert all(set(item.dependencies) <= ids for item in manifest.resources)
+    expected_sources = 3 if external else 1
+    assert len(sources) == expected_sources
+    assert len(bundle.asset_set.assets) == expected_sources
+    assert len(ids) == expected_sources + 1
+    allocations, uploaded = [], []
+
+    class Allocation:
+        def __init__(self):
+            self.released = False
+            allocations.append(self)
+
+        def release(self):
+            self.released = True
+
+    class Context:
+        def buffer(self, _):
+            return Allocation()
+
+    def upload(_output, _context, pixels, _opaque, _retain):
+        uploaded.append(pixels)
+        return Allocation()
+
+    monkeypatch.setattr(arena_gpu, "_configure_sampler", lambda *_: None)
+    owner = arena_gpu.upload_arena(
+        bundle.prepared_content[asset_id],
+        {"front": SimpleNamespace(context=Context())},
+        bundle.prepared_content,
+        asset_id,
+        upload,
+    )
+    assert len(uploaded) == 2
+    assert all(pixels is bundle.prepared_content[texture_id] for pixels in uploaded)
+    owner.release()
+    assert allocations and all(item.released for item in allocations)
+    assert bundle.asset_set.close() == ()
+    assert all(source.closed for source in sources)
+
+
 def test_glb_indexed_unlit_geometry_and_sampler_sources_are_preserved():
     document, binary = glb_fixture(texture=True, external=True)
     observed = []

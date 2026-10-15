@@ -983,6 +983,28 @@ async def test_unwired_eye_preview_rejects_before_worker_or_serial_access():
     # No workers/serial owner are installed: rejection must precede device access.
 
 
+@pytest.mark.parametrize("acknowledged", [False, True])
+async def test_free_running_eye_preview_requires_unaligned_ack_before_device_access(
+    acknowledged: bool,
+):
+    owner = object.__new__(ManualPreview)
+    owner.configuration = ConfigurationRecord(
+        control.AcquisitionSettings(), runtime.AcquisitionFilePolicies(), revision=1
+    )
+    eye = owner.configuration.settings.eye_tracking
+    eye.device.device_id = "eye-serial"
+    eye.device.frame_timing = camera.FRAME_TIMING_FREE_RUNNING
+    eye.device.unaligned_free_running = acknowledged
+    eye.device.settings.frame_rate_hz = 60
+    result = await owner._start(
+        wire.AcquisitionCameraCommand(camera=camera.CAMERA_ROLE_EYE_TRACKING), 100
+    )
+    assert result.result == control.COMMAND_RESULT_REJECTED
+    assert result.failure.code == (
+        "PREVIEW_DEPTH" if acknowledged else "EYE_TRIGGER_REQUIRED"
+    )
+
+
 class _Port:
     def __init__(self, preview: WorkerPreview) -> None:
         self.preview = preview
@@ -2534,3 +2556,90 @@ async def test_pulse_pause_retains_stopping_preview_until_tracking_release(
         await task
     assert worker.preview is preview and preview.stopping
     assert tracking_id in resources
+
+
+@pytest.mark.parametrize("restart", [False, True])
+@pytest.mark.parametrize("tracking_present", [False, True])
+async def test_tracking_camera_preview_allocates_consumer_ring_only_for_launched_tracking(
+    monkeypatch, restart, tracking_present
+):
+    module = pulse_module if restart else start_module
+    role = camera.CAMERA_ROLE_TRACKING
+    attachment = acq.FrameBufferAttachment()
+    attachment.buffer.camera = role
+    attachment.buffer.kind = acq.FRAME_BUFFER_KIND_PREVIEW
+    attachment.buffer.allocation_id = "preview-ring"
+    preview_slot = AsyncMock(return_value=(attachment, object()))
+    tracking_slot = AsyncMock(
+        return_value=(acq.FrameBufferAttachment(), acq.FrameBufferAttachment())
+    )
+    monkeypatch.setattr(module, "allocate_manual_preview_slot", preview_slot)
+    monkeypatch.setattr(module, "allocate_manual_tracking_slot", tracking_slot)
+    port = SimpleNamespace(
+        prepare_preview=AsyncMock(
+            return_value=control.CommandAdmission(
+                result=control.COMMAND_RESULT_REJECTED
+            )
+        )
+    )
+    monkeypatch.setattr(
+        module,
+        "retain_worker_command",
+        lambda *args, **kwargs: (
+            acq.WorkerCommand(),
+            SimpleNamespace(command_id="child"),
+            port,
+        ),
+    )
+    settings = control.AcquisitionSettings(tracking_ring_frames=3)
+    settings.tracking.sdk_buffer_count = 4
+    policies = runtime.AcquisitionFilePolicies()
+    policy = policies.cameras.add(camera=role, frame_silence_timeout_ns=100)
+    worker = SimpleNamespace(preview=None)
+    owner = SimpleNamespace(
+        identity=SimpleNamespace(
+            controller=control.ProcessIdentity(role="controller"),
+            tracking=control.ProcessIdentity(
+                role="tracking", generation="tracking-generation"
+            )
+            if tracking_present
+            else control.ProcessIdentity(),
+        ),
+        configuration=ConfigurationRecord(settings, policies, revision=7),
+        resources={},
+        resource_ledger=object(),
+        resource_port=object(),
+        device_status=SimpleNamespace(resolve_camera=lambda *args, **kwargs: None),
+    )
+    with pytest.raises(
+        RuntimeError, match="preparation.*rejected|re-preparation.*admitted"
+    ):
+        if restart:
+            await ManualPreviewPulseLifecycle._prepare_restart(
+                owner,
+                worker,
+                PausedPreview(role, camera.CameraResolvedState(), 8),
+                1000,
+                control.OperationContext(command_id="parent"),
+            )
+        else:
+            await ManualPreviewStart._prepare_preview_run(
+                owner,
+                wire.AcquisitionCameraCommand(camera=role),
+                worker,
+                settings.tracking,
+                policy,
+                camera.CameraResolvedState(),
+                "run",
+                7,
+                1000,
+            )
+    assert preview_slot.await_count == 1
+    assert tracking_slot.await_count == int(tracking_present)
+    payload = port.prepare_preview.call_args.args[0].camera
+    assert [output.buffer.kind for output in payload.outputs] == (
+        [acq.FRAME_BUFFER_KIND_PREVIEW, 0]
+        if tracking_present
+        else [acq.FRAME_BUFFER_KIND_PREVIEW]
+    )
+    assert (worker.preview.tracking_attachment is not None) == tracking_present

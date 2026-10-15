@@ -1,0 +1,26 @@
+{
+  "command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-nostdin",
+    "-stats",
+    "-stats_period",
+    "0.05",
+    "-re",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=size=64x64:rate=30",
+    "-t",
+    "1",
+    "-f",
+    "null",
+    "-"
+  ],
+  "returncode": 0,
+  "bytes": 1643,
+  "carriage_returns": 22,
+  "line_feeds": 14,
+  "scope": "Installed FFmpeg controlled nulloutput fixture; confirms CR stats behavior, not exact lost native exception",
+  "observed_utc": "2026-10-15T01:54:20.725035+00:00"
+}

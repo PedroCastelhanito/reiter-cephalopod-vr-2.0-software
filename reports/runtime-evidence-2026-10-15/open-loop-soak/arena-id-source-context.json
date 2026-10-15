@@ -1,0 +1,34 @@
+{
+  "head": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "scope": "uncommitted reviewed test increment plus existing parent changes; no clean revision claim",
+  "files": [
+    {
+      "path": "src/cephvr/acquisition/config/validation_pulse.py",
+      "sha256": "b6205f8ef935f5f51f5b7f7aa7de6877aee7ea29b3233222d11c82df2882b979"
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/manual_preview.py",
+      "sha256": "45ec6f9a0bc2a62027e95418590673c20f4332ad3d58beeb8c76ef3fb40640a7"
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/trial_pulses.py",
+      "sha256": "c57e6ef8ebbba7b55111bae8f245bd51b6bf8b78a11f01efb3b0913896156b94"
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/resources/assets.py",
+      "sha256": "1738f25cc04c2c92d30a1870220b9554dc8cfc2be6848c5068586f185ec7bedf"
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/resources/arena.py",
+      "sha256": "e5be4f81cacab642c2b65c0557828701c19581530919a0fd8acebb05513ae45d"
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/rendering/arena_gpu.py",
+      "sha256": "1937a7560a59fd10af9cb722276f92ac1a7356f36a27e3654ce598b0b395f35a"
+    },
+    {
+      "path": "config/backends/visual_stimulus_config.toml",
+      "sha256": "f0cea2fd5c1d4805a921071fc564109bf62ee063922839235c5458d887d4c922"
+    }
+  ]
+}

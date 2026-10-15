@@ -1,0 +1,53 @@
+{
+  "scope": "offline copies, no device import/adoption; display profile uses actual native identities plus supplied Pedro geometry, optical calibration unverified; all_outputs_vsync test override",
+  "files": [
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\prepare.py",
+      "sha256": "e00851e3baf76fed017097396bb2d93cd630912f8cad0b858c9096c6d059e852"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\original-last-configuration.json",
+      "sha256": "ca1b1353cb55d75dc127e5210fbc9eb94213a50b2e851200fb3b61421e3d90e7"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\program-arena60.json",
+      "sha256": "db6b30dc977b535265bfe2800bd07167baf4f69b8ee1258dea6a781bb1192887"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\program-combined120.json",
+      "sha256": "6f26ae7938dd0011393c45fbe7b8f5ad48686c7e0ac8da65ec02db0775bfc44e"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\program-combined60.json",
+      "sha256": "16e3d3106d1846488186fee563be46a9013e11e801e4a669c3e6ec52fc73ae8f"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\program-combined900.json",
+      "sha256": "fab17754ad1f32915e5cd8acbf3137f27a9ea348af2c42b44d80b49334026a5d"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\program-textures60.json",
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\candidate-arena60.pb",
+      "sha256": "7d66ef08611b82c3b0140922d6f39908996491f6de27c40b3b63451a7e51253d"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\candidate-combined120.pb",
+      "sha256": "6c8cb13589c10c6e4e1520c7079bb8da047c0444b4d06aab3dfcb219adaf4297"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\candidate-combined60.pb",
+      "sha256": "10435e9137c9bb3dcf3d72d6bd428cb8d55990b798323975dcac0c7fe0c6aaec"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\candidate-combined900.pb",
+      "sha256": "6bb94bbbd498c4bff5acb755cdc436e49c8ea4284a955677404f98e01aae5f4c"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\open-loop-soak\\candidate-textures60.pb",
+      "sha256": "d9340d20485b3ac30811cd5adfde860229034d1128a8263f7e3f82755c4f7706"
+    }
+  ]
+}

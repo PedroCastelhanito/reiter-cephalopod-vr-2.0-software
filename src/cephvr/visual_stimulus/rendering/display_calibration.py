@@ -5,6 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from cephvr.visual_stimulus.config.calibration_placement import (
+    PLACEMENT_VIEWS,
+    CalibrationPlacement,
+)
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.rendering.arena_gpu import ArenaGPUSet, upload_arena
@@ -45,6 +49,8 @@ class DisplayCalibrationRenderer:
         self.prepared: PreparedDisplayCalibration | None = None
         self._arena_gpu: ArenaGPUSet | None = None
         self.valid_areas: dict[str, tuple[float, float, float, float]] = {}
+        self.placement: CalibrationPlacement | None = None
+        self.photodiode_index = 0
 
     def present(
         self, display: DisplayProfile, prepared: PreparedDisplayCalibration
@@ -68,6 +74,9 @@ class DisplayCalibrationRenderer:
         self.announce("visual_stimulus:gpu:" + self._RESOURCE_KEY, None)
         self.display = display
         self.prepared = prepared
+        if display.calibration_view in PLACEMENT_VIEWS:
+            self.placement = CalibrationPlacement.from_display(display)
+            self.placement.validate_display(display, allow_empty_pulse=True)
         self.gpu_resources[self._RESOURCE_KEY] = None
 
         def retain(arena: ArenaGPUSet) -> None:
@@ -86,12 +95,27 @@ class DisplayCalibrationRenderer:
             display, prepared.display_calibration, self.outputs, self.gpu_resources
         )
 
-    def update(self, adjustments: dict[str, tuple[tuple[float, float], ...]]) -> None:
+    def update(
+        self,
+        adjustments: dict[str, tuple[tuple[float, float], ...]] | CalibrationPlacement,
+    ) -> None:
         """Validate all rectangles before writing the already-owned GL buffers."""
         from cephvr.visual_stimulus.config.calibration_adjustments import (
             CalibrationAdjustmentRejected,
             validated_adjustments,
         )
+
+        if isinstance(adjustments, CalibrationPlacement):
+            if (
+                self.display is None
+                or self.display.calibration_view not in PLACEMENT_VIEWS
+            ):
+                raise CalibrationAdjustmentRejected(
+                    "Placement update requires an active placement preview"
+                )
+            adjustments.validate_display(self.display)
+            self.placement = adjustments
+            return
 
         if (
             self.display is None
@@ -182,6 +206,21 @@ class DisplayCalibrationRenderer:
         for output_id, frame in self.frames.items():
             frame.activate()
             context = frame.context
+            if display.calibration_view in PLACEMENT_VIEWS:
+                from .calibration_placement import draw_placement
+                from .photodiode import photodiode_level
+
+                assert self.placement is not None
+                context.disable(self.moderngl.BLEND | self.moderngl.DEPTH_TEST)
+                draw_placement(
+                    context,
+                    frame,
+                    display.calibration_view,
+                    output_id,
+                    self.placement,
+                    photodiode_level(self.photodiode_index),
+                )
+                continue
             if display.calibration_view == "reference_bars":
                 frame.device_fbo.use()
                 context.viewport = (0, 0, frame.width, frame.height)
@@ -307,4 +346,6 @@ class DisplayCalibrationRenderer:
             self.display = None
             self.prepared = None
             self.valid_areas.clear()
+            self.placement = None
+            self.photodiode_index = 0
         return tuple(errors)

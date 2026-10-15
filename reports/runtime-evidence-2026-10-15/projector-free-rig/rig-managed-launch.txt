@@ -1,0 +1,7 @@
+acquisition_behavioral_worker ResolveCameraConfiguration 8d5edf68-28aa-4673-b335-2f1cdcfa79be failed: CameraAdapterError: prior capture has unknown SDK-buffer discard accounting
+ExecuteCameraCommand 717196ee-0587-4862-b75b-7fef0b4bae97 failed: PREVIEW_START_FAILED: prior capture has unknown SDK-buffer discard accounting
+CephVR launcher controller channel lost: eof
+CephVR supervisor shutdown: CONTROLLER_LOST: controller process exited
+CephVR acquisition shutdown: CONTROLLER_PROCESS_LOST: registered controller process exited; acquisition is stopping
+Acquisition MCU claim release remains unconfirmed: registered controller exited before Close RPC completed.
+CephVR launcher supervisor channel lost: eof

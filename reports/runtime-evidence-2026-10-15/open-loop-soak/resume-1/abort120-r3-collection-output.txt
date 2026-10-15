@@ -1,0 +1,98 @@
+reports\runtime-evidence-2026-10-15\open-loop-soak\resume-1\abort120-r3\assessment.json
+{
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "f9af6aa2-d273-4cda-8bf3-840f98158d09",
+      "session_id": "f0e6e4e4-329b-4a70-8a2a-7259cfc4abdd"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-123528",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "operator Abort now"
+    },
+    "cleanup_confirmed": true
+  },
+  "errors": [],
+  "stimulus": {
+    "encoder_outcome": {
+      "kind": "encoder_outcome",
+      "admitted_count": 3636,
+      "input_submitted_count": 3642,
+      "capacity_drop_count": 0,
+      "selected_real_count": 3636,
+      "same_slot_omission_count": 1,
+      "encoded_frame_count": 3642,
+      "duplicate_frame_count": 6,
+      "final_input_group_id": 3636,
+      "cutoff_host_ns": 57832231623400,
+      "exit_code": 0,
+      "eof_sent": true,
+      "drain_confirmed": true
+    },
+    "completion": {
+      "kind": "completion",
+      "cutoff_host_ns": 57832231623400,
+      "last_group_id": 3636,
+      "state_count": 3637,
+      "submission_attempt_count": 14548,
+      "capture_admission_count": 3636,
+      "capture_drop_count": 0,
+      "same_slot_omission_count": 1,
+      "unresolved_attempt_count": 0,
+      "outcome": "completed"
+    }
+  },
+  "metrics": [
+    {
+      "active_capture_slots": 0,
+      "cancelled_captures": 0,
+      "event": "recording_metrics",
+      "evidence_path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-123528\\protocol-data\\DUMMY_123537_stimulus_frames.jsonl",
+      "peak_capture_slots": 13,
+      "queued_captures": 0,
+      "stages_ns": {
+        "capture_ready": {
+          "count": 3636,
+          "max": 18449000,
+          "total": 11447518400
+        },
+        "normalization": {
+          "count": 3636,
+          "max": 5139900,
+          "total": 3703145200
+        },
+        "pipe_write": {
+          "count": 7329,
+          "max": 6418100,
+          "total": 5122284200
+        },
+        "queue_wait": {
+          "count": 3636,
+          "max": 209800300,
+          "total": 10920665300
+        },
+        "readback_poll_pending": {
+          "count": 0,
+          "max": 0,
+          "total": 0
+        },
+        "readback_poll_ready": {
+          "count": 3636,
+          "max": 4224500,
+          "total": 3499456200
+        },
+        "slot_hold": {
+          "count": 3636,
+          "max": 226496200,
+          "total": 67257878000
+        }
+      },
+      "submitted_bytes": 18647040000,
+      "zero_progress_writes": 3687
+    }
+  ]
+}

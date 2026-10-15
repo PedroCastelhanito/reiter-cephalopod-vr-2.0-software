@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-15",
+  "scope": "Local behavior/static checks and isolated GPU pixels; no running application or optical acceptance",
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_display_calibration_rendering.py tests/visual_stimulus/test_lifecycle.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_controller_communication.py tests/visual_stimulus/test_coordinator.py tests/controller/test_device_admission.py -q -m \"not windows and not rig\"",
+      "result": "193 passed in 5.04s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_display_calibration_rendering.py tests/visual_stimulus/test_lifecycle.py tests/gui/test_dashboard.py -q -k \"calibration or placement or photodiode or blackout\" -m \"not windows and not rig\"",
+      "result": "85 passed, 498 deselected in 12.68s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/visual_stimulus/rendering src/cephvr/visual_stimulus/worker",
+      "result": "Success: 50 source files"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "699 modules; zero violations; existing cohesion advisories reviewed"
+    },
+    {
+      "command": "Scoped ruff check and ruff format --check",
+      "result": "9 affected source/test files pass"
+    }
+  ],
+  "native": "pulse-native.json",
+  "initial_failures": "Two test-fixture errors corrected: strict model JSON versus Python tuple parsing; Pulse editor X/Y keys instead of column labels. Final executions pass."
+}

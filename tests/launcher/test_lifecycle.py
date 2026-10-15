@@ -615,6 +615,7 @@ def test_runtime_gui_script_bootstraps_from_outside_repo_without_installed_packa
     )
     assert result.returncode == 0
     assert "--reopen-gui" in result.stdout
+    assert "--no-tracking" in result.stdout
 
 
 class Native:
@@ -930,3 +931,35 @@ def test_old_launcher_without_endpoint_requires_manual_shutdown(tmp_path) -> Non
     _ensure_directory(root)
     with pytest.raises(WindowsLaunchError, match="no replacement endpoint"):
         _existing_endpoint(root)
+
+
+def test_project_launcher_no_tracking_is_explicit_and_cannot_reopen_existing_runtime(
+    tmp_path,
+):
+    root = tmp_path / "repo"
+    python = root / "python.exe"
+    default = launcher_command(root, python, reopen_gui=False)
+    assert "--no-tracking" not in default
+    assert launcher_command(root, python, reopen_gui=False, no_tracking=True) == [
+        *default,
+        "--no-tracking",
+    ]
+    with pytest.raises(ValueError, match="fresh application launch"):
+        launcher_command(root, python, reopen_gui=True, no_tracking=True)
+
+
+def test_runtime_gui_script_rejects_changing_roles_on_reopen(tmp_path):
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    script = Path(__file__).resolve().parents[2] / "scripts" / "start_runtime_gui.py"
+    result = subprocess.run(
+        [sys.executable, str(script), "--reopen-gui", "--no-tracking"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "fresh application launch" in result.stderr

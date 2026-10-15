@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-15T12:34:38.3708563+09:00",
+  "scope": "E06/A10/A11: immediate sealed admission; exact terminal OFF handoff; bounded serialized SDK drain; original operation/Finished identity; writer-preserving cleanup",
+  "files": [
+    {
+      "path": "src/cephvr/acquisition/worker/capture_runtime.py",
+      "sha256": "A0B5DB276AE5DD9C62A16380CA8527761438AF76216D265682D878A6F84EE5B0"
+    },
+    {
+      "path": "src/cephvr/acquisition/worker/trial_stop.py",
+      "sha256": "2CFC8EC7290D8E5AB7180F87C44E1A359CB036FBCFCA0543EECADAC37D5305DB"
+    },
+    {
+      "path": "src/cephvr/acquisition/worker/trial_lifecycle.py",
+      "sha256": "95CF6E48BBBE8D19FA905C7B358AC594F45164CA99F4730E94AB4469B36CA184"
+    },
+    {
+      "path": "src/cephvr/acquisition/worker/execution.py",
+      "sha256": "BA6C82D86FEE717AA7B3D85E1A492796BDAFFE1BEA464AEC98223F57335000B8"
+    },
+    {
+      "path": "src/cephvr/acquisition/worker/cleanup_lifecycle.py",
+      "sha256": "BEE60E848BCABFC92A8F6451165E66B82DB1B8B5CCD6930E1E4A75758F3BC0A0"
+    },
+    {
+      "path": "tests/acquisition/test_worker_foundations.py",
+      "sha256": "C66E5AD9C9424610D119F30208ECDB7164DB9F1902EB8BE26656D1D9A3865092"
+    },
+    {
+      "path": "tests/acquisition/test_worker_admission.py",
+      "sha256": "F721B3AF3DE8CFB704B7A5B317E35299B0DD15AAFB5E4C5CC80A916B639F4737"
+    },
+    {
+      "path": "tests/acquisition/test_recording_cleanup.py",
+      "sha256": "D18F5AC56F3670C9D04F9AF3F20ED984D92E72E1698A5B4A0CF1841141B913D1"
+    }
+  ],
+  "validation": "500 passed, 2 deselected in 2.50s; Ruff check/format8; win32mypy5;695 modules zero boundary violations;git diff --check passed",
+  "native": "Pending Astra freeze and Abort r3; r2 remains Interrupted with unconfirmed cleanup",
+  "cohesion": "capture_runtime623 remains SDK resource owner; execution514 remains bounded operation dispatch/completion, stop continuation kept in existing trial_stop owner",
+  "limitations": "No native acceptance from local checks; exact deadlines and unknown evidence retained"
+}

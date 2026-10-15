@@ -7,6 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 from cephvr.visual_stimulus.config.models.program_model import VideoSettings
 from cephvr.visual_stimulus.rendering.state import InstanceState, TrialState
 from cephvr.visual_stimulus.rendering.types import (
@@ -194,7 +195,7 @@ class RendererEngine:
         self,
         display: DisplayProfile,
         prepared: PreparedDisplayCalibration,
-        adjustments: dict[str, tuple[tuple[float, float], ...]],
+        adjustments: dict[str, tuple[tuple[float, float], ...]] | CalibrationPlacement,
     ) -> tuple[OutputActivity, ...]:
         self._assert_owner()
         if (
@@ -475,15 +476,9 @@ class RendererEngine:
 
     @staticmethod
     def photodiode_level(index: int) -> bool:
-        """Pattern v1: HH H LLL, then alternating through a 60 submission cycle."""
-        if index < 0:
-            raise ValueError("submission index cannot be negative")
-        position = index % 60
-        if position < 3:
-            return True
-        if position < 6:
-            return False
-        return position % 2 == 0
+        from cephvr.visual_stimulus.rendering.photodiode import photodiode_level
+
+        return photodiode_level(index)
 
     def render_tick(
         self, now_ns: int, feedback_batch: tuple[Any, ...] = ()

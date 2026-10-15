@@ -48,7 +48,7 @@ from cephvr.platform.windows.python_runtime import (
 )
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.credentials import default_runtime_root
-from cephvr.shared.managed_modules import missing_roles
+from cephvr.shared.managed_modules import managed_modules, missing_roles
 from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
 
 
@@ -81,11 +81,15 @@ def _retain_until_empty(
 
 
 def run_launcher(
-    *, software_root: Path, supervisor_config: Path, interpreter: Path
+    *,
+    software_root: Path,
+    supervisor_config: Path,
+    interpreter: Path,
+    no_tracking: bool = False,
 ) -> None:
     if sys.platform != "win32":
         raise WindowsLaunchError("CephVR managed launch requires Windows")
-    missing = missing_roles()
+    missing = missing_roles(no_tracking=no_tracking)
     if missing:
         raise WindowsLaunchError(
             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
@@ -101,7 +105,8 @@ def run_launcher(
     policy_root = supervisor_config.parents[2] / "contracts" / "policy"
     backend_ports = {
         role: read_backend_port(supervisor_config.parent, policy_root, role)
-        for role in ("acquisition", "visual_stimulus", "tracking")
+        for role in managed_modules(no_tracking=no_tracking)
+        if role != "gui"
     }
     require_distinct_ports(
         (
@@ -178,6 +183,7 @@ def run_launcher(
                 "supervisor_port": port,
                 "controller_port": resolved.controller_port,
                 "backend_ports": backend_ports,
+                "no_tracking": no_tracking,
                 "max_message_bytes": resolved.max_message_bytes,
                 "max_retained_incidents": resolved.max_retained_incidents,
                 "command_retention_ns": resolved.policies.command_retention_after_finalization_ns,
@@ -439,7 +445,14 @@ def main() -> None:
         action="store_true",
         help="open a fresh GUI in the running application generation",
     )
+    parser.add_argument(
+        "--no-tracking",
+        action="store_true",
+        help="omit the Tracking process for this launch; enabling it requires a full restart",
+    )
     args = parser.parse_args()
+    if args.reopen_gui and args.no_tracking:
+        parser.error("--no-tracking requires a fresh application launch")
     if args.reopen_gui:
         if sys.platform != "win32":
             parser.error("managed GUI relaunch requires Windows")
@@ -456,6 +469,7 @@ def main() -> None:
             software_root=args.software_root.resolve(),
             supervisor_config=supervisor_config.resolve(),
             interpreter=args.python.resolve(),
+            no_tracking=args.no_tracking,
         )
     except ReplacementDeclined as exc:
         print(exc)

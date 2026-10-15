@@ -1,0 +1,30 @@
+[
+  {
+    "ProcessId": 21660,
+    "CreationDate": "2026-10-15T13:09:41.08814+09:00",
+    "Name": "ffprobe.exe",
+    "ExecutablePath": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.exe",
+    "CommandLine": "ffprobe -v error -count_frames -show_streams -show_format -of json C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_behavioral_cam.mp4"
+  },
+  {
+    "ProcessId": 25772,
+    "CreationDate": "2026-10-15T13:09:41.088157+09:00",
+    "Name": "ffprobe.exe",
+    "ExecutablePath": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.exe",
+    "CommandLine": "ffprobe -v error -count_frames -show_streams -show_format -of json C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_eye_tracking_cam.mp4"
+  },
+  {
+    "ProcessId": 26528,
+    "CreationDate": "2026-10-15T13:09:41.088507+09:00",
+    "Name": "ffprobe.exe",
+    "ExecutablePath": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.exe",
+    "CommandLine": "ffprobe -v error -count_frames -show_streams -show_format -of json C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_stimulus.mp4"
+  },
+  {
+    "ProcessId": 26808,
+    "CreationDate": "2026-10-15T13:10:35.286997+09:00",
+    "Name": "ffmpeg.exe",
+    "ExecutablePath": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe",
+    "CommandLine": "ffmpeg -v error -hwaccel none -i C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\open-loop-recordings-20261015\\20261015_open_loop_resume1_20261015\\DUMMY-125408\\protocol-data\\DUMMY_125417_tracking_cam.mp4 -map 0:v:0 -f null -"
+  }
+]

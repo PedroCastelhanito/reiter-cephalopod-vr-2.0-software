@@ -1,0 +1,21 @@
+{
+  "photodiode_placement": {
+    "initial_exact": true,
+    "updated_exact": true,
+    "output_px": [
+      320,
+      200
+    ]
+  },
+  "blackout_placement": {
+    "initial_exact": true,
+    "updated_exact": true,
+    "output_px": [
+      320,
+      200
+    ]
+  },
+  "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "scope": "Production draw_placement on isolated offscreen framebuffer; no native windows, swaps, live application or optical timing acceptance",
+  "source_sha256": "26b01c756a9964bc84a230f6acfa93d214db9b64962ba09598dedeec006649d5"
+}

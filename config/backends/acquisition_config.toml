@@ -53,7 +53,8 @@ save_video = true
 # Assignment changes require fresh Setup.
 
 # Independent complete encoding list for this camera; no shared-list inheritance.
-# Owner-selected high-quality color baseline: CQ16/p4; preserve source dimensions.
+# Owner-selected 2026-10-15 compact high-quality baseline: CQ23/p4.
+# Preserve source dimensions; representative-scene testing follows PFS updates.
 # RTX 2080 Ti probe rejected 4112-wide H.264; 4096-wide initialization passed.
 # Revalidate final dimensions/depth; do not infer a selected ROI from this baseline.
 # Output options only; encoding defaults live here, not in architecture policy.
@@ -75,9 +76,11 @@ ffmpeg_args = [
   "-colorspace", "bt709",
   "-preset", "p4",
   "-rc", "vbr",
-  "-cq", "16",
+  "-cq", "23",
   "-b:v", "0",
   "-rc-lookahead", "0",
+  "-spatial-aq", "0",
+  "-temporal-aq", "0",
 ]
 
 
@@ -95,7 +98,7 @@ exposure_duration_mode = "timed"
 frame_silence_timeout_s = 1
 enabled = false
 save_video = true
-# Standard CQ16/p4; owner-selected CQ23 test override pending visual evaluation.
+# Owner-selected 2026-10-15 CQ23/p4; visual evaluation follows PFS updates.
 # Explicit mono conversion; neutral chroma in YUV 4:2:0, unchanged dimensions.
 # Preserve source precision: this 8-bit list rejects deeper sources without explicit consent.
 ffmpeg_args = [
@@ -109,6 +112,8 @@ ffmpeg_args = [
   "-cq", "23",
   "-b:v", "0",
   "-rc-lookahead", "0",
+  "-spatial-aq", "0",
+  "-temporal-aq", "0",
 ]
 
 [cameras.tracking]
@@ -147,7 +152,8 @@ save_video = true
 # device_id above is confirmed; complete other required settings before enabling.
 
 # Independent complete encoding list for this camera; no shared-list inheritance.
-# Owner-selected high-quality mono baseline: CQ16/p4; preserve source dimensions.
+# Owner-selected 2026-10-15 mono baseline: CQ23/p4; preserve source dimensions.
+# Representative-scene testing follows PFS updates.
 # Output options only; encoding defaults live here, not in architecture policy.
 # Explicit grayscale conversion; YUV 4:2:0 stores neutral chroma/full-resolution luma.
 # Full range, BT.709 matrix; no spatial resizing.
@@ -167,9 +173,11 @@ ffmpeg_args = [
   "-colorspace", "bt709",
   "-preset", "p4",
   "-rc", "vbr",
-  "-cq", "16",
+  "-cq", "23",
   "-b:v", "0",
   "-rc-lookahead", "0",
+  "-spatial-aq", "0",
+  "-temporal-aq", "0",
 ]
 
 [cameras.behavioral.transport]

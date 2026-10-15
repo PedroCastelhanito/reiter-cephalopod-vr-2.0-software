@@ -1,0 +1,3 @@
+initial_session {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup_confirmed": true}
+participants []
+shutdown {"command_id": "623f638b-a4d6-4a70-9622-ce9dc8b02d54", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}

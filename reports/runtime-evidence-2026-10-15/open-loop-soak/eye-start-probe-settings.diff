@@ -1,0 +1,16 @@
+--- 
+
++++ 
+
+@@ -112,8 +112,8 @@
+
+ BslContrast	0.000
+ BslBrightness	0.000
+ BalanceRatio	{BalanceRatioSelector=Red}	1.0000
+-BalanceRatio	{BalanceRatioSelector=Green}	2.1079
+-BalanceRatio	{BalanceRatioSelector=Blue}	1.0320
++BalanceRatio	{BalanceRatioSelector=Green}	2.0566
++BalanceRatio	{BalanceRatioSelector=Blue}	1.0298
+ BalanceRatioSelector	Red
+ BalanceWhiteAuto	Continuous
+ ColorTransformationEnable	{ColorTransformationSelector=RGBtoRGB}	0

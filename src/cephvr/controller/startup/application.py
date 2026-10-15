@@ -31,7 +31,6 @@ from cephvr.controller.microcontroller.bootstrap import create_microcontroller
 from cephvr.controller.planning import (
     plan_outputs,
 )
-from cephvr.controller.ports import BACKEND_NAMES
 from cephvr.controller.recovery import StartupRecovery
 from cephvr.controller.runtime import ControllerRuntime
 from cephvr.controller.service import (
@@ -57,6 +56,7 @@ from cephvr.shared.auth import Principal
 from cephvr.shared.clock import describe_host_clock
 from cephvr.shared.credentials import CredentialStore, default_runtime_root
 from cephvr.shared.identity import require_uuid4
+from cephvr.shared.managed_modules import no_tracking_from_bootstrap
 from cephvr.shared.recovery import RecoveryStore, UnfinishedSessionPointer
 
 
@@ -98,15 +98,15 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
         raise ValueError("bootstrap ports disagree with the versioned configuration")
     principal = Principal("controller", controller_generation, controller_token)
     descriptors = _backend_descriptors(bootstrap)
-    managed_jobs = managed_jobs_from_bootstrap(bootstrap.get("managed_jobs"))
+    managed_jobs = managed_jobs_from_bootstrap(
+        bootstrap.get("managed_jobs"), no_tracking=no_tracking_from_bootstrap(bootstrap)
+    )
     managed_generations = {job.role: job.generation for job in managed_jobs}
     if any(
         managed_generations.get(entry.backend_name) != entry.backend_generation
         for entry in descriptors
     ):
         raise ValueError("backend credentials and managed job generations disagree")
-    if {entry.backend_name for entry in descriptors} != BACKEND_NAMES:
-        raise ValueError("bootstrap omits a required top-level backend identity")
     launcher_handle = cast(
         int, _bootstrap_value(bootstrap, "launcher_control_handle", int)
     )

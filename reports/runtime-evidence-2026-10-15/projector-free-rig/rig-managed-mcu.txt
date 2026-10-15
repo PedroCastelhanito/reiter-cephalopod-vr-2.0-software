@@ -1,0 +1,4 @@
+initial_session {"phase": "SESSION_PHASE_CONFIGURATION"}
+connect [true, "Completed"]
+mcu {"observation": {"port": "COM8", "connection_id": "49bdf11e-c8cd-40a7-8724-498ce80c12d4", "request_id": "49bdf11e-c8cd-40a7-8724-498ce80c12d4-7", "observed_monotonic_ns": "45064071567000", "state": {"configuration_valid": false, "watchdog_stopped": false, "watchdog_ms": 0, "behavioral": {"enabled": false, "running": false}, "tracking": {"enabled": false, "running": false}, "eye_tracking": {"enabled": false, "running": false}}, "capabilities": {"protocol_version": 4, "firmware": "cephvr2_uno_4", "pins": ["D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13"], "minimum_requested_hz": 0.1, "maximum_requested_hz": 100.0, "minimum_watchdog_ms": 500, "maximum_watchdog_ms": 10000, "rising_edge_input_pins": ["D2", "D3"]}, "capabilities_observed_monotonic_ns": "45064043140800"}}
+configuration_unchanged true

@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-15",
+  "source_revision": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "scope": "Owner-authorized actual rig tests without powered projectors; real Windows/native NVOF, camera/MCU managed operations, read-only SpikeGLX, synthetic NVENC and package checks. Earlier documentation audit edits were already present.",
+  "rig": {
+    "python": "3.11.15",
+    "driver": "617.14",
+    "render_tracking_gpu": "GPU-77642118-1623-48dd-3686-1014aa86b818",
+    "encoding_gpu": "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+    "ffmpeg_test_pair": "C:/Dev/software/ffmpeg-9.0.2-essentials_build/bin",
+    "default_path_pair": "C:/Dev/software/ffmpeg-4.3.2-2021/bin"
+  },
+  "results": {
+    "windows_and_rig_smokes": "25 passed, 1 symlink-privilege skip; includes actual NVOF same-image execution",
+    "native_picker_ordinary_plugins": "22 passed, 486 deselected",
+    "native_layout_hover": "5 passed, 1 failed; trial-card actual height326 vs <320 assertion",
+    "broad_native_gui": "Interrupted after approximately two minutes without recorded progress; no pass claimed",
+    "tracking_contracts": "48 pass; 19 schemas match",
+    "visual_contracts": "42 pass; prepared-trial schema initially drifted in embedded superseded calibration fields; regenerated sole drifted schema from canonical model",
+    "package": "cp311 win_amd64 wheel and source distribution build",
+    "mcu": "COM8 protocol4 cephvr2_uno_4; stopped state; no flash",
+    "camera_previews": "4 managed start/stop/release cycles each for enabled Behavior and Tracking; first-cycle native viewers flagged visible; adopted configuration unchanged",
+    "camera_reuse_finding": "Additional Behavior cycle stopped successfully; following Start rejected with prior capture has unknown SDK-buffer discard accounting. Cause unverified; guard preserved.",
+    "controller_loss": "First active attempt refused rounded CIM creation time and fallback Stop succeeded; retry capture blocked by SDK accounting. Idle exact-generation/PID/time/image controller termination succeeds; supervisor/acquisition exit without traceback, all-owned-absent receipt retained, MCU claim release truthfully unconfirmed.",
+    "restoration": "Both full PFS snapshots exact-match after restoring original LineSelector cursors; checked values match; cameras closed; saved last_configuration bytes unchanged.",
+    "spikeglx": "Read-only SDK check timed out; remote state unknown",
+    "encoding": {
+      "status": "31/31 cases exit0, external frame counts match and all full decodes pass; 10s warmup plus30 measurements of60s requested frames",
+      "all_source_synthetic_fps_min_max": {
+        "behavioral": [
+          81.8,
+          84.95
+        ],
+        "tracking": [
+          151.69,
+          156.24
+        ],
+        "stimulus": [
+          164.15,
+          170.47
+        ]
+      },
+      "adapter": "RTX2080Ti actual UUID samples",
+      "background": "Separately launched application renderer appears on RTX5060Ti beginning during r1-cameras-cq23; later matrix is not an otherwise idle-machine benchmark. No camera diagnostic workload was started by this test during encoding.",
+      "formats": "Behavior1760x3000 RGB24/30Hz, Tracking1588x1344 gray/60Hz, synthetic Stimulus1280x1000 RGBA/60Hz. Eye excluded; CQ16/23, p4; repeat2 reverses CQ order."
+    },
+    "tracking_diagnostic": "Prepared but not run; owner explicitly requests leaving separately opened GUI running and finishing current checks only. No takeover, new diagnostic or shutdown performed against it. Remaining camera diagnostic scope is owner-deferred.",
+    "empty_video": "Direct production-shaped raw-input options without identity tags, zero stdin: both enabled camera formats exit0;1614/1606-byte MP4s synchronize/close. Not playable-video or runtime NO_FRAMES accounting proof. Initial probe harness fsync on read-only Windows handle failed; retained initial artifact/log, corrected writable handle and used fresh paths.",
+    "current_saved_config_bytes_unchanged": true,
+    "scope_end": "Current bounded native/device/encoder checks completed with failures/blockers recorded and owned-generation restoration verified. Separately opened GUI left running per owner instruction. No commit or push.",
+    "records_validation": "1137 local Markdown file targets resolve;37 unique TODO tasks; all evidence JSON parses;11 schemas match; git diff --check passes"
+  },
+  "limits": "No projector test, Setup/trial, animal scientific accuracy, optical/electrical measurement, firmware upload or paired remote recording. Eye remains disabled. Synthetic encoding does not prove capture loss, cross-GPU readback/stdin throughput or sustained synchronized application performance. No production Python change; prepared-trial schema regenerated only.",
+  "raw_encoding_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\rig-encoding-current",
+  "schema_source": "cephvr.visual_stimulus.config.models.artifact_models.PreparedTrial; generated by contracts/visual_stimulus/generate_schemas.py",
+  "implementation_fingerprints": {
+    "src/cephvr/acquisition/camera/basler.py": "238b2ae53ae8c5d6ae72506bdf53ecaf227b5ff1b7d5922ec16ca63bf21417a5",
+    "src/cephvr/controller/device/camera.py": "60a4157589071c51285052984e6f7022582820748a22cf2a7d5cc7b2318edf9a",
+    "src/cephvr/controller/lifecycle/cleanup.py": "6e710494e6bd5d5c2a1e76febaa64975fcedd4b05adabc3fa6849f96c9fb1b3c",
+    "src/cephvr/gui/epoch_composer.py": "6e5990beb8533651d2e6587bf3590385fb841bf5cb4f11ae79118e23012b2bce",
+    "src/cephvr/gui/projectors.py": "5cfe7721e9363e0a355917835a308202faad7ea8aa45c0c551e19f69a5f7fc87",
+    "tests/gui/test_dashboard.py": "d7c402e6baaa4124681c0855739b4146f283ed03608306030506c3dd12067b7f",
+    "tools/encoding_probe.py": "623f46eaefff6e05064e76ab9d1f46868c8a526b19dee8ce00a8ddec0480d8ad",
+    "contracts/visual_stimulus/prepared-trial.schema.json": "195ce35aea3075eb98773381854b5aa3fea34a54efcce4ee98c64d0031a7aab9"
+  }
+}

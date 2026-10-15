@@ -1,0 +1,15 @@
+{
+  "observed_utc": "2026-10-15T03:00:50.576541+00:00",
+  "head": "b68c4ee7edd6815f4859c48b1a61a08d673fedc5",
+  "scope": "Resumed userauthorized tests; fresh pretest calibration/settings snapshot; previous originals are historical, do notrestore overthese",
+  "files": [
+    {
+      "source": "config/last_configuration.json",
+      "sha256": "a8b3e3828c27e275bc6183901c2ad821382e21e735905f03644adc62a6b09e9b"
+    },
+    {
+      "source": "config/backends/visual_stimulus_config.toml",
+      "sha256": "63cbe4dd1ed13255868af52e29886a891f1c582f698507c9fd7a40baa94a6d3d"
+    }
+  ]
+}

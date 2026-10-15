@@ -164,12 +164,17 @@ def diagnostic_display_profile(
     assignments: tuple[AssignedDisplay, ...],
     monitors: tuple[MonitorBinding, ...],
     *,
-    view: Literal["reference_bars", "frame_grid"] | None = None,
+    view: Literal[
+        "reference_bars", "frame_grid", "photodiode_placement", "blackout_placement"
+    ]
+    | None = None,
     blackout_zones: list[dict[str, Any]] | None = None,
+    photodiode_face: str | None = None,
+    photodiode_patch: dict[str, Any] | None = None,
 ) -> tuple[DisplayProfile, dict[str, GeometricProfile]]:
     """Bind four assigned faces to native interfaces and per-face correction meshes."""
     geometry_input = calibration
-    if view == "reference_bars":
+    if view in ("reference_bars", "photodiode_placement", "blackout_placement"):
         values = calibration["values"]
         assert isinstance(values, dict)
         geometry_input = dict(
@@ -250,7 +255,7 @@ def diagnostic_display_profile(
                 geometric_profile=dict(logical_path=logical_path),
             )
         )
-        if view == "reference_bars":
+        if view in ("reference_bars", "photodiode_placement", "blackout_placement"):
             vertices = tuple(
                 dict(uv=(x, y), xy=(x, y))
                 for y, x in ((0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0))
@@ -309,7 +314,8 @@ def diagnostic_display_profile(
                 columns=2,
                 vertices=vertices,
                 valid_area=None
-                if view == "reference_bars"
+                if view
+                in ("reference_bars", "photodiode_placement", "blackout_placement")
                 else face_valid_area(calibration, face, monitor),
                 orientation="mirrored" if mirrored else "preserving",
                 diagonal="bottom_left_to_top_right",
@@ -349,7 +355,22 @@ def diagnostic_display_profile(
             presentation_mode="all_outputs_vsync",
             photometric_mode="uncalibrated",
             idle_linear_rgb=(0.0, 0.0, 0.0),
-            photodiode_enabled=False,
+            photodiode_enabled=view == "photodiode_placement"
+            and photodiode_patch is not None,
+            photodiode_output_id=f"calibration_{photodiode_face.lower()}"
+            if view == "photodiode_placement"
+            and photodiode_face
+            and photodiode_patch is not None
+            else None,
+            photodiode_patch=(
+                dict(
+                    **photodiode_patch,
+                    high_linear_rgb=(1, 1, 1),
+                    low_linear_rgb=(0, 0, 0),
+                )
+                if view == "photodiode_placement" and photodiode_patch
+                else None
+            ),
         )
     )
     return profile, profiles
@@ -361,19 +382,30 @@ def write_diagnostic_bundle(
     assignments: tuple[AssignedDisplay, ...],
     monitors: tuple[MonitorBinding, ...],
     *,
-    view: Literal["reference_bars", "frame_grid"] | None = None,
+    view: Literal[
+        "reference_bars", "frame_grid", "photodiode_placement", "blackout_placement"
+    ]
+    | None = None,
     runtime_root: Path | None = None,
     blackout_zones: list[dict[str, Any]] | None = None,
+    photodiode_face: str | None = None,
+    photodiode_patch: dict[str, Any] | None = None,
 ) -> Path:
     """Refresh one repository pattern and stage its exact bytes with runtime mappings."""
 
     if not asset_root.is_dir():
         raise ValueError("Choose an existing Assets folder")
     profile, meshes = diagnostic_display_profile(
-        calibration, assignments, monitors, view=view, blackout_zones=blackout_zones
+        calibration,
+        assignments,
+        monitors,
+        view=view,
+        blackout_zones=blackout_zones,
+        photodiode_face=photodiode_face,
+        photodiode_patch=photodiode_patch,
     )
     step = profile.calibration_view
-    if step == "reference_bars":
+    if step != "frame_grid":
         bar_outputs = {}
         for output in profile.outputs:
             assert output.reference_bars is not None
@@ -395,7 +427,17 @@ def write_diagnostic_bundle(
             ]
             for surface in profile.geometry.surfaces
         }
-        glb = make_calibration_glb(rig, screens)
+        glb = make_calibration_glb(
+            rig,
+            screens,
+            raster_sizes={
+                mapping.surface_id.title(): (
+                    mapping.viewport.width,
+                    mapping.viewport.height,
+                )
+                for mapping in profile.mappings
+            },
+        )
     pattern_directory = asset_root / "calibration"
     pattern_directory.mkdir(exist_ok=True)
     arena_path = pattern_directory / f"{step}.glb"

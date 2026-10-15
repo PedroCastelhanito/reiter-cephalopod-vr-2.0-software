@@ -1,0 +1,145 @@
+{
+  "media_root": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media",
+  "canonical_asset_root": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets",
+  "copied_files": [
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.png",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.png",
+      "sha256": "e3bb39a80f3396e43a4a65636b63165ebbd1746659afa6a77a45202235baa341",
+      "bytes": 300454
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "bytes": 570
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_10_primary_color_0.7_secondary_color_0.00.png",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_10_primary_color_0.7_secondary_color_0.00.png",
+      "sha256": "e3bb39a80f3396e43a4a65636b63165ebbd1746659afa6a77a45202235baa341",
+      "bytes": 300454
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_10_primary_color_0.7_secondary_color_0.00.texture.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_10_primary_color_0.7_secondary_color_0.00.texture.json",
+      "sha256": "97c96405d8698efc206ddd49a44830be7cc4609be9a0483a2b4d2238f9d86dd8",
+      "bytes": 570
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "sha256": "1dbba04989c8b5139c6e54204fb58693a2f221d6139125c81719647a76bf147f",
+      "bytes": 113731
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "bytes": 584
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_25_primary_color_0.7_secondary_color_0.00.png",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_25_primary_color_0.7_secondary_color_0.00.png",
+      "sha256": "05f9f4eff9a560bd98de3a6ac962c61cb38dd4293d24c476d495d26cfc6f02b5",
+      "bytes": 76013
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_25_primary_color_0.7_secondary_color_0.00.texture.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_25_primary_color_0.7_secondary_color_0.00.texture.json",
+      "sha256": "584009550cda3fed24d05d04bf56a6c6bae92ee7e0eb99fd29ea1769e2136c2f",
+      "bytes": 571
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_35_primary_color_0.7_secondary_color_0.00.png",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_35_primary_color_0.7_secondary_color_0.00.png",
+      "sha256": "c389055cb658f492d31cd9b80b8a61fb1616644e18a3b5ba7571e0425126059d",
+      "bytes": 55224
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_35_primary_color_0.7_secondary_color_0.00.texture.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_35_primary_color_0.7_secondary_color_0.00.texture.json",
+      "sha256": "4f9514883574f31ed16ea60b3244d1769d4cd2d0cae4839973190488f32f7f2c",
+      "bytes": 585
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_45_primary_color_0.7_secondary_color_0.00.png",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_45_primary_color_0.7_secondary_color_0.00.png",
+      "sha256": "3196d52e9620130e3fcf6b63c9fe7276d93fabb6032f950c9aa5707515148b80",
+      "bytes": 46421
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_45_primary_color_0.7_secondary_color_0.00.texture.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_45_primary_color_0.7_secondary_color_0.00.texture.json",
+      "sha256": "0c3da2a59bba5bf23fffc4d4c2fef1b374d5bff298204f7051a945561d56b22a",
+      "bytes": 584
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_55_primary_color_0.7_secondary_color_0.00.png",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_55_primary_color_0.7_secondary_color_0.00.png",
+      "sha256": "186cb53a233ffdf804084b4a8a6d81fc5e8df4ec41fa1a0acfd52221ff6f8655",
+      "bytes": 41124
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_55_primary_color_0.7_secondary_color_0.00.texture.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_55_primary_color_0.7_secondary_color_0.00.texture.json",
+      "sha256": "d2cf18a19431e3a9aec6ff07e2ab59d12dc2c8425f930dc47d29171b7dd58c70",
+      "bytes": 585
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_65_primary_color_0.7_secondary_color_0.00.png",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_65_primary_color_0.7_secondary_color_0.00.png",
+      "sha256": "3ebf80c9091ca73aff3e5d7ce5ffa851961c69e34f7905f02fa8fd1c6a8384df",
+      "bytes": 36083
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_65_primary_color_0.7_secondary_color_0.00.texture.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\textures\\gaussian-noise\\GaussianNoise_scale_65_primary_color_0.7_secondary_color_0.00.texture.json",
+      "sha256": "91c83b5e18c600c634f1db2387411d89d05e828a495202160cb2a592ac54b220",
+      "bytes": 570
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\arenas\\circular_blackwalls_filterednoisefloor\\arena.glb",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\arenas\\circular_blackwalls_filterednoisefloor\\arena.glb",
+      "sha256": "19998cdd594824391f926e331cb966b590a7856aecd2179fdb1d4f0980a141fb",
+      "bytes": 472496
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\arenas\\circular_blackwalls_filterednoisefloor\\arena.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\arenas\\circular_blackwalls_filterednoisefloor\\arena.json",
+      "sha256": "d396af55eccb7da39091c157793459db2e518329d05ad7dded96b2e054a4a631",
+      "bytes": 5417
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\arenas\\circular_blackwalls_filterednoisefloor\\collision.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\arenas\\circular_blackwalls_filterednoisefloor\\collision.json",
+      "sha256": "8c2cca37df428684584196591d816239c0c44cc2b314ab4799c68ab631e73624",
+      "bytes": 459
+    },
+    {
+      "source": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\arenas\\circular_blackwalls_filterednoisefloor\\manifest.json",
+      "destination": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\arenas\\circular_blackwalls_filterednoisefloor\\manifest.json",
+      "sha256": "b94d8070ff34bf91f0d8ac146b46bbbcc553d9e2f1317986072b2da28b48d41b",
+      "bytes": 149
+    }
+  ],
+  "configuration_inputs": [
+    {
+      "source": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\cameras_config.json",
+      "sha256": "4cb55af964c0de98f984cd45a8e8e828061ee3c007fc8ca8642db3caaa10af87"
+    },
+    {
+      "source": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\microcontroller_config.json",
+      "sha256": "dd02c34d9e4a96056a3b921c0250091a535a89cf7ff00b1783216698bf77dd07"
+    },
+    {
+      "source": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\projectors_config.json",
+      "sha256": "2931c62c848efa9f1ba31ed5fb46c74f87c79e0b3df1b82166a1044ea7c93e53"
+    },
+    {
+      "source": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\drifting.flow.json",
+      "sha256": "280ff1a0aaaeebb74178802040ad38b0d0367db1e39eca09ebb014175ebf35dd"
+    }
+  ],
+  "scope": "Existing Gaussian textures and simple circular arena copied byte-for-byte with sidecars; original assets/configuration preserved. Projection areas remain uncalibrated."
+}

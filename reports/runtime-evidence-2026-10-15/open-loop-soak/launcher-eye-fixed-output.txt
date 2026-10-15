@@ -1,0 +1,13 @@
+acquisition_tracking_worker RecordPulseEvidence c755b11d-954f-4840-ac65-aaa666f730cd failed: RuntimeError: worker session is not prepared
+acquisition_behavioral_worker RecordPulseEvidence bc689a4d-1af1-4888-8eb1-732aa8f57a15 failed: RuntimeError: worker session is not prepared
+acquisition_eye_tracking_worker RecordPulseEvidence 7093dfe2-92a4-40d0-bf18-5c339a241b86 failed: TimeoutError: original worker operation deadline expired
+acquisition_eye_tracking_worker RecordPulseEvidence 2134ba18-89f7-4f23-a1dc-9d3a8024ad37 failed: RuntimeError: worker session is not prepared
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_OPERATION: late worker evidence is not a terminal sessionless camera operation
+InterruptSession f47a23ec-ab97-44bb-82f2-cb9725f3cd40 failed: SESSION_IDENTITY: no exact live session
+acquisition_tracking_worker RecordPulseEvidence 288693cb-a399-42b7-bf38-9135e7edc511 failed: RuntimeError: worker session is not prepared
+acquisition_behavioral_worker RecordPulseEvidence 828252d9-ccd9-49fd-a2c5-b65c06706772 failed: RuntimeError: worker session is not prepared
+acquisition_eye_tracking_worker RecordPulseEvidence eb6173e1-0013-40fe-8637-65f04f038dfb failed: RuntimeError: worker session is not prepared
+Cleanup e01214fe-d62e-4edf-be99-5e4b6a2cdff6 failed: CLEANUP_UNCONFIRMED: acquisition_behavioral_worker cleanup evidence is incomplete; acquisition_tracking_worker cleanup evidence is incomplete
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

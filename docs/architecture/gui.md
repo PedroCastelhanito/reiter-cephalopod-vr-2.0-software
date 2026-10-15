@@ -16,7 +16,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 205
+**Status:** Accepted · **Revision:** 208
+
+- Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
 
 - Projector window creation and recreation preserve the current desktop cursor
   position; disable automatic fullscreen cursor centering in the native window owner.
@@ -745,7 +747,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 
   After confirmed output activation the active step's launch button reads Close:
   reference bars use Launch reference calibration, frame/grid uses Launch projection
-  calibration. Disable the other step while active and both actions while pending.
+  calibration; placement actions are defined above. Disable other diagnostic launches
+  while a view is active and all actions while pending.
   Restore launch labels only after confirmed closure. Failed/pending commands never claim an
   output-state change. These actions and Close control V01's diagnostic presentation outside
   trial timing; preparation sends no output command.

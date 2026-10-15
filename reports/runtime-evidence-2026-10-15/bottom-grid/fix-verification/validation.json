@@ -1,0 +1,28 @@
+{
+  "gui": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"calibration_guides_keep_world_phase or calibration_arena_uses_saved or calibration_identity_profiles_bind or valid_pixels_and_axis_pitch\" --basetemp reports/runtime-evidence-2026-10-15/bottom-grid/pytest-temp-3",
+    "environment": "QT_QPA_PLATFORM=offscreen",
+    "result": "17 passed, 494 deselected"
+  },
+  "rendering": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_display_calibration_rendering.py -q -m \"not windows and not rig\" --basetemp reports/runtime-evidence-2026-10-15/bottom-grid/pytest-render-temp-1",
+    "result": "74 passed"
+  },
+  "static": {
+    "ruff_lint": "4 files passed",
+    "ruff_format": "4 files passed",
+    "mypy_win32": "3 source files passed",
+    "boundaries": "695 modules, zero violations; existing cohesion advisories"
+  },
+  "native": {
+    "command": ".venv/Scripts/python.exe reports/runtime-evidence-2026-10-15/bottom-grid/verify_fix.py",
+    "result": "RTX5060Ti production offscreen before/after passes; 122px missing-line gap becomes40-41px"
+  },
+  "limits": [
+    "No running application/device/saved measurement changes",
+    "Default pytest temp directory failed six fixtures; repository evidence temp root succeeded",
+    "Two broader GUI calibration selections stalled and were interrupted; no full GUI pass",
+    "First verify_fix attempt passed full GUI file to numeric parser and failed before creating native resources; corrected input construction passed",
+    "Owner unsure about portrait measurement provenance; physical size pending remeasurement"
+  ]
+}

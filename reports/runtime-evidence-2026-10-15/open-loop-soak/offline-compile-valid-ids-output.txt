@@ -1,0 +1,4 @@
+textures60 {'compiled': True, 'duration_ns': 60000000000, 'epoch_count': 2, 'budget': 'ResourceUsage(cpu_bytes=67115633, gpu_bytes=67109216)', 'source_close_errors': ()}
+arena60 {'compiled': False, 'error': 'MemoryError: resource budget exceeded for visual_stimulus:arena-texture-a9ce3a8ff716cbe648a091902dcb770c4e759b24a0f88298a0780b7d1da8ecb2: CPU 278895148/1073741824, GPU 715827840/536870912'}
+combined60 {'compiled': False, 'error': 'MemoryError: resource budget exceeded for visual_stimulus:arena-texture-a9ce3a8ff716cbe648a091902dcb770c4e759b24a0f88298a0780b7d1da8ecb2: CPU 346004597/1073741824, GPU 782936704/536870912'}
+combined900 {'compiled': False, 'error': 'MemoryError: resource budget exceeded for visual_stimulus:arena-texture-a9ce3a8ff716cbe648a091902dcb770c4e759b24a0f88298a0780b7d1da8ecb2: CPU 346004597/1073741824, GPU 782936704/536870912'}

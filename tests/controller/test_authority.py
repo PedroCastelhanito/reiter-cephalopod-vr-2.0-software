@@ -116,3 +116,53 @@ def test_bootstrap_job_inventory_is_exact_and_never_accepts_outer_job() -> None:
     values[0]["job_name"] = "application-123"
     with pytest.raises(ValueError):
         managed_jobs_from_bootstrap(values)
+
+
+@pytest.mark.parametrize("no_tracking", [False, True])
+@pytest.mark.parametrize(
+    "missing", [None, "tracking", "acquisition", "visual_stimulus", "gui"]
+)
+def test_bootstrap_requires_exact_declared_role_set(no_tracking, missing):
+    from cephvr.controller.startup.bootstrap import _backend_descriptors
+
+    roles = {"acquisition", "visual_stimulus", "tracking", "gui"} - {missing}
+    values = [
+        {
+            "role": role,
+            "generation": str(uuid.uuid4()),
+            "job_name": f"Local\\CephVR2-{uuid.uuid4()}",
+        }
+        for role in roles
+    ]
+    bootstrap = {
+        "no_tracking": no_tracking,
+        "backends": [
+            {
+                "backend_name": value["role"],
+                "backend_generation": value["generation"],
+                "endpoint": "127.0.0.1:50100",
+                "token": "secret",
+                "launch_confirmed": False,
+            }
+            for value in values
+            if value["role"] != "gui"
+        ],
+    }
+    expected = {"acquisition", "visual_stimulus", "gui"} | (
+        set() if no_tracking else {"tracking"}
+    )
+    if roles == expected:
+        assert {
+            job.role
+            for job in managed_jobs_from_bootstrap(values, no_tracking=no_tracking)
+        } == expected
+    else:
+        with pytest.raises(ValueError):
+            managed_jobs_from_bootstrap(values, no_tracking=no_tracking)
+    if roles - {"gui"} == expected - {"gui"}:
+        assert {
+            item.backend_name for item in _backend_descriptors(bootstrap)
+        } == expected - {"gui"}
+    else:
+        with pytest.raises(ValueError, match="declared launch roles"):
+            _backend_descriptors(bootstrap)

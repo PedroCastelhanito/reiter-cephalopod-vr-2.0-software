@@ -128,6 +128,7 @@ class DisplayCalibrationOwner:
     def advance(self, now_ns: int) -> int | None:
         job = self.job
         if job is None:
+            self._advance_pulse()
             return None
         if job.cleanup_command is not None:
             if not job.result.done() or job.thread.is_alive():
@@ -271,6 +272,38 @@ class DisplayCalibrationOwner:
             self._mark_unknown(job, exc)
             self.job = None
         return None
+
+    def _advance_pulse(self) -> None:
+        display = self.active_profile
+        if (
+            self.evidence.state != view.DISPLAY_CALIBRATION_STATE_ACTIVE
+            or display is None
+            or display.calibration_view != "photodiode_placement"
+            or self.prepared is None
+        ):
+            return
+        try:
+            activities = self.engine.present_display_calibration(display, self.prepared)
+            expected = {item.output_id for item in display.active_outputs}
+            if (
+                {item.output_id for item in activities} != expected
+                or len(activities) != len(expected)
+                or any(
+                    item.error or item.swap_return_ns < item.swap_entry_ns
+                    for item in activities
+                )
+            ):
+                raise RuntimeError("photodiode preview presentation failed")
+        except BaseException as exc:
+            self._mark(
+                view.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+                idle=False,
+                closed=False,
+                presented=False,
+                code="CALIBRATION_PULSE",
+                message=str(exc),
+            )
+            raise
 
     def update(
         self, request: messages.UpdateDisplayCalibrationCommand, deadline_ns: int

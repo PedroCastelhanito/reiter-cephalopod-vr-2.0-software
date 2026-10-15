@@ -60,8 +60,8 @@ semantics fail Setup. Release decoder/importer consumers before closing protecte
 
 ## Geometry and per-output presentation
 
-The protected DisplayProfile includes `calibration_view`, either `reference_bars`
-or `frame_grid` (default). It affects only V01 sessionless calibration. Reference
+The protected DisplayProfile includes `calibration_view`: `reference_bars`,
+`frame_grid` (default), `photodiode_placement`, or `blackout_placement`. It affects only V01 sessionless calibration. Reference
 view clears the native device framebuffer to black and draws output `reference_bars`
 in exact device pixels without arena/warp/color draws. Frame/grid view renders the
 prepared arena through V15 without reference bars. Both retain the existing protected
@@ -73,6 +73,30 @@ mapping records change only normalized affine destination XY in the GL owner's
 retained vertex buffers. Protected base profile/arena identities remain unchanged;
 retain command payloads and confirm the applied sequence in calibration evidence
 only after all-output presentation. Close/safety cleanup owns the same resources.
+
+Placement views use the native device framebuffer in output pixels: photodiode
+placement clears black and repeats V22's bright/dark pattern in the selected pulse rectangle; absent or
+incomplete initial rectangles open black with no pulse so the operator can define
+them live. Initial preparation alone permits that empty pulse. Live updates still
+require complete in-bounds rectangles and preserve the prior image for partial input; blackout
+placement clears neutral gray (0.25) and draws the per-output zones black, without
+a pulse. They share the protected input and all-output submission/Idle/cleanup
+path. A separate diagnostic submission index starts at zero on Open, advances after
+successful all-output submission, and survives live rectangle/target edits. Active
+photodiode previews repeat on the existing GL-owner service loop; Unknown/Close
+stops repetition. No trial clock, trial marker evidence or recording is started.
+For these views, UpdateDisplayCalibration carries `placement_json` instead of
+mapping adjustments. It is a strict UTF-8 JSON object bounded to 65,536 bytes and
+64 nesting levels, with duplicate keys/nonfinite values rejected. The canonical
+`CalibrationPlacement` model declares a complete `outputs` array (one to four
+unique active IDs, each with up to 256 `blackout_zones` pixel rectangles), optional
+`photodiode_output_id` and matching `photodiode_patch` (existing Frame/Pulse model).
+The active view constrains pulse presence; the GL owner validates exact output
+coverage and every rectangle against the retained native dimensions before
+replacing any placement state. Empty zone arrays remove all zones on that output.
+Protected base profile/arena identities remain fixed; increasing-sequence evidence
+is confirmed only after actual all-output presentation, using the original deadline.
+
 
 
 [GeometricProfile](geometric-profile.schema.json) binds the regular grid, bottom-left

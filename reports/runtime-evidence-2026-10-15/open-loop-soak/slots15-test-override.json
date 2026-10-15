@@ -1,0 +1,10 @@
+{
+  "scope": "temporary operator resource-limit test; preserve other settings/deadlines",
+  "before_sha256": "63cbe4dd1ed13255868af52e29886a891f1c582f698507c9fd7a40baa94a6d3d",
+  "after_sha256": "1c71c701819623b342b2327897fc9023065eecbcaec6aa398103c4df29dfb427",
+  "capture_slots_before": 3,
+  "capture_slots_after": 15,
+  "incremental_cpu_bytes": 61440000,
+  "incremental_gpu_bytes": 61440000,
+  "sizing": "ceil(0.1985829s*60Hz*1.2)=15; heuristic to test, not acceptance"
+}
