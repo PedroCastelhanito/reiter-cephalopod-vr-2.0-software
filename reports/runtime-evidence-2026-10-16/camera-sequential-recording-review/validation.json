@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-16",
+  "source_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_state": "Dirty shared checkout with sequential recording and concurrent controller/GUI/stimulus work; scoped source hashes retained.",
+  "scope": "A07/A08/A09 sequential-recording review; no production source edits in this review increment.",
+  "finding": {
+    "priority": "P2",
+    "task": "camera-first-frame-failure-accounting",
+    "observed": "First full input write succeeds; mapping append raises before submission callback; failed cleanup returns CAMERA_VIDEO_CONTENT_NO_FRAMES for the owned video.",
+    "closure": "Still unconfirmed; failed frame log; no success fabricated.",
+    "provenance": "Pre-existing: HEAD session_pump._write_slot calls on_submitted only after mapping append, and HEAD session_cleanup uses submitted to classify content.",
+    "probe": "probe.py / probe.txt; fake encoder, injected mapping failure, real pump and cleanup classifier."
+  },
+  "additional_probe": "Real queue/pump/JSONL/finalizer: capacity drop, invalid image, equal receipts, long gap, interrupted close; four sources/two mapped input images/zero duplicates.",
+  "pytest": {
+    "command": ".venv/bin/python -m pytest tests/acquisition tests/controller/test_planning.py tests/shared/test_encoding_probe.py tests/visual_stimulus/test_recording.py -q -m 'not windows and not rig'",
+    "result": "607 passed, 5 skipped, 2 deselected in 5.70s",
+    "output": "tests.txt"
+  },
+  "checks": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "src/cephvr/acquisition/recording",
+        "tests/acquisition/test_recording_cleanup.py",
+        "tests/acquisition/test_recording_paths.py"
+      ],
+      "exit_code": 0,
+      "output": "All checks passed!\n"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src/cephvr/acquisition/recording",
+        "tests/acquisition/test_recording_cleanup.py",
+        "tests/acquisition/test_recording_paths.py"
+      ],
+      "exit_code": 0,
+      "output": "33 files already formatted\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output": ""
+    }
+  ],
+  "limits": [
+    "No native Windows or hardware tests.",
+    "Fake encoder acceptance does not establish actual encoded/persisted frame counts or throughput.",
+    "No claim that all fault combinations are covered."
+  ],
+  "source_sha256": {
+    "src/cephvr/acquisition/recording/frame_log.py": "d5e14b71a5123cf2bd042f9bb9245aa3aef12d8cac30cc125c4f0d7eb2452518",
+    "src/cephvr/acquisition/recording/session_pump.py": "1220a6433858e9b8d4f3feee952c15e6669b937e37cf90aa4ee61ea91054fc57",
+    "src/cephvr/acquisition/recording/session.py": "865f71fe978e85defceee25de6648e970ef08a5952d125e2a56452cfff0147fa",
+    "src/cephvr/acquisition/recording/session_completion.py": "a5e2b86b6b72d6c7ed800f363ea3e816182bb216878d7d5af0a7f67f7931c4b2",
+    "src/cephvr/acquisition/recording/session_cleanup.py": "389c9aab6325bd8b588d46b58dbf76ffa4783a13db56183021f04a9f9c57ae34",
+    "src/cephvr/acquisition/recording/session_finalizer.py": "3b4cf0c70ffb8bb476277ae07b9f9f521bd799659307da4c7bf39e351d1c0417",
+    "src/cephvr/acquisition/buffers/queue.py": "6ecc8bf40931fb6baa6254513431d3c4177ed8fa489447badb4e6d8e8772059f",
+    "src/cephvr/acquisition/worker/capture.py": "51068cf5de62126144bdfc0085926e6e20518c5290fa287fb8dde00b8e3c7274",
+    "tests/acquisition/test_recording_cleanup.py": "04334a0371d164d2ac5ef8442ba71c87dac79dfbe4f4ef2f4865bf667ad7978e",
+    "tests/acquisition/test_recording_paths.py": "294970bd8bc9097711ab19ce34e3def2968c8da7b76dfe59cc20646c132b5804"
+  }
+}

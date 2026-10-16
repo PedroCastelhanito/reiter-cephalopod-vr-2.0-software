@@ -1,0 +1,83 @@
+..FF.F                                                                   [100%]
+=================================== FAILURES ===================================
+______ test_failed_video_presence_is_independent_of_ownership[True-None] _______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2062/test_failed_video_presence_is_2')
+present = True, owned = None
+
+    @pytest.mark.parametrize('present,owned', [(False, None), (False, 'old'), (True, None), (True, 'old'), (True, 'current')])
+    def test_failed_video_presence_is_independent_of_ownership(tmp_path, present, owned):
+        from cephvr.acquisition.recording.session_outputs import failed_outputs
+    
+        video, log = tmp_path / 'video.mp4', tmp_path / 'frames.jsonl'
+        if present:
+            video.write_bytes(b'partial video')
+        encoder = _Encoder(identity=owned)
+        encoder.exit_code = 1
+        outputs = failed_outputs(
+            _schedule(video, log), video, log, encoder=encoder,
+            video_identity=owned,
+            stat_identity=lambda path: 'current' if path.is_file() else None,
+            completion_failed=True,
+        )
+>       assert outputs[0].artifact_present is present
+E       assert False is True
+E        +  where False = output_key: "trial:acquisition:behavioral_cam"\npath: "/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-...ito/pytest-2062/test_failed_video_presence_is_2/video.mp4"\nclosure: OUTPUT_CLOSURE_UNCONFIRMED\nartifact_present: false\n.artifact_present
+
+tests/acquisition/test_recording_cleanup.py:1152: AssertionError
+_______ test_failed_video_presence_is_independent_of_ownership[True-old] _______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2062/test_failed_video_presence_is_3')
+present = True, owned = 'old'
+
+    @pytest.mark.parametrize('present,owned', [(False, None), (False, 'old'), (True, None), (True, 'old'), (True, 'current')])
+    def test_failed_video_presence_is_independent_of_ownership(tmp_path, present, owned):
+        from cephvr.acquisition.recording.session_outputs import failed_outputs
+    
+        video, log = tmp_path / 'video.mp4', tmp_path / 'frames.jsonl'
+        if present:
+            video.write_bytes(b'partial video')
+        encoder = _Encoder(identity=owned)
+        encoder.exit_code = 1
+        outputs = failed_outputs(
+            _schedule(video, log), video, log, encoder=encoder,
+            video_identity=owned,
+            stat_identity=lambda path: 'current' if path.is_file() else None,
+            completion_failed=True,
+        )
+>       assert outputs[0].artifact_present is present
+E       assert False is True
+E        +  where False = output_key: "trial:acquisition:behavioral_cam"\npath: "/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-...ito/pytest-2062/test_failed_video_presence_is_3/video.mp4"\nclosure: OUTPUT_CLOSURE_UNCONFIRMED\nartifact_present: false\n.artifact_present
+
+tests/acquisition/test_recording_cleanup.py:1152: AssertionError
+____________ test_prepared_manifest_detects_shader_content_changes _____________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2062/test_prepared_manifest_detects0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b2282d0>
+
+    def test_prepared_manifest_detects_shader_content_changes(tmp_path, monkeypatch):
+        from tests.visual_stimulus.support import make_program
+        from cephvr.visual_stimulus.rendering import shaders
+        from cephvr.visual_stimulus.resources.prepare import prepare_resources
+    
+        def manifest():
+            return prepare_resources(
+                make_program(), tmp_path, BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000),
+                announce=lambda *_: None, snapshot_limit_bytes=1_000_000,
+                video_index_limit_bytes=1000, glb_element_limit=1000,
+            ).manifest
+    
+        before = manifest()
+        monkeypatch.setattr(shaders, '_LAYER_FRAGMENT', shaders._LAYER_FRAGMENT.replace('float wave = cos(', 'float wave = sin('))
+        after = manifest()
+>       assert before.provenance != after.provenance
+E       AssertionError: assert (ComponentProvenance(role='renderer', implementation='CephVR', version='2.0', content_sha256=None), ComponentProvenanc...ne), ComponentProvenance(role='video_decoder', implementation='PyAV', version='unavailable', content_sha256=None), ...) != (ComponentProvenance(role='renderer', implementation='CephVR', version='2.0', content_sha256=None), ComponentProvenanc...ne), ComponentProvenance(role='video_decoder', implementation='PyAV', version='unavailable', content_sha256=None), ...)
+E        +  where (ComponentProvenance(role='renderer', implementation='CephVR', version='2.0', content_sha256=None), ComponentProvenanc...ne), ComponentProvenance(role='video_decoder', implementation='PyAV', version='unavailable', content_sha256=None), ...) = ResourceManifest(format_version=1, resources=(), provenance=(ComponentProvenance(role='renderer', implementation='Ceph...a256=None), ComponentProvenance(role='arena_importer', implementation='cephvr.glb', version='1', content_sha256=None))).provenance
+E        +  and   (ComponentProvenance(role='renderer', implementation='CephVR', version='2.0', content_sha256=None), ComponentProvenanc...ne), ComponentProvenance(role='video_decoder', implementation='PyAV', version='unavailable', content_sha256=None), ...) = ResourceManifest(format_version=1, resources=(), provenance=(ComponentProvenance(role='renderer', implementation='Ceph...a256=None), ComponentProvenance(role='arena_importer', implementation='cephvr.glb', version='1', content_sha256=None))).provenance
+
+tests/visual_stimulus/test_resources.py:1778: AssertionError
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_recording_cleanup.py::test_failed_video_presence_is_independent_of_ownership[True-None]
+FAILED tests/acquisition/test_recording_cleanup.py::test_failed_video_presence_is_independent_of_ownership[True-old]
+FAILED tests/visual_stimulus/test_resources.py::test_prepared_manifest_detects_shader_content_changes
+3 failed, 3 passed, 81 deselected in 3.30s

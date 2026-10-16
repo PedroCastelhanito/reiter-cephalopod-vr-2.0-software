@@ -113,8 +113,9 @@ promptable, while unsafe/unconfirmed execution that cannot be isolated requires 
 The completion line, appended once at closure, stores the producer cutoff, final
 received count, accounting completion, post-cutoff accounting and pulse outcomes under
 [frame_log_schema.toml](frame_log_schema.toml); unknown values are `null`. After a crash
-the frame log has no completion line, which means incomplete. The video is constant-rate
-at the nominal rate (A08); real timing comes from frame lines, not the MP4 timeline.
+the frame log has no completion line, which means incomplete. A08 records sequential
+images once at the nominal playback rate, without slot omissions or padding; playback
+duration need not match trial duration. Real timing comes from source-frame records.
 
 Actual device/pulse stopping, input sealing, accounting completion and durable closure
 remain separate obligations. The acquisition aggregate retains per-camera cutoffs

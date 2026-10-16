@@ -6,11 +6,12 @@ import hashlib
 import threading
 from collections.abc import Callable
 from concurrent.futures import Future
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.compiler import serialize_prepared_trial
+from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import plan_pb2
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
@@ -27,6 +28,28 @@ class PreparationJob:
     completion: Future[None]
     thread: threading.Thread | None = None
     resource_key: str = "preparation:cpu"
+    graphics_input: Future[tuple[PreparedTrial, ...]] = field(default_factory=Future)
+    graphics_result: Future[tuple[PreparedTrial, ...]] = field(default_factory=Future)
+
+    def service_graphics(
+        self, preparation: PreparationPort, *, cancelled: bool, now_ns: int
+    ) -> None:
+        """Complete the CPU handoff on the graphics owner, under the original bound."""
+        if (
+            not self.graphics_input.done()
+            or self.graphics_result.done()
+            or self.result.done()
+        ):
+            return
+        try:
+            if cancelled:
+                raise InterruptedError("Setup cancelled before graphics preparation")
+            if now_ns >= self.deadline_ns:
+                raise TimeoutError("graphics preparation missed its original deadline")
+            artifacts = preparation.prepare_graphics(self.graphics_input.result())
+            self.graphics_result.set_result(artifacts)
+        except BaseException as exc:
+            self.graphics_result.set_exception(exc)
 
 
 def begin(
@@ -47,14 +70,20 @@ def begin(
                 item.context.trial_id for item in request.session.trials
             }:
                 raise ValueError("preparer omitted a required trial")
-            future = recording.prepare_artifacts(artifacts, deadline_ns)
-            if future is not None:
-                future.result(remaining_seconds(deadline_ns, clock=clock))
+            job.graphics_input.set_result(artifacts)
+            artifacts = job.graphics_result.result(
+                remaining_seconds(deadline_ns, clock=clock)
+            )
             result = []
             for artifact in artifacts:
                 if clock() >= deadline_ns:
                     raise TimeoutError("CPU preparation missed its original deadline")
                 data = serialize_prepared_trial(artifact)
+                if (
+                    request.policies.limits.HasField("max_prepared_plan_bytes")
+                    and len(data) > request.policies.limits.max_prepared_plan_bytes
+                ):
+                    raise MemoryError("final prepared artifact exceeds its byte limit")
                 handle = vp.PreparedHandle(
                     prepared_generation=artifact.identity.prepared_generation,
                     configuration_revision=artifact.identity.configuration_revision,
@@ -64,6 +93,16 @@ def begin(
                     plan_sha256=hashlib.sha256(data).hexdigest(),
                     plan_bytes=len(data),
                 )
+                result.append(TrialArtifact(artifact, data, handle))
+            future = recording.prepare_artifacts(artifacts, deadline_ns)
+            if future is not None:
+                future.result(remaining_seconds(deadline_ns, clock=clock))
+            for record in result:
+                artifact, data, handle = record.artifact, record.data, record.handle
+                if clock() >= deadline_ns:
+                    raise TimeoutError(
+                        "recipe publication missed its original deadline"
+                    )
                 source = next(
                     item.context
                     for item in request.session.trials
@@ -89,7 +128,6 @@ def begin(
                     ),
                     deadline_ns,
                 )
-                result.append(TrialArtifact(artifact, data, handle))
             job.result.set_result(tuple(result))
         except BaseException as exc:
             job.result.set_exception(exc)

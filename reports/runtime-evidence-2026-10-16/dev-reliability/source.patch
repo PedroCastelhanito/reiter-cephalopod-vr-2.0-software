@@ -1,0 +1,796 @@
+diff --git a/src/cephvr/acquisition/camera/basler.py b/src/cephvr/acquisition/camera/basler.py
+index 402f5b04..bd9fcd3c 100644
+--- a/src/cephvr/acquisition/camera/basler.py
++++ b/src/cephvr/acquisition/camera/basler.py
+@@ -633,6 +633,9 @@ class BaslerCameraAdapter:
+         return self._camera, self._device_info
+ 
+     def _clear_device_ownership(self) -> None:
++        # A confirmed Close retires this SDK generation, not its historical counts.
++        # Failed Close never reaches here, so its reuse guard stays in force.
++        self._last_purge_evidence = None
+         self._camera = None
+         self._device_info = None
+         self._device_id = None
+diff --git a/src/cephvr/controller/lifecycle/evidence_wait.py b/src/cephvr/controller/lifecycle/evidence_wait.py
+index ad1f8d7b..63208dc3 100644
+--- a/src/cephvr/controller/lifecycle/evidence_wait.py
++++ b/src/cephvr/controller/lifecycle/evidence_wait.py
+@@ -87,7 +87,10 @@ class EvidenceWaiter:
+                 return set(attempt.ready)
+             if kind == "trial_ready":
+                 return set(attempt.trial_ready)
+-            return set(attempt.finished)
++            names = set(attempt.finished)
++            if closure_only:
++                names.update(attempt.cleanup)
++            return names
+ 
+         def predicate() -> bool:
+             return expected <= received_names()
+@@ -134,6 +137,29 @@ class EvidenceWaiter:
+ 
+         async def query(name: str) -> None:
+             backend = attempt.required[name]
++            if closure_only:
++                try:
++                    state = await asyncio.wait_for(
++                        backend.get_state(
++                            svc.BackendQuery(
++                                target=backend.context,
++                                work=pb.WorkContext(session=attempt.context),
++                            ),
++                            deadline_ns=recovery_deadline_ns,
++                        ),
++                        remaining_seconds(recovery_deadline_ns, clock=self.clock),
++                    )
++                    if state.HasField("cleanup"):
++                        await self.report(
++                            pb.LifecycleReport(cleanup=state.cleanup), self.clock()
++                        )
++                    elif state.HasField("finished"):
++                        await self.report(
++                            pb.LifecycleReport(finished=state.finished), self.clock()
++                        )
++                except Exception:
++                    pass
++                return
+             work = (
+                 pb.WorkContext(session=attempt.context)
+                 if kind == "setup_ready"
+diff --git a/src/cephvr/controller/lifecycle/interruption.py b/src/cephvr/controller/lifecycle/interruption.py
+index fd2c25dd..1f71a028 100644
+--- a/src/cephvr/controller/lifecycle/interruption.py
++++ b/src/cephvr/controller/lifecycle/interruption.py
+@@ -123,7 +123,8 @@ class InterruptionWorkflow:
+             )
+         trial_metadata_clean = False
+         try:
+-            trial_metadata_clean = await self._stop_backends_and_trial(attempt, reason)
++            await self._stop_backends(attempt, reason)
++            trial_metadata_clean = True
+         except Exception as exc:
+             # Finalization must still run, or later interrupts would only join a
+             # closure that never started.
+@@ -221,7 +222,7 @@ class InterruptionWorkflow:
+             attempt.interruption_issued_ns + self.limit_state.current.stop_evidence_ns
+         )
+ 
+-    async def _stop_backends_and_trial(self, attempt: Attempt, reason: str) -> bool:
++    async def _stop_backends(self, attempt: Attempt, reason: str) -> None:
+         stop_deadline_ns = self._stop_deadline(attempt)
+         if (
+             attempt.trial_task is not None
+@@ -230,7 +231,6 @@ class InterruptionWorkflow:
+             attempt.trial_task.cancel()
+             await asyncio.gather(attempt.trial_task, return_exceptions=True)
+         await self._interrupt_backends(attempt, reason, stop_deadline_ns)
+-        return await self.trial_logs.finish_interrupted_trial(attempt)
+ 
+     @staticmethod
+     async def _join(task: asyncio.Task[None]) -> None:
+@@ -388,26 +388,35 @@ class InterruptionWorkflow:
+                     self.clock() + self.limit_state.current.setup_cancel_ns
+                 )
+             cleanup_deadline = attempt.finalization_deadline_ns
++            interrupted = attempt.interrupted
+         clean = metadata_clean
+         if attempt.paired and not await self._finish_spikeglx_stop(
+             attempt, cleanup_deadline
+         ):
+             clean = False
++        if interrupted:
++            # Interrupted writers report closure through session cleanup, not a
++            # successful trial Finished. Request that proof before sealing LOGs.
++            clean = await self._cleanup_backends(attempt, cleanup_deadline) and clean
++            try:
++                clean = (
++                    await self.trial_logs.finish_interrupted_trial(attempt) and clean
++                )
++            except Exception as exc:
++                clean = False
++                async with self.lifecycle.lock:
++                    self.control.add_warning(
++                        "interruption", f"interrupted trial log failed: {exc}"
++                    )
++                    self.publisher.publish()
+         clean = (
+             await self.metadata.finish_session(
+                 attempt, outcome=outcome, deadline_ns=cleanup_deadline
+             )
+             and clean
+         )
+-        try:
+-            clean = (
+-                await self.cleanup.dispatch_backend_cleanup(
+-                    attempt, cleanup_deadline, "cleanup"
+-                )
+-                and clean
+-            )
+-        except TimeoutError:
+-            clean = False
++        if not interrupted:
++            clean = await self._cleanup_backends(attempt, cleanup_deadline) and clean
+         clean = await self.cleanup.await_cleanups(attempt, cleanup_deadline) and clean
+         if attempt.reservation_unconfirmed:
+             clean = False
+@@ -416,6 +425,14 @@ class InterruptionWorkflow:
+         async with self.lifecycle.lock:
+             self._publish_ended_locked(attempt, clean)
+ 
++    async def _cleanup_backends(self, attempt: Attempt, deadline_ns: int) -> bool:
++        try:
++            return await self.cleanup.dispatch_backend_cleanup(
++                attempt, deadline_ns, "cleanup"
++            )
++        except TimeoutError:
++            return False
++
+     async def _stop_spikeglx(self, attempt: Attempt, cleanup_deadline: int) -> bool:
+         """Stop the paired SpikeGLX run; True only when stopped and logged."""
+         if attempt.spikeglx_stopped:
+diff --git a/src/cephvr/controller/lifecycle_completion.py b/src/cephvr/controller/lifecycle_completion.py
+index c52b9109..f2ff0cc0 100644
+--- a/src/cephvr/controller/lifecycle_completion.py
++++ b/src/cephvr/controller/lifecycle_completion.py
+@@ -215,6 +215,11 @@ class DetailedCompletion:
+             )
+             or set(actual_outputs) != expected_outputs
+             or len(actual_outputs) != len(payload.outputs)
++            or any(
++                actual_outputs[output.output_key].path != output.path
++                for output in registered.outputs
++                if output.backend.backend_name == payload.source.role
++            )
+             or any(
+                 not cleanup_output_discharged(output)
+                 for output in actual_outputs.values()
+diff --git a/src/cephvr/controller/metadata/trial_logs.py b/src/cephvr/controller/metadata/trial_logs.py
+index 0ee1a002..e48859dd 100644
+--- a/src/cephvr/controller/metadata/trial_logs.py
++++ b/src/cephvr/controller/metadata/trial_logs.py
+@@ -41,29 +41,31 @@ def _actual_stop_ns(attempt: Attempt, active_backends: frozenset[str]) -> int |
+ def _interrupted_output_results(
+     attempt: Attempt, plan: pb.TrialPlan
+ ) -> list[dict[str, object]]:
+-    # A missing Finished report leaves every corresponding reserved output
+-    # explicitly unknown. A reported closure is retained exactly as sent.
++    # Only admitted exact-context reports can discharge interrupted closure;
++    # session cleanup does not imply successful trial Finished.
+     reported = {
+-        result.output_key: result
+-        for finished in attempt.finished.values()
+-        for result in finished.outputs
++        (name, result.output_key): result
++        for reports in (attempt.finished, attempt.cleanup)
++        for name, report in reports.items()
++        for result in report.outputs
+     }
+-    reported.update(
+-        {result.output_key: result for result in attempt.unavailable_outputs}
+-    )
++    unavailable = {result.output_key: result for result in attempt.unavailable_outputs}
+     output_results: list[dict[str, object]] = []
+     for output in attempt.prepared.outputs:
+         if output.trial != plan.context:
+             continue
+-        result = reported.get(output.output_key)
+-        if result is None:
++        result = reported.get(
++            (output.backend.backend_name, output.output_key),
++            unavailable.get(output.output_key),
++        )
++        if result is None or result.path != output.path:
+             result = pb.OutputResult(
+                 output_key=output.output_key,
+                 path=output.path,
+                 closure=pb.OUTPUT_CLOSURE_UNCONFIRMED,
+                 failure=pb.Failure(
+                     code="OUTPUT_CLOSURE_UNCONFIRMED",
+-                    message="no exact Finished closure by original interruption deadline",
++                    message="no exact output closure by original interruption deadline",
+                 ),
+             )
+         output_results.append(message_dict(result))
+@@ -188,7 +190,10 @@ class TrialLogs:
+             active_backends = activity_backends(attempt)
+             try:
+                 await self.evidence_waiter.wait_evidence(
+-                    lambda: active_backends <= attempt.stopped.keys(),
++                    lambda: (
++                        active_backends
++                        <= attempt.stopped.keys() | attempt.cleanup.keys()
++                    ),
+                     attempt.interruption_issued_ns
+                     + self.limits.current.stop_evidence_ns,
+                     attempt,
+@@ -238,7 +243,7 @@ class TrialLogs:
+                             "output_closure_confirmed": frozenset(
+                                 attempt.trial_participants
+                             )
+-                            <= attempt.finished.keys(),
++                            <= attempt.finished.keys() | attempt.cleanup.keys(),
+                             "start_unconfirmed": sorted(
+                                 closure.released - attempt.started.keys()
+                             ),
+diff --git a/tests/acquisition/test_camera_adapter_contracts.py b/tests/acquisition/test_camera_adapter_contracts.py
+index 198fbf2e..5a312504 100644
+--- a/tests/acquisition/test_camera_adapter_contracts.py
++++ b/tests/acquisition/test_camera_adapter_contracts.py
+@@ -29,6 +29,84 @@ def test_adapter_construction_does_not_load_pypylon() -> None:
+     assert adapter._camera is None
+ 
+ 
++@pytest.mark.parametrize("failed_close", [False, True])
++@pytest.mark.parametrize("timing", ["external_trigger", "free_running"])
++def test_preview_reopen_retires_only_closed_device_purge_guard(
++    monkeypatch: pytest.MonkeyPatch, failed_close: bool, timing: str
++) -> None:
++    info = SimpleNamespace(
++        GetSerialNumber=lambda: "assigned", GetDeviceClass=lambda: "BaslerUsb"
++    )
++    cameras = []
++
++    class Camera:
++        def __init__(self):
++            self.opened = False
++            self.fail_close = False
++            self.buffers = 0
++            self.MaxNumBuffer = SimpleNamespace(
++                SetValue=lambda value: setattr(self, "buffers", value),
++                GetValue=lambda: self.buffers,
++            )
++            self.NumReadyBuffers = SimpleNamespace(GetValue=lambda: 0)
++
++        def Open(self):
++            self.opened = True
++
++        def IsOpen(self):
++            return self.opened
++
++        def StopGrabbing(self):
++            pass
++
++        def Close(self):
++            if self.fail_close:
++                raise RuntimeError("native Close failed")
++            self.opened = False
++
++    def create(_device):
++        camera = Camera()
++        cameras.append(camera)
++        return camera
++
++    factory = SimpleNamespace(
++        EnumerateDevices=lambda: [info], CreateDevice=lambda value: value
++    )
++    adapter = BaslerCameraAdapter()
++    adapter._pylon = SimpleNamespace(
++        TlFactory=SimpleNamespace(GetInstance=lambda: factory), InstantCamera=create
++    )
++    monkeypatch.setattr(adapter, "_set_trigger_state", lambda *_args: None)
++    monkeypatch.setattr(adapter._wait_gate, "probe", lambda *_args: None)
++    monkeypatch.setattr(adapter, "_stop_device_generation", lambda _camera: True)
++    monkeypatch.setattr("cephvr.acquisition.camera.basler.host_time_ns", lambda: 100)
++    for cycle in range(6):
++        adapter.open("assigned")
++        adapter.configure_capture(timing, 3)
++        adapter._grabbing = True
++        adapter._drain_margin_confirmed = True
++        # Pending control work interrupts the observable drain; never guess zero.
++        evidence = adapter.stop_capture(200, should_continue_drain=lambda: False)
++        assert not evidence.accounting_complete
++        assert evidence.discarded_frame_count is None
++        with pytest.raises(CameraAdapterError, match="unknown SDK-buffer"):
++            adapter.configure_capture(timing, 3)
++        camera = cameras[-1]
++        if failed_close and cycle == 0:
++            camera.fail_close = True
++            with pytest.raises(CameraAdapterError, match="native Close failed"):
++                adapter.release_device()
++            assert adapter.device_open
++            assert adapter._last_purge_evidence is evidence
++            with pytest.raises(CameraAdapterError, match="unknown SDK-buffer"):
++                adapter.configure_capture(timing, 3)
++            camera.fail_close = False
++        adapter.release_device()
++        assert not camera.opened and not adapter.device_open
++        assert not evidence.accounting_complete
++    assert len(cameras) == 6
++
++
+ @pytest.mark.parametrize("trigger_mode", ["On", "Off"])
+ def test_setting_saved_rate_preserves_external_pfs_limiter(
+     monkeypatch, trigger_mode
+diff --git a/tests/acquisition/test_pulse_evidence.py b/tests/acquisition/test_pulse_evidence.py
+index b86999dc..6fb843ea 100644
+--- a/tests/acquisition/test_pulse_evidence.py
++++ b/tests/acquisition/test_pulse_evidence.py
+@@ -329,7 +329,13 @@ async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
+     if retired == "interrupted":
+         session.interrupted = trial.interrupted = True
+     elif retired == "replaced_session":
+-        slot.current = replace(session)
++        new_work = _trial_work()
++        new_trial = replace(trial, work=new_work)
++        slot.current = replace(
++            session,
++            work=control.WorkContext(session=new_work.trial.session),
++            trial=new_trial,
++        )
+     elif retired == "replaced_trial":
+         session.trial = replace(trial)
+     elif retired == "cancelled":
+@@ -361,6 +367,25 @@ async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
+             pulse.observation == observation
+             and trial.pulse_delivery_deadline_ns is None
+         )
++    if retired == "replaced_session":
++        current = slot.current
++        assert current is not None and current.trial is not None
++        assert current.work != session.work and current.trial.work != trial.work
++        assert current.trial.pulse_on is None and current.trial.pulse_off is None
++        # Crossing the retired boundary must leave this same owner's next session
++        # usable, with evidence attached only to the fresh trial.
++        await owner.execute(
++            current, current.trial, (), command=command, boundary_ns=100
++        )
++        assert calls == [(command, 100, 110)]
++        assert changes == [current.trial]
++        assert (current.trial.pulse_on is not None) == (
++            command == mcu.PULSE_BOUNDARY_COMMAND_ON
++        )
++        assert (current.trial.pulse_off is not None) == (
++            command == mcu.PULSE_BOUNDARY_COMMAND_OFF
++        )
++        assert trial.pulse_on is None and trial.pulse_off is None
+ 
+ 
+ def _schedule(work: control.WorkContext) -> acq.WorkerSchedule:
+diff --git a/tests/controller/test_lifecycle_commands.py b/tests/controller/test_lifecycle_commands.py
+index e10e81eb..e36342df 100644
+--- a/tests/controller/test_lifecycle_commands.py
++++ b/tests/controller/test_lifecycle_commands.py
+@@ -60,8 +60,9 @@ def _operation(runtime: ControllerRuntime, attempt: Attempt, name: str) -> str:
+     return command_id
+ 
+ 
++@pytest.mark.parametrize("stage", ["metadata", "fences"])
+ async def test_interrupt_during_finalize_joins_the_one_task(
+-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stage: str
+ ) -> None:
+     runtime, attempt = _setup(tmp_path, monkeypatch)
+     gate, entered = asyncio.Event(), asyncio.Event()
+@@ -69,11 +70,21 @@ async def test_interrupt_during_finalize_joins_the_one_task(
+ 
+     async def slow_fences(*_args: object) -> bool:
+         calls.append(1)
+-        entered.set()
+-        await gate.wait()
++        if stage == "fences":
++            entered.set()
++            await gate.wait()
+         return True
+ 
++    finish_session = runtime.metadata.finish_session
++
++    async def slow_metadata(*args: Any, **kwargs: Any) -> bool:
++        if stage == "metadata":
++            entered.set()
++            await gate.wait()
++        return await finish_session(*args, **kwargs)
++
+     monkeypatch.setattr(runtime.cleanup, "register_cleanup_fences", slow_fences)
++    monkeypatch.setattr(runtime.metadata, "finish_session", slow_metadata)
+     runtime.lifecycle.trial.phase = pb.TRIAL_PHASE_ENDED
+     first = asyncio.create_task(runtime.interruption.finalize(attempt))
+     await entered.wait()
+@@ -584,23 +595,160 @@ async def test_interrupt_finalizes_even_when_trial_log_closure_raises(
+     async def broken(_attempt: object) -> bool:
+         raise ValueError("unexpected trial log failure")
+ 
+-    finalized: list[bool] = []
++    finalized: list[str] = []
+ 
+-    async def finalize(_attempt: object, **kwargs: Any) -> None:
+-        finalized.append(kwargs["metadata_clean"])
++    async def finish_session(_attempt: object, **kwargs: Any) -> bool:
++        finalized.append(kwargs["outcome"])
++        return True
+ 
+     monkeypatch.setattr(runtime.trial_logs, "finish_interrupted_trial", broken)
+-    monkeypatch.setattr(runtime.interruption, "finalize", finalize)
++    monkeypatch.setattr(runtime.metadata, "finish_session", finish_session)
+ 
+     await runtime.interruption.interrupt(attempt, "operator Abort now")
+ 
+-    assert finalized == [False]
++    assert finalized == ["interrupted"]
++    assert attempt.closure.done and not attempt.closure.clean
+     assert any(
+         w.component == "interruption" and "unexpected trial log failure" in w.message
+         for w in runtime.control.warnings
+     )
+ 
+ 
++@pytest.mark.parametrize(
++    "closure", [pb.OUTPUT_CLOSURE_CLOSED, pb.OUTPUT_CLOSURE_FAILED]
++)
++async def test_abort_uses_exact_cleanup_before_trial_and_session_metadata(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, closure: int
++) -> None:
++    runtime, attempt = _setup(tmp_path, monkeypatch)
++    plan = _trial_attempt(runtime, attempt)
++    name = "visual_stimulus"
++    context = pb.BackendContext(backend_name=name, backend_generation=_id())
++    source = pb.ProcessIdentity(role=name, generation=context.backend_generation)
++    work = pb.WorkContext(session=attempt.context)
++    output = attempt.prepared.outputs.add(
++        output_key="stimulus",
++        backend=context,
++        trial=plan.context,
++        path=str(tmp_path / "stimulus.jsonl"),
++    )
++    attempt.registered_context = svc.RegisteredContext(work=work, outputs=[output])
++    attempt.trial_closure.released = frozenset({name})
++    attempt.setup_operations[name] = _id()
++    attempt.ready[name] = pb.ReadyReport()
++    attempt.ready[name].prepared_functions.add(lifecycle_sources=["renderer"])
++    runtime.supervisor_state.processes[name] = svc.ProcessHealthStatus(
++        process=source,
++        last_heartbeat=pb.HeartbeatReport(
++            source=source, work=work, cleanup_resources_revision=1
++        ),
++    )
++    events: list[str] = []
++    documents: list[dict[str, Any]] = []
++
++    class Peer:
++        async def interrupt_session(self, request: Any, *, deadline_ns: int) -> None:
++            events.append("interrupt")
++            assert deadline_ns == 1_000 + runtime.limits.stop_evidence_ns
++
++        async def cleanup(
++            self, request: svc.BackendCommand, *, deadline_ns: int
++        ) -> pb.CommandAdmission:
++            events.append("cleanup")
++            assert deadline_ns == attempt.finalization_deadline_ns
++            result = pb.OutputResult(
++                output_key=output.output_key,
++                path=output.path,
++                closure=closure,
++                artifact_present=True,
++            )
++            if closure == pb.OUTPUT_CLOSURE_FAILED:
++                result.failure.code = "WRITE_FAILED"
++            receipt = await runtime.report_lifecycle(
++                pb.LifecycleReport(
++                    cleanup=pb.CleanupReport(
++                        source=source,
++                        work=work,
++                        operation=pb.OperationContext(command_id=request.command_id),
++                        verified_monotonic_ns=1_000,
++                        trial_activity_stopped=True,
++                        cleanup_resources_revision=1,
++                        outputs=[result],
++                    )
++                ),
++                1_000,
++            )
++            assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
++            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
++
++    peer = Peer()
++    peer.context = context
++    attempt.required[name] = cast(Any, peer)
++    attempt.trial_participants[name] = cast(Any, peer)
++
++    async def fence(_attempt: Attempt, requests: Any, deadline_ns: int) -> bool:
++        events.append("fence")
++        attempt.registered_context.cleanup_commands.add(
++            target=source,
++            work=work,
++            operation=pb.OperationContext(command_id=requests[name].command_id),
++        )
++        return True
++
++    async def start_log(_attempt: Attempt, _plan: pb.TrialPlan) -> None:
++        events.append("trial_started")
++
++    async def persist(
++        _attempt: Attempt, _name: str, _action: str, document: dict[str, Any]
++    ) -> None:
++        events.append("trial_log")
++        documents.append(document)
++
++    async def event(_attempt: Attempt, name: str, **kwargs: Any) -> None:
++        events.append(name)
++        assert kwargs["outcome"] == "interrupted"
++        assert kwargs["details"]["output_closure_confirmed"]
++        assert kwargs["details"]["actual_end_monotonic_ns"] is None
++
++    async def session(_attempt: Attempt, **kwargs: Any) -> bool:
++        events.append("session_ended")
++        return True
++
++    monkeypatch.setattr(runtime.cleanup, "register_cleanup_fences", fence)
++    monkeypatch.setattr(runtime.trial_logs, "start_trial_log", start_log)
++    monkeypatch.setattr(runtime.metadata, "persist", persist)
++    monkeypatch.setattr(runtime.metadata, "log_event", event)
++    monkeypatch.setattr(runtime.metadata, "finish_session", session)
++    await asyncio.wait_for(runtime.interruption.interrupt(attempt, "Abort"), 0.5)
++    assert events == [
++        "interrupt",
++        "fence",
++        "cleanup",
++        "trial_started",
++        "trial_log",
++        "trial_finished",
++        "session_ended",
++    ]
++    assert documents[0]["outputs"][0]["closure"] == pb.OutputClosure.Name(closure)
++    assert documents[0]["outcome"] == "interrupted"
++    assert not attempt.finished
++    assert attempt.trial_log_finished and attempt.closure.clean
++    assert runtime.lifecycle.session.cleanup_confirmed
++    assert runtime.lifecycle.trial.outcome == pb.TRIAL_OUTCOME_INTERRUPTED
++    assert not runtime.control.warnings
++    receipt = await runtime.new_session(operator_command(runtime))
++    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
++    assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
++    assert runtime.lifecycle.attempt is None
++    replacement = _attempt(runtime, tmp_path, dict(attempt.required))
++    runtime.lifecycle.attempt = replacement
++    stale = await runtime.report_lifecycle(
++        pb.LifecycleReport(cleanup=attempt.cleanup[name]), 1_000
++    )
++    assert stale.result == pb.COMMAND_RESULT_REJECTED
++    assert not replacement.cleanup
++
++
+ async def test_owner_cleanup_releases_prepared_preview_like_setup_guard(
+     tmp_path: Path,
+ ) -> None:
+diff --git a/tests/controller/test_lifecycle_reports.py b/tests/controller/test_lifecycle_reports.py
+index 78af91d8..cf5179e6 100644
+--- a/tests/controller/test_lifecycle_reports.py
++++ b/tests/controller/test_lifecycle_reports.py
+@@ -375,6 +375,45 @@ async def test_failed_setup_cleanup_matches_registered_output_set_exactly(
+         assert receipt.failure.code == "EVIDENCE"
+ 
+ 
++@pytest.mark.parametrize("path", [None, "wrong.jsonl", "camera.jsonl"])
++async def test_cleanup_requires_registered_output_path(
++    tmp_path: Path, path: str | None
++) -> None:
++    fixture = _fixture(tmp_path)
++    attempt, backend = fixture.attempt, fixture.backend
++    source = pb.ProcessIdentity(
++        role=backend.backend_name, generation=backend.backend_generation
++    )
++    work = pb.WorkContext(session=attempt.context)
++    registered = svc.RegisteredContext(work=work)
++    registered.outputs.add(output_key="camera", backend=backend, path="camera.jsonl")
++    operation = pb.OperationContext(command_id=_id())
++    registered.cleanup_commands.add(target=source, work=work, operation=operation)
++    attempt.registered_context = registered
++    fixture.supervisor.processes[backend.backend_name] = svc.ProcessHealthStatus(
++        process=source,
++        last_heartbeat=pb.HeartbeatReport(
++            source=source, work=work, cleanup_resources_revision=1
++        ),
++    )
++    cleanup = pb.CleanupReport(
++        source=source,
++        work=work,
++        operation=operation,
++        verified_monotonic_ns=1,
++        trial_activity_stopped=True,
++        cleanup_resources_revision=1,
++    )
++    result = cleanup.outputs.add(
++        output_key="camera", closure=pb.OUTPUT_CLOSURE_CLOSED, artifact_present=True
++    )
++    if path is not None:
++        result.path = path
++    receipt = await fixture.reports.receive(pb.LifecycleReport(cleanup=cleanup), 50)
++    assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) == (path == "camera.jsonl")
++    assert bool(attempt.cleanup) == (path == "camera.jsonl")
++
++
+ async def test_trial_ready_requires_exact_trial_and_active_participant(
+     tmp_path: Path,
+ ) -> None:
+diff --git a/tests/controller/test_runtime_retention.py b/tests/controller/test_runtime_retention.py
+index db4fba2a..abddf20c 100644
+--- a/tests/controller/test_runtime_retention.py
++++ b/tests/controller/test_runtime_retention.py
+@@ -2,11 +2,14 @@
+ 
+ from __future__ import annotations
+ 
++import asyncio
+ import time
+ from dataclasses import replace
+ from pathlib import Path
+ from typing import cast
+ 
++import pytest
++
+ from cephvr.control.v1 import services_pb2 as svc
+ from cephvr.control.v1 import types_pb2 as pb
+ from cephvr.controller.ports import BackendPort
+@@ -20,6 +23,131 @@ from tests.controller.support_components import (
+ )
+ 
+ 
++@pytest.mark.parametrize(
++    "mismatch", [None, "session", "generation", "command", "catalogue"]
++)
++async def test_interrupted_closure_queries_exact_session_cleanup_once(
++    tmp_path: Path, mismatch: str | None
++) -> None:
++    context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
++    runtime = _runtime(tmp_path, context)
++    runtime.clock = time.monotonic_ns
++    runtime.evidence_waiter.clock = runtime.clock
++    runtime.limit_state.current = replace(runtime.limits, recovery_ns=50_000_000)
++    attempt = _attempt(runtime, tmp_path, {})
++    trial = pb.TrialContext(session=attempt.context, trial_id=_id(), trial_number=1)
++    attempt.prepared.trials.add(context=trial)
++    attempt.trial_index = 0
++    attempt.interrupted = True
++    attempt.finished_deadline_ns = runtime.clock() - 1_000_000
++    attempt.finalization_deadline_ns = runtime.clock() + 200_000_000
++    work = pb.WorkContext(session=attempt.context)
++    source = pb.ProcessIdentity(
++        role="acquisition", generation=context.backend_generation
++    )
++    command_id = _id()
++    output = attempt.prepared.outputs.add(
++        output_key="camera",
++        backend=context,
++        trial=trial,
++        path=str(tmp_path / "camera.jsonl"),
++    )
++    registered = svc.RegisteredContext(work=work, outputs=[output])
++    registered.cleanup_commands.add(
++        target=source, work=work, operation=pb.OperationContext(command_id=command_id)
++    )
++    attempt.registered_context = registered
++    runtime.supervisor_state.processes["acquisition"] = svc.ProcessHealthStatus(
++        process=source,
++        last_heartbeat=pb.HeartbeatReport(
++            source=source, work=work, cleanup_resources_revision=1
++        ),
++    )
++    cleanup = pb.CleanupReport(
++        source=source,
++        work=work,
++        operation=pb.OperationContext(command_id=command_id),
++        verified_monotonic_ns=runtime.clock(),
++        trial_activity_stopped=True,
++        cleanup_resources_revision=1,
++        outputs=[
++            pb.OutputResult(
++                output_key=output.output_key,
++                path=output.path,
++                closure=pb.OUTPUT_CLOSURE_CLOSED,
++                artifact_present=True,
++            )
++        ],
++    )
++    if mismatch == "session":
++        cleanup.work.session.session_id = _id()
++    elif mismatch == "generation":
++        cleanup.source.generation = _id()
++    elif mismatch == "command":
++        cleanup.operation.command_id = _id()
++    elif mismatch == "catalogue":
++        cleanup.cleanup_resources_revision = 2
++    queries: list[svc.BackendQuery] = []
++
++    class Peer:
++        async def get_state(
++            self, request: svc.BackendQuery, *, deadline_ns: int
++        ) -> pb.ParticipantState:
++            assert request.work == work
++            assert request.target == context
++            assert (
++                deadline_ns == attempt.finished_deadline_ns + runtime.limits.recovery_ns
++            )
++            queries.append(request)
++            return pb.ParticipantState(cleanup=cleanup)
++
++    peer = Peer()
++    peer.context = context
++    attempt.required["acquisition"] = cast(BackendPort, peer)
++    attempt.trial_participants["acquisition"] = cast(BackendPort, peer)
++    runtime.lifecycle.attempt = attempt
++    runtime.lifecycle.session = pb.SessionState(phase=pb.SESSION_PHASE_FINALIZING)
++    runtime.lifecycle.trial = pb.TrialState(
++        phase=pb.TRIAL_PHASE_FINALIZING, context=trial
++    )
++    wait = runtime.evidence_waiter.wait_lifecycle_with_recovery(
++        attempt,
++        "finished",
++        frozenset({"acquisition"}),
++        attempt.finished_deadline_ns,
++        closure_only=True,
++    )
++    if mismatch is None:
++        assert await asyncio.wait_for(wait, 0.5)
++        assert attempt.cleanup["acquisition"] == cleanup
++    else:
++        with pytest.raises(TimeoutError, match="one bounded recovery query"):
++            await asyncio.wait_for(wait, 0.5)
++        assert not attempt.cleanup
++    assert len(queries) == 1
++    assert not attempt.finished
++    assert not attempt.recovering_evidence
++    assert attempt.recovery_deadline_ns == 0
++
++
++async def test_interrupted_closure_cannot_extend_expired_finalization(
++    tmp_path: Path,
++) -> None:
++    context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
++    runtime = _runtime(tmp_path, context)
++    attempt = _attempt(runtime, tmp_path, {})
++    attempt.interrupted = True
++    attempt.finalization_deadline_ns = 999
++    runtime.lifecycle.attempt = attempt
++    runtime.lifecycle.trial.phase = pb.TRIAL_PHASE_FINALIZING
++    with pytest.raises(TimeoutError, match="required lifecycle evidence"):
++        await runtime.evidence_waiter.wait_lifecycle_with_recovery(
++            attempt, "finished", frozenset({"acquisition"}), 998, closure_only=True
++        )
++    assert not attempt.recovering_evidence
++    assert not runtime.control.warnings
++
++
+ async def test_late_camera_completion_reconciles_blocker_without_reviving_success(
+     tmp_path: Path,
+ ) -> None:
+diff --git a/tests/controller/test_safety_regressions.py b/tests/controller/test_safety_regressions.py
+index 70af6d2b..c89100df 100644
+--- a/tests/controller/test_safety_regressions.py
++++ b/tests/controller/test_safety_regressions.py
+@@ -56,15 +56,10 @@ async def test_interrupt_delivery_is_independent_and_keeps_original_deadline(
+         for name in ("acquisition", "visual_stimulus", "tracking")
+     }
+ 
+-    async def finish_trial(_attempt: Attempt) -> bool:
+-        assert cancelled.is_set()
+-        return True
+-
+-    monkeypatch.setattr(runtime.trial_logs, "finish_interrupted_trial", finish_trial)
+     if authority_loss:
+         await runtime.interruption.authority_emergency_interrupt(attempt, "lost owner")
+     else:
+-        assert await runtime.interruption._stop_backends_and_trial(attempt, "abort")
++        await runtime.interruption._stop_backends(attempt, "abort")
+     assert calls == dict.fromkeys(attempt.required, 20_000_500)
+     assert cancelled.is_set()
+     assert all(request.command.work.session == attempt.context for request in requests)

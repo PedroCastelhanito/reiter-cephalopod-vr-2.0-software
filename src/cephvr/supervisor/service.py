@@ -12,8 +12,10 @@ from cephvr.control.v1 import services_pb2_grpc
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.auth import AuthenticationError, require_authenticated_peer
 from cephvr.shared.clock import HostClockDescriptor, host_time_ns
+from cephvr.shared.commands import CommandCapacityError
 from cephvr.shared.transport_deadlines import parse_deadline_metadata
 from cephvr.supervisor.health import HealthMonitor
+from cephvr.supervisor.preview_consumers import retain_preview_result
 from cephvr.supervisor.receipts import (
     accepted,
     rejected,
@@ -257,7 +259,15 @@ class SupervisorService(services_pb2_grpc.SupervisorServiceServicer):
     async def ReportPreviewConsumerState(
         self, request: wire.PreviewConsumerReport, context: grpc.aio.ServicerContext
     ) -> types.ReportReceipt:
-        await self._authenticate(context, request.consumer)
+        # Select the permitted sender; the shared authenticator still validates
+        # every protected field, including duplicate metadata, without fallback.
+        relayed = any(
+            key == "x-cephvr-role" and value == self.controller.role
+            for key, value in context.invocation_metadata()
+        )
+        await self._authenticate(
+            context, self.controller if relayed else request.consumer
+        )
         if request.result == wire.PREVIEW_CONSUMER_RESULT_ATTACHED:
             return report_rejected("INVALID_PREVIEW", "ATTACHED belongs to controller")
         if (
@@ -267,6 +277,23 @@ class SupervisorService(services_pb2_grpc.SupervisorServiceServicer):
             return report_rejected(
                 "WRONG_CONTEXT", "preview consumer is not registered"
             )
+        try:
+            async with self.lock:
+                changed = retain_preview_result(
+                    self.registration.state.preview_consumers,
+                    request,
+                    max_entries=self.recovery.max_retained_entries,
+                    max_bytes=self.max_message_bytes // 4,
+                )
+        except CommandCapacityError as exc:
+            self.shutdown.begin_safety(
+                types.Failure(code="PREVIEW_EVIDENCE_CAPACITY", message=str(exc))
+            )
+            return report_rejected("CAPACITY", str(exc))
+        except ValueError as exc:
+            return report_rejected("INVALID_PREVIEW", str(exc))
+        if changed:
+            self.status.changed()
         return report_accepted()
 
     async def GetRecoveryState(

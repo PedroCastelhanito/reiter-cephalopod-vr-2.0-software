@@ -1,0 +1,17 @@
+{
+  "local_paths_checked": 450,
+  "missing": [
+    [
+      "reports/visual_stimulus.md",
+      "runtime-evidence-2026-10-15/bottom-grid/fix-verification/after/bottom-offscreen.png"
+    ],
+    [
+      "reports/visual_stimulus.md",
+      "runtime-evidence-2026-10-14/tank-screen-plot/tank-screens.png"
+    ]
+  ],
+  "changed_decision_anchors": "E13/V12/V28/E14 present",
+  "scope": "local target paths plus changed decision anchors; external URLs not re-fetched",
+  "assessment": "Both missing PNG targets are pre-existing links in HEAD, unrelated to this implementation. Changed targets and E13/V12/V28/E14 anchors resolve.",
+  "preexisting_in_head": true
+}

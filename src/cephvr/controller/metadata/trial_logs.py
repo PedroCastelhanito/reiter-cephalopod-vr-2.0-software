@@ -38,35 +38,50 @@ def _actual_stop_ns(attempt: Attempt, active_backends: frozenset[str]) -> int | 
     return None
 
 
-def _interrupted_output_results(
+def _trial_output_index(
     attempt: Attempt, plan: pb.TrialPlan
 ) -> list[dict[str, object]]:
-    # A missing Finished report leaves every corresponding reserved output
-    # explicitly unknown. A reported closure is retained exactly as sent.
+    # Only admitted exact-context reports can discharge interrupted closure;
+    # session cleanup does not imply successful trial Finished.
     reported = {
-        result.output_key: result
-        for finished in attempt.finished.values()
-        for result in finished.outputs
+        (name, result.output_key): result
+        for reports in (attempt.finished, attempt.cleanup)
+        for name, report in reports.items()
+        for result in report.outputs
     }
-    reported.update(
-        {result.output_key: result for result in attempt.unavailable_outputs}
-    )
+    unavailable = {result.output_key: result for result in attempt.unavailable_outputs}
     output_results: list[dict[str, object]] = []
     for output in attempt.prepared.outputs:
         if output.trial != plan.context:
             continue
-        result = reported.get(output.output_key)
-        if result is None:
+        result = reported.get(
+            (output.backend.backend_name, output.output_key),
+            unavailable.get(output.output_key),
+        )
+        if result is None or result.path != output.path:
             result = pb.OutputResult(
                 output_key=output.output_key,
                 path=output.path,
                 closure=pb.OUTPUT_CLOSURE_UNCONFIRMED,
                 failure=pb.Failure(
                     code="OUTPUT_CLOSURE_UNCONFIRMED",
-                    message="no exact Finished closure by original interruption deadline",
+                    message="no exact output closure by original completion deadline",
                 ),
             )
-        output_results.append(message_dict(result))
+        entry = message_dict(result)
+        definition = attempt.output_formats.get(output.output_key)
+        entry.update(
+            backend=message_dict(output.backend),
+            output_tag=output.output_tag,
+            extension=output.extension,
+            format=definition[0] if definition is not None else None,
+            schema_version=definition[1] if definition is not None else None,
+            artifact_present=result.artifact_present
+            if result.HasField("artifact_present")
+            else None,
+            counts=dict(result.counts),
+        )
+        output_results.append(entry)
     return output_results
 
 
@@ -116,12 +131,7 @@ class TrialLogs:
     ) -> None:
         if attempt.interrupted:
             raise RuntimeError("normal trial closure superseded by interruption")
-        outputs = [
-            message_dict(result)
-            for finished in attempt.finished.values()
-            for result in finished.outputs
-        ]
-        outputs.extend(message_dict(result) for result in attempt.unavailable_outputs)
+        outputs = _trial_output_index(attempt, plan)
         # Once issued, interruption must not replace this LOG or repeat the event.
         attempt.trial_closure.finish_append_issued = True
         await self.metadata.persist(
@@ -188,7 +198,10 @@ class TrialLogs:
             active_backends = activity_backends(attempt)
             try:
                 await self.evidence_waiter.wait_evidence(
-                    lambda: active_backends <= attempt.stopped.keys(),
+                    lambda: (
+                        active_backends
+                        <= attempt.stopped.keys() | attempt.cleanup.keys()
+                    ),
                     attempt.interruption_issued_ns
                     + self.limits.current.stop_evidence_ns,
                     attempt,
@@ -205,7 +218,7 @@ class TrialLogs:
                 )
             except TimeoutError:
                 pass
-            output_results = _interrupted_output_results(attempt, plan)
+            output_results = _trial_output_index(attempt, plan)
             await asyncio.wait_for(
                 self.metadata.persist(
                     attempt,
@@ -238,7 +251,7 @@ class TrialLogs:
                             "output_closure_confirmed": frozenset(
                                 attempt.trial_participants
                             )
-                            <= attempt.finished.keys(),
+                            <= attempt.finished.keys() | attempt.cleanup.keys(),
                             "start_unconfirmed": sorted(
                                 closure.released - attempt.started.keys()
                             ),

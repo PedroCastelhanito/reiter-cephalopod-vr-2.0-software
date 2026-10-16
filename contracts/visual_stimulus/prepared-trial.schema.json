@@ -3478,6 +3478,8 @@
         },
         "native_pixel_format": {
           "enum": [
+            "rgba8_top_down",
+            "r10g10b10a2_le_top_down",
             "rgba8_bottom_up",
             "r10g10b10a2_le_bottom_up"
           ],

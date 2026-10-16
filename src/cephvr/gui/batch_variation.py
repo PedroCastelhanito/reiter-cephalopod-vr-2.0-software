@@ -156,7 +156,8 @@ class BatchVariationRow(QWidget):
         self.refresh_layers()
 
     def enterEvent(self, event: QEnterEvent | None) -> None:
-        self.remove.show()
+        if not self.table_mode:
+            self.remove.show()
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent | None) -> None:

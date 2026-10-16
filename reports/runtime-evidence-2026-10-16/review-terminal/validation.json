@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-16",
+  "source_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_scope": "Concurrent dirty working tree; hashes identify inspected files.",
+  "source_sha256": {
+    "src/cephvr/gui/appearance.py": "b63445cb64c2d1a667f7777049f5e1c47cc29242fbc08bd601bb1650de6c2e51",
+    "src/cephvr/gui/components.py": "1b81ea4217e3f090f79c93ba248b03eed4bd7ed378e5a6be738c24ae96c11201",
+    "src/cephvr/gui/retro_instruments.py": "9d561f2e20ca42bfe9fc874cb86c47e97267f1c7bc14f4fb4df5835aa3169966",
+    "src/cephvr/gui/retro_overlay.py": "83d129ed96115ed4287f032b108d7c5256b566f59333c85710f551197813170c",
+    "src/cephvr/gui/theme.py": "ae485c47f292007b6b7cbeb9ac6dbf91db48d03328621084f02085ede8af27d8",
+    "src/cephvr/gui/assets/fonts/IBMPlexMono-Regular.ttf": "7c6fbddca4b700be918f5f6183d9bd4464fa427fe435f0b480d77fe2bb8c5a43",
+    "tests/gui/test_dashboard.py": "b001e186b01f87616ed5b1a0d08abdf80c50f806f6f658435bbf2087e8e40e9c",
+    "pyproject.toml": "0b5ca2b04458534751963166ec01bf84b65d0422a5e451659033f0d46070e3f4"
+  },
+  "checks": {
+    "focused_gui": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'review_appearance or responsive_navigation or wide_layout_keeps or dashboard_control_status or log_keeps_reading or log_entry_details or wrapped_log or console_tab or hud_fits_content' -m 'not windows and not rig'",
+      "result": "11 passed, 534 deselected"
+    },
+    "lint_format": {
+      "commands": [
+        ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+        ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui"
+      ],
+      "result": "passed; 166 files"
+    },
+    "mypy": {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/appearance.py src/cephvr/gui/components.py src/cephvr/gui/retro_instruments.py src/cephvr/gui/retro_overlay.py src/cephvr/gui/theme.py",
+      "result": "5 source files passed"
+    },
+    "boundaries": {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "706 modules, zero violations; existing cohesion advisories remain"
+    },
+    "build": {
+      "command": ".venv/bin/python -m build --no-isolation --outdir /tmp/cephvr-terminal-dist",
+      "result": "wheel and sdist built; font, license and source record byte-verified in both"
+    },
+    "visual": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-16/review-terminal/render.py",
+      "result": "1440/720 and CRT Off renders inspected"
+    }
+  },
+  "limitations": [
+    "Isolated build failed on sandbox PyPI DNS; local installed build dependencies succeeded.",
+    "Broad GUI run intentionally interrupted after 34 cases; Qt aborted during interruption, no full-suite pass.",
+    "Initial local test import placement/lint corrected before passing results.",
+    "Offscreen macOS fixtures; no native Windows/DPI, measured repaint cost, hardware or rig acceptance."
+  ]
+}

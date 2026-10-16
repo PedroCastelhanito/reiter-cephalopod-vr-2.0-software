@@ -1,0 +1,41 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_timed_out_reservation_acquire_retains_owner_until_late_cleanup ______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2018/test_timed_out_reservation_acq0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x106c09950>
+
+    async def test_timed_out_reservation_acquire_retains_owner_until_late_cleanup(tmp_path, monkeypatch):
+        import threading
+        import time
+    
+        runtime = _runtime(tmp_path, pb.BackendContext(backend_name="acquisition", backend_generation=_id()))
+        runtime.cleanup.clock = time.monotonic_ns
+        runtime.setup_execution.clock = time.monotonic_ns
+        attempt = _attempt(runtime, tmp_path, {})
+        runtime.lifecycle.attempt = attempt
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+        entered, release = threading.Event(), threading.Event()
+        acquire = attempt.reservation.acquire
+    
+        def delayed_acquire():
+            entered.set()
+            assert release.wait(2)
+            return acquire()
+    
+        monkeypatch.setattr(attempt.reservation, "acquire", delayed_acquire)
+        try:
+            with pytest.raises(TimeoutError):
+                await runtime.setup_execution._reserve_output(attempt, _id(), time.monotonic_ns() + 20_000_000)
+            assert entered.is_set()
+            attempt.cancel_requested = True
+            await runtime.cleanup.cancel_attempt(attempt)
+>           assert runtime.lifecycle.attempt is attempt
+E           assert None is Attempt(context=controller_generation: "925c32bd-b831-4cf9-84d2-9f3d3822bbc4"\nsession_id: "7ac8cf28-798a-46e0-8d87-beb...pending=set(), handoff_failures={}), trial_closure=TrialClosureState(released=frozenset(), finish_append_issued=False))
+E            +  where None = LifecycleState(session=phase: SESSION_PHASE_CONFIGURATION\ncleanup_confirmed: true\n, trial=phase: TRIAL_PHASE_PENDING\n,...pending=False, manual_control_cleanup_task=None, manual_control_cleanup_stopping=False, inventory_update_pending=False).attempt
+E            +    where LifecycleState(session=phase: SESSION_PHASE_CONFIGURATION\ncleanup_confirmed: true\n, trial=phase: TRIAL_PHASE_PENDING\n,...pending=False, manual_control_cleanup_task=None, manual_control_cleanup_stopping=False, inventory_update_pending=False) = <cephvr.controller.runtime.ControllerRuntime object at 0x106c11a10>.lifecycle
+
+tests/controller/test_setup.py:586: AssertionError
+=========================== short test summary info ============================
+FAILED tests/controller/test_setup.py::test_timed_out_reservation_acquire_retains_owner_until_late_cleanup
+1 failed, 15 deselected in 0.91s

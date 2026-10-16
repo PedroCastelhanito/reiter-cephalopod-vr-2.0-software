@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/reports/runtime-evidence-2026-10-16/backend-output-alignment-review/probe.py", line 8, in <module>
+    from tests.visual_stimulus.support import make_program
+ModuleNotFoundError: No module named 'tests'

@@ -12,6 +12,7 @@ from cephvr.visual_stimulus.config.models.artifact_models import (
     ReviewEncoding,
 )
 from cephvr.visual_stimulus.config.models.program_model import Scene
+from cephvr.visual_stimulus.rendering.arena import effective_arena_pose
 from cephvr.visual_stimulus.rendering.evidence import (
     clip_vertex_components,
     float32_words,
@@ -216,7 +217,11 @@ class ModernGLSceneRenderer:
             tuple(outputs_rendered),
             tuple(uniforms_by_id.values()),
             media,
-            (),
+            tuple(
+                effective_arena_pose(snapshot)
+                for snapshot in state
+                if snapshot.active and snapshot.instance_id == scene.arena_instance_id
+            ),
         )
 
     def _draw_scene_layers(

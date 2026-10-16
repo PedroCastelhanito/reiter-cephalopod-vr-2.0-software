@@ -1,0 +1,85 @@
+.F.                                                                      [100%]
+=================================== FAILURES ===================================
+__ test_failed_source_submission_cannot_be_retried_as_normal_closure[mapping] __
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2013/test_failed_source_submission_1')
+failure = 'mapping'
+
+    @pytest.mark.parametrize("failure", ["input", "mapping", "maintenance"])
+    def test_failed_source_submission_cannot_be_retried_as_normal_closure(
+        tmp_path: Path,
+        failure: str,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        start_ns = 1_000_000_000
+        schedule = _schedule(tmp_path / "failed.mp4", tmp_path / "failed.jsonl")
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 2_000_000_000
+        queue = RecordingQueue(1, 1)
+        pool = PixelBufferPool(payload_bytes=4, capacity=1)
+        pixels = pool.acquire_nowait()
+        pixels[:] = b"data"
+        queue.enqueue(FrameRecord(0, start_ns + 1, None, None, True, None), pixels)
+    
+        class FrameLog:
+            frame_count = 0
+    
+            def append_frame(self, *_args, **_kwargs):
+                pass
+    
+            def append_video_frame(self, **_fields):
+                if failure == "mapping":
+                    raise OSError("mapping failure")
+                self.frame_count += 1
+    
+        class Encoder(_Encoder):
+            def write(self, frame, *, deadline_ns):
+                if failure == "input":
+                    raise OSError("input failure")
+                super().write(frame, deadline_ns=deadline_ns)
+    
+        encoder = Encoder()
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(metadata_only=False, recording_bit_depth=8)
+        session._released = True
+        session._finished = False
+        session._finish_results = None
+        session._error = None
+        session._encoder = encoder
+        session._frame_log = FrameLog()
+        session._scheduled = schedule
+        session.queue, session.pixel_pool = queue, pool
+        session._prepared_buffer = bytearray(4)
+        session._started = True
+        session._last_frame_id = -1
+        session._submitted = 0
+        session._watchdog = None
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._write_deadline = lambda: start_ns + 100
+        session._sync_due = lambda: None
+        session._observe_video_identity = lambda: None
+    
+        def check_progress():
+            if failure == "maintenance":
+                raise OSError("maintenance failure")
+    
+        session._check_progress = check_progress
+        session.pixel_preparer = SimpleNamespace(
+            layout=SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8)),
+            prepare_recording_into=lambda pixels, buffer, **kwargs: SimpleNamespace(
+                data=bytes(pixels), effective_bits=8, source_effective_bits=8
+            ),
+        )
+        with pytest.raises(RecordingFailure):
+            session.process_available()
+        assert encoder.writes == (0 if failure == "input" else 1)
+>       assert session._submitted == encoder.writes
+E       assert 0 == 1
+E        +  where 0 = <cephvr.acquisition.recording.session.RecordingSession object at 0x1052d8910>._submitted
+E        +  and   1 = <tests.acquisition.test_recording_cleanup.test_failed_source_submission_cannot_be_retried_as_normal_closure.<locals>.Encoder object at 0x1052d8cd0>.writes
+
+tests/acquisition/test_recording_cleanup.py:924: AssertionError
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_recording_cleanup.py::test_failed_source_submission_cannot_be_retried_as_normal_closure[mapping]
+1 failed, 2 passed, 31 deselected in 0.41s

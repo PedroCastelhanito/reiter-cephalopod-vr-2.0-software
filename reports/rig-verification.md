@@ -30,6 +30,31 @@ crossing; the latest comprehensive paired run above does. Interrupted trial-log
 finalization latency remains open.
 
 Earlier Oct15 scope authorized open-loop
+
+Oct16 local reliability fixes do not close the following native checks. Use the
+normal managed application with fresh Setup and retain exact source/settings,
+commands, reports and output metadata; preserve original stop/recovery bounds.
+[Software changes and local evidence](acquisition.md).
+
+- [ ] `interrupt-trial-log-closure`: Abort an active all-camera/stimulus recording;
+  verify prompt cutoff separately from command-return latency, exact cleanup and
+  synchronized Interrupted trial/session logs with truthful output statuses.
+  Confirm no unnecessary Finished recovery wait when cleanup is already verified;
+  missing/failed evidence must remain visible. Verify NewSession after safe cleanup.
+- [ ] `rapid-abort-setup-heartbeat`: immediately perform NewSession, fresh Setup and
+  Start in the same application generation; record beyond the retired trial's
+  original end. Retain heartbeats/pulse identities and confirm no old worker,
+  deadline or pulse task mutates the new trial; include Abort during finalization.
+- [ ] `camera-preview-sdk-discard-reuse`: repeat more than five Behavior/Tracking
+  preview Start/Stop cycles in one generation, confirming actual device/ring release
+  after each Stop and a successful following Start. Capture any incomplete drain
+  evidence; failed/unconfirmed Close and pulse-pause paths retaining the device
+  must keep their safety guard. Do not force reopen or clear unknown accounting.
+  Include independent consumer and exact current-controller terminal-proof delivery
+  under E08/A10, lost acknowledgement/reconciliation and stale-generation rejection.
+  Oct16 authenticated local handoff tests pass; native handle release remains open.
+
+Current Oct15 scope: owner now confirms projectors/cameras on and requests open-loop
 Gaussian linked-screen motion, simple3D arena and all configured camera/stimulus
 recordings, CPU/GPU monitoring and a15-minute trial after shorter checks succeed.
 Use Desktop/Pedro files; projection areas remain uncalibrated, so engineering results
@@ -259,8 +284,9 @@ Pending rig test — stimulus ~20 fps diagnosis (owner requested Oct11):
 - [ ] Measure state/draw, context switching, each swap, composite/capture enqueue and
   completed GPU readback/CPU copy separately. Retain per-stage timing distributions,
   real render groups/s, capture admissions/drops and encoder submission counts.
-- [ ] Recheck the padded video's duration and real-versus-duplicate frame mapping
-  separately from actual rendering rate. Save command, source revision, configuration
+- [ ] Recheck sequential decoded-frame count and exact source timestamp mappings
+  separately from actual rendering rate; nominal playback duration need not match
+  the trial. Compare historical padded recordings using their original schema. Save command, source revision, configuration
   and raw evidence; use results to identify the bottleneck before choosing a fix.
 
 [Snapshot/source findings](runtime-evidence-2026-10-11/throughput-source-trace.json)
@@ -563,16 +589,17 @@ Existing operating-point/throughput deferrals below remain separate.
 | Visual Stimulus output precision and custom encoding | Under V20/E13, verify requested versus actual RGB8/RGB10 buffers, final code preservation, calibration matching and the real driver/cable/projector path. Exercise the single composite lossy argument validation, actual encoder compatibility at the composite resolution, explicit review conversion and encoder load/failure while preserving live rendering and required state evidence. Under SYS-002, confirm the now-operational RTX 2080 Ti sustains three concurrent NVENC sessions (two cameras plus one Visual Stimulus composite) at planned rates while the RTX 5060 Ti renders/tracks and AMD integrated graphics serves the operator display/GUI. Verify actual adapter identities, explicit FFmpeg device selection and host-transfer costs; the earlier RTX 5060 Ti encoder probes do not validate this placement. Normal runtime still performs no file-content validation. |
 | SpikeGLX session control | Under E12 and the [control contract](../contracts/spikeglx-control.md): installed SDK/SpikeGLX versions; command server bound to the dedicated link and firewall admitting only the rig; readback, gate/trigger-mode rejection and run-name collision behavior; startRun-to-saving latency and per-stream sample-count progress (including one stalled stream) to set the writing/no-progress bounds; stopRun completion; timed-out mutation reconciliation; Abort/link-loss behavior including transient recovery, per-stream deadline expiry, late replies and counter reset detection; command-server port (default 4142); stop margin against the final photodiode edge, including Stop/Cancel across trials, interrupted uncertain starts and immediate stop between trials; repeated fault/recovery episodes; controller-loss emergency warning naming the run for manual stopping. Acknowledgements are not pulse timing. |
 
-| Arena-file movement limits | Under V16/G01, load a legacy rectangular GLB and a declared convex GLB; verify transformed world bounds, 30 mm/default and edited clearance, starting pose, sliding at walls/corners and four-view agreement. Reject missing/unsupported/invalid geometry, empty inset and outside starts; retain resolved regions/fingerprints and source specifications through Setup/reset/restart. Preserve loaded explicit regions and unrestricted mode. Local offscreen/compiler/resource tests do not establish native file protection or rig equivalence. |
+| Arena-file movement limits | Under V16/G01, load a legacy rectangular GLB and a declared convex GLB; verify transformed world bounds, 30 mm/default and edited clearance, starting pose, sliding at walls/corners and four-view agreement. Reject missing/unsupported/invalid geometry, empty inset and outside starts; retain resolved regions/fingerprints and source specifications through Setup/reset/restart. Preserve loaded explicit regions and unrestricted mode. Inspect nonempty effective_poses for the active arena: declared frame, mm position and unit quaternion must agree with the frozen rendered transform before its authored asset mapping; retain exact model matrices and constrained-motion evidence. Oct16 local structured-evidence checks do not close this native/scientific acceptance. Local offscreen/compiler/resource tests do not establish native file protection or rig equivalence. |
 | Visual Stimulus scene composition and geometric correction | Under V02/V15, exercise one arena plus ordered alpha overlays, overlay independence from arena depth, covered-instance continuity and invalid composition rejection. Verify imported mesh coverage/orientation/fold rejection, masks and weighted overlaps, immutable session mappings, photodiode stage order and final-output recording/replay. Establish calibration accuracy through the actual optical path and resource cost on all outputs; no automatic calibration or optical-model guarantee is selected. |
-| Visual Stimulus review video and fragmented MP4 | Under E13, verify the constant-rate raw stdin input at the pacing output's nominal refresh sustains the composite resolution, video frame n maps to nominal slot n and its exact real source or identified duplicate, and tile placement/scale matches the recorded layout. Verify omission accounting permits successful closure, pre-T cancellation produces no padding, and cleanup retries retain the first cutoff and original write deadline. Exercise fragmented output, keyframe/fragment resource bounds, reader compatibility and drain/sync/close without ordinary-MP4 conversion or file-validation passes. |
+| Visual Stimulus review video and fragmented MP4 | Under E13/Header6, verify sequential raw stdin at the unchanged nominal playback rate sustains the unchanged composite resolution. Decoded frame n must map once to its exact source group/evaluation time and per-output submissions, with zero same-slot omissions or synthetic duplicates; tile placement/scale must match the recipe. Exercise same-time groups, capacity drops, out-of-order/cancelled readbacks, normal/Abort/empty input, and missing-tail mappings after a crash. Verify successful closure reconciles admissions/input counts and cleanup retries retain the exact first cutoff and original write deadline. Exercise fragmented output, keyframe/fragment resource bounds, reader compatibility and drain/sync/close without ordinary-MP4 conversion or file-validation passes. |
 | Empty Visual Stimulus review video and explicit depth conversion | Under V12/E13, exercise an all-dropped composite with complete required records, warnings, truthful artifact presence and successful cleanup. Reject empty-input encoder errors, missing-created artifacts and unknown results as normal completion. Verify explicit RGB10-to-8-bit review conversion and rejection of silent negotiation while live output/replay retain their selected precision. Normal runtime does not inspect completed-file contents. |
 | Visual Stimulus capture and durability | Verify per-group composite admission, compositing/PBO readback cost on the render thread, recording-thread and FFmpeg throughput within the renderer's process/GIL, ScheduleTrial FFmpeg launch with no frames before T and pre-T cancellation cleanup, required state/metadata retention and failures under V12/V13/V28; test periodic sync, sync failure, an incomplete final JSON line and replay labelled "partial, up to render group N". Preserve Unconfirmed crashed-video outcomes. |
 | Acquisition electrical/serial behavior | COM8 Uno protocol-v2 CAPS/STATUS passed after the manual upload. Owner assigned D9 Trial state, D2 Projector flip input, D10 behavioral trigger and D11 tracking trigger; the initial D2 test counted zero edges while the projector was off, and a later local GUI-worker test counted 120 rising edges without independent source observation. Confirm actual destinations, 5 V compatibility and shared signal ground before output tests. Run current output GUI Test/Stop with physical level/edge observation; former D2 input tests remain owner-deferred. Then verify camera trigger levels/edges, OFF/watchdog behavior, serial latency and DTR/RTS reconnect/reset under A10/A11; do not infer pulse-to-frame edge mapping from host receipts. |
 | Owned camera/pulse edits | Under A10/E07, apply a two-camera batch and pulse-only/configuration-only edits while the backend owns editing/preview devices. Verify actual readback, old external-output OFF before timing changes, exact preview restart and partial SDK/confirmation failure with capture/pulses stopped. Lose confirmation replies and verify committed configuration stays distinct from device outcome; exercise bounded next-edit base synchronization only after prior work quiesces, plus control loss, late results and exact cleanup. Suppress failed-restart status delivery before first-frame proof; recover the exact cleanup run without claiming it is running. Inject primary/Tracking transfer-release failure and lost MCU CLOSE replies; retain ownership fences until exact release or same-claim cleanup succeeds. Local fake-device tests do not close this check. |
 | Acquisition platform bindings | Verify frame-log flush/OS sync on the selected filesystem and SDK/native conversion under A07/A10, and the A03 seqlock slots plus Win32 named event adapter across spawned and independently launched consumers, including torn/lapped-read skips under load and a killed producer. |
 | Visual Stimulus feedback freshness | Tune and validate the 350 ms engineering default maximum under [V26](../docs/architecture/visual_stimulus.md#v26) with the full rig workload. Measure host-receipt-to-application age separately from optical latency; verify local stale-result rejection, fresh-result resumption within the same generation, producer-marker generation exclusion and logged hold/resumption. No passing evidence is supplied. |
-| FFmpeg raw input path | Verify raw stdin input (`-f rawvideo`, resolved pixel format/size, nominal `-framerate`) for the selected native pixel/conversion paths sustains the planned rates. Confirm decoded video count equals encoded-slot mappings, with real sources and explicitly labelled leading/interior/trailing duplicates distinguished. Exercise same-slot omissions, fractional cutoff, long gaps and entirely empty input under A07/A08/E13; source timestamps remain unchanged and final-frame quantization stays below one nominal period. Record exact tested versions, arguments and camera formats. |
+| Reusable stimulus readback and GPU row orientation | Verify new `*_top_down` recipe/evidence declarations and byte-identical pre-encoding RGBA8/packed10 input against the previous CPU flip, including asymmetric tiles, black margins, photodiode patches and odd/even heights. Confirm lazy PBO allocation plateaus at the existing capture-slot bound, ready buffers reuse safely, Abort/fault cleanup releases idle/pending storage and both FBO targets even when evidence publication fails, unbind/deletion failures retain exact retry ownership, and repeated Setup/Start does not grow GPU memory. End on a different projector context and verify cleanup activates the composite owner before deleting its FBOs; activation failure must retain resources for retry. Compare capture/readback/normalization/pipe timing, drops and combined-load throughput at unchanged dimensions, quality and projector rates; the new nearest GPU flip adds a copy and no speedup is presumed. |
+| FFmpeg raw input path | Verify raw stdin input (`-f rawvideo`, resolved pixel format/size, nominal `-framerate`) for the selected native pixel/conversion paths sustains the planned rates. For A07/A08 schema5 cameras, confirm decoded count equals sequential encoded mappings and retained usable source count, including closely spaced receipts, invalid images/capacity losses, long gaps, Abort and empty input. Require zero padding and unchanged source/native timestamps; playback duration is count/nominal rate and need not match the trial. Record representative combined-load throughput at unchanged camera rates. E13/Header6 stimulus also uses sequential retained composites without padding or rate-based omission; verify its group/timestamp mappings and unchanged composite geometry/pacing under combined load. Record exact tested versions, arguments and camera formats. |
 | Consumer precision and encoder compatibility | Verify native unpacking/alignment and source-depth RGB/grayscale preparation under the [pixel contract](../contracts/acquisition/pixel-processing.md), including high-bit-depth sources. Confirm the actual selected codec/output bit depth and color representation; no silent lower-depth conversion or widened 8-bit data labelled original-depth. Preview alone uses the approved display scaling. Keep lossy compression quality separate from representation bit depth. Verify the explicit per-camera output pixel format under A08, including detection of encoder format substitution. Check requested versus actual range/matrix conversion and output tags using known pixel values; tags alone do not prove the conversion. Verify that lower-depth output settings reject higher-depth sources until explicitly compatible arguments are provided. |
 | Basler conversion mappings | Exercise the declared [SDK registry](../contracts/acquisition/sdk-mappings.md): native packing/stride, Bayer patterns and edges, private buffer lifetime, effective depth and preview scaling. Record actual device/SDK support; unsupported mappings must fail explicitly. |
 | Windows ownership and cleanup | Exercise the shared [acquisition/Visual Stimulus launch contract](../contracts/windows-launch.md) and acquisition [I/O/sync contracts](../contracts/acquisition/windows-resources.md), including owner death at every launch stage, partial handle transfer, blocked pipe/stdin cancellation, process identity reuse, encoder sharing and failed storage sync. Require truthful cleanup blockers. |
@@ -599,8 +626,8 @@ outputs must remain uncertain rather than being counted as a passing result.
 Other runtime, performance and durability verification remains required by E15;
 this list records the specific items deferred here, not a completed test plan.
 
-Visual Stimulus declaration closure: the constant-rate review timing (frame n = nominal slot n,
-with explicit source/duplicate mapping) is bound in
+Visual Stimulus declaration closure: sequential retained frames with exact external
+source timestamps and nominal MP4 playback timing are bound in
 [encoding options](../contracts/visual_stimulus/encoding-options.md#review-timing).
 The existing encoder input-format/throughput deferral is unchanged; no successful test
 is implied. Full declaration status is in the
@@ -941,6 +968,11 @@ between automated Windows checks and full camera/model/closed-loop experiment ev
 
 ## Camera no-wiring anchoring
 
+Oct16 owner confirmation: hardware pulse wiring is verified and all planned camera
+recordings will be externally triggered. This is owner-supplied wiring evidence;
+the remaining checks below concern retained channel identity, source correspondence
+and loss accounting. Historical free-running runs retain their original scope.
+
 Owner-selected simple baseline (2026-10-14): [A09](../docs/architecture/acquisition.md#a09)
 assumes the first trigger in the matched trial/camera pulse train corresponds to the
 source image of the first video frame. This is an assumption, not a demonstrated
@@ -953,12 +985,13 @@ camera/stimulus evidence is locally implemented; native checks are listed below.
   The first trigger means this camera/trial's first pulse, not the first event of
   any kind in the session recording.
 - [ ] Resolve encoded frame zero to its actual source using video_frame mappings;
-  inspect leading padding, invalid images and recording omissions. Report any
+  inspect leading invalid images and recording losses (plus padding for historical
+  schema4 files). Report any
   conflict with first-trigger correspondence. Metadata-only runs use the first
   received source row, explicitly labeled assumed.
 - [ ] Inspect timing/count consistency at beginning/middle/end under normal repeated
-  trials and combined load; handle video duplicates through source identity and
-  distinguish source loss from encoding loss. Native counter gaps are interpreted
+  trials and combined load; map sequential video indices through source identity and
+  distinguish source loss from encoding loss. Historical duplicates retain their labels. Native counter gaps are interpreted
   only under their retained semantics. Good fit does not independently prove offset.
 - [ ] Retain mismatches, missing first-frame/pulse evidence, interrupted trials and
   unknown intervals for owner review. Revisit stronger anchoring only if needed;
@@ -974,6 +1007,11 @@ Local implementation under [A07](../docs/architecture/acquisition.md#a07) and
 [E13/V12/V28](../docs/architecture/visual_stimulus.md#e13) has passing host tests;
 these checks remain native acceptance, without wiring or trigger-cadence changes.
 
+- [ ] Verify V13 provenance in a native saved recipe: nonempty renderer-source/shader
+  hashes and actual per-output GPU/driver strings, with recipe bytes/digest matching
+  the prepared handle. Repeat after a controlled software release change; retain
+  referenced external asset/calibration versions. Oct16 local serialization/context
+  fixtures pass; native driver observations and performance remain unmeasured.
 - [ ] Run video On → Off → On across repeated sessions/trials using unchanged saved
   device/trigger settings. For every active camera, retain `_cam_frames.jsonl` in
   both modes; for Visual Stimulus retain `_stimulus_LOG.json` and `_stimulus_frames.jsonl`.
@@ -983,10 +1021,12 @@ these checks remain native acceptance, without wiring or trigger-cadence changes
   metadata identities, native counters/timestamps, invalid images, contiguous source
   IDs, pulse/transport summaries, actual stimulus states/submissions/image selections,
   clipping/feedback intervals and completion against the retained trial cutoff.
-- [ ] Confirm camera header schema4 `video.enabled=false`, null video mappings and
+- [ ] Confirm camera header schema5 `video.enabled=false`, null video mappings and
   `video_disabled` source dispositions without recording-drop claims; stimulus
-  header format5 `video_enabled=false`, empty captures and no encoder-outcome lines.
-  Video-on retains explicit real/duplicate mappings and the configured encoding.
+  header format6 `video_enabled=false`, empty captures and no encoder-outcome lines.
+  Camera video-on retains one mapping per real image; stimulus video retains its
+  sequential source/timestamp mappings. Both retain their configured encoding;
+  legacy recordings retain their original omission/duplicate interpretation.
 - [ ] Exercise normal completion, Abort, pre-T cancellation, required-evidence queue
   exhaustion and storage/sync failure; retain truthful closure/incomplete evidence,
   original deadlines and exact cleanup. Inspect GUI restoration of existing false
@@ -1203,23 +1243,32 @@ For each source/row/CQ/repeat, record these columns in the owning report:
   physical GPU UUID, workload, duration, file size bytes and file bitrate
   (8 × size_bytes / duration_seconds, in bits/s; includes container overhead).
 - Camera source counts: `received_frames`, invalid images and source dispositions
-  (`capacity_drop`, `same_slot_omission`, `video_disabled` separately); retain raw dropped
-  flags and completion transport counters. Video padding is counted from `video_frame`
-  dispositions, not from received-frame counts. Missed camera transport frames require
+  (`capacity_drop`, `invalid_image`, `video_disabled` separately); retain raw dropped
+  flags and completion transport counters. Schema5 camera images are sequential with
+  zero duplicates; count historical schema4 same-slot omissions/padding separately. Missed camera transport frames require
   native counters; nominal rate minus received count is not an independent loss proof.
 - Stimulus: authoritative final `encoder_outcome` capacity-drop, selected-real,
-  same-slot-omission, encoded and duplicate counts; completion unresolved count.
+  input-submitted/encoded and unresolved counts; Header6 legacy same-slot-omission
+  and synthetic-duplicate counters must be zero.
   Initial capture dispositions are diagnostics only: do not add late update lines to
   admission counts and double-count the same group. Separate render cadence misses
-  from recording admission drops and padded video frames.
+  from recording admission drops; historical padded frames retain their labels.
 - FFprobe decoded frame count versus final input-submitted/encoded mapping count;
   complete software decode; normal completion and closure evidence. A playable padded
   video alone is not zero-loss capture. Missing/contradictory evidence invalidates the row.
 - Timing aggregate count/total/max for ready/pending readback polls, capture readiness,
-  queue wait, normalization, pipe-call duration and slot lifetime; average=total/count
-  when count>0. Also peak/current slots, zero-progress writes and submitted bytes.
-  Readback polls include mapping/copy/cleanup; pipe-call time excludes async OS wait.
+  queue wait, normalization, pipe-call duration, full-frame input and slot lifetime;
+  average=total/count when count>0. Retain bounded worst-stage group/slot/start/end
+  examples and any unfinished input span. For startup, correlate these with T, the
+  dropped source group and encoder first-input/progress. Frame-input span includes
+  time between zero-progress calls; its attempt counts distinguish repeated pipe
+  unavailability from a long gap with few calls, without alone proving an OS cause.
+  Also retain peak/current slots, zero-progress writes and submitted bytes. Readback
+  polls include mapping/copy/cleanup; individual pipe-call time excludes async OS wait.
   No percentiles can be recovered from these aggregates; zero-progress calls are not drops.
+  Compare the accounted capture CPU/GPU reservations and separate evidence queue with
+  measured full-process/driver/encoder peaks before retaining a different slot default.
+  The restored3-slot default and archived15-slot override remain distinct test settings.
 
 Target zero recording capacity drops/unresolved captures, truthful duplicate accounting,
 normal closure and preserved nominal presentation. Throughput below nominal is a clear

@@ -1,0 +1,37 @@
+.....................F.                                                  [100%]
+=================================== FAILURES ===================================
+_______ test_preview_release_receipt_retains_exact_independent_evidence ________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2027/test_preview_release_receipt_r0')
+
+    async def test_preview_release_receipt_retains_exact_independent_evidence(tmp_path):
+        runtime, _, _, _ = make_runtime(tmp_path)
+        consumer = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+        runtime.credentials[(consumer.role, consumer.generation)] = "secret"
+        runtime.registration.source_registered = lambda *a, **kw: True
+        report = wire.PreviewConsumerReport(
+            client_id=consumer.generation,
+            controller_generation=runtime.controller.generation,
+            consumer=consumer,
+            preview_run_id=str(uuid4()),
+            allocation_id=str(uuid4()),
+            transfer_id=str(uuid4()),
+            result=wire.PREVIEW_CONSUMER_RESULT_FAILED,
+        )
+        context = Context(consumer.role, consumer.generation, "secret")
+        result = await runtime.service.ReportPreviewConsumerState(report, context)
+        assert result.result == types.COMMAND_RESULT_ACCEPTED
+        assert list(runtime.registration_state.preview_consumers.values()) == [report]
+        report.result = wire.PREVIEW_CONSUMER_RESULT_RELEASED
+        assert (
+            await runtime.service.ReportPreviewConsumerState(report, context)
+        ).result == types.COMMAND_RESULT_ACCEPTED
+        snapshot = await runtime.recovery.get_recovery_state(
+>           wire.RecoveryQuery(supervisor=runtime.identity)
+        )
+E       ValueError: Protocol message RecoveryQuery has no "supervisor" field.
+
+tests/supervisor/test_registration.py:921: ValueError
+=========================== short test summary info ============================
+FAILED tests/supervisor/test_registration.py::test_preview_release_receipt_retains_exact_independent_evidence
+1 failed, 22 passed in 1.63s

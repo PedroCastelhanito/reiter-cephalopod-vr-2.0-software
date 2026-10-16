@@ -18,6 +18,8 @@ from cephvr.controller.metadata.coordination import MetadataCoordinator
 from cephvr.controller.metadata.documents import (
     active_configuration_document,
     message_dict,
+    output_formats,
+    software_provenance,
 )
 from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.ports import SpikeGLXPort, SupervisorPort
@@ -27,6 +29,7 @@ from cephvr.controller.state import (
     DeviceState,
     LifecycleState,
     LimitsState,
+    SupervisorState,
 )
 from cephvr.shared.deadlines import remaining_seconds
 
@@ -39,6 +42,7 @@ class StartActivation:
         *,
         lifecycle: LifecycleState,
         control: ControlState,
+        supervisor_state: SupervisorState,
         device: DeviceState,
         limit_state: LimitsState,
         clock: Callable[[], int],
@@ -61,6 +65,7 @@ class StartActivation:
     ) -> None:
         self.lifecycle = lifecycle
         self.control = control
+        self.supervisor_state = supervisor_state
         self.device = device
         self.limit_state = limit_state
         self.clock = clock
@@ -136,6 +141,9 @@ class StartActivation:
             )
             if not isinstance(schema, dict) or schema.get("schema_version") != 1:
                 raise RuntimeError("versioned writer schema unavailable")
+            attempt.output_formats = output_formats(
+                schema, {output.output_key for output in attempt.prepared.outputs}
+            )
             writer = MetadataWriter(
                 attempt.reservation.protocol_directory,
                 max_operations=self.limit_state.current.max_metadata_operations,
@@ -152,6 +160,7 @@ class StartActivation:
                 "session_setup_monotonic_ns": attempt.prepared.anchor_monotonic_ns,
                 "local_timezone": attempt.prepared.local_timezone,
                 "configuration_revision": attempt.prepared.configuration_revision,
+                "provenance": software_provenance(attempt, self.supervisor_state),
                 "configuration": active_configuration_document(
                     attempt.prepared.configuration
                 ),

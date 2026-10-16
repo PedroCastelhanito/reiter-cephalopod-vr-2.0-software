@@ -60,6 +60,12 @@ class SnapshotPublisher:
     def observe_owner_loss(self, handler: Callable[[], Awaitable[None]]) -> None:
         self.owner_loss_observers.append(handler)
 
+    async def notify_owner_loss(self) -> None:
+        for observer in tuple(self.owner_loss_observers):
+            await observer()
+        if self.owner_lost is not None:
+            await self.owner_lost()
+
     def build_snapshot(self, *, include_configuration: bool = True) -> pb.Snapshot:
         view = pb.Snapshot(
             controller_generation=self.generation,
@@ -122,6 +128,31 @@ class SnapshotPublisher:
             and self.lifecycle.attempt.incidents is not None
         ):
             view.runtime_incidents.extend(self.lifecycle.attempt.incidents.snapshot())
+        self.control.retained_truncated |= any(
+            len(items) > RETAINED_LIMIT
+            for items in (
+                self.control.errors + self.supervisor_state.errors,
+                self.control.warnings + self.supervisor_state.warnings,
+                self.supervisor_state.recoveries
+                + self.supervisor_state.controller_recoveries,
+            )
+        )
+        view.retained_truncated = (
+            self.control.retained_truncated
+            or self.supervisor_state.retained_truncated
+            or bool(
+                self.lifecycle.attempt
+                and self.lifecycle.attempt.incidents
+                and self.lifecycle.attempt.incidents.retained_truncated
+            )
+        )
+        retained_times = (
+            [item.occurred_monotonic_ns for item in view.errors]
+            + [item.start_monotonic_ns for item in view.recoveries]
+            + [item.first_observed_monotonic_ns for item in view.runtime_incidents]
+        )
+        if retained_times:
+            view.retained_since_monotonic_ns = min(retained_times)
         self.projections.install_public(view)
         if self.microcontroller_view is not None:
             view.microcontroller.CopyFrom(self.microcontroller_view())
@@ -205,10 +236,7 @@ class SnapshotPublisher:
                     self.lifecycle.manual_control_cleanup_pending = True
                 self.publish()
         if released:
-            for observer in tuple(self.owner_loss_observers):
-                await observer()
-            if self.owner_lost is not None:
-                await self.owner_lost()
+            await self.notify_owner_loss()
 
     def publish(self) -> None:
         self.control.revision += 1

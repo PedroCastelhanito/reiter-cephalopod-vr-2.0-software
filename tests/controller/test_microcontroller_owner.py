@@ -2160,3 +2160,62 @@ def test_camera_client_allows_empty_roles_only_for_configuration() -> None:
         assert len(calls) == 1
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("scenario", ["matching", "partial", "pending_on", "rejected"])
+def test_confirmed_immediate_off_retires_matching_cancelled_trial_reservation(scenario):
+    clock = _Clock(10)
+    port = _ScriptedPort(statuses=[_status(), _status()])
+    owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+    owner.connect(deadline_ns=10_000)
+    selected = ("behavioral", "tracking") if scenario == "partial" else ("behavioral",)
+    owner.reserve_boundary(100, mcu.PULSE_BOUNDARY_COMMAND_ON, selected_roles=selected)
+    owner.reserve_boundary(200, mcu.PULSE_BOUNDARY_COMMAND_OFF, selected_roles=selected)
+    if scenario != "pending_on":
+        owner.cancel_on_reservations()
+    if scenario == "rejected":
+        write = port.write
+
+        def reject_off(payload):
+            if payload.startswith(b"OFF "):
+                request_id = payload.decode().split("id=", 1)[1].split()[0]
+                port._incoming.extend(f"ERR id={request_id} code=REJECTED\n".encode())
+                return len(payload)
+            return write(payload)
+
+        port.write = reject_off
+    evidence = owner.off(
+        ("behavioral",), scheduled_boundary_ns=None, stop_issued_ns=10, deadline_ns=1000
+    )
+    assert evidence.outcome == (
+        mcu.PULSE_COMMAND_OUTCOME_REJECTED
+        if scenario == "rejected"
+        else mcu.PULSE_COMMAND_OUTCOME_APPLIED
+    )
+    clock.value = 201
+    if scenario == "matching":
+        observation = owner.status(deadline_ns=1000)
+        assert not observation.state.behavioral.running
+    else:
+        with pytest.raises(ChannelDeadline):
+            owner.status(deadline_ns=1000)
+    owner.close(1000)
+
+
+def test_observation_exposes_connection_reply_diagnostics_without_health_credit():
+    clock = _Clock(10)
+    port = _ScriptedPort(statuses=[_status()])
+    write = port.write
+
+    def noisy_write(payload):
+        port._incoming.extend(b"bad-line\nOK id=old ignored=1\n")
+        return write(payload)
+
+    port.write = noisy_write
+    owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+    observed = owner.connect(deadline_ns=1000)
+    assert observed.unmatched_replies == 2
+    assert observed.malformed_replies == 2
+    assert observed.request_id.endswith("-2")
+    assert observed.HasField("observed_monotonic_ns")
+    owner.close(1000)

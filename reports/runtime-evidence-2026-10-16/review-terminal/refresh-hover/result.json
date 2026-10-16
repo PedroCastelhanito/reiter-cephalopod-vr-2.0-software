@@ -1,0 +1,18 @@
+{
+  "normal": {
+    "background": "#000000",
+    "under_mouse": false
+  },
+  "hover": {
+    "background": "#172e32",
+    "under_mouse": true
+  },
+  "pressed": {
+    "background": "#172e32",
+    "under_mouse": true
+  },
+  "disabled": {
+    "background": "#0b1213",
+    "under_mouse": true
+  }
+}

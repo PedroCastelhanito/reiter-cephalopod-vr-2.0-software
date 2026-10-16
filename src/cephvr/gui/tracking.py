@@ -360,16 +360,20 @@ class TrackingPage(ResponsiveColumns):
         if hasattr(self, "config_files"):
             self.config_files.set_enabled(self.can_edit and not self._diagnostic_locked)
         self.diagnostic_viewer_button.setEnabled(viewer_available)
-        timings = ""
+        timings: tuple[tuple[str, str], ...] = ()
         if last_duration_ns is not None and maximum_duration_ns is not None:
             timings = (
-                f"\nLAST      {last_duration_ns / 1_000_000:.2f} ms"
-                f"\nMAX       {maximum_duration_ns / 1_000_000:.2f} ms"
+                ("LAST", f"{last_duration_ns / 1_000_000:.2f} ms"),
+                ("MAX", f"{maximum_duration_ns / 1_000_000:.2f} ms"),
             )
-        self.status.hud.setPlainText(
-            f"INPUT     {self.source_description}\n"
-            f"TRACKING  {self.view.tracking_status}\n"
-            f"DIAGNOSTIC {message}{timings}"
+        self.status.set_rows(
+            (
+                ("INPUT", self.source_description),
+                None,
+                ("TRACKING", self.view.tracking_status),
+                ("DIAGNOSTIC", message),
+                *timings,
+            )
         )
 
     def toggle_preview(self) -> None:
@@ -401,8 +405,15 @@ class TrackingPage(ResponsiveColumns):
         self.can_edit = view.can_edit
         self.configuration.setEnabled(self.can_edit)
         self.pages.setEnabled(self.can_edit and not self._diagnostic_locked)
-        self.status.hud.setPlainText(
-            f"INPUT     {self.source_description}\nTRACKING  {view.tracking_status}\nPOSE      —\nCOVERAGE  —\nRESULT AGE  —"
+        self.status.set_rows(
+            (
+                ("INPUT", self.source_description),
+                None,
+                ("TRACKING", view.tracking_status),
+                ("POSE", "—"),
+                ("COVERAGE", "—"),
+                ("RESULT AGE", "—"),
+            )
         )
         if not self.can_edit:
             self.annotation.close()

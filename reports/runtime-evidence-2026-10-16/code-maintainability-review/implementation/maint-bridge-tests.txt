@@ -1,0 +1,37 @@
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 66%]
+........................................................................ [ 79%]
+........................................................F............... [ 92%]
+.........................................                                [100%]
+=================================== FAILURES ===================================
+_____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x314150e50>
+app = <PyQt6.QtWidgets.QApplication object at 0x123c9e440>
+
+    def test_trial_row_actions_scroll_target_and_align_cards(window, app):
+        from PyQt6.QtWidgets import QMessageBox
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        trials = editor.trials
+        window.resize(1280, 1100)
+        app.processEvents()
+>       assert editor.trial_card.height() < 320
+E       assert 321 < 320
+E        +  where 321 = <built-in method height of Card object at 0x36c354f70>()
+E        +    where <built-in method height of Card object at 0x36c354f70> = <cephvr.gui.components.Card object at 0x36c354f70>.height
+E        +      where <cephvr.gui.components.Card object at 0x36c354f70> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x36c357880>.trial_card
+
+tests/gui/test_dashboard.py:15371: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards
+1 failed, 544 passed in 507.63s (0:08:27)

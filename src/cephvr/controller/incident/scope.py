@@ -40,9 +40,7 @@ class ScopeConfirmation:
         supervisor: SupervisorPort | None,
         interrupt: Interrupt,
         spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]],
-        log_incident: Callable[
-            [Attempt, str, dict[str, object]], Coroutine[Any, Any, None]
-        ],
+        log_incident: Callable[[Attempt, str, dict[str, object]], None],
     ) -> None:
         self.lifecycle = lifecycle
         self.incident_state = incidents
@@ -272,18 +270,14 @@ class ScopeConfirmation:
                         )
                 self.publisher.publish()
                 if attempt.writer is not None:
-                    self.spawn(
-                        self.log_incident(
-                            attempt,
-                            "incident_scope",
-                            {
-                                "incident_id": confirmed.incident_id,
-                                "incident_revision": confirmed.revision,
-                                "affected_resources": list(
-                                    confirmed.affected_resources
-                                ),
-                            },
-                        )
+                    self.log_incident(
+                        attempt,
+                        "incident_scope",
+                        {
+                            "incident_id": confirmed.incident_id,
+                            "incident_revision": confirmed.revision,
+                            "affected_resources": list(confirmed.affected_resources),
+                        },
                     )
         except Exception as exc:
             await self.interrupt(

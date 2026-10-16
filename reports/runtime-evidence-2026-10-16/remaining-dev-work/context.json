@@ -1,0 +1,230 @@
+{
+  "date": "2026-10-16",
+  "base_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "tasks": {
+    "calibration-live-update-rejection": {
+      "outcome": "complete locally",
+      "decisions": [
+        "V01",
+        "E06",
+        "G01",
+        "ARCH-002"
+      ],
+      "method": "Owning controller regression now uses real ProjectionStore and exercises reject then valid Update for all three live views; prior projection and Setup block retained, pending/expected command retired. Reproduced three failures before repair.",
+      "tests": "25 device-admission tests; 522 controller tests; three authenticated calibration cases/five deselected",
+      "static": "Ruff/format three files; Win32 mypy two sources; boundaries698/zero violations",
+      "limitations": "No native/projector acceptance; unknown transport outcome remains fenced. Existing display-calibration owner remains cohesive around exact diagnostic identity/closure; focused update helper retained. No architecture/policy change.",
+      "sha256": {
+        "src/cephvr/controller/device/display_adjustments.py": "baf5a5b7caba8dded67b5ee56844be8d460fb2ffa08270e9e7c772b344b44724",
+        "src/cephvr/controller/device/display_calibration.py": "5918dbdfb8b8f05170154cac0a47314664609676d8c84b7127ed9884836bafb6",
+        "tests/controller/test_device_admission.py": "20f1d937ad9f9eb1197333a8e58e38c52b51667da8409cf34b90a6a4ac19e6c3"
+      }
+    },
+    "controller-config-inactive-backend-defaults": {
+      "outcome": "complete locally",
+      "decisions": [
+        "E07",
+        "E14",
+        "ARCH-002"
+      ],
+      "method": "Missing/malformed acquisition defaults warn only when inactive and preserve saved values; runtime publishes startup warnings. Setup control-limit reload does not reread saved history/backend defaults; active file-policy loading stays strict. Real Setup admission retains current configuration and warning with malformed history/acquisition files; device dispatch isolated.",
+      "tests": "38 configuration/Setup cases; 528 controller cases",
+      "static": "Ruff/format four files; Win32 mypy three sources after explicit optional returns; boundaries698/zero violations",
+      "earlier_attempts": "Three red reproduction cases (missing/malformed inactive TOML and absence of limits-only loading); initial mypy identified three optional-return annotations, corrected without changing behavior.",
+      "limits": "Acquisition default loading only; no backend/process/device readiness or native acceptance. Other backend default behaviors are not generalized from this fix.",
+      "sha256": {
+        "src/cephvr/controller/configuration.py": "5a24706929458ce3acb1687044ee89a10e7375b06187582fc1e7c39753698249",
+        "src/cephvr/controller/runtime.py": "bc616b9616978e138f14216ae31e150390d25e111dafa2e811b995af48dc3a5d",
+        "src/cephvr/controller/startup/application.py": "e5a348219b3904187ed06658813f55aa0f2b361988b762126234e26cb4acce25",
+        "tests/controller/test_configuration.py": "0dc07ce8d681bcb3ffeb4774f71bff26633085b5533f288a18c1442f97b6df3f"
+      }
+    },
+    "arena-effective-pose-evidence": {
+      "outcome": "complete locally; native acceptance open",
+      "decisions": [
+        "V13",
+        "V16",
+        "V15",
+        "ARCH-002"
+      ],
+      "method": "One structured effective pose per active arena from the exact state consumed by the scene renderer, before authored asset-to-world transform; declared world frame, mm position, unit xyzw quaternion matching existing Rz/Rx/Ry order. Current model matrices and presentation behavior unchanged.",
+      "tests": "97 rendering/evidence/feedback cases; 347 Visual Stimulus cases, one native/rig deselected",
+      "static": "Ruff/format three files; Win32 mypy two sources; boundaries698/zero violations",
+      "earlier_attempts": "Five new cases failed before implementation; four test namespaces initially omitted required arena kind, corrected in fixtures.",
+      "limits": "No new movement/coordinate interpretation or scientific/optical acceptance; existing matrices remain authoritative consumed bit evidence. Native structured-pose comparison retained in the rig checklist. Existing scene owner remains cohesive; pure transform/evidence calculations stay with arena helper.",
+      "sha256": {
+        "src/cephvr/visual_stimulus/rendering/arena.py": "ae8e65080bd3ae32a1a356328477c065e48e5f7c0b45e00d755293ecbc8411f5",
+        "src/cephvr/visual_stimulus/rendering/scene.py": "6db6e484a0efb93626bad844061b2ccf1226b424e9f5feb61fecb4c07ef37751",
+        "tests/visual_stimulus/test_rendering.py": "158226828a045aafb773c4c6cfd5f2e2465f6455276954aa508c9588c996b94f"
+      }
+    },
+    "e04-session-log-completeness": {
+      "outcome": "complete locally",
+      "decisions": [
+        "E04",
+        "E03",
+        "E06",
+        "ARCH-002"
+      ],
+      "tests": "1785 passed, 5 skipped, 5 deselected; authenticated loopback enabled",
+      "static": "Ruff and format224; Win32 mypy540; boundaries699 zero violations; generated19 Protobuf sources; whitespace clean",
+      "limits": "No native Windows, device, sustained workload or scientific acceptance. Unknown versions/counts remain explicit. Early sandbox loopback denials and corrected fixture/import errors preserved.",
+      "source_sha256": {
+        "src/cephvr/controller/metadata/coordination.py": "16d50b0e53429d27970f5930be3fdb56842ab5e9fc0a0275de109eb61626f044",
+        "src/cephvr/controller/metadata/documents.py": "1ff4aca76b2ec48a72a5b5a2c0f35a94944702bf3b2d667a2951ecc25dbf280c",
+        "src/cephvr/controller/metadata/trial_logs.py": "49359a38296d45f5f134e8f5b4c2c0fab2e6f1d80db2b02be7c5d30ce72f34b9",
+        "src/cephvr/controller/control/snapshots.py": "bb0ec2f98a8e08ebc4e29afeaafbcfc96fc6f7ce174a3696d8121e174ab20758",
+        "contracts/cephvr/control/v1/types.proto": "e4bfd72d26476e8a6f162dce32c9662ec95023a5b026223a0c2aed13034f0402",
+        "contracts/cephvr/control/v1/services.proto": "308e6d14801c5ece953c539aeade822bbf0cdb254ac5f1f4bd443a935d6fd373"
+      }
+    },
+    "camera-first-frame-failure-accounting": {
+      "outcome": "complete locally",
+      "decisions": [
+        "A07",
+        "A08",
+        "ARCH-002"
+      ],
+      "tests": "One red mapping case; three fault cases green; acquisition536 passed/five skipped/two deselected",
+      "static": "Ruff/format3; Win32 mypy2; boundaries699 zero violations; whitespace",
+      "limits": "Pure local failure/closure evidence; no encoder throughput or native scientific acceptance",
+      "source_sha256": {
+        "src/cephvr/acquisition/recording/session.py": "5346fc095bededd9b74d1e847ba7c2eea877731498d9502000c6254dc5b2303f",
+        "src/cephvr/acquisition/recording/session_pump.py": "d2083a1876da6d85d4da5a69d341130f94089ff10ab46aaac1470630dbc4c07b",
+        "tests/acquisition/test_recording_cleanup.py": "d69436c304d0f80b8bb90027e4cb2be2eccec1b96687cd561e2d99cb07cb9096"
+      }
+    },
+    "controller-cleanup-and-race-hardening": {
+      "outcome": "complete locally, including source-reviewed concerns not reproduced",
+      "decisions": [
+        "E04",
+        "E03",
+        "E06",
+        "E08",
+        "A10",
+        "ARCH-002"
+      ],
+      "tests": "1804 passed, 5 skipped, 5 deselected with authenticated loopback",
+      "static": "Ruff/format170; Win32 mypy132; boundaries701 zero violations; generated19 Protobuf sources; whitespace",
+      "limits": "Source-reviewed bounds/atomic registration are not runtime/rig passes. Native handles, COM/SDK, hardware faults and full workload remain outstanding.",
+      "source_sha256": {
+        "src/cephvr/controller/lifecycle/cleanup.py": "7d1deae9c0693f0008c9dea71927568bc384b3d6fe3cdf91474591bf8322e246",
+        "src/cephvr/controller/lifecycle/setup_execution.py": "701747611d0c794e3ba0a29068968f1b2d8374d00f2d60176407ea54b835f8a1",
+        "src/cephvr/controller/lifecycle/interruption.py": "0b66811ab7814069a4a00aa094d6a1a6b0c500236f664c89d537f94b0cf1f36c",
+        "src/cephvr/controller/device/tracking_diagnostic.py": "eaddef4223fcdd638d816fa6f28ac307e03e7c12aa5408d1cf588b0609448c57",
+        "src/cephvr/controller/transport/admission.py": "1417bbaddf4ee680a8ea3671bb14f00a0b2bebbedac20377aa20cce24190bf79",
+        "src/cephvr/supervisor/gui_relaunch.py": "c578779547cdf6d1ad50b6b67ff4d3718924850238ee59e0b4b9b10068a35c44",
+        "src/cephvr/supervisor/preview_consumers.py": "ec3d5a61a5c464877f9338dc6825ca149e585c7ee811b4517fc7527c0628e906"
+      }
+    },
+    "mcu-owner-residual-hardening": {
+      "outcome": "complete locally",
+      "decisions": [
+        "A11",
+        "E12",
+        "ARCH-002"
+      ],
+      "tests": "Focused158 (final broad suite contains these); backend/authenticated1813 passed, 5 skipped, 5 deselected",
+      "static": "Win32 mypy293; boundaries701 zero violations; scoped Ruff/format; generated19 Protobuf sources; whitespace",
+      "limits": "No electrical, firmware, physical mapping, COM hardware, native SDK or rig acceptance. Counts are diagnostic; ACK is not electrical proof.",
+      "source_sha256": {
+        "src/cephvr/controller/microcontroller/channel.py": "7e35df3183c74e79a64fdb2d358ad76fe639e586a362e867d2e1c787eabdc324",
+        "src/cephvr/controller/microcontroller/protocol.py": "fb40684c1f364286a85dfa0b207739766c25e4b7c7a5d8a13e03130ce43d113b",
+        "src/cephvr/controller/microcontroller/pulses.py": "7cbf55978b029e1c61e6fc0a81cdf6c91de5833e1e82335804099581bea4eb55",
+        "src/cephvr/controller/microcontroller/owner.py": "b046843e535fa65b51831dd9a1151c03617a010be56f82a4d77453bd47af2c63",
+        "src/cephvr/controller/device/spikeglx_monitor.py": "11799cee18af60780882c52c9955d8884a584c74353ef9ddfef65c3d99adc8d6",
+        "contracts/cephvr/acquisition/v1/microcontroller.proto": "019a80641826c66c4c5a0ccb7426dc5a870f5fc06ebfc379c4f4a74260dda437"
+      }
+    },
+    "controller-supervisor-residual-simplification": {
+      "outcome": "complete locally",
+      "decisions": [
+        "ARCH-002",
+        "E03",
+        "E04",
+        "E05",
+        "E06",
+        "E08"
+      ],
+      "tests": "Backend/authenticated1852 passed, 5 skipped, 5 deselected; source reviewed already-centralized role/safety maps and retained evidence fields",
+      "static": "Ruff/format222; Win32 mypy111; boundaries702 zero violations; whitespace clean",
+      "limits": "No Windows/device/rig/full-workload acceptance. Existing cohesive source size advisories reviewed; no whole-runtime references introduced.",
+      "source_sha256": {
+        "src/cephvr/controller/state.py": "2d364881ddec770a7918c1818d4e6e31864149de4455c2f5002ebdf44fbd1a15",
+        "src/cephvr/controller/configuration_access.py": "093977f902396ef4e9440f530241e10190a98bed4de89d21feaa7cafc0fac8cc",
+        "src/cephvr/controller/device/display_adjustments.py": "f5a622152fd4cdd747900f0a5f7c89238d96a73eb280418ffde90f5f124f931b",
+        "src/cephvr/controller/device/display_calibration.py": "f2b054df4054867902fa027f8fb3e927d16b846b59376d3e1cf260d3cd5d9fa0",
+        "src/cephvr/controller/control/leases.py": "77b185189dffa31d2782380f06cee0fe3554ff932cedab853732fb13e0e912fb",
+        "src/cephvr/controller/control/snapshots.py": "224ce89b79a035bb07bf2db8faad88ce26d9f98f24ccb1e223275092371c0152",
+        "src/cephvr/shared/deadlines.py": "7795d2f9542f1bbcdbf41066c27b7087cc6bd210c647babb7b436d02b62fb567",
+        "src/cephvr/shared/resources.py": "5743e1913a4242f4ac88bd90fb318235a0ddf5f0e477e269103bd5e0e171e4f0"
+      }
+    },
+    "stimulus-encode-benchmark": {
+      "outcome": "local analysis and diagnostics complete; native attribution deferred",
+      "decisions": [
+        "V12",
+        "E15",
+        "ARCH-002"
+      ],
+      "tests": "Visual349 passed/one exclusion; final integrated1860 passed/five skips/five exclusions",
+      "limits": "Historical aggregate maxima do not correlate to a single drop. No native run/default change. Missing max_bytes on first analysis attempt corrected.",
+      "analysis": "stimulus_capture_analysis.json",
+      "local_source_sha256": {
+        "src/cephvr/visual_stimulus/recording/metrics.py": "70e1f95bfbe55e77e881fc8827c958e85162373bdcdae96a6ec0eaa23dc3244c",
+        "src/cephvr/visual_stimulus/recording/capture.py": "d86ae59730d9fcc39edfef63005a14b040d655c1e7ace63a9bf907fae878179e",
+        "src/cephvr/visual_stimulus/recording/capture_runtime.py": "36451ed033de087a7b07fb1cc58ca2b610d118893cd1d1cb995ec3f868d467e4",
+        "tests/visual_stimulus/test_recording.py": "57322b11bf197bc27c76ce3a195b79d59cb91f8814ceea3161e53a2994634206"
+      }
+    },
+    "stimulus-capture-slots-trial": {
+      "outcome": "local modeled accounting complete; native full-memory/startup comparison deferred",
+      "default": "3 unchanged; historical test override15 not promoted",
+      "analysis": "stimulus_capture_analysis.json"
+    },
+    "preview-consumer-authenticated-handoff": {
+      "outcome": "complete locally",
+      "owner_choice": "Allow exact RELEASED/FAILED relay from current authenticated controller; independent consumer reporting retained; supervisor rejects ATTACHED.",
+      "decisions": [
+        "E08 revision174",
+        "A10 revision61",
+        "ARCH-002"
+      ],
+      "reproduction_before": "preview_auth_handoff_probe.before.json",
+      "probe_after": "preview_auth_handoff_probe.json",
+      "authenticated_tests": "Two real loopback terminal-result cases exercise both routes and rejection matrix; six controller recipient routing cases",
+      "source_sha256": {
+        "src/cephvr/controller/device/preview.py": "4df1e27ba851950b7cf172581e4100824a04c15bb9596031949142da556136b2",
+        "src/cephvr/supervisor/service.py": "20e51143ece8cb5f3df4a08d9c2c1a0f74c07baf515b33c157bce12d9c471cf6",
+        "tests/supervisor/test_registration.py": "d88403a1687173d4a9aaf6768de70cdc96794bae23ea6b7ba6c556b78d52abf1",
+        "tests/controller/test_camera_evidence.py": "b58fa85e0ca2bae4364410d979ffeb1d18f79d502028529569089ec496968f39"
+      },
+      "limits": "No native/rig execution; original in-process registered-consumer check isolated and authenticated test uses controlled registered subjects. Historical native fault cause unproven."
+    }
+  },
+  "final_integrated_validation": {
+    "date": "2026-10-16",
+    "source_revision": "uncommitted working tree over base_revision; earlier task hashes are historical snapshots",
+    "pytest": {
+      "command": ".venv/bin/python -m pytest tests/controller tests/supervisor tests/shared tests/acquisition tests/visual_stimulus tests/tracking -q -m 'not windows and not rig'",
+      "result": "1860 passed,5 skipped,5 deselected in40.34s",
+      "permissions": "Loopback-enabled execution; no hardware/native Windows acceptance"
+    },
+    "static": {
+      "ruff": "all checks passed",
+      "format": "679 files already formatted",
+      "mypy": "Win32 target583 source files, success",
+      "boundaries": "702 backend modules,0 violations; existing cohesion advisories reviewed",
+      "whitespace": "git diff --check passed"
+    },
+    "scope": "Six backend/shared owner areas. Concurrent GUI work is outside this test claim. No packaging change; no build run. Protobuf changes generated earlier from authoritative source. Rig checklist remains open.",
+    "raw_outputs": [
+      "remaining-dev-final-suite.txt",
+      "remaining-dev-final-ruff.txt",
+      "remaining-dev-final-format.txt",
+      "remaining-dev-final-types.txt",
+      "remaining-dev-final-boundaries.txt",
+      "remaining-dev-links-final.txt"
+    ]
+  }
+}

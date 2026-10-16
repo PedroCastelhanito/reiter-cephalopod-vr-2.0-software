@@ -18,15 +18,9 @@ from cephvr.visual_stimulus.config.models.display_profile import (
 )
 from cephvr.visual_stimulus.config.models.photometric_profile import PhotometricProfile
 from cephvr.visual_stimulus.config.models.program_model import VideoSettings
+from cephvr.visual_stimulus.rendering import shaders
 from cephvr.visual_stimulus.rendering.arena_draw import ArenaOutputDrawer
 from cephvr.visual_stimulus.rendering.diagnostics import DiagnosticRing
-from cephvr.visual_stimulus.rendering.shaders import (
-    _LAYER_FRAGMENT,
-    _LAYER_VERTEX,
-    _OUTPUT_FRAGMENT,
-    _QUAD_VERTEX,
-    _WARP_FRAGMENT,
-)
 from cephvr.visual_stimulus.rendering.upload import upload_linear_image
 from cephvr.visual_stimulus.resources.assets import PreparedResourceBundle
 from cephvr.visual_stimulus.resources.calibration import PreparedCalibration
@@ -155,17 +149,20 @@ class SceneOutputBuilder:
             warp_weight_textures: dict[str, Any] = {}
             layer_program = track(
                 context.program(
-                    vertex_shader=_LAYER_VERTEX, fragment_shader=_LAYER_FRAGMENT
+                    vertex_shader=shaders._LAYER_VERTEX,
+                    fragment_shader=shaders._LAYER_FRAGMENT,
                 )
             )
             warp_program = track(
                 context.program(
-                    vertex_shader=self._warp_vertex(), fragment_shader=_WARP_FRAGMENT
+                    vertex_shader=shaders._WARP_VERTEX,
+                    fragment_shader=shaders._WARP_FRAGMENT,
                 )
             )
             output_program = track(
                 context.program(
-                    vertex_shader=_QUAD_VERTEX, fragment_shader=_OUTPUT_FRAGMENT
+                    vertex_shader=shaders._QUAD_VERTEX,
+                    fragment_shader=shaders._OUTPUT_FRAGMENT,
                 )
             )
             arena_drawer = ArenaOutputDrawer(
@@ -313,12 +310,14 @@ class SceneOutputBuilder:
             warp_weight_textures: dict[str, Any] = {}
             warp_program = track(
                 context.program(
-                    vertex_shader=self._warp_vertex(), fragment_shader=_WARP_FRAGMENT
+                    vertex_shader=shaders._WARP_VERTEX,
+                    fragment_shader=shaders._WARP_FRAGMENT,
                 )
             )
             output_program = track(
                 context.program(
-                    vertex_shader=_QUAD_VERTEX, fragment_shader=_OUTPUT_FRAGMENT
+                    vertex_shader=shaders._QUAD_VERTEX,
+                    fragment_shader=shaders._OUTPUT_FRAGMENT,
                 )
             )
             arena_drawer = ArenaOutputDrawer(
@@ -437,15 +436,6 @@ class SceneOutputBuilder:
             if not resources:
                 del self.partial_allocations[key]
         return tuple(failures)
-
-    @staticmethod
-    def _warp_vertex() -> str:
-        return """#version 430
-in vec2 in_source;
-in vec2 in_position;
-out vec2 uv;
-void main() { uv = in_source; gl_Position = vec4(in_position,0.0,1.0); }
-"""
 
     @staticmethod
     def _quad_bytes() -> bytes:

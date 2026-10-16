@@ -267,7 +267,6 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         status_retention=camera_status_retention,
     )
     leases.bind_owner_loss(owner_cleanup.request)
-    publisher.bind_owner_loss(owner_cleanup.request)
     camera_readback = CameraReadback(
         lifecycle=i.lifecycle,
         configuration=i.configuration_state,
@@ -422,6 +421,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         configuration=i.configuration_state,
         control=i.control,
         metadata_state=i.metadata_state,
+        metadata=metadata,
         limit_state=i.limit_state,
         cleanup=cleanup,
         interruption=interruption,
@@ -510,6 +510,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
     start = StartActivation(
         lifecycle=i.lifecycle,
         control=i.control,
+        supervisor_state=i.supervisor_state,
         device=i.device_state,
         limit_state=i.limit_state,
         clock=i.clock,
@@ -553,6 +554,8 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         output_planner=i.output_planner,
         max_incident_bytes=i.max_incident_bytes,
         cancel_attempt=cleanup.cancel_attempt,
+        late_cleanup=cleanup.late_cleanup,
+        spawn=i.spawn,
     )
     setup_admission = SetupAdmission(
         lifecycle=i.lifecycle,

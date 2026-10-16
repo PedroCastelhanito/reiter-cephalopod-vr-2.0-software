@@ -238,6 +238,10 @@ class PreparedFixTests(unittest.TestCase):
                     'effective_ffmpeg_args': [], 'timing': timing()}
         load(document)  # Saving Off: no encoding.
         document['review_encoding'] = encoding; load(document)
+        for native_format in ('r10g10b10a2_le_top_down', 'r10g10b10a2_le_bottom_up'):
+            document['review_encoding'] = dict(encoding, native_pixel_format=native_format)
+            with self.subTest(native_format=native_format):
+                self.assertEqual(load(document).review_encoding.native_pixel_format, native_format)
         document['review_encoding'] = [encoding]
         with self.assertRaises(ValueError): load(document)  # Not a per-output list.
         bad_cases = {
@@ -248,6 +252,7 @@ class PreparedFixTests(unittest.TestCase):
             'wrong scale': dict(encoding, scale_denominator=1),
             'too small': dict(encoding, composite_width=399),
             'lost depth': dict(encoding, native_pixel_format='rgba8_bottom_up'),
+            'lost top-down depth': dict(encoding, native_pixel_format='rgba8_top_down'),
             'tile depth': dict(encoding, tiles=[tiles[0], tiles[1], tile('projector 3', 0, 0)]),
             'rate': dict(encoding, timing=dict(timing(), rate_numerator=120)),
             'unknown pacing': dict(encoding, timing=dict(timing(), pacing_output_id='projector 9')),

@@ -1,0 +1,3 @@
+src/cephvr/visual_stimulus/resources/provenance.py:102: error: Argument "role" to "ComponentProvenance" has incompatible type "str"; expected "Literal['renderer', 'shader', 'image_decoder', 'video_decoder', 'arena_importer', 'color_transform', 'graphics_driver', 'gpu', 'os']"  [arg-type]
+src/cephvr/visual_stimulus/rendering/native.py:273: error: Need type annotation for "result" (hint: "result: list[<type>] = ...")  [var-annotated]
+Found 2 errors in 2 files (checked 159 source files)

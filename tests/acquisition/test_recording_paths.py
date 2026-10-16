@@ -165,7 +165,7 @@ def test_frame_log_header_matches_declared_and_planned_cadence_schema(
         header["schema_version"]
         == declaration["schema_version"]
         == planned.schema_version
-        == 4
+        == 5
     )
     assert "video_frame" in declaration["format"]["line_types"]
     assert "source_host_receipt_ns" in planned.fields["video_frame"]
@@ -297,3 +297,78 @@ def test_metadata_only_session_retains_sources_without_video_resources(
     assert rows[-1]["video"]["recorded_frame_count"] == 0
     assert rows[-1]["outcome"] == ending
     assert len(list(tmp_path.iterdir())) == 1
+
+
+def test_sequential_frame_log_preserves_loss_and_rejects_false_source_mappings(
+    tmp_path: Path,
+) -> None:
+    from cephvr.acquisition.buffers.records import FrameRecord
+
+    writer = FrameLogWriter(
+        tmp_path / "frames.jsonl",
+        _identity(),
+        start_ns=100,
+        nominal_frame_rate_hz=60,
+        nominal_rate_source="applied_mcu_rate",
+        sync_interval_ns=1,
+        syncer=SimpleNamespace(sync=lambda _: None),
+    )
+    writer.create()
+    with pytest.raises(ValueError, match="disposition"):
+        writer.append_frame(
+            FrameRecord(0, 110, 40, 90, True, None),
+            dropped=True,
+            video_disposition="same_slot_omission",
+        )
+    # Source IDs count losses; encoded indices count only images actually submitted.
+    writer.append_frame(
+        FrameRecord(0, 110, 40, 90, True, None),
+        dropped=True,
+        video_disposition="capacity_drop",
+    )
+    writer.append_frame(
+        FrameRecord(1, 111, 41, 91, False, "INVALID_IMAGE"),
+        dropped=True,
+        video_disposition="invalid_image",
+    )
+    writer.append_frame(
+        FrameRecord(2, 112, 42, 92, True, None),
+        dropped=False,
+        video_frame=0,
+        video_disposition="real",
+    )
+    for index, source_id, receipt in [(1, 2, 112), (0, 1, 112), (0, 2, 113)]:
+        with pytest.raises(ValueError):
+            writer.append_video_frame(
+                encoded_frame_index=index,
+                source_frame_id=source_id,
+                source_host_receipt_ns=receipt,
+            )
+    writer.append_video_frame(
+        encoded_frame_index=0, source_frame_id=2, source_host_receipt_ns=112
+    )
+    with pytest.raises(ValueError, match="exactly once"):
+        writer.append_video_frame(
+            encoded_frame_index=1, source_frame_id=2, source_host_receipt_ns=112
+        )
+    writer.append_frame(
+        FrameRecord(3, 113, 43, 93, True, None),
+        dropped=False,
+        video_frame=1,
+        video_disposition="real",
+    )
+    writer.append_video_frame(
+        encoded_frame_index=1, source_frame_id=3, source_host_receipt_ns=113
+    )
+    writer.close_failed()
+    rows = [json.loads(line) for line in writer.path.read_text().splitlines()]
+    source_rows = [row for row in rows if row["type"] == "frame"]
+    assert [row["video_frame"] for row in source_rows] == [None, None, 0, 1]
+    assert [row["video_disposition"] for row in source_rows] == [
+        "capacity_drop",
+        "invalid_image",
+        "real",
+        "real",
+    ]
+    assert [row["host_receipt_ns"] for row in source_rows] == [110, 111, 112, 113]
+    assert writer.frame_count == writer.selected_source_count == 2

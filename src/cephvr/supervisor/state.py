@@ -56,6 +56,9 @@ class SupervisorTasks:
 
 @dataclass
 class RegistrationState:
+    preview_consumers: dict[
+        tuple[str, str, str, str, str], tuple[wire.PreviewConsumerReport, ...]
+    ] = field(default_factory=dict)
     context: wire.RegisteredContext | None = None
     topology: IncidentTopology | None = None
     prepared_worker_backend: dict[ProcessKey, str] = field(default_factory=dict)

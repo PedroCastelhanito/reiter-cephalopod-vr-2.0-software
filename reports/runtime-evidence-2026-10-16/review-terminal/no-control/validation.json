@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-16",
+  "scope": "Remove HUD Control row; preserve blank line after Status and existing command authority.",
+  "checks": {
+    "pytest": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'review_appearance or hud_fits_content or review_phase_locks' -m 'not windows and not rig': 11 passed, 537 deselected in 16.97s",
+    "ruff": "dashboard.py/test_dashboard.py check/format pass",
+    "mypy": "--platform win32 dashboard.py: 1 file pass",
+    "boundaries": "zero violations; see boundaries.txt",
+    "whitespace": "git diff --check passes",
+    "render": "presentation.py assertions pass; wide render inspected"
+  },
+  "source_sha256": "aea966d2f708061b713d0d0b336696b0ed1e1df725eb6bd71225a0937f8a03a1",
+  "limits": "Offscreen Review fixture, no native/DPI/rig acceptance; live total timing limitation unchanged."
+}

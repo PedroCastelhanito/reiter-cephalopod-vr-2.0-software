@@ -1,0 +1,39 @@
+....Fatal Python error: Segmentation fault
+
+Current thread 0x00000001fca76180 (most recent call first):
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/src/cephvr/gui/tables.py", line ??? in <lambda>
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/tests/gui/test_dashboard.py", line 16956 in test_review_inline_output_templates_keep_pins_and_unfinished_rows
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/python.py", line 167 in pytest_pyfunc_call
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/python.py", line 1707 in runtest
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 184 in pytest_runtest_call
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 250 in <lambda>
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 361 in from_call
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 249 in call_and_report
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 139 in runtestprotocol
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 118 in pytest_runtest_protocol
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/main.py", line 408 in pytest_runtestloop
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/main.py", line 384 in _main
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/main.py", line 330 in wrap_session
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/main.py", line 377 in pytest_cmdline_main
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py", line 229 in _main
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py", line 253 in _console_main
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pytest/__main__.py", line 9 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+
+Extension modules: PyQt6.QtCore, PyQt6.QtGui, PyQt6.QtWidgets, PyQt6.QtTest, google._upb._message, PyQt6.QtSvg, PyQt6.QtSerialPort (total: 7)

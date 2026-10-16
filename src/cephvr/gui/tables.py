@@ -1,6 +1,6 @@
 """Shared camera-style tables with optional persistent form controls."""
 
-from PyQt6.QtCore import QSize, Qt, QTimer
+from PyQt6.QtCore import QEvent, QSize, Qt, QTimer, pyqtSlot
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import ActionHeader, button
 from cephvr.gui.icons import device_icon
+from cephvr.gui.table_header import TableHeader
 from cephvr.gui.theme import SIZES
 
 
@@ -27,6 +28,12 @@ def refresh_button(hint: str) -> QPushButton:
 class DataTable(QTableWidget):
     def __init__(self, rows: int, columns: int) -> None:
         super().__init__(rows, columns)
+        self._hide_empty_header = False
+        self._extra_height = 0
+        self.fit_timer = QTimer(self)
+        self.fit_timer.setSingleShot(True)
+        self.fit_timer.timeout.connect(self.fit_rows)
+        self.use_header(TableHeader(Qt.Orientation.Horizontal))
         self.setShowGrid(False)
         self.setTabKeyNavigation(False)
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
@@ -42,7 +49,7 @@ class DataTable(QTableWidget):
     def add_refresh_action(self, hint: str) -> QPushButton:
         """Use one inventory header/selection pattern; the last column holds Refresh."""
         control = refresh_button(hint)
-        self.setHorizontalHeader(ActionHeader(control))
+        self.use_header(ActionHeader(control))
         header = self.horizontalHeader()
         assert header is not None
         header.setDefaultAlignment(
@@ -55,6 +62,23 @@ class DataTable(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         return control
+
+    def use_header(self, header: QHeaderView) -> None:
+        self.setHorizontalHeader(header)
+        header.sectionResized.connect(self.schedule_fit)
+
+    @pyqtSlot(int, int, int)
+    def schedule_fit(self, section: int, previous: int, current: int) -> None:
+        self.fit_timer.start()
+
+    def changeEvent(self, event: QEvent | None) -> None:
+        super().changeEvent(event)
+        if (
+            event is not None
+            and event.type() in {QEvent.Type.StyleChange, QEvent.Type.FontChange}
+            and hasattr(self, "fit_timer")
+        ):
+            self.fit_timer.start()
 
     def set_control(self, row: int, column: int, control: QWidget) -> None:
         host = QWidget()
@@ -79,8 +103,12 @@ class DataTable(QTableWidget):
         )
 
     def fit_rows(
-        self, *, hide_empty_header: bool = False, extra_height: int = 0
+        self, *, hide_empty_header: bool | None = None, extra_height: int | None = None
     ) -> None:
+        if hide_empty_header is not None:
+            self._hide_empty_header = hide_empty_header
+        if extra_height is not None:
+            self._extra_height = extra_height
         # Persistent editors need their styled height plus the item insets.
         self.ensurePolished()
         for child in self.findChildren(QWidget):
@@ -95,10 +123,11 @@ class DataTable(QTableWidget):
             self.setRowHeight(row, height)
         header = self.horizontalHeader()
         assert header is not None
-        if hide_empty_header:
+        if self._hide_empty_header:
             header.setVisible(
                 any(not self.isRowHidden(row) for row in range(self.rowCount()))
             )
+        header.setFixedHeight(header.sizeHint().height())
         self.setFixedHeight(
             (0 if header.isHidden() else header.sizeHint().height())
             + sum(
@@ -107,5 +136,5 @@ class DataTable(QTableWidget):
                 if not self.isRowHidden(row)
             )
             + 2 * self.frameWidth()
-            + extra_height
+            + self._extra_height
         )

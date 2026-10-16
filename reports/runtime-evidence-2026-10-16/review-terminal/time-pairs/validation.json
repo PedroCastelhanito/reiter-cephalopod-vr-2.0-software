@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-16",
+  "scope": "Trial and total elapsed/duration pairs; Review total fixture only.",
+  "checks": {
+    "pytest": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'review_appearance or hud_fits_content or managed_status_uses' -m 'not windows and not rig': 4 passed, 544 deselected in 12.03s",
+    "ruff": "check/format: dashboard.py/view.py/managed_status.py/test_dashboard.py pass",
+    "mypy": "--platform win32: dashboard.py/view.py/managed_status.py, 3 files pass",
+    "boundaries": "zero violations; see boundaries.txt",
+    "whitespace": "git diff --check passes",
+    "render": "presentation.py fixture and wide/narrow inspection pass"
+  },
+  "source_sha256": {
+    "src/cephvr/gui/dashboard.py": "dab620fac893bce2af66e298a99ff67363b006a8267312a80f80f8d54f373cc2",
+    "src/cephvr/gui/view.py": "ea3614be2ad8866ce1538d1e979836823dd0b67af07c9fae53f2d84d9b387582",
+    "src/cephvr/gui/managed_status.py": "664e8bcb9233ff4c626fa53464209b02c1c0fc210ddfe84f7a9647e9e91d79b5",
+    "tests/gui/test_dashboard.py": "d6eda05d5a5d23d232d47daa43b89f039d1faece2ed951813c0ac8530df04f6e"
+  },
+  "limits": "Managed trial duration uses scheduled end minus start, independently of actual elapsed. Session totals absent from snapshot, displayed unknown rather than estimated; runtime total projection remains pending. Review is static sample data. No native/DPI/rig claim."
+}

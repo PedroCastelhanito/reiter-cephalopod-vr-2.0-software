@@ -19,7 +19,6 @@ from cephvr.controller.incident.registry import (
 )
 from cephvr.controller.lifecycle.interruption import InterruptionWorkflow
 from cephvr.controller.state import (
-    RETAINED_LIMIT,
     ControlState,
     IncidentState,
     LifecycleState,
@@ -181,19 +180,24 @@ class OperatorPrompts:
                 self.incident_state.incident_prompts.pop(request.prompt_id, None)
                 owner.changed.set()
                 self.publisher.publish()
-                if owner.writer is not None:
-                    self.spawn(
-                        self.incidents.log_incident(
-                            owner,
-                            "incident_decision",
-                            {
-                                "incident_id": updated.incident_id,
-                                "incident_revision": updated.revision,
-                                "choice": request.choice,
-                                "client_id": request.command.operator.client_id,
-                                "affected_resources": list(updated.affected_resources),
-                            },
-                        )
+                if owner.writer is not None and (
+                    request.choice != "acknowledge" or not owner.recovery_log_closed
+                ):
+                    self.incidents.log_incident(
+                        owner,
+                        "incident_decision",
+                        {
+                            "incident_id": updated.incident_id,
+                            "incident_revision": updated.revision,
+                            "choice": request.choice,
+                            "disposition": pb.RuntimeIncidentDisposition.Name(
+                                updated.disposition
+                            )
+                            .removeprefix("RUNTIME_INCIDENT_DISPOSITION_")
+                            .lower(),
+                            "client_id": request.command.operator.client_id,
+                            "affected_resources": list(updated.affected_resources),
+                        },
                     )
                 if request.choice == "abort_session":
                     self.spawn(
@@ -289,5 +293,4 @@ class OperatorPrompts:
                 self.lifecycle.startup_completion_warning = None
                 if self.lifecycle.attempt is None:
                     self.lifecycle.session.cleanup_confirmed = True
-            self.control.warnings = self.control.warnings[-RETAINED_LIMIT:]
             self.publisher.publish()

@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 from dataclasses import replace
 from pathlib import Path
 from typing import cast
+
+import pytest
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
@@ -18,6 +21,131 @@ from tests.controller.support_components import (
     _runtime,
     bind_ledger,
 )
+
+
+@pytest.mark.parametrize(
+    "mismatch", [None, "session", "generation", "command", "catalogue"]
+)
+async def test_interrupted_closure_queries_exact_session_cleanup_once(
+    tmp_path: Path, mismatch: str | None
+) -> None:
+    context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, context)
+    runtime.clock = time.monotonic_ns
+    runtime.evidence_waiter.clock = runtime.clock
+    runtime.limit_state.current = replace(runtime.limits, recovery_ns=50_000_000)
+    attempt = _attempt(runtime, tmp_path, {})
+    trial = pb.TrialContext(session=attempt.context, trial_id=_id(), trial_number=1)
+    attempt.prepared.trials.add(context=trial)
+    attempt.trial_index = 0
+    attempt.interrupted = True
+    attempt.finished_deadline_ns = runtime.clock() - 1_000_000
+    attempt.finalization_deadline_ns = runtime.clock() + 200_000_000
+    work = pb.WorkContext(session=attempt.context)
+    source = pb.ProcessIdentity(
+        role="acquisition", generation=context.backend_generation
+    )
+    command_id = _id()
+    output = attempt.prepared.outputs.add(
+        output_key="camera",
+        backend=context,
+        trial=trial,
+        path=str(tmp_path / "camera.jsonl"),
+    )
+    registered = svc.RegisteredContext(work=work, outputs=[output])
+    registered.cleanup_commands.add(
+        target=source, work=work, operation=pb.OperationContext(command_id=command_id)
+    )
+    attempt.registered_context = registered
+    runtime.supervisor_state.processes["acquisition"] = svc.ProcessHealthStatus(
+        process=source,
+        last_heartbeat=pb.HeartbeatReport(
+            source=source, work=work, cleanup_resources_revision=1
+        ),
+    )
+    cleanup = pb.CleanupReport(
+        source=source,
+        work=work,
+        operation=pb.OperationContext(command_id=command_id),
+        verified_monotonic_ns=runtime.clock(),
+        trial_activity_stopped=True,
+        cleanup_resources_revision=1,
+        outputs=[
+            pb.OutputResult(
+                output_key=output.output_key,
+                path=output.path,
+                closure=pb.OUTPUT_CLOSURE_CLOSED,
+                artifact_present=True,
+            )
+        ],
+    )
+    if mismatch == "session":
+        cleanup.work.session.session_id = _id()
+    elif mismatch == "generation":
+        cleanup.source.generation = _id()
+    elif mismatch == "command":
+        cleanup.operation.command_id = _id()
+    elif mismatch == "catalogue":
+        cleanup.cleanup_resources_revision = 2
+    queries: list[svc.BackendQuery] = []
+
+    class Peer:
+        async def get_state(
+            self, request: svc.BackendQuery, *, deadline_ns: int
+        ) -> pb.ParticipantState:
+            assert request.work == work
+            assert request.target == context
+            assert (
+                deadline_ns == attempt.finished_deadline_ns + runtime.limits.recovery_ns
+            )
+            queries.append(request)
+            return pb.ParticipantState(cleanup=cleanup)
+
+    peer = Peer()
+    peer.context = context
+    attempt.required["acquisition"] = cast(BackendPort, peer)
+    attempt.trial_participants["acquisition"] = cast(BackendPort, peer)
+    runtime.lifecycle.attempt = attempt
+    runtime.lifecycle.session = pb.SessionState(phase=pb.SESSION_PHASE_FINALIZING)
+    runtime.lifecycle.trial = pb.TrialState(
+        phase=pb.TRIAL_PHASE_FINALIZING, context=trial
+    )
+    wait = runtime.evidence_waiter.wait_lifecycle_with_recovery(
+        attempt,
+        "finished",
+        frozenset({"acquisition"}),
+        attempt.finished_deadline_ns,
+        closure_only=True,
+    )
+    if mismatch is None:
+        assert await asyncio.wait_for(wait, 0.5)
+        assert attempt.cleanup["acquisition"] == cleanup
+    else:
+        with pytest.raises(TimeoutError, match="one bounded recovery query"):
+            await asyncio.wait_for(wait, 0.5)
+        assert not attempt.cleanup
+    assert len(queries) == 1
+    assert not attempt.finished
+    assert not attempt.recovering_evidence
+    assert attempt.recovery_deadline_ns == 0
+
+
+async def test_interrupted_closure_cannot_extend_expired_finalization(
+    tmp_path: Path,
+) -> None:
+    context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, context)
+    attempt = _attempt(runtime, tmp_path, {})
+    attempt.interrupted = True
+    attempt.finalization_deadline_ns = 999
+    runtime.lifecycle.attempt = attempt
+    runtime.lifecycle.trial.phase = pb.TRIAL_PHASE_FINALIZING
+    with pytest.raises(TimeoutError, match="required lifecycle evidence"):
+        await runtime.evidence_waiter.wait_lifecycle_with_recovery(
+            attempt, "finished", frozenset({"acquisition"}), 998, closure_only=True
+        )
+    assert not attempt.recovering_evidence
+    assert not runtime.control.warnings
 
 
 async def test_late_camera_completion_reconciles_blocker_without_reviving_success(
@@ -165,3 +293,73 @@ async def test_finished_recovery_keeps_exact_trial_identity_and_original_cutoff(
         pb.LifecycleReport(finished=finished), runtime.clock()
     )
     assert post_recovery_push.result == pb.COMMAND_RESULT_REJECTED
+
+
+def test_snapshot_retention_reports_source_times_and_sticky_omissions(tmp_path):
+    from cephvr.controller.state import RETAINED_LIMIT
+
+    runtime = _runtime(
+        tmp_path,
+        pb.BackendContext(backend_name="acquisition", backend_generation=_id()),
+    )
+    assert not runtime.publisher.build_snapshot().HasField(
+        "retained_since_monotonic_ns"
+    )
+    runtime.control.errors = [pb.ErrorReport(error_id=_id(), occurred_monotonic_ns=40)]
+    runtime.supervisor_state.recoveries = [
+        pb.RecoveryState(attempt_id=_id(), start_monotonic_ns=20)
+    ]
+    view = runtime.publisher.build_snapshot()
+    assert view.retained_since_monotonic_ns == 20
+    assert not view.retained_truncated
+    for number in range(RETAINED_LIMIT + 1):
+        runtime.control.add_warning("test", str(number))
+    assert len(runtime.control.warnings) == RETAINED_LIMIT
+    assert runtime.publisher.build_snapshot().retained_truncated
+    runtime.control.warnings.clear()
+    assert runtime.publisher.build_snapshot().retained_truncated
+
+
+def test_snapshot_combined_history_and_incident_eviction_are_visible(tmp_path):
+    runtime = _runtime(
+        tmp_path,
+        pb.BackendContext(backend_name="acquisition", backend_generation=_id()),
+    )
+    runtime.control.errors = [
+        pb.ErrorReport(error_id=str(i), occurred_monotonic_ns=i) for i in range(256)
+    ]
+    runtime.supervisor_state.errors = [
+        pb.ErrorReport(error_id="last", occurred_monotonic_ns=300)
+    ]
+    view = runtime.publisher.build_snapshot()
+    assert len(view.errors) == 256 and view.retained_truncated
+    assert view.retained_since_monotonic_ns == 1
+    runtime.control.errors.clear()
+    runtime.supervisor_state.errors.clear()
+    attempt = _attempt(runtime, tmp_path, {})
+    runtime.lifecycle.attempt = attempt
+    from cephvr.controller.incident.registry import IncidentRegistry
+
+    attempt.incidents = IncidentRegistry(
+        attempt.context, max_incidents=2, max_error_ids=8, max_bytes=65536
+    )
+    attempt.incidents.retained_truncated = True
+    assert runtime.publisher.build_snapshot().retained_truncated
+
+
+async def test_runtime_warning_entrypoint_is_bounded_and_owns_its_copy(tmp_path):
+    from cephvr.controller.state import RETAINED_LIMIT
+
+    runtime = _runtime(
+        tmp_path,
+        pb.BackendContext(backend_name="acquisition", backend_generation=_id()),
+    )
+    warning = pb.Warning(component="test")
+    for number in range(RETAINED_LIMIT + 1):
+        warning.warning_id = str(number)
+        await runtime.record_warning(warning)
+    warning.warning_id = "mutated"
+    assert len(runtime.control.warnings) == RETAINED_LIMIT
+    assert runtime.control.warnings[0].warning_id == "1"
+    assert runtime.control.warnings[-1].warning_id == str(RETAINED_LIMIT)
+    assert runtime.publisher.build_snapshot().retained_truncated

@@ -56,15 +56,10 @@ async def test_interrupt_delivery_is_independent_and_keeps_original_deadline(
         for name in ("acquisition", "visual_stimulus", "tracking")
     }
 
-    async def finish_trial(_attempt: Attempt) -> bool:
-        assert cancelled.is_set()
-        return True
-
-    monkeypatch.setattr(runtime.trial_logs, "finish_interrupted_trial", finish_trial)
     if authority_loss:
         await runtime.interruption.authority_emergency_interrupt(attempt, "lost owner")
     else:
-        assert await runtime.interruption._stop_backends_and_trial(attempt, "abort")
+        await runtime.interruption._stop_backends(attempt, "abort")
     assert calls == dict.fromkeys(attempt.required, 20_000_500)
     assert cancelled.is_set()
     assert all(request.command.work.session == attempt.context for request in requests)
@@ -343,3 +338,52 @@ async def test_start_terminal_operation_time_and_interruption_order(
         await runtime.cancel_background_tasks()
         if attempt.reservation.held:
             attempt.reservation.release()
+
+
+@pytest.mark.parametrize(
+    "dispatch_delta,receipt_delta", [(-1, -1), (0, 0), (1, 0), (0, 1)]
+)
+async def test_release_preserves_controller_100ms_and_backend_50ms_cutoffs(
+    tmp_path, dispatch_delta, receipt_delta
+):
+    from cephvr.controller.lifecycle.trials import TrialSchedule
+    from tests.controller.support_components import _attempt as component_attempt
+    from tests.controller.support_components import _runtime as component_runtime
+
+    context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = component_runtime(tmp_path, context)
+    attempt = component_attempt(runtime, tmp_path, {})
+    target = 1_000_000_000
+    dispatch_cutoff, receipt_cutoff = target - 100_000_000, target - 50_000_000
+    now = [dispatch_cutoff + dispatch_delta]
+    runtime.trials.clock = lambda: now[0]
+    seen = []
+
+    class Peer:
+        async def release_trial(self, request, *, deadline_ns):
+            seen.append((request, deadline_ns))
+            now[0] = receipt_cutoff + receipt_delta
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    peer = Peer()
+    peer.context = context
+    attempt.trial_participants["acquisition"] = peer
+    attempt.schedule_operations["acquisition"] = _id()
+    plan = pb.TrialPlan(
+        context=pb.TrialContext(session=attempt.context, trial_id=_id(), trial_number=1)
+    )
+    schedule = TrialSchedule(
+        target, target + 1_000_000_000, dispatch_cutoff, receipt_cutoff, "prefix"
+    )
+    if dispatch_delta > 0 or receipt_delta > 0:
+        with pytest.raises(TimeoutError):
+            await runtime.trials._release_participants(attempt, plan, schedule)
+    else:
+        await runtime.trials._release_participants(attempt, plan, schedule)
+    assert bool(seen) is (dispatch_delta <= 0)
+    if seen:
+        assert seen[0][1] == receipt_cutoff
+        assert (
+            seen[0][0].schedule_operation.command_id
+            == attempt.schedule_operations["acquisition"]
+        )

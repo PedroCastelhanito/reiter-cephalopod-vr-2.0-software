@@ -1,0 +1,55 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_confirmed_immediate_off_retires_matching_cancelled_trial_reservation ___
+
+    def test_confirmed_immediate_off_retires_matching_cancelled_trial_reservation():
+        clock = _Clock(10)
+        port = _ScriptedPort(statuses=[_status(), _status()])
+        owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+        owner.connect(deadline_ns=10_000)
+        owner.reserve_boundary(100, mcu.PULSE_BOUNDARY_COMMAND_ON, selected_roles=("behavioral",))
+        owner.reserve_boundary(200, mcu.PULSE_BOUNDARY_COMMAND_OFF, selected_roles=("behavioral",))
+        owner.cancel_on_reservations()
+        evidence = owner.off(("behavioral",), scheduled_boundary_ns=None, stop_issued_ns=10, deadline_ns=1000)
+        assert evidence.outcome == mcu.PULSE_COMMAND_OUTCOME_APPLIED
+        clock.value = 201
+>       observation = owner.status(deadline_ns=1000)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/controller/test_microcontroller_owner.py:2176: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/controller/microcontroller/owner.py:253: in status
+    exchange = self._exchange("STATUS", {}, deadline_ns, routine=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.controller.microcontroller.owner.SerialOwner object at 0x1027d4390>
+verb = 'STATUS', fields = {}, deadline_ns = 1000, routine = True
+dispatch_before_ns = None
+
+    def _exchange(
+        self,
+        verb: str,
+        fields: dict[str, str],
+        deadline_ns: int,
+        *,
+        routine: bool,
+        dispatch_before_ns: int | None = None,
+    ) -> Exchange:
+        self._assert_owner_thread()
+        now = self._clock()
+        next_boundary = self._pulses.next_boundary_ns
+        if (
+            routine
+            and next_boundary is not None
+            and now + self._ack_ns >= next_boundary
+        ):
+>           raise ChannelDeadline(
+                "routine command cannot drain before reserved boundary"
+            )
+E           cephvr.controller.microcontroller.channel.ChannelDeadline: routine command cannot drain before reserved boundary
+
+src/cephvr/controller/microcontroller/owner.py:454: ChannelDeadline
+=========================== short test summary info ============================
+FAILED tests/controller/test_microcontroller_owner.py::test_confirmed_immediate_off_retires_matching_cancelled_trial_reservation
+1 failed, 85 deselected in 0.32s

@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-16",
+  "scope": "Status consolidates phase/outcome; blank gap before trial/timing rows.",
+  "checks": {
+    "pytest": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'review_appearance or hud_fits_content or review_phase_locks' -m 'not windows and not rig': 11 passed, 537 deselected in 24.46s",
+    "ruff": "dashboard.py check/format --check pass",
+    "mypy": "--platform win32 dashboard.py: 1 file pass",
+    "boundaries": "zero violations; see boundaries.txt",
+    "whitespace": "git diff --check passes",
+    "render": "presentation.py fixture passes; wide render inspected"
+  },
+  "source_sha256": "c8f0adeefe58c0c4beb50617d0a0f8f6f37a6013eb19832e8e265d9d05003510",
+  "limits": "Review fixtures; no native/DPI or rig acceptance; previous live-total timing limitation unchanged."
+}

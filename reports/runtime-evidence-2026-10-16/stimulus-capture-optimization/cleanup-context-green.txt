@@ -1,0 +1,96 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___ test_native_capture_cleanup_activates_owner_before_scene_release[False] ____
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2096/test_native_capture_cleanup_ac0')
+activation_fails = False
+
+    @pytest.mark.parametrize("activation_fails", [False, True])
+    def test_native_capture_cleanup_activates_owner_before_scene_release(
+        tmp_path, activation_fails
+    ):
+        from cephvr.visual_stimulus.rendering.native import ModernGLPort, _OutputContext
+    
+        calls = []
+        fail = activation_fails
+    
+        def activate_first():
+            calls.append("first")
+            if fail:
+                raise RuntimeError("context activation failed")
+    
+        port = ModernGLPort(
+            tmp_path,
+            announce=lambda *_: None,
+            scene_renderer=NS(release=lambda: calls.append("scene")),
+        )
+        port._glfw = NS(destroy_window=lambda _: None, terminate=lambda: None)
+        for name, activate in (
+            ("first", activate_first),
+            ("last", lambda: calls.append("last")),
+        ):
+            port._outputs[name] = _OutputContext(
+                name, object(), NS(release=lambda: None), 1, 1, 8, 1, None, activate
+            )
+        assert not port._capture_fences  # successful transfers already retired their fences
+        result = port.release()
+        if activation_fails:
+            assert result.outstanding and calls == ["first"]
+            assert port.scene_renderer is not None and len(port._outputs) == 2
+            fail = False
+            calls.clear()
+            result = port.release()
+>       assert not result.outstanding
+E       assert not ("context:last:'types.SimpleNamespace' object has no attribute 'make_context_current'", "context:first:'types.SimpleNamespace' object has no attribute 'make_context_current'")
+E        +  where ("context:last:'types.SimpleNamespace' object has no attribute 'make_context_current'", "context:first:'types.SimpleNamespace' object has no attribute 'make_context_current'") = ResourceReleaseReport(released=(), outstanding=("context:last:'types.SimpleNamespace' object has no attribute 'make_context_current'", "context:first:'types.SimpleNamespace' object has no attribute 'make_context_current'")).outstanding
+
+tests/visual_stimulus/test_rendering.py:2357: AssertionError
+____ test_native_capture_cleanup_activates_owner_before_scene_release[True] ____
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2096/test_native_capture_cleanup_ac1')
+activation_fails = True
+
+    @pytest.mark.parametrize("activation_fails", [False, True])
+    def test_native_capture_cleanup_activates_owner_before_scene_release(
+        tmp_path, activation_fails
+    ):
+        from cephvr.visual_stimulus.rendering.native import ModernGLPort, _OutputContext
+    
+        calls = []
+        fail = activation_fails
+    
+        def activate_first():
+            calls.append("first")
+            if fail:
+                raise RuntimeError("context activation failed")
+    
+        port = ModernGLPort(
+            tmp_path,
+            announce=lambda *_: None,
+            scene_renderer=NS(release=lambda: calls.append("scene")),
+        )
+        port._glfw = NS(destroy_window=lambda _: None, terminate=lambda: None)
+        for name, activate in (
+            ("first", activate_first),
+            ("last", lambda: calls.append("last")),
+        ):
+            port._outputs[name] = _OutputContext(
+                name, object(), NS(release=lambda: None), 1, 1, 8, 1, None, activate
+            )
+        assert not port._capture_fences  # successful transfers already retired their fences
+        result = port.release()
+        if activation_fails:
+            assert result.outstanding and calls == ["first"]
+            assert port.scene_renderer is not None and len(port._outputs) == 2
+            fail = False
+            calls.clear()
+            result = port.release()
+>       assert not result.outstanding
+E       assert not ("context:last:'types.SimpleNamespace' object has no attribute 'make_context_current'", "context:first:'types.SimpleNamespace' object has no attribute 'make_context_current'")
+E        +  where ("context:last:'types.SimpleNamespace' object has no attribute 'make_context_current'", "context:first:'types.SimpleNamespace' object has no attribute 'make_context_current'") = ResourceReleaseReport(released=(), outstanding=("context:last:'types.SimpleNamespace' object has no attribute 'make_context_current'", "context:first:'types.SimpleNamespace' object has no attribute 'make_context_current'")).outstanding
+
+tests/visual_stimulus/test_rendering.py:2357: AssertionError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_rendering.py::test_native_capture_cleanup_activates_owner_before_scene_release[False]
+FAILED tests/visual_stimulus/test_rendering.py::test_native_capture_cleanup_activates_owner_before_scene_release[True]
+2 failed, 75 deselected in 0.47s

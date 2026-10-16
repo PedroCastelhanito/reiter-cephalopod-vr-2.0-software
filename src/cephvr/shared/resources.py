@@ -31,11 +31,7 @@ def validate_cleanup_fence_update(
     if not current.HasField("paired_spikeglx"):
         raise ResourceCatalogueError("paired SpikeGLX Setup fact is unknown")
     fences = current.cleanup_commands
-    if (
-        len(fences) > max_fences
-        or sum(len(item.SerializeToString(deterministic=True)) for item in fences)
-        > max_bytes
-    ):
+    if len(fences) > max_fences or sum(item.ByteSize() for item in fences) > max_bytes:
         raise ResourceCatalogueError("cleanup command fence capacity exceeded")
     allowed = {
         (item.backend_name, item.backend_generation)
@@ -210,10 +206,7 @@ class ResourceObligationRegistry:
         candidate = _validate_items(report.cleanup_resources, self.allowed_owners)
         if (
             len(candidate) > self.max_resources
-            or sum(
-                len(item.SerializeToString(deterministic=True)) for item in candidate
-            )
-            > self.max_bytes
+            or sum(item.ByteSize() for item in candidate) > self.max_bytes
         ):
             raise ResourceCatalogueError("cleanup catalogue capacity exceeded")
         if self._revision is None:

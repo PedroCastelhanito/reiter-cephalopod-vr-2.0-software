@@ -62,15 +62,24 @@ class PreviewHandling:
             except (ProjectionError, ValueError) as exc:
                 return rejected_receipt("EVIDENCE", str(exc))
         acquisition = self.backends.get("acquisition")
-        if acquisition is None or self.supervisor is None:
+        terminal = report.result in (
+            svc.PREVIEW_CONSUMER_RESULT_RELEASED,
+            svc.PREVIEW_CONSUMER_RESULT_FAILED,
+        )
+        if acquisition is None or (terminal and self.supervisor is None):
             return rejected_receipt(
                 "UNAVAILABLE", "preview release recipients unavailable"
             )
+        recipients: list[BackendPort | SupervisorPort] = [acquisition]
+        if terminal and self.supervisor is not None:
+            recipients.append(self.supervisor)
         try:
             results = await asyncio.wait_for(
                 asyncio.gather(
-                    acquisition.report_preview_consumer_state(report),
-                    self.supervisor.report_preview_consumer_state(report),
+                    *(
+                        owner.report_preview_consumer_state(report)
+                        for owner in recipients
+                    )
                 ),
                 self.limits.current.registration_ns / 1e9,
             )

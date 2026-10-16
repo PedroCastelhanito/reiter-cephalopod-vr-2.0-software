@@ -222,7 +222,7 @@ def _require_ok(
     reply: Reply, required: set[str], *, allow_optional_role_fields: bool = False
 ) -> None:
     if not reply.ok:
-        raise FirmwareRejected(reply.error_code or "UNKNOWN_ERROR")
+        raise FirmwareRejected(reply.error_code or "UNKNOWN_ERROR", reply=reply)
     allowed = set(required)
     if allow_optional_role_fields:
         allowed.update(
@@ -294,6 +294,16 @@ def _required_token(value: str, name: str) -> str:
 class FirmwareRejected(RuntimeError):
     """A matched ERR response; it is evidence of rejection, not transport success."""
 
-    def __init__(self, code: str):
-        super().__init__(code)
+    def __init__(self, code: str, *, reply: Reply | None = None):
         self.code = code
+        self.reply = (
+            Reply(reply.ok, reply.request_id, dict(reply.fields), reply.error_code)
+            if reply is not None
+            else None
+        )
+        context = (
+            " ".join(f"{key}={value}" for key, value in sorted(reply.fields.items()))
+            if reply
+            else ""
+        )
+        super().__init__(f"{code}: {context}" if context else code)

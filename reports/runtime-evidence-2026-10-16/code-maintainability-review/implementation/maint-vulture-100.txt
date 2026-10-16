@@ -1,0 +1,5 @@
+tests/platform/test_windows_jobs.py:51: unused variable 'inherit' (100% confidence)
+tests/platform/test_windows_jobs.py:51: unused variable 'rights' (100% confidence)
+tests/platform/test_windows_jobs.py:212: unused variable 'inherit' (100% confidence)
+tests/platform/test_windows_jobs.py:212: unused variable 'rights' (100% confidence)
+tests/supervisor/test_registration.py:227: unused variable 'grace' (100% confidence)

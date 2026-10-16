@@ -197,26 +197,28 @@ class DeviceViews:
                     calibration_pending = self.device.calibration_pending
                     if (
                         calibration_pending is not None
-                        and display_view.command_id == calibration_pending[0]
+                        and display_view.command_id == calibration_pending.command_id
                     ):
                         if (
-                            observed_ingress > calibration_pending[2]
-                            or self.configuration.revision != calibration_pending[1]
+                            observed_ingress > calibration_pending.deadline_ns
+                            or self.configuration.revision
+                            != calibration_pending.configuration_revision
                             or not display_view.HasField("calibration")
                             or display_view.calibration.diagnostic_id
-                            != calibration_pending[3]
+                            != calibration_pending.diagnostic_id
                             or display_view.calibration.configuration_revision
-                            != calibration_pending[1]
+                            != calibration_pending.configuration_revision
                         ):
                             raise ProjectionError(
                                 "display calibration evidence is stale or mismatched"
                             )
-                        expected_state = calibration_pending[4]
+                        expected_state = calibration_pending.expected_state
                         evidence = display_view.calibration
                         output_ids = {item.output_id for item in display_view.outputs}
-                        outputs_match = output_ids == calibration_pending[5] and len(
-                            display_view.outputs
-                        ) == len(output_ids)
+                        outputs_match = (
+                            output_ids == calibration_pending.output_ids
+                            and len(display_view.outputs) == len(output_ids)
+                        )
                         successful = (
                             outputs_match
                             and not evidence.failure_code
@@ -233,7 +235,7 @@ class DeviceViews:
                         )
                         changed = self.projections.accept_display(display_view)
                         self.hooks.complete_operation(
-                            calibration_pending[0],
+                            calibration_pending.command_id,
                             success=successful,
                             progress="calibration scene presented"
                             if expected_state
@@ -259,9 +261,9 @@ class DeviceViews:
                     pending = self.device.display_pending
                     if (
                         pending is None
-                        or display_view.command_id != pending[0]
-                        or observed_ingress > pending[2]
-                        or self.configuration.revision != pending[1]
+                        or display_view.command_id != pending.command_id
+                        or observed_ingress > pending.deadline_ns
+                        or self.configuration.revision != pending.configuration_revision
                     ):
                         raise ProjectionError(
                             "display result is stale or its original deadline elapsed"
@@ -271,9 +273,10 @@ class DeviceViews:
                         actual = {item.output_id for item in display_view.outputs}
                         successful = (
                             display_view.HasField("applied_revision")
-                            and display_view.applied_revision == pending[1]
-                            and actual == pending[3]
-                            and len(display_view.outputs) == len(pending[3])
+                            and display_view.applied_revision
+                            == pending.configuration_revision
+                            and actual == pending.output_ids
+                            and len(display_view.outputs) == len(pending.output_ids)
                             and not display_view.issues
                             and all(
                                 item.HasField("resources_ready")
@@ -285,7 +288,7 @@ class DeviceViews:
                             )
                         )
                         self.hooks.complete_operation(
-                            pending[0],
+                            pending.command_id,
                             success=successful,
                             progress="Idle output confirmed"
                             if successful

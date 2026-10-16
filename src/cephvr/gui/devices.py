@@ -24,7 +24,11 @@ from cephvr.gui.view import DashboardView
 
 class DevicesPage(QWidget):
     def __init__(
-        self, *, sample: bool = False, settings: QSettings | None = None
+        self,
+        *,
+        sample: bool = False,
+        settings: QSettings | None = None,
+        review: bool = False,
     ) -> None:
         super().__init__()
         body = QVBoxLayout(self)
@@ -41,7 +45,11 @@ class DevicesPage(QWidget):
         self.tabs.currentChanged.connect(self.tab_bar.setCurrentIndex)
         body.addWidget(self.tabs, 1)
         self.cameras = CamerasPanel(sample=sample)
-        self.microcontroller = MicrocontrollerPanel(settings=settings)
+        self.microcontroller = MicrocontrollerPanel(settings=settings, review=review)
+        if review:
+            from cephvr.gui.review_devices import arrange_devices
+
+            arrange_devices(self.microcontroller)
         self.wiring_dialog: McuWiringEditor | None = None
         self.wiring_identity: tuple[object, ...] | None = None
         self.cameras.drafts_changed.connect(self.sync_cameras)
@@ -67,7 +75,7 @@ class DevicesPage(QWidget):
             lambda *_: self.invalidate_wiring_editor()
         )
         self.sync_cameras()
-        self.projectors = ProjectorsPanel(settings=settings)
+        self.projectors = ProjectorsPanel(settings=settings, review=review)
         self.cameras.controls_changed.connect(self.sync_wiring_status)
         self.microcontroller.controls_changed.connect(self.sync_wiring_status)
         self.microcontroller.port.currentIndexChanged.connect(self.sync_wiring_status)

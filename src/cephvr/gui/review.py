@@ -22,9 +22,13 @@ class ReviewDashboardWindow(DashboardWindow):
     closing = pyqtSignal()
 
     def __init__(
-        self, *, sample: bool = False, settings: QSettings | None = None
+        self,
+        *,
+        sample: bool = False,
+        settings: QSettings | None = None,
+        device_review: bool = True,
     ) -> None:
-        super().__init__(sample=sample, settings=settings)
+        super().__init__(sample=sample, settings=settings, device_review=device_review)
         self._restore_failed = False
 
     def closeEvent(self, event: QCloseEvent | None) -> None:

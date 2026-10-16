@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 208
+**Status:** Accepted · **Revision:** 213
 
 - Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
 
@@ -54,16 +54,37 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Screen/X/Y/Width/Height and Add/remove; hide its header when empty and refit after
   Add/remove and restore through the shared table rule. Planning preview shows final-space
   black regions and a white pulse as placement, never optical timing.
-  V15/V19/V22 own final composition and trial/Idle behavior; both GUI modes share controls.
+  V15/V19/V22 own final composition and trial/Idle behavior; both GUI modes share controls outside the staged review candidate below.
+- Review and runtime hide Camera MCU wiring and place Test selected/Connect side
+  by side; camera trigger pins and MCU connection remain editable in their owning
+  configuration controls. Owner-requested review staging: Microcontroller places Inputs
+  and Outputs below its connection card. Inputs uses the Outputs table/button styling
+  with Add input, editable names/pins, enable checkboxes and remove actions. With no
+  definitions, hide the table/header and retain Add input. Keep unfinished definitions
+  in local review drafts and marked review files, restore legacy files as empty, and
+  keep A11's physical input/diagnostic deferral. Review input editing follows the
+  existing phase/authority/device-operation gates.
+  Review Add output inserts an unassigned inline type/pin row without a pin dialog.
+  Choose only existing supported signal identities; keep fixed signal/pin and camera
+  participation ownership. Retain unfinished rows/empty selected pins in Review drafts
+  and marked files until explicitly removed, with the same editing/test gates.
+  Runtime output authoring remains unchanged pending owner review.
+  Review Synchronization retains independent Frame/Pulse drafts by screen; blank
+  screens add no pulse, and pulse-display VSync selects all enabled pulse screens.
+  Its modeless local placement fixture repeats V22's pattern and accepts screen/field
+  edits without resetting the index. Review drafts and explicitly marked review-only
+  projector files retain all screens. Runtime files reject that extension rather than
+  silently losing pulses. Runtime promotion and physical multi-output VSync/rendering
+  follow owner review; current V20/V22 runtime contracts stay unchanged. This is a
+  scoped exception to shared page parity while the layout/behavior is under review.
 - Omit explanatory body descriptions throughout GUI cards, editors and dialogs;
   useful guidance belongs in control tooltips. Retain field labels, units, live
   summaries/status, empty-state messages, errors and required operator choices.
 - Review and managed runtime use the same DashboardWindow page construction,
   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
-  supplies local fixtures or authoritative state and command availability; it never
-  adds a separate page layout. Dashboard cards have identical geometry in both modes:
+  supplies local fixtures or authoritative state and command availability; it adds no separate page layout outside the staged review candidate above. Dashboard cards have identical geometry in both modes:
   no Runtime-only control button or hint row. Take control, confirmed Take over and
-  Release remain in Runtime's Control menu; the HUD reports actual authority.
+  Release remain in Runtime's Control menu; command gates follow actual authority.
   Review-only inspection menus and runtime authority
   actions retain their distinct purpose. Older saved review drafts migrate through
   the owning validators without discarding valid settings or changing source files
@@ -879,7 +900,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   gates, closes when none remain available and rechecks authority on selection.
   These contextual controls replace the redundant Session menu; backend commands remain
   distinct and no automatic session progression is introduced.
-  The HUD includes recording and metadata evidence. Dashboard excludes trial-plan
+  G02 owns the current compact HUD rows. Dashboard excludes trial-plan
   editing, backend participation/use editing, the separate session-progress card,
   embedded previews, the design-review banner, frontend footer and header
   connection/local-control badges. Removing badges does not change command authority.
@@ -945,7 +966,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 49
+**Status:** Accepted · **Revision:** 74
 
 - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
@@ -956,6 +977,27 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   port discovery uses that same control beside its selector. Participation is the
   first Use column; inventory row selection shares the same behavior. Shared table
   fitting handles hidden signal headers without leaving an empty header gutter.
+  Projector measurements content-size Screen and derived scale columns, leaving the
+  measured X/Y pair the remaining width. Display mm/px with one decimal without
+  rounding calculation inputs. Pair calibration Offset X/Y in one column like Width/Height.
+  Caption the projector diagrams Displays layout (without the Display IDs suffix)
+  and Setup geometry. Caption shared log cards Runtime log and the projector timing
+  card Photodiode. Its caption uses the shared content-sized title/frame gap.
+  SpikeGLX Input channels sizes Use to contents so its heading stays on one line.
+  All tab HUDs share Dashboard formatting through the shared StatusColumn row renderer:
+  uppercase labels, one aligned value column across groups, Retro colon separators,
+  explicit blank-line section spacing and shared fitted-console/palette treatment.
+  Appearance switches re-render retained rows without changing values or diagnostic
+  state. Tracking's status/log column follows this shared appearance independently
+  of its controls. Preserve each tab's information until separately reviewed.
+  Camera HUD shows found/enabled counts, a separator, then selected camera role,
+  connected status, Trigger source (Internal clock / External controller),
+  controller-configured external Trigger rate and backend-received
+  acquisition rate. Missing rate readbacks remain unknown; never substitute a local
+  edit or configured trigger frequency for measured acquisition rate.
+  Shared directory/stimulus path fields accept Ctrl and Command-style select-all,
+  copy, cut and paste, preserving full path text and existing validation/edit locks.
+  Focused paths use native text/selection painting even when read-only.
 
 - Standard uses the current CephVR1.0 Dashboard as the visual template: dark blue/black
   surfaces, subtle bordered cards, blue primary actions, muted red stopping actions,
@@ -963,29 +1005,60 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   accent for page headings, selected sidebar labels and active subtab text; keep
   form labels neutral, use bright blue coordinate headers and retain blue action/focus treatments. Embedded stimulus plots
   are excluded from the initial Dashboard increment.
-- Review and managed runtime offer the same window-bar Style menu with Standard
-  and Retro console, retaining a shared local frontend appearance preference.
-  Restore the legacy Review preference when no shared preference exists. Retro console
-  styles Dashboard, Protocol, Devices, Tracking, their subtabs and window chrome
-  with green-black surfaces, blue frames
+- Review and runtime offer the same window-bar Style menu with Standard and Retro
+  console, retaining a shared frontend preference with legacy Review fallback. Retro console
+  styles Dashboard, Devices, Tracking, Protocol planner/editor, Previews selector and window chrome with green-black surfaces, blue frames
   and actions, muted red-orange card titles, cyan page headings and field labels,
   restrained amber branding, pale green readouts/logs, cyan navigation/focus and warm warning/stop
   accents, unnumbered uppercase card headers, aligned monospace HUD columns, square
-  controls and instrument frames, labelled status lamps from the current view,
-  and faint static terminal lines, card/terminal edge ticks with periodic longer marks,
-  dashed section rules confined to the HUD, and cyan focus corners on Dashboard editors.
-  Status captions use brackets. A segmented trial-position strip appears only when
+  controls and instrument frames, labelled glyph status lamps from the current view,
+  and card/terminal edge ticks with periodic longer marks,
+  dashed section rules confined to the HUD, and cyan focus corners on styled editors.
+  The HUD shows Status (reported outcome when available, otherwise current phase)
+  with a blank-line gap before Trial and the Trial time/Total time elapsed / duration
+  pairs. Omit Control and separate Phase and Outcome rows.
+  Live values use authoritative timing; unavailable totals remain unknown, while
+  Review supplies explicitly simulated values. Omit Outputs, Reservation and Metadata rows.
+  Status captions use brackets. A full-width block-character trial-position strip appears only when
   a count is available, with the exact current index/count; it represents position,
   not completed trials. Ready lamps are green,
   preparation/waiting amber, explicit faults red and unavailable states neutral;
   preserve the exact status in the label/tooltip. No synthetic plots or telemetry.
   Switch live using the existing widgets, preserving drafts, command gates,
-  actual status/log content and responsive layout. Each window restores the saved
-  style on opening. Shared card/control painting and custom timeline, display-layout
-  and annotation chrome follow the selected palette; scientific image content and
-  semantic geometry colors retain their meaning.
+  actual status/log content and responsive layout. Both modes restore the saved
+  style on opening; appearance changes never enable Review simulation in runtime.
+  Protocol shares card frames/titles/glow, fonts, fields, menus and focus/caret treatment.
+  Its timelines use the active palette, square Retro blocks and inverse selected blocks;
+  unselected epochs retain their content-color identity. Compact symbolic buttons retain
+  their glyphs without brackets. Narrow group controls reserve room for both labelled
+  fields by omitting the redundant Selected group caption and balancing field widths.
+  Newly available screen rows receive matching advanced-card titles and glow. Preserve
+  canonical source, selection/hit geometry, edit history, validation and execution locks;
+  rendered stimulus previews retain their content colors.
   The shared theme owns both palettes; the experiment configuration excludes this
   cosmetic preference. Unknown saved styles fall back to Standard.
+  Retro uses bundled IBM Plex Mono Regular with its OFL license, inverse-video hover/selection,
+  bracketed button labels (disabled labels lowercase), a selected-navigation prompt,
+  and blinking block cursors in Runtime logs. Styled input fields use one native block
+  caret at the insertion position: typed text sits directly to its left, without a
+  floating gap or second caret. Qt owns editing, selection, scrolling and cursor blinking.
+  Icon-only buttons retain a dark hover/pressed fill with an accent border so their
+  fixed-color symbols remain visible.
+  The empty log displays `-- NO ENTRIES --` plus its cursor without inserting log data.
+  Omit the Experiment Control subtitle beneath the sidebar brand.
+  Retro uses a single-line CEPHVR wordmark with a thin lower rule and no text-drawn box
+  (version appears only in the sidebar footer). Review also stages
+  double-line frames on every Retro card (an owner-review trial) and shape-coded status glyphs
+  (ready ●, waiting ◐, fault ▲, unavailable ○) for owner review.
+  One mouse-transparent window overlay caches scanlines at 5% alpha and a faint
+  vignette; the separate Previews window has its own matching cached film.
+  The local Style-menu CRT toggle controls the films and heading/lamp glow;
+  main page headings share the card-title glow.
+  Standard has neither. Omit the extra review/phase/clock banner; phase remains in
+  the HUD. The Previews selector uses the shared compact card frame; its modeless
+  visibility/authority/pending gates remain unchanged. Device diagram geometry and
+  semantic palette roles remain unchanged; diagrams use the active appearance palette.
+  These preferences never enter experiment configuration.
 - Form errors never occupy inline labels. Keep editing and passive validation quiet;
   when an explicit action requires missing/invalid values, show a window-modal
   warning and preserve the draft/document. Leave validation actions callable so
@@ -1006,8 +1079,14 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   with focus; route them to the enclosing scroll container. Explicit clicks, typing
   and keyboard edits remain available. Apply this once at application scope.
 - Use one dim selection color for rows, navigation, subtabs and text selections,
-  distinct from table-header fill. Table cells and headers share horizontal padding;
+  distinct from table-header fill. Retro table rows use a dark blue-teal selection
+  with light text so enable checkboxes remain distinct; navigation/menu inverse
+  selection is unchanged. Table cells and headers share horizontal padding;
   content-sized columns include that padding rather than ending at their text width.
+  Shared Qt headers wrap to measured section widths and refit height after resize/font
+  changes, preserving empty-header visibility and owner-supplied extra table height.
+  Variation-table remove controls share one hover owner; defer visibility changes
+  until pointer-event dispatch finishes and resolve against the current rows.
   Header sections round their outer top corners with transparent header backgrounds
   so native header fills do not protrude beyond the table outline.
 - All tabular inventories and forms reuse the Cameras native Qt header, blue header
@@ -1025,6 +1104,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   dependent fields, in addition to normal layout spacing. Apply the margin to the
   dependent section so hidden sections leave no empty gap; preserve compact
   same-row/table checkboxes beside their associated values.
+- Camera trigger source/rate/pin fields align at their bottom edge when labels wrap.
+  The independent VSync mode field spans its full settings column, aligned to card edges.
 - Keep page alignment, fixed card gaps, labeled fields, natural button heights,
   content-measured table columns, semantic status labels and inherited dialog styling
   consistent across pages. Same-row controls share their tallest natural height
@@ -1042,9 +1123,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Reflow/scroll before clipping; preserve widget ownership
   and state during layout changes. Connection evidence remains distinct from Ready.
 - Except Protocol's G01 full-width planner and Projectors' display/tank diagram column, every page and device subtab keeps controls at the left, with a fitted HUD above
-  an expanding Activity log at the right; placeholder pages retain this same layout.
+  an expanding Runtime log at the right; placeholder pages retain this same layout.
   HUD height follows its rendered text, including wrapped lines and panel padding.
-  The Activity log fills the remaining column height. Shared fitted-text helpers,
+  The Runtime log fills the remaining column height. Shared fitted-text helpers,
   size policies and layout stretch implement this rule; retain readable log minimum
   height. The shared left configuration column scrolls independently when inventory
   or controls exceed available height; the right status/diagram/log column stays in

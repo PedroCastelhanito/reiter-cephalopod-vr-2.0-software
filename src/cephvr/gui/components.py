@@ -22,7 +22,6 @@ from PyQt6.QtWidgets import (
     QDoubleSpinBox,
     QFrame,
     QHBoxLayout,
-    QHeaderView,
     QLabel,
     QLineEdit,
     QPlainTextEdit,
@@ -36,7 +35,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.retro_instruments import card_marks, terminal_marks
+from cephvr.gui.formatting import HudRows, hud_text
+from cephvr.gui.retro_instruments import (
+    blink,
+    card_marks,
+    paint_status_lamp,
+    prompt_cursor,
+    terminal_marks,
+)
+from cephvr.gui.table_header import TableHeader
 from cephvr.gui.theme import SIZES, colors_for, retro_console
 
 
@@ -47,8 +54,42 @@ def label(text: str, role: str = "hint", *, wrap: bool = False) -> QLabel:
     return result
 
 
+class Button(QPushButton):
+    """Push button whose Retro console label is painted; text() stays unchanged."""
+
+    def retro_label(self) -> str | None:
+        role = self.property("role")
+        if (
+            not self.text()
+            or role == "icon"
+            or self.text() in ("+", "×", "−", "…")
+            or not retro_console(self)
+        ):
+            return None
+        if role == "navigation":
+            return ("> " if self.isChecked() else "  ") + self.text()
+        text = self.text().upper() if self.isEnabled() else self.text().lower()
+        return f"[ {text} ]"
+
+    def sizeHint(self) -> QSize:
+        size = super().sizeHint()
+        if self.retro_label() is not None and self.property("role") != "navigation":
+            size.setWidth(size.width() + self.fontMetrics().horizontalAdvance("[  ]"))
+        return size
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        label_text = self.retro_label()
+        if label_text is None:
+            super().paintEvent(event)
+            return
+        option = QStyleOptionButton()
+        self.initStyleOption(option)
+        option.text = label_text
+        QStylePainter(self).drawControl(QStyle.ControlElement.CE_PushButton, option)
+
+
 def button(text: str, role: str = "secondary", *, hint: str = "") -> QPushButton:
-    result = QPushButton(text)
+    result = Button(text)
     result.setProperty("role", role)
     result.setCursor(Qt.CursorShape.PointingHandCursor)
     result.setToolTip(hint)
@@ -172,6 +213,7 @@ class Card(QFrame):
         painter.setPen(QPen(QColor(colors.border), 1))
         painter.drawRoundedRect(frame, radius, radius)
         if retro_console(self):
+            painter.drawRect(frame.adjusted(3, 3, -3, -3))
             card_marks(painter, frame)
             painter.setPen(QPen(QColor(colors.accent), 1))
             for corner, direction in (
@@ -195,7 +237,7 @@ class StatusIndicator(QRadioButton):
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         if retro_console(self):
-            self.paint_instrument_lamp()
+            paint_status_lamp(self, self.status)
             return
         option = QStyleOptionButton()
         self.initStyleOption(option)
@@ -208,50 +250,6 @@ class StatusIndicator(QRadioButton):
         )
         painter = QStylePainter(self)
         painter.drawControl(QStyle.ControlElement.CE_RadioButton, option)
-
-    def paint_instrument_lamp(self) -> None:
-        colors = colors_for(self)
-        ink = (
-            colors.ready
-            if self.status == "Ready"
-            else colors.error
-            if self.status.casefold() in {"fault", "failed", "error", "unhealthy"}
-            else colors.waiting
-            if self.status.casefold()
-            in {"not prepared", "preparing", "waiting", "connected"}
-            else colors.muted
-        )
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        lamp = QColor(ink)
-        halo = QColor(lamp)
-        halo.setAlpha(25)
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(halo)
-        painter.drawEllipse(QRectF(0, 4, 12, 12))
-        painter.setPen(QPen(lamp, 1))
-        painter.setBrush(lamp if ink != colors.muted else QColor(colors.input))
-        painter.drawRect(QRectF(3, 7, 6, 6))
-        width = max(0, self.width() - 18)
-        painter.setPen(QColor(colors.label))
-        painter.drawText(
-            18,
-            14,
-            self.fontMetrics().elidedText(
-                self.text().upper(), Qt.TextElideMode.ElideRight, width
-            ),
-        )
-        font = painter.font()
-        font.setPixelSize(10)
-        painter.setFont(font)
-        painter.setPen(lamp)
-        painter.drawText(
-            18,
-            30,
-            painter.fontMetrics().elidedText(
-                f"[{self.status.upper()}]", Qt.TextElideMode.ElideRight, width
-            ),
-        )
 
     def set_status(self, status: str) -> None:
         self.status = status
@@ -327,6 +325,17 @@ class LogConsole(Console):
         super().__init__(lines=lines)
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
         self.setWordWrapMode(QTextOption.WrapMode.WordWrap)
+        blink().toggled.connect(self.blink_cursor)
+
+    def blink_cursor(self) -> None:
+        viewport = self.viewport()
+        if viewport is not None and retro_console(self):
+            viewport.update()
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        super().paintEvent(event)
+        if retro_console(self) and blink().on:
+            prompt_cursor(self)
 
     def appendPlainText(self, text: str | None) -> None:
         if not text:
@@ -428,18 +437,30 @@ class StatusColumn(QWidget):
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(SIZES.card_gap)
+        self.rows: HudRows = ()
         self.hud_card = Card(title)
         self.hud = FittedConsole()
         self.hud.setProperty("terminal", "telemetry")
         self.hud_card.body.addWidget(self.hud)
-        self.log_card = Card("Activity log", grow=True)
+        self.log_card = Card("Runtime log", grow=True)
         self.console = LogConsole()
         self.log_card.body.addWidget(self.console, 1)
         body.addWidget(self.hud_card)
         body.addWidget(self.log_card, 1)
 
+    def set_rows(self, rows: HudRows) -> None:
+        self.rows = rows
+        self.render_hud()
 
-class ActionHeader(QHeaderView):
+    def update_row(self, key: str, value: str) -> None:
+        rows = tuple(row for row in self.rows if row is None or row[0] != key)
+        self.set_rows((*rows, (key, value)))
+
+    def render_hud(self) -> None:
+        self.hud.setPlainText(hud_text(self.rows, retro=retro_console(self)))
+
+
+class ActionHeader(TableHeader):
     """Reserve the final table section for a compact, accessible header action."""
 
     def __init__(self, action: QPushButton) -> None:

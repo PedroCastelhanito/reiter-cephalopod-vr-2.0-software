@@ -39,14 +39,17 @@ def resolve_video_completion(
     and an empty-input encoder error remain unconfirmed/failures.
     """
     reconciled_counts = counts.eligible_group_count == (
-        counts.admitted_count
-        + counts.capacity_drop_count
-        + counts.same_slot_omission_count
+        counts.admitted_count + counts.capacity_drop_count
     )
     accounting_complete = (
         final_cutoff_known
         and every_eligible_group_resolved
         and reconciled_counts
+        and counts.same_slot_omission_count == counts.duplicate_frame_count == 0
+        and counts.admitted_count
+        == counts.selected_real_count
+        == counts.input_submitted_count
+        == counts.encoded_frame_count
         and counts.unresolved_capture_count == 0
         and counts.failed_capture_count == 0
     )

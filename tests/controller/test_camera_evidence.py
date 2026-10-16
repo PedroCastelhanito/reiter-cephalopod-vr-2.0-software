@@ -610,7 +610,7 @@ async def test_owner_cleanup_accepts_all_explicitly_closed_camera_roles(
     runtime.projections.devices = views
     runtime.device_state.manual_effects_admitted = True
     runtime.lifecycle.manual_control_cleanup_pending = True
-    cleanup = cast(ManualControlCleanup, runtime.leases.owner_lost.__self__)
+    cleanup = cast(ManualControlCleanup, runtime.publisher.owner_lost.__self__)
     await cleanup.run()
     assert not runtime.lifecycle.manual_control_cleanup_pending
     assert not runtime.device_state.manual_effects_admitted
@@ -670,7 +670,7 @@ async def test_failed_release_dispatch_frees_the_slot_for_a_cleanup_retry(
         async def execute_camera_command(self, command: Any, *, deadline_ns: int):
             raise ConnectionError("link lost")
 
-    cleanup = cast(ManualControlCleanup, runtime.leases.owner_lost.__self__)  # type: ignore[union-attr]
+    cleanup = cast(ManualControlCleanup, runtime.publisher.owner_lost.__self__)  # type: ignore[union-attr]
     settings = pb.AcquisitionSettings()
     settings.behavioral.device.device_id = "cam"
     policies = acquisition_pb.AcquisitionFilePolicies()
@@ -709,7 +709,7 @@ async def test_owner_cleanup_failure_retries_with_warning_and_no_interruption(
         interrupts.append(reason)
 
     runtime.interruption.interrupt = record  # type: ignore[method-assign]
-    cleanup = cast(ManualControlCleanup, runtime.leases.owner_lost.__self__)  # type: ignore[union-attr]
+    cleanup = cast(ManualControlCleanup, runtime.publisher.owner_lost.__self__)  # type: ignore[union-attr]
     cleanup.retry_delay_s = 0.01
     calls = 0
     warned = False
@@ -992,4 +992,63 @@ async def test_async_viewer_rejection_completes_operator_without_consumer_confir
     if original is not None:
         assert (
             reporter.get_report(child).SerializeToString(deterministic=True) == original
+        )
+
+
+@pytest.mark.parametrize(
+    "result",
+    [
+        svc.PREVIEW_CONSUMER_RESULT_ATTACHED,
+        svc.PREVIEW_CONSUMER_RESULT_FAILED,
+        svc.PREVIEW_CONSUMER_RESULT_RELEASED,
+    ],
+)
+@pytest.mark.parametrize("supervisor_available", [False, True])
+async def test_preview_routes_attachment_only_to_acquisition(
+    tmp_path, result, supervisor_available
+):
+    from types import SimpleNamespace
+
+    from cephvr.controller.device.preview import PreviewHandling
+
+    seen = []
+
+    class Recipient:
+        def __init__(self, name):
+            self.name = name
+
+        async def report_preview_consumer_state(self, report):
+            seen.append(
+                (
+                    self.name,
+                    svc.PreviewConsumerReport.FromString(report.SerializeToString()),
+                )
+            )
+            return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    report = svc.PreviewConsumerReport(result=result)
+    runtime = _runtime(
+        tmp_path,
+        pb.BackendContext(backend_name="acquisition", backend_generation=_id()),
+    )
+    preview = PreviewHandling(
+        lifecycle=runtime.lifecycle,
+        device=runtime.device_state,
+        backends={"acquisition": Recipient("acquisition")},
+        supervisor=Recipient("supervisor") if supervisor_available else None,
+        projections=SimpleNamespace(preview_result=lambda value: None),
+        limits=runtime.limit_state,
+        hooks=SimpleNamespace(publish=lambda: None),
+        finish_camera_operation=lambda operation: None,
+    )
+    receipt = await preview.report_preview_consumer_state(report)
+    terminal = result != svc.PREVIEW_CONSUMER_RESULT_ATTACHED
+    if terminal and not supervisor_available:
+        assert receipt.result == pb.COMMAND_RESULT_REJECTED
+        assert receipt.failure.code == "UNAVAILABLE"
+        assert seen == []
+    else:
+        assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+        assert seen == [("acquisition", report)] + (
+            [("supervisor", report)] if terminal else []
         )

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from concurrent.futures import Future
-from fractions import Fraction
 from pathlib import Path
 from types import SimpleNamespace
 from typing import cast
@@ -40,7 +39,6 @@ from cephvr.acquisition.worker.recording_runtime import WorkerRecordingRuntime
 from cephvr.acquisition.worker.trial_recording_terminal import TrialRecordingTerminal
 from cephvr.acquisition.worker.trial_state import WorkerTrialState
 from cephvr.control.v1 import types_pb2 as control
-from cephvr.shared.nominal_video_grid import NominalVideoGrid
 
 
 @pytest.mark.parametrize(
@@ -489,16 +487,12 @@ def test_overload_dropped_frame_is_still_logged_without_encoder_write() -> None:
     assert recycled is None
 
 
-def test_camera_video_uses_first_source_per_slot_and_streams_prior_pixels_for_gaps() -> (
-    None
-):
+def test_camera_video_keeps_same_interval_sources_without_gap_padding() -> None:
     from cephvr.acquisition.recording.session_pump import write_ordered_entry
 
     class Log:
         def __init__(self) -> None:
-            self.video_grid = NominalVideoGrid(1_000_000_000, 1)
-            self.next_video_slot = 0
-            self.last_video_source = None
+            self.frame_count = 0
             self.selected_source_count = 0
             self.rows = []
             self.encoded = []
@@ -518,14 +512,13 @@ def test_camera_video_uses_first_source_per_slot_and_streams_prior_pixels_for_ga
             self.selected_source_count += int(not dropped)
 
         def append_video_frame(
-            self, *, slot, source_frame_id, source_host_receipt_ns, disposition
+            self, *, encoded_frame_index, source_frame_id, source_host_receipt_ns
         ):
-            assert slot == self.next_video_slot
+            assert encoded_frame_index == self.frame_count
             self.encoded.append(
-                (slot, source_frame_id, source_host_receipt_ns, disposition)
+                (encoded_frame_index, source_frame_id, source_host_receipt_ns, "real")
             )
-            self.next_video_slot += 1
-            self.last_video_source = (source_frame_id, source_host_receipt_ns)
+            self.frame_count += 1
 
     class Preparer:
         layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
@@ -575,23 +568,28 @@ def test_camera_video_uses_first_source_per_slot_and_streams_prior_pixels_for_ga
             )
         )
 
-    assert submitted == [1, 0, 3]
-    assert encoder.payloads == [b"aaaa", b"aaaa", b"aaaa", b"cccc"]
+    assert submitted == [1, 1, 1]
+    assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
     assert log.rows == [
         (0, 1_000_000_000, False, 0, "real"),
-        (1, 1_500_000_000, True, None, "same_slot_omission"),
-        (2, 4_000_000_000, False, 3, "real"),
+        (1, 1_500_000_000, False, 1, "real"),
+        (2, 4_000_000_000, False, 2, "real"),
     ]
     assert log.encoded == [
         (0, 0, 1_000_000_000, "real"),
-        (1, 0, 1_000_000_000, "interior_duplicate"),
-        (2, 0, 1_000_000_000, "interior_duplicate"),
-        (3, 2, 4_000_000_000, "real"),
+        (1, 1, 1_500_000_000, "real"),
+        (2, 2, 4_000_000_000, "real"),
     ]
 
 
-def test_recording_session_pads_and_closes_with_original_tail_deadline(
+@pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+@pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+@pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+def test_recording_session_preserves_all_images_and_timestamps_without_padding(
     tmp_path: Path,
+    role: str,
+    rate_source: str,
+    outcome: str,
 ) -> None:
     from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
 
@@ -601,15 +599,11 @@ def test_recording_session_pads_and_closes_with_original_tail_deadline(
         def __init__(self) -> None:
             super().__init__(identity="owned-video")
             self.progress_frame = 0
-            self.fail_writes = 0
             self.deadlines: list[int] = []
             self.payloads: list[bytes] = []
 
         def write(self, frame, *, deadline_ns: int) -> None:
             self.deadlines.append(deadline_ns)
-            if self.fail_writes:
-                self.fail_writes -= 1
-                raise OSError("temporary tail input failure")
             super().write(frame, deadline_ns=deadline_ns)
             self.payloads.append(bytes(frame))
             self.progress_frame += 1
@@ -624,6 +618,13 @@ def test_recording_session_pads_and_closes_with_original_tail_deadline(
 
     class VideoSync(_Video):
         file_identity = "owned-video"
+        fail_sync = False
+
+        def sync(self):
+            if self.fail_sync:
+                self.fail_sync = False
+                raise OSError("temporary video sync failure")
+            super().sync()
 
     class Preparer:
         layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
@@ -659,7 +660,7 @@ def test_recording_session_pads_and_closes_with_original_tail_deadline(
         str(uuid4()),
         str(uuid4()),
         1,
-        "behavioral",
+        role,
         "device-17",
         "config.json",
         camera_clock,
@@ -670,26 +671,30 @@ def test_recording_session_pads_and_closes_with_original_tail_deadline(
         identity,
         start_ns=start_ns,
         nominal_frame_rate_hz=29.97002997002997,
-        nominal_rate_source="free_running_frame_rate",
+        nominal_rate_source=rate_source,
         sync_interval_ns=1,
         syncer=file_sync,
     )
     frame_log.create()
-    assert frame_log.video_grid.rate == Fraction("29.97002997")
-    queue = RecordingQueue(capacity_frames=2, pending_records_capacity=2)
-    pool = PixelBufferPool(payload_bytes=4, capacity=2)
+    queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+    pool = PixelBufferPool(payload_bytes=4, capacity=3)
     for frame_id, receipt_ns, pixels in (
         (0, start_ns + 70_000_000, b"aaaa"),
-        (1, start_ns + 140_000_000, b"cccc"),
+        (1, start_ns + 71_000_000, b"bbbb"),
+        (2, start_ns + 140_000_000, b"cccc"),
     ):
         owned = pool.acquire_nowait()
         owned[:] = pixels
-        queue.enqueue(FrameRecord(frame_id, receipt_ns, None, None, True, None), owned)
+        queue.enqueue(
+            FrameRecord(
+                frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+            ),
+            owned,
+        )
 
     encoder = Encoder()
     video_sync = VideoSync()
     session = object.__new__(RecordingSession)
-    session.settings = SimpleNamespace(metadata_only=False)
     session.settings = SimpleNamespace(
         metadata_only=False,
         recording_bit_depth=8,
@@ -734,61 +739,55 @@ def test_recording_session_pads_and_closes_with_original_tail_deadline(
     session._observe_video_identity = lambda: video_sync
     session._stat_identity = lambda _path: "owned-video"
 
-    assert session.process_available(max_entries=2) == 2
-    assert encoder.payloads == [b"aaaa"] * 3 + [b"aaaa", b"cccc"]
-    # Integer-ns cutoff one tick before rational slot 20 starts.
+    assert session.process_available(max_entries=3) == 3
+    assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
     cutoff_ns = start_ns + 667_333_333
-    end = CaptureEndMarker(2, cutoff_ns, cutoff_ns, 0, None, True)
-    pulses = PulseEvidence()
-    completion = RecordingCompletionContext("completed", cutoff_ns, cutoff_ns, None)
-
-    # The first tail write fails before submission. Retrying may use a later
-    # cleanup caller deadline, but cannot move the original input bound.
+    end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+    completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
     original_deadline = start_ns + 100
-    encoder.fail_writes = 1
-    with pytest.raises(OSError, match="tail input failure"):
-        session.finish(end, pulses, completion, deadline_ns=original_deadline)
-    assert encoder.deadlines[-1] == original_deadline
+    video_sync.fail_sync = True
+    with pytest.raises(OSError, match="temporary video sync failure"):
+        session.finish(end, PulseEvidence(), completion, deadline_ns=original_deadline)
     now[0] += 5
-    original_check_progress = session._check_progress
-    fail_progress = [True]
-
-    def fail_progress_after_input() -> None:
-        if fail_progress and fail_progress.pop():
-            raise OSError("tail maintenance failure after encoder input")
-        original_check_progress()
-
-    session._check_progress = fail_progress_after_input
-    with pytest.raises(OSError, match="maintenance failure after encoder input"):
-        session.finish(end, pulses, completion, deadline_ns=start_ns + 500)
-    assert frame_log.next_video_slot == 6
-    assert encoder.writes == 6
-    session.finish(end, pulses, completion, deadline_ns=start_ns + 500)
-
+    session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+    assert session._original_finish_deadline_ns == original_deadline
+    # Closure, including retries, must never submit invented tail images.
+    session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 600)
     lines = [json.loads(line) for line in log_path.read_text().splitlines()]
-    assert Fraction(str(lines[0]["video"]["nominal_frame_rate_hz"])) == (
-        frame_log.video_grid.rate
-    )
-    video_rows = [line for line in lines if line["type"] == "video_frame"]
-    completion_row = next(line for line in lines if line["type"] == "completion")
-    assert len(video_rows) == 20
-    assert [line["disposition"] for line in video_rows[:5]] == [
-        "leading_duplicate",
-        "leading_duplicate",
-        "real",
-        "interior_duplicate",
-        "real",
-    ]
-    assert all(line["disposition"] == "trailing_duplicate" for line in video_rows[5:])
-    assert completion_row["outcome"] == "completed"
-    assert completion_row["video"] == {
-        "recorded_frame_count": 20,
-        "selected_source_frame_count": 2,
-        "duplicate_frame_count": 18,
+    assert lines[0]["schema_version"] == 5
+    assert lines[0]["identity"]["camera_role"] == role
+    assert lines[0]["video"] == {
+        "enabled": True,
+        "nominal_frame_rate_hz": 29.97002997,
+        "nominal_rate_source": rate_source,
     }
-    assert encoder.writes == 20
-    assert encoder.deadlines[-1] == original_deadline
-    assert file_sync.calls >= 20 and video_sync.sync_count >= 20
+    source_rows = [line for line in lines if line["type"] == "frame"]
+    video_rows = [line for line in lines if line["type"] == "video_frame"]
+    assert [row["video_frame"] for row in source_rows] == [0, 1, 2]
+    assert [row["camera_frame_counter"] for row in source_rows] == [100, 101, 102]
+    assert [row["camera_timestamp_ns"] for row in source_rows] == [900, 901, 902]
+    assert [row["host_receipt_ns"] for row in source_rows] == [
+        start_ns + offset for offset in (70_000_000, 71_000_000, 140_000_000)
+    ]
+    assert video_rows == [
+        {
+            "type": "video_frame",
+            "encoded_frame_index": i,
+            "source_frame_id": i,
+            "source_host_receipt_ns": row["host_receipt_ns"],
+            "disposition": "real",
+        }
+        for i, row in enumerate(source_rows)
+    ]
+    assert lines[-1]["outcome"] == outcome
+    assert lines[-1]["video"] == {
+        "recorded_frame_count": 3,
+        "selected_source_frame_count": 3,
+        "duplicate_frame_count": 0,
+    }
+    assert lines[-1]["timing"]["recording_end_monotonic_ns"] == cutoff_ns
+    assert encoder.writes == 3
+    assert file_sync.calls >= 3 and video_sync.sync_count >= 3
     assert session._finish_results[0].closure == control.OUTPUT_CLOSURE_CLOSED
     assert video_sync.closed and session._finished
 
@@ -805,7 +804,7 @@ def test_unproved_terminal_stop_never_generates_trailing_video_slots(
     schedule.start_monotonic_ns = start_ns
     schedule.end_monotonic_ns = start_ns + 2_000_000_000
     encoder = _Encoder()
-    frame_log = SimpleNamespace(last_video_source=(0, start_ns), next_video_slot=1)
+    frame_log = SimpleNamespace(frame_count=1)
     session = object.__new__(RecordingSession)
     session.settings = SimpleNamespace(metadata_only=False)
     session._finished = False
@@ -853,77 +852,112 @@ def test_unproved_terminal_stop_never_generates_trailing_video_slots(
     assert session._finished
 
 
-def test_unlogged_submitted_tail_input_cannot_be_retried_as_normal_closure(
+@pytest.mark.parametrize("failure", ["input", "mapping", "maintenance"])
+def test_failed_source_submission_cannot_be_retried_as_normal_closure(
     tmp_path: Path,
+    failure: str,
 ) -> None:
-    from contextlib import nullcontext
-
     from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
 
     start_ns = 1_000_000_000
-    cutoff_ns = start_ns + 100_000_000
-    schedule = _schedule(tmp_path / "unlogged.mp4", tmp_path / "unlogged.jsonl")
+    schedule = _schedule(tmp_path / "failed.mp4", tmp_path / "failed.jsonl")
     schedule.start_monotonic_ns = start_ns
     schedule.end_monotonic_ns = start_ns + 2_000_000_000
+    queue = RecordingQueue(1, 1)
+    pool = PixelBufferPool(payload_bytes=4, capacity=1)
+    pixels = pool.acquire_nowait()
+    pixels[:] = b"data"
+    queue.enqueue(FrameRecord(0, start_ns + 1, None, None, True, None), pixels)
 
     class FrameLog:
-        last_video_source = (0, start_ns)
-        next_video_slot = 0
-        video_grid = SimpleNamespace(slots_before=lambda _cutoff: 1)
+        frame_count = 0
 
-        def append_video_frame(self, **_fields) -> None:
-            raise OSError("frame mapping append failed")
+        def append_frame(self, *_args, **_kwargs):
+            pass
 
-    class Watchdog:
-        def active_input_work(self):
-            return nullcontext()
+        def append_video_frame(self, **_fields):
+            if failure == "mapping":
+                raise OSError("mapping failure")
+            self.frame_count += 1
 
-    encoder = _Encoder()
+    class Encoder(_Encoder):
+        def write(self, frame, *, deadline_ns):
+            if failure == "input":
+                raise OSError("input failure")
+            super().write(frame, deadline_ns=deadline_ns)
+
+    encoder = Encoder()
     session = object.__new__(RecordingSession)
-    session.settings = SimpleNamespace(metadata_only=False)
+    session.settings = SimpleNamespace(metadata_only=False, recording_bit_depth=8)
+    session._released = True
     session._finished = False
     session._finish_results = None
     session._error = None
     session._encoder = encoder
     session._frame_log = FrameLog()
-    session._finish_arguments = None
-    session._original_finish_deadline_ns = None
-    session._active_io_deadline_ns = None
     session._scheduled = schedule
-    session.queue = SimpleNamespace(pending_records=0, waiting_pixels=0)
-    session._received = 0
-    session._logged = 0
+    session.queue, session.pixel_pool = queue, pool
+    session._prepared_buffer = bytearray(4)
+    session._started = True
     session._last_frame_id = -1
-    session._video_path = Path(schedule.outputs[0].path)
-    session._frame_log_path = Path(schedule.outputs[1].path)
     session._submitted = 0
-    session._prepared_buffer = bytearray(b"frame")
-    session._watchdog = Watchdog()
-    session._video_sync = None
-    session._video_identity = None
+    session._watchdog = None
     session._diagnostics = RecordingDiagnostics(lambda *_args: None)
-    session._finalization = FinalizationProgress()
-    session.clock_ns = lambda: start_ns
-    session._write_deadline = lambda: start_ns + 1_000_000_000
+    session._write_deadline = lambda: start_ns + 100
+    session._sync_due = lambda: None
+    session._observe_video_identity = lambda: None
 
-    end = CaptureEndMarker(0, cutoff_ns, cutoff_ns, 0, None, True)
-    completion = RecordingCompletionContext("completed", cutoff_ns, cutoff_ns, None)
-    with pytest.raises(RecordingFailure, match="required slot mapping was not logged"):
-        session.finish(
-            end,
-            PulseEvidence(),
-            completion,
-            deadline_ns=start_ns + 1_000_000_000,
-        )
-    assert encoder.writes == 1
-    with pytest.raises(RecordingFailure, match="cannot retry terminal input"):
-        session.finish(
-            end,
-            PulseEvidence(),
-            completion,
-            deadline_ns=start_ns + 2_000_000_000,
-        )
-    assert encoder.writes == 1
+    def check_progress():
+        if failure == "maintenance":
+            raise OSError("maintenance failure")
+
+    session._check_progress = check_progress
+    session.pixel_preparer = SimpleNamespace(
+        layout=SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8)),
+        prepare_recording_into=lambda pixels, buffer, **kwargs: SimpleNamespace(
+            data=bytes(pixels), effective_bits=8, source_effective_bits=8
+        ),
+    )
+    with pytest.raises(RecordingFailure):
+        session.process_available()
+    assert encoder.writes == (0 if failure == "input" else 1)
+    assert session._submitted == encoder.writes
+    from cephvr.acquisition.recording.session_cleanup import close_failed_recording
+
+    video = _Video()
+    results, _ = close_failed_recording(
+        schedule,
+        Path(schedule.outputs[0].path),
+        Path(schedule.outputs[1].path),
+        queue=queue,
+        pool=pool,
+        encoder=encoder,
+        frame_log=_FrameLog(),
+        video_sync=video,
+        finalization=FinalizationProgress(),
+        submitted=session._submitted,
+        observe_video=lambda: video,
+        stat_identity=lambda path: video.file_identity,
+        clock_ns=lambda: start_ns + 10,
+        deadline_ns=start_ns + 200,
+    )
+    assert results[0].camera_video_content == (
+        control.CAMERA_VIDEO_CONTENT_NO_FRAMES
+        if failure == "input"
+        else control.CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED
+    )
+    assert results[0].closure == control.OUTPUT_CLOSURE_UNCONFIRMED
+    assert results[1].closure == control.OUTPUT_CLOSURE_FAILED
+    assert queue.pending_records == 0
+    # The only private buffer is returned even after a partially submitted image.
+    assert pool.acquire_nowait().obj is pixels.obj
+    end = CaptureEndMarker(1, start_ns + 10, start_ns + 10, 0, None, True)
+    completion = RecordingCompletionContext(
+        "completed", start_ns + 10, start_ns + 10, None
+    )
+    with pytest.raises(RecordingFailure, match="cannot finalize recording"):
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 200)
+    assert encoder.writes == (0 if failure == "input" else 1)
 
 
 def test_all_dropped_run_uses_only_explicit_never_created_predicate(
@@ -944,12 +978,15 @@ def test_all_dropped_run_uses_only_explicit_never_created_predicate(
         video_path,
         log_path,
         recorded_frames=0,
+        source_frames=7,
         encoder=EmptyEncoder(),  # type: ignore[arg-type]
         video_identity=None,
         stat_identity=lambda path: None,
     )
     assert outputs[0].closure == control.OUTPUT_CLOSURE_NOT_STARTED
     assert not outputs[0].artifact_present
+    assert dict(outputs[0].counts) == {"frames": 0}
+    assert dict(outputs[1].counts) == {"video_frames": 0, "source_frames": 7}
 
 
 def test_exact_path_replacement_never_proves_encoder_output_closure(
@@ -1095,3 +1132,34 @@ def test_recording_fault_retains_real_outputs_and_original_cleanup_deadline(
         True,
     )
     assert not tracker.cleanup_pending
+
+
+@pytest.mark.parametrize(
+    "present,owned",
+    [(False, None), (False, "old"), (True, None), (True, "old"), (True, "current")],
+)
+def test_failed_video_presence_is_independent_of_ownership(tmp_path, present, owned):
+    from cephvr.acquisition.recording.session_outputs import failed_outputs
+
+    video, log = tmp_path / "video.mp4", tmp_path / "frames.jsonl"
+    if present:
+        video.write_bytes(b"partial video")
+    encoder = _Encoder(identity=owned)
+    encoder.exit_code = 1
+    outputs = failed_outputs(
+        _schedule(video, log),
+        video,
+        log,
+        encoder=encoder,
+        video_identity=owned,
+        stat_identity=lambda path: "current" if path.is_file() else None,
+        completion_failed=True,
+    )
+    assert outputs[0].artifact_present is present
+    assert outputs[0].closure == (
+        control.OUTPUT_CLOSURE_FAILED
+        if present and owned == "current"
+        else control.OUTPUT_CLOSURE_UNCONFIRMED
+    )
+    assert outputs[1].closure == control.OUTPUT_CLOSURE_FAILED
+    assert video.exists() is present

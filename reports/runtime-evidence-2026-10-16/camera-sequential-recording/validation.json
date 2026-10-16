@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-16",
+  "base_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_state": "dirty working tree including concurrent unrelated changes; own source fingerprints below",
+  "scope": "Sequential camera image recording; local behavior/static checks only",
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest tests/acquisition -q -m \"not windows and not rig\"",
+      "result": "535 passed, 5 skipped, 2 deselected; before final mapping regression",
+      "transcript": "acquisition.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/acquisition tests/controller tests/shared tests/visual_stimulus/test_recording.py -q -m \"not windows and not rig\"",
+      "result": "1211 passed, 5 skipped, 3 deselected, 3 failed in concurrently edited controller configuration tests; not a full integration pass",
+      "transcript": "broad-integration.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/acquisition tests/controller/test_planning.py tests/shared/test_encoding_probe.py tests/visual_stimulus/test_recording.py -q -m \"not windows and not rig\"",
+      "result": "607 passed, 5 skipped, 2 deselected",
+      "transcript": "final-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/acquisition tests/acquisition",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/acquisition tests/acquisition",
+      "result": "209 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/acquisition",
+      "result": "185 sources passed"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "698 modules; zero violations; existing cohesion advisories, session owner reduced to 638 lines"
+    },
+    {
+      "method": "Parse TOMLs, load acquisition policy, compare all frame-log field groups with declaration, compare camera writer-plan schema versions and root decision revisions; compare operator values excluding policy_version and stimulus recording/config/policy/shared grid against HEAD",
+      "result": "policy22/schema5/A07rev64/A08rev51/A09rev16 consistent; operator values/rates and stimulus path unchanged"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed before report finalization"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/controller/test_configuration.py -q -k \"acquisition_default_failure or setup_limit_reload\"",
+      "result": "5 passed, 18 deselected after concurrent controller implementation advanced; earlier broad failures resolved in this focused recheck, not a full-suite rerun",
+      "transcript": "controller-recheck.txt"
+    },
+    {
+      "method": "Check local Markdown target files and heading/explicit anchors in seven touched documentation/report files, excluding fenced code",
+      "result": "470 targets/anchors pass; initial scanner mistook four PowerShell expressions inside fenced code for Markdown links, corrected parser"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "initial_attempts": "Focused run 69 passed/3 failed due memoryview identity assertion; corrected to backing storage identity. Integration 91 passed/1 failed due invalid fixture code INCOMPLETE; corrected to required INVALID_IMAGE. Initial formatting findings corrected. These attempts are not passes.",
+  "limits": "No native Windows/SDK/NVENC/physical rig or performance acceptance. Historical schema4 camera recordings remain unchanged. Camera playback duration is not trial duration. Actual camera/queue losses remain possible and explicit.",
+  "sha256": {
+    "architecture.md": "cb8d05008e13fa7400dc6e878118a0d70b7937d0485485da8649334f4287c11b",
+    "docs/architecture/acquisition.md": "69c0ce09b5fafa227b95495f14fbd7de2fae0a522e93b4fb32bbcf607b879e2f",
+    "contracts/acquisition/camera-clock.md": "b3ce65117499f8df46fa11a0911edfd5d009fb5621b62cdfda44d3f85ff636b9",
+    "contracts/acquisition/encoding-options.md": "f805a1a664d22e5e3f8ffd22fa5653f7ab6bcbf2d427ac89a2367b3f314c0a3b",
+    "contracts/acquisition/frame_log_schema.toml": "91bbaface9532595255e7aab5ff762b3fae48c251afd3b9aa6c60e599133eecd",
+    "contracts/acquisition/recording-lifecycle.md": "979d2d2b6656e1bfba88dcc32779a6620e8e9c5d101ad2c32e656c8e94a890ab",
+    "contracts/policy/acquisition_policy.toml": "f32727ccce5ef0e2d0d8431d2706cdc8e5e64efb388f1bc3f23cc7947b444d82",
+    "config/backends/acquisition_config.toml": "2e06a645260da6cdb54d83ec174f62cb4a1a171173196732b219d0e45939d8b0",
+    "src/cephvr/acquisition/config/policy.py": "92e75d2db4e53e23a7fc9f4537bfd24797a3ff95f28b73d5ffcd24d536aba1e1",
+    "src/cephvr/acquisition/recording/frame_log.py": "d5e14b71a5123cf2bd042f9bb9245aa3aef12d8cac30cc125c4f0d7eb2452518",
+    "src/cephvr/acquisition/recording/session.py": "865f71fe978e85defceee25de6648e970ef08a5952d125e2a56452cfff0147fa",
+    "src/cephvr/acquisition/recording/session_completion.py": "a5e2b86b6b72d6c7ed800f363ea3e816182bb216878d7d5af0a7f67f7931c4b2",
+    "src/cephvr/acquisition/recording/session_pump.py": "1220a6433858e9b8d4f3feee952c15e6669b937e37cf90aa4ee61ea91054fc57",
+    "src/cephvr/acquisition/recording_schema.py": "844750d07514905f061d0ebc548c7317dbade5c4b8d42f62163b80c86a9f071b",
+    "tests/acquisition/test_recording_cleanup.py": "04334a0371d164d2ac5ef8442ba71c87dac79dfbe4f4ef2f4865bf667ad7978e",
+    "tests/acquisition/test_recording_paths.py": "294970bd8bc9097711ab19ce34e3def2968c8da7b76dfe59cc20646c132b5804"
+  }
+}

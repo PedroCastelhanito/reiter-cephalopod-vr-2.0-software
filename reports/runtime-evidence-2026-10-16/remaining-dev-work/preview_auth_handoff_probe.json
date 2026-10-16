@@ -1,0 +1,13 @@
+{
+  "method": "Production GrpcSupervisorPort metadata and SupervisorService authentication, local in-process RPC boundary. Registered consumer check isolated; no sockets/devices/native handles.",
+  "controller_forwarding": {
+    "PREVIEW_CONSUMER_RESULT_ATTACHED": {
+      "result": "COMMAND_RESULT_REJECTED"
+    },
+    "PREVIEW_CONSUMER_RESULT_RELEASED": {
+      "result": "COMMAND_RESULT_ACCEPTED"
+    }
+  },
+  "direct_consumer_release": "COMMAND_RESULT_ACCEPTED",
+  "assessment": "Owner-approved current-controller terminal relay and independent consumer delivery succeed; supervisor rejects ATTACHED. Original mismatch retained in preview_auth_handoff_probe.before.json. This in-process probe is supplemented by authenticated loopback tests."
+}

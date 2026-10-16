@@ -21,6 +21,7 @@ def closed_results(
     video_sync_closed: bool,
     artifact_present: bool | None,
     artifact_created_by_session: bool | None,
+    state_count: int | None = None,
 ) -> tuple[pb.OutputResult, ...]:
     outputs = {item.output_tag: item for item in schedule.outputs}
     completion = resolve_video_completion(
@@ -49,6 +50,12 @@ def closed_results(
     )
     if completion.artifact_present is not None:
         video.artifact_present = completion.artifact_present
+    if completion.closure in {"CLOSED", "NOT_STARTED"}:
+        video.counts.update(
+            frames=counts.encoded_frame_count,
+            input_frames=counts.input_submitted_count,
+            duplicate_frames=counts.duplicate_frame_count,
+        )
     if completion.warning:
         video.failure.message = completion.warning
     frames = pb.OutputResult(
@@ -59,6 +66,8 @@ def closed_results(
         else pb.OUTPUT_CLOSURE_UNCONFIRMED,
         artifact_present=evidence_closed,
     )
+    if evidence_closed and state_count is not None:
+        frames.counts["render_groups"] = state_count
     return video, frames
 
 

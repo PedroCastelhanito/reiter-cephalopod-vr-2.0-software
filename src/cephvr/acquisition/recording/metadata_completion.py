@@ -91,14 +91,15 @@ def finish_metadata(
         clock_ns=clock_ns,
     )
     closed = success and not finalization.late and not finalization.completion_failed
-    return [
-        output_result(
-            schedule,
-            frame_log.path,
-            control.OUTPUT_CLOSURE_CLOSED if closed else control.OUTPUT_CLOSURE_FAILED,
-            True,
-        )
-    ]
+    result = output_result(
+        schedule,
+        frame_log.path,
+        control.OUTPUT_CLOSURE_CLOSED if closed else control.OUTPUT_CLOSURE_FAILED,
+        True,
+    )
+    if closed:
+        result.counts["source_frames"] = logged
+    return [result]
 
 
 def cleanup_metadata(

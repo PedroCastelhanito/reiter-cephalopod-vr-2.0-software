@@ -128,6 +128,7 @@ class TrackingWriter:
             output_key=self.output_key,
             path=str(self.path),
             artifact_present=self.present,
+            counts=dict(self.counts) if success else {},
             closure=pb.OUTPUT_CLOSURE_CLOSED
             if success
             else pb.OUTPUT_CLOSURE_FAILED

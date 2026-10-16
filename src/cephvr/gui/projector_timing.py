@@ -8,7 +8,6 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QHeaderView,
     QLineEdit,
-    QSizePolicy,
     QTableWidgetItem,
     QWidget,
 )
@@ -33,15 +32,8 @@ LEGACY_MODE_LABELS = {
 
 class ProjectorTiming(Card):
     def __init__(self) -> None:
-        super().__init__("Photodiode & synchronization")
+        super().__init__("Photodiode")
         self.pulse = QCheckBox("Enable photodiode pulse")
-        self.caption.setWordWrap(True)
-        caption_policy = self.caption.sizePolicy()
-        caption_policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
-        caption_policy.setVerticalPolicy(QSizePolicy.Policy.Preferred)
-        caption_policy.setHeightForWidth(True)
-        self.caption.setSizePolicy(caption_policy)
-        self.header.setStretch(0, 1)
         self.body.addWidget(self.pulse)
         self.target = combo(())
         self.target.setPlaceholderText("Select display")
@@ -52,7 +44,7 @@ class ProjectorTiming(Card):
         grid = QGridLayout(self.options)
         grid.setContentsMargins(0, SIZES.section_toggle_gap, 0, 0)
         grid.addWidget(field("PULSE DISPLAY", self.target), 0, 0, 1, 2)
-        self.body.insertWidget(0, field("VSYNC MODE", self.mode))
+        self.mode_field = field("VSYNC MODE", self.mode)
         self.pulse_fields: dict[str, QLineEdit] = {}
         self.definition = DataTable(2, 5)
         self.definition.setAccessibleName("Photodiode pulse definition")
@@ -127,27 +119,7 @@ class ProjectorTiming(Card):
         pulse = [
             self.pulse_fields[k].text().strip() for k in ("X", "Y", "Width", "Height")
         ]
-        if not any(raw + pulse):
-            return None
-        if not all(v.isdecimal() for v in raw):
-            raise ValueError(
-                "Photodiode Frame requires integer pixel coordinates and dimensions"
-            )
-        x, y, width, height = map(int, raw)
-        area = dict(x=x, y=y, width=width, height=height)
-        if not any(pulse):
-            return {"rect": area, "background_rect": None}
-        if not all(v.isdecimal() for v in pulse):
-            raise ValueError(
-                "Photodiode Pulse requires X, Y, Width and Height in integer pixels"
-            )
-        px, py, pw, ph = map(int, pulse)
-        if min(pw, ph) <= 0 or px + pw > width or py + ph > height:
-            raise ValueError("Photodiode Pulse must fit inside its Frame")
-        return {
-            "background_rect": area,
-            "rect": dict(x=x + px, y=y + py, width=pw, height=ph),
-        }
+        return parse_patch(raw, pulse)
 
     def preview_overlays(
         self, resolutions: dict[str, tuple[int, int]], target_face: str | None
@@ -236,3 +208,28 @@ class ProjectorTiming(Card):
                 for rect in output.get("blackout_zones", [])
             ]
         )
+
+
+def parse_patch(raw: list[str], pulse: list[str]) -> dict[str, object] | None:
+    """Parse optional Frame/Pulse editor text without retaining derived state."""
+    if not any(raw + pulse):
+        return None
+    if not all(v.isdecimal() for v in raw):
+        raise ValueError(
+            "Photodiode Frame requires integer pixel coordinates and dimensions"
+        )
+    x, y, width, height = map(int, raw)
+    area = dict(x=x, y=y, width=width, height=height)
+    if not any(pulse):
+        return {"rect": area, "background_rect": None}
+    if not all(v.isdecimal() for v in pulse):
+        raise ValueError(
+            "Photodiode Pulse requires X, Y, Width and Height in integer pixels"
+        )
+    px, py, pw, ph = map(int, pulse)
+    if min(pw, ph) <= 0 or px + pw > width or py + ph > height:
+        raise ValueError("Photodiode Pulse must fit inside its Frame")
+    return {
+        "background_rect": area,
+        "rect": dict(x=x + px, y=y + py, width=pw, height=ph),
+    }

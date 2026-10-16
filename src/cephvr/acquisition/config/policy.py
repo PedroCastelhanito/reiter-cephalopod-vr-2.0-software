@@ -14,9 +14,9 @@ from cephvr.shared.config import (
     policy_digest,
 )
 
-POLICY_VERSION = 21
+POLICY_VERSION = 22
 CONTRACT_VERSION = 1
-_POLICY_SHA256 = "82332b80e66b9d158f1b56678b08d7f9ba5879c6dece492aa416c360ad73773c"
+_POLICY_SHA256 = "4d351bb395617e43428c214cabe68a2270e42a38c68282754f775ab46f78655d"
 
 _CONFIG_KEYS = frozenset(
     """

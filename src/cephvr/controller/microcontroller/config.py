@@ -1,5 +1,6 @@
 """Pure controller-owned Microcontroller defaults and fixed policy (A11/E14)."""
 
+from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 
@@ -120,7 +121,19 @@ def load_microcontroller_pair(root: Path) -> LoadedPair:
 
 
 def load_serial_policies(root: Path) -> runtime_pb2.AcquisitionFilePolicies:
-    values = load_microcontroller_pair(root).config["microcontroller"]
+    return resolve_serial_policies(
+        load_microcontroller_pair(root).config["microcontroller"]
+    )
+
+
+def resolve_serial_policies(
+    values: Mapping[str, object],
+) -> runtime_pb2.AcquisitionFilePolicies:
+    """Validate shared serial settings once; resolve exact positive wire units.
+
+    Baud and millisecond settings use integer literals. Seconds may be decimal
+    provided they resolve exactly to nanoseconds; the firmware watchdog uses ms.
+    """
     result = runtime_pb2.AcquisitionFilePolicies(contract_version=1)
     fields = {
         "serial_baud_rate": ("baud_rate", 1),
@@ -133,11 +146,17 @@ def load_serial_policies(root: Path) -> runtime_pb2.AcquisitionFilePolicies:
         if key not in values:
             raise ConfigurationError(f"microcontroller.{key} is required")
         value = values[key]
+        if key in {"baud_rate", "ack_timeout_ms", "stop_completion_margin_ms"}:
+            if type(value) is not int or not 0 < value < 1 << 32:
+                raise ConfigurationError(
+                    f"microcontroller.{key} must be an integer in 1..4294967295"
+                )
         if isinstance(value, bool) or not isinstance(value, (int, Decimal)):
             raise ConfigurationError(f"microcontroller.{key} must be a positive number")
         resolved = Decimal(value) * scale
         if (
-            resolved <= 0
+            not resolved.is_finite()
+            or resolved <= 0
             or resolved != resolved.to_integral_value()
             or resolved >= 1 << 63
         ):
@@ -145,8 +164,6 @@ def load_serial_policies(root: Path) -> runtime_pb2.AcquisitionFilePolicies:
                 f"microcontroller.{key} is outside exact positive bounds"
             )
         setattr(result, field, int(resolved))
-    if result.serial_baud_rate >= 1 << 32:
-        raise ConfigurationError("Microcontroller baud rate is outside uint32")
     if result.serial_keepalive_interval_ns >= result.serial_communication_timeout_ns:
         raise ConfigurationError(
             "microcontroller keepalive must be shorter than communication timeout"

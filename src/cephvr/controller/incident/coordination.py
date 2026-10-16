@@ -16,7 +16,6 @@ from cephvr.controller.lifecycle.evidence_wait import EvidenceWaiter
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.lifecycle_reports import LifecycleReports
 from cephvr.controller.metadata.coordination import MetadataCoordinator
-from cephvr.controller.metadata.types import StorageError
 from cephvr.controller.ports import SupervisorPort
 from cephvr.controller.state import (
     Attempt,
@@ -77,7 +76,7 @@ class IncidentCoordinator:
             log_incident=self.log_incident,
         )
 
-    async def log_incident(
+    def log_incident(
         self,
         attempt: Attempt,
         event_type: str,
@@ -87,19 +86,14 @@ class IncidentCoordinator:
         trial_number: int | None = None,
         outcome: str | None = None,
     ) -> None:
-        try:
-            await self.metadata.log_event(
-                attempt,
-                event_type,
-                at_ns=at_ns,
-                trial_number=trial_number,
-                outcome=outcome,
-                details=details,
-            )
-        except StorageError as exc:
-            await self.interrupt(
-                attempt, f"incident bookkeeping persistence failed: {exc}"
-            )
+        self.metadata.queue_event(
+            attempt,
+            event_type,
+            at_ns=self.clock() if at_ns is None else at_ns,
+            trial_number=trial_number,
+            outcome=outcome,
+            details=details,
+        )
 
     async def observe_runtime_error(self, error: pb.ErrorReport) -> str | None:
         async with self.lifecycle.lock:
@@ -139,6 +133,12 @@ class IncidentCoordinator:
                 bounded_accounting=True,
             )
             try:
+                prior_automatic = {
+                    item.incident_id
+                    for item in attempt.incidents.snapshot()
+                    if item.disposition
+                    == pb.RUNTIME_INCIDENT_DISPOSITION_AUTOMATIC_STOP
+                }
                 classification = classify_incident(
                     error,
                     attempt.incident_topology,
@@ -224,20 +224,31 @@ class IncidentCoordinator:
                         )
             self.publisher.publish()
             if attempt.writer is not None:
-                self.spawn(
+                self.log_incident(
+                    attempt,
+                    "error",
+                    {
+                        "error_id": error.error_id,
+                        "incident_id": incident.incident_id,
+                        "source_role": error.source.role,
+                        "failure_code": error.failure.code,
+                        "failure_message": error.failure.message[:2048],
+                        "affected_resources": list(incident.affected_resources),
+                        "classification": classification.status,
+                    },
+                )
+                if blocking and incident.incident_id not in prior_automatic:
                     self.log_incident(
                         attempt,
-                        "error",
+                        "incident_decision",
                         {
-                            "error_id": error.error_id,
                             "incident_id": incident.incident_id,
-                            "source_role": error.source.role,
-                            "failure_code": error.failure.code,
+                            "incident_revision": incident.revision,
                             "affected_resources": list(incident.affected_resources),
-                            "classification": classification.status,
+                            "disposition": "automatic_stop",
+                            "reason": classification.reason,
                         },
                     )
-                )
             return incident.incident_id
 
     async def resolve_recovered_incident(
@@ -297,17 +308,15 @@ class IncidentCoordinator:
                     del self.incident_state.incident_prompts[prompt_id]
             self.publisher.publish()
         if attempt.writer is not None:
-            self.spawn(
-                self.log_incident(
-                    attempt,
-                    "recovery",
-                    {
-                        "incident_id": incident_id,
-                        "resolved_by": "spikeglx_progress",
-                        "recovered_monotonic_ns": recovered_monotonic_ns,
-                    },
-                    at_ns=recovered_monotonic_ns,
-                )
+            self.log_incident(
+                attempt,
+                "recovery",
+                {
+                    "incident_id": incident_id,
+                    "resolved_by": "spikeglx_progress",
+                    "recovered_monotonic_ns": recovered_monotonic_ns,
+                },
+                at_ns=recovered_monotonic_ns,
             )
         return True
 

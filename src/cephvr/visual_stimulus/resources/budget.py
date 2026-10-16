@@ -42,6 +42,26 @@ def arena_mesh_bytes(vertex_count: int, index_count: int) -> int:
     return vertex_count * 9 * 4 + index_count * 4
 
 
+def review_capture_cpu_bytes(width: int, height: int, capture_slots: int) -> int:
+    """Conservatively bound slots, readback/pipe copies, headroom and row scratch."""
+    if min(width, height, capture_slots) <= 0:
+        raise ValueError("positive review capture dimensions and slots required")
+    frame_bytes = width * height * 4
+    return frame_bytes * (capture_slots + 3) + (height // 2) * width * 4
+
+
+def review_capture_gpu_bytes(
+    width: int, height: int, capture_slots: int, pixel_format: str
+) -> int:
+    """Two same-format targets plus the admission-bounded four-byte PBO pool."""
+    if min(width, height, capture_slots) <= 0:
+        raise ValueError("positive review capture dimensions and slots required")
+    if pixel_format not in {"rgba8_top_down", "r10g10b10a2_le_top_down"}:
+        raise ValueError("unsupported review capture format")
+    target_pixel_bytes = 4 if pixel_format == "rgba8_top_down" else 16
+    return width * height * (2 * target_pixel_bytes + 4 * capture_slots)
+
+
 class BoundedBudget:
     """Thread-safe checked accounting; reservations are atomic by owner."""
 

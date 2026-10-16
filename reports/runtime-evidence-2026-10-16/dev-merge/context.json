@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-16",
+  "local_rig_revision": "a0dc31a",
+  "local_appearance_checkpoint": "3743a81",
+  "merged_remote": "eac2e0e6a9b14b5c07a485d5a6aa116841fae3e2",
+  "backend_validation": {
+    "command": "python -m pytest tests --ignore=tests/gui -q -m \"not windows and not rig\" --basetemp=.pytest-merge-backend",
+    "passed": 2119,
+    "skipped": 4,
+    "deselected": 31,
+    "fixture_errors": 3,
+    "fixture_error_reason": "Demo generator requires output outside repository; all three pass with default external temp on rerun."
+  },
+  "conflict_owner_tests": 129,
+  "gui_focused_tests": 16,
+  "gui_suite": {
+    "command": "QT_QPA_PLATFORM=offscreen python -m pytest tests/gui -q -k \"not picker and not chooser and not tab_config_buttons_roundtrip_into_fresh_gui\"",
+    "passed": 536,
+    "failed": 2,
+    "deselected": 29,
+    "followup": "Both failures were old HUD row assertions retained by upstream. Aligned with accepted G02 compact HUD; two corrected cases pass separately. Full suite was already running with the pre-correction module loaded."
+  },
+  "static": {
+    "ruff": "pass",
+    "format_files": 924,
+    "mypy_win32_files": 811,
+    "boundary_modules": 713,
+    "boundary_violations": 0
+  },
+  "build": "sdist/wheel pass with --no-isolation outside sandbox; initial sandbox temp access denied",
+  "snapshot": "Offscreen ManagedDashboardWindow(sample=True), 1440x940, Retro enabled, CRT disabled for readable bounds; bundled IBM font, explicit Windows Segoe UI; no live controller/device operations.",
+  "limitations": [
+    "No native desktop or rig acceptance",
+    "Review-only I/O and multi-screen pulse contracts remain staged",
+    "Initial sandbox asyncio socketpair fixture stall; approved loopback run passes"
+  ],
+  "generated_bindings": "19 authoritative Protobuf sources regenerated"
+}

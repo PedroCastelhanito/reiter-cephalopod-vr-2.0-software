@@ -80,15 +80,19 @@ class SpikeGLXProgressMonitor:
             deadline = self.clock() + int(call_timeout_s * 1e9)
             observation = await self.spikeglx.observe_progress(deadline)
             completed_ns = self.clock()
-            if (
-                completed_ns >= deadline
-                or not observation.HasField("observed_monotonic_ns")
-                or observation.observed_monotonic_ns > deadline
+            if completed_ns >= deadline or (
+                observation.HasField("observed_monotonic_ns")
+                and observation.observed_monotonic_ns > deadline
             ):
                 observation = wire.SpikeGLXRecordingView(
                     phase=wire.SPIKEGLX_RECORDING_PHASE_UNKNOWN,
                     failure_code="DEADLINE",
                 )
+            if (
+                not observation.HasField("observed_monotonic_ns")
+                and not observation.failure_code
+            ):
+                observation.failure_code = "OBSERVATION_UNCONFIRMED"
             if not await self._active(attempt):
                 return
             view = wire.SpikeGLXRecordingView.FromString(

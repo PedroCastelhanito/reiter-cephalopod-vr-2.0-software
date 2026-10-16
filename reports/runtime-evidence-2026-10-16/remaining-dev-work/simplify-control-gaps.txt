@@ -1,0 +1,58 @@
+................................................F..                      [100%]
+=================================== FAILURES ===================================
+_______ test_cancel_fences_exact_cleanup_before_backend_dispatch[exact] ________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2038/test_cancel_fences_exact_clean0')
+receipt = 'exact'
+
+    @pytest.mark.parametrize("receipt", ["exact", "rejected", "changed"])
+    async def test_cancel_fences_exact_cleanup_before_backend_dispatch(tmp_path, receipt):
+        context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _runtime(tmp_path, context)
+        calls = []
+    
+        class Peer:
+            async def cancel_setup(self, request, *, deadline_ns):
+                calls.append((request, deadline_ns))
+                assert (
+                    attempt.registered_context.cleanup_commands[-1].operation.command_id
+                    == request.command_id
+                )
+                return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+    
+        peer = Peer()
+        peer.context = context
+        attempt = _attempt(runtime, tmp_path, {"acquisition": peer})
+        original = svc.RegisteredContext(
+            work=pb.WorkContext(session=attempt.context), required_participants=[context]
+        )
+        attempt.registered_context = original
+    
+        class Supervisor:
+            async def register_context(self, request):
+                echoed = svc.RegisteredContext.FromString(
+                    request.context.SerializeToString()
+                )
+                if receipt == "changed":
+                    echoed.cleanup_commands[-1].operation.command_id = _id()
+                return svc.RegistrationReceipt(
+                    admission=pb.CommandAdmission(
+                        result=pb.COMMAND_RESULT_REJECTED
+                        if receipt == "rejected"
+                        else pb.COMMAND_RESULT_ACCEPTED
+                    ),
+                    registered=echoed,
+                )
+    
+        runtime.cleanup.supervisor = Supervisor()
+>       assert await runtime.cleanup.dispatch_backend_cleanup(
+            attempt, 1_000_001_000, "cancel_setup"
+        ) is (receipt == "exact")
+E       AssertionError: assert False is ('exact' == 'exact'
+E         
+E           exact)
+
+tests/controller/test_setup.py:650: AssertionError
+=========================== short test summary info ============================
+FAILED tests/controller/test_setup.py::test_cancel_fences_exact_cleanup_before_backend_dispatch[exact]
+1 failed, 50 passed in 1.09s

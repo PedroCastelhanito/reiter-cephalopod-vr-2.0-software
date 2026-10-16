@@ -232,6 +232,24 @@ class PulseExecutor:
                 evidence.acknowledged_monotonic_ns = exchange.completed_ns
             evidence.applied = True
             evidence.outcome = microcontroller_pb2.PULSE_COMMAND_OUTCOME_APPLIED
+            if (
+                verb == "OFF"
+                and boundary_ns is None
+                and not any(
+                    item.command == microcontroller_pb2.PULSE_BOUNDARY_COMMAND_ON
+                    for item in self._reservations.values()
+                )
+            ):
+                # A confirmed safety OFF discharges matching cancelled-trial ends.
+                self._reservations = {
+                    when: item
+                    for when, item in self._reservations.items()
+                    if item.command != microcontroller_pb2.PULSE_BOUNDARY_COMMAND_OFF
+                    or not (
+                        {role for role in ROLES if getattr(item, f"{role}_selected")}
+                        <= roles
+                    )
+                }
             if compact["watchdog_stopped"]:
                 evidence.error_code = "WATCHDOG_STOPPED"
         except ChannelTimeout:

@@ -1,0 +1,30 @@
+{
+  "poll_failure_before": {
+    "pending_retained_after_poll_error": true,
+    "cancellation_errors": [],
+    "pooled_buffers_after_error": 0,
+    "deleted_buffers_after_cancel": [
+      7
+    ]
+  },
+  "poll_failure_current": {
+    "pending_retained_after_poll_error": false,
+    "cancellation_errors": [
+      "invalid pending review capture"
+    ],
+    "pooled_buffers_after_error": 1,
+    "deleted_buffers_after_cancel": []
+  },
+  "failed_evidence_queue_cancellation": {
+    "attempts": 3,
+    "errors": [
+      "required Visual Stimulus evidence exceeded evidence_pending_bytes",
+      "required Visual Stimulus evidence exceeded evidence_pending_bytes",
+      "required Visual Stimulus evidence exceeded evidence_pending_bytes"
+    ],
+    "runtime_pending": 1,
+    "gl_pending": 1,
+    "worker_reservations": 1,
+    "gl_delete_calls": 0
+  }
+}

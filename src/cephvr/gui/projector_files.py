@@ -43,7 +43,7 @@ class ProjectorFiles(CalibrationFiles):
                 "enabled_screens": self.read_participation(),
                 "photodiode_enabled": self.timing.pulse.isChecked(),
                 "pulse_screen": self.target_face(),
-                "vsync_mode": self.timing.mode.currentText(),
+                "vsync_mode": MODE_LABELS[self.timing.presentation_mode],
                 "frame_rect": {
                     key: int(edit.text()) if edit.text().strip() else None
                     for key, edit in self.timing.fields.items()

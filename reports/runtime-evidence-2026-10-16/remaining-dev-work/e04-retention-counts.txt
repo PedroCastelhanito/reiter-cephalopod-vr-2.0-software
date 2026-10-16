@@ -1,0 +1,35 @@
+..........F............................................................. [ 97%]
+..                                                                       [100%]
+=================================== FAILURES ===================================
+_______ test_snapshot_combined_history_and_incident_eviction_are_visible _______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2005/test_snapshot_combined_history0')
+
+    def test_snapshot_combined_history_and_incident_eviction_are_visible(tmp_path):
+        runtime = _runtime(
+            tmp_path,
+            pb.BackendContext(backend_name="acquisition", backend_generation=_id()),
+        )
+        runtime.control.errors = [
+            pb.ErrorReport(error_id=str(i), occurred_monotonic_ns=i) for i in range(256)
+        ]
+        runtime.supervisor_state.errors = [
+            pb.ErrorReport(error_id="last", occurred_monotonic_ns=300)
+        ]
+        view = runtime.publisher.build_snapshot()
+        assert len(view.errors) == 256 and view.retained_truncated
+        assert view.retained_since_monotonic_ns == 1
+        runtime.control.errors.clear()
+        runtime.supervisor_state.errors.clear()
+        attempt = _attempt(runtime, tmp_path, {})
+        runtime.lifecycle.attempt = attempt
+        from cephvr.controller.incident.registry import IncidentRegistry
+    
+>       attempt.incidents = IncidentRegistry(max_entries=2)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: IncidentRegistry.__init__() got an unexpected keyword argument 'max_entries'
+
+tests/controller/test_runtime_retention.py:343: TypeError
+=========================== short test summary info ============================
+FAILED tests/controller/test_runtime_retention.py::test_snapshot_combined_history_and_incident_eviction_are_visible
+1 failed, 73 passed in 1.42s

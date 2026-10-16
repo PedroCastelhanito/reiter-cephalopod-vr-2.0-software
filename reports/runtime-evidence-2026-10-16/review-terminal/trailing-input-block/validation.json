@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-16",
+  "source_sha256": "ccdb53ef7072669854565de341953f4ae9281fee2a79d0e8261a0619c1c246dd",
+  "scope": "offscreen Qt; no native/DPI/complex-script text shaping acceptance",
+  "tests": "3 passed, 550 deselected before clip-only refinement; final typing/Home/End render probe passed",
+  "checks": "Ruff/format, Win32 mypy1, boundaries712/zero violations, whitespace passed",
+  "visual": "End/Home captures inspected; rectangle remains after value"
+}

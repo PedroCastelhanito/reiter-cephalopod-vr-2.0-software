@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-16",
+  "scope": "Review Protocol styling; offscreen Qt only; no full-suite/native/DPI/performance/rig acceptance",
+  "decision": "G02 revision71 / ARCH-002",
+  "tests": "15 passed,543 deselected; final shared-HUD integration appearance2 passed,556 deselected",
+  "checks": "Ruff/format7,Win32 mypy6,boundaries712/zero violations,git diff --check passed",
+  "renders": "1440/1175/720; populated source/sequence/stimulus controls and advanced card; wide/narrow and advanced captures inspected",
+  "attempts": [
+    "Initial symbolic role changes broke native compact-role assertion; reverted roles and skipped Retro brackets on symbolic glyphs.",
+    "Original inline divider counterprobe and new shared divider both produced321px, exposing pre-existing320px test bound; assert actual content padding instead.",
+    "Dynamic-row fixture corrected to use populated review program, visible row focus, and apply the local edit before comparing canonical draft/history.",
+    "Two combined appearance cases failed while concurrent shared-HUD work omitted Dashboard rendering; settled integration renders Dashboard/status rows once and final rerun passes.",
+    "Two patch contexts changed concurrently; reread current files and preserved other chat edits.",
+    "One spacer optional-typing finding repaired."
+  ],
+  "source_sha256": {
+    "src/cephvr/gui/appearance.py": "bdb80d24c22996e59255d4677085cd909bbac924ecf4e71e020845c2bed4a157",
+    "src/cephvr/gui/components.py": "bc602f2c03152a213e9e0f18886299ad80a7788b0d19004727e9899329529e47",
+    "src/cephvr/gui/protocol_controls.py": "74a7373a58570a23231f6927acd0b9a91a5a9d09492fb95544ce4ede1293a12d",
+    "src/cephvr/gui/protocol_timeline.py": "1ae0e4c3f3c5ca323a90c1d850556a53bbf82ebec71a3125c2147c8163bf60f1",
+    "src/cephvr/gui/group_editor.py": "343fbe45d48b4ff157130a58197af5c55519b86151ab811a26412df96f8bcf32",
+    "src/cephvr/gui/theme.py": "52caf3487589ccf1150cab46ce7dc7db8efed1104c4f63d6034815d267948b7f",
+    "tests/gui/test_dashboard.py": "77cdd53e02e251ce2f7d0e51c5cf7a3c5c8b8f756bf9a71317c78e6b9d357567"
+  },
+  "provenance": "Source hashes at validation completion; shared appearance/components/theme/tests also include concurrent HUD work. Fixture captures preceded final Dashboard render-call integration; Protocol geometry/presentation unchanged by that integration. Shared-HUD task completed its own validation during final report reconciliation; final hashes include its last test-assertion updates."
+}

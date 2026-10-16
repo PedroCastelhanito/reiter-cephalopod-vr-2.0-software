@@ -491,3 +491,104 @@ async def test_grpc_failure_reaches_the_retry_loop_as_a_transport_error(
             )
     finally:
         await outbound.close()
+
+
+@pytest.mark.parametrize(
+    "outcome", ["verified", "admission_failure", "wrong_generation"]
+)
+async def test_execute_recovery_action_retains_exact_command_and_requires_verified_cleanup(
+    tmp_path, outcome
+):
+    from tests.supervisor.support import launch
+
+    runtime, native, outbound, context = make_runtime(tmp_path)
+    source = types.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    launch(runtime, native, runtime.identity, source, 72)
+    work = types.WorkContext(
+        session=types.SessionContext(
+            controller_generation=runtime.controller.generation, session_id=str(uuid4())
+        )
+    )
+    runtime.registration_state.context = wire.RegisteredContext(
+        controller=runtime.controller,
+        supervisor=runtime.identity,
+        work=work,
+        paired_spikeglx=False,
+        required_participants=[
+            types.BackendContext(
+                backend_name=source.role, backend_generation=source.generation
+            )
+        ],
+        policies=types.ControlPolicies(recovery_ns=20_000_000),
+    )
+    catalogue = ResourceObligationRegistry(
+        source,
+        work,
+        allowed_owners=frozenset({(source.role, source.generation)}),
+        max_resources=8,
+        max_bytes=4096,
+    )
+    catalogue.accept_heartbeat(
+        types.HeartbeatReport(
+            source=source, work=work, sent_monotonic_ns=1, cleanup_resources_revision=0
+        )
+    )
+    runtime.registration_state.catalogues[(source.role, source.generation)] = catalogue
+    calls = []
+
+    async def cleanup(target, command, *, deadline_ns):
+        calls.append((command, deadline_ns))
+        if outcome == "admission_failure":
+            raise RuntimeError("backend rejected cleanup")
+        report = types.CleanupReport(
+            source=source,
+            work=work,
+            operation=types.OperationContext(command_id=command.command_id),
+            verified_monotonic_ns=host_time_ns(),
+            trial_activity_stopped=True,
+            cleanup_resources_revision=0,
+        )
+        if outcome == "wrong_generation":
+            report.source.generation = str(uuid4())
+        result = await runtime.recovery.report_lifecycle(
+            types.LifecycleReport(cleanup=report),
+            deadline_ns=deadline_ns,
+            ingress_ns=host_time_ns(),
+        )
+        assert result.result == (
+            types.COMMAND_RESULT_ACCEPTED
+            if outcome == "verified"
+            else types.COMMAND_RESULT_REJECTED
+        )
+
+    outbound.cleanup_backend = cleanup
+    command_id = str(uuid4())
+    request = wire.RecoveryActionRequest(
+        command_id=command_id,
+        supervisor=runtime.identity,
+        target=source,
+        work=work,
+        action=wire.RECOVERY_ACTION_RETRY_GRACEFUL_CLEANUP,
+        operator=types.OperatorContext(
+            command_id=command_id,
+            client_id=str(uuid4()),
+            control_generation=str(uuid4()),
+        ),
+    )
+    admitted = await runtime.service.ExecuteRecoveryAction(request, context)
+    assert admitted.result == types.COMMAND_RESULT_ACCEPTED
+    assert await runtime.service.ExecuteRecoveryAction(request, context) == admitted
+    changed = wire.RecoveryActionRequest.FromString(request.SerializeToString())
+    changed.operator.control_generation = str(uuid4())
+    assert (
+        await runtime.service.ExecuteRecoveryAction(changed, context)
+    ).result == types.COMMAND_RESULT_REJECTED
+    await asyncio.wait_for(asyncio.gather(*tuple(runtime.tasks._tasks)), 1)
+    result = runtime.recovery_state.operations[command_id]
+    assert result.complete and result.succeeded is (outcome == "verified")
+    assert len(calls) == 1
+    recovery = runtime.recovery_state.recoveries[command_id]
+    assert calls[0][1] == recovery.deadline_monotonic_ns
+    assert recovery.deadline_monotonic_ns - recovery.start_monotonic_ns == 20_000_000
+    runtime.stop_background()
+    await runtime.close_outbound()

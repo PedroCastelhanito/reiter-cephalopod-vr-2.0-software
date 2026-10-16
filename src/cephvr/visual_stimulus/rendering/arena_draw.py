@@ -6,12 +6,12 @@ from collections.abc import Callable
 from typing import Any
 
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
+from cephvr.visual_stimulus.rendering import shaders
 from cephvr.visual_stimulus.rendering.arena import (
     arena_model_matrix,
     off_axis_view_projection,
 )
 from cephvr.visual_stimulus.rendering.arena_gpu import ArenaGPUSet
-from cephvr.visual_stimulus.rendering.shaders import _ARENA_FRAGMENT, _ARENA_VERTEX
 from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
 
 
@@ -30,7 +30,7 @@ class ArenaOutputDrawer:
         self.arrays: dict[tuple[str, int], Any] = {}
         retain(self)
         self.program = context.program(
-            vertex_shader=_ARENA_VERTEX, fragment_shader=_ARENA_FRAGMENT
+            vertex_shader=shaders._ARENA_VERTEX, fragment_shader=shaders._ARENA_FRAGMENT
         )
         for resource_id, gpu_set in gpu_resources.items():
             if not isinstance(gpu_set, ArenaGPUSet):

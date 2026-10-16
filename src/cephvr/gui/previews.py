@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import label
+from cephvr.gui.components import Card, label
 from cephvr.gui.layouts import snap_tool_window
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import PreviewView
@@ -33,17 +33,17 @@ class PreviewDialog(QDialog):
         self.setWindowTitle("Previews")
         self.setWindowModality(Qt.WindowModality.NonModal)
         body = QVBoxLayout(self)
-        body.setContentsMargins(*([SIZES.card_padding] * 4))
+        body.setContentsMargins(*([SIZES.compact_card_padding] * 4))
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        content = QWidget()
-        content.setObjectName("PreviewSources")
-        self.rows = QGridLayout(content)
-        self.rows.setContentsMargins(12, 8, 12, 8)
+        self.card = Card("Preview sources", compact=True)
+        self.rows = QGridLayout()
+        self.rows.setContentsMargins(0, 0, 0, 0)
         self.rows.setHorizontalSpacing(SIZES.field_x_gap)
-        self.rows.setVerticalSpacing(4)
+        self.rows.setVerticalSpacing(0)
         self.rows.setColumnStretch(0, 1)
-        self.scroll_area.setWidget(content)
+        self.card.body.addLayout(self.rows)
+        self.scroll_area.setWidget(self.card)
         body.addWidget(self.scroll_area)
         self.views: dict[str, PreviewView] = {}
         self.controls: dict[str, QCheckBox] = {}
@@ -145,7 +145,7 @@ class PreviewDialog(QDialog):
         available = (
             screen.availableGeometry().size() if screen is not None else self.size()
         )
-        margin = 2 * SIZES.card_padding
+        margin = 2 * SIZES.compact_card_padding
         width = (
             max(
                 (
@@ -161,10 +161,11 @@ class PreviewDialog(QDialog):
                 default=220,
             )
             + margin
-            + 24
+            + 2 * SIZES.card_padding
             + 2 * SIZES.field_x_gap
         )
-        height = self.rows.sizeHint().height() + margin + 4
+        self.card.body.activate()
+        height = self.card.sizeHint().height() + margin + 4
         self.setMinimumWidth(min(width, available.width()))
         self.setFixedHeight(min(height, max(1, available.height() - 40)))
         self.resize(self.minimumWidth(), self.height())

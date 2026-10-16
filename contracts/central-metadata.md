@@ -44,6 +44,24 @@ admits no further writes and returns only after its dedicated sentinel drains th
 queue and closes owned handles within the caller's remaining finalization budget;
 its Boolean result is not a fabricated CleanupReport or MetadataResult.
 
+## Provenance and output summaries
+
+SESSION_CONFIG `provenance` records the supervisor's authenticated status version
+and accepted Ready versions for active required backends. Empty/unavailable versions
+are JSON null; no package, Git, Python or GUI inventories are added.
+The trial LOG `outputs` indexes every exact reserved trial file, including its backend
+generation, tag, extension, writer format/schema version, closure and explicit known or
+unknown presence. `OutputResult.counts` carries only owner-observed nonnegative counts;
+missing keys are unknown. Camera video uses `frames`, its frame log uses `source_frames`
+and `video_frames`; Tracking uses record kinds (`pose`, `result`, `reset`, `discard`),
+stimulus video uses `frames`, `input_frames`, `duplicate_frames`, stimulus evidence uses
+`render_groups`, and its prepared document uses `documents`. No nominal-rate inference.
+Required command/incident events are owned before finalization can seal the writer;
+safety command dispatch does not await their persistence.
+Snapshot retained coverage uses the oldest retained error, recovery or incident timestamp
+and reports omissions from bounded diagnostic/outcome retention. It is not a complete
+history guarantee or a scientific stream; no timestamp is invented for untimed warnings.
+
 ## Closure, reservations and authority loss
 
 Controller seals writer admissions only after required final session events are admitted,

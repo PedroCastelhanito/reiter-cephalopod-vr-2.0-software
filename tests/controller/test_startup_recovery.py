@@ -663,3 +663,12 @@ def test_finished_reconciliation_must_match_configured_trial_id(
     )
     assert result.log_identity is None
     assert "Finished reconciliation" in (result.issue or "")
+
+
+def test_missing_recording_root_does_not_prove_cancelled_namespace_cleanup(tmp_path):
+    from cephvr.controller.recovery import _settle_cancelled_namespace
+
+    root = tmp_path / "unavailable-root"
+    assert not _settle_cancelled_namespace(root / "experiment" / "session")
+    root.mkdir()
+    assert _settle_cancelled_namespace(root / "experiment" / "session")

@@ -1,0 +1,75 @@
+B023 Function definition does not bind loop variable `width`
+   --> src/cephvr/gui/review_timing.py:178:42
+    |
+177 |             def normalized(rect):
+178 |                 if rect.x + rect.width > width or rect.y + rect.height > height:
+    |                                          ^^^^^
+179 |                     raise ValueError(f"Placement exceeds the {face} display")
+180 |                 return (
+    |
+
+B023 Function definition does not bind loop variable `height`
+   --> src/cephvr/gui/review_timing.py:178:74
+    |
+177 |             def normalized(rect):
+178 |                 if rect.x + rect.width > width or rect.y + rect.height > height:
+    |                                                                          ^^^^^^
+179 |                     raise ValueError(f"Placement exceeds the {face} display")
+180 |                 return (
+    |
+
+B023 Function definition does not bind loop variable `face`
+   --> src/cephvr/gui/review_timing.py:179:63
+    |
+177 |             def normalized(rect):
+178 |                 if rect.x + rect.width > width or rect.y + rect.height > height:
+179 |                     raise ValueError(f"Placement exceeds the {face} display")
+    |                                                               ^^^^
+180 |                 return (
+181 |                     rect.x / width,
+    |
+
+B023 Function definition does not bind loop variable `width`
+   --> src/cephvr/gui/review_timing.py:181:30
+    |
+179 |                     raise ValueError(f"Placement exceeds the {face} display")
+180 |                 return (
+181 |                     rect.x / width,
+    |                              ^^^^^
+182 |                     rect.y / height,
+183 |                     rect.width / width,
+    |
+
+B023 Function definition does not bind loop variable `height`
+   --> src/cephvr/gui/review_timing.py:182:30
+    |
+180 |                 return (
+181 |                     rect.x / width,
+182 |                     rect.y / height,
+    |                              ^^^^^^
+183 |                     rect.width / width,
+184 |                     rect.height / height,
+    |
+
+B023 Function definition does not bind loop variable `width`
+   --> src/cephvr/gui/review_timing.py:183:34
+    |
+181 |                     rect.x / width,
+182 |                     rect.y / height,
+183 |                     rect.width / width,
+    |                                  ^^^^^
+184 |                     rect.height / height,
+185 |                 )
+    |
+
+B023 Function definition does not bind loop variable `height`
+   --> src/cephvr/gui/review_timing.py:184:35
+    |
+182 |                     rect.y / height,
+183 |                     rect.width / width,
+184 |                     rect.height / height,
+    |                                   ^^^^^^
+185 |                 )
+    |
+
+Found 7 errors.

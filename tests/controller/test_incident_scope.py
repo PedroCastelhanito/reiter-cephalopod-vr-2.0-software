@@ -15,7 +15,13 @@ from cephvr.controller.incident.scope import ScopeConfirmation
 from cephvr.controller.lifecycle.activity import select_trial_participants
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import Attempt, IncidentState, LifecycleState
-from tests.controller.support_components import _attempt, _id, _RetainedPeer, _runtime
+from tests.controller.support_components import (
+    _attempt,
+    _id,
+    _RetainedPeer,
+    _runtime,
+    drain_runtime_tasks,
+)
 
 
 def test_confirmed_full_nonessential_loss_skips_only_its_backend(
@@ -100,8 +106,66 @@ class _Supervisor:
 
 
 class _Registry:
+    def snapshot(self):
+        return ()
+
     def observe(self, error: object, classification: object, **_kw: object) -> Any:
         return pb.RuntimeIncident(incident_id="inc", revision=2)
+
+
+async def test_blocking_incident_logs_error_text_and_one_automatic_disposition(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.controller.incident import coordination as module
+    from cephvr.controller.incident.registry import IncidentRegistry
+    from cephvr.shared.incidents import Classification
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(runtime, tmp_path, {})
+    attempt.activated = True
+    attempt.writer = cast(Any, object())
+    attempt.incident_topology = cast(Any, object())
+    attempt.incidents = IncidentRegistry(
+        attempt.context, max_incidents=8, max_error_ids=8, max_bytes=65536
+    )
+    runtime.lifecycle.attempt = attempt
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
+    coordinator = runtime.supervision.incidents
+    classification = Classification("blocking", "unsafe clock", ("camera",), 2000)
+    monkeypatch.setattr(module, "classify_incident", lambda *a, **k: classification)
+    recorded = []
+    stopped = []
+
+    async def event(_attempt, name, **kwargs):
+        recorded.append((name, kwargs["details"]))
+
+    async def interrupt(*args, **kwargs):
+        stopped.append(args)
+
+    monkeypatch.setattr(runtime.metadata, "log_event", event)
+    monkeypatch.setattr(coordinator, "interrupt", interrupt)
+    error = pb.ErrorReport(
+        error_id=_id(),
+        source=pb.ProcessIdentity(
+            role="acquisition", generation=backend.backend_generation
+        ),
+        work=pb.WorkContext(session=attempt.context),
+        occurred_monotonic_ns=1000,
+        failure=pb.Failure(code="CLOCK", message="host receipt timestamp decreased"),
+    )
+    await coordinator.observe_runtime_error(error)
+    await coordinator.observe_runtime_error(error)
+    assert len(attempt.recovery_log_tasks) == 3
+    await drain_runtime_tasks(runtime)
+    assert stopped
+    errors = [details for name, details in recorded if name == "error"]
+    decisions = [details for name, details in recorded if name == "incident_decision"]
+    assert errors[0]["failure_message"] == error.failure.message
+    assert len(decisions) == 1
+    assert decisions[0]["disposition"] == "automatic_stop"
+    assert decisions[0]["reason"] == "unsafe clock"
+    assert "client_id" not in decisions[0] and "choice" not in decisions[0]
 
 
 async def test_reconfirmation_replaces_incident_in_scope_and_plans(

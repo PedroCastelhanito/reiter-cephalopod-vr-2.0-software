@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-16",
+  "source_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "scope": "Dirty shared checkout; local macOS Qt offscreen behavior/rendering. No physical projector, Windows, optical timing or actual VSync acceptance.",
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"review_device_layout_candidates or review_per_screen or review_and_runtime_share_page_elements or local_review_draft or photodiode\"",
+      "outcome": "17 passed, 504 deselected; final focused source state",
+      "output": "gui-focused.txt"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler",
+      "outcome": "520 passed, one failure in test_trial_row_actions_scroll_target_and_align_cards: trial_card height321 expected<320; already tracked in native-protocol-hover-tests. Broad run began before final review-button gate and strengthened workflow assertions; final focused run covers those changes.",
+      "output": "Tool transcript only; full raw stdout not saved"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui/test_dashboard.py",
+      "outcome": "pass"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui/test_dashboard.py",
+      "outcome": "165 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/cameras.py src/cephvr/gui/devices.py src/cephvr/gui/projectors.py src/cephvr/gui/projector_timing.py src/cephvr/gui/projector_files.py src/cephvr/gui/review.py src/cephvr/gui/review_draft.py src/cephvr/gui/review_devices.py src/cephvr/gui/review_timing.py src/cephvr/gui/review_placement.py src/cephvr/gui/review_projector_files.py src/cephvr/gui/window.py",
+      "outcome": "12 source files pass"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "706 modules, zero violations; pre-existing cohesion advisories reviewed for affected assembly owners"
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass"
+    }
+  ],
+  "render_method": "QApplication with apply_theme, ReviewDashboardWindow sample fixtures, 1280x940; QWidget.grab PNG. Inspect Cameras, MCU, scrolled Synchronization and modeless local placement with Front/Left pulses. No saved user drafts modified by rendering.",
+  "launch": "Sandboxed Qt failed with no screens available. Initial escalation review timed out; permitted retry launched scripts/start_gui.py outside sandbox and remains running without launch error. Native window appearance not independently confirmed.",
+  "source_sha256": {
+    "cameras.py": "27ebc86a16399c623a47d2f73ac0ac90c7050906305f192ed72aad66cf7cc4bf",
+    "devices.py": "c918279bab3a7f7f7b240dd0f724b26fd0c860ff26160aca08b3325d611bbde5",
+    "projectors.py": "3d243dbb087c4308ddf53c410cf4af0ead572d6e839f4e6b6614f5c69ce57a1a",
+    "projector_timing.py": "ea85e9b5901c6709fd9a98af5227dd0888358fd3b602b796140ebe236d3b61d4",
+    "projector_files.py": "24b334fadfb7b1bcd967488a4ff9cc11be384bdd62da263e4d3239144c005f8f",
+    "review.py": "b1d4a5aba1e82d0229a3da6a13b4bdf24d7792800d4ebe89a27b8f1831fab487",
+    "review_draft.py": "1d9c0dfbd815b5e97e24930f4da27ea3064a3a0be6899be8935bbbcfca4d4839",
+    "review_devices.py": "29044bd4cd50dde27bf24ed51f950ec1fe82b6c25ad7b7cdb87a7faec5b60f4c",
+    "review_timing.py": "55439bcd1345af87f7669b31805247e247c8babc4ea95f32ffcfc9e214054bbe",
+    "review_placement.py": "feba3f95c525a6c147d0ca1c97cef5c73b0a393bfe61c5173451333459eed949",
+    "review_projector_files.py": "87146df32d919dcab7e21cbcc025aacf54aa50232c3fe885802eaab36e50bee3",
+    "window.py": "19bb5e8a55bfef1cebb54f4b2081a30fdd141eb1bcd25cd72491965ba9d28288"
+  }
+}

@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.software import software_version
 from cephvr.visual_stimulus.recording.recipe import PreparedRecipe
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
@@ -349,6 +350,7 @@ class Reports:
             validate_ready(payload, work, setup, self.state.prepared)
             payload.cleanup_resources.clear()
             payload.cleanup_resources.extend(self.state.resources)
+            payload.software_version = software_version()
             self.state.sealed = True
         if kind == "finished":
             recipe = self.state.recipe_results.get(work.trial.trial_id)

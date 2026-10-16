@@ -646,6 +646,7 @@ message SupervisorStatusReport {
   repeated Warning warnings = 9;
   repeated RecoveryState recoveries = 10;
   repeated OperationState operations = 11;
+  string software_version = 12; // Supervisor's own installed CephVR version; empty means unavailable.
   // Every list is the complete retained supervisor-owned projection, including empty.
   // Replace atomically; a newer full revision can skip predecessors. Same revision
   // must carry identical captured content/time. Lower revisions are ignored.
@@ -693,6 +694,7 @@ message RecoverySnapshot {
   reserved 12;
   reserved "controller_cleanup"; // Controller no longer reports Cleanup to supervisor.
   PriorApplicationExitReceipt prior_application_exit = 13; // Verified owner-private launcher receipt, only for an exact startup query.
+  repeated PreviewConsumerReport preview_consumers = 14; // Bounded consumer-attested failure/release; never start permission or aggregate resource closure.
 }
 enum RecoveryAction {
   RECOVERY_ACTION_UNSPECIFIED = 0;

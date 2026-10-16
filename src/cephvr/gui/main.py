@@ -739,10 +739,12 @@ class ManagedGui(QObject):
         if action == "spikeglx_connection":
             panel = self.window.devices.spikeglx
             panel.console.appendPlainText(rendered)
-            panel.status_column.hud.setPlainText(
-                "CONNECTION  Verified\n" + message.replace(" · ", "\n")
-                if success
-                else "CONNECTION  Unavailable\n" + message
+            panel.status_column.set_rows(
+                (
+                    ("CONNECTION", "Verified" if success else "Unavailable"),
+                    None,
+                    ("", message.replace(" · ", "\n") if success else message),
+                )
             )
         if action == "get_spikeglx_inventory" and not success:
             self._inventory_identity = None

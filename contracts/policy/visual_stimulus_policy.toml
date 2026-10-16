@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 15
+policy_version = 16
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_required_evidence_thread"
@@ -129,11 +129,10 @@ args_scope = "output_only"
 args_ownership = "composite"
 argument_contract = "shared_acquisition_inventory_with_visual_stimulus_constraints"
 container = "mp4"
-review_timing = "constant_nominal_refresh_rate_of_pacing_output_or_common_vsync_outputs"
-review_frame_mapping = "first_usable_evaluation_per_nominal_slot_with_identified_duplicates"
-# E13/V12/V28: leading backfill uses the first real image; later gaps repeat
-# the preceding selected image with exact source-group/time evidence.
-frame_duplication = true
+review_timing = "nominal_playback_refresh_rate_with_external_source_timestamps"
+review_frame_mapping = "sequential_retained_composites_with_contiguous_input_indices"
+# E13/V12/V28: sequential real composites retain exact source-group/time evidence.
+frame_duplication = false
 mp4_mode = "fragmented"
 review_depth_policy = "explicit_conversion_allow_reduction"
 empty_video_policy = "allow_confirmed_never_created_or_closed_empty"

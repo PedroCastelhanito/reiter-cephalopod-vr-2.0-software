@@ -17,7 +17,6 @@ from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.gui.camera_inventory import CAMERA_ROLES, CameraDraft, discover_drafts
 from cephvr.gui.camera_snapshot import CameraSnapshot
 from cephvr.gui.components import Card, StatusColumn, button, combo, field
-from cephvr.gui.formatting import metrics_text
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import PresetField
 from cephvr.gui.pin_numbers import PinNumber
@@ -68,6 +67,8 @@ class CamerasPanel(ResponsiveColumns):
         self.view = DashboardView()
         self.real_devices = False
         self.managed = False
+        self.controller_trigger_rates: dict[str, float] = {}
+        self.controller_trigger_sources: dict[str, str] = {}
         self.operation_pending = False
         self.pending_enable: dict[str, bool] = {}
         self.loading = False
@@ -90,7 +91,7 @@ class CamerasPanel(ResponsiveColumns):
         self.enable_controls: list[QCheckBox] = []
         self.populate_inventory()
         inventory.body.addWidget(self.table)
-        actions = QGridLayout()
+        self.inventory_actions = actions = QGridLayout()
         actions.setContentsMargins(0, 0, 0, 0)
         actions.setHorizontalSpacing(SIZES.field_x_gap)
         self.selected_test_button = button(
@@ -109,8 +110,9 @@ class CamerasPanel(ResponsiveColumns):
         self.refresh_button.clicked.connect(self.refresh_inventory)
         self.connect_button.clicked.connect(self.toggle_connection)
         actions.addWidget(self.selected_test_button, 0, 0)
-        actions.addWidget(self.wiring_button, 0, 1)
-        actions.addWidget(self.connect_button, 1, 0, 1, 2)
+        self.wiring_button.setParent(self)
+        self.wiring_button.hide()
+        actions.addWidget(self.connect_button, 0, 1)
         actions.setColumnStretch(0, 1)
         actions.setColumnStretch(1, 1)
         inventory.body.addLayout(actions)
@@ -170,14 +172,21 @@ class CamerasPanel(ResponsiveColumns):
             lambda value: self.edit("trigger_clock", value)
         )
         self.trigger_source.currentTextChanged.connect(self.save_settings)
-        form.addWidget(field("TRIGGER SOURCE", self.trigger_source), 0, 0)
+        form.addWidget(
+            field("TRIGGER SOURCE", self.trigger_source),
+            0,
+            0,
+            Qt.AlignmentFlag.AlignBottom,
+        )
         specs = (("trigger_frequency_hz", "TRIGGER RATE (Hz)"),)
         for index, (key, title) in enumerate(specs):
             editor = QLineEdit()
             editor.setPlaceholderText("Not set")
             editor.textChanged.connect(lambda value, name=key: self.edit(name, value))
             self.fields[key] = editor
-            form.addWidget(field(title, editor), 0, index + 1)
+            form.addWidget(
+                field(title, editor), 0, index + 1, Qt.AlignmentFlag.AlignBottom
+            )
         rate = self.fields["trigger_frequency_hz"]
         validator = QDoubleValidator(rate)
         validator.setBottom(0.1)
@@ -193,7 +202,9 @@ class CamerasPanel(ResponsiveColumns):
             "MCU output pin shared with the Microcontroller table"
         )
         form.setColumnStretch(2, 1)
-        form.addWidget(field("PIN", self.trigger_pin), 0, 2)
+        form.addWidget(
+            field("PIN", self.trigger_pin), 0, 2, Qt.AlignmentFlag.AlignBottom
+        )
         self.configuration.body.addLayout(form)
         self.preset_field = PresetField()
         self.preset = self.preset_field.editor
@@ -566,52 +577,27 @@ class CamerasPanel(ResponsiveColumns):
         for editor in (*self.fields.values(), self.preset_field, self.trigger_source):
             editor.setEnabled(self.can_edit_camera_settings and draft is not None)
         self.role.setEnabled(self.can_edit_camera_settings and draft is not None)
-        self.status_column.hud.setPlainText(
-            metrics_text(
+        rate = self.controller_trigger_rates.get(draft.serial) if draft else None
+        source = "—"
+        if draft:
+            source = (
+                self.controller_trigger_sources.get(draft.serial, "")
+                if self.managed
+                else draft.values.get("trigger_clock", "")
+            ) or "—"
+        self.status_column.set_rows(
+            (
+                ("CAMERAS FOUND", str(len(self.drafts))),
+                ("CAMERAS ENABLED", str(sum(camera.enabled for camera in self.drafts))),
+                None,
+                ("CAMERA ROLE", draft.role if draft else "—"),
                 (
-                    ("CAMERA", draft.serial if draft else "—"),
-                    ("ROLE", draft.role if draft else "—"),
-                    (
-                        "EXPERIMENT",
-                        "Enabled" if draft and draft.enabled else "Inactive",
-                    ),
-                    (
-                        "CONNECTION",
-                        "Open"
-                        if self.managed and draft and draft.connected
-                        else "Connected · review"
-                        if draft and draft.connected
-                        else "Not connected",
-                    ),
-                    (
-                        "PREVIEW",
-                        "Visible"
-                        if self.managed and preview and preview.visible
-                        else "Visible · review"
-                        if preview and preview.visible
-                        else "Hidden",
-                    ),
-                    (
-                        "TRIGGER",
-                        draft.values.get("trigger_clock", "") or "—" if draft else "—",
-                    ),
-                    (
-                        "RATE (Hz)",
-                        draft.values.get("trigger_frequency_hz", "") or "—"
-                        if draft
-                        else "—",
-                    ),
-                    (
-                        "PFS",
-                        "Imported · SDK readback"
-                        if self.managed
-                        and draft
-                        and draft.values.get("pfs_imported") == "yes"
-                        else "Selected · not applied"
-                        if draft and draft.values.get("preset")
-                        else "Not selected",
-                    ),
-                )
+                    "STATUS",
+                    "Connected" if draft and draft.connected else "Not connected",
+                ),
+                ("TRIGGER SOURCE", source),
+                ("TRIGGER RATE", f"{rate:g} Hz" if rate is not None else "—"),
+                ("ACQUISITION RATE", "—"),
             )
         )
         self.controls_changed.emit()

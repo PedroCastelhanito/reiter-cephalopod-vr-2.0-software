@@ -1159,15 +1159,18 @@ def test_dashboard_control_status_matches_connection_and_authority(
 ) -> None:
     dashboard = DashboardWindow(sample=False).dashboard
     cases = (
-        (DashboardView(connected=True, has_control=True), "Control held"),
-        (DashboardView(connected=True, has_control=False), "Observer"),
-        (DashboardView(connected=False, has_control=False), "Disconnected"),
-        (DashboardView(sample=True, has_control=True), "Local review"),
-        (DashboardView(sample=True, has_control=False), "Review observer"),
+        (DashboardView(connected=True, has_control=True), True),
+        (DashboardView(connected=True, has_control=False), False),
+        (DashboardView(connected=False, has_control=False), False),
+        (DashboardView(sample=True, has_control=True), True),
+        (DashboardView(sample=True, has_control=False), False),
     )
     for view, expected in cases:
         dashboard.apply_view(view)
-        assert f"CONTROL  {expected}" in dashboard.runtime_console.toPlainText()
+        assert "Configuration" in dashboard.runtime_console.toPlainText()
+        assert "CONTROL" not in dashboard.runtime_console.toPlainText()
+        assert dashboard.command_buttons["Setup"].isEnabled() == expected
+        assert dashboard.subject_id.isEnabled() == expected
     dashboard.window().close()
     dashboard.window().deleteLater()
     app.processEvents()
@@ -1312,6 +1315,16 @@ def test_managed_status_uses_readiness_and_output_closure_evidence() -> None:
     participant.process_running = True
     participant.ready.configuration_revision = 7
     assert dashboard_view(state, "gui-1", ()).tracking_status == "Ready"
+
+    assert view.trial_duration_s is None
+    assert view.total_elapsed_s is None and view.total_duration_s is None
+    state.trial.start_monotonic_ns = 10_000_000_000
+    state.trial.scheduled_end_monotonic_ns = 160_000_000_000
+    state.trial.actual_end_monotonic_ns = 58_000_000_000
+    timed = dashboard_view(state, "gui-1", ())
+    assert timed.elapsed_s == 48
+    assert timed.trial_duration_s == 150
+    assert timed.total_elapsed_s is None and timed.total_duration_s is None
 
 
 def test_retained_summary_keeps_incidents_ahead_of_completed_operation_history() -> (
@@ -2642,7 +2655,8 @@ def test_review_selector_renders_completion_and_observer_lock(
     assert controls is not None
     controls.set_phase(Phase.ENDED)
     assert "Completed" in window.dashboard.runtime_console.toPlainText()
-    assert "Closed" in window.dashboard.runtime_console.toPlainText()
+    assert window.dashboard.view.output_status == "Closed"
+    assert "TOTAL TIME" in window.dashboard.runtime_console.toPlainText()
     controls.observer.setChecked(True)
     assert not window.dashboard.command_buttons["Setup"].isEnabled()
 
@@ -2671,13 +2685,14 @@ def test_dashboard_has_only_requested_cards(window: DashboardWindow) -> None:
     titles = {
         card.header.itemAt(0).widget().text()
         for card in window.dashboard.findChildren(Card)
+        if not window.dashboard.preview_dialog.isAncestorOf(card)
     }
     assert titles == {
         "System controls",
         "Session config",
         "Recordings",
         "Runtime HUD",
-        "Activity log",
+        "Runtime log",
     }
     assert not any(
         item.property("role") == "pill" for item in window.findChildren(QLabel)
@@ -2935,7 +2950,6 @@ def test_camera_pfs_picker_preserves_camera_identity_and_editing_gate(
     assert "*.pfs" in dialog.nameFilters()[0]
     dialog.fileSelected.emit(str(preset))
     assert cameras.drafts[0].values["preset"] == str(preset)
-    assert "not applied" in cameras.status_column.hud.toPlainText()
     cameras.table.selectRow(1)
     assert picker.dialog is None
     dialog.fileSelected.emit(str(preset))
@@ -3053,7 +3067,8 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
                     measurements = panel.measurements
                     assert measurements.caption.text() == "Pixel-to-mm calibration"
                     widths = [measurements.table.columnWidth(i) for i in range(3)]
-                    assert max(widths) - min(widths) <= 1
+                    assert widths[1] > widths[0]
+                    assert widths[1] > widths[2]
                 header = panel.table.horizontalHeader()
                 refresh = panel.refresh_button
                 assert refresh.parentWidget() is header.viewport()
@@ -4909,6 +4924,10 @@ def test_inventory_required_roles_follow_the_accepted_active_configuration() -> 
     )
     acquisition.tracking.enabled = True
     acquisition.tracking.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
+    acquisition.eye_tracking.enabled = True
+    acquisition.eye_tracking.device.frame_timing = (
+        camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+    )
     vs = configuration.backends.add(
         backend_name="visual_stimulus", enabled=True
     ).visual_stimulus
@@ -4918,6 +4937,7 @@ def test_inventory_required_roles_follow_the_accepted_active_configuration() -> 
         {
             spikeglx_pb2.PULSE_ROLE_BEHAVIORAL_CAMERA,
             spikeglx_pb2.PULSE_ROLE_PHOTODIODE,
+            spikeglx_pb2.PULSE_ROLE_EYE_TRACKING_CAMERA,
         }
     )
 
@@ -5386,8 +5406,8 @@ def test_managed_snapshot_keeps_diagnostic_close_pending_and_status_visible(
     assert not page.diagnostic_button.isEnabled()
     assert page._diagnostic_locked
     assert "pose: running (current source)" in page.status.hud.toPlainText()
-    assert "LAST      12.00 ms" in page.status.hud.toPlainText()
-    assert "MAX       20.00 ms" in page.status.hud.toPlainText()
+    assert ("LAST", "12.00 ms") in page.status.rows
+    assert ("MAX", "20.00 ms") in page.status.rows
     page.diagnostic_button.click()
     assert not any(action == "begin_tracking_diagnostic" for action, _ in requests)
 
@@ -9289,8 +9309,11 @@ def test_batch_reference_picker_scope_and_lock(
     assert not composer.isEnabled()
 
 
+@pytest.mark.parametrize(
+    "modifier", [Qt.KeyboardModifier.ControlModifier, Qt.KeyboardModifier.MetaModifier]
+)
 def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
-    window: DashboardWindow, app: QApplication, tmp_path: Path
+    window: DashboardWindow, app: QApplication, tmp_path: Path, modifier
 ) -> None:
     from PyQt6.QtGui import QImage
 
@@ -9324,9 +9347,26 @@ def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
     source = next(iter(left.parameters.asset_forms.values()))
     destination = next(iter(right.parameters.asset_forms.values()))
     assert not destination.isReadOnly()
-    destination.setFocus()
-    destination.selectAll()
-    QTest.keyClicks(destination, source.text())
+    clipboard = app.clipboard()
+    assert clipboard is not None
+    previous_clipboard = clipboard.text()
+    try:
+        source.setFocus()
+        QTest.keyClick(source, Qt.Key.Key_A, modifier)
+        QTest.keyClick(source, Qt.Key.Key_C, modifier)
+        assert clipboard.text() == "second.png"
+        pasted_path = (
+            str(second)
+            if modifier == Qt.KeyboardModifier.MetaModifier
+            else clipboard.text()
+        )
+        clipboard.setText(pasted_path)
+        destination.setFocus()
+        QTest.keyClick(destination, Qt.Key.Key_A, modifier)
+        QTest.keyClick(destination, Qt.Key.Key_V, modifier)
+        assert destination.text() == pasted_path
+    finally:
+        clipboard.setText(previous_clipboard)
     composer.duration.setFocus()
     app.processEvents()
     assets = {asset.asset_id: asset.logical_path for asset in composer.program.assets}
@@ -13013,6 +13053,7 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
     monkeypatch.setattr(ControllerBridge, "start", lambda self: None)
     review = ReviewDashboardWindow(
         sample=True,
+        device_review=False,
         settings=QSettings(str(tmp_path / "review.ini"), QSettings.Format.IniFormat),
     )
     runtime = ManagedDashboardWindow(
@@ -13051,19 +13092,36 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
         )
 
     def editor_geometry(parent: QWidget) -> list:
-        return [
+        return sorted(
+            (
+                (
+                    type(control).__name__,
+                    control.accessibleName(),
+                    control.text()
+                    if isinstance(control, (QLabel, QLineEdit, QAbstractButton))
+                    else control.currentText(),
+                    control.mapTo(parent, QPoint()),
+                    control.size(),
+                )
+                for control in parent.findChildren(QWidget)
+                if isinstance(control, (QLabel, QLineEdit, QComboBox, QAbstractButton))
+                and control.isVisible()
+            ),
+            key=repr,
+        )
+
+    def control_gates(parent: QWidget) -> list:
+        return sorted(
             (
                 type(control).__name__,
+                control.accessibleName(),
                 control.text()
-                if isinstance(control, (QLabel, QLineEdit, QAbstractButton))
+                if isinstance(control, (QAbstractButton, QLineEdit))
                 else control.currentText(),
-                control.mapTo(parent, QPoint()),
-                control.size(),
+                control.isEnabled(),
             )
-            for control in parent.findChildren(QWidget)
-            if isinstance(control, (QLabel, QLineEdit, QComboBox, QAbstractButton))
-            and control.isVisible()
-        ]
+            for control in parent.findChildren((QAbstractButton, QLineEdit, QComboBox))
+        )
 
     try:
         runtime.devices.cameras.populate_inventory()
@@ -13072,6 +13130,10 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
         runtime.snapshots.restore(
             runtime.snapshots.validate(review.snapshots.capture())
         )
+        runtime.devices.cameras.table.selectRow(
+            review.devices.cameras.table.currentRow()
+        )
+        runtime.devices.cameras.load_selected()
         runtime.apply_view(
             replace(review.dashboard.view, sample=False, connected=True)
             if runtime_authority
@@ -13133,6 +13195,31 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
                 ]
 
             assert visible_cards(review_page) == visible_cards(runtime_page)
+            assert editor_geometry(review_page) == editor_geometry(runtime_page), (
+                page,
+                subtab,
+                inner_tab,
+            )
+        # Authoring gates match; hardware actions retain their transport prerequisites.
+        for phase in Phase:
+            for observer in (False, True):
+                view = review_view(phase, observer=observer)
+                review.apply_view(view)
+                runtime.apply_view(replace(view, sample=False, connected=True))
+                for left, right in (
+                    (review.dashboard, runtime.dashboard),
+                    (review.protocol, runtime.protocol),
+                    (review.tracking, runtime.tracking),
+                ):
+                    assert control_gates(left) == control_gates(right), (
+                        phase,
+                        observer,
+                    )
+                assert (
+                    review.dashboard.stop_choices() == runtime.dashboard.stop_choices()
+                )
+        review.apply_view(review_view(Phase.CONFIGURATION))
+        runtime.apply_view(replace(review.dashboard.view, sample=False, connected=True))
         # Family-specific fields are created on selection, including initial pose
         # and arena limits. Compare their placement with Advanced settings open.
         from cephvr.gui.protocol_batches import grouped_program
@@ -13287,6 +13374,7 @@ def test_managed_camera_inventory_restores_selected_configuration(
     serials = [draft.serial for draft in panel.drafts]
     panel.drafts = []
     panel.populate_inventory()
+    assert "CAMERAS FOUND     0" in panel.status_column.hud.toPlainText()
     requests = []
     binding = ManagedCameras(
         panel,
@@ -13352,9 +13440,43 @@ def test_managed_camera_inventory_restores_selected_configuration(
         assert panel.preset.toolTip() == draft.values["preset"]
         assert panel.trigger_source.currentText() == draft.values["trigger_clock"]
         assert panel.fields["trigger_frequency_hz"].text() == str(30 * (row + 1))
+        hud = panel.status_column.hud.toPlainText()
+        assert hud.splitlines()[:2] == ["CAMERAS FOUND     2", "CAMERAS ENABLED   0"]
+        assert "\n\n" in hud
+        details = dict(
+            line.split("  ", 1) for line in hud.split("\n\n")[1].splitlines()
+        )
+        details = {key.strip(): value.strip() for key, value in details.items()}
+        assert details == {
+            "CAMERA ROLE": draft.role,
+            "STATUS": "Not connected",
+            "TRIGGER SOURCE": "External controller" if row == 0 else "Internal clock",
+            "TRIGGER RATE": "30 Hz" if row == 0 else "—",
+            "ACQUISITION RATE": "—",
+        }
+    assert list(details).index("TRIGGER SOURCE") < list(details).index("TRIGGER RATE")
     panel.edit("trigger_frequency_hz", "45")
     binding.install(state)
     assert panel.selected.values["trigger_frequency_hz"] == "45"
+    panel.table.selectRow(0)
+    panel.refresh_controls()
+    assert "30 Hz" in panel.status_column.hud.toPlainText()
+    assert "45 Hz" not in panel.status_column.hud.toPlainText()
+    binding.disconnected()
+    panel.refresh_controls()
+    assert "30 Hz" not in panel.status_column.hud.toPlainText()
+    assert (
+        dict(row for row in panel.status_column.rows if row is not None)[
+            "TRIGGER SOURCE"
+        ]
+        == "—"
+    )
+    panel.drafts[0].enabled = True
+    panel.drafts[0].connected = True
+    panel.refresh_controls()
+    hud = panel.status_column.hud.toPlainText()
+    assert "CAMERAS ENABLED   1" in hud
+    assert "STATUS            Connected" in hud
     assert not requests
 
 
@@ -13857,6 +13979,11 @@ def test_projector_reference_measurements_derive_distance_and_roundtrip(
     assert distance.text() == "960.0"
     panel.measurements.fields["Front", "reference_x_mm"].setText("30.4")
     assert distance.text() == "182.4"
+    assert panel.measurements.scales["Front"].text() == "0.1 / 0.5"
+    assert (
+        panel.calibration_files.snapshot()["values"]["screens.Front.reference_x_mm"]
+        == 30.4
+    )
     panel.measurements.fields["Front", "reference_x_mm"].setText("160")
     assert panel.measurements.scales["Front"].text() == "0.5 / 0.5"
     snapshot = panel.calibration_files.snapshot()
@@ -14306,7 +14433,11 @@ def test_calibration_adjustment_steps_preserve_drafts(app):
     scale.setReadOnly(True)
     QTest.keyClick(scale, Qt.Key.Key_Up)
     assert scale.text() == "0.01"
-    assert table.table.columnCount() == 5
+    assert table.table.columnCount() == 4
+    assert (
+        table.controls["Front", "offset_x_px"].parentWidget()
+        is table.controls["Front", "offset_y_px"].parentWidget()
+    )
     from PyQt6.QtWidgets import QToolButton
 
     assert not table.findChildren(QToolButton)
@@ -15771,6 +15902,9 @@ def test_managed_appearance_restores_shared_or_legacy_preference(
 def test_review_appearance_switch_preserves_drafts_and_runtime(
     app: QApplication, tmp_path: Path, width: int, managed: bool
 ) -> None:
+    from PyQt6.QtGui import QFontInfo
+
+    from cephvr.gui.components import Button
     from cephvr.gui.managed_window import ManagedDashboardWindow
     from cephvr.gui.review import ReviewDashboardWindow
     from cephvr.gui.theme import COLORS, RETRO_COLORS, colors_for
@@ -15788,6 +15922,17 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
         review.dashboard.subject_id.setText("Unsaved subject")
         review.dashboard.age.setText("Unfinished edit")
         review.dashboard.log_console.setPlainText("Existing log entry")
+        review.dashboard.show_previews()
+        selector = review.dashboard.preview_dialog
+        preview_views = dict(selector.views)
+        preview_requests = []
+        selector.visibility_requested.connect(
+            lambda *args: preview_requests.append(args)
+        )
+        device_gates = {
+            control: control.isEnabled()
+            for control in review.devices.findChildren(Button)
+        }
         before = review.snapshots.capture()
         editors = review.dashboard.subject_editors
         gates = [
@@ -15821,10 +15966,43 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
             assert runtime.dashboard.trial_position.isHidden()
             assert review.appearance.name == name
             assert review.appearance.actions[name].isChecked()
+            from cephvr.gui.components import StatusColumn
+
+            for status in review.findChildren(StatusColumn):
+                rendered = status.hud.toPlainText()
+                labelled = [row for row in status.rows if row is not None and row[0]]
+                assert all(row[0].upper() in rendered for row in labelled)
+                if name == "retro_console" and labelled:
+                    assert (
+                        len(
+                            {
+                                line.index(" : ")
+                                for line in rendered.splitlines()
+                                if " : " in line
+                            }
+                        )
+                        == 1
+                    )
+                if name == "standard":
+                    assert " : " not in rendered
             assert review.snapshots.capture() == before
             assert review.dashboard.subject_editors == editors
             assert review.dashboard.log_console.toPlainText() == "Existing log entry"
             assert review.dashboard.view == current_view
+            assert selector.isVisible()
+            assert selector.views == preview_views and not preview_requests
+            assert all(
+                control.isEnabled() == enabled
+                for control, enabled in device_gates.items()
+            )
+            assert selector.card.caption.text() == (
+                "PREVIEW SOURCES" if name == "retro_console" else "Preview sources"
+            )
+            assert review.devices.config_cards[0].caption.text() == (
+                "CONFIGURATION FILE"
+                if name == "retro_console"
+                else "Configuration file"
+            )
             assert review.dashboard.session_controls.caption.text() == (
                 "SYSTEM CONTROLS" if name == "retro_console" else "System controls"
             )
@@ -15838,7 +16016,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
             if name == "retro_console":
                 rows = [line for line in hud.splitlines() if line]
                 assert len({line.index(" : ") for line in rows}) == 1
-                assert " : Local review" in hud
+                assert f" : {current_view.phase.value}" in hud
             else:
                 assert hud == standard_hud
             assert [
@@ -15857,6 +16035,41 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                     assert colors_for(child) == colors_for(page)
             assert runtime.styleSheet() == ""
             assert app.styleSheet() == original_application_style
+            if name == "retro_console":
+                assert (
+                    QFontInfo(review.dashboard.subject_id.font()).family()
+                    == "IBM Plex Mono"
+                )
+                assert review.appearance.brand.text() == "CEPHVR"
+                start = review.dashboard.command_buttons["Start"]
+                assert isinstance(start, Button)
+                assert start.retro_label() == "[ start ]"
+                assert review.page_buttons[0].retro_label() == "> Dashboard"
+                overlay = review.appearance.crt.overlay
+                assert overlay.host is review
+                assert overlay.testAttribute(
+                    Qt.WidgetAttribute.WA_TransparentForMouseEvents
+                )
+                assert not overlay.grab().isNull()
+                film = overlay.film
+                overlay.grab()
+                assert overlay.film is film
+                title_glow = review.page_title.graphicsEffect()
+                card_glow = review.dashboard.session_controls.caption.graphicsEffect()
+                assert title_glow is not None and card_glow is not None
+                assert title_glow.blurRadius() == card_glow.blurRadius()
+                assert title_glow.color() == card_glow.color()
+                review.appearance.crt_action.setChecked(False)
+                assert overlay.isHidden()
+                assert review.appearance.preview_crt.overlay.isHidden()
+                assert review.page_title.graphicsEffect() is None
+                assert (
+                    review.dashboard.session_controls.caption.graphicsEffect() is None
+                )
+                review.appearance.crt_action.setChecked(True)
+                assert overlay.isVisible()
+                assert review.appearance.preview_crt.overlay.isVisible()
+                assert review.page_title.graphicsEffect() is not None
         for status in ("Ready", "Waiting", "Failed", "Unavailable"):
             review.dashboard.apply_view(replace(current_view, camera_status=status))
             indicator = review.dashboard.backend_indicators["Cameras"]
@@ -15876,6 +16089,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
             assert not position.grab().isNull()
         review.appearance.select("standard")
         assert position.isHidden() and brackets.isHidden()
+        assert review.page_title.graphicsEffect() is None
         review.appearance.select("retro_console")
         assert position.isVisible()
         review.dashboard.subject_id.setFocus()
@@ -16522,3 +16736,651 @@ def test_placement_bundle_uses_native_pixels_without_reference_measurements(
         )
         assert data["valid_area"] is None
         assert all(vertex["uv"] == vertex["xy"] for vertex in data["vertices"])
+
+
+@pytest.mark.parametrize("width", [720, 1280])
+def test_review_device_layout_candidates_stay_out_of_runtime(app, tmp_path, width):
+    from PyQt6.QtWidgets import QVBoxLayout
+
+    from cephvr.gui.review import ReviewDashboardWindow
+
+    reviewed = ReviewDashboardWindow(sample=True)
+    runtime = DashboardWindow(sample=True)
+    try:
+        ReviewControls(reviewed, simulate_projectors=True)
+        reviewed.resize(width, 940)
+        reviewed.select_page(2)
+        reviewed.show()
+        app.processEvents()
+        cameras = reviewed.devices.cameras
+        left = cameras.selected_test_button.mapTo(cameras, QPoint())
+        right = cameras.connect_button.mapTo(cameras, QPoint())
+        assert left.y() == right.y()
+        assert left.x() + cameras.selected_test_button.width() <= right.x()
+        assert not cameras.wiring_button.isVisible()
+        assert runtime.devices.cameras.wiring_button.isHidden()
+        assert (
+            runtime.devices.cameras.inventory_actions.itemAtPosition(0, 1).widget()
+            is runtime.devices.cameras.connect_button
+        )
+        mcu = reviewed.devices.microcontroller
+        reviewed.devices.tabs.setCurrentIndex(1)
+        app.processEvents()
+        layout = mcu.columns[0].layout()
+        assert isinstance(layout, QVBoxLayout)
+        assert layout.indexOf(mcu.io) == layout.indexOf(mcu.configuration) + 1
+        assert layout.indexOf(mcu.triggers) == layout.indexOf(mcu.io) + 1
+        assert mcu.io.isVisible()
+        assert not mcu.flip_pin.isEnabled()
+        assert runtime.devices.microcontroller.io.isHidden()
+    finally:
+        reviewed.deleteLater()
+        runtime.deleteLater()
+
+
+def test_review_per_screen_pulses_blank_vsync_and_local_restore(app, tmp_path):
+    from cephvr.gui.review import ReviewDashboardWindow
+    from cephvr.gui.review_draft import load_review_draft, save_review_draft
+    from cephvr.gui.review_timing import ReviewProjectorTiming
+
+    reviewed = ReviewDashboardWindow(sample=True)
+    restored = ReviewDashboardWindow(sample=True)
+    try:
+        for target in (reviewed, restored):
+            ReviewControls(target, simulate_projectors=True)
+        timing = reviewed.devices.projectors.timing
+        assert isinstance(timing, ReviewProjectorTiming)
+        timing.pulse.setChecked(True)
+        timing.target.setCurrentIndex(0)
+        for key, value in zip(
+            ("X", "Y", "Width", "Height"), ("10", "20", "100", "80"), strict=True
+        ):
+            timing.fields[key].setText(value)
+        for key, value in zip(
+            ("X", "Y", "Width", "Height"), ("5", "6", "20", "30"), strict=True
+        ):
+            timing.pulse_fields[key].setText(value)
+        timing.target.setCurrentIndex(1)
+        assert all(not edit.text() for edit in timing.fields.values())
+        assert set(timing.patches()) == {"Front"}
+        for key, value in zip(
+            ("X", "Y", "Width", "Height"), ("30", "40", "50", "60"), strict=True
+        ):
+            timing.fields[key].setText(value)
+        assert set(timing.patches()) == {"Front", "Left"}
+        assert timing.vsync_faces() == ("Front", "Left")
+        overlays = timing.preview_overlays(timing.resolutions(), "Left")
+        assert overlays["Front"][1] == (15 / 1920, 26 / 1080, 20 / 1920, 30 / 1080)
+        assert timing.placement_button.isEnabled()
+        timing.placement_button.click()
+        assert timing.preview is not None
+        preview = timing.preview
+        preview.advance()
+        timing.target.setCurrentIndex(2)
+        assert preview.index == 1
+        timing.fields["X"].setText("5")
+        assert set(timing.patches(strict=False)) == {"Front", "Left"}
+        assert timing.vsync_faces() == ("Front", "Left")
+        with pytest.raises(ValueError):
+            timing.patches()
+        timing.fields["X"].clear()
+        assert set(timing.patches()) == {"Front", "Left"}
+        timing.target.setCurrentIndex(0)
+        assert timing.fields["X"].text() == "10"
+        assert timing.pulse_fields["X"].text() == "5"
+        path = tmp_path / "review.json"
+        save_review_draft(reviewed, path)
+        assert load_review_draft(restored, path)
+        fresh = restored.devices.projectors.timing
+        saved_config = reviewed.devices.projectors.calibration_files.snapshot()
+        fresh.restore_drafts({})
+        restored.devices.projectors.calibration_files.apply_snapshot(saved_config)
+        assert fresh.drafts == timing.drafts
+        legacy = dict(saved_config)
+        legacy.pop("review_pulse_screens")
+        fresh.target.setCurrentIndex(1)
+        restored.devices.projectors.calibration_files.apply_snapshot(legacy)
+        assert set(fresh.patches()) == {"Front"}
+        assert fresh.patches()["Front"].rect.x == 15
+        restored.devices.projectors.calibration_files.apply_snapshot(saved_config)
+        runtime = DashboardWindow(sample=True)
+        try:
+            with pytest.raises(ValueError, match="complete projector configuration"):
+                runtime.devices.projectors.calibration_files.validate(saved_config)
+        finally:
+            runtime.deleteLater()
+        assert fresh.vsync_faces() == ("Front", "Left")
+        for field in (*timing.fields.values(), *timing.pulse_fields.values()):
+            field.clear()
+        assert set(timing.patches()) == {"Left"}
+        assert timing.vsync_faces() == ("Left",)
+        timing.pulse.setChecked(False)
+        assert timing.vsync_faces() == ()
+        timing.set_presentation_mode("all_outputs_vsync")
+        assert timing.vsync_faces() == ("Front", "Left", "Right", "Bottom")
+        timing.set_presentation_mode("free_run")
+        assert timing.vsync_faces() == ()
+        reviewed.apply_view(review_view(Phase.RUNNING))
+        assert timing.preview is None
+    finally:
+        if timing.preview is not None:
+            timing.preview.close()
+        reviewed.deleteLater()
+        restored.deleteLater()
+
+
+@pytest.mark.parametrize(
+    "role,expected", [("behavioral", 1), ("tracking", 2), ("eye_tracking", 7)]
+)
+@pytest.mark.parametrize("backend_enabled", [False, True])
+@pytest.mark.parametrize("camera_enabled", [False, True])
+@pytest.mark.parametrize("external", [False, True])
+def test_inventory_camera_roles_require_active_external_trigger(
+    role, expected, backend_enabled, camera_enabled, external
+):
+    from cephvr.acquisition.v1 import camera_pb2
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_display_operations import required_inventory_roles
+
+    configuration = pb.ExperimentConfiguration()
+    backend = configuration.backends.add(
+        backend_name="acquisition", enabled=backend_enabled
+    )
+    camera = getattr(backend.acquisition, role)
+    camera.enabled = camera_enabled
+    camera.device.frame_timing = (
+        camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+        if external
+        else camera_pb2.FRAME_TIMING_FREE_RUNNING
+    )
+    assert required_inventory_roles(configuration) == (
+        frozenset({expected})
+        if backend_enabled and camera_enabled and external
+        else frozenset()
+    )
+
+
+@pytest.mark.parametrize("width", [720, 1280])
+def test_review_mcu_inputs_define_remove_and_hide_empty_header(app, width):
+    from cephvr.gui.review import ReviewDashboardWindow
+
+    reviewed = ReviewDashboardWindow(sample=True)
+    try:
+        ReviewControls(reviewed, simulate_projectors=True)
+        reviewed.resize(width, 940)
+        reviewed.select_page(2)
+        reviewed.devices.tabs.setCurrentIndex(1)
+        reviewed.show()
+        app.processEvents()
+        panel = reviewed.devices.microcontroller
+        inputs = panel.review_inputs
+        assert inputs is not None
+        header = panel.input_table.horizontalHeader()
+        assert header is not None
+        assert inputs.add_button.isVisible() and inputs.add_button.isEnabled()
+        assert header.isHidden() and not panel.input_table.isVisible()
+        assert all(
+            label.text() != "No inputs configured"
+            for label in panel.io.findChildren(QLabel)
+        )
+        inputs.add_button.click()
+        first = inputs.rows[0]
+        first.name.setText("Photodiode")
+        first.pin.setText("D3")
+        inputs.add_button.click()
+        second = inputs.rows[1]
+        second.name.setText("External event")
+        second.pin.setText("2")
+        second.enabled.setChecked(False)
+        app.processEvents()
+        assert header.isVisible()
+        assert panel.input_table.rowCount() == 3  # Inert legacy slot plus two inputs.
+        assert inputs.snapshot() == [
+            dict(name="Photodiode", pin="3", enabled=True),
+            dict(name="External event", pin="2", enabled=False),
+        ]
+        assert not first.test.isEnabled()  # No physical input diagnostics in review.
+        first.remove.click()
+        assert inputs.snapshot() == [
+            dict(name="External event", pin="2", enabled=False)
+        ]
+        second.remove.click()
+        app.processEvents()
+        assert inputs.snapshot() == []
+        assert header.isHidden() and not panel.input_table.isVisible()
+        assert inputs.add_button.isVisible() and inputs.add_button.isEnabled()
+    finally:
+        reviewed.deleteLater()
+
+
+def test_review_mcu_inputs_persist_and_respect_editing_gates(app, tmp_path):
+    from cephvr.gui.review import ReviewDashboardWindow
+    from cephvr.gui.review_draft import load_review_draft, save_review_draft
+
+    reviewed = ReviewDashboardWindow(sample=True)
+    restored = ReviewDashboardWindow(sample=True)
+    runtime = DashboardWindow(sample=True)
+    try:
+        for target in (reviewed, restored):
+            ReviewControls(target, simulate_projectors=True)
+        panel = reviewed.devices.microcontroller
+        inputs = panel.review_inputs
+        fresh = restored.devices.microcontroller.review_inputs
+        assert inputs is not None and fresh is not None
+        inputs.add_button.click()
+        row = inputs.rows[0]
+        row.name.setText("Sync edge")
+        row.pin.setText("3")
+        inputs.add_button.click()  # Retain an unfinished definition too.
+        expected = inputs.snapshot()
+        path = tmp_path / "review-inputs.json"
+        save_review_draft(reviewed, path)
+        assert load_review_draft(restored, path)
+        assert fresh.snapshot() == expected
+        document = panel.snapshots.capture()
+        fresh.restore([])
+        restored.devices.microcontroller.snapshots.restore(document)
+        assert fresh.snapshot() == expected
+        with pytest.raises(ValueError, match="field inventory"):
+            runtime.devices.microcontroller.snapshots.validate(document)
+        assert runtime.devices.microcontroller.review_inputs is None
+        legacy = dict(document)
+        legacy.pop("review_inputs")
+        restored.devices.microcontroller.snapshots.restore(legacy)
+        assert fresh.snapshot() == []
+        with pytest.raises(ValueError, match="input drafts"):
+            fresh.restore([dict(name="Bad", pin="3", enabled="yes")])
+        assert fresh.snapshot() == []
+        reviewed.apply_view(review_view(Phase.RUNNING))
+        assert not inputs.add_button.isEnabled()
+        assert not row.name.isEnabled() and not row.pin.isEnabled()
+        assert not row.remove.isEnabled()
+        inputs.add()
+        inputs.remove(row)
+        assert inputs.snapshot() == expected
+        reviewed.apply_view(review_view(Phase.CONFIGURATION, observer=True))
+        assert not inputs.add_button.isEnabled()
+        reviewed.apply_view(review_view(Phase.CONFIGURATION))
+        panel.review_tests.add("trial-state")
+        panel.refresh_tests()
+        assert not inputs.add_button.isEnabled()
+        panel.review_tests.clear()
+        panel.refresh_tests()
+        assert inputs.add_button.isEnabled()
+    finally:
+        reviewed.deleteLater()
+        restored.deleteLater()
+        runtime.deleteLater()
+
+
+@pytest.mark.parametrize("width", [720, 1175, 1440])
+def test_review_devices_capture_aligned_fields_and_wrapped_headers(app, width):
+    from cephvr.gui.review import ReviewDashboardWindow
+    from cephvr.gui.table_header import TableHeader
+    from cephvr.gui.tables import DataTable
+
+    reviewed = ReviewDashboardWindow(sample=True)
+    try:
+        ReviewControls(reviewed, simulate_projectors=True)
+        reviewed.appearance.select("retro_console")
+        reviewed.resize(width, 940)
+        reviewed.show()
+        reviewed.page_buttons[2].click()
+        for _ in range(5):
+            app.processEvents()
+        camera = reviewed.devices.cameras
+        editors = (
+            camera.trigger_source,
+            camera.fields["trigger_frequency_hz"],
+            camera.trigger_pin,
+        )
+        assert len({e.mapTo(camera.configuration, QPoint()).y() for e in editors}) == 1
+        assert len({e.height() for e in editors}) == 1
+        for index in range(4):
+            reviewed.devices.tabs.setCurrentIndex(index)
+            for _ in range(5):
+                app.processEvents()
+            for table in reviewed.devices.panels[index].findChildren(DataTable):
+                if not table.isVisible():
+                    continue
+                header = table.horizontalHeader()
+                assert isinstance(header, TableHeader)
+                if header.isHidden():
+                    continue
+                for column in range(header.count()):
+                    if not header.isSectionHidden(column):
+                        layout = header.label_layout(column, header.sectionSize(column))
+                        assert layout.boundingRect().height() + 16 <= header.height()
+        projectors = reviewed.devices.projectors
+        reviewed.devices.tabs.setCurrentIndex(2)
+        projectors.setup_tabs.setCurrentIndex(2)
+        for _ in range(5):
+            app.processEvents()
+        timing = projectors.timing
+        assert timing.mode_field.width() == timing.width()
+        assert (
+            timing.mode_field.mapTo(projectors, QPoint()).x()
+            == timing.mapTo(projectors, QPoint()).x()
+        )
+    finally:
+        reviewed.hide()
+        reviewed.deleteLater()
+        app.processEvents()
+
+
+@pytest.mark.parametrize("width", [720, 1440])
+def test_review_inline_output_templates_keep_pins_and_unfinished_rows(
+    app, tmp_path, monkeypatch, width
+):
+    from PyQt6.QtWidgets import QInputDialog
+
+    from cephvr.gui.review import ReviewDashboardWindow
+    from cephvr.gui.review_draft import load_review_draft, save_review_draft
+    from cephvr.gui.review_mcu_outputs import ReviewMicrocontrollerSignals
+
+    monkeypatch.setattr(
+        QInputDialog, "getInt", lambda *_: pytest.fail("Pin dialog must not open")
+    )
+    reviewed = ReviewDashboardWindow(sample=True)
+    try:
+        ReviewControls(reviewed, simulate_projectors=True)
+        reviewed.appearance.select("retro_console")
+        reviewed.resize(width, 940)
+        reviewed.show()
+        reviewed.page_buttons[2].click()
+        reviewed.devices.tabs.setCurrentIndex(1)
+        app.processEvents()
+        panel = reviewed.devices.microcontroller
+        signals = panel.signals
+        assert isinstance(signals, ReviewMicrocontrollerSignals)
+        add = signals.add_buttons[0][0]
+        assert add.menu() is None
+        before = [
+            (draft.role, draft.enabled) for draft in reviewed.devices.cameras.drafts
+        ]
+        add.click()
+        assert len(signals.templates) == 1
+        template = signals.templates[0]
+        assert template.selector.currentIndex() == -1 and not template.pin.text()
+        assert all(not editor.text() for editor in signals.editors.values())
+        template.pin.setText("8")
+        template.selector.setCurrentIndex(template.selector.findData("behavioral"))
+        assert not signals.templates
+        assert panel.pin_editors["behavioral"].text() == "8"
+        assert before == [
+            (draft.role, draft.enabled) for draft in reviewed.devices.cameras.drafts
+        ]
+        add.click()
+        template = signals.templates[0]
+        template.selector.setCurrentIndex(template.selector.findData("trial-state"))
+        assert not panel.trial_pin.text()
+        assert not panel.output_table.isRowHidden(0)
+        add.click()
+        signals.templates[0].pin.setText("7")
+        data = panel.snapshots.capture()
+        signals.remove("behavioral")
+        panel.snapshots.restore(data)
+        assert panel.snapshots.capture() == data
+        assert signals.templates[0].pin.text() == "7"
+        assert panel.pin_editors["behavioral"].text() == "8"
+        assert not panel.output_table.isRowHidden(0)
+        path = tmp_path / "unfinished-output-review.json"
+        save_review_draft(reviewed, path)
+        signals.remove_template(signals.templates[0])
+        signals.remove("trial-state")
+        assert load_review_draft(reviewed, path)
+        assert panel.snapshots.capture() == data
+        selected = signals.selectors["behavioral"]
+        selected.setCurrentIndex(selected.findData("tracking"))
+        assert panel.pin_editors["behavioral"].text() == ""
+        assert panel.pin_editors["tracking"].text() == "8"
+        assert before == [
+            (draft.role, draft.enabled) for draft in reviewed.devices.cameras.drafts
+        ]
+        panel.set_role_pin("eye_tracking", "9")
+        panel.refresh_tests()
+        panel.pin_editors["eye_tracking"].clear()
+        panel.refresh_tests()
+        assert not panel.output_table.isRowHidden(panel.role_rows["eye_tracking"])
+        signals.remove("eye_tracking")
+        assert panel.output_table.isRowHidden(panel.role_rows["eye_tracking"])
+        current = panel.snapshots.capture()
+        reviewed.apply_view(review_view(Phase.RUNNING))
+        signals.add()
+        signals.remove("tracking")
+        assert panel.snapshots.capture() == current
+        assert not add.isEnabled()
+    finally:
+        reviewed.hide()
+        reviewed.deleteLater()
+        app.processEvents()
+
+
+@pytest.mark.parametrize(
+    "modifier", [Qt.KeyboardModifier.ControlModifier, Qt.KeyboardModifier.MetaModifier]
+)
+def test_directory_paths_clipboard_and_editing_locks(window, app, modifier):
+    clipboard = app.clipboard()
+    assert clipboard is not None
+    previous = clipboard.text()
+    path = "/data/experiment α/" + "long directory/" * 12
+    try:
+        for page, editor in (
+            (0, window.dashboard.output_field.editor),
+            (1, window.protocol.assets.folders["root"].editor),
+        ):
+            window.page_buttons[page].click()
+            editor.setFocus()
+            clipboard.setText(path)
+            QTest.keyClick(editor, Qt.Key.Key_A, modifier)
+            QTest.keyClick(editor, Qt.Key.Key_V, modifier)
+            assert editor.text() == path and editor.toolTip() == path
+            QTest.keyClick(editor, Qt.Key.Key_A, modifier)
+            QTest.keyClick(editor, Qt.Key.Key_C, modifier)
+            assert clipboard.text() == path
+            QTest.keyClick(editor, Qt.Key.Key_X, modifier)
+            assert editor.text() == "" and clipboard.text() == path
+            QTest.keyClick(editor, Qt.Key.Key_V, modifier)
+            assert editor.text() == path
+            editor.setReadOnly(True)
+            QTest.keyClick(editor, Qt.Key.Key_A, modifier)
+            clipboard.setText("different")
+            QTest.keyClick(editor, Qt.Key.Key_C, modifier)
+            assert clipboard.text() == path
+            clipboard.setText("different")
+            QTest.keyClick(editor, Qt.Key.Key_V, modifier)
+            QTest.keyClick(editor, Qt.Key.Key_X, modifier)
+            assert editor.text() == path
+            editor.setReadOnly(False)
+        assert window.devices.projectors.asset_root == path
+        window.apply_view(review_view(Phase.RUNNING))
+        for editor in (
+            window.dashboard.output_field.editor,
+            window.protocol.assets.folders["root"].editor,
+        ):
+            clipboard.setText("locked replacement")
+            QTest.keyClick(editor, Qt.Key.Key_A, modifier)
+            QTest.keyClick(editor, Qt.Key.Key_V, modifier)
+            assert editor.text() == path
+    finally:
+        clipboard.setText(previous)
+
+
+@pytest.mark.parametrize("width", [1440, 720])
+def test_review_protocol_style_keeps_drafts_history_and_dynamic_screen_rows(
+    app, tmp_path, width
+):
+    from cephvr.gui.components import Button
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.review import ReviewDashboardWindow
+    from cephvr.gui.theme import COLORS, RETRO_COLORS, colors_for
+
+    settings = QSettings(
+        str(tmp_path / "protocol-style.ini"), QSettings.Format.IniFormat
+    )
+    reviewed = ReviewDashboardWindow(sample=True, settings=settings)
+    try:
+        reviewed.resize(width, 1000)
+        reviewed.apply_view(review_view(Phase.CONFIGURATION))
+        reviewed.page_buttons[1].click()
+        reviewed.show()
+        editor = reviewed.protocol.editor
+        editor.set_program(review_program())
+        open_protocol_group(editor)
+        reviewed.appearance.select("retro_console")
+        editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        for _ in range(5):
+            app.processEvents()
+        composer = editor.subgroup.composer
+        advanced = composer.rows["Front"].parameters.advanced_card
+        assert advanced.caption.text() == "ADVANCED SETTINGS"
+        assert advanced.caption.graphicsEffect() is not None
+        reviewed.activateWindow()
+        reviewed.protocol.config_scroll.ensureWidgetVisible(composer.rows["Front"])
+        composer.rows["Front"].stimulus.setFocus()
+        app.processEvents()
+        assert any(
+            item.parentWidget() is composer.rows["Front"].stimulus and item.isVisible()
+            for item in reviewed.appearance.focus_brackets
+        )
+        composer.batch_label.setText("Unsaved style draft")
+        editor.subgroup.apply()
+        app.processEvents()
+        original = editor.program
+        history = (
+            list(editor.histories[editor.index].past),
+            list(editor.histories[editor.index].future),
+        )
+        gates = {
+            control: control.isEnabled() for control in editor.findChildren(Button)
+        }
+        source = (
+            editor.timeline.paths,
+            editor.timeline.type_keys,
+            editor.timeline.selection,
+        )
+        for style in ("standard", "retro_console", "standard", "retro_console"):
+            reviewed.appearance.select(style)
+            for _ in range(5):
+                app.processEvents()
+            assert composer.batch_label.text() == "Unsaved style draft"
+            assert editor.program == original
+            assert (
+                editor.histories[editor.index].past,
+                editor.histories[editor.index].future,
+            ) == history
+            assert (
+                editor.timeline.paths,
+                editor.timeline.type_keys,
+                editor.timeline.selection,
+            ) == source
+            assert all(
+                control.isEnabled() == enabled for control, enabled in gates.items()
+            )
+            assert colors_for(editor.timeline) == (
+                RETRO_COLORS if style == "retro_console" else COLORS
+            )
+            assert advanced.caption.text() == (
+                "ADVANCED SETTINGS" if style == "retro_console" else "Advanced settings"
+            )
+            viewport = reviewed.protocol.config_scroll.viewport()
+            assert reviewed.protocol.config_scroll.widget().width() <= viewport.width()
+            assert editor.settings_card.width() == editor.width()
+            assert editor.timeline_card.height() == editor.trial_card.height()
+            for caption in editor.group_editor.findChildren(QLabel):
+                if caption.isVisible() and caption.property("role") == "label":
+                    assert caption.width() >= caption.fontMetrics().horizontalAdvance(
+                        caption.text()
+                    )
+            shot = editor.timeline.grab().toImage()
+            rect = next(
+                rect
+                for rect, index, face, _ in editor.timeline.hits
+                if not face
+                and editor.timeline.paths[index] in editor.timeline.selection
+            )
+            if style == "retro_console":
+                assert (
+                    shot.pixelColor(
+                        round(rect.right() - 10), round(rect.bottom() - 10)
+                    ).name()
+                    == RETRO_COLORS.accent
+                )
+        reviewed.apply_view(review_view(Phase.RUNNING))
+        locked = {
+            control: control.isEnabled() for control in editor.findChildren(Button)
+        }
+        for style in ("standard", "retro_console"):
+            reviewed.appearance.select(style)
+            assert all(
+                control.isEnabled() == enabled for control, enabled in locked.items()
+            )
+            assert not reviewed.protocol.can_edit
+    finally:
+        reviewed.appearance.select("standard")
+        reviewed.hide()
+        reviewed.deleteLater()
+        app.processEvents()
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+def test_variation_hover_does_not_change_visibility_during_enter_dispatch(
+    window, app, monkeypatch, style
+):
+    from PyQt6.QtCore import QPointF
+    from PyQt6.QtGui import QCursor, QEnterEvent
+
+    appearance = window.appearance
+    appearance.select(style, persist=False)
+    try:
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        form = editor.subgroup
+        form.add_rule.click()
+        app.processEvents()
+        row = form.rows[0]
+        table = form.variation_table
+        calls = []
+        with monkeypatch.context() as patch:
+            patch.setattr(
+                row.remove, "setVisible", lambda visible: calls.append(visible)
+            )
+            point = QPointF(row.target.rect().center())
+            event = QEnterEvent(
+                point, point, QPointF(row.target.mapToGlobal(point.toPoint()))
+            )
+            table.eventFilter(row.target, event)
+            assert calls == []
+        row.remove.hide()
+        row.enterEvent(event)
+        assert row.remove.isHidden()  # Table mode has one hover owner.
+        window.protocol.config_scroll.ensureWidgetVisible(table)
+        app.processEvents()
+        QTest.mouseMove(form.add_rule, form.add_rule.rect().center())
+        QTest.qWait(20)
+        QTest.mouseMove(row.target, row.target.rect().center())
+        QTest.qWait(50)
+        app.processEvents()
+        assert not row.remove.isHidden(), (
+            QCursor.pos(),
+            row.target.mapToGlobal(row.target.rect().center()),
+            table.viewport().mapFromGlobal(QCursor.pos()),
+            table.viewport().rect(),
+            table.isVisible(),
+        )
+        QTest.mouseMove(form.add_rule, form.add_rule.rect().center())
+        QTest.qWait(50)
+        assert row.remove.isHidden()
+        # Pending hover work must tolerate removal and a fresh rule immediately after.
+        table.eventFilter(row.target, event)
+        form.remove_variation(row)
+        form.add_rule.click()
+        app.processEvents()
+        assert len(form.rows) == len(table.rules) == 1
+        assert form.rows[0] is not row
+    finally:
+        appearance.select("standard", persist=False)

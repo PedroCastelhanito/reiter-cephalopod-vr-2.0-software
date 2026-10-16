@@ -5,6 +5,7 @@ from __future__ import annotations
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.projections import ProjectionError
 
 
@@ -45,9 +46,7 @@ def resolved_configuration(
     }:
         raise ProjectionError("resolution camera role is invalid")
     candidate = pb.ExperimentConfiguration.FromString(current.SerializeToString())
-    backends = [
-        entry for entry in candidate.backends if entry.backend_name == "acquisition"
-    ]
+    backends = acquisition_backends(candidate)
     if len(backends) != 1 or backends[0].WhichOneof("settings") != "acquisition":
         raise ProjectionError("current acquisition configuration is ambiguous")
     settings = backends[0].acquisition

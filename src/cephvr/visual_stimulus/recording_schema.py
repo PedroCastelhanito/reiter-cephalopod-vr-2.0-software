@@ -48,13 +48,13 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         },
     )
     evidence = WriterSchema(
-        schema_version=5,
+        schema_version=6,
         format="jsonl",
         fields={
             "line": "EvidenceRecord(payload: Header|RenderGroup|GroupUpdate|FeedbackEvidence|Interval|EncoderOutcome|Completion)",
-            "group_id": "monotonic source render-group identity; video slots map to original group state and evaluation time",
+            "group_id": "monotonic source render-group identity; video indices map to original group state and evaluation time",
             "submission": "per-output attempt/return/failure/unknown/cutoff_excluded observation",
-            "capture": "per-group admission, same-slot omission, and explicit real/duplicate encoded-slot mapping",
+            "capture": "per-group admission/drop/transfer outcomes; contiguous zero-based index on complete input submission only",
         },
         units={
             "host_time": "host monotonic ns",
@@ -62,20 +62,22 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         },
         clocks={
             "host": "cephvr.host.perf_counter_ns.v1",
-            "video": "first usable evaluation per nominal slot; duplicate mappings preserve source group/time",
+            "video": "sequential retained groups; source timing is evaluation_host_ns and per-output submission observations",
         },
     )
     video = WriterSchema(
-        schema_version=2,
+        schema_version=3,
         format="mp4",
         fields={
             "review_composite": "one tiled lossy review stream; no original-pixel guarantee",
-            "frame_correspondence": "video slot n maps to a real source group or an explicitly labeled duplicate",
+            "frame_correspondence": "frame n maps once to the n-th completely submitted source composite; no padding or slot omissions",
             "fragmentation": "fragmented MP4; no hybrid conversion or remux",
         },
-        units={"frame_rate": "photodiode output refresh rate"},
+        units={
+            "frame_rate": "nominal playback rate from pacing output or common VSync rate"
+        },
         clocks={
-            "presentation": "cephvr.host.perf_counter_ns.v1; constant-rate encoder timeline"
+            "presentation": "nominal playback only; scientific host time from stimulus_frames.jsonl"
         },
     )
     return {

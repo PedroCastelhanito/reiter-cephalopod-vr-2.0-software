@@ -13,6 +13,7 @@ from google.protobuf.json_format import ParseDict, ParseError
 from google.protobuf.message import Message
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.configuration_files import load_control_files
 from cephvr.controller.validator_gate import BackendValidator, gate_backend_validators
 from cephvr.shared.config import ConfigurationError
@@ -45,6 +46,7 @@ class ControllerConfiguration:
     max_retained_incidents: int
     default_intertrial_gap_ns: int
     history_warning: str | None
+    backend_warnings: tuple[str, ...] = ()
 
 
 def _section(data: Mapping[str, Any], *keys: str) -> Any:
@@ -162,7 +164,7 @@ def _load_supervisor_startup(
 
 def _load_reusable_configuration(
     root: Path, ec: Mapping[str, Any], max_message: int
-) -> tuple[pb.ExperimentConfiguration, str | None]:
+) -> tuple[pb.ExperimentConfiguration, str | None, tuple[str, ...]]:
     """Load saved history, fill acquisition/tracking defaults and the asset root."""
     history_warning: str | None = None
     try:
@@ -174,7 +176,7 @@ def _load_reusable_configuration(
         # defaults; this never grants Setup or replaces a valid default TOML.
         reusable = pb.ExperimentConfiguration()
         history_warning = str(exc)
-    _fill_acquisition_defaults(reusable, root)
+    acquisition_warning = _fill_acquisition_defaults(reusable, root)
     tracking = next(
         (item for item in reusable.backends if item.backend_name == "tracking"), None
     )
@@ -189,11 +191,17 @@ def _load_reusable_configuration(
             raise ConfigurationError("assets.asset_root must be a nonempty path")
         if not reusable.HasField("asset_root"):
             reusable.asset_root = asset_root
-    return reusable, history_warning
+    return (
+        reusable,
+        history_warning,
+        ((acquisition_warning,) if acquisition_warning else ()),
+    )
 
 
-def load_controller_configuration(software_root: Path) -> ControllerConfiguration:
-    """Resolve only accepted file-owned values; missing scientific inputs stay unset."""
+def load_controller_configuration(
+    software_root: Path, *, include_configuration: bool = True
+) -> ControllerConfiguration:
+    """Load startup configuration, or only control limits/policies for fresh Setup."""
     root = Path(software_root)
     experiment, supervisor = load_control_files(root)
     ec, sc = experiment.config, supervisor.config
@@ -300,7 +308,11 @@ def load_controller_configuration(software_root: Path) -> ControllerConfiguratio
         "max_metadata_operations": metadata_operations,
         "max_metadata_bytes": metadata_bytes,
     }
-    reusable, history_warning = _load_reusable_configuration(root, ec, max_message)
+    reusable, history_warning, backend_warnings = (
+        _load_reusable_configuration(root, ec, max_message)
+        if include_configuration
+        else (pb.ExperimentConfiguration(), None, ())
+    )
     return ControllerConfiguration(
         configuration=reusable,
         policies=policies,
@@ -313,12 +325,13 @@ def load_controller_configuration(software_root: Path) -> ControllerConfiguratio
         max_retained_incidents=max_incidents,
         default_intertrial_gap_ns=default_gap,
         history_warning=history_warning,
+        backend_warnings=backend_warnings,
     )
 
 
 def _fill_acquisition_defaults(
     configuration: pb.ExperimentConfiguration, software_root: Path
-) -> None:
+) -> str | None:
     """Fill absent acquisition fields from its owning TOML without enabling it.
 
     Optional protobuf presence preserves explicit false/zero values. The
@@ -327,19 +340,25 @@ def _fill_acquisition_defaults(
     """
     from cephvr.acquisition.configuration import load_defaults
 
-    defaults = load_defaults(software_root)
     backend = next(
-        (item for item in configuration.backends if item.backend_name == "acquisition"),
+        (item for item in acquisition_backends(configuration)),
         None,
     )
+    try:
+        defaults = load_defaults(software_root)
+    except ConfigurationError as exc:
+        if backend is not None and backend.enabled:
+            raise
+        return f"inactive acquisition defaults unavailable: {exc}"
     if backend is None:
         backend = configuration.backends.add(backend_name="acquisition")
     if backend.WhichOneof("settings") is None:
         backend.acquisition.CopyFrom(defaults)
-        return
+        return None
     if backend.WhichOneof("settings") != "acquisition":
-        return
+        return None
     _fill_missing_message(backend.acquisition, defaults)
+    return None
 
 
 def _fill_missing_message(target: Message, defaults: Message) -> None:

@@ -39,6 +39,9 @@ class DashboardView:
     trial_count: int = 0
     elapsed_s: float | None = None
     remaining_s: float | None = None
+    trial_duration_s: float | None = None
+    total_elapsed_s: float | None = None
+    total_duration_s: float | None = None
     outcome: str = "—"
     camera_status: str = "Unavailable"
     stimulus_status: str = "Unavailable"
@@ -82,6 +85,9 @@ def review_view(phase: Phase, *, observer: bool = False) -> DashboardView:
         trial_count=6,
         elapsed_s=150 if phase == Phase.ENDED else 48 if running else None,
         remaining_s=0 if phase == Phase.ENDED else 102 if running else None,
+        trial_duration_s=150,
+        total_elapsed_s=900 if phase == Phase.ENDED else 198 if running else None,
+        total_duration_s=900,
         outcome="Completed" if phase == Phase.ENDED else "—",
         camera_status="Ready" if prepared else "Not prepared",
         stimulus_status="Ready" if prepared else "Not prepared",

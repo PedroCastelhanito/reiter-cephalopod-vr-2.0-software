@@ -1,0 +1,209 @@
+........................................................................ [  4%]
+........................................................................ [  9%]
+........................................................................ [ 14%]
+........................................................................ [ 18%]
+........................................................................ [ 23%]
+........................................................................ [ 28%]
+........................................................................ [ 32%]
+........................................................................ [ 37%]
+........................................................................ [ 42%]
+........................................................................ [ 46%]
+........................................................................ [ 51%]
+........................................................................ [ 56%]
+........................................................................ [ 61%]
+........................................................................ [ 65%]
+...............................sssss.................................... [ 70%]
+........................................................................ [ 75%]
+.......................................................................F [ 79%]
+FFFFFF.................................................................. [ 84%]
+........................................................................ [ 89%]
+........................................................................ [ 93%]
+.........................................................FF............. [ 98%]
+................FFFF..                                                   [100%]
+=================================== FAILURES ===================================
+_ test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware _
+tests/visual_stimulus/test_controller_communication.py:173: in test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware
+    acq_port = acq_server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:47.511434 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[None] _
+tests/visual_stimulus/test_controller_communication.py:261: in test_controller_initialize_display_retains_confirmed_idle_separately_from_ready
+    listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:47.614274 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[monitor] _
+tests/visual_stimulus/test_controller_communication.py:261: in test_controller_initialize_display_retains_confirmed_idle_separately_from_ready
+    listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:47.631491 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[adapter] _
+tests/visual_stimulus/test_controller_communication.py:261: in test_controller_initialize_display_retains_confirmed_idle_separately_from_ready
+    listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:47.647064 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_authenticated_live_calibration_update_transport_and_exact_receipt[frame_grid] _
+tests/visual_stimulus/test_controller_communication.py:501: in test_authenticated_live_calibration_update_transport_and_exact_receipt
+    worker_listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:47.660384 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_authenticated_live_calibration_update_transport_and_exact_receipt[photodiode_placement] _
+tests/visual_stimulus/test_controller_communication.py:501: in test_authenticated_live_calibration_update_transport_and_exact_receipt
+    worker_listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:47.673487 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_authenticated_live_calibration_update_transport_and_exact_receipt[blackout_placement] _
+tests/visual_stimulus/test_controller_communication.py:501: in test_authenticated_live_calibration_update_transport_and_exact_receipt
+    worker_listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:47.687442 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+___ test_arena_bundle_subresource_ids_validate_and_bind_gpu_textures[False] ____
+src/cephvr/visual_stimulus/resources/media.py:170: in decode_image
+    import imagecodecs
+E   ModuleNotFoundError: No module named 'imagecodecs'
+
+The above exception was the direct cause of the following exception:
+tests/visual_stimulus/test_resources.py:993: in test_arena_bundle_subresource_ids_validate_and_bind_gpu_textures
+    bundle = prepare_resources(
+src/cephvr/visual_stimulus/resources/prepare.py:385: in prepare_resources
+    arena = prepare_arena(
+src/cephvr/visual_stimulus/resources/arena.py:159: in prepare_arena
+    pixels = decode_image(
+src/cephvr/visual_stimulus/resources/media.py:172: in decode_image
+    raise MediaPreparationError(
+E   cephvr.visual_stimulus.resources.media.MediaPreparationError: imagecodecs is required for image assets
+____ test_arena_bundle_subresource_ids_validate_and_bind_gpu_textures[True] ____
+src/cephvr/visual_stimulus/resources/media.py:170: in decode_image
+    import imagecodecs
+E   ModuleNotFoundError: No module named 'imagecodecs'
+
+The above exception was the direct cause of the following exception:
+tests/visual_stimulus/test_resources.py:993: in test_arena_bundle_subresource_ids_validate_and_bind_gpu_textures
+    bundle = prepare_resources(
+src/cephvr/visual_stimulus/resources/prepare.py:385: in prepare_resources
+    arena = prepare_arena(
+src/cephvr/visual_stimulus/resources/arena.py:159: in prepare_arena
+    pixels = decode_image(
+src/cephvr/visual_stimulus/resources/media.py:172: in decode_image
+    raise MediaPreparationError(
+E   cephvr.visual_stimulus.resources.media.MediaPreparationError: imagecodecs is required for image assets
+______ test_authenticated_first_use_calibration_repeat_and_close_recovery ______
+tests/visual_stimulus/test_transport.py:348: in test_authenticated_first_use_calibration_repeat_and_close_recovery
+    coordinator_listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:51.331303 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_____ test_authenticated_coordinator_renderer_replay_and_stale_generation ______
+tests/visual_stimulus/test_transport.py:715: in test_authenticated_coordinator_renderer_replay_and_stale_generation
+    listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:51.353720 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+____ test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state ____
+tests/visual_stimulus/test_transport.py:857: in test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state
+    listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:51.377148 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_____ test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial _____
+tests/visual_stimulus/test_transport.py:996: in test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial
+    listener = await serve(
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: in validate_port_binding_result
+    raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E   RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+----------------------------- Captured stderr call -----------------------------
+E1016 08:42:51.402105 8725136 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[None]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[monitor]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[adapter]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt[frame_grid]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt[photodiode_placement]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt[blackout_placement]
+FAILED tests/visual_stimulus/test_resources.py::test_arena_bundle_subresource_ids_validate_and_bind_gpu_textures[False]
+FAILED tests/visual_stimulus/test_resources.py::test_arena_bundle_subresource_ids_validate_and_bind_gpu_textures[True]
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_first_use_calibration_repeat_and_close_recovery
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_coordinator_renderer_replay_and_stale_generation
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial
+13 failed, 1516 passed, 5 skipped, 3 deselected in 21.26s

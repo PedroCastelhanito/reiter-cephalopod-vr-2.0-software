@@ -29,7 +29,12 @@ class SpikeGLXPanel(DevicePanel):
     def __init__(self) -> None:
         super().__init__(
             "SpikeGLX connection",
-            "SERVER      —\nVERSION     —\nACQUISITION Unknown\nSTREAMS     —",
+            (
+                ("SERVER", "—"),
+                ("VERSION", "—"),
+                ("ACQUISITION", "Unknown"),
+                ("STREAMS", "—"),
+            ),
             ("Test connection",),
         )
         self.pairing = QCheckBox("SpikeGLX pairing enabled")
@@ -60,7 +65,6 @@ class SpikeGLXPanel(DevicePanel):
         header = self.table.horizontalHeader()
         assert header is not None
         for column, width in (
-            (0, 42),
             (2, 102),
             (3, 58),
             (4, 82),
@@ -70,6 +74,7 @@ class SpikeGLXPanel(DevicePanel):
             header.setSectionResizeMode(column, QHeaderView.ResizeMode.Fixed)
             header.resizeSection(column, width)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         self.table.fit_rows(hide_empty_header=True)
         self.mapping.body.addWidget(self.table)

@@ -59,7 +59,7 @@ class PlannerControls(QWidget):
         self.timeline_card.body.addLayout(actions)
         self.timeline_card.body.addWidget(self.timeline)
         self.group_divider = QFrame()
-        self.group_divider.setProperty("role", "planner-divider")
+        self.group_divider.setProperty("role", "section-divider")
         self.group_divider.setFixedHeight(1)
         self.timeline_card.body.addWidget(self.group_divider)
         self.group_controls = QHBoxLayout()
@@ -116,10 +116,20 @@ class PlannerControls(QWidget):
             - 7,
         )
         available = max(0, round(right))
+        compact = available < 400
+        self.selected_group_label.setVisible(not compact)
+        gap = self.group_controls.itemAt(1)
+        assert gap is not None
+        gap_spacer = gap.spacerItem()
+        assert gap_spacer is not None
+        gap_spacer.changeSize(0 if compact else 16, 0)
+        label_width = (
+            0 if compact else self.selected_group_label.sizeHint().width() + 16
+        )
         self.group_editor.setFixedWidth(
             min(
                 420,
-                max(0, available - self.selected_group_label.sizeHint().width() - 16),
+                max(0, available - label_width),
             )
         )
         item = self.group_controls.itemAt(4)

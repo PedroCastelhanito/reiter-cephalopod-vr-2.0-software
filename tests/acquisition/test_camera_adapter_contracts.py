@@ -29,6 +29,84 @@ def test_adapter_construction_does_not_load_pypylon() -> None:
     assert adapter._camera is None
 
 
+@pytest.mark.parametrize("failed_close", [False, True])
+@pytest.mark.parametrize("timing", ["external_trigger", "free_running"])
+def test_preview_reopen_retires_only_closed_device_purge_guard(
+    monkeypatch: pytest.MonkeyPatch, failed_close: bool, timing: str
+) -> None:
+    info = SimpleNamespace(
+        GetSerialNumber=lambda: "assigned", GetDeviceClass=lambda: "BaslerUsb"
+    )
+    cameras = []
+
+    class Camera:
+        def __init__(self):
+            self.opened = False
+            self.fail_close = False
+            self.buffers = 0
+            self.MaxNumBuffer = SimpleNamespace(
+                SetValue=lambda value: setattr(self, "buffers", value),
+                GetValue=lambda: self.buffers,
+            )
+            self.NumReadyBuffers = SimpleNamespace(GetValue=lambda: 0)
+
+        def Open(self):
+            self.opened = True
+
+        def IsOpen(self):
+            return self.opened
+
+        def StopGrabbing(self):
+            pass
+
+        def Close(self):
+            if self.fail_close:
+                raise RuntimeError("native Close failed")
+            self.opened = False
+
+    def create(_device):
+        camera = Camera()
+        cameras.append(camera)
+        return camera
+
+    factory = SimpleNamespace(
+        EnumerateDevices=lambda: [info], CreateDevice=lambda value: value
+    )
+    adapter = BaslerCameraAdapter()
+    adapter._pylon = SimpleNamespace(
+        TlFactory=SimpleNamespace(GetInstance=lambda: factory), InstantCamera=create
+    )
+    monkeypatch.setattr(adapter, "_set_trigger_state", lambda *_args: None)
+    monkeypatch.setattr(adapter._wait_gate, "probe", lambda *_args: None)
+    monkeypatch.setattr(adapter, "_stop_device_generation", lambda _camera: True)
+    monkeypatch.setattr("cephvr.acquisition.camera.basler.host_time_ns", lambda: 100)
+    for cycle in range(6):
+        adapter.open("assigned")
+        adapter.configure_capture(timing, 3)
+        adapter._grabbing = True
+        adapter._drain_margin_confirmed = True
+        # Pending control work interrupts the observable drain; never guess zero.
+        evidence = adapter.stop_capture(200, should_continue_drain=lambda: False)
+        assert not evidence.accounting_complete
+        assert evidence.discarded_frame_count is None
+        with pytest.raises(CameraAdapterError, match="unknown SDK-buffer"):
+            adapter.configure_capture(timing, 3)
+        camera = cameras[-1]
+        if failed_close and cycle == 0:
+            camera.fail_close = True
+            with pytest.raises(CameraAdapterError, match="native Close failed"):
+                adapter.release_device()
+            assert adapter.device_open
+            assert adapter._last_purge_evidence is evidence
+            with pytest.raises(CameraAdapterError, match="unknown SDK-buffer"):
+                adapter.configure_capture(timing, 3)
+            camera.fail_close = False
+        adapter.release_device()
+        assert not camera.opened and not adapter.device_open
+        assert not evidence.accounting_complete
+    assert len(cameras) == 6
+
+
 @pytest.mark.parametrize("trigger_mode", ["On", "Off"])
 def test_setting_saved_rate_preserves_external_pfs_limiter(
     monkeypatch, trigger_mode

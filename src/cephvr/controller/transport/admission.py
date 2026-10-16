@@ -135,6 +135,9 @@ class CommandAdmissionGate:
             "SaveConfigurationHistory",
             "NewSession",
         }
+        now = self._work.clock()
+        ledger.prune(now)
+        retained = ledger.get(command_id)
         current_work = self._work.current_work_key()
         work_key = (
             command_id
@@ -144,14 +147,14 @@ class CommandAdmissionGate:
             or current_work is None
             else current_work
         )
+        if retained is not None:
+            work_key = retained.work_key
         try:
             if any(other.get(command_id) is not None for other in other_ledgers):
                 raise CommandConflict(
                     "command ID already belongs to another admission lane"
                 )
-            admission = ledger.admit(
-                command_id, canonical, self._work.clock(), work_key=work_key
-            )
+            admission = ledger.admit(command_id, canonical, now, work_key=work_key)
         except (ValueError, CommandConflict, CommandCapacityError) as exc:
             return rejected_admission(command_id, "ADMISSION", str(exc))
         if admission.replayed:

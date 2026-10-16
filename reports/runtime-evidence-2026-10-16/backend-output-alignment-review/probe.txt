@@ -1,0 +1,25 @@
+{
+  "manifest_roles": [
+    "arena_importer",
+    "image_decoder",
+    "renderer",
+    "video_decoder"
+  ],
+  "renderer": {
+    "role": "renderer",
+    "implementation": "CephVR",
+    "version": "2.0",
+    "content_sha256": null
+  },
+  "unresolved_shader_ids": [
+    "cephvr-linear-scene-v1"
+  ],
+  "manifest_unchanged_after_shader_change": true
+}
+REPRODUCED: production manifest builder does not retain exact shader/renderer or graphics-environment provenance.
+REPRODUCED: video exists at reserved path, identity proof missing, failed_outputs reports artifact_present=false.
+output_key: "trial:acquisition:behavioral_cam"
+path: "/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/tmpkd3xxr7j/trial.mp4"
+closure: OUTPUT_CLOSURE_UNCONFIRMED
+artifact_present: false
+

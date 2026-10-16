@@ -379,7 +379,7 @@ def test_evidence_writer_preserves_exact_inputs_when_review_frame_drops(
     assert parsed.completion is None  # Closing a file cannot imply trial completion.
 
 
-def test_cadence_header_rejects_legacy_evidence_version_and_keeps_recipe_v2() -> None:
+def test_sequential_header_versions_and_writer_schema_keep_recipe_v2() -> None:
     from cephvr.visual_stimulus.recording_schema import get_writer_schemas
 
     header = _header().model_dump()
@@ -387,6 +387,9 @@ def test_cadence_header_rejects_legacy_evidence_version_and_keeps_recipe_v2() ->
     header["format_version"] = 2
     with pytest.raises(ValidationError):
         Header.model_validate(header)
+    for version in (3, 4, 5, 6):
+        header["format_version"] = version
+        assert Header.model_validate(header).format_version == version
     schemas = get_writer_schemas()
-    assert schemas["visual_stimulus", "stimulus_frames", "jsonl"].schema_version == 5
+    assert schemas["visual_stimulus", "stimulus_frames", "jsonl"].schema_version == 6
     assert schemas["visual_stimulus", "stimulus_LOG", "json"].schema_version == 2

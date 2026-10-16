@@ -1,0 +1,62 @@
+....................F................................................... [ 78%]
+....................                                                     [100%]
+=================================== FAILURES ===================================
+__ test_sequential_frame_log_preserves_loss_and_rejects_false_source_mappings __
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1969/test_sequential_frame_log_pres0')
+
+    def test_sequential_frame_log_preserves_loss_and_rejects_false_source_mappings(
+        tmp_path: Path,
+    ) -> None:
+        from cephvr.acquisition.buffers.records import FrameRecord
+    
+        writer = FrameLogWriter(
+            tmp_path / "frames.jsonl",
+            _identity(),
+            start_ns=100,
+            nominal_frame_rate_hz=60,
+            nominal_rate_source="applied_mcu_rate",
+            sync_interval_ns=1,
+            syncer=SimpleNamespace(sync=lambda _: None),
+        )
+        writer.create()
+        # Source IDs count losses; encoded indices count only images actually submitted.
+        writer.append_frame(
+            FrameRecord(0, 110, 40, 90, True, None),
+            dropped=True,
+            video_disposition="capacity_drop",
+        )
+        writer.append_frame(
+>           FrameRecord(1, 111, 41, 91, False, "INCOMPLETE"),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            dropped=True,
+            video_disposition="invalid_image",
+        )
+
+tests/acquisition/test_recording_paths.py:324: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+<string>:10: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = FrameRecord(frame_id=1, acquisition_time_ns=111, camera_frame_counter=41, camera_timestamp_ns=91, valid_image=False, invalid_code='INCOMPLETE', diagnostics=())
+
+    def __post_init__(self) -> None:
+        if self.frame_id < 0 or self.acquisition_time_ns <= 0:
+            raise ValueError(
+                "frame ID and host receipt time must be nonnegative/positive"
+            )
+        for name in ("camera_frame_counter", "camera_timestamp_ns"):
+            value = getattr(self, name)
+            if value is not None and value < 0:
+                raise ValueError(f"{name} must be nonnegative when present")
+        if self.valid_image and self.invalid_code is not None:
+            raise ValueError("valid image cannot carry an invalid-image code")
+        if not self.valid_image and self.invalid_code != "INVALID_IMAGE":
+>           raise ValueError("invalid SDK image must use stable INVALID_IMAGE code")
+E           ValueError: invalid SDK image must use stable INVALID_IMAGE code
+
+src/cephvr/acquisition/buffers/records.py:63: ValueError
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_recording_paths.py::test_sequential_frame_log_preserves_loss_and_rejects_false_source_mappings
+1 failed, 91 passed in 2.83s

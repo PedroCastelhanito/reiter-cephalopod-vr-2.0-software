@@ -21,6 +21,8 @@ from cephvr.visual_stimulus.resources.budget import (
     BoundedBudget,
     arena_mesh_bytes,
     arena_texture_bytes,
+    review_capture_cpu_bytes,
+    review_capture_gpu_bytes,
 )
 from cephvr.visual_stimulus.resources.ffv1_configuration import (
     FFV1ConfigurationError,
@@ -34,7 +36,6 @@ from cephvr.visual_stimulus.resources.media import (
     MediaPreparationError,
     decode_image,
 )
-from cephvr.visual_stimulus.resources.session import review_capture_cpu_bytes
 from cephvr.visual_stimulus.resources.uniforms import build_uniform_layouts
 from cephvr.visual_stimulus.resources.video import VideoPlayback
 from cephvr.visual_stimulus.resources.video_index import (
@@ -1758,3 +1759,145 @@ def test_glb_retains_declared_arena_geometry_from_protected_content(tmp_path):
     finally:
         assert bundle.asset_set.close() == ()
     assert bundle.asset_set.assets[0].source.closed
+
+
+def test_prepared_manifest_detects_shader_content_changes(tmp_path, monkeypatch):
+    from tests.visual_stimulus.support import make_program
+
+    from cephvr.visual_stimulus.rendering import shaders
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    def manifest():
+        return prepare_resources(
+            make_program(),
+            tmp_path,
+            BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000),
+            announce=lambda *_: None,
+            snapshot_limit_bytes=1_000_000,
+            video_index_limit_bytes=1000,
+            glb_element_limit=1000,
+        ).manifest
+
+    before = manifest()
+    monkeypatch.setattr(
+        shaders,
+        "_LAYER_FRAGMENT",
+        shaders._LAYER_FRAGMENT.replace("float wave = cos(", "float wave = sin("),
+    )
+    after = manifest()
+    assert before.provenance != after.provenance
+    assert before.resources == after.resources == ()
+    roles = {item.role for item in after.provenance}
+    assert {"renderer", "shader", "color_transform", "os"} <= roles
+
+
+def test_renderer_source_digest_detects_edits_and_is_relocatable(tmp_path):
+    import shutil
+
+    from cephvr.visual_stimulus.resources.provenance import source_digest
+
+    root = tmp_path / "release-a"
+    root.mkdir()
+    source = root / "render.py"
+    source.write_text("def render(): return 1\n")
+    before = source_digest(root, lambda: None)
+    shutil.copytree(root, tmp_path / "relocated")
+    assert before == source_digest(tmp_path / "relocated", lambda: None)
+    source.write_text("def render(): return 2\n")
+    assert before != source_digest(root, lambda: None)
+
+    def cancelled():
+        raise InterruptedError("cancelled")
+
+    with pytest.raises(InterruptedError):
+        source_digest(root, cancelled)
+    source.unlink()
+    with pytest.raises(ValueError, match="source is unavailable"):
+        source_digest(root, lambda: None)
+
+
+def test_shared_asset_library_reuses_files_and_retains_old_versions(tmp_path):
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    class Source:
+        def __init__(self, path):
+            self.path = path
+
+        def independent_reader(self):
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            pass
+
+    for name, size in (("v1", 8), ("v2", 16)):
+        directory = tmp_path / name
+        directory.mkdir()
+        (directory / "texture.json").write_text(
+            json.dumps(
+                {
+                    "pattern": "checker",
+                    "params": {"texture_resolution": size, "tile_width_mm": 40},
+                }
+            )
+        )
+    before = {
+        path.relative_to(tmp_path): path.read_bytes()
+        for path in tmp_path.rglob("*")
+        if path.is_file()
+    }
+
+    def prepare(relative):
+        program = SimpleNamespace(
+            assets=(
+                Asset(
+                    asset_id="recipe",
+                    logical_path=relative,
+                    profile="cephvr1_texture_json_v1",
+                    color_override=None,
+                ),
+            ),
+            instances=(),
+            sequence=(),
+        )
+        bundle = prepare_resources(
+            program,
+            tmp_path,
+            BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000),
+            announce=lambda *_: None,
+            snapshot_limit_bytes=100_000,
+            max_document_bytes=1000,
+            video_index_limit_bytes=1000,
+            glb_element_limit=1000,
+            source_factory=Source,
+        )
+        bundle.asset_set.close()
+        return bundle.manifest.resources[0].fingerprint
+
+    first = prepare("v1/texture.json")
+    assert prepare("v1/texture.json") == first
+    second = prepare("v2/texture.json")
+    assert second.sha256 != first.sha256
+    assert prepare("v1/texture.json") == first
+    assert {
+        path.relative_to(tmp_path): path.read_bytes()
+        for path in tmp_path.rglob("*")
+        if path.is_file()
+    } == before
+
+
+@pytest.mark.parametrize(
+    "pixel_format,target_bytes",
+    [("rgba8_top_down", 4), ("r10g10b10a2_le_top_down", 16)],
+)
+def test_review_gpu_budget_includes_both_targets_and_bounded_pool(
+    pixel_format, target_bytes
+):
+    assert review_capture_gpu_bytes(1280, 1000, 3, pixel_format) == 1280 * 1000 * (
+        2 * target_bytes + 3 * 4
+    )
+    with pytest.raises(ValueError):
+        review_capture_gpu_bytes(1280, 1000, 0, pixel_format)
+    with pytest.raises(ValueError):
+        review_capture_gpu_bytes(1280, 1000, 3, "unknown")

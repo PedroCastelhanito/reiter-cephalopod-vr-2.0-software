@@ -317,6 +317,26 @@ explicit for static checking of native API declarations; it does not execute Win
 code. Generated bindings are excluded from handwritten-code checks. Existing contract
 checks remain separate and follow the [contract index](../contracts/README.md).
 
+Vulture is included in the development extra for an optional dead-code evaluation:
+
+```sh
+python -m vulture
+python -m vulture --min-confidence 60
+```
+
+The configured scan covers handwritten source, tests, tools, scripts and contract
+Python, excluding generated bindings. The default confidence of 100 gives a narrow first pass; lowering it to 60 includes
+unused class/function/attribute candidates.
+An exit status of 3 means candidates were found, not that deleting them is safe.
+This audit is advisory and is not a CI/release gate. Review Qt overrides/signals,
+gRPC callbacks, Pydantic validators, native ABI fields, test-double signatures,
+console entry points and contract exports before editing. Whitelists/ignored bare
+names can hide unrelated symbols with the same name; do not auto-generate a blanket
+baseline or remove all reported symbols. See the
+[upstream confidence/false-positive guidance](https://github.com/jendrikseipp/vulture#handling-false-positives).
+The Oct16 evaluation and its scope are in the
+[current review](../reports/runtime.md#maintainability-review).
+
 The module-boundary check parses source without importing or executing it. It rejects
 feature imports of runtime/entry/service modules and private runtime access. Files
 over 500 lines produce a cohesion-review warning, not an automatic failure or a

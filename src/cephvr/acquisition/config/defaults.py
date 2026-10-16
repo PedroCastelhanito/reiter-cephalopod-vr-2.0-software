@@ -8,7 +8,10 @@ from pathlib import Path
 from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2
-from cephvr.controller.microcontroller.config import load_microcontroller_pair
+from cephvr.controller.microcontroller.config import (
+    load_microcontroller_pair,
+    resolve_serial_policies,
+)
 from cephvr.shared.config import ConfigurationError
 
 from .policy import _load_pair
@@ -19,7 +22,6 @@ from .values import (
     _required,
     _role,
     _token,
-    _validate_microcontroller_defaults,
 )
 
 
@@ -213,5 +215,5 @@ def load_defaults(root: Path) -> types_pb2.AcquisitionSettings:
     )
     if result.session_preview_max_hz < 0:
         raise ConfigurationError("preview.session_preview_max_hz must be nonnegative")
-    _validate_microcontroller_defaults(mc)
+    resolve_serial_policies(mc)
     return result

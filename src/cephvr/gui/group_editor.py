@@ -1,7 +1,7 @@
 """Inspect/edit existing groups and preview canonical expansion without backend I/O."""
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QTextOption
+from PyQt6.QtGui import QResizeEvent, QTextOption
 from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -40,7 +40,7 @@ class GroupEditor(QWidget):
         self.repetitions = QLineEdit()
         self.name = QLineEdit()
         self.name.setAccessibleName("Group name")
-        row = QHBoxLayout()
+        row = self.fields_row = QHBoxLayout()
         for caption, control, stretch in (
             ("Group name", self.name, 2),
             ("Repetitions", self.repetitions, 1),
@@ -66,6 +66,10 @@ class GroupEditor(QWidget):
         self.name.textEdited.connect(self.mark_changed)
         self.name.editingFinished.connect(self.apply_if_dirty)
         self.repetitions.editingFinished.connect(self.apply_if_dirty)
+
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        super().resizeEvent(event)
+        self.fields_row.setStretch(0, 1 if self.width() < 300 else 2)
 
     def bind(self, program: Program, path: NodePath) -> None:
         if self.program is program and self.path == path and not self.dirty:

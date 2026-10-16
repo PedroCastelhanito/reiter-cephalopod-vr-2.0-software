@@ -7,6 +7,7 @@ from google.protobuf.message import Message
 from cephvr.acquisition.config.validation import validate_configuration
 from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.control.connection_edits import validate_connections
 
 
@@ -29,12 +30,8 @@ def camera_edit_validation(
     ] = validate_configuration,
 ) -> pb.ValidationResult | None:
     """Recognize one camera's parameter/pulse edit, preserving every other field."""
-    old_entries = [
-        item for item in current.backends if item.backend_name == "acquisition"
-    ]
-    new_entries = [
-        item for item in proposed.backends if item.backend_name == "acquisition"
-    ]
+    old_entries = acquisition_backends(current)
+    new_entries = acquisition_backends(proposed)
     if len(old_entries) != 1 or len(new_entries) != 1:
         return None
     if not old_entries[0].HasField("acquisition") or not new_entries[0].HasField(
@@ -43,11 +40,7 @@ def camera_edit_validation(
         return None
     for role in CAMERA_NAMES:
         expected = pb.ExperimentConfiguration.FromString(current.SerializeToString())
-        target = next(
-            item.acquisition
-            for item in expected.backends
-            if item.backend_name == "acquisition"
-        )
+        target = next(item.acquisition for item in acquisition_backends(expected))
         source = new_entries[0].acquisition
         _known_fields(getattr(target, role).device, getattr(source, role).device)
         _known_fields(getattr(target.pulses, role), getattr(source.pulses, role))
@@ -76,18 +69,14 @@ def validate_selected_camera(
 ) -> pb.ValidationResult:
     """Validate action inputs in a copy; retain the candidate's actual flags."""
     projection = pb.ExperimentConfiguration.FromString(candidate.SerializeToString())
-    backend = next(
-        item for item in projection.backends if item.backend_name == "acquisition"
-    )
+    backend = next(item for item in acquisition_backends(projection))
     backend.enabled = True
     for name in CAMERA_NAMES:
         getattr(backend.acquisition, name).enabled = name == role
     # Manual preview does not create a recording path.
     getattr(backend.acquisition, role).save_video = False
     result = validator(projection)
-    actual = next(
-        item for item in candidate.backends if item.backend_name == "acquisition"
-    )
+    actual = next(item for item in acquisition_backends(candidate))
     connection = validate_connections(actual, selected_role=role)
     result.issues.extend(connection.issues)
     result.valid = result.valid and connection.valid

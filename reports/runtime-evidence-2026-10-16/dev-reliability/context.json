@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-16",
+  "source_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_scope": "Uncommitted source.patch over source_revision; existing and concurrent LOG changes preserved separately.",
+  "python": "3.11.15",
+  "platform": "Darwin",
+  "source_sha256": {
+    "src/cephvr/acquisition/camera/basler.py": "930521556066989f62caf41629bccde380da0824e3bcbd73dde7925aeeca450a",
+    "src/cephvr/controller/lifecycle/evidence_wait.py": "2ecae984f8d734d9b2568a5e0706c26d91e2fa416bd0931cd9b2203d8b621fb0",
+    "src/cephvr/controller/lifecycle/interruption.py": "a356c17b4c05146005f4225a6757a92b064aee4ffaa46e58c0657566849a825b",
+    "src/cephvr/controller/lifecycle_completion.py": "a4b910fd58f340e2472095f94dee5b06ef8f15119b8c8c25678753b5f91bc994",
+    "src/cephvr/controller/metadata/trial_logs.py": "b7fb6fc8f73429ba4b2408e07eb08ec81725a7cb983b6584c467a099859c8ff6",
+    "tests/acquisition/test_camera_adapter_contracts.py": "71c107481e005d9e855bd9c6867bb284d81f2a9d44341b963eba3de49bff203b",
+    "tests/acquisition/test_pulse_evidence.py": "0f73781a6a2ec3dfba2ee5d8f1630b4cd373f235a28a61127f1707a33dfe4b06",
+    "tests/controller/test_lifecycle_commands.py": "15cf03223398992d2a0ae6a0b2d680ae20407cd44325096b6914a49f65cd6414",
+    "tests/controller/test_lifecycle_reports.py": "d796e1f2f95d59441cbf7c5f66fa7ea91a7ea94d73552ad12f1344f51816836d",
+    "tests/controller/test_runtime_retention.py": "b8502eb339768d9e7c9dbd056cb8b146b7e0dad40f84820b6bc813e9bec1905c",
+    "tests/controller/test_safety_regressions.py": "c09679f2b337253c5477a43a9531f70e92f311b0aca12ab6fdb8f525427da41f"
+  },
+  "governing_decisions": [
+    "E04",
+    "E05",
+    "E06",
+    "E08",
+    "A10",
+    "ARCH-002",
+    "E15"
+  ],
+  "checks": [
+    {
+      "command": ".venv/bin/python tools/generate_contracts.py",
+      "outcome": "19 existing Protobuf sources regenerated; no contract or generated tracked-source edits"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/controller tests/acquisition tests/supervisor tests/visual_stimulus -q -m \"not windows and not rig\" --tb=short",
+      "outcome": "1531 passed, 5 skipped, 3 deselected; 18.67s",
+      "raw": "backend-tests-final.txt",
+      "permissions": "local loopback access"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_controller_communication.py tests/visual_stimulus/test_transport.py -q -m \"not windows and not rig\" --tb=short",
+      "outcome": "17 passed; 2.08s; also included in final full selection",
+      "raw": "authenticated-tests.txt",
+      "permissions": "local loopback access"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/controller src/cephvr/acquisition tests/controller tests/acquisition",
+      "outcome": "pass",
+      "raw": "ruff-check.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/controller src/cephvr/acquisition tests/controller tests/acquisition",
+      "outcome": "346 files formatted",
+      "raw": "ruff-format.txt"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/controller src/cephvr/acquisition",
+      "outcome": "293 source files pass; static analysis only",
+      "raw": "mypy.txt"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "698 modules; zero violations; existing cohesion advisories",
+      "raw": "boundaries.txt"
+    }
+  ],
+  "earlier_attempts": [
+    "Controller collection initially failed on stale ignored ProjectionLimits bindings; regeneration cleared it.",
+    "First broad controller/acquisition/supervisor run: 1183 passes, five skips, two deselections, one obsolete private-method test call; corrected owning test.",
+    {
+      "outcome": "Restricted expanded selection: 1516 passes, 13 failures, five skips, three deselections. Eleven failures were denied loopback binds; two required the missing pinned imagecodecs package.",
+      "raw": "backend-tests.txt"
+    },
+    {
+      "outcome": "Installed repository-pinned imagecodecs==2025.3.30 into the existing Python3.11 venv; numpy2.4.4 unchanged; no dependency declarations changed.",
+      "raw": "dependency-install.txt"
+    },
+    {
+      "outcome": "1530 passes before final manual review; superseded by final suite with added overlapping-Abort regression.",
+      "raw": "backend-tests-before-final-review.txt"
+    },
+    "Tool-transcript-only focused red/green checks: four adapter variants reproduce stale closed-device guard before repair; metadata-overlap test reproduces skipped cleanup introduced by initial ordering change, then both overlap variants pass after retaining finalization ordering. Early new fixtures lacked frozen Ready/output declarations and one used scalar-field presence incorrectly; corrected without weakening admission."
+  ],
+  "coverage": [
+    "Admitted fenced exact-generation/session/command/catalogue cleanup before interrupted trial/session metadata; Closed and Failed output statuses, absent actual stop times and no normal Finished fabrication.",
+    "Exact registered output paths; missing/wrong paths rejected. One frozen-set session-state recovery query; wrong generation/session/command/catalogue rejected; expired finalization cannot extend recovery.",
+    "NewSession after confirmed cleanup; stale old cleanup rejected against a fresh attempt. Retired pulse boundary cannot actuate/mutate fresh session; same owner remains usable for next trial.",
+    "Six SDK-boundary close/reopen cycles per external/free-running and failed-Close variant; same-device unknown guard and failed-Close guard remain; historical unknown discard evidence unchanged.",
+    "Abort joining normal finalization during metadata or cleanup fencing preserves one cleanup dispatch and original completed outcome."
+  ],
+  "cohesion_review": "567-line interruption workflow retains one finalization task and focused cleanup/trial metadata operations; 685-line Basler SDK facade retains device lifetime. No new state, process, dependency declaration, policy or test module.",
+  "limitations": [
+    "No native Windows, real SDK/device, projector, electrical/optical or full-load validation; no rig checks closed.",
+    "Original native cause of incomplete preview drain is not established; cross-close propagation of its guard is reproduced and repaired locally.",
+    "Native Abort latency/synchronized metadata, rapid recording across retired end and more-than-five real preview cycles remain open in reports/rig-verification.md.",
+    "Historical unknown trial metadata/output evidence is not retroactively rewritten. Other TODO controller race/logging concerns remain outside this focused repair."
+  ]
+}

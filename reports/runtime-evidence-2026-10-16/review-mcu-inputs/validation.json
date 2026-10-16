@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-16",
+  "revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "scope": "Shared dirty checkout; review-only Qt offscreen macOS tests and renders; no native Windows, serial input, firmware or electrical validation.",
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"review_mcu_inputs or review_device_layout_candidates or microcontroller or review_draft or review_window_saves or review_and_runtime_share_page_elements\"",
+      "outcome": "28 passed, 520 deselected in72.61s; stdout retained in tool transcript"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui/review_mcu_inputs.py src/cephvr/gui/review_mcu_snapshot.py src/cephvr/gui/microcontroller.py src/cephvr/gui/devices.py src/cephvr/gui/review_devices.py src/cephvr/gui/review_draft.py tests/gui/test_dashboard.py",
+      "outcome": "pass"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui/review_mcu_inputs.py src/cephvr/gui/review_mcu_snapshot.py src/cephvr/gui/microcontroller.py src/cephvr/gui/devices.py src/cephvr/gui/review_devices.py src/cephvr/gui/review_draft.py tests/gui/test_dashboard.py",
+      "outcome": "7 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/review_mcu_inputs.py src/cephvr/gui/review_mcu_snapshot.py src/cephvr/gui/microcontroller.py src/cephvr/gui/devices.py src/cephvr/gui/review_devices.py src/cephvr/gui/review_draft.py",
+      "outcome": "6 source files pass"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "710 modules; zero violations. Existing cohesive-owner advisories include MCU609lines; new behavior resides in focused review helpers."
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass"
+    }
+  ],
+  "render_method": "QT_QPA_PLATFORM=offscreen QApplication/apply_theme/ReviewDashboardWindow with simulated fixtures,1280x940. QWidget.grab before and after Add input and name/pin edits. Both PNGs visually inspected. Owning tests check720/1280 empty/header/add/remove behavior.",
+  "initial_failures": "Corrected import/local-annotation lint and a test assumption that mistakenly included the Inputs card caption among placeholder labels; no failing product behavior retained.",
+  "source_sha256": {
+    "review_mcu_inputs.py": "7f4c14da26a9a126ea0e1ee9a9489851427a497c342bf66a03dee0e0169ca781",
+    "review_mcu_snapshot.py": "ed3fcc56afc41ffd613d61774de33d87b5aa533de4a9f31da7562cd3a19ccfde",
+    "microcontroller.py": "f4f7372702a5f09033a30b791134991c85670e7b444a80531e99d0b9e809b077",
+    "devices.py": "ca826ff75ac36f825cf49c7136c95299f3af1f3ec3f9cc381440f2909e7ea656",
+    "review_devices.py": "c8c3420d0317d63539cca6188b9e89fcdfc4af1526cfab676d174b4874f276b9",
+    "review_draft.py": "c35631a94f514a1642009b2619be8a1fbfbfe1118b17fced4bd9bc9038204605"
+  }
+}

@@ -45,6 +45,189 @@ Live-calibration explicit Update rejection is repaired without clearing the acti
 diagnostic block; owning cases cover three views and rejected/unknown outcomes.
 [Fresh audit evidence](runtime-evidence-2026-10-15/comprehensive-audit/).
 
+Oct16 `stimulus-sequential-recording` implements owner-approved
+[E13 revision26](../docs/architecture/visual_stimulus.md#e13), with V12rev14,
+V28rev7 and E14rev212/policy16. Retained usable composites now enter the MP4 once in
+source-group order, including equal-time and repeated-content groups. Contiguous
+zero-based indices are published only after a complete raw input frame is accepted.
+Capacity drops and failed/cancelled readbacks consume no index; pending earlier
+readbacks block later input ordering within the same fixed capture-slot bound.
+There is no nominal-slot omission or leading/interior/trailing padding. Legacy
+omission/duplicate counters stay zero, and closure requires full sequential count
+reconciliation. A failed input or mapping publication cannot be retried as another
+frame or promoted to successful closure.
+
+Header6 and the MP4 writer schema3 distinguish the new correspondence; recipe schema2
+is retained with `ffmpeg_rawvideo_sequential_v1`. The same `_stimulus_frames.jsonl`
+provides `input_submitted.video_frame_index` → group → `state.evaluation_host_ns`
+and exact per-output submission times, without a second timestamp file. Historical
+Header3–5 remain readable under their original semantics. MP4 nominal playback rate
+is unchanged but its duration is no longer scientific elapsed time. Video-off
+scientific outputs, fragmented-MP4 closure, original deadlines and exact cutoff stay
+in place. Crashed tail pixels/mappings remain unknown; no recovery/replay runtime is
+added.
+
+ARCH-002 removes the cadence/padding state and retained previous image, simplifying
+the focused capture owner. No new
+process, dependency or whole-runtime reference. The existing native recording and
+resource session size advisories remain cohesive lifecycle/resource owner exceptions;
+timing logic stays in the focused capture helper. The conservative memory ceiling
+is unchanged. At that sequential-recording increment, geometry/input-argument helpers
+matched HEAD by AST and compositor/readback source matched byte-for-byte; operator
+TOML values matched except the required policy version. The subsequent capture
+optimization below changes readback implementation while retaining tile sampling. The retained Oct15 profile still computes1280×1000 with factor2 and
+unchanged tile rectangles when the encoder maximum needs no extra reduction; this
+is not a live-rig configuration observation. Projector pacing and output rendering
+were not edited.
+
+Local validation:458 tests and79 contract subtests pass (one native/rig exclusion),
+including authenticated transports, normal/interrupted on-disk mappings, same-time
+real repeats, reverse readback completion, cancelled first capture, capacity gaps,
+partial input/mapping failures, empty/off recording and original cleanup deadlines.
+Ruff/format174, Win32 mypy158,11 generated schema checks and710 backend modules with
+zero boundary violations pass. Initial Header version fixture/schema sequencing,
+optional diagnostic typing and one formatting error were corrected. The first broad
+run's11 localhost bind denials passed with socket permission. A preservation probe's
+initial tuple serialization assumption was corrected; its actual equality/geometry
+checks pass. [Raw results, exact commands, sample test outputs and source hashes](runtime-evidence-2026-10-16/stimulus-sequential-recording/validation.json)
+retain the dirty-checkout/source scope. Native encoder input/count/fragment recovery
+and full-load throughput remain in the [single rig checklist](rig-verification.md);
+local fake-input tests do not prove NVENC output or device equivalence.
+Local documentation checks resolve changed references/decision anchors but find two
+pre-existing missing historical PNG targets (Oct15 bottom-grid/fix-verification/after/
+bottom-offscreen.png and Oct14 tank-screen-plot/tank-screens.png). Their links already
+exist in HEAD; restoration/location verification is queued separately.
+
+Oct16 `stimulus-capture-optimization` now implements the owner-authorized PBO reuse
+and GPU row orientation under [V12 revision15](../docs/architecture/visual_stimulus.md#v12).
+The existing admission bound controls lazy pool growth; idle PBO storage is reused
+without per-frame allocation/deletion. Each transfer has a fresh identity/fence.
+Only signaled, successfully copied/unmapped buffers return to the pool; cancelled or
+failed storage is discarded. Host bytearrays remain independent of later PBO writes.
+Covered cleanup retries retain exact failed ownership and skip confirmed deletions, including
+idle-buffer and partial-target allocation failures. Cleanup explicitly activates the
+first output context before scene release, even when producer fences are already
+retired. A local failure probe exposed this pre-existing context-selection gap; failed
+activation retains scene/window ownership for retry. GL calls stay on their owner.
+
+The compositor's shaders, quad, tile-render loop, dimensions and FFmpeg argv builder
+are unchanged against the pre-increment snapshot; operator configuration is byte
+identical. Rather than change bilinear tile sampling, a same-size nearest GPU blit
+reverses the completed framebuffer into a second identical-format target. It preserves
+black margins, restores scissor, rebinds the composite FBO and leaves no PBO bound. New capture strings
+`rgba8_top_down` and `r10g10b10a2_le_top_down` make the actual row order explicit in
+recipes/evidence. Historical bottom-up representations remain interpretable; live GL
+capture accepts only top-down plans. The 8-bit recording path passes its owned buffer
+through without a row copy; packed 10-bit retains X-bit normalization. This additional
+GPU copy is a deliberate tradeoff to preserve sampled pixel codes; performance is
+unmeasured. [OpenGL framebuffer blit semantics](https://wikis.khronos.org/opengl/GlBlitFramebuffer)
+and [PBO synchronization](https://wikis.khronos.org/opengl/Pixel_Buffer_Object) support
+the transfer design, not a hardware throughput claim.
+
+ARCH-002 keeps ownership in the existing focused capture helper and moves recording
+memory calculations to the existing resource-budget module. GPU preflight now counts
+both targets (two RGBA8 or RGBA32F images) plus the bounded four-byte PBO pool; CPU
+headroom/settings stay unchanged. No new process/dependency, independently editable
+capacity or off-thread GL work. The existing large preparation/recording owner size
+advisories remain reviewed cohesive exceptions; separable accounting was extracted.
+E13 layout, resolution, image processing, nominal playback and projector pacing are
+unchanged; sequential timestamp mapping and closure rules remain in place.
+
+Final local owner/contract suite:430 tests and82 subtests pass, one native/rig exclusion,
+including authenticated transports. The host GL model checks byte-equivalent transfer
+against the prior CPU path for 8/10-bit, odd/even/single rows, bounded repeated reuse,
+independent host buffers, reverse completion, unsignaled cancellation, stale handles,
+blit/fence/map corruption, and failed-deletion/partial-allocation retries. It does not
+execute native GL or prove actual GPU pixel equivalence. Ruff/format174, Win32 mypy158,
+11 schemas and710 module boundary checks pass; three import-order issues were fixed
+before final checks. The context probe initially lacked a GLFW teardown stub, which
+was corrected without changing its ordering assertion; final normal/failing activation
+cases pass. [Exact source snapshots/hashes and raw validation](runtime-evidence-2026-10-16/stimulus-capture-optimization/validation.json)
+retain this dirty checkout's scope. The owner will perform native pixel, memory and
+combined-load performance checks later under the [rig checklist](rig-verification.md).
+GPU grayscale conversion, off-thread readback and layout/crop changes remain outside
+this implementation; `stimulus-review-encoding-cost` retains the native follow-up.
+
+Oct16 `stimulus-capture-cleanup-faults` repairs both locally reproduced cleanup
+findings under [V12](../docs/architecture/visual_stimulus.md#v12) and
+[E06](../docs/architecture/system-contracts.md#e06), without changing those decisions:
+
+- Capture cancellation now attempts independent reservation/GL releases even when
+  required evidence cannot be queued, then propagates the first error. Confirmed
+  reservation cancellation is retained across GL retries, so failure counts are not
+  repeated; a failed or incomplete GL deletion retains its exact pending handle.
+  A stopped recorder still produces Failed output results after resource cleanup.
+- Readback retirement/pooling now follows all fallible GL work, including the final
+  buffer unbind. Restoration failures mark the handle failed and retain it for
+  cancellation, even when the fence was already deleted. Failed storage is discarded,
+  never recycled; later capture allocates fresh storage.
+
+Ten new owning regressions fail before repair and pass after it. They cover full and
+sealed evidence queues, multiple pending captures, false/raising GL cancellation
+followed by retry, unchanged failure counters and deadlines, failed output results,
+and ready/unsignaled unbind failures with deletion retries. Final owner/contract suite:
+440 tests and82 subtests pass with one native/rig exclusion and localhost permission.
+Ruff/format174 files, Win32 mypy158 sources and boundaries712 modules/zero violations
+pass; two initial formatting findings were corrected. ARCH-002 keeps the existing
+focused owners and owning test modules; unchanged large backend owners retain their
+cohesion advisories. No new state machine, dependency or queue is added.
+
+Static preservation checks confirm unchanged capture submission, GPU orientation,
+shader bytes, composite geometry, encoding arguments and operator settings. Existing
+host tests retain asymmetric 8/10-bit and odd/even/single-row image coverage. These
+results do not establish native GL pixel equivalence, driver fault frequency or
+throughput; those remain in the [rig checklist](rig-verification.md). The
+[original review reproductions](runtime-evidence-2026-10-16/stimulus-capture-review/validation.json)
+remain historical evidence of the defects; current red/green results, commands and
+source fingerprints are in [fix validation](runtime-evidence-2026-10-16/stimulus-capture-cleanup-fixes/validation.json).
+
+Oct16 E08/V12/ARCH-002 maintenance shares only unary peer mechanics, with Visual
+Stimulus-owned stub selection retained. Recording metric comments clarify complete
+input spans, zero-progress gaps and independent maxima without changing diagnostics
+or scientific outputs. Authenticated peer26 and recording52 focused cases pass;
+[current evidence](runtime.md#maintainability-review) retains final integration scope.
+Native full-load acceptance remains open.
+
+Oct16 `stimulus-replay-provenance` is repaired under
+[V13 revision12](../docs/architecture/visual_stimulus.md#v13). The existing recipe
+manifest now includes the installed renderer-source SHA-256, individual scene/arena/
+warp/output shader hashes, Python/OS and relevant package/linked-decoder versions,
+in-package color/importer identities, and actual per-output GL vendor/renderer/driver
+observations. Missing required graphics facts reject Setup. Source/shader/environment
+changes are distinguishable in saved canonical bytes; retain the matching software
+release externally. The [earlier probe](runtime-evidence-2026-10-16/backend-output-alignment-review/validation.json)
+reproduced the generic-label defect before this repair.
+
+ARCH-002 extracts provenance from the resource preparer into a focused helper and
+consolidates unchanged GLSL source ownership. Source collection runs once per Setup;
+no per-frame hashing/readback or new dependency/process is introduced. The existing
+CPU preparation worker now hands artifacts to the graphics owner and resumes after
+context provenance enrichment, before recipe preparation, canonical hashing and
+publication. Two bounded Futures preserve graphics-thread ownership, original Setup
+deadlines and cleanup joins. Graphics failures retain the original lifecycle failure
+path. Final serialized size remains bounded. Native/session/lifecycle size advisories
+are reviewed as cohesive context/resource/lifecycle owners; new provenance mechanics
+live in the helper and existing preparation job, without runtime back-references.
+
+Owner-approved external preservation uses one backed-up, versioned asset library;
+per-run manifests retain paths, sizes and hashes without copying an asset subset.
+Preserve each image, mesh/material dependency and calibration version once, and keep
+referenced versions. [Operator example](../docs/examples/session-logging.md#shared-asset-library).
+Tracking remains deferred; reconstruction targets software-generated output.
+Offline compatibility validation/replay/export and native GPU verification remain
+separate from experiment-side retention; no pixel/light-onset equivalence is claimed.
+
+Acquisition/stimulus and selected central-output tests pass997, with five platform
+skips/three exclusions, including authenticated localhost transports. Five focused
+final-publication cases additionally verify the on-disk recipe against the prepared
+handle, graphics failure, cancellation, deadline and final-byte-limit rejection.
+Source relocation/edit, shader mutation, driver changes/missing facts and shared
+asset version reuse are covered. Exact GLSL preservation is checked against HEAD.
+Ruff/format176, Win32 mypy159 and boundary checks pass. The initial run required
+localhost access and correction of one new test fixture's snapshot budget; two initial
+type annotations were corrected. [Commands, source fingerprints and raw results](runtime-evidence-2026-10-16/output-provenance-fixes/validation.json)
+retain scope/limits. Native checks stay in the [single rig checklist](rig-verification.md#always-saved-scientific-evidence).
+
 Oct15 live-pulse follow-up completes the owner-requested photodiode preview: the
 existing GL-owner service loop repeatedly submits the current placement while Active.
 Trial and diagnostic drawing share one pure V22 pattern helper, with separate
@@ -192,7 +375,36 @@ there are no unresolved submissions/captures. Stimulus records 54,000 CFR frames
 53,389 real frames, 598 same-slot omissions, one capacity drop and 611 duplicates
 (1.131%). The capacity drop is group 17 at T+0.2947451 seconds, with none thereafter.
 Peak capture occupancy reaches 15/15 and maximum slot hold is 261.51 ms; burst headroom
-and zero-loss capture are not established. Active GPU means by translation/spin/arena
+and zero-loss capture are not established.
+Oct16 read-only reanalysis bounds the historical ready-to-dequeue maximum at241.9643ms,
+readback readiness at61.2051ms, normalization at10.0268ms and individual pipe calls
+at9.3096ms. These maxima need not belong to one capture; pipe-call duration excludes
+waiting between zero-progress calls. The old aggregates cannot attribute group17's
+startup drop to GL, encoder or OS scheduling, and cannot recover percentiles.
+Current local diagnostics retain one group/slot/timestamp example per fixed stage and
+a full-frame input span with attempt/zero-progress counts, plus one unfinished span.
+No rendering, pixels, capture selection, output count, deadline or GL ownership changes.
+Owning tests pin old counts/timings, exact examples and snapshot isolation; new native
+correlation remains in the [single rig plan](rig-verification.md#encoding-test-plan).
+Final integrated backend/authenticated1860 passes/five skips/five exclusions, Ruff,
+format679, Win32 mypy583 and boundaries702/zero violations pass. Validation is local;
+no native throughput, total-memory or zero-loss acceptance is inferred.
+
+The archived profile/scale resolves to1280x1000 RGBA (5,120,000bytes/frame), independently
+matching276,480,000,000 submitted bytes/54,000 input frames. Accounted capture memory:
+
+| Slots | CPU reservation | GPU reservation |
+| --- | --- | --- |
+| Restored default3 | 31.74MiB | 34.18MiB |
+| Tested override15 | 90.33MiB | 92.77MiB |
+
+Both CPU reservations fit256MiB `recording_bytes_total`; GPU reservations join the shared
+asset budget. The evidence queue has a separate16MiB bound. These are current allocation
+formulas, not measured full-process/driver/FFmpeg/OS memory. Keep restored default3;
+15 fits these bounds but still filled and dropped in the900-second run, so no new default,
+queue increase or headroom claim is justified here. Existing15-slot test settings remain
+archived for controlled native comparison. [Reproducible analysis and limits](runtime-evidence-2026-10-16/remaining-dev-work/stimulus_capture_analysis.json).
+ Active GPU means by translation/spin/arena
 are 10.99/11.28/10.21% rendering and 42.36/42.76/42.56% encoding; memory stays constant.
 Six nonaliasing snapshots at 15/17, 315/322 and 615/622 seconds show changing content
 in all four tiles. Astra accepts software-linked motion/endurance, with physical
@@ -208,8 +420,20 @@ the camera PFS selector-cursor restoration limitation. Cleanup removes only 51 p
 regenerable synthetic MP4s (13.504 GiB), retaining their commands/counts/decode results,
 all real/failed recordings and unique evidence.
 [Cleanup manifest](runtime-evidence-2026-10-15/projector-free-rig/synthetic-media-cleanup.json).
-An observed V16 evidence gap remains: arena effective_poses is empty although the exact
-model matrix is retained. Do not infer scientific virtual-camera pose acceptance.
+Oct16 `arena-effective-pose-evidence` repairs that structured evidence gap under
+[V13/V16](../docs/architecture/visual_stimulus.md#v16). The scene renderer retains one
+pose for the active arena using the same frozen state as its existing model matrix:
+explicit world frame, millimetre position and a unit xyzw quaternion matching the
+existing yaw/pitch/roll composition. The authored asset transform remains separately
+represented by the prepared asset and exact model-matrix words. Drawing/constraint
+behavior and physical observer calibration are unchanged; no new movement semantics
+or scientific acceptance is inferred. Existing arena helpers share finite pose-value
+validation under ARCH-002, with no new dependency/state owner. Rendering/evidence/
+feedback97 and Visual Stimulus347 pass (one native/rig deselected); scoped Ruff/format3,
+Win32 mypy2 and boundaries698/zero violations pass. An initial test fixture omitted
+the required arena kind and was corrected. Native pose/frame/matrix inspection remains
+in the [rig checklist](rig-verification.md).
+[Local source/check evidence](runtime-evidence-2026-10-16/remaining-dev-work/context.json).
 [Raw attempts, fixes and native evidence](runtime-evidence-2026-10-15/open-loop-soak/)
 
 Oct15 encoder matrix completes31/31 cases:10s all-source warm-up plus three
@@ -689,10 +913,11 @@ defect found in this source review; native stderr collection and encoding remain
 rig checks. ARCH-002: diagnostics are a focused module; existing
 oversized native owner only binds the scale/clock to existing lifecycle operations,
 with no added process/dependency or whole-runtime reference. No native GPU/FFmpeg
-encode or measured frame-drop reduction is claimed. PBO pooling, shared-context
-readback, CPU row-flip removal and RGB/mono capture-layout changes remain contingent
-on [rig measurements](rig-verification.md); current mono encoding still takes RGBA
-input, now at the reduced review dimensions.
+encode or measured frame-drop reduction was claimed by that increment. PBO pooling
+and GPU row orientation are subsequently implemented above; off-thread readback and
+RGB/mono capture-layout changes remain deferred. Current mono encoding still takes
+RGBA input at the reduced review dimensions; [native measurements](rig-verification.md)
+remain pending.
 
 Oct14 `encoding-quality-defaults`: owner selects CQ16 as the standard, p4, unchanged
 camera dimensions (review composite now reduced as above), Behavior color 4:4:4 and Tracking mono; Eye and Stimulus mono
@@ -840,7 +1065,8 @@ lock and private native pipe copying remove recording contention. Original owner
 slot bounds, precision and encoder settings remain. Preparation release receipts are
 retained for cleanup retry until all source/consumer ownership closes, then retired at
 new preparation; this fixes the reproduced On-to-On unknown-resource shutdown.
-The owning CPU budget includes padding, readback/pipe copies and half-frame scratch.
+That historical CPU budget included padding, readback/pipe copies and half-frame
+scratch; the current sequential path retains the conservative ceiling without padding.
 ARCH-002 keeps the existing cohesive native/preparation owners with small helpers,
 no new dependency/process or whole-runtime reference.1123 regressions pass/3 skip/
 6 deselect, native pipe14 pass, Ruff/static mypy427/boundaries667 pass.
@@ -1145,7 +1371,7 @@ trial; median render interval is 49.29 ms. This supersedes run42's 1,419-frame/2
 measurement for the latest retained workload, without establishing a regression or
 cause across differently loaded runs. Throughput and unpadded elapsed-time compression
 remain separate issues; padding cannot restore missing physical presentations.
-See the local [E13](../docs/architecture/visual_stimulus.md#e13) padding implementation below and the
+See current [E13](../docs/architecture/visual_stimulus.md#e13) sequential recording above and the
 [rig checklist](rig-verification.md); this is not a scientific timing pass.
 
 Recording uses one bounded full-frame pending encoder write instead of polling every
@@ -1189,16 +1415,9 @@ Library ownership references: [GLFW fullscreen hints](https://www.glfw.org/docs/
 [ModernGL context creation](https://moderngl.readthedocs.io/en/latest/topics/context.html),
 [ModernGL loader lifetime](https://github.com/moderngl/moderngl/blob/5.12.0/_moderngl.py).
 
-Owner-selected video timing rules now follow
-[E13 revision 20](../docs/architecture/visual_stimulus.md#e13),
-[V12 revision 11](../docs/architecture/visual_stimulus.md#v12) and
-[V28 revision 5](../docs/architecture/visual_stimulus.md#v28): first usable image per
-evaluation-time slot, explicit leading first-image backfill, later repeated-image
-padding and separate real-source/encoded-frame evidence. The recording thread retains
-one normalized image, preserves admitted source order, installs cutoff before draining,
-and services evidence/sync during streamed padding. Resource preflight includes the
-retained image, transient readback copy and row scratch. Evidence Header/registry 3
-and fixed policy 8 bind the mapping; PreparedTrial/recipe remains format 2.
+Historical Oct9 timing validation used nominal-slot selection/padding, now superseded
+by the Oct16 sequential implementation above under [E13](../docs/architecture/visual_stimulus.md#e13).
+Its retained checks below establish only the source and policy tested at that date.
 Pre-T cancellation, immutable cleanup cutoff, omission accounting and proved camera
 tail boundaries are corrected. Successful encoder input is retained before maintenance;
 a missing required mapping poisons normal retry. Sol accepts the corrections after 53

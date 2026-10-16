@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-16",
+  "scope": "Local Running presentation fixture only; production source unchanged",
+  "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-16/review-terminal/running/presentation.py",
+  "result": "Running fixture assertions pass; wide/narrow renders inspected.",
+  "assertions": [
+    "Running phase, trial2/6",
+    "Setup/Start disabled, Stop enabled",
+    "Subject field locked",
+    "sample=True, connected=False"
+  ],
+  "script_sha256": "76bbc194437177acce55b140d77759d6c3d99d1fb411c5799f58d0abebfa79bb",
+  "interactive": "Launched isolated presentation.py --interactive via nohup; launch command exit0, no startup error in log. Native visibility not independently inspected. Base DashboardWindow avoids saved Review-draft writes.",
+  "limits": "Static example content and timestamps; no actual experiment, devices, controller commands, performance evidence or rig acceptance."
+}

@@ -51,6 +51,30 @@ def _id() -> str:
     return str(uuid.uuid4())
 
 
+@pytest.mark.parametrize("installed", [True, False])
+def test_process_software_version_is_owned_and_unknown_without_distribution(
+    monkeypatch, installed
+):
+    from cephvr.shared import software
+
+    calls = []
+
+    def lookup(name):
+        calls.append(name)
+        if not installed:
+            raise software.PackageNotFoundError(name)
+        return "2.0.0.test"
+
+    software.software_version.cache_clear()
+    monkeypatch.setattr(software, "version", lookup)
+    try:
+        assert software.software_version() == ("2.0.0.test" if installed else "")
+        assert software.software_version() == ("2.0.0.test" if installed else "")
+        assert calls == ["cephvr"]
+    finally:
+        software.software_version.cache_clear()
+
+
 def test_nominal_video_grid_uses_half_open_rational_slots_and_ceil_cutoff() -> None:
     grid = NominalVideoGrid(10_000_000_000, Fraction(30_000, 1_001))
     first_boundary = grid.start_ns + (1_001_000_000 + 29) // 30

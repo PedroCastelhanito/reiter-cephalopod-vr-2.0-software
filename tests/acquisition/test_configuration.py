@@ -688,3 +688,46 @@ def test_confirmation_must_match_every_reported_camera_and_pulse_readback() -> N
         {camera.CAMERA_ROLE_BEHAVIORAL},
         pulse_resolution,
     )
+
+
+@pytest.mark.parametrize(
+    "key,value,accepted",
+    [
+        ("ack_timeout_ms", "1.5", False),
+        ("ack_timeout_ms", "100.0", False),
+        ("ack_timeout_ms", "true", False),
+        ("ack_timeout_ms", "0", False),
+        ("ack_timeout_ms", "4294967296", False),
+        ("ack_timeout_ms", "1", True),
+        ("baud_rate", "115200.0", False),
+        ("baud_rate", "4294967296", False),
+        ("stop_completion_margin_ms", "0.5", False),
+        ("keepalive_interval_s", "0.000000001", True),
+        ("keepalive_interval_s", "0.0000000001", False),
+        ("keepalive_interval_s", "3", False),
+        ("keepalive_interval_s", "nan", False),
+        ("keepalive_interval_s", "inf", False),
+        ("communication_timeout_s", "3.000000001", False),
+        ("communication_timeout_s", "4294967.296", False),
+        ("communication_timeout_s", "3.001", True),
+    ],
+)
+def test_microcontroller_defaults_and_serial_policies_share_validation(
+    tmp_path, key, value, accepted
+):
+    import re
+
+    from cephvr.controller.microcontroller.config import load_serial_policies
+
+    root = _copy_configuration(tmp_path)
+    path = root / "config/backends/microcontroller_config.toml"
+    path.write_text(re.sub(rf"(?m)^{key} = .*$", f"{key} = {value}", path.read_text()))
+    if accepted:
+        defaults = load_defaults(root)
+        policies = load_serial_policies(root)
+        assert defaults.HasField("pulses")
+        assert policies.serial_ack_timeout_ns > 0
+    else:
+        for loader in (load_defaults, load_serial_policies):
+            with pytest.raises(ConfigurationError):
+                loader(root)

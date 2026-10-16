@@ -22,6 +22,7 @@ def successful_outputs(
     encoder: EncoderProcess,
     video_identity: object | None,
     stat_identity: Callable[[Path], object | None],
+    source_frames: int | None = None,
 ) -> list[control.OutputResult]:
     if encoder.exit_code != 0:
         raise RecordingFailure("successful closure requires encoder exit zero")
@@ -54,10 +55,14 @@ def successful_outputs(
             False,
             control.CAMERA_VIDEO_CONTENT_NO_FRAMES,
         )
-    return [
-        video_result,
-        output_result(schedule, frame_log_path, control.OUTPUT_CLOSURE_CLOSED, True),
-    ]
+    video_result.counts["frames"] = recorded_frames
+    frame_result = output_result(
+        schedule, frame_log_path, control.OUTPUT_CLOSURE_CLOSED, True
+    )
+    frame_result.counts["video_frames"] = recorded_frames
+    if source_frames is not None:
+        frame_result.counts["source_frames"] = source_frames
+    return [video_result, frame_result]
 
 
 def failed_outputs(
@@ -82,7 +87,10 @@ def failed_outputs(
         )
     else:
         video = output_result(
-            schedule, video_path, control.OUTPUT_CLOSURE_UNCONFIRMED, False
+            schedule,
+            video_path,
+            control.OUTPUT_CLOSURE_UNCONFIRMED,
+            current_identity is not None,
         )
     return [
         video,

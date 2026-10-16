@@ -6,6 +6,7 @@ once their original deadlines and serialized capacity have been checked.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Literal
 from uuid import uuid4
 
@@ -195,9 +196,7 @@ class IncidentRegistry:
                     record.revision += 1
             records[incident_id] = record
         errors[error.error_id] = encoded
-        used_bytes = sum(len(item) for item in errors.values()) + sum(
-            len(item.SerializeToString(deterministic=True)) for item in records.values()
-        )
+        used_bytes = self._retained_bytes(errors, records)
         if used_bytes > self.max_bytes:
             raise IncidentCapacityError("incident serialized byte capacity exhausted")
         self._records = records
@@ -244,13 +243,8 @@ class IncidentRegistry:
                 else pb.RUNTIME_INCIDENT_DISPOSITION_ABORT_SELECTED
             )
         record.revision += 1
-        current_bytes = sum(len(item) for item in self._errors.values()) + sum(
-            len(item.SerializeToString(deterministic=True))
-            for key, item in self._records.items()
-            if key != incident_id
-        )
         if (
-            current_bytes + len(record.SerializeToString(deterministic=True))
+            self._retained_bytes(self._errors, self._records | {incident_id: record})
             > self.max_bytes
         ):
             raise IncidentCapacityError(
@@ -259,11 +253,12 @@ class IncidentRegistry:
         self._records[incident_id] = record
         return pb.RuntimeIncident.FromString(record.SerializeToString())
 
-    def end_session(self) -> None:
+    def end_session(self) -> tuple[pb.RuntimeIncident, ...]:
         records = {
             key: pb.RuntimeIncident.FromString(value.SerializeToString())
             for key, value in self._records.items()
         }
+        changed: list[pb.RuntimeIncident] = []
         for record in records.values():
             if record.disposition == pb.RUNTIME_INCIDENT_DISPOSITION_AWAITING_OPERATOR:
                 record.disposition = (
@@ -271,15 +266,18 @@ class IncidentRegistry:
                 )
                 record.continuation_available = False
                 record.revision += 1
-        used_bytes = sum(len(item) for item in self._errors.values()) + sum(
-            len(item.SerializeToString(deterministic=True)) for item in records.values()
-        )
+                changed.append(record)
+        used_bytes = self._retained_bytes(self._errors, records)
         if used_bytes > self.max_bytes:
             raise IncidentCapacityError(
                 "terminal incident view exceeds serialized byte capacity"
             )
         self._records = records
         self._finalized = True
+        return tuple(
+            pb.RuntimeIncident.FromString(record.SerializeToString())
+            for record in changed
+        )
 
     def resolve_after_recovery(
         self,
@@ -314,13 +312,8 @@ class IncidentRegistry:
             record.last_observed_monotonic_ns, recovered_monotonic_ns
         )
         record.revision += 1
-        current_bytes = sum(len(item) for item in self._errors.values()) + sum(
-            len(item.SerializeToString(deterministic=True))
-            for key, item in self._records.items()
-            if key != incident_id
-        )
         if (
-            current_bytes + len(record.SerializeToString(deterministic=True))
+            self._retained_bytes(self._errors, self._records | {incident_id: record})
             > self.max_bytes
         ):
             raise IncidentCapacityError(
@@ -328,6 +321,14 @@ class IncidentRegistry:
             )
         self._records[incident_id] = record
         return pb.RuntimeIncident.FromString(record.SerializeToString())
+
+    @staticmethod
+    def _retained_bytes(
+        errors: Mapping[str, bytes], records: Mapping[str, pb.RuntimeIncident]
+    ) -> int:
+        return sum(len(item) for item in errors.values()) + sum(
+            item.ByteSize() for item in records.values()
+        )
 
     def snapshot(self) -> tuple[pb.RuntimeIncident, ...]:
         return tuple(

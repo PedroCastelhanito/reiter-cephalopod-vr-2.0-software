@@ -1,0 +1,15 @@
+{
+  "method": "Production GrpcSupervisorPort metadata and SupervisorService authentication, local in-process RPC boundary. Registered consumer check isolated; no sockets/devices/native handles.",
+  "controller_forwarding": {
+    "PREVIEW_CONSUMER_RESULT_ATTACHED": {
+      "exception": "PermissionError",
+      "reason": "credential role mismatch"
+    },
+    "PREVIEW_CONSUMER_RESULT_RELEASED": {
+      "exception": "PermissionError",
+      "reason": "credential role mismatch"
+    }
+  },
+  "direct_consumer_release": "COMMAND_RESULT_ACCEPTED",
+  "assessment": "Controller relay fails authentication before terminal-evidence retention. ATTACHED also must not be sent to supervisor under its current contract. Ownership choice is pending; no authentication was weakened."
+}

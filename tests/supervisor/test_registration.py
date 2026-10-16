@@ -835,3 +835,231 @@ async def test_launch_descriptors_retain_only_selected_role_identities(
     assert ("tracking_generation" in descriptor) is not no_tracking
     if not no_tracking:
         assert descriptor["tracking_generation"] == inputs.role_bootstrap["tracking"][0]
+
+
+@pytest.mark.parametrize("failure", ["launch", "notification"])
+async def test_gui_replacement_retains_only_actually_launched_command(failure):
+    from cephvr.platform.windows.jobs import SuspendedProcess, WindowsLaunchError
+    from cephvr.supervisor.gui_relaunch import GuiRelaunch
+
+    owner = types.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+    original, replacement, following = (str(uuid4()) for _ in range(3))
+    launched = []
+
+    def refresh(command):
+        return wire.LaunchState(
+            phase=wire.LAUNCH_PHASE_RELEASED
+            if command == original
+            else wire.LAUNCH_PHASE_OS_CONFIRMED
+        )
+
+    async def launch(request, state, token, deadline):
+        if failure == "launch" and not launched:
+            launched.append("failure")
+            raise OSError("create failed")
+        launched.append(request.command_id)
+        return SuspendedProcess(1, 2, EXE, 3, 4)
+
+    async def register(*args):
+        if failure == "notification":
+            raise OSError("notification failed")
+
+    handler = GuiRelaunch(
+        owner=owner,
+        interpreter=EXE,
+        command_id=original,
+        refresh=refresh,
+        launch=launch,
+        register=register,
+    )
+
+    def request(command):
+        return wire.PlanLaunchRequest(
+            command_id=command,
+            owner=owner,
+            child=types.ProcessIdentity(role="gui", generation=str(uuid4())),
+            executable=EXE,
+            python_worker=True,
+            stop_method="grpc_shutdown",
+        )
+
+    with pytest.raises(OSError):
+        await handler(request(replacement), wire.LaunchState(), "token", 100)
+    assert handler.command_id == (original if failure == "launch" else replacement)
+    if failure == "launch":
+        await handler(request(following), wire.LaunchState(), "token", 100)
+        assert handler.command_id == following
+    else:
+        with pytest.raises(WindowsLaunchError, match="prior GUI launch"):
+            await handler(request(following), wire.LaunchState(), "token", 100)
+        assert launched == [replacement]
+
+
+async def test_preview_release_receipt_retains_exact_independent_evidence(tmp_path):
+    runtime, _, _, _ = make_runtime(tmp_path)
+    consumer = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+    runtime.credentials[(consumer.role, consumer.generation)] = "secret"
+    runtime.registration.source_registered = lambda *a, **kw: True
+    report = wire.PreviewConsumerReport(
+        client_id=consumer.generation,
+        controller_generation=runtime.controller.generation,
+        consumer=consumer,
+        preview_run_id=str(uuid4()),
+        allocation_id=str(uuid4()),
+        transfer_id=str(uuid4()),
+        result=wire.PREVIEW_CONSUMER_RESULT_FAILED,
+    )
+    context = Context(consumer.role, consumer.generation, "secret")
+    result = await runtime.service.ReportPreviewConsumerState(report, context)
+    assert result.result == types.COMMAND_RESULT_ACCEPTED
+    assert list(runtime.registration_state.preview_consumers.values()) == [(report,)]
+    failed = wire.PreviewConsumerReport.FromString(report.SerializeToString())
+    report.result = wire.PREVIEW_CONSUMER_RESULT_RELEASED
+    assert (
+        await runtime.service.ReportPreviewConsumerState(report, context)
+    ).result == types.COMMAND_RESULT_ACCEPTED
+    snapshot = await runtime.recovery.get_recovery_state(
+        wire.RecoveryQuery(expected_supervisor=runtime.identity)
+    )
+    assert list(snapshot.preview_consumers) == [failed, report]
+    report.result = wire.PREVIEW_CONSUMER_RESULT_FAILED
+    report.failure.message = "changed failure"
+    assert (
+        await runtime.service.ReportPreviewConsumerState(report, context)
+    ).result == types.COMMAND_RESULT_REJECTED
+    await runtime.close_outbound()
+
+
+def test_preview_evidence_bounds_never_evict_unreleased_consumers():
+    from cephvr.shared.commands import CommandCapacityError
+    from cephvr.supervisor.preview_consumers import retain_preview_result
+
+    records = {}
+
+    def report(result):
+        consumer = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+        return wire.PreviewConsumerReport(
+            client_id=consumer.generation,
+            consumer=consumer,
+            controller_generation=str(uuid4()),
+            preview_run_id=str(uuid4()),
+            allocation_id=str(uuid4()),
+            transfer_id=str(uuid4()),
+            result=result,
+        )
+
+    first = report(wire.PREVIEW_CONSUMER_RESULT_RELEASED)
+    failed = report(wire.PREVIEW_CONSUMER_RESULT_FAILED)
+    for value in (first, failed):
+        retain_preview_result(records, value, max_entries=2, max_bytes=4096)
+    newest = report(wire.PREVIEW_CONSUMER_RESULT_FAILED)
+    retain_preview_result(records, newest, max_entries=2, max_bytes=4096)
+    assert list(records.values()) == [(failed,), (newest,)]
+    with pytest.raises(CommandCapacityError):
+        retain_preview_result(
+            records,
+            report(wire.PREVIEW_CONSUMER_RESULT_FAILED),
+            max_entries=2,
+            max_bytes=4096,
+        )
+    assert list(records.values()) == [(failed,), (newest,)]
+
+
+@pytest.mark.parametrize(
+    "result",
+    [wire.PREVIEW_CONSUMER_RESULT_FAILED, wire.PREVIEW_CONSUMER_RESULT_RELEASED],
+)
+async def test_preview_terminal_handoff_authenticates_controller_or_consumer(
+    tmp_path, result
+):
+    import grpc
+
+    from cephvr.control.v1 import services_pb2_grpc as rpc
+    from cephvr.controller.backend import GrpcSupervisorPort
+    from cephvr.shared.auth import Principal
+
+    runtime, _, _, _ = make_runtime(tmp_path)
+    consumer = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+    runtime.credentials[(consumer.role, consumer.generation)] = "consumer-secret"
+    runtime.registration.source_registered = lambda source, **kw: source == consumer
+    report = wire.PreviewConsumerReport(
+        client_id=consumer.generation,
+        consumer=consumer,
+        controller_generation=runtime.controller.generation,
+        preview_run_id=str(uuid4()),
+        allocation_id=str(uuid4()),
+        transfer_id=str(uuid4()),
+        result=result,
+    )
+    server = grpc.aio.server()
+    rpc.add_SupervisorServiceServicer_to_server(runtime.service, server)
+    port = server.add_insecure_port("127.0.0.1:0")
+    assert port
+    await server.start()
+    try:
+        async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
+            stub = rpc.SupervisorServiceStub(channel)
+            controller = Principal(
+                "controller", runtime.controller.generation, "controller-secret"
+            )
+            direct = Principal(consumer.role, consumer.generation, "consumer-secret")
+            relay = GrpcSupervisorPort(stub, controller)
+            assert (
+                await relay.report_preview_consumer_state(report)
+            ).result == types.COMMAND_RESULT_ACCEPTED
+            assert (
+                await stub.ReportPreviewConsumerState(
+                    report, metadata=direct.metadata()
+                )
+            ).result == types.COMMAND_RESULT_ACCEPTED
+            assert list(runtime.registration_state.preview_consumers.values()) == [
+                (report,)
+            ]
+            for metadata in (
+                Principal("controller", str(uuid4()), "controller-secret").metadata(),
+                Principal(
+                    "controller", runtime.controller.generation, "wrong"
+                ).metadata(),
+                Principal(consumer.role, consumer.generation, "wrong").metadata(),
+                controller.metadata() + (("x-cephvr-role", "gui"),),
+                controller.metadata()
+                + (("x-cephvr-generation", controller.generation),),
+                (),
+            ):
+                with pytest.raises(grpc.aio.AioRpcError) as failure:
+                    await stub.ReportPreviewConsumerState(report, metadata=metadata)
+                assert failure.value.code() == grpc.StatusCode.PERMISSION_DENIED
+            changed = wire.PreviewConsumerReport.FromString(report.SerializeToString())
+            changed.failure.message = "changed terminal payload"
+            assert (
+                await relay.report_preview_consumer_state(changed)
+            ).result == types.COMMAND_RESULT_REJECTED
+            for principal in (controller, direct):
+                attached = wire.PreviewConsumerReport.FromString(
+                    report.SerializeToString()
+                )
+                attached.result = wire.PREVIEW_CONSUMER_RESULT_ATTACHED
+                assert (
+                    await stub.ReportPreviewConsumerState(
+                        attached, metadata=principal.metadata()
+                    )
+                ).result == types.COMMAND_RESULT_REJECTED
+            for field in ("controller_generation", "client_id"):
+                changed.CopyFrom(report)
+                setattr(changed, field, str(uuid4()))
+                assert (
+                    await relay.report_preview_consumer_state(changed)
+                ).result == types.COMMAND_RESULT_REJECTED
+            changed.CopyFrom(report)
+            changed.consumer.generation = str(uuid4())
+            changed.client_id = changed.consumer.generation
+            assert (
+                await relay.report_preview_consumer_state(changed)
+            ).result == types.COMMAND_RESULT_REJECTED
+            assert list(runtime.registration_state.preview_consumers.values()) == [
+                (report,)
+            ]
+    finally:
+        await server.stop(None)
+        runtime.stop_background()
+        await runtime.close_outbound()

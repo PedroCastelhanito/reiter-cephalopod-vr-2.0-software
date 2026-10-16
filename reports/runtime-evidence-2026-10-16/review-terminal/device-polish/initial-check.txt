@@ -1,0 +1,5 @@
+qt.qpa.fonts: Populating font family aliases took 66 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+{1440: [{'y': 129, 'height': 36, 'width': 196}, {'y': 129, 'height': 36, 'width': 181}, {'y': 129, 'height': 36, 'width': 180}], 1175: [{'y': 136, 'height': 36, 'width': 196}, {'y': 144, 'height': 36, 'width': 115}, {'y': 136, 'height': 36, 'width': 114}], 720: [{'y': 129, 'height': 36, 'width': 196}, {'y': 129, 'height': 36, 'width': 133}, {'y': 129, 'height': 36, 'width': 133}]}

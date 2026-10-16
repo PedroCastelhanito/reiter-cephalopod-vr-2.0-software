@@ -8,9 +8,8 @@ import threading
 import time
 from collections.abc import Callable
 from concurrent.futures import Future
-from fractions import Fraction
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from uuid import uuid4
 
 from cephvr.control.v1 import services_pb2_grpc
@@ -391,9 +390,6 @@ class NativeRecording:
             evidence=evidence,
             encoder=adapter,
             video_start_ns=request.start_monotonic_ns,
-            video_rate_hz=Fraction(
-                encoding.timing.rate_numerator, encoding.timing.rate_denominator
-            ),
             # One already-bounded RGBA composite per overlapped write avoids a
             # polling delay for every small slice of a large review frame.
             max_encoder_write_chunk=(
@@ -422,14 +418,9 @@ class NativeRecording:
         )
 
         def record_video_input(frame: CompositeFrame) -> None:
-            disposition: CaptureDisposition = (
-                "input_submitted"
-                if frame.encoded_disposition == "real"
-                else cast(CaptureDisposition, frame.encoded_disposition)
-            )
             self._enqueue_capture_update(
                 frame.group_id,
-                disposition,
+                "input_submitted",
                 frame.video_frame_index,
                 None,
                 terminal=True,
@@ -547,7 +538,7 @@ class NativeRecording:
             )
             header = Header(
                 kind="header",
-                format_version=5,
+                format_version=6,
                 video_enabled=self.saving,
                 identity=artifact.identity,
                 writer_generation=self._writer_generation,
@@ -705,6 +696,9 @@ class NativeRecording:
                     if result.evidence_closed
                     else pb.OUTPUT_CLOSURE_FAILED,
                     artifact_present=result.evidence_closed,
+                    counts={"render_groups": self._capture_runtime.state_count}
+                    if result.evidence_closed and self._capture_runtime is not None
+                    else {},
                 ),
             )
             return self._output_results
@@ -712,6 +706,9 @@ class NativeRecording:
         self._output_results = closed_results(
             self._schedule,
             self._worker.counts(),
+            state_count=self._capture_runtime.state_count
+            if self._capture_runtime is not None
+            else None,
             evidence_closed=result.evidence_closed,
             cutoff_known=self._cutoff_ns is not None,
             encoder_cleanup_confirmed=self.encoder_owner.cleanup_complete,

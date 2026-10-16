@@ -6,11 +6,8 @@ import threading
 import time
 from collections import deque
 from collections.abc import Callable
-from dataclasses import dataclass
-from fractions import Fraction
+from dataclasses import dataclass, replace
 from typing import Literal, cast
-
-from cephvr.shared.nominal_video_grid import NominalVideoGrid
 
 from .evidence import EncoderInput, EvidenceWriter
 from .metrics import RecordingMetrics
@@ -19,18 +16,22 @@ from .metrics import RecordingMetrics
 @dataclass(frozen=True)
 class CompositeFrame:
     group_id: int
-    video_frame_index: int
+    video_frame_index: int | None
     width: int
     height: int
-    pixel_format: Literal["rgba8_bottom_up", "r10g10b10a2_le_bottom_up"]
+    pixel_format: Literal[
+        "rgba8_top_down",
+        "r10g10b10a2_le_top_down",
+        "rgba8_bottom_up",
+        "r10g10b10a2_le_bottom_up",
+    ]
     pixels: bytes | bytearray
     source_host_ns: int = 0
-    encoded_disposition: str = "real"
 
     def __post_init__(self) -> None:
         if (
             self.group_id < 0
-            or self.video_frame_index < 0
+            or (self.video_frame_index is not None and self.video_frame_index < 0)
             or min(self.width, self.height) <= 0
         ):
             raise ValueError("invalid review-composite identity or dimensions")
@@ -51,7 +52,6 @@ class CaptureAdmission:
 class CaptureReservation:
     token: int
     group_id: int
-    video_frame_index: int
     source_host_ns: int = 0
 
 
@@ -88,7 +88,6 @@ class RecordingWorker:
         max_encoder_write_chunk: int = 256 * 1024,
         on_submitted: Callable[[CompositeFrame], None] | None = None,
         video_start_ns: int,
-        video_rate_hz: float | Fraction,
         clock_ns: Callable[[], int] = time.perf_counter_ns,
     ) -> None:
         if min(capture_slots, max_encoder_write_chunk) <= 0:
@@ -99,8 +98,10 @@ class RecordingWorker:
         self.encoder = encoder
         self.max_encoder_write_chunk = max_encoder_write_chunk
         self.on_submitted = on_submitted
-        self.video_grid = NominalVideoGrid(video_start_ns, video_rate_hz)
-        self._frames: deque[tuple[CompositeFrame, int, bool]] = deque()
+        if video_start_ns < 0:
+            raise ValueError("video start must be nonnegative")
+        self.video_start_ns = video_start_ns
+        self._frames: deque[CompositeFrame] = deque()
         self._lock = threading.Lock()
         self._reservations: dict[int, CaptureReservation] = {}
         self._next_token = 0
@@ -110,31 +111,22 @@ class RecordingWorker:
         self._dropped = 0
         self._failed_capture = 0
         self._last_group: int | None = None
-        self._last_selected_slot: int | None = None
-        self._next_encoded_slot = 0
+        self._last_eligible: tuple[int, int] | None = None
         self._active_frame: CompositeFrame | None = None
         self._active_offset = 0
         self._active_normalized = False
-        self._pending_real: CompositeFrame | None = None
-        self._pending_real_normalized = False
-        self._repeat_remaining = 0
-        self._repeat_disposition: str | None = None
-        self._last_usable: CompositeFrame | None = None
-        self._cutoff_slots: int | None = None
-        self._duplicate_count = 0
-        self._encoded_count = 0
-        self._same_slot_omissions = 0
+        self._cutoff_ns: int | None = None
+        self._failed = False
         self._selected_real = 0
 
     def offer(self, frame: CompositeFrame) -> CaptureAdmission:
-        reservation, disposition, slot = self.classify_and_reserve(
+        if frame.video_frame_index is not None:
+            raise ValueError("video index is assigned only when writing encoder input")
+        reservation, disposition, index = self.classify_and_reserve(
             frame.group_id, frame.source_host_ns
         )
         if reservation is None:
-            return CaptureAdmission(False, slot, disposition)
-        if frame.video_frame_index != reservation.video_frame_index:
-            self.cancel_reservation(reservation)
-            raise ValueError("video frame index must equal its nominal slot")
+            return CaptureAdmission(False, index, disposition)
         self.complete_capture(
             reservation,
             width=frame.width,
@@ -142,34 +134,34 @@ class RecordingWorker:
             pixel_format=frame.pixel_format,
             pixels=frame.pixels,
         )
-        return CaptureAdmission(True, reservation.video_frame_index, "admitted")
+        return CaptureAdmission(True, None, "admitted")
 
     def classify_and_reserve(
         self, group_id: int, source_host_ns: int
     ) -> tuple[CaptureReservation | None, str, int | None]:
-        """Apply first-per-slot selection before bounded pixel capture admission."""
-        if group_id < 0 or source_host_ns < 0:
-            raise ValueError("source identity and evaluation time must be nonnegative")
-        slot = self.video_grid.slot_for(source_host_ns)
+        """Admit each ordered render group once, without rate-based resampling."""
+        if group_id < 0 or source_host_ns < self.video_start_ns:
+            raise ValueError("source identity or evaluation time precedes trial start")
         with self._lock:
+            if self._failed or self._cutoff_ns is not None:
+                raise RuntimeError("recording admission is closed")
+            if self._last_eligible is not None:
+                last_group, last_time = self._last_eligible
+                if group_id <= last_group or source_host_ns < last_time:
+                    raise ValueError(
+                        "render groups and evaluation times must be ordered"
+                    )
+            self._last_eligible = (group_id, source_host_ns)
             self._eligible += 1
-            if self._last_selected_slot is not None and slot < self._last_selected_slot:
-                raise ValueError("render evaluation times must be ordered")
-            if slot == self._last_selected_slot:
-                self._same_slot_omissions += 1
-                return None, "same_slot_omission", slot
             if self._inflight_capture_count() >= self.capture_slots:
                 self._dropped += 1
                 return None, "capacity_drop", None
-            reservation = CaptureReservation(
-                self._next_token, group_id, slot, source_host_ns
-            )
+            reservation = CaptureReservation(self._next_token, group_id, source_host_ns)
             self._next_token += 1
             self._reservations[reservation.token] = reservation
             self.metrics.reserve(reservation.group_id, self._inflight_capture_count())
             self._admitted += 1
-            self._last_selected_slot = slot
-            return reservation, "admitted", slot
+            return reservation, "admitted", None
 
     def complete_capture(
         self,
@@ -188,15 +180,26 @@ class RecordingWorker:
         """
         if take_ownership and not isinstance(pixels, bytearray):
             raise TypeError("owned capture requires a bytearray")
-        if pixel_format not in {"rgba8_bottom_up", "r10g10b10a2_le_bottom_up"}:
+        if pixel_format not in {
+            "rgba8_top_down",
+            "r10g10b10a2_le_top_down",
+            "rgba8_bottom_up",
+            "r10g10b10a2_le_bottom_up",
+        }:
             raise ValueError("unsupported review-composite pixel format")
         owned = CompositeFrame(
             group_id=reservation.group_id,
-            video_frame_index=reservation.video_frame_index,
+            video_frame_index=None,
             width=width,
             height=height,
             pixel_format=cast(
-                Literal["rgba8_bottom_up", "r10g10b10a2_le_bottom_up"], pixel_format
+                Literal[
+                    "rgba8_top_down",
+                    "r10g10b10a2_le_top_down",
+                    "rgba8_bottom_up",
+                    "r10g10b10a2_le_bottom_up",
+                ],
+                pixel_format,
             ),
             pixels=pixels
             if take_ownership and isinstance(pixels, bytearray)
@@ -210,10 +213,8 @@ class RecordingWorker:
             del self._reservations[reservation.token]
             self.metrics.ready(reservation.group_id)
             self._selected_real += 1
-            self._frames.append((owned, 0, False))
-            self._frames = deque(
-                sorted(self._frames, key=lambda item: item[0].video_frame_index)
-            )
+            self._frames.append(owned)
+            self._frames = deque(sorted(self._frames, key=lambda item: item.group_id))
 
     def cancel_reservation(self, reservation: CaptureReservation) -> None:
         with self._lock:
@@ -226,92 +227,50 @@ class RecordingWorker:
 
     def drain_once(self) -> bool:
         """Service evidence first, then one bounded write chunk; return if progressed."""
-        if self.evidence.pending_bytes:
-            self.evidence.write_pending()
-            return True
-        return self._drain_cadence_once()
+        if self._failed:
+            raise RuntimeError("recording input failed; cannot retry")
+        try:
+            if self.evidence.pending_bytes:
+                self.evidence.write_pending()
+                return True
+            return self._drain_frame_once()
+        except Exception:
+            self._failed = True
+            raise
 
     def set_cutoff(self, cutoff_ns: int) -> None:
-        slots = self.video_grid.slots_before(cutoff_ns)
+        if cutoff_ns < self.video_start_ns:
+            raise ValueError("video cutoff precedes video start")
         with self._lock:
-            if self._cutoff_slots is not None and self._cutoff_slots != slots:
+            if self._cutoff_ns is not None and self._cutoff_ns != cutoff_ns:
                 raise RuntimeError(
                     "recording cutoff cannot change after admission seal"
                 )
-            self._cutoff_slots = slots
+            self._cutoff_ns = cutoff_ns
 
     def _inflight_capture_count(self) -> int:
-        buffers = {id(frame.pixels) for frame, _offset, _normalized in self._frames}
-        if self._pending_real is not None:
-            buffers.add(id(self._pending_real.pixels))
-        if self._active_frame is not None and self._active_frame.pixels is not getattr(
-            self._last_usable, "pixels", None
-        ):
-            buffers.add(id(self._active_frame.pixels))
-        return len(self._reservations) + len(buffers)
+        return (
+            len(self._reservations)
+            + len(self._frames)
+            + int(self._active_frame is not None)
+        )
 
-    def _drain_cadence_once(self) -> bool:
+    def _drain_frame_once(self) -> bool:
         with self._lock:
             if self._active_frame is None:
-                if self._frames:
-                    frame, _offset, normalized = self._frames[0]
-                    earlier_reservation = any(
-                        item.video_frame_index < frame.video_frame_index
-                        for item in self._reservations.values()
-                    )
-                    if earlier_reservation:
-                        return False
-                    self._frames.popleft()
-                    self.metrics.dequeue(frame.group_id)
-                    gap = frame.video_frame_index - self._next_encoded_slot
-                    if gap < 0:
-                        raise RuntimeError("capture completed behind encoded order")
-                    if gap:
-                        if self._last_usable is None:
-                            duplicate = frame
-                            disposition = "leading_duplicate"
-                        else:
-                            duplicate = self._last_usable
-                            disposition = "interior_duplicate"
-                        self._active_frame = _at_slot(
-                            duplicate, self._next_encoded_slot, disposition
-                        )
-                        self._active_normalized = normalized or (
-                            disposition == "interior_duplicate"
-                        )
-                        self._pending_real = frame
-                        self._pending_real_normalized = normalized
-                        self._repeat_remaining = gap
-                        self._repeat_disposition = disposition
-                    else:
-                        self._active_frame = frame
-                        self._active_normalized = normalized
-                        self._pending_real = frame
-                        self._pending_real_normalized = normalized
-                        self._repeat_remaining = 0
-                        self._repeat_disposition = None
-                elif (
-                    not self._reservations
-                    and self._last_usable is not None
-                    and self._cutoff_slots is not None
-                    and self._next_encoded_slot < self._cutoff_slots
-                ):
-                    self._active_frame = _at_slot(
-                        self._last_usable,
-                        self._next_encoded_slot,
-                        "trailing_duplicate",
-                    )
-                    self._active_normalized = True
-                    self._pending_real = None
-                    self._repeat_remaining = (
-                        self._cutoff_slots - self._next_encoded_slot
-                    )
-                    self._repeat_disposition = "trailing_duplicate"
-                else:
+                if not self._frames:
                     return False
+                frame = self._frames[0]
+                if any(
+                    item.group_id < frame.group_id
+                    for item in self._reservations.values()
+                ):
+                    return False
+                self._frames.popleft()
+                self.metrics.dequeue(frame.group_id)
+                self._active_frame = replace(frame, video_frame_index=self._submitted)
             frame = self._active_frame
-            if frame is None:
-                return False
+            assert frame.video_frame_index is not None
             normalize = not self._active_normalized
             offset = self._active_offset
         # Only the recording thread changes the active pixels. Admission and
@@ -319,7 +278,17 @@ class RecordingWorker:
         if normalize:
             started = self.metrics.clock_ns()
             normalized_frame = _ffmpeg_input_order(frame)
-            self.metrics.observe("normalization", self.metrics.clock_ns() - started)
+            completed = self.metrics.clock_ns()
+            self.metrics.observe(
+                "normalization",
+                completed - started,
+                sample={
+                    "group_id": frame.group_id,
+                    "video_frame_index": frame.video_frame_index,
+                    "start_monotonic_ns": started,
+                    "end_monotonic_ns": completed,
+                },
+            )
             with self._lock:
                 if self._active_frame is not frame or self._active_offset != offset:
                     raise RuntimeError(
@@ -328,21 +297,24 @@ class RecordingWorker:
                 frame = normalized_frame
                 self._active_frame = frame
                 self._active_normalized = True
-                if (
-                    self._pending_real is not None
-                    and self._pending_real.pixels is frame.pixels
-                ):
-                    self._pending_real_normalized = True
         end = min(len(frame.pixels), offset + self.max_encoder_write_chunk)
         chunk = memoryview(frame.pixels)[offset:end]
         started = self.metrics.clock_ns()
         consumed = self.encoder.write_chunk(chunk)
         if consumed < 0 or consumed > len(chunk):
             raise RuntimeError("encoder input returned an invalid write count")
-        self.metrics.write(self.metrics.clock_ns() - started, consumed)
+        completed = self.metrics.clock_ns()
+        self.metrics.write(
+            completed - started,
+            consumed,
+            group_id=frame.group_id,
+            video_frame_index=cast(int, frame.video_frame_index),
+            started_ns=started,
+            completed_ns=completed,
+            frame_complete=offset + consumed == len(frame.pixels),
+        )
         if consumed == 0:
             return False
-        submitted_frame: CompositeFrame | None = None
         completed_frame: CompositeFrame | None = None
         with self._lock:
             if self._active_frame is not frame or self._active_offset != offset:
@@ -351,46 +323,14 @@ class RecordingWorker:
             if self._active_offset == len(frame.pixels):
                 completed_frame = frame
                 self._submitted += 1
-                self._encoded_count += 1
                 self._last_group = frame.group_id
-                self._next_encoded_slot += 1
-                if self._repeat_remaining:
-                    self._duplicate_count += 1
-                    self._repeat_remaining -= 1
-                    if self._repeat_remaining:
-                        assert self._repeat_disposition is not None
-                        self._active_frame = _at_slot(
-                            frame,
-                            self._next_encoded_slot,
-                            self._repeat_disposition,
-                        )
-                        self._active_offset = 0
-                        self._active_normalized = True
-                    elif self._pending_real is not None:
-                        self._active_frame = self._pending_real
-                        self._active_offset = 0
-                        self._active_normalized = self._pending_real_normalized
-                        self._pending_real = None
-                        self._pending_real_normalized = False
-                    else:
-                        self._active_frame = None
-                        self._active_offset = 0
-                        self._active_normalized = False
-                else:
-                    self.metrics.release(frame.group_id)
-                    self._last_usable = frame
-                    self._active_frame = None
-                    self._active_offset = 0
-                    self._active_normalized = False
-                    self._pending_real = None
-                    self._pending_real_normalized = False
-                    submitted_frame = frame
-            elif not self._active_normalized:
-                self._active_offset += 0
+                self.metrics.release(frame.group_id)
+                self._active_frame = None
+                self._active_offset = 0
+                self._active_normalized = False
+        # Input acceptance is irreversible even if recording its mapping fails.
         if completed_frame is not None and self.on_submitted is not None:
-            self.on_submitted(
-                submitted_frame if submitted_frame is not None else completed_frame
-            )
+            self.on_submitted(completed_frame)
         return True
 
     def counts(self) -> RecordingCounts:
@@ -407,9 +347,7 @@ class RecordingWorker:
                     + int(self._active_frame is not None)
                 ),
                 final_input_group_id=self._last_group,
-                encoded_frame_count=self._encoded_count,
-                duplicate_frame_count=self._duplicate_count,
-                same_slot_omission_count=self._same_slot_omissions,
+                encoded_frame_count=self._submitted,
                 selected_real_count=self._selected_real,
             )
 
@@ -419,18 +357,22 @@ class RecordingWorker:
                 raise RuntimeError(
                     "cannot close FFmpeg input while admitted captures remain"
                 )
+        if self._failed:
+            raise RuntimeError("cannot finalize failed recording input")
         self.encoder.close_input()
         return self.counts()
 
 
 def _ffmpeg_input_order(frame: CompositeFrame) -> CompositeFrame:
-    """Flip bottom-up capture rows and normalize the packed 10-bit X bits."""
+    """Accept GPU-oriented rows; normalize packed X bits and legacy bottom-up input."""
+    if frame.pixel_format == "rgba8_top_down":
+        return frame
     import numpy as np
 
     normalized = (
         frame.pixels if isinstance(frame.pixels, bytearray) else bytearray(frame.pixels)
     )
-    if frame.height > 1:
+    if frame.height > 1 and frame.pixel_format.endswith("bottom_up"):
         # Native copies release the GIL while the GL owner continues presenting.
         # Only half a frame is temporary; odd-height middle rows stay in place.
         rows = np.frombuffer(normalized, dtype=np.uint8).reshape(frame.height, -1)
@@ -440,7 +382,7 @@ def _ffmpeg_input_order(frame: CompositeFrame) -> CompositeFrame:
         saved = top.copy()
         np.copyto(top, bottom)
         np.copyto(bottom, saved)
-    if frame.pixel_format == "r10g10b10a2_le_bottom_up":
+    if frame.pixel_format.startswith("r10g10b10a2_le_"):
         x_bytes = np.frombuffer(normalized, dtype=np.uint8)[3::4]
         np.bitwise_and(x_bytes, 0x3F, out=x_bytes)
     return CompositeFrame(
@@ -451,18 +393,4 @@ def _ffmpeg_input_order(frame: CompositeFrame) -> CompositeFrame:
         pixel_format=frame.pixel_format,
         pixels=normalized,
         source_host_ns=frame.source_host_ns,
-        encoded_disposition=frame.encoded_disposition,
-    )
-
-
-def _at_slot(frame: CompositeFrame, slot: int, disposition: str) -> CompositeFrame:
-    return CompositeFrame(
-        group_id=frame.group_id,
-        video_frame_index=slot,
-        width=frame.width,
-        height=frame.height,
-        pixel_format=frame.pixel_format,
-        pixels=frame.pixels,
-        source_host_ns=frame.source_host_ns,
-        encoded_disposition=disposition,
     )

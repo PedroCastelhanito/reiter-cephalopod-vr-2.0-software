@@ -11,6 +11,7 @@ from cephvr.acquisition.config.validation_values import (
 from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 
 
 def connection_edit_validation(
@@ -18,8 +19,8 @@ def connection_edit_validation(
 ) -> pb.ValidationResult | None:
     """Validate only an exact identity/pulse-field diff; other edits use full validation."""
     expected = pb.ExperimentConfiguration.FromString(current.SerializeToString())
-    before = [item for item in expected.backends if item.backend_name == "acquisition"]
-    after = [item for item in proposed.backends if item.backend_name == "acquisition"]
+    before = acquisition_backends(expected)
+    after = acquisition_backends(proposed)
     if len(before) != 1 or len(after) != 1:
         return None
     old, new = before[0], after[0]

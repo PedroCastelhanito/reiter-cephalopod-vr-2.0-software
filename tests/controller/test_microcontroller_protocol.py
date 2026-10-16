@@ -172,6 +172,9 @@ def test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies() -> No
     assert result.reply.request_id == result.request_id
     assert channel.unmatched_replies == 1
     assert channel.malformed_replies == 1
+    channel.close()
+    channel.open(10000)
+    assert channel.unmatched_replies == channel.malformed_replies == 0
 
 
 def test_dispatched_request_without_ack_is_timed_out_with_dispatch_evidence() -> None:
@@ -361,3 +364,38 @@ class _FakePort:
 
     def close(self) -> None:
         pass
+
+
+def test_startup_probe_stops_after_hard_transport_failure():
+    clock = _StepClock()
+    port = _FakePort()
+    calls = []
+
+    def broken(payload):
+        calls.append(payload)
+        raise OSError("device removed")
+
+    port.on_write = broken
+    channel = SerialChannel("fake", 115200, 100, clock=clock, serial_port=port)
+    channel.open(1000)
+    with pytest.raises(ChannelTransportFailure, match="device removed"):
+        channel.probe("CAPS", 1000)
+    assert len(calls) == 1
+
+
+def test_matched_firmware_rejection_preserves_context():
+    from cephvr.controller.microcontroller.protocol import FirmwareRejected
+
+    clock = _StepClock()
+    port = _FakePort()
+    port.on_write = lambda payload: _write_reply(
+        port, payload, b"ERR id={request_id} code=PIN_CONFLICT pin=D2 kind=behavioral\n"
+    )
+    channel = SerialChannel("fake", 115200, 100, clock=clock, serial_port=port)
+    channel.open(1000)
+    with pytest.raises(FirmwareRejected) as rejected:
+        channel.request("DIAG_START", {}, 1000)
+    assert rejected.value.code == "PIN_CONFLICT"
+    assert rejected.value.reply.fields == {"pin": "D2", "kind": "behavioral"}
+    assert rejected.value.reply.request_id == channel.last_exchange.request_id
+    assert "pin=D2" in str(rejected.value)

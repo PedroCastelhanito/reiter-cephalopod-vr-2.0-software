@@ -375,6 +375,45 @@ async def test_failed_setup_cleanup_matches_registered_output_set_exactly(
         assert receipt.failure.code == "EVIDENCE"
 
 
+@pytest.mark.parametrize("path", [None, "wrong.jsonl", "camera.jsonl"])
+async def test_cleanup_requires_registered_output_path(
+    tmp_path: Path, path: str | None
+) -> None:
+    fixture = _fixture(tmp_path)
+    attempt, backend = fixture.attempt, fixture.backend
+    source = pb.ProcessIdentity(
+        role=backend.backend_name, generation=backend.backend_generation
+    )
+    work = pb.WorkContext(session=attempt.context)
+    registered = svc.RegisteredContext(work=work)
+    registered.outputs.add(output_key="camera", backend=backend, path="camera.jsonl")
+    operation = pb.OperationContext(command_id=_id())
+    registered.cleanup_commands.add(target=source, work=work, operation=operation)
+    attempt.registered_context = registered
+    fixture.supervisor.processes[backend.backend_name] = svc.ProcessHealthStatus(
+        process=source,
+        last_heartbeat=pb.HeartbeatReport(
+            source=source, work=work, cleanup_resources_revision=1
+        ),
+    )
+    cleanup = pb.CleanupReport(
+        source=source,
+        work=work,
+        operation=operation,
+        verified_monotonic_ns=1,
+        trial_activity_stopped=True,
+        cleanup_resources_revision=1,
+    )
+    result = cleanup.outputs.add(
+        output_key="camera", closure=pb.OUTPUT_CLOSURE_CLOSED, artifact_present=True
+    )
+    if path is not None:
+        result.path = path
+    receipt = await fixture.reports.receive(pb.LifecycleReport(cleanup=cleanup), 50)
+    assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) == (path == "camera.jsonl")
+    assert bool(attempt.cleanup) == (path == "camera.jsonl")
+
+
 async def test_trial_ready_requires_exact_trial_and_active_participant(
     tmp_path: Path,
 ) -> None:

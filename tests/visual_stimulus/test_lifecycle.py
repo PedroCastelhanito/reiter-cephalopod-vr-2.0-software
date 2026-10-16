@@ -1879,6 +1879,18 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
                 tuple(OutputActivity(output.output_id, 1, 1, 1) for output in outputs),
             )
 
+        def replay_provenance(self):
+            from cephvr.visual_stimulus.resources.provenance import graphics_provenance
+
+            return graphics_provenance(
+                "fixture",
+                {
+                    "GL_VENDOR": "fixture-vendor",
+                    "GL_RENDERER": "fixture-renderer",
+                    "GL_VERSION": "fixture-driver",
+                },
+            )
+
         def install_image_residency(self, cache, deadline_ns):
             self.cache = cache
             cache.attach(
@@ -1980,7 +1992,15 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
             artifacts[0].manifest.resources[0].profile_id == "cephvr1_texture_json_v1"
         )
         assert preparation.image_residency is not None
-        preparation.prepare_graphics(artifacts)
+        artifacts = preparation.prepare_graphics(artifacts)
+        assert any(
+            item.role == "graphics_driver" and item.version == "fixture-driver"
+            for item in artifacts[0].manifest.provenance
+        )
+        assert (
+            preparation.resources_for(trial.context.trial_id).manifest
+            == artifacts[0].manifest
+        )
         assert port.prepared == [trial.context.trial_id]
         assert port.cache is preparation.image_residency
         assert any("gpu:resident-image" in key for key in announcements)
@@ -1992,3 +2012,116 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
     assert sources and all(source.closed for source in sources)
     assert preparation.image_residency is None
     assert not preparation._bundles
+
+
+@pytest.mark.parametrize("failure", [None, "graphics", "cancelled", "deadline", "size"])
+def test_setup_publishes_only_final_graphics_provenance_under_original_deadline(
+    failure,
+    tmp_path,
+):
+    import hashlib
+    import time
+
+    from cephvr.visual_stimulus.compiler import serialize_prepared_trial
+    from cephvr.visual_stimulus.resources.provenance import graphics_provenance
+    from cephvr.visual_stimulus.worker.preparation import begin
+
+    artifact = make_prepared_trial()
+    manifest = artifact.manifest.model_copy(
+        update={
+            "provenance": graphics_provenance(
+                "test",
+                {
+                    "GL_VENDOR": "vendor",
+                    "GL_RENDERER": "renderer",
+                    "GL_VERSION": "driver",
+                },
+            )
+        }
+    )
+    final = artifact.model_copy(update={"manifest": manifest})
+    request = visual_stimulus.WorkerSetup()
+    request.session.trials.add().context.trial_id = artifact.identity.trial_id
+    if failure == "size":
+        request.policies.limits.max_prepared_plan_bytes = len(
+            serialize_prepared_trial(artifact)
+        )
+    deadline = time.perf_counter_ns() + 5_000_000_000
+    owner = threading.get_ident()
+    recorded, reported, events = [], [], []
+
+    class Prepare:
+        def prepare_trials(self, *_):
+            assert threading.get_ident() != owner
+            return (artifact,)
+
+        def prepare_graphics(self, artifacts):
+            assert threading.get_ident() == owner
+            events.append("graphics")
+            assert artifacts == (artifact,)
+            if failure == "graphics":
+                raise ValueError("context unavailable")
+            return (final,)
+
+    class Recording:
+        def prepare_artifacts(self, artifacts, bound):
+            assert threading.get_ident() != owner and bound == deadline
+            assert artifacts == (final,)
+            recorded.extend(artifacts)
+
+    class Report:
+        def confirm(self, method, message, bound):
+            assert threading.get_ident() != owner and bound == deadline
+            reported.append(message)
+
+    preparer = Prepare()
+    job = begin(
+        request,
+        preparer,
+        Recording(),
+        Report(),
+        lambda *_: None,
+        deadline,
+        time.perf_counter_ns,
+    )
+    assert job.graphics_input.result(timeout=1) == (artifact,)
+    assert not recorded and not reported and not job.result.done()
+    job.service_graphics(
+        preparer,
+        cancelled=failure == "cancelled",
+        now_ns=deadline if failure == "deadline" else time.perf_counter_ns(),
+    )
+    if failure is None:
+        records = job.result.result(timeout=1)
+        data = serialize_prepared_trial(final)
+        assert records[0].artifact == final and records[0].data == data
+        assert records[0].handle.plan_sha256 == hashlib.sha256(data).hexdigest()
+        assert reported[0].prepared_artifact.prepared_trial_json.encode() == data
+        assert recorded == [final]
+        from cephvr.visual_stimulus.recording.recipe import (
+            prepare_recipe,
+            publish_recipe,
+        )
+
+        recipe = prepare_recipe(recorded[0], max_bytes=1_000_000)
+        path = tmp_path / "trial_stimulus_LOG.json"
+        reference = publish_recipe(
+            path,
+            path.name,
+            recipe,
+            expected_sha256=records[0].handle.plan_sha256,
+            expected_byte_length=records[0].handle.plan_bytes,
+            trial_start_host_ns=100,
+            now_host_ns=100,
+        )
+        assert path.read_bytes() == data
+        assert reference.sha256 == records[0].handle.plan_sha256
+    else:
+        with pytest.raises((ValueError, InterruptedError, TimeoutError, MemoryError)):
+            job.result.result(timeout=1)
+        assert not reported
+        assert not recorded
+    job.thread.join(timeout=1)
+    assert not job.thread.is_alive()
+    job.service_graphics(preparer, cancelled=False, now_ns=time.perf_counter_ns())
+    assert events == ([] if failure in ("cancelled", "deadline") else ["graphics"])

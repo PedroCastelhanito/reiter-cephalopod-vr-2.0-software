@@ -199,6 +199,7 @@ class ControlState:
     watches: dict[tuple[str, str], Watch] = field(default_factory=dict)
     operations: dict[str, pb.OperationState] = field(default_factory=dict)
     operation_finished_ns: dict[str, int] = field(default_factory=dict)
+    retained_truncated: bool = False
     errors: list[pb.ErrorReport] = field(default_factory=list)
     warnings: list[pb.Warning] = field(default_factory=list)
     tracking_diagnostic: pb.TrackingDiagnosticState = field(
@@ -207,12 +208,20 @@ class ControlState:
 
     def add_warning(self, component: str, message: str) -> None:
         """Retain a fresh warning; the caller publishes under its own lock."""
-        self.warnings.append(
+        self.retain_warning(
             pb.Warning(
                 warning_id=str(uuid.uuid4()), component=component, message=message
             )
         )
-        self.warnings = self.warnings[-RETAINED_LIMIT:]
+
+    def retain_warning(self, warning: pb.Warning) -> None:
+        self.replace_warnings(
+            [*self.warnings, pb.Warning.FromString(warning.SerializeToString())]
+        )
+
+    def replace_warnings(self, warnings: list[pb.Warning]) -> None:
+        self.retained_truncated |= len(warnings) > RETAINED_LIMIT
+        self.warnings = warnings[-RETAINED_LIMIT:]
 
 
 @dataclass
@@ -236,6 +245,7 @@ class SupervisorState:
     """Latest supervision observations and retained recovery evidence."""
 
     last_seen_ns: int
+    software_version: str = ""
     status_revision: int = 0
     status_bytes: bytes = b""
     processes: dict[str, svc.ProcessHealthStatus] = field(default_factory=dict)
@@ -244,6 +254,7 @@ class SupervisorState:
     controller_recoveries: list[pb.RecoveryState] = field(default_factory=list)
     operations: dict[str, pb.OperationState] = field(default_factory=dict)
     interruption_ids: dict[str, bytes] = field(default_factory=dict)
+    retained_truncated: bool = False
     errors: list[pb.ErrorReport] = field(default_factory=list)
     warnings: list[pb.Warning] = field(default_factory=list)
 
@@ -258,12 +269,30 @@ class IncidentState:
     incident_prompts: dict[str, tuple[pb.Prompt, Attempt]] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class PendingDisplay:
+    command_id: str
+    configuration_revision: int
+    deadline_ns: int
+    output_ids: frozenset[str]
+
+
+@dataclass(frozen=True)
+class PendingCalibration:
+    command_id: str
+    configuration_revision: int
+    deadline_ns: int
+    diagnostic_id: str
+    expected_state: int
+    output_ids: frozenset[str]
+
+
 @dataclass
 class DeviceState:
     """Pending display and camera commands."""
 
-    display_pending: tuple[str, int, int, frozenset[str]] | None = None
-    calibration_pending: tuple[str, int, int, str, int, frozenset[str]] | None = None
+    display_pending: PendingDisplay | None = None
+    calibration_pending: PendingCalibration | None = None
     calibration_blocked: bool = False
     camera_operation: CameraOperation | None = None
     camera_operations: dict[str, CameraOperation] = field(default_factory=dict)
@@ -325,6 +354,7 @@ class ClosureState:
     clean: bool = False
     start_command_id: str = ""
     metadata_written: bool = False
+    metadata_clean: bool = False
     # Shutdown commands whose supervisor handoff result is not yet known, and
     # the handoff failure recorded for each command that failed.
     handoff_pending: set[str] = field(default_factory=set)
@@ -400,6 +430,7 @@ class Attempt:
     spikeglx_monitor_stop: asyncio.Event = field(default_factory=asyncio.Event)
     handoff: PreparationHandoff | None = None
     file_policies: dict[str, Message] = field(default_factory=dict)
+    output_formats: dict[str, tuple[str, int]] = field(default_factory=dict)
     registered_context: svc.RegisteredContext | None = None
     incident_topology: IncidentTopology | None = None
     incidents: IncidentRegistry | None = None
@@ -426,6 +457,7 @@ class Attempt:
     cancel_command_ids: list[str] = field(default_factory=list)
     abort_command_ids: list[str] = field(default_factory=list)
     shutdown_command_ids: list[str] = field(default_factory=list)
+    reservation_acquire_task: asyncio.Task[list[Path]] | None = None
     reservation_registration_started: bool = False
     reservation_registered: bool = True
     closure: ClosureState = field(default_factory=ClosureState)

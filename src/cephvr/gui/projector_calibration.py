@@ -82,14 +82,13 @@ class CalibrationTable(Card):
         super().__init__("Screen calibration")
         self.drafts = drafts
         self.controls: dict[tuple[str, str], QWidget] = {}
-        self.table = DataTable(len(FACES), 5)
+        self.table = DataTable(len(FACES), 4)
         self.table.setHorizontalHeaderLabels(
             [
                 "Screen",
                 "Inverse",
                 "Width / Height (px)",
-                "Offset X (px)",
-                "Offset Y (px)",
+                "Offset X / Y (px)",
             ]
         )
         header = self.table.horizontalHeader()
@@ -102,8 +101,7 @@ class CalibrationTable(Card):
                 (
                     ("flip_x", "flip_y"),
                     ("valid_width_px", "valid_height_px"),
-                    ("offset_x_px",),
-                    ("offset_y_px",),
+                    ("offset_x_px", "offset_y_px"),
                 ),
                 1,
             ):

@@ -57,3 +57,33 @@ Missing completion evidence remains unknown; neither an end event nor a process 
 proves scientific file closure. E04 owns durable metadata/recovery rules and E06 owns
 cleanup blockers. No logging failure waits on successful error persistence before
 stopping work. Runtime durability and recovery still require E15 verification.
+
+
+## Shared asset library
+
+[V13](../architecture/visual_stimulus.md#v13) owns preservation and replay rules.
+For example, point the configured asset root at one library containing:
+
+```text
+stimulus-library/
+  images/set-001/                 # preserve existing image bytes
+  images/set-002/                 # add only new/changed images here
+  arenas/tank-v1/scene.glb
+  calibration/2026-10-16/         # geometry, masks, weights and color profiles
+  calibration/2026-11-03/         # retain the earlier calibration too
+```
+
+A protocol can reference files from several versions without duplicating unchanged
+images. Each trial's `_stimulus_LOG.json` manifest records the logical paths, byte
+sizes and SHA-256 identities of the actual assets and dependencies. The same image
+used in 100 experiments stays one library file, referenced by 100 small manifests.
+A library backup is independent of experiment folders; use read-only permissions
+for published versions where practical. Do not rename/delete earlier referenced
+files just because a newer collection or calibration exists.
+
+Preserve the corresponding renderer source release and dependency environment once
+per software version as well. The recipe identifies the version; it does not contain
+its executable code. Relocating the library is permitted when the relative paths and
+content remain available; future replay verifies content before use. CephVR does not
+create the library, duplicate assets into experiments, or implement offline replay.
+Numeric settings and the resolved program remain directly in the saved trial recipe.

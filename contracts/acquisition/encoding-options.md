@@ -131,7 +131,7 @@ Use locale-independent decimal seconds. This avoids a burst of catch-up keyframe
 after a gap. Request independently decodable IDR boundaries where the selected codec
 uses them, and fragment on keyframes with hybrid-fragmented MP4. Additional encoder
 keyframes are permitted. Fragment scheduling does not create source images; F is a
-target, not a loss bound. A08's explicit duplicate slots remain part of prepared input.
+target, not a loss bound. A08 submits each usable retained source once without timestamp resampling or padding.
 
 Use passthrough frame synchronization so FFmpeg neither duplicates nor drops input
 frames: input frame n is video frame n at n / nominal rate (A08). The deferred rig

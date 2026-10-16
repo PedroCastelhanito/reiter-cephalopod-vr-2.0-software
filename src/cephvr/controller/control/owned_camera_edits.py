@@ -12,6 +12,7 @@ from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.control.operations import ControlOperations
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.device.release_evidence import (
@@ -356,9 +357,8 @@ def _acquisition_entry(
 ) -> pb.BackendSettings | None:
     entries = [
         item
-        for item in configuration.backends
-        if item.backend_name == "acquisition"
-        and item.WhichOneof("settings") == "acquisition"
+        for item in acquisition_backends(configuration)
+        if (item.WhichOneof("settings") == "acquisition")
     ]
     return entries[0] if len(entries) == 1 else None
 

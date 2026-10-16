@@ -70,6 +70,7 @@ class SupervisorObservations:
                 self.supervisor_state.last_seen_ns = ingress_ns
                 return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
             self.supervisor_state.status_revision = report.status_revision
+            self.supervisor_state.software_version = report.software_version
             self.supervisor_state.status_bytes = serialized
             self.supervisor_state.last_seen_ns = ingress_ns
             self.supervisor_state.processes = {
@@ -78,6 +79,13 @@ class SupervisorObservations:
             self.supervisor_state.all_processes = [
                 deepcopy(item) for item in report.processes
             ]
+            self.supervisor_state.retained_truncated |= (
+                any(
+                    len(items) > RETAINED_LIMIT
+                    for items in (report.errors, report.warnings, report.recoveries)
+                )
+                or len(report.operations) > 1024
+            )
             self.supervisor_state.errors = [
                 deepcopy(item) for item in report.errors[-RETAINED_LIMIT:]
             ]

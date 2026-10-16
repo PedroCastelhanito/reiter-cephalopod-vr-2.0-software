@@ -1,0 +1,32 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish[False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x118288350>
+conflicting_edit = False
+
+    @pytest.mark.parametrize("conflicting_edit", [False, True])
+    async def test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish(monkeypatch, conflicting_edit):
+        runtime = _runtime()
+        monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+        started, release = threading.Event(), threading.Event()
+        def validate(_configuration):
+            started.set()
+            assert release.wait(2)
+            return pb.ValidationResult(completed=True, valid=True)
+        runtime.configuration_commands.validators = {"test": validate}
+        update = asyncio.create_task(runtime.update_configuration(_update_request(runtime, "changed")))
+        assert await asyncio.to_thread(started.wait, 2)
+        runtime.publisher.publish()
+        if conflicting_edit:
+            runtime.device_state.configuration_edit = object()
+        release.set()
+        result = await update
+>       assert result.result == (pb.COMMAND_RESULT_REJECTED if conflicting_edit else pb.COMMAND_RESULT_ACCEPTED)
+E       assert 2 == 1
+E        +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "REJECTED"\n  message: "configuration changes were not applied: configuration or session phase changed during validation"\n}\ncommand_id: "e0efc8eb-c959-4f77-b29f-a51bf307e3ba"\n.result
+
+tests/controller/test_configuration_transactions.py:826: AssertionError
+=========================== short test summary info ============================
+FAILED tests/controller/test_configuration_transactions.py::test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish[False]
+1 failed, 1 passed, 34 deselected in 0.54s

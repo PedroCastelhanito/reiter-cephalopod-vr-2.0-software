@@ -1,0 +1,444 @@
+FFFFFFFFFF                                                               [100%]
+=================================== FAILURES ===================================
+___ test_readback_unbind_failure_retains_cancellable_ownership[False-False] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x105bc8ed0>
+signaled = False, delete_fails = False
+
+    @pytest.mark.parametrize("signaled", [False, True])
+    @pytest.mark.parametrize("delete_fails", [False, True])
+    def test_readback_unbind_failure_retains_cancellable_ownership(
+        monkeypatch, signaled, delete_fails
+    ):
+        gl = _CaptureGL(b"RGBA", 1, 1)
+        capture, outputs, encoding, released = _review_capture_fixture(monkeypatch, gl)
+        pending = capture.capture(outputs, encoding)
+        sync = pending.sync
+        gl.signaled = signaled
+        gl.fail = "unbind"
+        with pytest.raises(RuntimeError, match="unbind failed"):
+            capture.poll(pending)
+>       assert pending in capture._pending and pending.failed
+E       assert (_Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105c02090>, pbo=1, byte_count=4), sync=2, failed=False) in [_Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105c02090>, pbo=1, byte_count=4), sync=2, failed=False)] and False)
+E        +  where [_Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105c02090>, pbo=1, byte_count=4), sync=2, failed=False)] = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x105bc8cd0>._pending
+E        +  and   False = _Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105c02090>, pbo=1, byte_count=4), sync=2, failed=False).failed
+
+tests/visual_stimulus/test_rendering.py:2293: AssertionError
+____ test_readback_unbind_failure_retains_cancellable_ownership[False-True] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x105bcaf10>
+signaled = True, delete_fails = False
+
+    @pytest.mark.parametrize("signaled", [False, True])
+    @pytest.mark.parametrize("delete_fails", [False, True])
+    def test_readback_unbind_failure_retains_cancellable_ownership(
+        monkeypatch, signaled, delete_fails
+    ):
+        gl = _CaptureGL(b"RGBA", 1, 1)
+        capture, outputs, encoding, released = _review_capture_fixture(monkeypatch, gl)
+        pending = capture.capture(outputs, encoding)
+        sync = pending.sync
+        gl.signaled = signaled
+        gl.fail = "unbind"
+        with pytest.raises(RuntimeError, match="unbind failed"):
+            capture.poll(pending)
+>       assert pending in capture._pending and pending.failed
+E       assert (_Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105b20810>, pbo=1, byte_count=4), sync=None, failed=False) in [])
+E        +  where [] = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x105b20f10>._pending
+
+tests/visual_stimulus/test_rendering.py:2293: AssertionError
+____ test_readback_unbind_failure_retains_cancellable_ownership[True-False] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x105c00790>
+signaled = False, delete_fails = True
+
+    @pytest.mark.parametrize("signaled", [False, True])
+    @pytest.mark.parametrize("delete_fails", [False, True])
+    def test_readback_unbind_failure_retains_cancellable_ownership(
+        monkeypatch, signaled, delete_fails
+    ):
+        gl = _CaptureGL(b"RGBA", 1, 1)
+        capture, outputs, encoding, released = _review_capture_fixture(monkeypatch, gl)
+        pending = capture.capture(outputs, encoding)
+        sync = pending.sync
+        gl.signaled = signaled
+        gl.fail = "unbind"
+        with pytest.raises(RuntimeError, match="unbind failed"):
+            capture.poll(pending)
+>       assert pending in capture._pending and pending.failed
+E       assert (_Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105c00590>, pbo=1, byte_count=4), sync=2, failed=False) in [_Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105c00590>, pbo=1, byte_count=4), sync=2, failed=False)] and False)
+E        +  where [_Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105c00590>, pbo=1, byte_count=4), sync=2, failed=False)] = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x105be7790>._pending
+E        +  and   False = _Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105c00590>, pbo=1, byte_count=4), sync=2, failed=False).failed
+
+tests/visual_stimulus/test_rendering.py:2293: AssertionError
+____ test_readback_unbind_failure_retains_cancellable_ownership[True-True] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x105a82850>
+signaled = True, delete_fails = True
+
+    @pytest.mark.parametrize("signaled", [False, True])
+    @pytest.mark.parametrize("delete_fails", [False, True])
+    def test_readback_unbind_failure_retains_cancellable_ownership(
+        monkeypatch, signaled, delete_fails
+    ):
+        gl = _CaptureGL(b"RGBA", 1, 1)
+        capture, outputs, encoding, released = _review_capture_fixture(monkeypatch, gl)
+        pending = capture.capture(outputs, encoding)
+        sync = pending.sync
+        gl.signaled = signaled
+        gl.fail = "unbind"
+        with pytest.raises(RuntimeError, match="unbind failed"):
+            capture.poll(pending)
+>       assert pending in capture._pending and pending.failed
+E       assert (_Pending(buffer=_Buffer(gl=<tests.visual_stimulus.test_rendering._CaptureGL object at 0x105a802d0>, pbo=1, byte_count=4), sync=None, failed=False) in [])
+E        +  where [] = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x105a82710>._pending
+
+tests/visual_stimulus/test_rendering.py:2293: AssertionError
+_ test_capture_cancellation_releases_resources_despite_evidence_failure[none-False] _
+
+queue_sealed = False, gl_retry = 'none'
+
+    @pytest.mark.parametrize("queue_sealed", [False, True])
+    @pytest.mark.parametrize("gl_retry", ["none", "pending", "error"])
+    def test_capture_cancellation_releases_resources_despite_evidence_failure(
+        queue_sealed, gl_retry
+    ):
+        from collections import deque
+    
+        evidence = EvidenceWriter(max_pending_bytes=4096)
+        worker = RecordingWorker(
+            capture_slots=2, evidence=evidence, encoder=_Input(), video_start_ns=0
+        )
+        # A stopped recorder can retain byte reservations when serialization fails.
+        # Exercise the real queue guard without starting a recording thread.
+        session = object.__new__(RecordingSession)
+        session.worker = worker
+        session.evidence = evidence
+        session._condition = threading.Condition()
+        session._closing = queue_sealed
+        session.max_queued_evidence_bytes = 4096
+        session._line_bytes = 4096
+        session._lines = deque()
+        gl_calls = []
+    
+        def cancel(pending):
+            gl_calls.append(pending)
+            if pending == "first" and gl_calls.count("first") == 1:
+                if gl_retry == "pending":
+                    return False
+                if gl_retry == "error":
+                    raise RuntimeError("GL deletion failed")
+            return True
+    
+        runtime = RecordingCaptureRuntime(
+            NS(cancel_review_capture=cancel), session,
+            NS(native_pixel_format="rgba8_top_down", encoder_pixel_format="yuv420p"),
+            evidence_pending_bytes=4096, capture_slots=2,
+        )
+        for group, handle in enumerate(("first", "second")):
+            reservation, _, _ = worker.classify_and_reserve(group, group)
+            assert reservation is not None
+            runtime.pending[reservation.token] = (reservation, handle)
+        expected = RuntimeError if queue_sealed else BufferError
+        with pytest.raises(expected, match="sealed|evidence_pending_bytes"):
+            runtime.cancel_pending("capture_cleanup")
+        # Required logging failure is still raised, after both releases are attempted.
+>       assert gl_calls == ["first", "second"]
+E       AssertionError: assert [] == ['first', 'second']
+E         
+E         Right contains 2 more items, first extra item: 'first'
+E         Use -v to get more diff
+
+tests/visual_stimulus/test_recording.py:935: AssertionError
+_ test_capture_cancellation_releases_resources_despite_evidence_failure[none-True] _
+
+queue_sealed = True, gl_retry = 'none'
+
+    @pytest.mark.parametrize("queue_sealed", [False, True])
+    @pytest.mark.parametrize("gl_retry", ["none", "pending", "error"])
+    def test_capture_cancellation_releases_resources_despite_evidence_failure(
+        queue_sealed, gl_retry
+    ):
+        from collections import deque
+    
+        evidence = EvidenceWriter(max_pending_bytes=4096)
+        worker = RecordingWorker(
+            capture_slots=2, evidence=evidence, encoder=_Input(), video_start_ns=0
+        )
+        # A stopped recorder can retain byte reservations when serialization fails.
+        # Exercise the real queue guard without starting a recording thread.
+        session = object.__new__(RecordingSession)
+        session.worker = worker
+        session.evidence = evidence
+        session._condition = threading.Condition()
+        session._closing = queue_sealed
+        session.max_queued_evidence_bytes = 4096
+        session._line_bytes = 4096
+        session._lines = deque()
+        gl_calls = []
+    
+        def cancel(pending):
+            gl_calls.append(pending)
+            if pending == "first" and gl_calls.count("first") == 1:
+                if gl_retry == "pending":
+                    return False
+                if gl_retry == "error":
+                    raise RuntimeError("GL deletion failed")
+            return True
+    
+        runtime = RecordingCaptureRuntime(
+            NS(cancel_review_capture=cancel), session,
+            NS(native_pixel_format="rgba8_top_down", encoder_pixel_format="yuv420p"),
+            evidence_pending_bytes=4096, capture_slots=2,
+        )
+        for group, handle in enumerate(("first", "second")):
+            reservation, _, _ = worker.classify_and_reserve(group, group)
+            assert reservation is not None
+            runtime.pending[reservation.token] = (reservation, handle)
+        expected = RuntimeError if queue_sealed else BufferError
+        with pytest.raises(expected, match="sealed|evidence_pending_bytes"):
+            runtime.cancel_pending("capture_cleanup")
+        # Required logging failure is still raised, after both releases are attempted.
+>       assert gl_calls == ["first", "second"]
+E       AssertionError: assert [] == ['first', 'second']
+E         
+E         Right contains 2 more items, first extra item: 'first'
+E         Use -v to get more diff
+
+tests/visual_stimulus/test_recording.py:935: AssertionError
+_ test_capture_cancellation_releases_resources_despite_evidence_failure[pending-False] _
+
+queue_sealed = False, gl_retry = 'pending'
+
+    @pytest.mark.parametrize("queue_sealed", [False, True])
+    @pytest.mark.parametrize("gl_retry", ["none", "pending", "error"])
+    def test_capture_cancellation_releases_resources_despite_evidence_failure(
+        queue_sealed, gl_retry
+    ):
+        from collections import deque
+    
+        evidence = EvidenceWriter(max_pending_bytes=4096)
+        worker = RecordingWorker(
+            capture_slots=2, evidence=evidence, encoder=_Input(), video_start_ns=0
+        )
+        # A stopped recorder can retain byte reservations when serialization fails.
+        # Exercise the real queue guard without starting a recording thread.
+        session = object.__new__(RecordingSession)
+        session.worker = worker
+        session.evidence = evidence
+        session._condition = threading.Condition()
+        session._closing = queue_sealed
+        session.max_queued_evidence_bytes = 4096
+        session._line_bytes = 4096
+        session._lines = deque()
+        gl_calls = []
+    
+        def cancel(pending):
+            gl_calls.append(pending)
+            if pending == "first" and gl_calls.count("first") == 1:
+                if gl_retry == "pending":
+                    return False
+                if gl_retry == "error":
+                    raise RuntimeError("GL deletion failed")
+            return True
+    
+        runtime = RecordingCaptureRuntime(
+            NS(cancel_review_capture=cancel), session,
+            NS(native_pixel_format="rgba8_top_down", encoder_pixel_format="yuv420p"),
+            evidence_pending_bytes=4096, capture_slots=2,
+        )
+        for group, handle in enumerate(("first", "second")):
+            reservation, _, _ = worker.classify_and_reserve(group, group)
+            assert reservation is not None
+            runtime.pending[reservation.token] = (reservation, handle)
+        expected = RuntimeError if queue_sealed else BufferError
+        with pytest.raises(expected, match="sealed|evidence_pending_bytes"):
+            runtime.cancel_pending("capture_cleanup")
+        # Required logging failure is still raised, after both releases are attempted.
+>       assert gl_calls == ["first", "second"]
+E       AssertionError: assert [] == ['first', 'second']
+E         
+E         Right contains 2 more items, first extra item: 'first'
+E         Use -v to get more diff
+
+tests/visual_stimulus/test_recording.py:935: AssertionError
+_ test_capture_cancellation_releases_resources_despite_evidence_failure[pending-True] _
+
+queue_sealed = True, gl_retry = 'pending'
+
+    @pytest.mark.parametrize("queue_sealed", [False, True])
+    @pytest.mark.parametrize("gl_retry", ["none", "pending", "error"])
+    def test_capture_cancellation_releases_resources_despite_evidence_failure(
+        queue_sealed, gl_retry
+    ):
+        from collections import deque
+    
+        evidence = EvidenceWriter(max_pending_bytes=4096)
+        worker = RecordingWorker(
+            capture_slots=2, evidence=evidence, encoder=_Input(), video_start_ns=0
+        )
+        # A stopped recorder can retain byte reservations when serialization fails.
+        # Exercise the real queue guard without starting a recording thread.
+        session = object.__new__(RecordingSession)
+        session.worker = worker
+        session.evidence = evidence
+        session._condition = threading.Condition()
+        session._closing = queue_sealed
+        session.max_queued_evidence_bytes = 4096
+        session._line_bytes = 4096
+        session._lines = deque()
+        gl_calls = []
+    
+        def cancel(pending):
+            gl_calls.append(pending)
+            if pending == "first" and gl_calls.count("first") == 1:
+                if gl_retry == "pending":
+                    return False
+                if gl_retry == "error":
+                    raise RuntimeError("GL deletion failed")
+            return True
+    
+        runtime = RecordingCaptureRuntime(
+            NS(cancel_review_capture=cancel), session,
+            NS(native_pixel_format="rgba8_top_down", encoder_pixel_format="yuv420p"),
+            evidence_pending_bytes=4096, capture_slots=2,
+        )
+        for group, handle in enumerate(("first", "second")):
+            reservation, _, _ = worker.classify_and_reserve(group, group)
+            assert reservation is not None
+            runtime.pending[reservation.token] = (reservation, handle)
+        expected = RuntimeError if queue_sealed else BufferError
+        with pytest.raises(expected, match="sealed|evidence_pending_bytes"):
+            runtime.cancel_pending("capture_cleanup")
+        # Required logging failure is still raised, after both releases are attempted.
+>       assert gl_calls == ["first", "second"]
+E       AssertionError: assert [] == ['first', 'second']
+E         
+E         Right contains 2 more items, first extra item: 'first'
+E         Use -v to get more diff
+
+tests/visual_stimulus/test_recording.py:935: AssertionError
+_ test_capture_cancellation_releases_resources_despite_evidence_failure[error-False] _
+
+queue_sealed = False, gl_retry = 'error'
+
+    @pytest.mark.parametrize("queue_sealed", [False, True])
+    @pytest.mark.parametrize("gl_retry", ["none", "pending", "error"])
+    def test_capture_cancellation_releases_resources_despite_evidence_failure(
+        queue_sealed, gl_retry
+    ):
+        from collections import deque
+    
+        evidence = EvidenceWriter(max_pending_bytes=4096)
+        worker = RecordingWorker(
+            capture_slots=2, evidence=evidence, encoder=_Input(), video_start_ns=0
+        )
+        # A stopped recorder can retain byte reservations when serialization fails.
+        # Exercise the real queue guard without starting a recording thread.
+        session = object.__new__(RecordingSession)
+        session.worker = worker
+        session.evidence = evidence
+        session._condition = threading.Condition()
+        session._closing = queue_sealed
+        session.max_queued_evidence_bytes = 4096
+        session._line_bytes = 4096
+        session._lines = deque()
+        gl_calls = []
+    
+        def cancel(pending):
+            gl_calls.append(pending)
+            if pending == "first" and gl_calls.count("first") == 1:
+                if gl_retry == "pending":
+                    return False
+                if gl_retry == "error":
+                    raise RuntimeError("GL deletion failed")
+            return True
+    
+        runtime = RecordingCaptureRuntime(
+            NS(cancel_review_capture=cancel), session,
+            NS(native_pixel_format="rgba8_top_down", encoder_pixel_format="yuv420p"),
+            evidence_pending_bytes=4096, capture_slots=2,
+        )
+        for group, handle in enumerate(("first", "second")):
+            reservation, _, _ = worker.classify_and_reserve(group, group)
+            assert reservation is not None
+            runtime.pending[reservation.token] = (reservation, handle)
+        expected = RuntimeError if queue_sealed else BufferError
+        with pytest.raises(expected, match="sealed|evidence_pending_bytes"):
+            runtime.cancel_pending("capture_cleanup")
+        # Required logging failure is still raised, after both releases are attempted.
+>       assert gl_calls == ["first", "second"]
+E       AssertionError: assert [] == ['first', 'second']
+E         
+E         Right contains 2 more items, first extra item: 'first'
+E         Use -v to get more diff
+
+tests/visual_stimulus/test_recording.py:935: AssertionError
+_ test_capture_cancellation_releases_resources_despite_evidence_failure[error-True] _
+
+queue_sealed = True, gl_retry = 'error'
+
+    @pytest.mark.parametrize("queue_sealed", [False, True])
+    @pytest.mark.parametrize("gl_retry", ["none", "pending", "error"])
+    def test_capture_cancellation_releases_resources_despite_evidence_failure(
+        queue_sealed, gl_retry
+    ):
+        from collections import deque
+    
+        evidence = EvidenceWriter(max_pending_bytes=4096)
+        worker = RecordingWorker(
+            capture_slots=2, evidence=evidence, encoder=_Input(), video_start_ns=0
+        )
+        # A stopped recorder can retain byte reservations when serialization fails.
+        # Exercise the real queue guard without starting a recording thread.
+        session = object.__new__(RecordingSession)
+        session.worker = worker
+        session.evidence = evidence
+        session._condition = threading.Condition()
+        session._closing = queue_sealed
+        session.max_queued_evidence_bytes = 4096
+        session._line_bytes = 4096
+        session._lines = deque()
+        gl_calls = []
+    
+        def cancel(pending):
+            gl_calls.append(pending)
+            if pending == "first" and gl_calls.count("first") == 1:
+                if gl_retry == "pending":
+                    return False
+                if gl_retry == "error":
+                    raise RuntimeError("GL deletion failed")
+            return True
+    
+        runtime = RecordingCaptureRuntime(
+            NS(cancel_review_capture=cancel), session,
+            NS(native_pixel_format="rgba8_top_down", encoder_pixel_format="yuv420p"),
+            evidence_pending_bytes=4096, capture_slots=2,
+        )
+        for group, handle in enumerate(("first", "second")):
+            reservation, _, _ = worker.classify_and_reserve(group, group)
+            assert reservation is not None
+            runtime.pending[reservation.token] = (reservation, handle)
+        expected = RuntimeError if queue_sealed else BufferError
+        with pytest.raises(expected, match="sealed|evidence_pending_bytes"):
+            runtime.cancel_pending("capture_cleanup")
+        # Required logging failure is still raised, after both releases are attempted.
+>       assert gl_calls == ["first", "second"]
+E       AssertionError: assert [] == ['first', 'second']
+E         
+E         Right contains 2 more items, first extra item: 'first'
+E         Use -v to get more diff
+
+tests/visual_stimulus/test_recording.py:935: AssertionError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_rendering.py::test_readback_unbind_failure_retains_cancellable_ownership[False-False]
+FAILED tests/visual_stimulus/test_rendering.py::test_readback_unbind_failure_retains_cancellable_ownership[False-True]
+FAILED tests/visual_stimulus/test_rendering.py::test_readback_unbind_failure_retains_cancellable_ownership[True-False]
+FAILED tests/visual_stimulus/test_rendering.py::test_readback_unbind_failure_retains_cancellable_ownership[True-True]
+FAILED tests/visual_stimulus/test_recording.py::test_capture_cancellation_releases_resources_despite_evidence_failure[none-False]
+FAILED tests/visual_stimulus/test_recording.py::test_capture_cancellation_releases_resources_despite_evidence_failure[none-True]
+FAILED tests/visual_stimulus/test_recording.py::test_capture_cancellation_releases_resources_despite_evidence_failure[pending-False]
+FAILED tests/visual_stimulus/test_recording.py::test_capture_cancellation_releases_resources_despite_evidence_failure[pending-True]
+FAILED tests/visual_stimulus/test_recording.py::test_capture_cancellation_releases_resources_despite_evidence_failure[error-False]
+FAILED tests/visual_stimulus/test_recording.py::test_capture_cancellation_releases_resources_despite_evidence_failure[error-True]
+10 failed, 143 deselected in 0.97s

@@ -1,0 +1,316 @@
+........................................................................ [  5%]
+........................................................................ [ 11%]
+........................................................................ [ 17%]
+........................................................................ [ 23%]
+........................................................................ [ 29%]
+........................................................................ [ 35%]
+........................................................................ [ 41%]
+................................sssss................................... [ 47%]
+........................................................................ [ 53%]
+...............................F.F.F.................................... [ 59%]
+........................................................................ [ 64%]
+........................................................................ [ 70%]
+........................................................................ [ 76%]
+........................................................................ [ 82%]
+........................................................................ [ 88%]
+........................................................................ [ 94%]
+...................................................................      [100%]
+=================================== FAILURES ===================================
+___ test_acquisition_default_failure_warns_only_when_inactive[missing-False] ___
+
+path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu0/config/backends/acquisition_config.toml')
+max_file_bytes = 1048576
+
+    def _read_toml(path: Path, *, max_file_bytes: int) -> dict[str, Any]:
+        try:
+>           with path.open("rb") as stream:
+                 ^^^^^^^^^^^^^^^
+
+src/cephvr/shared/config.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu0/config/backends/acquisition_config.toml')
+mode = 'rb', buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu0/config/backends/acquisition_config.toml'
+
+.venv/lib/python3.11/pathlib.py:1044: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu0')
+enabled = False, damage = 'missing'
+
+    @pytest.mark.parametrize("enabled", [False, True])
+    @pytest.mark.parametrize("damage", ["missing", "malformed"])
+    def test_acquisition_default_failure_warns_only_when_inactive(
+        tmp_path: Path, enabled: bool, damage: str
+    ) -> None:
+        _copy_pairs(tmp_path)
+        saved = {
+            "format_version": 1,
+            "configuration": {"backends": [{
+                "backendName": "acquisition", "enabled": enabled,
+                "acquisition": {"behavioral": {"enabled": False}},
+            }]},
+        }
+        history = tmp_path / "config/last_configuration.json"
+        history.write_text(json.dumps(saved))
+        before = history.read_bytes()
+        path = tmp_path / "config/backends/acquisition_config.toml"
+        if damage == "missing":
+            path.unlink()
+        else:
+            path.write_text("invalid=[")
+        if enabled:
+            with pytest.raises(ConfigurationError):
+                load_controller_configuration(tmp_path)
+        else:
+>           loaded = load_controller_configuration(tmp_path)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/controller/test_configuration.py:127: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/controller/configuration.py:303: in load_controller_configuration
+    reusable, history_warning = _load_reusable_configuration(root, ec, max_message)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/controller/configuration.py:177: in _load_reusable_configuration
+    _fill_acquisition_defaults(reusable, root)
+src/cephvr/controller/configuration.py:330: in _fill_acquisition_defaults
+    defaults = load_defaults(software_root)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/config/defaults.py:28: in load_defaults
+    pair = _load_pair(Path(root))
+           ^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/config/policy.py:139: in _load_pair
+    pair = load_pair(
+src/cephvr/shared/config.py:123: in load_pair
+    config = _read_toml(Path(config_path), max_file_bytes=max_file_bytes)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu0/config/backends/acquisition_config.toml')
+max_file_bytes = 1048576
+
+    def _read_toml(path: Path, *, max_file_bytes: int) -> dict[str, Any]:
+        try:
+            with path.open("rb") as stream:
+                raw = stream.read(max_file_bytes + 1)
+        except OSError as exc:
+>           raise ConfigurationError(f"cannot read {path}: {exc}") from exc
+E           cephvr.shared.config.ConfigurationError: cannot read /private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu0/config/backends/acquisition_config.toml: [Errno 2] No such file or directory: '/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu0/config/backends/acquisition_config.toml'
+
+src/cephvr/shared/config.py:48: ConfigurationError
+__ test_acquisition_default_failure_warns_only_when_inactive[malformed-False] __
+
+path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu2/config/backends/acquisition_config.toml')
+max_file_bytes = 1048576
+
+    def _read_toml(path: Path, *, max_file_bytes: int) -> dict[str, Any]:
+        try:
+            with path.open("rb") as stream:
+                raw = stream.read(max_file_bytes + 1)
+        except OSError as exc:
+            raise ConfigurationError(f"cannot read {path}: {exc}") from exc
+        if len(raw) > max_file_bytes:
+            raise ConfigurationError(f"{path} exceeds TOML byte limit")
+        try:
+>           parsed = tomllib.loads(raw.decode("utf-8"), parse_float=Decimal)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/cephvr/shared/config.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/tomllib/_parser.py:102: in loads
+    pos = key_value_rule(src, pos, out, header, parse_float)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/tomllib/_parser.py:326: in key_value_rule
+    pos, key, value = parse_key_value_pair(src, pos, parse_float)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/tomllib/_parser.py:369: in parse_key_value_pair
+    pos, value = parse_value(src, pos, parse_float)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/tomllib/_parser.py:616: in parse_value
+    return parse_array(src, pos, parse_float)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/tomllib/_parser.py:420: in parse_array
+    pos, val = parse_value(src, pos, parse_float)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+src = 'invalid=[', pos = 9
+parse_float = <function make_safe_parse_float.<locals>.safe_parse_float at 0x107efdb20>
+
+    def parse_value(  # noqa: C901
+        src: str, pos: Pos, parse_float: ParseFloat
+    ) -> tuple[Pos, Any]:
+        try:
+            char: str | None = src[pos]
+        except IndexError:
+            char = None
+    
+        # IMPORTANT: order conditions based on speed of checking and likelihood
+    
+        # Basic strings
+        if char == '"':
+            if src.startswith('"""', pos):
+                return parse_multiline_str(src, pos, literal=False)
+            return parse_one_line_basic_str(src, pos)
+    
+        # Literal strings
+        if char == "'":
+            if src.startswith("'''", pos):
+                return parse_multiline_str(src, pos, literal=True)
+            return parse_literal_str(src, pos)
+    
+        # Booleans
+        if char == "t":
+            if src.startswith("true", pos):
+                return pos + 4, True
+        if char == "f":
+            if src.startswith("false", pos):
+                return pos + 5, False
+    
+        # Arrays
+        if char == "[":
+            return parse_array(src, pos, parse_float)
+    
+        # Inline tables
+        if char == "{":
+            return parse_inline_table(src, pos, parse_float)
+    
+        # Dates and times
+        datetime_match = RE_DATETIME.match(src, pos)
+        if datetime_match:
+            try:
+                datetime_obj = match_to_datetime(datetime_match)
+            except ValueError as e:
+                raise suffixed_err(src, pos, "Invalid date or datetime") from e
+            return datetime_match.end(), datetime_obj
+        localtime_match = RE_LOCALTIME.match(src, pos)
+        if localtime_match:
+            return localtime_match.end(), match_to_localtime(localtime_match)
+    
+        # Integers and "normal" floats.
+        # The regex will greedily match any type starting with a decimal
+        # char, so needs to be located after handling of dates and times.
+        number_match = RE_NUMBER.match(src, pos)
+        if number_match:
+            return number_match.end(), match_to_number(number_match, parse_float)
+    
+        # Special floats
+        first_three = src[pos : pos + 3]
+        if first_three in {"inf", "nan"}:
+            return pos + 3, parse_float(first_three)
+        first_four = src[pos : pos + 4]
+        if first_four in {"-inf", "+inf", "-nan", "+nan"}:
+            return pos + 4, parse_float(first_four)
+    
+>       raise suffixed_err(src, pos, "Invalid value")
+E       tomllib.TOMLDecodeError: Invalid value (at end of document)
+
+.venv/lib/python3.11/tomllib/_parser.py:649: TOMLDecodeError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu2')
+enabled = False, damage = 'malformed'
+
+    @pytest.mark.parametrize("enabled", [False, True])
+    @pytest.mark.parametrize("damage", ["missing", "malformed"])
+    def test_acquisition_default_failure_warns_only_when_inactive(
+        tmp_path: Path, enabled: bool, damage: str
+    ) -> None:
+        _copy_pairs(tmp_path)
+        saved = {
+            "format_version": 1,
+            "configuration": {"backends": [{
+                "backendName": "acquisition", "enabled": enabled,
+                "acquisition": {"behavioral": {"enabled": False}},
+            }]},
+        }
+        history = tmp_path / "config/last_configuration.json"
+        history.write_text(json.dumps(saved))
+        before = history.read_bytes()
+        path = tmp_path / "config/backends/acquisition_config.toml"
+        if damage == "missing":
+            path.unlink()
+        else:
+            path.write_text("invalid=[")
+        if enabled:
+            with pytest.raises(ConfigurationError):
+                load_controller_configuration(tmp_path)
+        else:
+>           loaded = load_controller_configuration(tmp_path)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/controller/test_configuration.py:127: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/controller/configuration.py:303: in load_controller_configuration
+    reusable, history_warning = _load_reusable_configuration(root, ec, max_message)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/controller/configuration.py:177: in _load_reusable_configuration
+    _fill_acquisition_defaults(reusable, root)
+src/cephvr/controller/configuration.py:330: in _fill_acquisition_defaults
+    defaults = load_defaults(software_root)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/config/defaults.py:28: in load_defaults
+    pair = _load_pair(Path(root))
+           ^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/config/policy.py:139: in _load_pair
+    pair = load_pair(
+src/cephvr/shared/config.py:123: in load_pair
+    config = _read_toml(Path(config_path), max_file_bytes=max_file_bytes)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu2/config/backends/acquisition_config.toml')
+max_file_bytes = 1048576
+
+    def _read_toml(path: Path, *, max_file_bytes: int) -> dict[str, Any]:
+        try:
+            with path.open("rb") as stream:
+                raw = stream.read(max_file_bytes + 1)
+        except OSError as exc:
+            raise ConfigurationError(f"cannot read {path}: {exc}") from exc
+        if len(raw) > max_file_bytes:
+            raise ConfigurationError(f"{path} exceeds TOML byte limit")
+        try:
+            parsed = tomllib.loads(raw.decode("utf-8"), parse_float=Decimal)
+        except (UnicodeError, tomllib.TOMLDecodeError) as exc:
+>           raise ConfigurationError(f"invalid TOML in {path}: {exc}") from exc
+E           cephvr.shared.config.ConfigurationError: invalid TOML in /private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_acquisition_default_failu2/config/backends/acquisition_config.toml: Invalid value (at end of document)
+
+src/cephvr/shared/config.py:54: ConfigurationError
+_______ test_setup_limit_reload_ignores_saved_and_backend_configuration ________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1973/test_setup_limit_reload_ignore0')
+
+    def test_setup_limit_reload_ignores_saved_and_backend_configuration(
+        tmp_path: Path,
+    ) -> None:
+        from cephvr.controller.startup.providers import _installed_file_policies
+    
+        _copy_pairs(tmp_path)
+        baseline = load_controller_configuration(tmp_path)
+        (tmp_path / "config/last_configuration.json").write_text("invalid JSON")
+        (tmp_path / "config/backends/acquisition_config.toml").write_text("invalid=[")
+>       loaded = load_controller_configuration(tmp_path, include_configuration=False)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: load_controller_configuration() got an unexpected keyword argument 'include_configuration'
+
+tests/controller/test_configuration.py:147: TypeError
+=========================== short test summary info ============================
+FAILED tests/controller/test_configuration.py::test_acquisition_default_failure_warns_only_when_inactive[missing-False]
+FAILED tests/controller/test_configuration.py::test_acquisition_default_failure_warns_only_when_inactive[malformed-False]
+FAILED tests/controller/test_configuration.py::test_setup_limit_reload_ignores_saved_and_backend_configuration
+3 failed, 1211 passed, 5 skipped, 3 deselected in 13.49s

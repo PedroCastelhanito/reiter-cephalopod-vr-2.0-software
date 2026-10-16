@@ -1,0 +1,7 @@
+Cameras found    2
+Cameras enabled  2
+
+Camera role       Behavior cam
+Status            Not connected
+Trigger rate      —
+Acquisition rate  —

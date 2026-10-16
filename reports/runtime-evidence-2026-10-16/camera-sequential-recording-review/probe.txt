@@ -1,0 +1,8 @@
+PASS: queue overflow + invalid image + equal receipts + long gap + interrupted close; four sources -> two mapped images, no padding
+output_key: "trial:acquisition:behavioral_cam"
+path: "/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/tmp9w1rwwx9/trial.mp4"
+closure: OUTPUT_CLOSURE_UNCONFIRMED
+artifact_present: true
+camera_video_content: CAMERA_VIDEO_CONTENT_NO_FRAMES
+
+REPRODUCED: first image fully accepted, mapping append fails, cleanup incorrectly reports NO_FRAMES; pre-existing callback ordering

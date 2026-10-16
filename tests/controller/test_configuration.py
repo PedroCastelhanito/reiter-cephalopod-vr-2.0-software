@@ -5,16 +5,21 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 
+from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.configuration import (
     controller_validators,
     load_controller_configuration,
     validate_experiment_candidate,
 )
+from cephvr.controller.runtime import ControllerRuntime
+from cephvr.controller.state import ControllerLimits
 from cephvr.shared.config import ConfigurationError
+from tests.controller.support_components import drain_runtime_tasks
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 
@@ -51,6 +56,8 @@ def _copy_pairs(root: Path) -> None:
         "contracts/policy/acquisition_policy.toml",
         "config/backends/microcontroller_config.toml",
         "contracts/policy/microcontroller_policy.toml",
+        "config/backends/visual_stimulus_config.toml",
+        "contracts/policy/visual_stimulus_policy.toml",
     ):
         destination = root / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -97,6 +104,147 @@ def test_loader_preserves_explicit_saved_false(tmp_path: Path) -> None:
         loaded.configuration.backends[0].visual_stimulus.save_visual_stimulus_data
         is False
     )
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+@pytest.mark.parametrize("damage", ["missing", "malformed"])
+def test_acquisition_default_failure_warns_only_when_inactive(
+    tmp_path: Path, enabled: bool, damage: str
+) -> None:
+    _copy_pairs(tmp_path)
+    saved = {
+        "format_version": 1,
+        "configuration": {
+            "backends": [
+                {
+                    "backendName": "acquisition",
+                    "enabled": enabled,
+                    "acquisition": {"behavioral": {"enabled": False}},
+                }
+            ]
+        },
+    }
+    history = tmp_path / "config/last_configuration.json"
+    history.write_text(json.dumps(saved))
+    before = history.read_bytes()
+    path = tmp_path / "config/backends/acquisition_config.toml"
+    if damage == "missing":
+        path.unlink()
+    else:
+        path.write_text("invalid=[")
+    if enabled:
+        with pytest.raises(ConfigurationError):
+            load_controller_configuration(tmp_path)
+    else:
+        loaded = load_controller_configuration(tmp_path)
+        assert loaded.backend_warnings
+        assert "acquisition" in loaded.backend_warnings[0]
+        backend = loaded.configuration.backends[0]
+        assert not backend.enabled
+        assert backend.acquisition.behavioral.HasField("enabled")
+        assert not backend.acquisition.behavioral.enabled
+        assert not backend.acquisition.behavioral.HasField("ffmpeg_args")
+        runtime = ControllerRuntime(
+            generation=str(uuid4()),
+            configuration=loaded.configuration,
+            limits=ControllerLimits(**loaded.limits_kwargs),
+            validators={},
+            backends={},
+            startup_settings=loaded,
+            settings_loader=lambda: load_controller_configuration(
+                tmp_path, include_configuration=False
+            ),
+        )
+        assert any(
+            warning.component == "configuration"
+            and warning.message == loaded.backend_warnings[0]
+            for warning in runtime.control.warnings
+        )
+    assert history.read_bytes() == before
+
+
+def test_setup_limit_reload_ignores_saved_and_backend_configuration(
+    tmp_path: Path,
+) -> None:
+    from cephvr.controller.startup.providers import _installed_file_policies
+
+    _copy_pairs(tmp_path)
+    baseline = load_controller_configuration(tmp_path)
+    (tmp_path / "config/last_configuration.json").write_text("invalid JSON")
+    (tmp_path / "config/backends/acquisition_config.toml").write_text("invalid=[")
+    loaded = load_controller_configuration(tmp_path, include_configuration=False)
+    assert loaded.limits_kwargs == baseline.limits_kwargs
+    assert loaded.policies == baseline.policies
+    assert not loaded.configuration.backends
+    assert loaded.history_warning is None
+    assert not loaded.backend_warnings
+    assert _installed_file_policies(tmp_path, frozenset()) == {}
+    with pytest.raises(ConfigurationError):
+        _installed_file_policies(tmp_path, frozenset({"acquisition"}))
+
+
+async def test_inactive_default_warning_survives_setup_without_reloading_history(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.controller.startup.providers import _installed_file_policies
+
+    _copy_pairs(tmp_path)
+    (tmp_path / "config/backends/acquisition_config.toml").write_text("invalid=[")
+    startup = load_controller_configuration(tmp_path)
+    visual = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=str(uuid4())
+    )
+    peer = type("Peer", (), {"context": visual})()
+    runtime = ControllerRuntime(
+        generation=str(uuid4()),
+        configuration=startup.configuration,
+        limits=ControllerLimits(**startup.limits_kwargs),
+        validators={},
+        backends={"visual_stimulus": peer},
+        startup_settings=startup,
+        settings_loader=lambda: load_controller_configuration(
+            tmp_path, include_configuration=False
+        ),
+        file_policy_loader=lambda names: _installed_file_policies(tmp_path, names),
+    )
+    candidate = runtime.configuration_state.current
+    candidate.mode = pb.SESSION_MODE_OPEN_LOOP
+    candidate.recording_root = str(tmp_path)
+    candidate.experiment = "experiment"
+    candidate.subject = "subject"
+    candidate.backends.add(backend_name="visual_stimulus", enabled=True)
+    candidate.trials.add(trial_number=1)
+    before = candidate.SerializeToString()
+    runtime.supervisor_state.processes["visual_stimulus"] = svc.ProcessHealthStatus(
+        process=pb.ProcessIdentity(
+            role="visual_stimulus", generation=visual.backend_generation
+        ),
+        process_running=True,
+        connected=True,
+    )
+    runtime.setup_admission.validators = {
+        "structural": lambda _: pb.ValidationResult(completed=True, valid=True)
+    }
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+
+    async def no_device_dispatch(*_args):
+        pass
+
+    monkeypatch.setattr(runtime.setup_execution, "run_setup", no_device_dispatch)
+    (tmp_path / "config/last_configuration.json").write_text("invalid JSON")
+    command = svc.OperatorCommand()
+    command.operator.command_id = str(uuid4())
+    admission = await runtime.setup(command)
+    assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.lifecycle.attempt is not None
+    assert (
+        runtime.lifecycle.attempt.prepared.configuration.SerializeToString() == before
+    )
+    assert runtime.configuration_state.current.SerializeToString() == before
+    assert any(
+        w.message == startup.backend_warnings[0] for w in runtime.control.warnings
+    )
+    await drain_runtime_tasks(runtime)
 
 
 def test_loader_preserves_explicit_acquisition_false_and_empty_arguments(
@@ -246,3 +394,19 @@ def test_unknown_empty_toml_table_is_rejected(tmp_path: Path) -> None:
     config.write_text(config.read_text() + "\n[unsupported_empty_section]\n")
     with pytest.raises(ConfigurationError, match="unsupported_empty_section"):
         load_controller_configuration(tmp_path)
+
+
+def test_acquisition_lookup_preserves_duplicate_dormant_entries_for_owner_validation():
+    from cephvr.controller.configuration_access import acquisition_backends
+
+    configuration = pb.ExperimentConfiguration()
+    configuration.backends.add(backend_name="tracking", enabled=True)
+    first = configuration.backends.add(backend_name="acquisition", enabled=False)
+    second = configuration.backends.add(backend_name="acquisition", enabled=True)
+    second.acquisition.pulses.port = "COM8"
+    entries = acquisition_backends(configuration)
+    assert entries == [first, second]
+    assert not entries[0].HasField("acquisition")
+    assert entries[1].acquisition.pulses.port == "COM8"
+    entries[1].enabled = False
+    assert not second.enabled

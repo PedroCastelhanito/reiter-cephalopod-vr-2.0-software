@@ -72,6 +72,8 @@ message MicrocontrollerObservation {
   MicrocontrollerState state = 5;
   MicrocontrollerCapabilities capabilities = 6;
   optional int64 capabilities_observed_monotonic_ns = 7;
+  optional uint64 unmatched_replies = 8; // Connection-scoped ignored replies, never health/completion proof.
+  optional uint64 malformed_replies = 9;
   // A full matched STATUS/CONFIGURE observation; PING cannot refresh this full
   // configuration evidence or capability timestamp. No physical-edge proof.
 }

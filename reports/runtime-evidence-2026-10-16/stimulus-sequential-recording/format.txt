@@ -1,0 +1,12 @@
+unformatted: File would be reformatted
+  --> src/cephvr/visual_stimulus/recording_schema.py:76:16
+   |
+75 |         },
+   -         units={"frame_rate": "nominal playback rate from pacing output or common VSync rate"},
+76 +         units={
+77 +             "frame_rate": "nominal playback rate from pacing output or common VSync rate"
+78 +         },
+79 |         clocks={
+   |
+
+1 file would be reformatted, 173 files already formatted

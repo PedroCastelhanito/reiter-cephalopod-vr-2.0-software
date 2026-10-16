@@ -1,0 +1,89 @@
+{
+  "date_utc": "2026-10-16T02:27:50.820238+00:00",
+  "base_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "tree": "dirty shared checkout with concurrent work; hashes identify reviewed final files",
+  "source_sha256": {
+    "src/cephvr/acquisition/recording/session_outputs.py": "616129f455270fded74ab21217196f489e32d30a5ac444bd1fd3c72a34676550",
+    "src/cephvr/visual_stimulus/resources/provenance.py": "0e39c9eca1a88250a60c0a443711120df4231582289084dfc1c95aa4ccad06b5",
+    "src/cephvr/visual_stimulus/resources/prepare.py": "a854d918199426c7d32d98d5cb6e93e5ad020ab579e492e6721501fad133eb88",
+    "src/cephvr/visual_stimulus/resources/session.py": "83bfcced69040a03fb76b56bac8cb573c9be2f9376dabb753d8907cbe2f114a9",
+    "src/cephvr/visual_stimulus/rendering/native.py": "47a7bdee80e0be55357b153634326338254dd435b4028aa9a4a6ce8f4d277a0f",
+    "src/cephvr/visual_stimulus/rendering/types.py": "2102b98c90391e70585e57d50a8a416eea0212784eb24da5bd6641b4aeeaf521",
+    "src/cephvr/visual_stimulus/rendering/shaders.py": "cffccedff4f60744baccd30ebcb1126d8601ddce199c8395922ff6a1f13c1fb5",
+    "src/cephvr/visual_stimulus/rendering/scene_resources.py": "5b17820e7764a55ba0c6bce9be86f3d4a0f996eebfc4039073b2d3ec7df790fe",
+    "src/cephvr/visual_stimulus/rendering/arena_draw.py": "8701914c48a6a38da65ba6758827c85edd05c17b2f16ebfb9b3275702c8c425c",
+    "src/cephvr/visual_stimulus/worker/preparation.py": "d5fcc2303f6a5152dbaf11949fbe67c27fd50dcd7bf4e3717479734a80862fc9",
+    "src/cephvr/visual_stimulus/worker/ports.py": "db016cd9ab63757f980c110ee71cecc850e7ee122d3daf76c505555b9ee99a55",
+    "src/cephvr/visual_stimulus/worker/lifecycle.py": "f6ad0a323cb983949fd4f30db118e99180739c437616cc92515b8a5b2e548e61",
+    "tests/acquisition/test_recording_cleanup.py": "2cc2c653ee7978a801c4db98650d095e8b0997fcee468e7c28d1ef15dddd60e9",
+    "tests/visual_stimulus/test_resources.py": "026c339ab88826caaeea1f7060886c75534a1071e88c2f1b882d9dc5b4b91663",
+    "tests/visual_stimulus/test_rendering.py": "df9b1c23650985d70b6851acad52f7c8d505595626e408526da036cc85dd85ef",
+    "tests/visual_stimulus/test_lifecycle.py": "2608ccaec6c785c72941e639ce7b42f7c5e52335f13409f37c94e00cb29097d1",
+    "tests/visual_stimulus/support.py": "75235da8310e427ecb4bb79703e1a1a1d7ade97ffe3ca15d3fb772475d83393d"
+  },
+  "commands": [
+    {
+      "command": ".venv/bin/python -m pytest tests/acquisition/test_recording_cleanup.py tests/visual_stimulus/test_resources.py -q -k \"failed_video_presence or prepared_manifest_detects\"",
+      "result": "3 failed, 3 passed before repair (both defects reproduced)",
+      "output": "red.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/acquisition/test_recording_cleanup.py tests/visual_stimulus/test_resources.py tests/visual_stimulus/test_lifecycle.py tests/visual_stimulus/test_rendering.py -q -m \"not windows and not rig\"",
+      "result": "192 passed initial focused implementation",
+      "output": "focused-initial.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/acquisition tests/visual_stimulus tests/controller/test_metadata.py tests/controller/test_output_evidence.py tests/controller/test_lifecycle_reports.py -q -m \"not windows and not rig\"",
+      "result": "997 passed, 5 skipped, 3 deselected; localhost permission enabled",
+      "output": "tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_lifecycle.py -q -k setup_publishes_only_final",
+      "result": "5 passed, 43 deselected; final on-disk publication assertion",
+      "output": "recipe-publication.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus src/cephvr/acquisition/recording/session_outputs.py tests/acquisition/test_recording_cleanup.py",
+      "result": "pass",
+      "output": "ruff.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus src/cephvr/acquisition/recording/session_outputs.py tests/acquisition/test_recording_cleanup.py",
+      "result": "176 files formatted",
+      "output": "format.txt"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/visual_stimulus src/cephvr/acquisition/recording/session_outputs.py",
+      "result": "159 source files pass",
+      "output": "mypy.txt"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "710 modules, 0 violations; cohesion advisories assessed in owner report",
+      "output": "boundaries.txt"
+    },
+    {
+      "command": "Compare AST literal GLSL strings against git show HEAD (including moved warp vertex)",
+      "result": "all unchanged byte-for-byte",
+      "output": "shader-preservation.json"
+    }
+  ],
+  "initial_failures": {
+    "tests-initial.txt": "11 localhost bind denials; one new asset-library fixture exceeded its own snapshot budget (corrected); 958 passed. Collection also changed with concurrent work.",
+    "mypy-initial.txt": "Two new type annotations required and corrected."
+  },
+  "scope": [
+    "A07/E04 failed-output presence separate from ownership",
+    "V13 rev12 source/shader/graphics provenance before final recipe hashing/publication",
+    "Owner-selected versioned external library; no per-run asset copying",
+    "Source-only and controlled adapter tests; on-disk recipe publication; authenticated localhost integration"
+  ],
+  "limitations": [
+    "No native Windows/GPU/rig execution",
+    "Software output reconstruction only; offline compatibility/replay/export remains deferred",
+    "No asset library was copied, relocated, or automatically archived",
+    "Existing source releases must be retained externally; live code modification unsupported",
+    "Tracking remains deferred; hardware wiring owner-confirmed, not remeasured",
+    "No camera cadence/encoding or stimulus recording policy changes"
+  ]
+}

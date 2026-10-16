@@ -13,7 +13,7 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.commands import CommandLedger
 
 from .limits import AcquisitionControlLimits
-from .terminal_scope import terminal_evidence_scope, terminal_target
+from .terminal_scope import same_session, terminal_evidence_scope, terminal_target
 from .warnings import WorkerWarningLedger
 
 
@@ -291,7 +291,7 @@ class WorkerState:
         ):
             raise ValueError("worker lifecycle evidence has another registered context")
         if self.context.HasField("work") and evidence.source.HasField("work"):
-            if not _same_session(evidence.source.work, self.context.work):
+            if not same_session(evidence.source.work, self.context.work):
                 raise ValueError("worker lifecycle evidence has another session")
         kind = evidence.WhichOneof("evidence")
         if kind is None:
@@ -399,16 +399,3 @@ def _work_key(context: acq.WorkerContext) -> str:
     if kind == "session":
         return context.work.session.session_id
     return context.worker.generation
-
-
-def _same_session(left: control.WorkContext, right: control.WorkContext) -> bool:
-    left_kind, right_kind = left.WhichOneof("work"), right.WhichOneof("work")
-    if left_kind == "session" and right_kind == "session":
-        return left.session == right.session
-    if left_kind == "trial" and right_kind == "trial":
-        return left.trial.session == right.trial.session
-    if left_kind == "trial" and right_kind == "session":
-        return left.trial.session == right.session
-    if left_kind == "session" and right_kind == "trial":
-        return left.session == right.trial.session
-    return False

@@ -3,6 +3,7 @@
 import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QSettings, QSignalBlocker, pyqtSignal
 from PyQt6.QtSerialPort import QSerialPortInfo
@@ -28,6 +29,9 @@ from cephvr.gui.tables import DataTable, refresh_button
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView, Phase
 
+if TYPE_CHECKING:
+    from cephvr.gui.review_mcu_inputs import ReviewMicrocontrollerInputs
+
 
 @dataclass(frozen=True)
 class CameraTrigger:
@@ -46,10 +50,12 @@ class MicrocontrollerPanel(DevicePanel):
     save_requested = pyqtSignal(str, str, bool, str, bool, object, object, object)
     pin_test_requested = pyqtSignal(str, bool)
 
-    def __init__(self, *, settings: QSettings | None = None) -> None:
+    def __init__(
+        self, *, settings: QSettings | None = None, review: bool = False
+    ) -> None:
         super().__init__(
             "Microcontroller connection",
-            "PORT        —\nFIRMWARE    —\nTRIGGER TEST Not tested",
+            (("PORT", "—"), ("FIRMWARE", "—"), ("TRIGGER TEST", "Not tested")),
             ("Test connection",),
         )
         self.port = combo(())
@@ -155,11 +161,26 @@ class MicrocontrollerPanel(DevicePanel):
         self.io.hide()
         layout.insertWidget(2, self.triggers)
         self.port.currentIndexChanged.connect(self.port_changed)
-        self.snapshots = MicrocontrollerSnapshot(self)
+        self.review_inputs: ReviewMicrocontrollerInputs | None = None
+        signal_class = MicrocontrollerSignals
+        if review:
+            from cephvr.gui.review_mcu_outputs import ReviewMicrocontrollerSignals
+
+            signal_class = ReviewMicrocontrollerSignals
+        self.signals = signal_class(self)
+        snapshot_class = MicrocontrollerSnapshot
+        if review:
+            from cephvr.gui.review_mcu_inputs import (
+                ReviewMicrocontrollerInputs as Inputs,
+            )
+            from cephvr.gui.review_mcu_snapshot import ReviewMicrocontrollerSnapshot
+
+            self.review_inputs = Inputs(self)
+            snapshot_class = ReviewMicrocontrollerSnapshot
+        self.snapshots = snapshot_class(self)
         self.config_files = self.snapshots.files
         for editor in (self.trial_pin, self.flip_pin):
             editor.textChanged.connect(self.mark_draft_changed)
-        self.signals = MicrocontrollerSignals(self)
         self.refresh_tests()
 
     def request_upload(self) -> None:
@@ -353,13 +374,7 @@ class MicrocontrollerPanel(DevicePanel):
                         "MCU counts generated transitions; use the receiving device to "
                         "verify voltage, physical pulse timing and reception."
                     )
-            lines = [
-                line
-                for line in self.status_column.hud.toPlainText().splitlines()
-                if not line.startswith("TRIGGER TEST")
-            ]
-            lines.append(f"TRIGGER TEST {key}: {result}")
-            self.status_column.hud.setPlainText("\n".join(lines))
+            self.status_column.update_row("TRIGGER TEST", f"{key}: {result}")
         self.refresh_tests()
 
     def set_test_failure(self, key: str, message: str) -> None:

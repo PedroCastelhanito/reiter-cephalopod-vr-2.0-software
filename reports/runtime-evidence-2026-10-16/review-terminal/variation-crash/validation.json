@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-16",
+  "decision": "G02 revision73 / ARCH-002",
+  "reported_trigger": "Click Add variation rule",
+  "finding": "Native report contains PyQt QTableWidget eventFilter abort amid nested setVisible/synthetic enter-leave dispatch; table and table-mode row both owned remove-button hover visibility.",
+  "repair": "One table hover owner; Qt-owned single-shot receiver slot computes current hovered row after dispatch. Standalone variation rows keep their own hover behavior.",
+  "red": "2 Standard/Retro callback timing regressions failed before repair; this demonstrates synchronous mutation, not an exact native-abort reproduction.",
+  "checks": "25 passed,535 deselected; Ruff/format3,Win32 mypy2,boundaries712/zero violations,whitespace passed",
+  "native_fixed": "21 native Cocoa add/remove cycles:9 Standard,9 Retro,3 saved-draft Retro at1440/1175/720; no callback errors. Saved draft loaded read-only and never saved.",
+  "baseline_limits": "Offscreen8/native8/manual and native event-loop baseline did not abort. Restored legacy hover callbacks on saved draft also completed3 cycles. Exact original Python exception/source identity remains unknown. Initial native-loop baseline prints10 due repeat+1 though9 iterations execute; final counter corrected.",
+  "environment": "First sandboxed Cocoa attempt could not see displays and aborted before reproduction; approved isolated runs outside sandbox succeeded. No native Windows/alternate-DPI/rig acceptance.",
+  "follow_up": "Owner-session Add variation rule retry; retain Python stderr/traceback if it recurs.",
+  "source_sha256": {
+    "src/cephvr/gui/variation_table.py": "80384cf7de4d8d89b664f10e919be7640c94ca3893df06da7d5bb2a8c13d48c5",
+    "src/cephvr/gui/batch_variation.py": "e9f98a0b8c8833a6d89630ea516ce50d57d85ba6e1fc50b1a71c146103c0d86d",
+    "tests/gui/test_dashboard.py": "6ce3bcfed09fd4528e1c43d64953f512eca8bd3d50b0c0838bdba12f542c8dcc"
+  },
+  "saved_draft_sha256": "c5871706e835ec2780cc6677348eb8868d630a42b9e4d34b0ccf5a8400739279"
+}

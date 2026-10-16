@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-16",
+  "scope": "offscreen Qt; no native/DPI/complex-script acceptance",
+  "tests": "5 passed,548 deselected",
+  "checks": "Ruff/format2,Win32 mypy2,boundaries712/zero violations,whitespace passed",
+  "fixture": "typing/Home/End insertion,selection replace,60-character scrolling,Standard/Retro switch passed; captures inspected",
+  "source_sha256": {
+    "src/cephvr/gui/theme.py": "d1e84cba8eb4cbf2423f1c4eb04dc539919926448f8603c6f34c1262be256fb2",
+    "src/cephvr/gui/retro_instruments.py": "df789d137b55f579e743ee3b6147ea95e1863ae94019b511d53983d2f5cd1c5a"
+  }
+}

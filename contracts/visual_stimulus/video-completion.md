@@ -25,10 +25,11 @@ unknown enum values and output-kind/context mismatches. Required detailed-record
 outputs have neither video field set. Counts and identities stay in the existing
 detailed stream and bounded final summaries, not per-frame lifecycle RPCs.
 
-At cutoff, reconcile eligible render groups, same-slot video omissions, capacity
-omissions, admissions and terminal input dispositions of the composite stream. Drain
-admitted work, resolve pending capture slots, emit nominal slots before the exact cutoff
-from a retained selected source image, and confirm writers/children/handles released.
+At cutoff, reconcile eligible render groups, capacity drops, admissions and terminal
+input dispositions. Successful sequential accounting requires eligible = admitted +
+capacity_drop and admitted = selected_real = input_submitted = encoded, with zero
+failed/unresolved captures and zero legacy omission/duplicate counts. Drain admitted
+in-interval work and confirm writers/children/handles released. Never fill time gaps.
 With no usable image, retain the existing empty-stream accounting. A partial or failed input write
 cannot become NO_FRAMES merely because the completed-frame counter is zero. Any
 known encode/write/sync failure remains failure, regardless of the content count.
@@ -55,8 +56,8 @@ replace creation/ownership history. Created-then-missing files do not qualify. N
 ignore empty-input exit errors, delete a file to manufacture absence or restart an
 encoder to hide failure. Attempt the selected path's normal finalization. Its ability
 to finish with empty input is still to be verified; this contract does not choose or
-prove MP4 input packaging. Duplicate slots map to a real selected source and carry an
-explicit leading, interior or trailing disposition; they do not create source groups.
+prove MP4 input packaging. Every retained composite maps to exactly one original
+source group through its sequential input index and exact source timestamp.
 
 For a NO_FRAMES review video, emit one warning and retain its exact loss/accounting
 summary, using existing bounded diagnostics/admin status.

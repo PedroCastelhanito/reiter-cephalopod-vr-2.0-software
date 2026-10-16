@@ -13,6 +13,7 @@ from google.protobuf.message import Message
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.device.calibration_inputs import read_reference
+from cephvr.controller.device.display_adjustments import dispatch_calibration_call
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.projections import ProjectionStore
@@ -22,6 +23,7 @@ from cephvr.controller.state import (
     DeviceState,
     LifecycleState,
     LimitsState,
+    PendingCalibration,
 )
 from cephvr.shared.calibration_assets import (
     CALIBRATION_REFERENCES,
@@ -153,7 +155,7 @@ class DisplayCalibrationController:
                 )
             except RuntimeError as exc:
                 return self.hooks.admission(command_id, error=str(exc))
-            self.device.calibration_pending = (
+            self.device.calibration_pending = PendingCalibration(
                 command_id,
                 revision,
                 deadline,
@@ -289,7 +291,7 @@ class DisplayCalibrationController:
                 or self.lifecycle.attempt is not None
                 or self.device.display_pending is not None
                 or self.device.calibration_pending is None
-                or self.device.calibration_pending[0] != command_id
+                or self.device.calibration_pending.command_id != command_id
                 or self.backends.get("visual_stimulus") is not backend
                 or backend.context != backend_context
                 or self.clock() >= deadline
@@ -332,7 +334,7 @@ class DisplayCalibrationController:
                     arena_sha256=request.expected_arena_sha256,
                     policies=policies,
                 )
-                self.device.calibration_pending = (
+                self.device.calibration_pending = PendingCalibration(
                     command_id,
                     revision,
                     deadline,
@@ -348,27 +350,15 @@ class DisplayCalibrationController:
                 raise asyncio.CancelledError
             return self.hooks.admission(command_id, error=rejection)
         assert dispatch is not None
-        rpc_task: asyncio.Task[pb.CommandAdmission] | None = None
         try:
-            rpc_task = asyncio.create_task(
-                backend.open_display_calibration(dispatch, deadline_ns=deadline)
-            )
-            self._track_backend_call(rpc_task)
-            # Let the request enter the backend transport before a safety Close
-            # may acquire the local dispatch gate.
-            await asyncio.sleep(0)
-        except asyncio.CancelledError:
-            # Cancellation leaves the remote outcome uncertain. Keep the exact
-            # pending identity, but always release the local serialization gate.
-            raise
-        finally:
-            if self._dispatch_lock.locked():
-                self._dispatch_lock.release()
-        assert rpc_task is not None
-        try:
-            reply = await asyncio.wait_for(
-                asyncio.shield(rpc_task),
-                remaining_seconds(deadline, clock=self.clock),
+            reply = await dispatch_calibration_call(
+                lambda: backend.open_display_calibration(
+                    dispatch, deadline_ns=deadline
+                ),
+                dispatch_lock=self._dispatch_lock,
+                track=self._track_backend_call,
+                deadline_ns=deadline,
+                clock=self.clock,
             )
         except asyncio.CancelledError:
             raise
@@ -416,8 +406,9 @@ class DisplayCalibrationController:
             pending = self.device.calibration_pending
             pending_open = (
                 pending is not None
-                and pending[3] == request.diagnostic_id
-                and pending[4] == vs_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE
+                and pending.diagnostic_id == request.diagnostic_id
+                and pending.expected_state
+                == vs_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE
             )
             display_view = self.projections.display
             evidence = self._evidence()
@@ -450,10 +441,12 @@ class DisplayCalibrationController:
                     command_id, error="Visual Stimulus coordinator unavailable"
                 )
             revision = (
-                pending[1] if pending_open and pending else self.configuration.revision
+                pending.configuration_revision
+                if pending_open and pending
+                else self.configuration.revision
             )
             output_ids = (
-                pending[5]
+                pending.output_ids
                 if pending_open and pending is not None
                 else frozenset(item.output_id for item in display_view.outputs)
                 if display_view is not None
@@ -500,7 +493,7 @@ class DisplayCalibrationController:
             except RuntimeError as exc:
                 self._dispatch_lock.release()
                 return self.hooks.admission(command_id, error=str(exc))
-            self.device.calibration_pending = (
+            self.device.calibration_pending = PendingCalibration(
                 command_id,
                 revision,
                 deadline,
@@ -510,23 +503,15 @@ class DisplayCalibrationController:
             )
             self.projections.expect_display(command_id, revision)
             self.hooks.publish()
-        rpc_task: asyncio.Task[pb.CommandAdmission] | None = None
         try:
-            rpc_task = asyncio.create_task(
-                backend.close_display_calibration(dispatch, deadline_ns=deadline)
-            )
-            self._track_backend_call(rpc_task)
-            await asyncio.sleep(0)
-        except asyncio.CancelledError:
-            raise
-        finally:
-            if self._dispatch_lock.locked():
-                self._dispatch_lock.release()
-        assert rpc_task is not None
-        try:
-            reply = await asyncio.wait_for(
-                asyncio.shield(rpc_task),
-                remaining_seconds(deadline, clock=self.clock),
+            reply = await dispatch_calibration_call(
+                lambda: backend.close_display_calibration(
+                    dispatch, deadline_ns=deadline
+                ),
+                dispatch_lock=self._dispatch_lock,
+                track=self._track_backend_call,
+                deadline_ns=deadline,
+                clock=self.clock,
             )
         except asyncio.CancelledError:
             raise
@@ -555,23 +540,23 @@ class DisplayCalibrationController:
                 )
             deadline = self._owner_loss_deadline_ns
             pending = self.device.calibration_pending
-            if pending is not None and pending[4] == (
+            if pending is not None and pending.expected_state == (
                 vs_runtime.DISPLAY_CALIBRATION_STATE_IDLE
             ):
-                pending_command_id = pending[0]
-                diagnostic_id = pending[3]
-                revision = pending[1]
-                output_ids = pending[5]
+                pending_command_id = pending.command_id
+                diagnostic_id = pending.diagnostic_id
+                revision = pending.configuration_revision
+                output_ids = pending.output_ids
                 wait_for_close = True
             else:
                 evidence = self._evidence()
                 display = self.projections.display
-                if pending is not None and pending[4] == (
+                if pending is not None and pending.expected_state == (
                     vs_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE
                 ):
-                    diagnostic_id = pending[3]
-                    revision = pending[1]
-                    output_ids = pending[5]
+                    diagnostic_id = pending.diagnostic_id
+                    revision = pending.configuration_revision
+                    output_ids = pending.output_ids
                 elif (
                     evidence is not None
                     and display is not None
@@ -617,7 +602,7 @@ class DisplayCalibrationController:
                 except RuntimeError:
                     return
                 self.device.calibration_blocked = True
-                self.device.calibration_pending = (
+                self.device.calibration_pending = PendingCalibration(
                     command_id,
                     revision,
                     deadline,
@@ -650,25 +635,18 @@ class DisplayCalibrationController:
             )
         except TimeoutError:
             return
-        rpc_task: asyncio.Task[pb.CommandAdmission] | None = None
-        try:
-            if self.clock() < deadline:
-                rpc_task = asyncio.create_task(
-                    backend.close_display_calibration(dispatch, deadline_ns=deadline)
-                )
-                self._track_backend_call(rpc_task)
-                await asyncio.sleep(0)
-        except asyncio.CancelledError:
-            raise
-        finally:
-            if self._dispatch_lock.locked():
-                self._dispatch_lock.release()
-        if rpc_task is None:
+        if self.clock() >= deadline:
+            self._dispatch_lock.release()
             return
         try:
-            reply = await asyncio.wait_for(
-                asyncio.shield(rpc_task),
-                remaining_seconds(deadline, clock=self.clock),
+            reply = await dispatch_calibration_call(
+                lambda: backend.close_display_calibration(
+                    dispatch, deadline_ns=deadline
+                ),
+                dispatch_lock=self._dispatch_lock,
+                track=self._track_backend_call,
+                deadline_ns=deadline,
+                clock=self.clock,
             )
         except Exception as exc:
             self.hooks.complete_operation(
@@ -697,7 +675,7 @@ class DisplayCalibrationController:
             async with self.lifecycle.lock:
                 evidence = self._evidence()
                 pending = self.device.calibration_pending
-                if pending is None or pending[0] != command_id:
+                if pending is None or pending.command_id != command_id:
                     if (
                         evidence is not None
                         and evidence.diagnostic_id == diagnostic_id
@@ -724,7 +702,7 @@ class DisplayCalibrationController:
         task.add_done_callback(finished)
 
     async def _update_admission_failed(
-        self, command_id: str, message: str, rejected: bool
+        self, command_id: str, message: str, *, rejected: bool = False
     ) -> None:
         await self._admission_failed(
             command_id, message, rejected=rejected, retain_active=True
@@ -740,7 +718,7 @@ class DisplayCalibrationController:
     ) -> None:
         async with self.lifecycle.lock:
             pending = self.device.calibration_pending
-            if pending is not None and pending[0] == command_id:
+            if pending is not None and pending.command_id == command_id:
                 self.hooks.complete_operation(
                     command_id,
                     success=False,
@@ -749,7 +727,8 @@ class DisplayCalibrationController:
                 )
                 if (
                     rejected
-                    and pending[4] == vs_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE
+                    and pending.expected_state
+                    == vs_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE
                 ):
                     # Rejected Updates leave the existing diagnostic active.
                     self.device.calibration_blocked = retain_active
@@ -758,17 +737,19 @@ class DisplayCalibrationController:
                 elif rejected:
                     self.device.calibration_pending = None
                     self.projections.expected_display = None
-                elif pending[4] == vs_runtime.DISPLAY_CALIBRATION_STATE_IDLE:
+                elif (
+                    pending.expected_state == vs_runtime.DISPLAY_CALIBRATION_STATE_IDLE
+                ):
                     # An unconfirmed Close expires like an accepted one so the
                     # retained diagnostic identity can be closed again.
-                    self.hooks.spawn(self._timeout(command_id, pending[2]))
+                    self.hooks.spawn(self._timeout(command_id, pending.deadline_ns))
                 self.hooks.publish()
 
     async def _timeout(self, command_id: str, deadline_ns: int) -> None:
         await asyncio.sleep(remaining_seconds(deadline_ns, clock=self.clock))
         async with self.lifecycle.lock:
             pending = self.device.calibration_pending
-            if pending is not None and pending[0] == command_id:
+            if pending is not None and pending.command_id == command_id:
                 self.hooks.complete_operation(
                     command_id,
                     success=False,
@@ -778,7 +759,7 @@ class DisplayCalibrationController:
                 # Retain the exact diagnostic identity when Open or Close
                 # evidence is absent; control loss must still be able to issue
                 # one bounded exact Close, and Setup stays blocked.
-                if pending[4] == vs_runtime.DISPLAY_CALIBRATION_STATE_IDLE:
+                if pending.expected_state == vs_runtime.DISPLAY_CALIBRATION_STATE_IDLE:
                     self.device.calibration_pending = None
                     self.projections.expected_display = None
                 self.hooks.publish()
