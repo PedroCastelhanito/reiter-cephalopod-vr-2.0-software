@@ -1,5 +1,89 @@
 # Acquisition status
 
+Oct16 encoding audit preserves current [A08/A09](../docs/architecture/acquisition.md#a08)
+sequential source-once rules. Two real cameras run concurrently with four projector
+outputs and three encoders. The reviewed shared input adapter polls immediate
+completion once, preserving pending-buffer ownership and original deadlines. Native
+8-bit GBR capability/profile aliases now match installed FFmpeg and exact-device
+NVENC evidence; build, device, profile and lossless feature gates remain required.
+No 10-bit expansion or saved encoding default change was made.
+
+A deterministic full-resolution high-entropy synthetic RGB/gray reference verifies
+H264 lossless output byte-for-byte, including every decoded frame in the matched
+HEVC camera comparison. This establishes prepared-pixel capability, not raw Bayer
+preservation or hashes of live camera pixels. **Real-time lossless is not achieved**:
+the completed 60 s p4 run receives 1798 Behavior frames but retains 1416, with 382
+explicit recording-capacity omissions between 16.4 and 43.0 s. Tracking retains
+3588/3588. The Behavior file is 5.82 GB. HEVC saves about 14.6% in the short matched
+repeated-pool test but misses all three tested input-rate targets.
+
+One p1-camera diagnostic, also adding bounded instrumentation, interrupts around
+53 s. Behavior video sync takes 25.20 s over 44 calls (maximum 3.01 s); preparation
+averages 5.50 ms and pipe writes 1.34 ms. Its sampled queue reaches 20/20. These
+measurements identify synchronous video-file flush stalls in this run, not a GPU
+bottleneck or proof of deficient storage hardware. No isolated preset causality is
+claimed. Preserve A08's persistence cadence and final sync; further storage-path
+and concurrent-sync ownership work is needed before promising full retention.
+
+The diagnostic also lacks exact Behavior frame-log closure; its failed cleanup
+is retained. Save Off normally completes with scientific evidence retained. Early
+Abort after Save On rejects interrupted Finished evidence and cleanup remains
+unconfirmed. Failed-Setup retired-attempt reporting remains separate. The native
+wait ACK is now published before waking the private event; a deterministic wrapper
+regression proves ordering, and 75 owning/native wait checks pass. The observed
+Setup failure is consistent with this race, not conclusively attributed to it.
+
+Final backend checks: 2188 passed, 5 Windows symlink-privilege skips, 1 rig test
+excluded and separately passed (NVOF). All three camera PFS/readbacks and ten
+operator files are restored exactly; cameras are closed and temporary profiling
+source is restored to its original hash. [Methods/results/limits](runtime-evidence-2026-10-16/encoding-overload-audit/README.md),
+[restoration](runtime-evidence-2026-10-16/encoding-overload-audit/final-restoration-r3.json).
+
+Oct16 `gui-preview-slot`: [G01](../docs/architecture/gui.md#g01)'s detached display
+placement now keeps the existing process-owned HighGUI window topmost without
+activation, using the same physical visible-frame positioning helper. Reader,
+frame conversion, capture and release behavior are unchanged. Three owning
+thread/failure cases and the native two-window ring case pass, including exact
+position/chrome, nonactivation, wheel/reset and independent closure. Native shared
+memory required an unsandboxed test; no camera hardware was used. See the
+[current GUI assessment](runtime.md) and
+[native slot evidence](runtime-evidence-2026-10-16/preview-slot/native-slot-results.json)
+for presentation scope and DPI limits.
+
+Oct16 `camera-timestamp-yellow-preview`: repaired A09/A10 timestamp capability
+detection in the existing small metadata owner. Exact documented USB models now
+use the fixed 1 ns clock when frequency nodes are absent; readable frequency
+nodes still win and unknown models remain unavailable. The
+[SDK binding](../contracts/acquisition/sdk-mappings.md#transport-and-metadata-bindings)
+owns the model mapping. No new dependency, process or policy setting; ARCH-002's
+existing focused owner and adapter behavior test module suffice.
+
+An authenticated controller snapshot confirmed Behavioral serial40065509 released
+in Configuration before a bounded exclusive SDK diagnostic. Its acA4112-30uc has
+neither frequency node; repaired metadata preparation returns ChunkTimestamp,
+1 ns/tick and no warning. Four exposure samples preserve matching chunk/grab
+timestamps. This is device-local time, not host/pulse synchronization acceptance.
+
+The yellow image is reproduced in native BayerRG8 capture. All seven sampled
+frames match direct Basler BGR conversion byte-for-byte. At25ms,99.885% of red
+pixels saturate;5ms eliminates saturation but the scene remains nearly uniform
+brown/yellow. Thus no preview conversion defect is observed; optical scene/focus
+and suitable scientific exposure/white balance require owner confirmation.
+No permanent exposure or white-balance change is adopted. Initial PFS reload
+changed only LineSelector context; explicitly restoring its original Line1 yields
+byte-exact original PFS, and the camera is closed. Test image mode is Off.
+[Native evidence, captures and restoration](runtime-evidence-2026-10-16/camera-preview-diagnosis/sweep.json)
+and [initial comparison](runtime-evidence-2026-10-16/camera-preview-diagnosis/probe.json)
+retain the actual methods and limits. The SDK probes use temporary software
+triggers; they do not validate external triggering or full application restart.
+
+Owning adapter/diagnostic/preview tests pass165 with one native deselection;
+scoped Ruff/format, Win32 mypy and boundaries715/zero violations pass.
+Existing size advisories concern unchanged owners, not the small metadata edit.
+Sandbox SDK enumeration found no device, and async loopback tests stalled;
+permitted native/loopback runs completed. Full application restart is required
+to load the fix into the already running workers; historical warnings are retained.
+
 Comprehensive Oct15 recheck completes bounded native workloads. Fresh native camera readback differs
 from saved configuration: Behavioral4096×3000/3ms versus saved1760×1716/25ms;
 Tracking ROI1588×1344 matches; Eye1920×1200 matches but native100Hz/limiter-off

@@ -140,6 +140,14 @@ class MicrocontrollerDevice:
             raise RuntimeError(
                 "Stop diagnostics before reconnecting the Microcontroller"
             )
+        if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_DISCONNECT:
+            if (
+                not request.expected_connection_id
+                or request.expected_connection_id != self.view.observation.connection_id
+            ):
+                raise RuntimeError("MCU connection identity changed before disconnect")
+            await self.close(deadline_ns=deadline_ns, permanent=False)
+            return
         self.reload_idle_policy()
         self.manual_active = True
         self.changed()

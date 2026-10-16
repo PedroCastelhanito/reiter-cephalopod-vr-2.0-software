@@ -10,11 +10,21 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
+
+
 Completed open-loop endurance, bounded camera-codec lossless checks,
 restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 [Acquisition](reports/acquisition.md); remaining acceptance work is listed below.
 
 ## Next
+
+- [ ] `lossless-storage-sync-capacity` [acquisition] [shared] Profile the exact recording storage path and concurrent video sync ownership while preserving A08 persistence/deadline/closure guarantees. Done when: a bounded high-detail lossless live run retains all received frames and closes exact outputs, with measured sync/queue/resource evidence. Status: completed p4 Behavior retains 1416/1798 (382 capacity omissions); one p1/instrumented run interrupts with 25.20 s video-sync time/44 calls and missing frame-log closure. No cadence/default reduction or queue-size workaround adopted. — [Assessment](reports/acquisition.md), [raw diagnostic](reports/runtime-evidence-2026-10-16/encoding-overload-audit/profile-stage-assessment.json)
+
+- [ ] `interrupted-finished-abort-proof` [acquisition] [controller] [supervisor] Preserve and reconcile exact interrupted worker Finished output evidence without weakening closure/identity guards. Done when: bounded native Abort closes metadata, encoder and resources, confirms cleanup/NewSession, and rejects mismatched evidence. Status: Oct16 Save On after Off records valid interrupted camera completions, but coordinator rejects Finished and cleanup remains unconfirmed; underlying output/exception cause is not established. — [Current assessment](reports/acquisition.md), [raw attempt](reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/)
+
+- [ ] `failed-setup-retired-report` [acquisition] [visual_stimulus] [controller] [supervisor] Reconcile late worker evidence after failed Setup while retaining exact retired-attempt fences. Done when: bounded native resource-budget rejection settles without a later STALE report causing application shutdown. Status: observed after an audit fixture omitted unused-arena pruning; the budget rejection was correct, late-report shutdown is a separate lifecycle finding. No stale guard relaxation. — [Assessment](reports/runtime.md), [raw Setup attempt](reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/)
+
+- [ ] `camera-timestamp-yellow-preview` [acquisition] [shared] Confirm expected optical scene/focus and select suitable exposure, with the repaired runtime now restarted; optical confirmation remains. Status: exact-model 1ns fallback passes165 local checks and real-camera metadata probe; seven native frames match SDK conversion exactly.25ms saturates99.885% of red pixels;5ms removes clipping but leaves a near-uniform scene. Original PFS restored byte-exact/camera closed; awaiting owner scene confirmation, no scientific settings adopted. — [Assessment/evidence](reports/acquisition.md)
 
 - [ ] `shutdown-resource-registration` [visual_stimulus] [supervisor] Reproduce and repair final Shutdown resource-report rejection after completed trial/NewSession/configuration restoration. Done when: exact registered cleanup identities settle without emergency while process absence remains truthful. Status: final isolated trial completes/counts decode and restored cameras/settings match exactly; Shutdown command succeeds and all owned processes are absent, but emits cleanup returned an unregistered resource. No trial-output failure is inferred. — [Assessment](reports/runtime.md), [Emergency](reports/emergency-80538644376400-cf134742-126d-4fc6-aa22-c7ed8d33f493.json)
 
@@ -41,7 +51,6 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 - [ ] `gui-empty-variation-group` [gui] Diagnose reported GUI exit after Add group with an untouched empty variation row and a displayed error. Done when: failing runtime callback is identified and covered. Status: Oct15 native blank/sample button-click cases preserve the draft, warn and recover; four focused cases pass. Reported crash remains unreproduced; error text/traceback is missing. — [Runtime](reports/runtime.md#unresolved-findings-and-limitations)
 
 - [ ] `bottom-calibration-grid-distortion` [gui] [visual_stimulus] Remeasure Bottom orange X/green Y bars in current portrait mode and verify physical10mm cell equivalence. Done when: verified measurements resolve relative cell size and fixed-grid projection is inspected. Status: software missing-line fix complete; GUI17/rendering74/native offscreen checks pass. Saved Bottom44/24mm for180/320px remains unverified by owner; no measurements replaced. GUI restart/relaunch required to regenerate fixed strokes. — [Assessment](reports/visual_stimulus.md), [Fix/scale evidence](reports/runtime-evidence-2026-10-15/bottom-grid/fix-verification/summary.json)
-
 
 - [ ] `native-picker-pytest-exception-hook` [gui] Complete ordinary-plugin full native suite after historical native picker exit 0xC0000409. Done when: full native execution finishes without the exception-hook fault. Status: latest comprehensive native selection-roundtrip7 fixtures remain blocked because Windows helper ignores synthetic Qt selection; bounded failure is a harness limit, not proven operator picker defect. Remaining native run finishes510pass/twofail/sevenexcluded; focused row fixture correction subsequently passes. One hover-input failure and seven selection-roundtrip fixtures remain; historical22pass result is not fresh complete acceptance. — [Assessment](reports/runtime.md)
 

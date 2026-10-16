@@ -56,7 +56,21 @@ class ManagedCameras(QObject):
         )
 
     def queue(self, action: str, **options: object) -> bool:
-        if self.pending or not self.bridge.request(action, **options):
+        if self.pending:
+            return False
+        kind = options.get("kind")
+        if action in {"camera", "prepare_camera"} and kind in {
+            rpc.CAMERA_COMMAND_KIND_START_PREVIEW,
+            rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
+        }:
+            button = (
+                self.panel.connect_button
+                if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                else self.panel.selected_test_button
+            )
+            options["cancellation"] = self.panel.pending_action.begin(button)
+        if not self.bridge.request(action, **options):
+            self.panel.pending_action.finish()
             return False
         self.pending = action
         self.panel.operation_pending = True
@@ -67,6 +81,7 @@ class ManagedCameras(QObject):
         if action != self.pending:
             return
         self.pending = ""
+        self.panel.pending_action.finish()
         self.panel.operation_pending = False
         self.panel.pending_enable.clear()
         self.panel.console.appendPlainText(f"{action}: {message}")
@@ -97,6 +112,7 @@ class ManagedCameras(QObject):
     def disconnected(self) -> None:
         self._camera_revision = -1
         self.pending = ""
+        self.panel.pending_action.finish()
         self.panel.operation_pending = False
         self.panel.pending_enable.clear()
         self.configured_tests.clear()

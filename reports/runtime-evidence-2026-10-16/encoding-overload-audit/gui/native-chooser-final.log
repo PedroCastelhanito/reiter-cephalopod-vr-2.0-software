@@ -1,0 +1,30 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 586 items / 568 deselected / 18 selected
+
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[False-False] PASSED [  5%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[False-True] PASSED [ 11%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[True-False] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[True-True] PASSED [ 22%]
+tests/gui/test_dashboard.py::test_started_config_chooser_closes_on_authority_loss[False] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_started_config_chooser_closes_on_authority_loss[True] PASSED [ 33%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-protocol] PASSED [ 38%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-tracking] PASSED [ 44%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-cameras] PASSED [ 50%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-microcontroller] PASSED [ 55%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-spikeglx] PASSED [ 61%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-gui] PASSED [ 66%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-protocol] PASSED [ 72%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-tracking] PASSED [ 77%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-cameras] PASSED [ 83%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-microcontroller] PASSED [ 88%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-spikeglx] PASSED [ 94%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-gui] PASSED [100%]
+
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\gui\native-chooser-final.xml -
+===================== 18 passed, 568 deselected in 12.00s =====================

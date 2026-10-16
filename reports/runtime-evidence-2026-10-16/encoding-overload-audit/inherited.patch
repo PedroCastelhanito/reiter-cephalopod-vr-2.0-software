@@ -1,0 +1,1689 @@
+diff --git a/LOG.md b/LOG.md
+index 0a721a2..9b4dda4 100644
+--- a/LOG.md
++++ b/LOG.md
+@@ -3914,3 +3914,18 @@ Do not condense entries again except on an owner request.
+ 
+ - `merge-dev-gui` [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [shared]: owner authorizes merge. Fetch succeeds with Git permission; checkpoint3743a81 preserves this chat's tracked changes, then merge origin/main eac2e0e over local rig commit a0dc31a. Resolve20 conflicted files, retaining both dated evidence streams and task findings; adopt newer GUI presentation with shared runtime appearance, legacy preference fallback and real controller gates. G01rev213/G02rev74 promote the camera action row/hide MCU wiring and updated multi-tab style, bundled font and CRT controls; Review-only inline I/O and multi-screen pulse behavior retain contract restrictions. Preserve rejected-versus-uncertain Update fencing and use the dev typed callback signature. Regenerate19 Protobuf bindings rather than editing generated code. Existing arena-effective-pose implementation/tests from dev supersede the stale implementation TODO; native/scientific acceptance stays separate. The unrelated untracked emergency report remains untouched.
+ - Validation: conflict owners129pass; broad rig-independent backend2119pass/four skips/31deselected plus three fixture errors because demo output was under repository basetemp; all three pass with external temp. Sandbox async fixtures initially stalled in Windows socketpair accept (faulthandler diagnosis); approved loopback run completes. GUI16 focused pass; broad offscreen536pass/twofail/29picker-chooser exclusions, with both stale upstream HUD assertions corrected to G02 and passing separately. Preserve authority-gate and output-state assertions. One initial focused run exposed the renamed appearance import in a dev test; switched to its already-owned window helper before final16pass. Ruff/format924, Win32mypy811, boundaries713/zero and final whitespace pass; initial generated-schema/type conflicts were corrected before final passes. sdist/wheel build succeeds outside sandbox after temp permission failure. Trim one upstream license trailing space without changing its text. Inspected merged1440px runtime camera raster with fixture data and CRT disabled. No live rig/device/firmware action or saved-config change; full application restart loads merged backend/contracts. [Context and build/raster evidence](reports/runtime-evidence-2026-10-16/dev-merge/context.json). Local merge complete; no push requested.
++
++- 2026-10-16 `camera-timestamp-yellow-preview` [acquisition] [shared]: Start owner-requested investigation under A01/A09/A10 and ARCH-002. Trace existing metadata and private conversion owners; preserve saved scientific settings and active device ownership. Timestamp detection currently requires a frequency node; verify documented model units before any fallback. No new dependency or process planned.
++
++- 2026-10-16 `gui-preview-slot` [gui]: Start owner-requested maximized startup and detached preview slot under G01/ARCH-002. Reuse existing placement messages and shared shell, without new processes, dependencies or backend ownership. Keep existing square sizing and native frame allowance; extend the owning GUI behavior tests.
++
++- 2026-10-16 `camera-timestamp-yellow-preview` [acquisition] [shared]: Repair A09/A10 metadata detection using Basler-documented exact USB models when frequency nodes are absent; unknown models still warn and readable frequencies take precedence. Existing small metadata owner/test module reused under ARCH-002. Native released-camera diagnostic confirms acA4112-30uc lacks both nodes, repaired1ns clock/chunks work, and seven application frames match direct SDK conversion byte-exact.25ms clips99.885% red;5ms avoids clipping but scene stays uniform. No conversion defect observed; owner scene/focus confirmation remains pending. Initial PFS reload differed only LineSelector; final original PFS restored byte-exact, camera closed.165 owning tests pass/one deselected; Ruff/format2, Win32mypy1, boundaries715/zero and whitespace pass. Sandbox enumeration found no device and async loopback stalled; stopped those sessions and permitted runs pass. Evidence packaging hit a Windows text-decoding error after saving context; corrected explicit UTF-8. Current report/SDK binding and dated evidence updated. Full application restart and optical/scientific acceptance remain open; concurrent GUI/controller changes preserved.
++
++- 2026-10-16 `gui-preview-slot` [gui]: Complete G01/ARCH-002 maximized runtime/Review startup and shared right-side detached preview placement on Dashboard, Cameras and Tracking. Reuse backend placement hints with physical monitor conversion; retain free movement/reopen placement. Visual check caught and fixed Card vertical growth.22 owning tests pass after adapting wide fixture to reserved width and using workspace temp after permission errors; scoped Ruff/format and Win32 mypy pass; boundaries714/zero with existing cohesion advisories. Broader preview selection stalled and was stopped. Native isolated captures produced images/hints but final capture exited1 without diagnostics; no native lifecycle/live-camera/DPI acceptance claimed. Evidence in reports/runtime-evidence-2026-10-16/preview-slot/validation.txt. Preserve concurrent device-cancellation/camera investigation edits; subsequent broad lint flagged their managed_actions import ordering.
++
++- 2026-10-16 `gui-preview-slot` [gui] [acquisition]: Reopen from owner screenshot: preview can sit behind GUI and card is too tall. ARCH-002 review retains focused placement/native-window owners and existing behavior tests; no new protocol/process. Native isolated HighGUI measurement:320px image gives322x352 visible frame, outer336x359 at96dpi. Correct inset target and fit container to initial square plus native chrome; preserve ownership checks.
++
++
++- 2026-10-16 `device-action-cancel` [gui] [controller]: Owner selects safe cancellation. Implement G01rev215/A11rev49 Cancel/Cancelling for camera Connect/Test selected, MCU connection/pin Test and SpikeGLX connection check. Retain bounded in-flight calls, skip subsequent steps, compensate newly created resources and retain accepted settings/pre-existing connections. Add identity-checked MCU Disconnect reusing existing outputs-off/serial cleanup, with unchanged authority/claim gates and cleanup fences; regenerate19 contracts. ARCH-002 keeps token/button and cleanup in focused helpers with explicit client/options/snapshot interfaces; no dependency/process introduced. Initial tests found and fixed restored Test overriding active Stop and managed-camera Cancel incorrectly depending on configuration_wired; update two request-shape assertions for cancellation tokens. Final affected GUI/controller272pass/one skip/443deselected; added pin click assertion1pass/582deselected. Ruff/format212, Win32mypy210, boundaries715/zero and whitespace pass. Offscreen tests use approved loopback access; live hardware/native cancellation remains unverified. Record implementation/limits in runtime report; preserve concurrent preview and acquisition changes. Full runtime restart required for contract/backend changes.
++
++- 2026-10-16 `gui-preview-slot` [gui] [acquisition]: Complete G01rev216/ARCH-002 correction: fit card to initial image/native chrome, target inset below heading using physical ClientToScreen, and keep process-verified detached HighGUI topmost without activation.14 GUI cases/three private-thread cases pass; native two-window case passes outside sandbox after named-memory denial, covering physical geometry, topmost, focus preservation, wheel/reset and independent closure. Native combined Qt/OpenCV probe exits0: maximized640px image/642x672 frame at1250,150 and restored373px image/375x405 frame at805,158 match target exactly after GUI activation. Fitted native capture inspected. Ruff/format5, Win32mypy3, boundaries715/zero and whitespace pass. No real camera, alternate-monitor DPI or full-workload acceptance; no user application restart. Evidence and source probe in reports/runtime-evidence-2026-10-16/preview-slot; current runtime/acquisition assessments updated, concurrent work preserved.
+diff --git a/TODO.md b/TODO.md
+index 51b5afd..f4446c0 100644
+--- a/TODO.md
++++ b/TODO.md
+@@ -10,12 +10,17 @@ Blocked and Deferred entries name their reason.
+ 
+ ## In progress
+ 
++
++
++
+ Completed open-loop endurance, bounded camera-codec lossless checks,
+ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
+ [Acquisition](reports/acquisition.md); remaining acceptance work is listed below.
+ 
+ ## Next
+ 
++- [ ] `camera-timestamp-yellow-preview` [acquisition] [shared] Confirm expected optical scene/focus and select suitable exposure, then restart the application to load the timestamp repair. Status: exact-model 1ns fallback passes165 local checks and real-camera metadata probe; seven native frames match SDK conversion exactly.25ms saturates99.885% of red pixels;5ms removes clipping but leaves a near-uniform scene. Original PFS restored byte-exact/camera closed; awaiting owner scene confirmation, no scientific settings adopted. — [Assessment/evidence](reports/acquisition.md)
++
+ - [ ] `shutdown-resource-registration` [visual_stimulus] [supervisor] Reproduce and repair final Shutdown resource-report rejection after completed trial/NewSession/configuration restoration. Done when: exact registered cleanup identities settle without emergency while process absence remains truthful. Status: final isolated trial completes/counts decode and restored cameras/settings match exactly; Shutdown command succeeds and all owned processes are absent, but emits cleanup returned an unregistered resource. No trial-output failure is inferred. — [Assessment](reports/runtime.md), [Emergency](reports/emergency-80538644376400-cf134742-126d-4fc6-aa22-c7ed8d33f493.json)
+ 
+ - [ ] `post-session-calibration-retirement` [visual_stimulus] [controller] Safely retire completed worker/coordinator setup context before sessionless diagnostic reopening. Done when: native post-session Open works while old-session replay/cleanup fencing remains exact. Status: observed fresh audit rejection after successful NewSession because retained interrupted/setup state fences calibration; fresh application Open works. No guard-only relaxation. — [Assessment](reports/visual_stimulus.md)
+diff --git a/architecture.md b/architecture.md
+index 23145fe..7959f18 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -63,7 +63,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
+ | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 25 |
+ | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
+-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 213 |
++| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 216 |
+ | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 74 |
+ | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
+ | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
+@@ -90,7 +90,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 51 |
+ | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 16 |
+ | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 61 |
+-| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 48 |
++| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 49 |
+ | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 25 |
+ | <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 13 |
+ | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 12 |
+diff --git a/contracts/acquisition/sdk-mappings.md b/contracts/acquisition/sdk-mappings.md
+index 0eadb8c..cfe1265 100644
+--- a/contracts/acquisition/sdk-mappings.md
++++ b/contracts/acquisition/sdk-mappings.md
+@@ -133,6 +133,14 @@ source node/unit/counter epoch in adapter state, avoiding duplicate per-frame me
+ Transfer timestamp provenance through the prepared [camera-clock descriptor](camera-clock.md);
+ recording never rediscovers it independently or assumes a host-aligned clock.
+ 
++Read `TimestampTickFrequency`, then `GevTimestampTickFrequency`. When neither
++provides a positive frequency, the exact USB3 models `acA4112-30uc`,
++`a2A1920-160ucPRO` and `a2A2464-77umPRO` use Basler's documented fixed
++1 GHz clock (1 ns/tick), matched against readable `DeviceModelName`.
++[Basler timestamp model table](https://docs.baslerweb.com/timestamp) is the
++unit source. Do not extend this fallback by model prefix or transport alone;
++unknown models retain unavailable timestamps. Readable frequencies take precedence.
++
+ ## Transport summary binding
+ 
+ A07's compact summary (code `TRANSPORT_SUMMARY`, no frame reference) is written to the
+diff --git a/contracts/cephvr/control/v1/services.proto b/contracts/cephvr/control/v1/services.proto
+index fb56fda..f9992ac 100644
+--- a/contracts/cephvr/control/v1/services.proto
++++ b/contracts/cephvr/control/v1/services.proto
+@@ -251,6 +251,7 @@ enum MicrocontrollerCommandKind {
+   MICROCONTROLLER_COMMAND_KIND_STATUS = 3;
+   MICROCONTROLLER_COMMAND_KIND_STOP = 4;
+   MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE = 5; // Explicit Configuration-only Uno update.
++  MICROCONTROLLER_COMMAND_KIND_DISCONNECT = 6; // Close the exact idle manual connection.
+ }
+ message MicrocontrollerCommandRequest {
+   OperatorCommand command = 1;
+@@ -259,6 +260,7 @@ message MicrocontrollerCommandRequest {
+   MicrocontrollerSignalKind signal = 4; // START only; pin/rate come from current configuration.
+   string firmware_path = 5; // UPLOAD only; Arduino sketch (.ino) or compiled Uno image (.hex).
+   string firmware_sha256 = 6; // Pins complete sketch snapshot or compiled image bytes.
++  string expected_connection_id = 7; // Required only for DISCONNECT.
+ }
+ // E12/G01: authenticated, read-only controller diagnostic; no Setup or run mutation.
+ message SpikeGLXConnectionQuery {
+diff --git a/docs/architecture/acquisition.md b/docs/architecture/acquisition.md
+index a1fe871..5c2b6e8 100644
+--- a/docs/architecture/acquisition.md
++++ b/docs/architecture/acquisition.md
+@@ -911,7 +911,7 @@ hardware information and later implementation; no new deferral is implied.
+ <a id="a11"></a>
+ ### A11 — Microcontroller command protocol
+ 
+-**Status:** Accepted · **Revision:** 48
++**Status:** Accepted · **Revision:** 49
+ 
+ **Board and firmware**
+ 
+@@ -969,6 +969,12 @@ hardware information and later implementation; no new deferral is implied.
+   release fences new execution while admitting camera safety cleanup. Firmware watchdog
+   remains independent.
+ 
++- Explicit manual Disconnect requires the exact current connection ID at admission
++  and execution, idle Configuration, operator authority and no camera-trigger claim.
++  It reuses bounded outputs-off/serial-close cleanup, preserves its operation deadline
++  and leaves uncertain release fenced. G01 cancellation uses it only for a connection
++  created by that intent; an existing connection is retained and only the newly
++  started diagnostic is stopped. No in-flight hardware request is force-cancelled.
+ - One serial owner opens only the configured port. Boot/reset leaves outputs off and
+   volatile configuration invalid. Reopen requires outputs-off verification, fresh
+   capabilities and full configuration; no automatic pulse/session resumption. A failed
+diff --git a/docs/architecture/gui.md b/docs/architecture/gui.md
+index e9322f5..f466b14 100644
+--- a/docs/architecture/gui.md
++++ b/docs/architecture/gui.md
+@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ <a id="g01"></a>
+ ### G01 — GUI navigation and settings ownership
+ 
+-**Status:** Accepted · **Revision:** 213
++**Status:** Accepted · **Revision:** 216
+ 
+ - Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
+ 
+@@ -537,10 +537,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+   Connect starts A10 manual capture and then Shows its acquisition-owned OpenCV
+   window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
+   visibility evidence updates the GUI selector. Show snaps the visible preview frame
+-  outside the GUI's top-right edge, shrinking the square to available right-hand
+-  space before using the left edge; clamp to the current monitor work area when
+-  neither side fits. Use physical visible-frame bounds without a tool-window gap
+-  or invisible resize borders. Reopening samples the current GUI position;
++  into the reserved right-side Preview area on Dashboard, Devices/Cameras and
++  Tracking. The shared runtime/review shell opens maximized and keeps this area
++  separate from controls; other tabs reclaim its space. Previews remain detached,
++  never embedded or reparented. Place the native frame inside the card below its
++  heading; size the card to the initial square and native chrome with only border
++  padding, rather than stretching it to page height. Use physical client-to-screen
++  coordinates and native DPI metrics. Keep detached previews topmost without
++  activating them so GUI interaction cannot cover them. Reopening samples the
++  current layout. When no slot
++  is visible, retain monitor-constrained placement beside the GUI;
+   an open window remains freely movable. A10 owns padding and wheel zoom/reset.
+   The GUI owns no camera display reader. Disconnect releases an
+   editing/cleanup owner when no capture is running. Camera/pulse settings remain
+@@ -585,7 +591,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+   settings with their existing V20/V22/A11 owners. VSync mode
+   remains editable when the photodiode patch is disabled.
+ - Managed MCU connection/pin tests use controller-confirmed COM/pin/rate values.
+-  Pending commands lock edits and repeat tests. A11 diagnostic observations drive
++  Pending commands lock edits and repeat tests. Camera Connect/Test selected, MCU
++  Test connection/pin Test and the read-only SpikeGLX connection check replace their
++  initiating button with Cancel, then disabled Cancelling while the current bounded
++  call settles. Cancellation skips remaining steps without aborting transport or
++  extending the in-flight deadline. Confirm cleanup of newly created camera/MCU
++  resources before reporting cancellation; retain pre-existing resources and accepted
++  settings. Cleanup failure, lost authority/connection or changed generation remains
++  an explicit unconfirmed outcome, never a successful cancellation. Firmware Upload
++  and safety Stop/Disconnect retain their existing completion behavior.
++  A11 diagnostic observations drive
+   Test/Stop state; a bounded follow-up status query begins after confirmed execution,
+   and control/connection loss cancels local timers. Firmware/edge reports do not prove
+   physical receiver wiring.
+diff --git a/reports/acquisition.md b/reports/acquisition.md
+index 228a0ed..50b386e 100644
+--- a/reports/acquisition.md
++++ b/reports/acquisition.md
+@@ -1,5 +1,50 @@
+ # Acquisition status
+ 
++Oct16 `gui-preview-slot`: [G01](../docs/architecture/gui.md#g01)'s detached display
++placement now keeps the existing process-owned HighGUI window topmost without
++activation, using the same physical visible-frame positioning helper. Reader,
++frame conversion, capture and release behavior are unchanged. Three owning
++thread/failure cases and the native two-window ring case pass, including exact
++position/chrome, nonactivation, wheel/reset and independent closure. Native shared
++memory required an unsandboxed test; no camera hardware was used. See the
++[current GUI assessment](runtime.md) and
++[native slot evidence](runtime-evidence-2026-10-16/preview-slot/native-slot-results.json)
++for presentation scope and DPI limits.
++
++Oct16 `camera-timestamp-yellow-preview`: repaired A09/A10 timestamp capability
++detection in the existing small metadata owner. Exact documented USB models now
++use the fixed 1 ns clock when frequency nodes are absent; readable frequency
++nodes still win and unknown models remain unavailable. The
++[SDK binding](../contracts/acquisition/sdk-mappings.md#transport-and-metadata-bindings)
++owns the model mapping. No new dependency, process or policy setting; ARCH-002's
++existing focused owner and adapter behavior test module suffice.
++
++An authenticated controller snapshot confirmed Behavioral serial40065509 released
++in Configuration before a bounded exclusive SDK diagnostic. Its acA4112-30uc has
++neither frequency node; repaired metadata preparation returns ChunkTimestamp,
++1 ns/tick and no warning. Four exposure samples preserve matching chunk/grab
++timestamps. This is device-local time, not host/pulse synchronization acceptance.
++
++The yellow image is reproduced in native BayerRG8 capture. All seven sampled
++frames match direct Basler BGR conversion byte-for-byte. At25ms,99.885% of red
++pixels saturate;5ms eliminates saturation but the scene remains nearly uniform
++brown/yellow. Thus no preview conversion defect is observed; optical scene/focus
++and suitable scientific exposure/white balance require owner confirmation.
++No permanent exposure or white-balance change is adopted. Initial PFS reload
++changed only LineSelector context; explicitly restoring its original Line1 yields
++byte-exact original PFS, and the camera is closed. Test image mode is Off.
++[Native evidence, captures and restoration](runtime-evidence-2026-10-16/camera-preview-diagnosis/sweep.json)
++and [initial comparison](runtime-evidence-2026-10-16/camera-preview-diagnosis/probe.json)
++retain the actual methods and limits. The SDK probes use temporary software
++triggers; they do not validate external triggering or full application restart.
++
++Owning adapter/diagnostic/preview tests pass165 with one native deselection;
++scoped Ruff/format, Win32 mypy and boundaries715/zero violations pass.
++Existing size advisories concern unchanged owners, not the small metadata edit.
++Sandbox SDK enumeration found no device, and async loopback tests stalled;
++permitted native/loopback runs completed. Full application restart is required
++to load the fix into the already running workers; historical warnings are retained.
++
+ Comprehensive Oct15 recheck completes bounded native workloads. Fresh native camera readback differs
+ from saved configuration: Behavioral4096×3000/3ms versus saved1760×1716/25ms;
+ Tracking ROI1588×1344 matches; Eye1920×1200 matches but native100Hz/limiter-off
+diff --git a/reports/runtime.md b/reports/runtime.md
+index 5fa613d..d98ee84 100644
+--- a/reports/runtime.md
++++ b/reports/runtime.md
+@@ -1,5 +1,63 @@
+ # Controller and supervisor status
+ 
++Oct16 `device-action-cancel` implements owner-selected safe cancellation under
++[G01](../docs/architecture/gui.md#g01) and [A11](../docs/architecture/acquisition.md#a11).
++Camera Connect/Test selected, MCU connection/pin tests and SpikeGLX Test connection
++show Cancel while pending and disabled Cancelling after a click. The GUI skips
++remaining steps, waits for the existing bounded call, and closes only newly created
++resources using confirmed controller identity. Accepted settings and pre-existing
++connections remain. MCU cleanup adds an exact-connection Disconnect command using
++the existing outputs-off/close owner; admission and execution retain authority,
++Configuration/camera-claim gates and bounded deadlines. Unconfirmed cleanup or
++changed controller/acquisition identity is an error, never reported as cancellation
++success. Firmware Upload and safety Stop/Disconnect retain their completion behavior.
++Restart the full runtime to load both client and controller contract changes.
++
++ARCH-002 review: isolated button/token and compensation logic in two focused GUI
++modules; existing panels/coordinators only wire lifecycle callbacks, with no new
++process, package, whole-runtime back-reference or duplicate authoritative device state.
++Existing size advisories for panels/main remain cohesive presentation/orchestration
++owners. Extended the owning GUI and MCU behavior suites. Final offscreen selection
++(`pytest tests/gui/test_dashboard.py tests/controller/test_microcontroller_owner.py
++ tests/controller/test_microcontroller_protocol.py -q -k
++ '(camera or mcu or microcontroller or spikeglx or cancellation or manual_disconnect)
++ and not picker and not chooser'`) passes272, skips1, deselects443. A subsequent
++pin-button click assertion passes separately (1/582 deselected). Covers queued and
++in-flight cancellation, skipped Show/Connect, retained accepted settings, exact new
++preview/serial cleanup, preserved pre-existing connection, generation change,
++cleanup failure, repeat-click fencing and button restoration. Initial checks exposed
++and fixed the MCU completion label overwrite and managed-camera Cancel authority gate;
++two older request-dictionary assertions now include the per-request cancellation token.
++Ruff/format212, Win32 mypy210, boundaries715/zero violations and whitespace pass;
++19 Protobuf sources regenerated. Tests used approved loopback access and Qt offscreen.
++No live-device cancellation, firmware action or native/rig acceptance was performed;
++[E15 rig verification](rig-verification.md) remains separate.
++
++Oct16 `gui-preview-slot` implements [G01](../docs/architecture/gui.md#g01): runtime
++and Review open maximized, with a reserved Preview area on Dashboard,
++Devices/Cameras and Tracking. Owner native feedback exposed the initial full-height
++card and preserved Z-order as unsuitable. The fitted card now reserves only the
++initial image/native chrome plus heading/padding; physical ClientToScreen mapping
++targets its inset child region. Native owner-checked placement uses topmost without
++activation, keeping detached windows visible above GUI interaction. Other tabs
++reclaim the area; reopening samples current layout. No embedding, image reader,
++new protocol/process or backend state is introduced. Focused existing placement
++and Windows-native modules own the change under ARCH-002.
++
++Current validation:14 GUI layout/placement cases and three HighGUI thread/failure
++cases pass. The native HighGUI case passes outside the sandbox after sandbox
++shared-memory denial; it verifies frame size/position, topmost, nonactivation,
++wheel/reset and independent closure/producer continuity. An isolated real Qt/OpenCV
++probe verifies exact inset/frame match after GUI activation: maximized image640,
++frame642x672 at(1250,150), restored image373/frame375x405 at(805,158), both96dpi.
++The fitted native GUI capture was inspected. Scoped Ruff/format, Win32 mypy3 and
++boundaries715/zero violations pass; existing unrelated cohesion advisories remain.
++[Native probe and results](runtime-evidence-2026-10-16/preview-slot/native-slot-results.json)
++and [validation history](runtime-evidence-2026-10-16/preview-slot/validation.txt)
++retain bounded scope. No real camera, mixed-monitor DPI or full-workload acceptance
++is claimed. Restart the application to load both GUI and acquisition-owned native
++placement changes; no running application/device was restarted by this work.
++
+ Current integration (2026-10-16, `merge-dev-gui`): fetched origin/main eac2e0e
+ is merged with local rig fixes a0dc31a and the appearance checkpoint3743a81.
+ [G01](../docs/architecture/gui.md#g01)/[G02](../docs/architecture/gui.md#g02)
+diff --git a/src/cephvr/acquisition/camera/metadata.py b/src/cephvr/acquisition/camera/metadata.py
+index 5abe5d6..456ab43 100644
+--- a/src/cephvr/acquisition/camera/metadata.py
++++ b/src/cephvr/acquisition/camera/metadata.py
+@@ -21,6 +21,11 @@ from cephvr.acquisition.camera.types import (
+     TransportInterface,
+ )
+ 
++# Exact USB models with fixed units documented at docs.baslerweb.com/timestamp.
++_FIXED_NANOSECOND_MODELS = frozenset(
++    {"acA4112-30uc", "a2A1920-160ucPRO", "a2A2464-77umPRO"}
++)
++
+ 
+ def native_metadata(
+     camera: Any, device_id: str, interface: TransportInterface
+@@ -33,6 +38,10 @@ def native_metadata(
+             frequency = _positive_integer(
+                 read_value(nodes, "GevTimestampTickFrequency")
+             )
++        if frequency is None and interface == "usb3":
++            model = read_value(nodes, "DeviceModelName")
++            if model in _FIXED_NANOSECOND_MODELS:
++                frequency = 1_000_000_000
+         chunk_timestamp = False
+         chunk_counter = False
+         genicam = importlib.import_module("pypylon.genicam")
+diff --git a/src/cephvr/controller/device/microcontroller.py b/src/cephvr/controller/device/microcontroller.py
+index 45895ab..2e18adc 100644
+--- a/src/cephvr/controller/device/microcontroller.py
++++ b/src/cephvr/controller/device/microcontroller.py
+@@ -65,6 +65,7 @@ class MicrocontrollerCommands:
+                     svc.MICROCONTROLLER_COMMAND_KIND_START,
+                     svc.MICROCONTROLLER_COMMAND_KIND_STATUS,
+                     svc.MICROCONTROLLER_COMMAND_KIND_STOP,
++                    svc.MICROCONTROLLER_COMMAND_KIND_DISCONNECT,
+                     svc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+                 }
+             ):
+@@ -77,6 +78,15 @@ class MicrocontrollerCommands:
+                 return self.hooks.admission(
+                     operator_id, error="invalid MCU signal selection"
+                 )
++            disconnect = request.kind == svc.MICROCONTROLLER_COMMAND_KIND_DISCONNECT
++            if disconnect != bool(request.expected_connection_id) or (
++                disconnect
++                and request.expected_connection_id
++                != self.owner.view.observation.connection_id
++            ):
++                return self.hooks.admission(
++                    operator_id, error="MCU connection identity changed"
++                )
+             upload = request.kind == svc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE
+             if upload != bool(request.firmware_path and request.firmware_sha256) or (
+                 not upload and (request.firmware_path or request.firmware_sha256)
+diff --git a/src/cephvr/controller/microcontroller/device.py b/src/cephvr/controller/microcontroller/device.py
+index ce668be..03ab128 100644
+--- a/src/cephvr/controller/microcontroller/device.py
++++ b/src/cephvr/controller/microcontroller/device.py
+@@ -140,6 +140,14 @@ class MicrocontrollerDevice:
+             raise RuntimeError(
+                 "Stop diagnostics before reconnecting the Microcontroller"
+             )
++        if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_DISCONNECT:
++            if (
++                not request.expected_connection_id
++                or request.expected_connection_id != self.view.observation.connection_id
++            ):
++                raise RuntimeError("MCU connection identity changed before disconnect")
++            await self.close(deadline_ns=deadline_ns, permanent=False)
++            return
+         self.reload_idle_policy()
+         self.manual_active = True
+         self.changed()
+diff --git a/src/cephvr/gui/camera_action_submission.py b/src/cephvr/gui/camera_action_submission.py
+index 94ed581..dd02b56 100644
+--- a/src/cephvr/gui/camera_action_submission.py
++++ b/src/cephvr/gui/camera_action_submission.py
+@@ -7,6 +7,7 @@ from cephvr.acquisition.identity import camera_role_name
+ from cephvr.client.session import ClientError, HeadlessClient
+ from cephvr.control.v1 import services_pb2 as rpc
+ from cephvr.control.v1 import types_pb2 as pb
++from cephvr.gui.action_cancellation import checkpoint
+ from cephvr.gui.device_requests import assign_camera_role
+ from cephvr.gui.managed_device_commands import _save_camera_settings
+ 
+@@ -47,6 +48,7 @@ async def prepare_camera(
+     if assignment_changed:
+         await assign_camera_role(client, options)
+         accepted(client.snapshot)
++        checkpoint(options)
+     if options["kind"] == rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION:
+         return
+     await _save_camera_settings(
+diff --git a/src/cephvr/gui/cameras.py b/src/cephvr/gui/cameras.py
+index f75e7c7..76be3f8 100644
+--- a/src/cephvr/gui/cameras.py
++++ b/src/cephvr/gui/cameras.py
+@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
+ )
+ 
+ from cephvr.acquisition.camera.basler import BaslerCameraAdapter
++from cephvr.gui.action_cancellation import PendingAction
+ from cephvr.gui.camera_inventory import CAMERA_ROLES, CameraDraft, discover_drafts
+ from cephvr.gui.camera_snapshot import CameraSnapshot
+ from cephvr.gui.components import Card, StatusColumn, button, combo, field
+@@ -70,6 +71,7 @@ class CamerasPanel(ResponsiveColumns):
+         self.controller_trigger_rates: dict[str, float] = {}
+         self.controller_trigger_sources: dict[str, str] = {}
+         self.operation_pending = False
++        self.pending_action = PendingAction()
+         self.pending_enable: dict[str, bool] = {}
+         self.loading = False
+         self.snapshot_draft = False
+@@ -264,15 +266,15 @@ class CamerasPanel(ResponsiveColumns):
+ 
+     @property
+     def can_operate(self) -> bool:
+-        return (
+-            not self.operation_pending
+-            and self.view.phase == Phase.CONFIGURATION
+-            and (
+-                self.can_edit
+-                or self.managed
+-                and self.view.connected
+-                and self.view.has_control
+-            )
++        return not self.operation_pending and self.can_control_devices
++
++    @property
++    def can_control_devices(self) -> bool:
++        return self.view.phase == Phase.CONFIGURATION and (
++            self.can_edit
++            or self.managed
++            and self.view.connected
++            and self.view.has_control
+         )
+ 
+     @property
+@@ -440,6 +442,8 @@ class CamerasPanel(ResponsiveColumns):
+         self.refresh_controls()
+ 
+     def toggle_connection(self) -> None:
++        if self.pending_action.cancel(self.connect_button):
++            return
+         if self.can_operate and (draft := self.selected):
+             if self.managed:
+                 self.connection_requested.emit(draft.key, not draft.connected)
+@@ -451,6 +455,8 @@ class CamerasPanel(ResponsiveColumns):
+             self.preview_requested.emit(draft.key, draft.connected)
+ 
+     def test_selected(self) -> None:
++        if self.pending_action.cancel(self.selected_test_button):
++            return
+         draft = self.selected
+         if not self.can_operate or draft is None or draft.role not in CAMERA_ROLES:
+             return
+@@ -600,4 +606,5 @@ class CamerasPanel(ResponsiveColumns):
+                 ("ACQUISITION RATE", "—"),
+             )
+         )
++        self.pending_action.refresh(self.can_control_devices)
+         self.controls_changed.emit()
+diff --git a/src/cephvr/gui/main.py b/src/cephvr/gui/main.py
+index 8d6e709..0b03572 100644
+--- a/src/cephvr/gui/main.py
++++ b/src/cephvr/gui/main.py
+@@ -174,7 +174,7 @@ class ManagedGui(QObject):
+             ),
+         )
+         window.devices.spikeglx.connection_requested.connect(
+-            lambda: bridge.request("spikeglx_connection")
++            lambda: window.devices.spikeglx.start_connection_check(bridge.request)
+         )
+         window.devices.spikeglx.pairing_requested.connect(
+             self.display_operations.submit_pairing
+@@ -227,6 +227,7 @@ class ManagedGui(QObject):
+         self.control_ready = False
+         self.auto_control_attempted = False
+         self.state = None
++        self.window.devices.spikeglx.pending_action.finish()
+         self.window.devices.spikeglx.pairing_pending = False
+         self.tracking_diagnostics.install_snapshot(None)
+         self._inventory_identity = None
+@@ -699,7 +700,11 @@ class ManagedGui(QObject):
+             self.window.devices.spikeglx.apply_view(self.window.dashboard.view)
+             self.window.devices.spikeglx.console.appendPlainText(message)
+         label = action_label(action)
+-        rendered = f"{label}: {message}" if success else f"{label} failed: {message}"
++        rendered = (
++            f"{label}: {message}"
++            if success or message.startswith("Cancelled")
++            else f"{label} failed: {message}"
++        )
+         if not quiet_mcu_poll and (
+             action != "tracking_diagnostic_frame" or not success
+         ):
+@@ -738,10 +743,19 @@ class ManagedGui(QObject):
+             self.refresh_camera_state()
+         if action == "spikeglx_connection":
+             panel = self.window.devices.spikeglx
++            panel.pending_action.finish()
++            panel.apply_view(self.window.dashboard.view)
+             panel.console.appendPlainText(rendered)
+             panel.status_column.set_rows(
+                 (
+-                    ("CONNECTION", "Verified" if success else "Unavailable"),
++                    (
++                        "CONNECTION",
++                        "Verified"
++                        if success
++                        else "Cancelled"
++                        if message.startswith("Cancelled")
++                        else "Unavailable",
++                    ),
+                     None,
+                     ("", message.replace(" · ", "\n") if success else message),
+                 )
+@@ -837,7 +851,7 @@ def main(argv: list[str] | None = None) -> int:
+             manager = ManagedGui(window, bridge)
+             app.aboutToQuit.connect(manager.shutdown)
+             fit_window_to_screen(window)
+-            window.show()
++            window.showMaximized()
+             return app.exec()
+         finally:
+             store.remove_client(principal)
+diff --git a/src/cephvr/gui/managed_actions.py b/src/cephvr/gui/managed_actions.py
+index 4b3115f..e778732 100644
+--- a/src/cephvr/gui/managed_actions.py
++++ b/src/cephvr/gui/managed_actions.py
+@@ -10,7 +10,9 @@ from typing import Any, cast
+ from cephvr.client.session import ClientError, HeadlessClient
+ from cephvr.control.v1 import services_pb2 as rpc
+ from cephvr.control.v1 import types_pb2 as pb
++from cephvr.gui.action_cancellation import ActionCancelled, Cancellation, checkpoint
+ from cephvr.gui.camera_action_submission import prepare_camera
++from cephvr.gui.cancel_cleanup import cleanup_cancelled_device
+ from cephvr.gui.managed_device_commands import dispatch_device_action
+ from cephvr.gui.managed_display_operations import (
+     close_display_calibration_request,
+@@ -111,6 +113,33 @@ class ManagedActions:
+     async def _device(
+         self, client: HeadlessClient, action: str, options: dict[str, Any]
+     ) -> bool:
++        token = options.get("cancellation")
++        if not isinstance(token, Cancellation):
++            result = await self._device_result(client, action, options)
++        else:
++            if token.requested.is_set():
++                self.command_finished(action, False, "Cancelled before dispatch")
++                return True
++            before = pb.Snapshot.FromString(client.snapshot.SerializeToString())
++            try:
++                result = await self._device_result(client, action, options)
++                checkpoint(options)
++            except ActionCancelled:
++                await cleanup_cancelled_device(client, action, options, before)
++                self.command_finished(
++                    action,
++                    False,
++                    "Cancelled; cleanup confirmed. Applied settings are retained.",
++                )
++                return True
++        if result is None:
++            return False
++        self.command_finished(action, *result)
++        return True
++
++    async def _device_result(
++        self, client: HeadlessClient, action: str, options: dict[str, Any]
++    ) -> tuple[bool, str] | None:
+         if action in {"prepare_mcu_test", "prepare_mcu_connection"}:
+             base_revision = int(options["base_revision"])
+             if action == "prepare_mcu_connection":
+@@ -121,6 +150,7 @@ class ManagedActions:
+             self.device_configuration_accepted(
+                 base_revision, client.snapshot.SerializeToString()
+             )
++            checkpoint(options)
+             mcu_result = await dispatch_device_action(
+                 client,
+                 "mcu",
+@@ -128,8 +158,7 @@ class ManagedActions:
+                 self.principal,
+             )
+             assert mcu_result is not None
+-            self.command_finished(action, *mcu_result)
+-            return True
++            return mcu_result
+         if action == "prepare_camera":
+             base_revision = int(options["base_revision"])
+ 
+@@ -145,6 +174,7 @@ class ManagedActions:
+                     base_revision = state.configuration.revision
+ 
+             await prepare_camera(client, options, camera_accepted)
++            checkpoint(options)
+             try:
+                 camera_result = await dispatch_device_action(
+                     client,
+@@ -155,8 +185,7 @@ class ManagedActions:
+             finally:
+                 camera_accepted(client.snapshot)
+             assert camera_result is not None
+-            self.command_finished(action, *camera_result)
+-            return True
++            return camera_result
+         base_revision = client.snapshot.configuration.revision
+         device_result = await dispatch_device_action(
+             client, action, options, self.principal
+@@ -171,9 +200,8 @@ class ManagedActions:
+                 self.device_configuration_accepted(
+                     base_revision, client.snapshot.SerializeToString()
+                 )
+-            self.command_finished(action, success, message)
+-            return True
+-        return False
++            return success, message
++        return None
+ 
+     async def _inventory(
+         self, client: HeadlessClient, action: str, options: dict[str, Any]
+diff --git a/src/cephvr/gui/managed_cameras.py b/src/cephvr/gui/managed_cameras.py
+index 84341d7..195df2b 100644
+--- a/src/cephvr/gui/managed_cameras.py
++++ b/src/cephvr/gui/managed_cameras.py
+@@ -56,7 +56,21 @@ class ManagedCameras(QObject):
+         )
+ 
+     def queue(self, action: str, **options: object) -> bool:
+-        if self.pending or not self.bridge.request(action, **options):
++        if self.pending:
++            return False
++        kind = options.get("kind")
++        if action in {"camera", "prepare_camera"} and kind in {
++            rpc.CAMERA_COMMAND_KIND_START_PREVIEW,
++            rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
++        }:
++            button = (
++                self.panel.connect_button
++                if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
++                else self.panel.selected_test_button
++            )
++            options["cancellation"] = self.panel.pending_action.begin(button)
++        if not self.bridge.request(action, **options):
++            self.panel.pending_action.finish()
+             return False
+         self.pending = action
+         self.panel.operation_pending = True
+@@ -67,6 +81,7 @@ class ManagedCameras(QObject):
+         if action != self.pending:
+             return
+         self.pending = ""
++        self.panel.pending_action.finish()
+         self.panel.operation_pending = False
+         self.panel.pending_enable.clear()
+         self.panel.console.appendPlainText(f"{action}: {message}")
+@@ -97,6 +112,7 @@ class ManagedCameras(QObject):
+     def disconnected(self) -> None:
+         self._camera_revision = -1
+         self.pending = ""
++        self.panel.pending_action.finish()
+         self.panel.operation_pending = False
+         self.panel.pending_enable.clear()
+         self.configured_tests.clear()
+diff --git a/src/cephvr/gui/managed_device_commands.py b/src/cephvr/gui/managed_device_commands.py
+index d780841..d273ae3 100644
+--- a/src/cephvr/gui/managed_device_commands.py
++++ b/src/cephvr/gui/managed_device_commands.py
+@@ -13,6 +13,7 @@ from cephvr.client.session import ClientError, HeadlessClient
+ from cephvr.control.v1 import services_pb2 as rpc
+ from cephvr.control.v1 import types_pb2 as pb
+ from cephvr.controller.microcontroller.firmware_source import read_firmware
++from cephvr.gui.action_cancellation import checkpoint
+ from cephvr.gui.device_requests import (
+     assign_camera_role,
+     import_camera_preset,
+@@ -29,6 +30,7 @@ async def dispatch_device_action(
+     principal: Principal,
+ ) -> tuple[bool, str] | None:
+     """Dispatch one device request; return None when another owner handles it."""
++    checkpoint(options)
+     if action == "set_spikeglx_enabled":
+         state = client.snapshot
+         if state.configuration.revision != options["expected_revision"]:
+@@ -82,6 +84,7 @@ async def dispatch_device_action(
+             request.firmware_path = str(image.path)
+             request.firmware_sha256 = image.digest
+         outcome = await client.execute("ExecuteMicrocontrollerCommand", request)
++        checkpoint(options)
+         if not outcome.succeeded:
+             raise ClientError(outcome.failure or "MCU operation did not succeed.")
+         return True, "Completed"
+@@ -207,6 +210,7 @@ async def _camera(
+             raise ClientError("No current preview run for this camera.")
+         request.preview_run_id = camera.preview_run_id
+     outcome = await client.execute("ExecuteCameraCommand", request)
++    checkpoint(options)
+     if not outcome.succeeded:
+         raise ClientError(outcome.failure or "Camera operation did not succeed.")
+     if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW and options.get("show_preview"):
+@@ -227,6 +231,7 @@ async def _camera(
+         if "placement" in options:
+             show.preview_placement.ParseFromString(options["placement"])
+         shown = await client.execute("ExecuteCameraCommand", show)
++        checkpoint(options)
+         if not shown.succeeded:
+             raise ClientError(
+                 f"Capture started; preview could not open: {shown.failure or 'unconfirmed presentation'}. "
+@@ -303,6 +308,7 @@ async def _save_camera_settings(
+         await _update_configuration(client, state, proposed, "Camera settings")
+     if accepted is not None:
+         accepted(client.snapshot)
++    checkpoint(options)
+     if import_preset:
+         role = next(
+             role
+diff --git a/src/cephvr/gui/managed_mcu.py b/src/cephvr/gui/managed_mcu.py
+index 948d1cb..562ea98 100644
+--- a/src/cephvr/gui/managed_mcu.py
++++ b/src/cephvr/gui/managed_mcu.py
+@@ -82,7 +82,7 @@ class ManagedMcu(QObject):
+ 
+     def test_connection(self) -> None:
+         state = self.snapshot()
+-        if state is None:
++        if state is None or self.pending:
+             return
+         settings = next(
+             (
+@@ -99,8 +99,10 @@ class ManagedMcu(QObject):
+             )
+             return
+         if selected != settings.pulses.port:
++            token = self.panel.pending_action.begin(self.panel.test_connection_button)
+             if self.bridge.request(
+                 "prepare_mcu_connection",
++                cancellation=token,
+                 generation=state.controller_generation,
+                 base_revision=state.configuration.revision,
+                 base_configuration=state.configuration_values.current.SerializeToString(
+@@ -112,6 +114,8 @@ class ManagedMcu(QObject):
+                 self.pending = True
+                 self.panel.connection_pending = True
+                 self.panel.refresh_tests()
++            else:
++                self.panel.pending_action.finish()
+             return
+         self.send(rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT)
+ 
+@@ -284,7 +288,18 @@ class ManagedMcu(QObject):
+         if submission is not None:
+             action = "prepare_mcu_test"
+             options.update(submission)
++        if kind in {
++            rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
++            rpc.MICROCONTROLLER_COMMAND_KIND_START,
++        }:
++            button = (
++                self.panel.test_connection_button
++                if not key
++                else self.panel.test_buttons[key]
++            )
++            options["cancellation"] = self.panel.pending_action.begin(button)
+         if not self.bridge.request(action, **options):
++            self.panel.pending_action.finish()
+             self.panel.set_test_failure(
+                 key or "MCU", "Controller connection is unavailable."
+             )
+@@ -316,12 +331,19 @@ class ManagedMcu(QObject):
+         }:
+             return
+         self.pending = False
++        self.panel.pending_action.finish()
++        for key in self.panel.test_buttons:
++            self.panel.update_test_button(key)
+         self.pending_kind = 0
+         self.panel.upload_pending = False
+         self.panel.connection_pending = False
+         self.panel.pending_test_key = ""
+         if not success:
+-            self.panel.console.appendPlainText(f"MCU command failed: {message}")
++            self.panel.console.appendPlainText(
++                message
++                if message.startswith("Cancelled")
++                else f"MCU command failed: {message}"
++            )
+         # Confirm active state and renew the diagnostic lease after completion.
+         # Submission can include serial startup and does not prove a running test.
+         if (
+@@ -335,6 +357,7 @@ class ManagedMcu(QObject):
+     def disconnected(self) -> None:
+         self.settle.stop()
+         self.pending = False
++        self.panel.pending_action.finish()
+         self.pending_kind = 0
+         self.revision = self.observed_ns = -1
+         self.panel.upload_pending = False
+diff --git a/src/cephvr/gui/microcontroller.py b/src/cephvr/gui/microcontroller.py
+index 6fb4de6..8539f86 100644
+--- a/src/cephvr/gui/microcontroller.py
++++ b/src/cephvr/gui/microcontroller.py
+@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
+     QWidget,
+ )
+ 
++from cephvr.gui.action_cancellation import PendingAction
+ from cephvr.gui.components import Card, button, combo, equal_row_height, field
+ from cephvr.gui.device_panel import DevicePanel
+ from cephvr.gui.microcontroller_signals import ROLE_OUTPUTS, MicrocontrollerSignals
+@@ -114,6 +115,7 @@ class MicrocontrollerPanel(DevicePanel):
+         self.managed_test_key = ""
+         self.pending_test_key = ""
+         self.connection_pending = False
++        self.pending_action = PendingAction()
+         self.review_tests: set[str] = set()
+         self.test_buttons: dict[str, QPushButton] = {}
+         self.enable_controls: dict[str, QCheckBox] = {}
+@@ -253,6 +255,10 @@ class MicrocontrollerPanel(DevicePanel):
+         self.refresh_tests()
+ 
+     def request(self, name: str) -> None:
++        if name == "Test connection" and self.pending_action.cancel(
++            self.test_connection_button
++        ):
++            return
+         if not self.can_review:
+             return
+         if name == "Scan ports":
+@@ -475,6 +481,7 @@ class MicrocontrollerPanel(DevicePanel):
+                 self.can_review and not active and not self.upload_pending
+             )
+ 
++        self.pending_action.refresh(self.can_review)
+         self.controls_changed.emit()
+ 
+     def port_changed(self) -> None:
+@@ -521,6 +528,10 @@ class MicrocontrollerPanel(DevicePanel):
+         control.update()
+ 
+     def test_pin(self, key: str) -> None:
++        if key in self.test_buttons and self.pending_action.cancel(
++            self.test_buttons[key]
++        ):
++            return
+         if key == "projector-flip":
+             return
+         if self.managed and key == self.managed_test_key:
+diff --git a/src/cephvr/gui/preview_placement.py b/src/cephvr/gui/preview_placement.py
+index de9469e..625a4e2 100644
+--- a/src/cephvr/gui/preview_placement.py
++++ b/src/cephvr/gui/preview_placement.py
+@@ -1,11 +1,50 @@
+ """Initial display-only placement hints for acquisition-owned camera windows."""
+ 
+-from PyQt6.QtCore import QRect
+-from PyQt6.QtGui import QGuiApplication
+-from PyQt6.QtWidgets import QWidget
++from math import ceil
++
++from PyQt6.QtCore import QPoint, QRect, Qt
++from PyQt6.QtGui import QGuiApplication, QResizeEvent
++from PyQt6.QtWidgets import QVBoxLayout, QWidget
+ 
+ from cephvr.control.v1 import services_pb2 as rpc
+-from cephvr.platform.windows.window_coordinates import operator_window_geometry
++from cephvr.gui.components import Card, label
++from cephvr.platform.windows.window_coordinates import (
++    client_point_to_screen,
++    operator_window_geometry,
++    preview_frame_extra,
++)
++
++
++class PreviewSlot(Card):
++    """Reserve the initial detached frame's footprint below the card heading."""
++
++    def __init__(self) -> None:
++        super().__init__("Preview")
++        self.setMinimumWidth(200)
++        self.setMaximumWidth(658)
++        self.body.setContentsMargins(8, 0, 8, 8)
++        self.body.setSpacing(4)
++        self.header.setContentsMargins(0, 0, 0, 0)
++        self.target = QWidget()
++        self.target.setObjectName("ExternalPreviewSlot")
++        layout = QVBoxLayout(self.target)
++        hint = label("Preview windows open here", "muted")
++        hint.setWordWrap(True)
++        hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
++        layout.addWidget(hint)
++        self.body.addWidget(self.target)
++
++    def resizeEvent(self, event: QResizeEvent | None) -> None:
++        super().resizeEvent(event)
++        scale = self.devicePixelRatioF()
++        extra_width, extra_height = preview_frame_extra(scale)
++        side = max(
++            128,
++            min(round(640 * scale), round((self.width() - 16) * scale) - extra_width),
++        )
++        height = ceil((side + extra_height) / scale)
++        self.target.setFixedHeight(height)
++        self.setFixedHeight(self.header.sizeHint().height() + 4 + height + 8)
+ 
+ 
+ def square_preview_placement(
+@@ -39,11 +78,50 @@ def square_preview_placement(
+ 
+ 
+ def preview_window_placement(main: QWidget) -> rpc.PreviewWindowPlacement:
++    slot = main.findChild(QWidget, "ExternalPreviewSlot")
++    screen = main.screen()
++    area = screen.availableGeometry() if screen is not None else QRect(0, 0, 1920, 1080)
++    slot_rect = (
++        QRect(slot.mapToGlobal(QPoint()), slot.size())
++        if slot is not None and slot.isVisible()
++        else None
++    )
+     if QGuiApplication.platformName() == "windows":
+         anchor_bounds, area_bounds, scale = operator_window_geometry(int(main.winId()))
++        if slot_rect is not None:
++            assert slot is not None
++            offset = slot.mapTo(main, QPoint())
++            x, y = client_point_to_screen(
++                int(main.winId()), round(offset.x() * scale), round(offset.y() * scale)
++            )
++            slot_rect = QRect(
++                x,
++                y,
++                round(slot_rect.width() * scale),
++                round(slot_rect.height() * scale),
++            )
++            return slot_preview_placement(slot_rect, QRect(*area_bounds), scale)
+         return square_preview_placement(
+             QRect(*anchor_bounds), QRect(*area_bounds), scale
+         )
+-    screen = main.screen()
+-    area = screen.availableGeometry() if screen is not None else QRect(0, 0, 1920, 1080)
++    if slot_rect is not None:
++        return slot_preview_placement(slot_rect, area)
+     return square_preview_placement(main.frameGeometry(), area)
++
++
++def slot_preview_placement(
++    slot: QRect, area: QRect, scale: float = 1.0
++) -> rpc.PreviewWindowPlacement:
++    """Fit the detached square and its native frame within the reserved area."""
++    bounds = slot.intersected(area)
++    extra_width, extra_height = preview_frame_extra(scale)
++    side = max(
++        128,
++        min(
++            round(640 * scale),
++            2048,
++            bounds.width() - extra_width,
++            bounds.height() - extra_height,
++        ),
++    )
++    return rpc.PreviewWindowPlacement(x=bounds.x(), y=bounds.y(), side=side)
+diff --git a/src/cephvr/gui/review.py b/src/cephvr/gui/review.py
+index 66637e4..986ec95 100644
+--- a/src/cephvr/gui/review.py
++++ b/src/cephvr/gui/review.py
+@@ -298,7 +298,7 @@ def main() -> None:
+                 f"The saved review draft was preserved but could not be restored: {exc}",
+             )
+     fit_window_to_screen(window)
+-    window.show()
++    window.showMaximized()
+     window.raise_()
+     window.activateWindow()
+     sys.exit(app.exec())
+diff --git a/src/cephvr/gui/spikeglx.py b/src/cephvr/gui/spikeglx.py
+index 4a86ed5..913287b 100644
+--- a/src/cephvr/gui/spikeglx.py
++++ b/src/cephvr/gui/spikeglx.py
+@@ -1,5 +1,6 @@
+ """Local pulse-inventory drafts; remote saved-channel validation belongs to E12."""
+ 
++from collections.abc import Callable
+ from typing import cast
+ 
+ from PyQt6.QtCore import Qt, pyqtSignal
+@@ -12,6 +13,7 @@ from PyQt6.QtWidgets import (
+     QWidget,
+ )
+ 
++from cephvr.gui.action_cancellation import PendingAction
+ from cephvr.gui.components import Card, button, combo, label
+ from cephvr.gui.device_panel import DevicePanel, entry
+ from cephvr.gui.spikeglx_snapshot import SpikeGLXSnapshot
+@@ -42,6 +44,7 @@ class SpikeGLXPanel(DevicePanel):
+         self.pairing.setToolTip(
+             "Enable SpikeGLX recording for this session. New-session default: config/backends/synchronization_config.toml"
+         )
++        self.pending_action = PendingAction()
+         self.pairing_pending = False
+         self.pairing.clicked.connect(self.pairing_requested.emit)
+         self.pairing.setEnabled(False)
+@@ -425,10 +428,22 @@ class SpikeGLXPanel(DevicePanel):
+             and view.phase == Phase.CONFIGURATION
+             and not self.pairing_pending
+         )
++        self.pending_action.refresh(view.connected and not view.sample)
+         self.refresh_controls()
+ 
++    def start_connection_check(self, submit: Callable[..., bool]) -> None:
++        if self.pending_action.token is not None:
++            return
++        token = self.pending_action.begin(self.action_buttons[0])
++        if not submit("spikeglx_connection", cancellation=token):
++            self.pending_action.finish()
++        else:
++            self.pending_action.refresh(True)
++
+     def request(self, name: str) -> None:
+         if name == "Test connection":
++            if self.pending_action.cancel(self.action_buttons[0]):
++                return
+             if self.action_buttons[0].isEnabled():
+                 self.connection_requested.emit()
+         elif self.can_review:
+diff --git a/src/cephvr/gui/window.py b/src/cephvr/gui/window.py
+index cb26969..8ac6cf5 100644
+--- a/src/cephvr/gui/window.py
++++ b/src/cephvr/gui/window.py
+@@ -1,6 +1,6 @@
+ """Frontend shell with shared status columns and local configuration pages."""
+ 
+-from PyQt6.QtCore import QEvent, QSettings
++from PyQt6.QtCore import QEvent, QSettings, Qt
+ from PyQt6.QtGui import QCloseEvent
+ from PyQt6.QtWidgets import (
+     QButtonGroup,
+@@ -19,6 +19,7 @@ from cephvr.gui.dashboard import Dashboard
+ from cephvr.gui.devices import DevicesPage
+ from cephvr.gui.gui_snapshot import GuiSnapshot, SnapshotPages
+ from cephvr.gui.notices import StatusEvent
++from cephvr.gui.preview_placement import PreviewSlot
+ from cephvr.gui.protocol import ProtocolPage
+ from cephvr.gui.recordings import RecordingsCard
+ from cephvr.gui.theme import SIZES
+@@ -143,7 +144,13 @@ class DashboardWindow(QMainWindow):
+         self.page_header.setFixedHeight(
+             max(control.sizeHint().height() for control in header_controls)
+         )
+-        body.addWidget(self.stack, 1)
++        content = QHBoxLayout()
++        content.setSpacing(SIZES.column_gap)
++        content.addWidget(self.stack, 3)
++        self.preview_slot = PreviewSlot()
++        content.addWidget(self.preview_slot, 2, Qt.AlignmentFlag.AlignTop)
++        body.addLayout(content, 1)
++        self.devices.tabs.currentChanged.connect(self.update_preview_slot)
+         layout.addWidget(page, 1)
+         self.navigation.idClicked.connect(self.select_page)
+         self.apply_view(DashboardView())
+@@ -165,6 +172,13 @@ class DashboardWindow(QMainWindow):
+         self.stack.setCurrentIndex(index)
+         self.page_title.setText(PAGES[index].upper())
+         self.dashboard.preview_button.setVisible(index == 0)
++        self.update_preview_slot()
++
++    def update_preview_slot(self) -> None:
++        page = self.stack.currentIndex()
++        self.preview_slot.setVisible(
++            page in (0, 3) or (page == 2 and self.devices.tabs.currentIndex() == 0)
++        )
+ 
+     def apply_view(self, view: DashboardView) -> None:
+         self.dashboard.apply_view(view)
+diff --git a/src/cephvr/platform/windows/window_coordinates.py b/src/cephvr/platform/windows/window_coordinates.py
+index 74ef294..937ae1d 100644
+--- a/src/cephvr/platform/windows/window_coordinates.py
++++ b/src/cephvr/platform/windows/window_coordinates.py
+@@ -85,6 +85,29 @@ def _visible_frame(hwnd: int) -> wintypes.RECT:
+     return rect
+ 
+ 
++def client_point_to_screen(hwnd: int, x: int, y: int) -> tuple[int, int]:
++    """Map a physical client offset without assuming monitor or frame origins."""
++    with physical_coordinates():
++        api = ctypes.WinDLL("user32", use_last_error=True)
++        api.ClientToScreen.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.POINT)]
++        point = wintypes.POINT(x, y)
++        if not api.ClientToScreen(hwnd, ctypes.byref(point)):
++            raise ctypes.WinError(ctypes.get_last_error())
++        return point.x, point.y
++
++
++def preview_frame_extra(scale: float = 1.0) -> tuple[int, int]:
++    """Visible Win32 HighGUI chrome around an autosized square image."""
++    if sys.platform != "win32":
++        return round(2 * scale), round(32 * scale)
++    api = ctypes.WinDLL("user32", use_last_error=True)
++    api.GetSystemMetricsForDpi.argtypes = [ctypes.c_int, wintypes.UINT]
++    dpi = round(96 * scale)
++    metric = api.GetSystemMetricsForDpi
++    # Visible border, caption, and top resize frame; DWM hides the other padding.
++    return 2 * metric(5, dpi), sum(metric(key, dpi) for key in (4, 33, 92, 6))
++
++
+ def position_preview_frame(title: str, x: int, y: int) -> None:
+     """Place this process's visible preview corner, excluding invisible borders."""
+     with physical_coordinates():
+@@ -115,14 +138,14 @@ def position_preview_frame(title: str, x: int, y: int) -> None:
+         if not api.GetWindowRect(handle, ctypes.byref(outer)):
+             raise ctypes.WinError(ctypes.get_last_error())
+         visible = _visible_frame(handle)
+-        # SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE preserves operator focus.
++        # HWND_TOPMOST keeps the detached viewer above the GUI without activation.
+         if not api.SetWindowPos(
+             handle,
+-            None,
++            wintypes.HWND(-1),
+             x - (visible.left - outer.left),
+             y - (visible.top - outer.top),
+             0,
+             0,
+-            0x0015,
++            0x0011,
+         ):
+             raise ctypes.WinError(ctypes.get_last_error())
+diff --git a/tests/acquisition/test_camera_adapter_contracts.py b/tests/acquisition/test_camera_adapter_contracts.py
+index 5a31250..772beae 100644
+--- a/tests/acquisition/test_camera_adapter_contracts.py
++++ b/tests/acquisition/test_camera_adapter_contracts.py
+@@ -10,6 +10,7 @@ import pytest
+ from cephvr.acquisition.camera.basler import BaslerCameraAdapter
+ from cephvr.acquisition.camera.errors import CameraAdapterError
+ from cephvr.acquisition.camera.features import capability, read_value, write_value
++from cephvr.acquisition.camera.metadata import native_metadata
+ from cephvr.acquisition.camera.native_formats import (
+     device_pixel_format,
+     native_pixel_format,
+@@ -29,6 +30,42 @@ def test_adapter_construction_does_not_load_pypylon() -> None:
+     assert adapter._camera is None
+ 
+ 
++@pytest.mark.parametrize(
++    "model,interface,frequency,expected",
++    [
++        ("acA4112-30uc", "usb3", None, (1, 1)),
++        ("a2A1920-160ucPRO", "usb3", None, (1, 1)),
++        ("a2A2464-77umPRO", "usb3", None, (1, 1)),
++        ("unknown", "usb3", None, (None, None)),
++        ("acA4112-30uc", "gige", None, (None, None)),
++        ("acA4112-30uc", "usb3", 125_000_000, (8, 1)),
++        ("unknown", "gige", 125_000_000, (8, 1)),
++    ],
++)
++def test_metadata_uses_only_documented_model_clock_fallback(
++    monkeypatch, model, interface, frequency, expected
++) -> None:
++    from cephvr.acquisition.camera import metadata
++
++    values = {"DeviceModelName": model, "TimestampTickFrequency": frequency}
++    monkeypatch.setattr(metadata, "read_value", lambda nodes, name: values.get(name))
++    monkeypatch.setattr(metadata, "get_node", lambda nodes, name: None)
++    monkeypatch.setattr(
++        metadata.importlib, "import_module", lambda name: SimpleNamespace()
++    )
++    camera = SimpleNamespace(GetNodeMap=lambda: object())
++    result = native_metadata(camera, "exact-device", interface)
++    clock = result.camera_clock
++    assert (
++        clock.tick_period_ns_numerator,
++        clock.tick_period_ns_denominator,
++    ) == expected
++    assert result.timestamp_available is (expected[0] is not None)
++    assert any(w.code == "NATIVE_TIMESTAMP_UNAVAILABLE" for w in result.warnings) is (
++        expected[0] is None
++    )
++
++
+ @pytest.mark.parametrize("failed_close", [False, True])
+ @pytest.mark.parametrize("timing", ["external_trigger", "free_running"])
+ def test_preview_reopen_retires_only_closed_device_purge_guard(
+diff --git a/tests/acquisition/test_manual_preview.py b/tests/acquisition/test_manual_preview.py
+index b393405..9e3a813 100644
+--- a/tests/acquisition/test_manual_preview.py
++++ b/tests/acquisition/test_manual_preview.py
+@@ -280,11 +280,24 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
+             == 0
+         )
+         assert (visible.left, visible.top) == (400, 100)
+-        from cephvr.platform.windows.window_coordinates import operator_window_geometry
++        from cephvr.platform.windows.window_coordinates import (
++            operator_window_geometry,
++            position_preview_frame,
++            preview_frame_extra,
++        )
+ 
+         anchor, work_area, scale = operator_window_geometry(handle)
+         assert anchor[:2] == (400, 100)
+         assert work_area[2] > 0 and work_area[3] > 0 and scale >= 1
++        extra_width, extra_height = preview_frame_extra(scale)
++        assert anchor[2:] == (256 + extra_width, 256 + extra_height)
++        native.GetWindowLongW.argtypes = [ctypes.c_void_p, ctypes.c_int]
++        assert native.GetWindowLongW(handle, -20) & 0x00000008  # WS_EX_TOPMOST
++        native.GetForegroundWindow.restype = ctypes.c_void_p
++        foreground = native.GetForegroundWindow()
++        position_preview_frame(first.title, 410, 110)
++        assert native.GetForegroundWindow() == foreground
++        assert operator_window_geometry(handle)[0][:2] == (410, 110)
+         point = ((rect.top + 128) & 0xFFFF) << 16 | ((rect.left + 128) & 0xFFFF)
+         assert native.PostMessageW(child, 0x020A, 120 << 16, point)
+         assert zoomed.wait(3), (
+diff --git a/tests/controller/test_microcontroller_owner.py b/tests/controller/test_microcontroller_owner.py
+index 9e5f85d..c6b7f77 100644
+--- a/tests/controller/test_microcontroller_owner.py
++++ b/tests/controller/test_microcontroller_owner.py
+@@ -1136,9 +1136,12 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
+             assert "fresh connect" not in events
+ 
+ 
++@pytest.mark.parametrize("disconnect", [False, True])
+ @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+ @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+-async def test_microcontroller_upload_requires_every_camera_released(role, owned):
++async def test_microcontroller_upload_requires_every_camera_released(
++    role, owned, disconnect
++):
+     from unittest.mock import AsyncMock, Mock
+ 
+     from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+@@ -1182,6 +1185,12 @@ async def test_microcontroller_upload_requires_every_camera_released(role, owned
+         firmware_path="firmware.ino",
+         firmware_sha256="a" * 64,
+     )
++    if disconnect:
++        request.kind = wire.MICROCONTROLLER_COMMAND_KIND_DISCONNECT
++        request.ClearField("firmware_path")
++        request.ClearField("firmware_sha256")
++        owner.view.observation.connection_id = "current"
++        request.expected_connection_id = "current"
+     request.command.operator.command_id = "upload"
+     await commands.execute(request)
+     hooks.admission.assert_called_once_with(
+@@ -2219,3 +2228,43 @@ def test_observation_exposes_connection_reply_diagnostics_without_health_credit(
+     assert observed.request_id.endswith("-2")
+     assert observed.HasField("observed_monotonic_ns")
+     owner.close(1000)
++
++
++@pytest.mark.parametrize("identity", ["", "stale", "current"])
++async def test_manual_disconnect_requires_exact_connection_and_retains_deadline(
++    identity,
++):
++    from unittest.mock import AsyncMock
++
++    serial = AsyncMock()
++    owner = MicrocontrollerDevice(
++        serial,
++        control.AcquisitionSettings(),
++        runtime_pb2.AcquisitionFilePolicies(),
++        host_time_ns,
++    )
++    owner.port_owned = True
++    owner.view.observation.connection_id = "current"
++    stopped = mcu.MicrocontrollerState()
++    for role in ("behavioral", "tracking", "eye_tracking"):
++        getattr(stopped, role).running = False
++    serial.off.return_value = mcu.PulseCommandEvidence(
++        outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=stopped
++    )
++    deadline = host_time_ns() + 1_000_000_000
++    request = wire.MicrocontrollerCommandRequest(
++        kind=wire.MICROCONTROLLER_COMMAND_KIND_DISCONNECT,
++        expected_connection_id=identity,
++    )
++    if identity != "current":
++        with pytest.raises(RuntimeError, match="identity changed"):
++            await owner.execute(request, camera.CameraPulseConfiguration(), deadline)
++        serial.close.assert_not_awaited()
++        assert owner.view.observation.connection_id == "current"
++    else:
++        await owner.execute(request, camera.CameraPulseConfiguration(), deadline)
++        serial.close.assert_awaited_once_with(deadline_ns=deadline)
++        assert serial.off.await_args.kwargs["deadline_ns"] == deadline
++        assert not owner.view.HasField("observation") and not owner.closed
++        assert owner.cleanup_complete
++        owner.ensure_idle()
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index cbb3584..3f93dbf 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -71,6 +71,55 @@ def test_square_preview_placement_fits_small_work_area() -> None:
+     assert result.y == area.top()
+ 
+ 
++@pytest.mark.parametrize("scale", [1.0, 1.5, 2.0])
++def test_preview_slot_fits_native_frame(scale: float) -> None:
++    from cephvr.gui.preview_placement import slot_preview_placement
++    from cephvr.platform.windows.window_coordinates import preview_frame_extra
++
++    slot = QRect(-900, 100, round(400 * scale), round(500 * scale))
++    result = slot_preview_placement(slot, QRect(-1920, 0, 3840, 2160), scale)
++    assert (result.x, result.y) == (slot.x(), slot.y())
++    width, height = preview_frame_extra(scale)
++    assert result.side + width == slot.width()
++    assert result.side + height <= slot.height()
++
++
++def test_preview_slot_tracks_relevant_tabs(
++    window: DashboardWindow, app: QApplication
++) -> None:
++    from cephvr.gui.preview_placement import preview_window_placement
++
++    window.showMaximized()
++    app.processEvents()
++    assert window.isMaximized()
++    for page, device, visible in (
++        (0, 0, True),
++        (1, 0, False),
++        (2, 0, True),
++        (2, 1, False),
++        (2, 2, False),
++        (3, 2, True),
++    ):
++        window.devices.tabs.setCurrentIndex(device)
++        window.select_page(page)
++        app.processEvents()
++        assert window.preview_slot.isVisible() is visible
++        if visible:
++            slot = window.preview_slot
++            target = slot.target
++            assert slot.height() < window.stack.height()
++            assert target.geometry().top() > slot.caption.geometry().bottom()
++            assert target.geometry().left() == 8
++            assert target.geometry().bottom() + 9 == slot.height()
++            assert (
++                window.preview_slot.geometry().left() > window.stack.geometry().right()
++            )
++            if QApplication.platformName() != "windows":
++                hint = preview_window_placement(window)
++                origin = target.mapToGlobal(QPoint())
++                assert (hint.x, hint.y) == (origin.x(), origin.y())
++
++
+ @pytest.fixture(scope="module")
+ def app() -> QApplication:
+     result = QApplication.instance()
+@@ -2631,7 +2680,7 @@ def test_responsive_navigation_preserves_widget_identity(
+     subject = window.dashboard.subject_id
+     subject.setText("PERSISTENT")
+     modes = set()
+-    for width in (1440, 1100, 720, 1440):
++    for width in (1920, 1440, 1100, 720, 1920):
+         window.resize(width, 940)
+         app.processEvents()
+         modes.add(window.dashboard.mode)
+@@ -6258,7 +6307,18 @@ def test_managed_microcontroller_submits_edited_pin_before_test(
+     panel.trial_pin.setText("D8")
+     binding.test_pin("trial-state", True)
+ 
+-    assert requests[:2] == [
++    from cephvr.gui.action_cancellation import Cancellation
++
++    assert all(
++        isinstance(options["cancellation"], Cancellation) for _, options in requests[:2]
++    )
++    assert [
++        (
++            action,
++            {key: value for key, value in options.items() if key != "cancellation"},
++        )
++        for action, options in requests[:2]
++    ] == [
+         ("mcu", {"kind": rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT}),
+         (
+             "mcu",
+@@ -6302,6 +6362,7 @@ def test_managed_camera_pin_test_uses_saved_role_signal(
+     monkeypatch.setattr(managed_mcu.QTimer, "singleShot", lambda *_: None)
+     binding = managed_mcu.ManagedMcu(panel, bridge, lambda: state)
+     binding.test_pin("behavioral", True)
++    assert requests[0][1].pop("cancellation") is panel.pending_action.token
+     assert requests == [
+         (
+             "mcu",
+@@ -17384,3 +17445,299 @@ def test_variation_hover_does_not_change_visibility_during_enter_dispatch(
+         assert form.rows[0] is not row
+     finally:
+         appearance.select("standard", persist=False)
++
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize(
++    "cancel_at", ["queued", "start", "show", "cleanup_failure", "generation"]
++)
++async def test_camera_safe_cancellation_waits_and_closes_exact_new_run(cancel_at):
++    from cephvr.client.session import ClientError
++    from cephvr.control.v1 import services_pb2 as rpc
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.action_cancellation import Cancellation
++    from cephvr.gui.controller_bridge import ControllerBridge
++    from cephvr.shared.auth import Principal
++
++    token = Cancellation()
++    state = pb.Snapshot(controller_generation="original")
++    state.configuration.revision = 7
++    device = state.acquisition_devices.behavioral
++    calls, finished = [], []
++
++    async def execute(method, request):
++        calls.append(request)
++        if request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW:
++            device.device_open = device.preview_running = True
++            device.preview_run_id = "new-run"
++            if cancel_at != "show":
++                token.requested.set()
++            if cancel_at == "generation":
++                state.controller_generation = "replacement"
++        elif request.kind == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW:
++            token.requested.set()
++        else:
++            assert request.kind == rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW
++            assert request.preview_run_id == "new-run"
++            assert request.expected_configuration_revision == 7
++            assert not finished  # Cancelling lasts through confirmed cleanup.
++            if cancel_at == "cleanup_failure":
++                return SimpleNamespace(succeeded=False, failure="release unconfirmed")
++            device.Clear()
++        return SimpleNamespace(succeeded=True, failure="")
++
++    client = SimpleNamespace(
++        snapshot=state, execute=execute, operator_command=lambda: rpc.OperatorCommand()
++    )
++    bridge = ControllerBridge(
++        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
++    )
++    bridge.command_finished.connect(lambda *args: finished.append(args))
++    if cancel_at == "queued":
++        token.requested.set()
++    operation = bridge._dispatch(
++        client,
++        "camera",
++        dict(
++            kind=rpc.CAMERA_COMMAND_KIND_START_PREVIEW,
++            role=1,
++            show_preview=True,
++            cancellation=token,
++        ),
++    )
++    if cancel_at in {"cleanup_failure", "generation"}:
++        with pytest.raises(ClientError, match="unconfirmed"):
++            await operation
++        assert not finished
++    else:
++        await operation
++        assert finished[0][1] is False and finished[0][2].startswith("Cancelled")
++        assert not device.device_open
++    assert (
++        len(calls)
++        == {"queued": 0, "start": 2, "show": 3, "cleanup_failure": 2, "generation": 1}[
++            cancel_at
++        ]
++    )
++
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize("preexisting", [False, True])
++async def test_mcu_cancel_preserves_existing_connection_and_stops_new_test(preexisting):
++    from cephvr.control.v1 import services_pb2 as rpc
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.action_cancellation import Cancellation
++    from cephvr.gui.controller_bridge import ControllerBridge
++    from cephvr.shared.auth import Principal
++
++    state = pb.Snapshot(controller_generation="generation")
++    state.configuration.revision = 3
++    if preexisting:
++        state.microcontroller.observation.connection_id = "connection"
++    token = Cancellation()
++    calls = []
++
++    async def execute(method, request):
++        calls.append(request)
++        if request.kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
++            state.microcontroller.observation.connection_id = "connection"
++            state.microcontroller.diagnostic.active = True
++            state.microcontroller.diagnostic.signal = (
++                pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE
++            )
++            token.requested.set()
++        elif preexisting:
++            assert request.kind == rpc.MICROCONTROLLER_COMMAND_KIND_STOP
++            state.microcontroller.ClearField("diagnostic")
++        else:
++            assert request.kind == rpc.MICROCONTROLLER_COMMAND_KIND_DISCONNECT
++            assert request.expected_connection_id == "connection"
++            state.microcontroller.Clear()
++        return SimpleNamespace(succeeded=True, failure="")
++
++    client = SimpleNamespace(
++        snapshot=state, execute=execute, operator_command=lambda: rpc.OperatorCommand()
++    )
++    bridge = ControllerBridge(
++        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
++    )
++    await bridge._dispatch(
++        client,
++        "mcu",
++        dict(
++            kind=rpc.MICROCONTROLLER_COMMAND_KIND_START,
++            signal=pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
++            cancellation=token,
++        ),
++    )
++    assert len(calls) == 2
++    assert bool(state.microcontroller.observation.connection_id) == preexisting
++    assert not state.microcontroller.diagnostic.active
++
++
++def test_pending_mcu_button_cancels_without_dispatching_twice(window):
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.managed_mcu import ManagedMcu
++
++    panel = window.devices.microcontroller
++    panel.managed = True
++    panel.set_saved_pins("COM8", "D9", True, "D2", True)
++    window.apply_view(
++        DashboardView(connected=True, has_control=True, configuration_wired=False)
++    )
++    state = pb.Snapshot()
++    state.configuration_values.current.backends.add(
++        backend_name="acquisition"
++    ).acquisition.pulses.port = "COM8"
++    calls = []
++    binding = ManagedMcu(
++        panel,
++        SimpleNamespace(
++            request=lambda action, **kw: calls.append((action, kw)) or True
++        ),
++        lambda: state,
++    )
++    control = panel.test_connection_button
++    original = control.text()
++    control.click()
++    assert control.text() == "Cancel" and control.isEnabled()
++    token = calls[0][1]["cancellation"]
++    control.click()
++    assert token.requested.is_set() and control.text().startswith("Cancelling")
++    assert not control.isEnabled() and len(calls) == 1
++    panel.refresh_tests()
++    assert not control.isEnabled()
++    binding.finished("mcu", False, "Cancelled; cleanup confirmed")
++    assert control.text() == original and control.isEnabled()
++
++    binding.test_pin("trial-state", True)
++    pin_button = panel.test_buttons["trial-state"]
++    assert pin_button.text() == "Cancel" and pin_button.isEnabled()
++    pin_button.click()
++    assert calls[-1][1]["cancellation"].requested.is_set()
++    assert pin_button.text().startswith("Cancelling") and not pin_button.isEnabled()
++    binding.finished(calls[-1][0], False, "Cancelled; cleanup confirmed")
++    assert pin_button.text() == "Test"
++
++
++def test_spikeglx_check_cancel_survives_view_refresh(window):
++    panel = window.devices.spikeglx
++    view = DashboardView(connected=True, has_control=True)
++    panel.apply_view(view)
++    calls = []
++    panel.connection_requested.connect(
++        lambda: panel.start_connection_check(
++            lambda action, **kw: calls.append((action, kw)) or True
++        )
++    )
++    control = panel.action_buttons[0]
++    control.click()
++    panel.apply_view(view)
++    assert control.text() == "Cancel" and control.isEnabled()
++    control.click()
++    panel.apply_view(view)
++    assert control.text().startswith("Cancelling") and not control.isEnabled()
++    assert len(calls) == 1 and calls[0][1]["cancellation"].requested.is_set()
++    panel.pending_action.finish()
++    panel.apply_view(view)
++    assert control.text() == "Test connection" and control.isEnabled()
++
++
++@pytest.mark.asyncio
++async def test_cancel_after_mcu_settings_acceptance_skips_hardware_and_retains_settings():
++    from cephvr.control.v1 import services_pb2 as rpc
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.action_cancellation import Cancellation
++    from cephvr.gui.controller_bridge import ControllerBridge
++    from cephvr.shared.auth import Principal
++
++    state = pb.Snapshot(controller_generation="generation")
++    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
++    state.configuration.revision = state.configuration_values.revision = 7
++    settings = state.configuration_values.current.backends.add(
++        backend_name="acquisition"
++    ).acquisition
++    settings.pulses.port = "COM8"
++    token = Cancellation()
++    options = dict(
++        generation="generation",
++        base_revision=7,
++        base_configuration=state.configuration_values.current.SerializeToString(
++            deterministic=True
++        ),
++        port="COM9",
++        kind=rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
++        cancellation=token,
++    )
++    calls, accepted, finished = [], [], []
++
++    async def execute(method, request):
++        calls.append(method)
++        assert method == "UpdateConfiguration"
++        state.configuration_values.current.CopyFrom(request.proposed)
++        state.configuration.revision = state.configuration_values.revision = 8
++        token.requested.set()
++        return SimpleNamespace(succeeded=True, failure="")
++
++    client = SimpleNamespace(
++        snapshot=state, execute=execute, operator_command=lambda: rpc.OperatorCommand()
++    )
++    bridge = ControllerBridge(
++        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
++    )
++    bridge.device_configuration_accepted.connect(lambda *args: accepted.append(args))
++    bridge.command_finished.connect(lambda *args: finished.append(args))
++    await bridge._dispatch(client, "prepare_mcu_connection", options)
++    assert calls == ["UpdateConfiguration"] and len(accepted) == 1
++    assert (
++        state.configuration_values.current.backends[0].acquisition.pulses.port == "COM9"
++    )
++    assert finished[0][2].startswith("Cancelled")
++
++
++@pytest.mark.asyncio
++async def test_cancel_camera_test_does_not_close_preexisting_preview():
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.cancel_cleanup import cleanup_cancelled_device
++
++    before = pb.Snapshot(controller_generation="generation")
++    before.acquisition_devices.behavioral.preview_running = True
++    before.acquisition_devices.behavioral.preview_run_id = "already-open"
++    client = SimpleNamespace(
++        snapshot=pb.Snapshot.FromString(before.SerializeToString())
++    )
++    await cleanup_cancelled_device(client, "camera", {"role": 1}, before)
++    assert (
++        client.snapshot.acquisition_devices.behavioral.preview_run_id == "already-open"
++    )
++
++
++@pytest.mark.parametrize("wired", [False, True])
++def test_pending_camera_button_cancel_is_bound_to_original_request(window, wired):
++    from cephvr.control.v1 import services_pb2 as rpc
++    from cephvr.gui.managed_cameras import ManagedCameras
++
++    panel = window.devices.cameras
++    panel.managed = True
++    window.apply_view(
++        DashboardView(connected=True, has_control=True, configuration_wired=wired)
++    )
++    calls = []
++    binding = ManagedCameras(
++        panel,
++        SimpleNamespace(
++            request=lambda action, **kw: calls.append((action, kw)) or True
++        ),
++        lambda *_: False,
++    )
++    assert binding.queue("camera", kind=rpc.CAMERA_COMMAND_KIND_START_PREVIEW, role=1)
++    control = panel.connect_button
++    assert control.text() == "Cancel" and control.isEnabled()
++    control.click()
++    assert len(calls) == 1 and calls[0][1]["role"] == 1
++    assert calls[0][1]["cancellation"].requested.is_set()
++    panel.refresh_controls()
++    assert control.text().startswith("Cancelling") and not control.isEnabled()
++    binding.finished("camera", False, "Cancelled; cleanup confirmed")
++    assert control.text() in {"Connect", "Disconnect"}
++    assert panel.pending_action.token is None

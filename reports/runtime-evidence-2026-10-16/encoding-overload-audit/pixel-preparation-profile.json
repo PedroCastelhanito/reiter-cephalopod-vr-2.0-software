@@ -1,0 +1,108 @@
+{
+  "scope": "Offline exact production PixelPreparer, synthetic8-bitBayer pool,20calls; includes attachment/conversion/outputcopy, no camera/FFmpeg/storage/queue load",
+  "dimensions": [
+    1760,
+    1716
+  ],
+  "seed": 20261016,
+  "converter_max_threads": "<Swig Object of type 'Pylon::IIntegerEx *' at 0x000001BC74E9D590>",
+  "source_sha256": [
+    "2061abfdbc18e6bdac08db8b52d53f1a309f275795aad6a53d764b9fcc3457ef",
+    "a4a43a7d10ffc1069337934559f1edecd4e3021558fa57a51fabe407d62bc690",
+    "f5e967a42c08c1983b42da35d9ba586290cfebd3ebf212042852ccabcd8bf8ea",
+    "668722adaa6527d9d8f3648c62353ab0d7ea010098dc094813cb25926a487207",
+    "1e88b37c412c32972dc0e03551b295530f88d566c54fab0374b56972e64438f7",
+    "60e5002080cb3347cf279b63327fc6a44b43ad95a1ebe93c7e344c96b4cf7f0d",
+    "ad44cebfc6800f51575dae0b245a5ec59125a8c4286cb9d92278b52d49bc78b3",
+    "1bccd863d662416406cd40bb0833728c999d25423c5a63d2117dde828083a3aa"
+  ],
+  "output_bytes": 9060480,
+  "samples_ns": {
+    "prepare_total": [
+      3225500,
+      2939500,
+      2922100,
+      2908600,
+      2957000,
+      2978400,
+      2608800,
+      2887900,
+      2758300,
+      2834700,
+      2957500,
+      2868300,
+      2699000,
+      2739300,
+      2887500,
+      2980700,
+      2912300,
+      2945600,
+      2906300,
+      2919400
+    ],
+    "attach_and_convert": [
+      1512100,
+      1433400,
+      1390500,
+      1424300,
+      1395000,
+      1433500,
+      1140400,
+      1348900,
+      1320400,
+      1346100,
+      1435000,
+      1379400,
+      1158400,
+      1289700,
+      1338100,
+      1410500,
+      1366800,
+      1395200,
+      1389200,
+      1423200
+    ],
+    "remaining_validation_copy_release": [
+      1713400,
+      1506100,
+      1531600,
+      1484300,
+      1562000,
+      1544900,
+      1468400,
+      1539000,
+      1437900,
+      1488600,
+      1522500,
+      1488900,
+      1540600,
+      1449600,
+      1549400,
+      1570200,
+      1545500,
+      1550400,
+      1517100,
+      1496200
+    ]
+  },
+  "summary_ns": {
+    "prepare_total": {
+      "mean": 2891835.0,
+      "p50": 2910450.0,
+      "p95": 2992940.0,
+      "max": 3225500
+    },
+    "attach_and_convert": {
+      "mean": 1366505.0,
+      "p50": 1389850.0,
+      "p95": 1438855.0,
+      "max": 1512100
+    },
+    "remaining_validation_copy_release": {
+      "mean": 1525330.0,
+      "p50": 1527050.0,
+      "p95": 1577360.0,
+      "max": 1713400
+    }
+  }
+}

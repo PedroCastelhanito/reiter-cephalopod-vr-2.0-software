@@ -35,15 +35,14 @@ class WindowsEncoderInputAdapter:
     def write_chunk(self, data: memoryview) -> int:
         if self.process is None:
             raise RuntimeError("registered FFmpeg child is not ready")
-        if self._pending:
-            transferred = self.process.poll_write()
-            if transferred is None:
-                return 0
-            self._pending = False
-            return transferred
-        self.process.begin_write(data, deadline_ns=self.write_deadline_ns())
-        self._pending = True
-        return 0
+        if not self._pending:
+            self.process.begin_write(data, deadline_ns=self.write_deadline_ns())
+            self._pending = True
+        transferred = self.process.poll_write()
+        if transferred is None:
+            return 0
+        self._pending = False
+        return transferred
 
     def close_input(self) -> None:
         if self.process is None:

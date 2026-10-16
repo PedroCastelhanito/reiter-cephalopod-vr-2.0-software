@@ -215,16 +215,55 @@ class DetailedCompletion:
             )
             or set(actual_outputs) != expected_outputs
             or len(actual_outputs) != len(payload.outputs)
-            or any(
-                actual_outputs[output.output_key].path != output.path
-                for output in registered.outputs
-                if output.backend.backend_name == payload.source.role
+            or registered.outputs
+            and not DetailedCompletion._scheduled_cleanup_outputs_valid(
+                attempt, payload.source.role, registered, actual_outputs
             )
             or any(
                 not cleanup_output_discharged(output)
                 for output in actual_outputs.values()
             )
         )
+
+    @staticmethod
+    def _scheduled_cleanup_outputs_valid(
+        attempt: Attempt,
+        name: str,
+        registered: svc.RegisteredContext,
+        results: dict[str, pb.OutputResult],
+    ) -> bool:
+        """Join frozen Setup identities to controller-owned scheduled paths (E08)."""
+        scheduled = [
+            o for o in attempt.prepared.outputs if o.backend.backend_name == name
+        ]
+        by_key = {o.output_key: o for o in scheduled}
+        frozen = [o for o in registered.outputs if o.backend.backend_name == name]
+        if (
+            len(by_key) != len(scheduled)
+            or set(by_key) != {o.output_key for o in frozen}
+            or len(frozen) != len(by_key)
+        ):
+            return False
+        for identity in frozen:
+            plan = by_key[identity.output_key]
+            if (
+                identity.HasField("path")
+                and identity.path
+                and identity.path != plan.path
+            ):
+                return False
+            original, adopted = deepcopy(identity), deepcopy(plan)
+            original.ClearField("path")
+            adopted.ClearField("path")
+            if original != adopted:
+                return False
+            result = results[identity.output_key]
+            if plan.HasField("path") and plan.path:
+                if result.path != plan.path:
+                    return False
+            elif not cleanup_output_absence_proven(result):
+                return False
+        return True
 
     def _retain_late_finished(
         self,

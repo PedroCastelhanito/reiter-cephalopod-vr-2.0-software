@@ -251,6 +251,7 @@ enum MicrocontrollerCommandKind {
   MICROCONTROLLER_COMMAND_KIND_STATUS = 3;
   MICROCONTROLLER_COMMAND_KIND_STOP = 4;
   MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE = 5; // Explicit Configuration-only Uno update.
+  MICROCONTROLLER_COMMAND_KIND_DISCONNECT = 6; // Close the exact idle manual connection.
 }
 message MicrocontrollerCommandRequest {
   OperatorCommand command = 1;
@@ -259,6 +260,7 @@ message MicrocontrollerCommandRequest {
   MicrocontrollerSignalKind signal = 4; // START only; pin/rate come from current configuration.
   string firmware_path = 5; // UPLOAD only; Arduino sketch (.ino) or compiled Uno image (.hex).
   string firmware_sha256 = 6; // Pins complete sketch snapshot or compiled image bytes.
+  string expected_connection_id = 7; // Required only for DISCONNECT.
 }
 // E12/G01: authenticated, read-only controller diagnostic; no Setup or run mutation.
 message SpikeGLXConnectionQuery {

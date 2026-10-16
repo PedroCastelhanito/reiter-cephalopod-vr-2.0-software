@@ -1,0 +1,76 @@
+{
+  "timestamp": "2026-10-16T18:59:31.5491745+09:00",
+  "source_head": "62ee90c9331f8e0829966a988262e188670ce9d6",
+  "source_worktree": "Inherited dirty state preserved; lead owns baseline provenance",
+  "own_source_paths": [
+    {
+      "path": "src/cephvr/gui/camera_trigger_form.py",
+      "sha256": "887e1381deecbc71a6e5cb84866603e0a1f8224c76bcd4827f3dcea4d4b7854c"
+    },
+    {
+      "path": "src/cephvr/gui/cameras.py",
+      "sha256": "c71d6dd322234c1a1a7f9c0773d7501423495af01597b63b9b199b04afbff56a"
+    },
+    {
+      "path": "src/cephvr/gui/devices.py",
+      "sha256": "dda594355d69222d1a5c6cfe5702049e7fc2522d8059d5a4119cc6f75c934c0e"
+    },
+    {
+      "path": "src/cephvr/gui/recordings.py",
+      "sha256": "489864d23603548f87e64f68697881b361e07a0cda651c1c64e136bea35657bc"
+    },
+    {
+      "path": "tests/gui/test_dashboard.py",
+      "sha256": "ea017ff8d042869ed5468f77c1a39524bec46a7a79e2f54564fb13a9ea344c7b"
+    }
+  ],
+  "inherited_not_owned": [
+    "src/cephvr/gui/review.py",
+    "src/cephvr/gui/main.py",
+    "src/cephvr/gui/window.py",
+    "src/cephvr/gui/preview_placement.py",
+    "all earlier cancellation source/test edits except new gated-await regression"
+  ],
+  "offscreen_full": {
+    "skipped": 0,
+    "passed": 586,
+    "watchdog_seconds": 330,
+    "seconds": 293.46,
+    "failed": 0
+  },
+  "native_focused": {
+    "seconds": 5.92,
+    "passed": 8,
+    "deselected": 578
+  },
+  "native_chooser": {
+    "seconds": 12.0,
+    "passed": 18,
+    "deselected": 568
+  },
+  "native_hover": {
+    "seconds": 2.15,
+    "passed": 2,
+    "failed": 0
+  },
+  "native_picker": {
+    "exit_code": 124,
+    "original_watchdog_seconds": 20,
+    "completed": 0,
+    "blocked_case": "test_tab_config_buttons_roundtrip_into_fresh_gui[protocol]",
+    "stack_watchdog_seconds": 8,
+    "selected": 7,
+    "blocked_source_line": 525,
+    "remaining_siblings_unattempted": 6,
+    "blocked_operation": "app.processEvents() after writer.dialog.accept() returned; queued native modal startup"
+  },
+  "static": "Ruff5/format5; Win32 mypy4; boundaries716 zero; scoped whitespace pass",
+  "review": "Astra final source/static acceptance; Camera600-line existing cohesive panel with48-line focused form extraction",
+  "failed_attempts": [
+    "Initial full offscreen579pass6fail285.77s; all six resolved in final full586pass",
+    "Ancestor configuration event-filter approach yielded correct geometry but teardown0xC0000005; removed and replaced by owned QWidget. Exact crash root cause not proven. Final geometry exit0 and3create/delete cycles pass.",
+    "First native picker20s watchdog traceback captured by pytest and lost on os._exit;8s uncaptured run retains exact blocking stack."
+  ],
+  "final_owned_test_processes": [],
+  "feature_inventory": "final-feature-inventory.json"
+}

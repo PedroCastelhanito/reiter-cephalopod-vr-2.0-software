@@ -1,5 +1,6 @@
 """Local pulse-inventory drafts; remote saved-channel validation belongs to E12."""
 
+from collections.abc import Callable
 from typing import cast
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -12,6 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from cephvr.gui.action_cancellation import PendingAction
 from cephvr.gui.components import Card, button, combo, label
 from cephvr.gui.device_panel import DevicePanel, entry
 from cephvr.gui.spikeglx_snapshot import SpikeGLXSnapshot
@@ -42,6 +44,7 @@ class SpikeGLXPanel(DevicePanel):
         self.pairing.setToolTip(
             "Enable SpikeGLX recording for this session. New-session default: config/backends/synchronization_config.toml"
         )
+        self.pending_action = PendingAction()
         self.pairing_pending = False
         self.pairing.clicked.connect(self.pairing_requested.emit)
         self.pairing.setEnabled(False)
@@ -425,10 +428,22 @@ class SpikeGLXPanel(DevicePanel):
             and view.phase == Phase.CONFIGURATION
             and not self.pairing_pending
         )
+        self.pending_action.refresh(view.connected and not view.sample)
         self.refresh_controls()
+
+    def start_connection_check(self, submit: Callable[..., bool]) -> None:
+        if self.pending_action.token is not None:
+            return
+        token = self.pending_action.begin(self.action_buttons[0])
+        if not submit("spikeglx_connection", cancellation=token):
+            self.pending_action.finish()
+        else:
+            self.pending_action.refresh(True)
 
     def request(self, name: str) -> None:
         if name == "Test connection":
+            if self.pending_action.cancel(self.action_buttons[0]):
+                return
             if self.action_buttons[0].isEnabled():
                 self.connection_requested.emit()
         elif self.can_review:

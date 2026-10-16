@@ -133,6 +133,14 @@ source node/unit/counter epoch in adapter state, avoiding duplicate per-frame me
 Transfer timestamp provenance through the prepared [camera-clock descriptor](camera-clock.md);
 recording never rediscovers it independently or assumes a host-aligned clock.
 
+Read `TimestampTickFrequency`, then `GevTimestampTickFrequency`. When neither
+provides a positive frequency, the exact USB3 models `acA4112-30uc`,
+`a2A1920-160ucPRO` and `a2A2464-77umPRO` use Basler's documented fixed
+1 GHz clock (1 ns/tick), matched against readable `DeviceModelName`.
+[Basler timestamp model table](https://docs.baslerweb.com/timestamp) is the
+unit source. Do not extend this fallback by model prefix or transport alone;
+unknown models retain unavailable timestamps. Readable frequencies take precedence.
+
 ## Transport summary binding
 
 A07's compact summary (code `TRANSPORT_SUMMARY`, no frame reference) is written to the

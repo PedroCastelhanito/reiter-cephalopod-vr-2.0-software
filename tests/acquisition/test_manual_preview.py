@@ -280,11 +280,24 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
             == 0
         )
         assert (visible.left, visible.top) == (400, 100)
-        from cephvr.platform.windows.window_coordinates import operator_window_geometry
+        from cephvr.platform.windows.window_coordinates import (
+            operator_window_geometry,
+            position_preview_frame,
+            preview_frame_extra,
+        )
 
         anchor, work_area, scale = operator_window_geometry(handle)
         assert anchor[:2] == (400, 100)
         assert work_area[2] > 0 and work_area[3] > 0 and scale >= 1
+        extra_width, extra_height = preview_frame_extra(scale)
+        assert anchor[2:] == (256 + extra_width, 256 + extra_height)
+        native.GetWindowLongW.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        assert native.GetWindowLongW(handle, -20) & 0x00000008  # WS_EX_TOPMOST
+        native.GetForegroundWindow.restype = ctypes.c_void_p
+        foreground = native.GetForegroundWindow()
+        position_preview_frame(first.title, 410, 110)
+        assert native.GetForegroundWindow() == foreground
+        assert operator_window_geometry(handle)[0][:2] == (410, 110)
         point = ((rect.top + 128) & 0xFFFF) << 16 | ((rect.left + 128) & 0xFFFF)
         assert native.PostMessageW(child, 0x020A, 120 << 16, point)
         assert zoomed.wait(3), (

@@ -1,0 +1,189 @@
+{
+  "entries": [
+    {
+      "path": "reports\\emergency-160468031468500-dde11ea8-b99a-4f51-8fbf-5970c85d1412.json",
+      "sha256": "5c59754aa25e6c350074acc244dcd0c1febaa8c545b32a74ce75d8e134bd0af7",
+      "bytes": 228,
+      "inherited_baseline": true,
+      "controller_generation": "ac58cb95-a123-4ab7-9666-33278c1ffb56",
+      "cause": "CHILD_EXITED",
+      "errors": []
+    },
+    {
+      "path": "reports\\emergency-161881244463300-71446a2a-eaf0-4c8b-a05a-cd30257cd765.json",
+      "sha256": "9aa1c6096a787cd24d07bb1536002021b3b905545abf9c826df4e9bdceb8c3d0",
+      "bytes": 228,
+      "inherited_baseline": true,
+      "controller_generation": "07b9bd3d-3659-46ad-a7a1-645dcb9eff51",
+      "cause": "CHILD_EXITED",
+      "errors": []
+    },
+    {
+      "path": "reports\\emergency-162484417613100-243b1019-3d1d-4b94-8d63-3c086a64cd65.json",
+      "sha256": "9349d3393899a272badc6ed125e4f9cca89ea4a969ee8243c2bb3f0fcfc5fa8c",
+      "bytes": 228,
+      "inherited_baseline": true,
+      "controller_generation": "b99ada97-4462-4a21-a46d-50f366afeb8d",
+      "cause": "CHILD_EXITED",
+      "errors": []
+    },
+    {
+      "path": "reports\\emergency-162971005253800-112af738-ea36-4ff4-bbd8-f7bcd0c5a2f7.json",
+      "sha256": "d6a950e278e60ab1b121b4d0e8264fad78677f59cf0b89525e057aceca6d5ebc",
+      "bytes": 228,
+      "inherited_baseline": true,
+      "controller_generation": "d5cbf7f9-aca1-4e20-9019-b1757ea95c76",
+      "cause": "CHILD_EXITED",
+      "errors": []
+    },
+    {
+      "path": "reports\\emergency-163979442999700-2845211d-75da-455c-9a13-864044b17e16.json",
+      "sha256": "3ef7a3fd530c7951dce4a08252ea2eb310214da6495766133e166a6efd98a902",
+      "bytes": 1126,
+      "inherited_baseline": false,
+      "controller_generation": "f7f905a2-9dd6-43cb-b565-f81c460da32c",
+      "cause": "CHILD_EXITED",
+      "errors": [
+        {
+          "id": "f0d95c4d-036f-4e1c-9898-50d63d585648",
+          "component": "visual_stimulus_renderer",
+          "code": "VISUAL_STIMULUS_WORKER_FAILURE",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        },
+        {
+          "id": "45759dd8-8f3e-4b4e-8b36-9c6ff9687855",
+          "component": "visual_stimulus",
+          "code": "VISUAL_STIMULUS_OPERATION",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        },
+        {
+          "id": "93bcc2b9-5621-4655-afcf-98500e312d91",
+          "component": "visual_stimulus_renderer",
+          "code": "VISUAL_STIMULUS_RENDERER",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        }
+      ]
+    },
+    {
+      "path": "reports\\emergency-164360321207900-4787b6a8-8958-49ee-97e7-fab77b68f689.json",
+      "sha256": "e7cfaac6f06c334a0b9b0cc28fc964f48020cb2eda380c39a5dd5fd04ab0efe7",
+      "bytes": 1126,
+      "inherited_baseline": false,
+      "controller_generation": "d263f736-56a2-4f48-8edd-f06b6c9b9f80",
+      "cause": "CHILD_EXITED",
+      "errors": [
+        {
+          "id": "9094b7e3-6bb7-4a50-9773-3ce0812eb5e5",
+          "component": "visual_stimulus_renderer",
+          "code": "VISUAL_STIMULUS_WORKER_FAILURE",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        },
+        {
+          "id": "a464db1b-913a-4466-a196-001a80c84d6b",
+          "component": "visual_stimulus_renderer",
+          "code": "VISUAL_STIMULUS_RENDERER",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        },
+        {
+          "id": "0bef3b93-93f0-4fb8-b775-57a829edd921",
+          "component": "visual_stimulus",
+          "code": "VISUAL_STIMULUS_OPERATION",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        }
+      ]
+    },
+    {
+      "path": "reports\\emergency-165000613227400-f84f6c49-ba52-4807-8960-72f6aa25a3cc.json",
+      "sha256": "b165a208fa30d2c83151e7eb8696775b0236af04b3fc9ac9c17a99a150245be0",
+      "bytes": 1586,
+      "inherited_baseline": false,
+      "controller_generation": "601c881b-a549-43ee-b956-0adec5a5d20f",
+      "cause": "CHILD_EXITED",
+      "errors": [
+        {
+          "id": "5b5f9be6-1049-4f3c-bf3e-bdca6e5424d5",
+          "component": "acquisition_tracking_worker",
+          "code": "COORDINATOR_HEALTH_LOST",
+          "message": "worker report rejected: INVALID_EVIDENCE: interrupted Finished differs from exact trial outputs"
+        },
+        {
+          "id": "b3e6e6fb-111d-4cea-8170-3b4e3b67262d",
+          "component": "acquisition_behavioral_worker",
+          "code": "COORDINATOR_HEALTH_LOST",
+          "message": "worker report rejected: INVALID_EVIDENCE: interrupted Finished differs from exact trial outputs"
+        },
+        {
+          "id": "694dbf8b-a417-44c2-9e89-c376c4e0de47",
+          "component": "visual_stimulus_renderer",
+          "code": "VISUAL_STIMULUS_WORKER_FAILURE",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        },
+        {
+          "id": "108f2d0e-c958-442f-b814-db572f9fabf0",
+          "component": "visual_stimulus_renderer",
+          "code": "VISUAL_STIMULUS_RENDERER",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        },
+        {
+          "id": "78668c8a-7a61-44be-87d3-b4f59cdf7017",
+          "component": "visual_stimulus",
+          "code": "VISUAL_STIMULUS_OPERATION",
+          "message": "ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: EVIDENCE: cleanup identity or release proof missing"
+        }
+      ]
+    },
+    {
+      "path": "reports\\emergency-165678527988800-c88cacd9-4fa3-44e1-9b47-41316fa7105a.json",
+      "sha256": "6182aaf3e90fa133709b8386cb626fff1e6a270bf4df6a26e7d64b77fc8d9321",
+      "bytes": 912,
+      "inherited_baseline": false,
+      "controller_generation": "f173c042-3ca7-48e2-bfaf-339c072018bd",
+      "cause": "COORDINATOR_HEALTH_LOST",
+      "errors": [
+        {
+          "id": "ef1593cc-29bb-4bb6-94aa-bed866bba639",
+          "component": "acquisition_behavioral_worker",
+          "code": "COORDINATOR_HEALTH_LOST",
+          "message": "worker report rejected: STALE: attempt retired"
+        },
+        {
+          "id": "a36e9c1c-6339-4a96-aa93-548007b2ac08",
+          "component": "visual_stimulus_renderer",
+          "code": "VISUAL_STIMULUS_RENDERER",
+          "message": "cleanup returned an unregistered resource"
+        },
+        {
+          "id": "4c69c05d-f6bb-42f8-92e6-9a45087f244d",
+          "component": "visual_stimulus",
+          "code": "VISUAL_STIMULUS_OPERATION",
+          "message": "cleanup returned an unregistered resource"
+        }
+      ]
+    },
+    {
+      "path": "reports\\emergency-166295841200400-2efac77a-ff2c-4510-a15c-5d375fe23d11.json",
+      "sha256": "a82ebbb9e7cd68116ba3998024131f8a3cdc60e67dac8a1cd9fd4bef31060bcc",
+      "bytes": 852,
+      "inherited_baseline": false,
+      "controller_generation": "8f38032b-8279-4593-8738-8b15229bc990",
+      "cause": "COORDINATOR_HEALTH_LOST",
+      "errors": [
+        {
+          "id": "ec5397dc-3091-489c-8e0a-4d9aa6869462",
+          "component": "acquisition_tracking_worker",
+          "code": "COORDINATOR_HEALTH_LOST",
+          "message": "worker report rejected: INVALID_EVIDENCE: interrupted Finished differs from exact trial outputs"
+        },
+        {
+          "id": "cf12090a-660d-43a7-9e31-613299286c9a",
+          "component": "acquisition_behavioral_worker",
+          "code": "COORDINATOR_HEALTH_LOST",
+          "message": "worker report rejected: INVALID_EVIDENCE: interrupted Finished differs from exact trial outputs"
+        }
+      ]
+    }
+  ],
+  "final_live_generation": "d5e6d173-9ff0-44d5-b2dd-4e5724065393",
+  "final_live_generation_has_emergency": false,
+  "scope": "Four inherited emergency reports and five from this audit; preserve original bytes, normal finalshutdownabsence does not erase earlierfailedsessionevidence"
+}

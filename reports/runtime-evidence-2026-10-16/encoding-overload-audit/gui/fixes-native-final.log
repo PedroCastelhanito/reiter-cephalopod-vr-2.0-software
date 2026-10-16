@@ -1,0 +1,20 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 586 items / 578 deselected / 8 selected
+
+tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[720] PASSED [ 12%]
+tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[1175] PASSED [ 25%]
+tests/gui/test_dashboard.py::test_camera_trigger_form_reflows_and_destroys_owned_editors PASSED [ 37%]
+tests/gui/test_dashboard.py::test_hud_fits_content_and_log_fills_available_height PASSED [ 50%]
+tests/gui/test_dashboard.py::test_all_pages_share_fitted_hud_and_expanding_log PASSED [ 62%]
+tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud PASSED [ 75%]
+tests/gui/test_dashboard.py::test_eye_role_projects_and_tests_selected_without_capture PASSED [ 87%]
+tests/gui/test_dashboard.py::test_recording_checks_stay_next_to_labels PASSED [100%]
+
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\gui\fixes-native-final.xml -
+====================== 8 passed, 578 deselected in 5.92s ======================

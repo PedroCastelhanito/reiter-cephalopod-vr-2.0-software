@@ -39,7 +39,7 @@ class DevicesPage(QWidget):
         self.tab_bar.setIconSize(QSize(20, 20))
         self.tab_bar.setDrawBase(False)
         self.tab_bar.setExpanding(True)
-        self.tab_bar.setUsesScrollButtons(False)
+        self.tab_bar.setUsesScrollButtons(True)
         self.tab_bar.setElideMode(Qt.TextElideMode.ElideRight)
         self.tab_bar.currentChanged.connect(self.tabs.setCurrentIndex)
         self.tabs.currentChanged.connect(self.tab_bar.setCurrentIndex)

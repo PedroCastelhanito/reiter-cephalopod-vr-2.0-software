@@ -136,7 +136,7 @@ def _profiles_for_representation(codec: str, pixel_format: str) -> frozenset[str
     if codec == "h264_nvenc":
         if pixel_format == "yuv420p":
             return frozenset({"baseline", "main", "high"})
-        if pixel_format == "yuv444p":
+        if pixel_format in {"yuv444p", "gbrp"}:
             return frozenset({"high444p"})
     if codec == "hevc_nvenc":
         if pixel_format == "yuv420p":

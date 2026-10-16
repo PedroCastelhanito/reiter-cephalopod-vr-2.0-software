@@ -1,0 +1,426 @@
+{
+  "scope": "Exact scientific/config JSON/JSONL bytes; videos retained locally and separately hashed, no output/closure reinterpretation",
+  "archive_sha256": "3b69047584b4e5a62843fb2c84c8ef85bff7657242d3349d4e520259d8719643",
+  "entries": {
+    "saved-p4-baseline60-r1/DUMMY_180444_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\DUMMY_180444_behavioral_cam_frames.jsonl",
+      "bytes": 623927,
+      "sha256": "751d32216ed463a41b5529ed78f01f27e2b0d1b63882c450e71667a49d35ba3a"
+    },
+    "saved-p4-baseline60-r1/DUMMY_180444_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\DUMMY_180444_LOG.json",
+      "bytes": 15423,
+      "sha256": "23c5e18f66d44e6821168b4a2a7f483a9c6085e93d7194bb272c9a0f2fe6e5f7"
+    },
+    "saved-p4-baseline60-r1/DUMMY_180444_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\DUMMY_180444_stimulus_frames.jsonl",
+      "bytes": 18968793,
+      "sha256": "a8f378b665cb486b164abcbd5a715a204d5eb6fdcffab960b7d19ed2bc12c96b"
+    },
+    "saved-p4-baseline60-r1/DUMMY_180444_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\DUMMY_180444_stimulus_LOG.json",
+      "bytes": 38846,
+      "sha256": "f8af612f100f12715dad4ebe06bb97672d0ac49347e052f1e8e3446520eed0e9"
+    },
+    "saved-p4-baseline60-r1/DUMMY_180444_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\DUMMY_180444_tracking_cam_frames.jsonl",
+      "bytes": 1252215,
+      "sha256": "2b84b19bda2aaf252f460a537b3cad16a8c21ef3eb4b84425a6b1cf29bff0687"
+    },
+    "saved-p4-baseline60-r1/RECOVERY-0d5cdf74-064c-44d5-a4f4-b4d58933eba7.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\RECOVERY-0d5cdf74-064c-44d5-a4f4-b4d58933eba7.json",
+      "bytes": 846,
+      "sha256": "435df71d714077e04335973d23c4b305d704ee661243bbd74c04b15cbf7c8b18"
+    },
+    "saved-p4-baseline60-r1/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "2b3ecd258f21f3cd4bebb84f3fa83ae7e31e2a2e931fca635e05af6584df64ce"
+    },
+    "saved-p4-baseline60-r1/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31464,
+      "sha256": "d98f9052c83e215389b9882395a0beff3778d418e6c50b9146d1d23e62506246"
+    },
+    "saved-p4-baseline60-r1/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_saved-p4-baseline60-r1\\DUMMY-180440\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 977,
+      "sha256": "a4b208ffb11660efc16a98e6eb510418cc2607f5e7bf4f93bc262650ab932d30"
+    },
+    "p1-diagnostic60-r1/DUMMY_181105_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\DUMMY_181105_behavioral_cam_frames.jsonl",
+      "bytes": 623923,
+      "sha256": "76c4c87d8fbe7f66530fb175b279c5f7d60d0e169df1d31001955d5eb6b0d742"
+    },
+    "p1-diagnostic60-r1/DUMMY_181105_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\DUMMY_181105_LOG.json",
+      "bytes": 15395,
+      "sha256": "36e5ca45fb9ca97cdd0b0e6f7376b229f314141158d5debb7d32ea18fa950f4a"
+    },
+    "p1-diagnostic60-r1/DUMMY_181105_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\DUMMY_181105_stimulus_frames.jsonl",
+      "bytes": 18974532,
+      "sha256": "583b2b3f735db15ac87a9a427e8978c293b556041e611a43e26a55646e82f4d6"
+    },
+    "p1-diagnostic60-r1/DUMMY_181105_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\DUMMY_181105_stimulus_LOG.json",
+      "bytes": 38846,
+      "sha256": "d639fe0879534d73280ed93d8d96b99526d0558dffc43b6a6f3abe05309641f4"
+    },
+    "p1-diagnostic60-r1/DUMMY_181105_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\DUMMY_181105_tracking_cam_frames.jsonl",
+      "bytes": 1252211,
+      "sha256": "3bb3c311d216d96a76e92a9dbff61216e5862d189aa13a610d4b1889d2ca9ddd"
+    },
+    "p1-diagnostic60-r1/RECOVERY-6795cc42-7d64-4871-a1ea-559b04ba2086.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\RECOVERY-6795cc42-7d64-4871-a1ea-559b04ba2086.json",
+      "bytes": 846,
+      "sha256": "b4eece8e944537a76dd036c1c72749a9a3dafb5b8d1cc82315c917998ca15389"
+    },
+    "p1-diagnostic60-r1/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "f96ac793a72a63d5a0cb71f120806a4dbcedac17f4ce7673cfe74e7f13d1bd9b"
+    },
+    "p1-diagnostic60-r1/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31460,
+      "sha256": "9e857c3b135cb61285da9956686707a0da0ba57e5d11cc3091d86759046495c0"
+    },
+    "p1-diagnostic60-r1/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_p1-diagnostic60-r1\\DUMMY-181101\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 977,
+      "sha256": "ddc9c3f2f2434f59f8d5aa9fa8223c85093f6cd1012a5420e5e6db7ccc27da13"
+    },
+    "abort-cleanup-diagnostic-r1/DUMMY_182241_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\DUMMY_182241_behavioral_cam_frames.jsonl",
+      "bytes": 53030,
+      "sha256": "eb1f3ef2f86c7ba36bd58473b66aa020c2041570d59f34ff38efafcc5a8970b9"
+    },
+    "abort-cleanup-diagnostic-r1/DUMMY_182241_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\DUMMY_182241_LOG.json",
+      "bytes": 15768,
+      "sha256": "a522bf78a7bf011469fab452f734b7b7d3aeba2348e99638fceeed9973f0c90a"
+    },
+    "abort-cleanup-diagnostic-r1/DUMMY_182241_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\DUMMY_182241_stimulus_frames.jsonl",
+      "bytes": 1608660,
+      "sha256": "19adee74208229575889b5ad4c1757b752e5da6d5147591f179944df33e2efca"
+    },
+    "abort-cleanup-diagnostic-r1/DUMMY_182241_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\DUMMY_182241_stimulus_LOG.json",
+      "bytes": 38846,
+      "sha256": "ba2656dbed50c1502ffb722d95265f5ac4e2a31c61e1e3b16d8595834359e9ec"
+    },
+    "abort-cleanup-diagnostic-r1/DUMMY_182241_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\DUMMY_182241_tracking_cam_frames.jsonl",
+      "bytes": 102505,
+      "sha256": "af6000f2e8d65fe215cf2fcbf46ce9b8a714eb3a08e797f705a72c5c6fc8df6c"
+    },
+    "abort-cleanup-diagnostic-r1/RECOVERY-3dac4217-ddc9-4518-b26e-fa7b215c30f4.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\RECOVERY-3dac4217-ddc9-4518-b26e-fa7b215c30f4.json",
+      "bytes": 846,
+      "sha256": "db3b05b6eac54866fb21634d6b2446d4a851ed8898d0b755d9e4c93510390f4b"
+    },
+    "abort-cleanup-diagnostic-r1/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "603bc42b0080c0c5cbb6953e304f678b4e5cc768c245a7e716d8e777f569f84e"
+    },
+    "abort-cleanup-diagnostic-r1/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31466,
+      "sha256": "b16a47cc7b2e03ef7f47d4d77911b360a22baec74b420b8947c41fb4d7cd85e6"
+    },
+    "abort-cleanup-diagnostic-r1/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 1298,
+      "sha256": "1f0221a6ed4fcbd7c8a6032e32d69994d24087c09256194231f2948b5254dafb"
+    },
+    "repaired-p4-3slots60-r2/DUMMY_182850_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-3slots60-r2\\DUMMY-182845\\protocol-data\\DUMMY_182850_behavioral_cam_frames.jsonl",
+      "bytes": 623928,
+      "sha256": "98599a4a3ab4da2959ae4d5ccf764d579949bab3effa155c7b0dcd3d1853b87d"
+    },
+    "repaired-p4-3slots60-r2/DUMMY_182850_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-3slots60-r2\\DUMMY-182845\\protocol-data\\DUMMY_182850_LOG.json",
+      "bytes": 15430,
+      "sha256": "bcae4b7002e50d76faade2c30527382c51d9ff50818882626b2546b0f9474200"
+    },
+    "repaired-p4-3slots60-r2/DUMMY_182850_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-3slots60-r2\\DUMMY-182845\\protocol-data\\DUMMY_182850_stimulus_frames.jsonl",
+      "bytes": 18972701,
+      "sha256": "751e826cf43f147746767fefd78af1c629fa309eca475c3dfe34fdb2d37405c3"
+    },
+    "repaired-p4-3slots60-r2/DUMMY_182850_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-3slots60-r2\\DUMMY-182845\\protocol-data\\DUMMY_182850_stimulus_LOG.json",
+      "bytes": 38846,
+      "sha256": "9ee25a055737c2e66f2a86b5268fdb75a4e3bcedc88664e7e5eb45af4217ee6b"
+    },
+    "repaired-p4-3slots60-r2/DUMMY_182850_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-3slots60-r2\\DUMMY-182845\\protocol-data\\DUMMY_182850_tracking_cam_frames.jsonl",
+      "bytes": 1252216,
+      "sha256": "985637c8e5d12a9de154850d022062a93bdc1a51dc03aade8945fad432f05975"
+    },
+    "repaired-p4-3slots60-r2/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-3slots60-r2\\DUMMY-182845\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "236cd0c8024d7aee347eb2fcf230cbcb303cb1c7507797a6b2e393df15f63369"
+    },
+    "repaired-p4-3slots60-r2/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-3slots60-r2\\DUMMY-182845\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31465,
+      "sha256": "7d00cd397f5204bea1de98625be898aad0c0e5827e2b89900e6c0fd1a8cc557c"
+    },
+    "repaired-p4-3slots60-r2/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-3slots60-r2\\DUMMY-182845\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 605,
+      "sha256": "c74f6f226eabe6b8fa68eff4874c00d665c701b3980c03b39c6a63968cd3f0b4"
+    },
+    "repaired-p4-16slots60-r1/DUMMY_183159_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-16slots60-r1\\DUMMY-183154\\protocol-data\\DUMMY_183159_behavioral_cam_frames.jsonl",
+      "bytes": 623929,
+      "sha256": "263f6bb5ec175960ca95cacc8612cd6a0ae902e77dfd7e5826cbc7587f11eb61"
+    },
+    "repaired-p4-16slots60-r1/DUMMY_183159_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-16slots60-r1\\DUMMY-183154\\protocol-data\\DUMMY_183159_LOG.json",
+      "bytes": 15437,
+      "sha256": "0e36b8306c875d1b65a8c5dac0e60560b967aaea417ebdad8b416327a64c4217"
+    },
+    "repaired-p4-16slots60-r1/DUMMY_183159_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-16slots60-r1\\DUMMY-183154\\protocol-data\\DUMMY_183159_stimulus_frames.jsonl",
+      "bytes": 18971079,
+      "sha256": "97aa6560afcadfefd437d99c141c0e224c8ef21f8a4af0e43f586002f14be8cf"
+    },
+    "repaired-p4-16slots60-r1/DUMMY_183159_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-16slots60-r1\\DUMMY-183154\\protocol-data\\DUMMY_183159_stimulus_LOG.json",
+      "bytes": 38846,
+      "sha256": "19e906b7d20470adeda9d6ddfb97cff4d315f54e3f3b8f0b6eef13308feccd68"
+    },
+    "repaired-p4-16slots60-r1/DUMMY_183159_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-16slots60-r1\\DUMMY-183154\\protocol-data\\DUMMY_183159_tracking_cam_frames.jsonl",
+      "bytes": 1252217,
+      "sha256": "89014c7945a235079c16eb8fc0f92b97d6838936573d862c6eb3ba1ab1689096"
+    },
+    "repaired-p4-16slots60-r1/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-16slots60-r1\\DUMMY-183154\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "521bf99ba5dadf47406c20d0a9978dc6ad51da262a9a2c3e331cd1681e2df450"
+    },
+    "repaired-p4-16slots60-r1/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-16slots60-r1\\DUMMY-183154\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31466,
+      "sha256": "a7121355045a6d64db806c83a46e99cfb8352968edbd425305adfb4a289188dc"
+    },
+    "repaired-p4-16slots60-r1/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_repaired-p4-16slots60-r1\\DUMMY-183154\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 605,
+      "sha256": "277dd97128c978eb731c24dde6a441d1f1cbe2d4d4bfbeecfcdebdf3d65f7993"
+    },
+    "managed-rgb-gray-lossless60-r5/DUMMY_184114_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\DUMMY_184114_behavioral_cam_frames.jsonl",
+      "bytes": 575646,
+      "sha256": "734d37dfef1f4965cde40ac4c3cec6dceb8fd5f3823422b661ed3309e91e463e"
+    },
+    "managed-rgb-gray-lossless60-r5/DUMMY_184114_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\DUMMY_184114_LOG.json",
+      "bytes": 15437,
+      "sha256": "866fde6fc28a737c34eee8c38670d5e553bea762c5de53281a6e0a80903d19c1"
+    },
+    "managed-rgb-gray-lossless60-r5/DUMMY_184114_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\DUMMY_184114_stimulus_frames.jsonl",
+      "bytes": 18976357,
+      "sha256": "50c74e08e45d1f628761b43bb51fd9eb9b0fd6c3c68c02e87380a310f3466fad"
+    },
+    "managed-rgb-gray-lossless60-r5/DUMMY_184114_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\DUMMY_184114_stimulus_LOG.json",
+      "bytes": 38846,
+      "sha256": "c19ed69c5613a322ce879194cae7ddf0c1ffe991b8da425f76bc3a6f3de027d5"
+    },
+    "managed-rgb-gray-lossless60-r5/DUMMY_184114_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\DUMMY_184114_tracking_cam_frames.jsonl",
+      "bytes": 1252217,
+      "sha256": "2876918fe010de3d767efd2c1cc5e3743623e6af37a4ea2c43ae73e8a4d25f56"
+    },
+    "managed-rgb-gray-lossless60-r5/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "1861c5244f431eff4caba18c51ffbe051536cb1c5b649623590e15567ee34a02"
+    },
+    "managed-rgb-gray-lossless60-r5/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31437,
+      "sha256": "fe69a1943ed424f9da478f99459c83cb9c3126f3d1da8b1a6af126d8c1df1d69"
+    },
+    "managed-rgb-gray-lossless60-r5/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 605,
+      "sha256": "0f44d52a448435bc386be8bf3b87b543334dc532058013457b5b75c45d82f785"
+    },
+    "managed-save-off60-r1/DUMMY_184245_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-off60-r1\\DUMMY-184241\\protocol-data\\DUMMY_184245_behavioral_cam_frames.jsonl",
+      "bytes": 402504,
+      "sha256": "f3962c369d90d0b01f3b4d765f302c77729f4e9efc8c5254f84844c5b105c945"
+    },
+    "managed-save-off60-r1/DUMMY_184245_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-off60-r1\\DUMMY-184241\\protocol-data\\DUMMY_184245_LOG.json",
+      "bytes": 13444,
+      "sha256": "c6e503ae4e73909f301294aa8144283dfdc576171b428a827d7ffcf616ef3de4"
+    },
+    "managed-save-off60-r1/DUMMY_184245_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-off60-r1\\DUMMY-184241\\protocol-data\\DUMMY_184245_stimulus_frames.jsonl",
+      "bytes": 16784417,
+      "sha256": "42c908844be1cc823a15731ce6375625f00b48130c4f75ab5a98fda094e9e76f"
+    },
+    "managed-save-off60-r1/DUMMY_184245_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-off60-r1\\DUMMY-184241\\protocol-data\\DUMMY_184245_stimulus_LOG.json",
+      "bytes": 37723,
+      "sha256": "dfee7c84bc04c7b9d3dda3846aac35ce64bd305fbd4559bac9c41f55ece9c005"
+    },
+    "managed-save-off60-r1/DUMMY_184245_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-off60-r1\\DUMMY-184241\\protocol-data\\DUMMY_184245_tracking_cam_frames.jsonl",
+      "bytes": 807042,
+      "sha256": "2ee7730370087be270e698f3cf0b23a2f33b8d69e443606e059c18623924bdaa"
+    },
+    "managed-save-off60-r1/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-off60-r1\\DUMMY-184241\\protocol-data\\SCHEMA.json",
+      "bytes": 6491,
+      "sha256": "3887019387cae1ff2b57e07dc9339104d463cc2bd0f06d624b0a27018d01d367"
+    },
+    "managed-save-off60-r1/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-off60-r1\\DUMMY-184241\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 30172,
+      "sha256": "44069d87d1ee2d04fe4ac686c8763643f57f56c7c53c440e947ed8ef6e0e0e51"
+    },
+    "managed-save-off60-r1/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-off60-r1\\DUMMY-184241\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 605,
+      "sha256": "0a40382a9c665e89a51e2d5c80ffcf2287b0f12cfda6cd8f45993762b6c6d5b0"
+    },
+    "managed-save-on-abort-r1/DUMMY_184406_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\DUMMY_184406_behavioral_cam_frames.jsonl",
+      "bytes": 53030,
+      "sha256": "2f4cb06a4cad15afdc7d0d8d0e8da81939d51fe7559aec700b2870bfd148e316"
+    },
+    "managed-save-on-abort-r1/DUMMY_184406_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\DUMMY_184406_LOG.json",
+      "bytes": 15768,
+      "sha256": "95a5bbaf033b8e2982c1e2a6099b69105427c4d7f03a6a9a41882e448ea15fcb"
+    },
+    "managed-save-on-abort-r1/DUMMY_184406_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\DUMMY_184406_stimulus_frames.jsonl",
+      "bytes": 1606589,
+      "sha256": "2d56ec5456e246190d8fab810e2d85741fcdad5e4af989c164f74154e00d0914"
+    },
+    "managed-save-on-abort-r1/DUMMY_184406_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\DUMMY_184406_stimulus_LOG.json",
+      "bytes": 38846,
+      "sha256": "d1dd41fa822e239bc12adc2c725ce690f5362ea743cdab0e552c49f8799a2825"
+    },
+    "managed-save-on-abort-r1/DUMMY_184406_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\DUMMY_184406_tracking_cam_frames.jsonl",
+      "bytes": 102160,
+      "sha256": "9be12a3dcd00d290bf3969d959a72b0cc6edb1a1e3c4e282716f843775b550c5"
+    },
+    "managed-save-on-abort-r1/RECOVERY-84f2c32e-9549-4799-8ef6-c8ba8ba5d57d.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\RECOVERY-84f2c32e-9549-4799-8ef6-c8ba8ba5d57d.json",
+      "bytes": 846,
+      "sha256": "60d8cf84f20db9702c0b6cb3e1a63fd5469e37442ec6fc63da8409da1f7b35a4"
+    },
+    "managed-save-on-abort-r1/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "f0a600c7630b5efc9fd1741bd335c92be9ad2759a1441a657eb5bd3c805e6ada"
+    },
+    "managed-save-on-abort-r1/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31466,
+      "sha256": "8422538c625faf7fa09f45af30bf6351d3f113e20358dedba2a4eb07f1d691ce"
+    },
+    "managed-save-on-abort-r1/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 1298,
+      "sha256": "10376b9c1eed88bb5a023fc91f9cc289f5ac7b91615076710cef23cba8b129c7"
+    },
+    "full-review-overload60-r1/DUMMY_184723_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_full-review-overload60-r\\DUMMY-184719\\protocol-data\\DUMMY_184723_behavioral_cam_frames.jsonl",
+      "bytes": 623929,
+      "sha256": "d76a7e6453ef3f5368047d878f5c9d2386a81bb77aac2efb569803f348d6a16d"
+    },
+    "full-review-overload60-r1/DUMMY_184723_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_full-review-overload60-r\\DUMMY-184719\\protocol-data\\DUMMY_184723_LOG.json",
+      "bytes": 15437,
+      "sha256": "e993e3a2aee440111219011c4a7f702bb760417c7af708609ee0246787105c7c"
+    },
+    "full-review-overload60-r1/DUMMY_184723_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_full-review-overload60-r\\DUMMY-184719\\protocol-data\\DUMMY_184723_stimulus_frames.jsonl",
+      "bytes": 18958228,
+      "sha256": "d22abcfeec74fee76d836eed90f1745fc2cf7846c9c6ce442ea28370883ebaed"
+    },
+    "full-review-overload60-r1/DUMMY_184723_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_full-review-overload60-r\\DUMMY-184719\\protocol-data\\DUMMY_184723_stimulus_LOG.json",
+      "bytes": 38854,
+      "sha256": "4ee8a990279f54054da2d5ca5308196d740af499e75b1512496d218b8a5bd61f"
+    },
+    "full-review-overload60-r1/DUMMY_184723_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_full-review-overload60-r\\DUMMY-184719\\protocol-data\\DUMMY_184723_tracking_cam_frames.jsonl",
+      "bytes": 1252217,
+      "sha256": "b50f81a64dbaf681c66c1fe9f6d1755aa3cb201b8ce97b7a9220de76a0fc3a0d"
+    },
+    "full-review-overload60-r1/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_full-review-overload60-r\\DUMMY-184719\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "252e442b47ad0010468e8bcd8ed227b81c07fc5f10ed9c8bca2935a6a37d823c"
+    },
+    "full-review-overload60-r1/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_full-review-overload60-r\\DUMMY-184719\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31466,
+      "sha256": "f9385928ed218c9724a2b227eb656ff63566bf58606a15ce8dcb527bbc78408d"
+    },
+    "full-review-overload60-r1/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_full-review-overload60-r\\DUMMY-184719\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 605,
+      "sha256": "818d43f8d6c40e65bf211572e137e7fbbbb9dabb52ba0bb89f993cc3148dc7bf"
+    },
+    "managed-lossless-p1-profile60-r2/DUMMY_192024_behavioral_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-192020\\protocol-data\\DUMMY_192024_behavioral_cam_frames.jsonl",
+      "bytes": 498528,
+      "sha256": "0461c09d838e9022d08db3a71bac08edc7cd3390eafa67c0d3a0c505e59f9afe"
+    },
+    "managed-lossless-p1-profile60-r2/DUMMY_192024_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-192020\\protocol-data\\DUMMY_192024_LOG.json",
+      "bytes": 15771,
+      "sha256": "51bdb219ca8ad419fef055bc04a0047876c0a8225fd707742b0726a15eaeca49"
+    },
+    "managed-lossless-p1-profile60-r2/DUMMY_192024_stimulus_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-192020\\protocol-data\\DUMMY_192024_stimulus_frames.jsonl",
+      "bytes": 16662679,
+      "sha256": "d5130b775f43ccd4d82eb48841d8da709aa70a801718c23d4fed58c2b944bc35"
+    },
+    "managed-lossless-p1-profile60-r2/DUMMY_192024_stimulus_LOG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-192020\\protocol-data\\DUMMY_192024_stimulus_LOG.json",
+      "bytes": 38846,
+      "sha256": "5007db68d1aa426dabfa1e6de24264a9f2823b37b4ae9f2f8f555f6d798353f5"
+    },
+    "managed-lossless-p1-profile60-r2/DUMMY_192024_tracking_cam_frames.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-192020\\protocol-data\\DUMMY_192024_tracking_cam_frames.jsonl",
+      "bytes": 1099973,
+      "sha256": "43e975f4fdd46af1d5b5d94a83a3b0b75bf82f0968a4e92b432fb39e8412e36f"
+    },
+    "managed-lossless-p1-profile60-r2/SCHEMA.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-192020\\protocol-data\\SCHEMA.json",
+      "bytes": 8386,
+      "sha256": "1871557179c1424839862954d3c2eb1a54924d5e2a444960c49ff7773d2db65e"
+    },
+    "managed-lossless-p1-profile60-r2/SESSION_CONFIG.json": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-192020\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 31437,
+      "sha256": "a0e570612a29224892a8de2b59d53b842e692d85a09ead48a9560d2202bd3b97"
+    },
+    "managed-lossless-p1-profile60-r2/SESSION_LOG.jsonl": {
+      "source_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-192020\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 1671,
+      "sha256": "afe5bc86df3bb51b5407bfb3ec04756b67a2235e4623b3f8ba987151ff3d5ab9"
+    }
+  }
+}

@@ -628,6 +628,38 @@ def test_blocking_wait_wakeup_verification_uses_loop_and_respects_deadline() -> 
     assert asyncio.run(run()) == [100]
 
 
+def test_blocking_wait_acknowledgement_precedes_native_wake() -> None:
+    callbacks = []
+    timers = []
+
+    class Loop:
+        def call_soon_threadsafe(self, callback, *args):
+            callbacks.append(lambda: callback(*args))
+
+        def call_later(self, delay, callback, *args):
+            assert delay > 0
+            timers.append(lambda: callback(*args))
+            return SimpleNamespace(cancel=lambda: None)
+
+    class Camera:
+        def verify_blocking_wait_wakeup(self, schedule, timeout_ns):
+            assert timeout_ns == 100
+
+            def wake():
+                # Native SetEvent can resume the waiter before this callback returns.
+                assert acknowledgement.is_set()
+
+            acknowledgement = schedule(wake)
+            callbacks.pop(0)()
+            assert not acknowledgement.is_set()
+            timers.pop(0)()
+            assert acknowledgement.is_set()
+
+    verify_blocking_wait(
+        cast(asyncio.AbstractEventLoop, Loop()), Camera(), 200, clock_ns=lambda: 100
+    )
+
+
 def test_session_preparation_requires_exact_work_and_configuration_revision() -> None:
     context = _worker_context()
     state = _worker_state(context)

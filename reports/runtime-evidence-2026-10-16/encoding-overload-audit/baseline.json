@@ -1,0 +1,245 @@
+{
+  "date": "2026-10-16",
+  "observed_unix_time": 1792140852.0991828,
+  "head": "62ee90c9331f8e0829966a988262e188670ce9d6",
+  "inherited_files": {
+    "LOG.md": {
+      "bytes": 746064,
+      "sha256": "fac488d2e76e048eff75e2133cf8efa9b17530cac1136ae90f420ac44400bf02"
+    },
+    "TODO.md": {
+      "bytes": 28324,
+      "sha256": "9ab75243c1041ac0dafa59cdb6f43de2d994d2271c00ceb28878bd7548449c29"
+    },
+    "architecture.md": {
+      "bytes": 34419,
+      "sha256": "f7fd29083c8efd23ed0544239f9a4c1521a8c0c01f617bb1b09a762e4c0a2e07"
+    },
+    "contracts/acquisition/sdk-mappings.md": {
+      "bytes": 16524,
+      "sha256": "54515e15e371e94624afaec325448fcb30a16af74f9c09d66bd38b390e16676e"
+    },
+    "contracts/cephvr/control/v1/services.proto": {
+      "bytes": 39196,
+      "sha256": "a1605ec4c701f82c159ab436b4f7b5dbe47434b8f97483cd39a0953601e02182"
+    },
+    "docs/architecture/acquisition.md": {
+      "bytes": 78587,
+      "sha256": "817bfcc85ac50bbc03801142a35bdc59ed973331891e17bf883256a03a811bec"
+    },
+    "docs/architecture/gui.md": {
+      "bytes": 99638,
+      "sha256": "ff4c75c7bd74f319204f1074cd6a16876162cb1f78253db568ac89ec2710ff8b"
+    },
+    "reports/acquisition.md": {
+      "bytes": 121235,
+      "sha256": "bc5fef411b1fb01679e56070d0eec7afb0012961ebf252e0e5dc1ae950884a04"
+    },
+    "reports/emergency-160468031468500-dde11ea8-b99a-4f51-8fbf-5970c85d1412.json": {
+      "bytes": 228,
+      "sha256": "5c59754aa25e6c350074acc244dcd0c1febaa8c545b32a74ce75d8e134bd0af7"
+    },
+    "reports/emergency-161881244463300-71446a2a-eaf0-4c8b-a05a-cd30257cd765.json": {
+      "bytes": 228,
+      "sha256": "9aa1c6096a787cd24d07bb1536002021b3b905545abf9c826df4e9bdceb8c3d0"
+    },
+    "reports/emergency-162484417613100-243b1019-3d1d-4b94-8d63-3c086a64cd65.json": {
+      "bytes": 228,
+      "sha256": "9349d3393899a272badc6ed125e4f9cca89ea4a969ee8243c2bb3f0fcfc5fa8c"
+    },
+    "reports/emergency-162971005253800-112af738-ea36-4ff4-bbd8-f7bcd0c5a2f7.json": {
+      "bytes": 228,
+      "sha256": "d6a950e278e60ab1b121b4d0e8264fad78677f59cf0b89525e057aceca6d5ebc"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/before.pfs": {
+      "bytes": 40983,
+      "sha256": "1d6bf164f2730af5b411b6a99d107ff2cf886d4264702c9891274c63d2f56dd7"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/context.json": {
+      "bytes": 1220,
+      "sha256": "b4b6597138caa44e5fc0e4c36838bad844b712892225f3a38d3d446211687b63"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/controller-readback.json": {
+      "bytes": 7308,
+      "sha256": "7d9fc7707cc232e6cba65b7796de3d4783413bd05c7f6f107c3654d3a7096aab"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/exposure_probe.py": {
+      "bytes": 4449,
+      "sha256": "f9644b2dc70a126c1e856560790904750f52aa156be8172e54be5e76f9eed28d"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/native.npy": {
+      "bytes": 3020288,
+      "sha256": "b50e0054ebed0486419ecd3170186d9ff71eaf8e75c693b1cb1f1a1fdbfbf370"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/probe.json": {
+      "bytes": 2384,
+      "sha256": "bbf101115cd5e4d5c87a2739f8ea4ad20d2a77de781a2bf8b6a494554624c2e6"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/probe.py": {
+      "bytes": 3995,
+      "sha256": "2cf723470183e90ac7a63d8e252a5178ec2d4e87ef0a2b7016d9d355e7fdd1d2"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/restored.pfs": {
+      "bytes": 41003,
+      "sha256": "03c12646f548e7430aaef23be3be4652856b516a07eaef314b2ec1c33af440b1"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/sweep-before.pfs": {
+      "bytes": 40983,
+      "sha256": "1d6bf164f2730af5b411b6a99d107ff2cf886d4264702c9891274c63d2f56dd7"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/sweep-restored.pfs": {
+      "bytes": 40983,
+      "sha256": "1d6bf164f2730af5b411b6a99d107ff2cf886d4264702c9891274c63d2f56dd7"
+    },
+    "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/sweep.json": {
+      "bytes": 3215,
+      "sha256": "f44e03fe2a63b8bcac3aa019e55b52dfc304146ea73d88844e81d360bb33ef39"
+    },
+    "reports/runtime-evidence-2026-10-16/preview-slot/native-slot-results.json": {
+      "bytes": 375,
+      "sha256": "8b9ea93c1d2c833cd2a76018fdf016ed28085a72c170ce1e6f1b865c4a56a797"
+    },
+    "reports/runtime-evidence-2026-10-16/preview-slot/native_slot_probe.py": {
+      "bytes": 2917,
+      "sha256": "946542045385f8bec4407f7edab2cb0e168528d997639d7e374cd89a60d01929"
+    },
+    "reports/runtime-evidence-2026-10-16/preview-slot/validation.txt": {
+      "bytes": 3377,
+      "sha256": "0fc0ed026469e2c01887d4423e470202e3bb2fc0648018c866a0ba4257258329"
+    },
+    "reports/runtime.md": {
+      "bytes": 454454,
+      "sha256": "5241c1e3cf45d70ad4f2c30deaafb823d81acd04a229b0296c23343e3f6f716b"
+    },
+    "src/cephvr/acquisition/camera/metadata.py": {
+      "bytes": 6186,
+      "sha256": "553390dcffa93b57f033eebba19b565e2e77c3f47b124aba02a969fc14828add"
+    },
+    "src/cephvr/controller/device/microcontroller.py": {
+      "bytes": 7786,
+      "sha256": "22d5138d22386588fb96a5826fbbc0d0bcbf233caa1c0283912db15ba20a5212"
+    },
+    "src/cephvr/controller/microcontroller/device.py": {
+      "bytes": 21011,
+      "sha256": "f07609732d8322b437a4c6ca500f23c153f403c39d927d37a8558ccbba7a5bcd"
+    },
+    "src/cephvr/gui/action_cancellation.py": {
+      "bytes": 2012,
+      "sha256": "2bfe2a5933e0effd4108763f057e957d8900b763c6a0265bed620edcb79f83bf"
+    },
+    "src/cephvr/gui/camera_action_submission.py": {
+      "bytes": 2272,
+      "sha256": "98f1d02153b2ef917a2e2e9f1315ebf8827d73d6066484d6a70c6179ff2aad76"
+    },
+    "src/cephvr/gui/cameras.py": {
+      "bytes": 25115,
+      "sha256": "84ea686c1c1dbb8a601566e7422bb405674ea1cd234d249a0be11eeb4f5fc0e6"
+    },
+    "src/cephvr/gui/cancel_cleanup.py": {
+      "bytes": 5066,
+      "sha256": "2efb197c8dd5f630358d8a094d71f32f73fbb0d767ea65de3c1f8ad7926dd883"
+    },
+    "src/cephvr/gui/main.py": {
+      "bytes": 35740,
+      "sha256": "082dc1b7c5944e5aaf42a87f2677f2ee8c988bec347552bddeb8cdf0ab9e3e25"
+    },
+    "src/cephvr/gui/managed_actions.py": {
+      "bytes": 18636,
+      "sha256": "b34e94309e834788cd4618fa2e1a725dc9fbb6a7a2ed7e54391b8469457650ac"
+    },
+    "src/cephvr/gui/managed_cameras.py": {
+      "bytes": 18311,
+      "sha256": "d6e0835cc76bcfbbfc86704ac44952c3e5c7cd8fab8d2e6699ace355ca205b0c"
+    },
+    "src/cephvr/gui/managed_device_commands.py": {
+      "bytes": 15099,
+      "sha256": "c0a5377bf140c57289013ea6a0a62f7fe7899b1bb85c40794405a39b889daa64"
+    },
+    "src/cephvr/gui/managed_mcu.py": {
+      "bytes": 17968,
+      "sha256": "f4eb92befa076fb1c510de62371c51c56608ff3b5690c93c66a2cfe2898df144"
+    },
+    "src/cephvr/gui/microcontroller.py": {
+      "bytes": 24721,
+      "sha256": "9c0bf43a6aa552870382372f257b2aa3db161e53bf1d5081c6d7deda4c2ec928"
+    },
+    "src/cephvr/gui/preview_placement.py": {
+      "bytes": 4729,
+      "sha256": "ee922340c1a58c3dcec09c8fbb3bef5ca468ca6dd1226527d20a9b408be543ac"
+    },
+    "src/cephvr/gui/review.py": {
+      "bytes": 12011,
+      "sha256": "ab8f954ea5f467681787db1b197db03117cbea1a8c68261c4b8834d5ed5a5e3b"
+    },
+    "src/cephvr/gui/spikeglx.py": {
+      "bytes": 19319,
+      "sha256": "e1ed3c4f85fca455a99186bac45793158ce7473f59143367d05f5818dda7133b"
+    },
+    "src/cephvr/gui/window.py": {
+      "bytes": 9219,
+      "sha256": "6513b953e2c6b13ef8b410efab4eea6fa8d3e02e04edb3a3dd1ce35b74d64a3d"
+    },
+    "src/cephvr/platform/windows/window_coordinates.py": {
+      "bytes": 5596,
+      "sha256": "170f3ec629defc4126e43fcc8bdf9cb76006d5109fe5b16f2949bbfd7351c6ff"
+    },
+    "tests/acquisition/test_camera_adapter_contracts.py": {
+      "bytes": 20711,
+      "sha256": "c6bffd215263f5ae9ea15254cebed41862d1cdfc1d19a960e4b873ad0b87a622"
+    },
+    "tests/acquisition/test_manual_preview.py": {
+      "bytes": 98700,
+      "sha256": "3c7f017689f8fd802993785af95e13e79def79ad10cb72e94b555484f3ade5d4"
+    },
+    "tests/controller/test_microcontroller_owner.py": {
+      "bytes": 83206,
+      "sha256": "89a21de51aab7bb3b8261703078f458689333bcde45a76fc953522e0b951cbf4"
+    },
+    "tests/gui/test_dashboard.py": {
+      "bytes": 700042,
+      "sha256": "c3026a5015c321664453502789566aa840c2b16d7c6cbfb57af815a1a628d694"
+    }
+  },
+  "operator_files": {
+    "config\\last_configuration.json": {
+      "bytes": 146671,
+      "sha256": "9714f21fa0149a1c5a8a9159da0ea9d08b10e52a10cb9fe19e8e1e1f05219479"
+    },
+    "config\\runtime_gui.json": {
+      "bytes": 50253,
+      "sha256": "c7ba71b8327a85035a7e777742ccc97fea916a26734bdbc24bd3700f40f029b2"
+    },
+    "config\\backends\\acquisition_config.toml": {
+      "bytes": 12763,
+      "sha256": "2e06a645260da6cdb54d83ec174f62cb4a1a171173196732b219d0e45939d8b0"
+    },
+    "config\\backends\\experiment_config.toml": {
+      "bytes": 6801,
+      "sha256": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115"
+    },
+    "config\\backends\\gui_config.toml": {
+      "bytes": 675,
+      "sha256": "e5498d0b0864531b98595760ea8cb17880c010fffa57d168c88ceff6d8f53c30"
+    },
+    "config\\backends\\microcontroller_config.toml": {
+      "bytes": 1304,
+      "sha256": "3fb97389300d23739be336f11226c9471903497820259e153496c9413b518607"
+    },
+    "config\\backends\\supervisor_config.toml": {
+      "bytes": 2211,
+      "sha256": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe"
+    },
+    "config\\backends\\synchronization_config.toml": {
+      "bytes": 2370,
+      "sha256": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94"
+    },
+    "config\\backends\\tracking_config.toml": {
+      "bytes": 8347,
+      "sha256": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c"
+    },
+    "config\\backends\\visual_stimulus_config.toml": {
+      "bytes": 6263,
+      "sha256": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212"
+    }
+  }
+}

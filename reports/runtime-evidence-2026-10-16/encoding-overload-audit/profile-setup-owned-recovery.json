@@ -1,0 +1,19 @@
+{
+  "generation": "34d92ca2-7ed4-420a-9c32-df2c3c01de05",
+  "result": {
+    "command_id": "b9e1cd42-4801-4d7e-b8ab-3ca38009e131",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "prior_exit_receipt": {
+    "controller_generation": "1ec20307-7335-45a1-91cd-b6f9a1cc313e",
+    "supervisor_generation": "ea061719-439e-44f3-932d-8d1a05503bf0",
+    "observed_monotonic_ns": 168233194379300,
+    "all_owned_processes_absent": true,
+    "format_version": 1,
+    "controller_channel_loss": "eof"
+  },
+  "scope": "Normal recovery retains scientific outputs and unknown-output status; no pointer or scientific file edits by audit"
+}

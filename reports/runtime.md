@@ -1,5 +1,78 @@
 # Controller and supervisor status
 
+Oct16 audit repairs exact scheduled-output Cleanup path validation, immediate
+encoder write polling and 8-bit GBR capability gates. The native wait ACK now
+precedes its private wake; ordering regression passes. Final backend validation:
+2188 passed, 5 privilege skips; explicit rig NVOF separately passes. GUI: 586
+passed offscreen, 28 selected native passes; seven native picker roundtrips remain
+unvalidated, without proving operator picker failure.
+
+Real-time lossless camera retention is not achieved: Behavior retains 1416/1798
+frames in the completed p4 run. One final p1/instrumented diagnostic interrupts;
+video sync dominates measured consumer time and exact frame-log closure is missing.
+Earlier normal completed trials/Shutdown remain valid, while failed Setup late
+reports and early Abort Finished validation remain separate open findings. All
+three camera baselines and ten operator files are restored; temporary source hook
+is removed. [Current methods, results and limits](runtime-evidence-2026-10-16/encoding-overload-audit/README.md).
+
+Oct16 `device-action-cancel` implements owner-selected safe cancellation under
+[G01](../docs/architecture/gui.md#g01) and [A11](../docs/architecture/acquisition.md#a11).
+Camera Connect/Test selected, MCU connection/pin tests and SpikeGLX Test connection
+show Cancel while pending and disabled Cancelling after a click. The GUI skips
+remaining steps, waits for the existing bounded call, and closes only newly created
+resources using confirmed controller identity. Accepted settings and pre-existing
+connections remain. MCU cleanup adds an exact-connection Disconnect command using
+the existing outputs-off/close owner; admission and execution retain authority,
+Configuration/camera-claim gates and bounded deadlines. Unconfirmed cleanup or
+changed controller/acquisition identity is an error, never reported as cancellation
+success. Firmware Upload and safety Stop/Disconnect retain their completion behavior.
+Restart the full runtime to load both client and controller contract changes.
+
+ARCH-002 review: isolated button/token and compensation logic in two focused GUI
+modules; existing panels/coordinators only wire lifecycle callbacks, with no new
+process, package, whole-runtime back-reference or duplicate authoritative device state.
+Existing size advisories for panels/main remain cohesive presentation/orchestration
+owners. Extended the owning GUI and MCU behavior suites. Final offscreen selection
+(`pytest tests/gui/test_dashboard.py tests/controller/test_microcontroller_owner.py
+ tests/controller/test_microcontroller_protocol.py -q -k
+ '(camera or mcu or microcontroller or spikeglx or cancellation or manual_disconnect)
+ and not picker and not chooser'`) passes272, skips1, deselects443. A subsequent
+pin-button click assertion passes separately (1/582 deselected). Covers queued and
+in-flight cancellation, skipped Show/Connect, retained accepted settings, exact new
+preview/serial cleanup, preserved pre-existing connection, generation change,
+cleanup failure, repeat-click fencing and button restoration. Initial checks exposed
+and fixed the MCU completion label overwrite and managed-camera Cancel authority gate;
+two older request-dictionary assertions now include the per-request cancellation token.
+Ruff/format212, Win32 mypy210, boundaries715/zero violations and whitespace pass;
+19 Protobuf sources regenerated. Tests used approved loopback access and Qt offscreen.
+No live-device cancellation, firmware action or native/rig acceptance was performed;
+[E15 rig verification](rig-verification.md) remains separate.
+
+Oct16 `gui-preview-slot` implements [G01](../docs/architecture/gui.md#g01): runtime
+and Review open maximized, with a reserved Preview area on Dashboard,
+Devices/Cameras and Tracking. Owner native feedback exposed the initial full-height
+card and preserved Z-order as unsuitable. The fitted card now reserves only the
+initial image/native chrome plus heading/padding; physical ClientToScreen mapping
+targets its inset child region. Native owner-checked placement uses topmost without
+activation, keeping detached windows visible above GUI interaction. Other tabs
+reclaim the area; reopening samples current layout. No embedding, image reader,
+new protocol/process or backend state is introduced. Focused existing placement
+and Windows-native modules own the change under ARCH-002.
+
+Current validation:14 GUI layout/placement cases and three HighGUI thread/failure
+cases pass. The native HighGUI case passes outside the sandbox after sandbox
+shared-memory denial; it verifies frame size/position, topmost, nonactivation,
+wheel/reset and independent closure/producer continuity. An isolated real Qt/OpenCV
+probe verifies exact inset/frame match after GUI activation: maximized image640,
+frame642x672 at(1250,150), restored image373/frame375x405 at(805,158), both96dpi.
+The fitted native GUI capture was inspected. Scoped Ruff/format, Win32 mypy3 and
+boundaries715/zero violations pass; existing unrelated cohesion advisories remain.
+[Native probe and results](runtime-evidence-2026-10-16/preview-slot/native-slot-results.json)
+and [validation history](runtime-evidence-2026-10-16/preview-slot/validation.txt)
+retain bounded scope. No real camera, mixed-monitor DPI or full-workload acceptance
+is claimed. Restart the application to load both GUI and acquisition-owned native
+placement changes; no running application/device was restarted by this work.
+
 Current integration (2026-10-16, `merge-dev-gui`): fetched origin/main eac2e0e
 is merged with local rig fixes a0dc31a and the appearance checkpoint3743a81.
 [G01](../docs/architecture/gui.md#g01)/[G02](../docs/architecture/gui.md#g02)

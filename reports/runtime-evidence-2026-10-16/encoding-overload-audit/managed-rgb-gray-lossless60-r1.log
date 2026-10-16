@@ -1,0 +1,23 @@
+UpdateConfiguration {"command_id": "e05a11d5-927f-4395-af25-2399f8732482", "complete": true, "succeeded": true, "needs_input": false, "failure": "", "elapsed_ns": 14057200}
+Setup {"command_id": "1213710d-6324-48d4-af83-c8546ea9629f", "complete": true, "succeeded": false, "needs_input": false, "failure": "SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: resource budget exceeded for visual_stimulus:8583cf3c-0bbf-4747-a8ad-f912c87de4c9:arena-texture-a9ce3a8ff716cbe648a091902dcb770c4e759b24a0f88298a0780b7d1da8ecb2: CPU 278900064/1073741824, GPU 715827840/536870912", "elapsed_ns": 2634141400}
+failure_snapshot {"controller_generation": "f173c042-3ca7-48e2-bfaf-339c072018bd", "captured_monotonic_ns": "165668306802800", "state_revision": "267", "configuration": {"revision": "5", "edit_validation": [{"configuration_revision": "4", "completed": true, "valid": true, "component": "experiment", "configuration_module_version": "experiment-v1"}, {"configuration_revision": "4", "completed": true, "valid": true, "component": "acquisition", "configuration_module_version": "acquisition-config-v1"}, {"configuration_revision": "4", "completed": true, "valid": true, "component": "synchronization", "configuration_module_version": "inactive"}, {"configuration_revision": "4", "completed": true, "valid": true, "component": "tracking", "configuration_module_version": "inactive"}, {"configuration_revision": "4", "completed": true, "valid": true, "component": "visual_stimulus", "configuration_module_version": "visual-stimulus-config-v2"}]}, "session": {"phase": "SESSION_PHASE_SETTING_UP", "context": {"controller_generation": "f173c042-3ca7-48e2-bfaf-339c072018bd", "session_id": "676fb9ea-be8c-4f7e-91e8-534790b16299"}, "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-183351", "trial_count": 1}, "trial": {"phase": "TRIAL_PHASE_PENDING"}, "participants": [{"process": {"role": "visual_stimulus", "generation": "36cd73a4-69a9-4207-9327-911f382a342e"}, "enabled": true, "required": true, "proces
+error "AssertionError: SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: resource budget exceeded for visual_stimulus:8583cf3c-0bbf-4747-a8ad-f912c87de4c9:arena-texture-a9ce3a8ff716cbe648a091902dcb770c4e759b24a0f88298a0780b7d1da8ecb2: CPU 278900064/1073741824, GPU 715827840/536870912"
+monitor_exit 0
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 392, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 292, in main
+    await execute("Setup")
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 272, in execute
+    assert result.succeeded, result.failure
+           ^^^^^^^^^^^^^^^^
+AssertionError: SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: resource budget exceeded for visual_stimulus:8583cf3c-0bbf-4747-a8ad-f912c87de4c9:arena-texture-a9ce3a8ff716cbe648a091902dcb770c4e759b24a0f88298a0780b7d1da8ecb2: CPU 278900064/1073741824, GPU 715827840/536870912

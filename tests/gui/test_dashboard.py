@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QLabel,
     QPushButton,
+    QToolButton,
     QWidget,
 )
 
@@ -69,6 +70,55 @@ def test_square_preview_placement_fits_small_work_area() -> None:
     assert result.side == 536
     assert area.left() <= result.x <= area.right() - result.side
     assert result.y == area.top()
+
+
+@pytest.mark.parametrize("scale", [1.0, 1.5, 2.0])
+def test_preview_slot_fits_native_frame(scale: float) -> None:
+    from cephvr.gui.preview_placement import slot_preview_placement
+    from cephvr.platform.windows.window_coordinates import preview_frame_extra
+
+    slot = QRect(-900, 100, round(400 * scale), round(500 * scale))
+    result = slot_preview_placement(slot, QRect(-1920, 0, 3840, 2160), scale)
+    assert (result.x, result.y) == (slot.x(), slot.y())
+    width, height = preview_frame_extra(scale)
+    assert result.side + width == slot.width()
+    assert result.side + height <= slot.height()
+
+
+def test_preview_slot_tracks_relevant_tabs(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    from cephvr.gui.preview_placement import preview_window_placement
+
+    window.showMaximized()
+    app.processEvents()
+    assert window.isMaximized()
+    for page, device, visible in (
+        (0, 0, True),
+        (1, 0, False),
+        (2, 0, True),
+        (2, 1, False),
+        (2, 2, False),
+        (3, 2, True),
+    ):
+        window.devices.tabs.setCurrentIndex(device)
+        window.select_page(page)
+        app.processEvents()
+        assert window.preview_slot.isVisible() is visible
+        if visible:
+            slot = window.preview_slot
+            target = slot.target
+            assert slot.height() < window.stack.height()
+            assert target.geometry().top() > slot.caption.geometry().bottom()
+            assert target.geometry().left() == 8
+            assert target.geometry().bottom() + 9 == slot.height()
+            assert (
+                window.preview_slot.geometry().left() > window.stack.geometry().right()
+            )
+            if QApplication.platformName() != "windows":
+                hint = preview_window_placement(window)
+                origin = target.mapToGlobal(QPoint())
+                assert (hint.x, hint.y) == (origin.x(), origin.y())
 
 
 @pytest.fixture(scope="module")
@@ -2269,13 +2319,61 @@ def test_devices_draft_icons_local_edits_and_command_gates(
 def test_devices_draft_reflows_without_horizontal_clipping(
     window: DashboardWindow, app: QApplication, width: int
 ) -> None:
-    window.resize(width, 883)
     window.page_buttons[2].click()
-    for index in range(4):
-        window.devices.tabs.setCurrentIndex(index)
+    form = window.devices.cameras.trigger_form
+    fields = form.fields
+    for current_width in (width, 1920, width):
+        window.resize(current_width, 883)
+        for index in range(4):
+            window.devices.tabs.setCurrentIndex(index)
+            app.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 1000)
+            scroll = window.devices.panels[index].scrollers[0]
+            assert scroll.horizontalScrollBar().maximum() == 0
+            if index == 0:
+                assert form.grid.count() == 3 and form.fields == fields
+                assert all(form.rect().contains(item.geometry()) for item in fields)
+                assert all(item.width() > 0 for item in fields)
+
+
+def test_camera_trigger_form_reflows_and_destroys_owned_editors(app):
+    from cephvr.gui.cameras import CamerasPanel
+
+    destroyed = []
+    for cycle in range(3):
+        panel = CamerasPanel(sample=True)
+        panel.destroyed.connect(lambda: destroyed.append(True))
+        panel.apply_view(review_view(Phase.CONFIGURATION))
+        panel.show()
         app.processEvents()
-        scroll = window.devices.panels[index].scrollers[0]
-        assert scroll.horizontalScrollBar().maximum() == 0
+        form = panel.trigger_form
+        fields = form.fields
+        source, rate, pin = form.controls
+        source.setFocus()
+        QTest.keyClick(source, Qt.Key.Key_End)
+        rate.setText("60")
+        pin.setText("9")
+        for width in (298, 572, 298):
+            panel.resize(width, 883)
+            app.processEvents()
+            assert form.grid.count() == 3 and form.fields == fields
+            assert all(form.rect().contains(item.geometry()) for item in fields)
+            assert all(
+                item.rect().contains(control.geometry())
+                for item, control in zip(fields, form.controls, strict=True)
+            )
+            assert all(control.width() > 0 for control in form.controls)
+            assert source.currentText() == source.toolTip() == "External controller"
+            assert (
+                source.fontMetrics().horizontalAdvance(source.currentText())
+                < source.width()
+            )
+            assert rate.text() == "60" and pin.text() == "9"
+            assert form.stacked is (width == 298)
+        panel.close()
+        panel.deleteLater()
+        app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        app.processEvents()
+        assert len(destroyed) == cycle + 1
 
 
 def test_folder_picker_selection_cancellation_and_phase_lock(
@@ -2631,7 +2729,7 @@ def test_responsive_navigation_preserves_widget_identity(
     subject = window.dashboard.subject_id
     subject.setText("PERSISTENT")
     modes = set()
-    for width in (1440, 1100, 720, 1440):
+    for width in (1920, 1440, 1100, 720, 1920):
         window.resize(width, 940)
         app.processEvents()
         modes.add(window.dashboard.mode)
@@ -2718,8 +2816,9 @@ def test_hud_fits_content_and_log_fills_available_height(
     panel_heights = []
     log_heights = []
     for height in (883, 1100):
-        window.resize(1175, height)
+        window.resize(1920, height)
         app.processEvents()
+        assert dashboard.mode == "wide"
         right = dashboard.columns[1]
         assert dashboard.hud_card.y() == 0
         assert dashboard.log_card.geometry().bottom() == right.height() - 1
@@ -2993,8 +3092,9 @@ def test_all_pages_share_fitted_hud_and_expanding_log(
         assert isinstance(status, StatusColumn)
         sizes = []
         for height in (940, 1040):
-            window.resize(1175, height)
+            window.resize(1920, height)
             app.processEvents()
+            assert panel.mode == "wide"
             sizes.append((status.hud.height(), status.console.height()))
             if height == 940:
                 first_card = panel.columns[0].layout().itemAt(0).widget()
@@ -3017,20 +3117,44 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
 ) -> None:
     assert window.tracking.load_button.text() == "Load…"
     assert window.tracking.save_button.text() == "Save as…"
-    window.resize(1175, 940)
+    window.resize(1920, 940)
     app.processEvents()
+    assert window.dashboard.mode == "wide"
     hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
     window.page_buttons[2].click()
     from cephvr.gui.theme import SIZES
 
     bar = window.devices.tab_bar
-    for width in (1175, 720, 1175):
+
+    def visible_tab(index):
+        arrows = [
+            control for control in bar.findChildren(QToolButton) if control.isVisible()
+        ]
+        visible = bar.rect()
+        for control in arrows:
+            visible.setRight(min(visible.right(), control.x() - 1))
+        for _ in range(bar.count()):
+            center = bar.tabRect(index).center()
+            if visible.contains(center):
+                return center
+            direction = (
+                Qt.ArrowType.LeftArrow
+                if center.x() < visible.left()
+                else Qt.ArrowType.RightArrow
+            )
+            arrow = next(
+                control for control in arrows if control.arrowType() == direction
+            )
+            assert arrow.isEnabled()
+            QTest.mouseClick(arrow, Qt.MouseButton.LeftButton)
+            app.processEvents()
+        pytest.fail("Device tab was not reachable through its scroll arrows")
+
+    for width in (1920, 720, 1920):
         window.resize(width, 940)
         for index in (2, 0, 3, 1):
             app.processEvents()
-            QTest.mouseClick(
-                bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
-            )
+            QTest.mouseClick(bar, Qt.MouseButton.LeftButton, pos=visible_tab(index))
             app.processEvents()
             assert window.devices.tabs.currentIndex() == index
             panel = window.devices.panels[index]
@@ -3038,8 +3162,19 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
             assert window.devices.navigation.parentWidget() is left
             assert bar.isVisible()
             assert bar.width() == left.width()
-            assert bar.tabRect(3).right() == bar.width() - 1
-            if width == 1175:
+            arrows = [
+                control
+                for control in bar.findChildren(QToolButton)
+                if control.isVisible()
+            ]
+            if not arrows:
+                assert bar.tabRect(3).right() == bar.width() - 1
+            else:
+                assert all(
+                    bar.rect().contains(control.geometry()) for control in arrows
+                )
+            if width == 1920:
+                assert panel.mode == "wide"
                 hud = panel.layout_card if index == 2 else panel.columns[1].hud_card
                 border_top = (
                     hud.mapTo(window, QPoint()).y()
@@ -3102,7 +3237,7 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
                 .maximum()
                 == 0
             )
-            if width == 1175:
+            if width == 1920:
                 assert (
                     panel.layout_card if index == 2 else panel.columns[1].hud_card
                 ).mapTo(window, QPoint()).y() == hud_top
@@ -5653,8 +5788,17 @@ def test_eye_role_projects_and_tests_selected_without_capture(
     binding.install(state)
     assert panel.drafts[0].role == "Eye tracking"
     binding.test_selected(panel.drafts[0].key)
+    token = panel.pending_action.token
+    assert token is not None and not token.requested.is_set()
     assert calls == [
-        ("camera", {"role": 3, "kind": rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION})
+        (
+            "camera",
+            {
+                "role": 3,
+                "kind": rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
+                "cancellation": token,
+            },
+        )
     ]
 
 
@@ -6258,7 +6402,18 @@ def test_managed_microcontroller_submits_edited_pin_before_test(
     panel.trial_pin.setText("D8")
     binding.test_pin("trial-state", True)
 
-    assert requests[:2] == [
+    from cephvr.gui.action_cancellation import Cancellation
+
+    assert all(
+        isinstance(options["cancellation"], Cancellation) for _, options in requests[:2]
+    )
+    assert [
+        (
+            action,
+            {key: value for key, value in options.items() if key != "cancellation"},
+        )
+        for action, options in requests[:2]
+    ] == [
         ("mcu", {"kind": rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT}),
         (
             "mcu",
@@ -6302,6 +6457,7 @@ def test_managed_camera_pin_test_uses_saved_role_signal(
     monkeypatch.setattr(managed_mcu.QTimer, "singleShot", lambda *_: None)
     binding = managed_mcu.ManagedMcu(panel, bridge, lambda: state)
     binding.test_pin("behavioral", True)
+    assert requests[0][1].pop("cancellation") is panel.pending_action.token
     assert requests == [
         (
             "mcu",
@@ -8834,20 +8990,23 @@ def test_recording_checks_stay_next_to_labels(
     dashboard = window.dashboard
     assert dashboard.isAncestorOf(panel)
     assert not window.protocol.isAncestorOf(panel)
-    for width in (1175, 720):
+    for width in (1175, 720, 1920, 720):
         window.resize(width, 883)
         app.processEvents()
         dashboard.config_scroll.ensureWidgetVisible(panel)
         app.processEvents()
         assert panel.y() > dashboard.subject_card.geometry().bottom()
         assert panel.width() == dashboard.subject_card.width()
-        for key, check in panel.record.items():
-            caption = panel.source_labels[key]
+        pairs = [
+            (panel.source_labels[key], check) for key, check in panel.record.items()
+        ]
+        for caption, check in (*pairs, (panel.velocity_label, panel.velocities)):
             gap = caption.mapTo(panel, QPoint()).x() - (
                 check.mapTo(panel, QPoint()).x() + check.width()
             )
             assert 0 <= gap <= 12
             assert caption.height() >= caption.heightForWidth(caption.width())
+        assert panel.height() >= panel.heightForWidth(panel.width())
 
 
 def test_looming_primary_controls_and_custom_size_fidelity(
@@ -17384,3 +17543,386 @@ def test_variation_hover_does_not_change_visibility_during_enter_dispatch(
         assert form.rows[0] is not row
     finally:
         appearance.select("standard", persist=False)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "cancel_at", ["queued", "start", "show", "cleanup_failure", "generation"]
+)
+async def test_camera_safe_cancellation_waits_and_closes_exact_new_run(cancel_at):
+    from cephvr.client.session import ClientError
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_cancellation import Cancellation
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    token = Cancellation()
+    state = pb.Snapshot(controller_generation="original")
+    state.configuration.revision = 7
+    device = state.acquisition_devices.behavioral
+    calls, finished = [], []
+
+    async def execute(method, request):
+        calls.append(request)
+        if request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW:
+            device.device_open = device.preview_running = True
+            device.preview_run_id = "new-run"
+            if cancel_at != "show":
+                token.requested.set()
+            if cancel_at == "generation":
+                state.controller_generation = "replacement"
+        elif request.kind == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW:
+            token.requested.set()
+        else:
+            assert request.kind == rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+            assert request.preview_run_id == "new-run"
+            assert request.expected_configuration_revision == 7
+            assert not finished  # Cancelling lasts through confirmed cleanup.
+            if cancel_at == "cleanup_failure":
+                return SimpleNamespace(succeeded=False, failure="release unconfirmed")
+            device.Clear()
+        return SimpleNamespace(succeeded=True, failure="")
+
+    client = SimpleNamespace(
+        snapshot=state, execute=execute, operator_command=lambda: rpc.OperatorCommand()
+    )
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+    bridge.command_finished.connect(lambda *args: finished.append(args))
+    if cancel_at == "queued":
+        token.requested.set()
+    operation = bridge._dispatch(
+        client,
+        "camera",
+        dict(
+            kind=rpc.CAMERA_COMMAND_KIND_START_PREVIEW,
+            role=1,
+            show_preview=True,
+            cancellation=token,
+        ),
+    )
+    if cancel_at in {"cleanup_failure", "generation"}:
+        with pytest.raises(ClientError, match="unconfirmed"):
+            await operation
+        assert not finished
+    else:
+        await operation
+        assert finished[0][1] is False and finished[0][2].startswith("Cancelled")
+        assert not device.device_open
+    assert (
+        len(calls)
+        == {"queued": 0, "start": 2, "show": 3, "cleanup_failure": 2, "generation": 1}[
+            cancel_at
+        ]
+    )
+
+
+@pytest.mark.asyncio
+async def test_camera_cancel_waits_for_inflight_call_and_exact_cleanup():
+    import asyncio
+
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_cancellation import Cancellation
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot(controller_generation="generation")
+    state.configuration.revision = 7
+    device = state.acquisition_devices.behavioral
+    token = Cancellation()
+    started, cleanup_started = asyncio.Event(), asyncio.Event()
+    complete_call, complete_cleanup = asyncio.Event(), asyncio.Event()
+    events, cancelled, finished = [], [], []
+
+    async def execute(method, request):
+        assert method == "ExecuteCameraCommand"
+        try:
+            if request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW:
+                events.append("start")
+                started.set()
+                await complete_call.wait()
+                device.device_open = device.preview_running = True
+                device.preview_run_id = "created-run"
+                events.append("started")
+            else:
+                assert request.kind == rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+                assert request.preview_run_id == "created-run"
+                assert request.expected_configuration_revision == 7
+                events.append("cleanup")
+                cleanup_started.set()
+                await complete_cleanup.wait()
+                device.Clear()
+                events.append("closed")
+        except asyncio.CancelledError:
+            cancelled.append(request.kind)
+            raise
+        return SimpleNamespace(succeeded=True, failure="")
+
+    client = SimpleNamespace(
+        snapshot=state, execute=execute, operator_command=lambda: rpc.OperatorCommand()
+    )
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+
+    def terminal(*args):
+        events.append("terminal")
+        finished.append(args)
+
+    bridge.command_finished.connect(terminal)
+    operation = asyncio.create_task(
+        bridge._dispatch(
+            client,
+            "camera",
+            dict(
+                kind=rpc.CAMERA_COMMAND_KIND_START_PREVIEW,
+                role=1,
+                show_preview=True,
+                cancellation=token,
+            ),
+        )
+    )
+    try:
+        await asyncio.wait_for(started.wait(), 1)
+        token.requested.set()
+        await asyncio.sleep(0)
+        assert events == ["start"] and not finished and not operation.done()
+        complete_call.set()
+        await asyncio.wait_for(cleanup_started.wait(), 1)
+        assert events == ["start", "started", "cleanup"]
+        assert device.device_open and not finished and not operation.done()
+        complete_cleanup.set()
+        await asyncio.wait_for(asyncio.shield(operation), 1)
+        assert events == ["start", "started", "cleanup", "closed", "terminal"]
+        assert not cancelled and not device.device_open
+        assert len(finished) == 1 and finished[0][1] is False
+        assert finished[0][2].startswith("Cancelled; cleanup confirmed")
+    finally:
+        complete_call.set()
+        complete_cleanup.set()
+        await asyncio.wait_for(operation, 1)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("preexisting", [False, True])
+async def test_mcu_cancel_preserves_existing_connection_and_stops_new_test(preexisting):
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_cancellation import Cancellation
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot(controller_generation="generation")
+    state.configuration.revision = 3
+    if preexisting:
+        state.microcontroller.observation.connection_id = "connection"
+    token = Cancellation()
+    calls = []
+
+    async def execute(method, request):
+        calls.append(request)
+        if request.kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
+            state.microcontroller.observation.connection_id = "connection"
+            state.microcontroller.diagnostic.active = True
+            state.microcontroller.diagnostic.signal = (
+                pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE
+            )
+            token.requested.set()
+        elif preexisting:
+            assert request.kind == rpc.MICROCONTROLLER_COMMAND_KIND_STOP
+            state.microcontroller.ClearField("diagnostic")
+        else:
+            assert request.kind == rpc.MICROCONTROLLER_COMMAND_KIND_DISCONNECT
+            assert request.expected_connection_id == "connection"
+            state.microcontroller.Clear()
+        return SimpleNamespace(succeeded=True, failure="")
+
+    client = SimpleNamespace(
+        snapshot=state, execute=execute, operator_command=lambda: rpc.OperatorCommand()
+    )
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+    await bridge._dispatch(
+        client,
+        "mcu",
+        dict(
+            kind=rpc.MICROCONTROLLER_COMMAND_KIND_START,
+            signal=pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
+            cancellation=token,
+        ),
+    )
+    assert len(calls) == 2
+    assert bool(state.microcontroller.observation.connection_id) == preexisting
+    assert not state.microcontroller.diagnostic.active
+
+
+def test_pending_mcu_button_cancels_without_dispatching_twice(window):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_mcu import ManagedMcu
+
+    panel = window.devices.microcontroller
+    panel.managed = True
+    panel.set_saved_pins("COM8", "D9", True, "D2", True)
+    window.apply_view(
+        DashboardView(connected=True, has_control=True, configuration_wired=False)
+    )
+    state = pb.Snapshot()
+    state.configuration_values.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition.pulses.port = "COM8"
+    calls = []
+    binding = ManagedMcu(
+        panel,
+        SimpleNamespace(
+            request=lambda action, **kw: calls.append((action, kw)) or True
+        ),
+        lambda: state,
+    )
+    control = panel.test_connection_button
+    original = control.text()
+    control.click()
+    assert control.text() == "Cancel" and control.isEnabled()
+    token = calls[0][1]["cancellation"]
+    control.click()
+    assert token.requested.is_set() and control.text().startswith("Cancelling")
+    assert not control.isEnabled() and len(calls) == 1
+    panel.refresh_tests()
+    assert not control.isEnabled()
+    binding.finished("mcu", False, "Cancelled; cleanup confirmed")
+    assert control.text() == original and control.isEnabled()
+
+    binding.test_pin("trial-state", True)
+    pin_button = panel.test_buttons["trial-state"]
+    assert pin_button.text() == "Cancel" and pin_button.isEnabled()
+    pin_button.click()
+    assert calls[-1][1]["cancellation"].requested.is_set()
+    assert pin_button.text().startswith("Cancelling") and not pin_button.isEnabled()
+    binding.finished(calls[-1][0], False, "Cancelled; cleanup confirmed")
+    assert pin_button.text() == "Test"
+
+
+def test_spikeglx_check_cancel_survives_view_refresh(window):
+    panel = window.devices.spikeglx
+    view = DashboardView(connected=True, has_control=True)
+    panel.apply_view(view)
+    calls = []
+    panel.connection_requested.connect(
+        lambda: panel.start_connection_check(
+            lambda action, **kw: calls.append((action, kw)) or True
+        )
+    )
+    control = panel.action_buttons[0]
+    control.click()
+    panel.apply_view(view)
+    assert control.text() == "Cancel" and control.isEnabled()
+    control.click()
+    panel.apply_view(view)
+    assert control.text().startswith("Cancelling") and not control.isEnabled()
+    assert len(calls) == 1 and calls[0][1]["cancellation"].requested.is_set()
+    panel.pending_action.finish()
+    panel.apply_view(view)
+    assert control.text() == "Test connection" and control.isEnabled()
+
+
+@pytest.mark.asyncio
+async def test_cancel_after_mcu_settings_acceptance_skips_hardware_and_retains_settings():
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_cancellation import Cancellation
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot(controller_generation="generation")
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = state.configuration_values.revision = 7
+    settings = state.configuration_values.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition
+    settings.pulses.port = "COM8"
+    token = Cancellation()
+    options = dict(
+        generation="generation",
+        base_revision=7,
+        base_configuration=state.configuration_values.current.SerializeToString(
+            deterministic=True
+        ),
+        port="COM9",
+        kind=rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+        cancellation=token,
+    )
+    calls, accepted, finished = [], [], []
+
+    async def execute(method, request):
+        calls.append(method)
+        assert method == "UpdateConfiguration"
+        state.configuration_values.current.CopyFrom(request.proposed)
+        state.configuration.revision = state.configuration_values.revision = 8
+        token.requested.set()
+        return SimpleNamespace(succeeded=True, failure="")
+
+    client = SimpleNamespace(
+        snapshot=state, execute=execute, operator_command=lambda: rpc.OperatorCommand()
+    )
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+    bridge.device_configuration_accepted.connect(lambda *args: accepted.append(args))
+    bridge.command_finished.connect(lambda *args: finished.append(args))
+    await bridge._dispatch(client, "prepare_mcu_connection", options)
+    assert calls == ["UpdateConfiguration"] and len(accepted) == 1
+    assert (
+        state.configuration_values.current.backends[0].acquisition.pulses.port == "COM9"
+    )
+    assert finished[0][2].startswith("Cancelled")
+
+
+@pytest.mark.asyncio
+async def test_cancel_camera_test_does_not_close_preexisting_preview():
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.cancel_cleanup import cleanup_cancelled_device
+
+    before = pb.Snapshot(controller_generation="generation")
+    before.acquisition_devices.behavioral.preview_running = True
+    before.acquisition_devices.behavioral.preview_run_id = "already-open"
+    client = SimpleNamespace(
+        snapshot=pb.Snapshot.FromString(before.SerializeToString())
+    )
+    await cleanup_cancelled_device(client, "camera", {"role": 1}, before)
+    assert (
+        client.snapshot.acquisition_devices.behavioral.preview_run_id == "already-open"
+    )
+
+
+@pytest.mark.parametrize("wired", [False, True])
+def test_pending_camera_button_cancel_is_bound_to_original_request(window, wired):
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.gui.managed_cameras import ManagedCameras
+
+    panel = window.devices.cameras
+    panel.managed = True
+    window.apply_view(
+        DashboardView(connected=True, has_control=True, configuration_wired=wired)
+    )
+    calls = []
+    binding = ManagedCameras(
+        panel,
+        SimpleNamespace(
+            request=lambda action, **kw: calls.append((action, kw)) or True
+        ),
+        lambda *_: False,
+    )
+    assert binding.queue("camera", kind=rpc.CAMERA_COMMAND_KIND_START_PREVIEW, role=1)
+    control = panel.connect_button
+    assert control.text() == "Cancel" and control.isEnabled()
+    control.click()
+    assert len(calls) == 1 and calls[0][1]["role"] == 1
+    assert calls[0][1]["cancellation"].requested.is_set()
+    panel.refresh_controls()
+    assert control.text().startswith("Cancelling") and not control.isEnabled()
+    binding.finished("camera", False, "Cancelled; cleanup confirmed")
+    assert control.text() in {"Connect", "Disconnect"}
+    assert panel.pending_action.token is None

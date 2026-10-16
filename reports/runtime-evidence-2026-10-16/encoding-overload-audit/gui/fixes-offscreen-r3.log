@@ -1,0 +1,31 @@
+F.......                                                                 [100%]
+================================== FAILURES ===================================
+_________ test_devices_draft_reflows_without_horizontal_clipping[720] _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D73D29B7F0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D732109C60>, width = 720
+
+    @pytest.mark.parametrize("width", [720, 1175])
+    def test_devices_draft_reflows_without_horizontal_clipping(
+        window: DashboardWindow, app: QApplication, width: int
+    ) -> None:
+        window.page_buttons[2].click()
+        form = window.devices.cameras.trigger_form
+        fields = form.fields
+        for current_width in (width, 1920, width):
+            window.resize(current_width, 883)
+            for index in range(4):
+                window.devices.tabs.setCurrentIndex(index)
+                app.processEvents()
+                scroll = window.devices.panels[index].scrollers[0]
+>               assert scroll.horizontalScrollBar().maximum() == 0
+E               assert 73 == 0
+E                +  where 73 = <built-in method maximum of QScrollBar object at 0x000001D73D3F0B80>()
+E                +    where <built-in method maximum of QScrollBar object at 0x000001D73D3F0B80> = <PyQt6.QtWidgets.QScrollBar object at 0x000001D73D3F0B80>.maximum
+E                +      where <PyQt6.QtWidgets.QScrollBar object at 0x000001D73D3F0B80> = <built-in method horizontalScrollBar of QScrollArea object at 0x000001D73D750940>()
+E                +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000001D73D750940> = <PyQt6.QtWidgets.QScrollArea object at 0x000001D73D750940>.horizontalScrollBar
+
+tests\gui\test_dashboard.py:2331: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[720]
+1 failed, 7 passed, 578 deselected in 8.70s

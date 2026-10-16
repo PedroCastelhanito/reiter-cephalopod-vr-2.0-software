@@ -1,0 +1,123 @@
+{
+  "serial": "40065509",
+  "model": "acA4112-30uc",
+  "frames": [
+    {
+      "index": 0,
+      "exposure_us": 25000,
+      "raw_min": 124,
+      "raw_max": 255,
+      "bgr_mean": [
+        144.59336723882177,
+        238.14738093346048,
+        254.7065966703751
+      ],
+      "bgr_std": [
+        6.373545448912006,
+        8.489799107102591,
+        8.644753526849735
+      ],
+      "direct_sdk_max_difference": 0,
+      "timestamp_ticks": 87128115411339,
+      "chunk_timestamp": 87128115411339,
+      "red_saturated_fraction": 0.9988493987073532
+    },
+    {
+      "index": 1,
+      "exposure_us": 5000,
+      "raw_min": 39,
+      "raw_max": 147,
+      "bgr_mean": [
+        63.41396945857173,
+        112.43764601875397,
+        134.53801255562618
+      ],
+      "bgr_std": [
+        5.0242299718598025,
+        4.379621252332475,
+        5.140211121347613
+      ],
+      "direct_sdk_max_difference": 0,
+      "timestamp_ticks": 87128431600509,
+      "chunk_timestamp": 87128431600509,
+      "red_saturated_fraction": 0.0
+    },
+    {
+      "index": 2,
+      "exposure_us": 1000,
+      "raw_min": 0,
+      "raw_max": 70,
+      "bgr_mean": [
+        18.86801328406442,
+        49.67784951790634,
+        59.227815744861196
+      ],
+      "bgr_std": [
+        7.420703623063967,
+        2.9107785169417277,
+        3.3442200926912875
+      ],
+      "direct_sdk_max_difference": 0,
+      "timestamp_ticks": 87128731968921,
+      "chunk_timestamp": 87128731968921,
+      "red_saturated_fraction": 0.0
+    },
+    {
+      "index": 3,
+      "exposure_us": 100,
+      "raw_min": 0,
+      "raw_max": 57,
+      "bgr_mean": [
+        1.1813201949565586,
+        8.237933089637636,
+        7.946471047891502
+      ],
+      "bgr_std": [
+        2.3454788096956825,
+        3.272559537118632,
+        5.502522953778624
+      ],
+      "direct_sdk_max_difference": 0,
+      "timestamp_ticks": 87129031622751,
+      "chunk_timestamp": 87129031622751,
+      "red_saturated_fraction": 0.0
+    }
+  ],
+  "features": {
+    "DeviceModelName": "acA4112-30uc",
+    "TimestampTickFrequency": null,
+    "GevTimestampTickFrequency": null,
+    "PixelFormat": "BayerRG8",
+    "Width": 1760,
+    "Height": 1716,
+    "ExposureTime": 25000.0,
+    "Gain": 0.0,
+    "Gamma": 1.0,
+    "TestImageSelector": "Off",
+    "BalanceWhiteAuto": "Off",
+    "LightSourcePreset": "Daylight5000K"
+  },
+  "metadata": {
+    "timestamp_available": true,
+    "frame_counter_available": true,
+    "warnings": [],
+    "camera_clock": {
+      "device_id": "40065509",
+      "timestamp_source": "ChunkTimestamp",
+      "conversion_available": true,
+      "tick_period_ns_numerator": 1,
+      "tick_period_ns_denominator": 1,
+      "timestamp_semantics": "exposure_start",
+      "reset_semantics": "unknown",
+      "wrap_semantics": "unknown",
+      "unavailable_reason": "",
+      "counter_source": "CGrabResultData.GetBlockID",
+      "counter_semantics": "frames",
+      "counter_width_bits": 64,
+      "counter_wrap_semantics": "unknown",
+      "counter_unavailable_reason": ""
+    }
+  },
+  "pfs_restored_exact": true,
+  "closed": true
+}

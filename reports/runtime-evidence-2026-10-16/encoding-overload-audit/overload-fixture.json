@@ -1,0 +1,7 @@
+{
+  "sha256": "55086b93616b3b4ccaaa520ef72ac19f9d28dbec6570dff37de5981fb7331838",
+  "capture_slots": 8,
+  "review_scale_factor": 1,
+  "capture_cpu_estimate_bytes": 235520000,
+  "purpose": "4x review input bytes, finite budgets unchanged, full60 normal instead knownfailingAbort"
+}

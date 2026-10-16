@@ -7,6 +7,7 @@ from collections.abc import Coroutine
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, cast
 from uuid import uuid4
 
@@ -15,6 +16,8 @@ import pytest
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.lifecycle.preparation_context import PreparationContext
+from cephvr.controller.lifecycle.trials import TrialExecution
 from cephvr.controller.lifecycle_reports import LifecycleReports, ReportHooks
 from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.planning import requested_output_identities
@@ -386,7 +389,10 @@ async def test_cleanup_requires_registered_output_path(
     )
     work = pb.WorkContext(session=attempt.context)
     registered = svc.RegisteredContext(work=work)
-    registered.outputs.add(output_key="camera", backend=backend, path="camera.jsonl")
+    registered.outputs.add(output_key="camera", backend=backend)
+    attempt.prepared.outputs.add(
+        output_key="camera", backend=backend, path="camera.jsonl"
+    )
     operation = pb.OperationContext(command_id=_id())
     registered.cleanup_commands.add(target=source, work=work, operation=operation)
     attempt.registered_context = registered
@@ -412,6 +418,99 @@ async def test_cleanup_requires_registered_output_path(
     receipt = await fixture.reports.receive(pb.LifecycleReport(cleanup=cleanup), 50)
     assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) == (path == "camera.jsonl")
     assert bool(attempt.cleanup) == (path == "camera.jsonl")
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    [
+        "scheduled",
+        "wrong-path",
+        "foreign-trial",
+        "missing-plan",
+        "duplicate-frozen",
+        "registered-wrong-path",
+        "unscheduled",
+        "unscheduled-closed",
+    ],
+)
+async def test_cleanup_joins_frozen_setup_output_to_scheduled_path(tmp_path, outcome):
+    fixture = _fixture(tmp_path)
+    attempt, backend = fixture.attempt, fixture.backend
+    trial = attempt.prepared.trials[0]
+    trial.resolved_duration_ns = 1_000_000_000
+    attempt.prepared.anchor_wall_time = datetime.now(UTC).isoformat()
+    attempt.prepared.anchor_monotonic_ns = 0
+    attempt.prepared.configuration.subject = "DUMMY"
+    attempt.prepared.outputs.add(
+        output_key="camera",
+        backend=backend,
+        trial=trial.context,
+        output_tag="camera",
+        extension="jsonl",
+    )
+    preparation = PreparationContext(
+        configuration=ConfigurationState(
+            pb.ExperimentConfiguration(), pb.ControlPolicies()
+        ),
+        supervisor=fixture.supervisor,
+        generation=attempt.context.controller_generation,
+        supervisor_generation=_id(),
+    )
+    registered = preparation.registration(attempt, "setup").context
+    assert not registered.outputs[0].HasField("path")
+    attempt.registered_context = registered
+    if not outcome.startswith("unscheduled"):
+        execution = SimpleNamespace(
+            clock=lambda: 100,
+            limit_state=LimitsState(_limits()),
+            lifecycle=fixture.lifecycle,
+            publisher=SimpleNamespace(publish=lambda: None),
+        )
+        await TrialExecution._plan_trial(execution, attempt, trial)
+        assert attempt.prepared.outputs[0].path
+    assert not registered.outputs[0].HasField("path")
+    source = pb.ProcessIdentity(
+        role=backend.backend_name, generation=backend.backend_generation
+    )
+    work = pb.WorkContext(session=attempt.context)
+    operation = pb.OperationContext(command_id=_id())
+    registered.cleanup_commands.add(target=source, work=work, operation=operation)
+    fixture.supervisor.processes[backend.backend_name] = svc.ProcessHealthStatus(
+        process=source,
+        last_heartbeat=pb.HeartbeatReport(
+            source=source, work=work, cleanup_resources_revision=1
+        ),
+    )
+    cleanup = pb.CleanupReport(
+        source=source,
+        work=work,
+        operation=operation,
+        verified_monotonic_ns=1,
+        trial_activity_stopped=True,
+        cleanup_resources_revision=1,
+    )
+    cleanup.outputs.add(
+        output_key="camera",
+        path=attempt.prepared.outputs[0].path,
+        closure=pb.OUTPUT_CLOSURE_NOT_STARTED
+        if outcome == "unscheduled"
+        else pb.OUTPUT_CLOSURE_CLOSED,
+        artifact_present=outcome != "unscheduled",
+    )
+    if outcome == "wrong-path":
+        cleanup.outputs[0].path = "foreign.jsonl"
+    elif outcome == "foreign-trial":
+        attempt.prepared.outputs[0].trial.trial_id = _id()
+    elif outcome == "missing-plan":
+        del attempt.prepared.outputs[:]
+    elif outcome == "duplicate-frozen":
+        registered.outputs.add().CopyFrom(registered.outputs[0])
+    elif outcome == "registered-wrong-path":
+        registered.outputs[0].path = "wrong-frozen-path.jsonl"
+    receipt = await fixture.reports.receive(pb.LifecycleReport(cleanup=cleanup), 50)
+    assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) == (
+        outcome in {"scheduled", "unscheduled"}
+    )
 
 
 async def test_trial_ready_requires_exact_trial_and_active_participant(

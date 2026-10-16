@@ -1,7 +1,7 @@
 """Session recording choices, independent of the protocol editor's layout."""
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QGridLayout, QHBoxLayout, QLabel
+from PyQt6.QtWidgets import QCheckBox, QGridLayout, QLabel, QSizePolicy
 
 from cephvr.gui.cameras import CamerasPanel
 from cephvr.gui.components import Card, label
@@ -13,10 +13,11 @@ class RecordingsCard(Card):
 
     def __init__(self, cameras: CamerasPanel) -> None:
         super().__init__("Recordings")
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.cameras = cameras
         self.can_edit = False
         self.source_grid = QGridLayout()
-        self.source_grid.setHorizontalSpacing(14)
+        self.source_grid.setHorizontalSpacing(8)
         self.source_grid.setVerticalSpacing(12)
         self.body.addLayout(self.source_grid)
         self.record: dict[str, QCheckBox] = {}
@@ -68,22 +69,16 @@ class RecordingsCard(Card):
             if camera.key not in self.record:
                 self.add_recording(camera.key, camera.role)
         while self.source_grid.count():
-            item = self.source_grid.takeAt(0)
-            if item is not None and (layout := item.layout()) is not None:
-                while layout.count():
-                    layout.takeAt(0)
-                layout.deleteLater()
+            self.source_grid.takeAt(0)
         items = [
             (self.source_labels[key], control) for key, control in self.record.items()
         ]
         items.append((self.velocity_label, self.velocities))
         for index, (caption, control) in enumerate(items):
-            pair = QHBoxLayout()
-            pair.setSpacing(8)
-            pair.addWidget(control)
-            pair.addWidget(caption, 1)
-            self.source_grid.addLayout(pair, index // 2, index % 2)
-            self.source_grid.setColumnStretch(index % 2, 1)
+            column = (index % 2) * 2
+            self.source_grid.addWidget(control, index // 2, column)
+            self.source_grid.addWidget(caption, index // 2, column + 1)
+            self.source_grid.setColumnStretch(column + 1, 1)
         self.refresh_controls()
 
     def recording_changed(self) -> None:

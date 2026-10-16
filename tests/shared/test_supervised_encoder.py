@@ -20,6 +20,7 @@ from cephvr.platform.windows.jobs import SuspendedProcess
 from cephvr.shared import supervised_encoder
 from cephvr.shared.auth import Principal
 from cephvr.shared.encoder_errors import EncoderLaunchError
+from cephvr.shared.encoder_io import WindowsEncoderInputAdapter
 from cephvr.shared.supervised_encoder import (
     FFMPEG_PROBE_ROLE,
     SupervisedEncoderLauncher,
@@ -29,6 +30,61 @@ DEADLINE = 10**15
 CHILD = SuspendedProcess(
     pid=7, creation_time_100ns=70, executable="x", process_handle=1, thread_handle=2
 )
+
+
+@pytest.mark.parametrize("completion", [8, 3])
+def test_encoder_input_observes_immediate_or_short_completion(completion):
+    starts = []
+    process = SimpleNamespace(
+        begin_write=lambda data, **kw: starts.append((data, kw)),
+        poll_write=lambda: completion,
+        close_stdin=lambda **kw: None,
+    )
+    adapter = WindowsEncoderInputAdapter(
+        process, write_deadline_ns=lambda: DEADLINE, close_deadline_ns=lambda: DEADLINE
+    )
+    frame = memoryview(bytearray(8))
+    assert adapter.write_chunk(frame) == completion
+    assert starts == [(frame, {"deadline_ns": DEADLINE})]
+    adapter.close_input()
+
+
+def test_encoder_input_pending_write_keeps_original_buffer_and_deadline():
+    starts = []
+    completions = iter([None, None, 8])
+    deadlines = iter([DEADLINE])
+    process = SimpleNamespace(
+        begin_write=lambda data, **kw: starts.append((data, kw)),
+        poll_write=lambda: next(completions),
+        close_stdin=lambda **kw: None,
+    )
+    adapter = WindowsEncoderInputAdapter(
+        process,
+        write_deadline_ns=lambda: next(deadlines),
+        close_deadline_ns=lambda: DEADLINE,
+    )
+    frame = memoryview(bytearray(8))
+    assert adapter.write_chunk(frame) == 0
+    with pytest.raises(RuntimeError, match="pending overlapped"):
+        adapter.close_input()
+    assert adapter.write_chunk(memoryview(bytearray(2))) == 0
+    assert adapter.write_chunk(frame) == 8
+    assert starts == [(frame, {"deadline_ns": DEADLINE})]
+    adapter.close_input()
+
+
+def test_encoder_input_poll_failure_does_not_release_pending_ownership():
+    def failed_poll():
+        raise OSError("write outcome unknown")
+
+    process = SimpleNamespace(begin_write=lambda *a, **kw: None, poll_write=failed_poll)
+    adapter = WindowsEncoderInputAdapter(
+        process, write_deadline_ns=lambda: DEADLINE, close_deadline_ns=lambda: DEADLINE
+    )
+    with pytest.raises(OSError, match="unknown"):
+        adapter.write_chunk(memoryview(bytearray(8)))
+    with pytest.raises(RuntimeError, match="pending overlapped"):
+        adapter.close_input()
 
 
 class FakeEndpoint:

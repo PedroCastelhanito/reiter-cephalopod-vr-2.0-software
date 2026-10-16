@@ -100,3 +100,6 @@ __pycache__/
 !/assets/calibration/reference_bars.glb
 !/assets/calibration/frame_grid.glb
 /demo_assets/
+
+# Reproducible synthetic encoding buffers: preserve locally with the audit hash manifest.
+/reports/runtime-evidence-2026-10-16/encoding-overload-audit/**/*.raw

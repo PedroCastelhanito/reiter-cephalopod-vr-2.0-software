@@ -1,0 +1,8 @@
+{
+  "original_sha256": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212",
+  "temporary_sha256": "93d36e311aa8733e51b5e2b292f9a1cc717bfca433ee3e897f65ddd0bb0b6c0c",
+  "capture_slots": 16,
+  "estimated_capture_cpu_bytes": 99840000,
+  "recording_bytes_total": 268435456,
+  "scope": "Temporary bounded engineering setting, restore exact original bytes; no default recommendation yet"
+}

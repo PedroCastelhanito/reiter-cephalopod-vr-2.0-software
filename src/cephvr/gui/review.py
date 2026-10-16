@@ -298,7 +298,7 @@ def main() -> None:
                 f"The saved review draft was preserved but could not be restored: {exc}",
             )
     fit_window_to_screen(window)
-    window.show()
+    window.showMaximized()
     window.raise_()
     window.activateWindow()
     sys.exit(app.exec())

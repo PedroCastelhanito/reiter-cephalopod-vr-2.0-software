@@ -1,0 +1,82 @@
+[
+  {
+    "group": 5,
+    "capture": {
+      "disposition": "capacity_drop",
+      "video_frame_index": null,
+      "source_pixel_format": "rgba8_top_down",
+      "encoder_pixel_format": "yuv444p",
+      "failure_code": null
+    }
+  },
+  {
+    "group": 6,
+    "capture": {
+      "disposition": "capacity_drop",
+      "video_frame_index": null,
+      "source_pixel_format": "rgba8_top_down",
+      "encoder_pixel_format": "yuv444p",
+      "failure_code": null
+    }
+  },
+  {
+    "group": 7,
+    "capture": {
+      "disposition": "capacity_drop",
+      "video_frame_index": null,
+      "source_pixel_format": "rgba8_top_down",
+      "encoder_pixel_format": "yuv444p",
+      "failure_code": null
+    }
+  },
+  {
+    "group": 8,
+    "capture": {
+      "disposition": "capacity_drop",
+      "video_frame_index": null,
+      "source_pixel_format": "rgba8_top_down",
+      "encoder_pixel_format": "yuv444p",
+      "failure_code": null
+    }
+  },
+  {
+    "group": 9,
+    "capture": {
+      "disposition": "capacity_drop",
+      "video_frame_index": null,
+      "source_pixel_format": "rgba8_top_down",
+      "encoder_pixel_format": "yuv444p",
+      "failure_code": null
+    }
+  },
+  {
+    "group": 10,
+    "capture": {
+      "disposition": "capacity_drop",
+      "video_frame_index": null,
+      "source_pixel_format": "rgba8_top_down",
+      "encoder_pixel_format": "yuv444p",
+      "failure_code": null
+    }
+  },
+  {
+    "group": 11,
+    "capture": {
+      "disposition": "capacity_drop",
+      "video_frame_index": null,
+      "source_pixel_format": "rgba8_top_down",
+      "encoder_pixel_format": "yuv444p",
+      "failure_code": null
+    }
+  },
+  {
+    "group": 12,
+    "capture": {
+      "disposition": "capacity_drop",
+      "video_frame_index": null,
+      "source_pixel_format": "rgba8_top_down",
+      "encoder_pixel_format": "yuv444p",
+      "failure_code": null
+    }
+  }
+]

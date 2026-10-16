@@ -82,7 +82,7 @@ class ManagedMcu(QObject):
 
     def test_connection(self) -> None:
         state = self.snapshot()
-        if state is None:
+        if state is None or self.pending:
             return
         settings = next(
             (
@@ -99,8 +99,10 @@ class ManagedMcu(QObject):
             )
             return
         if selected != settings.pulses.port:
+            token = self.panel.pending_action.begin(self.panel.test_connection_button)
             if self.bridge.request(
                 "prepare_mcu_connection",
+                cancellation=token,
                 generation=state.controller_generation,
                 base_revision=state.configuration.revision,
                 base_configuration=state.configuration_values.current.SerializeToString(
@@ -112,6 +114,8 @@ class ManagedMcu(QObject):
                 self.pending = True
                 self.panel.connection_pending = True
                 self.panel.refresh_tests()
+            else:
+                self.panel.pending_action.finish()
             return
         self.send(rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT)
 
@@ -284,7 +288,18 @@ class ManagedMcu(QObject):
         if submission is not None:
             action = "prepare_mcu_test"
             options.update(submission)
+        if kind in {
+            rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+            rpc.MICROCONTROLLER_COMMAND_KIND_START,
+        }:
+            button = (
+                self.panel.test_connection_button
+                if not key
+                else self.panel.test_buttons[key]
+            )
+            options["cancellation"] = self.panel.pending_action.begin(button)
         if not self.bridge.request(action, **options):
+            self.panel.pending_action.finish()
             self.panel.set_test_failure(
                 key or "MCU", "Controller connection is unavailable."
             )
@@ -316,12 +331,19 @@ class ManagedMcu(QObject):
         }:
             return
         self.pending = False
+        self.panel.pending_action.finish()
+        for key in self.panel.test_buttons:
+            self.panel.update_test_button(key)
         self.pending_kind = 0
         self.panel.upload_pending = False
         self.panel.connection_pending = False
         self.panel.pending_test_key = ""
         if not success:
-            self.panel.console.appendPlainText(f"MCU command failed: {message}")
+            self.panel.console.appendPlainText(
+                message
+                if message.startswith("Cancelled")
+                else f"MCU command failed: {message}"
+            )
         # Confirm active state and renew the diagnostic lease after completion.
         # Submission can include serial startup and does not prove a running test.
         if (
@@ -335,6 +357,7 @@ class ManagedMcu(QObject):
     def disconnected(self) -> None:
         self.settle.stop()
         self.pending = False
+        self.panel.pending_action.finish()
         self.pending_kind = 0
         self.revision = self.observed_ns = -1
         self.panel.upload_pending = False

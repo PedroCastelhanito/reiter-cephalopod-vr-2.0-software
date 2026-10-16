@@ -1,0 +1,7 @@
+acquisition_tracking_worker SetupSession 4a344e18-c760-4785-a9fd-af9e92a27b5f failed: CameraAdapterError: pypylon blocking control wait did not release the GIL
+SetupSession b58d823c-6318-4c3e-944e-9e1c68495a16 failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 2 Setup failed: WORKER_OPERATION_FAILED: pypylon blocking control wait did not release the GIL
+CancelSetup c443d53a-61bf-41c2-a613-4e85725c4aa2 failed: CLEANUP_UNCONFIRMED: acquisition_tracking_worker cleanup evidence is incomplete
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_EVIDENCE: session cleanup lacks retained Setup ownership
+InterruptSession 45d88d2f-f53c-4a50-a7bb-2684aa77e123 failed: SESSION_IDENTITY: no exact live session
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

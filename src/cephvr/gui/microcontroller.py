@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from cephvr.gui.action_cancellation import PendingAction
 from cephvr.gui.components import Card, button, combo, equal_row_height, field
 from cephvr.gui.device_panel import DevicePanel
 from cephvr.gui.microcontroller_signals import ROLE_OUTPUTS, MicrocontrollerSignals
@@ -114,6 +115,7 @@ class MicrocontrollerPanel(DevicePanel):
         self.managed_test_key = ""
         self.pending_test_key = ""
         self.connection_pending = False
+        self.pending_action = PendingAction()
         self.review_tests: set[str] = set()
         self.test_buttons: dict[str, QPushButton] = {}
         self.enable_controls: dict[str, QCheckBox] = {}
@@ -253,6 +255,10 @@ class MicrocontrollerPanel(DevicePanel):
         self.refresh_tests()
 
     def request(self, name: str) -> None:
+        if name == "Test connection" and self.pending_action.cancel(
+            self.test_connection_button
+        ):
+            return
         if not self.can_review:
             return
         if name == "Scan ports":
@@ -475,6 +481,7 @@ class MicrocontrollerPanel(DevicePanel):
                 self.can_review and not active and not self.upload_pending
             )
 
+        self.pending_action.refresh(self.can_review)
         self.controls_changed.emit()
 
     def port_changed(self) -> None:
@@ -521,6 +528,10 @@ class MicrocontrollerPanel(DevicePanel):
         control.update()
 
     def test_pin(self, key: str) -> None:
+        if key in self.test_buttons and self.pending_action.cancel(
+            self.test_buttons[key]
+        ):
+            return
         if key == "projector-flip":
             return
         if self.managed and key == self.managed_test_key:

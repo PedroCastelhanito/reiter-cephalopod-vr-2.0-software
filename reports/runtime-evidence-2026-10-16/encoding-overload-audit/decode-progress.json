@@ -1,0 +1,7 @@
+{
+  "ProcessId": 36172,
+  "CreationDate": "2026-10-16T19:06:17.414543+09:00",
+  "KernelModeTime": 15781250,
+  "UserModeTime": 582812500,
+  "CommandLine": "ffmpeg -hide_banner -v error -threads 2 -i C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-rgb-gray-lossles\\DUMMY-184110\\protocol-data\\DUMMY_184114_behavioral_cam.mp4 -f null -"
+}

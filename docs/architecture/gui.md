@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 213
+**Status:** Accepted · **Revision:** 216
 
 - Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
 
@@ -537,10 +537,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Connect starts A10 manual capture and then Shows its acquisition-owned OpenCV
   window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
   visibility evidence updates the GUI selector. Show snaps the visible preview frame
-  outside the GUI's top-right edge, shrinking the square to available right-hand
-  space before using the left edge; clamp to the current monitor work area when
-  neither side fits. Use physical visible-frame bounds without a tool-window gap
-  or invisible resize borders. Reopening samples the current GUI position;
+  into the reserved right-side Preview area on Dashboard, Devices/Cameras and
+  Tracking. The shared runtime/review shell opens maximized and keeps this area
+  separate from controls; other tabs reclaim its space. Previews remain detached,
+  never embedded or reparented. Place the native frame inside the card below its
+  heading; size the card to the initial square and native chrome with only border
+  padding, rather than stretching it to page height. Use physical client-to-screen
+  coordinates and native DPI metrics. Keep detached previews topmost without
+  activating them so GUI interaction cannot cover them. Reopening samples the
+  current layout. When no slot
+  is visible, retain monitor-constrained placement beside the GUI;
   an open window remains freely movable. A10 owns padding and wheel zoom/reset.
   The GUI owns no camera display reader. Disconnect releases an
   editing/cleanup owner when no capture is running. Camera/pulse settings remain
@@ -585,7 +591,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   settings with their existing V20/V22/A11 owners. VSync mode
   remains editable when the photodiode patch is disabled.
 - Managed MCU connection/pin tests use controller-confirmed COM/pin/rate values.
-  Pending commands lock edits and repeat tests. A11 diagnostic observations drive
+  Pending commands lock edits and repeat tests. Camera Connect/Test selected, MCU
+  Test connection/pin Test and the read-only SpikeGLX connection check replace their
+  initiating button with Cancel, then disabled Cancelling while the current bounded
+  call settles. Cancellation skips remaining steps without aborting transport or
+  extending the in-flight deadline. Confirm cleanup of newly created camera/MCU
+  resources before reporting cancellation; retain pre-existing resources and accepted
+  settings. Cleanup failure, lost authority/connection or changed generation remains
+  an explicit unconfirmed outcome, never a successful cancellation. Firmware Upload
+  and safety Stop/Disconnect retain their existing completion behavior.
+  A11 diagnostic observations drive
   Test/Stop state; a bounded follow-up status query begins after confirmed execution,
   and control/connection loss cancels local timers. Firmware/edge reports do not prove
   physical receiver wiring.

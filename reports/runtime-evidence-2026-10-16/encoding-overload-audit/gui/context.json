@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-16T18:01:11.0797348+09:00",
+  "source_head": "62ee90c9331f8e0829966a988262e188670ce9d6",
+  "dirty_inherited": true,
+  "changed_by_this_increment": "tests/gui/test_dashboard.py::test_camera_cancel_waits_for_inflight_call_and_exact_cleanup",
+  "sha256": "80910a11dbdc34ad29cfb6bc3e06d8c80e25fd29bd66aefbd33a6f2a47b59cd9",
+  "review": "Astra accepted gated-await regression",
+  "collected": 585,
+  "offscreen_focused": {
+    "deselected": 560,
+    "seconds": 3.12,
+    "passed": 25
+  },
+  "offscreen_full": {
+    "failed": 6,
+    "watchdog_seconds": 300,
+    "seconds": 285.77,
+    "passed": 579
+  },
+  "native_focused": {
+    "deselected": 560,
+    "seconds": 3.85,
+    "passed": 25
+  },
+  "native_highgui_owner": {
+    "warnings": 6,
+    "seconds": 0.7,
+    "passed": 1
+  },
+  "static": "Ruff check, format check and scoped git diff --check pass",
+  "failures": [
+    {
+      "name": "test_devices_draft_reflows_without_horizontal_clipping[720]",
+      "message": "assert 66 == 0\n +  where 66 = <built-in method maximum of QScrollBar object at 0x000002CFD29FE050>()\n +    where <built-in method maximum of QScrollBar object at 0x000002CFD29FE050> = <PyQt6.QtWidgets.QScrollBar object at 0x000002CFD29FE050>.maximum\n +      where <PyQt6.QtWidgets.QScrollBar object at 0x000002CFD29FE050> = <built-in method horizontalScrollBar of QScrollArea object at 0x000002CFEF1E9CF0>()\n +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000002CFEF1E9CF0> = <PyQt6.QtWidgets.QScrollArea object at 0x000002CFEF1E9CF0>.horizontalScrollBar"
+    },
+    {
+      "name": "test_hud_fits_content_and_log_fills_available_height",
+      "message": "assert 144 > 144\n +  where 144 = <built-in method height of LogConsole object at 0x000002CFE6031EA0>()\n +    where <built-in method height of LogConsole object at 0x000002CFE6031EA0> = <cephvr.gui.components.LogConsole object at 0x000002CFE6031EA0>.height\n +      where <cephvr.gui.components.LogConsole object at 0x000002CFE6031EA0> = <cephvr.gui.dashboard.Dashboard object at 0x000002CFE60316C0>.log_console\n +  and   144 = <built-in method minimumHeight of LogConsole object at 0x000002CFE6031EA0>()\n +    where <built-in method minimumHeight of LogConsole object at 0x000002CFE6031EA0> = <cephvr.gui.components.LogConsole object at 0x000002CFE6031EA0>.minimumHeight\n +      where <cephvr.gui.components.LogConsole object at 0x000002CFE6031EA0> = <cephvr.gui.dashboard.Dashboard object at 0x000002CFE60316C0>.log_console"
+    },
+    {
+      "name": "test_all_pages_share_fitted_hud_and_expanding_log",
+      "message": "assert 3 == 1\n +  where 3 = len({(102, 102), (102, 500), (102, 519)})\n +    where {(102, 102), (102, 500), (102, 519)} = set([(102, 519), (102, 500), (102, 102), (102, 102), (102, 519)])"
+    },
+    {
+      "name": "test_device_tabs_sit_above_controls_without_moving_hud",
+      "message": "assert 102 == 519\n +  where 102 = <built-in method y of QPoint object at 0x000002CFE867DD90>()\n +    where <built-in method y of QPoint object at 0x000002CFE867DD90> = PyQt6.QtCore.QPoint(679, 102).y\n +      where PyQt6.QtCore.QPoint(679, 102) = <built-in method mapTo of Card object at 0x000002CFE6036320>(<cephvr.gui.window.DashboardWindow object at 0x000002CF8E71B130>, PyQt6.QtCore.QPoint())\n +        where <built-in method mapTo of Card object at 0x000002CFE6036320> = <cephvr.gui.components.Card object at 0x000002CFE6036320>.mapTo\n +        and   PyQt6.QtCore.QPoint() = QPoint()"
+    },
+    {
+      "name": "test_eye_role_projects_and_tests_selected_without_capture",
+      "message": "AssertionError: assert [('camera', {...90: unset>)})] == [('camera', {..., 'kind': 7})]\n  \n  At index 0 diff: ('camera', {'role': 3, 'kind': 7, 'cancellation': Cancellation(requested=<threading.Event at 0x2cfc2408390: unset>)}) != ('camera', {'role': 3, 'kind': 7})\n  Use -v to get more diff"
+    },
+    {
+      "name": "test_recording_checks_stay_next_to_labels",
+      "message": "assert 34 >= 51\n +  where 34 = <built-in method height of QLabel object at 0x000002CF8E6751B0>()\n +    where <built-in method height of QLabel object at 0x000002CF8E6751B0> = <PyQt6.QtWidgets.QLabel object at 0x000002CF8E6751B0>.height\n +  and   51 = <built-in method heightForWidth of QLabel object at 0x000002CF8E6751B0>(94)\n +    where <built-in method heightForWidth of QLabel object at 0x000002CF8E6751B0> = <PyQt6.QtWidgets.QLabel object at 0x000002CF8E6751B0>.heightForWidth\n +    and   94 = <built-in method width of QLabel object at 0x000002CF8E6751B0>()\n +      where <built-in method width of QLabel object at 0x000002CF8E6751B0> = <PyQt6.QtWidgets.QLabel object at 0x000002CF8E6751B0>.width"
+    }
+  ],
+  "limitations": [
+    "No managed application or real device started",
+    "Full native and chooser followup deferred for encoding priority",
+    "Known seven native picker roundtrips not blindly retried",
+    "Synthetic integrated cancellation is not real hardware acceptance"
+  ],
+  "remaining_owned_test_processes": []
+}

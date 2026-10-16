@@ -1,6 +1,6 @@
 """Frontend shell with shared status columns and local configuration pages."""
 
-from PyQt6.QtCore import QEvent, QSettings
+from PyQt6.QtCore import QEvent, QSettings, Qt
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QButtonGroup,
@@ -19,6 +19,7 @@ from cephvr.gui.dashboard import Dashboard
 from cephvr.gui.devices import DevicesPage
 from cephvr.gui.gui_snapshot import GuiSnapshot, SnapshotPages
 from cephvr.gui.notices import StatusEvent
+from cephvr.gui.preview_placement import PreviewSlot
 from cephvr.gui.protocol import ProtocolPage
 from cephvr.gui.recordings import RecordingsCard
 from cephvr.gui.theme import SIZES
@@ -143,7 +144,13 @@ class DashboardWindow(QMainWindow):
         self.page_header.setFixedHeight(
             max(control.sizeHint().height() for control in header_controls)
         )
-        body.addWidget(self.stack, 1)
+        content = QHBoxLayout()
+        content.setSpacing(SIZES.column_gap)
+        content.addWidget(self.stack, 3)
+        self.preview_slot = PreviewSlot()
+        content.addWidget(self.preview_slot, 2, Qt.AlignmentFlag.AlignTop)
+        body.addLayout(content, 1)
+        self.devices.tabs.currentChanged.connect(self.update_preview_slot)
         layout.addWidget(page, 1)
         self.navigation.idClicked.connect(self.select_page)
         self.apply_view(DashboardView())
@@ -165,6 +172,13 @@ class DashboardWindow(QMainWindow):
         self.stack.setCurrentIndex(index)
         self.page_title.setText(PAGES[index].upper())
         self.dashboard.preview_button.setVisible(index == 0)
+        self.update_preview_slot()
+
+    def update_preview_slot(self) -> None:
+        page = self.stack.currentIndex()
+        self.preview_slot.setVisible(
+            page in (0, 3) or (page == 2 and self.devices.tabs.currentIndex() == 0)
+        )
 
     def apply_view(self, view: DashboardView) -> None:
         self.dashboard.apply_view(view)

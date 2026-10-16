@@ -10,7 +10,9 @@ from typing import Any, cast
 from cephvr.client.session import ClientError, HeadlessClient
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.action_cancellation import ActionCancelled, Cancellation, checkpoint
 from cephvr.gui.camera_action_submission import prepare_camera
+from cephvr.gui.cancel_cleanup import cleanup_cancelled_device
 from cephvr.gui.managed_device_commands import dispatch_device_action
 from cephvr.gui.managed_display_operations import (
     close_display_calibration_request,
@@ -111,6 +113,33 @@ class ManagedActions:
     async def _device(
         self, client: HeadlessClient, action: str, options: dict[str, Any]
     ) -> bool:
+        token = options.get("cancellation")
+        if not isinstance(token, Cancellation):
+            result = await self._device_result(client, action, options)
+        else:
+            if token.requested.is_set():
+                self.command_finished(action, False, "Cancelled before dispatch")
+                return True
+            before = pb.Snapshot.FromString(client.snapshot.SerializeToString())
+            try:
+                result = await self._device_result(client, action, options)
+                checkpoint(options)
+            except ActionCancelled:
+                await cleanup_cancelled_device(client, action, options, before)
+                self.command_finished(
+                    action,
+                    False,
+                    "Cancelled; cleanup confirmed. Applied settings are retained.",
+                )
+                return True
+        if result is None:
+            return False
+        self.command_finished(action, *result)
+        return True
+
+    async def _device_result(
+        self, client: HeadlessClient, action: str, options: dict[str, Any]
+    ) -> tuple[bool, str] | None:
         if action in {"prepare_mcu_test", "prepare_mcu_connection"}:
             base_revision = int(options["base_revision"])
             if action == "prepare_mcu_connection":
@@ -121,6 +150,7 @@ class ManagedActions:
             self.device_configuration_accepted(
                 base_revision, client.snapshot.SerializeToString()
             )
+            checkpoint(options)
             mcu_result = await dispatch_device_action(
                 client,
                 "mcu",
@@ -128,8 +158,7 @@ class ManagedActions:
                 self.principal,
             )
             assert mcu_result is not None
-            self.command_finished(action, *mcu_result)
-            return True
+            return mcu_result
         if action == "prepare_camera":
             base_revision = int(options["base_revision"])
 
@@ -145,6 +174,7 @@ class ManagedActions:
                     base_revision = state.configuration.revision
 
             await prepare_camera(client, options, camera_accepted)
+            checkpoint(options)
             try:
                 camera_result = await dispatch_device_action(
                     client,
@@ -155,8 +185,7 @@ class ManagedActions:
             finally:
                 camera_accepted(client.snapshot)
             assert camera_result is not None
-            self.command_finished(action, *camera_result)
-            return True
+            return camera_result
         base_revision = client.snapshot.configuration.revision
         device_result = await dispatch_device_action(
             client, action, options, self.principal
@@ -171,9 +200,8 @@ class ManagedActions:
                 self.device_configuration_accepted(
                     base_revision, client.snapshot.SerializeToString()
                 )
-            self.command_finished(action, success, message)
-            return True
-        return False
+            return success, message
+        return None
 
     async def _inventory(
         self, client: HeadlessClient, action: str, options: dict[str, Any]

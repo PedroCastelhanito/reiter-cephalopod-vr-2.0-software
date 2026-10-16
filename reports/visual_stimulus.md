@@ -1,6 +1,35 @@
 # Visual Stimulus status
 
-Current Oct15 comprehensive recheck confirms fresh managed Idle initialization on
+Current Oct16 encoding/overload audit follows sequential [V12/V28](../docs/architecture/visual_stimulus.md#v12)
+and lossy-review [E13](../docs/architecture/system-contracts.md#e13). Rendering
+remains on RTX 5060 Ti and NVENC on RTX 2080 Ti; no cross-GPU sharing or new GPU
+filter policy was introduced. Existing GPU orientation/PBO reuse makes measured
+normalization negligible. Removing a forced host write-poll deferral reduces mean
+native stimulus frame-input time from 14.30 ms to 1.93 ms in the tested p4 fixture.
+Cold-start buffering remains distinct: three slots omit groups 5–12, while a
+bounded temporary 16-slot fixture encodes all 3,599 real groups once with no drops,
+confirmed drain, session cleanup and NewSession. Peak occupancy is eight slots.
+Saved three-slot/half-resolution settings are restored, not silently retuned.
+
+A higher-demand full-review-resolution/eight-slot 60-second fixture submits four
+times the review bytes per frame within unchanged resource budgets. It completes
+normally with 3,597 real groups, 3,592 encoded once and five explicit capacity
+omissions at startup groups 10–14 (0.176–0.242 s); no later capacity omissions,
+duplicates or nominal padding are observed. Mean frame input is 6.11 ms. This is
+bounded higher-demand evidence, not proof of sustained saturation or universal
+loss-free recording. Full external decode/count verification passes for retained media; source omissions remain explicit.
+Scientific JSONL/renderer state remains independent of optional video saving.
+
+Normal cleanup now strictly joins frozen Setup output identities to controller
+scheduled paths; native completed trials/NewSession/Shutdown pass. Early Abort
+still exposes a separate acquisition interrupted-Finished/cleanup failure, retained
+in the [current audit assessment](runtime-evidence-2026-10-16/encoding-overload-audit/README.md).
+The earlier successful Abort observations below are historical and do not close
+this current regression. Final live shutdown has an exact absence receipt and no
+new emergency; settings/cameras are restored byte-exact. See the single
+[remaining rig checklist](rig-verification.md) for acceptance gaps.
+
+Historical Oct15 comprehensive recheck confirms fresh managed Idle initialization on
 all four60Hz outputs with8-bit channels and swap interval1. This is software
 submission evidence, not optical timing. The saved program's declared arena texture
 requires715,827,840 GPU-budget bytes versus536,870,912 configured; Setup correctly

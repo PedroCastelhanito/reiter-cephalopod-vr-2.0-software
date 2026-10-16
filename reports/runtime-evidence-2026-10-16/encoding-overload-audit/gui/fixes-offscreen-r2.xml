@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="7" time="4.671" timestamp="2026-10-16T18:25:28.598375+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_reflows_without_horizontal_clipping[720]" time="0.554" /><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_reflows_without_horizontal_clipping[1175]" time="0.606" /><testcase classname="tests.gui.test_dashboard" name="test_hud_fits_content_and_log_fills_available_height" time="0.525" /><testcase classname="tests.gui.test_dashboard" name="test_all_pages_share_fitted_hud_and_expanding_log" time="0.594" /><testcase classname="tests.gui.test_dashboard" name="test_device_tabs_sit_above_controls_without_moving_hud" time="0.594"><failure message="assert 363 == (298 - 1)&#10; +  where 363 = &lt;built-in method right of QRect object at 0x00000188C50C9A10&gt;()&#10; +    where &lt;built-in method right of QRect object at 0x00000188C50C9A10&gt; = PyQt6.QtCore.QRect(276, 0, 88, 40).right&#10; +      where PyQt6.QtCore.QRect(276, 0, 88, 40) = &lt;built-in method tabRect of QTabBar object at 0x00000188C8BABA30&gt;(3)&#10; +        where &lt;built-in method tabRect of QTabBar object at 0x00000188C8BABA30&gt; = &lt;PyQt6.QtWidgets.QTabBar object at 0x00000188C8BABA30&gt;.tabRect&#10; +  and   298 = &lt;built-in method width of QTabBar object at 0x00000188C8BABA30&gt;()&#10; +    where &lt;built-in method width of QTabBar object at 0x00000188C8BABA30&gt; = &lt;PyQt6.QtWidgets.QTabBar object at 0x00000188C8BABA30&gt;.width">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000188C8BA8670&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000188C4899CF0&gt;
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -&gt; None:
+        assert window.tracking.load_button.text() == "Load…"
+        assert window.tracking.save_button.text() == "Save as…"
+        window.resize(1920, 940)
+        app.processEvents()
+        assert window.dashboard.mode == "wide"
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1920, 720, 1920):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+&gt;               assert bar.tabRect(3).right() == bar.width() - 1
+E               assert 363 == (298 - 1)
+E                +  where 363 = &lt;built-in method right of QRect object at 0x00000188C50C9A10&gt;()
+E                +    where &lt;built-in method right of QRect object at 0x00000188C50C9A10&gt; = PyQt6.QtCore.QRect(276, 0, 88, 40).right
+E                +      where PyQt6.QtCore.QRect(276, 0, 88, 40) = &lt;built-in method tabRect of QTabBar object at 0x00000188C8BABA30&gt;(3)
+E                +        where &lt;built-in method tabRect of QTabBar object at 0x00000188C8BABA30&gt; = &lt;PyQt6.QtWidgets.QTabBar object at 0x00000188C8BABA30&gt;.tabRect
+E                +  and   298 = &lt;built-in method width of QTabBar object at 0x00000188C8BABA30&gt;()
+E                +    where &lt;built-in method width of QTabBar object at 0x00000188C8BABA30&gt; = &lt;PyQt6.QtWidgets.QTabBar object at 0x00000188C8BABA30&gt;.width
+
+tests\gui\test_dashboard.py:3093: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_eye_role_projects_and_tests_selected_without_capture" time="0.542" /><testcase classname="tests.gui.test_dashboard" name="test_recording_checks_stay_next_to_labels" time="0.549" /></testsuite></testsuites>

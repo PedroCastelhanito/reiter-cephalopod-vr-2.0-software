@@ -1,0 +1,3 @@
+behavior 150 {'byte_exact': True, 'maximum_sample_error': 0, 'source_sha256': '4cd254299c76445f7bc518af4bf4d9d70c127a12188ecda15df5a0f33156f6d2', 'decoded_sha256': '4cd254299c76445f7bc518af4bf4d9d70c127a12188ecda15df5a0f33156f6d2', 'scope': 'RGBsamples'}
+tracking 300 {'byte_exact': True, 'maximum_sample_error': 0, 'source_sha256': '2da9895d8d04628a61e8644057cfd953292f8ff9697532d0093970f3d60f8395', 'decoded_sha256': '2da9895d8d04628a61e8644057cfd953292f8ff9697532d0093970f3d60f8395', 'scope': 'grayversusstoredluma'}
+stimulus 300 None

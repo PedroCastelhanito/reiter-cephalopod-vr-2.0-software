@@ -911,7 +911,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 48
+**Status:** Accepted · **Revision:** 49
 
 **Board and firmware**
 
@@ -969,6 +969,12 @@ hardware information and later implementation; no new deferral is implied.
   release fences new execution while admitting camera safety cleanup. Firmware watchdog
   remains independent.
 
+- Explicit manual Disconnect requires the exact current connection ID at admission
+  and execution, idle Configuration, operator authority and no camera-trigger claim.
+  It reuses bounded outputs-off/serial-close cleanup, preserves its operation deadline
+  and leaves uncertain release fenced. G01 cancellation uses it only for a connection
+  created by that intent; an existing connection is retained and only the newly
+  started diagnostic is stopped. No in-flight hardware request is force-cancelled.
 - One serial owner opens only the configured port. Boot/reset leaves outputs off and
   volatile configuration invalid. Reopen requires outputs-off verification, fresh
   capabilities and full configuration; no automatic pulse/session resumption. A failed

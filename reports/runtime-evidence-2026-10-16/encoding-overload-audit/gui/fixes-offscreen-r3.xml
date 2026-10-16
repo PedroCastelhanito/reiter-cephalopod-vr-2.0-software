@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="8" time="8.686" timestamp="2026-10-16T18:26:51.735837+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_reflows_without_horizontal_clipping[720]" time="0.800"><failure message="assert 73 == 0&#10; +  where 73 = &lt;built-in method maximum of QScrollBar object at 0x000001D73D3F0B80&gt;()&#10; +    where &lt;built-in method maximum of QScrollBar object at 0x000001D73D3F0B80&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x000001D73D3F0B80&gt;.maximum&#10; +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x000001D73D3F0B80&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000001D73D750940&gt;()&#10; +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000001D73D750940&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x000001D73D750940&gt;.horizontalScrollBar">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000001D73D29B7F0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001D732109C60&gt;, width = 720
+
+    @pytest.mark.parametrize("width", [720, 1175])
+    def test_devices_draft_reflows_without_horizontal_clipping(
+        window: DashboardWindow, app: QApplication, width: int
+    ) -&gt; None:
+        window.page_buttons[2].click()
+        form = window.devices.cameras.trigger_form
+        fields = form.fields
+        for current_width in (width, 1920, width):
+            window.resize(current_width, 883)
+            for index in range(4):
+                window.devices.tabs.setCurrentIndex(index)
+                app.processEvents()
+                scroll = window.devices.panels[index].scrollers[0]
+&gt;               assert scroll.horizontalScrollBar().maximum() == 0
+E               assert 73 == 0
+E                +  where 73 = &lt;built-in method maximum of QScrollBar object at 0x000001D73D3F0B80&gt;()
+E                +    where &lt;built-in method maximum of QScrollBar object at 0x000001D73D3F0B80&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x000001D73D3F0B80&gt;.maximum
+E                +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x000001D73D3F0B80&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000001D73D750940&gt;()
+E                +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000001D73D750940&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x000001D73D750940&gt;.horizontalScrollBar
+
+tests\gui\test_dashboard.py:2331: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_reflows_without_horizontal_clipping[1175]" time="0.771" /><testcase classname="tests.gui.test_dashboard" name="test_camera_trigger_form_reflows_and_destroys_owned_editors" time="0.157" /><testcase classname="tests.gui.test_dashboard" name="test_hud_fits_content_and_log_fills_available_height" time="0.546" /><testcase classname="tests.gui.test_dashboard" name="test_all_pages_share_fitted_hud_and_expanding_log" time="0.608" /><testcase classname="tests.gui.test_dashboard" name="test_device_tabs_sit_above_controls_without_moving_hud" time="0.882" /><testcase classname="tests.gui.test_dashboard" name="test_eye_role_projects_and_tests_selected_without_capture" time="0.759" /><testcase classname="tests.gui.test_dashboard" name="test_recording_checks_stay_next_to_labels" time="0.813" /></testsuite></testsuites>

@@ -85,6 +85,29 @@ def _visible_frame(hwnd: int) -> wintypes.RECT:
     return rect
 
 
+def client_point_to_screen(hwnd: int, x: int, y: int) -> tuple[int, int]:
+    """Map a physical client offset without assuming monitor or frame origins."""
+    with physical_coordinates():
+        api = ctypes.WinDLL("user32", use_last_error=True)
+        api.ClientToScreen.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.POINT)]
+        point = wintypes.POINT(x, y)
+        if not api.ClientToScreen(hwnd, ctypes.byref(point)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return point.x, point.y
+
+
+def preview_frame_extra(scale: float = 1.0) -> tuple[int, int]:
+    """Visible Win32 HighGUI chrome around an autosized square image."""
+    if sys.platform != "win32":
+        return round(2 * scale), round(32 * scale)
+    api = ctypes.WinDLL("user32", use_last_error=True)
+    api.GetSystemMetricsForDpi.argtypes = [ctypes.c_int, wintypes.UINT]
+    dpi = round(96 * scale)
+    metric = api.GetSystemMetricsForDpi
+    # Visible border, caption, and top resize frame; DWM hides the other padding.
+    return 2 * metric(5, dpi), sum(metric(key, dpi) for key in (4, 33, 92, 6))
+
+
 def position_preview_frame(title: str, x: int, y: int) -> None:
     """Place this process's visible preview corner, excluding invisible borders."""
     with physical_coordinates():
@@ -115,14 +138,14 @@ def position_preview_frame(title: str, x: int, y: int) -> None:
         if not api.GetWindowRect(handle, ctypes.byref(outer)):
             raise ctypes.WinError(ctypes.get_last_error())
         visible = _visible_frame(handle)
-        # SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE preserves operator focus.
+        # HWND_TOPMOST keeps the detached viewer above the GUI without activation.
         if not api.SetWindowPos(
             handle,
-            None,
+            wintypes.HWND(-1),
             x - (visible.left - outer.left),
             y - (visible.top - outer.top),
             0,
             0,
-            0x0015,
+            0x0011,
         ):
             raise ctypes.WinError(ctypes.get_last_error())

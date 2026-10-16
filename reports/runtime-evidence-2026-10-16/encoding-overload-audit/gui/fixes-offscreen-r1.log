@@ -1,0 +1,109 @@
+F...F.F                                                                  [100%]
+================================== FAILURES ===================================
+_________ test_devices_draft_reflows_without_horizontal_clipping[720] _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000023674467400>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000023669399E10>, width = 720
+
+    @pytest.mark.parametrize("width", [720, 1175])
+    def test_devices_draft_reflows_without_horizontal_clipping(
+        window: DashboardWindow, app: QApplication, width: int
+    ) -> None:
+        window.resize(width, 883)
+        window.page_buttons[2].click()
+        for index in range(4):
+            window.devices.tabs.setCurrentIndex(index)
+            app.processEvents()
+            scroll = window.devices.panels[index].scrollers[0]
+>           assert scroll.horizontalScrollBar().maximum() == 0
+E           assert 73 == 0
+E            +  where 73 = <built-in method maximum of QScrollBar object at 0x00000236725BFA30>()
+E            +    where <built-in method maximum of QScrollBar object at 0x00000236725BFA30> = <PyQt6.QtWidgets.QScrollBar object at 0x00000236725BFA30>.maximum
+E            +      where <PyQt6.QtWidgets.QScrollBar object at 0x00000236725BFA30> = <built-in method horizontalScrollBar of QScrollArea object at 0x000002367449FD00>()
+E            +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000002367449FD00> = <PyQt6.QtWidgets.QScrollArea object at 0x000002367449FD00>.horizontalScrollBar
+
+tests\gui\test_dashboard.py:2327: AssertionError
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002367364F370>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000023669399E10>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load�"
+        assert window.tracking.save_button.text() == "Save as�"
+        window.resize(1920, 940)
+        app.processEvents()
+        assert window.dashboard.mode == "wide"
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1920, 720, 1920):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+>               assert bar.tabRect(3).right() == bar.width() - 1
+E               assert 363 == (298 - 1)
+E                +  where 363 = <built-in method right of QRect object at 0x000002366CFB6110>()
+E                +    where <built-in method right of QRect object at 0x000002366CFB6110> = PyQt6.QtCore.QRect(276, 0, 88, 40).right
+E                +      where PyQt6.QtCore.QRect(276, 0, 88, 40) = <built-in method tabRect of QTabBar object at 0x000002367361E680>(3)
+E                +        where <built-in method tabRect of QTabBar object at 0x000002367361E680> = <PyQt6.QtWidgets.QTabBar object at 0x000002367361E680>.tabRect
+E                +  and   298 = <built-in method width of QTabBar object at 0x000002367361E680>()
+E                +    where <built-in method width of QTabBar object at 0x000002367361E680> = <PyQt6.QtWidgets.QTabBar object at 0x000002367361E680>.width
+
+tests\gui\test_dashboard.py:3093: AssertionError
+__________________ test_recording_checks_stay_next_to_labels __________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002366CF9A200>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000023669399E10>
+
+    def test_recording_checks_stay_next_to_labels(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.page_buttons[0].click()
+        app.processEvents()
+        panel = window.recordings
+        dashboard = window.dashboard
+        assert dashboard.isAncestorOf(panel)
+        assert not window.protocol.isAncestorOf(panel)
+        for width in (1175, 720):
+            window.resize(width, 883)
+            app.processEvents()
+            dashboard.config_scroll.ensureWidgetVisible(panel)
+            app.processEvents()
+            assert panel.y() > dashboard.subject_card.geometry().bottom()
+            assert panel.width() == dashboard.subject_card.width()
+            for key, check in panel.record.items():
+                caption = panel.source_labels[key]
+                gap = caption.mapTo(panel, QPoint()).x() - (
+                    check.mapTo(panel, QPoint()).x() + check.width()
+                )
+                assert 0 <= gap <= 12
+>               assert caption.height() >= caption.heightForWidth(caption.width())
+E               assert 34 >= 51
+E                +  where 34 = <built-in method height of QLabel object at 0x000002367252BD00>()
+E                +    where <built-in method height of QLabel object at 0x000002367252BD00> = <PyQt6.QtWidgets.QLabel object at 0x000002367252BD00>.height
+E                +  and   51 = <built-in method heightForWidth of QLabel object at 0x000002367252BD00>(97)
+E                +    where <built-in method heightForWidth of QLabel object at 0x000002367252BD00> = <PyQt6.QtWidgets.QLabel object at 0x000002367252BD00>.heightForWidth
+E                +    and   97 = <built-in method width of QLabel object at 0x000002367252BD00>()
+E                +      where <built-in method width of QLabel object at 0x000002367252BD00> = <PyQt6.QtWidgets.QLabel object at 0x000002367252BD00>.width
+
+tests\gui\test_dashboard.py:8924: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[720]
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+FAILED tests/gui/test_dashboard.py::test_recording_checks_stay_next_to_labels
+3 failed, 4 passed, 578 deselected in 7.15s

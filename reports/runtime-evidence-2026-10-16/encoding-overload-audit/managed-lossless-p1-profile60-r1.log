@@ -1,0 +1,23 @@
+UpdateConfiguration {"command_id": "0faa3148-8a26-40fb-b906-52a265939f05", "complete": true, "succeeded": true, "needs_input": false, "failure": "", "elapsed_ns": 14740200}
+Setup {"command_id": "fb9d7c0d-c810-4853-9ab8-83c5b60ab1c0", "complete": true, "succeeded": false, "needs_input": false, "failure": "SETUP_FAILED: acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 2 Setup failed: WORKER_OPERATION_FAILED: pypylon blocking control wait did not release the GIL", "elapsed_ns": 2396140800}
+failure_snapshot {"controller_generation": "1ec20307-7335-45a1-91cd-b6f9a1cc313e", "captured_monotonic_ns": "168172731973400", "state_revision": "58", "configuration": {"revision": "3", "edit_validation": [{"configuration_revision": "2", "completed": true, "valid": true, "component": "experiment", "configuration_module_version": "experiment-v1"}, {"configuration_revision": "2", "completed": true, "valid": true, "component": "acquisition", "configuration_module_version": "acquisition-config-v1"}, {"configuration_revision": "2", "completed": true, "valid": true, "component": "synchronization", "configuration_module_version": "inactive"}, {"configuration_revision": "2", "completed": true, "valid": true, "component": "tracking", "configuration_module_version": "inactive"}, {"configuration_revision": "2", "completed": true, "valid": true, "component": "visual_stimulus", "configuration_module_version": "visual-stimulus-config-v2"}]}, "session": {"phase": "SESSION_PHASE_SETTING_UP", "context": {"controller_generation": "1ec20307-7335-45a1-91cd-b6f9a1cc313e", "session_id": "a1a08124-6d65-44a5-a9b2-a710c3160f5a"}, "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-lossless-p1-prof\\DUMMY-191536", "trial_count": 1}, "trial": {"phase": "TRIAL_PHASE_PENDING"}, "participants": [{"process": {"role": "acquisition", "generation": "7fc7d0cb-6987-4a36-825c-1b6517a71a31"}, "enabled": true, "required": true, "process_run
+error "AssertionError: SETUP_FAILED: acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 2 Setup failed: WORKER_OPERATION_FAILED: pypylon blocking control wait did not release the GIL"
+monitor_exit 0
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 213, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 158, in main
+    await execute("Setup")
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 148, in execute
+    assert result.succeeded, result.failure
+           ^^^^^^^^^^^^^^^^
+AssertionError: SETUP_FAILED: acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 2 Setup failed: WORKER_OPERATION_FAILED: pypylon blocking control wait did not release the GIL

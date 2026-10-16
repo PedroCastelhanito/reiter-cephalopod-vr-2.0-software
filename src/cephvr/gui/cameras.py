@@ -8,14 +8,17 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLineEdit,
+    QSizePolicy,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
+from cephvr.gui.action_cancellation import PendingAction
 from cephvr.gui.camera_inventory import CAMERA_ROLES, CameraDraft, discover_drafts
 from cephvr.gui.camera_snapshot import CameraSnapshot
+from cephvr.gui.camera_trigger_form import CameraTriggerForm
 from cephvr.gui.components import Card, StatusColumn, button, combo, field
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import PresetField
@@ -70,6 +73,7 @@ class CamerasPanel(ResponsiveColumns):
         self.controller_trigger_rates: dict[str, float] = {}
         self.controller_trigger_sources: dict[str, str] = {}
         self.operation_pending = False
+        self.pending_action = PendingAction()
         self.pending_enable: dict[str, bool] = {}
         self.loading = False
         self.snapshot_draft = False
@@ -121,8 +125,7 @@ class CamerasPanel(ResponsiveColumns):
         self.role = combo((*CAMERA_ROLES, "Unassigned"))
         self.role.currentTextChanged.connect(self.assign_role)
         self.configuration.body.addWidget(field("ROLE", self.role))
-        form = QGridLayout()
-        self._finish_configuration(form, left_layout)
+        self._finish_configuration(left_layout)
         self.snapshots = CameraSnapshot(self)
         self.config_files = self.snapshots.files
 
@@ -157,37 +160,25 @@ class CamerasPanel(ResponsiveColumns):
             + 2 * self.table.frameWidth()
         )
 
-    def _finish_configuration(
-        self, form: QGridLayout, left_layout: QVBoxLayout
-    ) -> None:
-        form.setHorizontalSpacing(SIZES.field_x_gap)
-        form.setVerticalSpacing(SIZES.field_y_gap)
-        form.setColumnStretch(0, 1)
-        form.setColumnStretch(1, 1)
+    def _finish_configuration(self, left_layout: QVBoxLayout) -> None:
         self.fields: dict[str, QLineEdit] = {}
         self.trigger_source = combo(("Internal clock", "External controller"))
+        self.trigger_source.setMinimumContentsLength(8)
+        self.trigger_source.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed
+        )
         self.trigger_source.setPlaceholderText("Select trigger source")
         self.trigger_source.setCurrentIndex(-1)
         self.trigger_source.currentTextChanged.connect(
             lambda value: self.edit("trigger_clock", value)
         )
         self.trigger_source.currentTextChanged.connect(self.save_settings)
-        form.addWidget(
-            field("TRIGGER SOURCE", self.trigger_source),
-            0,
-            0,
-            Qt.AlignmentFlag.AlignBottom,
-        )
-        specs = (("trigger_frequency_hz", "TRIGGER RATE (Hz)"),)
-        for index, (key, title) in enumerate(specs):
-            editor = QLineEdit()
-            editor.setPlaceholderText("Not set")
-            editor.textChanged.connect(lambda value, name=key: self.edit(name, value))
-            self.fields[key] = editor
-            form.addWidget(
-                field(title, editor), 0, index + 1, Qt.AlignmentFlag.AlignBottom
-            )
-        rate = self.fields["trigger_frequency_hz"]
+        source_field = field("TRIGGER SOURCE", self.trigger_source)
+        rate = QLineEdit()
+        rate.setPlaceholderText("Not set")
+        rate.textChanged.connect(lambda value: self.edit("trigger_frequency_hz", value))
+        self.fields["trigger_frequency_hz"] = rate
+        rate_field = field("TRIGGER RATE (Hz)", rate)
         validator = QDoubleValidator(rate)
         validator.setBottom(0.1)
         validator.setDecimals(1)
@@ -201,11 +192,12 @@ class CamerasPanel(ResponsiveColumns):
         self.trigger_pin.setToolTip(
             "MCU output pin shared with the Microcontroller table"
         )
-        form.setColumnStretch(2, 1)
-        form.addWidget(
-            field("PIN", self.trigger_pin), 0, 2, Qt.AlignmentFlag.AlignBottom
+        self.trigger_form = CameraTriggerForm(
+            (source_field, rate_field, field("PIN", self.trigger_pin)),
+            (self.trigger_source, rate, self.trigger_pin),
         )
-        self.configuration.body.addLayout(form)
+        self.configuration.body.addWidget(self.trigger_form)
+        self.trigger_source.currentTextChanged.connect(self.trigger_source.setToolTip)
         self.preset_field = PresetField()
         self.preset = self.preset_field.editor
         self.preset.textChanged.connect(lambda value: self.edit("preset", value))
@@ -264,15 +256,15 @@ class CamerasPanel(ResponsiveColumns):
 
     @property
     def can_operate(self) -> bool:
-        return (
-            not self.operation_pending
-            and self.view.phase == Phase.CONFIGURATION
-            and (
-                self.can_edit
-                or self.managed
-                and self.view.connected
-                and self.view.has_control
-            )
+        return not self.operation_pending and self.can_control_devices
+
+    @property
+    def can_control_devices(self) -> bool:
+        return self.view.phase == Phase.CONFIGURATION and (
+            self.can_edit
+            or self.managed
+            and self.view.connected
+            and self.view.has_control
         )
 
     @property
@@ -440,6 +432,8 @@ class CamerasPanel(ResponsiveColumns):
         self.refresh_controls()
 
     def toggle_connection(self) -> None:
+        if self.pending_action.cancel(self.connect_button):
+            return
         if self.can_operate and (draft := self.selected):
             if self.managed:
                 self.connection_requested.emit(draft.key, not draft.connected)
@@ -451,6 +445,8 @@ class CamerasPanel(ResponsiveColumns):
             self.preview_requested.emit(draft.key, draft.connected)
 
     def test_selected(self) -> None:
+        if self.pending_action.cancel(self.selected_test_button):
+            return
         draft = self.selected
         if not self.can_operate or draft is None or draft.role not in CAMERA_ROLES:
             return
@@ -600,4 +596,5 @@ class CamerasPanel(ResponsiveColumns):
                 ("ACQUISITION RATE", "—"),
             )
         )
+        self.pending_action.refresh(self.can_control_devices)
         self.controls_changed.emit()

@@ -1,0 +1,9 @@
+saved-p4-baseline60-r1 3 videos; SESSION_OUTCOME_INTERRUPTED cleanup False
+p1-diagnostic60-r1 3 videos; SESSION_OUTCOME_INTERRUPTED cleanup False
+abort-cleanup-diagnostic-r1 3 videos; SESSION_OUTCOME_INTERRUPTED cleanup False
+repaired-p4-3slots60-r2 3 videos; SESSION_OUTCOME_COMPLETED cleanup True
+repaired-p4-16slots60-r1 3 videos; SESSION_OUTCOME_COMPLETED cleanup True
+managed-rgb-gray-lossless60-r5 3 videos; SESSION_OUTCOME_COMPLETED cleanup True
+managed-save-off60-r1 0 videos; SESSION_OUTCOME_COMPLETED cleanup True
+managed-save-on-abort-r1 3 videos; SESSION_OUTCOME_INTERRUPTED cleanup False
+full-review-overload60-r1 3 videos; SESSION_OUTCOME_COMPLETED cleanup True

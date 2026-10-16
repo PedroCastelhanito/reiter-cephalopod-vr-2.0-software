@@ -65,6 +65,7 @@ class MicrocontrollerCommands:
                     svc.MICROCONTROLLER_COMMAND_KIND_START,
                     svc.MICROCONTROLLER_COMMAND_KIND_STATUS,
                     svc.MICROCONTROLLER_COMMAND_KIND_STOP,
+                    svc.MICROCONTROLLER_COMMAND_KIND_DISCONNECT,
                     svc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
                 }
             ):
@@ -76,6 +77,15 @@ class MicrocontrollerCommands:
             ):
                 return self.hooks.admission(
                     operator_id, error="invalid MCU signal selection"
+                )
+            disconnect = request.kind == svc.MICROCONTROLLER_COMMAND_KIND_DISCONNECT
+            if disconnect != bool(request.expected_connection_id) or (
+                disconnect
+                and request.expected_connection_id
+                != self.owner.view.observation.connection_id
+            ):
+                return self.hooks.admission(
+                    operator_id, error="MCU connection identity changed"
                 )
             upload = request.kind == svc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE
             if upload != bool(request.firmware_path and request.firmware_sha256) or (

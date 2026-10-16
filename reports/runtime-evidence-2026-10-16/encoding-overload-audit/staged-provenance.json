@@ -1,0 +1,2371 @@
+{
+  "baseline_head": "62ee90c9331f8e0829966a988262e188670ce9d6",
+  "scope": "Final integrated content inventory; self and evidence manifest excluded to avoid circular hashes. No saved operator configuration changes, no temporary hook, no staged raw/video.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 342,
+      "sha256": "0422cfca3ba8996c805f37b417df16c12bc6837d071f48269452ea05cdf033cc"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 2617,
+      "sha256": "64492d4f3920f40d282a4c4e26f37f5f48df90bf7b359a72bc1258eb50e9ab93"
+    },
+    {
+      "path": "LOG.md",
+      "bytes": 755921,
+      "sha256": "22f6271da01f6764314320d62234e6714db188d5d5d01897e84d72e573da2771"
+    },
+    {
+      "path": "TODO.md",
+      "bytes": 30524,
+      "sha256": "887cd95600688760be9d4c990bc65d1fe89483d6b6902c85cfbced35a57b8ebc"
+    },
+    {
+      "path": "architecture.md",
+      "bytes": 34419,
+      "sha256": "f7fd29083c8efd23ed0544239f9a4c1521a8c0c01f617bb1b09a762e4c0a2e07"
+    },
+    {
+      "path": "contracts/acquisition/sdk-mappings.md",
+      "bytes": 16524,
+      "sha256": "54515e15e371e94624afaec325448fcb30a16af74f9c09d66bd38b390e16676e"
+    },
+    {
+      "path": "contracts/cephvr/control/v1/services.proto",
+      "bytes": 39196,
+      "sha256": "a1605ec4c701f82c159ab436b4f7b5dbe47434b8f97483cd39a0953601e02182"
+    },
+    {
+      "path": "docs/architecture/acquisition.md",
+      "bytes": 78587,
+      "sha256": "817bfcc85ac50bbc03801142a35bdc59ed973331891e17bf883256a03a811bec"
+    },
+    {
+      "path": "docs/architecture/gui.md",
+      "bytes": 99638,
+      "sha256": "ff4c75c7bd74f319204f1074cd6a16876162cb1f78253db568ac89ec2710ff8b"
+    },
+    {
+      "path": "reports/acquisition.md",
+      "bytes": 125669,
+      "sha256": "9aa22e384c1e88d4a8a9ccad2872792771fe6ceb1e5dc87299145120d2acd0f5"
+    },
+    {
+      "path": "reports/emergency-160468031468500-dde11ea8-b99a-4f51-8fbf-5970c85d1412.json",
+      "bytes": 228,
+      "sha256": "5c59754aa25e6c350074acc244dcd0c1febaa8c545b32a74ce75d8e134bd0af7"
+    },
+    {
+      "path": "reports/emergency-161881244463300-71446a2a-eaf0-4c8b-a05a-cd30257cd765.json",
+      "bytes": 228,
+      "sha256": "9aa1c6096a787cd24d07bb1536002021b3b905545abf9c826df4e9bdceb8c3d0"
+    },
+    {
+      "path": "reports/emergency-162484417613100-243b1019-3d1d-4b94-8d63-3c086a64cd65.json",
+      "bytes": 228,
+      "sha256": "9349d3393899a272badc6ed125e4f9cca89ea4a969ee8243c2bb3f0fcfc5fa8c"
+    },
+    {
+      "path": "reports/emergency-162971005253800-112af738-ea36-4ff4-bbd8-f7bcd0c5a2f7.json",
+      "bytes": 228,
+      "sha256": "d6a950e278e60ab1b121b4d0e8264fad78677f59cf0b89525e057aceca6d5ebc"
+    },
+    {
+      "path": "reports/emergency-163979442999700-2845211d-75da-455c-9a13-864044b17e16.json",
+      "bytes": 1126,
+      "sha256": "3ef7a3fd530c7951dce4a08252ea2eb310214da6495766133e166a6efd98a902"
+    },
+    {
+      "path": "reports/emergency-164360321207900-4787b6a8-8958-49ee-97e7-fab77b68f689.json",
+      "bytes": 1126,
+      "sha256": "e7cfaac6f06c334a0b9b0cc28fc964f48020cb2eda380c39a5dd5fd04ab0efe7"
+    },
+    {
+      "path": "reports/emergency-165000613227400-f84f6c49-ba52-4807-8960-72f6aa25a3cc.json",
+      "bytes": 1586,
+      "sha256": "b165a208fa30d2c83151e7eb8696775b0236af04b3fc9ac9c17a99a150245be0"
+    },
+    {
+      "path": "reports/emergency-165678527988800-c88cacd9-4fa3-44e1-9b47-41316fa7105a.json",
+      "bytes": 912,
+      "sha256": "6182aaf3e90fa133709b8386cb626fff1e6a270bf4df6a26e7d64b77fc8d9321"
+    },
+    {
+      "path": "reports/emergency-166295841200400-2efac77a-ff2c-4510-a15c-5d375fe23d11.json",
+      "bytes": 852,
+      "sha256": "a82ebbb9e7cd68116ba3998024131f8a3cdc60e67dac8a1cd9fd4bef31060bcc"
+    },
+    {
+      "path": "reports/emergency-168182961974200-bf9d9c1d-5930-4dab-a2ff-a0e9b9aeeeb3.json",
+      "bytes": 614,
+      "sha256": "772caece6b3c7d9faad49654e786eb1c30aee0e4c3ee8dcb62c7190bd17ba6bb"
+    },
+    {
+      "path": "reports/emergency-168511750384400-82900f39-6e49-4dbb-bc91-c44d3b612f53.json",
+      "bytes": 1047,
+      "sha256": "798d69c08feb71f27837043b5df53dba093d9ecdad86858572aae5e8ed321e1b"
+    },
+    {
+      "path": "reports/rig-verification.md",
+      "bytes": 114112,
+      "sha256": "211632a0c725dce364d691dc54f680f5ec6543439d866eb39849431b0baf4e25"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/before.pfs",
+      "bytes": 40983,
+      "sha256": "1d6bf164f2730af5b411b6a99d107ff2cf886d4264702c9891274c63d2f56dd7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/context.json",
+      "bytes": 1220,
+      "sha256": "b4b6597138caa44e5fc0e4c36838bad844b712892225f3a38d3d446211687b63"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/controller-readback.json",
+      "bytes": 7308,
+      "sha256": "7d9fc7707cc232e6cba65b7796de3d4783413bd05c7f6f107c3654d3a7096aab"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/exposure_probe.py",
+      "bytes": 4449,
+      "sha256": "f9644b2dc70a126c1e856560790904750f52aa156be8172e54be5e76f9eed28d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/native.npy",
+      "bytes": 3020288,
+      "sha256": "b50e0054ebed0486419ecd3170186d9ff71eaf8e75c693b1cb1f1a1fdbfbf370"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/probe.json",
+      "bytes": 2384,
+      "sha256": "bbf101115cd5e4d5c87a2739f8ea4ad20d2a77de781a2bf8b6a494554624c2e6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/probe.py",
+      "bytes": 3995,
+      "sha256": "2cf723470183e90ac7a63d8e252a5178ec2d4e87ef0a2b7016d9d355e7fdd1d2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/restored.pfs",
+      "bytes": 41003,
+      "sha256": "03c12646f548e7430aaef23be3be4652856b516a07eaef314b2ec1c33af440b1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/sweep-before.pfs",
+      "bytes": 40983,
+      "sha256": "1d6bf164f2730af5b411b6a99d107ff2cf886d4264702c9891274c63d2f56dd7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/sweep-restored.pfs",
+      "bytes": 40983,
+      "sha256": "1d6bf164f2730af5b411b6a99d107ff2cf886d4264702c9891274c63d2f56dd7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/camera-preview-diagnosis/sweep.json",
+      "bytes": 3215,
+      "sha256": "f44e03fe2a63b8bcac3aa019e55b52dfc304146ea73d88844e81d360bb33ef39"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/README.md",
+      "bytes": 7670,
+      "sha256": "800eb1d03631aa842acb709764256a6446750328346e4c7383022ecf47a7f3d8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1.log",
+      "bytes": 5159,
+      "sha256": "86f3aaae660a17f790d021f4a8ba46c5df7b46f9d59991d932b0cfddbffdb2af"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/before.pb",
+      "bytes": 141405,
+      "sha256": "bc1bb55c60f5c03d95beca0bdeb953066fb95ad4ff12bbfe529be5293676fc52"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/candidate.json",
+      "bytes": 149390,
+      "sha256": "41cbb843b8362d3609bc7b1d47a6b2daa19dc1c7e914ff927b2ed6f0f6b8ac9a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/candidate.pb",
+      "bytes": 139338,
+      "sha256": "aab8c494339701d1d403e7bc2cddfa1c4fae8e9d5388485de431f83a0b74e420"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/failure.pb",
+      "bytes": 146686,
+      "sha256": "cffffacb3ba4ecdffd8e456d4c6ea0c29a7ab78fed3dffa1d795f8ec4923e293"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/monitor.jsonl",
+      "bytes": 302337,
+      "sha256": "53ae408e765b942d71634044221f8afb3061f8a5e72713cd9fbcfd69988bba15"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/ready.pb",
+      "bytes": 141798,
+      "sha256": "30afd446bc7a288dea0733576eb96fa836d2e26dd50f996a5db302bde3fc0dee"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-cleanup-diagnostic-r1/run.json",
+      "bytes": 338560,
+      "sha256": "fef1d3ed7914aa0048b1339e62df6f5dcaf4b10e2d5dfd09d787a1863ca64475"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-diagnostic-exit.json",
+      "bytes": 284,
+      "sha256": "b4022adab22f3c679be0c0e07321506e08d25f2e63568c0aba8989083b5d08b6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-owned-recovery-r2.json",
+      "bytes": 690,
+      "sha256": "133f5f2d5f867d4e24f9b876c9b35467d111da0af2475bcf54e2cbab5ebb4aae"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-owned-recovery-r2.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/abort-owned-recovery.log",
+      "bytes": 398,
+      "sha256": "008736c7e8cedafd4ac3f8d75ed929bf17f588389c568c1eb46e3af90bb1f143"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/acquisition-fixes.log",
+      "bytes": 750,
+      "sha256": "f4d227e1c8437e23a0a211228a78fb67ac1b61c47619bf7eeebed0eaecdbc68d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/acquisition-session-before-profile.py",
+      "bytes": 25965,
+      "sha256": "5346fc095bededd9b74d1e847ba7c2eea877731498d9502000c6254dc5b2303f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/after-lossless-fixture-error.json",
+      "bytes": 163615,
+      "sha256": "62b1de16f7c709cbeb60964c1a3affc201162703966d27d607de809ba9f5bba2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/after-lossless-fixture-error.pb",
+      "bytes": 144810,
+      "sha256": "635892d767b7def15b28f19eb4760e5d6ef7e07c4a9ef42ad9b599824e474e76"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/archive_scientific.py",
+      "bytes": 1457,
+      "sha256": "b4e1400828eb90a766c4bf8087927c125b843b412e39436bcd883e14f728e05d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/assess_resources.py",
+      "bytes": 3758,
+      "sha256": "1fe4242333ecaa8bf0457231b3d793f467a5c477f666b38cf9488927eeb9cb7e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/backend-baseline.log",
+      "bytes": 2559,
+      "sha256": "ee458f607dc771b7e4bdefd3478f9b2ca6198150fc4ede893aa1db4d61c79727"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/backend-baseline.xml",
+      "bytes": 334886,
+      "sha256": "8c2e384772618b9a8fce5dfaadf8657a66ac95c0d1877071eae096c2292ee3f3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/backend-final-handshake.log",
+      "bytes": 2559,
+      "sha256": "a22fa83913cbf2ee449731a5d57614254a2626cf8029cc35b315fed9ed9f81ed"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/backend-final-handshake.xml",
+      "bytes": 337792,
+      "sha256": "09c1e2c16f5935feb23eb7cb23c0672699d21b14d9172fff32848800a4eef9bb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/backend-final.log",
+      "bytes": 2559,
+      "sha256": "97edd6c482055dc9235a0331d4c7685258d618778f3c355fd6c74307a995eeb6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/backend-final.xml",
+      "bytes": 337650,
+      "sha256": "f1ccd19186bcb1a316dd60f894f79f034d8122e0cbbf58e63c5eeaa9b02cbbf6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/baseline.json",
+      "bytes": 10285,
+      "sha256": "20df0a4a72f6c0627cc5552927482468d0775fe0c6319f397ca0f4b8faaf7a64"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/baseline.py",
+      "bytes": 1915,
+      "sha256": "d68775cedb061b0d6bf6d1b034c3e4000a24b6b63b4d7f50fdf7e5757f765ffb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/before-p1-diagnostic.json",
+      "bytes": 156676,
+      "sha256": "93cee5b3502b56ec2f0d17b8e4b89908c6aeeacf864b056716067de3f6f1fe4f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/before-p1-diagnostic.pb",
+      "bytes": 142197,
+      "sha256": "b98c4087715024c20dcc5463b978eb6e8922974dd418fc2129aeedbcc6030e82"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/behavior-hevc-decode.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/boundaries-final.log",
+      "bytes": 3521,
+      "sha256": "c3abc31e44670f464418e2a1777b8a52355e64d0036897d92cdb5f498dc51ca1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/build-final.log",
+      "bytes": 363293,
+      "sha256": "cd425154295ec7be98f90bdf6b796f02bcc9fcb7f27ecded4a836982b2af0d00"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/cache-cleanup.json",
+      "bytes": 15771,
+      "sha256": "b818c97e9c6c300753b01d0a6e1223664d27ae4bff89d78dc8d0832d17ff5ccd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/camera-40065509-baseline.pfs",
+      "bytes": 40798,
+      "sha256": "931716fc6a894081c3102c89e6869222b9312ad871d93c9270a67d295349f05b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/camera-40065509-restored.pfs",
+      "bytes": 40798,
+      "sha256": "931716fc6a894081c3102c89e6869222b9312ad871d93c9270a67d295349f05b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/camera-40278236-baseline.pfs",
+      "bytes": 43207,
+      "sha256": "770058f5d63fd99b0bfcfbf754ef4fab16c2de661b84b25c21962d4e04cd1532"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/camera-40278236-restored.pfs",
+      "bytes": 43207,
+      "sha256": "770058f5d63fd99b0bfcfbf754ef4fab16c2de661b84b25c21962d4e04cd1532"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/camera-40747103-baseline.pfs",
+      "bytes": 40304,
+      "sha256": "775b5b3f92e4e305c705f2a161c2b0b47b0f7f39dd3906fe86ded382e7158886"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/camera-40747103-restored.pfs",
+      "bytes": 40304,
+      "sha256": "775b5b3f92e4e305c705f2a161c2b0b47b0f7f39dd3906fe86ded382e7158886"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capability-restart-shutdown.json",
+      "bytes": 235,
+      "sha256": "c896e8be5271a43ed376fcd6786a427a4301430e363c1cc4fb72266348626627"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capability-restart-shutdown.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-context.json",
+      "bytes": 479,
+      "sha256": "06b8c028fd055293b848c6612ed019afd63ba4fb3ac1daa29d870a47866a42a5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-decode-final.log",
+      "bytes": 1244,
+      "sha256": "325af4e4e42a230ffde0d8ec8b433a874ab6909f8b60dfee87c90b13a6a33da5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-decode.json",
+      "bytes": 41931,
+      "sha256": "d180333b25329fca54c7d88a71f7b876e250bb2b7584939dd11f1df9feefb92a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-decode.log",
+      "bytes": 2964,
+      "sha256": "d6cad89c8e5f9c8e2c45e4d9770c1596b12733f841caaa1f96daeee50b64c176"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-hevc-decode.json",
+      "bytes": 9202,
+      "sha256": "545388b45c03dd39ac47ce1bdd2a46fe3fc22e40186d3e17d5fc08f876b484e8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-hevc-decode.log",
+      "bytes": 541,
+      "sha256": "93aa23db471ba22c05e603b99d8c066cf0faf128250391b183065edec1387f56"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-hevc-lossless-r1.log",
+      "bytes": 4630,
+      "sha256": "92a30f5c61e50e8bd50191c15923d35720d204bfaf024b8d8fbe0ad4e4b14b57"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-hevc-lossless-r1/behavior.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-hevc-lossless-r1/fixture.json",
+      "bytes": 2414,
+      "sha256": "08c6463e7e1a91e3b7f2ae0191010b83cf35a3774bdcb72a35d495c9280f2609"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-hevc-lossless-r1/results.json",
+      "bytes": 7482,
+      "sha256": "9b6003c2591b5fc877e82abc3951b3413e26e87662bc556ec275ab7fd58ba725"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-hevc-lossless-r1/stimulus.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-hevc-lossless-r1/tracking.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-original-encoder-io.py",
+      "bytes": 1967,
+      "sha256": "bae93900d92481773d25b2af7f9c910535c5b9d3ee3fc354a627b4bb41274861"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p1-immediate-r1.log",
+      "bytes": 4625,
+      "sha256": "43e401ae950f78612a226a14b76761ec8c877581271a883d79e30602d1af6037"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p1-immediate-r1/behavior.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p1-immediate-r1/fixture.json",
+      "bytes": 2378,
+      "sha256": "6b1943581c7aef9a30b32925fc2bd74658b207b4affe864845699a70757dc25e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p1-immediate-r1/results.json",
+      "bytes": 7441,
+      "sha256": "d5babcbe9d6e22e8d30503660e7d6a67ef301f52bece12c57e3af68730cea459"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p1-immediate-r1/stimulus.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p1-immediate-r1/tracking.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-immediate-r1.log",
+      "bytes": 4626,
+      "sha256": "319f36bda54cf384d064509af3283add9e527c95cd1ff373b015c9a57c8e6236"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-immediate-r1/behavior.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-immediate-r1/fixture.json",
+      "bytes": 2378,
+      "sha256": "272befa5c2dd7e67aa6b850cf9687377877bc6f4696108e1f0c012771cacd980"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-immediate-r1/results.json",
+      "bytes": 7442,
+      "sha256": "683d23d86d461809a4c16baf4b963fd89b3808f73e146509228242eb0b8f82c8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-immediate-r1/stimulus.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-immediate-r1/tracking.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-lossless-r1.log",
+      "bytes": 4625,
+      "sha256": "43796d1f53867cd47cef150922a675392c24d7cc53567bbc1a27384a50adb40d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-lossless-r1/behavior.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-lossless-r1/fixture.json",
+      "bytes": 2376,
+      "sha256": "3a2d2ccdf64ec1877250b08b60d1bd47dd6cb17aa7d8b9fd2ea48bfbc74279c9"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-lossless-r1/results.json",
+      "bytes": 7439,
+      "sha256": "042da5d352667e2bb0d8bfe9b151e5c0f55e8e51fb0cb01a3116816b5432b98a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-lossless-r1/stimulus.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-lossless-r1/tracking.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-original-r1.log",
+      "bytes": 4611,
+      "sha256": "8adf9e2c74f2628268db6c44d532e72351c504ac54f85ef96f44922bf652c0ef"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-original-r1/behavior.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-original-r1/fixture.json",
+      "bytes": 2378,
+      "sha256": "25bfd294be065ccffff2399797446096eadcd15cb2d3ea6d91d75041a6282e45"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-original-r1/results.json",
+      "bytes": 7427,
+      "sha256": "70c4a28491ce779236ede902b0c7e42622ea096a56661b7b0ac638156581d584"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-original-r1/stimulus.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-original-r1/tracking.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-thread1-r1.log",
+      "bytes": 4734,
+      "sha256": "9c387a6d5cfeaf4047c7d392225fff65a42e7a5d4fd18198c0349c34e1fa9c13"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-thread1-r1/behavior.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-thread1-r1/fixture.json",
+      "bytes": 2373,
+      "sha256": "89ac44e7cded08df06870a187ebc42aec9f7cfe81422b7b84dfed1177ff392d5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-thread1-r1/results.json",
+      "bytes": 7557,
+      "sha256": "b0f176e3677103966668108ef0a9b55e1cb423f6b5eccf5dc2737c4d86bcf491"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-thread1-r1/stimulus.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/capacity-p4-thread1-r1/tracking.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/collect_managed.py",
+      "bytes": 6977,
+      "sha256": "9bd5bcceae772a481b110aa33165c8ebb2c14cd5c39703465f54e069d5368533"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/collect_profile.py",
+      "bytes": 6924,
+      "sha256": "6dffe14a9ccaed06402d888393ac3666f8de34951badb6a0112f8228e7406d24"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/colorspace-cuda-help.txt",
+      "bytes": 537,
+      "sha256": "035dc0944ec23b5a121917d3ef50698882f5e08b60a07fa79f71e41101ebefdc"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/controller-fixes.log",
+      "bytes": 761,
+      "sha256": "848062bcf341fb7015465abfc3bd5a1b31c3b5ce6be7765d4a319aac894a346b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/decode-progress.json",
+      "bytes": 427,
+      "sha256": "7288d09ba524fd72030c12c9f78083e9a7168b365e5782b02424120e951d3d53"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/decode_capacity.py",
+      "bytes": 3837,
+      "sha256": "fe49a0b14b6fce7f8484e2e5780e24810744b63d597b28c1110d369b1d321c51"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/emergency-inventory-before-final.json",
+      "bytes": 8581,
+      "sha256": "e87694e56065a3196718ef5c5ba4e7a48b4b12fc9b5885f35197070f9d6c4d57"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/emergency-inventory.json",
+      "bytes": 37636,
+      "sha256": "314f55af6802c9a09ad841dd58b412ac2f0e9d9b88ca894937c036131566c490"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/failed-baseline-exit.json",
+      "bytes": 252,
+      "sha256": "921abcee7080b4679253b1baf45185992047fa2b03921266ebbed4959412f33b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/failed-fixture-owned-recovery.json",
+      "bytes": 690,
+      "sha256": "7faf5755ab559f092b2afddee623a8edb387c23e7e0485667552c62a717fbcbd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/failed-fixture-owned-recovery.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/ffmpeg-version.txt",
+      "bytes": 1500,
+      "sha256": "711056f2bc922237113d5defe7da4dbd97beaab41098e5f8d425753dbfea99ff"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-live-exit.json",
+      "bytes": 284,
+      "sha256": "1393e6cc1bfa95ec8c3cb0f235006b9a774a38a9c14196f78e1791fc6ee80756"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-live-shutdown.json",
+      "bytes": 235,
+      "sha256": "496358d9a6b4f259393ef233e088a9bedd05d129b8a7da44893ebbe0f90e920d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-live-shutdown.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-restoration-r2.json",
+      "bytes": 5731,
+      "sha256": "f2d583ecf5228222957fd01843968d993f2bca60a85a6992d3ff4efc02ca0dbe"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-restoration-r3.json",
+      "bytes": 6550,
+      "sha256": "58abb430708b204aabb5057729cbd3e65cd27f0a31a6e0776a04c7cf99162d46"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-restoration-r3.log",
+      "bytes": 6550,
+      "sha256": "58abb430708b204aabb5057729cbd3e65cd27f0a31a6e0776a04c7cf99162d46"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-restoration.json",
+      "bytes": 2928,
+      "sha256": "f632746d7476cbf0fb789f7ce36d404bb63609cdf78ec048e721c6fcd7750271"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-restoration.log",
+      "bytes": 811,
+      "sha256": "9ca3556d6249a87223ceacc3f6ca4d3b38621c75199d61432a4c5837b59f9497"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-runtime-configuration-restoration.log",
+      "bytes": 174,
+      "sha256": "f393b738ae29c2c14fc36461cae44d7dae5678225def6f627e7b68aca0e7e19c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-runtime-configuration-restoration/before.pb",
+      "bytes": 141125,
+      "sha256": "e8c9defb0bf3c479e071e180a22d20688930e9c0a74159e7ddd00a5b772e199b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-runtime-configuration-restoration/candidate.json",
+      "bytes": 150881,
+      "sha256": "e19111ca1acfe1a3f2bdb67f193f128d7cd47c4e01b41639ff99cee9d7348d30"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-runtime-configuration-restoration/candidate.pb",
+      "bytes": 140451,
+      "sha256": "c474bd35e4a62225e2de6c7fcfc21a8912579eccec022b0afbb33a2dd0e1d4b8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/final-runtime-configuration-restoration/run.json",
+      "bytes": 518,
+      "sha256": "348197ceb0895f93098784229e834412f6c645b5fe96467976d05893d62d6b3a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/format-final.log",
+      "bytes": 29,
+      "sha256": "d5432c82caa5c7a1b552c9d2aff77e863df9dc0fd60f1acc7d700ac8662978fb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1.log",
+      "bytes": 5210,
+      "sha256": "25d0200176cfaa3618555fad6b51697478215a717d1c2c7491d7ec04abc5a263"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/before.pb",
+      "bytes": 141405,
+      "sha256": "13123cced80908f29a6bcd02e54de45b80ec79bf82e608314eb2495a38d419a8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/candidate.json",
+      "bytes": 149390,
+      "sha256": "949f90c90b4215172c1ed66ec9475b7bc0f6c6234a13ebfd6b0f5c741f5b387f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/candidate.pb",
+      "bytes": 139338,
+      "sha256": "c38dcf4aee30e7a640e94e0ed286fda32fe94710aa4b56f8f54f53b30180fd47"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/drop-groups.json",
+      "bytes": 333,
+      "sha256": "30a725f389ee80ac1fb3fee6d93f39124e0c29ac18f3a1942792f1591d8accae"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/final.pb",
+      "bytes": 143556,
+      "sha256": "9315a6793f4ee274d2e458659d2afe6d23fb9fb63c942cd0e6912bb379521d75"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/monitor.jsonl",
+      "bytes": 457181,
+      "sha256": "1e2673fa3351d796fdb4d971b51dbdf8517c0b906bbceadd7a42d1637f926efd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/ready.pb",
+      "bytes": 141798,
+      "sha256": "b919d208feb6381007969e626d11ab0f9db55775bb4ab7f323589d4012b6d6e1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/full-review-overload60-r1/run.json",
+      "bytes": 491977,
+      "sha256": "814f7c367aaf315736a2094572e8cc899e31287135c81386a89a7b1045d8f2b4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gbr-no-colorspace.json",
+      "bytes": 3043,
+      "sha256": "e79fe7d59251eeea091a38d496069a267fec7657ec1323a5041850e5cf23e2ec"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gpu-filter-probe.json",
+      "bytes": 5106,
+      "sha256": "a91a8d5fc7985b9fb438e18bdb8c4dad02cdaad7d616e801be8e8c225f350f88"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gpu-filter-probe.log",
+      "bytes": 5106,
+      "sha256": "a91a8d5fc7985b9fb438e18bdb8c4dad02cdaad7d616e801be8e8c225f350f88"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gpu-inventory.txt",
+      "bytes": 287,
+      "sha256": "07748a43deacb0b41469a8405b2bfac3500aac65b3cbce6702b4624fd2943645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gpu_filter_probe.py",
+      "bytes": 1264,
+      "sha256": "08935979edc023b9568b78c109fc6c9215d833b30bd9a27789310ad9d2fd6efd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/collect.log",
+      "bytes": 56427,
+      "sha256": "0781bcabb2d86f4657257ee19d09abda1ce41bc673fe0d3b15d5b0a0610ac1e1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/context.json",
+      "bytes": 5096,
+      "sha256": "8963ac9bccce95b2eee7e9da3195a0dcf093065f81ab2e7bbd422df30168a74a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/final-feature-inventory.json",
+      "bytes": 104246,
+      "sha256": "9ec655fc43e85b93e4915bd16dec15452ca788de443269fe25cb8d7290399868"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/final-process-absence.json",
+      "bytes": 4,
+      "sha256": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/final-validation.json",
+      "bytes": 2867,
+      "sha256": "df6a83c0360ad4d1e5d6923162b972e1cda287c069bc1020a46a0bc172c91cfb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-native-final.log",
+      "bytes": 1646,
+      "sha256": "f152a1cb9ebe437b0f880a9e3322c6149b46294827e5a492966a09cee40df58b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-native-final.xml",
+      "bytes": 1242,
+      "sha256": "bc00806a42f057d8aaca574d6c0e174e7b8ab30366f5961bd7538b2782530c8c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-offscreen-r1.log",
+      "bytes": 6622,
+      "sha256": "08bb500ba01a7c2f43cda3dfbf33fcb5f63b9404c6f5550747bff6721cbe3d81"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-offscreen-r1.xml",
+      "bytes": 9461,
+      "sha256": "d4a53ff61dc31782c3267ea606213dcbc467965a8cd386987ff1b81cf46a5df4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-offscreen-r2.log",
+      "bytes": 2790,
+      "sha256": "4fe40b6380ac69e3fff62e45f46224d48e2edc29f1e0c99c353770c3c3af8234"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-offscreen-r2.xml",
+      "bytes": 4323,
+      "sha256": "fe09e9479319138a3b99e1dc2037f9926dbcdd431e06453eba89f2b2ed9bb667"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-offscreen-r3.log",
+      "bytes": 2036,
+      "sha256": "53a9dab0fc6ff15d4b15564a34ac463172b7227c90484c06bbb79c7a6fa13388"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-offscreen-r3.xml",
+      "bytes": 3551,
+      "sha256": "9715c643e570ae71b51831004f2faff81d551fbccc7b7529767fe43723b5abdb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-offscreen-r4.log",
+      "bytes": 116,
+      "sha256": "efd814a9eed1699f157c7fb926ba6cd57a70372e8ab63c77b73b711936ea5b4b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/fixes-offscreen-r4.xml",
+      "bytes": 1242,
+      "sha256": "57545d41d099b5d134a4ba49af5e3ce351b05b3d613c680e9a4afd9a5dd08587"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/geometry-after-minimal.log",
+      "bytes": 4210,
+      "sha256": "1c4fab629a7f9efadf3ce865008a4fda06ae94a04d1da489389e8063f15793b2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/geometry-after-reflow.log",
+      "bytes": 5024,
+      "sha256": "ecd6d7ba34383444a5db24777923de2161d70aa6ec625a932e53fdcbac4f0a69"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/geometry-before.log",
+      "bytes": 4543,
+      "sha256": "a695587662b2786882cfda20c9b4957643c05b85e9c4987b645a186873de5fc2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/geometry-owned-form.log",
+      "bytes": 5022,
+      "sha256": "29f6d08eb6393c9c3ce5d65b9861ac0225211658318996c7b36e85e238c3321e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/geometry-policy-candidate.log",
+      "bytes": 5021,
+      "sha256": "95c1f25008ff00847d7e4aca1d8362c8d63e29beb88b44aa0e1d61d096b3f13e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/geometry_probe.py",
+      "bytes": 4486,
+      "sha256": "9b7a929fe3b90e0e71c7ba69df78dc2d93cc745c01b73ffbd2363b4d0783456c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-chooser-final.log",
+      "bytes": 2995,
+      "sha256": "15c3c813e67b7da0679280cbd3006c917a8bf8e4829a72de1c068f02af904ccd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-chooser-final.xml",
+      "bytes": 2840,
+      "sha256": "dd96a6bac38eb5327babc9ddce6234f733037ff6c68d5a0fd8e4ac03e9dc15d5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-focused.log",
+      "bytes": 117,
+      "sha256": "2c4c71d28a220ba711e1a19172e235fec6d2c273b8ea0cdecd6cbb356687adf4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-focused.xml",
+      "bytes": 3564,
+      "sha256": "f3a2dfae3f920a7dff68f62bad081979ac7a087cf4a861f0184e58f35e0d3d8a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-hover-final.log",
+      "bytes": 1032,
+      "sha256": "321a4922da128d13f018c89551fff3e7c87a1e2b7cd5b6bb0b9bc64b7c1aeff6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-hover-final.xml",
+      "bytes": 510,
+      "sha256": "7c9b1d165791604b1c8e73d98732b207eae0515527c68279c5e0db33ca89724f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-picker-final.exitcode",
+      "bytes": 5,
+      "sha256": "4a30efff1e51f55cb5d9158fd1307180f3d0795821c35a79ab9c523e41a6241f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-picker-final.log",
+      "bytes": 647,
+      "sha256": "d9739e65874a8a765eae5ff501642740cd79e6f0265dd867b2fde516dadc19d5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-picker-stack.log",
+      "bytes": 5871,
+      "sha256": "89c1c94404c6de485b3b255999a25e9878e9b79a546314f2e6c8c2acc3dfb233"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-preview-owner.log",
+      "bytes": 1321,
+      "sha256": "25cbb55d4c27845bc4aa8364cbe757907be55843442d24febd298dbd55baf2a3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/native-preview-owner.xml",
+      "bytes": 409,
+      "sha256": "1e103eae1b38d3e8b313582439484ea1f57d577ccf044ec3f7f88c4abd910fa3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/offscreen-final-full.log",
+      "bytes": 65516,
+      "sha256": "75c597cbd0486bed3f9da9ddd3dc2fe09cc38bafcdc936fda9d2208cbb53b4a0"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/offscreen-final-full.xml",
+      "bytes": 79814,
+      "sha256": "f5f63a4079179372331a8164218c9a54b0d9281f4ccd500644081603ccf3a867"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/offscreen-focused.log",
+      "bytes": 117,
+      "sha256": "3867820fc9a88b743ec9fb8b4e7728d613bfb6e77c4d4e9b78cde095347198e7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/offscreen-focused.xml",
+      "bytes": 3564,
+      "sha256": "da3277f022f5bbabede82b1902d5f9f84df21415845a66d81f7397eb170a36bb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/offscreen-full.log",
+      "bytes": 17131,
+      "sha256": "b33a3587c74130a20a97651faf08c51125d16ebe4a1fbacdd0a8f3acbe546df3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/offscreen-full.xml",
+      "bytes": 98900,
+      "sha256": "414f5bef633416e3074e16e7bff08223e830e44d50c0d46c2f28318bb32a0a28"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/gui/process-absence.json",
+      "bytes": 4,
+      "sha256": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/h264-capability.txt",
+      "bytes": 10571,
+      "sha256": "6e690dbb6008c46a7661446f430f3cdb52c1fe3562d6b11a7cd9d94743ea54c8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/handshake-mypy.log",
+      "bytes": 43,
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/hevc-capability.txt",
+      "bytes": 10908,
+      "sha256": "6f19ee333087205422457924a00558659d0dbf9ffeebcd334a6690b55f295dfd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/inherited.patch",
+      "bytes": 87764,
+      "sha256": "c312fc9450ee4d290503fe38dc3b3a500b8a0ca60917a851f99c495389392e73"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/inventory.json",
+      "bytes": 3667,
+      "sha256": "c2cd06d0352423a375f4a568615db9f8668685f35366c9a4b6d79131e5b5cfbc"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/inventory.log",
+      "bytes": 2326,
+      "sha256": "c7d6026b4d689987c2bb42f7f232d2aeba1a990ce0357760994b5b8ce3aab3e7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/inventory.py",
+      "bytes": 2596,
+      "sha256": "6dbb0670b784d5077781d2ac4025028664effe9474b3909ea7ce60a68a76c59a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-abort-diagnostic.log",
+      "bytes": 20057,
+      "sha256": "1a5af8a468c0240dc62e352936afe1e0d98fc7441b518ee90acc9d217c08e7fa"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-baseline.log",
+      "bytes": 2729,
+      "sha256": "0b6cf3130eb3ec7a6eb647f4c8686ec46ee561839e3218235d6b4c1d6d2542a7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-lossless-p1-profile-r2.log",
+      "bytes": 6736,
+      "sha256": "82aafcabc61d072999fd4f014d1e33b689327be9cc12c5fd227caf3a909cd259"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-lossless-p1-profile.log",
+      "bytes": 897,
+      "sha256": "97e636e72e144443eb229f51eafcb2008f5392b6982f415e4d69c3d024f02245"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-lossless-supported.log",
+      "bytes": 5966,
+      "sha256": "e45b66107259b4b874834d2e041fc11fdc25d2097b3990f5ca1bb183fe2d90bb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-lossless.log",
+      "bytes": 1249,
+      "sha256": "bf3613c0c99c53535d8f4785965db24b306f6a800a0ce9f689ba246c49ae287a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-overload.log",
+      "bytes": 2212,
+      "sha256": "3c6f436a1a893f31b73451827c6888ba6ba5bdf9db8ffa4a912d4b7b33d7fcd5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-p1-diagnostic.log",
+      "bytes": 14067,
+      "sha256": "a1c46ff127b44b9db4fcdd522236e7b0e8bac07270ec0a56a2f1281c1855e593"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-repaired-p4.log",
+      "bytes": 2211,
+      "sha256": "8159714bbf7c02c3d3cabccf971d5ba0f65165bc5fed04e2727ddc70f215a935"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/launcher-slot16.log",
+      "bytes": 2300,
+      "sha256": "6a0400b396ada0ff2981a2a7c38ebea0e2fbd5ff810df9844dc84bbb16eed1dc"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/lossless-behavior-drop-timing.json",
+      "bytes": 631,
+      "sha256": "c045235f4ea3b1752972c3bbcb1f691821f91f620ec6a83a62c325162cb1f6a7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/machine-cpu.json",
+      "bytes": 153,
+      "sha256": "834f059fbacdd7837a5a01171cd692b5d0a50d371b0850b4709962ef42250e40"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/machine-storage.json",
+      "bytes": 105,
+      "sha256": "a5736a273a4ab2335ec6f973b87d177bdd4c41614e7ad5672cbd75936a0ec131"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/machine-system.json",
+      "bytes": 124,
+      "sha256": "ec502cf4d9b7928a1ed850bdfe71043e445e8ad96eef8336daaed065a66101e3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-assessment.json",
+      "bytes": 205840,
+      "sha256": "f09489c0e51d5e87eebe82205ef3d572d900fa00a3461c998cb6b0c65cfcef70"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-assessment.log",
+      "bytes": 685,
+      "sha256": "1dfca9cd8341f8d6468bae957cf2470438a5ca7e859ffbafce98524a9205702e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-harness-provenance.json",
+      "bytes": 568,
+      "sha256": "b6630d3df2d372a3f27222ed9e9bcc8693242d154b56042593b83fa4cf385ba2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1.log",
+      "bytes": 3848,
+      "sha256": "495ab2920957a3291edd76aa19f0ad4343ad24a674c7866ba15fcd9a94466973"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1/before.pb",
+      "bytes": 141117,
+      "sha256": "34b53b7c9250d749531dc2f1dc3b9168f4bf93b80190314c59666a64cc9fe219"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1/candidate.json",
+      "bytes": 149329,
+      "sha256": "69d462863491d0eea7a6dceb68abb0fece6893dded5026ed6743cd174720d78e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1/candidate.pb",
+      "bytes": 139311,
+      "sha256": "c231cf04b8fdd5c680c25389fe80e544b877a59dceeb3e97f09c739e1473a766"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1/failure.pb",
+      "bytes": 141582,
+      "sha256": "509112040119fc1006c6556bd76fb0d18f261fabe78bf1c635c23897ab836ea7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1/monitor.jsonl",
+      "bytes": 17358,
+      "sha256": "ac83969619909bf26a4a42a71fa1b42042f1ab794d8bf424ec81bda84da375de"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r1/run.json",
+      "bytes": 162347,
+      "sha256": "f685eba844d51e65b8a2261a24f70f45c53fe74b92fddb368b43252a11481bfe"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2.log",
+      "bytes": 6629,
+      "sha256": "8383b851b6aa67b9a9f5e832c1be484e131c2cb444c7815713e1cc9e44e01492"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/before.pb",
+      "bytes": 141678,
+      "sha256": "7dd112744346572a2595d69242c0a6394fc4ad208bacc43e92f0eba2c6433983"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/candidate.json",
+      "bytes": 149329,
+      "sha256": "69d462863491d0eea7a6dceb68abb0fece6893dded5026ed6743cd174720d78e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/candidate.pb",
+      "bytes": 139311,
+      "sha256": "c231cf04b8fdd5c680c25389fe80e544b877a59dceeb3e97f09c739e1473a766"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/failure.pb",
+      "bytes": 147683,
+      "sha256": "cc7fcb33c98073596be43796fe54de422f5d39ea55773c5cb2aaba2b7b76a8ef"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/monitor.jsonl",
+      "bytes": 636440,
+      "sha256": "1954acd88438e947f0b2458a762004d78f001fb1e5c1e8239f395279bd45eb79"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/ready.pb",
+      "bytes": 142044,
+      "sha256": "a3fd03700b53b0d8aabe652982f9a7b8c456a508903e9c511f8a5fe5b4b7ab71"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-lossless-p1-profile60-r2/run.json",
+      "bytes": 510272,
+      "sha256": "2da2450aa388c3cc3d65c43a96c9f605ab322574b19e49ca383325f9a3edca89"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1.log",
+      "bytes": 3974,
+      "sha256": "8e024475b81c3155345e939ca7686ba6b7d606434a84c06897cd157248c582bd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/before.pb",
+      "bytes": 140839,
+      "sha256": "e2e61347a7960c0b14bc15966b0fc61e36d3dae0ed99ce30e3b374dcde9aad03"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/candidate.json",
+      "bytes": 150623,
+      "sha256": "7f47c9336089fa08d4d4d7e0104f951d2eb6fc023f7980524974427fce1e4f64"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/candidate.pb",
+      "bytes": 140422,
+      "sha256": "b0ef03d96b79c9ea4a3787f7bba9b7f6acd7d273862c506c1e7e8e7fc7ed6cf4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/failure.pb",
+      "bytes": 143695,
+      "sha256": "a1d93ed7f3302a937a73ef01700baf87d7e2bc571f2c3b6189409e70dd116a9c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/monitor.jsonl",
+      "bytes": 17934,
+      "sha256": "966509658476d81c739bc11c9c9c59ec7551accb17693e73266f87482ec37a7b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/program.json",
+      "bytes": 22264,
+      "sha256": "16e3d3106d1846488186fee563be46a9013e11e801e4a669c3e6ec52fc73ae8f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/run.json",
+      "bytes": 166207,
+      "sha256": "7d63df6d1f09cba697e613966ac557d7ae03d18f6e20da35946a47ada60f1da1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r2.log",
+      "bytes": 3767,
+      "sha256": "5e5308948f5c59dd6310838b8d8a552fa008be8d7415d2c8d55c9706584ed3d1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r2/before.pb",
+      "bytes": 145545,
+      "sha256": "0b0a7b78048b11629769249c6c61cb5da4a60cbc173ca6ff134ff106cfa150b9"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r2/candidate.json",
+      "bytes": 149381,
+      "sha256": "e66cca6a13e2dc48101fc59d35c8ff3d0f1623631a1343ea868a4a4df30d163a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r2/candidate.pb",
+      "bytes": 139329,
+      "sha256": "2aa93ce6d4750ac71dd4d73466f4d2a06be1f01fbf592be4e7abd2085a3d6482"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r2/failure.pb",
+      "bytes": 145569,
+      "sha256": "4a283c25e6ce4b0bcd96b4869ec148cda38e3329069597105dcca951ce867651"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r2/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r2/run.json",
+      "bytes": 169133,
+      "sha256": "2dc1d341bfbfbf7e6471eb9fd165e16773b0067fc1fcbfb76a2489ad923a8bc0"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3.log",
+      "bytes": 5210,
+      "sha256": "ee2b2ba01a429fde62031982970ec2bf72e3a0e9250fc83fe7f3ffec4215843b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/before.pb",
+      "bytes": 141678,
+      "sha256": "5b75c351ab24748e90ba8e9a3c0d2a2c3f63e507ec98a07c998c0f3ccbebd22e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/candidate.json",
+      "bytes": 149381,
+      "sha256": "e66cca6a13e2dc48101fc59d35c8ff3d0f1623631a1343ea868a4a4df30d163a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/candidate.pb",
+      "bytes": 139329,
+      "sha256": "2aa93ce6d4750ac71dd4d73466f4d2a06be1f01fbf592be4e7abd2085a3d6482"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/final.pb",
+      "bytes": 143218,
+      "sha256": "ca98b59c2e15e9d0e0b8f1a3b3bda7e686a091104c61a05f47d9b94c0aeb5d3e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/monitor.jsonl",
+      "bytes": 29521,
+      "sha256": "8dbb99aa6c98dfa13610fd1ad98bcc894a49c99f4b38ec50b80b23723075aca0"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/ready.pb",
+      "bytes": 142062,
+      "sha256": "f4e65e89b26d19d63b97ff726499251bdc5d04ce82e072dc15b048f6470d4187"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r3/run.json",
+      "bytes": 490847,
+      "sha256": "672777ca3e9fac4823554d458bdd58a6a5b8342efeadfa086c790646021ce58b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4.log",
+      "bytes": 8000,
+      "sha256": "8a7f75bb97f1b412190565ca362afd2c2a6143cf758547ba4ac73a80f83e242e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/before.pb",
+      "bytes": 141389,
+      "sha256": "9bacc7f77e913da900ab4c8453bdd51a4dd4bf8608cb71ec130d4a87d7d5c775"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/candidate.json",
+      "bytes": 149329,
+      "sha256": "42051b5ad2f778f987e84cb5f760c575821617206128538fc58b8d011cf0b46b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/candidate.pb",
+      "bytes": 139311,
+      "sha256": "5b91b502ce6aa2517400d93be3e92ddc8407b4be0b8293580dca5c1af87a39e1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/failure.pb",
+      "bytes": 141890,
+      "sha256": "8b430833ab2b253021a23573627d182cdc0ddc1dcd5d36d3d2352d86da5f2c3f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/final.pb",
+      "bytes": 143819,
+      "sha256": "e706bd263dae0de006f0dca97d6d2d26bf2448bc17e486a5a21acbd8350be760"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/monitor.jsonl",
+      "bytes": 30001,
+      "sha256": "8b45f4c6820d7e2341baa54ff92b306fdb3c5af38cc50a4426510a65873a6a2c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/ready.pb",
+      "bytes": 142642,
+      "sha256": "544a0c9431659abbb4f23de369cdbce3d2bb3072b3c23dbdb7127bf6d9949666"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r4/run.json",
+      "bytes": 659533,
+      "sha256": "cf9b655843821b7cb444c121321c2bc88f60461a0c713008b0efe9a928d91f6f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5.log",
+      "bytes": 5210,
+      "sha256": "b2693814193ab56434e27b6c98136cf1fee6627de47b80e105936b4ee6ad21e7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/before.pb",
+      "bytes": 141117,
+      "sha256": "eda099cebdd2c36a2fa6ca92c88d0ce68f1f0ccaa50d7e936f5e6a76469cf1f1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/candidate.json",
+      "bytes": 149329,
+      "sha256": "42051b5ad2f778f987e84cb5f760c575821617206128538fc58b8d011cf0b46b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/candidate.pb",
+      "bytes": 139311,
+      "sha256": "5b91b502ce6aa2517400d93be3e92ddc8407b4be0b8293580dca5c1af87a39e1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/final.pb",
+      "bytes": 143243,
+      "sha256": "796251c60a650d1cd553c1ee83157ff1ca732b2b1268f5a50e70bc8141001901"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/monitor.jsonl",
+      "bytes": 456692,
+      "sha256": "58d2ca6decff8dd058312480f8f7addb1e9b573be1d0bf45c8012311051dfb4e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/ready.pb",
+      "bytes": 141485,
+      "sha256": "fd637af8d7e4692a987a05e47f121aba45ef3e422d77c18014e8d67cd023a01a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r5/run.json",
+      "bytes": 489178,
+      "sha256": "84394a9399ca223ed73bf25fafc8c2cc53cbd36704ae61997abb94f1a9ccabd0"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1.log",
+      "bytes": 5210,
+      "sha256": "41fbc4c75900cffd1ac447add7baed470b41db1a593afdd6175c3565bde5fa93"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/before.pb",
+      "bytes": 140812,
+      "sha256": "0747fbdcd246e20957f166156d9b78ecdb3575372b049b7e20dcd49cef3b6c52"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/candidate.json",
+      "bytes": 149391,
+      "sha256": "e87a1a2bd7bc948622197be5641b683465480d38617add6b0ef9ed25287d5256"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/candidate.pb",
+      "bytes": 139335,
+      "sha256": "a8c312e6fdc22a0a34a37d08f49255a8fa7333732fd108dc1ae681d51c838d94"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/final.pb",
+      "bytes": 144169,
+      "sha256": "86976092a0fccbbb66307a9cf41c02d35acdefb401da4987bcd8880cc422c02c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/monitor.jsonl",
+      "bytes": 397132,
+      "sha256": "b488ed5a7b95151d54714156431ed1eee42e673c29ce210e2b2c38b04d5b580c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/ready.pb",
+      "bytes": 142421,
+      "sha256": "f9f34637ea01cd8f98c74fc021e7b8507ec1e5658398b59896aa70b133f85099"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-off60-r1/run.json",
+      "bytes": 496870,
+      "sha256": "69f8156318af6515fdbd5639d349adb19212ec3f58a620d132c0d60dc3bbb9ae"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1.log",
+      "bytes": 5159,
+      "sha256": "fb7de9044adc1725382f743033632fef38cee757da3a92496e78e0ec8fdc9b3c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/before.pb",
+      "bytes": 141753,
+      "sha256": "af2a887a99b9cbb6463a97113324a96703172e57aaf1eb9d4677bb65704023f9"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/candidate.json",
+      "bytes": 149390,
+      "sha256": "310bbef3858857603ffc99e0ad7ffa1be8c6f58459be794fdd9c610e5aebc2ea"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/candidate.pb",
+      "bytes": 139338,
+      "sha256": "d1581ee9d1934a24821e7c291927127f9fb9a38540516a65f0a41cd0b8a79ad4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/failure.pb",
+      "bytes": 146209,
+      "sha256": "07229cec4ada794f935e2ef5ae6208b8c5dcba28350c7f8655d4233f9a392d3c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/monitor.jsonl",
+      "bytes": 311519,
+      "sha256": "68d530756d6cb7591d28ad8dc9542ea34367ac1d39df2fc83e97ca0274523a71"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/ready.pb",
+      "bytes": 143027,
+      "sha256": "17e7af717187e7176934f0aba04dac61e3e459f0caea17c99a3306aee85745c6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-save-on-abort-r1/run.json",
+      "bytes": 342572,
+      "sha256": "4e45888fbfbf8152cda6ca2c8fc8f49f1300ad7fc5ec1648c683e4a00fc2d830"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-source-before-lossless.json",
+      "bytes": 201,
+      "sha256": "7bc4ff6db1993260436ec34876aa993f359aacaac687638e7e7ab73378ea7e2d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-trial-original.py",
+      "bytes": 11300,
+      "sha256": "9ca74463881a1c69490d67bee312174ca873b631bc0944a781bdf4af95fbce90"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed_trial.py",
+      "bytes": 12895,
+      "sha256": "a930560be378142e5c0d2bf2830141baf37e779d7ef7c2a453c5afec131a2245"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/mypy-final.log",
+      "bytes": 46,
+      "sha256": "22b1eb3667d1a4141bbbd87baac26c4d2d5d30a7df47f9f137bf0220e14be17a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/native-profile-provenance.json",
+      "bytes": 363,
+      "sha256": "23c589b1729004420dece4c81517330447218c3634eefe840c88169de67fc818"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/native_stage_profile.py",
+      "bytes": 3384,
+      "sha256": "18881ec43d275ba5f0025c93ba483a42936f7ffd3c12d8e00aac27d9f81eb24f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/acquisition_config.toml",
+      "bytes": 12763,
+      "sha256": "2e06a645260da6cdb54d83ec174f62cb4a1a171173196732b219d0e45939d8b0"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/experiment_config.toml",
+      "bytes": 6801,
+      "sha256": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/gui_config.toml",
+      "bytes": 675,
+      "sha256": "e5498d0b0864531b98595760ea8cb17880c010fffa57d168c88ceff6d8f53c30"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/last_configuration.json",
+      "bytes": 146671,
+      "sha256": "9714f21fa0149a1c5a8a9159da0ea9d08b10e52a10cb9fe19e8e1e1f05219479"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/microcontroller_config.toml",
+      "bytes": 1304,
+      "sha256": "3fb97389300d23739be336f11226c9471903497820259e153496c9413b518607"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/runtime_gui.json",
+      "bytes": 50253,
+      "sha256": "c7ba71b8327a85035a7e777742ccc97fea916a26734bdbc24bd3700f40f029b2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/supervisor_config.toml",
+      "bytes": 2211,
+      "sha256": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/synchronization_config.toml",
+      "bytes": 2370,
+      "sha256": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/tracking_config.toml",
+      "bytes": 8347,
+      "sha256": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/original-settings/visual_stimulus_config.toml",
+      "bytes": 6263,
+      "sha256": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/overload-fixture.json",
+      "bytes": 286,
+      "sha256": "931c7b83b1eadde4c0f0cdc4694644e2cad291acfd4327d96156d6367cb2927f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/owned-session-recovery.json",
+      "bytes": 690,
+      "sha256": "0c0fde9b402ab22c2c4fb195ef88d27afddcc0d69d08c49cc7adbf2ebfe70ef9"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/owned-session-recovery.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1.log",
+      "bytes": 7111,
+      "sha256": "91bf63ae6cf11c76d20c6bdc6a65cfecbf51dd0009cce32b6e5944d03cf06c23"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/before.pb",
+      "bytes": 141405,
+      "sha256": "92d54eae5f17ba191f0758b90f36167609aef02f26213ecf2e858f9b60bed136"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/candidate.json",
+      "bytes": 149384,
+      "sha256": "ba2eac59dcb9e7ba0a92c263f89d3914330af07cbb5fff7e292bb6dedc9cccf1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/candidate.pb",
+      "bytes": 139332,
+      "sha256": "fe0ed7d07acafb5829f0659007c591962d9ce9b59e2b5011333d46496c11c04b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/failure.pb",
+      "bytes": 147495,
+      "sha256": "63d4d35230705369cdf9bd6ae08ddc604377ae562bbbcb4378d30917a7f728f3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/final.pb",
+      "bytes": 147573,
+      "sha256": "d5b2f263693a37ce0678483711c1975f2f9b04772261e7f757c90cca07f5da4f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/monitor.jsonl",
+      "bytes": 520969,
+      "sha256": "4453c207e4d3a3a3350e4aafc15c9f322a40538a987563ee692b725199bcda0f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/ready.pb",
+      "bytes": 141780,
+      "sha256": "060e88beb8b47624bf3a91c49a38c78d2bb72fdb1b5ee637d2fca0cff823b0ba"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-diagnostic60-r1/run.json",
+      "bytes": 512266,
+      "sha256": "8da8ec0ed2308940099d4ed046c0289289274fb01cd43f2170887c6534834779"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-exit.json",
+      "bytes": 284,
+      "sha256": "b23712b7c7d51815cf2f94e102fdbde9d417cba9301a06b83d23552cfd01e82a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-owned-recovery.json",
+      "bytes": 690,
+      "sha256": "39fe31721b43ea76a589b1385d7464b0b07ad862dd3d780071c6eccf3f6c37e0"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/p1-owned-recovery.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/pipe_capacity.py",
+      "bytes": 8204,
+      "sha256": "447b55a7f050372fecc6fee2161fc18359f0836c881db250547dc921c9797017"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/pixel-preparation-profile.json",
+      "bytes": 2517,
+      "sha256": "201a4b3561870fa1d6ebef8d92162bedd5c512590038d049286ef3eb2d940c2d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/pixel-preparation-profile.log",
+      "bytes": 384,
+      "sha256": "816beffef4166ad1997a57655c02756a0eea65c4b5e91eb2099c4627f1afbb24"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/pixel-roundtrip-r2.log",
+      "bytes": 7224,
+      "sha256": "558f9f06f32882bed57f6927a8ab060176cc1d1193293770aa179f403bc2bb87"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/pixel-roundtrip-r2/results.json",
+      "bytes": 35384,
+      "sha256": "1c046ea92166476f8ed04ed48ff80acec8a3d03b4e0fd29916f113dba484af38"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/pixel-roundtrip.log",
+      "bytes": 6098,
+      "sha256": "8055edd1d60c90ce22ad67b57a9096bcbe17eaf1023e6075f6bdc5f0bc678a3f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/pixel-roundtrip/results.json",
+      "bytes": 31265,
+      "sha256": "2ba642a3a0d70d2343af1f9327c321f68c26d48639a3eb9871163b53a44b6893"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/pixel_roundtrip.py",
+      "bytes": 6691,
+      "sha256": "88ee90e8e93a4e320162ba0c389ee72e4d970eea0367ed2fe1394816c312b182"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/post-baseline-processes.json",
+      "bytes": 4,
+      "sha256": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/prepare_managed_harness.py",
+      "bytes": 2339,
+      "sha256": "8a86a8d110b1f121f67920e306b8f006d3ae824727afba572af7b3a4333803b8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/profile-media-verification.log",
+      "bytes": 86,
+      "sha256": "fb14263f91d1515b887ff488f5efb07dae6404c77b8d61eeece25324b6ec53ea"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/profile-p1-failed-exit.json",
+      "bytes": 252,
+      "sha256": "622f616ad673dd3dfcacd96572ff0b7cd44435853ddf1955190dfa3f5886ccb1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/profile-setup-failed-exit.json",
+      "bytes": 284,
+      "sha256": "9e89f8482ba621b91a877def336ddd044ea5c1374514cb17fbe71ee3930f7589"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/profile-setup-owned-recovery.json",
+      "bytes": 690,
+      "sha256": "794e2b2b1a15eb292e1f77e00013966549b1742a9eb56f006872a13afa8fd9e9"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/profile-stage-assessment.json",
+      "bytes": 5890,
+      "sha256": "b68fe036d6b85e9bd89c09129d849de9af8d7bd685b5f7d355c2c523fcf55f86"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/profile-visual-stimulus-config.toml",
+      "bytes": 6264,
+      "sha256": "93d36e311aa8733e51b5e2b292f9a1cc717bfca433ee3e897f65ddd0bb0b6c0c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/profile_pixels.py",
+      "bytes": 2196,
+      "sha256": "fb6c4fa2c0629052a5a0a3b162822bc95dee29417e1236e43cb33bc2f75aa600"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/read_snapshot.py",
+      "bytes": 1418,
+      "sha256": "4cbd1f36cc57b516b12f898fef4016d5b4fc42620d12c45b1a40cda460bbef62"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1.log",
+      "bytes": 5211,
+      "sha256": "a35a9f1f43c670b483eaed6e8cd1f820018b65cda8c0857c49ac3ffb9b165b64"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/before.pb",
+      "bytes": 141117,
+      "sha256": "0ad4fb1e4d9673f9ffdfc62f34a37b4b69ab5166e88d493bdd855ca18bd9b995"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/candidate.json",
+      "bytes": 149390,
+      "sha256": "7ca0648264fb0149225a0b70102792eee47230f4ecbb15bed6bde50828c50db8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/candidate.pb",
+      "bytes": 139338,
+      "sha256": "736abe7bc899fa1320a7ef6afcf6f9bf2c990e4b059a68c085a1efa120a60822"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/final.pb",
+      "bytes": 143270,
+      "sha256": "e8f55e16b5ac340198964b4ac6664d1873dc1126b9a643d23b231f547fc1d09e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/monitor.jsonl",
+      "bytes": 462998,
+      "sha256": "e32106b8b001ef76760c4a0ab3e95d24f8efc183f0567ecafea1948fe91e1573"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/ready.pb",
+      "bytes": 141512,
+      "sha256": "e8e7dd28dacffeddbc60166683271b912753a560aead8448c04b582df60f29b8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-16slots60-r1/run.json",
+      "bytes": 489329,
+      "sha256": "3211c79c57a7b80dd532992f04e8fbe454327497b96f8c106ee25c4ec8a33cf4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r1.log",
+      "bytes": 2571,
+      "sha256": "9daa774c3fcd51af9a5d9217b0a3a9c2dd8b672f027c2cfc16d83ab1e6f92cfd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r1/failure.pb",
+      "bytes": 142201,
+      "sha256": "574546dc87a5b5022b5934516fe964c63cf1b969b6a5f7ede5f17afcfdfd7a18"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r1/run.json",
+      "bytes": 159652,
+      "sha256": "558ccfe355b243ab7707dd78a4bd4839f78d2cc73769c03a82f3171a5f9e1c7a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2.log",
+      "bytes": 5210,
+      "sha256": "e5a647c71c41c72e559db2ef03462f59bfc7532ec477618265daf6eed942125c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/before.pb",
+      "bytes": 141507,
+      "sha256": "fc5cb53d36feaa773197d36d3334dd013bcaf3df7149c29f54f87ad299c33c93"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/candidate.json",
+      "bytes": 149389,
+      "sha256": "ab46a8358d0f01100e3cc11385655bddcc9d0049e089270bc1b8fc376ddf5386"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/candidate.pb",
+      "bytes": 139337,
+      "sha256": "e9fef5fde25e1d01b496b2490eeecafcb59e4db73297f9bd20b88ac0a902fb22"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/drop-groups.json",
+      "bytes": 1960,
+      "sha256": "fcdce75f1757546794b8c347a239e6e015a4c7ec6f65fba94867c0b1c6827135"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/final.pb",
+      "bytes": 143652,
+      "sha256": "53b0cc62a0cd6cf875692d1567cf21483bd84ebc555abf8b58e2df7bcc74d0eb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/monitor.jsonl",
+      "bytes": 463035,
+      "sha256": "0d303180439719b053862e6aade13bca9d8804525db3a67c9a2a03bcbed58fcc"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/ready.pb",
+      "bytes": 141897,
+      "sha256": "8627d178a7d324dfa3581610d9ef648bca0f27a097ed615af618db995ed7478e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-3slots60-r2/run.json",
+      "bytes": 492802,
+      "sha256": "c393042b9281a9f1bd66e4de91cb8a6d6c6b604a21f2eefb8b7955f042b2af0b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-shutdown.json",
+      "bytes": 235,
+      "sha256": "298fe071d9d5c8219cd89c0b7795bc07ae34b15792a795625e146351c90394d1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/repaired-p4-shutdown.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/resource-assessment.json",
+      "bytes": 17177,
+      "sha256": "1fbf0a3dcc3e67706db4d7215e16388fd5cc7dd096c2b6f5c83e0d7aae4f0d93"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/resource-assessment.log",
+      "bytes": 17177,
+      "sha256": "1fbf0a3dcc3e67706db4d7215e16388fd5cc7dd096c2b6f5c83e0d7aae4f0d93"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-capability-restart.log",
+      "bytes": 174,
+      "sha256": "f8a9f212d9763886bb7b4fa327599b372c79a9736f8598ebedc1a6d19537fd8d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-capability-restart/before.pb",
+      "bytes": 141968,
+      "sha256": "e1ed75551f6e804931b6ef7d5abb73d2ef9a9550e7d3e2f05e34683644a1c3e9"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-capability-restart/candidate.json",
+      "bytes": 150881,
+      "sha256": "e19111ca1acfe1a3f2bdb67f193f128d7cd47c4e01b41639ff99cee9d7348d30"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-capability-restart/candidate.pb",
+      "bytes": 140451,
+      "sha256": "c474bd35e4a62225e2de6c7fcfc21a8912579eccec022b0afbb33a2dd0e1d4b8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-capability-restart/run.json",
+      "bytes": 518,
+      "sha256": "25f53bc3f10774e8bc18dbeb51e1c80c818e4ce5ca2081c8fec373ce2b64ceb6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-slot-fixture.log",
+      "bytes": 174,
+      "sha256": "9a945ffedac76425077d4d318f2b06b1e9d9f08a5354774869ddc1c5df4f2492"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-slot-fixture/before.pb",
+      "bytes": 141226,
+      "sha256": "9a27e8b2de88e6a918304a7616cea51842430001c17899a907d274634566421b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-slot-fixture/candidate.json",
+      "bytes": 150881,
+      "sha256": "e19111ca1acfe1a3f2bdb67f193f128d7cd47c4e01b41639ff99cee9d7348d30"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-slot-fixture/candidate.pb",
+      "bytes": 140451,
+      "sha256": "c474bd35e4a62225e2de6c7fcfc21a8912579eccec022b0afbb33a2dd0e1d4b8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore-before-slot-fixture/run.json",
+      "bytes": 429,
+      "sha256": "2270ba4225e11db26df3f4b3d9812ffb58b0eef7995131f28b78dd22f8824697"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore_original.py",
+      "bytes": 3772,
+      "sha256": "e2154bb82734d5692787e4e75b027b1eb04b935bf01cfbb3a1dd95bf1e0f1c34"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/restore_profile_original.py",
+      "bytes": 3775,
+      "sha256": "bb6e987d675c1529130c713ce82f2465427a1059d7bef1f1b5ef4482dae131ca"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/rig-native-final.log",
+      "bytes": 100,
+      "sha256": "1b6d285e9bf8c2d7876becb3febd98832a4a060079ff2e22611ccc00af141ee5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/ruff-final.log",
+      "bytes": 20,
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/runtime-original-configuration.pb",
+      "bytes": 140451,
+      "sha256": "c474bd35e4a62225e2de6c7fcfc21a8912579eccec022b0afbb33a2dd0e1d4b8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/save-on-abort-exit.json",
+      "bytes": 284,
+      "sha256": "c3d8b27bc9fbdc2d1d759ee73476b0817236f9aa905b250ca498ca97c86aa70e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/save-on-abort-owned-recovery.json",
+      "bytes": 690,
+      "sha256": "456d79a84d1b7be5d1e55976979301310b2d717d799d4f5b83d009ad49dcea30"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/save-on-abort-owned-recovery.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/save-on-abort-pending.json",
+      "bytes": 169477,
+      "sha256": "c15c2649f2f5c7bfe032be0affbd17e60e78e41f0e2c3601798243c6e6c60b36"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/save-on-abort-pending.pb",
+      "bytes": 146469,
+      "sha256": "4d908a791d8002d5bfe7373d5021374dca6974d4036918383b3c903de5553433"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1.log",
+      "bytes": 7111,
+      "sha256": "2a23dd7a29ab9c6745d883c83fe3ad460b8b1d012ad7ff7b1c9999e7a40d7968"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/before.pb",
+      "bytes": 141117,
+      "sha256": "49a5c92fec4c7b49dd8aba63eb1228cc9867639478c4738ea00d46fda80dabd3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/candidate.json",
+      "bytes": 149388,
+      "sha256": "77d5c9756cb05e520994dee82b09c93e5de996979ea22e426e60b7413b79555e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/candidate.pb",
+      "bytes": 139336,
+      "sha256": "0b57a958d32d8a1a778675901deb6fbcf2d46d394070dd87f97adc9521c3b126"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/failure.pb",
+      "bytes": 147219,
+      "sha256": "bc9293d38761b37a726719175f4527d6c99d3e63016b04d20c101dcc6392b4b8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/final.pb",
+      "bytes": 147297,
+      "sha256": "e2b040b7b6a0af87fe53deeac94557b0f42bd221221f64343baa7c7fe6171987"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/monitor.jsonl",
+      "bytes": 520887,
+      "sha256": "40e5ab3f738777d9d0bc9a57d6727223df85a7d30eb195834fe8f89185cf57f5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/ready.pb",
+      "bytes": 141506,
+      "sha256": "7c538807c3f82844518d3dece89a55b67b3a1bd8dbb107eac4a6678f5ead894d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/saved-p4-baseline60-r1/run.json",
+      "bytes": 509744,
+      "sha256": "b30ff533566e0fc6f34ff4c8f5fefa1b5bdde0a7a5e79d10cc000eb592737a13"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/scale-cuda-help.txt",
+      "bytes": 1802,
+      "sha256": "e0a0684660d0128bf92fbb3a455296dc7c2697574d1f62c779437a2501e071b3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/scientific-records-manifest.json",
+      "bytes": 34547,
+      "sha256": "603ee529e91b8df3f0d33a4bce8b14ef40cdf350adf1e71e66b15d0951d94ae8"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/settle_owned_session.py",
+      "bytes": 2740,
+      "sha256": "7dbb856b4c981346d088dd79eb705e522e59e47df8a779d916c8c2bb454035cd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/shutdown.py",
+      "bytes": 1499,
+      "sha256": "4d5cc2b635f41dabdd91ab3eeb99fe2bfab41a99e771c346d338bb2114952345"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/slot16-fixture.json",
+      "bytes": 405,
+      "sha256": "98130d2f5897b436e84510cef46319171a66e152d523a653761dbcc9364d4900"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/slot16-generation-exit.json",
+      "bytes": 284,
+      "sha256": "c67f5e3f2ca366d18fef735d15c54394230a17396d9e78ef6745b116e727b89b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/stimulus-hevc-decode.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/tracking-hevc-decode.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/validated-recipes.json",
+      "bytes": 1861,
+      "sha256": "822800a8f7813f79b62062843092cad571755a331388e7b80f39c3b99b72b992"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/verify_hevc.py",
+      "bytes": 3874,
+      "sha256": "2168b5f8bcdad37c4e990f37935d24e9223c8d02003abf81b228a691508cddbe"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/visual_stimulus_config.toml.before-final-restore",
+      "bytes": 6263,
+      "sha256": "55086b93616b3b4ccaaa520ef72ac19f9d28dbec6570dff37de5981fb7331838"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/wait-handshake-fix.log",
+      "bytes": 182,
+      "sha256": "a5f0efae4baeba7db54d5463c67caffd9162f886db3a887035b19bb2eb3d3c5f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/preview-slot/native-slot-results.json",
+      "bytes": 375,
+      "sha256": "8b9ea93c1d2c833cd2a76018fdf016ed28085a72c170ce1e6f1b865c4a56a797"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/preview-slot/native_slot_probe.py",
+      "bytes": 2917,
+      "sha256": "946542045385f8bec4407f7edab2cb0e168528d997639d7e374cd89a60d01929"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/preview-slot/validation.txt",
+      "bytes": 3377,
+      "sha256": "0fc0ed026469e2c01887d4423e470202e3bb2fc0648018c866a0ba4257258329"
+    },
+    {
+      "path": "reports/runtime.md",
+      "bytes": 461271,
+      "sha256": "945e6baaebcb807d2964406ed71ba74120f164767d9f28a168381862210ceaf7"
+    },
+    {
+      "path": "reports/visual_stimulus.md",
+      "bytes": 164413,
+      "sha256": "0f8131b8be7b2903095ccb64cd210d5f167637cd9eb168eb13aca518c3a653e1"
+    },
+    {
+      "path": "src/cephvr/acquisition/camera/metadata.py",
+      "bytes": 6186,
+      "sha256": "553390dcffa93b57f033eebba19b565e2e77c3f47b124aba02a969fc14828add"
+    },
+    {
+      "path": "src/cephvr/acquisition/worker/blocking_wait.py",
+      "bytes": 1934,
+      "sha256": "d455dcc98d68e5de5f1d4559c2333c76d62907c9cfd1886853d9851bc32b2ff5"
+    },
+    {
+      "path": "src/cephvr/controller/device/microcontroller.py",
+      "bytes": 7786,
+      "sha256": "22d5138d22386588fb96a5826fbbc0d0bcbf233caa1c0283912db15ba20a5212"
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle_completion.py",
+      "bytes": 15530,
+      "sha256": "0a3e61cc52595579cbe05f72628d8ee3216774f195af946882d28b7ac268594d"
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/device.py",
+      "bytes": 21011,
+      "sha256": "f07609732d8322b437a4c6ca500f23c153f403c39d927d37a8558ccbba7a5bcd"
+    },
+    {
+      "path": "src/cephvr/gui/action_cancellation.py",
+      "bytes": 2012,
+      "sha256": "2bfe2a5933e0effd4108763f057e957d8900b763c6a0265bed620edcb79f83bf"
+    },
+    {
+      "path": "src/cephvr/gui/camera_action_submission.py",
+      "bytes": 2272,
+      "sha256": "98f1d02153b2ef917a2e2e9f1315ebf8827d73d6066484d6a70c6179ff2aad76"
+    },
+    {
+      "path": "src/cephvr/gui/camera_trigger_form.py",
+      "bytes": 1773,
+      "sha256": "887e1381deecbc71a6e5cb84866603e0a1f8224c76bcd4827f3dcea4d4b7854c"
+    },
+    {
+      "path": "src/cephvr/gui/cameras.py",
+      "bytes": 24931,
+      "sha256": "c71d6dd322234c1a1a7f9c0773d7501423495af01597b63b9b199b04afbff56a"
+    },
+    {
+      "path": "src/cephvr/gui/cancel_cleanup.py",
+      "bytes": 5066,
+      "sha256": "2efb197c8dd5f630358d8a094d71f32f73fbb0d767ea65de3c1f8ad7926dd883"
+    },
+    {
+      "path": "src/cephvr/gui/devices.py",
+      "bytes": 12751,
+      "sha256": "dda594355d69222d1a5c6cfe5702049e7fc2522d8059d5a4119cc6f75c934c0e"
+    },
+    {
+      "path": "src/cephvr/gui/main.py",
+      "bytes": 35740,
+      "sha256": "082dc1b7c5944e5aaf42a87f2677f2ee8c988bec347552bddeb8cdf0ab9e3e25"
+    },
+    {
+      "path": "src/cephvr/gui/managed_actions.py",
+      "bytes": 18636,
+      "sha256": "b34e94309e834788cd4618fa2e1a725dc9fbb6a7a2ed7e54391b8469457650ac"
+    },
+    {
+      "path": "src/cephvr/gui/managed_cameras.py",
+      "bytes": 18311,
+      "sha256": "d6e0835cc76bcfbbfc86704ac44952c3e5c7cd8fab8d2e6699ace355ca205b0c"
+    },
+    {
+      "path": "src/cephvr/gui/managed_device_commands.py",
+      "bytes": 15099,
+      "sha256": "c0a5377bf140c57289013ea6a0a62f7fe7899b1bb85c40794405a39b889daa64"
+    },
+    {
+      "path": "src/cephvr/gui/managed_mcu.py",
+      "bytes": 17968,
+      "sha256": "f4eb92befa076fb1c510de62371c51c56608ff3b5690c93c66a2cfe2898df144"
+    },
+    {
+      "path": "src/cephvr/gui/microcontroller.py",
+      "bytes": 24721,
+      "sha256": "9c0bf43a6aa552870382372f257b2aa3db161e53bf1d5081c6d7deda4c2ec928"
+    },
+    {
+      "path": "src/cephvr/gui/preview_placement.py",
+      "bytes": 4729,
+      "sha256": "ee922340c1a58c3dcec09c8fbb3bef5ca468ca6dd1226527d20a9b408be543ac"
+    },
+    {
+      "path": "src/cephvr/gui/recordings.py",
+      "bytes": 4188,
+      "sha256": "489864d23603548f87e64f68697881b361e07a0cda651c1c64e136bea35657bc"
+    },
+    {
+      "path": "src/cephvr/gui/review.py",
+      "bytes": 12011,
+      "sha256": "ab8f954ea5f467681787db1b197db03117cbea1a8c68261c4b8834d5ed5a5e3b"
+    },
+    {
+      "path": "src/cephvr/gui/spikeglx.py",
+      "bytes": 19319,
+      "sha256": "e1ed3c4f85fca455a99186bac45793158ce7473f59143367d05f5818dda7133b"
+    },
+    {
+      "path": "src/cephvr/gui/window.py",
+      "bytes": 9219,
+      "sha256": "6513b953e2c6b13ef8b410efab4eea6fa8d3e02e04edb3a3dd1ce35b74d64a3d"
+    },
+    {
+      "path": "src/cephvr/platform/windows/nvenc_features.py",
+      "bytes": 10202,
+      "sha256": "6d3d54419733c418209ceb38c35c688a05cd3e181d912de1781baea201e87145"
+    },
+    {
+      "path": "src/cephvr/platform/windows/window_coordinates.py",
+      "bytes": 5596,
+      "sha256": "170f3ec629defc4126e43fcc8bdf9cb76006d5109fe5b16f2949bbfd7351c6ff"
+    },
+    {
+      "path": "src/cephvr/shared/encoder_io.py",
+      "bytes": 1942,
+      "sha256": "4c8af1d92cac4ee3e7ccd4a6801ace581c9c071e46f1665773d0e8913ae42915"
+    },
+    {
+      "path": "src/cephvr/shared/ffmpeg_encoding_rules.py",
+      "bytes": 5938,
+      "sha256": "f56ff938c5d58a769b016b67fa69e2e1fda2f0dfaa86290c65a95ceb7944affa"
+    },
+    {
+      "path": "tests/acquisition/test_camera_adapter_contracts.py",
+      "bytes": 20711,
+      "sha256": "c6bffd215263f5ae9ea15254cebed41862d1cdfc1d19a960e4b873ad0b87a622"
+    },
+    {
+      "path": "tests/acquisition/test_manual_preview.py",
+      "bytes": 98700,
+      "sha256": "3c7f017689f8fd802993785af95e13e79def79ad10cb72e94b555484f3ade5d4"
+    },
+    {
+      "path": "tests/acquisition/test_recording_capabilities.py",
+      "bytes": 12776,
+      "sha256": "2e3266c91160cb8eb9a098dbe4518654fa117316da406951cc9c911411b2872f"
+    },
+    {
+      "path": "tests/acquisition/test_worker_foundations.py",
+      "bytes": 74009,
+      "sha256": "919c2ddd57e46fde3e54a9bbf7aa7ebe37703a8211bd6ea9effcf03fd8083702"
+    },
+    {
+      "path": "tests/controller/test_lifecycle_reports.py",
+      "bytes": 24518,
+      "sha256": "e7f91243c32ed0fb56ecb8e4bd4fbebc4c0b86d3f0a8924eec4553b4a0b033f6"
+    },
+    {
+      "path": "tests/controller/test_microcontroller_owner.py",
+      "bytes": 83206,
+      "sha256": "89a21de51aab7bb3b8261703078f458689333bcde45a76fc953522e0b951cbf4"
+    },
+    {
+      "path": "tests/gui/test_dashboard.py",
+      "bytes": 707285,
+      "sha256": "ea017ff8d042869ed5468f77c1a39524bec46a7a79e2f54564fb13a9ea344c7b"
+    },
+    {
+      "path": "tests/shared/test_supervised_encoder.py",
+      "bytes": 12668,
+      "sha256": "6ad9f501456674b398d3770dea58c9ef8fba97bc2abf7cf2cf1492ad44f1b471"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/scientific-records.zip",
+      "bytes": 6423841,
+      "sha256": "3b69047584b4e5a62843fb2c84c8ef85bff7657242d3349d4e520259d8719643"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-16/encoding-overload-audit/inherited-baseline.zip",
+      "bytes": 2261973,
+      "sha256": "8186887d0ff4a1e3db1fb296becde464088f78338c10b6a55ed827846f91500a"
+    }
+  ]
+}

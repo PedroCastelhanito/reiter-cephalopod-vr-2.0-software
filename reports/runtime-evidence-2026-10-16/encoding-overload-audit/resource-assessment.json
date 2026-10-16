@@ -1,0 +1,599 @@
+{
+  "scope": "Only active trial timestamps; GPU utilization is device-wide sampled ~1Hz. RSS sums double-count shared pages. Process I/O includes pipes and is not physical disk throughput. CPU uses cumulative Windows counters; no per-stage CPU/GPU attribution.",
+  "runs": {
+    "saved-p4-baseline60-r1": {
+      "start_monotonic_ns": 163918655962800,
+      "end_monotonic_ns": 163978655962800,
+      "active_monitor_samples": 60,
+      "system_cpu_percent": {
+        "count": 59,
+        "mean": 10.88290828013497,
+        "p50": 11.00828056502679,
+        "p95": 12.570571003342806,
+        "max": 13.186274509803921
+      },
+      "observed_process_cpu_percent_of_machine": {
+        "count": 59,
+        "mean": 8.354585557784826,
+        "p50": 8.498480973305401,
+        "p95": 10.1158990128454,
+        "max": 10.452950453311832
+      },
+      "sum_process_working_set_bytes": {
+        "count": 60,
+        "mean": 2362780603.733333,
+        "p50": 2358251520.0,
+        "p95": 2453837414.4,
+        "max": 2463752192.0
+      },
+      "process_io_write_bytes_per_second_including_pipes": {
+        "count": 59,
+        "mean": 711562463.5432272,
+        "p50": 712002052.384187,
+        "p95": 712799861.5010364,
+        "max": 713047446.2866613
+      },
+      "gpu": {
+        "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 5060 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 10.983050847457626,
+            "p50": 11.0,
+            "p95": 11.0,
+            "max": 11.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 0.0,
+            "p50": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 655.0,
+            "p50": 655.0,
+            "p95": 655.0,
+            "max": 655.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 32.6371186440678,
+            "p50": 32.73,
+            "p95": 32.910999999999994,
+            "max": 32.96
+          }
+        },
+        "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 2080 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 28.06779661016949,
+            "p50": 26.0,
+            "p95": 31.0,
+            "max": 33.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 43.13559322033898,
+            "p50": 44.0,
+            "p95": 46.099999999999994,
+            "max": 47.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 713.0,
+            "p50": 713.0,
+            "p95": 713.0,
+            "max": 713.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 63.12050847457627,
+            "p50": 62.92,
+            "p95": 64.255,
+            "max": 70.64
+          }
+        }
+      }
+    },
+    "p1-diagnostic60-r1": {
+      "start_monotonic_ns": 164299478279600,
+      "end_monotonic_ns": 164359478279600,
+      "active_monitor_samples": 60,
+      "system_cpu_percent": {
+        "count": 59,
+        "mean": 9.865281074871218,
+        "p50": 9.375,
+        "p95": 13.176725435001217,
+        "max": 15.009746588693957
+      },
+      "observed_process_cpu_percent_of_machine": {
+        "count": 59,
+        "mean": 7.205015147024436,
+        "p50": 7.226741723194735,
+        "p95": 8.80728101212539,
+        "max": 9.229936112167662
+      },
+      "sum_process_working_set_bytes": {
+        "count": 60,
+        "mean": 2300899328.0,
+        "p50": 2298656768.0,
+        "p95": 2351233638.4,
+        "max": 2360160256.0
+      },
+      "process_io_write_bytes_per_second_including_pipes": {
+        "count": 59,
+        "mean": 711540485.8490885,
+        "p50": 711796679.6877735,
+        "p95": 712664017.3312137,
+        "max": 712810768.0997794
+      },
+      "gpu": {
+        "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 5060 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 11.0,
+            "p50": 11.0,
+            "p95": 11.0,
+            "max": 11.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 0.0,
+            "p50": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 655.0,
+            "p50": 655.0,
+            "p95": 655.0,
+            "max": 655.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 32.76305084745763,
+            "p50": 32.82,
+            "p95": 33.023,
+            "max": 33.07
+          }
+        },
+        "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 2080 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 27.89830508474576,
+            "p50": 26.0,
+            "p95": 31.0,
+            "max": 34.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 41.389830508474574,
+            "p50": 42.0,
+            "p95": 45.0,
+            "max": 45.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 713.0,
+            "p50": 713.0,
+            "p95": 713.0,
+            "max": 713.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 56.7642372881356,
+            "p50": 61.27,
+            "p95": 63.794,
+            "max": 68.18
+          }
+        }
+      }
+    },
+    "repaired-p4-3slots60-r2": {
+      "start_monotonic_ns": 165364264169100,
+      "end_monotonic_ns": 165424264169100,
+      "active_monitor_samples": 60,
+      "system_cpu_percent": {
+        "count": 59,
+        "mean": 19.277679659953563,
+        "p50": 13.229571984435797,
+        "p95": 40.34764580548127,
+        "max": 46.52744050509956
+      },
+      "observed_process_cpu_percent_of_machine": {
+        "count": 59,
+        "mean": 8.70621839099443,
+        "p50": 8.396738839732722,
+        "p95": 10.965783040996742,
+        "max": 14.007855813266332
+      },
+      "sum_process_working_set_bytes": {
+        "count": 60,
+        "mean": 2201422370.133333,
+        "p50": 2192513024.0,
+        "p95": 2254769152.0,
+        "max": 2264248320.0
+      },
+      "process_io_write_bytes_per_second_including_pipes": {
+        "count": 59,
+        "mean": 712010490.9903201,
+        "p50": 711634024.0065377,
+        "p95": 717739074.5033214,
+        "max": 736852152.498796
+      },
+      "gpu": {
+        "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 5060 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 10.983050847457626,
+            "p50": 11.0,
+            "p95": 11.0,
+            "max": 12.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 0.0,
+            "p50": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 655.0,
+            "p50": 655.0,
+            "p95": 655.0,
+            "max": 655.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 33.39576271186441,
+            "p50": 33.38,
+            "p95": 33.994,
+            "max": 34.12
+          }
+        },
+        "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 2080 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 27.8135593220339,
+            "p50": 26.0,
+            "p95": 31.0,
+            "max": 31.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 43.71186440677966,
+            "p50": 45.0,
+            "p95": 47.0,
+            "max": 49.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 710.6440677966102,
+            "p50": 713.0,
+            "p95": 713.0,
+            "max": 713.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 62.759322033898314,
+            "p50": 62.76,
+            "p95": 63.19499999999999,
+            "max": 66.07
+          }
+        }
+      }
+    },
+    "repaired-p4-16slots60-r1": {
+      "start_monotonic_ns": 165553474735700,
+      "end_monotonic_ns": 165613474735700,
+      "active_monitor_samples": 60,
+      "system_cpu_percent": {
+        "count": 59,
+        "mean": 26.807627839449815,
+        "p50": 33.674963396778914,
+        "p95": 41.78892113075727,
+        "max": 46.397273612463486
+      },
+      "observed_process_cpu_percent_of_machine": {
+        "count": 59,
+        "mean": 8.839602324969173,
+        "p50": 8.692633649871361,
+        "p95": 10.997535879439369,
+        "max": 11.961633457323636
+      },
+      "sum_process_working_set_bytes": {
+        "count": 60,
+        "mean": 2230143180.8,
+        "p50": 2235480064.0,
+        "p95": 2254491033.6,
+        "max": 2260164608.0
+      },
+      "process_io_write_bytes_per_second_including_pipes": {
+        "count": 59,
+        "mean": 712288334.7120291,
+        "p50": 712170986.1077386,
+        "p95": 718148620.2207325,
+        "max": 752078644.7535534
+      },
+      "gpu": {
+        "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 5060 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 10.94915254237288,
+            "p50": 11.0,
+            "p95": 11.0,
+            "max": 11.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 0.0,
+            "p50": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 655.0,
+            "p50": 655.0,
+            "p95": 655.0,
+            "max": 655.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 34.307966101694916,
+            "p50": 34.33,
+            "p95": 34.794,
+            "max": 35.09
+          }
+        },
+        "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 2080 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 27.491525423728813,
+            "p50": 26.0,
+            "p95": 31.0,
+            "max": 34.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 43.05084745762712,
+            "p50": 44.0,
+            "p95": 47.0,
+            "max": 48.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 712.1694915254237,
+            "p50": 713.0,
+            "p95": 713.0,
+            "max": 713.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 61.83169491525424,
+            "p50": 62.99,
+            "p95": 63.623999999999995,
+            "max": 67.03
+          }
+        }
+      }
+    },
+    "managed-rgb-gray-lossless60-r5": {
+      "start_monotonic_ns": 166108748764800,
+      "end_monotonic_ns": 166168748764800,
+      "active_monitor_samples": 60,
+      "system_cpu_percent": {
+        "count": 59,
+        "mean": 12.579223690897587,
+        "p50": 12.45708680725846,
+        "p95": 16.61619189576194,
+        "max": 18.929440389294403
+      },
+      "observed_process_cpu_percent_of_machine": {
+        "count": 59,
+        "mean": 8.643442508466295,
+        "p50": 8.641977507563224,
+        "p95": 11.820878070010485,
+        "max": 12.209476808204684
+      },
+      "sum_process_working_set_bytes": {
+        "count": 60,
+        "mean": 2557488947.2,
+        "p50": 2557220864.0,
+        "p95": 2605750476.8,
+        "max": 2653995008.0
+      },
+      "process_io_write_bytes_per_second_including_pipes": {
+        "count": 59,
+        "mean": 747103605.0900317,
+        "p50": 805738219.8638636,
+        "p95": 914108125.1443145,
+        "max": 1070438727.8088958
+      },
+      "gpu": {
+        "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 5060 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 11.0,
+            "p50": 11.0,
+            "p95": 11.0,
+            "max": 11.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 0.0,
+            "p50": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 655.0,
+            "p50": 655.0,
+            "p95": 655.0,
+            "max": 655.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 34.12694915254237,
+            "p50": 34.14,
+            "p95": 34.356,
+            "max": 34.49
+          }
+        },
+        "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 2080 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 25.220338983050848,
+            "p50": 26.0,
+            "p95": 37.0,
+            "max": 41.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 43.40677966101695,
+            "p50": 44.0,
+            "p95": 59.099999999999994,
+            "max": 65.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 713.0,
+            "p50": 713.0,
+            "p95": 713.0,
+            "max": 713.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 67.73881355932204,
+            "p50": 63.39,
+            "p95": 90.12100000000001,
+            "max": 90.85
+          }
+        }
+      }
+    },
+    "full-review-overload60-r1": {
+      "start_monotonic_ns": 166477084997600,
+      "end_monotonic_ns": 166537084997600,
+      "active_monitor_samples": 60,
+      "system_cpu_percent": {
+        "count": 59,
+        "mean": 17.013003518528432,
+        "p50": 16.471734892787524,
+        "p95": 21.25215241291006,
+        "max": 23.133235724743777
+      },
+      "observed_process_cpu_percent_of_machine": {
+        "count": 59,
+        "mean": 13.207515069619834,
+        "p50": 13.231248263279047,
+        "p95": 16.939692930271324,
+        "max": 18.553086368646387
+      },
+      "sum_process_working_set_bytes": {
+        "count": 60,
+        "mean": 2506942395.733333,
+        "p50": 2505687040.0,
+        "p95": 2590452121.6,
+        "max": 2605715456.0
+      },
+      "process_io_write_bytes_per_second_including_pipes": {
+        "count": 59,
+        "mean": 1635479179.4607003,
+        "p50": 1635710124.4839652,
+        "p95": 1656112074.3657243,
+        "max": 1657319701.815763
+      },
+      "gpu": {
+        "GPU-77642118-1623-48dd-3686-1014aa86b818": {
+          "index": "0",
+          "name": "NVIDIA GeForce RTX 5060 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 13.932203389830509,
+            "p50": 14.0,
+            "p95": 15.0,
+            "max": 15.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 0.0,
+            "p50": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 700.0,
+            "p50": 700.0,
+            "p95": 700.0,
+            "max": 700.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 34.1964406779661,
+            "p50": 34.25,
+            "p95": 34.502,
+            "max": 34.59
+          }
+        },
+        "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+          "index": "1",
+          "name": "NVIDIA GeForce RTX 2080 Ti",
+          "utilization_percent": {
+            "count": 59,
+            "mean": 45.32203389830509,
+            "p50": 46.0,
+            "p95": 46.0,
+            "max": 50.0
+          },
+          "encoder_percent": {
+            "count": 59,
+            "mean": 51.186440677966104,
+            "p50": 52.0,
+            "p95": 52.0,
+            "max": 60.0
+          },
+          "memory_MiB": {
+            "count": 59,
+            "mean": 1048.0,
+            "p50": 1048.0,
+            "p95": 1048.0,
+            "max": 1048.0
+          },
+          "power_W": {
+            "count": 59,
+            "mean": 91.5184745762712,
+            "p50": 91.56,
+            "p95": 92.77499999999999,
+            "max": 92.96
+          }
+        }
+      }
+    }
+  }
+}

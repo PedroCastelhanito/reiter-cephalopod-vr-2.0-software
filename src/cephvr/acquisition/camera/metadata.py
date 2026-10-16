@@ -21,6 +21,11 @@ from cephvr.acquisition.camera.types import (
     TransportInterface,
 )
 
+# Exact USB models with fixed units documented at docs.baslerweb.com/timestamp.
+_FIXED_NANOSECOND_MODELS = frozenset(
+    {"acA4112-30uc", "a2A1920-160ucPRO", "a2A2464-77umPRO"}
+)
+
 
 def native_metadata(
     camera: Any, device_id: str, interface: TransportInterface
@@ -33,6 +38,10 @@ def native_metadata(
             frequency = _positive_integer(
                 read_value(nodes, "GevTimestampTickFrequency")
             )
+        if frequency is None and interface == "usb3":
+            model = read_value(nodes, "DeviceModelName")
+            if model in _FIXED_NANOSECOND_MODELS:
+                frequency = 1_000_000_000
         chunk_timestamp = False
         chunk_counter = False
         genicam = importlib.import_module("pypylon.genicam")

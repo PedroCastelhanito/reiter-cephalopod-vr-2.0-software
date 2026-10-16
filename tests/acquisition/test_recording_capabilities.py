@@ -21,7 +21,7 @@ from cephvr.acquisition.recording.encoding import (
     validate_arguments,
 )
 from cephvr.control.v1 import types_pb2 as types
-from cephvr.platform.windows.nvenc_features import _rate_control_modes
+from cephvr.platform.windows.nvenc_features import _BUFFER_FORMATS, _rate_control_modes
 from cephvr.shared.ffmpeg_capabilities import _parse_pixel_formats
 
 
@@ -187,6 +187,77 @@ def _capabilities() -> EncoderCapabilities:
         force_idr_codecs=frozenset({"h264_nvenc"}),
         device_max_dimensions={("h264_nvenc", "yuv420p"): (4096, 4096)},
     )
+
+
+@pytest.mark.parametrize(
+    "device_support,build_support,profile_support,lossless_support",
+    [
+        (True, True, True, True),
+        (False, True, True, True),
+        (True, False, True, True),
+        (True, True, False, True),
+        (True, True, True, False),
+    ],
+)
+def test_planar_rgb_requires_exact_device_buffer_and_installed_encoder_format(
+    device_support, build_support, profile_support, lossless_support
+):
+    assert _BUFFER_FORMATS[0x00001000] == {"yuv444p", "gbrp"}
+    formats = frozenset({"gbrp"})
+    caps = replace(
+        _capabilities(),
+        pixel_formats=formats,
+        codec_pixel_formats={"h264_nvenc": formats if build_support else frozenset()},
+        device_codec_pixel_formats={
+            "h264_nvenc": frozenset(_BUFFER_FORMATS[0x00001000])
+            if device_support
+            else frozenset()
+        },
+        device_max_dimensions={("h264_nvenc", "gbrp"): (4096, 4096)},
+        device_codec_profiles={
+            "h264_nvenc": frozenset({"high444p" if profile_support else "high"})
+        },
+        device_lossless={"h264_nvenc": lossless_support},
+        device_rate_controls={"h264_nvenc": frozenset({"constqp"})},
+        options={
+            **_capabilities().options,
+            "-tune": frozenset({"lossless"}),
+            "-rc": frozenset({"constqp"}),
+            "-qp": frozenset(),
+        },
+        numeric_ranges={**_capabilities().numeric_ranges, "-qp": (0, 51)},
+    )
+    arguments = [
+        "-c:v",
+        "h264_nvenc",
+        "-pix_fmt",
+        "+gbrp",
+        "-tune",
+        "lossless",
+        "-rc",
+        "constqp",
+        "-qp",
+        "0",
+    ]
+
+    def validate():
+        return validate_arguments(
+            arguments,
+            capabilities=caps,
+            input_pixel_format="gbrp",
+            recording_bit_depth=8,
+            input_width=256,
+            input_height=256,
+        )
+
+    if device_support and build_support and profile_support and lossless_support:
+        validate()
+    else:
+        with pytest.raises(
+            EncodingOptionsError,
+            match="does not support|not advertise|no NVENC profile",
+        ):
+            validate()
 
 
 @pytest.mark.parametrize("size", [(4112, 480), (640, 4112)])

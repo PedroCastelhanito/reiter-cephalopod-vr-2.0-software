@@ -1,0 +1,63 @@
+{
+  "scope": "Prepared 8-bit RGB/gray pixel-fidelity recipe only, not sensor-raw preservation or proven real-time retention. Live p4 Behavior retained 1416 of 1798 received frames; 382 explicit capacity omissions. Diagnostic p1 run interrupted and is not accepted. Defaults restored; stimulus remains lossy.",
+  "behavior": [
+    "-c:v",
+    "h264_nvenc",
+    "-pix_fmt",
+    "+gbrp",
+    "-vf",
+    "scale=w=iw:h=ih:in_range=full:out_range=full,format=pix_fmts=gbrp",
+    "-color_range",
+    "pc",
+    "-preset",
+    "p4",
+    "-rc-lookahead",
+    "0",
+    "-spatial-aq",
+    "0",
+    "-temporal-aq",
+    "0",
+    "-rc",
+    "constqp",
+    "-qp",
+    "0",
+    "-tune",
+    "lossless"
+  ],
+  "tracking": [
+    "-c:v",
+    "h264_nvenc",
+    "-pix_fmt",
+    "+yuv420p",
+    "-vf",
+    "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=gray,scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv420p",
+    "-color_range",
+    "pc",
+    "-colorspace",
+    "bt709",
+    "-preset",
+    "p4",
+    "-rc-lookahead",
+    "0",
+    "-spatial-aq",
+    "0",
+    "-temporal-aq",
+    "0",
+    "-rc",
+    "constqp",
+    "-qp",
+    "0",
+    "-tune",
+    "lossless"
+  ],
+  "device_placement": "SYS002:exactconfiguredRTX2080TiUUIDresolvedbybackend, nooperatorGPUargoverride",
+  "capture_buffer_recommendation": {
+    "capture_slots": 16,
+    "review_scale_factor": 2,
+    "scope": "Tested60sGaussianfixture zeroobservedcapacitydrops; boundedresourcevalidationrequired, notuniversalguarantee"
+  },
+  "not_recommended_as_default": {
+    "hevc_lossless": "Matchedshortsyntheticfixture misses30/60/60inputtargets despite~14.6%size saving",
+    "p1_or_filter_threads1": "Single shortcapacityrun insufficienttojustifydefault/filtercontractextension"
+  }
+}

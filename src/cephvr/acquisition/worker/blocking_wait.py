@@ -39,8 +39,8 @@ def verify_blocking_wait(
         with callback_lock:
             if cancelled.is_set():
                 return
-            wake_private_event()
             acknowledgement.set()
+            wake_private_event()
 
     def register(wake_private_event: Callable[[], None]) -> None:
         with callback_lock:

@@ -174,7 +174,7 @@ class ManagedGui(QObject):
             ),
         )
         window.devices.spikeglx.connection_requested.connect(
-            lambda: bridge.request("spikeglx_connection")
+            lambda: window.devices.spikeglx.start_connection_check(bridge.request)
         )
         window.devices.spikeglx.pairing_requested.connect(
             self.display_operations.submit_pairing
@@ -227,6 +227,7 @@ class ManagedGui(QObject):
         self.control_ready = False
         self.auto_control_attempted = False
         self.state = None
+        self.window.devices.spikeglx.pending_action.finish()
         self.window.devices.spikeglx.pairing_pending = False
         self.tracking_diagnostics.install_snapshot(None)
         self._inventory_identity = None
@@ -699,7 +700,11 @@ class ManagedGui(QObject):
             self.window.devices.spikeglx.apply_view(self.window.dashboard.view)
             self.window.devices.spikeglx.console.appendPlainText(message)
         label = action_label(action)
-        rendered = f"{label}: {message}" if success else f"{label} failed: {message}"
+        rendered = (
+            f"{label}: {message}"
+            if success or message.startswith("Cancelled")
+            else f"{label} failed: {message}"
+        )
         if not quiet_mcu_poll and (
             action != "tracking_diagnostic_frame" or not success
         ):
@@ -738,10 +743,19 @@ class ManagedGui(QObject):
             self.refresh_camera_state()
         if action == "spikeglx_connection":
             panel = self.window.devices.spikeglx
+            panel.pending_action.finish()
+            panel.apply_view(self.window.dashboard.view)
             panel.console.appendPlainText(rendered)
             panel.status_column.set_rows(
                 (
-                    ("CONNECTION", "Verified" if success else "Unavailable"),
+                    (
+                        "CONNECTION",
+                        "Verified"
+                        if success
+                        else "Cancelled"
+                        if message.startswith("Cancelled")
+                        else "Unavailable",
+                    ),
                     None,
                     ("", message.replace(" · ", "\n") if success else message),
                 )
@@ -837,7 +851,7 @@ def main(argv: list[str] | None = None) -> int:
             manager = ManagedGui(window, bridge)
             app.aboutToQuit.connect(manager.shutdown)
             fit_window_to_screen(window)
-            window.show()
+            window.showMaximized()
             return app.exec()
         finally:
             store.remove_client(principal)

@@ -1,0 +1,26 @@
+[
+  {
+    "maximized": true,
+    "frame": [
+      1250,
+      150,
+      642,
+      672
+    ],
+    "side": 640,
+    "scale": 1.0,
+    "topmost_after_gui_activation": true
+  },
+  {
+    "maximized": false,
+    "frame": [
+      805,
+      158,
+      375,
+      405
+    ],
+    "side": 373,
+    "scale": 1.0,
+    "topmost_after_gui_activation": true
+  }
+]

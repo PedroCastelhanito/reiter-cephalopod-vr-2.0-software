@@ -1,0 +1,48 @@
+{
+  "scope": "Unpaced synthetic capacity, three simultaneous streams; eight precomputed high-entropy frames looped, no camera/renderer/scientific acceptance",
+  "arguments": {
+    "label": "capacity-p4-original-r1",
+    "seconds": 5,
+    "preset": "p4",
+    "filter_threads": null,
+    "immediate_poll": false,
+    "lossless_camera": false
+  },
+  "device": {
+    "uuid": "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+    "ordinal": 1
+  },
+  "seed": 20261016,
+  "fixture_sha256": {
+    "behavior": [
+      "50b4714ff7279fd884df8b68bc91c4127b10dbcb4d7c7a0c4a474299e5338bc9",
+      "626cb244a6fcd6b6142f3cdc8597b29f9cb746385617ea5fe638828b7876639d",
+      "06498dc098c9ffbd937ad434d3972339892207f44d627876da1e5a9435fc2209",
+      "5c89a96b088e97acce7aba1e93cb143b58a1bf2b02ab90826c87ef27388a730c",
+      "0d7f0a2263f1c1345f0ed556c3c04f55131fb8e64897b7f793121980a58324c9",
+      "5783a2fde856e75672e0eda6639e489fa7a74e062f53f22b08b3aba06620ef1b",
+      "46c86d06480d1fce29bc064297968a1e410021197b28c28e28c27ab0bf7ab2eb",
+      "65527df98e89ba11a8849cf749070784fa5b84357b56c53a73bc387f48b7800f"
+    ],
+    "tracking": [
+      "bf19b4c515ededf5739e0a8be314d7be1bec711171c4ef8df37944141e203204",
+      "a3259cb89f9e96afda4cd9d80a2e62eb05e2d4eecb7a15ea30c4e715687b6a73",
+      "3fea7ec20083615cdf0ca1c80a9703da6a302458d6127d95065a7ea2ea043938",
+      "87a28db2c49693b052d510742ccbeb07f09e92c408fbd72e9bbb2e3f29819b4c",
+      "63bba5cea6a527167d8e9cdda3e3f0e6880da76aaa409ae5bb3c16faf7706bd4",
+      "93384f83503dc2ba20f7655864c47af30c4d52260b904abc2a74bb33934bd97c",
+      "8a557bc107a0325ccd1fc6ca65607784d911af5927d04ee61ffdcfe232e7ace8",
+      "49651cc813bfa66d986e0a2a22e5616a6242f58ef803ba0f24e42f0ee0577251"
+    ],
+    "stimulus": [
+      "66e0563f0e5a4091dbccf91417eab03982798cbf501eb972a9405f163d0562fe",
+      "6bd7a21ce4400ce2e7f864e5c38ea64d9bcb7c36f6d818a9a2d46ee2014cb593",
+      "802b90792b2d146df1e14c228c5ac6d11051d0faf50641c8bff93553a61e3ae5",
+      "2cc57e2ced46e1691fa4038e51e5d7d813023360a330b5ae05b61df19e391c2f",
+      "6ca0f87a66896633b3b3f3029e4b6df0283ef864a439b643688f70af1dae49c1",
+      "cb6d977dc192f02e1d2e58a9122c19bd087ea4593c8b424c2f36b8fc8b5e0c33",
+      "9f605ec2a635ec942a769bdf2bc81bd3544a1f5a68a0258edd6419b76b778b30",
+      "f73a683bca3d16e6aaa37218305ac0dce43aa30d35192d213952f2cc0ca81ca4"
+    ]
+  }
+}

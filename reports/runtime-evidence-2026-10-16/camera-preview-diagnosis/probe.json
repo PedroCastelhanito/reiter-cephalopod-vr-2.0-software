@@ -1,0 +1,94 @@
+{
+  "serial": "40065509",
+  "model": "acA4112-30uc",
+  "frames": [
+    {
+      "index": 0,
+      "raw_min": 124,
+      "raw_max": 255,
+      "bgr_mean": [
+        144.5527213789998,
+        238.04362152998516,
+        254.7065966703751
+      ],
+      "bgr_std": [
+        6.372293149623378,
+        8.484928634633008,
+        8.644753526849735
+      ],
+      "direct_sdk_max_difference": 0,
+      "timestamp_ticks": 87062098622211
+    },
+    {
+      "index": 1,
+      "raw_min": 125,
+      "raw_max": 255,
+      "bgr_mean": [
+        145.8809132628735,
+        237.85189791269337,
+        254.7065966703751
+      ],
+      "bgr_std": [
+        6.374771002557724,
+        8.481277783653285,
+        8.644753526849735
+      ],
+      "direct_sdk_max_difference": 0,
+      "timestamp_ticks": 87062293248282
+    },
+    {
+      "index": 2,
+      "raw_min": 126,
+      "raw_max": 255,
+      "bgr_mean": [
+        146.11823645104894,
+        238.85616821625345,
+        254.7065966703751
+      ],
+      "bgr_std": [
+        6.3802080781069765,
+        8.511648144461734,
+        8.644753526849735
+      ],
+      "direct_sdk_max_difference": 0,
+      "timestamp_ticks": 87062489940204
+    }
+  ],
+  "features": {
+    "DeviceModelName": "acA4112-30uc",
+    "TimestampTickFrequency": null,
+    "GevTimestampTickFrequency": null,
+    "PixelFormat": "BayerRG8",
+    "Width": 1760,
+    "Height": 1716,
+    "ExposureTime": 25000.0,
+    "Gain": 0.0,
+    "Gamma": 1.0,
+    "TestImageSelector": "Off",
+    "BalanceWhiteAuto": "Off",
+    "LightSourcePreset": "Daylight5000K"
+  },
+  "metadata": {
+    "timestamp_available": true,
+    "frame_counter_available": true,
+    "warnings": [],
+    "camera_clock": {
+      "device_id": "40065509",
+      "timestamp_source": "ChunkTimestamp",
+      "conversion_available": true,
+      "tick_period_ns_numerator": 1,
+      "tick_period_ns_denominator": 1,
+      "timestamp_semantics": "exposure_start",
+      "reset_semantics": "unknown",
+      "wrap_semantics": "unknown",
+      "unavailable_reason": "",
+      "counter_source": "CGrabResultData.GetBlockID",
+      "counter_semantics": "frames",
+      "counter_width_bits": 64,
+      "counter_wrap_semantics": "unknown",
+      "counter_unavailable_reason": ""
+    }
+  },
+  "pfs_restored_exact": false,
+  "closed": true
+}

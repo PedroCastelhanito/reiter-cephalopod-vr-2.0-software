@@ -1,0 +1,15 @@
+Filter colorspace_cuda
+  CUDA accelerated video color converter
+    Inputs:
+       #0: default (video)
+    Outputs:
+       #0: default (video)
+colorspace_cuda AVOptions:
+   range             <int>        ..FV....... Output video range (from 0 to 2) (default 0)
+     tv              1            ..FV....... Limited range
+     mpeg            1            ..FV....... Limited range
+     pc              2            ..FV....... Full range
+     jpeg            2            ..FV....... Full range
+
+
+Exiting with exit code 0

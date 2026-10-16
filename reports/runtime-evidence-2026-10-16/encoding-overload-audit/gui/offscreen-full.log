@@ -1,0 +1,303 @@
+........................................................................ [ 12%]
+........................F.............................F.............FF.. [ 24%]
+..............................................................F......... [ 36%]
+........................................................................ [ 49%]
+.......................F................................................ [ 61%]
+........................................................................ [ 73%]
+........................................................................ [ 86%]
+........................................................................ [ 98%]
+.........                                                                [100%]
+================================== FAILURES ===================================
+_________ test_devices_draft_reflows_without_horizontal_clipping[720] _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002CFF02CEEF0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002CFD149B640>, width = 720
+
+    @pytest.mark.parametrize("width", [720, 1175])
+    def test_devices_draft_reflows_without_horizontal_clipping(
+        window: DashboardWindow, app: QApplication, width: int
+    ) -> None:
+        window.resize(width, 883)
+        window.page_buttons[2].click()
+        for index in range(4):
+            window.devices.tabs.setCurrentIndex(index)
+            app.processEvents()
+            scroll = window.devices.panels[index].scrollers[0]
+>           assert scroll.horizontalScrollBar().maximum() == 0
+E           assert 66 == 0
+E            +  where 66 = <built-in method maximum of QScrollBar object at 0x000002CFD29FE050>()
+E            +    where <built-in method maximum of QScrollBar object at 0x000002CFD29FE050> = <PyQt6.QtWidgets.QScrollBar object at 0x000002CFD29FE050>.maximum
+E            +      where <PyQt6.QtWidgets.QScrollBar object at 0x000002CFD29FE050> = <built-in method horizontalScrollBar of QScrollArea object at 0x000002CFEF1E9CF0>()
+E            +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000002CFEF1E9CF0> = <PyQt6.QtWidgets.QScrollArea object at 0x000002CFEF1E9CF0>.horizontalScrollBar
+
+tests\gui\test_dashboard.py:2327: AssertionError
+____________ test_hud_fits_content_and_log_fills_available_height _____________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000002CFD149B640>
+window = <cephvr.gui.window.DashboardWindow object at 0x000002CFE6030F70>
+
+    def test_hud_fits_content_and_log_fills_available_height(
+        app: QApplication, window: DashboardWindow
+    ) -> None:
+        dashboard = window.dashboard
+        panel_heights = []
+        log_heights = []
+        for height in (883, 1100):
+            window.resize(1175, height)
+            app.processEvents()
+            right = dashboard.columns[1]
+            assert dashboard.hud_card.y() == 0
+            assert dashboard.log_card.geometry().bottom() == right.height() - 1
+            assert dashboard.runtime_console.verticalScrollBar().maximum() == 0
+>           assert dashboard.log_console.height() > dashboard.log_console.minimumHeight()
+E           assert 144 > 144
+E            +  where 144 = <built-in method height of LogConsole object at 0x000002CFE6031EA0>()
+E            +    where <built-in method height of LogConsole object at 0x000002CFE6031EA0> = <cephvr.gui.components.LogConsole object at 0x000002CFE6031EA0>.height
+E            +      where <cephvr.gui.components.LogConsole object at 0x000002CFE6031EA0> = <cephvr.gui.dashboard.Dashboard object at 0x000002CFE60316C0>.log_console
+E            +  and   144 = <built-in method minimumHeight of LogConsole object at 0x000002CFE6031EA0>()
+E            +    where <built-in method minimumHeight of LogConsole object at 0x000002CFE6031EA0> = <cephvr.gui.components.LogConsole object at 0x000002CFE6031EA0>.minimumHeight
+E            +      where <cephvr.gui.components.LogConsole object at 0x000002CFE6031EA0> = <cephvr.gui.dashboard.Dashboard object at 0x000002CFE60316C0>.log_console
+
+tests\gui\test_dashboard.py:2776: AssertionError
+______________ test_all_pages_share_fitted_hud_and_expanding_log ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002CFD2A33E20>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002CFD149B640>
+
+    def test_all_pages_share_fitted_hud_and_expanding_log(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.components import StatusColumn
+    
+        targets = [(0, None), *((2, i) for i in range(4)), (3, None)]
+        top_positions = []
+        for page, subtab in targets:
+            window.page_buttons[page].click()
+            if subtab is not None:
+                window.devices.tabs.setCurrentIndex(subtab)
+                panel = window.devices.panels[subtab]
+            else:
+                panel = window.stack.widget(page)
+            status = panel.columns[1]
+            if panel is window.devices.projectors:
+                assert not status.hud_card.isVisible()
+                assert panel.layout_card.isVisible() and panel.tank_card.isVisible()
+                continue
+            assert isinstance(status, StatusColumn)
+            sizes = []
+            for height in (940, 1040):
+                window.resize(1175, height)
+                app.processEvents()
+                sizes.append((status.hud.height(), status.console.height()))
+                if height == 940:
+                    first_card = panel.columns[0].layout().itemAt(0).widget()
+                    top_positions.append(
+                        (
+                            first_card.mapTo(window, QPoint()).y(),
+                            status.hud_card.mapTo(window, QPoint()).y(),
+                        )
+                    )
+                assert status.hud_card.y() < status.log_card.y()
+                assert status.hud.verticalScrollBar().maximum() == 0
+            assert sizes[0][0] == sizes[1][0]
+            assert sizes[1][1] > sizes[0][1]
+    
+>       assert len(set(top_positions)) == 1
+E       assert 3 == 1
+E        +  where 3 = len({(102, 102), (102, 500), (102, 519)})
+E        +    where {(102, 102), (102, 500), (102, 519)} = set([(102, 519), (102, 500), (102, 102), (102, 102), (102, 519)])
+
+tests\gui\test_dashboard.py:3061: AssertionError
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002CF8E71B130>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002CFD149B640>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load�"
+        assert window.tracking.save_button.text() == "Save as�"
+        window.resize(1175, 940)
+        app.processEvents()
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1175, 720, 1175):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+                assert bar.tabRect(3).right() == bar.width() - 1
+                if width == 1175:
+                    hud = panel.layout_card if index == 2 else panel.columns[1].hud_card
+                    border_top = (
+                        hud.mapTo(window, QPoint()).y()
+                        + hud.caption.geometry().center().y()
+                    )
+                    assert abs(bar.mapTo(window, QPoint()).y() - border_top) <= 1
+                card = left.layout().itemAt(1).widget()
+                assert card is window.devices.config_cards[index]
+                assert card.caption.text() == "Configuration file"
+                files = panel.calibration_files if index == 2 else panel.config_files
+                assert card.isAncestorOf(files.load_button)
+                assert card.isAncestorOf(files.save_button)
+                assert files.load_button.text() == "Load�"
+                assert files.save_button.text() == "Save as�"
+                assert abs(files.load_button.width() - files.save_button.width()) <= 1
+                assert files.load_button.height() == files.save_button.height()
+                load_pos = files.load_button.mapTo(card, QPoint())
+                save_pos = files.save_button.mapTo(card, QPoint())
+                assert load_pos.y() == save_pos.y()
+                assert save_pos.x() - load_pos.x() - files.load_button.width() == (
+                    SIZES.field_x_gap
+                )
+                if index in (0, 2):
+                    if index == 2:
+                        measurements = panel.measurements
+                        assert measurements.caption.text() == "Pixel-to-mm calibration"
+                        widths = [measurements.table.columnWidth(i) for i in range(3)]
+                        assert widths[1] > widths[0]
+                        assert widths[1] > widths[2]
+                    header = panel.table.horizontalHeader()
+                    refresh = panel.refresh_button
+                    assert refresh.parentWidget() is header.viewport()
+                    assert refresh.text() == "" and not refresh.icon().isNull()
+                    assert refresh.size() == QSize(26, 26)
+                    assert refresh.iconSize() == QSize(16, 16)
+                    assert header.viewport().rect().contains(refresh.geometry())
+                    assert panel.table.horizontalHeaderItem(0).text() == "Use"
+                if index == 1:
+                    assert panel.scan_button.parentWidget() is panel.port.parentWidget()
+                    assert panel.scan_button.size() == QSize(26, 26)
+                if index == 1:
+                    assert panel.io.isHidden()
+                    assert panel.output_table.isVisible()
+                    assert panel.triggers.rect().contains(panel.output_table.geometry())
+                    assert set(panel.pin_editors) == {
+                        "behavioral",
+                        "tracking",
+                        "eye_tracking",
+                    }
+                    assert all(
+                        pin.parentWidget()
+                        is panel.output_table.cellWidget(panel.role_rows[key], 2)
+                        for key, pin in panel.pin_editors.items()
+                    )
+                assert card.y() >= window.devices.navigation.height() + SIZES.card_gap
+                assert (
+                    window.devices.panels[index]
+                    .scrollers[0]
+                    .horizontalScrollBar()
+                    .maximum()
+                    == 0
+                )
+                if width == 1175:
+>                   assert (
+                        panel.layout_card if index == 2 else panel.columns[1].hud_card
+                    ).mapTo(window, QPoint()).y() == hud_top
+E                   assert 102 == 519
+E                    +  where 102 = <built-in method y of QPoint object at 0x000002CFE867DD90>()
+E                    +    where <built-in method y of QPoint object at 0x000002CFE867DD90> = PyQt6.QtCore.QPoint(679, 102).y
+E                    +      where PyQt6.QtCore.QPoint(679, 102) = <built-in method mapTo of Card object at 0x000002CFE6036320>(<cephvr.gui.window.DashboardWindow object at 0x000002CF8E71B130>, PyQt6.QtCore.QPoint())
+E                    +        where <built-in method mapTo of Card object at 0x000002CFE6036320> = <cephvr.gui.components.Card object at 0x000002CFE6036320>.mapTo
+E                    +        and   PyQt6.QtCore.QPoint() = QPoint()
+
+tests\gui\test_dashboard.py:3155: AssertionError
+__________ test_eye_role_projects_and_tests_selected_without_capture __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002CFD13B5EA0>
+
+    def test_eye_role_projects_and_tests_selected_without_capture(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_cameras import ManagedCameras
+    
+        panel = window.devices.cameras
+        panel.managed = True
+        assert panel.role.findText("Eye tracking") >= 0
+        state = pb.Snapshot()
+        state.configuration.revision = 4
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.eye_tracking.device.device_id = panel.drafts[0].serial
+        settings.eye_tracking.enabled = False
+        calls = []
+        binding = ManagedCameras(
+            panel,
+            SimpleNamespace(
+                request=lambda action, **kw: calls.append((action, kw)) or True
+            ),
+            lambda *_: False,
+        )
+        binding.install(state)
+        assert panel.drafts[0].role == "Eye tracking"
+        binding.test_selected(panel.drafts[0].key)
+>       assert calls == [
+            ("camera", {"role": 3, "kind": rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION})
+        ]
+E       AssertionError: assert [('camera', {...90: unset>)})] == [('camera', {..., 'kind': 7})]
+E         
+E         At index 0 diff: ('camera', {'role': 3, 'kind': 7, 'cancellation': Cancellation(requested=<threading.Event at 0x2cfc2408390: unset>)}) != ('camera', {'role': 3, 'kind': 7})
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:5705: AssertionError
+__________________ test_recording_checks_stay_next_to_labels __________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002CF9B87D7E0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002CFD149B640>
+
+    def test_recording_checks_stay_next_to_labels(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.page_buttons[0].click()
+        app.processEvents()
+        panel = window.recordings
+        dashboard = window.dashboard
+        assert dashboard.isAncestorOf(panel)
+        assert not window.protocol.isAncestorOf(panel)
+        for width in (1175, 720):
+            window.resize(width, 883)
+            app.processEvents()
+            dashboard.config_scroll.ensureWidgetVisible(panel)
+            app.processEvents()
+            assert panel.y() > dashboard.subject_card.geometry().bottom()
+            assert panel.width() == dashboard.subject_card.width()
+            for key, check in panel.record.items():
+                caption = panel.source_labels[key]
+                gap = caption.mapTo(panel, QPoint()).x() - (
+                    check.mapTo(panel, QPoint()).x() + check.width()
+                )
+                assert 0 <= gap <= 12
+>               assert caption.height() >= caption.heightForWidth(caption.width())
+E               assert 34 >= 51
+E                +  where 34 = <built-in method height of QLabel object at 0x000002CF8E6751B0>()
+E                +    where <built-in method height of QLabel object at 0x000002CF8E6751B0> = <PyQt6.QtWidgets.QLabel object at 0x000002CF8E6751B0>.height
+E                +  and   51 = <built-in method heightForWidth of QLabel object at 0x000002CF8E6751B0>(94)
+E                +    where <built-in method heightForWidth of QLabel object at 0x000002CF8E6751B0> = <PyQt6.QtWidgets.QLabel object at 0x000002CF8E6751B0>.heightForWidth
+E                +    and   94 = <built-in method width of QLabel object at 0x000002CF8E6751B0>()
+E                +      where <built-in method width of QLabel object at 0x000002CF8E6751B0> = <PyQt6.QtWidgets.QLabel object at 0x000002CF8E6751B0>.width
+
+tests\gui\test_dashboard.py:8911: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[720]
+FAILED tests/gui/test_dashboard.py::test_hud_fits_content_and_log_fills_available_height
+FAILED tests/gui/test_dashboard.py::test_all_pages_share_fitted_hud_and_expanding_log
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+FAILED tests/gui/test_dashboard.py::test_eye_role_projects_and_tests_selected_without_capture
+FAILED tests/gui/test_dashboard.py::test_recording_checks_stay_next_to_labels
+6 failed, 579 passed in 285.77s (0:04:45)

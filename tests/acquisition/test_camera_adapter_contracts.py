@@ -10,6 +10,7 @@ import pytest
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.acquisition.camera.errors import CameraAdapterError
 from cephvr.acquisition.camera.features import capability, read_value, write_value
+from cephvr.acquisition.camera.metadata import native_metadata
 from cephvr.acquisition.camera.native_formats import (
     device_pixel_format,
     native_pixel_format,
@@ -27,6 +28,42 @@ def test_adapter_construction_does_not_load_pypylon() -> None:
     adapter = BaslerCameraAdapter()
     assert adapter._pylon is None
     assert adapter._camera is None
+
+
+@pytest.mark.parametrize(
+    "model,interface,frequency,expected",
+    [
+        ("acA4112-30uc", "usb3", None, (1, 1)),
+        ("a2A1920-160ucPRO", "usb3", None, (1, 1)),
+        ("a2A2464-77umPRO", "usb3", None, (1, 1)),
+        ("unknown", "usb3", None, (None, None)),
+        ("acA4112-30uc", "gige", None, (None, None)),
+        ("acA4112-30uc", "usb3", 125_000_000, (8, 1)),
+        ("unknown", "gige", 125_000_000, (8, 1)),
+    ],
+)
+def test_metadata_uses_only_documented_model_clock_fallback(
+    monkeypatch, model, interface, frequency, expected
+) -> None:
+    from cephvr.acquisition.camera import metadata
+
+    values = {"DeviceModelName": model, "TimestampTickFrequency": frequency}
+    monkeypatch.setattr(metadata, "read_value", lambda nodes, name: values.get(name))
+    monkeypatch.setattr(metadata, "get_node", lambda nodes, name: None)
+    monkeypatch.setattr(
+        metadata.importlib, "import_module", lambda name: SimpleNamespace()
+    )
+    camera = SimpleNamespace(GetNodeMap=lambda: object())
+    result = native_metadata(camera, "exact-device", interface)
+    clock = result.camera_clock
+    assert (
+        clock.tick_period_ns_numerator,
+        clock.tick_period_ns_denominator,
+    ) == expected
+    assert result.timestamp_available is (expected[0] is not None)
+    assert any(w.code == "NATIVE_TIMESTAMP_UNAVAILABLE" for w in result.warnings) is (
+        expected[0] is None
+    )
 
 
 @pytest.mark.parametrize("failed_close", [False, True])

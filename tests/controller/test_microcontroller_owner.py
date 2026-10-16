@@ -1136,9 +1136,12 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
             assert "fresh connect" not in events
 
 
+@pytest.mark.parametrize("disconnect", [False, True])
 @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
 @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
-async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+async def test_microcontroller_upload_requires_every_camera_released(
+    role, owned, disconnect
+):
     from unittest.mock import AsyncMock, Mock
 
     from cephvr.controller.device.microcontroller import MicrocontrollerCommands
@@ -1182,6 +1185,12 @@ async def test_microcontroller_upload_requires_every_camera_released(role, owned
         firmware_path="firmware.ino",
         firmware_sha256="a" * 64,
     )
+    if disconnect:
+        request.kind = wire.MICROCONTROLLER_COMMAND_KIND_DISCONNECT
+        request.ClearField("firmware_path")
+        request.ClearField("firmware_sha256")
+        owner.view.observation.connection_id = "current"
+        request.expected_connection_id = "current"
     request.command.operator.command_id = "upload"
     await commands.execute(request)
     hooks.admission.assert_called_once_with(
@@ -2219,3 +2228,43 @@ def test_observation_exposes_connection_reply_diagnostics_without_health_credit(
     assert observed.request_id.endswith("-2")
     assert observed.HasField("observed_monotonic_ns")
     owner.close(1000)
+
+
+@pytest.mark.parametrize("identity", ["", "stale", "current"])
+async def test_manual_disconnect_requires_exact_connection_and_retains_deadline(
+    identity,
+):
+    from unittest.mock import AsyncMock
+
+    serial = AsyncMock()
+    owner = MicrocontrollerDevice(
+        serial,
+        control.AcquisitionSettings(),
+        runtime_pb2.AcquisitionFilePolicies(),
+        host_time_ns,
+    )
+    owner.port_owned = True
+    owner.view.observation.connection_id = "current"
+    stopped = mcu.MicrocontrollerState()
+    for role in ("behavioral", "tracking", "eye_tracking"):
+        getattr(stopped, role).running = False
+    serial.off.return_value = mcu.PulseCommandEvidence(
+        outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=stopped
+    )
+    deadline = host_time_ns() + 1_000_000_000
+    request = wire.MicrocontrollerCommandRequest(
+        kind=wire.MICROCONTROLLER_COMMAND_KIND_DISCONNECT,
+        expected_connection_id=identity,
+    )
+    if identity != "current":
+        with pytest.raises(RuntimeError, match="identity changed"):
+            await owner.execute(request, camera.CameraPulseConfiguration(), deadline)
+        serial.close.assert_not_awaited()
+        assert owner.view.observation.connection_id == "current"
+    else:
+        await owner.execute(request, camera.CameraPulseConfiguration(), deadline)
+        serial.close.assert_awaited_once_with(deadline_ns=deadline)
+        assert serial.off.await_args.kwargs["deadline_ns"] == deadline
+        assert not owner.view.HasField("observation") and not owner.closed
+        assert owner.cleanup_complete
+        owner.ensure_idle()

@@ -1,0 +1,230 @@
+[
+  {
+    "width": 720,
+    "stack": 298,
+    "slot": 200,
+    "mode": "stacked",
+    "viewport": 298,
+    "left": 298,
+    "horizontal_max": 0,
+    "oversized_minimum_hints": [
+      {
+        "class": "SelectionBox",
+        "name": "",
+        "text": "",
+        "width": 266,
+        "minimum_hint": 319,
+        "minimum": 0
+      }
+    ],
+    "controls": {
+      "table": {
+        "width": 266,
+        "minimum_hint": 28,
+        "minimum": 0
+      },
+      "configuration": {
+        "width": 298,
+        "minimum_hint": 198,
+        "minimum": 0
+      },
+      "trigger_source": {
+        "width": 266,
+        "minimum_hint": 319,
+        "minimum": 0
+      },
+      "rate": {
+        "width": 171,
+        "minimum_hint": 34,
+        "minimum": 0
+      },
+      "pin": {
+        "width": 85,
+        "minimum_hint": 34,
+        "minimum": 0
+      }
+    },
+    "combo_policy": {
+      "minimum_contents": 8,
+      "placeholder": "Select trigger source",
+      "placeholder_pixels": 168,
+      "size_adjust": "AdjustToMinimumContentsLengthWithIcon"
+    },
+    "recordings": [
+      {
+        "text": "Visual stimulus video",
+        "width": 97,
+        "height": 51,
+        "required": 51,
+        "size_hint": 34
+      },
+      {
+        "text": "Behavior cam video",
+        "width": 97,
+        "height": 51,
+        "required": 34,
+        "size_hint": 17
+      },
+      {
+        "text": "Tracking cam video",
+        "width": 97,
+        "height": 34,
+        "required": 34,
+        "size_hint": 17
+      }
+    ],
+    "recording_card": {
+      "width": 298,
+      "height": 157,
+      "has_height_for_width": true,
+      "required": 157,
+      "vertical_policy": "Preferred"
+    }
+  },
+  {
+    "width": 1175,
+    "stack": 572,
+    "slot": 381,
+    "mode": "stacked",
+    "viewport": 572,
+    "left": 572,
+    "horizontal_max": 0,
+    "oversized_minimum_hints": [],
+    "controls": {
+      "table": {
+        "width": 540,
+        "minimum_hint": 28,
+        "minimum": 0
+      },
+      "configuration": {
+        "width": 572,
+        "minimum_hint": 371,
+        "minimum": 0
+      },
+      "trigger_source": {
+        "width": 319,
+        "minimum_hint": 319,
+        "minimum": 0
+      },
+      "rate": {
+        "width": 101,
+        "minimum_hint": 34,
+        "minimum": 0
+      },
+      "pin": {
+        "width": 100,
+        "minimum_hint": 34,
+        "minimum": 0
+      }
+    },
+    "combo_policy": {
+      "minimum_contents": 8,
+      "placeholder": "Select trigger source",
+      "placeholder_pixels": 168,
+      "size_adjust": "AdjustToMinimumContentsLengthWithIcon"
+    },
+    "recordings": [
+      {
+        "text": "Visual stimulus video",
+        "width": 234,
+        "height": 17,
+        "required": 17,
+        "size_hint": 34
+      },
+      {
+        "text": "Behavior cam video",
+        "width": 234,
+        "height": 17,
+        "required": 17,
+        "size_hint": 17
+      },
+      {
+        "text": "Tracking cam video",
+        "width": 234,
+        "height": 17,
+        "required": 17,
+        "size_hint": 17
+      }
+    ],
+    "recording_card": {
+      "width": 572,
+      "height": 106,
+      "has_height_for_width": true,
+      "required": 106,
+      "vertical_policy": "Preferred"
+    }
+  },
+  {
+    "width": 1920,
+    "stack": 1040,
+    "slot": 658,
+    "mode": "wide",
+    "viewport": 512,
+    "left": 512,
+    "horizontal_max": 0,
+    "oversized_minimum_hints": [],
+    "controls": {
+      "table": {
+        "width": 480,
+        "minimum_hint": 28,
+        "minimum": 0
+      },
+      "configuration": {
+        "width": 512,
+        "minimum_hint": 371,
+        "minimum": 0
+      },
+      "trigger_source": {
+        "width": 319,
+        "minimum_hint": 319,
+        "minimum": 0
+      },
+      "rate": {
+        "width": 71,
+        "minimum_hint": 34,
+        "minimum": 0
+      },
+      "pin": {
+        "width": 70,
+        "minimum_hint": 34,
+        "minimum": 0
+      }
+    },
+    "combo_policy": {
+      "minimum_contents": 8,
+      "placeholder": "Select trigger source",
+      "placeholder_pixels": 168,
+      "size_adjust": "AdjustToMinimumContentsLengthWithIcon"
+    },
+    "recordings": [
+      {
+        "text": "Visual stimulus video",
+        "width": 204,
+        "height": 17,
+        "required": 17,
+        "size_hint": 34
+      },
+      {
+        "text": "Behavior cam video",
+        "width": 204,
+        "height": 17,
+        "required": 17,
+        "size_hint": 17
+      },
+      {
+        "text": "Tracking cam video",
+        "width": 204,
+        "height": 17,
+        "required": 17,
+        "size_hint": 17
+      }
+    ],
+    "recording_card": {
+      "width": 512,
+      "height": 106,
+      "has_height_for_width": true,
+      "required": 106,
+      "vertical_policy": "Preferred"
+    }
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "original_adapter_source_revision": "62ee90c9331f8e0829966a988262e188670ce9d6",
+  "original_adapter_sha256": "bae93900d92481773d25b2af7f9c910535c5b9d3ee3fc354a627b4bb41274861",
+  "method": "All five capacity-r1 cases ran before adapter source edit; immediate variant adds one poll only after original begin_write. Source snapshot reconstructed from exact initial HEAD (file clean at baseline).",
+  "media_decoded": 15,
+  "lossless_prepared_rgb_and_gray_exact": true
+}

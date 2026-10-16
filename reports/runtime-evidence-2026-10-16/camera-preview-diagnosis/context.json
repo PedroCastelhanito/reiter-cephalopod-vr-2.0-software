@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-16",
+  "source_revision": "62ee90c9331f8e0829966a988262e188670ce9d6",
+  "scope": "Working tree timestamp repair; concurrent unrelated GUI/controller edits present. Native exclusive SDK diagnostic after controller-confirmed release; temporary software triggering, original PFS restored exactly. No external-trigger or full application restart acceptance.",
+  "documentation": "https://docs.baslerweb.com/timestamp",
+  "tests": {
+    "command": "python -m pytest tests/acquisition/test_camera_adapter_contracts.py tests/acquisition/test_frame_diagnostic_tracker.py tests/acquisition/test_manual_preview.py -q -m \"not windows and not rig\"",
+    "passed": 165,
+    "deselected": 1
+  },
+  "source_hashes": {
+    "src/cephvr/acquisition/camera/metadata.py": "553390dcffa93b57f033eebba19b565e2e77c3f47b124aba02a969fc14828add",
+    "src/cephvr/shared/pixels/preparer.py": "5a126ff5f4a2b8d8f6bc8d4032ccb2b8ded99f2073c17bc95dd32b7844e7d4fc",
+    "src/cephvr/acquisition/preview/highgui.py": "0b32842fbd46b2723537e1a0864bcd8c1af982dd1373dc39be805bcafc55a11e",
+    "tests/acquisition/test_camera_adapter_contracts.py": "c6bffd215263f5ae9ea15254cebed41862d1cdfc1d19a960e4b873ad0b87a622"
+  }
+}

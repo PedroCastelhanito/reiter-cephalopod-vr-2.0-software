@@ -1,0 +1,18 @@
+failure_snapshot {"controller_generation": "4924f09a-f2bc-46fb-82b8-16512b219c27", "captured_monotonic_ns": "165341448212200", "state_revision": "21", "configuration": {"revision": "1"}, "session": {"phase": "SESSION_PHASE_CONFIGURATION"}, "trial": {"phase": "TRIAL_PHASE_PENDING"}, "operations": [{"context": {"command_id": "34dbdeee-468c-427e-9695-8e522795dcad"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}], "warnings": [{"warning_id": "9e737336-491e-46f8-b756-e87fc0ecc82f", "component": "startup_recovery", "message": "Recover unfinished session at C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic\\DUMMY-182236. Intact administrative logs can receive evidence-based terminal recovery events. Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker."}], "prompts": [{"prompt_id": "6228f7ff-4b71-4e2e-9892-a3e7aaf7ca62", "setup": {"controller_generation": "601c881b-a549-43ee-b956-0adec5a5d20f", "session_id": "1dfccb6d-62df-4ce3-87f5-848530b331d0"}, "operation": {"command_id": "3dac4217-ddc9-4518-b26e-fa7b215c30f4"}, "explanation": "Recover unfinished session at C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_abort-cleanup-diagnostic
+error "AssertionError: "
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 194, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 124, in main
+    assert not client.snapshot.prompts
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

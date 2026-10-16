@@ -1,0 +1,47 @@
+....F..                                                                  [100%]
+================================== FAILURES ===================================
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000188C8BA8670>
+app = <PyQt6.QtWidgets.QApplication object at 0x00000188C4899CF0>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load�"
+        assert window.tracking.save_button.text() == "Save as�"
+        window.resize(1920, 940)
+        app.processEvents()
+        assert window.dashboard.mode == "wide"
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1920, 720, 1920):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+>               assert bar.tabRect(3).right() == bar.width() - 1
+E               assert 363 == (298 - 1)
+E                +  where 363 = <built-in method right of QRect object at 0x00000188C50C9A10>()
+E                +    where <built-in method right of QRect object at 0x00000188C50C9A10> = PyQt6.QtCore.QRect(276, 0, 88, 40).right
+E                +      where PyQt6.QtCore.QRect(276, 0, 88, 40) = <built-in method tabRect of QTabBar object at 0x00000188C8BABA30>(3)
+E                +        where <built-in method tabRect of QTabBar object at 0x00000188C8BABA30> = <PyQt6.QtWidgets.QTabBar object at 0x00000188C8BABA30>.tabRect
+E                +  and   298 = <built-in method width of QTabBar object at 0x00000188C8BABA30>()
+E                +    where <built-in method width of QTabBar object at 0x00000188C8BABA30> = <PyQt6.QtWidgets.QTabBar object at 0x00000188C8BABA30>.width
+
+tests\gui\test_dashboard.py:3093: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+1 failed, 6 passed, 578 deselected in 4.69s

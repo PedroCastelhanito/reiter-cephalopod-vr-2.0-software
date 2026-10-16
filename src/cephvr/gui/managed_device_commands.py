@@ -13,6 +13,7 @@ from cephvr.client.session import ClientError, HeadlessClient
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.microcontroller.firmware_source import read_firmware
+from cephvr.gui.action_cancellation import checkpoint
 from cephvr.gui.device_requests import (
     assign_camera_role,
     import_camera_preset,
@@ -29,6 +30,7 @@ async def dispatch_device_action(
     principal: Principal,
 ) -> tuple[bool, str] | None:
     """Dispatch one device request; return None when another owner handles it."""
+    checkpoint(options)
     if action == "set_spikeglx_enabled":
         state = client.snapshot
         if state.configuration.revision != options["expected_revision"]:
@@ -82,6 +84,7 @@ async def dispatch_device_action(
             request.firmware_path = str(image.path)
             request.firmware_sha256 = image.digest
         outcome = await client.execute("ExecuteMicrocontrollerCommand", request)
+        checkpoint(options)
         if not outcome.succeeded:
             raise ClientError(outcome.failure or "MCU operation did not succeed.")
         return True, "Completed"
@@ -207,6 +210,7 @@ async def _camera(
             raise ClientError("No current preview run for this camera.")
         request.preview_run_id = camera.preview_run_id
     outcome = await client.execute("ExecuteCameraCommand", request)
+    checkpoint(options)
     if not outcome.succeeded:
         raise ClientError(outcome.failure or "Camera operation did not succeed.")
     if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW and options.get("show_preview"):
@@ -227,6 +231,7 @@ async def _camera(
         if "placement" in options:
             show.preview_placement.ParseFromString(options["placement"])
         shown = await client.execute("ExecuteCameraCommand", show)
+        checkpoint(options)
         if not shown.succeeded:
             raise ClientError(
                 f"Capture started; preview could not open: {shown.failure or 'unconfirmed presentation'}. "
@@ -303,6 +308,7 @@ async def _save_camera_settings(
         await _update_configuration(client, state, proposed, "Camera settings")
     if accepted is not None:
         accepted(client.snapshot)
+    checkpoint(options)
     if import_preset:
         role = next(
             role

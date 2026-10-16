@@ -1,0 +1,6 @@
+{
+  "origin": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-15\\comprehensive-audit\\trial.py",
+  "origin_sha256": "f2d761305b411dd581ec2dd6323f63210fe2d37353252c5f3a833cafac7b6c8b",
+  "adapted_sha256": "9ca74463881a1c69490d67bee312174ca873b631bc0944a781bdf4af95fbce90",
+  "review": "Current RPCs reviewed; fresh settings source/output namespace; sequential accounting assessed separately, never old CFR assessment; compact console only; p1/lossless camera variants, E13 stimulus remains lossy"
+}

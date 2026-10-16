@@ -1,6 +1,21 @@
 # Rig verification — outstanding checks
 
-Latest comprehensive Oct15 audit supersedes the availability limits of earlier
+Current Oct16 audit verifies prepared RGB/gray lossless capability, but not
+real-time complete retention: Behavior retains 1416/1798 received frames, with
+382 explicit capacity omissions. Final diagnostic video-file sync stalls dominate
+its consumer time; it interrupts with unconfirmed frame-log closure. Normal
+stimulus 16-slot fixture retains 3599/3599; higher-demand full-resolution/eight-slot
+fixture loses five startup groups and none later observed. Save Off normally
+retains science; early Abort and failed-Setup retired reports remain open.
+
+Final backend 2188 passed/5 privilege skips, explicit rig NVOF passed; GUI 586
+passed offscreen/28 selected native passes, seven native picker roundtrips remain
+unvalidated. All three camera baselines and ten settings files are restored.
+These results do not establish external-trigger/optical/Tracking-processing
+acceptance. MCU outputs stay disabled, firmware unchanged, fresh compatibility
+unestablished. [Current assessment](runtime-evidence-2026-10-16/encoding-overload-audit/README.md).
+
+Historical comprehensive Oct15 audit supersedes the availability limits of earlier
 runs below: owner confirmed an empty rig with cameras and projection available;
 reward/actuator/stimulation remain disabled and firmware unchanged. Current COM8
 firmware is incompatible with request-ID CAPS, so new trials explicitly acknowledge

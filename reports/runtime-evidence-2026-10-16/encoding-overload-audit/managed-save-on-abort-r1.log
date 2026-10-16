@@ -1,0 +1,27 @@
+UpdateConfiguration {"command_id": "961f38bb-467e-4833-b221-43b2831bccdf", "complete": true, "succeeded": true, "needs_input": false, "failure": "", "elapsed_ns": 15146600}
+Setup {"command_id": "df4f459d-ecb6-4bdc-bbf0-2b8c3f0a325a", "complete": true, "succeeded": true, "needs_input": false, "failure": "", "elapsed_ns": 3427270800}
+ready {"controller_generation": "8f38032b-8279-4593-8738-8b15229bc990", "captured_monotonic_ns": "166279910012800", "state_revision": "429", "configuration": {"revision": "7", "edit_validation": [{"configuration_revision": "6", "completed": true, "valid": true, "component": "experiment", "configuration_module_version": "experiment-v1"}, {"configuration_revision": "6", "completed": true, "valid": true, "component": "acquisition", "configuration_module_version": "acquisition-config-v1"}, {"configuration_revision": "6", "completed": true, "valid": true, "component": "synchronization", "configuration_module_version": "inactive"}, {"configuration_revision": "6", "completed": true, "valid": true, "component": "tracking", "configuration_module_version": "inactive"}, {"configuration_revision": "6", "completed": true, "valid": true, "component": "visual_stimulus", "configuration_module_version": "visual-stimulus-config-v2"}]}, "session": {"phase": "SESSION_PHASE_READY", "context": {"controller_generation": "8f38032b-8279-4593-8738-8b15229bc990", "session_id": "7aa0c99b-ca77-4a23-a935-e4780f064d27"}, "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402", "trial_count": 1}, "trial": {"phase": "TRIAL_PHASE_PENDING"}, "participants": [{"process": {"role": "acquisition", "generation": "7de6ce6a-c94b-4754-8ee3-c37723cabc50"}, "enabled": true, "required": true, "process_running
+StartSession {"command_id": "82c0c2eb-a81f-4342-b05b-01be71d51c52", "complete": true, "succeeded": true, "needs_input": false, "failure": "", "elapsed_ns": 45643000}
+retired_trial_boundary_ns 166340482064400
+AbortNow {"command_id": "4cfef106-258d-45bd-bf09-deb3f33265da", "complete": true, "succeeded": false, "needs_input": false, "failure": "OPERATION_FAILED: cleanup could not be confirmed", "elapsed_ns": 40264424800}
+failure_snapshot {"controller_generation": "8f38032b-8279-4593-8738-8b15229bc990", "captured_monotonic_ns": "166325815819600", "state_revision": "515", "configuration": {"revision": "7", "locked": true, "edit_validation": [{"configuration_revision": "6", "completed": true, "valid": true, "component": "experiment", "configuration_module_version": "experiment-v1"}, {"configuration_revision": "6", "completed": true, "valid": true, "component": "acquisition", "configuration_module_version": "acquisition-config-v1"}, {"configuration_revision": "6", "completed": true, "valid": true, "component": "synchronization", "configuration_module_version": "inactive"}, {"configuration_revision": "6", "completed": true, "valid": true, "component": "tracking", "configuration_module_version": "inactive"}, {"configuration_revision": "6", "completed": true, "valid": true, "component": "visual_stimulus", "configuration_module_version": "visual-stimulus-config-v2"}]}, "session": {"phase": "SESSION_PHASE_ENDED", "context": {"controller_generation": "8f38032b-8279-4593-8738-8b15229bc990", "session_id": "7aa0c99b-ca77-4a23-a935-e4780f064d27"}, "outcome": "SESSION_OUTCOME_INTERRUPTED", "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-20261016\\20261016_audit_managed-save-on-abort-r1\\DUMMY-184402", "trial_count": 1, "activated": true, "interruption_reason": {"code": "INTERRUPTED", "message": "operator Abort now"}}, "trial": {"context": {"session": {"controlle
+error "AssertionError: OPERATION_FAILED: cleanup could not be confirmed"
+monitor_exit 0
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 209, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 178, in main
+    await execute("AbortNow")
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-16\encoding-overload-audit\managed_trial.py", line 144, in execute
+    assert result.succeeded, result.failure
+           ^^^^^^^^^^^^^^^^
+AssertionError: OPERATION_FAILED: cleanup could not be confirmed

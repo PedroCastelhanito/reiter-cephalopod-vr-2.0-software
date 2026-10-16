@@ -1,0 +1,120 @@
+{
+  "capacity-p1-immediate-r1": {
+    "behavior": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    },
+    "tracking": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    },
+    "stimulus": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    }
+  },
+  "capacity-p4-immediate-r1": {
+    "behavior": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    },
+    "tracking": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    },
+    "stimulus": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    }
+  },
+  "capacity-p4-lossless-r1": {
+    "behavior": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true,
+      "pixel_reference": {
+        "byte_exact": true,
+        "maximum_sample_error": 0,
+        "source_sha256": "4cd254299c76445f7bc518af4bf4d9d70c127a12188ecda15df5a0f33156f6d2",
+        "decoded_sha256": "4cd254299c76445f7bc518af4bf4d9d70c127a12188ecda15df5a0f33156f6d2",
+        "exit": 0,
+        "stderr": "",
+        "scope": "Prepared RGB samples"
+      }
+    },
+    "tracking": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true,
+      "pixel_reference": {
+        "byte_exact": true,
+        "maximum_sample_error": 0,
+        "source_sha256": "2da9895d8d04628a61e8644057cfd953292f8ff9697532d0093970f3d60f8395",
+        "decoded_sha256": "2da9895d8d04628a61e8644057cfd953292f8ff9697532d0093970f3d60f8395",
+        "exit": 0,
+        "stderr": "",
+        "scope": "Prepared gray samples versus stored luma plane"
+      }
+    },
+    "stimulus": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    }
+  },
+  "capacity-p4-original-r1": {
+    "behavior": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    },
+    "tracking": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    },
+    "stimulus": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    }
+  },
+  "capacity-p4-thread1-r1": {
+    "behavior": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    },
+    "tracking": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    },
+    "stimulus": {
+      "probe_exit": 0,
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "count_matches": true
+    }
+  }
+}

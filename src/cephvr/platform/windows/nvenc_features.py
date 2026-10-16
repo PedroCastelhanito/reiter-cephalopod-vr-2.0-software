@@ -46,7 +46,8 @@ _BUFFER_FORMATS = {
     0x00000001: {"nv12"},
     0x00000010: {"yuv420p"},
     0x00000100: {"yuv420p"},
-    0x00001000: {"yuv444p"},
+    # FFmpeg maps planar 8-bit GBR and YUV444 to NV_ENC_BUFFER_FORMAT_YUV444.
+    0x00001000: {"yuv444p", "gbrp"},
     0x00010000: {"p010le"},
     0x00100000: {"yuv444p10le"},
 }

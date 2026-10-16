@@ -1,0 +1,9 @@
+acquisition_behavioral_worker PrepareTrial af1edc77-a942-455d-9c90-15456f80641f failed: EncodingOptionsError: unsupported colorspace metadata enum
+PrepareTrial 80d22329-d6fb-4778-8983-f41d9ce1da02 failed: TRIAL_PREPARATION_FAILED: camera role 1 trial preparation failed: INVALID_REQUEST: unsupported colorspace metadata enum
+InterruptSession efa2db05-8ec6-45a8-bc29-e175ea37dfdb failed: SESSION_INTERRUPT_UNCONFIRMED: ON-boundary cancellation failed: Camera trigger client has no active device claim
+acquisition_behavioral_worker PrepareTrial 2cb66276-d5ea-496a-9a35-8848091d2df8 failed: EncodingOptionsError: resolved encoding device does not support h264_nvenc/gbrp
+PrepareTrial f14ef9db-fd0d-481b-a5f5-b76015cbb744 failed: TRIAL_PREPARATION_FAILED: camera role 1 trial preparation failed: INVALID_REQUEST: resolved encoding device does not support h264_nvenc/gbrp
+InterruptSession 9f5d05ef-032f-44f4-a5b1-405fc4c305e9 failed: SESSION_INTERRUPT_UNCONFIRMED: ON-boundary cancellation failed: Camera trigger client has no active device claim
+CephVR launcher controller channel lost: eof
+Acquisition MCU claim release remains unconfirmed: registered controller exited before Close RPC completed.
+CephVR launcher supervisor channel lost: eof
