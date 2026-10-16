@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import QScrollBar, QWidget
 from cephvr.gui.formatting import clock_duration
 from cephvr.gui.projector_layers import layers_for
 from cephvr.gui.protocol_document import node_name
-from cephvr.gui.theme import COLORS
+from cephvr.gui.theme import colors_for
 from cephvr.gui.timeline_actions import TimelineActions
 from cephvr.gui.timeline_details import (
     epoch_heading,
@@ -255,7 +255,7 @@ class ProgramTimeline(QWidget):
         if self.program is None:
             return
         if self.error:
-            painter.setPen(QColor(COLORS.muted))
+            painter.setPen(QColor(colors_for(self).muted))
             painter.drawText(self.rect(), Qt.TextFlag.TextWordWrap, self.error)
             return
         if not self.nodes:
@@ -277,10 +277,10 @@ class ProgramTimeline(QWidget):
                     float(self.width() - 1), end * width - self.scrollbar.value() - 7
                 )
                 band = QRectF(left, 0, right - left, 36)
-                painter.setBrush(QColor(COLORS.selection))
+                painter.setBrush(QColor(colors_for(self).selection))
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawRoundedRect(band, 4, 4)
-                painter.setPen(QColor(COLORS.accent))
+                painter.setPen(QColor(colors_for(self).accent))
                 painter.drawText(
                     band.adjusted(8, 0, -44, 0),
                     Qt.AlignmentFlag.AlignVCenter,
@@ -308,22 +308,24 @@ class ProgramTimeline(QWidget):
             selected = self.paths[i] in self.selection
             group = isinstance(node, Group)
             painter.setBrush(
-                QColor(COLORS.selection if selected else COLORS.input)
+                QColor(
+                    colors_for(self).selection if selected else colors_for(self).input
+                )
                 if group
                 else stimulus_color(self.type_keys[i])
             )
             painter.setPen(
                 QPen(
                     QColor(
-                        (COLORS.accent if group else COLORS.text)
+                        (colors_for(self).accent if group else colors_for(self).text)
                         if selected
-                        else COLORS.border
+                        else colors_for(self).border
                     ),
                     2 if selected else 1,
                 )
             )
             painter.drawRoundedRect(rect, 6, 6)
-            painter.setPen(QColor(COLORS.text))
+            painter.setPen(QColor(colors_for(self).text))
             name = node_name(node).replace("_", " ")
             value = self.durations[i]
             summary = clock_duration(value) if value is not None else "Timing at Setup"
@@ -387,7 +389,7 @@ class ProgramTimeline(QWidget):
         )
         if len(self.selection) > 1:
             heading += f" · {len(self.selection)} selected"
-        painter.setPen(QColor(COLORS.text))
+        painter.setPen(QColor(colors_for(self).text))
         heading_rect = QRectF(0, 88 + self.batch_offset, self.width(), 24)
         painter.drawText(
             heading_rect,
@@ -402,17 +404,21 @@ class ProgramTimeline(QWidget):
         for (face, layers), height in zip(
             self.detail_rows(), self.lane_heights(), strict=True
         ):
-            painter.setPen(QColor(COLORS.label))
+            painter.setPen(QColor(colors_for(self).label))
             painter.drawText(
                 QRectF(0, y, 53, height), Qt.AlignmentFlag.AlignVCenter, face
             )
             rect = QRectF(x0, y, width, height - 5)
-            painter.setBrush(QColor(COLORS.input))
-            painter.setPen(QPen(QColor(COLORS.border), 1))
+            painter.setBrush(QColor(colors_for(self).input))
+            painter.setPen(QPen(QColor(colors_for(self).border), 1))
             painter.drawRoundedRect(rect, 4, 4)
             for position, (layer, text) in enumerate(layers):
                 line = QRectF(x0 + 8, y + 4 + 25 * position, width - 16, 25)
-                painter.setPen(QColor(COLORS.text if layer >= 0 else COLORS.muted))
+                painter.setPen(
+                    QColor(
+                        colors_for(self).text if layer >= 0 else colors_for(self).muted
+                    )
+                )
                 painter.drawText(
                     line,
                     Qt.AlignmentFlag.AlignVCenter,

@@ -8,7 +8,6 @@ from PyQt6.QtCore import QObject, QRect, QSettings, pyqtSignal
 from PyQt6.QtGui import QAction, QActionGroup, QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
-from cephvr.gui.appearance import ReviewAppearance
 from cephvr.gui.layouts import fit_window_to_screen
 from cephvr.gui.projectors import DisplayInfo
 from cephvr.gui.review_draft import draft_path, load_review_draft, save_review_draft
@@ -26,9 +25,6 @@ class ReviewDashboardWindow(DashboardWindow):
         self, *, sample: bool = False, settings: QSettings | None = None
     ) -> None:
         super().__init__(sample=sample, settings=settings)
-        self.appearance = ReviewAppearance(
-            self, self.dashboard, self.page_header, settings
-        )
         self._restore_failed = False
 
     def closeEvent(self, event: QCloseEvent | None) -> None:

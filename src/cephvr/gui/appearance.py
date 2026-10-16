@@ -1,4 +1,4 @@
-"""Local Review appearance preference, independent of experiment configuration."""
+"""Shared frontend appearance preference, independent of experiment configuration."""
 
 from PyQt6.QtCore import QObject, QSettings
 from PyQt6.QtGui import QAction, QActionGroup
@@ -10,7 +10,7 @@ from cephvr.gui.retro_instruments import FocusBrackets
 from cephvr.gui.theme import retro_chrome_stylesheet, retro_stylesheet
 
 
-class ReviewAppearance(QObject):
+class DashboardAppearance(QObject):
     def __init__(
         self,
         window: QMainWindow,
@@ -48,7 +48,11 @@ class ReviewAppearance(QObject):
             menu.addAction(action)
             self.actions[key] = action
         saved = (
-            settings.value("review/appearance", "standard") if settings else "standard"
+            settings.value(
+                "appearance/style", settings.value("review/appearance", "standard")
+            )
+            if settings
+            else "standard"
         )
         self.select(str(saved), persist=False)
 
@@ -56,9 +60,10 @@ class ReviewAppearance(QObject):
         self.name = name if name in self.actions else "standard"
         retro = self.name == "retro_console"
         self.actions[self.name].setChecked(True)
-        self.dashboard.setProperty("retroConsole", retro)
-        self.window.setStyleSheet(retro_chrome_stylesheet() if retro else "")
-        self.dashboard.setStyleSheet(retro_stylesheet() if retro else "")
+        self.window.setProperty("retroConsole", retro)
+        self.window.setStyleSheet(
+            retro_stylesheet() + retro_chrome_stylesheet() if retro else ""
+        )
         for card, title in self.card_titles.items():
             card.caption.setText(title.upper() if retro else title)
         self.dashboard.render_hud()
@@ -66,5 +71,5 @@ class ReviewAppearance(QObject):
             brackets.refresh()
         self.dashboard.update()
         if persist and self.settings is not None:
-            self.settings.setValue("review/appearance", self.name)
+            self.settings.setValue("appearance/style", self.name)
             self.settings.sync()

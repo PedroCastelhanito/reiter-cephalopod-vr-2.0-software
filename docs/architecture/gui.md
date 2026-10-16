@@ -945,7 +945,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 47
+**Status:** Accepted · **Revision:** 49
 
 - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
@@ -963,9 +963,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   accent for page headings, selected sidebar labels and active subtab text; keep
   form labels neutral, use bright blue coordinate headers and retain blue action/focus treatments. Embedded stimulus plots
   are excluded from the initial Dashboard increment.
-- Review alone offers a window-bar Style menu with Standard and Retro console,
-  retaining the choice as a local Review appearance preference. Retro console
-  styles its Dashboard and window chrome with green-black surfaces, blue frames
+- Review and managed runtime offer the same window-bar Style menu with Standard
+  and Retro console, retaining a shared local frontend appearance preference.
+  Restore the legacy Review preference when no shared preference exists. Retro console
+  styles Dashboard, Protocol, Devices, Tracking, their subtabs and window chrome
+  with green-black surfaces, blue frames
   and actions, muted red-orange card titles, cyan page headings and field labels,
   restrained amber branding, pale green readouts/logs, cyan navigation/focus and warm warning/stop
   accents, unnumbered uppercase card headers, aligned monospace HUD columns, square
@@ -978,8 +980,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   preparation/waiting amber, explicit faults red and unavailable states neutral;
   preserve the exact status in the label/tooltip. No synthetic plots or telemetry.
   Switch live using the existing widgets, preserving drafts, command gates,
-  actual status/log content and responsive layout. Runtime retains Standard and
-  exposes no style selector; other page contents retain their current presentation.
+  actual status/log content and responsive layout. Each window restores the saved
+  style on opening. Shared card/control painting and custom timeline, display-layout
+  and annotation chrome follow the selected palette; scientific image content and
+  semantic geometry colors retain their meaning.
   The shared theme owns both palettes; the experiment configuration excludes this
   cosmetic preference. Unknown saved styles fall back to Standard.
 - Form errors never occupy inline labels. Keep editing and passive validation quiet;

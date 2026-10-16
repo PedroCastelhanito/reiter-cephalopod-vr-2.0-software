@@ -115,7 +115,7 @@ RETRO_FONT = "'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace"
 
 
 def retro_console(widget: QWidget) -> bool:
-    """Only the explicitly styled Review Dashboard uses custom instrument painting."""
+    """Use the appearance of the owning frontend window for custom painting."""
     current: QWidget | None = widget
     while current is not None:
         if current.property("retroConsole") is True:
@@ -163,6 +163,7 @@ def stylesheet(
     QMenu::item:disabled {{ color: {c.disabled}; }}
     QMenu::separator {{ height: 1px; background: {c.border}; margin: 4px 8px; }}
     QFrame[role='card'] {{ background: transparent; border: none; }}
+    QFrame[role='planner-divider'] {{ background: {c.border}; border: none; }}
     QFrame[role='banner'] {{ background: {c.active}; border: 1px solid {c.input_border};
                             border-radius: {s.field_radius}px; }}
     QPushButton {{ background: {c.secondary}; border: 1px solid {c.input_border};
@@ -272,6 +273,8 @@ def retro_stylesheet() -> str:
     return (
         stylesheet(c, RETRO_SIZES, RETRO_FONT)
         + f"""
+    QTabBar::tab {{ border-radius: 0; }}
+    QFrame[role='planner-divider'] {{ background: {c.border}; border: none; }}
     QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; letter-spacing: 1px; font-size: 13px; }}
     QLabel[role='label'] {{ letter-spacing: 1px; }}
     QLineEdit, QComboBox {{ color: {c.text}; }}

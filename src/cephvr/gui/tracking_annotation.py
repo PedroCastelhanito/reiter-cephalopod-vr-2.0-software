@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import QDialog, QFileDialog, QHBoxLayout, QVBoxLayout, QWid
 from cephvr.gui.components import button, combo, equal_row_height, label
 from cephvr.gui.layouts import snap_tool_window
 from cephvr.gui.notices import FormNotice
-from cephvr.gui.theme import COLORS
+from cephvr.gui.theme import colors_for
 
 POINTS = {
     "Reference points": ("Anterior", "Posterior", "Animal-left", "Animal-right"),
@@ -110,9 +110,9 @@ class AnnotationCanvas(QWidget):
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor(COLORS.input))
+        painter.fillRect(self.rect(), QColor(colors_for(self).input))
         if self.image.isNull():
-            painter.setPen(QColor(COLORS.muted))
+            painter.setPen(QColor(colors_for(self).muted))
             painter.drawText(
                 self.rect(),
                 Qt.AlignmentFlag.AlignCenter,
@@ -125,7 +125,12 @@ class AnnotationCanvas(QWidget):
         for mode, points in self.points.items():
             painter.setPen(
                 QPen(
-                    QColor(COLORS.accent if mode == self.mode else COLORS.projection), 2
+                    QColor(
+                        colors_for(self).accent
+                        if mode == self.mode
+                        else colors_for(self).projection
+                    ),
+                    2,
                 )
             )
             mapped = [

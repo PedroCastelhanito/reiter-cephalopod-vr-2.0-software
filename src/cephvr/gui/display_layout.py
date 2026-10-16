@@ -4,7 +4,7 @@ from PyQt6.QtCore import QRect, QRectF, QSize, Qt
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QWidget
 
-from cephvr.gui.theme import COLORS
+from cephvr.gui.theme import colors_for
 
 
 class DisplayLayout(QWidget):
@@ -22,7 +22,7 @@ class DisplayLayout(QWidget):
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(QColor(COLORS.muted))
+        painter.setPen(QColor(colors_for(self).muted))
         if not self.outputs:
             painter.drawText(
                 self.rect(),
@@ -48,9 +48,13 @@ class DisplayLayout(QWidget):
                 rect.width() * scale,
                 rect.height() * scale,
             ).adjusted(2, 2, -2, -2)
-            painter.setBrush(QColor(COLORS.selection))
+            painter.setBrush(QColor(colors_for(self).selection))
             painter.setPen(
-                QColor(COLORS.muted if row in self.disabled_indices else COLORS.accent)
+                QColor(
+                    colors_for(self).muted
+                    if row in self.disabled_indices
+                    else colors_for(self).accent
+                )
             )
             painter.drawRoundedRect(box, 5, 5)
             painter.drawText(box, Qt.AlignmentFlag.AlignCenter, name)

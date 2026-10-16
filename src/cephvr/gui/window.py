@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from cephvr.gui.appearance import DashboardAppearance
 from cephvr.gui.components import button, label
 from cephvr.gui.dashboard import Dashboard
 from cephvr.gui.devices import DevicesPage
@@ -141,6 +142,9 @@ class DashboardWindow(QMainWindow):
         layout.addWidget(page, 1)
         self.navigation.idClicked.connect(self.select_page)
         self.apply_view(DashboardView())
+        self.appearance = DashboardAppearance(
+            self, self.dashboard, self.page_header, settings
+        )
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
         self.tracking.annotation.close()

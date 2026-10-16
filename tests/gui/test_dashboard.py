@@ -15734,9 +15734,42 @@ def test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors():
     assert matrices[0] != matrices[1]
 
 
+@pytest.mark.parametrize(
+    ("legacy", "shared", "expected"),
+    [
+        ("retro_console", None, "retro_console"),
+        ("retro_console", "standard", "standard"),
+        ("standard", "retro_console", "retro_console"),
+        ("retro_console", "unknown", "standard"),
+    ],
+)
+def test_managed_appearance_restores_shared_or_legacy_preference(
+    app: QApplication, tmp_path: Path, legacy: str, shared: str | None, expected: str
+) -> None:
+    from cephvr.gui.managed_window import ManagedDashboardWindow
+
+    settings = QSettings(str(tmp_path / "appearance.ini"), QSettings.Format.IniFormat)
+    settings.setValue("review/appearance", legacy)
+    if shared is not None:
+        settings.setValue("appearance/style", shared)
+    window = ManagedDashboardWindow(settings=settings)
+    try:
+        assert window.appearance.name == expected
+        assert window.appearance.actions[expected].isChecked()
+        assert window.property("retroConsole") == (expected == "retro_console")
+        assert settings.value("review/appearance") == legacy
+        assert settings.value("appearance/style") == shared
+    finally:
+        window.tracking.annotation.close()
+        window.hide()
+        window.deleteLater()
+        app.processEvents()
+
+
 @pytest.mark.parametrize("width", [1440, 720])
+@pytest.mark.parametrize("managed", [False, True])
 def test_review_appearance_switch_preserves_drafts_and_runtime(
-    app: QApplication, tmp_path: Path, width: int
+    app: QApplication, tmp_path: Path, width: int, managed: bool
 ) -> None:
     from cephvr.gui.managed_window import ManagedDashboardWindow
     from cephvr.gui.review import ReviewDashboardWindow
@@ -15744,7 +15777,8 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
 
     path = str(tmp_path / "appearance.ini")
     settings = QSettings(path, QSettings.Format.IniFormat)
-    review = ReviewDashboardWindow(sample=True, settings=settings)
+    window_class = ManagedDashboardWindow if managed else ReviewDashboardWindow
+    review = window_class(sample=True, settings=settings)
     runtime = ManagedDashboardWindow(settings=settings)
     reopened = None
     try:
@@ -15768,7 +15802,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
             if item.parentWidget() is review.dashboard.subject_id
         )
         assert review.appearance.name == "standard"
-        assert "Style" not in [action.text() for action in runtime.menuBar().actions()]
+        assert "Style" in [action.text() for action in runtime.menuBar().actions()]
         for name in ("retro_console", "standard", "retro_console"):
             review.appearance.actions[name].trigger()
             for _ in range(4):
@@ -15815,7 +15849,12 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                 RETRO_COLORS if name == "retro_console" else COLORS
             )
             assert colors_for(runtime.dashboard.subject_card) == COLORS
-            assert colors_for(review.devices.cameras) == COLORS
+            for page in (review.protocol, review.devices, review.tracking):
+                assert colors_for(page) == (
+                    RETRO_COLORS if name == "retro_console" else COLORS
+                )
+                for child in page.findChildren(QWidget):
+                    assert colors_for(child) == colors_for(page)
             assert runtime.styleSheet() == ""
             assert app.styleSheet() == original_application_style
         for status in ("Ready", "Waiting", "Failed", "Unavailable"):
@@ -15849,12 +15888,12 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
             item.isVisible() and item.parentWidget() is review.dashboard.sex
             for item in review.appearance.focus_brackets
         )
-        reopened = ReviewDashboardWindow(
+        reopened = ManagedDashboardWindow(
             settings=QSettings(path, QSettings.Format.IniFormat)
         )
         assert reopened.appearance.name == "retro_console"
         assert reopened.appearance.actions["retro_console"].isChecked()
-        assert settings.value("review/appearance") == "retro_console"
+        assert settings.value("appearance/style") == "retro_console"
     finally:
         for window in (review, runtime, reopened):
             if window is not None:

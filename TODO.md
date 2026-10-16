@@ -10,6 +10,8 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
+- [ ] `merge-dev-gui` [repo] [gui] Merge origin/main with local rig fixes and carry updated Review presentation into runtime. Owner: current Codex chat. Resolve conflicts and validate integration before completion.
+
 Completed open-loop endurance, bounded camera-codec lossless checks,
 restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 [Acquisition](reports/acquisition.md); remaining acceptance work is listed below.

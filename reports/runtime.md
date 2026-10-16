@@ -1,5 +1,29 @@
 # Controller and supervisor status
 
+Current GUI appearance alignment (2026-10-16, `runtime-review-appearance`):
+[G02 revision49](../docs/architecture/gui.md#g02) now applies the shared Style menu
+and Standard/Retro console presentation to Review and managed runtime across
+Dashboard, Protocol, Devices and Tracking, including subtabs. The common
+DashboardWindow constructs one focused appearance helper; saved frontend preferences
+fall back to the existing Review key and stay outside experiment configuration.
+ARCH-002 review reuses the shared stylesheet and inherited window appearance; no
+new dependency or duplicate layout. The518-line protocol timeline remains a cohesive
+canvas/interaction owner: this increment only replaces fixed palette reads. Other
+existing backend cohesion warnings remain outside this cosmetic change.
+Latest offscreen GUI selection passes12 cases (513 deselected), covering both modes
+at720/1440px, draft/status/log/command-gate preservation, saved-style precedence,
+legacy migration, unknown-style fallback, descendant palette inheritance on all
+three additional pages and existing layout behavior. Prior authority selection
+passed15 cases before this extension.
+Ruff check and format161, Windows-target mypy159 and boundaries699/zero violations
+pass. Isolated1440px managed-window rasters of Protocol, Devices and Tracking
+were inspected with Windows Segoe UI and Consolas loaded into offscreen Qt; initial offscreen font discovery
+produced missing glyphs. This is not live desktop or rig acceptance. Initial pytest
+failed to create sandbox temporary directories; workspace basetemp resolved it.
+A broader GUI run stalled after53 progress dots and was interrupted without a
+completed suite result; no cause is claimed. Native GUI limitations below remain.
+Reopen the GUI to load the shared appearance implementation.
+
 Current comprehensive Oct15 audit final source checks pass (E06/E07/E08/ARCH-002):
 1920 backend cases pass/five skip/one rig deselected, including eligible native
 Windows and HighGUI tests. Ruff, format915, Win32 mypy795 and boundaries699/zero

@@ -15,7 +15,6 @@ from cephvr.gui.notices import FormNotice
 from cephvr.gui.protocol_hierarchy import ProtocolHierarchy
 from cephvr.gui.protocol_timeline import ProgramTimeline
 from cephvr.gui.subgroup_editor import SubgroupEditor
-from cephvr.gui.theme import COLORS
 from cephvr.gui.trial_list import TrialList
 
 
@@ -60,7 +59,7 @@ class PlannerControls(QWidget):
         self.timeline_card.body.addLayout(actions)
         self.timeline_card.body.addWidget(self.timeline)
         self.group_divider = QFrame()
-        self.group_divider.setStyleSheet(f"background: {COLORS.border}; border: none;")
+        self.group_divider.setProperty("role", "planner-divider")
         self.group_divider.setFixedHeight(1)
         self.timeline_card.body.addWidget(self.group_divider)
         self.group_controls = QHBoxLayout()
