@@ -23,12 +23,18 @@ void main() { color = vec4(texture(source_tex, uv).rgb, 0.0); }
 """
 
 
-@dataclass(slots=True)
-class _Pending:
+@dataclass(slots=True, eq=False)
+class _Buffer:
     gl: Any
     pbo: int
-    sync: Any
     byte_count: int
+
+
+@dataclass(slots=True, eq=False)
+class _Pending:
+    buffer: _Buffer
+    sync: Any = None
+    failed: bool = False
 
 
 class ReviewCapture:
@@ -36,9 +42,10 @@ class ReviewCapture:
 
     def __init__(self) -> None:
         self._pending: list[_Pending] = []
+        self._available: list[_Buffer] = []
         self._context: Any | None = None
         self._dimensions: tuple[int, int, str] | None = None
-        self._shared: tuple[Any, ...] = ()
+        self._shared: list[Any] = []
 
     def capture(
         self,
@@ -62,7 +69,9 @@ class ReviewCapture:
         self._ensure_compositor(context, width, height, encoding.native_pixel_format)
         if self._context is not context:
             raise RuntimeError("review capture must use one shared GL context")
-        _texture, framebuffer, program, _buffer, array = self._shared
+        _texture, framebuffer, program, _buffer, array, _flipped, readback = (
+            self._shared
+        )
         by_id = {item.output_id: item for item in outputs}
         framebuffer.use()
         cast(Any, context).viewport = (0, 0, width, height)
@@ -76,41 +85,86 @@ class ReviewCapture:
             array.render(mode=moderngl.TRIANGLE_STRIP)
         cast(Any, context).viewport = (0, 0, width, height)
         byte_count = width * height * 4
-        pbo = 0
-        sync = None
+        # The upstream capture reservation bounds pending+CPU-owned frames. Reusing
+        # idle buffers first keeps this pool at that admitted concurrency high-water.
+        buffer = (
+            self._available.pop() if self._available else _Buffer(GL, 0, byte_count)
+        )
+        pending = _Pending(buffer)
+        self._pending.append(pending)
         try:
-            pbo = GL.glGenBuffers(1)
-            GL.glBindFramebuffer(GL.GL_READ_FRAMEBUFFER, framebuffer.glo)
+            if not buffer.pbo:
+                buffer.pbo = GL.glGenBuffers(1)
+                if not buffer.pbo:
+                    raise RuntimeError("review readback buffer allocation failed")
+                GL.glBindBuffer(GL.GL_PIXEL_PACK_BUFFER, buffer.pbo)
+                GL.glBufferData(
+                    GL.GL_PIXEL_PACK_BUFFER, byte_count, None, GL.GL_STREAM_READ
+                )
+            else:
+                GL.glBindBuffer(GL.GL_PIXEL_PACK_BUFFER, buffer.pbo)
+            self._orient_for_readback(GL, framebuffer, readback, width, height)
+            GL.glBindFramebuffer(GL.GL_READ_FRAMEBUFFER, readback.glo)
             GL.glReadBuffer(GL.GL_COLOR_ATTACHMENT0)
-            GL.glBindBuffer(GL.GL_PIXEL_PACK_BUFFER, pbo)
-            GL.glBufferData(
-                GL.GL_PIXEL_PACK_BUFFER, byte_count, None, GL.GL_STREAM_READ
-            )
             read_type = (
                 GL.GL_UNSIGNED_BYTE
-                if encoding.native_pixel_format == "rgba8_bottom_up"
+                if encoding.native_pixel_format == "rgba8_top_down"
                 else GL.GL_UNSIGNED_INT_2_10_10_10_REV
             )
             GL.glReadPixels(
                 0, 0, width, height, GL.GL_RGBA, read_type, ctypes.c_void_p(0)
             )
-            sync = GL.glFenceSync(GL.GL_SYNC_GPU_COMMANDS_COMPLETE, 0)
+            pending.sync = GL.glFenceSync(GL.GL_SYNC_GPU_COMMANDS_COMPLETE, 0)
+            if not pending.sync:
+                pending.sync = None
+                raise RuntimeError("review readback fence creation failed")
             GL.glFlush()
-            pending = _Pending(GL, pbo, sync, byte_count)
-            self._pending.append(pending)
             return pending
         except BaseException:
-            GL.glBindBuffer(GL.GL_PIXEL_PACK_BUFFER, 0)
-            if sync is not None:
-                GL.glDeleteSync(sync)
-            if pbo:
-                GL.glDeleteBuffers(1, [pbo])
+            pending.failed = True
+            try:
+                self.cancel(pending)
+            except Exception:
+                pass  # Retain exact failed ownership for release retry.
             raise
+        finally:
+            GL.glBindBuffer(GL.GL_PIXEL_PACK_BUFFER, 0)
+            framebuffer.use()
+
+    @staticmethod
+    def _orient_for_readback(
+        gl: Any, source: Any, target: Any, width: int, height: int
+    ) -> None:
+        # Flip completed pixels, not texture sampling: even mixed-size/downsampled
+        # tiles and black margins retain the original composite's numeric codes.
+        scissor = gl.glIsEnabled(gl.GL_SCISSOR_TEST)
+        try:
+            if scissor:
+                gl.glDisable(gl.GL_SCISSOR_TEST)
+            gl.glBindFramebuffer(gl.GL_READ_FRAMEBUFFER, source.glo)
+            gl.glReadBuffer(gl.GL_COLOR_ATTACHMENT0)
+            gl.glBindFramebuffer(gl.GL_DRAW_FRAMEBUFFER, target.glo)
+            gl.glDrawBuffer(gl.GL_COLOR_ATTACHMENT0)
+            gl.glBlitFramebuffer(
+                0,
+                0,
+                width,
+                height,
+                0,
+                height,
+                width,
+                0,
+                gl.GL_COLOR_BUFFER_BIT,
+                gl.GL_NEAREST,
+            )
+        finally:
+            if scissor:
+                gl.glEnable(gl.GL_SCISSOR_TEST)
 
     def _ensure_compositor(
         self, context: Any, width: int, height: int, pixel_format: str
     ) -> None:
-        if pixel_format not in {"rgba8_bottom_up", "r10g10b10a2_le_bottom_up"}:
+        if pixel_format not in {"rgba8_top_down", "r10g10b10a2_le_top_down"}:
             raise ValueError("unsupported review-composite pixel format")
         dimensions = (width, height, pixel_format)
         if self._shared:
@@ -118,12 +172,16 @@ class ReviewCapture:
                 raise RuntimeError(
                     "review compositor cannot change context or dimensions"
                 )
+            if len(self._shared) != 7:
+                raise RuntimeError("review compositor has unreleased partial resources")
             return
-        created: list[Any] = []
+        self._context = context
+        self._dimensions = dimensions
+        created = self._shared
         try:
             # Match the already selected 8-bit recording representation before
             # readback; float-to-byte glReadPixels stalls the native driver.
-            dtype = "f1" if pixel_format == "rgba8_bottom_up" else "f4"
+            dtype = "f1" if pixel_format == "rgba8_top_down" else "f4"
             texture = context.texture((width, height), 4, dtype=dtype)
             created.append(texture)
             framebuffer = context.framebuffer(color_attachments=(texture,))
@@ -136,69 +194,91 @@ class ReviewCapture:
                 program, [(buffer, "2f 2f", "in_position", "in_uv")]
             )
             created.append(array)
+            flipped = context.texture((width, height), 4, dtype=dtype)
+            created.append(flipped)
+            readback = context.framebuffer(color_attachments=(flipped,))
+            created.append(readback)
         except BaseException:
-            for resource in reversed(created):
-                resource.release()
+            # Keep partially created resources registered if deletion itself fails.
+            try:
+                self.release()
+            except Exception:
+                pass
             raise
-        self._context = context
-        self._dimensions = dimensions
-        self._shared = tuple(created)
 
-    def poll(self, pending: object) -> bytearray | None:
+    def _require_pending(self, pending: object) -> _Pending:
         if not isinstance(pending, _Pending) or pending not in self._pending:
             raise TypeError("invalid pending review capture")
-        gl = pending.gl
-        result = gl.glClientWaitSync(pending.sync, 0, 0)
-        if result not in (gl.GL_ALREADY_SIGNALED, gl.GL_CONDITION_SATISFIED):
-            if result == gl.GL_WAIT_FAILED:
-                raise RuntimeError("review-composite readback fence failed")
-            return None
-        gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, pending.pbo)
-        pointer = gl.glMapBufferRange(
-            gl.GL_PIXEL_PACK_BUFFER, 0, pending.byte_count, gl.GL_MAP_READ_BIT
-        )
-        address = ctypes.cast(pointer, ctypes.c_void_p).value
-        if address is None:
-            raise RuntimeError("review-composite readback mapping failed")
+        return pending
+
+    def poll(self, pending: object) -> bytearray | None:
+        pending = self._require_pending(pending)
+        if pending.failed:
+            raise RuntimeError("review readback failed; cleanup is required")
+        buffer = pending.buffer
+        gl = buffer.gl
         try:
-            # The signalled fence covers every byte. Copy from the completed
-            # mapped buffer once, without first zeroing another full frame.
-            pixels = bytearray(
-                (ctypes.c_ubyte * pending.byte_count).from_address(address)
-            )
-        finally:
-            unmapped = gl.glUnmapBuffer(gl.GL_PIXEL_PACK_BUFFER)
-        if not unmapped:
-            raise RuntimeError("review-composite readback mapping was corrupted")
-        gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, 0)
-        gl.glDeleteSync(pending.sync)
-        gl.glDeleteBuffers(1, [pending.pbo])
+            try:
+                result = gl.glClientWaitSync(pending.sync, 0, 0)
+                if result not in (gl.GL_ALREADY_SIGNALED, gl.GL_CONDITION_SATISFIED):
+                    if result == gl.GL_WAIT_FAILED:
+                        raise RuntimeError("review-composite readback fence failed")
+                    return None
+                gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, buffer.pbo)
+                pointer = gl.glMapBufferRange(
+                    gl.GL_PIXEL_PACK_BUFFER, 0, buffer.byte_count, gl.GL_MAP_READ_BIT
+                )
+                address = ctypes.cast(pointer, ctypes.c_void_p).value
+                if address is None:
+                    raise RuntimeError("review-composite readback mapping failed")
+                try:
+                    pixels = bytearray(
+                        (ctypes.c_ubyte * buffer.byte_count).from_address(address)
+                    )
+                finally:
+                    unmapped = gl.glUnmapBuffer(gl.GL_PIXEL_PACK_BUFFER)
+                if not unmapped:
+                    raise RuntimeError(
+                        "review-composite readback mapping was corrupted"
+                    )
+                gl.glDeleteSync(pending.sync)
+                pending.sync = None
+            finally:
+                gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, 0)
+        except BaseException:
+            pending.failed = True
+            raise
+        # Only retire ownership after every fallible GL restoration succeeds.
         self._pending.remove(pending)
+        self._available.append(buffer)
         return pixels
 
     def cancel(self, pending: object) -> bool:
-        """Delete GL-owned capture objects on the owner thread.
-
-        OpenGL defers destruction of objects still referenced by queued commands;
-        deleting the names here is therefore a bounded cancellation operation.
-        Keep the owner registered if any deletion raises so shutdown can retry.
-        """
-        if not isinstance(pending, _Pending) or pending not in self._pending:
-            raise TypeError("invalid pending review capture")
-        pending.gl.glDeleteSync(pending.sync)
-        pending.gl.glDeleteBuffers(1, [pending.pbo])
+        """Discard pending storage, never recycle a potentially unfinished transfer."""
+        pending = self._require_pending(pending)
+        pending.failed = True
+        if pending.sync is not None:
+            pending.buffer.gl.glDeleteSync(pending.sync)
+            pending.sync = None
+        self._delete_buffer(pending.buffer)
         self._pending.remove(pending)
         return True
 
+    @staticmethod
+    def _delete_buffer(buffer: _Buffer) -> None:
+        if buffer.pbo:
+            buffer.gl.glDeleteBuffers(1, [buffer.pbo])
+            buffer.pbo = 0
+
     def release(self) -> None:
         for pending in tuple(self._pending):
-            gl = pending.gl
-            gl.glDeleteSync(pending.sync)
-            gl.glDeleteBuffers(1, [pending.pbo])
-        self._pending.clear()
-        for resource in reversed(self._shared):
-            resource.release()
-        self._shared = ()
+            self.cancel(pending)
+        while self._available:
+            self._delete_buffer(self._available[-1])
+            self._available.pop()
+        while self._shared:
+            self._shared[-1].release()
+            self._shared.pop()
         self._context = None
         self._dimensions = None
 

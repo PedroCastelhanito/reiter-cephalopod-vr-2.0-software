@@ -1,0 +1,120 @@
+{
+  "date": "2026-10-16",
+  "revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "scope": "Concurrent dirty working tree; G01rev212/G02rev55 Review device authoring and shared layout/header fixes. Runtime output authoring remains unchanged.",
+  "checks": {
+    "final_tests": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'review_devices_capture or review_inline_output or review_appearance or microcontroller_role_outputs_clear or microcontroller_file_restores or devices_draft_reflows or projector_config_tabs or camera_pin_tracks or review_device_layout_candidates or microcontroller_row_heights or protocol_cards_reflow or variation_controls_fit_narrow or review_mcu_inputs_define or preview_selector' -m 'not windows and not rig'",
+      "result": "21 passed, 532 deselected in 32.13s; final-tests.txt"
+    },
+    "static": {
+      "commands": [
+        ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+        ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui",
+        ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/cameras.py src/cephvr/gui/components.py src/cephvr/gui/table_header.py src/cephvr/gui/tables.py src/cephvr/gui/theme.py src/cephvr/gui/projector_timing.py src/cephvr/gui/projectors.py src/cephvr/gui/review_mcu_outputs.py src/cephvr/gui/review_mcu_inputs.py src/cephvr/gui/microcontroller.py src/cephvr/gui/review_mcu_snapshot.py src/cephvr/gui/review_draft.py"
+      ],
+      "result": "lint/format171 pass; mypy12 pass"
+    },
+    "boundaries": {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "712 modules, zero violations; existing cohesive assembly size advisories remain"
+    },
+    "whitespace": "git diff --check passes",
+    "visual": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-16/review-terminal/device-polish/render.py",
+      "result": "Device pages/projector tabs and direct control/table captures at1440/1175/720; Protocol and four Tracking pages also rendered at1440/720. Representative captures inspected. Direct control captures disable CRT/glow for readable boundaries; full pages retain effects."
+    }
+  },
+  "source_sha256": {
+    "src/cephvr/gui/cameras.py": "7e043993773f0cb3ee2de76fbb8ad81525dbe6889da28c049b78d20708beb6ca",
+    "src/cephvr/gui/components.py": "6b82e718fbf1640481d72b524b5d430dbe501459a69b872349849c63765a3833",
+    "src/cephvr/gui/table_header.py": "5fb44c45571769904b8a466ee5b4377ea123ea17c1e3f1011c656fd1f85d0f36",
+    "src/cephvr/gui/tables.py": "4a91f6955a47e993a7374cd3cf2212d93252beadef650a16e50b9d3be08a1c8d",
+    "src/cephvr/gui/theme.py": "d3fd34c38a53476c9f48e0be81a7619bda939f4479924adefee41d194b27636c",
+    "src/cephvr/gui/projector_timing.py": "36d735aa79a38bc2a7504fbe82eed69211a8ddffd0398d9390a8c2840ffbc339",
+    "src/cephvr/gui/projectors.py": "1a0112a5635b7d506b9ceb425cdd0b5d7bc8cf953d4ef80dc029c22891f4ef19",
+    "src/cephvr/gui/review_mcu_outputs.py": "b0d18167139fe90a082fb6e6aba35f288db6b75a32def9a3cd584f6bd67a0a24",
+    "src/cephvr/gui/review_mcu_inputs.py": "1685afc1f02fddc2b07d2281599925ac62ad8fefcc7ab4490b8313859223e61d",
+    "src/cephvr/gui/microcontroller.py": "b2d10d0c339438c9b0353fdc37f47410d40ba47a30f7148140f6228d5b0a08a0",
+    "src/cephvr/gui/review_mcu_snapshot.py": "fb7913e4fb56e2ee18356ff81c9283aff857904f1cb32531b0097ef0455acf4b",
+    "src/cephvr/gui/review_draft.py": "02077de7973c2234d02713b55ae6a5c8b5c690fc01f4f5f02ea475c48b32912e",
+    "tests/gui/test_dashboard.py": "9ba5c9a2045a3673154770d9e22936894e28a79ae08057795b3a98cfccf4ea8f"
+  },
+  "observed_before": {
+    "camera1175": "Trigger source y136, rate y144, pin y136; all36px high. Original geometry observed before edits; before-camera captures were refreshed after palette/header changes but before alignment repair. No pristine source hash retained for those images."
+  },
+  "observed_after": {
+    "1440": [
+      {
+        "y": 129,
+        "height": 36,
+        "width": 196
+      },
+      {
+        "y": 129,
+        "height": 36,
+        "width": 181
+      },
+      {
+        "y": 129,
+        "height": 36,
+        "width": 180
+      }
+    ],
+    "1175": [
+      {
+        "y": 144,
+        "height": 36,
+        "width": 196
+      },
+      {
+        "y": 144,
+        "height": 36,
+        "width": 115
+      },
+      {
+        "y": 144,
+        "height": 36,
+        "width": 114
+      }
+    ],
+    "720": [
+      {
+        "y": 129,
+        "height": 36,
+        "width": 196
+      },
+      {
+        "y": 129,
+        "height": 36,
+        "width": 133
+      },
+      {
+        "y": 129,
+        "height": 36,
+        "width": 133
+      }
+    ]
+  },
+  "covered_behaviors": [
+    "Blank output row, no output menu or pin dialog; inline pin before/after role choice",
+    "Existing signal identities, role uniqueness/capacity and camera participation preserved",
+    "Empty selected pin remains visible until removal; portable Review config and full Review draft retain unfinished rows",
+    "Role change transfers pin; Running gates prevent output add/remove",
+    "Actual trigger box y/height alignment at three widths; VSync field/card width and x equality",
+    "Visible header text height fits wrapped header; table extra-height and empty-header behavior preserved",
+    "Repeated fresh-window construction/teardown and dynamic style switching"
+  ],
+  "initial_attempts": [
+    "Shared field spacer did not fix the8px alignment; removed it and bottom-aligned the three camera field containers.",
+    "One forward-reference import error and typing/import issues corrected before final runs.",
+    "New header resize lambda segfaulted in repeated-window sequence; initial-segfault.txt retained. Replaced it with a receiver-owned Qt slot; new five-case sequence and final21-case selection pass. This does not diagnose any historical native GUI issue.",
+    "Two test-only missing draft-helper imports corrected; initial-import-failures.txt retained."
+  ],
+  "limits": [
+    "Offscreen macOS fixtures, no native Windows/DPI or physical device/rig acceptance.",
+    "No full GUI suite; focused workflow, table integration and static checks only.",
+    "Existing large Cameras/Microcontroller/Projectors files remain cohesive page assemblies; edits are layout anchors/class selection only. Inline output state/validation and header painting are in focused modules.",
+    "Runtime output workflow promotion and existing live total timing follow-ups remain pending."
+  ]
+}

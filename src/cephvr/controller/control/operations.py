@@ -110,6 +110,7 @@ class ControlOperations:
                 operation.work.WhichOneof("work") != "session"
                 or operation.work.session.session_id != active_session
             ):
+                self.control.retained_truncated = True
                 self.control.operations.pop(command_id, None)
                 self.control.operation_finished_ns.pop(command_id, None)
 

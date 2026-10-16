@@ -329,7 +329,13 @@ async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
     if retired == "interrupted":
         session.interrupted = trial.interrupted = True
     elif retired == "replaced_session":
-        slot.current = replace(session)
+        new_work = _trial_work()
+        new_trial = replace(trial, work=new_work)
+        slot.current = replace(
+            session,
+            work=control.WorkContext(session=new_work.trial.session),
+            trial=new_trial,
+        )
     elif retired == "replaced_trial":
         session.trial = replace(trial)
     elif retired == "cancelled":
@@ -361,6 +367,25 @@ async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
             pulse.observation == observation
             and trial.pulse_delivery_deadline_ns is None
         )
+    if retired == "replaced_session":
+        current = slot.current
+        assert current is not None and current.trial is not None
+        assert current.work != session.work and current.trial.work != trial.work
+        assert current.trial.pulse_on is None and current.trial.pulse_off is None
+        # Crossing the retired boundary must leave this same owner's next session
+        # usable, with evidence attached only to the fresh trial.
+        await owner.execute(
+            current, current.trial, (), command=command, boundary_ns=100
+        )
+        assert calls == [(command, 100, 110)]
+        assert changes == [current.trial]
+        assert (current.trial.pulse_on is not None) == (
+            command == mcu.PULSE_BOUNDARY_COMMAND_ON
+        )
+        assert (current.trial.pulse_off is not None) == (
+            command == mcu.PULSE_BOUNDARY_COMMAND_OFF
+        )
+        assert trial.pulse_on is None and trial.pulse_off is None
 
 
 def _schedule(work: control.WorkContext) -> acq.WorkerSchedule:

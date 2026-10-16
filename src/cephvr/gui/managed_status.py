@@ -54,6 +54,17 @@ def dashboard_view(
     now = perf_counter_ns()
     elapsed = None
     remaining = None
+    trial_duration = None
+    if state.trial.HasField("start_monotonic_ns") and state.trial.HasField(
+        "scheduled_end_monotonic_ns"
+    ):
+        trial_duration = (
+            max(
+                0,
+                state.trial.scheduled_end_monotonic_ns - state.trial.start_monotonic_ns,
+            )
+            / 1_000_000_000
+        )
     if state.trial.HasField("start_monotonic_ns"):
         end_ns = (
             state.trial.actual_end_monotonic_ns
@@ -135,6 +146,7 @@ def dashboard_view(
         trial_count=trial_count,
         elapsed_s=elapsed,
         remaining_s=remaining,
+        trial_duration_s=trial_duration,
         outcome=outcome,
         camera_status=statuses["Cameras"],
         stimulus_status=statuses["Visual stimulus"],

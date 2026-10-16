@@ -1,0 +1,150 @@
+.............FF                                                          [100%]
+=================================== FAILURES ===================================
+____ test_review_inline_output_templates_keep_pins_and_unfinished_rows[720] ____
+
+app = <PyQt6.QtWidgets.QApplication object at 0x121505120>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2102/test_review_inline_output_temp0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1177fce90>
+width = 720
+
+    @pytest.mark.parametrize("width", [720, 1440])
+    def test_review_inline_output_templates_keep_pins_and_unfinished_rows(
+        app, tmp_path, monkeypatch, width
+    ):
+        from PyQt6.QtWidgets import QInputDialog
+    
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.gui.review_draft import load_review_draft, save_review_draft
+        from cephvr.gui.review_mcu_outputs import ReviewMicrocontrollerSignals
+    
+        monkeypatch.setattr(
+            QInputDialog, "getInt", lambda *_: pytest.fail("Pin dialog must not open")
+        )
+        reviewed = ReviewDashboardWindow(sample=True)
+        try:
+            ReviewControls(reviewed, simulate_projectors=True)
+            reviewed.appearance.select("retro_console")
+            reviewed.resize(width, 940)
+            reviewed.show()
+            reviewed.page_buttons[2].click()
+            reviewed.devices.tabs.setCurrentIndex(1)
+            app.processEvents()
+            panel = reviewed.devices.microcontroller
+            signals = panel.signals
+            assert isinstance(signals, ReviewMicrocontrollerSignals)
+            add = signals.add_buttons[0][0]
+            assert add.menu() is None
+            before = [
+                (draft.role, draft.enabled) for draft in reviewed.devices.cameras.drafts
+            ]
+            add.click()
+            assert len(signals.templates) == 1
+            template = signals.templates[0]
+            assert template.selector.currentIndex() == -1 and not template.pin.text()
+            assert all(not editor.text() for editor in signals.editors.values())
+            template.pin.setText("8")
+            template.selector.setCurrentIndex(template.selector.findData("behavioral"))
+            assert not signals.templates
+            assert panel.pin_editors["behavioral"].text() == "8"
+            assert before == [
+                (draft.role, draft.enabled) for draft in reviewed.devices.cameras.drafts
+            ]
+            add.click()
+            template = signals.templates[0]
+            template.selector.setCurrentIndex(template.selector.findData("trial-state"))
+            assert not panel.trial_pin.text()
+            assert not panel.output_table.isRowHidden(0)
+            add.click()
+            signals.templates[0].pin.setText("7")
+            data = panel.snapshots.capture()
+            signals.remove("behavioral")
+            panel.snapshots.restore(data)
+            assert panel.snapshots.capture() == data
+            assert signals.templates[0].pin.text() == "7"
+            assert panel.pin_editors["behavioral"].text() == "8"
+            assert not panel.output_table.isRowHidden(0)
+>           path = tmp_path / "unfinished-output-review.json"
+            ^^^^^^^^^^^^^^^^^
+E           NameError: name 'save_review_draft' is not defined
+
+tests/gui/test_dashboard.py:16992: NameError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___ test_review_inline_output_templates_keep_pins_and_unfinished_rows[1440] ____
+
+app = <PyQt6.QtWidgets.QApplication object at 0x121505120>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2102/test_review_inline_output_temp1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x107d14ad0>
+width = 1440
+
+    @pytest.mark.parametrize("width", [720, 1440])
+    def test_review_inline_output_templates_keep_pins_and_unfinished_rows(
+        app, tmp_path, monkeypatch, width
+    ):
+        from PyQt6.QtWidgets import QInputDialog
+    
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.gui.review_draft import load_review_draft, save_review_draft
+        from cephvr.gui.review_mcu_outputs import ReviewMicrocontrollerSignals
+    
+        monkeypatch.setattr(
+            QInputDialog, "getInt", lambda *_: pytest.fail("Pin dialog must not open")
+        )
+        reviewed = ReviewDashboardWindow(sample=True)
+        try:
+            ReviewControls(reviewed, simulate_projectors=True)
+            reviewed.appearance.select("retro_console")
+            reviewed.resize(width, 940)
+            reviewed.show()
+            reviewed.page_buttons[2].click()
+            reviewed.devices.tabs.setCurrentIndex(1)
+            app.processEvents()
+            panel = reviewed.devices.microcontroller
+            signals = panel.signals
+            assert isinstance(signals, ReviewMicrocontrollerSignals)
+            add = signals.add_buttons[0][0]
+            assert add.menu() is None
+            before = [
+                (draft.role, draft.enabled) for draft in reviewed.devices.cameras.drafts
+            ]
+            add.click()
+            assert len(signals.templates) == 1
+            template = signals.templates[0]
+            assert template.selector.currentIndex() == -1 and not template.pin.text()
+            assert all(not editor.text() for editor in signals.editors.values())
+            template.pin.setText("8")
+            template.selector.setCurrentIndex(template.selector.findData("behavioral"))
+            assert not signals.templates
+            assert panel.pin_editors["behavioral"].text() == "8"
+            assert before == [
+                (draft.role, draft.enabled) for draft in reviewed.devices.cameras.drafts
+            ]
+            add.click()
+            template = signals.templates[0]
+            template.selector.setCurrentIndex(template.selector.findData("trial-state"))
+            assert not panel.trial_pin.text()
+            assert not panel.output_table.isRowHidden(0)
+            add.click()
+            signals.templates[0].pin.setText("7")
+            data = panel.snapshots.capture()
+            signals.remove("behavioral")
+            panel.snapshots.restore(data)
+            assert panel.snapshots.capture() == data
+            assert signals.templates[0].pin.text() == "7"
+            assert panel.pin_editors["behavioral"].text() == "8"
+            assert not panel.output_table.isRowHidden(0)
+>           path = tmp_path / "unfinished-output-review.json"
+            ^^^^^^^^^^^^^^^^^
+E           NameError: name 'save_review_draft' is not defined
+
+tests/gui/test_dashboard.py:16992: NameError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_review_inline_output_templates_keep_pins_and_unfinished_rows[720]
+FAILED tests/gui/test_dashboard.py::test_review_inline_output_templates_keep_pins_and_unfinished_rows[1440]
+2 failed, 13 passed, 538 deselected in 29.95s

@@ -271,7 +271,10 @@ def test_monitor_treats_unknown_as_no_advance_and_resets_per_stream_clock() -> N
 
 
 @pytest.mark.asyncio
-async def test_monitor_loop_retains_gate_baseline_through_unknown_observation() -> None:
+@pytest.mark.parametrize("failure_code", ["TIMEOUT", "RuntimeError", ""])
+async def test_monitor_loop_retains_gate_baseline_through_unknown_observation(
+    failure_code: str,
+) -> None:
     session = pb.SessionContext(
         controller_generation="be848407-e044-45cc-98ed-8908777f9dc5",
         session_id="724d476d-b9eb-4f52-8afb-30ae1b1014fd",
@@ -327,7 +330,7 @@ async def test_monitor_loop_retains_gate_baseline_through_unknown_observation() 
             del deadline_ns
             return wire.SpikeGLXRecordingView(
                 phase=wire.SPIKEGLX_RECORDING_PHASE_UNKNOWN,
-                failure_code="TIMEOUT",
+                failure_code=failure_code,
             )
 
     class FakeIncidents:
@@ -354,6 +357,9 @@ async def test_monitor_loop_retains_gate_baseline_through_unknown_observation() 
         clock=lambda: 1_000,
     )
     await monitor.run(attempt)
+    assert attempt.spikeglx_recording.failure_code == (
+        failure_code or "OBSERVATION_UNCONFIRMED"
+    )
     assert not attempt.spikeglx_recording.HasField("observed_monotonic_ns")
     assert not attempt.spikeglx_recording.HasField("running")
     assert not attempt.spikeglx_recording.HasField("saving")

@@ -2004,3 +2004,34 @@ def test_health_ages_owner_published_capture_snapshot_without_runtime_reads() ->
     assert stale.continuing_functions[0].resource_id == "behavioral.capture"
     assert not stale.continuing_functions[0].functioning
     assert not stale.continuing_functions[0].control_path_valid
+
+
+@pytest.mark.parametrize("left_kind", ["none", "session", "trial"])
+@pytest.mark.parametrize("right_kind", ["none", "session", "trial"])
+@pytest.mark.parametrize("mutation", ["same", "session", "controller"])
+def test_worker_same_session_requires_exact_session_identity(
+    left_kind, right_kind, mutation
+):
+    from cephvr.acquisition.worker.terminal_scope import same_session
+
+    session = control.SessionContext(
+        controller_generation=str(uuid4()), session_id=str(uuid4())
+    )
+
+    def work(kind, session):
+        if kind == "session":
+            return control.WorkContext(session=session)
+        if kind == "trial":
+            return control.WorkContext(
+                trial=control.TrialContext(session=session, trial_id=str(uuid4()))
+            )
+        return control.WorkContext()
+
+    other = control.SessionContext.FromString(session.SerializeToString())
+    if mutation == "session":
+        other.session_id = str(uuid4())
+    elif mutation == "controller":
+        other.controller_generation = str(uuid4())
+    assert same_session(work(left_kind, session), work(right_kind, other)) == (
+        left_kind != "none" and right_kind != "none" and mutation == "same"
+    )

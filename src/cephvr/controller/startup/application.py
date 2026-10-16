@@ -198,7 +198,9 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
         validators=controller_validators(_installed_validators(software_root)),
         display_validator=_installed_display_validator(),
         display_pacing_resolver=_installed_display_pacing_resolver(),
-        settings_loader=lambda: load_controller_configuration(software_root),
+        settings_loader=lambda: load_controller_configuration(
+            software_root, include_configuration=False
+        ),
         startup_settings=settings,
         software_root=software_root,
         backends=backend_ports,

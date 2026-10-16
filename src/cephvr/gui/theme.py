@@ -3,7 +3,14 @@
 from dataclasses import dataclass, replace
 
 from PyQt6.QtGui import QColor, QFont, QPalette
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QLineEdit,
+    QProxyStyle,
+    QStyle,
+    QStyleOption,
+    QWidget,
+)
 
 
 @dataclass(frozen=True)
@@ -111,11 +118,11 @@ RETRO_SIZES = replace(
     body_font=12,
     console_font=12,
 )
-RETRO_FONT = "'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace"
+RETRO_FONT = "'IBM Plex Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace"
 
 
 def retro_console(widget: QWidget) -> bool:
-    """Only the explicitly styled Review Dashboard uses custom instrument painting."""
+    """Only explicitly styled Review surfaces use custom instrument painting."""
     current: QWidget | None = widget
     while current is not None:
         if current.property("retroConsole") is True:
@@ -163,6 +170,7 @@ def stylesheet(
     QMenu::item:disabled {{ color: {c.disabled}; }}
     QMenu::separator {{ height: 1px; background: {c.border}; margin: 4px 8px; }}
     QFrame[role='card'] {{ background: transparent; border: none; }}
+    QFrame[role='section-divider'] {{ background: {c.border}; border: none; }}
     QFrame[role='banner'] {{ background: {c.active}; border: 1px solid {c.input_border};
                             border-radius: {s.field_radius}px; }}
     QPushButton {{ background: {c.secondary}; border: 1px solid {c.input_border};
@@ -214,11 +222,9 @@ def stylesheet(
     QTabBar::tab:last {{ margin-right: 0; }}
     QTabBar::tab:selected {{ color: {c.coral}; background: {c.selection}; border-color: {c.accent}; }}
     QTabBar::tab:hover {{ border-color: {c.focus}; }}
-    QWidget#PreviewSources {{ background: {c.card}; border: 1px solid {c.border};
-                             border-radius: {s.field_radius}px; }}
     QLabel[role='selector-heading'] {{ color: {c.accent}; font-size: {s.label_font}px;
-                                       font-weight: 700; min-height: 24px; }}
-    QLabel[role='selector-source'] {{ color: {c.text}; min-height: 26px; }}
+                                       font-weight: 700; min-height: 20px; }}
+    QLabel[role='selector-source'] {{ color: {c.text}; min-height: 22px; }}
     QLabel:disabled, QLabel[role='label']:disabled, QLabel[role='selector-source']:disabled {{ color: {c.disabled}; }}
     QCheckBox[role='viewer-toggle'] {{ padding: 3px; border: 1px solid transparent;
                                       border-radius: 6px; }}
@@ -276,6 +282,7 @@ def retro_stylesheet() -> str:
     QLabel[role='label'] {{ letter-spacing: 1px; }}
     QLineEdit, QComboBox {{ color: {c.text}; }}
     QPushButton {{ letter-spacing: 0.8px; }}
+    QTabBar::tab {{ border-radius: 0; }}
     QPushButton:pressed {{ background: {c.active}; border: 1px solid {c.accent}; }}
     QCheckBox::indicator {{ border-radius: 0; width: 13px; height: 13px; }}
     QCheckBox::indicator:checked {{ background: {c.ready}; border-color: {c.ready}; }}
@@ -284,6 +291,25 @@ def retro_stylesheet() -> str:
     QPlainTextEdit[role='console'] {{ font-family: {RETRO_FONT}; padding: 12px;
         border: 1px solid {c.input_border}; border-radius: 0; }}
     QPlainTextEdit[terminal='telemetry'] {{ color: {c.mirror}; }}
+    QPushButton:hover, QPushButton[role='primary']:hover {{
+        background: {c.accent}; color: {c.window}; border-color: {c.accent}; }}
+    QPushButton[role='danger']:hover, QPushButton[role='compact-stop']:hover {{
+        background: {c.danger_border}; color: {c.window}; border-color: {c.danger_border}; }}
+    QPushButton[role='icon']:hover, QPushButton[role='icon']:pressed {{
+        background: {c.hover}; border-color: {c.accent}; }}
+    QPushButton:disabled:hover {{ background: {c.window}; color: {c.disabled};
+        border-color: {c.border}; }}
+    QLineEdit, QComboBox, QPlainTextEdit[role='console'], QTextEdit {{
+        selection-background-color: {c.accent}; selection-color: {c.window}; }}
+    QComboBox QAbstractItemView {{
+        selection-background-color: {c.accent}; selection-color: {c.window}; }}
+    QMenu::item:selected {{ background: {c.accent}; color: {c.window}; }}
+    QListWidget[role='trials']::item {{ border-radius: 0; }}
+    QListWidget[role='trials']::item:selected {{ background: {c.accent}; color: {c.window}; }}
+    QScrollBar#TimelineScroll:horizontal, QScrollBar#TimelineScroll::handle:horizontal {{
+        border-radius: 0; }}
+    QTableView::item:selected {{ background: {c.primary}; color: {c.text}; }}
+    QTabBar::tab:selected {{ background: {c.accent}; color: {c.window}; }}
     """
     )
 
@@ -297,26 +323,48 @@ def retro_chrome_stylesheet() -> str:
         font-family: {RETRO_FONT}; color: {c.accent}; }}
     QFrame#Sidebar QLabel[role='muted'] {{ color: {c.muted}; font-size: 10px; }}
     QFrame#Sidebar QLabel[role='brand'] {{ color: {c.projection}; }}
+    QFrame#Sidebar QLabel[role='brand'] {{ font-size: 18px; font-weight: 600;
+        letter-spacing: 2px; padding: 0 0 12px 0;
+        border-bottom: 1px solid {c.border}; }}
     QFrame#Sidebar QPushButton {{ font-family: {RETRO_FONT}; font-size: 12px;
         color: {c.muted}; border-radius: 0; border: 1px solid transparent; }}
-    QFrame#Sidebar QPushButton:checked {{ color: {c.accent}; background: {c.selection};
-        border: 1px solid {c.border}; border-left: 3px solid {c.accent}; }}
-    QFrame#Sidebar QPushButton:hover {{ background: {c.hover}; border-color: {c.focus}; }}
+    QFrame#Sidebar QPushButton:checked, QFrame#Sidebar QPushButton:hover {{
+        color: {c.window}; background: {c.accent}; border: 1px solid {c.accent}; }}
     QWidget#WindowHeader QPushButton {{ font-family: {RETRO_FONT}; color: {c.focus};
         background: {c.secondary}; border: 1px solid {c.input_border}; border-radius: 1px; }}
+    QWidget#WindowHeader QPushButton:hover {{
+        color: {c.window}; background: {c.accent}; border-color: {c.accent}; }}
     QMenuBar, QMenu {{ font-family: {RETRO_FONT}; color: {c.text}; background: {c.sidebar}; }}
     QMenuBar {{ border-bottom: 1px solid {c.border}; }}
     QMenuBar::item, QMenu::item {{ color: {c.text}; }}
-    QMenuBar::item:selected, QMenu::item:selected {{ background: {c.selection}; color: {c.accent}; }}
+    QMenuBar::item:selected, QMenu::item:selected {{ background: {c.accent}; color: {c.window}; }}
     QMenu {{ border: 1px solid {c.border}; }}
     """
+
+
+class EditorCursorStyle(QProxyStyle):
+    """Let Qt own insertion, scrolling and blinking for the Retro block caret."""
+
+    def pixelMetric(
+        self,
+        metric: QStyle.PixelMetric,
+        option: QStyleOption | None = None,
+        widget: QWidget | None = None,
+    ) -> int:
+        if (
+            metric == QStyle.PixelMetric.PM_TextCursorWidth
+            and isinstance(widget, QLineEdit)
+            and retro_console(widget)
+        ):
+            return max(6, widget.fontMetrics().horizontalAdvance(" "))
+        return super().pixelMetric(metric, option, widget)
 
 
 def apply_theme(app: QApplication) -> None:
     from cephvr.gui.wheel_guard import install_wheel_guard
 
     install_wheel_guard(app)
-    app.setStyle("Fusion")
+    app.setStyle(EditorCursorStyle("Fusion"))
     palette = app.palette()
     palette.setColor(QPalette.ColorRole.Highlight, QColor(COLORS.selection))
     palette.setColor(QPalette.ColorRole.HighlightedText, QColor(COLORS.text))

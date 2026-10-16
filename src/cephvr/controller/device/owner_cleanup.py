@@ -14,6 +14,7 @@ from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.release_evidence import (
     camera_policy,
@@ -27,7 +28,6 @@ from cephvr.controller.device.status_retention import CameraStatusRetention
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
-    RETAINED_LIMIT,
     CameraOperation,
     ConfigurationState,
     ControlState,
@@ -57,7 +57,7 @@ def record_manual_cleanup_warning(
                 message=f"manual camera cleanup pending, retrying: {error}",
             )
         )
-    control.warnings = kept[-RETAINED_LIMIT:]
+    control.replace_warnings(kept)
     if changed:
         publish()
 
@@ -291,9 +291,8 @@ class ManualControlCleanup:
         return next(
             (
                 item.acquisition
-                for item in self.configuration.current.backends
-                if item.backend_name == "acquisition"
-                and item.WhichOneof("settings") == "acquisition"
+                for item in acquisition_backends(self.configuration.current)
+                if (item.WhichOneof("settings") == "acquisition")
             ),
             None,
         )

@@ -74,11 +74,17 @@ class RecordingCaptureRuntime:
             metrics = self.session.metrics
             started = metrics.clock_ns()
             pixels = self.renderer.poll_review_capture(pending)
+            completed = metrics.clock_ns()
             metrics.observe(
                 "readback_poll_ready"
                 if pixels is not None
                 else "readback_poll_pending",
-                metrics.clock_ns() - started,
+                completed - started,
+                sample={
+                    "group_id": reservation.group_id,
+                    "start_monotonic_ns": started,
+                    "end_monotonic_ns": completed,
+                },
             )
             if pixels is None:
                 continue
@@ -94,7 +100,7 @@ class RecordingCaptureRuntime:
             self.enqueue_capture_update(
                 reservation.group_id,
                 "transfer_complete",
-                reservation.video_frame_index,
+                None,
                 None,
             )
 
@@ -114,12 +120,12 @@ class RecordingCaptureRuntime:
                 reserved_bytes=min(self.evidence_pending_bytes, 256 * 1024),
             )
             return
-        reservation, disposition, slot = self.session.classify_capture(
+        reservation, disposition, index = self.session.classify_capture(
             group_id, state.evaluation_host_ns
         )
         captures: tuple[tuple[CaptureDisposition, int | None, str | None], ...]
         if reservation is None:
-            captures = ((cast(CaptureDisposition, disposition), slot, None),)
+            captures = ((cast(CaptureDisposition, disposition), index, None),)
         else:
             try:
                 pending = self.renderer.capture_review_composite(
@@ -130,7 +136,7 @@ class RecordingCaptureRuntime:
                 captures = (
                     (
                         "transfer_failed",
-                        reservation.video_frame_index,
+                        None,
                         "CAPTURE_FAILED",
                     ),
                 )
@@ -143,7 +149,7 @@ class RecordingCaptureRuntime:
                 )
                 raise
             self.pending[reservation.token] = (reservation, pending)
-            captures = (("admitted", reservation.video_frame_index, None),)
+            captures = (("admitted", None, None),)
         self.next_group_id += 1
         self.session.enqueue_evidence_factory(
             _render_evidence_factory(
@@ -315,23 +321,40 @@ class RecordingCaptureRuntime:
 
     def cancel_pending(self, failure: str) -> bool:
         released = True
+        first_error: Exception | None = None
         for token, (reservation, pending) in tuple(self.pending.items()):
             if token not in self._cancelled_tokens:
-                self.enqueue_capture_update(
-                    reservation.group_id,
-                    "transfer_failed",
-                    reservation.video_frame_index,
-                    failure,
-                )
-                self.session.cancel_capture(reservation)
+                try:
+                    self.enqueue_capture_update(
+                        reservation.group_id,
+                        "transfer_failed",
+                        None,
+                        failure,
+                    )
+                except Exception as exc:
+                    first_error = first_error or exc
+                try:
+                    self.session.cancel_capture(reservation)
+                except Exception as exc:
+                    first_error = first_error or exc
+                    continue  # Retain both owners until reservation release is known.
                 self._cancelled_tokens.add(token)
-            if self.renderer.cancel_review_capture(pending):
-                del self.pending[token]
-            else:
-                released = False
+            try:
+                if self.renderer.cancel_review_capture(pending):
+                    del self.pending[token]
+                else:
+                    released = False
+            except Exception as exc:
+                first_error = first_error or exc
         if self.reservation is not None:
-            self.session.cancel_capture(self.reservation)
-            self.reservation = None
+            try:
+                self.session.cancel_capture(self.reservation)
+                self.reservation = None
+            except Exception as exc:
+                first_error = first_error or exc
+        # Required logging failure still propagates, after independent cleanup.
+        if first_error is not None:
+            raise first_error
         return released
 
 

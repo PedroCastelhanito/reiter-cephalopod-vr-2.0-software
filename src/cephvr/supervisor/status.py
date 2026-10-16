@@ -9,6 +9,7 @@ from uuid import uuid4
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.software import software_version
 from cephvr.supervisor.ports import SupervisorOutbound
 from cephvr.supervisor.registry import LaunchError, LaunchRegistry, NativeLaunches
 from cephvr.supervisor.state import (
@@ -107,6 +108,7 @@ class StatusPublisher:
             report = self.state.pending_status
             if report is None or report.status_revision != revision:
                 report = wire.SupervisorStatusReport(
+                    software_version=software_version(),
                     supervisor=self.identity,
                     controller_generation=self.controller.generation,
                     status_revision=revision,

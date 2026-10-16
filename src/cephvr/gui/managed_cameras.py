@@ -100,6 +100,8 @@ class ManagedCameras(QObject):
         self.panel.operation_pending = False
         self.panel.pending_enable.clear()
         self.configured_tests.clear()
+        self.panel.controller_trigger_rates.clear()
+        self.panel.controller_trigger_sources.clear()
 
     def test_enabled(self) -> None:
         if self.configured_tests:
@@ -137,6 +139,28 @@ class ManagedCameras(QObject):
             ),
             None,
         )
+        cameras.controller_trigger_rates.clear()
+        cameras.controller_trigger_sources.clear()
+        if mcu_settings is not None:
+            for name in ("behavioral", "tracking", "eye_tracking"):
+                device = getattr(mcu_settings, name).device
+                pulse = getattr(mcu_settings.pulses, name)
+                if device.device_id:
+                    cameras.controller_trigger_sources[device.device_id] = (
+                        "External controller"
+                        if device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+                        else "Internal clock"
+                        if device.frame_timing == camera.FRAME_TIMING_FREE_RUNNING
+                        else ""
+                    )
+                if (
+                    device.device_id
+                    and device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+                    and pulse.HasField("requested_frequency_hz")
+                ):
+                    cameras.controller_trigger_rates[device.device_id] = (
+                        pulse.requested_frequency_hz
+                    )
         camera_settings = next(
             (
                 entry.acquisition
@@ -185,13 +209,8 @@ class ManagedCameras(QObject):
                     assigned_camera = getattr(
                         mcu_settings, camera_role_name(_CAMERAS[expected_role])
                     )
-                    timing = assigned_camera.device.frame_timing
                     draft.values["trigger_clock"] = (
-                        "External controller"
-                        if timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
-                        else "Internal clock"
-                        if timing == camera.FRAME_TIMING_FREE_RUNNING
-                        else ""
+                        cameras.controller_trigger_sources.get(draft.serial, "")
                     )
                     draft.values["trigger_source"] = (
                         assigned_camera.device.settings.trigger_source

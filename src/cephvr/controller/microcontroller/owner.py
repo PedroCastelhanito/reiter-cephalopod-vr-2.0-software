@@ -475,6 +475,8 @@ class SerialOwner:
             connection_id=self.connection_id,
             request_id=request_id,
             observed_monotonic_ns=observed_ns,
+            unmatched_replies=self.unmatched_replies,
+            malformed_replies=self.malformed_replies,
         )
         observation.state.CopyFrom(state)
         if self._capabilities is not None:

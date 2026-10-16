@@ -91,8 +91,8 @@ A09 accepts a first-trigger/first-video-source assumption for initial post hoc
 alignment, with existing trigger wiring, fixed cadence and trial-only capture.
 For each uniquely matched trial/camera pulse train, associate its first recorded
 trigger with the source image referenced by encoded video frame zero. Resolve that
-source through A07 video_frame mappings; leading padding can reference a later
-received source. Preserve and flag leading invalid/dropped source rows rather than
+source through A07 video_frame mappings; this may be a later received source after invalid images or capacity loss.
+Preserve and flag leading invalid/dropped source rows rather than
 silently declaring that the first video source equals received frame_id zero.
 With video disabled, the analogous assumption uses the first received source row.
 

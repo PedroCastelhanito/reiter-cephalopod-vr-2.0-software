@@ -1,0 +1,926 @@
+[
+  {
+    "name": "0-0-1440-retro_console",
+    "text": "STATUS     : Configuration\n\nTRIAL      : \u2014\nTRIAL TIME : \u2014 / \u2014\nTOTAL TIME : \u2014 / \u2014",
+    "rows": [
+      [
+        "STATUS",
+        "Configuration"
+      ],
+      null,
+      [
+        "TRIAL",
+        "\u2014"
+      ],
+      [
+        "TRIAL TIME",
+        "\u2014 / \u2014"
+      ],
+      [
+        "TOTAL TIME",
+        "\u2014 / \u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-0-1440-retro_console",
+    "text": "CAMERAS FOUND    : 2\nCAMERAS ENABLED  : 2\n\nCAMERA ROLE      : Behavior cam\nSTATUS           : Not connected\nTRIGGER RATE     : \u2014\nACQUISITION RATE : \u2014",
+    "rows": [
+      [
+        "CAMERAS FOUND",
+        "2"
+      ],
+      [
+        "CAMERAS ENABLED",
+        "2"
+      ],
+      null,
+      [
+        "CAMERA ROLE",
+        "Behavior cam"
+      ],
+      [
+        "STATUS",
+        "Not connected"
+      ],
+      [
+        "TRIGGER RATE",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION RATE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-1-1440-retro_console",
+    "text": "CONNECTION   : Not connected\n\nPORT         : \u2014\nFIRMWARE     : \u2014\nTRIGGER TEST : Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "PORT",
+        "\u2014"
+      ],
+      [
+        "FIRMWARE",
+        "\u2014"
+      ],
+      [
+        "TRIGGER TEST",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-2-1440-retro_console",
+    "text": "CONNECTION : Not connected\n\nDISPLAY    : \u2014\nPROJECTOR  : Unassigned\nOUTPUT     : Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "DISPLAY",
+        "\u2014"
+      ],
+      [
+        "PROJECTOR",
+        "Unassigned"
+      ],
+      [
+        "OUTPUT",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-3-1440-retro_console",
+    "text": "CONNECTION  : Not connected\n\nSERVER      : \u2014\nVERSION     : \u2014\nACQUISITION : Unknown\nSTREAMS     : \u2014",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "SERVER",
+        "\u2014"
+      ],
+      [
+        "VERSION",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION",
+        "Unknown"
+      ],
+      [
+        "STREAMS",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "3-0-1440-retro_console",
+    "text": "INPUT      : Tracking cam \u00b7 REVIEW-002\n\nTRACKING   : Unavailable\nPOSE       : \u2014\nCOVERAGE   : \u2014\nRESULT AGE : \u2014",
+    "rows": [
+      [
+        "INPUT",
+        "Tracking cam \u00b7 REVIEW-002"
+      ],
+      null,
+      [
+        "TRACKING",
+        "Unavailable"
+      ],
+      [
+        "POSE",
+        "\u2014"
+      ],
+      [
+        "COVERAGE",
+        "\u2014"
+      ],
+      [
+        "RESULT AGE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "0-0-720-retro_console",
+    "text": "STATUS     : Configuration\n\nTRIAL      : \u2014\nTRIAL TIME : \u2014 / \u2014\nTOTAL TIME : \u2014 / \u2014",
+    "rows": [
+      [
+        "STATUS",
+        "Configuration"
+      ],
+      null,
+      [
+        "TRIAL",
+        "\u2014"
+      ],
+      [
+        "TRIAL TIME",
+        "\u2014 / \u2014"
+      ],
+      [
+        "TOTAL TIME",
+        "\u2014 / \u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-0-720-retro_console",
+    "text": "CAMERAS FOUND    : 2\nCAMERAS ENABLED  : 2\n\nCAMERA ROLE      : Behavior cam\nSTATUS           : Not connected\nTRIGGER RATE     : \u2014\nACQUISITION RATE : \u2014",
+    "rows": [
+      [
+        "CAMERAS FOUND",
+        "2"
+      ],
+      [
+        "CAMERAS ENABLED",
+        "2"
+      ],
+      null,
+      [
+        "CAMERA ROLE",
+        "Behavior cam"
+      ],
+      [
+        "STATUS",
+        "Not connected"
+      ],
+      [
+        "TRIGGER RATE",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION RATE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-1-720-retro_console",
+    "text": "CONNECTION   : Not connected\n\nPORT         : \u2014\nFIRMWARE     : \u2014\nTRIGGER TEST : Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "PORT",
+        "\u2014"
+      ],
+      [
+        "FIRMWARE",
+        "\u2014"
+      ],
+      [
+        "TRIGGER TEST",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-2-720-retro_console",
+    "text": "CONNECTION : Not connected\n\nDISPLAY    : \u2014\nPROJECTOR  : Unassigned\nOUTPUT     : Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "DISPLAY",
+        "\u2014"
+      ],
+      [
+        "PROJECTOR",
+        "Unassigned"
+      ],
+      [
+        "OUTPUT",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-3-720-retro_console",
+    "text": "CONNECTION  : Not connected\n\nSERVER      : \u2014\nVERSION     : \u2014\nACQUISITION : Unknown\nSTREAMS     : \u2014",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "SERVER",
+        "\u2014"
+      ],
+      [
+        "VERSION",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION",
+        "Unknown"
+      ],
+      [
+        "STREAMS",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "3-0-720-retro_console",
+    "text": "INPUT      : Tracking cam \u00b7 REVIEW-002\n\nTRACKING   : Unavailable\nPOSE       : \u2014\nCOVERAGE   : \u2014\nRESULT AGE : \u2014",
+    "rows": [
+      [
+        "INPUT",
+        "Tracking cam \u00b7 REVIEW-002"
+      ],
+      null,
+      [
+        "TRACKING",
+        "Unavailable"
+      ],
+      [
+        "POSE",
+        "\u2014"
+      ],
+      [
+        "COVERAGE",
+        "\u2014"
+      ],
+      [
+        "RESULT AGE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "0-0-1440-standard",
+    "text": "STATUS      Configuration\n\nTRIAL       \u2014\nTRIAL TIME  \u2014 / \u2014\nTOTAL TIME  \u2014 / \u2014",
+    "rows": [
+      [
+        "STATUS",
+        "Configuration"
+      ],
+      null,
+      [
+        "TRIAL",
+        "\u2014"
+      ],
+      [
+        "TRIAL TIME",
+        "\u2014 / \u2014"
+      ],
+      [
+        "TOTAL TIME",
+        "\u2014 / \u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-0-1440-standard",
+    "text": "CAMERAS FOUND     2\nCAMERAS ENABLED   2\n\nCAMERA ROLE       Behavior cam\nSTATUS            Not connected\nTRIGGER RATE      \u2014\nACQUISITION RATE  \u2014",
+    "rows": [
+      [
+        "CAMERAS FOUND",
+        "2"
+      ],
+      [
+        "CAMERAS ENABLED",
+        "2"
+      ],
+      null,
+      [
+        "CAMERA ROLE",
+        "Behavior cam"
+      ],
+      [
+        "STATUS",
+        "Not connected"
+      ],
+      [
+        "TRIGGER RATE",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION RATE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-1-1440-standard",
+    "text": "CONNECTION    Not connected\n\nPORT          \u2014\nFIRMWARE      \u2014\nTRIGGER TEST  Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "PORT",
+        "\u2014"
+      ],
+      [
+        "FIRMWARE",
+        "\u2014"
+      ],
+      [
+        "TRIGGER TEST",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-2-1440-standard",
+    "text": "CONNECTION  Not connected\n\nDISPLAY     \u2014\nPROJECTOR   Unassigned\nOUTPUT      Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "DISPLAY",
+        "\u2014"
+      ],
+      [
+        "PROJECTOR",
+        "Unassigned"
+      ],
+      [
+        "OUTPUT",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-3-1440-standard",
+    "text": "CONNECTION   Not connected\n\nSERVER       \u2014\nVERSION      \u2014\nACQUISITION  Unknown\nSTREAMS      \u2014",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "SERVER",
+        "\u2014"
+      ],
+      [
+        "VERSION",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION",
+        "Unknown"
+      ],
+      [
+        "STREAMS",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "3-0-1440-standard",
+    "text": "INPUT       Tracking cam \u00b7 REVIEW-002\n\nTRACKING    Unavailable\nPOSE        \u2014\nCOVERAGE    \u2014\nRESULT AGE  \u2014",
+    "rows": [
+      [
+        "INPUT",
+        "Tracking cam \u00b7 REVIEW-002"
+      ],
+      null,
+      [
+        "TRACKING",
+        "Unavailable"
+      ],
+      [
+        "POSE",
+        "\u2014"
+      ],
+      [
+        "COVERAGE",
+        "\u2014"
+      ],
+      [
+        "RESULT AGE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "0-0-720-standard",
+    "text": "STATUS      Configuration\n\nTRIAL       \u2014\nTRIAL TIME  \u2014 / \u2014\nTOTAL TIME  \u2014 / \u2014",
+    "rows": [
+      [
+        "STATUS",
+        "Configuration"
+      ],
+      null,
+      [
+        "TRIAL",
+        "\u2014"
+      ],
+      [
+        "TRIAL TIME",
+        "\u2014 / \u2014"
+      ],
+      [
+        "TOTAL TIME",
+        "\u2014 / \u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-0-720-standard",
+    "text": "CAMERAS FOUND     2\nCAMERAS ENABLED   2\n\nCAMERA ROLE       Behavior cam\nSTATUS            Not connected\nTRIGGER RATE      \u2014\nACQUISITION RATE  \u2014",
+    "rows": [
+      [
+        "CAMERAS FOUND",
+        "2"
+      ],
+      [
+        "CAMERAS ENABLED",
+        "2"
+      ],
+      null,
+      [
+        "CAMERA ROLE",
+        "Behavior cam"
+      ],
+      [
+        "STATUS",
+        "Not connected"
+      ],
+      [
+        "TRIGGER RATE",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION RATE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-1-720-standard",
+    "text": "CONNECTION    Not connected\n\nPORT          \u2014\nFIRMWARE      \u2014\nTRIGGER TEST  Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "PORT",
+        "\u2014"
+      ],
+      [
+        "FIRMWARE",
+        "\u2014"
+      ],
+      [
+        "TRIGGER TEST",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-2-720-standard",
+    "text": "CONNECTION  Not connected\n\nDISPLAY     \u2014\nPROJECTOR   Unassigned\nOUTPUT      Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "DISPLAY",
+        "\u2014"
+      ],
+      [
+        "PROJECTOR",
+        "Unassigned"
+      ],
+      [
+        "OUTPUT",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-3-720-standard",
+    "text": "CONNECTION   Not connected\n\nSERVER       \u2014\nVERSION      \u2014\nACQUISITION  Unknown\nSTREAMS      \u2014",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "SERVER",
+        "\u2014"
+      ],
+      [
+        "VERSION",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION",
+        "Unknown"
+      ],
+      [
+        "STREAMS",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "3-0-720-standard",
+    "text": "INPUT       Tracking cam \u00b7 REVIEW-002\n\nTRACKING    Unavailable\nPOSE        \u2014\nCOVERAGE    \u2014\nRESULT AGE  \u2014",
+    "rows": [
+      [
+        "INPUT",
+        "Tracking cam \u00b7 REVIEW-002"
+      ],
+      null,
+      [
+        "TRACKING",
+        "Unavailable"
+      ],
+      [
+        "POSE",
+        "\u2014"
+      ],
+      [
+        "COVERAGE",
+        "\u2014"
+      ],
+      [
+        "RESULT AGE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "0-0-1440-retro_console",
+    "text": "STATUS     : Configuration\n\nTRIAL      : \u2014\nTRIAL TIME : \u2014 / \u2014\nTOTAL TIME : \u2014 / \u2014",
+    "rows": [
+      [
+        "STATUS",
+        "Configuration"
+      ],
+      null,
+      [
+        "TRIAL",
+        "\u2014"
+      ],
+      [
+        "TRIAL TIME",
+        "\u2014 / \u2014"
+      ],
+      [
+        "TOTAL TIME",
+        "\u2014 / \u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-0-1440-retro_console",
+    "text": "CAMERAS FOUND    : 2\nCAMERAS ENABLED  : 2\n\nCAMERA ROLE      : Behavior cam\nSTATUS           : Not connected\nTRIGGER RATE     : \u2014\nACQUISITION RATE : \u2014",
+    "rows": [
+      [
+        "CAMERAS FOUND",
+        "2"
+      ],
+      [
+        "CAMERAS ENABLED",
+        "2"
+      ],
+      null,
+      [
+        "CAMERA ROLE",
+        "Behavior cam"
+      ],
+      [
+        "STATUS",
+        "Not connected"
+      ],
+      [
+        "TRIGGER RATE",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION RATE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-1-1440-retro_console",
+    "text": "CONNECTION   : Not connected\n\nPORT         : \u2014\nFIRMWARE     : \u2014\nTRIGGER TEST : Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "PORT",
+        "\u2014"
+      ],
+      [
+        "FIRMWARE",
+        "\u2014"
+      ],
+      [
+        "TRIGGER TEST",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-2-1440-retro_console",
+    "text": "CONNECTION : Not connected\n\nDISPLAY    : \u2014\nPROJECTOR  : Unassigned\nOUTPUT     : Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "DISPLAY",
+        "\u2014"
+      ],
+      [
+        "PROJECTOR",
+        "Unassigned"
+      ],
+      [
+        "OUTPUT",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-3-1440-retro_console",
+    "text": "CONNECTION  : Not connected\n\nSERVER      : \u2014\nVERSION     : \u2014\nACQUISITION : Unknown\nSTREAMS     : \u2014",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "SERVER",
+        "\u2014"
+      ],
+      [
+        "VERSION",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION",
+        "Unknown"
+      ],
+      [
+        "STREAMS",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "3-0-1440-retro_console",
+    "text": "INPUT      : Tracking cam \u00b7 REVIEW-002\n\nTRACKING   : Unavailable\nPOSE       : \u2014\nCOVERAGE   : \u2014\nRESULT AGE : \u2014",
+    "rows": [
+      [
+        "INPUT",
+        "Tracking cam \u00b7 REVIEW-002"
+      ],
+      null,
+      [
+        "TRACKING",
+        "Unavailable"
+      ],
+      [
+        "POSE",
+        "\u2014"
+      ],
+      [
+        "COVERAGE",
+        "\u2014"
+      ],
+      [
+        "RESULT AGE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "0-0-720-retro_console",
+    "text": "STATUS     : Configuration\n\nTRIAL      : \u2014\nTRIAL TIME : \u2014 / \u2014\nTOTAL TIME : \u2014 / \u2014",
+    "rows": [
+      [
+        "STATUS",
+        "Configuration"
+      ],
+      null,
+      [
+        "TRIAL",
+        "\u2014"
+      ],
+      [
+        "TRIAL TIME",
+        "\u2014 / \u2014"
+      ],
+      [
+        "TOTAL TIME",
+        "\u2014 / \u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-0-720-retro_console",
+    "text": "CAMERAS FOUND    : 2\nCAMERAS ENABLED  : 2\n\nCAMERA ROLE      : Behavior cam\nSTATUS           : Not connected\nTRIGGER RATE     : \u2014\nACQUISITION RATE : \u2014",
+    "rows": [
+      [
+        "CAMERAS FOUND",
+        "2"
+      ],
+      [
+        "CAMERAS ENABLED",
+        "2"
+      ],
+      null,
+      [
+        "CAMERA ROLE",
+        "Behavior cam"
+      ],
+      [
+        "STATUS",
+        "Not connected"
+      ],
+      [
+        "TRIGGER RATE",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION RATE",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "2-1-720-retro_console",
+    "text": "CONNECTION   : Not connected\n\nPORT         : \u2014\nFIRMWARE     : \u2014\nTRIGGER TEST : Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "PORT",
+        "\u2014"
+      ],
+      [
+        "FIRMWARE",
+        "\u2014"
+      ],
+      [
+        "TRIGGER TEST",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-2-720-retro_console",
+    "text": "CONNECTION : Not connected\n\nDISPLAY    : \u2014\nPROJECTOR  : Unassigned\nOUTPUT     : Not tested",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "DISPLAY",
+        "\u2014"
+      ],
+      [
+        "PROJECTOR",
+        "Unassigned"
+      ],
+      [
+        "OUTPUT",
+        "Not tested"
+      ]
+    ]
+  },
+  {
+    "name": "2-3-720-retro_console",
+    "text": "CONNECTION  : Not connected\n\nSERVER      : \u2014\nVERSION     : \u2014\nACQUISITION : Unknown\nSTREAMS     : \u2014",
+    "rows": [
+      [
+        "CONNECTION",
+        "Not connected"
+      ],
+      null,
+      [
+        "SERVER",
+        "\u2014"
+      ],
+      [
+        "VERSION",
+        "\u2014"
+      ],
+      [
+        "ACQUISITION",
+        "Unknown"
+      ],
+      [
+        "STREAMS",
+        "\u2014"
+      ]
+    ]
+  },
+  {
+    "name": "3-0-720-retro_console",
+    "text": "INPUT      : Tracking cam \u00b7 REVIEW-002\n\nTRACKING   : Unavailable\nPOSE       : \u2014\nCOVERAGE   : \u2014\nRESULT AGE : \u2014",
+    "rows": [
+      [
+        "INPUT",
+        "Tracking cam \u00b7 REVIEW-002"
+      ],
+      null,
+      [
+        "TRACKING",
+        "Unavailable"
+      ],
+      [
+        "POSE",
+        "\u2014"
+      ],
+      [
+        "COVERAGE",
+        "\u2014"
+      ],
+      [
+        "RESULT AGE",
+        "\u2014"
+      ]
+    ]
+  }
+]

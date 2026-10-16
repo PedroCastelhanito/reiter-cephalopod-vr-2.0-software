@@ -12,6 +12,7 @@ from typing import Any
 from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.control.camera_edit_validation import validate_configuration_edit
 from cephvr.controller.control.connection_edits import connection_edit_validation
 from cephvr.controller.control.operations import ControlOperations
@@ -62,8 +63,7 @@ def _acquisition_settings(
 ) -> list[bytes]:
     return [
         item.SerializeToString(deterministic=True)
-        for item in configuration.backends
-        if item.backend_name == "acquisition"
+        for item in acquisition_backends(configuration)
     ]
 
 
@@ -73,12 +73,8 @@ def camera_participation_only(
     """Validate a flags-only edit without treating device settings as ready."""
     expected = pb.ExperimentConfiguration()
     expected.CopyFrom(current)
-    existing = [
-        item for item in expected.backends if item.backend_name == "acquisition"
-    ]
-    selected = [
-        item for item in proposed.backends if item.backend_name == "acquisition"
-    ]
+    existing = acquisition_backends(expected)
+    selected = acquisition_backends(proposed)
     if len(existing) != 1 or len(selected) != 1:
         return False
     before, after = existing[0], selected[0]
@@ -170,7 +166,6 @@ class ConfigurationCommands:
                     command_id,
                     error="another acquisition configuration edit is unresolved",
                 )
-            revision = self.control.revision
             participation_only = camera_participation_only(
                 self.configuration_state.current, request.proposed
             )
@@ -239,7 +234,7 @@ class ConfigurationCommands:
             if (
                 error
                 or request.expected_revision != self.configuration_state.revision
-                or self.control.revision != revision
+                or self.device_state.configuration_edit is not None
                 or self.lifecycle.session.phase not in _EDITABLE_PHASES
             ):
                 return self.control_operations.admission(
@@ -299,7 +294,7 @@ class ConfigurationCommands:
                 )
                 if self.device_state.display_pending is not None:
                     self.control_operations.complete_operation(
-                        self.device_state.display_pending[0],
+                        self.device_state.display_pending.command_id,
                         success=False,
                         progress="display initialization superseded",
                         error="configuration revision changed",

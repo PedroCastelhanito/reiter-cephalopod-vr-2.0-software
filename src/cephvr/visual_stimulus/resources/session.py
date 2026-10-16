@@ -7,6 +7,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
@@ -37,7 +38,11 @@ from cephvr.visual_stimulus.resources.assets import (
     PreparedResourceBundle,
     ProtectedSource,
 )
-from cephvr.visual_stimulus.resources.budget import BoundedBudget
+from cephvr.visual_stimulus.resources.budget import (
+    BoundedBudget,
+    review_capture_cpu_bytes,
+    review_capture_gpu_bytes,
+)
 from cephvr.visual_stimulus.resources.calibration import (
     PreparedCalibration,
     prepare_calibration,
@@ -47,6 +52,7 @@ from cephvr.visual_stimulus.resources.display_calibration import (
     prepare_display_calibration_request,
 )
 from cephvr.visual_stimulus.resources.prepare import prepare_resources
+from cephvr.visual_stimulus.resources.provenance import software_provenance
 from cephvr.visual_stimulus.resources.video import VideoPlayback
 from cephvr.visual_stimulus.resources.video_decoder import DecoderFactory
 from cephvr.visual_stimulus.resources.video_session import VideoSession
@@ -65,14 +71,6 @@ class ReviewEncodingProvider(Protocol):
         limits: object,
         announce: Callable[[str, str | None], None],
     ) -> ReviewEncoding: ...
-
-
-def review_capture_cpu_bytes(width: int, height: int, capture_slots: int) -> int:
-    """Bound slots, retained padding, readback copy, pipe copy and row scratch."""
-    if min(width, height, capture_slots) <= 0:
-        raise ValueError("positive review capture dimensions and slots required")
-    frame_bytes = width * height * 4
-    return frame_bytes * (capture_slots + 3) + (height // 2) * width * 4
 
 
 class NativePreparation:
@@ -349,6 +347,7 @@ class NativePreparation:
                 "saving is enabled but no review encoder preflight provider is installed"
             )
         ffmpeg_args = tuple(request.settings.review_ffmpeg_args)
+        components = software_provenance(self._budget.check_cancelled_or_expired)
         artifacts: list[PreparedTrial] = []
         validated_images: dict[str, tuple[ImageSource, ImageInfo]] = {}
         try:
@@ -394,6 +393,7 @@ class NativePreparation:
                     codec_threads=limits.codec_threads_per_context,
                     defer_images=True,
                     validated_images=validated_images,
+                    component_provenance=components,
                 )
                 trial_id = trial.context.trial_id
                 if trial_id in self._bundles:
@@ -428,11 +428,6 @@ class NativePreparation:
                         raise ValueError(
                             "recording capture memory bounds must be explicit"
                         )
-                    pixels = (
-                        review_encoding.composite_width
-                        * review_encoding.composite_height
-                    )
-                    frame_bytes = pixels * 4
                     cpu_bytes = review_capture_cpu_bytes(
                         review_encoding.composite_width,
                         review_encoding.composite_height,
@@ -446,7 +441,12 @@ class NativePreparation:
                     self._budget.reserve(
                         owner=f"visual_stimulus:{trial.context.trial_id}:review-capture",
                         cpu_bytes=cpu_bytes,
-                        gpu_bytes=pixels * 16 + frame_bytes * limits.capture_slots,
+                        gpu_bytes=review_capture_gpu_bytes(
+                            review_encoding.composite_width,
+                            review_encoding.composite_height,
+                            limits.capture_slots,
+                            review_encoding.native_pixel_format,
+                        ),
                     )
                 from cephvr.visual_stimulus.resources.glb import GLBScene
 
@@ -544,7 +544,9 @@ class NativePreparation:
                 f"no prepared Visual Stimulus resources for trial {trial_id}"
             ) from exc
 
-    def prepare_graphics(self, artifacts: tuple[PreparedTrial, ...]) -> None:
+    def prepare_graphics(
+        self, artifacts: tuple[PreparedTrial, ...]
+    ) -> tuple[PreparedTrial, ...]:
         """Allocate/validate GPU resources on the renderer's GL owner thread."""
         if self._deadline_ns is None:
             raise RuntimeError("CPU Setup preparation must precede graphics allocation")
@@ -582,6 +584,18 @@ class NativePreparation:
         # unchanged. Keep old Idle through CPU preparation, then replace outputs
         # and require fresh framebuffer/Idle observations before Ready.
         self.engine.replace_display(display, calibration)
+        components = self.port.replay_provenance()
+        prepared = []
+        for artifact in artifacts:
+            manifest = artifact.manifest.model_copy(
+                update={"provenance": (*artifact.manifest.provenance, *components)}
+            )
+            artifact = artifact.model_copy(update={"manifest": manifest})
+            self._bundles[artifact.identity.trial_id] = replace(
+                self.resources_for(artifact.identity.trial_id), manifest=manifest
+            )
+            prepared.append(artifact)
+        artifacts = tuple(prepared)
         if self.image_residency is not None:
             install_images = getattr(self.port, "install_image_residency", None)
             if install_images is None:
@@ -593,6 +607,8 @@ class NativePreparation:
                 artifact, self.resources_for(artifact.identity.trial_id)
             )
             self._check(self._deadline_ns)
+
+        return artifacts
 
     def create_engine(self) -> RendererEngine:
         return self.engine

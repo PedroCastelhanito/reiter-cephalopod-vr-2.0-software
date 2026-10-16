@@ -131,6 +131,7 @@ async def test_setup_disk_check_uses_frozen_root(
         datetime(2026, 9, 30, tzinfo=UTC),
     )
     attempt = Attempt(session, pb.PreparedSession(context=session), reservation, {}, {})
+    runtime.lifecycle.attempt = attempt
     queried: list[Path] = []
     real = shutil.disk_usage
 
@@ -141,6 +142,7 @@ async def test_setup_disk_check_uses_frozen_root(
     monkeypatch.setattr(shutil, "disk_usage", spy)
     await runtime.setup_execution._reserve_output(attempt, _id(), 10**12)
     assert queried == [tmp_path.resolve()]
+    reservation.cancel()
 
 
 @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
@@ -804,3 +806,34 @@ async def test_wait_evidence_surfaces_retained_trial_failure(tmp_path: Path) -> 
         match="acquisition PrepareTrial failed: WRITER: cannot prepare output",
     ):
         await runtime.evidence_waiter.wait_evidence(lambda: False, 10**18, attempt)
+
+
+@pytest.mark.parametrize("conflicting_edit", [False, True])
+async def test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish(
+    monkeypatch, conflicting_edit
+):
+    runtime = _runtime()
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    started, release = threading.Event(), threading.Event()
+
+    def validate(_configuration):
+        started.set()
+        assert release.wait(2)
+        return pb.ValidationResult(completed=True, valid=True)
+
+    runtime.configuration_commands.validators = {"test": validate}
+    update = asyncio.create_task(
+        runtime.update_configuration(_update_request(runtime, "changed"))
+    )
+    assert await asyncio.to_thread(started.wait, 2)
+    runtime.publisher.publish()
+    if conflicting_edit:
+        runtime.device_state.configuration_edit = object()
+    release.set()
+    result = await update
+    assert result.result == (
+        pb.COMMAND_RESULT_REJECTED if conflicting_edit else pb.COMMAND_RESULT_ACCEPTED
+    )
+    assert runtime.configuration_state.current.subject == (
+        "" if conflicting_edit else "changed"
+    )

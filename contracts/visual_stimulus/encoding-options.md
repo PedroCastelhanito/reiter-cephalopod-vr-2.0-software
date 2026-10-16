@@ -46,11 +46,11 @@ automatic resize or adapter fallback.
 | Area | Visual Stimulus-specific rule |
 | --- | --- |
 | Fidelity | Require an explicitly lossy mode compatible with E13's configurable lossy review intent. Reject lossless tuning/mode combinations; codec-specific quality validation must not confuse a value meaning automatic quality with lossless. An occasionally exactly reproduced frame is not evidence that settings were lossless. |
-| Input | The [tiled composite](recorded-outputs.md#tiled-composite) of final renderer-produced output images, including correction and patch, at the prepared composite dimensions and code representation. Retain both the native capture layout and the FFmpeg raw-input pixel format derived from that explicit ABI in `ReviewEncoding`; Setup verifies that the installed build advertises it. `rgba8_bottom_up` maps to `rgba`; packed little-endian RGB10 with R/G/B in the low 30 bits and two zero X bits maps to `x2bgr10le`. Recording flips bottom-up rows before rawvideo input. The FFmpeg format definition is documented in the [upstream pixel-format patch](https://ffmpeg.org/pipermail/ffmpeg-devel/2021-September/285611.html). Actual input fidelity and throughput remain rig checks. No camera-native/Bayer preparation or inherited acquisition alignment. |
+| Input | The [tiled composite](recorded-outputs.md#tiled-composite) of final renderer-produced output images, including correction and patch, at the prepared composite dimensions and code representation. Retain both the native capture layout and the FFmpeg raw-input pixel format derived from that explicit ABI in `ReviewEncoding`; Setup verifies that the installed build advertises it. `rgba8_top_down` maps to `rgba`; `r10g10b10a2_le_top_down` has little-endian R/G/B in the low 30 bits and two zero X bits, mapping to `x2bgr10le`. The GL owner flips the completed composite with a same-size nearest copy before readback; new rawvideo input needs no CPU row flip. Historical bottom-up declarations retain their original interpretation. The FFmpeg format definition is documented in the [upstream pixel-format patch](https://ffmpeg.org/pipermail/ffmpeg-devel/2021-September/285611.html). Actual input fidelity and throughput remain rig checks. No camera-native/Bayer preparation or inherited acquisition alignment. |
 | Filters | Permit the shared validated format/conversion chain, with FFmpeg scale restricted to the already-prepared composite dimensions (review reduction occurs in the GPU compositor before readback). Reject crop/pad/flip, resizing, overlays and temporal filters: these would break the recorded tile layout. Shared filter grammar/alias validation still applies. |
 | Pixel format | Require explicit terminal format and matching +pix_fmt, with explicit channel/range/matrix conversion. Explicit depth reduction is permitted for this lossy review copy, including RGB10 to 8-bit storage. Validate the requested conversion and encoder support during Setup; retain source/target depth, pixel format, chroma, range/matrix and effective arguments. Reject silent negotiation, undeclared intermediate reduction and reduction followed by widening presented as preserved precision. Chroma conversion remains explicit. |
 | Color tags | Must describe the actual supplied code/conversion interpretation. Measured projector device codes are not automatically standard sRGB/BT.709 light values. Retain custom interpretation in replay provenance; do not invent standard transfer/primaries tags just to make a player accept a file. |
-| Timing | Constant rate under [review timing](#review-timing); Visual Stimulus sets the input rate. Reject user tokens that change the frame rate, duplicate/drop frames or retime samples. Encoder input format/throughput retains its accepted rig deferral, without inheriting acquisition rules. |
+| Timing | Sequential frames with nominal playback rate under [review timing](#review-timing); Visual Stimulus sets the input rate. Reject user tokens that change the frame rate, duplicate/drop frames or retime samples. Encoder input format/throughput retains its accepted rig deferral, without inheriting acquisition rules. |
 | Metadata | Reuse duplicate-key/reserved-identity protection. Visual Stimulus owns session/trial identity and the tile layout; camera-role tags and camera frame-log correspondence are not Visual Stimulus identities. User title/comment/description remain separate. |
 | Container/paths | One `_stimulus.mp4` per trial, reserved through E04. Visual Stimulus builds its raw stdin input, rate, path, overwrite protection, muxer flags and diagnostic pipes; user tokens cannot add another file or override them. Use fragmented MP4, retained after closure; never select hybrid conversion or ordinary MP4 implicitly. The fragment lifecycle below applies. |
 
@@ -70,21 +70,25 @@ results; it does not waive encoder errors or required state/presentation records
 
 ## Review timing
 
-The review video is constant-rate at the pacing output's nominal refresh rate,
-or the common nominal refresh rate of enabled outputs in all-output VSync without
-a designated pacer. Differing rates in the latter case reject recording preparation;
-`pacing_output_id` is null, never a guessed face. This timing is retained as PreparedTrial
-ReviewEncoding.timing. Video frame n (zero-based) occupies nominal slot n under
-[E13](../../docs/architecture/visual_stimulus.md#e13). The first usable source group
-in a slot wins; leading gaps repeat the first selected image and interior/trailing
-gaps repeat the previous selected image. Emit slots starting strictly before the
-actual cutoff, retaining the existing empty-stream behavior when no image is usable.
-The [evidence file](evidence-format.md) maps each encoded slot to its original source
-group and distinguishes real input from leading/interior/trailing duplicates and
-source omissions. State-evaluation times and per-output swap observations remain
-unchanged. Pass this prepared sequence to FFmpeg without per-frame timestamps or
-additional encoder duplication/drop. Review timing never establishes optical onset
-or display duration.
+The MP4 uses the pacing output's nominal refresh rate, or the common nominal rate
+of enabled outputs in all-output VSync, for ordinary playback only. Differing rates
+in the latter case still reject preparation; `pacing_output_id` remains null.
+PreparedTrial ReviewEncoding.timing retains that rate and declares
+`implementation = "ffmpeg_rawvideo_sequential_v1"`. FFmpeg receives raw sequential
+frames with `-fps_mode passthrough`; no added frame duplication/drop or source-time
+resampling occurs. The input rate and projector pacing are unchanged.
+
+Video frame n (zero-based) is the n-th completely submitted retained source composite.
+The [evidence file](evidence-format.md) maps it through `input_submitted` to its
+original render group, `state.evaluation_host_ns` and per-output swap observations.
+Capture failures/cancellations and capacity drops have no index; same-time and
+repeated-content real groups remain eligible. No leading/interior/trailing padding.
+The encoded count is the complete raw-input count, subject to successful encoder
+finalization; it is not a runtime scan of persisted samples. Nominal playback time
+and video duration do not express scientific timing or optical onset. Use the
+original timestamps for alignment, including interrupted recordings; never infer
+missing timestamps from the MP4 rate. Old `ffmpeg_rawvideo_cfr_v1` recipes retain
+the historical nominal-slot/padding interpretation.
 
 ## Fragmented MP4 lifecycle
 

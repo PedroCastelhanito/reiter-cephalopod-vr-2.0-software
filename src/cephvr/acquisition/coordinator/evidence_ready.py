@@ -16,6 +16,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.software import software_version
 
 
 class WorkerReadyReports:
@@ -157,6 +158,7 @@ class WorkerReadyReports:
         resolved = control.BackendSettings(backend_name="acquisition", enabled=True)
         resolved.acquisition.CopyFrom(self.settings)
         aggregate = control.ReadyReport(
+            software_version=software_version(),
             context=control.ReportContext(
                 backend=self.backend,
                 work=session.work,

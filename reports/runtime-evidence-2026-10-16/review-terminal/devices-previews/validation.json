@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-16",
+  "revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "scope": "Concurrent dirty working tree; Review Devices + Previews appearance expansion under G02rev54/ARCH-002.",
+  "checks": {
+    "focused": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'review_appearance or preview_selector or preview_waits_for_report or unavailable_preview or preview_participation or devices_draft or projector_config_tabs or tank_drag or review_device_layout_candidates' -m 'not windows and not rig'",
+      "result": "13 passed, 535 deselected in 42.64s; tests.txt"
+    },
+    "dynamic_editor": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k review_appearance -m 'not windows and not rig'",
+      "result": "2 passed, 546 deselected in 11.95s; after adding dynamic-row focus/add/remove assertions and lazy decoration"
+    },
+    "lint_format": {
+      "commands": [
+        ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+        ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui"
+      ],
+      "result": "pass; 169 files"
+    },
+    "mypy": {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/appearance.py src/cephvr/gui/previews.py src/cephvr/gui/theme.py src/cephvr/gui/display_layout.py src/cephvr/gui/tank_diagram.py src/cephvr/gui/icons.py src/cephvr/gui/retro_overlay.py",
+      "result": "7 files pass"
+    },
+    "boundaries": {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "710 modules, zero violations; existing size advisories retained in boundaries.txt"
+    },
+    "visual": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-16/review-terminal/devices-previews/render.py",
+      "result": "All four device subtabs, three projector pages and selector rendered at 1440/720; inspected wide Cameras/MCU/Projectors/SpikeGLX, narrow Cameras/Projectors and selector. Standard comparison retained."
+    },
+    "whitespace": "git diff --check passed"
+  },
+  "source_sha256": {
+    "src/cephvr/gui/appearance.py": "2199416c64e3ff9ab5cb4ce88ee1ac9ec375ed2f111b07a495c9558b8ea7d726",
+    "src/cephvr/gui/previews.py": "fb389848b0aa585aec9c73f58434bf2ee11bea0a2c6d7f635d38a021a9f23858",
+    "src/cephvr/gui/theme.py": "b9e3717f5ebd9ccde24fe5b31981f77b596d981c4034a1e4cab128c1a67dd6c0",
+    "src/cephvr/gui/display_layout.py": "53cd9eaf3aa250486d6bcea786cfa75537ad038a002a02b61ac810bbfd847dbf",
+    "src/cephvr/gui/tank_diagram.py": "dc5959c01a042821cd127d8f6876e13bf6479d86df55489d2fedcc27bdf7e624",
+    "src/cephvr/gui/icons.py": "bd589ad5a235b182f2f3ab02bd23e425e68a51b8b25966fe6f46bc570eae4c13",
+    "src/cephvr/gui/retro_overlay.py": "335a44d6d594674678ca36a2b60ba21780a1cc7f6372c2da3519de3aa34e61bb",
+    "tests/gui/test_dashboard.py": "50e3316ffbdab3899359e643bdbf84cf7635db9da178332c7ef8e9faf0d36a66"
+  },
+  "initial_attempts": [
+    "Shared card initially made Standard selector 240px then214px, failing existing <200px check. Compact shared-card padding/row layout repaired; assertion retained and later passes.",
+    "Mypy caught a reused Button/QPushButton loop variable; renamed chrome loop variable and final checks pass.",
+    "One apply_patch context mismatch changed no files; re-read formatted imports and reapplied."
+  ],
+  "limits": [
+    "Offscreen macOS presentation fixtures; no native Windows/DPI, physical devices, command execution, CRT repaint cost or rig acceptance.",
+    "No full GUI rerun; focused owners/appearance/preview gates plus static checks only.",
+    "Production managed mode remains Standard; selector now uses compact shared Card in both appearances. Protocol/Tracking styling unchanged."
+  ]
+}

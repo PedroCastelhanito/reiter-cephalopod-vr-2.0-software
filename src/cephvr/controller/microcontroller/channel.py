@@ -109,6 +109,8 @@ class SerialChannel:
             ) from exc
         self.connection_id = str(uuid.uuid4())
         self._counter = 0
+        self.unmatched_replies = 0
+        self.malformed_replies = 0
 
     def request(
         self,
@@ -242,7 +244,9 @@ class SerialChannel:
                     exchange = Exchange(reply, request_id, dispatched, received_ns)
                     self.last_exchange = exchange
                     if not reply.ok:
-                        raise FirmwareRejected(reply.error_code or "UNKNOWN_ERROR")
+                        raise FirmwareRejected(
+                            reply.error_code or "UNKNOWN_ERROR", reply=reply
+                        )
                     return exchange
                 if len(line) + 1 > 512:
                     too_long = True
@@ -264,13 +268,11 @@ class SerialChannel:
         while self.clock() < deadline_ns:
             try:
                 result = self.request(verb, {}, deadline_ns, read_only=True)
-            except ChannelCancelled:
-                raise
-            except ChannelIncompatibleFirmware:
+            except (ChannelCancelled, ChannelTransportFailure, ChannelDeadline):
                 raise
             except FirmwareRejected as exc:
                 raise ChannelTransportFailure(
-                    f"MCU rejected startup {verb}: {exc.code}"
+                    f"MCU rejected startup {verb}: {exc}"
                 ) from exc
             except (ChannelError, ProtocolError) as exc:
                 last_error = exc

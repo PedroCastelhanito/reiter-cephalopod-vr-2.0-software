@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 173
+**Status:** Accepted · **Revision:** 174
 
 **Processes and startup**
 
@@ -311,6 +311,13 @@ design; runtime monitoring remains unimplemented.
   the same protected endpoint forwards validated tracking Cleanup evidence from
   controller or supervisor to acquisition for exact consumer release. Release
   evidence remains admissible during cleanup without renewing its original budget.
+- Preview consumer FAILED/RELEASED proofs reach the supervisor independently from
+  the registered consumer and may also be relayed unchanged by the authenticated
+  current controller. Bind either route to the registered consumer, current
+  controller generation and exact run/allocation/transfer identity; reject stale,
+  conflicting or malformed evidence. Supervisor rejects ATTACHED and gains neither
+  viewer-start nor aggregate resource-closure authority from terminal proofs.
+  Existing reconciliation and original deadlines remain unchanged.
 - One controller event loop owns lifecycle state. Device/file work returns results
   asynchronously and cannot mutate lifecycle or block the loop. Ingress timestamps
   are kept for deadline decisions (E05).
@@ -560,11 +567,12 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 211
+**Status:** Accepted · **Revision:** 212
 
-- Visual Stimulus policy version15 combines the accepted file-owned projection limits
+- Visual Stimulus policy version16 combines the accepted file-owned projection limits
   (V15/G01) with required scientific evidence and optional reduced review video
-  (E13/V12/V28). Keep the matching loader digest and both file versions aligned.
+  using sequential timestamp-mapped frames (E13/V12/V28). Keep the matching loader
+  digest and both file versions aligned.
 
 - **Operator files contain only settings.** Human-readable `<backend>_config.toml`
   files under [config/backends/](../../config/backends/README.md) hold only values an

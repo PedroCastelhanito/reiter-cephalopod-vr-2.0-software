@@ -556,3 +556,102 @@ async def test_update_configuration_refreshes_projection_revision(
     assert runtime.projections.configuration_revision == (
         runtime.configuration_state.revision
     )
+
+
+async def test_timed_out_reservation_acquire_retains_owner_until_late_cleanup(
+    tmp_path, monkeypatch
+):
+    import threading
+    import time
+
+    runtime = _runtime(
+        tmp_path,
+        pb.BackendContext(backend_name="acquisition", backend_generation=_id()),
+    )
+    runtime.cleanup.clock = time.monotonic_ns
+    runtime.setup_execution.clock = time.monotonic_ns
+    attempt = _attempt(runtime, tmp_path, {})
+    runtime.lifecycle.attempt = attempt
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+    entered, release = threading.Event(), threading.Event()
+    acquire = attempt.reservation.acquire
+
+    def delayed_acquire():
+        entered.set()
+        assert release.wait(2)
+        return acquire()
+
+    monkeypatch.setattr(attempt.reservation, "acquire", delayed_acquire)
+    try:
+        with pytest.raises(TimeoutError):
+            await runtime.setup_execution._reserve_output(
+                attempt, _id(), time.monotonic_ns() + 20_000_000
+            )
+        assert entered.is_set()
+        attempt.cancel_requested = True
+        await runtime.cleanup.cancel_attempt(attempt)
+        assert runtime.lifecycle.attempt is attempt
+        assert not runtime.lifecycle.session.cleanup_confirmed
+        release.set()
+        for _ in range(200):
+            if runtime.lifecycle.session.cleanup_confirmed:
+                break
+            await asyncio.sleep(0.005)
+        assert runtime.lifecycle.session.cleanup_confirmed
+        assert runtime.lifecycle.attempt is None
+        assert not attempt.reservation.held
+    finally:
+        release.set()
+        await drain_runtime_tasks(runtime)
+        if attempt.reservation.held:
+            attempt.reservation.release()
+
+
+@pytest.mark.parametrize("receipt", ["exact", "rejected", "changed"])
+async def test_cancel_fences_exact_cleanup_before_backend_dispatch(tmp_path, receipt):
+    context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, context)
+    calls = []
+
+    class Peer:
+        async def cancel_setup(self, request, *, deadline_ns):
+            calls.append((request, deadline_ns))
+            assert (
+                attempt.registered_context.cleanup_commands[-1].operation.command_id
+                == request.command_id
+            )
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    peer = Peer()
+    peer.context = context
+    attempt = _attempt(runtime, tmp_path, {"acquisition": peer})
+    original = svc.RegisteredContext(
+        paired_spikeglx=False,
+        work=pb.WorkContext(session=attempt.context),
+        required_participants=[context],
+    )
+    attempt.registered_context = original
+
+    class Supervisor:
+        async def register_context(self, request):
+            echoed = svc.RegisteredContext.FromString(
+                request.context.SerializeToString()
+            )
+            if receipt == "changed":
+                echoed.cleanup_commands[-1].operation.command_id = _id()
+            return svc.RegistrationReceipt(
+                admission=pb.CommandAdmission(
+                    result=pb.COMMAND_RESULT_REJECTED
+                    if receipt == "rejected"
+                    else pb.COMMAND_RESULT_ACCEPTED
+                ),
+                registered=echoed,
+            )
+
+    runtime.cleanup.supervisor = Supervisor()
+    assert await runtime.cleanup.dispatch_backend_cleanup(
+        attempt, 1_000_001_000, "cancel_setup"
+    ) is (receipt == "exact")
+    assert bool(calls) is (receipt == "exact")
+    if receipt != "exact":
+        assert attempt.registered_context == original

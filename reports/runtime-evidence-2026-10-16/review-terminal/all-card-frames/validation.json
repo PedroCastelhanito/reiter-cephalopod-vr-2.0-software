@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-16",
+  "revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "scope": "Concurrent working tree; owner-requested all-card double-frame trial, Review Retro only.",
+  "checks": {
+    "pytest": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k review_appearance -m 'not windows and not rig'",
+      "result": "2 passed, 546 deselected in 9.61s"
+    },
+    "ruff": "check and format --check pass for components.py and appearance.py",
+    "mypy": "--platform win32: 2 source files pass",
+    "boundaries": "tools/check_backend_boundaries.py: zero violations; raw advisories in boundaries.txt",
+    "whitespace": "git diff --check passes",
+    "render": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-16/review-terminal/all-card-frames/render.py; wide render inspected"
+  },
+  "source_sha256": {
+    "src/cephvr/gui/components.py": "d29cd0479684701f17c02f387d05627a7f860ac80d41bfac87719f25d3947e7c",
+    "src/cephvr/gui/appearance.py": "8452804ba571871226dba946b1815e425b0afc1aec3c1b33a180480b7c409a60"
+  },
+  "limitations": "Offscreen macOS fixture; no native Windows/DPI or rig acceptance."
+}

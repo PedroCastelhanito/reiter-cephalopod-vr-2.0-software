@@ -88,7 +88,14 @@ def _settle_cancelled_namespace(directory: Path) -> bool:
         return False
     parent = directory.parent
     if parent.is_symlink() or not parent.is_dir():
-        return not parent.exists() and not parent.is_symlink()
+        # A vanished/unmounted data root cannot prove absence of the old session.
+        root = parent.parent
+        return (
+            not parent.exists()
+            and not parent.is_symlink()
+            and root.is_dir()
+            and not root.is_symlink()
+        )
     pattern = re.compile(rf"\.{re.escape(directory.name)}\.[0-9a-f-]{{36}}\.cleanup")
     leftovers = [p for p in parent.iterdir() if pattern.fullmatch(p.name)]
     for leftover in leftovers:

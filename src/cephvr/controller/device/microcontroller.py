@@ -6,6 +6,7 @@ from uuid import uuid4
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.microcontroller.device import MicrocontrollerDevice
 from cephvr.controller.state import (
@@ -95,9 +96,8 @@ class MicrocontrollerCommands:
             settings = next(
                 (
                     item.acquisition
-                    for item in self.configuration.current.backends
-                    if item.backend_name == "acquisition"
-                    and item.HasField("acquisition")
+                    for item in acquisition_backends(self.configuration.current)
+                    if (item.HasField("acquisition"))
                 ),
                 None,
             )

@@ -1,0 +1,38 @@
+[
+  {
+    "style": "standard",
+    "width": 1440,
+    "use_width": 53,
+    "lines": 1
+  },
+  {
+    "style": "standard",
+    "width": 1175,
+    "use_width": 53,
+    "lines": 1
+  },
+  {
+    "style": "standard",
+    "width": 720,
+    "use_width": 53,
+    "lines": 1
+  },
+  {
+    "style": "retro_console",
+    "width": 1440,
+    "use_width": 50,
+    "lines": 1
+  },
+  {
+    "style": "retro_console",
+    "width": 1175,
+    "use_width": 50,
+    "lines": 1
+  },
+  {
+    "style": "retro_console",
+    "width": 720,
+    "use_width": 50,
+    "lines": 1
+  }
+]

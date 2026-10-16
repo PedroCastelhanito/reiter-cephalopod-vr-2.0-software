@@ -16,6 +16,7 @@ from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.device.owned_edit_recovery import recover_owned_edit_status
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.release_evidence import (
@@ -172,6 +173,17 @@ class CameraCommands:
                     operator_id, error=f"acquisition file policy unavailable: {exc}"
                 )
         async with self.lifecycle.lock:
+            refreshed = self._select_locked(request)
+            if isinstance(refreshed, pb.CommandAdmission):
+                return refreshed
+            if (
+                refreshed.revision != selection.revision
+                or refreshed.backend.context != selection.backend.context
+            ):
+                return self.hooks.admission(
+                    operator_id, error="camera selection changed before dispatch"
+                )
+            selection = refreshed
             try:
                 dispatched = self._dispatch_locked(
                     request, selection, policy, deadline_ns=deadline_ns
@@ -326,8 +338,7 @@ class CameraCommands:
         settings = next(
             (
                 item.acquisition
-                for item in self.configuration.current.backends
-                if item.backend_name == "acquisition"
+                for item in acquisition_backends(self.configuration.current)
             ),
             None,
         )
@@ -429,8 +440,7 @@ class CameraCommands:
         command.settings.CopyFrom(
             next(
                 item.acquisition
-                for item in self.configuration.current.backends
-                if item.backend_name == "acquisition"
+                for item in acquisition_backends(self.configuration.current)
             )
         )
         command.command.command_id = child_id

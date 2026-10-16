@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-16",
+  "method": "Archived rig aggregate interpretation and current pure allocation formula; no new performance measurement.",
+  "rig_source_revision": "Not recorded in the selected raw metrics/config/completion files; source provenance remains with their original execution context.",
+  "inputs_sha256": {
+    "reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/owned-renderer-metrics.jsonl": "da457779d79216999d04926718c615fc163f279ba1dde1a01bb118642564ed3d",
+    "reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/completion-summary.json": "092b5be9c6c4bc46edb77b8c7171a63e856267600cc475c05fa9279eb1abb3d6",
+    "reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/effective-candidate.json": "bcd58cad85fe24a9617739a86b63e2cbfa9c16ce698646db9353b6fe52793d70",
+    "reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/operator-config.test.toml": "f0cea2fd5c1d4805a921071fc564109bf62ee063922839235c5458d887d4c922",
+    "config/backends/visual_stimulus_config.toml": "63cbe4dd1ed13255868af52e29886a891f1c582f698507c9fd7a40baa94a6d3d"
+  },
+  "geometry": {
+    "width": 1280,
+    "height": 1000,
+    "scale": 2,
+    "rgba_frame_bytes": 5120000,
+    "confirmed_by_total_submitted_bytes": true
+  },
+  "accounted_capture_memory": {
+    "3": {
+      "cpu_bytes": 33280000,
+      "gpu_bytes": 35840000,
+      "cpu_mib": 31.73828125,
+      "gpu_mib": 34.1796875,
+      "recording_cpu_budget_bytes": 268435456,
+      "fits_capture_cpu_budget": true,
+      "separate_evidence_queue_limit_bytes": 16777216
+    },
+    "15": {
+      "cpu_bytes": 94720000,
+      "gpu_bytes": 97280000,
+      "cpu_mib": 90.33203125,
+      "gpu_mib": 92.7734375,
+      "recording_cpu_budget_bytes": 268435456,
+      "fits_capture_cpu_budget": true,
+      "separate_evidence_queue_limit_bytes": 16777216
+    }
+  },
+  "historical_stages": {
+    "capture_ready": {
+      "count": 53389,
+      "max": 61205100,
+      "total": 203475636100,
+      "mean_ns": 3811190.247054637
+    },
+    "normalization": {
+      "count": 53389,
+      "max": 10026800,
+      "total": 76280641400,
+      "mean_ns": 1428770.7467830451
+    },
+    "pipe_write": {
+      "count": 108042,
+      "max": 9309600,
+      "total": 93265665600,
+      "mean_ns": 863235.275170767
+    },
+    "queue_wait": {
+      "count": 53389,
+      "max": 241964300,
+      "total": 63965028000,
+      "mean_ns": 1198093.764633164
+    },
+    "readback_poll_pending": {
+      "count": 0,
+      "max": 0,
+      "total": 0,
+      "mean_ns": null
+    },
+    "readback_poll_ready": {
+      "count": 53389,
+      "max": 5943900,
+      "total": 66748777500,
+      "mean_ns": 1250234.6457135365
+    },
+    "slot_hold": {
+      "count": 53389,
+      "max": 261507900,
+      "total": 943910883100,
+      "mean_ns": 17679875.68787578
+    }
+  },
+  "historical_capacity_drops": 1,
+  "historical_peak_slots": 15,
+  "interpretation": [
+    "Queue wait is ready-to-dequeue; slot hold spans reservation-to-release. The maxima need not belong to one capture.",
+    "Pipe-call durations exclude time between zero-progress writes and do not bound complete-frame stdin latency.",
+    "The old aggregates cannot correlate the single startup drop with a particular GL/encoder/OS scheduling event or recover percentiles.",
+    "The new bounded worst-stage examples and full-frame input spans require a future rig run before native attribution."
+  ],
+  "default_disposition": "Keep the restored capture_slots=3 default. The tested 15-slot override fits accounted budgets but still filled all slots and dropped one capture; retain its evidence and leave a default increase pending native correlation.",
+  "limits": "CPU capture reservation is checked against recording_bytes_total; GPU reservation joins the shared asset budget. Evidence queue bytes are separate. These formulas exclude unmeasured Python/driver/FFmpeg/OS memory and are not total-process/VRAM or zero-loss guarantees."
+}

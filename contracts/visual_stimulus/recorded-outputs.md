@@ -28,8 +28,8 @@ preview/recording layout must not alter the stimulus. Record the composite with
 operator-tuned lossy compression through one complete custom FFmpeg token list under
 [encoding options](encoding-options.md), including explicit codec/quality/pixel
 conversion within the required constraints. Keep fragmented MP4 at closure under
-that binding. The video is constant-rate; frame n occupies nominal slot n and maps
-explicitly to its selected real source group or identified duplicate
+that binding. The video stores retained composites sequentially; frame n maps
+to the n-th completely submitted source composite, with exact source timestamps
 ([review timing](encoding-options.md#review-timing)). The video serves
 posthoc visualization, not exact pixel recovery. [V13 replay](replay.md) uses retained
 program/assets and actual frame state for high-fidelity reconstruction and lossless
@@ -65,11 +65,11 @@ transport or evidence bridge. The coordinator prepares the renderer and aggregat
 lifecycle evidence; it never relays pixels or performs scientific file writes.
 
 The GL thread tiles each render group's final output images into one composite and
-reads it back by PBO into one of the bounded in-process `capture_slots`. Before pixel
-admission, `evaluation_host_ns` selects the first usable group in each nominal slot
-`[T+n/R,T+(n+1)/R)`; later same-slot groups remain full source evidence and are marked
-video-only omissions. The recording thread takes completed readbacks, writes selected
-real composites and explicit duplicate slots to FFmpeg's stdin and
+orients its completed pixels on the GPU and reads them back through reusable PBOs
+within the bounded in-process `capture_slots`. Before pixel
+admission, no nominal-rate selection is applied. Every render group is eligible,
+including repeated pixels or equal evaluation timestamps. The recording thread takes
+completed readbacks in source-group order, writes each retained composite once and
 writes the [evidence file](evidence-format.md). The GL thread never waits on recording.
 Launch FFmpeg at ScheduleTrial acceptance, off the render thread, with the final
 paths; feed no frames before T. Launch failure before T is a required failure before
@@ -79,16 +79,27 @@ Prepare the recording thread and reservations before required readiness under
 E04/E05/E08; create/write trial outputs only under E11. With video off the same
 thread persists scientific evidence, without capture, encoding or capture-slot allocation.
 
-Make one admission decision per render group. A same-slot omission is decided before
-pixel admission and remains distinct from a `capacity_drop`; neither changes source
-group/state facts. If no capture slot is free, drop that group's video sample before
+Make one admission decision per render group. If no capture slot is free, record a
+`capacity_drop` and drop that group's video sample before
 compositing/readback and continue rendering. Never evict an admitted sample, slow
 presentation, spill to an unbounded queue or replay an omitted source.
-`recording_bytes_total` bounds capture slots, encoder-input buffering, one retained
-prepared image for streamed duplicates and one transient PBO readback ownership copy.
-It also includes one bounded row-swap scratch buffer. Temporary exhaustion alone is
+`recording_bytes_total` conservatively bounds capture slots, encoder-input buffering
+and transient PBO readback ownership copies. No previous image is retained for padding.
+The existing CPU ceiling retains conservative scratch/headroom; new top-down buffers
+need no CPU row-swap scratch. GPU accounting includes the composite and same-format
+flip target plus the admission-bounded PBO pool. Temporary exhaustion alone is
 not encoder failure. A blocked FFmpeg write must not stop the
 recording thread servicing required evidence lines, nor the worker's control/health path.
+
+Recording diagnostics retain fixed stage aggregates, at most one worst-duration
+example per stage, and one unfinished frame-input span. Examples carry exact source
+group/video-index identity where applicable and host start/end times. `pipe_write`
+measures individual calls; `frame_input` spans all attempts for one complete raw frame,
+including time between zero-progress calls, with attempt/zero-progress counts. Capture
+readiness, ready-to-dequeue queue wait and reservation-to-release lifetime retain their
+own examples. Snapshots copy these bounded records; no per-frame diagnostic history,
+percentile estimate or new deadline/control input is introduced. These times prove
+neither encoding/persistence nor physical presentation.
 
 Evidence lines are bounded by `evidence_pending_bytes`, separately from capture slots,
 so a full video path cannot silently drop metadata. If required evidence cannot be
@@ -100,9 +111,10 @@ Unconfirmed outcomes after a crash stay unknown; surviving samples are never ren
 V10 render/epoch misses and media source frame skips are not recording-capacity drops.
 
 At trial cutoff, stop admitting out-of-interval samples, reconcile the exact producer
-watermark and drain admitted work under E11. Fill leading slots from the first usable
-real image and interior/trailing slots from the last selected image, mapping every
-encoded slot to its unchanged source group and evaluation time. No usable image keeps
+watermark and drain admitted work under E11 without leading, interior or trailing
+padding. Assign consecutive zero-based video indices as complete input frames are
+submitted; capture failures/cancellations/drops consume no index. Pending readbacks
+cannot allow later groups to overtake earlier ones. No usable image keeps
 the existing empty/absent outcome. Apply the [review-video completion predicate](video-completion.md),
 including confirmed empty/absent results with warnings and complete required records.
 Report closure/evidence before aggregate Finished. E05's external post hoc file-validation boundary applies: no file
@@ -129,8 +141,8 @@ Final renderer images precede any external desktop-compositor, driver, display-l
 or projector processing not performed by CephVR. They cannot measure light onset,
 brightness or physical alignment. Rig/pulse evidence remains separate.
 
-When Save Visual Stimulus data is Off, skip the recording-only capture/encoding path and detailed
-outputs under E13; preserve rendering and the agreed administrative summaries.
+When Save Visual Stimulus data is Off, skip only the capture/encoding path; retain
+required scientific evidence and recipe outputs under E13.
 
 ## Remaining work and verification
 

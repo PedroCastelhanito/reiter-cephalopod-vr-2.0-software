@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-16",
+  "scope": "offscreen Qt; no native/DPI/repaint-cost/rig acceptance",
+  "tests": "6 passed, 547 deselected",
+  "static": "Ruff/format3, Win32 mypy2, boundaries712/zero violations, whitespace pass",
+  "visuals": "Photodiode1175 and Devices page heading inspected; caption geometry1440/1175/720; all four page heading effects and CRT-off/Standard checked",
+  "source_sha256": {
+    "src/cephvr/gui/appearance.py": "1ed5b2b588be3851c7f6074472ebcec71d4a2f2eb3c2dd24f0a864eca99a5776",
+    "src/cephvr/gui/projector_timing.py": "415cf9bfb9b5b446aad6639743a80bfefadcc7fcfb82ec4f7e2781f2d460703d",
+    "tests/gui/test_dashboard.py": "6861ce3ee049ca797235a55d4195140cbe1ec293aa7c4800c442f46d28fc0f46"
+  }
+}

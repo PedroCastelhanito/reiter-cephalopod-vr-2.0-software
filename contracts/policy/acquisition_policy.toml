@@ -2,7 +2,7 @@
 # Source rules: Camera/acquisition defaults. See architecture.md: E10, E14, A01-A05, A07-A11.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/acquisition_config.toml. The loader rejects a version mismatch.
-policy_version = 21
+policy_version = 22
 
 [platform]
 target_os = "windows"
@@ -122,7 +122,7 @@ native_timestamp_unit = "ns"
 native_clock_provenance = "prepared_descriptor"
 native_timestamp_unavailable = "warn_and_leave_empty"
 invalid_image_row = "dropped"
-video_correspondence = "nominal_slot_to_real_source_or_identified_duplicate"
+video_correspondence = "sequential_encoded_image_to_original_source_and_timestamp"
 row_write_policy = "source_after_selection_encoded_mapping_after_input_submission"
 pending_records_owner = "camera_worker_recording_thread"
 metadata_transport = "in_process_with_frame"
@@ -163,9 +163,8 @@ mp4_mode = "hybrid_fragmented"
 faststart = false
 playback_timing = "constant_nominal_rate"
 nominal_rate_source = "applied_mcu_rate_or_free_running_frame_rate"
-# A07/A08: first usable receipt per slot; identified first-image leading backfill,
-# then previous-image interior/trailing padding through the actual cutoff.
-frame_duplication = true
+# A07/A08: every usable retained image once; nominal rate controls playback only.
+frame_duplication = false
 b_frames = 0
 final_frame_duration = "one_nominal_period"
 

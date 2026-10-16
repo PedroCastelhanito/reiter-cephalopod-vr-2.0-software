@@ -81,7 +81,9 @@ class PreparationPort(Protocol):
         self, prepared: PreparedDisplayCalibration
     ) -> bool: ...
 
-    def prepare_graphics(self, artifacts: tuple[PreparedTrial, ...]) -> None: ...
+    def prepare_graphics(
+        self, artifacts: tuple[PreparedTrial, ...]
+    ) -> tuple[PreparedTrial, ...]: ...
 
     def prepare_trials(
         self,

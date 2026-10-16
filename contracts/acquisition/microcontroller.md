@@ -29,7 +29,10 @@ Every request includes `id=<connection_uuid>-<counter>`. Host uses a fresh UUIDv
 opening the port and monotonically increasing uint64 counters, starting at 1 without
 wrap/reuse. Firmware echoes the token unchanged. Only one request is outstanding;
 reply IDs must match exactly. Unmatched/malformed replies are diagnostic evidence,
-not successful completion or fresh health. Keep the original deadline.
+not successful completion or fresh health. Full host observations expose optional
+connection-cumulative unmatched/malformed reply counts; reset on a fresh connection.
+Keep the original deadline. Matched ERR exceptions preserve the parsed request ID,
+symbolic code and bounded firmware context; pulse outcome codes remain symbolic.
 
 Booleans are `0`/`1`; integers are nonnegative base-10 digits within the stated width;
 frequency requests and CAPS request bounds are positive decimal Hz on the 0.1-Hz grid,
@@ -241,6 +244,18 @@ No second serial channel or immediate hardware-stop guarantee is introduced.
 
 ## Stop-budget validation
 
+The acknowledgement timeout covers serial dispatch through receipt of a complete,
+valid reply with the matching request ID. Its per-request deadline is capped by
+any earlier operation deadline. A timeout leaves application state unconfirmed;
+state-changing commands are not automatically retransmitted.
+
+The controller-owned validator is shared by serial policies and acquisition
+defaults. Baud rate, `ack_timeout_ms` and `stop_completion_margin_ms` require positive
+uint32 integer literals. Seconds settings must be finite and resolve exactly to
+positive int64 nanoseconds; the firmware communication watchdog must additionally
+resolve to a positive uint32 number of milliseconds. Keepalive is shorter than
+that communication timeout. No loader owns a second timing definition.
+
 `microcontroller.ack_timeout_ms` defaults to 100; the owning experiment
 `stop_report_timeout_ms` remains 250. `microcontroller.stop_completion_margin_ms`
 defaults to 50 and reserves camera stopping/drain plus end-to-end report delivery;
@@ -298,7 +313,10 @@ On Abort/interruption, camera-local admission stops promptly under E11 while the
 serial owner cancels unsent ON and prioritizes OFF at the next available slot. A
 transmitted request is not preempted. OFF retains the original stop issuance and
 earlier deadline; do not reinterpret its eventual dispatch as a new stop boundary.
-A timed-out ON cannot be retried as execution; a fresh OFF cleanup request has its
+A confirmed immediate OFF retires only covered OFF reservations after unsent ON
+has been cancelled. Partial, rejected or uncertain OFF leaves unmatched reservations
+fenced; a pending ON must retain its future OFF. A timed-out ON cannot be retried as
+execution; a fresh OFF cleanup request has its
 own request ID and preserves the original failed/uncertain ON evidence.
 
 ### Typed host evidence

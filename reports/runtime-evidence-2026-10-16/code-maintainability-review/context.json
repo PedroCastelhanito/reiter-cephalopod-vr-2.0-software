@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-16",
+  "task": "code-maintainability-review",
+  "base_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_state": "Uncommitted shared working tree with concurrent GUI/output-review work; no runtime source edited by this review. Hashes identify inspected source snapshot.",
+  "models": {
+    "primary": "Current chat primary reviewer; source tracing, direct reproduction, static checks and evidence reconciliation",
+    "architectural_reviewer": "gpt-6-astra high, explicitly requested by owner; focused sharing, architectural/package tradeoffs; no edits"
+  },
+  "method": [
+    "AST name/reference and exact-body duplication survey across handwritten src/tests/tools; contract Python subsequently traced to discard false positives",
+    "Targeted source/caller/architecture review",
+    "Two direct pure-function reproductions, no file settings mutations",
+    "Configured Ruff src/tests/tools and backend boundary check"
+  ],
+  "results": {
+    "reproduction": "reproduction.json",
+    "ruff": "All checks passed; initial concurrent review_timing B023 findings resolved before final",
+    "format": "924 files already formatted",
+    "boundaries": "705 backend modules,0 violations; existing cohesion size advisories remain"
+  },
+  "findings": [
+    "P2 GUI omits required Eye pulse role",
+    "P2 duplicated MCU validators disagree on fractional milliseconds",
+    "P3 nearly identical unary peer implementations",
+    "P3 feature dispatch separable from GUI thread/connection owner",
+    "P3 unreferenced EpochSelection class and editable_parameters helper",
+    "P3 exact duplicated acquisition session-match predicate",
+    "P3 missing precise recording metrics API semantics"
+  ],
+  "package_assessment": {
+    "runtime": "No new runtime dependency justified by reviewed source. Preserve existing native/process/writer mechanisms.",
+    "development": "Optional Vulture evaluation with source/tests/tools/contract Python and dynamic API whitelists; not installed/run.",
+    "source": "https://github.com/jendrikseipp/vulture#handling-false-positives"
+  },
+  "limits": [
+    "Broad static survey plus focused review; not exhaustive execution/algorithm review",
+    "No fresh broad runtime test suite, Windows/hardware/rig checks or package trial",
+    "Tracking design/contract exports and Windows historical manual recovery helper not classified as dead solely from source names",
+    "Review recommendations do not authorize implementation or choose unresolved numeric policy"
+  ],
+  "source_sha256": {
+    "src/cephvr/gui/managed_display_operations.py": "02ed317d7aa403dd8c98dbb359558638955c877f586b14f3b2637a769a43ae39",
+    "src/cephvr/synchronization/inventory_validation.py": "0f832f7c448e31b3ac777e288ff556c8b468ceae512dc961738e65ab48e3c40c",
+    "src/cephvr/controller/microcontroller/config.py": "c6826b2da639b96a77e15884fbba2c28ffdedea44459a191a6c41ff46713d2b9",
+    "src/cephvr/acquisition/config/values.py": "fab6bbf79d9d52d80eeaf141733e04311676b868c6ce12b81ac76abcec6e9a33",
+    "src/cephvr/tracking/transport/peers.py": "89d4a67e992ef3811e5eaa7f6fa65428be9eb728babbbde0d3d5a2689c6f3c0b",
+    "src/cephvr/visual_stimulus/transport/peers.py": "f18ad042afafe313405d6acb73551d217a0546be0582b8d110cec8e87d57e41e",
+    "src/cephvr/gui/controller_bridge.py": "13b270beb223c4b58dad81955f238bece93bac4687e6f2bbcae7784e32f83111",
+    "src/cephvr/gui/epoch_selection.py": "15e5881c1600b772c591e19858e2ca3ca7a5ea2e7848cd0054ef7839661c0ecb",
+    "src/cephvr/gui/subgroup_editor.py": "e5b48fad0098f9b71980c78d11baa0dd1a2332bbf5c28f68d4714b455e14d7f6",
+    "src/cephvr/gui/stimulus_columns.py": "1cf896aec1e6b0b32368a2d068f9404a5e47fdafa92eecd84ee9f7bd3aca47ea",
+    "src/cephvr/acquisition/worker/service.py": "c78754231cf9903d42202e92e3d34b32870eed658e6a2c75e2b80c4b19c483f4",
+    "src/cephvr/acquisition/worker/state.py": "aaa0b7b60935c206eadac6e2e5e572b08ef2691b6fa07b9d2139d8044b22dd7a",
+    "src/cephvr/visual_stimulus/recording/metrics.py": "70e1f95bfbe55e77e881fc8827c958e85162373bdcdae96a6ec0eaa23dc3244c",
+    "src/cephvr/platform/windows/security.py": "4dc8627d64bccfa2e8f5c45fa27872b487d5a263acba5a9916c2475607fb4cb9",
+    "pyproject.toml": "c436d64620d94909bcfac3a6409427b89c89b5f4a26faeb2614f1e82973b409d"
+  }
+}

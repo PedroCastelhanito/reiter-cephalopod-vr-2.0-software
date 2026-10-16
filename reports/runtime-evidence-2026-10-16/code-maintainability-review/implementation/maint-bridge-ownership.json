@@ -1,0 +1,23 @@
+{
+  "method": "AST comparison ignoring formatting and line numbers; only _dispatch is replaced with explicit feature-owner delegation.",
+  "unchanged_bridge_methods": {
+    "__init__": true,
+    "connection_epoch": true,
+    "request": true,
+    "_is_safety_request": true,
+    "_queue_request": true,
+    "_release_pending": true,
+    "stop": true,
+    "run": true,
+    "_run": true,
+    "_snapshot_received": true,
+    "_commands": true,
+    "_dispatch_guarded": true,
+    "_track_operation": true,
+    "_tracking_diagnostic_frame": true,
+    "_track_request": true,
+    "_submit_configuration": true,
+    "_validate_configuration_snapshot": true
+  },
+  "limits": "This establishes structural preservation of bridge safety/scheduling code, not runtime/platform equivalence."
+}

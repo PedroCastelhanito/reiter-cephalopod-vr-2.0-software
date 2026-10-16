@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable, Coroutine
-from typing import Any
+from typing import Any, Protocol
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
@@ -16,6 +16,7 @@ from cephvr.controller.state import (
     DeviceState,
     LifecycleState,
     LimitsState,
+    PendingCalibration,
 )
 from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.config.calibration_adjustments import (
@@ -23,6 +24,33 @@ from cephvr.visual_stimulus.config.calibration_adjustments import (
     validated_update,
 )
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+
+class AdmissionFailure(Protocol):
+    def __call__(
+        self, command_id: str, message: str, *, rejected: bool = False
+    ) -> Awaitable[None]: ...
+
+
+async def dispatch_calibration_call(
+    start: Callable[[], Coroutine[Any, Any, pb.CommandAdmission]],
+    *,
+    dispatch_lock: asyncio.Lock,
+    track: Callable[[asyncio.Task[pb.CommandAdmission]], None],
+    deadline_ns: int,
+    clock: Callable[[], int],
+) -> pb.CommandAdmission:
+    """Enter transport before releasing the held gate; retain uncertain calls."""
+    try:
+        task = asyncio.create_task(start())
+        track(task)
+        await asyncio.sleep(0)
+    finally:
+        if dispatch_lock.locked():
+            dispatch_lock.release()
+    return await asyncio.wait_for(
+        asyncio.shield(task), remaining_seconds(deadline_ns, clock=clock)
+    )
 
 
 async def update_calibration(
@@ -39,7 +67,7 @@ async def update_calibration(
     clock: Callable[[], int],
     dispatch_lock: asyncio.Lock,
     track: Callable[[asyncio.Task[pb.CommandAdmission]], None],
-    failed: Callable[[str, str], Awaitable[None]],
+    failed: AdmissionFailure,
     expire: Callable[[str, int], Coroutine[Any, Any, None]],
 ) -> pb.CommandAdmission:
     command_id = request.command.operator.command_id
@@ -115,7 +143,7 @@ async def update_calibration(
             dispatch_lock.release()
             return hooks.admission(command_id, error=str(exc))
         device.calibration_blocked = True
-        device.calibration_pending = (
+        device.calibration_pending = PendingCalibration(
             command_id,
             configuration.revision,
             deadline,
@@ -126,16 +154,12 @@ async def update_calibration(
         projections.expect_display(command_id, configuration.revision)
         hooks.publish()
     try:
-        task = asyncio.create_task(
-            backend.update_display_calibration(dispatch, deadline_ns=deadline)
-        )
-        track(task)
-        await asyncio.sleep(0)
-    finally:
-        dispatch_lock.release()
-    try:
-        reply = await asyncio.wait_for(
-            asyncio.shield(task), remaining_seconds(deadline, clock=clock)
+        reply = await dispatch_calibration_call(
+            lambda: backend.update_display_calibration(dispatch, deadline_ns=deadline),
+            dispatch_lock=dispatch_lock,
+            track=track,
+            deadline_ns=deadline,
+            clock=clock,
         )
     except asyncio.CancelledError:
         raise
@@ -144,7 +168,7 @@ async def update_calibration(
         return hooks.admission(command_id, error=str(exc))
     if reply.result != pb.COMMAND_RESULT_ACCEPTED:
         message = reply.failure.message or "Renderer rejected live calibration"
-        await failed(command_id, message)
+        await failed(command_id, message, rejected=True)
         return hooks.admission(command_id, error=message)
     hooks.spawn(expire(command_id, deadline))
     return hooks.admission(command_id)

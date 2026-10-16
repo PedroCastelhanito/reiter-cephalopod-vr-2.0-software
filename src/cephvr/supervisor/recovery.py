@@ -275,6 +275,11 @@ class RecoveryCoordinator:
             status_revision=self.status.revision,
             warnings=list(self.status.warnings.values()),
             cleanup_blockers=self.cleanup_blockers(),
+            preview_consumers=[
+                item
+                for group in self.registration.state.preview_consumers.values()
+                for item in group
+            ],
         )
         if prior_receipt is not None:
             response.prior_application_exit.CopyFrom(

@@ -12,6 +12,7 @@ from cephvr.controller.control.operations import ControlOperations
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.lifecycle.cleanup import CleanupWorkflow
 from cephvr.controller.lifecycle.interruption import InterruptionWorkflow
+from cephvr.controller.metadata.coordination import MetadataCoordinator
 from cephvr.controller.ports import SupervisorPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
@@ -36,6 +37,7 @@ class SessionCommands:
         configuration: ConfigurationState,
         control: ControlState,
         metadata_state: MetadataState,
+        metadata: MetadataCoordinator,
         limit_state: LimitsState,
         cleanup: CleanupWorkflow,
         interruption: InterruptionWorkflow,
@@ -53,6 +55,7 @@ class SessionCommands:
         self.configuration_state = configuration
         self.control = control
         self.metadata_state = metadata_state
+        self.metadata = metadata
         self.limit_state = limit_state
         self.cleanup = cleanup
         self.interruption = interruption
@@ -126,6 +129,16 @@ class SessionCommands:
                 succeeded=True,
             )
             self.publisher.publish()
+            if attempt is not None:
+                self.metadata.queue_event(
+                    attempt,
+                    "command_accepted",
+                    details={
+                        "command": "CancelStopAfterTrial"
+                        if cancel
+                        else "StopAfterTrial"
+                    },
+                )
             return self.control_operations.admission(command.operator.command_id)
 
     def _safety_refusal(
@@ -167,6 +180,9 @@ class SessionCommands:
                 attempt=attempt,
                 progress="interruption in progress",
                 safety="abort",
+            )
+            self.metadata.queue_event(
+                attempt, "command_accepted", details={"command": "AbortNow"}
             )
             self.spawn(self.interruption.interrupt(attempt, "operator Abort now"))
             return self.control_operations.admission(command.operator.command_id)

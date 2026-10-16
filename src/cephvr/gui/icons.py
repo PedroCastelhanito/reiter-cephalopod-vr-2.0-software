@@ -15,10 +15,10 @@ PATHS = {
 }
 
 
-def device_icon(name: str) -> QIcon:
+def device_icon(name: str, color: str = COLORS.accent) -> QIcon:
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
-        f'fill="none" stroke="{COLORS.accent}" stroke-width="1.6" '
+        f'fill="none" stroke="{color}" stroke-width="1.6" '
         f'stroke-linecap="round" stroke-linejoin="round">{PATHS[name]}</svg>'
     )
     pixmap = QPixmap(48, 48)

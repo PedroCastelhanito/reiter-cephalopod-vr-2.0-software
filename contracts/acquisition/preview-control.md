@@ -224,8 +224,16 @@ PreviewConsumerReport binds client/controller/consumer generations and run/alloc
 transfer. Duplicate reports are idempotent; ATTACHED cannot regress RELEASED or revive
 retired work. FAILED is not release evidence; later verified RELEASED may discharge
 that obligation while preserving the error. Send release/failure evidence independently
-to controller and supervisor; controller normally relays it to coordinator. Supervisor
-has cleanup authority, not viewer-start authority. Missing acknowledgements retain
+to controller and supervisor; the authenticated current controller relays the exact
+terminal proof to coordinator and supervisor under [E08](../../docs/architecture/system-contracts.md#e08).
+The supervisor accepts either authenticated delivery route with the same registered
+consumer and exact identity checks. ATTACHED goes through controller to coordinator
+only and is rejected at supervisor. Supervisor has cleanup authority, not viewer-start authority. Its acknowledgement retains the exact
+consumer-attested failure/release in bounded supervisor state, available in the existing
+recovery snapshot. A later release keeps the earlier failure evidence; duplicates are
+idempotent and changed same-result payloads reject. Only already released subjects may
+be evicted at the existing entry/byte bounds; exhaustion of unreleased evidence follows
+E06. These reports alone do not certify producer/aggregate resource closure. Missing acknowledgements retain
 existing reconciliation/deadlines, not another retry budget.
 
 A cancelled attach may leave handles already transferred. Keep its cache/ledger entry

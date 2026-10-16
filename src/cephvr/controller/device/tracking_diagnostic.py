@@ -88,34 +88,14 @@ class TrackingDiagnosticController:
         if error:
             return _reject(operator.operator.command_id, error)
         async with self.lifecycle.lock:
-            if request.expected_configuration_revision != self.configuration.revision:
-                return _reject(
-                    operator.operator.command_id, "configuration revision changed"
-                )
-            if (
-                self.device.configuration_edit is not None
-                or self.device.camera_operation is not None
-            ):
-                return _reject(
-                    operator.operator.command_id,
-                    "camera configuration or camera operation is unresolved",
-                )
-            if (
-                self.lifecycle.attempt is not None
-                or self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
-            ):
-                return _reject(
-                    operator.operator.command_id,
-                    "Tracking diagnostic is only available before Setup",
-                )
-            if (
-                self.control.tracking_diagnostic.active
-                or not self.control.tracking_diagnostic.closed
-            ):
-                return _reject(
-                    operator.operator.command_id,
-                    "another Tracking diagnostic has not confirmed closure",
-                )
+            blocker = self._begin_blocker(request)
+            if blocker:
+                return _reject(operator.operator.command_id, blocker)
+        policies = await self._file_policies()
+        async with self.lifecycle.lock:
+            blocker = self._authorize(operator) or self._begin_blocker(request)
+            if blocker:
+                return _reject(operator.operator.command_id, blocker)
             accepted_settings = _tracking_settings(self.configuration.current)
             if accepted_settings is None:
                 return _reject(operator.operator.command_id, "Tracking is unconfigured")
@@ -170,7 +150,6 @@ class TrackingDiagnosticController:
             tracking_run = request.preview_run_id
             revision = self.configuration.revision
             camera_serial = devices.tracking.device.physical_id
-            policies = await self._file_policies()
             if policies is None:
                 return _reject(
                     operator.operator.command_id, "Tracking file policy is unavailable"
@@ -606,6 +585,26 @@ class TrackingDiagnosticController:
                     current.SerializeToString()
                 )
         raise ValueError("Tracking diagnostic changed during status query")
+
+    def _begin_blocker(self, request: svc.BeginTrackingDiagnosticRequest) -> str:
+        if request.expected_configuration_revision != self.configuration.revision:
+            return "configuration revision changed"
+        if (
+            self.device.configuration_edit is not None
+            or self.device.camera_operation is not None
+        ):
+            return "camera configuration or camera operation is unresolved"
+        if (
+            self.lifecycle.attempt is not None
+            or self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
+        ):
+            return "Tracking diagnostic is only available before Setup"
+        if (
+            self.control.tracking_diagnostic.active
+            or not self.control.tracking_diagnostic.closed
+        ):
+            return "another Tracking diagnostic has not confirmed closure"
+        return ""
 
     async def _file_policies(self) -> TrackingFilePolicies | None:
         if self.file_policy_loader is None:

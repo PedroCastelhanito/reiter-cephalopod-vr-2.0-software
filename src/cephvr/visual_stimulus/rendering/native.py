@@ -16,7 +16,10 @@ from pathlib import Path
 from typing import Any, cast
 
 from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
-from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
+from cephvr.visual_stimulus.config.models.artifact_models import (
+    ComponentProvenance,
+    PreparedTrial,
+)
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile, Output
 from cephvr.visual_stimulus.rendering.native_display import (
     DisplayGpuUnavailableError,
@@ -259,6 +262,20 @@ class ModernGLPort:
 
     _display_report: DisplayInitialization
     _idle_activities: list[OutputActivity]
+
+    def replay_provenance(self) -> tuple[ComponentProvenance, ...]:
+        """Observe only initialized output contexts on their owning thread."""
+        from cephvr.visual_stimulus.resources.provenance import graphics_provenance
+
+        self._assert_owner()
+        if self._display is None or not self._outputs:
+            raise NativeRenderingError("replay provenance requires initialized outputs")
+        result: list[ComponentProvenance] = []
+        for output in self._display.active_outputs:
+            item = self._outputs[output.output_id]
+            item.activate()
+            result.extend(graphics_provenance(output.output_id, item.context.info))
+        return tuple(result)
 
     def _idle_device_color(
         self, output: Output, display: DisplayProfile
@@ -687,6 +704,8 @@ class ModernGLPort:
                 outstanding.append(f"capture-fence:{exc}")
         if self.scene_renderer is not None:
             try:
+                if self._outputs:
+                    next(iter(self._outputs.values())).activate()
                 self.scene_renderer.release()
                 self.scene_renderer = None
             except Exception as exc:

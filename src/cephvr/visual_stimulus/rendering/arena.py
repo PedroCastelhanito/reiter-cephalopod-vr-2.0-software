@@ -11,6 +11,7 @@ from cephvr.visual_stimulus.rendering.projection import (
     off_axis_frustum,
     projection_matrix,
 )
+from cephvr.visual_stimulus.rendering.types import InstanceSnapshot, PoseSnapshot
 
 Matrix4 = tuple[tuple[float, float, float, float], ...]
 
@@ -48,16 +49,44 @@ def _rotation_z(degrees: float) -> Matrix4:
     return ((cosine, -sine, 0, 0), (sine, cosine, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1))
 
 
-def arena_model_matrix(
+def _pose_values(
     settings: Any, state: dict[str, float | int | str | bool]
-) -> Matrix4:
-    """Compose effective virtual observer pose with authored asset-to-world data."""
+) -> tuple[float, float, float, float, float, float]:
     x, y, yaw = (float(state[key]) for key in ("x", "y", "yaw"))
     height = float(settings.fixed_height_mm)
     pitch, roll = float(settings.fixed_pitch_deg), float(settings.fixed_roll_deg)
     values = (x, y, yaw, height, pitch, roll)
     if any(not math.isfinite(value) for value in values):
         raise ValueError("arena pose and fixed orientation must be finite")
+    return values
+
+
+def effective_arena_pose(snapshot: InstanceSnapshot) -> PoseSnapshot:
+    """Retain the shared rigid pose before the authored asset transform (V13/V16)."""
+    settings = snapshot.settings
+    if settings is None or settings.kind != "arena":
+        raise ValueError("effective arena pose requires arena settings")
+    x, y, yaw, height, pitch, roll = _pose_values(settings, dict(snapshot.state))
+    sz, cz = math.sin(math.radians(yaw) / 2), math.cos(math.radians(yaw) / 2)
+    sx, cx = math.sin(math.radians(pitch) / 2), math.cos(math.radians(pitch) / 2)
+    sy, cy = math.sin(math.radians(roll) / 2), math.cos(math.radians(roll) / 2)
+    # Match the exact Rz(yaw) Rx(pitch) Ry(roll) order used for rendering.
+    orientation = (
+        cz * sx * cy - sz * cx * sy,
+        cz * cx * sy + sz * sx * cy,
+        sz * cx * cy + cz * sx * sy,
+        cz * cx * cy - sz * sx * sy,
+    )
+    return PoseSnapshot(
+        snapshot.instance_id, settings.world_frame_id, (x, y, height), orientation
+    )
+
+
+def arena_model_matrix(
+    settings: Any, state: dict[str, float | int | str | bool]
+) -> Matrix4:
+    """Compose effective virtual observer pose with authored asset-to-world data."""
+    x, y, yaw, height, pitch, roll = _pose_values(settings, state)
     translation: Matrix4 = ((1, 0, 0, x), (0, 1, 0, y), (0, 0, 1, height), (0, 0, 0, 1))
     authored: Matrix4 = settings.asset_to_world
     model = _multiply(translation, _rotation_z(yaw))

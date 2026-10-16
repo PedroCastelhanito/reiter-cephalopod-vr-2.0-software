@@ -1,6 +1,6 @@
 """Shared variation columns while rule widgets retain validation and sampled values."""
 
-from PyQt6.QtCore import QEvent, QObject
+from PyQt6.QtCore import QEvent, QObject, QTimer, pyqtSlot
 from PyQt6.QtGui import QCursor, QResizeEvent
 from PyQt6.QtWidgets import QHeaderView
 
@@ -12,6 +12,9 @@ class VariationTable(DataTable):
     def __init__(self) -> None:
         super().__init__(0, 6)
         self.rules: list[BatchVariationRow] = []
+        self.hover_timer = QTimer(self)
+        self.hover_timer.setSingleShot(True)
+        self.hover_timer.timeout.connect(self.refresh_hover)
         self.setHorizontalHeaderLabels(
             ["Projectors", "Layer", "Parameter", "Method", "Values / range", ""]
         )
@@ -69,20 +72,25 @@ class VariationTable(DataTable):
 
     def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
         if event is not None and event.type() == QEvent.Type.Enter:
-            for rule in self.rules:
-                controls = (
-                    rule.target,
-                    rule.layer,
-                    rule.parameter,
-                    rule.method,
-                    rule,
-                    rule.remove,
-                )
-                rule.remove.setVisible(watched in controls)
+            self.hover_timer.start()
         return super().eventFilter(watched, event)
 
     def leaveEvent(self, event: QEvent | None) -> None:
-        if not self.rect().contains(self.mapFromGlobal(QCursor.pos())):
-            for rule in self.rules:
-                rule.remove.hide()
+        self.hover_timer.start()
         super().leaveEvent(event)
+
+    @pyqtSlot()
+    def refresh_hover(self) -> None:
+        """Visibility changes can synthesize mouse events; finish dispatch first."""
+        viewport = self.viewport()
+        assert viewport is not None
+        position = viewport.mapFromGlobal(QCursor.pos())
+        hovered = (
+            self.rowAt(position.y())
+            if self.isVisible() and viewport.rect().contains(position)
+            else -1
+        )
+        for index, rule in enumerate(self.rules):
+            visible = index == hovered
+            if rule.remove.isHidden() == visible:
+                rule.remove.setVisible(visible)

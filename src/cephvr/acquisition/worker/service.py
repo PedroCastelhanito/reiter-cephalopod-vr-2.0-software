@@ -22,6 +22,7 @@ from .ports import WorkerOperationOwner
 from .state import WorkerState
 from .terminal_scope import (
     command_work_key,
+    same_session,
     terminal_target,
     terminal_target_matches,
 )
@@ -500,23 +501,10 @@ def _same_worker(
     if not same_identity:
         return False
     if requested.HasField("work"):
-        return registered.HasField("work") and _same_session(
+        return registered.HasField("work") and same_session(
             requested.work, registered.work
         )
     return allow_missing_work
-
-
-def _same_session(left: control.WorkContext, right: control.WorkContext) -> bool:
-    left_kind, right_kind = left.WhichOneof("work"), right.WhichOneof("work")
-    if left_kind == "session" and right_kind == "session":
-        return left.session == right.session
-    if left_kind == "trial" and right_kind == "trial":
-        return left.trial.session == right.trial.session
-    if left_kind == "trial" and right_kind == "session":
-        return left.trial.session == right.session
-    if left_kind == "session" and right_kind == "trial":
-        return left.session == right.trial.session
-    return False
 
 
 def _valid_scope(name: str, target: acq.WorkerContext) -> bool:

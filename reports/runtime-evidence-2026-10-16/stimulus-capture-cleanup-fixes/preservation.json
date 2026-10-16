@@ -1,0 +1,19 @@
+{
+  "checks": {
+    "struct_quad": true,
+    "__init__": true,
+    "capture": true,
+    "_orient_for_readback": true,
+    "_ensure_compositor": true,
+    "_require_pending": true,
+    "cancel": true,
+    "_delete_buffer": true,
+    "release": true,
+    "_composite_geometry": true,
+    "build_review_argv": true,
+    "ffmpeg_input_format": true,
+    "operator_configuration_bytes": true,
+    "shader_bytes": true
+  },
+  "scope": "Capture submission, orientation, composition, shader bytes, geometry, FFmpeg argv and operator settings preserved. Static/source and host tests only; native output equivalence remains a rig check."
+}

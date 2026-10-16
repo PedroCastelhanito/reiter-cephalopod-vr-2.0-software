@@ -1,0 +1,89 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+____________ test_startup_probe_stops_after_hard_transport_failure _____________
+
+    def test_startup_probe_stops_after_hard_transport_failure():
+        clock = _StepClock()
+        port = _FakePort()
+        calls = []
+        def broken(payload):
+            calls.append(payload)
+            raise OSError("device removed")
+        port.on_write = broken
+        channel = SerialChannel("fake", 115200, 100, clock=clock, serial_port=port)
+        channel.open(1000)
+        with pytest.raises(ChannelTransportFailure, match="device removed"):
+>           channel.probe("CAPS", 1000)
+
+tests/controller/test_microcontroller_protocol.py:377: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.controller.microcontroller.channel.SerialChannel object at 0x106f4abd0>
+verb = 'CAPS', deadline_ns = 1000
+
+    def probe(self, verb: str, deadline_ns: int) -> Exchange:
+        """Retry a read-only startup probe with a fresh ID inside its original deadline."""
+        if verb not in ("CAPS", "STATUS"):
+            raise ValueError("only read-only CAPS and STATUS probes may be retried")
+        last_error: BaseException | None = None
+        while self.clock() < deadline_ns:
+            try:
+                result = self.request(verb, {}, deadline_ns, read_only=True)
+            except ChannelCancelled:
+                raise
+            except ChannelIncompatibleFirmware:
+                raise
+            except FirmwareRejected as exc:
+                raise ChannelTransportFailure(
+                    f"MCU rejected startup {verb}: {exc.code}"
+                ) from exc
+            except (ChannelError, ProtocolError) as exc:
+                last_error = exc
+                continue
+            if result.reply is not None:
+                return result
+        detail = f": {last_error}" if last_error else ""
+>       raise ChannelTimeout(
+            f"no valid {verb} response before original deadline{detail}"
+        )
+E       cephvr.controller.microcontroller.channel.ChannelTimeout: no valid CAPS response before original deadline: acknowledgement deadline expired before dispatch
+
+src/cephvr/controller/microcontroller/channel.py:281: ChannelTimeout
+______________ test_matched_firmware_rejection_preserves_context _______________
+
+    def test_matched_firmware_rejection_preserves_context():
+        from cephvr.controller.microcontroller.protocol import FirmwareRejected
+    
+        clock = _StepClock()
+        port = _FakePort()
+        port.on_write = lambda payload: _write_reply(port, payload, b"ERR id={request_id} code=PIN_CONFLICT pin=D2 kind=behavioral\n")
+        channel = SerialChannel("fake", 115200, 100, clock=clock, serial_port=port)
+        channel.open(1000)
+        with pytest.raises(FirmwareRejected) as rejected:
+            channel.request("DIAG_START", {}, 1000)
+        assert rejected.value.code == "PIN_CONFLICT"
+>       assert rejected.value.reply.fields == {"pin": "D2", "kind": "behavioral"}
+               ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'FirmwareRejected' object has no attribute 'reply'
+
+tests/controller/test_microcontroller_protocol.py:392: AttributeError
+__ test_confirmed_immediate_off_retires_matching_cancelled_trial_reservation ___
+
+    def test_confirmed_immediate_off_retires_matching_cancelled_trial_reservation():
+        clock = _Clock(10)
+        port = _ScriptedPort(statuses=[_status(), _status()])
+        owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+        owner.connect(deadline_ns=10_000)
+        owner.reserve_boundary(100, mcu.PULSE_BOUNDARY_COMMAND_ON, selected_roles=("behavioral",))
+        owner.reserve_boundary(200, mcu.PULSE_BOUNDARY_COMMAND_OFF, selected_roles=("behavioral",))
+        owner.cancel_on_reservations()
+>       evidence = owner.off(("behavioral",), boundary_ns=None, stop_issued_ns=10, deadline_ns=1000)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: SerialOwner.off() got an unexpected keyword argument 'boundary_ns'
+
+tests/controller/test_microcontroller_owner.py:2173: TypeError
+=========================== short test summary info ============================
+FAILED tests/controller/test_microcontroller_protocol.py::test_startup_probe_stops_after_hard_transport_failure
+FAILED tests/controller/test_microcontroller_protocol.py::test_matched_firmware_rejection_preserves_context
+FAILED tests/controller/test_microcontroller_owner.py::test_confirmed_immediate_off_retires_matching_cancelled_trial_reservation
+3 failed, 149 deselected in 0.56s

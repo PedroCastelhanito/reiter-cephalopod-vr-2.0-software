@@ -25,8 +25,8 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         clocks={
             "host_clock": "cephvr.host.perf_counter_ns.v1",
             "camera_timestamp_ns": "cephvr.camera.native.v1",
-            "video_frame": "nominal slot selected for this real source; omitted sources have null",
-            "encoded_frame_index": "contiguous constant-rate slot at nominal_frame_rate_hz",
+            "video_frame": "sequential encoded index for this source; invalid/dropped sources have null",
+            "encoded_frame_index": "contiguous image index; nominal_frame_rate_hz controls playback only",
         },
     )
     video = WriterSchema(
@@ -35,7 +35,7 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         fields={
             "container_identity_tags": ", ".join(MP4_IDENTITY_KEYS),
             "video_timeline": "constant-rate frame index at nominal_frame_rate_hz",
-            "frame_correspondence": "explicit encoded-slot mappings name each real source or identified duplicate",
+            "frame_correspondence": "one encoded image per retained usable source, with explicit identity/time mapping",
         },
         units={"frame_rate": "frames/s"},
         clocks={

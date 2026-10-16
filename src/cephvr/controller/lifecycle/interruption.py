@@ -123,7 +123,8 @@ class InterruptionWorkflow:
             )
         trial_metadata_clean = False
         try:
-            trial_metadata_clean = await self._stop_backends_and_trial(attempt, reason)
+            await self._stop_backends(attempt, reason)
+            trial_metadata_clean = True
         except Exception as exc:
             # Finalization must still run, or later interrupts would only join a
             # closure that never started.
@@ -221,7 +222,7 @@ class InterruptionWorkflow:
             attempt.interruption_issued_ns + self.limit_state.current.stop_evidence_ns
         )
 
-    async def _stop_backends_and_trial(self, attempt: Attempt, reason: str) -> bool:
+    async def _stop_backends(self, attempt: Attempt, reason: str) -> None:
         stop_deadline_ns = self._stop_deadline(attempt)
         if (
             attempt.trial_task is not None
@@ -230,7 +231,6 @@ class InterruptionWorkflow:
             attempt.trial_task.cancel()
             await asyncio.gather(attempt.trial_task, return_exceptions=True)
         await self._interrupt_backends(attempt, reason, stop_deadline_ns)
-        return await self.trial_logs.finish_interrupted_trial(attempt)
 
     @staticmethod
     async def _join(task: asyncio.Task[None]) -> None:
@@ -333,6 +333,7 @@ class InterruptionWorkflow:
                 )
             )
             if len(self.control.errors) > RETAINED_LIMIT:
+                self.control.retained_truncated = True
                 self.control.errors = self.control.errors[-RETAINED_LIMIT:]
             self.publisher.publish()
         self.spawn(
@@ -388,26 +389,59 @@ class InterruptionWorkflow:
                     self.clock() + self.limit_state.current.setup_cancel_ns
                 )
             cleanup_deadline = attempt.finalization_deadline_ns
+            interrupted = attempt.interrupted
         clean = metadata_clean
         if attempt.paired and not await self._finish_spikeglx_stop(
             attempt, cleanup_deadline
         ):
             clean = False
-        clean = (
+        if interrupted:
+            # Interrupted writers report closure through session cleanup, not a
+            # successful trial Finished. Request that proof before sealing LOGs.
+            clean = await self._cleanup_backends(attempt, cleanup_deadline) and clean
+            try:
+                metadata_clean = (
+                    await self.trial_logs.finish_interrupted_trial(attempt)
+                    and metadata_clean
+                )
+            except Exception as exc:
+                metadata_clean = False
+                async with self.lifecycle.lock:
+                    self.control.add_warning(
+                        "interruption", f"interrupted trial log failed: {exc}"
+                    )
+                    self.publisher.publish()
+        async with self.lifecycle.lock:
+            if attempt.incidents is not None:
+                try:
+                    unanswered = attempt.incidents.end_session()
+                except IncidentCapacityError:
+                    clean = False
+                    self.control.add_warning(
+                        "incidents", "terminal incident accounting capacity exhausted"
+                    )
+                else:
+                    for incident in unanswered:
+                        self.metadata.queue_event(
+                            attempt,
+                            "incident_decision",
+                            details={
+                                "incident_id": incident.incident_id,
+                                "incident_revision": incident.revision,
+                                "affected_resources": list(incident.affected_resources),
+                                "disposition": "session_ended_unanswered",
+                            },
+                        )
+        metadata_clean = (
             await self.metadata.finish_session(
                 attempt, outcome=outcome, deadline_ns=cleanup_deadline
             )
-            and clean
+            and metadata_clean
         )
-        try:
-            clean = (
-                await self.cleanup.dispatch_backend_cleanup(
-                    attempt, cleanup_deadline, "cleanup"
-                )
-                and clean
-            )
-        except TimeoutError:
-            clean = False
+        attempt.closure.metadata_clean = metadata_clean
+        clean = metadata_clean and clean
+        if not interrupted:
+            clean = await self._cleanup_backends(attempt, cleanup_deadline) and clean
         clean = await self.cleanup.await_cleanups(attempt, cleanup_deadline) and clean
         if attempt.reservation_unconfirmed:
             clean = False
@@ -416,8 +450,16 @@ class InterruptionWorkflow:
         async with self.lifecycle.lock:
             self._publish_ended_locked(attempt, clean)
 
+    async def _cleanup_backends(self, attempt: Attempt, deadline_ns: int) -> bool:
+        try:
+            return await self.cleanup.dispatch_backend_cleanup(
+                attempt, deadline_ns, "cleanup"
+            )
+        except TimeoutError:
+            return False
+
     async def _stop_spikeglx(self, attempt: Attempt, cleanup_deadline: int) -> bool:
-        """Stop the paired SpikeGLX run; True only when stopped and logged."""
+        """Stop the paired run, preserving remote evidence if central logging fails."""
         if attempt.spikeglx_stopped:
             return True
         attempt.spikeglx_monitor_stop.set()
@@ -427,39 +469,38 @@ class InterruptionWorkflow:
             )
             self.publisher.publish()
         try:
-            if self.spikeglx is None:
-                confirmed = False
-            else:
-                confirmed = await asyncio.wait_for(
-                    self.spikeglx.stop_expected_run(cleanup_deadline),
-                    remaining_seconds(cleanup_deadline, clock=self.clock),
-                )
+            confirmed = self.spikeglx is not None and await asyncio.wait_for(
+                self.spikeglx.stop_expected_run(cleanup_deadline),
+                remaining_seconds(cleanup_deadline, clock=self.clock),
+            )
+        except Exception:
+            confirmed = False
+        async with self.lifecycle.lock:
             if not confirmed:
-                async with self.lifecycle.lock:
-                    attempt.spikeglx_recording.phase = (
-                        spikeglx_pb.SPIKEGLX_RECORDING_PHASE_UNKNOWN
-                    )
-                    attempt.spikeglx_recording.failure_code = "STOP_UNCONFIRMED"
-                    self.publisher.publish()
-                return False
-            attempt.spikeglx_stopped = True
-            async with self.lifecycle.lock:
+                attempt.spikeglx_recording.phase = (
+                    spikeglx_pb.SPIKEGLX_RECORDING_PHASE_UNKNOWN
+                )
+                attempt.spikeglx_recording.failure_code = "STOP_UNCONFIRMED"
+            else:
+                attempt.spikeglx_stopped = True
                 attempt.spikeglx_recording.phase = (
                     spikeglx_pb.SPIKEGLX_RECORDING_PHASE_STOPPED
                 )
                 attempt.spikeglx_recording.ClearField("failure_code")
-                self.publisher.publish()
+            self.publisher.publish()
+        if not confirmed:
+            return False
+        try:
             await self.metadata.log_event(
                 attempt,
                 "spikeglx_stopped",
                 details={"run_name": attempt.prepared.spikeglx.run_name},
             )
-        except Exception:
+        except Exception as exc:
             async with self.lifecycle.lock:
-                attempt.spikeglx_recording.phase = (
-                    spikeglx_pb.SPIKEGLX_RECORDING_PHASE_UNKNOWN
+                self.control.add_warning(
+                    "metadata", f"confirmed SpikeGLX stop could not be logged: {exc}"
                 )
-                attempt.spikeglx_recording.failure_code = "STOP_UNCONFIRMED"
                 self.publisher.publish()
             return False
         return True
@@ -512,14 +553,6 @@ class InterruptionWorkflow:
         )
         if not clean:
             self.lifecycle.session.outcome = pb.SESSION_OUTCOME_INTERRUPTED
-        if attempt.incidents is not None:
-            try:
-                attempt.incidents.end_session()
-            except IncidentCapacityError:
-                self.lifecycle.session.outcome = pb.SESSION_OUTCOME_INTERRUPTED
-                self.control.add_warning(
-                    "incidents", "terminal incident accounting capacity exhausted"
-                )
         for prompt_id, (prompt, owner) in list(
             self.incident_state.incident_prompts.items()
         ):

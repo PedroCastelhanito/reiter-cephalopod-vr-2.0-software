@@ -1,0 +1,5 @@
+IBM Plex Mono Regular, unmodified. Retrieved 2026-10-16.
+Source: https://github.com/IBM/plex/tree/master/packages/plex-mono/fonts/complete/ttf
+Download: https://raw.githubusercontent.com/IBM/plex/master/packages/plex-mono/fonts/complete/ttf/IBMPlexMono-Regular.ttf
+License: https://github.com/IBM/plex/blob/master/LICENSE.txt (included as OFL.txt)
+SHA256: 7c6fbddca4b700be918f5f6183d9bd4464fa427fe435f0b480d77fe2bb8c5a43

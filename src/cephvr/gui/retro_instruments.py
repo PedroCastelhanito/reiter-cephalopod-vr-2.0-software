@@ -2,11 +2,74 @@
 
 from math import ceil
 
-from PyQt6.QtCore import QEvent, QObject, QPointF, QRectF, Qt
-from PyQt6.QtGui import QColor, QPainter, QPaintEvent, QPen
-from PyQt6.QtWidgets import QPlainTextEdit, QWidget
+from PyQt6.QtCore import QEvent, QObject, QPointF, QRectF, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor, QPainter, QPaintEvent, QPen, QTextCursor
+from PyQt6.QtWidgets import (
+    QApplication,
+    QPlainTextEdit,
+    QRadioButton,
+    QWidget,
+)
 
 from cephvr.gui.theme import RETRO_COLORS, retro_console
+
+
+class Blink(QObject):
+    """Shared cursor phase; solid when the platform disables cursor flashing."""
+
+    toggled = pyqtSignal()
+
+    def __init__(self) -> None:
+        super().__init__(QApplication.instance())
+        self.on = True
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.tick)
+        flash = QApplication.cursorFlashTime()
+        if flash > 1:
+            self.timer.start(flash // 2)
+
+    def tick(self) -> None:
+        self.on = not self.on
+        self.toggled.emit()
+
+    def restart(self) -> None:
+        """Show the cursor solid after editing, then resume blinking."""
+        self.on = True
+        if self.timer.isActive():
+            self.timer.start()
+        self.toggled.emit()
+
+
+_blink: Blink | None = None
+
+
+def blink() -> Blink:
+    global _blink
+    if _blink is None:
+        _blink = Blink()
+    return _blink
+
+
+def prompt_cursor(console: QPlainTextEdit) -> None:
+    """Block cursor after the last log line, or after the empty-log placeholder."""
+    document = console.document()
+    viewport = console.viewport()
+    assert document is not None and viewport is not None
+    cursor = QTextCursor(document)
+    cursor.movePosition(QTextCursor.MoveOperation.End)
+    rect = console.cursorRect(cursor)
+    if document.isEmpty():
+        rect.translate(
+            console.fontMetrics().horizontalAdvance(console.placeholderText()), 0
+        )
+    block = QRectF(
+        rect.left(),
+        rect.top(),
+        console.fontMetrics().horizontalAdvance(" "),
+        rect.height(),
+    )
+    if viewport.rect().contains(block.toRect()):
+        QPainter(viewport).fillRect(block, QColor(RETRO_COLORS.accent))
 
 
 def dashed_rule(painter: QPainter, left: float, right: float, y: float) -> None:
@@ -32,11 +95,6 @@ def terminal_marks(console: QPlainTextEdit, event: QPaintEvent) -> None:
     assert viewport is not None
     painter = QPainter(viewport)
     ink = QColor(RETRO_COLORS.focus)
-    ink.setAlpha(7)
-    painter.setPen(ink)
-    area = event.rect()
-    for y in range(area.top() - area.top() % 4, area.bottom() + 1, 4):
-        painter.drawLine(area.left(), y, area.right(), y)
     ink.setAlpha(70)
     painter.setPen(ink)
     for index, y in enumerate(range(8, viewport.height() - 8, 20)):
@@ -53,6 +111,59 @@ def terminal_marks(console: QPlainTextEdit, event: QPaintEvent) -> None:
             if not block.text() and rect.bottom() >= 0:
                 dashed_rule(painter, 4, viewport.width() - 16, rect.center().y())
             block = block.next()
+
+
+def paint_status_lamp(indicator: QRadioButton, status: str) -> None:
+    colors = RETRO_COLORS
+    ink = (
+        colors.ready
+        if status == "Ready"
+        else colors.error
+        if status.casefold() in {"fault", "failed", "error", "unhealthy"}
+        else colors.waiting
+        if status.casefold() in {"not prepared", "preparing", "waiting", "connected"}
+        else colors.muted
+    )
+    painter = QPainter(indicator)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    lamp = QColor(ink)
+    halo = QColor(lamp)
+    halo.setAlpha(25)
+    glyph = (
+        "●"
+        if ink == colors.ready
+        else "▲"
+        if ink == colors.error
+        else "◐"
+        if ink == colors.waiting
+        else "○"
+    )
+    if indicator.property("crtGlow") is True:
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(halo)
+        painter.drawEllipse(QRectF(0, 4, 14, 14))
+    painter.setPen(lamp)
+    painter.drawText(QRectF(0, 2, 14, 18), Qt.AlignmentFlag.AlignCenter, glyph)
+    width = max(0, indicator.width() - 18)
+    painter.setPen(QColor(colors.label))
+    painter.drawText(
+        18,
+        14,
+        indicator.fontMetrics().elidedText(
+            indicator.text().upper(), Qt.TextElideMode.ElideRight, width
+        ),
+    )
+    font = painter.font()
+    font.setPixelSize(10)
+    painter.setFont(font)
+    painter.setPen(lamp)
+    painter.drawText(
+        18,
+        30,
+        painter.fontMetrics().elidedText(
+            f"[{status.upper()}]", Qt.TextElideMode.ElideRight, width
+        ),
+    )
 
 
 class FocusBrackets(QWidget):
@@ -134,17 +245,15 @@ class TrialPosition(QWidget):
         )
         segments = min(self.count, 24)
         position = ceil(max(0, min(self.index, self.count)) * segments / self.count)
-        gap = 4
-        width = (self.width() - gap * (segments - 1) - 1) / segments
-        for index in range(segments):
-            painter.setPen(QColor(RETRO_COLORS.border))
-            painter.setBrush(
-                QColor(
-                    RETRO_COLORS.mirror
-                    if index == position - 1
-                    else RETRO_COLORS.primary
-                    if index < position
-                    else RETRO_COLORS.input
-                )
+        font.setPixelSize(13)
+        painter.setFont(font)
+        glyph_width = painter.fontMetrics().horizontalAdvance("▓")
+        cells = max(segments, int(self.width() / glyph_width))
+        painter.scale(self.width() / (cells * glyph_width), 1)
+        for cell in range(cells):
+            index = cell * segments // cells
+            painter.setPen(
+                QColor(RETRO_COLORS.mirror if index < position else RETRO_COLORS.border)
             )
-            painter.drawRect(QRectF(index * (width + gap) + 0.5, 23, width, 9))
+            glyph = "▒" if index == position - 1 else "▓" if index < position else "░"
+            painter.drawText(cell * glyph_width, 33, glyph)

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from pathlib import Path
 from uuid import uuid4
 
@@ -14,6 +13,9 @@ from cephvr.shared.calibration_assets import (
     CALIBRATION_REFERENCES,
     calibration_asset_root,
     calibration_runtime_root,
+)
+from cephvr.synchronization.inventory_validation import (
+    required_inventory_roles as required_inventory_roles,
 )
 from cephvr.synchronization.v1 import spikeglx_pb2
 
@@ -241,54 +243,3 @@ def validate_inventory_snapshot(
         for item in snapshot.pulse_channels
     ):
         raise ClientError("SpikeGLX inventory contains an invalid channel record.")
-
-
-def required_inventory_roles(
-    configuration: pb.ExperimentConfiguration,
-) -> frozenset[int]:
-    """Mirror the bounded E12 required-role projection for the installed draft."""
-    from cephvr.acquisition.v1 import camera_pb2
-
-    required: set[int] = set()
-    for backend in configuration.backends:
-        if not backend.enabled:
-            continue
-        if (
-            backend.backend_name == "acquisition"
-            and backend.WhichOneof("settings") == "acquisition"
-        ):
-            acquisition = backend.acquisition
-            for name, role in (
-                ("behavioral", spikeglx_pb2.PULSE_ROLE_BEHAVIORAL_CAMERA),
-                ("tracking", spikeglx_pb2.PULSE_ROLE_TRACKING_CAMERA),
-            ):
-                camera = getattr(acquisition, name)
-                if (
-                    camera.HasField("enabled")
-                    and camera.enabled
-                    and camera.device.frame_timing
-                    == camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
-                ):
-                    required.add(role)
-            if acquisition.HasField("pulses"):
-                if (
-                    acquisition.pulses.HasField("trial_state_enabled")
-                    and acquisition.pulses.trial_state_enabled
-                ):
-                    required.add(spikeglx_pb2.PULSE_ROLE_TRIAL_STATE)
-                if (
-                    acquisition.pulses.HasField("projector_flip_enabled")
-                    and acquisition.pulses.projector_flip_enabled
-                ):
-                    required.add(spikeglx_pb2.PULSE_ROLE_PROJECTOR_FLIP)
-        if (
-            backend.backend_name == "visual_stimulus"
-            and backend.WhichOneof("settings") == "visual_stimulus"
-        ):
-            try:
-                profile = json.loads(backend.visual_stimulus.display.profile_json)
-            except (TypeError, ValueError):
-                continue
-            if isinstance(profile, dict) and profile.get("photodiode_enabled") is True:
-                required.add(spikeglx_pb2.PULSE_ROLE_PHOTODIODE)
-    return frozenset(required)

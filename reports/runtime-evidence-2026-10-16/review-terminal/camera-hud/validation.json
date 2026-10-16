@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-16",
+  "scope": "offscreen GUI; no native/DPI/backend receive-rate/hardware acceptance",
+  "tests": "5 passed initially;2 inventory cases rerun after count/status and separator refinement",
+  "checks": "Ruff/format3,Win32 mypy2,boundaries712/zero violations,whitespace pass",
+  "visual": "1440/720 sample HUD rendered; final wide capture inspected",
+  "limitation": "CameraDeviceView has no measured acquisition-rate readback; displayed unknown, queued camera-acquisition-rate-readback",
+  "source_sha256": {
+    "src/cephvr/gui/cameras.py": "0d9de4eb83bfd72c73872017d8dd2135b57030b1c9a2164766cc513ed32750db",
+    "src/cephvr/gui/managed_cameras.py": "0c7285809e70f7aaf925ed687bdfa4679c047ef97d4ebfa5d37a32da2dd7979e"
+  }
+}

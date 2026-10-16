@@ -25,7 +25,6 @@ from cephvr.shared.credentials import (
     default_runtime_root,
 )
 from cephvr.shared.deadlines import (
-    Deadline,
     duration_ns,
     remaining_seconds,
 )
@@ -50,6 +49,30 @@ from cephvr.shared.transport_deadlines import (
 
 def _id() -> str:
     return str(uuid.uuid4())
+
+
+@pytest.mark.parametrize("installed", [True, False])
+def test_process_software_version_is_owned_and_unknown_without_distribution(
+    monkeypatch, installed
+):
+    from cephvr.shared import software
+
+    calls = []
+
+    def lookup(name):
+        calls.append(name)
+        if not installed:
+            raise software.PackageNotFoundError(name)
+        return "2.0.0.test"
+
+    software.software_version.cache_clear()
+    monkeypatch.setattr(software, "version", lookup)
+    try:
+        assert software.software_version() == ("2.0.0.test" if installed else "")
+        assert software.software_version() == ("2.0.0.test" if installed else "")
+        assert calls == ["cephvr"]
+    finally:
+        software.software_version.cache_clear()
 
 
 def test_nominal_video_grid_uses_half_open_rational_slots_and_ceil_cutoff() -> None:
@@ -149,11 +172,6 @@ def test_uuid_requires_canonical_v4() -> None:
 
 
 def test_deadline_does_not_renew_or_round() -> None:
-    deadline = Deadline(100)
-    assert deadline.constrain(Deadline(200)).absolute_ns == 100
-    assert deadline.remaining_ns(now_ns=110) == 0
-    assert not deadline.expired_at(100)
-    assert deadline.expired_at(101)
     assert duration_ns(0.08, "s") == 80_000_000
     with pytest.raises(ValueError):
         duration_ns(0.0000000001, "s")
@@ -214,8 +232,6 @@ def test_remaining_deadline_helpers_preserve_clamping_and_transport_validation()
     assert remaining_seconds(-1, clock=lambda: 0) == 0.0
     with pytest.raises(ValueError, match="signed int64"):
         transport_remaining_seconds(-1, clock=lambda: 0)
-    with pytest.raises(ValueError, match="signed int64"):
-        Deadline(100).remaining_ns(now_ns=-1)
 
 
 def test_interruption_remains_available_on_ordinary_overload() -> None:

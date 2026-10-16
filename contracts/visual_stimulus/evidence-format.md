@@ -27,13 +27,14 @@ reference to `_stimulus_LOG.json` (including its manifest and uniform layouts). 
 referenced log must be published before the Header is written. Paths are relative to
 the session's `protocol-data/` directory (no `protocol-data/` prefix) and cannot escape
 it after normalization/symlink resolution.
-Current Header `format_version = 5` adds `video_enabled`. With video disabled,
-render groups retain full scientific state and submissions with empty `captures`;
-no encoder-outcome records are emitted. Completion records still reconcile actual
-render groups and submissions, with zero video admissions/drops. Older format4
-added image-selection evidence; readers also accept
-version 3 records without image selections. The earlier one-admitted-group
-mapping is not compatible with this encoded-slot correspondence.
+Current Header `format_version = 6` declares sequential retained video frames with
+external source timestamps. It retains format5's `video_enabled`. With video disabled,
+render groups retain full scientific state/submissions with empty `captures`, no
+encoder-outcome records and zero video admissions/drops. Readers still accept historical
+format3–5 records with nominal-slot mappings/omissions/padding; version4 added image
+selections and version5 added the video flag. Never interpret their indices using the
+format6 rules. The recipe's review timing implementation identifies the corresponding
+encoding mode.
 Artifact names still use E04's reservation mechanism.
 
 ## Definitions and effective inputs
@@ -115,13 +116,16 @@ the offline reader use the same semantic rules:
   No projector shows a trial image after the cutoff.
 - Capture dispositions are independent of submission and refer to the group's one
   tiled review composite (tiles map to outputs through the recipe's ReviewEncoding
-  layout). The first usable evaluation per nominal half-open slot selects its source;
-  later same-slot groups carry `same_slot_omission`, distinct from capacity loss or
-  failed readback. `video_frame_index` is the nominal slot, not an admitted-group
-  ordinal. `leading_duplicate`, `interior_duplicate` and `trailing_duplicate` updates
-  map encoded slots back to the original source group's unchanged evaluation time.
-  The first usable source backfills leading slots; the last selected source fills
-  interior and trailing gaps. A stdin write is not proof of encoded pixels.
+  layout). In format6, `admitted`, `transfer_complete`, `transfer_failed` and
+  `capacity_drop` carry null `video_frame_index`. Only `input_submitted` carries the
+  contiguous zero-based video ordinal, once per retained source group, after the full
+  raw frame is accepted. Source groups remain ordered even when readbacks finish out
+  of order; failed/cancelled/dropped captures consume no index. Join each mapping to
+  its RenderGroup's `state.evaluation_host_ns` and per-output submission entry/return
+  times. Equal timestamps or repeated pixels do not imply duplicate storage.
+  Historical same-slot/padding dispositions are not emitted in format6. A stdin
+  write is not proof of encoded or durable pixels; after a crash, unmatched video
+  samples or missing mappings remain unknown, never inferred from nominal playback.
 - Feedback and interval lines retain the current application/disposition identities.
   Applied FeedbackEvidence references an existing RenderGroup and is written after it
   even though the application occurred before rendering. Each line keeps its result's
@@ -138,8 +142,10 @@ the offline reader use the same semantic rules:
   with no clipping. Capture-slot drops do not omit clipping records.
 - EncoderOutcome is one final account for the composite FFmpeg process after all
   capture dispositions, including late GroupUpdates. Reconcile successful real
-  captures, same-slot omissions, capacity drops, encoded frames and duplicate frames
-  separately; absent observations remain unknown. File sync/close is reported through E06;
+  captures, capacity drops and complete input frames. In format6 the legacy
+  `same_slot_omission_count` and `duplicate_frame_count` remain zero, and normal
+  closure requires admitted = selected_real = input_submitted = encoded counts.
+  Eligible = admitted + capacity_drop; absent observations remain unknown. File sync/close is reported through E06;
   a line cannot prove the later close of its own file.
 - Completion counts reconcile all prior groups, attempts and dispositions (each group
   contributes exactly one state), declared cutoff and exact output set. Normal
@@ -212,7 +218,8 @@ pose and appearance continue. A residency_hold marks a readiness miss even when 
 scheduled images are skipped while the original clocks advance. First-use anchors are
 prepared before Ready; selection before any earlier selection identifies the anchor
 without falsely marking a repetition. Existing per-output submission records distinguish
-selection/rendering from confirmed submission; video padding duplicates remain separate.
+selection/rendering from confirmed submission; repeated source selections are not
+synthetic video duplicates.
 E13's legacy `save_visual_stimulus_data` field controls review video only.
 False remains false on loading saved settings; scientific image-selection and other
 per-group evidence is always retained. No new user toggle or settings-file migration is required.

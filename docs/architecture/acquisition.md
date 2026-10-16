@@ -304,7 +304,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 63
+**Status:** Accepted · **Revision:** 64
 
 **Files**
 
@@ -345,14 +345,13 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   integer/rational arithmetic, preserving device origin; no host substitution or
   raw-tick duplicate. Missing units/optional metadata warn and leave the field null,
   without dropping valid pixels or blocking Ready. Timestamps are exact JSON integers.
-- Retain an explicit mapping for every encoded video frame to its real source or
-  identified padding under A08. Mark duplicated frames so post hoc analysis can
-  discard them without inferring duplication from image equality. Padding never
-  creates a received-source record, native timestamp or acquisition count. An
-  input submission alone does not prove encoding; persisted correspondence checks
-  remain external post hoc work. Same-slot video omissions retain explicit source
-  dispositions; encoded counts distinguish selected real images from leading, gap
-  and trailing duplicates without changing acquisition counts.
+- Retain one explicit mapping per encoded image to its original source ID and
+  host receipt time under A08; native timing remains on the source row. Schema v5
+  uses contiguous encoded indices without nominal slots or padding. Invalid images
+  and capacity drops retain source rows with null video indices; video-disabled
+  rows remain explicit. Completion distinguishes selected-source and submitted
+  counts, with duplicate count fixed at zero. Input submission alone does not
+  prove persisted encoding; correspondence checks remain external post hoc work.
 - Append complete frame lines, in contiguous source order, once final drop decisions
   are known. Every **1 s** (`sync_interval_s`, configurable) and at closure, write
   ready lines and request one OS sync; completion requires sync success. Not a
@@ -419,7 +418,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a08"></a>
 ### A08 — Video encoding and container
 
-**Status:** Accepted · **Revision:** 50
+**Status:** Accepted · **Revision:** 51
 
 **Encoder lifecycle and input**
 
@@ -548,30 +547,23 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 
 **Video timing**
 
-- Video is constant-rate at the nominal rate recorded in the frame-log header: the
-  applied MCU rate for externally triggered cameras, or the resolved `frame_rate_hz`
-  for free-running ones. The coordinator supplies its controller-confirmed typed MCU
-  observation in the private worker Setup payload for external-trigger saving;
-  missing or invalid applied-rate evidence blocks recording preparation.
-  Maintain the nominal video cadence through recording drops by padding missing
-  video slots with explicitly identified duplicated images. Padding must preserve
-  video duration rather than compressing gaps. A07 records encoded indices,
-  duplicate disposition and real-source references so post hoc analysis can
-  identify drops and discard duplicates. Never relabel padding as real acquisition.
-  The video timeline is not a scientific clock; host receipt/native timestamps and
-  SYS-004 pulse alignment retain their meaning.
-- Assign host-receipt times to half-open nominal-rate slots from trial start T.
-  Select the first usable image per slot; later images in that slot remain in the
-  source log with an explicit video-omission disposition. Selected images retain
-  source order. Fill interior/trailing gaps with the last selected image; backfill
-  leading slots with the first usable image, explicitly identifying that later
-  source and its real receipt time. Padding never changes source timestamps.
-- Include slots whose start precedes the actual E11 cutoff; nominal video duration
-  is quantized to whole frames and may exceed the interval by less than one period.
-  Padding is generated incrementally within existing resource/deadline bounds;
-  it does not allocate a gap-sized queue or delay acquisition. No usable image
-  retains A07's existing empty-video handling. Backwards host times interrupt under
-  A05. Encoder/storage failure handling and original deadlines are unchanged.
+- Encode every usable retained in-trial camera image exactly once, in source order,
+  at the unchanged nominal playback rate: the applied MCU rate for externally
+  triggered cameras, or resolved `frame_rate_hz` for free-running ones. The
+  coordinator still supplies confirmed typed MCU rate evidence for external-trigger
+  saving; missing/invalid evidence blocks preparation. Camera acquisition/trigger
+  rates are unchanged. A07 maps contiguous encoded indices to original source IDs
+  and timestamps; never omit an image merely because another arrived in the same
+  nominal interval, and never insert leading, interior or trailing duplicates.
+- The MP4 timeline is a sequential playback convenience, not a scientific clock or
+  guaranteed trial-duration representation. Playback duration is encoded count
+  divided by nominal rate. Host receipt/native timestamps and SYS-004 pulse alignment
+  retain scientific timing; missing images remain explicit gaps in that evidence.
+  E11/A09 receipt-based trial membership, bounded queue overload and invalid-image
+  handling remain authoritative. No usable image retains A07 empty-video handling.
+- Preserve source timestamps and original encoding/storage deadlines. Do not retime
+  images, pad at closure, allocate unbounded queues or add a second recording mode.
+  This rule applies to all camera roles; E13's stimulus review timing is independent.
 - Sync flushed video storage every **1 s** (configurable) and at final closure,
   without stopping encoding. This cannot persist encoder-buffered frames or guarantee
   a loss window. Video sync is separate from the frame log; storage failure enters
@@ -587,7 +579,7 @@ deferral (E15) remains.
 <a id="a09"></a>
 ### A09 — Source-frame identity
 
-**Status:** Accepted · **Revision:** 15
+**Status:** Accepted · **Revision:** 16
 
 - A camera frame belongs to a trial only if its host-monotonic receipt timestamp
   (A05) satisfies `trial_start <= receipt < trial_stop`, using the normal scheduled
@@ -610,8 +602,8 @@ deferral (E15) remains.
   assumption that the first recorded camera trigger in the matched trial's pulse
   train corresponds to the source image of its first video frame. Label this an
   assumed anchor, not independently measured correspondence. Use A07's encoded-to-
-  source mapping: padding duplicates are not new exposures and later video indices
-  are not pulse indices. Preserve native timestamps/counters and explicit drops;
+  source mapping: later sequential video indices are not pulse indices when
+  acquisition or recording has lost an image. Preserve native timestamps/counters and explicit drops;
   conflicting evidence is reported, never silently renumbered or repaired. With
   video disabled, use the first received source row as the analogous assumed anchor.
   Retain existing wiring, cadence and trial boundaries. ExposureActive wiring,
@@ -650,7 +642,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 60
+**Status:** Accepted · **Revision:** 61
 
 **Capture lifetime**
 
@@ -713,6 +705,9 @@ stamping/filtering and the mappings still need runtime implementation.
   before Setup. An optional low-rate session preview (A03, `session_preview_max_hz`,
   default 10, configurable, 0 = off) shows in-trial frames only and never changes
   capture or pulses.
+- External preview attachment goes to acquisition through the controller. Terminal
+  consumer proofs also follow [E08](system-contracts.md#e08)'s independent and
+  current-controller relay routes; ATTACHED is never sent to the supervisor.
 - Controller-authorized T08 diagnostics may consume the selected manual preview
   through A03's distinct ordered ring without another camera/SDK owner. Exact
   diagnostic/preview identities and confirmed attachment/release bind the consumer;
@@ -916,7 +911,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 47
+**Status:** Accepted · **Revision:** 48
 
 **Board and firmware**
 
@@ -1084,8 +1079,10 @@ hardware information and later implementation; no new deferral is implied.
 **Operator I/O diagnostics**
 
 - Projector flip input, its diagnostics and camera-trigger phase offsets are deferred
-  by the owner. Expose no MCU input control/add/test action and reject activation or
-  diagnostics before serial/device work. Legacy wire/snapshot pin fields may remain
+  by the owner for runtime. The G01 local review candidate may author named input/pin
+  drafts, without device/serial operations. Managed runtime exposes no MCU input
+  control/add/test action and rejects activation or diagnostics before serial/device
+  work. Legacy wire/snapshot pin fields may remain
   inert for compatibility; they cannot enable the input. V20 presentation modes do
   not require an MCU input. Firmware implements output diagnostics only.
 - Trial state is an active-high output; camera trigger enablement/rates retain A10's

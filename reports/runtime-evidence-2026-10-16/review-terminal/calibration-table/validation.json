@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-16",
+  "scope": "offscreen Qt layout and local GUI checks; no native/DPI/rig acceptance",
+  "tests": "7 passed, 546 deselected",
+  "static": "Ruff/format3, Win32 mypy2, boundaries712/zero violations, git diff --check passed",
+  "layouts": "1440/1175/720: measured header one line;1175 captures inspected",
+  "hashes": {
+    "src/cephvr/gui/projector_calibration.py": "a2c2e47917d0390b4d166b58e2a5bf7c44cd87e71f0c421ead5f6111a218104e",
+    "src/cephvr/gui/projector_measurements.py": "14a602a32ceb0bce3e7e9c829368d01992a0d74f3f03b48a0a9546a8954d55a0",
+    "tests/gui/test_dashboard.py": "717a08c56da70dba8ea81f3522a44bcd10c499d3fee9a888727a4c7eafb10ae6"
+  }
+}

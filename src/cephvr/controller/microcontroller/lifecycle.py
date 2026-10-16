@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.microcontroller.device import MicrocontrollerDevice
 from cephvr.controller.microcontroller.health import MicrocontrollerHealth
 from cephvr.controller.state import (
@@ -177,9 +178,8 @@ class MicrocontrollerLifecycle:
                 settings = next(
                     (
                         item.acquisition
-                        for item in self.configuration.current.backends
-                        if item.backend_name == "acquisition"
-                        and item.HasField("acquisition")
+                        for item in acquisition_backends(self.configuration.current)
+                        if (item.HasField("acquisition"))
                     ),
                     None,
                 )
@@ -202,9 +202,8 @@ class MicrocontrollerLifecycle:
                             next(
                                 (
                                     item.acquisition
-                                    for item in edit.proposed.backends
-                                    if item.backend_name == "acquisition"
-                                    and item.WhichOneof("settings") == "acquisition"
+                                    for item in acquisition_backends(edit.proposed)
+                                    if (item.WhichOneof("settings") == "acquisition")
                                 ),
                                 None,
                             )

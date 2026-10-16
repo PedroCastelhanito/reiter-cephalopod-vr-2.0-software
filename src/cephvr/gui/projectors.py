@@ -111,10 +111,12 @@ class ProjectorsPanel(DevicePanel):
             face for face in ("Front", "Left", "Right", "Bottom") if face in enabled
         )
 
-    def __init__(self, *, settings: QSettings | None = None) -> None:
+    def __init__(
+        self, *, settings: QSettings | None = None, review: bool = False
+    ) -> None:
         super().__init__(
             "Displays",
-            "DISPLAY     —\nPROJECTOR   Unassigned\nOUTPUT      Not tested",
+            (("DISPLAY", "—"), ("PROJECTOR", "Unassigned"), ("OUTPUT", "Not tested")),
             (),
         )
         self.table = DataTable(0, 5)
@@ -156,7 +158,7 @@ class ProjectorsPanel(DevicePanel):
         self._pulse_face: str | None = None
         self._configuration_error = ""
         self._geometry_dirty = False
-        self.layout_card = Card("Displays layout · Display IDs")
+        self.layout_card = Card("Displays layout")
         self.diagram = DisplayLayout()
         self.layout_card.body.addWidget(self.diagram)
         layout = self.columns[0].layout()
@@ -171,11 +173,18 @@ class ProjectorsPanel(DevicePanel):
                     f, "subject_distance", value
                 )
             )
+        self.review = review
         self.live_tuning_available = True
-        self.timing = ProjectorTiming()
-        self.timing.placement_button.clicked.connect(
-            lambda: self.request_placement("photodiode_placement")
-        )
+        if review:
+            from cephvr.gui.review_timing import ReviewProjectorTiming
+
+            self.timing: ProjectorTiming = ReviewProjectorTiming(self)
+        else:
+            self.timing = ProjectorTiming()
+        if not review:
+            self.timing.placement_button.clicked.connect(
+                lambda: self.request_placement("photodiode_placement")
+            )
         self.timing.blackouts.placement_button.clicked.connect(
             lambda: self.request_placement("blackout_placement")
         )
@@ -210,7 +219,12 @@ class ProjectorsPanel(DevicePanel):
         for (face, key), editor in self.calibration.controls.items():
             assert isinstance(editor, (QLineEdit, QCheckBox))
             calibration_fields[f"screens.{face}.{key}"] = editor
-        self.calibration_files = ProjectorFiles(
+        files_class = ProjectorFiles
+        if review:
+            from cephvr.gui.review_projector_files import ReviewProjectorFiles
+
+            files_class = ReviewProjectorFiles
+        self.calibration_files = files_class(
             calibration_fields,
             self.timing,
             self.face_participation,
@@ -238,6 +252,7 @@ class ProjectorsPanel(DevicePanel):
         synchronization_layout = QVBoxLayout(synchronization)
         synchronization_layout.setContentsMargins(0, 0, 0, 0)
         synchronization_layout.setSpacing(SIZES.card_gap)
+        synchronization_layout.addWidget(self.timing.mode_field)
         synchronization_layout.addWidget(self.timing)
         synchronization_layout.addWidget(self.timing.blackouts)
         synchronization_layout.addStretch()
@@ -262,7 +277,7 @@ class ProjectorsPanel(DevicePanel):
         assert isinstance(right, QVBoxLayout)
         self.status_column.hud_card.hide()
         right.insertWidget(0, self.layout_card)
-        self.tank_card = Card("Tank & screens")
+        self.tank_card = Card("Setup geometry")
         self.tank = TankDiagram()
         self.tank_card.body.addWidget(self.tank)
         right.insertWidget(1, self.tank_card)
@@ -776,6 +791,8 @@ class ProjectorsPanel(DevicePanel):
         from cephvr.gui.placement_calibration import refresh_placement_controls
 
         refresh_placement_controls(self, editable=editable)
+        if self.review:
+            self.timing.placement_button.setEnabled(self.can_review)
 
     def update_participation(self) -> None:
         self.diagram.disabled_indices = {
@@ -847,13 +864,18 @@ class ProjectorsPanel(DevicePanel):
         if self.loading:
             return
         if not self.keys:
-            self.status_column.hud.setPlainText(NO_PROJECTORS_MESSAGE)
+            self.status_column.set_rows((("", NO_PROJECTORS_MESSAGE),))
             return
         row = self.table.currentRow()
         key = self.keys[row] if 0 <= row < len(self.keys) else ""
         item = self.table.item(row, 1)
-        self.status_column.hud.setPlainText(
-            f"DISPLAY ID  {item.text() if item else '—'}\nPROJECTOR  {self.assignments.get(key, 'Unassigned')}\nOUTPUT     Not tested"
+        self.status_column.set_rows(
+            (
+                ("DISPLAY ID", item.text() if item else "—"),
+                None,
+                ("PROJECTOR", self.assignments.get(key, "Unassigned")),
+                ("OUTPUT", "Not tested"),
+            )
         )
 
     def apply_view(self, view: DashboardView) -> None:

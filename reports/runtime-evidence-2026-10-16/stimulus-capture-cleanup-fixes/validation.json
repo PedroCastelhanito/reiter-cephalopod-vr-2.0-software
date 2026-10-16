@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-16",
+  "source_head": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_state": "Dirty shared working tree; unrelated GUI work concurrent. Exact two production files before this increment are retained as *.before. Final formatting changes are whitespace only.",
+  "decisions": [
+    "V12 revision15",
+    "E13 revision26",
+    "E06",
+    "ARCH-002",
+    "E15"
+  ],
+  "changes": [
+    "Cancel independent pending captures despite evidence error, retaining exact reservation/GL retry state and propagating first error.",
+    "Commit buffer retirement and pooling only after final GL unbind succeeds."
+  ],
+  "source_sha256": {
+    "src/cephvr/visual_stimulus/rendering/capture.py": "b6ff2a4f5b6be8efda005ead1dc4db409f59066ff03f0d0a76c2fe91b501169a",
+    "src/cephvr/visual_stimulus/recording/capture_runtime.py": "84f425839bf51801c6b10e0c10ec2667fae13b795ab8eaaa3b32063490d8e282",
+    "tests/visual_stimulus/test_rendering.py": "f486fa136a620c4fbfc8354000427f9b9d6b9e05cd2378e84aeef7b486c65b92",
+    "tests/visual_stimulus/test_recording.py": "c806827ac99491e8cf7b710a911e2b964ca4f46a0effa4ba4e8e8574ca0b051b",
+    "config/backends/visual_stimulus_config.toml": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212"
+  },
+  "commands": [
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_recording.py -q -k 'unbind_failure or cancellation_releases_resources_despite'",
+      "before": "10 failed, 143 deselected",
+      "before_exit_code": 1,
+      "after": "10 passed, 143 deselected",
+      "exit_code": 0,
+      "outputs": [
+        "red.txt",
+        "green.txt"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus contracts/visual_stimulus/tests -q -m 'not windows and not rig'",
+      "exit_code": 0,
+      "outcome": "440 passed, 1 deselected, 82 subtests passed in 4.36s",
+      "output": "tests.txt",
+      "permissions": "localhost sockets enabled"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus",
+      "exit_code": 0,
+      "output": "ruff-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus",
+      "exit_code": 0,
+      "outcome": "174 files already formatted",
+      "output": "format-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/visual_stimulus",
+      "exit_code": 0,
+      "outcome": "158 source files",
+      "output": "mypy.txt"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "exit_code": 0,
+      "outcome": "712 modules; zero violations; existing size advisories, no changed source owner exceeds500 lines",
+      "output": "boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "output": "whitespace.txt"
+    }
+  ],
+  "preservation": "preservation.json",
+  "limits": [
+    "No native GL, NVENC, Windows device or rig execution.",
+    "Existing host image orientation tests pass; actual GPU pixel equivalence and performance remain rig checks.",
+    "Historical review probes assert the old defect and are intentionally not rewritten or rerun as current acceptance."
+  ],
+  "document_checks": "document-checks.json"
+}

@@ -13,7 +13,7 @@ from cephvr.gui.projector_optics import (
     bottom_mirror_footprint,
     projection_footprint,
 )
-from cephvr.gui.theme import COLORS, SIZES
+from cephvr.gui.theme import SIZES, colors_for
 
 
 class TankDiagram(QWidget):
@@ -51,6 +51,7 @@ class TankDiagram(QWidget):
         self.update()
 
     def draw_legend(self, painter: QPainter) -> float:
+        colors = colors_for(self)
         painter.save()
         self.legend_regions.clear()
         font = painter.font()
@@ -58,10 +59,10 @@ class TankDiagram(QWidget):
         painter.setFont(font)
         x, y = 8.0, 14.0
         for key, title, color, marker in (
-            ("tank", "Tank", COLORS.muted, "line"),
-            ("screens", "Screens", COLORS.accent, "line"),
-            ("projection", "Projection", COLORS.projection, "optics"),
-            ("subject", "Subject", COLORS.text, "dot"),
+            ("tank", "Tank", colors.muted, "line"),
+            ("screens", "Screens", colors.accent, "line"),
+            ("projection", "Projection", colors.projection, "optics"),
+            ("subject", "Subject", colors.text, "dot"),
         ):
             extent = painter.fontMetrics().horizontalAdvance(title) + 32
             if x + extent > self.width() - 5 and x > 8:
@@ -77,9 +78,9 @@ class TankDiagram(QWidget):
             )
             if marker == "optics":
                 painter.drawLine(QPointF(x, y - 4), QPointF(x + 13, y - 4))
-                painter.setBrush(QColor(COLORS.projection))
+                painter.setBrush(QColor(colors.projection))
                 painter.drawEllipse(QPointF(x + 2, y - 4), 2, 2)
-                painter.setPen(QPen(QColor(COLORS.footprint), 1.5))
+                painter.setPen(QPen(QColor(colors.footprint), 1.5))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.drawRect(QRectF(x + 9, y - 8, 5, 8))
                 painter.setPen(QColor(color))
@@ -242,15 +243,19 @@ class TankDiagram(QWidget):
             super().mouseDoubleClickEvent(event)
 
     def draw_screen(self, painter: QPainter, face: str, polygon: QPolygonF) -> None:
-        painter.setBrush(QColor(33, 91, 133, 25))
-        painter.setPen(QColor(COLORS.accent))
+        colors = colors_for(self)
+        wash = QColor(colors.primary)
+        wash.setAlpha(25)
+        painter.setBrush(wash)
+        painter.setPen(QColor(colors.accent))
         painter.drawPolygon(polygon)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        colors = colors_for(self)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         legend_height = self.draw_legend(painter)
-        painter.setPen(QColor(COLORS.muted))
+        painter.setPen(QColor(colors.muted))
         if self.rig is None:
             painter.drawText(
                 self.rect(),
@@ -310,8 +315,8 @@ class TankDiagram(QWidget):
                 + (py - (max_y + min_y) / 2) * scale,
             )
 
-        amber = QColor(COLORS.projection)
-        painter.setPen(QPen(QColor(COLORS.muted), 1))
+        amber = QColor(colors.projection)
+        painter.setPen(QPen(QColor(colors.muted), 1))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         if self.visible_elements["tank"]:
             for corners in tank:
@@ -337,17 +342,17 @@ class TankDiagram(QWidget):
                 )
                 if not projection.mirror:
                     mark = point(projection.mirror_center)
-                    painter.setPen(QPen(QColor(COLORS.mirror), 2))
+                    painter.setPen(QPen(QColor(colors.mirror), 2))
                     painter.drawLine(mark + QPointF(-5, 5), mark + QPointF(5, -5))
             if projection.mirror:
-                mirror_color = QColor(COLORS.mirror)
+                mirror_color = QColor(colors.mirror)
                 painter.setPen(QPen(mirror_color, 1.5))
                 mirror_color.setAlpha(35)
                 painter.setBrush(mirror_color)
                 painter.drawPolygon(QPolygonF([point(p) for p in projection.mirror]))
             painter.setPen(
                 QPen(
-                    QColor(COLORS.footprint),
+                    QColor(colors.footprint),
                     1.5,
                     Qt.PenStyle.DashLine
                     if projection.warning
@@ -359,8 +364,8 @@ class TankDiagram(QWidget):
             painter.setPen(amber)
             painter.setBrush(amber)
             painter.drawEllipse(point(projection.projector), 3, 3)
-        painter.setBrush(QColor(COLORS.text))
-        painter.setPen(QColor(COLORS.text))
+        painter.setBrush(QColor(colors.text))
+        painter.setPen(QColor(colors.text))
         subject = point(rig.subject)
         if self.visible_elements["subject"]:
             painter.drawEllipse(subject, 4, 4)

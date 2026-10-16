@@ -19,7 +19,6 @@ from cephvr.controller.metadata.types import (
 )
 from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.state import (
-    RETAINED_LIMIT,
     Attempt,
     ControlState,
     LifecycleState,
@@ -204,14 +203,13 @@ class MetadataCoordinator:
                         prior_failure
                         or "metadata completion missed its original deadline"
                     )
-                    self.control.warnings.append(
+                    self.control.retain_warning(
                         pb.Warning(
                             warning_id=str(uuid.uuid4()),
                             component="metadata",
                             message=f"{completion.path.name}: late verified sync; original timeout retained: {reason}",
                         )
                     )
-                    self.control.warnings = self.control.warnings[-RETAINED_LIMIT:]
             elif completion.error:
                 result.failure.CopyFrom(
                     pb.Failure(code="METADATA_WRITE", message=completion.error)
@@ -299,6 +297,30 @@ class MetadataCoordinator:
                 details=details,
             ),
         )
+
+    def queue_event(self, attempt: Attempt, event_type: str, **kwargs: Any) -> None:
+        """Own an event before releasing the lifecycle lock or starting finalization."""
+        if not attempt.activated or attempt.writer is None:
+            return
+        if (
+            attempt.writer_closed
+            or attempt.recovery_log_closed
+            or len(attempt.recovery_log_tasks)
+            >= self.limits.current.max_metadata_operations
+        ):
+            attempt.recovery_log_failed = True
+            self.spawn(self._event_admission_failed())
+            return
+        kwargs.setdefault("at_ns", self.clock())
+        task = self.spawn(self.log_event(attempt, event_type, **kwargs))
+        attempt.recovery_log_tasks.add(task)
+        task.add_done_callback(attempt.recovery_log_finished)
+
+    @staticmethod
+    async def _event_admission_failed() -> None:
+        # The runtime's owned-task failure path interrupts without delaying safety
+        # command delivery or making the failed append appear successful.
+        raise StorageError("required session event exceeds admission/sealing bounds")
 
     async def finish_session(
         self, attempt: Attempt, *, outcome: str, deadline_ns: int

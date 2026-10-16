@@ -7,6 +7,7 @@ import json
 import os
 import uuid
 from concurrent.futures import Future
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -16,8 +17,13 @@ import pytest
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.metadata.coordination import MetadataCoordinator
-from cephvr.controller.metadata.documents import active_configuration_document
+from cephvr.controller.metadata.documents import (
+    active_configuration_document,
+    output_formats,
+    software_provenance,
+)
 from cephvr.controller.metadata.reservation import OutputReservation
+from cephvr.controller.metadata.trial_logs import _trial_output_index
 from cephvr.controller.metadata.types import (
     MetadataCompletion,
     MetadataWrite,
@@ -25,7 +31,7 @@ from cephvr.controller.metadata.types import (
 )
 from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.ports import BackendPort
-from cephvr.controller.state import Attempt
+from cephvr.controller.state import Attempt, ControlState
 from tests.controller.support_components import (
     _attempt,
     _id,
@@ -41,6 +47,184 @@ class _RetiringWriter:
 
     def retire(self, command_id: str) -> None:
         self.retired.append(command_id)
+
+
+def test_session_provenance_uses_only_accepted_active_software_versions(tmp_path):
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(runtime, tmp_path, {"acquisition": cast(Any, object())})
+    attempt.ready["acquisition"] = pb.ReadyReport(software_version="camera-build")
+    attempt.ready["inactive"] = pb.ReadyReport(software_version="must-not-leak")
+    runtime.supervisor_state.software_version = "supervisor-build"
+    assert software_provenance(attempt, runtime.supervisor_state) == {
+        "supervisor": "supervisor-build",
+        "backends": {"acquisition": "camera-build"},
+    }
+    runtime.supervisor_state.software_version = ""
+    attempt.ready.clear()
+    assert software_provenance(attempt, runtime.supervisor_state) == {
+        "supervisor": None,
+        "backends": {"acquisition": None},
+    }
+
+
+@pytest.mark.parametrize("damage", [None, "missing", "duplicate", "version"])
+def test_output_index_freezes_writer_definitions_and_preserves_unknowns(
+    tmp_path, damage
+):
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(runtime, tmp_path, {})
+    trial = pb.TrialContext(session=attempt.context, trial_id=_id(), trial_number=1)
+    plan = attempt.prepared.trials.add(context=trial)
+    for key in ("video", "frames"):
+        attempt.prepared.outputs.add(
+            output_key=key,
+            backend=backend,
+            trial=trial,
+            output_tag=key,
+            extension="mp4" if key == "video" else "jsonl",
+            path=str(tmp_path / key),
+        )
+    definitions = [
+        {"output_key": "video", "format": "fmp4", "schema_version": 1},
+        {"output_key": "frames", "format": "jsonl", "schema_version": 4},
+    ]
+    if damage == "missing":
+        definitions.pop()
+    elif damage == "duplicate":
+        definitions.append(definitions[0])
+    elif damage == "version":
+        definitions[0]["schema_version"] = True
+    if damage is not None:
+        with pytest.raises(ValueError):
+            output_formats({"outputs": definitions}, {"video", "frames"})
+        return
+    attempt.output_formats = output_formats(
+        {"outputs": definitions}, {"video", "frames"}
+    )
+    attempt.finished["acquisition"] = pb.FinishedReport(
+        outputs=[
+            pb.OutputResult(
+                output_key="video",
+                path=str(tmp_path / "video"),
+                closure=pb.OUTPUT_CLOSURE_CLOSED,
+                artifact_present=True,
+                counts={"frames": 17},
+            )
+        ]
+    )
+    index = _trial_output_index(attempt, plan)
+    assert len(index) == 2
+    assert index[0]["backend"] == {
+        "backend_name": "acquisition",
+        "backend_generation": backend.backend_generation,
+    }
+    assert index[0]["format"] == "fmp4" and index[0]["schema_version"] == 1
+    assert index[0]["counts"] == {"frames": 17}
+    assert index[1]["format"] == "jsonl" and index[1]["schema_version"] == 4
+    assert index[1]["artifact_present"] is None and index[1]["counts"] == {}
+    assert index[1]["closure"] == "OUTPUT_CLOSURE_UNCONFIRMED"
+
+
+@pytest.mark.parametrize("failed", [False, True])
+async def test_queued_required_events_finish_before_session_seal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failed: bool
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(runtime, tmp_path, {})
+    attempt.activated = True
+    runtime.lifecycle.attempt = attempt
+    gate, entered = asyncio.Event(), asyncio.Event()
+    events: list[str] = []
+
+    class Writer:
+        def seal(self, timeout: float) -> bool:
+            events.append("seal")
+            return True
+
+    attempt.writer = cast(MetadataWriter, Writer())
+
+    def spawn(coroutine):
+        task = asyncio.create_task(coroutine)
+        task.add_done_callback(lambda result: result.exception())
+        return task
+
+    runtime.metadata.spawn = spawn
+
+    async def event(_attempt: Attempt, event_type: str, **kwargs: Any) -> None:
+        if event_type == "command_accepted":
+            entered.set()
+            await gate.wait()
+            if failed:
+                raise StorageError("append failed")
+        events.append(event_type)
+
+    monkeypatch.setattr(runtime.metadata, "log_event", event)
+    async with runtime.lifecycle.lock:
+        runtime.metadata.queue_event(
+            attempt, "command_accepted", details={"command": "AbortNow"}
+        )
+    await entered.wait()
+    finalizing = asyncio.create_task(
+        runtime.metadata.finish_session(
+            attempt, outcome="interrupted", deadline_ns=1_000_001_000
+        )
+    )
+    await asyncio.sleep(0)
+    assert attempt.recovery_log_closed and not events
+    gate.set()
+    assert await finalizing is not failed
+    assert events == (
+        ["session_ended", "seal"]
+        if failed
+        else ["command_accepted", "session_ended", "seal"]
+    )
+    assert attempt.recovery_log_failed == failed
+    assert attempt.writer_closed
+
+
+async def test_required_event_capacity_failure_cannot_claim_clean_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(runtime, tmp_path, {})
+    attempt.activated = True
+    gate = asyncio.Event()
+
+    class Writer:
+        def seal(self, timeout):
+            return True
+
+    attempt.writer = cast(MetadataWriter, Writer())
+    runtime.limit_state.current = replace(runtime.limits, max_metadata_operations=4)
+    tasks = []
+
+    def spawn(coroutine):
+        task = asyncio.create_task(coroutine)
+        task.add_done_callback(lambda done: done.exception())
+        tasks.append(task)
+        return task
+
+    runtime.metadata.spawn = spawn
+
+    async def event(_attempt, name, **kwargs):
+        if name != "session_ended":
+            await gate.wait()
+
+    monkeypatch.setattr(runtime.metadata, "log_event", event)
+    for _ in range(5):
+        runtime.metadata.queue_event(attempt, "command_accepted")
+    assert len(attempt.recovery_log_tasks) == 4
+    assert attempt.recovery_log_failed
+    gate.set()
+    assert not await runtime.metadata.finish_session(
+        attempt, outcome="interrupted", deadline_ns=1_000_001_000
+    )
+    await asyncio.gather(*tasks, return_exceptions=True)
+    assert isinstance(tasks[-1].exception(), StorageError)
 
 
 @pytest.mark.parametrize(
@@ -461,7 +645,7 @@ async def test_cancelled_persist_records_unconfirmed_and_reconciles_late_sync() 
     )
     coordinator = MetadataCoordinator(
         lifecycle=SimpleNamespace(lock=asyncio.Lock()),  # type: ignore[arg-type]
-        control=SimpleNamespace(warnings=[]),  # type: ignore[arg-type]
+        control=ControlState(),  # type: ignore[arg-type]
         metadata_state=metadata_state,  # type: ignore[arg-type]
         limits=SimpleNamespace(  # type: ignore[arg-type]
             current=SimpleNamespace(
@@ -495,3 +679,56 @@ async def test_cancelled_persist_records_unconfirmed_and_reconciles_late_sync() 
     assert writer.retired == [command_id]
     assert results[command_id].state == pb.METADATA_PERSISTENCE_SYNCED
     assert uuid.UUID(command_id)
+
+
+@pytest.mark.parametrize("limit", ["count", "bytes"])
+def test_writer_capacity_includes_active_io_and_late_sync_keeps_original_deadline(
+    tmp_path, monkeypatch, limit
+):
+    import threading
+
+    entered, release = threading.Event(), threading.Event()
+    real_fsync = os.fsync
+
+    def blocked(fd):
+        entered.set()
+        assert release.wait(2)
+        return real_fsync(fd)
+
+    monkeypatch.setattr(os, "fsync", blocked)
+    now = [1]
+    writer = MetadataWriter(
+        tmp_path,
+        max_operations=1 if limit == "count" else 4,
+        max_bytes=4096 if limit == "count" else 7,
+        clock=lambda: now[0],
+        session_id=SESSION,
+    )
+    request = _append("first", tmp_path / "SESSION_LOG.jsonl", b'{"n":1}')
+    try:
+        first = writer.submit(request)
+        assert entered.wait(1)
+        with pytest.raises(StorageError, match="capacity"):
+            writer.submit(
+                replace(
+                    request,
+                    command_id="second",
+                    operation=pb.OperationContext(command_id="second"),
+                )
+            )
+        now[0] = 3
+        release.set()
+        result = first.result(2)
+        assert result.state == "synced" and not result.deadline_met
+        writer.retire("first")
+        next_request = replace(
+            request,
+            command_id="third",
+            operation=pb.OperationContext(command_id="third"),
+            submitted_ns=3,
+            deadline_ns=4,
+        )
+        assert writer.submit(next_request).result(2).deadline_met
+    finally:
+        release.set()
+        assert writer.seal(2)

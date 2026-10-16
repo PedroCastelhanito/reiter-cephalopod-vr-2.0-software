@@ -1,0 +1,25 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_runtime_warning_entrypoint_is_bounded_and_owns_its_copy _________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2034/test_runtime_warning_entrypoin0')
+
+    async def test_runtime_warning_entrypoint_is_bounded_and_owns_its_copy(tmp_path):
+        from cephvr.controller.state import RETAINED_LIMIT
+    
+        runtime = _runtime(tmp_path, pb.BackendContext(backend_name="acquisition", backend_generation=_id()))
+        warning = pb.Warning(component="test")
+        for number in range(RETAINED_LIMIT + 1):
+            warning.warning_id = str(number)
+            await runtime.record_warning(warning)
+        warning.warning_id = "mutated"
+>       assert len(runtime.control.warnings) == RETAINED_LIMIT
+E       assert 257 == 256
+E        +  where 257 = len([warning_id: "0"\ncomponent: "test"\n, warning_id: "1"\ncomponent: "test"\n, warning_id: "2"\ncomponent: "test"\n, warning_id: "3"\ncomponent: "test"\n, warning_id: "4"\ncomponent: "test"\n, warning_id: "5"\ncomponent: "test"\n, ...])
+E        +    where [warning_id: "0"\ncomponent: "test"\n, warning_id: "1"\ncomponent: "test"\n, warning_id: "2"\ncomponent: "test"\n, warning_id: "3"\ncomponent: "test"\n, warning_id: "4"\ncomponent: "test"\n, warning_id: "5"\ncomponent: "test"\n, ...] = ControlState(revision=258, owner=None, watches={}, operations={}, operation_finished_ns={}, retained_truncated=False, ...test"\n, warning_id: "255"\ncomponent: "test"\n, warning_id: "256"\ncomponent: "test"\n], tracking_diagnostic=closed: true\n).warnings
+E        +      where ControlState(revision=258, owner=None, watches={}, operations={}, operation_finished_ns={}, retained_truncated=False, ...test"\n, warning_id: "255"\ncomponent: "test"\n, warning_id: "256"\ncomponent: "test"\n], tracking_diagnostic=closed: true\n) = <cephvr.controller.runtime.ControllerRuntime object at 0x10ac67210>.control
+
+tests/controller/test_runtime_retention.py:359: AssertionError
+=========================== short test summary info ============================
+FAILED tests/controller/test_runtime_retention.py::test_runtime_warning_entrypoint_is_bounded_and_owns_its_copy
+1 failed, 11 deselected in 0.44s

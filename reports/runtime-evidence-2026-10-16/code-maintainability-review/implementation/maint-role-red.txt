@@ -1,0 +1,44 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_inventory_required_roles_follow_the_accepted_active_configuration ____
+
+    def test_inventory_required_roles_follow_the_accepted_active_configuration() -> None:
+        from cephvr.acquisition.v1 import camera_pb2
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_display_operations import required_inventory_roles
+        from cephvr.synchronization.v1 import spikeglx_pb2
+    
+        configuration = pb.ExperimentConfiguration()
+        acquisition = configuration.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        acquisition.behavioral.enabled = True
+        acquisition.behavioral.device.frame_timing = (
+            camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+        )
+        acquisition.tracking.enabled = True
+        acquisition.tracking.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
+        acquisition.eye_tracking.enabled = True
+        acquisition.eye_tracking.device.frame_timing = camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+        vs = configuration.backends.add(
+            backend_name="visual_stimulus", enabled=True
+        ).visual_stimulus
+        vs.display.profile_json = '{"photodiode_enabled":true}'
+    
+>       assert required_inventory_roles(configuration) == frozenset(
+            {
+                spikeglx_pb2.PULSE_ROLE_BEHAVIORAL_CAMERA,
+                spikeglx_pb2.PULSE_ROLE_PHOTODIODE,
+                spikeglx_pb2.PULSE_ROLE_EYE_TRACKING_CAMERA,
+            }
+        )
+E       assert frozenset({1, 3}) == frozenset({1, 3, 7})
+E         
+E         Extra items in the right set:
+E         7
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:4919: AssertionError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_inventory_required_roles_follow_the_accepted_active_configuration
+1 failed, 520 deselected in 3.90s

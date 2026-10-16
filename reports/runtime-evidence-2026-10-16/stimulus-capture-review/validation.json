@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-16",
+  "source_head": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_state": "Dirty shared checkout; pre-optimization snapshot is the exact retained working-tree file, not HEAD. GUI work is concurrent and outside this review.",
+  "scope": "Review only: PBO reuse, GPU row orientation, cancellation and cleanup. No implementation changes.",
+  "source_sha256": {
+    "src/cephvr/visual_stimulus/rendering/capture.py": "2ff17538dd320eb6e50dd63f904383a80cb3826566119ea8b1a9b5339e3d24f7",
+    "src/cephvr/visual_stimulus/rendering/native.py": "d6357554db6472704c1ab18fc372c9234554edcb1cfacd02d2340931efb5b8ad",
+    "src/cephvr/visual_stimulus/recording/capture_runtime.py": "f63c2e8bf9358c7fae365df15ecfca29bf7e642870afa87cbae454b38f7da35e",
+    "src/cephvr/visual_stimulus/recording/session.py": "2d74cb0724d77dca668c71a8b4eb9bc68f928ce736033538fbd02aad6ec87336",
+    "src/cephvr/visual_stimulus/worker/cleanup.py": "911eb158e4e16e830d0102775b37aaab225c121155035449542269dd165b0dec",
+    "src/cephvr/visual_stimulus/resources/budget.py": "ab5a2f635c5d5ede671b9d9de4d361af2b50e31c6d69d5d22e9e887842f0eaeb",
+    "tests/visual_stimulus/test_rendering.py": "99c724026af6b6a7ffcc6a3acffb07124e2974d6b62d846de12366b4a8452cd6",
+    "tests/visual_stimulus/test_recording.py": "c5c307200bf3ede02c43693e800f71bb64bf1b0ab175ba4f4413d23e75135b94",
+    "reports/runtime-evidence-2026-10-16/stimulus-capture-optimization/capture-before.py": "e9424c00ddaab954e6e060b64dc12ae3fbe4e8cfb80091114952a683f5201793",
+    "reports/runtime-evidence-2026-10-16/stimulus-capture-review/probe.py": "d02ce96f16b49cce963e6052fdc61c3f2317d0361076903ed6a3d58f33b6d6d5"
+  },
+  "commands": [
+    {
+      "command": ".venv/bin/python reports/runtime-evidence-2026-10-16/stimulus-capture-review/probe.py",
+      "exit_code": 0,
+      "outcome": "Reproduces both findings; assertions confirm observed failure behavior, not a fix.",
+      "output": "probe-result.json"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus contracts/visual_stimulus/tests -q -m 'not windows and not rig'",
+      "exit_code": 0,
+      "permission": "localhost sockets enabled",
+      "outcome": "430 passed, 1 deselected, 82 subtests passed in 10.05s",
+      "output": "tests.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "output": "whitespace.txt"
+    }
+  ],
+  "findings": [
+    {
+      "priority": "P1",
+      "origin": "Pre-existing in HEAD",
+      "location": "recording/capture_runtime.py:325-334",
+      "summary": "Evidence enqueue failure prevents cancellation and all later GL teardown.",
+      "evidence": "Actual enqueue/cancel methods on injected full failed queue; three attempts, zero delete calls, retained reservation and GL token."
+    },
+    {
+      "priority": "P2",
+      "origin": "Introduced by optimization",
+      "location": "rendering/capture.py:241-250",
+      "summary": "Successful readback retires handle before fallible final unbind; error leaves caller holding an uncancellable stale handle.",
+      "evidence": "One-shot host GL unbind failure; current rejects cancellation, exact pre-optimization snapshot cancels successfully."
+    }
+  ],
+  "limits": [
+    "No real GL or NVENC execution; graphics extra is not installed locally.",
+    "Fault injection establishes control flow only, not driver error incidence.",
+    "No native image equivalence, timing, memory plateau or rig acceptance claim.",
+    "Existing host model tests exercise row reversal for 8/10-bit and odd/even/single-row images; they do not execute native blits."
+  ],
+  "references": [
+    "https://wikis.khronos.org/opengl/GlBlitFramebuffer",
+    "https://raw.githubusercontent.com/moderngl/moderngl/5.12.0/src/moderngl.cpp"
+  ]
+}

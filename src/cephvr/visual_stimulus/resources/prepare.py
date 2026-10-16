@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Literal
 
 from cephvr.platform.windows.protected_source import ProtectedWindowsSource
+from cephvr.visual_stimulus.config.models.artifact_models import ComponentProvenance
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.config.models.program_model import Program
 from cephvr.visual_stimulus.resources.arena import prepare_arena
@@ -26,6 +26,7 @@ from cephvr.visual_stimulus.resources.image_interpretation import (
     image_validation_key,
 )
 from cephvr.visual_stimulus.resources.media import decode_image
+from cephvr.visual_stimulus.resources.provenance import software_provenance
 from cephvr.visual_stimulus.resources.recipe_dependencies import (
     decode_recipe_image,
     image_dependency,
@@ -37,13 +38,6 @@ from cephvr.visual_stimulus.resources.video_index import index_video
 
 if TYPE_CHECKING:
     from cephvr.visual_stimulus.resources.image_source import ImageInfo, ImageSource
-
-
-def _version(distribution: str) -> str:
-    try:
-        return version(distribution)
-    except PackageNotFoundError:
-        return "unavailable"
 
 
 def prepare_resources(
@@ -63,6 +57,7 @@ def prepare_resources(
     codec_threads: int = 1,
     path_overrides: Mapping[str, Path] | None = None,
     defer_images: bool = False,
+    component_provenance: tuple[ComponentProvenance, ...] | None = None,
     validated_images: dict[str, tuple[ImageSource, ImageInfo]] | None = None,
 ) -> PreparedResourceBundle:
     """Protect all source assets and return canonical manifest facts.
@@ -89,7 +84,6 @@ def prepare_resources(
     )
     try:
         from cephvr.visual_stimulus.config.models.artifact_models import (
-            ComponentProvenance,
             Fingerprint,
             Interpretation,
             Resource,
@@ -482,48 +476,9 @@ def prepare_resources(
             format_version=1,
             resources=tuple(entries),
             provenance=(
-                ComponentProvenance(
-                    role="renderer",
-                    implementation="CephVR",
-                    version="2.0",
-                    content_sha256=None,
-                ),
-                ComponentProvenance(
-                    role="image_decoder",
-                    implementation="imagecodecs",
-                    version=_version("imagecodecs"),
-                    content_sha256=None,
-                ),
-                ComponentProvenance(
-                    role="image_decoder",
-                    implementation="tifffile",
-                    version=_version("tifffile"),
-                    content_sha256=None,
-                ),
-                ComponentProvenance(
-                    role="image_decoder",
-                    implementation="cephvr1-compatible-raster",
-                    version="1",
-                    content_sha256=None,
-                ),
-                ComponentProvenance(
-                    role="image_decoder",
-                    implementation="Pillow",
-                    version=_version("Pillow"),
-                    content_sha256=None,
-                ),
-                ComponentProvenance(
-                    role="video_decoder",
-                    implementation="PyAV",
-                    version=_version("av"),
-                    content_sha256=None,
-                ),
-                ComponentProvenance(
-                    role="arena_importer",
-                    implementation="cephvr.glb",
-                    version="1",
-                    content_sha256=None,
-                ),
+                component_provenance
+                if component_provenance is not None
+                else software_provenance(budget.check_cancelled_or_expired)
             ),
         )
         return PreparedResourceBundle(

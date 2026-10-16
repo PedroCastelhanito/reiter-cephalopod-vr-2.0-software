@@ -5,9 +5,11 @@ from __future__ import annotations
 import asyncio
 import shutil
 import uuid
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Coroutine, Mapping
 from copy import deepcopy
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.operations import ControlOperations
@@ -65,6 +67,8 @@ class SetupExecution:
         | None,
         max_incident_bytes: int,
         cancel_attempt: Callable[[Attempt], Awaitable[None]],
+        late_cleanup: Callable[[Attempt], Coroutine[Any, Any, None]],
+        spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]],
     ) -> None:
         self.lifecycle = lifecycle
         self.control = control
@@ -90,6 +94,8 @@ class SetupExecution:
         )
         self.max_incident_bytes = max_incident_bytes
         self.cancel_attempt = cancel_attempt
+        self.late_cleanup = late_cleanup
+        self.spawn = spawn
 
     async def run_setup(self, attempt: Attempt, command_id: str, deadline: int) -> None:
         try:
@@ -134,10 +140,22 @@ class SetupExecution:
             attempt.overrides.append(
                 {"check": "recording_space", "free_bytes": free, "reason": reason}
             )
+        acquire = asyncio.create_task(asyncio.to_thread(attempt.reservation.acquire))
+        attempt.reservation_acquire_task = acquire
+
+        def acquired(task: asyncio.Task[list[Path]]) -> None:
+            # A timed-out thread still owns the exact attempt; never lose its lock.
+            if not task.cancelled():
+                task.exception()
+            if attempt.cancel_requested:
+                self.spawn(self.late_cleanup(attempt))
+
+        acquire.add_done_callback(acquired)
         conflicts = await asyncio.wait_for(
-            asyncio.to_thread(attempt.reservation.acquire),
-            remaining_seconds(deadline, clock=self.clock),
+            asyncio.shield(acquire), remaining_seconds(deadline, clock=self.clock)
         )
+        if attempt.cancel_requested or self.lifecycle.attempt is not attempt:
+            raise RuntimeError("Setup retired during reservation acquisition")
         if conflicts:
             listed = [str(path) for path in conflicts]
             extended = await self._prompt_extending_deadline(

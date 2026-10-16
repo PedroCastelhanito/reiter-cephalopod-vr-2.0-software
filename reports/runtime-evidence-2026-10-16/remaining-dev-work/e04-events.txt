@@ -1,0 +1,20 @@
+.............................................FF                          [100%]
+=================================== FAILURES ===================================
+_______________ test_confirmed_incident_is_not_reconfirmed[True] _______________
+tests/controller/test_incident_scope.py:213: in test_confirmed_incident_is_not_reconfirmed
+    await coordinator.observe_runtime_error(pb.ErrorReport(error_id=_id()))
+src/cephvr/controller/incident/coordination.py:138: in observe_runtime_error
+    for item in attempt.incidents.snapshot()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: '_Registry' object has no attribute 'snapshot'
+______________ test_confirmed_incident_is_not_reconfirmed[False] _______________
+tests/controller/test_incident_scope.py:213: in test_confirmed_incident_is_not_reconfirmed
+    await coordinator.observe_runtime_error(pb.ErrorReport(error_id=_id()))
+src/cephvr/controller/incident/coordination.py:138: in observe_runtime_error
+    for item in attempt.incidents.snapshot()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: '_Registry' object has no attribute 'snapshot'
+=========================== short test summary info ============================
+FAILED tests/controller/test_incident_scope.py::test_confirmed_incident_is_not_reconfirmed[True]
+FAILED tests/controller/test_incident_scope.py::test_confirmed_incident_is_not_reconfirmed[False]
+2 failed, 45 passed in 2.34s

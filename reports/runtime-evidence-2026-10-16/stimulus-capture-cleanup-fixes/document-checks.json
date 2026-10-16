@@ -1,0 +1,10 @@
+{
+  "checked_local_links_and_explicit_anchors": [
+    "../docs/architecture/visual_stimulus.md#v12",
+    "../docs/architecture/system-contracts.md#e06",
+    "rig-verification.md",
+    "runtime-evidence-2026-10-16/stimulus-capture-review/validation.json",
+    "runtime-evidence-2026-10-16/stimulus-capture-cleanup-fixes/validation.json"
+  ],
+  "outcome": "passed; scoped to changed report assessment"
+}

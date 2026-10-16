@@ -1,0 +1,40 @@
+unformatted: File would be reformatted
+   --> src/cephvr/visual_stimulus/rendering/capture.py:241:40
+    |
+240 |                 if not unmapped:
+    -                     raise RuntimeError("review-composite readback mapping was corrupted")
+241 +                     raise RuntimeError(
+242 +                         "review-composite readback mapping was corrupted"
+243 +                     )
+244 |                 gl.glDeleteSync(pending.sync)
+    |
+
+unformatted: File would be reformatted
+   --> tests/visual_stimulus/test_recording.py:926:42
+    |
+925 |     runtime = RecordingCaptureRuntime(
+    -         NS(cancel_review_capture=cancel), session,
+926 +         NS(cancel_review_capture=cancel),
+927 +         session,
+928 |         NS(native_pixel_format="rgba8_top_down", encoder_pixel_format="yuv420p"),
+    -         evidence_pending_bytes=4096, capture_slots=2,
+929 +         evidence_pending_bytes=4096,
+930 +         capture_slots=2,
+931 |     )
+--------------------------------------------------------------------------------
+948 |     assert worker.counts().failed_capture_count == 2
+    -     assert gl_calls == ["first", "second"] + (
+    -         [] if gl_retry == "none" else ["first"]
+    -     )
+949 +     assert gl_calls == ["first", "second"] + ([] if gl_retry == "none" else ["first"])
+950 |     assert not session._lines  # no invented replacement for missing evidence
+--------------------------------------------------------------------------------
+960 |     for tag in ("stimulus", "stimulus_frames"):
+    -         recording._schedule.outputs.add(
+    -             output_key=tag, output_tag=tag, path=f"/{tag}"
+    -         )
+961 +         recording._schedule.outputs.add(output_key=tag, output_tag=tag, path=f"/{tag}")
+962 |     recording.begin_cancel(123)
+    |
+
+2 files would be reformatted, 172 files already formatted

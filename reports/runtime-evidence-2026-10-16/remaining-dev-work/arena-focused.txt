@@ -1,0 +1,41 @@
+...................FFFF................................................. [ 74%]
+.........................                                                [100%]
+=================================== FAILURES ===================================
+_____ test_effective_arena_pose_matches_rendered_rigid_transform[angles0] ______
+tests/visual_stimulus/test_rendering.py:615: in test_effective_arena_pose_matches_rendered_rigid_transform
+    pose = effective_arena_pose(snapshot)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/visual_stimulus/rendering/arena.py:67: in effective_arena_pose
+    if settings is None or settings.kind != "arena":
+                           ^^^^^^^^^^^^^
+E   AttributeError: 'types.SimpleNamespace' object has no attribute 'kind'
+_____ test_effective_arena_pose_matches_rendered_rigid_transform[angles1] ______
+tests/visual_stimulus/test_rendering.py:615: in test_effective_arena_pose_matches_rendered_rigid_transform
+    pose = effective_arena_pose(snapshot)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/visual_stimulus/rendering/arena.py:67: in effective_arena_pose
+    if settings is None or settings.kind != "arena":
+                           ^^^^^^^^^^^^^
+E   AttributeError: 'types.SimpleNamespace' object has no attribute 'kind'
+_____ test_effective_arena_pose_matches_rendered_rigid_transform[angles2] ______
+tests/visual_stimulus/test_rendering.py:615: in test_effective_arena_pose_matches_rendered_rigid_transform
+    pose = effective_arena_pose(snapshot)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/visual_stimulus/rendering/arena.py:67: in effective_arena_pose
+    if settings is None or settings.kind != "arena":
+                           ^^^^^^^^^^^^^
+E   AttributeError: 'types.SimpleNamespace' object has no attribute 'kind'
+_____ test_effective_arena_pose_matches_rendered_rigid_transform[angles3] ______
+tests/visual_stimulus/test_rendering.py:615: in test_effective_arena_pose_matches_rendered_rigid_transform
+    pose = effective_arena_pose(snapshot)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/visual_stimulus/rendering/arena.py:67: in effective_arena_pose
+    if settings is None or settings.kind != "arena":
+                           ^^^^^^^^^^^^^
+E   AttributeError: 'types.SimpleNamespace' object has no attribute 'kind'
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_rendering.py::test_effective_arena_pose_matches_rendered_rigid_transform[angles0]
+FAILED tests/visual_stimulus/test_rendering.py::test_effective_arena_pose_matches_rendered_rigid_transform[angles1]
+FAILED tests/visual_stimulus/test_rendering.py::test_effective_arena_pose_matches_rendered_rigid_transform[angles2]
+FAILED tests/visual_stimulus/test_rendering.py::test_effective_arena_pose_matches_rendered_rigid_transform[angles3]
+4 failed, 93 passed in 2.88s

@@ -216,6 +216,11 @@ class DetailedCompletion:
             or set(actual_outputs) != expected_outputs
             or len(actual_outputs) != len(payload.outputs)
             or any(
+                actual_outputs[output.output_key].path != output.path
+                for output in registered.outputs
+                if output.backend.backend_name == payload.source.role
+            )
+            or any(
                 not cleanup_output_discharged(output)
                 for output in actual_outputs.values()
             )
@@ -266,6 +271,9 @@ class DetailedCompletion:
             evidence=f"{len(payload.outputs)} exact output closure result(s) retained",
         )
         self.supervisor.controller_recoveries.append(recovered)
+        self.supervisor.retained_truncated |= (
+            len(self.supervisor.controller_recoveries) > RETAINED_LIMIT
+        )
         self.supervisor.controller_recoveries = self.supervisor.controller_recoveries[
             -RETAINED_LIMIT:
         ]

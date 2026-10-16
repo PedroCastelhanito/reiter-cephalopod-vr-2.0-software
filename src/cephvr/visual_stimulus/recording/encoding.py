@@ -137,9 +137,9 @@ def prepare_review_encoding(
             )
             for output_id, *_ in tiles
         ),
-        native_pixel_format="rgba8_bottom_up"
+        native_pixel_format="rgba8_top_down"
         if source_bits == 8
-        else "r10g10b10a2_le_bottom_up",
+        else "r10g10b10a2_le_top_down",
         input_pixel_format=input_pixel_format,
         encoder_pixel_format=effective.output_pixel_format,
         encoder_gpu_ordinal=effective.encoder_gpu_ordinal,
@@ -149,7 +149,7 @@ def prepare_review_encoding(
             pacing_output_id=display.selected_pacing_output_id,
             rate_numerator=rate_numerator,
             rate_denominator=rate_denominator,
-            implementation="ffmpeg_rawvideo_cfr_v1",
+            implementation="ffmpeg_rawvideo_sequential_v1",
             capability_evidence_id=capability_evidence_id,
         ),
     )

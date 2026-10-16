@@ -1,5 +1,115 @@
 # Acquisition status
 
+Oct16 maintainability implementation shares controller-owned MCU validation with
+acquisition defaults and uses one exact worker session predicate. Existing operator
+values, original deadlines and ownership remain; focused configuration35 and worker90
+checks pass. [Current cross-owner assessment](runtime.md#maintainability-review)
+retains final integration evidence and remaining native limits.
+
+Oct16 `camera-failed-output-presence` is repaired under E04/A07/A08:
+`session_outputs.failed_outputs` now reports actual path presence independently of
+owned-identity proof. An existing unmatched/unproved video is present with closure
+unconfirmed; an absent path is absent. Exact owned failed-encoder outputs retain
+failed closure. No deletion, replacement, ownership promotion or frame behavior changed.
+Five real-path cases cover absent, unproved, replaced and exact-owned outcomes.
+The [original probe](runtime-evidence-2026-10-16/backend-output-alignment-review/validation.json)
+and [repair checks](runtime-evidence-2026-10-16/output-provenance-fixes/validation.json)
+retain red/green evidence. Combined acquisition/stimulus/selected central-output tests
+pass997 (five platform skips, three exclusions); native execution is separate.
+
+The source/video/timestamp joins retain explicit losses. A09's initial anchor remains
+an assumption and native counter gaps/reset ambiguity remain visible. On Oct16 the
+owner confirmed hardware pulse wiring is verified and all planned cameras will be
+externally triggered; free-running alignment is outside this task. This confirmation
+does not rewrite historical free-running evidence below. Camera cadence and encoding
+settings were not changed by these two output fixes.
+
+Oct16 sequential camera recording is implemented under
+[A08 revision51](../docs/architecture/acquisition.md#a08), with A07rev64/A09rev16
+mapping/anchor clarifications and acquisition policy22. All three roles encode each
+usable retained image once in source order, retaining receipt/native timestamps and
+explicit invalid/capacity-loss rows. Schema5 removes nominal slots, enforces exact
+one-to-one source mappings and retains a zero duplicate count. Playback remains at
+the existing nominal rate; its duration need not equal the trial. Camera settings,
+trigger rates, encoding arguments and E13 stimulus recording are unchanged. Historical
+Oct15 schema4/CQ18 results below describe the former camera resampling path, not
+native acceptance of this change.
+
+ARCH-002 removes camera slot-selection/tail-padding code and redundant slot/duplicate
+state. The recording session remains a cohesive schedule/pump/closure owner (638
+lines, reduced from691), with conversion, append-only evidence and finalization in
+existing focused modules. No dependency, process or extra recording mode is added.
+Owning regressions cover all roles/timing modes, same-interval images, gaps, source
+identity/timestamps, invalid/capacity losses, metadata-only output, normal/Abort
+closure retries and input/mapping/maintenance failures without false success.
+Final acquisition/planning/encoding-probe/stimulus-recording selection passes607
+(five platform skips/two marker deselections). Ruff/format209, Win32 mypy185 and
+boundaries698/zero violations pass; policy/schema/register and unchanged-rate/stimulus
+checks pass. A broader run has1211 passes and three failures in concurrently edited
+controller-configuration tests; those cases now pass a focused five-case recheck
+after the concurrent implementation advanced. No full integration rerun is claimed.
+Earlier fixture mistakes and corrected attempts are retained in the [validation context](runtime-evidence-2026-10-16/camera-sequential-recording/validation.json).
+Native count/decode, unchanged-rate combined throughput and timestamp correspondence
+remain in the [rig checklist](rig-verification.md); local checks do not establish
+NVENC throughput, optical timing or zero physical loss.
+
+Oct16 follow-up review reproduces inherited first-image accepted-input accounting loss
+when its required mapping append fails. The local repair counts a completed pipe write
+before that append, while retaining failure and incomplete source metadata. Maintenance
+and sync remain after successful mapping. Input-write failure stays NO_FRAMES; mapping
+and later maintenance faults retain FRAMES_SUBMITTED with unconfirmed video/failed log.
+The owning fault test fails before repair and passes afterward; acquisition536 passes,
+five platform skips/two exclusions, Ruff/format3, Win32 mypy2 and boundaries699/zero
+violations pass. No native encoder or rig acceptance is inferred.
+[Repair evidence](runtime-evidence-2026-10-16/remaining-dev-work/context.json).
+The [reproduction and validation](runtime-evidence-2026-10-16/camera-sequential-recording-review/validation.json)
+retain a real-queue/pump/JSONL/finalizer check combining capacity loss, invalid input,
+equal receipt timestamps, a long gap and interrupted closure (four source rows,
+two images, exact mappings, zero padding). The focused integration rerun passes607
+with five skips/two deselections; scoped Ruff/format passes33 files. The fault probe
+uses an accepting fake encoder and injected mapping failure, not native media proof.
+
+Oct16 development-machine reliability repair under
+[E04](../docs/architecture/supervisor.md#e04),
+[E05](../docs/architecture/experiment.md#e05),
+[E06/E08](../docs/architecture/system-contracts.md#e06) and
+[A10](../docs/architecture/acquisition.md#a10): interrupted backend cleanup now
+precedes interrupted trial/session metadata sealing. Already validated exact cleanup
+reports supply current-trial output results without inventing normal Finished or
+an actual stop timestamp. Missing evidence remains unconfirmed; one frozen-set
+session-state recovery query retains the original deadline. Normal completion
+keeps metadata-before-cleanup ordering, including an Abort joining during metadata
+sealing. Cleanup admission additionally rejects output paths differing from the
+registered plans. Earlier trial files are not retroactively rewritten.
+
+The Basler adapter's unknown-discard reuse guard previously survived successful
+native device Close and incorrectly blocked a fresh open. Local regressions reproduce
+this across both timing modes. Confirmed Close now retires only that device-scoped
+guard; same-device reuse and failed Close remain blocked, and retained unknown counts
+stay unknown. Six repeated close/reopen cycles per test variant pass. This identifies
+the cross-close software defect, not the original native drain-interruption cause.
+Existing retired-boundary checks now exercise a fresh session/trial on the same
+pulse owner after the old boundary, with no stale actuation or evidence mutation.
+
+ARCH-002 review reuses the existing lifecycle, metadata, report-admission and SDK
+owners and behavior test modules; no dependencies, processes, policy values or
+runtime states are added. The existing 567-line interruption workflow remains
+cohesive around one finalization task; the 685-line Basler facade retains device/SDK
+ownership. No separable responsibility is extended. Native Abort latency/metadata,
+rapid reuse and repeated real-camera preview acceptance remain open in the
+[rig checklist](rig-verification.md). Local validation and source provenance are in
+[Oct16 evidence](runtime-evidence-2026-10-16/dev-reliability/context.json).
+
+Final local selection passes **1,531 tests**, with five skips and three native/rig
+deselections; it includes authenticated loopback checks. Scoped Ruff/format passes
+346 files, Win32 mypy passes 293 sources and boundaries inspect 698 modules with zero
+violations. The first expanded run retained 11 denied loopback binds and two missing
+imagecodecs failures; permitted final execution after installing the already pinned
+imagecodecs version passes. Stale ignored bindings were regenerated from existing
+contracts. A final review caught and fixed an overlap race introduced by the initial
+ordering change; its red/green case is included in the final result. These are local
+behavior/static results, not native timing or SDK acceptance.
+
 Owner-selected Oct15 recording tuning now uses CQ23/p4 H.264 NVENC VBR with
 zero target bitrate, zero lookahead and both AQ modes explicitly disabled for
 all three cameras. Behavioral retains full-range BT.709 YUV444; Tracking and Eye

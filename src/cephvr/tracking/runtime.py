@@ -14,6 +14,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.software import software_version
 from cephvr.shared.transport_deadlines import remaining_seconds
 from cephvr.tracking.coordinator.commands import validate
 from cephvr.tracking.coordinator.ports import FeedbackPort, SessionPort
@@ -246,6 +247,7 @@ class TrackingRuntime:
                 raise TimeoutError("feedback attachment missed original Setup deadline")
             await asyncio.sleep(0.01)
         state.ready = pb.ReadyReport(
+            software_version=software_version(),
             context=self.reports.context(request.command),
             configuration_revision=request.plan.configuration_revision,
             required_checks_passed=True,

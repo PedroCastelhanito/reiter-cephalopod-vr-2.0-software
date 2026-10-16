@@ -1,5 +1,27 @@
 # Tracking status
 
+Oct16 E08/ARCH-002 maintenance uses shared unary peer mechanics while preserving
+Tracking-owned stub selection, authentication, original absolute deadlines and receipt
+checks. Tracking/Visual Stimulus authenticated transport/runtime26 cases pass; no
+estimator/scientific behavior changes. [Current maintenance evidence](runtime.md#maintainability-review)
+retains final integration scope; native/scientific acceptance remains separate.
+
+Owner reconfirmed on Oct16 that Tracking backend work is deferred for the current
+output-alignment/reconstruction task. The source audit below is retained evidence,
+not a request to enable Tracking or begin its live acceptance.
+
+Oct16 output-content audit traces T19 schema3 header settings/source identity, pose and
+movement timestamps, source-frame pairs, feedback result IDs, units and reset/discard
+records through recording before feedback publication. No additional actionable
+Tracking output defect was established in this scope. Camera joins use enclosing
+session/trial plus `resolved_settings_json.input_camera_role` and source frame IDs;
+the allocation ID alone is not a camera identifier. Movement intervals are host-receipt
+intervals, not device-exposure timestamps. With T14 saving Off, stimulus application
+evidence supports its own reconstruction but cannot recover all unconsumed Tracking
+results/pose histories. Source/contract review and owning recording tests are included
+in the [337-pass output selection](runtime-evidence-2026-10-16/backend-output-alignment-review/validation.json);
+live Tracking, scientific accuracy and cross-clock alignment remain unverified.
+
 Oct15 real native same-image NVIDIA Optical Flow execution/lease smoke passes in
 the25-pass Windows/rig selection (one privilege skip). All48 owning contract cases and19
 schema comparisons pass. These establish native availability, not scientific accuracy,

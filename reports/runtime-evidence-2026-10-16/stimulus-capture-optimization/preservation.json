@@ -1,0 +1,13 @@
+{
+  "comparison": "Exact pre-increment local snapshot, not HEAD; existing sequential changes preserved",
+  "checks": {
+    "compositor_shader_bytes": true,
+    "quad_geometry": true,
+    "tile_render_loop": true,
+    "operator_configuration_bytes": true,
+    "_composite_geometry": true,
+    "build_review_argv": true,
+    "ffmpeg_input_format": true
+  },
+  "scope": "Static preservation; GL transfer output checked by host model in tests; native GPU pixels/performance remain pending"
+}

@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-16",
+  "scope": "offscreen Qt; no native/DPI acceptance",
+  "tests": "2 passed,551 deselected",
+  "checks": "Ruff/format3,Win32 mypy2,boundaries712/zero violations,whitespace pass",
+  "render": "1440/720; fit assertions pass; wide crop inspected",
+  "attempts": "initial standalone Qt teardown exit138 after images; explicit effect removal/deferred widget cleanup rerun exit0",
+  "source_sha256": {
+    "src/cephvr/gui/appearance.py": "1bf93350748bcceb71837a71f1d09b57f231077d2589ffef34346445826496fa",
+    "src/cephvr/gui/theme.py": "d74d72fc1244c38779bb3753a14ec8dcae2be340aa1609f1908f89f9dd479343",
+    "tests/gui/test_dashboard.py": "2b50a953bfaf36b94189ec09893591e206e276419983c99748e3193b593835e3"
+  }
+}

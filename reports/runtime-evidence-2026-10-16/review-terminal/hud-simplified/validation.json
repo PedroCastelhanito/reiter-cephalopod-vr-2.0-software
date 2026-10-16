@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-16",
+  "scope": "Full-width Retro trial-position strip; remove output/reservation/metadata display rows from shared Dashboard HUD. Status records unchanged.",
+  "checks": {
+    "pytest": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'review_appearance or hud_fits_content or review_phase_locks' -m 'not windows and not rig': 11 passed, 537 deselected in 19.74s",
+    "ruff": "check/format --check dashboard.py and retro_instruments.py pass",
+    "mypy": "--platform win32 dashboard.py and retro_instruments.py: 2 files pass",
+    "boundaries": "zero violations; see boundaries.txt",
+    "whitespace": "git diff --check passes",
+    "render": "presentation.py: Running fixture assertions and wide/narrow visual inspection pass"
+  },
+  "source_sha256": {
+    "src/cephvr/gui/dashboard.py": "8957abde50aef0fd4a85f4a27945a0006951a578a5cde3bd7af0995a982fc3fd",
+    "src/cephvr/gui/retro_instruments.py": "b5c661ef09722811f07626ff62eb004ad01256fb7c87c0611f7ca8d741bc68df"
+  },
+  "limits": "Offscreen macOS fixtures; no native Windows/DPI or rig acceptance. Additional HUD fields remain suggestions, not implemented."
+}

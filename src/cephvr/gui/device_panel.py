@@ -15,7 +15,12 @@ def entry(placeholder: str) -> QLineEdit:
 
 
 class DevicePanel(ResponsiveColumns):
-    def __init__(self, title: str, readbacks: str, actions: tuple[str, ...]) -> None:
+    def __init__(
+        self,
+        title: str,
+        readbacks: tuple[tuple[str, str], ...],
+        actions: tuple[str, ...],
+    ) -> None:
         left, left_layout = column()
         right = StatusColumn("Device HUD")
         super().__init__(left, right)
@@ -41,7 +46,7 @@ class DevicePanel(ResponsiveColumns):
         left_layout.addWidget(self.configuration)
         left_layout.addStretch()
         self.status_column = right
-        right.hud.setPlainText("CONNECTION  Not connected\n" + readbacks)
+        right.set_rows((("CONNECTION", "Not connected"), None, *readbacks))
         self.console = right.console
         self.console.setPlainText("No connection checks performed.")
         self.can_review = False

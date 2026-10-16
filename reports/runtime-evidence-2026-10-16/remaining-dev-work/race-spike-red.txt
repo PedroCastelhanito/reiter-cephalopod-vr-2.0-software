@@ -1,0 +1,34 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_spikeglx_stop_log_failure_preserves_confirmed_remote_stop ________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2020/test_spikeglx_stop_log_failure0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10a48c490>
+
+    async def test_spikeglx_stop_log_failure_preserves_confirmed_remote_stop(tmp_path, monkeypatch):
+        from cephvr.controller.metadata.types import StorageError
+        from cephvr.synchronization.v1 import spikeglx_pb2 as spike
+    
+        runtime, attempt = _setup(tmp_path, monkeypatch)
+        class Remote:
+            async def stop_expected_run(self, deadline):
+                return True
+    
+        runtime.interruption.spikeglx = Remote()
+        async def fail_log(*args, **kwargs):
+            raise StorageError("log unavailable")
+    
+        monkeypatch.setattr(runtime.metadata, "log_event", fail_log)
+        try:
+            assert not await runtime.interruption._stop_spikeglx(attempt, 100_000)
+            assert attempt.spikeglx_stopped
+>           assert attempt.spikeglx_recording.phase == spike.SPIKEGLX_RECORDING_PHASE_STOPPED
+E           assert 6 == 5
+E            +  where 6 = phase: SPIKEGLX_RECORDING_PHASE_UNKNOWN\nfailure_code: "STOP_UNCONFIRMED"\n.phase
+E            +    where phase: SPIKEGLX_RECORDING_PHASE_UNKNOWN\nfailure_code: "STOP_UNCONFIRMED"\n = Attempt(context=controller_generation: "4d21d47d-ac01-4371-97ff-45cf569f4bd5"\nsession_id: "2055d38d-beaa-4512-a1e0-c02...pending=set(), handoff_failures={}), trial_closure=TrialClosureState(released=frozenset(), finish_append_issued=False)).spikeglx_recording
+E            +  and   5 = <module 'cephvr.synchronization.v1.spikeglx_pb2' from '/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/src/cephvr/synchronization/v1/spikeglx_pb2.py'>.SPIKEGLX_RECORDING_PHASE_STOPPED
+
+tests/controller/test_lifecycle_commands.py:884: AssertionError
+=========================== short test summary info ============================
+FAILED tests/controller/test_lifecycle_commands.py::test_spikeglx_stop_log_failure_preserves_confirmed_remote_stop
+1 failed, 27 deselected in 0.59s

@@ -1,0 +1,257 @@
+...............F........................FF                               [100%]
+=================================== FAILURES ===================================
+____________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1177a67a0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1111341f0>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load…"
+        assert window.tracking.save_button.text() == "Save as…"
+        window.resize(1175, 940)
+        app.processEvents()
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1175, 720, 1175):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+                assert bar.tabRect(3).right() == bar.width() - 1
+                if width == 1175:
+                    hud = panel.layout_card if index == 2 else panel.columns[1].hud_card
+                    border_top = (
+                        hud.mapTo(window, QPoint()).y()
+                        + hud.caption.geometry().center().y()
+                    )
+                    assert abs(bar.mapTo(window, QPoint()).y() - border_top) <= 1
+                card = left.layout().itemAt(1).widget()
+                assert card is window.devices.config_cards[index]
+                assert card.caption.text() == "Configuration file"
+                files = panel.calibration_files if index == 2 else panel.config_files
+                assert card.isAncestorOf(files.load_button)
+                assert card.isAncestorOf(files.save_button)
+                assert files.load_button.text() == "Load…"
+                assert files.save_button.text() == "Save as…"
+                assert abs(files.load_button.width() - files.save_button.width()) <= 1
+                assert files.load_button.height() == files.save_button.height()
+                load_pos = files.load_button.mapTo(card, QPoint())
+                save_pos = files.save_button.mapTo(card, QPoint())
+                assert load_pos.y() == save_pos.y()
+                assert save_pos.x() - load_pos.x() - files.load_button.width() == (
+                    SIZES.field_x_gap
+                )
+                if index in (0, 2):
+                    if index == 2:
+                        measurements = panel.measurements
+                        assert measurements.caption.text() == "Pixel-to-mm calibration"
+                        widths = [measurements.table.columnWidth(i) for i in range(3)]
+>                       assert max(widths) - min(widths) <= 1
+E                       assert (257 - 74) <= 1
+E                        +  where 257 = max([74, 257, 112])
+E                        +  and   74 = min([74, 257, 112])
+
+tests/gui/test_dashboard.py:3066: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_______ test_review_appearance_switch_preserves_drafts_and_runtime[1440] _______
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1111341f0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2133/test_review_appearance_switch_0')
+width = 1440
+
+    @pytest.mark.parametrize("width", [1440, 720])
+    def test_review_appearance_switch_preserves_drafts_and_runtime(
+        app: QApplication, tmp_path: Path, width: int
+    ) -> None:
+        from PyQt6.QtGui import QFontInfo
+    
+        from cephvr.gui.components import Button
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.gui.theme import COLORS, RETRO_COLORS, colors_for
+    
+        path = str(tmp_path / "appearance.ini")
+        settings = QSettings(path, QSettings.Format.IniFormat)
+        review = ReviewDashboardWindow(sample=True, settings=settings)
+        runtime = ManagedDashboardWindow(settings=settings)
+        reopened = None
+        try:
+            review.resize(width, 940)
+            review.show()
+            review.apply_view(review_view(Phase.CONFIGURATION))
+            review.dashboard.subject_id.setText("Unsaved subject")
+            review.dashboard.age.setText("Unfinished edit")
+            review.dashboard.log_console.setPlainText("Existing log entry")
+            review.dashboard.show_previews()
+            selector = review.dashboard.preview_dialog
+            preview_views = dict(selector.views)
+            preview_requests = []
+            selector.visibility_requested.connect(
+                lambda *args: preview_requests.append(args)
+            )
+            device_gates = {
+                control: control.isEnabled()
+                for control in review.devices.findChildren(Button)
+            }
+            before = review.snapshots.capture()
+            editors = review.dashboard.subject_editors
+            gates = [
+                button.isEnabled() for button in review.dashboard.command_buttons.values()
+            ]
+            original_application_style = app.styleSheet()
+            standard_hud = review.dashboard.runtime_console.toPlainText()
+            current_view = review.dashboard.view
+            brackets = next(
+                item
+                for item in review.appearance.focus_brackets
+                if item.parentWidget() is review.dashboard.subject_id
+            )
+            assert review.appearance.name == "standard"
+            assert "Style" not in [action.text() for action in runtime.menuBar().actions()]
+            for name in ("retro_console", "standard", "retro_console"):
+                review.appearance.actions[name].trigger()
+                for _ in range(4):
+                    app.processEvents()
+                review.activateWindow()
+                review.dashboard.subject_id.setFocus()
+                app.processEvents()
+                assert review.dashboard.subject_id.hasFocus()
+                assert brackets.isVisible() == (name == "retro_console")
+                assert brackets.testAttribute(
+                    Qt.WidgetAttribute.WA_TransparentForMouseEvents
+                )
+>               assert review.dashboard.trial_position.isVisible() == (
+                    name == "retro_console"
+                )
+E               AssertionError: assert False == ('retro_console' == 'retro_console'
+E                +  where False = <built-in method isVisible of TrialPosition object at 0x11773f640>()
+E                +    where <built-in method isVisible of TrialPosition object at 0x11773f640> = <cephvr.gui.retro_instruments.TrialPosition object at 0x11773f640>.isVisible
+E                +      where <cephvr.gui.retro_instruments.TrialPosition object at 0x11773f640> = <cephvr.gui.dashboard.Dashboard object at 0x1177a5480>.trial_position
+E                +        where <cephvr.gui.dashboard.Dashboard object at 0x1177a5480> = <cephvr.gui.review.ReviewDashboardWindow object at 0x11122eb90>.dashboard
+E                 
+E                   retro_console)
+
+tests/gui/test_dashboard.py:15907: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_______ test_review_appearance_switch_preserves_drafts_and_runtime[720] ________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1111341f0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2133/test_review_appearance_switch_1')
+width = 720
+
+    @pytest.mark.parametrize("width", [1440, 720])
+    def test_review_appearance_switch_preserves_drafts_and_runtime(
+        app: QApplication, tmp_path: Path, width: int
+    ) -> None:
+        from PyQt6.QtGui import QFontInfo
+    
+        from cephvr.gui.components import Button
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.gui.theme import COLORS, RETRO_COLORS, colors_for
+    
+        path = str(tmp_path / "appearance.ini")
+        settings = QSettings(path, QSettings.Format.IniFormat)
+        review = ReviewDashboardWindow(sample=True, settings=settings)
+        runtime = ManagedDashboardWindow(settings=settings)
+        reopened = None
+        try:
+            review.resize(width, 940)
+            review.show()
+            review.apply_view(review_view(Phase.CONFIGURATION))
+            review.dashboard.subject_id.setText("Unsaved subject")
+            review.dashboard.age.setText("Unfinished edit")
+            review.dashboard.log_console.setPlainText("Existing log entry")
+            review.dashboard.show_previews()
+            selector = review.dashboard.preview_dialog
+            preview_views = dict(selector.views)
+            preview_requests = []
+            selector.visibility_requested.connect(
+                lambda *args: preview_requests.append(args)
+            )
+            device_gates = {
+                control: control.isEnabled()
+                for control in review.devices.findChildren(Button)
+            }
+            before = review.snapshots.capture()
+            editors = review.dashboard.subject_editors
+            gates = [
+                button.isEnabled() for button in review.dashboard.command_buttons.values()
+            ]
+            original_application_style = app.styleSheet()
+            standard_hud = review.dashboard.runtime_console.toPlainText()
+            current_view = review.dashboard.view
+            brackets = next(
+                item
+                for item in review.appearance.focus_brackets
+                if item.parentWidget() is review.dashboard.subject_id
+            )
+            assert review.appearance.name == "standard"
+            assert "Style" not in [action.text() for action in runtime.menuBar().actions()]
+            for name in ("retro_console", "standard", "retro_console"):
+                review.appearance.actions[name].trigger()
+                for _ in range(4):
+                    app.processEvents()
+                review.activateWindow()
+                review.dashboard.subject_id.setFocus()
+                app.processEvents()
+                assert review.dashboard.subject_id.hasFocus()
+                assert brackets.isVisible() == (name == "retro_console")
+                assert brackets.testAttribute(
+                    Qt.WidgetAttribute.WA_TransparentForMouseEvents
+                )
+>               assert review.dashboard.trial_position.isVisible() == (
+                    name == "retro_console"
+                )
+E               AssertionError: assert False == ('retro_console' == 'retro_console'
+E                +  where False = <built-in method isVisible of TrialPosition object at 0x120eaef80>()
+E                +    where <built-in method isVisible of TrialPosition object at 0x120eaef80> = <cephvr.gui.retro_instruments.TrialPosition object at 0x120eaef80>.isVisible
+E                +      where <cephvr.gui.retro_instruments.TrialPosition object at 0x120eaef80> = <cephvr.gui.dashboard.Dashboard object at 0x1222e8430>.trial_position
+E                +        where <cephvr.gui.dashboard.Dashboard object at 0x1222e8430> = <cephvr.gui.review.ReviewDashboardWindow object at 0x1222e8700>.dashboard
+E                 
+E                   retro_console)
+
+tests/gui/test_dashboard.py:15907: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+FAILED tests/gui/test_dashboard.py::test_review_appearance_switch_preserves_drafts_and_runtime[1440]
+FAILED tests/gui/test_dashboard.py::test_review_appearance_switch_preserves_drafts_and_runtime[720]
+3 failed, 39 passed, 516 deselected in 41.17s

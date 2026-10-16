@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-16",
+  "source_head": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_state": "dirty shared checkout, includes preserved prior and concurrent work; hashes identify tested implementation",
+  "source_sha256": {
+    "src/cephvr/visual_stimulus/recording/capture.py": "8f3c2dce0134bb494b9d6702d4f2d622324d6f1b5ee821dc062d998aad6299b8",
+    "src/cephvr/visual_stimulus/recording/capture_runtime.py": "f63c2e8bf9358c7fae365df15ecfca29bf7e642870afa87cbae454b38f7da35e",
+    "src/cephvr/visual_stimulus/recording/completion.py": "9cef2961e9c682503dd06a65d82b33d4f43b047ba71703ac072707f689dfbb49",
+    "src/cephvr/visual_stimulus/recording/native.py": "0ba38683c1d9edc9c87a709fbb5f5a242ea9521063b7f73bef8fc992cfe24bc3",
+    "src/cephvr/visual_stimulus/recording/encoding.py": "0564f29fe7ba11594137c5f01b3972832acdd3e2b82621cff954749c86426c2d",
+    "src/cephvr/visual_stimulus/recording_schema.py": "571f6a20892fd155b028dfd5557a8e8f9880358912cbba4bf9f4529886e0febc",
+    "src/cephvr/visual_stimulus/configuration.py": "5c9d6aa10606bb01ea45b46a3bbd2c931bb20904e2e09d3dcbe873307b28414b",
+    "src/cephvr/visual_stimulus/config/models/evidence_model.py": "b385333fb933a35b1a792160acb86524b281018361fd2df91e0e898841a2f545",
+    "src/cephvr/visual_stimulus/config/models/artifact_models.py": "8e3572dca915b201f49aa2bc739cfe56f1ea691090264cf93190974912a8dfbd",
+    "tests/visual_stimulus/test_recording.py": "e1f23cdaf6777c804d2472a06249b587dcc922dd4844bbacb031859f8d5c2ef8",
+    "tests/visual_stimulus/test_evidence_contract.py": "aa2b58d90ec42451cbd77ff84ad7731e9f8eff043bed1d8efa8330f3af310fc3",
+    "contracts/policy/visual_stimulus_policy.toml": "b25139c69b114b5047ddd7e332d0a04ce5cb9cca82e9fba96616267ee3fc0f2f",
+    "config/backends/visual_stimulus_config.toml": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212",
+    "contracts/visual_stimulus/evidence-record.schema.json": "483f62059dda1fcfb2e143525f7e6ca44cd0f21adfb6e14f54987947db0e02f3"
+  },
+  "commands": [
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus contracts/visual_stimulus/tests -q -m \"not windows and not rig\"",
+      "result": "392 passed; 11 sandbox localhost bind failures, 1 excluded, 79 subtests passed",
+      "raw": "owner-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_recording.py tests/visual_stimulus/test_evidence_contract.py -q -m \"not windows and not rig\"",
+      "result": "78 passed",
+      "raw": "focused-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus contracts/visual_stimulus/tests tests/controller/test_planning.py tests/controller/test_metadata.py tests/shared/test_encoding_probe.py -q -m \"not windows and not rig\"",
+      "permission": "localhost access",
+      "result": "458 passed, 1 excluded, 79 subtests passed",
+      "raw": "integration-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus",
+      "result": "passed",
+      "raw": "ruff.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus",
+      "result": "174 files passed after correction",
+      "raw": "format-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/visual_stimulus",
+      "result": "158 source files passed after optional metric field correction",
+      "raw": "mypy-final.txt"
+    },
+    {
+      "command": ".venv/bin/python contracts/visual_stimulus/generate_schemas.py --check",
+      "result": "11 schemas passed",
+      "raw": "schemas.txt"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "710 modules; zero violations, pre-existing size advisories reviewed",
+      "raw": "boundaries.txt"
+    },
+    {
+      "command": ".venv/bin/python reports/runtime-evidence-2026-10-16/stimulus-sequential-recording/check_preservation.py",
+      "result": "geometry/argv/input helpers AST equal; compositor byte equal; settings equal except policy version; retained profile 1280x1000",
+      "raw": "preserved-output-path.json"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed",
+      "raw": "whitespace.txt"
+    }
+  ],
+  "corrected_initial_attempts": [
+    "Header changed before schema/fixture updates (54 and 69 focused cases passed respectively; failures corrected)",
+    "Optional capture-stage index no longer exists: removed from int-only metrics sample",
+    "One writer-schema formatting change",
+    "Preservation probe initially assumed tile tuples were model objects; corrected serialization"
+  ],
+  "sample_files": {
+    "interrupted": {
+      "file": "sample-test-interrupted.jsonl",
+      "source_fixture": "/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2087/test_sequential_session_persiscurrent/frames.jsonl",
+      "scope": "actual local test output from fake renderer/encoder; no MP4 or hardware claim"
+    },
+    "completed": {
+      "file": "sample-test-completed.jsonl",
+      "source_fixture": "/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2087/test_sequential_session_persis0/frames.jsonl",
+      "scope": "actual local test output from fake renderer/encoder; no MP4 or hardware claim"
+    }
+  },
+  "limits": [
+    "No native Windows/GL/NVENC or full-load performance execution",
+    "No physical projector timing/equality or offline replay/export validation",
+    "No native decoded frame-count or crash-fragment recovery result",
+    "Composite optimization candidates only; geometry/resolution/pacing unchanged"
+  ],
+  "documentation_checks": {
+    "raw": "document-links.json",
+    "outcome": "Changed references/decision anchors resolve; 2 pre-existing historical report PNG targets absent among 450 checked local targets",
+    "followup": "historical-stimulus-evidence-images"
+  }
+}

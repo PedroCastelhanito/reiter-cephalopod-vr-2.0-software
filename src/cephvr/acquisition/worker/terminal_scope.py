@@ -1,10 +1,11 @@
-"""Command-local E08 retention for terminal commands on finalized work."""
+"""E08 worker scope identity and command-local terminal retention."""
 
 from __future__ import annotations
 
 from google.protobuf.message import DecodeError
 
 from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.commands import CommandRecord
 
 TERMINAL_COMMANDS = frozenset({"Cleanup", "Shutdown"})
@@ -63,3 +64,16 @@ def _terminal_request(record: CommandRecord) -> acq.WorkerCommand | None:
     except (DecodeError, ValueError):
         return None
     return request
+
+
+def same_session(left: control.WorkContext, right: control.WorkContext) -> bool:
+    left_kind, right_kind = left.WhichOneof("work"), right.WhichOneof("work")
+    if left_kind == "session" and right_kind == "session":
+        return left.session == right.session
+    if left_kind == "trial" and right_kind == "trial":
+        return left.trial.session == right.trial.session
+    if left_kind == "trial" and right_kind == "session":
+        return left.trial.session == right.session
+    if left_kind == "session" and right_kind == "trial":
+        return left.session == right.trial.session
+    return False

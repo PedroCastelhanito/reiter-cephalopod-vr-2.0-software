@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-16",
+  "scope": "offscreen GUI/local tests; no native/DPI/CRT-cost/rig acceptance",
+  "tests": "42 passed,516 deselected; additional managed diagnostic1 passed,557 deselected",
+  "static": "GUI/test Ruff, scoped format13, Win32 mypy12, boundaries712/zero violations, whitespace pass",
+  "initial": "39 pass/3 fail: trial-position instrument refresh omitted during appearance consolidation and obsolete equal measurement column assertion; repaired; tracking diagnostic assertions use retained rows",
+  "render": "Dashboard,4 device HUDs,Tracking at1440/720 through Retro/Standard/Retro; Camera/MCU/Tracking/Dashboard wide images inspected; Projectors hidden HUD still formatted without replacing diagrams",
+  "source_sha256": {
+    "src/cephvr/gui/formatting.py": "48174b0b0272e0611612f63920b44027d16d903804e057d7633832a7d8abed55",
+    "src/cephvr/gui/components.py": "bc602f2c03152a213e9e0f18886299ad80a7788b0d19004727e9899329529e47",
+    "src/cephvr/gui/dashboard.py": "64617f99777c3cae041ec2f9c6099332665dfd3170ed3043ef71f28da59f5a6d",
+    "src/cephvr/gui/cameras.py": "8da79192d3bcb533e4560b762a546f59b21af377c26862b1346665e68f4ec37f",
+    "src/cephvr/gui/device_panel.py": "7ffea2009ef5de1192d1939389ff39008c936caab82afda092d3fbdabb93864a",
+    "src/cephvr/gui/microcontroller.py": "a067cfe1c885ed60f0f973c1adc1a6726c2af02f2e2438cba3b40fef4a5ee532",
+    "src/cephvr/gui/projectors.py": "0a595061418131d7eb861301cf06b76b2edbfcd03a78b6bddde6ed068cf7f6f3",
+    "src/cephvr/gui/spikeglx.py": "e81f9d8e45dfe91224d8151603de57a170538b605ea798f821717f2490be3b03",
+    "src/cephvr/gui/managed_mcu.py": "255e3b74d051815640bee86ff0755ca3a00e70db41b2c4910d6983fd25eda928",
+    "src/cephvr/gui/tracking.py": "168d8d76ca9a90f811a488ef4d0184ee916388ecaf9852277af8ac27f646a7ca",
+    "src/cephvr/gui/main.py": "5ffc04c75412e14cd9f32cbc0aba666330b2c523b6e96dfa3a2d22e75ddfa72a",
+    "src/cephvr/gui/appearance.py": "bdb80d24c22996e59255d4677085cd909bbac924ecf4e71e020845c2bed4a157"
+  }
+}

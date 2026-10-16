@@ -1,9 +1,10 @@
 """Shared path display and asynchronous directory selection for local drafts."""
 
+from collections.abc import Callable
 from pathlib import Path, PurePosixPath
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QPaintEvent
+from PyQt6.QtCore import QEvent, Qt, pyqtSignal
+from PyQt6.QtGui import QKeyEvent, QPaintEvent
 from PyQt6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -27,8 +28,36 @@ class PathEdit(QLineEdit):
         self.filename_only = filename_only
         self.textChanged.connect(self.setToolTip)
 
+    def event(self, event: QEvent | None) -> bool:
+        if (
+            isinstance(event, QKeyEvent)
+            and event.type() in (QEvent.Type.ShortcutOverride, QEvent.Type.KeyPress)
+            and event.modifiers()
+            in (Qt.KeyboardModifier.ControlModifier, Qt.KeyboardModifier.MetaModifier)
+        ):
+            operations: dict[int, Callable[[], None]] = {
+                Qt.Key.Key_A: self.selectAll,
+                Qt.Key.Key_C: self.copy,
+                Qt.Key.Key_X: self.cut,
+                Qt.Key.Key_V: self.paste,
+            }
+            operation = operations.get(event.key())
+            if operation is not None:
+                if (
+                    event.type() == QEvent.Type.KeyPress
+                    and self.isEnabled()
+                    and (
+                        event.key() in (Qt.Key.Key_A, Qt.Key.Key_C)
+                        or not self.isReadOnly()
+                    )
+                ):
+                    operation()
+                event.accept()
+                return True
+        return super().event(event)
+
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        if (self.hasFocus() and not self.isReadOnly()) or not self.text():
+        if self.hasFocus() or not self.text():
             super().paintEvent(event)
             return
         option = QStyleOptionFrame()

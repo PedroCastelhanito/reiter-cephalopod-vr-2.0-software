@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-16",
+  "base_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_state": "Uncommitted shared checkout with concurrent GUI/output-provenance work; preserve unrelated edits. Snapshot hashes identify inspected final files, not an exclusive commit.",
+  "scope": "Seven authorized maintenance findings and development-only Vulture evaluation; no new architecture policy or native/rig acceptance.",
+  "tasks": {
+    "spikeglx-required-role-sharing": "completed locally",
+    "mcu-settings-validation-sharing": "completed locally",
+    "shared-unary-peer-mechanism": "completed locally",
+    "gui-bridge-feature-dispatch": "completed locally",
+    "unused-gui-editing-remnants": "completed locally",
+    "worker-session-predicate-sharing": "completed locally",
+    "recording-metrics-api-comments": "completed locally",
+    "vulture-evaluation": "completed locally"
+  },
+  "decisions": [
+    "ARCH-002",
+    "E08",
+    "E12",
+    "A01",
+    "A11",
+    "E14",
+    "G01",
+    "V12",
+    "E15"
+  ],
+  "focused_results": {
+    "roles": "25 passed after red Eye mismatch regression",
+    "configuration": "35 passed including17 parity cases",
+    "peers": "26 actual authenticated loopback cases passed",
+    "unused_gui": "8 focused fresh-process cases passed,540 deselected",
+    "worker_scope": "90 passed including27 new identity combinations",
+    "metrics": "52 unchanged behavior cases passed",
+    "bridge_safety": "17 methods unchanged by AST, except dispatch delegation; all46 relevant bridge cases in broad collection passed"
+  },
+  "integrated_validation": {
+    "backend": {
+      "command": ".venv/bin/python -m pytest tests/controller tests/supervisor tests/shared tests/acquisition tests/visual_stimulus tests/tracking -q -m 'not windows and not rig'",
+      "result": "1918 passed,5 skipped,5 deselected in87.50s; loopback-enabled execution"
+    },
+    "gui": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q",
+      "result": "544 passed,1 baseline failure in507.63s",
+      "failure": "test_trial_row_actions_scroll_target_and_align_cards:321<320",
+      "baseline_method": "Separate subprocess installs in-memory import overrides for pre-maintenance GUI adapters from HEAD and saved original bridge; no shared source reverted. Identical321<320 failure in2.59s.",
+      "limits": "Collection snapshot545 tests; three concurrent GUI additions arrived afterward. Fresh focused editing run uses current source. Not native Windows/rig acceptance."
+    },
+    "ruff": "All checks passed across src/tests/tools/scripts",
+    "format": "931 files already formatted",
+    "mypy": "--platform win32 src/cephvr:809 sources,success; static only",
+    "boundaries": "710 backend modules,0 violations; existing size advisories retained",
+    "build": "python -m build --no-isolation --outdir /private/tmp/cephvr-maintainability-build succeeded for sdist+wheel; new helpers packaged and Vulture metadata restricted to dev extra",
+    "whitespace": "git diff --check clean",
+    "documentation": "1656 local targets/anchors across22 changed Markdown documents:0 new broken;3 pre-existing unavailable images preserved.",
+    "static_commands": [
+      ".venv/bin/python -m ruff check src tests tools scripts",
+      ".venv/bin/python -m ruff format --check src tests tools scripts",
+      ".venv/bin/python -m mypy --platform win32 src/cephvr",
+      ".venv/bin/python tools/check_backend_boundaries.py",
+      "git diff --check"
+    ]
+  },
+  "vulture": {
+    "version": "2.16,dev extra only; installed initially in temporary directory then declared project environment",
+    "configuration": "pyproject.toml [tool.vulture],handwritten src/tests/tools/scripts/contracts; generated excluded; no whitelist/CI gate",
+    "baseline60": 313,
+    "after60": 311,
+    "after60_source": 286,
+    "after100": 5,
+    "after100_assessment": "All five are unused test-double parameters preserving interface signatures; no production finding at100 confidence. Lower-confidence output remains unverified; do not auto-remove callbacks/native/contract fields.",
+    "install_limit": "First automatic approval review timed out before executing; allowed retry succeeded.",
+    "upstream": "https://github.com/jendrikseipp/vulture#handling-false-positives",
+    "environment_command": {
+      "command": ".venv/bin/python -m vulture",
+      "exit_code": 3,
+      "meaning": "Advisory candidates found: five unused test-double parameters; not a runtime/check failure."
+    }
+  },
+  "remaining": "Existing Protocol geometry issue, unverified lower-confidence audit candidates and all existing rig/physical checks remain open. Prior review reproduction script targets pre-change private API; original JSON/source hashes retained.",
+  "source_sha256": {
+    "src/cephvr/gui/managed_display_operations.py": "c0ae41224a316fc2e17d7bacb5a99c6a3e8dac51ffcbd0af853f44b788cd8f8b",
+    "src/cephvr/controller/microcontroller/config.py": "ba38c22babd46bfe7f23eb889242cf0a054ff5c29a68db6dc129a3dc4f3230e4",
+    "src/cephvr/acquisition/config/defaults.py": "06b8c10ae39907196c26a25b6d3e2bb89d7c56bf04d05af9657a94df8d6746e5",
+    "src/cephvr/acquisition/config/values.py": "3abd9337289f77e7c797c95e14689357df6df0f2f3c18419b64b9577b1d6595e",
+    "src/cephvr/shared/unary_peer.py": "d3528c65655c408a4fa2478c16dbe53aaf8d3d54ee8cd2e78f6253d2a85d2fb1",
+    "src/cephvr/tracking/transport/peers.py": "6038d678b64d169c604b738f2436ad6ab3821effaef0d9c548b8046b91e01371",
+    "src/cephvr/visual_stimulus/transport/peers.py": "b083eaca17b2de20141931a3c14cc1bf28e29fbca753c3972625a41800099686",
+    "src/cephvr/gui/controller_bridge.py": "d57fc0bd114ea07a9475a9ba038a33cc537a9c088618b44effa28e5588003950",
+    "src/cephvr/gui/managed_actions.py": "15dc12f90c18a76cb300aa7693d09d0de4316ec8ab01a0a92db0af5261f84b32",
+    "src/cephvr/gui/epoch_selection.py": "48bac7d38bad7f6364795cd5cca2c0dda1dfe8dadd25bab0e949caf7d0471bdd",
+    "src/cephvr/gui/stimulus_columns.py": "bcc8943026595f8a7608b1526496de21cd5d8a269ec5e90c56318a4e4d0fda08",
+    "src/cephvr/acquisition/worker/service.py": "e3a3849b3b59981a42bfc6491d5169f8c50b53e9ef3a26035f8c9be3afba809d",
+    "src/cephvr/acquisition/worker/state.py": "862a365fa436b959f0b07f02117d18ac237eac15838ca3dad4be6bae966c6203",
+    "src/cephvr/acquisition/worker/terminal_scope.py": "0008b36b7157bb96acf96a392f31807694eae635b3ab521228414b564b38070d",
+    "src/cephvr/visual_stimulus/recording/metrics.py": "3d172eccf2bb22b28d801f9532496afc6c88f8729b333663dd7adbe0e20d44f7",
+    "tests/gui/test_dashboard.py": "a20bf0edf2198fa90fd8e247273882ff4b6fc8c8f0e6d2684c5a0f131f6a3b92",
+    "tests/acquisition/test_configuration.py": "f4c767021a64771558f503aadd4b81ec6d83f6b78490f8da2f0f6048ba644aa5",
+    "tests/acquisition/test_worker_foundations.py": "5a8b1da63e330266fa98dad6d0da28fee51a111a20c4d6ef5c89e13e9494c2df",
+    "pyproject.toml": "1775ffc72837d60156a6c0a7fe8f3f4d2f04087f2c2386261a6a740a7c1171ff",
+    "docs/development.md": "3d053d4d09ea5f3fae5ac22fd808c4e6a289443a993fa5f9f4731c0515b3aa2a",
+    "contracts/acquisition/microcontroller.md": "60b09c9156472cab0ced0de2e17bf6577c7339205b2ad1fd428d61e0699b1649"
+  }
+}

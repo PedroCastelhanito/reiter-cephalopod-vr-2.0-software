@@ -1,0 +1,40 @@
+F.F                                                                      [100%]
+=================================== FAILURES ===================================
+_______ test_late_backend_cleanup_cannot_certify_failed_metadata[False] ________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2016/test_late_backend_cleanup_cann0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109b1f4d0>
+metadata_clean = False
+
+    @pytest.mark.parametrize("metadata_clean", [False, True])
+    async def test_late_backend_cleanup_cannot_certify_failed_metadata(tmp_path, monkeypatch, metadata_clean):
+        runtime, attempt = _setup(tmp_path, monkeypatch)
+        attempt.writer_closed = True
+        attempt.closure.metadata_clean = metadata_clean
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_ENDED
+        try:
+            await runtime.cleanup.late_cleanup(attempt)
+>           assert runtime.lifecycle.session.cleanup_confirmed is metadata_clean
+E           assert True is False
+E            +  where True = phase: SESSION_PHASE_ENDED\ncontext {\n  controller_generation: "19ecfe7e-7fa4-487d-94f9-cfa4ae9c5b36"\n  session_id: "a7af633b-dda6-4956-998c-4bfef0bf9b1f"\n}\nactivated: true\ncleanup_confirmed: true\n.cleanup_confirmed
+E            +    where phase: SESSION_PHASE_ENDED\ncontext {\n  controller_generation: "19ecfe7e-7fa4-487d-94f9-cfa4ae9c5b36"\n  session_id: "a7af633b-dda6-4956-998c-4bfef0bf9b1f"\n}\nactivated: true\ncleanup_confirmed: true\n = LifecycleState(session=phase: SESSION_PHASE_ENDED\ncontext {\n  controller_generation: "19ecfe7e-7fa4-487d-94f9-cfa4ae9c...pending=False, manual_control_cleanup_task=None, manual_control_cleanup_stopping=False, inventory_update_pending=False).session
+E            +      where LifecycleState(session=phase: SESSION_PHASE_ENDED\ncontext {\n  controller_generation: "19ecfe7e-7fa4-487d-94f9-cfa4ae9c...pending=False, manual_control_cleanup_task=None, manual_control_cleanup_stopping=False, inventory_update_pending=False) = <cephvr.controller.runtime.ControllerRuntime object at 0x109b12f10>.lifecycle
+
+tests/controller/test_lifecycle_commands.py:858: AssertionError
+____ test_missing_recording_root_does_not_prove_cancelled_namespace_cleanup ____
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2016/test_missing_recording_root_do0')
+
+    def test_missing_recording_root_does_not_prove_cancelled_namespace_cleanup(tmp_path):
+        from cephvr.controller.recovery import _settle_cancelled_namespace
+    
+        root = tmp_path / "unavailable-root"
+>       assert not _settle_cancelled_namespace(root / "experiment" / "session")
+E       AssertionError: assert not True
+E        +  where True = <function _settle_cancelled_namespace at 0x1094222a0>(((PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2016/test_missing_recording_root_do0/unavailable-root') / 'experiment') / 'session'))
+
+tests/controller/test_startup_recovery.py:629: AssertionError
+=========================== short test summary info ============================
+FAILED tests/controller/test_lifecycle_commands.py::test_late_backend_cleanup_cannot_certify_failed_metadata[False]
+FAILED tests/controller/test_startup_recovery.py::test_missing_recording_root_does_not_prove_cancelled_namespace_cleanup
+2 failed, 1 passed, 46 deselected in 0.55s

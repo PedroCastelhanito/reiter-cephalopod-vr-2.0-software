@@ -13,6 +13,7 @@ from cephvr.gui.microcontroller_signals import ROLE_OUTPUTS
 from cephvr.gui.pin_numbers import firmware_pin, pin_number
 from cephvr.gui.protocol_document import TrialDraft
 from cephvr.gui.protocol_history import EditHistory
+from cephvr.gui.review_mcu_outputs import ReviewMicrocontrollerSignals, validate_outputs
 from cephvr.gui.window import DashboardWindow
 from cephvr.visual_stimulus.config.models.program_model import parse_program_json
 from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
@@ -43,7 +44,7 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
     mcu = window.devices.microcontroller
     projectors = window.devices.projectors
     spike = window.devices.spikeglx
-    data = {
+    data: dict[str, Any] = {
         "format_version": 6,
         "dashboard": {key: getattr(dashboard, key).text() for key in _DASHBOARD}
         | {"sex": dashboard.sex.currentText()},
@@ -138,6 +139,14 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
             },
         },
     }
+    if mcu.review_inputs is not None:
+        data["microcontroller"]["inputs"] = mcu.review_inputs.snapshot()
+        assert isinstance(mcu.signals, ReviewMicrocontrollerSignals)
+        data["microcontroller"]["output_drafts"] = mcu.signals.snapshot()
+    from cephvr.gui.review_timing import ReviewProjectorTiming
+
+    if isinstance(projectors.timing, ReviewProjectorTiming):
+        data["projectors"]["pulse"]["screens"] = projectors.timing.drafts
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode(
         "utf-8"
     )
@@ -179,6 +188,13 @@ def load_review_draft(window: DashboardWindow, path: Path) -> bool:
     if not trials:
         raise ValueError("Review draft has no trial")
     data["microcontroller"]["camera_pins"] = _role_pins(data)
+    saved_mcu = data["microcontroller"]
+    occupied = {key for key, pin in saved_mcu["camera_pins"].items() if pin}
+    if saved_mcu["trial_pin"]:
+        occupied.add("trial-state")
+    saved_mcu["output_drafts"] = validate_outputs(
+        saved_mcu.get("output_drafts", dict(selected=[], templates=[])), occupied
+    )
     saved_projectors = data["projectors"]
     if data["format_version"] < 3:
         bottom = dict(saved_projectors["screens"].get("Bottom", {}))
@@ -307,6 +323,15 @@ def _restore(
         data["microcontroller"]["flip_enabled"],
     )
 
+    if mcu.review_inputs is not None:
+        mcu.review_inputs.restore(data["microcontroller"].get("inputs", []))
+        assert isinstance(mcu.signals, ReviewMicrocontrollerSignals)
+        mcu.signals.restore(
+            data["microcontroller"].get(
+                "output_drafts", dict(selected=[], templates=[])
+            )
+        )
+
     page = window.protocol
     page.assets.folders["root"].editor.setText(data["protocol"]["assets_root"])
     page.session_mode.setCurrentText(data["protocol"]["mode"])
@@ -351,6 +376,15 @@ def _restore(
     )
     for key, field in projectors.timing.fields.items():
         field.setText(pulse["fields"].get(key, ""))
+    from cephvr.gui.review_timing import ReviewProjectorTiming
+
+    if isinstance(projectors.timing, ReviewProjectorTiming):
+        timing = projectors.timing
+        drafts = pulse.get("screens")
+        if drafts is not None:
+            timing.restore_drafts(drafts)
+        else:
+            timing.edited()
     projectors.update_geometry()
 
     spike = window.devices.spikeglx

@@ -1,0 +1,18 @@
+{
+  "method": "Direct pure projections and validators; injected values only, no host file mutation, sockets, devices or runtime acceptance.",
+  "eye_required_roles": {
+    "gui": [],
+    "backend": [
+      7
+    ]
+  },
+  "fractional_ack_timeout_ms": {
+    "input": "Decimal('1.5')",
+    "controller_resolved_ns": 1500000,
+    "acquisition_defaults": {
+      "accepted": false,
+      "message": "microcontroller.ack_timeout_ms must be an integer in 1..4294967295"
+    }
+  },
+  "assessment": "Duplicated domain functions demonstrably disagree. This does not choose which numeric setting type should be accepted."
+}

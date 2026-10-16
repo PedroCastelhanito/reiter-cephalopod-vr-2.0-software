@@ -17,12 +17,12 @@ from cephvr.gui.components import (
     field,
 )
 from cephvr.gui.dialogs import StopDialog
-from cephvr.gui.formatting import duration, metrics_text
+from cephvr.gui.formatting import duration
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import DirectoryField
 from cephvr.gui.previews import PreviewDialog
 from cephvr.gui.retro_instruments import TrialPosition
-from cephvr.gui.theme import SIZES, retro_console
+from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView, Phase
 
 ACTION_PHASES = {
@@ -44,6 +44,7 @@ class Dashboard(ResponsiveColumns):
     ) -> None:
         left, left_layout = column()
         right = StatusColumn()
+        self.status_column = right
         super().__init__(left, right)
         self.view = DashboardView()
         self.stop_dialog: StopDialog | None = None
@@ -241,38 +242,18 @@ class Dashboard(ResponsiveColumns):
         view = self.view
         self.trial_position.set_position(view.trial_index, view.trial_count)
         rows = (
-            ("PHASE", view.phase.value),
-            (
-                "CONTROL",
-                "Local review"
-                if view.sample and view.has_control
-                else "Review observer"
-                if view.sample
-                else "Control held"
-                if view.connected and view.has_control
-                else "Observer"
-                if view.connected
-                else "Disconnected",
-            ),
+            ("STATUS", view.outcome if view.outcome != "—" else view.phase.value),
             (
                 "TRIAL",
                 f"{view.trial_index}/{view.trial_count}" if view.trial_count else "—",
             ),
-            ("ELAPSED", duration(view.elapsed_s)),
-            ("OUTCOME", view.outcome),
+            (
+                "TRIAL TIME",
+                f"{duration(view.elapsed_s)} / {duration(view.trial_duration_s)}",
+            ),
+            (
+                "TOTAL TIME",
+                f"{duration(view.total_elapsed_s)} / {duration(view.total_duration_s)}",
+            ),
         )
-        output_rows = (
-            ("OUTPUTS", view.output_status),
-            ("RESERVATION", view.reservation_status),
-            ("METADATA", view.metadata_status),
-        )
-        if retro_console(self):
-            width = max(len(key) for key, _ in rows + output_rows)
-            groups = (
-                "\n".join(f"{key:<{width}} : {value}" for key, value in group)
-                for group in (rows, output_rows)
-            )
-            text = "\n\n".join(groups)
-        else:
-            text = metrics_text(rows) + "\n\n" + metrics_text(output_rows)
-        self.runtime_console.setPlainText(text)
+        self.status_column.set_rows((rows[0], None, *rows[1:]))

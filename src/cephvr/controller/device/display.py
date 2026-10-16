@@ -20,6 +20,7 @@ from cephvr.controller.state import (
     DeviceState,
     LifecycleState,
     LimitsState,
+    PendingDisplay,
 )
 from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
@@ -169,6 +170,8 @@ class DisplayInitialization:
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
                 or self.lifecycle.authority_lost
                 or self.lifecycle.session.shutdown_requested
+                or self.device.display_pending is not None
+                or self.device.calibration_pending is not None
             ):
                 return self.hooks.admission(
                     command_id, error="display settings changed before dispatch"
@@ -205,7 +208,7 @@ class DisplayInitialization:
                 )
             except RuntimeError:
                 return self._capacity_failure(command_id)
-            self.device.display_pending = (
+            self.device.display_pending = PendingDisplay(
                 command_id,
                 revision,
                 deadline_ns,
@@ -226,7 +229,7 @@ class DisplayInitialization:
             async with self.lifecycle.lock:
                 if (
                     self.device.display_pending is not None
-                    and self.device.display_pending[0] == command_id
+                    and self.device.display_pending.command_id == command_id
                 ):
                     self.hooks.complete_operation(
                         command_id,
@@ -256,7 +259,7 @@ class DisplayInitialization:
         async with self.lifecycle.lock:
             if (
                 self.device.display_pending is not None
-                and self.device.display_pending[0] == command_id
+                and self.device.display_pending.command_id == command_id
             ):
                 self.hooks.complete_operation(
                     command_id,

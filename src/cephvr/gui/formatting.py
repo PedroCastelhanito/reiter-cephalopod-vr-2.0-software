@@ -47,6 +47,18 @@ def duration(seconds: float | None) -> str:
     return f"{hours:02d}:{minutes:02d}:{seconds_part:02d}"
 
 
-def metrics_text(rows: tuple[tuple[str, str], ...]) -> str:
-    width = max((len(key) for key, _ in rows), default=0)
-    return "\n".join(f"{key:<{width}}  {value}" for key, value in rows)
+HudRows = tuple[tuple[str, str] | None, ...]
+
+
+def hud_text(rows: HudRows, *, retro: bool) -> str:
+    """Align HUD labels across sections; None separates groups, empty labels are notes."""
+    width = max((len(row[0]) for row in rows if row is not None), default=0)
+    separator = " : " if retro else "  "
+    return "\n".join(
+        ""
+        if row is None
+        else f"{row[0].upper():<{width}}{separator}{row[1]}"
+        if row[0]
+        else row[1]
+        for row in rows
+    )

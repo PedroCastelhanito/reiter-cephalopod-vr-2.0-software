@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import QScrollBar, QWidget
 from cephvr.gui.formatting import clock_duration
 from cephvr.gui.projector_layers import layers_for
 from cephvr.gui.protocol_document import node_name
-from cephvr.gui.theme import COLORS
+from cephvr.gui.theme import colors_for, retro_console
 from cephvr.gui.timeline_actions import TimelineActions
 from cephvr.gui.timeline_details import (
     epoch_heading,
@@ -244,6 +244,8 @@ class ProgramTimeline(QWidget):
         self.height_changed.emit()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        colors = colors_for(self)
+        retro = retro_console(self)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.hits.clear()
@@ -255,7 +257,7 @@ class ProgramTimeline(QWidget):
         if self.program is None:
             return
         if self.error:
-            painter.setPen(QColor(COLORS.muted))
+            painter.setPen(QColor(colors.muted))
             painter.drawText(self.rect(), Qt.TextFlag.TextWordWrap, self.error)
             return
         if not self.nodes:
@@ -277,10 +279,10 @@ class ProgramTimeline(QWidget):
                     float(self.width() - 1), end * width - self.scrollbar.value() - 7
                 )
                 band = QRectF(left, 0, right - left, 36)
-                painter.setBrush(QColor(COLORS.selection))
+                painter.setBrush(QColor(colors.selection))
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawRoundedRect(band, 4, 4)
-                painter.setPen(QColor(COLORS.accent))
+                painter.drawRoundedRect(band, 0 if retro else 4, 0 if retro else 4)
+                painter.setPen(QColor(colors.accent))
                 painter.drawText(
                     band.adjusted(8, 0, -44, 0),
                     Qt.AlignmentFlag.AlignVCenter,
@@ -308,22 +310,24 @@ class ProgramTimeline(QWidget):
             selected = self.paths[i] in self.selection
             group = isinstance(node, Group)
             painter.setBrush(
-                QColor(COLORS.selection if selected else COLORS.input)
+                QColor(colors.accent)
+                if retro and selected
+                else QColor(colors.selection if selected else colors.input)
                 if group
                 else stimulus_color(self.type_keys[i])
             )
             painter.setPen(
                 QPen(
                     QColor(
-                        (COLORS.accent if group else COLORS.text)
+                        (colors.accent if group else colors.text)
                         if selected
-                        else COLORS.border
+                        else colors.border
                     ),
                     2 if selected else 1,
                 )
             )
-            painter.drawRoundedRect(rect, 6, 6)
-            painter.setPen(QColor(COLORS.text))
+            painter.drawRoundedRect(rect, 0 if retro else 6, 0 if retro else 6)
+            painter.setPen(QColor(colors.window if retro and selected else colors.text))
             name = node_name(node).replace("_", " ")
             value = self.durations[i]
             summary = clock_duration(value) if value is not None else "Timing at Setup"
@@ -340,6 +344,7 @@ class ProgramTimeline(QWidget):
                     > rect.width() - 16
                 )
                 group_heading = QRectF(rect.left(), 0, rect.width(), 36)
+                painter.setPen(QColor(colors.text))
                 painter.drawText(
                     group_heading.adjusted(8, 0, -8, 0),
                     Qt.AlignmentFlag.AlignVCenter,
@@ -350,6 +355,9 @@ class ProgramTimeline(QWidget):
                     ),
                 )
                 self.hover_text.append((group_heading, name))
+                painter.setPen(
+                    QColor(colors.window if retro and selected else colors.text)
+                )
                 lines = ((5, counts),) if compact else ((5, counts), (29, summary))
                 summary = counts + " · " + summary
             for offset, text in lines:
@@ -387,7 +395,7 @@ class ProgramTimeline(QWidget):
         )
         if len(self.selection) > 1:
             heading += f" · {len(self.selection)} selected"
-        painter.setPen(QColor(COLORS.text))
+        painter.setPen(QColor(colors.text))
         heading_rect = QRectF(0, 88 + self.batch_offset, self.width(), 24)
         painter.drawText(
             heading_rect,
@@ -402,17 +410,17 @@ class ProgramTimeline(QWidget):
         for (face, layers), height in zip(
             self.detail_rows(), self.lane_heights(), strict=True
         ):
-            painter.setPen(QColor(COLORS.label))
+            painter.setPen(QColor(colors.label))
             painter.drawText(
                 QRectF(0, y, 53, height), Qt.AlignmentFlag.AlignVCenter, face
             )
             rect = QRectF(x0, y, width, height - 5)
-            painter.setBrush(QColor(COLORS.input))
-            painter.setPen(QPen(QColor(COLORS.border), 1))
-            painter.drawRoundedRect(rect, 4, 4)
+            painter.setBrush(QColor(colors.input))
+            painter.setPen(QPen(QColor(colors.border), 1))
+            painter.drawRoundedRect(rect, 0 if retro else 4, 0 if retro else 4)
             for position, (layer, text) in enumerate(layers):
                 line = QRectF(x0 + 8, y + 4 + 25 * position, width - 16, 25)
-                painter.setPen(QColor(COLORS.text if layer >= 0 else COLORS.muted))
+                painter.setPen(QColor(colors.text if layer >= 0 else colors.muted))
                 painter.drawText(
                     line,
                     Qt.AlignmentFlag.AlignVCenter,

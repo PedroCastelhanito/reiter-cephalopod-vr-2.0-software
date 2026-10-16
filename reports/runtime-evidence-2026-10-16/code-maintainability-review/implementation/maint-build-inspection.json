@@ -1,0 +1,6 @@
+{
+  "wheel": "/private/tmp/cephvr-maintainability-build/cephvr-2.0.0.dev0-py3-none-any.whl",
+  "vulture_requirement": "Requires-Dist: vulture==2.16; extra == \"dev\"",
+  "new_modules_packaged": true,
+  "unused_gui_class_absent": true
+}

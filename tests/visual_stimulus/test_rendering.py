@@ -595,6 +595,76 @@ def test_arena_model_and_physical_projection_are_finite_and_pose_sensitive():
     assert all(value == pytest.approx(value) for row in projection for value in row)
 
 
+@pytest.mark.parametrize(
+    "angles", [(0, 0, 0), (90, 0, 0), (35, -20, 17), (-175, 80, -110)]
+)
+def test_effective_arena_pose_matches_rendered_rigid_transform(angles):
+    from cephvr.visual_stimulus.rendering.arena import effective_arena_pose
+
+    yaw, pitch, roll = angles
+    settings = NS(
+        kind="arena",
+        instance_id="arena",
+        world_frame_id="world",
+        fixed_height_mm=12.0,
+        fixed_pitch_deg=pitch,
+        fixed_roll_deg=roll,
+        asset_to_world=((1, 0, 0, 8), (0, 1, 0, 9), (0, 0, 1, 10), (0, 0, 0, 1)),
+    )
+    state = {"x": 2.0, "y": -3.0, "yaw": yaw}
+    snapshot = InstanceSnapshot("arena", "arena", True, tuple(state.items()), settings)
+    pose = effective_arena_pose(snapshot)
+    assert pose.instance_id == "arena" and pose.frame_id == "world"
+    assert pose.position_mm == (2.0, -3.0, 12.0)
+    x, y, z, w = pose.orientation_xyzw
+    assert x * x + y * y + z * z + w * w == pytest.approx(1)
+    rotation = (
+        (1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)),
+        (2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)),
+        (2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)),
+    )
+    model = arena_model_matrix(settings, state)
+    for row in range(3):
+        assert model[row][:3] == pytest.approx(rotation[row])
+        assert model[row][3] == pytest.approx(
+            pose.position_mm[row]
+            + sum(rotation[row][j] * settings.asset_to_world[j][3] for j in range(3))
+        )
+
+
+def test_scene_render_group_retains_only_the_active_arena_pose():
+    artifact = make_prepared_trial()
+    trial_id = artifact.identity.trial_id
+    renderer = ModernGLSceneRenderer()
+    renderer._moderngl = NS()
+    renderer._artifacts[trial_id] = artifact.model_copy(update={"uniform_layouts": ()})
+    renderer._outputs[trial_id] = {}
+    renderer._resources[trial_id] = {}
+    renderer._gpu_resources[trial_id] = {}
+    settings = NS(
+        kind="arena",
+        instance_id="arena",
+        world_frame_id="world",
+        fixed_height_mm=4,
+        fixed_pitch_deg=0,
+        fixed_roll_deg=0,
+        asset_to_world=((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1)),
+    )
+    snapshot = InstanceSnapshot(
+        "arena", "arena", True, (("x", 1), ("y", 2), ("yaw", 0)), settings
+    )
+    scene = NS(arena_instance_id="arena")
+    result = renderer.render_group(
+        (scene, False, 0, trial_id, 0, 0, 0), (snapshot,), {}, {}
+    )
+    assert len(result.effective_poses) == 1
+    assert result.effective_poses[0].position_mm == (1, 2, 4)
+    result = renderer.render_group(
+        (NS(arena_instance_id=None), False, 0, trial_id, 1, 0, 1), (), {}, {}
+    )
+    assert result.effective_poses == ()
+
+
 def test_clipping_diagnostic_reservation_and_flag_decode_are_bounded():
     assert DIAGNOSTIC_SLOTS == 16
     assert reservation_bytes(4) == 4 * 16 * 16
@@ -1062,7 +1132,7 @@ def test_shared_context_wait_uses_unsigned_64_bit_ignored_timeout(monkeypatch):
 
 @pytest.mark.parametrize(
     ("pixel_format", "dtype"),
-    [("rgba8_bottom_up", "f1"), ("r10g10b10a2_le_bottom_up", "f4")],
+    [("rgba8_top_down", "f1"), ("r10g10b10a2_le_top_down", "f4")],
 )
 def test_review_capture_clears_framebuffer_in_creation_order(
     monkeypatch, pixel_format, dtype
@@ -1113,14 +1183,14 @@ def test_review_capture_clears_framebuffer_in_creation_order(
                 native_pixel_format=pixel_format,
             ),
         )
-    assert events == ["use", "clear"]
-    assert texture_types == [dtype]
+    assert events == ["use", "clear", "use"]
+    assert texture_types == [dtype, dtype]
     capture._ensure_compositor(context, 2, 2, pixel_format)
-    assert texture_types == [dtype]
+    assert texture_types == [dtype, dtype]
     other = (
-        "r10g10b10a2_le_bottom_up"
-        if pixel_format == "rgba8_bottom_up"
-        else "rgba8_bottom_up"
+        "r10g10b10a2_le_top_down"
+        if pixel_format == "rgba8_top_down"
+        else "rgba8_top_down"
     )
     with pytest.raises(RuntimeError, match="cannot change"):
         capture._ensure_compositor(context, 2, 2, other)
@@ -1132,7 +1202,11 @@ def test_review_capture_clears_framebuffer_in_creation_order(
 def test_review_capture_polls_fence_then_fills_owned_host_buffer(mapping):
     import ctypes
 
-    from cephvr.visual_stimulus.rendering.capture import ReviewCapture, _Pending
+    from cephvr.visual_stimulus.rendering.capture import (
+        ReviewCapture,
+        _Buffer,
+        _Pending,
+    )
 
     events = []
     signaled = False
@@ -1165,7 +1239,7 @@ def test_review_capture_polls_fence_then_fills_owned_host_buffer(mapping):
         glDeleteBuffers=lambda *_args: events.append("buffer"),
     )
     capture = ReviewCapture()
-    pending = _Pending(gl, 7, 8, 8)
+    pending = _Pending(_Buffer(gl, 7, 8), 8)
     capture._pending.append(pending)
     assert capture.poll(pending) is None
     assert not events
@@ -1174,6 +1248,8 @@ def test_review_capture_polls_fence_then_fills_owned_host_buffer(mapping):
         with pytest.raises(RuntimeError, match="mapping"):
             capture.poll(pending)
         assert capture._pending == [pending]
+        with pytest.raises(RuntimeError, match="cleanup is required"):
+            capture.poll(pending)
         capture.release()
         assert not capture._pending
         assert events[-2:] == ["fence", "buffer"]
@@ -1181,10 +1257,15 @@ def test_review_capture_polls_fence_then_fills_owned_host_buffer(mapping):
     pixels = capture.poll(pending)
     assert isinstance(pixels, bytearray)
     assert pixels == expected
-    assert events == ["map", "unmap", "fence", "buffer"]
+    assert events == ["map", "unmap", "fence"]
+    assert capture._available == [pending.buffer]
     assert not capture._pending
     with pytest.raises(TypeError, match="invalid pending"):
         capture.poll(pending)
+
+    capture.release()
+    assert not capture._available
+    assert events[-1] == "buffer"
 
 
 def test_context_activation_checks_actual_pointer_before_skipping_rebind():
@@ -1891,3 +1972,431 @@ def test_physical_corners_use_surface_center_as_local_origin():
         artifact, NS(state={**state, "x": 100.0, "y": 50.0}), "front", identity
     )
     assert edge[0] == (0.0, 0.0)
+
+
+def test_native_provenance_uses_each_actual_context_and_detects_driver_changes(
+    tmp_path,
+):
+    from cephvr.visual_stimulus.rendering.native import ModernGLPort
+
+    port = ModernGLPort(tmp_path, announce=lambda *_: None)
+    with pytest.raises(RuntimeError, match="initialized outputs"):
+        port.replay_provenance()
+    display = make_prepared_trial().display
+    port._display = display
+    activations = []
+    for output in display.active_outputs:
+        port._outputs[output.output_id] = NS(
+            activate=lambda name=output.output_id: activations.append(name),
+            context=NS(
+                info={
+                    "GL_VENDOR": "NVIDIA",
+                    "GL_RENDERER": "fixture-GPU",
+                    "GL_VERSION": "4.6 driver-a",
+                }
+            ),
+        )
+    before = port.replay_provenance()
+    assert activations == [output.output_id for output in display.active_outputs]
+    assert sum(item.role == "gpu" for item in before) == len(display.active_outputs)
+    first = port._outputs[display.active_outputs[0].output_id]
+    first.context.info["GL_VERSION"] = "4.6 driver-b"
+    assert port.replay_provenance() != before
+    del first.context.info["GL_VERSION"]
+    with pytest.raises(ValueError, match="missing graphics provenance GL_VERSION"):
+        port.replay_provenance()
+
+
+class _CaptureGL:
+    """Host model of buffer/fence ownership and same-size nearest framebuffer blit."""
+
+    GL_PIXEL_PACK_BUFFER = 1
+    GL_READ_FRAMEBUFFER = 2
+    GL_DRAW_FRAMEBUFFER = 3
+    GL_COLOR_ATTACHMENT0 = 4
+    GL_STREAM_READ = 5
+    GL_UNSIGNED_BYTE = 6
+    GL_UNSIGNED_INT_2_10_10_10_REV = 7
+    GL_RGBA = 8
+    GL_SYNC_GPU_COMMANDS_COMPLETE = 9
+    GL_SCISSOR_TEST = 10
+    GL_COLOR_BUFFER_BIT = 11
+    GL_NEAREST = 12
+    GL_ALREADY_SIGNALED = 13
+    GL_CONDITION_SATISFIED = 14
+    GL_WAIT_FAILED = 15
+    GL_MAP_READ_BIT = 16
+
+    def __init__(self, pixels, width, height):
+        self.pixels, self.width, self.height = pixels, width, height
+        self.buffers, self.syncs = {}, set()
+        self.bound = 0
+        self.serial = 0
+        self.signaled = True
+        self.scissor = True
+        self.allocations = self.storage_allocations = self.blits = 0
+        self.delete_syncs = []
+        self.fail = None
+
+    def glGenBuffers(self, _count):
+        self.serial += 1
+        self.allocations += 1
+        return self.serial
+
+    def glBindBuffer(self, _target, pbo):
+        if pbo == 0 and self.fail == "unbind":
+            self.fail = None
+            raise RuntimeError("unbind failed")
+        self.bound = pbo
+
+    def glBufferData(self, _target, size, _data, _usage):
+        import ctypes
+
+        self.storage_allocations += 1
+        self.buffers[self.bound] = (ctypes.c_ubyte * size)()
+
+    def glBindFramebuffer(self, _target, _fbo):
+        pass
+
+    def glReadBuffer(self, _buffer):
+        pass
+
+    def glDrawBuffer(self, _buffer):
+        pass
+
+    def glIsEnabled(self, _state):
+        return self.scissor
+
+    def glDisable(self, _state):
+        self.scissor = False
+
+    def glEnable(self, _state):
+        self.scissor = True
+
+    def glBlitFramebuffer(self, *args):
+        assert args == (
+            0,
+            0,
+            self.width,
+            self.height,
+            0,
+            self.height,
+            self.width,
+            0,
+            self.GL_COLOR_BUFFER_BIT,
+            self.GL_NEAREST,
+        )
+        assert not self.scissor
+        if self.fail == "blit":
+            raise RuntimeError("blit failed")
+        stride = self.width * 4
+        self.oriented = b"".join(
+            self.pixels[n : n + stride]
+            for n in range(len(self.pixels) - stride, -1, -stride)
+        )
+        self.blits += 1
+
+    def glReadPixels(self, _x, _y, width, height, _format, _type, _offset):
+        assert (width, height) == (self.width, self.height)
+        self.buffers[self.bound][:] = self.oriented
+
+    def glFenceSync(self, _condition, _flags):
+        if self.fail == "fence":
+            return None
+        self.serial += 1
+        self.syncs.add(self.serial)
+        return self.serial
+
+    def glFlush(self):
+        pass
+
+    def glClientWaitSync(self, sync, _flags, timeout):
+        assert timeout == 0 and sync in self.syncs
+        return self.GL_ALREADY_SIGNALED if self.signaled else 0
+
+    def glMapBufferRange(self, _target, _offset, _size, _flags):
+        import ctypes
+
+        return ctypes.addressof(self.buffers[self.bound])
+
+    def glUnmapBuffer(self, _target):
+        return True
+
+    def glDeleteSync(self, sync):
+        assert sync in self.syncs
+        self.syncs.remove(sync)
+        self.delete_syncs.append(sync)
+
+    def glDeleteBuffers(self, _count, pbos):
+        if self.fail == "delete":
+            raise RuntimeError("delete failed")
+        for pbo in pbos:
+            del self.buffers[pbo]
+
+
+def _review_capture_fixture(monkeypatch, gl, pixel_format="rgba8_top_down"):
+    from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+
+    monkeypatch.setitem(sys.modules, "OpenGL", NS(GL=gl))
+    monkeypatch.setitem(sys.modules, "moderngl", NS(TRIANGLE_STRIP=1))
+    released = []
+
+    def resource(name, **kwargs):
+        return NS(release=lambda: released.append(name), **kwargs)
+
+    context = NS()
+    capture = ReviewCapture()
+    capture._context = context
+    capture._dimensions = (gl.width, gl.height, pixel_format)
+    capture._shared = [
+        resource("texture"),
+        resource("fbo", glo=10, use=lambda: None, clear=lambda *_: None),
+        {"source_tex": NS(value=0)},
+        resource("quad"),
+        resource("array"),
+        resource("flipped"),
+        resource("readback", glo=11),
+    ]
+
+    # Program needs mapping and release like the actual ModernGL resource.
+    class Program(dict):
+        def release(self):
+            released.append("program")
+
+    capture._shared[2] = Program(source_tex=NS(value=0))
+    encoding = NS(
+        composite_width=gl.width,
+        composite_height=gl.height,
+        tiles=(),
+        native_pixel_format=pixel_format,
+    )
+    outputs = (NS(output_id="one", texture_handle=NS(ctx=context)),)
+    return capture, outputs, encoding, released
+
+
+@pytest.mark.parametrize("height", [1, 3, 4])
+@pytest.mark.parametrize("pixel_format", ["rgba8_top_down", "r10g10b10a2_le_top_down"])
+def test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage(
+    monkeypatch, height, pixel_format
+):
+    from cephvr.visual_stimulus.recording.capture import (
+        CompositeFrame,
+        _ffmpeg_input_order,
+    )
+
+    width = 3
+    source = bytes((i * 37) % 256 for i in range(width * height * 4))
+    gl = _CaptureGL(source, width, height)
+    capture, outputs, encoding, released = _review_capture_fixture(
+        monkeypatch, gl, pixel_format
+    )
+    old = CompositeFrame(
+        0, 0, width, height, pixel_format.replace("top_down", "bottom_up"), source
+    )
+    expected = _ffmpeg_input_order(old).pixels
+    first_pixels = None
+    old_pending = None
+    for _ in range(30):
+        pending = capture.capture(outputs, encoding)
+        assert pending is not old_pending
+        pixels = capture.poll(pending)
+        result = _ffmpeg_input_order(
+            CompositeFrame(0, 0, width, height, pixel_format, pixels)
+        )
+        assert result.pixels == expected
+        assert gl.scissor and gl.bound == 0
+        if old_pending is not None:
+            with pytest.raises(TypeError):
+                capture.poll(old_pending)
+        if first_pixels is None:
+            first_pixels = bytes(pixels)
+        else:
+            assert pixels == first_pixels
+        old_pending = pending
+    assert gl.allocations == gl.storage_allocations == 1
+    assert gl.blits == 30
+    capture.release()
+    assert not gl.buffers and not gl.syncs
+    assert len(released) == 7
+    capture.release()  # exact successful releases are not repeated
+    assert len(released) == 7
+
+
+def test_readback_pool_high_water_and_unsignaled_cancellation(monkeypatch):
+    gl = _CaptureGL(b"RGBA", 1, 1)
+    capture, outputs, encoding, _ = _review_capture_fixture(monkeypatch, gl)
+    gl.signaled = False
+    pending = [capture.capture(outputs, encoding) for _ in range(3)]
+    assert all(capture.poll(p) is None for p in pending)
+    assert not capture._available and gl.allocations == 3
+    cancelled = pending.pop(0)
+    assert capture.cancel(cancelled)
+    assert not capture._available  # no unsignaled storage can return to the pool
+    gl.signaled = True
+    snapshots = [capture.poll(p) for p in reversed(pending)]
+    gl.pixels = b"DIFF"
+    for _ in range(30):
+        more = [capture.capture(outputs, encoding) for _ in range(2)]
+        for p in more:
+            assert capture.poll(p) == b"DIFF"
+    assert snapshots == [b"RGBA", b"RGBA"]
+    assert gl.allocations == 3 and len(capture._available) == 2
+    capture.release()
+    assert not gl.buffers and not gl.syncs
+
+
+@pytest.mark.parametrize("failure", ["blit", "fence"])
+def test_capture_failure_restores_state_and_discards_buffer(monkeypatch, failure):
+    gl = _CaptureGL(b"RGBA", 1, 1)
+    capture, outputs, encoding, _ = _review_capture_fixture(monkeypatch, gl)
+    gl.fail = failure
+    with pytest.raises(RuntimeError):
+        capture.capture(outputs, encoding)
+    assert not capture._pending and not capture._available
+    assert not gl.buffers and not gl.syncs
+    assert gl.scissor and gl.bound == 0
+    capture.release()
+
+
+def test_capture_cleanup_retry_keeps_exact_buffer_and_does_not_redelete_sync(
+    monkeypatch,
+):
+    gl = _CaptureGL(b"RGBA", 1, 1)
+    capture, outputs, encoding, released = _review_capture_fixture(monkeypatch, gl)
+    pending = capture.capture(outputs, encoding)
+    sync = pending.sync
+    gl.fail = "delete"
+    with pytest.raises(RuntimeError, match="delete failed"):
+        capture.cancel(pending)
+    assert pending in capture._pending and pending.sync is None
+    assert gl.delete_syncs == [sync] and not released
+    gl.fail = None
+    capture.release()
+    assert gl.delete_syncs == [sync]
+    assert not capture._pending and not gl.buffers
+    assert len(released) == 7
+
+
+@pytest.mark.parametrize("signaled", [False, True])
+@pytest.mark.parametrize("delete_fails", [False, True])
+def test_readback_unbind_failure_retains_cancellable_ownership(
+    monkeypatch, signaled, delete_fails
+):
+    gl = _CaptureGL(b"RGBA", 1, 1)
+    capture, outputs, encoding, released = _review_capture_fixture(monkeypatch, gl)
+    pending = capture.capture(outputs, encoding)
+    sync = pending.sync
+    gl.signaled = signaled
+    gl.fail = "unbind"
+    with pytest.raises(RuntimeError, match="unbind failed"):
+        capture.poll(pending)
+    assert pending in capture._pending and pending.failed
+    assert not capture._available
+    with pytest.raises(RuntimeError, match="cleanup is required"):
+        capture.poll(pending)
+    if delete_fails:
+        gl.fail = "delete"
+        with pytest.raises(RuntimeError, match="delete failed"):
+            capture.cancel(pending)
+        assert pending in capture._pending and not capture._available
+        gl.fail = None
+    assert capture.cancel(pending)
+    assert gl.delete_syncs == [sync]
+    assert not gl.syncs and not gl.buffers and not capture._pending
+    assert not capture._available
+    # Failed storage is discarded; a subsequent capture allocates a fresh buffer.
+    gl.signaled = True
+    next_pending = capture.capture(outputs, encoding)
+    assert capture.poll(next_pending) == b"RGBA"
+    assert gl.allocations == 2
+    capture.release()
+    assert len(released) == 7 and not gl.buffers
+
+
+def test_idle_readback_buffer_delete_failure_remains_owned_for_retry(monkeypatch):
+    gl = _CaptureGL(b"RGBA", 1, 1)
+    capture, outputs, encoding, released = _review_capture_fixture(monkeypatch, gl)
+    pending = capture.capture(outputs, encoding)
+    assert capture.poll(pending) == b"RGBA"
+    gl.fail = "delete"
+    with pytest.raises(RuntimeError, match="delete failed"):
+        capture.release()
+    assert len(capture._available) == 1 and not released
+    gl.fail = None
+    capture.release()
+    assert not gl.buffers and not capture._available
+    assert len(released) == 7
+
+
+def test_partial_compositor_allocation_keeps_failed_resource_release_for_retry():
+    from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+
+    release_fails = True
+    released = []
+
+    def release():
+        if release_fails:
+            raise RuntimeError("texture release failed")
+        released.append("texture")
+
+    def fail_framebuffer(**_kwargs):
+        raise RuntimeError("framebuffer allocation failed")
+
+    context = NS(
+        texture=lambda *_args, **_kwargs: NS(release=release),
+        framebuffer=fail_framebuffer,
+    )
+    capture = ReviewCapture()
+    with pytest.raises(RuntimeError, match="framebuffer allocation failed"):
+        capture._ensure_compositor(context, 2, 2, "rgba8_top_down")
+    assert len(capture._shared) == 1
+    with pytest.raises(RuntimeError, match="partial resources"):
+        capture._ensure_compositor(context, 2, 2, "rgba8_top_down")
+    release_fails = False
+    capture.release()
+    assert released == ["texture"] and not capture._shared
+    assert capture._context is None and capture._dimensions is None
+
+
+@pytest.mark.parametrize("activation_fails", [False, True])
+def test_native_capture_cleanup_activates_owner_before_scene_release(
+    tmp_path, activation_fails
+):
+    from cephvr.visual_stimulus.rendering.native import ModernGLPort, _OutputContext
+
+    calls = []
+    fail = activation_fails
+
+    def activate_first():
+        calls.append("first")
+        if fail:
+            raise RuntimeError("context activation failed")
+
+    port = ModernGLPort(
+        tmp_path,
+        announce=lambda *_: None,
+        scene_renderer=NS(release=lambda: calls.append("scene")),
+    )
+    port._glfw = NS(
+        make_context_current=lambda _: None,
+        destroy_window=lambda _: None,
+        terminate=lambda: None,
+    )
+    for name, activate in (
+        ("first", activate_first),
+        ("last", lambda: calls.append("last")),
+    ):
+        port._outputs[name] = _OutputContext(
+            name, object(), NS(release=lambda: None), 1, 1, 8, 1, None, activate
+        )
+    assert not port._capture_fences  # successful transfers already retired their fences
+    result = port.release()
+    if activation_fails:
+        assert result.outstanding and calls == ["first"]
+        assert port.scene_renderer is not None and len(port._outputs) == 2
+        fail = False
+        calls.clear()
+        result = port.release()
+    assert not result.outstanding
+    assert calls[:2] == ["first", "scene"]
+    assert port.scene_renderer is None and not port._outputs

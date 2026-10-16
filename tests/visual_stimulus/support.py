@@ -248,7 +248,7 @@ class Preparation:
         return Graphics(host_time_ns, self.artifact).initialize_display(display)
 
     def prepare_graphics(self, artifacts):
-        pass
+        return artifacts
 
     def __init__(self, artifact):
         self.artifact = artifact

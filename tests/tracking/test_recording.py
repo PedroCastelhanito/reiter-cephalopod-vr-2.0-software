@@ -79,6 +79,7 @@ def test_idle_writer_syncs_then_completes_empty_scientific_stream(
     ]
     assert [line["kind"] for line in lines] == ["header", "completion"]
     assert lines[-1]["result_records"] == 0
+    assert dict(result.counts) == {"pose": 0, "result": 0, "reset": 0, "discard": 0}
 
 
 def test_sync_failure_is_closed_failure_not_success(tmp_path, monkeypatch):

@@ -209,3 +209,28 @@ async def test_takeover_and_release_invalidate_old_generation() -> None:
         operations.authorized(current_command)
         == "controller generation or control lease mismatch"
     )
+
+
+@pytest.mark.parametrize("path", ["release", "disconnect"])
+async def test_owner_loss_subscriptions_are_shared_and_delivered_once(path):
+    generation, lifecycle, control, publisher, operations, leases = _components()
+    seen = []
+
+    async def observer():
+        seen.append("observer")
+
+    async def cleanup():
+        seen.append("cleanup")
+
+    leases.observe_owner_loss(observer)
+    publisher.bind_owner_loss(cleanup)
+    watch = await _installed_watch(publisher, str(uuid4()))
+    assert (
+        await leases.claim(_claim(generation, watch))
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    command = _command(generation, watch.client_id, control.owner[2])
+    if path == "release":
+        await leases.release_control(command)
+    else:
+        await publisher.close_watch(watch)
+    assert seen == ["observer", "cleanup"]

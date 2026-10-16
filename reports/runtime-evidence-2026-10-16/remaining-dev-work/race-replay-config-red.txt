@@ -1,0 +1,110 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+____ test_command_retry_uses_original_scope_after_live_scope_changes[False] ____
+
+retired = False
+
+    @pytest.mark.parametrize("retired", [False, True])
+    async def test_command_retry_uses_original_scope_after_live_scope_changes(retired):
+        work = _Work()
+        gate = _gate(work)
+        command_id = _id()
+        request = _request(command_id)
+        calls = []
+        async def action():
+            calls.append(1)
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED, command_id=command_id)
+        try:
+            first = await gate.admit("StopAfterTrial", command_id, request, action)
+            work.key = None if retired else _id()
+            replay = await gate.admit("StopAfterTrial", command_id, request, action)
+>           assert replay == first
+E           assert result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "ADMISSION"\n  message: "command ID identifies a changed request"\n}\ncommand_id: "78df53d8-175c-4445-b169-a43dd04bca48"\n == result: COMMAND_RESULT_ACCEPTED\ncommand_id: "78df53d8-175c-4445-b169-a43dd04bca48"\n
+
+tests/controller/test_command_admission.py:476: AssertionError
+____ test_command_retry_uses_original_scope_after_live_scope_changes[True] _____
+
+retired = True
+
+    @pytest.mark.parametrize("retired", [False, True])
+    async def test_command_retry_uses_original_scope_after_live_scope_changes(retired):
+        work = _Work()
+        gate = _gate(work)
+        command_id = _id()
+        request = _request(command_id)
+        calls = []
+        async def action():
+            calls.append(1)
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED, command_id=command_id)
+        try:
+            first = await gate.admit("StopAfterTrial", command_id, request, action)
+            work.key = None if retired else _id()
+            replay = await gate.admit("StopAfterTrial", command_id, request, action)
+>           assert replay == first
+E           assert result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "ADMISSION"\n  message: "command ID identifies a changed request"\n}\ncommand_id: "55dca556-be58-4a79-b72e-946786b43869"\n == result: COMMAND_RESULT_ACCEPTED\ncommand_id: "55dca556-be58-4a79-b72e-946786b43869"\n
+
+tests/controller/test_command_admission.py:476: AssertionError
+_ test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish[False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111db15d0>
+conflicting_edit = False
+
+    @pytest.mark.parametrize("conflicting_edit", [False, True])
+    async def test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish(monkeypatch, conflicting_edit):
+        runtime = _runtime()
+        monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+        started, release = threading.Event(), threading.Event()
+        def validate(_configuration):
+            started.set()
+            assert release.wait(2)
+            return pb.ValidationResult(completed=True, valid=True)
+        runtime.configuration_commands.validators = {"test": validate}
+        update = asyncio.create_task(runtime.update_configuration(_update_request(runtime, "changed")))
+        assert await asyncio.to_thread(started.wait, 2)
+        runtime.publisher.publish()
+        if conflicting_edit:
+            runtime.device.configuration_edit = object()
+        release.set()
+        result = await update
+>       assert result.result == (pb.COMMAND_RESULT_REJECTED if conflicting_edit else pb.COMMAND_RESULT_ACCEPTED)
+E       assert 2 == 1
+E        +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "REJECTED"\n  message: "configuration changes were not applied: configuration or session phase changed during validation"\n}\ncommand_id: "8974e3c6-486b-49d5-9dea-1433d5205c87"\n.result
+
+tests/controller/test_configuration_transactions.py:826: AssertionError
+_ test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish[True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111d8a490>
+conflicting_edit = True
+
+    @pytest.mark.parametrize("conflicting_edit", [False, True])
+    async def test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish(monkeypatch, conflicting_edit):
+        runtime = _runtime()
+        monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+        started, release = threading.Event(), threading.Event()
+        def validate(_configuration):
+            started.set()
+            assert release.wait(2)
+            return pb.ValidationResult(completed=True, valid=True)
+        runtime.configuration_commands.validators = {"test": validate}
+        update = asyncio.create_task(runtime.update_configuration(_update_request(runtime, "changed")))
+        assert await asyncio.to_thread(started.wait, 2)
+        runtime.publisher.publish()
+        if conflicting_edit:
+>           runtime.device.configuration_edit = object()
+            ^^^^^^^^^^^^^^
+E           AttributeError: 'ControllerRuntime' object has no attribute 'device'
+
+tests/controller/test_configuration_transactions.py:823: AttributeError
+=========================== short test summary info ============================
+FAILED tests/controller/test_command_admission.py::test_command_retry_uses_original_scope_after_live_scope_changes[False]
+FAILED tests/controller/test_command_admission.py::test_command_retry_uses_original_scope_after_live_scope_changes[True]
+FAILED tests/controller/test_configuration_transactions.py::test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish[False]
+FAILED tests/controller/test_configuration_transactions.py::test_configuration_commit_rechecks_edit_guard_without_rejecting_unrelated_publish[True]
+4 failed, 48 deselected in 2.69s
+_GatheringFuture exception was never retrieved
+future: <_GatheringFuture finished exception=CancelledError()>
+Traceback (most recent call last):
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+asyncio.exceptions.CancelledError

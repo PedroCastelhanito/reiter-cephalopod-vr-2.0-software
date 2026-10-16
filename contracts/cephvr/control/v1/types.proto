@@ -469,6 +469,7 @@ message OutputResult {
   optional bool artifact_present = 5; // Absent means unknown, never false.
   CameraVideoContent camera_video_content = 6; // Camera MP4 only; otherwise UNSPECIFIED.
   VisualStimulusReviewVideoContent visual_stimulus_review_video_content = 7; // Visual Stimulus review MP4 only.
+  map<string, uint64> counts = 8; // Owning writer's observed counts, named by unit/record kind. Missing means unknown; never infer from nominal rate.
   // Populate only the applicable video content field; the other is UNSPECIFIED.
   // NO_FRAMES never waives errors. Owning predicates: acquisition/empty-video.md
   // and visual_stimulus/video-completion.md. Unknown/unspecified is not confirmed empty success.
@@ -491,6 +492,7 @@ message ReadyReport {
   repeated string asset_filenames = 6; // Filename with extension only, E04.
   repeated PreparedFunctionScope prepared_functions = 7; // E06 exact owned loss closure; retained for this generation/session.
   repeated ResourceObligation cleanup_resources = 8; // Exact native resource/path release obligations; separate from output closure.
+  string software_version = 9; // Owning top-level backend's installed CephVR version; empty means unavailable.
 }
 message ResourceObligation {
   ProcessIdentity owner = 1; // Exact process generation that must prove release.
@@ -904,8 +906,8 @@ message Snapshot {
   OutputReservationState reservation = 22; // Controller-owned E04 session reservation; absent before Setup.
   // Reconnect warnings use errors/recoveries/runtime_incidents above (E03); there is
   // no separate history RPC. Bounded by [control].max_retained_incidents.
-  optional int64 retained_since_monotonic_ns = 23; // Oldest retained entry for the current Setup/session.
-  bool retained_truncated = 24; // Older resolved entries were evicted at the bound.
+  optional int64 retained_since_monotonic_ns = 23; // Oldest retained error/recovery/incident timestamp in this view; absent when none.
+  bool retained_truncated = 24; // Retained diagnostic/outcome history has omissions from bounded retention.
   TrackingDiagnosticState tracking_diagnostic = 25; // Coalesced status only; no image or overlay bytes.
   MicrocontrollerDeviceView microcontroller = 26; // Controller-owned, independent of acquisition participation.
 }

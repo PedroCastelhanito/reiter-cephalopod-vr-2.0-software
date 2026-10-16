@@ -1,0 +1,52 @@
+{
+  "method": "AST equality with HEAD for geometry/input-argv helpers; byte equality for compositor; TOML equality for operator settings except policy version. Geometry calculation uses retained Oct15 profile, not live rig state.",
+  "unchanged": {
+    "_composite_geometry": true,
+    "build_review_argv": true,
+    "ffmpeg_input_format": true,
+    "GPU_compositor_and_readback": true,
+    "all_stimulus_operator_values_except_policy_version": true
+  },
+  "example_geometry": {
+    "profile": "reports/runtime-evidence-2026-10-15/open-loop-soak/display-profile.json",
+    "assumed_encoder_maximum": [
+      8192,
+      8192
+    ],
+    "review_scale_factor": 2,
+    "width": 1280,
+    "height": 1000,
+    "scale_denominator": 2,
+    "tiles": [
+      [
+        "calibration_front",
+        0,
+        640,
+        640,
+        360
+      ],
+      [
+        "calibration_left",
+        640,
+        640,
+        640,
+        360
+      ],
+      [
+        "calibration_right",
+        0,
+        280,
+        640,
+        360
+      ],
+      [
+        "calibration_bottom",
+        640,
+        0,
+        360,
+        640
+      ]
+    ]
+  },
+  "new_rate_mode": "nominal playback only; scientific timestamps external"
+}

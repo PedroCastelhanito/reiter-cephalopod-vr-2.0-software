@@ -633,6 +633,9 @@ class BaslerCameraAdapter:
         return self._camera, self._device_info
 
     def _clear_device_ownership(self) -> None:
+        # A confirmed Close retires this SDK generation, not its historical counts.
+        # Failed Close never reaches here, so its reuse guard stays in force.
+        self._last_purge_evidence = None
         self._camera = None
         self._device_info = None
         self._device_id = None

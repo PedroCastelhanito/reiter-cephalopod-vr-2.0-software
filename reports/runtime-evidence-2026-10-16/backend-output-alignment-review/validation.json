@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-16",
+  "source_revision": "0361484d1018c2514ba64aba22432a0079c6ce5c",
+  "source_state": "Shared dirty checkout with current recording, central metadata and concurrent controller/GUI changes. Scoped source hashes retained; not a committed build.",
+  "review_scope": "Output source/schema trace for camera, Tracking, Visual Stimulus, controller metadata and SpikeGLX readback/alignment boundaries; no production edits.",
+  "findings": [
+    {
+      "priority": "P2",
+      "task": "stimulus-replay-provenance",
+      "evidence": "Production manifest builder preserves generic renderer/importer names and decoder package versions; lacks shader fingerprints and GPU/graphics driver/color-transform provenance. Changing layer shader cosine to sine leaves manifest identical. Native preparation passes it through unchanged to recipe.",
+      "authority": "V13/replay contract"
+    },
+    {
+      "priority": "P2",
+      "task": "camera-failed-output-presence",
+      "evidence": "Existing video path with absent ownership proof returns artifact_present=false from failed_outputs; closure remains unconfirmed. Central output index retains this false presence field.",
+      "authority": "E04/A07/A08 truthful output evidence"
+    }
+  ],
+  "tests": {
+    "command": ".venv/bin/python -m pytest tests/acquisition/test_recording_cleanup.py tests/acquisition/test_recording_paths.py tests/controller/test_metadata.py tests/controller/test_planning.py tests/controller/test_output_evidence.py tests/controller/test_spikeglx.py tests/tracking/test_recording.py tests/visual_stimulus/test_recording.py tests/visual_stimulus/test_resources.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_evidence_contract.py -q -m 'not windows and not rig'",
+    "result": "337 passed in 7.88s",
+    "output": "tests.txt"
+  },
+  "probe": {
+    "command": "PYTHONPATH=. .venv/bin/python reports/runtime-evidence-2026-10-16/backend-output-alignment-review/probe.py",
+    "output": "probe.txt",
+    "initial_attempt": "Missing tests package import without repository PYTHONPATH; retained in probe-initial.txt."
+  },
+  "checks": {
+    "git diff --check": "passed",
+    "new report local links/anchors": "13 passed"
+  },
+  "limitations": [
+    "No actual session file set compiled/aligned.",
+    "No live rig configuration queried; checked-in pulse_inventory is empty.",
+    "No GL render/replay, Windows device, hardware pulse or optical timing verification.",
+    "External assets are referenced, not archived; offline compiler/replay remains deferred.",
+    "Existing assumed camera anchor, free-running clock mapping, OneBox/probe common-sync and periodic/single-output optical-marker limitations remain unresolved."
+  ],
+  "source_sha256": {
+    "src/cephvr/acquisition/recording/session_outputs.py": "f313717fe5cb018b7e1bda4d3b2b37b61dbbcfe0f8323c652f3f18cb2358e7be",
+    "src/cephvr/acquisition/recording/session_completion.py": "b860bcb6c1596557f0c4acf92b5339db85e5b8727e0c99b60fab8bfaadcfc532",
+    "src/cephvr/acquisition/recording/frame_log.py": "d5e14b71a5123cf2bd042f9bb9245aa3aef12d8cac30cc125c4f0d7eb2452518",
+    "src/cephvr/controller/metadata/trial_logs.py": "49359a38296d45f5f134e8f5b4c2c0fab2e6f1d80db2b02be7c5d30ce72f34b9",
+    "src/cephvr/controller/lifecycle/start.py": "6b2d640c170b805bdd52e19cf1165c1eff700c267307c8df0e2e657f39960697",
+    "src/cephvr/tracking/coordinator/trials.py": "609edf178757bb5da45ca82f9b93fde9ff360fc8d9cf16b19329d57bfbcc8693",
+    "src/cephvr/tracking/processing/movement.py": "f2cb65337ec515a3a5eae87a5e22ae9f1d412cecb7c885dee77eff0b5182e77b",
+    "src/cephvr/tracking/config/models/records.py": "b5b40826fd4fc154b8e328fc1bf03748c837d7e4f3d5ce3c2780e69ad9564f88",
+    "src/cephvr/visual_stimulus/resources/prepare.py": "bee04da1bf35784a918817853b6e65f54d15e17719434299867ce489f91b91e1",
+    "src/cephvr/visual_stimulus/resources/session.py": "92ff08dc9348f42601f97334f95607b779a3d60fc6d2e7433fb0adbed82bad61",
+    "src/cephvr/visual_stimulus/resources/uniforms.py": "579ca9549ec9782e040752e1aeee056382d2660d146f1b77a8317af55bf618f7",
+    "src/cephvr/visual_stimulus/rendering/evidence.py": "6c6c5d6878cb2d349bdd8db7750913d134d3e885b0df8b5d68acba3247e2b696",
+    "src/cephvr/visual_stimulus/rendering/scene.py": "6db6e484a0efb93626bad844061b2ccf1226b424e9f5feb61fecb4c07ef37751",
+    "src/cephvr/visual_stimulus/rendering/shaders.py": "b14abc61f811be6c0084bcccca3487b53bf342642d3f6811e36d14b551b8df74",
+    "src/cephvr/visual_stimulus/recording/evidence_records.py": "99bb127ec33d646e0c4848740fba7eb831cbd115c8ca825408e5dff5073c9e6a",
+    "src/cephvr/visual_stimulus/config/models/evidence_model.py": "9c0f8eee245551ccd21193b361809fb51f1f6822b229328c59c82810b9d07c6a",
+    "src/cephvr/synchronization/inventory_validation.py": "0f832f7c448e31b3ac777e288ff556c8b468ceae512dc961738e65ab48e3c40c",
+    "src/cephvr/synchronization/channel_mapping.py": "eebabd3e2ee2de421fdd722fe779af1b6e7d260d4031ccb8ea8cda4f27589cf2",
+    "config/backends/synchronization_config.toml": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94"
+  }
+}

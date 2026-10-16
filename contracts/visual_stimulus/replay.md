@@ -18,10 +18,9 @@ summary, never a second full plan. Do not require the original editable program 
 or regenerate a random plan from a seed instead of retaining the resolved plan.
 [Prepared artifact schemas](stimulus-schema.md) and [file ownership](runtime-bindings.md) bind this representation.
 
-The stimulus log retains the prepared replay manifest in either save mode. With Save
-Visual Stimulus data On, the renderer's recording thread additionally writes lossless scientific
-state/presentation evidence (`_stimulus_frames.jsonl`), separately from the lossy
-review-video pixels. The manifest identifies by content fingerprint every external
+The stimulus log retains the prepared replay manifest in either save mode. The
+renderer always writes scientific state/presentation evidence
+(`_stimulus_frames.jsonl`); the save switch controls only the lossy review video. The manifest identifies by content fingerprint every external
 image/video/mesh/texture and projection/calibration resource consumed by the plan,
 including transitive dependencies. Retain exact effective renderer settings, output
 mapping/dimensions, shader/renderer identity and replay-relevant decode/color-transform
@@ -30,7 +29,13 @@ and graphics-environment provenance. Do not collect unrelated environment invent
 The manifest is the narrowly scoped exception to E04's minimal asset/provenance
 policy, not a second session log. Reference external originals; CephVR does not copy
 media/arena/calibration files into the session or create a managed asset archive.
-The operator must preserve the original content. Retained authored-program snapshots
+The operator preserves each used version once in a backed-up, immutable external
+library shared by all experiments. Add changed images, meshes, textures and calibration
+files under new versioned paths; do not overwrite/delete content referenced by retained
+runs. Retain transitive dependencies and matching software releases the same way.
+There is no per-experiment asset subset copy or additional library service.
+[Library example](../../docs/examples/session-logging.md#shared-asset-library).
+Retained authored-program snapshots
 and effective numeric settings remain session/trial records, not external-asset copies.
 
 Store each external dependency's logical reference and SHA-256 content digest in the
@@ -54,6 +59,37 @@ media-decode checks. V04's [asset lifetime](asset-lifetime.md) binds protection 
 retention for prepared consumers. Analysis software must independently establish
 source stability for its replay readers. A manifest alone is not source protection
 or completed replay preparation.
+
+## Renderer provenance at preparation
+
+The existing `manifest.provenance` entries retain the installed CephVR distribution
+version and a `cephvr.visual_stimulus.python-source-v1` SHA-256 identity. Compute it
+from sorted relative POSIX `.py` paths below the installed Visual Stimulus package,
+each UTF-8 path followed by NUL and the 32-byte SHA-256 of that file's exact bytes.
+This includes local source edits and is independent of the installation root. Retain
+that source release and dependencies; modifying installed code requires restarting
+the worker before Setup. This identity does not claim hot-reloaded code equivalence.
+
+Record separate SHA-256 entries for all built-in scene/arena/warp/output GLSL sources
+used by the renderer, including the output color pipeline. Retain Python, OS and
+relevant renderer/image/video package versions plus PyAV's linked library versions
+when available. An unused optional decoder may be labelled unavailable. Content
+identities for in-package color transforms, rasterization and arena import refer to
+the same source release; asset-specific color interpretation remains in the resources.
+
+After initializing the final trial display, collect actual GL_VENDOR, GL_RENDERER and
+GL_VERSION for every active output on the graphics owner. Missing/empty observations
+reject Setup. GPU entries retain vendor/renderer as sorted JSON in `version`; driver
+entries retain the driver-supplied GL_VERSION string, with output identity in
+`implementation`. These identify software/context compatibility, not light onset.
+
+CPU preparation hands immutable artifacts to the graphics owner under the original
+Setup deadline, then resumes only with enriched artifacts. The recorder's recipe,
+reported canonical bytes, prepared SHA-256 and Ready handle all refer to those final
+artifacts. Preserve the final prepared-byte bound and cancellation/cleanup ownership.
+No GPU readback, pixel hashing or frame-path provenance work is introduced. Offline
+compatibility checking/reconstruction remains deferred; richer provenance does not
+by itself establish pixel equality.
 
 ## Log the inputs actually rendered
 

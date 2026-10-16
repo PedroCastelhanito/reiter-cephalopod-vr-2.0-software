@@ -1,0 +1,5 @@
+Checked 1656 local Markdown targets/anchors across 22 changed documents.
+PRE-EXISTING UNAVAILABLE ARTIFACT: reports/runtime.md: missing runtime-evidence-2026-10-14/tank-screen-plot/tank-screens.png
+PRE-EXISTING UNAVAILABLE ARTIFACT: reports/visual_stimulus.md: missing runtime-evidence-2026-10-15/bottom-grid/fix-verification/after/bottom-offscreen.png
+PRE-EXISTING UNAVAILABLE ARTIFACT: reports/visual_stimulus.md: missing runtime-evidence-2026-10-14/tank-screen-plot/tank-screens.png
+0 new broken targets/anchors; 3 pre-existing unavailable artifact references preserved.

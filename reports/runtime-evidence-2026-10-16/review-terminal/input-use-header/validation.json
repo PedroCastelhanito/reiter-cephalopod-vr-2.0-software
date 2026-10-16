@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-16",
+  "scope": "offscreen Qt; no native/DPI acceptance",
+  "source_sha256": "40c697c99dc58461c1e80c58040e49582816c97c838d98e23d1cdf001fb77cd3",
+  "tests": "5 passed,548 deselected",
+  "checks": "Ruff/format,Win32 mypy1,boundaries712/zero violations,whitespace pass",
+  "visuals": "1440/1175/720 Standard/Retro single-line Use assertions; Retro1175 inspected"
+}

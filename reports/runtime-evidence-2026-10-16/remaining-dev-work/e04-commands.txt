@@ -1,0 +1,10 @@
+.........................F................                               [100%]
+=================================== FAILURES ===================================
+___ test_accepted_stop_withdrawal_abort_events_are_owned_before_interruption ___
+tests/controller/test_lifecycle_commands.py:260: in test_accepted_stop_withdrawal_abort_events_are_owned_before_interruption
+    runtime.cancel_stop_after_trial,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'ControllerRuntime' object has no attribute 'cancel_stop_after_trial'
+=========================== short test summary info ============================
+FAILED tests/controller/test_lifecycle_commands.py::test_accepted_stop_withdrawal_abort_events_are_owned_before_interruption
+1 failed, 41 passed in 3.88s

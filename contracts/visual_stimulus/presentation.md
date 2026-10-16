@@ -81,7 +81,7 @@ identity and reported error/unknown disposition. A returned call is software evi
 not optical onset or proof that the same frame appeared on every output. Keep state
 sampling, GPU completion (where measured), swap calls, video admission and photodiode
 trace evidence distinct. [Review playback](encoding-options.md#review-timing) is
-constant-rate at the pacing output's nominal refresh; per-output swap times remain
+sequential with nominal playback at the pacing output's refresh; per-output swap times remain
 independent evidence. V13 replay reproduces recorded states/output sequences;
 it cannot reconstruct tearing/scanout from a swap timestamp alone.
 

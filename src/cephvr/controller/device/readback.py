@@ -10,6 +10,7 @@ from cephvr.acquisition.identity import CAMERA_NAMES, camera_role_name
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.control.camera_edit_validation import validate_selected_camera
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.release_evidence import (
@@ -87,8 +88,7 @@ class CameraReadback:
         try:
             setting = next(
                 item.acquisition
-                for item in self.configuration.current.backends
-                if item.backend_name == "acquisition"
+                for item in acquisition_backends(self.configuration.current)
             )
             expected_pulses = (
                 operation.kind == svc.CAMERA_COMMAND_KIND_START_PREVIEW
@@ -149,9 +149,7 @@ class CameraReadback:
                     candidate != self.configuration.current
                 )
                 confirmed = next(
-                    item.acquisition
-                    for item in candidate.backends
-                    if item.backend_name == "acquisition"
+                    item.acquisition for item in acquisition_backends(candidate)
                 )
                 confirmation = svc.AcquisitionConfigurationConfirmation(
                     resolution_operation=report.operation,

@@ -1,0 +1,88 @@
+.................F..................................                     [100%]
+=================================== FAILURES ===================================
+____________________ test_setup_disk_check_uses_frozen_root ____________________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2022/test_setup_disk_check_uses_fro0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x107fbc550>
+
+    async def test_setup_disk_check_uses_frozen_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        runtime = _runtime()
+        session = pb.SessionContext(
+            controller_generation=runtime.generation, session_id=_id()
+        )
+        reservation = OutputReservation(
+            tmp_path,
+            "experiment",
+            "subject",
+            session.session_id,
+            runtime.generation,
+            datetime(2026, 9, 30, tzinfo=UTC),
+        )
+        attempt = Attempt(session, pb.PreparedSession(context=session), reservation, {}, {})
+        queried: list[Path] = []
+        real = shutil.disk_usage
+    
+        def spy(path: Path) -> object:
+            queried.append(Path(path))
+            return real(path)
+    
+        monkeypatch.setattr(shutil, "disk_usage", spy)
+>       await runtime.setup_execution._reserve_output(attempt, _id(), 10**12)
+
+tests/controller/test_configuration_transactions.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.controller.lifecycle.setup_execution.SetupExecution object at 0x107ff0290>
+attempt = Attempt(context=controller_generation: "13ecf6b0-5945-45db-858e-b61d213de837"
+session_id: "340c769f-3d15-418b-95bd-d73...pending=set(), handoff_failures={}), trial_closure=TrialClosureState(released=frozenset(), finish_append_issued=False))
+command_id = '16745d0e-49c2-47ff-8d9b-430d8873d6fa', deadline = 1000000000000
+
+    async def _reserve_output(
+        self, attempt: Attempt, command_id: str, deadline: int
+    ) -> int | None:
+        """Check space, resolve listed collisions, and register the live reservation."""
+        try:
+            free = await asyncio.wait_for(
+                asyncio.to_thread(
+                    lambda: shutil.disk_usage(attempt.reservation.root).free
+                ),
+                self.limits.current.space_query_ns / 1e9,
+            )
+            reason = f"recording destination has {free} free bytes"
+        except (TimeoutError, OSError) as exc:
+            free = None
+            reason = f"recording space unknown: {exc}"
+        if free is None or free < self.limits.current.low_space_bytes:
+            extended = await self._prompt_extending_deadline(
+                attempt, command_id, f"{reason}; Continue or Cancel Setup", deadline
+            )
+            if extended is None:
+                return None
+            deadline = extended
+            attempt.overrides.append(
+                {"check": "recording_space", "free_bytes": free, "reason": reason}
+            )
+        acquire = asyncio.create_task(asyncio.to_thread(attempt.reservation.acquire))
+        attempt.reservation_acquire_task = acquire
+    
+        def acquired(task: asyncio.Task[list[Path]]) -> None:
+            # A timed-out thread still owns the exact attempt; never lose its lock.
+            if not task.cancelled():
+                task.exception()
+            if attempt.cancel_requested:
+                self.spawn(self.late_cleanup(attempt))
+    
+        acquire.add_done_callback(acquired)
+        conflicts = await asyncio.wait_for(
+            asyncio.shield(acquire), remaining_seconds(deadline, clock=self.clock)
+        )
+        if attempt.cancel_requested or self.lifecycle.attempt is not attempt:
+>           raise RuntimeError("Setup retired during reservation acquisition")
+E           RuntimeError: Setup retired during reservation acquisition
+
+src/cephvr/controller/lifecycle/setup_execution.py:158: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/controller/test_configuration_transactions.py::test_setup_disk_check_uses_frozen_root
+1 failed, 51 passed in 1.23s

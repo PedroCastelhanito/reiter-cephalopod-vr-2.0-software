@@ -1,0 +1,64 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_capture_metrics_bound_pending_frames_and_separate_waits _________
+
+    def test_capture_metrics_bound_pending_frames_and_separate_waits() -> None:
+        now = [0]
+        encoder = _DelayedInput()
+        worker = RecordingWorker(
+            capture_slots=2,
+            evidence=EvidenceWriter(max_pending_bytes=4096),
+            encoder=encoder,
+            video_start_ns=0,
+            video_rate_hz=1,
+            clock_ns=lambda: now[0],
+        )
+        first, _, _ = worker.classify_and_reserve(0, 0)
+        now[0] = 10
+        second, _, _ = worker.classify_and_reserve(1, 1_000_000_000)
+        assert first is not None and second is not None
+        now[0] = 20
+        worker.complete_capture(
+            second,
+            width=1,
+            height=1,
+            pixel_format="rgba8_bottom_up",
+            pixels=bytearray(b"BBBB"),
+            take_ownership=True,
+        )
+        assert not worker.drain_once()  # Earlier GPU capture remains unresolved.
+        for group in range(2, 100):
+            assert (
+                worker.classify_and_reserve(group, group * 1_000_000_000)[1]
+                == "capacity_drop"
+            )
+        assert worker.metrics.snapshot()["active_capture_slots"] == 2
+        now[0] = 30
+        worker.complete_capture(
+            first, width=1, height=1, pixel_format="rgba8_bottom_up", pixels=b"AAAA"
+        )
+        now[0] = 40
+        assert not worker.drain_once()
+        now[0] = 50
+        assert worker.drain_once()
+        now[0] = 60
+        assert not worker.drain_once()
+        now[0] = 70
+        assert worker.drain_once()
+        assert encoder.data == b"AAAABBBB"
+        result = worker.metrics.snapshot()
+        assert result["active_capture_slots"] == result["queued_captures"] == 0
+        assert result["peak_capture_slots"] == 2
+        assert result["submitted_bytes"] == 8
+        assert result["zero_progress_writes"] == 2
+        assert result["stages_ns"]["capture_ready"] == {"count": 2, "total": 40, "max": 30}
+        assert result["stages_ns"]["queue_wait"] == {"count": 2, "total": 50, "max": 40}
+        assert result["stages_ns"]["slot_hold"] == {"count": 2, "total": 110, "max": 60}
+>       assert result["stages_ns"]["frame_input"] == {"count": 2, "total": 20, "max": 10}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'frame_input'
+
+tests/visual_stimulus/test_recording.py:1386: KeyError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_recording.py::test_capture_metrics_bound_pending_frames_and_separate_waits
+1 failed, 51 deselected in 1.02s

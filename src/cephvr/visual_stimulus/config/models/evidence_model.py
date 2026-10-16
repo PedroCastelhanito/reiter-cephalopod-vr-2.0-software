@@ -99,7 +99,7 @@ class Pose(Model):
 
 class Header(Model):
     kind: Literal["header"]
-    format_version: Literal[3, 4, 5]
+    format_version: Literal[3, 4, 5, 6]
     video_enabled: bool = True
     identity: Identity
     writer_generation: Id
@@ -193,7 +193,8 @@ class Capture(
         "trailing_duplicate",
         "unknown",
     ]
-    # E13: nominal encoded slot; source identity/time comes from the referenced group.
+    # Header6: contiguous input ordinal only on input_submitted; earlier stages use null.
+    # Header3–5 retain their historical nominal-slot interpretation.
     video_frame_index: U64 | None
     source_pixel_format: Id
     encoder_pixel_format: Id | None

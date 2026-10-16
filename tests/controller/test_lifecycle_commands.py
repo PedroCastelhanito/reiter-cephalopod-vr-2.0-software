@@ -60,8 +60,9 @@ def _operation(runtime: ControllerRuntime, attempt: Attempt, name: str) -> str:
     return command_id
 
 
+@pytest.mark.parametrize("stage", ["metadata", "fences"])
 async def test_interrupt_during_finalize_joins_the_one_task(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stage: str
 ) -> None:
     runtime, attempt = _setup(tmp_path, monkeypatch)
     gate, entered = asyncio.Event(), asyncio.Event()
@@ -69,11 +70,21 @@ async def test_interrupt_during_finalize_joins_the_one_task(
 
     async def slow_fences(*_args: object) -> bool:
         calls.append(1)
-        entered.set()
-        await gate.wait()
+        if stage == "fences":
+            entered.set()
+            await gate.wait()
         return True
 
+    finish_session = runtime.metadata.finish_session
+
+    async def slow_metadata(*args: Any, **kwargs: Any) -> bool:
+        if stage == "metadata":
+            entered.set()
+            await gate.wait()
+        return await finish_session(*args, **kwargs)
+
     monkeypatch.setattr(runtime.cleanup, "register_cleanup_fences", slow_fences)
+    monkeypatch.setattr(runtime.metadata, "finish_session", slow_metadata)
     runtime.lifecycle.trial.phase = pb.TRIAL_PHASE_ENDED
     first = asyncio.create_task(runtime.interruption.finalize(attempt))
     await entered.wait()
@@ -223,6 +234,79 @@ async def test_failed_trial_metadata_still_seals_before_backend_cleanup(
     assert not runtime.lifecycle.session.cleanup_confirmed
     assert attempt.reservation.held  # failed evidence cannot complete the marker
     attempt.reservation.release()
+
+
+async def test_accepted_stop_withdrawal_abort_events_are_owned_before_interruption(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    attempt.writer = cast(Any, _Writer())
+    recorded: list[str] = []
+    dispatched = asyncio.Event()
+
+    async def event(_attempt: Attempt, event_type: str, **kwargs: Any) -> None:
+        assert event_type == "command_accepted"
+        assert kwargs["at_ns"] == runtime.clock()
+        recorded.append(kwargs["details"]["command"])
+
+    async def interrupt(_attempt: Attempt, _reason: str) -> None:
+        assert attempt.recovery_log_tasks or len(recorded) == 3
+        dispatched.set()
+
+    monkeypatch.setattr(runtime.metadata, "log_event", event)
+    monkeypatch.setattr(runtime.interruption, "interrupt", interrupt)
+    for method in (
+        runtime.stop_after_trial,
+        lambda command: runtime.stop_after_trial(command, cancel=True),
+        runtime.abort_now,
+    ):
+        assert (
+            await method(operator_command(runtime))
+        ).result == pb.COMMAND_RESULT_ACCEPTED
+    await drain_runtime_tasks(runtime)
+    assert dispatched.is_set()
+    assert recorded == ["StopAfterTrial", "CancelStopAfterTrial", "AbortNow"]
+    assert not attempt.recovery_log_tasks and not attempt.recovery_log_failed
+    attempt.reservation.release()
+
+
+async def test_unanswered_incident_is_logged_before_session_seal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.controller.incident.registry import IncidentRegistry
+    from cephvr.shared.incidents import Classification
+
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    writer = _Writer()
+    attempt.writer = cast(Any, writer)
+    attempt.incidents = IncidentRegistry(
+        attempt.context, max_incidents=8, max_error_ids=8, max_bytes=65536
+    )
+    pending = attempt.incidents.observe(
+        pb.ErrorReport(
+            error_id=_id(),
+            work=pb.WorkContext(session=attempt.context),
+            source=pb.ProcessIdentity(role="acquisition", generation=_id()),
+            occurred_monotonic_ns=1000,
+        ),
+        Classification("pending", "uncertain output", ("camera",), 2000),
+        consequence="uncertain output",
+    )
+    events = []
+
+    async def event(_attempt, name, **kwargs):
+        assert writer.sealed == 0
+        events.append((name, kwargs))
+
+    monkeypatch.setattr(runtime.metadata, "log_event", event)
+    await runtime.interruption.finalize(attempt)
+    assert [name for name, _ in events] == ["incident_decision", "session_ended"]
+    details = events[0][1]["details"]
+    assert details["incident_id"] == pending.incident_id
+    assert details["incident_revision"] == pending.revision + 1
+    assert details["disposition"] == "session_ended_unanswered"
+    assert "client_id" not in details and "choice" not in details
+    assert writer.sealed == 1 and attempt.closure.clean
 
 
 async def test_abort_during_starting_with_metadata_keeps_files_and_unblocks_setup(
@@ -584,21 +668,158 @@ async def test_interrupt_finalizes_even_when_trial_log_closure_raises(
     async def broken(_attempt: object) -> bool:
         raise ValueError("unexpected trial log failure")
 
-    finalized: list[bool] = []
+    finalized: list[str] = []
 
-    async def finalize(_attempt: object, **kwargs: Any) -> None:
-        finalized.append(kwargs["metadata_clean"])
+    async def finish_session(_attempt: object, **kwargs: Any) -> bool:
+        finalized.append(kwargs["outcome"])
+        return True
 
     monkeypatch.setattr(runtime.trial_logs, "finish_interrupted_trial", broken)
-    monkeypatch.setattr(runtime.interruption, "finalize", finalize)
+    monkeypatch.setattr(runtime.metadata, "finish_session", finish_session)
 
     await runtime.interruption.interrupt(attempt, "operator Abort now")
 
-    assert finalized == [False]
+    assert finalized == ["interrupted"]
+    assert attempt.closure.done and not attempt.closure.clean
     assert any(
         w.component == "interruption" and "unexpected trial log failure" in w.message
         for w in runtime.control.warnings
     )
+
+
+@pytest.mark.parametrize(
+    "closure", [pb.OUTPUT_CLOSURE_CLOSED, pb.OUTPUT_CLOSURE_FAILED]
+)
+async def test_abort_uses_exact_cleanup_before_trial_and_session_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, closure: int
+) -> None:
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    plan = _trial_attempt(runtime, attempt)
+    name = "visual_stimulus"
+    context = pb.BackendContext(backend_name=name, backend_generation=_id())
+    source = pb.ProcessIdentity(role=name, generation=context.backend_generation)
+    work = pb.WorkContext(session=attempt.context)
+    output = attempt.prepared.outputs.add(
+        output_key="stimulus",
+        backend=context,
+        trial=plan.context,
+        path=str(tmp_path / "stimulus.jsonl"),
+    )
+    attempt.registered_context = svc.RegisteredContext(work=work, outputs=[output])
+    attempt.trial_closure.released = frozenset({name})
+    attempt.setup_operations[name] = _id()
+    attempt.ready[name] = pb.ReadyReport()
+    attempt.ready[name].prepared_functions.add(lifecycle_sources=["renderer"])
+    runtime.supervisor_state.processes[name] = svc.ProcessHealthStatus(
+        process=source,
+        last_heartbeat=pb.HeartbeatReport(
+            source=source, work=work, cleanup_resources_revision=1
+        ),
+    )
+    events: list[str] = []
+    documents: list[dict[str, Any]] = []
+
+    class Peer:
+        async def interrupt_session(self, request: Any, *, deadline_ns: int) -> None:
+            events.append("interrupt")
+            assert deadline_ns == 1_000 + runtime.limits.stop_evidence_ns
+
+        async def cleanup(
+            self, request: svc.BackendCommand, *, deadline_ns: int
+        ) -> pb.CommandAdmission:
+            events.append("cleanup")
+            assert deadline_ns == attempt.finalization_deadline_ns
+            result = pb.OutputResult(
+                output_key=output.output_key,
+                path=output.path,
+                closure=closure,
+                artifact_present=True,
+            )
+            if closure == pb.OUTPUT_CLOSURE_FAILED:
+                result.failure.code = "WRITE_FAILED"
+            receipt = await runtime.report_lifecycle(
+                pb.LifecycleReport(
+                    cleanup=pb.CleanupReport(
+                        source=source,
+                        work=work,
+                        operation=pb.OperationContext(command_id=request.command_id),
+                        verified_monotonic_ns=1_000,
+                        trial_activity_stopped=True,
+                        cleanup_resources_revision=1,
+                        outputs=[result],
+                    )
+                ),
+                1_000,
+            )
+            assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    peer = Peer()
+    peer.context = context
+    attempt.required[name] = cast(Any, peer)
+    attempt.trial_participants[name] = cast(Any, peer)
+
+    async def fence(_attempt: Attempt, requests: Any, deadline_ns: int) -> bool:
+        events.append("fence")
+        attempt.registered_context.cleanup_commands.add(
+            target=source,
+            work=work,
+            operation=pb.OperationContext(command_id=requests[name].command_id),
+        )
+        return True
+
+    async def start_log(_attempt: Attempt, _plan: pb.TrialPlan) -> None:
+        events.append("trial_started")
+
+    async def persist(
+        _attempt: Attempt, _name: str, _action: str, document: dict[str, Any]
+    ) -> None:
+        events.append("trial_log")
+        documents.append(document)
+
+    async def event(_attempt: Attempt, name: str, **kwargs: Any) -> None:
+        events.append(name)
+        assert kwargs["outcome"] == "interrupted"
+        assert kwargs["details"]["output_closure_confirmed"]
+        assert kwargs["details"]["actual_end_monotonic_ns"] is None
+
+    async def session(_attempt: Attempt, **kwargs: Any) -> bool:
+        events.append("session_ended")
+        return True
+
+    monkeypatch.setattr(runtime.cleanup, "register_cleanup_fences", fence)
+    monkeypatch.setattr(runtime.trial_logs, "start_trial_log", start_log)
+    monkeypatch.setattr(runtime.metadata, "persist", persist)
+    monkeypatch.setattr(runtime.metadata, "log_event", event)
+    monkeypatch.setattr(runtime.metadata, "finish_session", session)
+    await asyncio.wait_for(runtime.interruption.interrupt(attempt, "Abort"), 2)
+    assert events == [
+        "interrupt",
+        "fence",
+        "cleanup",
+        "trial_started",
+        "trial_log",
+        "trial_finished",
+        "session_ended",
+    ]
+    assert documents[0]["outputs"][0]["closure"] == pb.OutputClosure.Name(closure)
+    assert documents[0]["outcome"] == "interrupted"
+    assert not attempt.finished
+    assert attempt.trial_log_finished and attempt.closure.clean
+    assert runtime.lifecycle.session.cleanup_confirmed
+    assert runtime.lifecycle.trial.outcome == pb.TRIAL_OUTCOME_INTERRUPTED
+    assert not runtime.control.warnings
+    receipt = await runtime.new_session(operator_command(runtime))
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
+    assert runtime.lifecycle.attempt is None
+    replacement = _attempt(runtime, tmp_path, dict(attempt.required))
+    runtime.lifecycle.attempt = replacement
+    stale = await runtime.report_lifecycle(
+        pb.LifecycleReport(cleanup=attempt.cleanup[name]), 1_000
+    )
+    assert stale.result == pb.COMMAND_RESULT_REJECTED
+    assert not replacement.cleanup
 
 
 async def test_owner_cleanup_releases_prepared_preview_like_setup_guard(
@@ -624,3 +845,52 @@ async def test_owner_cleanup_releases_prepared_preview_like_setup_guard(
     with pytest.raises(RuntimeError, match="no cleanup backend settings"):
         await _cleanup(runtime).run()
     assert runtime.lifecycle.manual_control_cleanup_pending
+
+
+@pytest.mark.parametrize("metadata_clean", [False, True])
+async def test_late_backend_cleanup_cannot_certify_failed_metadata(
+    tmp_path, monkeypatch, metadata_clean
+):
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    attempt.writer_closed = True
+    attempt.closure.metadata_clean = metadata_clean
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_ENDED
+    try:
+        await runtime.cleanup.late_cleanup(attempt)
+        assert runtime.lifecycle.session.cleanup_confirmed is metadata_clean
+        assert attempt.reservation.held is not metadata_clean
+    finally:
+        if attempt.reservation.held:
+            attempt.reservation.release()
+
+
+async def test_spikeglx_stop_log_failure_preserves_confirmed_remote_stop(
+    tmp_path, monkeypatch
+):
+    from cephvr.controller.metadata.types import StorageError
+    from cephvr.synchronization.v1 import spikeglx_pb2 as spike
+
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+
+    class Remote:
+        async def stop_expected_run(self, deadline):
+            return True
+
+    runtime.interruption.spikeglx = Remote()
+
+    async def fail_log(*args, **kwargs):
+        raise StorageError("log unavailable")
+
+    monkeypatch.setattr(runtime.metadata, "log_event", fail_log)
+    try:
+        assert not await runtime.interruption._stop_spikeglx(attempt, 100_000)
+        assert attempt.spikeglx_stopped
+        assert (
+            attempt.spikeglx_recording.phase == spike.SPIKEGLX_RECORDING_PHASE_STOPPED
+        )
+        assert not attempt.spikeglx_recording.failure_code
+        assert any(
+            "log unavailable" in item.message for item in runtime.control.warnings
+        )
+    finally:
+        attempt.reservation.release()

@@ -1,9 +1,9 @@
 # A07/E04 format declaration, NOT runtime configuration or a writer.
-# A07/A08 nominal-slot video mapping; source rows remain independent and unchanged.
+# A07/A08 sequential image mapping; original source timing remains authoritative.
 # One append-only JSON Lines frame log per recorded camera/trial, next to that
-# camera's MP4: a header, received-image rows, encoded-slot mappings and completion.
+# camera's MP4: a header, received-image rows, encoded-image mappings and completion.
 contract_status = "declared" # Host acceptance/verification: reports/acquisition.md.
-schema_version = 4 # v2 was source-frame-only JSONL with implicit one-to-one video rows.
+schema_version = 5 # v4 used host-time slots and identified padding; never reinterpret old logs.
 camera_roles = ["behavioral", "tracking", "eye_tracking"]
 camera_tags = ["behavioral_cam", "tracking_cam", "eye_tracking_cam"]
 video_pattern = "<trial_prefix>_<camera_role>_cam.mp4"
@@ -44,8 +44,8 @@ camera_clock_fields = [
 camera_clock_value = "cephvr.camera.native.v1"
 
 [header.video]
-# Constant-rate video (A08): video frame n is shown at n / nominal_frame_rate_hz. The
-# video timeline is not a clock; real timing comes from the frame lines.
+# Sequential images (A08): frame n plays at n / nominal_frame_rate_hz.
+# Playback duration need not equal trial duration; real timing comes from source rows.
 fields = ["enabled", "nominal_frame_rate_hz", "nominal_rate_source"]
 # enabled=false: no video_frame lines, all source rows have video_disposition=video_disabled,
 # video_frame=null and dropped=false. invalid_code still identifies invalid images.
@@ -57,20 +57,18 @@ nominal_rate_source_values = ["applied_mcu_rate", "free_running_frame_rate"]
 # appended once its drop decision is final, in contiguous source order; never placeholders.
 fields = ["type", "frame_id", "host_receipt_ns", "dropped", "video_frame", "video_disposition", "camera_frame_counter", "camera_timestamp_ns", "invalid_code"]
 frame_id_start = 0 # Per camera per trial, including invalid/dropped frames (A09).
-# dropped: true/false. video_frame: nominal slot for selected real source frames;
-# null for invalid, capacity-dropped and same-slot-omitted sources. video_disposition
-# identifies the distinct source omission. camera_* : null when unavailable.
+# dropped: true/false. video_frame: contiguous encoded index for retained usable images;
+# null for invalid/capacity-dropped sources. video_disposition identifies why an image
+# was not recorded. camera_* : null when unavailable.
 # invalid_code: null for valid images; stable code for invalid/incomplete images.
-video_disposition_values = ["real", "invalid_image", "capacity_drop", "same_slot_omission", "video_disabled"]
+video_disposition_values = ["real", "invalid_image", "capacity_drop", "video_disabled"]
 video_mapping = "explicit_encoded_video_frame_lines_reference_original_source_identity_and_time"
 
 [video_frame]
-fields = ["type", "encoded_frame_index", "nominal_slot", "source_frame_id", "source_host_receipt_ns", "disposition"]
-disposition_values = ["real", "leading_duplicate", "interior_duplicate", "trailing_duplicate"]
-slot_interval = "[T+n/R,T+(n+1)/R)"
-slot_clock = "host_receipt_ns"
-selection = "first_usable_image_per_slot; later_same_slot_images_are_video_omissions_only"
-endpoint = "emit_slots_whose_start_is_strictly_before_actual_cutoff"
+fields = ["type", "encoded_frame_index", "source_frame_id", "source_host_receipt_ns", "disposition"]
+disposition_values = ["real"]
+selection = "every_usable_retained_source_once_in_source_order"
+endpoint = "no_padding_at_actual_cutoff"
 
 [completion]
 # Appended once at closure after drain/reconciliation; absent after a crash.
@@ -87,7 +85,8 @@ fields = [
 
 [completion.video]
 fields = ["recorded_frame_count", "selected_source_frame_count", "duplicate_frame_count"]
-recorded_frame_count = "complete nominal frames submitted to FFmpeg input; not proof of encoded/persisted samples"
+recorded_frame_count = "complete sequential images submitted to FFmpeg input; not proof of encoded/persisted samples"
+# Successful correspondence requires recorded == selected; duplicate_frame_count is always 0.
 
 [completion.pulses]
 # SYS-004 matching evidence from A11 grouped ON/OFF; null for free-running cameras

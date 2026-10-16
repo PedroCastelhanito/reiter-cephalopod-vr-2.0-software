@@ -1,0 +1,7 @@
+Collecting imagecodecs==2025.3.30
+  Downloading imagecodecs-2025.3.30-cp311-cp311-macosx_11_0_arm64.whl.metadata (20 kB)
+Requirement already satisfied: numpy in ./.venv/lib/python3.11/site-packages (from imagecodecs==2025.3.30) (2.4.4)
+Downloading imagecodecs-2025.3.30-cp311-cp311-macosx_11_0_arm64.whl (15.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.1/15.1 MB 4.3 MB/s  0:00:03
+Installing collected packages: imagecodecs
+Successfully installed imagecodecs-2025.3.30

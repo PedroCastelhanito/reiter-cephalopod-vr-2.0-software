@@ -25,6 +25,7 @@ from cephvr.controller.device.display_calibration import DisplayCalibrationContr
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.status_retention import CameraStatusRetention
 from cephvr.controller.ports import BackendPort
+from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
     CameraOperation,
     ConfigurationState,
@@ -32,6 +33,7 @@ from cephvr.controller.state import (
     DeviceState,
     LifecycleState,
     LimitsState,
+    PendingCalibration,
     Watch,
 )
 from cephvr.shared.commands import CommandLedger
@@ -547,7 +549,7 @@ async def test_assembled_owner_loss_closes_exact_display_calibration(
     )
     runtime.device_state.calibration_blocked = True
     if uncertain_open:
-        runtime.device_state.calibration_pending = (
+        runtime.device_state.calibration_pending = PendingCalibration(
             _id(),
             revision,
             runtime.clock() + runtime.limits.recovery_ns,
@@ -889,8 +891,10 @@ async def test_controller_authorizes_firmware_only_in_idle_configuration(blocked
     "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
 )
 @pytest.mark.asyncio
+@pytest.mark.parametrize("reject_first", [False, True])
 async def test_live_calibration_update_requires_exact_leased_active_grid(
     calibration_view,
+    reject_first,
 ):
     from cephvr.visual_stimulus.v1 import messages_pb2 as messages
 
@@ -905,6 +909,11 @@ async def test_live_calibration_update_requires_exact_leased_active_grid(
         async def update_display_calibration(self, request, *, deadline_ns):
             sent.append(request)
             assert request.deadline_monotonic_ns == deadline_ns
+            if reject_first and len(sent) == 1:
+                return pb.CommandAdmission(
+                    result=pb.COMMAND_RESULT_REJECTED,
+                    failure=pb.Failure(message="invalid live rectangle"),
+                )
             return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
 
     backend = Backend()
@@ -917,8 +926,13 @@ async def test_live_calibration_update_requires_exact_leased_active_grid(
     evidence.controller_generation = generation
     evidence.calibration_view = calibration_view
     evidence.state = visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
-    projections = type("Projection", (), {"display": display})()
-    projections.expect_display = lambda *_args: None
+    projections = ProjectionStore(
+        generation,
+        {"visual_stimulus": backend.context},
+        max_entries=8,
+        max_payload_bytes=1_000_000,
+    )
+    projections.display = display
     controller = DisplayCalibrationController(
         lifecycle=env.lifecycle,
         configuration=env.configuration,
@@ -983,12 +997,23 @@ async def test_live_calibration_update_requires_exact_leased_active_grid(
         request.adjustments[0].destination_xy[0] = 0.1
     else:
         request.placement_json = placement_json
+    if reject_first:
+        prior = display.SerializeToString()
+        rejected_id = request.command.operator.command_id
+        assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+        assert env.device.calibration_pending is None
+        assert projections.expected_display is None
+        assert env.device.calibration_blocked
+        assert display.SerializeToString() == prior
+        assert env.control.operations[rejected_id].complete
+        assert not env.control.operations[rejected_id].succeeded
+        request.command.operator.command_id = _id()
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_ACCEPTED
     assert sent[0].diagnostic_id == evidence.diagnostic_id
     assert sent[0].adjustment_sequence == 1
     assert sent[0].placement_json == request.placement_json
     assert (
-        env.device.calibration_pending[4]
+        env.device.calibration_pending.expected_state
         == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
     )
     assert evidence.adjustment_sequence == 0  # Admission is not presentation.
@@ -1003,7 +1028,10 @@ async def test_live_calibration_update_requires_exact_leased_active_grid(
     env.lifecycle.session.shutdown_requested = True
     request.command.operator.command_id = _id()
     assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
-    assert len(sent) == 1 and env.device.calibration_pending is None
+    assert (
+        len(sent) == (2 if reject_first else 1)
+        and env.device.calibration_pending is None
+    )
     env.lifecycle.session.shutdown_requested = False
     from dataclasses import replace
 
@@ -1033,3 +1061,82 @@ def test_startup_display_resolves_only_file_projection_values():
     policy.ClearField("projection")
     with pytest.raises(ConfigurationError, match="projection.near_mm"):
         resolver(json.dumps(source), policy)
+
+
+@pytest.mark.parametrize("pending", ["display_pending", "calibration_pending"])
+async def test_display_initialize_rechecks_pending_ownership_after_policy_load(pending):
+    env = _Env()
+    entered, release = threading.Event(), threading.Event()
+
+    def loader(names):
+        entered.set()
+        assert release.wait(2)
+        return _policies()
+
+    display = _display(env, loader)
+    task = asyncio.create_task(display.initialize_display())
+    try:
+        assert await asyncio.to_thread(entered.wait, 2)
+        setattr(env.device, pending, ("another",))
+        release.set()
+        result = await task
+        assert result.result == pb.COMMAND_RESULT_REJECTED
+        assert not env.control.operations
+        assert getattr(env.device, pending) == ("another",)
+    finally:
+        release.set()
+        await asyncio.gather(task, return_exceptions=True)
+        for spawned in env.spawned:
+            spawned.close()
+
+
+@pytest.mark.parametrize("blocker", ["phase", "manual_cleanup", "startup"])
+async def test_camera_policy_load_rechecks_lifecycle_before_dispatch(
+    tmp_path, monkeypatch, blocker
+):
+    from cephvr.acquisition.config.file_policies import (
+        load_file_policies as acquisition_policies,
+    )
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    from dataclasses import replace
+
+    runtime.camera.hooks = replace(runtime.camera.hooks, authorized=lambda *a, **k: "")
+    settings = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    settings.acquisition.behavioral.device.device_id = "assigned"
+    entered, release = threading.Event(), threading.Event()
+
+    def loader(names):
+        entered.set()
+        assert release.wait(2)
+        return {
+            "acquisition": acquisition_policies(Path(__file__).resolve().parents[2])
+        }
+
+    runtime.camera.file_policy_loader = loader
+    request = svc.CameraCommandRequest(
+        camera=camera_pb.CAMERA_ROLE_BEHAVIORAL,
+        kind=svc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
+        expected_configuration_revision=1,
+    )
+    request.command.operator.command_id = _id()
+    task = asyncio.create_task(runtime.camera.execute_camera_command(request))
+    try:
+        assert await asyncio.to_thread(entered.wait, 2)
+        if blocker == "phase":
+            runtime.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+        elif blocker == "manual_cleanup":
+            runtime.lifecycle.manual_control_cleanup_pending = True
+        else:
+            runtime.lifecycle.startup_blocker = "recovery required"
+        release.set()
+        result = await task
+        assert result.result == pb.COMMAND_RESULT_REJECTED
+        assert runtime.device_state.camera_operation is None
+        assert not runtime.control.operations
+    finally:
+        release.set()
+        await asyncio.gather(task, return_exceptions=True)

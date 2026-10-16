@@ -108,34 +108,3 @@ def _bool(value: object, path: str) -> bool:
     if type(value) is not bool:
         raise ConfigurationError(f"{path} must be a boolean")
     return value
-
-
-def _validate_microcontroller_defaults(values: dict[str, Any]) -> None:
-    _positive_int(
-        _required(values, "baud_rate", "microcontroller.baud_rate"),
-        "microcontroller.baud_rate",
-    )
-    ack = _required(values, "ack_timeout_ms", "microcontroller.ack_timeout_ms")
-    margin = _required(
-        values, "stop_completion_margin_ms", "microcontroller.stop_completion_margin_ms"
-    )
-    keepalive = _required(
-        values, "keepalive_interval_s", "microcontroller.keepalive_interval_s"
-    )
-    communication = _required(
-        values, "communication_timeout_s", "microcontroller.communication_timeout_s"
-    )
-    _positive_int(ack, "microcontroller.ack_timeout_ms")
-    _positive_int(margin, "microcontroller.stop_completion_margin_ms")
-    keepalive_ns = _duration_ns(
-        keepalive, "microcontroller.keepalive_interval_s", 1_000_000_000
-    )
-    comm_ns = _duration_ns(
-        communication, "microcontroller.communication_timeout_s", 1_000_000_000
-    )
-    if keepalive_ns >= comm_ns:
-        raise ConfigurationError(
-            "microcontroller keepalive must be shorter than communication timeout"
-        )
-    # E05's actual stop-report allowance and resolved camera drains are supplied by
-    # Setup. The loader checks exact values here; the coordinator checks the whole path.

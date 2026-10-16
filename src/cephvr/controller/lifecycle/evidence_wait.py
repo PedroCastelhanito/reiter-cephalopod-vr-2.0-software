@@ -87,7 +87,10 @@ class EvidenceWaiter:
                 return set(attempt.ready)
             if kind == "trial_ready":
                 return set(attempt.trial_ready)
-            return set(attempt.finished)
+            names = set(attempt.finished)
+            if closure_only:
+                names.update(attempt.cleanup)
+            return names
 
         def predicate() -> bool:
             return expected <= received_names()
@@ -134,6 +137,29 @@ class EvidenceWaiter:
 
         async def query(name: str) -> None:
             backend = attempt.required[name]
+            if closure_only:
+                try:
+                    state = await asyncio.wait_for(
+                        backend.get_state(
+                            svc.BackendQuery(
+                                target=backend.context,
+                                work=pb.WorkContext(session=attempt.context),
+                            ),
+                            deadline_ns=recovery_deadline_ns,
+                        ),
+                        remaining_seconds(recovery_deadline_ns, clock=self.clock),
+                    )
+                    if state.HasField("cleanup"):
+                        await self.report(
+                            pb.LifecycleReport(cleanup=state.cleanup), self.clock()
+                        )
+                    elif state.HasField("finished"):
+                        await self.report(
+                            pb.LifecycleReport(finished=state.finished), self.clock()
+                        )
+                except Exception:
+                    pass
+                return
             work = (
                 pb.WorkContext(session=attempt.context)
                 if kind == "setup_ready"

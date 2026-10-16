@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-16",
+  "scope": "Owner-requested removal of review/phase/clock banner",
+  "checks": {
+    "pytest": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k review_appearance -m 'not windows and not rig': 2 passed, 546 deselected in 12.20s",
+    "ruff": "check and format --check appearance.py/theme.py/test_dashboard.py pass",
+    "mypy": "--platform win32 appearance.py/theme.py: 2 files pass",
+    "boundaries": "zero violations; see boundaries.txt",
+    "whitespace": "git diff --check passes",
+    "render": "render.py: wide/narrow/CRT-off generated, wide inspected"
+  },
+  "source_sha256": {
+    "src/cephvr/gui/appearance.py": "d25c9dab4033761e23c12731909cfd0c73e4e412799100ac52328fc2264d1268",
+    "src/cephvr/gui/theme.py": "ab0434c912721e975c443f9c325fcebdac16fb0a7e7d5cf8f57cccd758ba1167",
+    "tests/gui/test_dashboard.py": "3028edc2113545ebfdd99deaf235f1e4a5fd71e6854e1a2839cbdd41296c2687"
+  },
+  "limits": "Offscreen fixtures, no native Windows/DPI or rig acceptance."
+}

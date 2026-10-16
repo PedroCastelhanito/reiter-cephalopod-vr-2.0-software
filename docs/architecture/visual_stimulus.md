@@ -522,22 +522,25 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v12"></a>
 ### V12 — Visual Stimulus recording thread and overload
 
-**Status:** Accepted · **Revision:** 13
+**Status:** Accepted · **Revision:** 15
 
 - The rendering worker always runs one recording thread for required trial evidence
   (V28). E13 video saving additionally enables an FFmpeg/NVENC subprocess and the
   tiled review capture path. No separate recording process, pixel-slot transport
   or evidence bridge. The coordinator owns preparation/lifecycle aggregation.
 - The GL thread tiles each render group's final output images into one composite and
-  reads it back through bounded pixel buffers (`capture_slots`); the recording thread
+  orients the completed recording composite on the GPU, and reads it back through
+  reusable pixel buffers bounded by `capture_slots`; the recording thread
   writes completed readbacks as raw frames to FFmpeg's stdin. The GL thread never
   waits on recording: one admission decision per render group; with no free slot,
   drop that group's video sample and record its identity, timing and drop
-  disposition. Apply E13's first-usable-per-slot selection before pixel admission;
-  same-slot omissions have a separate disposition from capacity drops. Never evict
-  an admitted sample, slow presentation or grow memory without bound. Retained
-  padding pixels count against the recording resource budget. Submission evidence
-  stays per output. Fresh readback bytearrays transfer exclusive ownership to the
+  disposition. Apply E13's sequential mapping without rate-based selection or padding.
+  Never evict an admitted sample, slow presentation or grow memory without bound. Submission evidence
+  stays per output. Recycle a PBO only after its fence signals and its copied host
+  buffer unmaps successfully; discard cancelled/failed transfers and retain failed
+  cleanup ownership. Account for both same-format composite targets in Setup.
+  GPU orientation preserves tile sampling, codes, layout and projector pacing.
+  Fresh readback bytearrays transfer exclusive ownership to the
   recording thread; borrowed inputs are copied. Keep fixed-size per-trial stage
   timing/slot aggregates and timestamps only for admitted captures; emit diagnostics
   on recording-thread exit without changing evidence or failure deadlines.
@@ -553,11 +556,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   recording omissions and physical presentation evidence stay distinct.
 - An all-dropped review video may complete with a warning and no artifact only when
   final accounting, required evidence and successful cleanup are confirmed. Never
-  fabricate real render/capture evidence; E13's identified duplicate padding is
-  derived recording content, not a newly rendered or presented image.
+  fabricate render/capture evidence or images to fill recording gaps.
 - Prepare the recording thread before required Ready; finalize video and evidence
-  before aggregate Finished, draining admitted in-interval samples and E13's
-  identified in-interval padding (E11). With
+  before aggregate Finished, draining admitted in-interval samples (E11). With
   video saving off, evidence writing still runs, with no capture slots, GPU readback
   or encoding. The thread shares the
   renderer's process and GIL; full-workload throughput is an E15 rig check.
@@ -568,7 +569,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v13"></a>
 ### V13 — Trial replay from program and actual render evidence
 
-**Status:** Accepted · **Revision:** 11
+**Status:** Accepted · **Revision:** 12
 
 - Analysis software owns offline reconstruction and lossless export. The experiment
   backend records immutable program/resolved-plan information, matching asset
@@ -583,10 +584,18 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   even with saving Off; logging failure enters E06 incident classification.
   Replay-relevant content fingerprints/provenance are a scoped exception to E04's
   filename-only asset logging. Reference external originals by fingerprint; never
-  bundle/copy assets or create a managed archive. The operator preserves matching
-  assets; replay rejects missing/mismatched content. V04's source protection covers
+  bundle/copy assets or create a managed archive. The operator maintains one backed-up,
+  versioned external library shared across experiments: preserve each used content
+  version once, including mesh/calibration dependencies, and never overwrite versions
+  referenced by retained runs. Per-run manifests retain paths, sizes and hashes;
+  replay rejects missing/mismatched content. V04's source protection covers
   preparation/execution; a Setup digest alone neither establishes immutability nor
   preserves originals after release.
+- Retain exact installed renderer-source and compiled-shader-source identities,
+  relevant decode/color software versions and each output context's GPU/driver
+  observations. Finalize these facts before hashing, publishing or preparing the
+  saved recipe; missing required provenance fails Setup. Preserve matching software
+  releases externally, once per version. No runtime code replacement is supported.
 - Validate recorded program, assets, replay-relevant provenance and effective state
   without original-output pixel fingerprints (sampled included). No per-frame pixel
   hashing or verification-only GPU readback. Reconstructed output is validated at
@@ -1060,17 +1069,18 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v28"></a>
 ### V28 — Visual Stimulus evidence file and crash behavior
 
-**Status:** Accepted · **Revision:** 6
+**Status:** Accepted · **Revision:** 7
 
 - Independently of review-video saving, the recording thread writes `<prefix>_stimulus_frames.jsonl`:
   UTF-8 JSON Lines, one line per render group plus separate update lines for late
   outcomes (referencing the group ID), append-only, OS-synced every **1 s**
   (`record_sync_interval_s`) and at closure. Never rewrite earlier lines or make
-  rendering wait for disk sync. Separate encoded-frame mapping records identify each
-  selected real composite or leading/gap/trailing duplicate and its exact source
-  group/time; padding adds no render-group or presentation evidence. A final closing
-  line records real, omitted and padded accounting separately. Missing required
-  evidence or failed writes/sync follows V12/E06. Header format5 declares
+  rendering wait for disk sync. Header format6 declares sequential video correspondence:
+  complete input-submission updates map each contiguous video index to exactly one
+  source group/time; earlier capture stages carry no index. A final closing line
+  reconciles admitted/submitted/capacity-dropped and unresolved captures; retained
+  legacy omission/duplicate counters are zero. Missing required evidence or failed
+  writes/sync follows V12/E06. The Header retains
   `video_enabled`; video-off groups have empty captures and no encoder-outcome
   records. Required state/submission/feedback/diagnostic/completion records remain.
 - After a crash the file is valid up to its last complete line; readers discard an
@@ -1087,7 +1097,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="e13"></a>
 ### E13 — Save Visual Stimulus data
 
-**Status:** Accepted · **Revision:** 25
+**Status:** Accepted · **Revision:** 26
 
 - Active experiment Visual Stimulus always saves scientific data and metadata:
   recipe/program provenance, effective state, per-output submission/marker evidence,
@@ -1119,24 +1129,20 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Explicitly configured review-video depth reduction is allowed with validated
   conversion and retained source/target representation evidence; silent negotiation
   is forbidden. Rendering and V13 reconstruction keep their original precision.
-- The review video is constant-rate at the designated pacing output's nominal
-  refresh rate, or the common nominal refresh rate of all enabled outputs when
-  all-output VSync has no pacer. The latter records a null pacing identity and
-  rejects differing nominal rates rather than guessing an output. Pad missing recording slots with
-  explicitly identified duplicated composite images to preserve cadence/duration.
-  V28 evidence must map every encoded frame to its real render group or padding,
-  identifying duplicates for post hoc exclusion. Padding never fabricates state,
-  render groups or presentation observations. Real timing (state-evaluation host
-  time, per-output swap observations) stays in the evidence file; review timing
-  never establishes optical onset. Assign each group's evaluation host time to
-  half-open nominal-rate slots from trial start T, selecting the first usable
-  composite per slot. Later same-slot groups retain full real evidence and an
-  explicit video-omission disposition. Fill interior/trailing gaps with the last
-  selected composite; backfill leading slots with the first usable composite,
-  explicitly retaining its real source/time. Include slots starting before the
-  actual E11 cutoff; whole-frame quantization adds less than one nominal period.
-  Generate padding incrementally within V12's existing bounds and original
-  deadlines. An entirely empty recording retains V12's existing empty-video rule.
+- Store each retained usable composite exactly once in render-group order, with
+  contiguous zero-based video indices assigned on complete encoder-input submission.
+  Keep real repeated-content groups; never omit same-slot groups or pad gaps.
+  Capacity drops and failed/cancelled captures retain explicit source evidence and
+  consume no video index. V28 maps each input index to the original group's exact
+  evaluation host time and per-output submission observations. These observations
+  describe software output, not optical onset; input acceptance is not file durability.
+  The MP4 retains the pacing output's nominal refresh rate (or the common rate of
+  all enabled VSync outputs with null pacing identity) only for ordinary playback.
+  Differing rates without a pacer still reject preparation. Playback time/duration
+  is not experiment time; alignment uses the evidence timestamps. Preserve composite
+  geometry, output resolution and projector pacing. At E11 cutoff drain only retained
+  in-interval captures within existing bounds/deadlines, without tail padding.
+  An entirely empty recording retains V12's existing empty-video rule.
 - Review videos are fragmented MP4, kept in that format after normal closure; no
   conversion to ordinary MP4 or faststart pass at trial end. Normal encoder drain,
   finalization, sync and close stay required; V28's Unconfirmed crashed-video outcome

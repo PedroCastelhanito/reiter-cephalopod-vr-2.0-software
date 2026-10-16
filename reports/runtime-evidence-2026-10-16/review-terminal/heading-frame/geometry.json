@@ -1,0 +1,17 @@
+{
+  "1440": {
+    "card_width": 609,
+    "caption_width": 100,
+    "caption_hint": 100
+  },
+  "1175": {
+    "card_width": 477,
+    "caption_width": 100,
+    "caption_hint": 100
+  },
+  "720": {
+    "card_width": 514,
+    "caption_width": 100,
+    "caption_hint": 100
+  }
+}

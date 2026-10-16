@@ -457,3 +457,62 @@ async def test_safety_command_has_bounded_reserved_admission_when_ordinary_ledge
         assert safety.result == pb.COMMAND_RESULT_ACCEPTED
     finally:
         await gate.aclose()
+
+
+@pytest.mark.parametrize("retired", [False, True])
+async def test_command_retry_uses_original_scope_after_live_scope_changes(retired):
+    work = _Work()
+    gate = _gate(work)
+    command_id = _id()
+    request = _request(command_id)
+    calls = []
+
+    async def action():
+        calls.append(1)
+        return pb.CommandAdmission(
+            result=pb.COMMAND_RESULT_ACCEPTED, command_id=command_id
+        )
+
+    try:
+        first = await gate.admit("StopAfterTrial", command_id, request, action)
+        work.key = None if retired else _id()
+        replay = await gate.admit("StopAfterTrial", command_id, request, action)
+        assert replay == first
+        assert calls == [1]
+        changed = svc.OperatorCommand.FromString(request.SerializeToString())
+        changed.controller_generation = _id()
+        conflict = await gate.admit("StopAfterTrial", command_id, changed, action)
+        assert conflict.result == pb.COMMAND_RESULT_REJECTED
+    finally:
+        await gate.aclose()
+
+
+@pytest.mark.parametrize("failure", [None, "controller", "missing", "token", "peer"])
+async def test_production_credential_auth_factory_binds_exact_local_identity(
+    tmp_path, failure
+):
+    from cephvr.controller.transport.auth import credential_store_authentication
+    from cephvr.shared.auth import AuthenticationError
+    from cephvr.shared.credentials import CredentialStore
+
+    generation = _id()
+    store = CredentialStore(tmp_path / "credentials", generation)
+    principal = store.provision_client("cli")
+    authenticate = credential_store_authentication(store)
+    metadata = principal.metadata()
+    if failure == "token":
+        metadata = tuple(
+            (key, "invalid" if key == "x-cephvr-token" else value)
+            for key, value in metadata
+        )
+    call = authenticate(
+        _id() if failure == "missing" else principal.generation,
+        _id() if failure == "controller" else generation,
+        "ipv4:192.0.2.1:1234" if failure == "peer" else "ipv4:127.0.0.1:1234",
+        metadata,
+    )
+    if failure:
+        with pytest.raises(AuthenticationError):
+            await call
+    else:
+        await call

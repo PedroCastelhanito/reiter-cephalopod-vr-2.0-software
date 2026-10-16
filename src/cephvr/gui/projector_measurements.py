@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QLineEdit,
     QTableWidgetItem,
@@ -38,6 +39,10 @@ class ProjectorMeasurements(Card):
                 "X / Y (mm/px)",
             ]
         )
+        header = self.table.horizontalHeader()
+        assert header is not None
+        for column in (0, 2):
+            header.setSectionResizeMode(column, QHeaderView.ResizeMode.ResizeToContents)
         for row, face in enumerate(FACES):
             self.table.setItem(row, 0, QTableWidgetItem(face))
             self.scales[face] = label("—")
@@ -133,7 +138,7 @@ class ProjectorMeasurements(Card):
                     else None,
                 )
                 self.scales[face].setText(
-                    f"{scale.mm_per_pixel_x:.6g} / {scale.mm_per_pixel_y:.6g}"
+                    f"{scale.mm_per_pixel_x:.1f} / {scale.mm_per_pixel_y:.1f}"
                 )
                 try:
                     throw = float(draft.get("throw", ""))

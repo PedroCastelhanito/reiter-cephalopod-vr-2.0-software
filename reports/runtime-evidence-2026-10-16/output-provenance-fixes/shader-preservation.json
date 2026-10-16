@@ -1,0 +1,12 @@
+{
+  "existing_shader_sources_byte_identical": [
+    "_QUAD_VERTEX",
+    "_LAYER_VERTEX",
+    "_LAYER_FRAGMENT",
+    "_ARENA_VERTEX",
+    "_ARENA_FRAGMENT",
+    "_WARP_FRAGMENT",
+    "_OUTPUT_FRAGMENT"
+  ],
+  "moved_warp_shader_byte_identical": true
+}

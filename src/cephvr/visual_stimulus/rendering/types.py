@@ -11,6 +11,7 @@ from cephvr.visual_stimulus.config.models.program_model import Settings
 from cephvr.visual_stimulus.resources.media import ImagePixels
 
 if TYPE_CHECKING:
+    from cephvr.visual_stimulus.config.models.artifact_models import ComponentProvenance
     from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
     from cephvr.visual_stimulus.resources.display_calibration import (
         PreparedDisplayCalibration,
@@ -222,6 +223,8 @@ class RenderPort(Protocol):
     def diagnostics_pending(self) -> bool: ...
 
     def initialize_display(self, display: object) -> DisplayInitialization: ...
+
+    def replay_provenance(self) -> tuple[ComponentProvenance, ...]: ...
 
     def show_idle(self, display: object) -> tuple[OutputActivity, ...]: ...
 

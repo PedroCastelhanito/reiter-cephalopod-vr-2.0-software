@@ -24,6 +24,24 @@ from cephvr.visual_stimulus.config.projection import policy_projection
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
+def _resolved_display_profile(
+    profile_json: str,
+    policy: visual_stimulus_pb.VisualStimulusFilePolicies,
+    resolver: Callable[..., DisplayProfile],
+) -> DisplayProfile:
+    return resolver(
+        profile_json,
+        max_bytes=policy.limits.max_document_bytes,
+        projection=policy_projection(policy.projection),
+        refresh_hz=policy.pacing_refresh_hz
+        if policy.HasField("pacing_refresh_hz")
+        else None,
+        output_id=policy.pacing_output_id
+        if policy.HasField("pacing_output_id")
+        else None,
+    )
+
+
 @dataclass(frozen=True)
 class _VisualStimulusValidator:
     """Validate against the exact typed file policy held by the caller."""
@@ -74,20 +92,8 @@ class _VisualStimulusValidator:
                 if item.backend_name == "visual_stimulus" and item.enabled
             )
             settings = resolved_backend.visual_stimulus
-            display = self.profile_resolver(
-                settings.display.profile_json,
-                max_bytes=typed_policy.limits.max_document_bytes,
-                projection=policy_projection(typed_policy.projection),
-                refresh_hz=(
-                    typed_policy.pacing_refresh_hz
-                    if typed_policy.HasField("pacing_refresh_hz")
-                    else None
-                ),
-                output_id=(
-                    typed_policy.pacing_output_id
-                    if typed_policy.HasField("pacing_output_id")
-                    else None
-                ),
+            display = _resolved_display_profile(
+                settings.display.profile_json, typed_policy, self.profile_resolver
             )
             settings.display.profile_json = display.model_dump_json()
             return self.pure_validator(resolved_candidate)
@@ -285,21 +291,7 @@ def _installed_display_pacing_resolver() -> Callable[[str, Message], str] | None
         ):
             raise ValueError("Visual Stimulus file policies unavailable")
         typed_policy = cast(visual_stimulus_pb.VisualStimulusFilePolicies, policy)
-        output = provider(
-            profile_json,
-            max_bytes=typed_policy.limits.max_document_bytes,
-            projection=policy_projection(typed_policy.projection),
-            refresh_hz=(
-                typed_policy.pacing_refresh_hz
-                if typed_policy.HasField("pacing_refresh_hz")
-                else None
-            ),
-            output_id=(
-                typed_policy.pacing_output_id
-                if typed_policy.HasField("pacing_output_id")
-                else None
-            ),
-        )
-        return cast(str, output.model_dump_json())
+        output = _resolved_display_profile(profile_json, typed_policy, provider)
+        return output.model_dump_json()
 
     return resolve

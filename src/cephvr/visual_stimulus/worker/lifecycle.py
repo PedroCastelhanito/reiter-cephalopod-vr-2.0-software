@@ -354,7 +354,6 @@ class LifecycleDriver:
     ) -> None:
         if self.cancelled.is_set() or self.state.interrupted:
             raise InterruptedError("Setup cancelled before graphics preparation")
-        self.preparation.prepare_graphics(tuple(record.artifact for record in records))
         if not self.display_owner.ready:
             self.display_owner.mark_ready()
         has_feedback = any(
@@ -457,6 +456,11 @@ class LifecycleDriver:
             windows_active = False
         job = self.preparation_job
         if job is not None:
+            job.service_graphics(
+                self.preparation,
+                cancelled=self.cancelled.is_set() or self.state.interrupted,
+                now_ns=now_ns,
+            )
             if not job.result.done() or (
                 job.thread is not None and job.thread.is_alive()
             ):
@@ -470,6 +474,11 @@ class LifecycleDriver:
                 self.state.interrupted = True
                 self.cancelled.set()
                 job.completion.set_exception(exc)
+                if (
+                    job.graphics_result.done()
+                    and job.graphics_result.exception() is exc
+                ):
+                    self.fail(exc)
             except BaseException as exc:
                 job.completion.set_exception(exc)
                 self.fail(exc)

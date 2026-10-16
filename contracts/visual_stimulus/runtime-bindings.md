@@ -141,21 +141,37 @@ no capture slot is free, record V12 `capacity_drop` for that group and skip
 compositing/readback. After a group's swap calls are issued, the GL owner samples each
 final output texture into its [tile](recorded-outputs.md#tiled-composite) of one
 composite target (shared-context fence rules above apply); presented images are
-unchanged. Composite codes are opaque device codes. Pixel layout is row-major,
-bottom-up, width*4 stride, either RGBA8 (R,G,B,A bytes) or R10G10B10A2 little-endian
-(R low 10, G next 10, B next 10, A high 2). Alpha is ignored for review; integer code
-values and conversion are explicit. The recording thread handles orientation/channel/
-depth conversion in the validated encoding path; do not infer representation from
-allocation width alone.
+unchanged. Composite codes are opaque device codes. Keep existing tile sampling and
+bottom-left recipe rectangles; flip the complete framebuffer into a second target
+of identical dimensions/format using a same-size nearest GPU blit with reversed Y.
+This includes black margins and never changes a projector texture. Temporarily
+disable scissor for the full-target copy and restore it afterward. New capture ABI
+is row-major top-down, width*4 stride: `rgba8_top_down` (R,G,B,A bytes) or
+`r10g10b10a2_le_top_down` (R low10, G next10, B next10, A high2, little-endian).
+FFmpeg still receives `rgba` or `x2bgr10le`. Alpha/X normalization remains explicit;
+no CPU row flip runs for new captures. Historical `*_bottom_up` recipe declarations
+retain their original meaning; the live compositor rejects them.
 
-Use glReadPixels into the slot's preallocated PBO from the composite target with an
-associated GL fence; poll glClientWaitSync with timeout zero on later iterations. Map
-only when signaled, hand the mapped slot to the recording thread and return it to the
-GL owner's free list after its stdin write completes. Only the GL thread makes GL calls;
-GL_WAIT_FAILED is failure. A signaled fence avoids an explicit completion wait; it is
-not a guarantee of zero driver overhead. At cutoff, no new captures; drain admitted
-eligible captures under existing deadlines. Keep context/GPU release on the owner
-thread; unknown slot release remains a cleanup blocker under E06/E08.
+Use glReadPixels into an idle reusable PBO, allocating storage only when all existing
+PBOs are in flight. Existing capture admission bounds pool high-water by
+`capture_slots`, without another independently configurable limit. Associate a fresh
+fence/handle with each transfer and poll glClientWaitSync with timeout zero. Only
+when signaled, map/copy into an exclusively owned host bytearray and unmap; then delete
+the fence and return the PBO to the GL pool. Host pixels survive PBO reuse and are
+handed to the recording thread; the capture reservation remains occupied until
+encoder submission. Never map an unfinished transfer, reuse a stale handle or recycle
+cancelled/failed storage. Discard that storage on the GL owner; failed deletion retains
+exact ownership for cleanup retry, without repeating already confirmed deletions.
+Activate the composite-owning first output context before scene teardown, including
+when all producer fences have retired; failed activation retains ownership. Release
+idle and pending PBOs plus both targets on resource teardown. GPU accounting
+includes two RGBA8 or RGBA32F targets and up to `capture_slots` four-byte-per-pixel
+PBOs. CPU bounds remain conservative. No new setting or enlarged admission queue.
+
+Only the GL thread makes GL calls; GL_WAIT_FAILED is failure. A signaled fence avoids
+an explicit completion wait, not all driver overhead. At cutoff no new captures;
+drain admitted eligible captures under existing deadlines. Keep context/GPU release
+on the owner thread; unknown release remains a cleanup blocker under E06/E08.
 
 RenderGroup carries one state plus known output/capture observations; GroupUpdate
 carries late outcomes under [evidence-format.md](evidence-format.md). Reserve bounded

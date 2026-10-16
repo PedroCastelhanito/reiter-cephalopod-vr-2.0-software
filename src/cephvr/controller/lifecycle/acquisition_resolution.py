@@ -11,6 +11,7 @@ from typing import Any
 from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration_access import acquisition_backends
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.device.readback import CameraReadback
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
@@ -225,9 +226,8 @@ class AcquisitionResolution:
                 )
                 confirmed = next(
                     item.acquisition
-                    for item in candidate.backends
-                    if item.backend_name == "acquisition"
-                    and item.WhichOneof("settings") == "acquisition"
+                    for item in acquisition_backends(candidate)
+                    if (item.WhichOneof("settings") == "acquisition")
                 )
                 confirmation = svc.AcquisitionConfigurationConfirmation(
                     resolution_operation=report.operation,
@@ -365,8 +365,8 @@ class AcquisitionResolution:
             setting = next(
                 (
                     item.acquisition
-                    for item in attempt.prepared.configuration.backends
-                    if item.backend_name == "acquisition" and item.enabled
+                    for item in acquisition_backends(attempt.prepared.configuration)
+                    if (item.enabled)
                 ),
                 None,
             )
@@ -426,8 +426,8 @@ class AcquisitionResolution:
                 )
                 confirmed = next(
                     item.acquisition
-                    for item in candidate.backends
-                    if item.backend_name == "acquisition" and item.enabled
+                    for item in acquisition_backends(candidate)
+                    if (item.enabled)
                 )
                 confirmation = svc.AcquisitionConfigurationConfirmation(
                     command=self.preparation_context.handoff_command(

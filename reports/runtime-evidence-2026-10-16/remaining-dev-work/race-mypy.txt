@@ -1,0 +1,2 @@
+src/cephvr/controller/lifecycle/setup_execution.py:151: error: Argument 1 has incompatible type "Awaitable[None]"; expected "Coroutine[Any, Any, Any]"  [arg-type]
+Found 1 error in 1 file (checked 108 source files)

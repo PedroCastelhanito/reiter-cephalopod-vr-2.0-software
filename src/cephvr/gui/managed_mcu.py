@@ -387,17 +387,29 @@ class ManagedMcu(QObject):
         panel.refresh_tests()
         observation = state.microcontroller.observation
         if state.microcontroller.failure:
-            panel.status_column.hud.setPlainText(
-                f"CONNECTION  Fault\n{state.microcontroller.failure}"
+            panel.status_column.set_rows(
+                (("CONNECTION", "Fault"), None, ("", state.microcontroller.failure))
             )
         elif not observation.HasField("capabilities"):
-            panel.status_column.hud.setPlainText("CONNECTION  Not connected")
+            panel.status_column.set_rows((("CONNECTION", "Not connected"),))
         else:
-            panel.status_column.hud.setPlainText(
-                f"CONNECTION  Verified\nPORT        {observation.port}\n"
-                f"FIRMWARE    {observation.capabilities.firmware}\n"
-                f"PROTOCOL    {observation.capabilities.protocol_version}\n"
-                f"OUTPUTS     {'Running' if any(getattr(observation.state, role).running for role in ('behavioral', 'tracking', 'eye_tracking')) else 'Stopped'}"
+            panel.status_column.set_rows(
+                (
+                    ("CONNECTION", "Verified"),
+                    None,
+                    ("PORT", observation.port),
+                    ("FIRMWARE", observation.capabilities.firmware),
+                    ("PROTOCOL", str(observation.capabilities.protocol_version)),
+                    (
+                        "OUTPUTS",
+                        "Running"
+                        if any(
+                            getattr(observation.state, role).running
+                            for role in ("behavioral", "tracking", "eye_tracking")
+                        )
+                        else "Stopped",
+                    ),
+                )
             )
         diagnostic = state.microcontroller.diagnostic
         if not state.microcontroller.HasField("diagnostic"):

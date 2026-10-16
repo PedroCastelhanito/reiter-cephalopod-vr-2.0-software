@@ -237,3 +237,167 @@ async def test_close_retains_controller_ownership_when_release_receipt_is_reject
     assert result == ""
     assert owner.control.tracking_diagnostic.closed
     assert owner._attachment is None
+
+
+async def test_begin_policy_load_leaves_lifecycle_lock_available_and_rechecks_revision():
+    controller = TrackingDiagnosticController.__new__(TrackingDiagnosticController)
+    controller._authorize = lambda _command: ""
+    controller.lifecycle = SimpleNamespace(
+        lock=asyncio.Lock(),
+        attempt=None,
+        session=pb.SessionState(phase=pb.SESSION_PHASE_CONFIGURATION),
+    )
+    from cephvr.acquisition.v1 import camera_pb2
+
+    configuration = pb.ExperimentConfiguration()
+    settings = configuration.backends.add(backend_name="tracking", enabled=True)
+    settings.tracking.input_camera_role = camera_pb2.CAMERA_ROLE_TRACKING
+    controller.configuration = SimpleNamespace(revision=7, current=configuration)
+    devices = pb.AcquisitionDeviceViews()
+    devices.tracking.preview_running = True
+    devices.tracking.preview_run_id = "run"
+    devices.tracking.applied_configuration_revision = 7
+    devices.tracking.device.physical_id = "camera"
+    controller.projections = SimpleNamespace(devices=devices)
+    controller.backends = {
+        "tracking": SimpleNamespace(registration=SimpleNamespace(endpoint="loopback")),
+        "acquisition": object(),
+    }
+    controller.device = SimpleNamespace(configuration_edit=None, camera_operation=None)
+    controller.control = SimpleNamespace(
+        tracking_diagnostic=pb.TrackingDiagnosticState(closed=True)
+    )
+    entered, release = asyncio.Event(), asyncio.Event()
+
+    async def policies():
+        entered.set()
+        await release.wait()
+        return None
+
+    controller._file_policies = policies
+    request = svc.BeginTrackingDiagnosticRequest(
+        expected_configuration_revision=7, preview_run_id="run"
+    )
+    request.command.operator.command_id = str(uuid4())
+    task = asyncio.create_task(controller.begin(request))
+    try:
+        await asyncio.wait_for(entered.wait(), 0.5)
+        async with asyncio.timeout(0.5):
+            async with controller.lifecycle.lock:
+                controller.configuration.revision += 1
+        release.set()
+        result = await task
+        assert result.result == pb.COMMAND_RESULT_REJECTED
+        assert "revision changed" in result.failure.message
+    finally:
+        release.set()
+        await asyncio.gather(task, return_exceptions=True)
+
+
+@pytest.mark.parametrize(
+    "blocker,reason",
+    [
+        ("authority", "lease"),
+        ("revision", "revision"),
+        ("phase", "before Setup"),
+        ("attempt", "before Setup"),
+        ("edit", "camera configuration"),
+        ("camera", "camera operation"),
+        ("active", "closure"),
+        ("unclosed", "closure"),
+        ("unconfigured", "unconfigured"),
+        ("role", "assigned Tracking camera"),
+        ("preview", "preview"),
+        ("run", "preview"),
+        ("applied_revision", "preview"),
+        ("physical", "preview"),
+        ("backend", "endpoint"),
+        ("endpoint", "endpoint"),
+        ("duplicate_stages", "distinct"),
+        ("policy", "file policy"),
+    ],
+)
+async def test_tracking_diagnostic_begin_rejection_matrix_leaves_no_admitted_owner(
+    blocker, reason
+):
+    from cephvr.acquisition.v1 import camera_pb2
+    from cephvr.controller.state import DeviceState
+
+    owner = TrackingDiagnosticController.__new__(TrackingDiagnosticController)
+    owner._authorize = lambda command: (
+        "lease unavailable" if blocker == "authority" else ""
+    )
+    owner.lifecycle = SimpleNamespace(
+        lock=asyncio.Lock(),
+        attempt=None,
+        session=pb.SessionState(phase=pb.SESSION_PHASE_CONFIGURATION),
+    )
+    config = pb.ExperimentConfiguration()
+    settings = config.backends.add(backend_name="tracking", enabled=True)
+    settings.tracking.input_camera_role = camera_pb2.CAMERA_ROLE_TRACKING
+    owner.configuration = SimpleNamespace(current=config, revision=7)
+    owner.device = DeviceState()
+    owner.control = SimpleNamespace(
+        tracking_diagnostic=pb.TrackingDiagnosticState(closed=True)
+    )
+    views = pb.AcquisitionDeviceViews()
+    view = views.tracking
+    view.preview_running, view.preview_run_id, view.applied_configuration_revision = (
+        True,
+        "run",
+        7,
+    )
+    view.device.physical_id = "camera"
+    owner.projections = SimpleNamespace(devices=views)
+    endpoint = SimpleNamespace(endpoint="loopback")
+    owner.backends = {
+        "tracking": SimpleNamespace(registration=endpoint),
+        "acquisition": object(),
+    }
+
+    async def policies():
+        return None
+
+    owner._file_policies = policies
+    request = svc.BeginTrackingDiagnosticRequest(
+        expected_configuration_revision=7, preview_run_id="run"
+    )
+    request.command.operator.command_id = str(uuid4())
+    if blocker == "revision":
+        owner.configuration.revision = 8
+    elif blocker == "phase":
+        owner.lifecycle.session.phase = pb.SESSION_PHASE_READY
+    elif blocker == "attempt":
+        owner.lifecycle.attempt = object()
+    elif blocker == "edit":
+        owner.device.configuration_edit = object()
+    elif blocker == "camera":
+        owner.device.camera_operation = object()
+    elif blocker == "active":
+        owner.control.tracking_diagnostic.active = True
+    elif blocker == "unclosed":
+        owner.control.tracking_diagnostic.closed = False
+    elif blocker == "unconfigured":
+        config.ClearField("backends")
+    elif blocker == "role":
+        settings.tracking.input_camera_role = camera_pb2.CAMERA_ROLE_BEHAVIORAL
+    elif blocker == "preview":
+        view.preview_running = False
+    elif blocker == "run":
+        view.preview_run_id = "stale"
+    elif blocker == "applied_revision":
+        view.applied_configuration_revision = 8
+    elif blocker == "physical":
+        view.device.physical_id = ""
+    elif blocker == "backend":
+        del owner.backends["tracking"]
+    elif blocker == "endpoint":
+        endpoint.endpoint = ""
+    elif blocker == "duplicate_stages":
+        request.selected_stages.extend([1, 1])
+    before = owner.control.tracking_diagnostic.SerializeToString()
+    reply = await owner.begin(request)
+    assert (
+        reply.result == pb.COMMAND_RESULT_REJECTED and reason in reply.failure.message
+    )
+    assert owner.control.tracking_diagnostic.SerializeToString() == before

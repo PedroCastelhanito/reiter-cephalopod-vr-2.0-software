@@ -1,0 +1,30 @@
+{
+  "geometry": {
+    "width": 1280,
+    "height": 1000,
+    "scale": 2,
+    "rgba_frame_bytes": 5120000,
+    "confirmed_by_total_submitted_bytes": true
+  },
+  "capture_memory": {
+    "3": {
+      "cpu_bytes": 33280000,
+      "gpu_bytes": 35840000,
+      "cpu_mib": 31.73828125,
+      "gpu_mib": 34.1796875,
+      "recording_cpu_budget_bytes": 268435456,
+      "fits_capture_cpu_budget": true,
+      "separate_evidence_queue_limit_bytes": 16777216
+    },
+    "15": {
+      "cpu_bytes": 94720000,
+      "gpu_bytes": 97280000,
+      "cpu_mib": 90.33203125,
+      "gpu_mib": 92.7734375,
+      "recording_cpu_budget_bytes": 268435456,
+      "fits_capture_cpu_budget": true,
+      "separate_evidence_queue_limit_bytes": 16777216
+    }
+  },
+  "default": 3
+}

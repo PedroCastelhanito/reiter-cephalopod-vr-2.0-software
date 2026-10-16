@@ -291,6 +291,7 @@ class RecipeOwner:
             )
             result.closure = pb.OUTPUT_CLOSURE_CLOSED
             result.artifact_present = True
+            result.counts["documents"] = 1
             publication.published = True
         except Exception as exc:
             result.failure.CopyFrom(

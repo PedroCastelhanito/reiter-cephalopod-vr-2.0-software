@@ -1,0 +1,2 @@
+src/cephvr/visual_stimulus/recording/capture_runtime.py:85: error: Dict entry 1 has incompatible type "str": "None"; expected "str": "int"  [dict-item]
+Found 1 error in 1 file (checked 158 source files)

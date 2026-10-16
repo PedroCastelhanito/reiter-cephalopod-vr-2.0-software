@@ -244,7 +244,10 @@ class CleanupWorkflow:
             clean = False
         if attempt.setup_operations:
             clean = await self.await_cleanups(attempt, deadline) and clean
-        if attempt.reservation_unconfirmed:
+        if attempt.reservation_unconfirmed or (
+            attempt.reservation_acquire_task is not None
+            and not attempt.reservation_acquire_task.done()
+        ):
             clean = False
         if clean and not self.lifecycle.authority_lost and attempt.reservation.held:
             try:
@@ -278,6 +281,12 @@ class CleanupWorkflow:
                 if clean:
                     self.lifecycle.attempt = None
                 self.publisher.publish()
+        if (
+            not clean
+            and attempt.reservation_acquire_task is not None
+            and attempt.reservation_acquire_task.done()
+        ):
+            await self.late_cleanup(attempt)
 
     async def await_cleanups(self, attempt: Attempt, initial_deadline_ns: int) -> bool:
         expected = set(attempt.setup_operations)
@@ -403,17 +412,34 @@ class CleanupWorkflow:
 
     async def late_cleanup(self, attempt: Attempt) -> None:
         async with self.lifecycle.lock:
+            prior = attempt.closure.task
+            if prior is not None and not prior.done():
+                return
+            task = self.spawn(self._late_cleanup(attempt))
+            attempt.closure.task = task
+        await asyncio.shield(task)
+
+    async def _late_cleanup(self, attempt: Attempt) -> None:
+        async with self.lifecycle.lock:
             if (
                 self.lifecycle.authority_lost
                 or attempt.reservation_unconfirmed
                 or self.lifecycle.attempt is not attempt
                 or self.lifecycle.session.cleanup_confirmed
-                or len(attempt.cleanup) != len(attempt.required)
+                or (
+                    attempt.reservation_acquire_task is not None
+                    and not attempt.reservation_acquire_task.done()
+                )
+                or (
+                    attempt.registered_context is not None
+                    and len(attempt.cleanup) != len(attempt.required)
+                )
             ):
                 return
             if self.lifecycle.session.phase == pb.SESSION_PHASE_ENDED:
                 if (
                     not attempt.writer_closed
+                    or not attempt.closure.metadata_clean
                     or attempt.paired
                     and not attempt.spikeglx_stopped
                 ):

@@ -31,7 +31,11 @@ PAGES = ("Dashboard", "Protocol", "Devices", "Tracking")
 
 class DashboardWindow(QMainWindow):
     def __init__(
-        self, *, sample: bool = False, settings: QSettings | None = None
+        self,
+        *,
+        sample: bool = False,
+        settings: QSettings | None = None,
+        device_review: bool = False,
     ) -> None:
         super().__init__()
         self.setWindowTitle(
@@ -52,7 +56,6 @@ class DashboardWindow(QMainWindow):
         sidebar_layout.setContentsMargins(12, 24, 12, 18)
         sidebar_layout.setSpacing(8)
         sidebar_layout.addWidget(label("CephVR", "brand"))
-        sidebar_layout.addWidget(label("EXPERIMENT CONTROL", "muted"))
         sidebar_layout.addSpacing(24)
         self.navigation = QButtonGroup(self)
         self.page_buttons = []
@@ -83,7 +86,9 @@ class DashboardWindow(QMainWindow):
         self.dashboard = Dashboard(sample=sample, settings=settings)
         self.dashboard_scroll = self.dashboard.scrollers[0]
         self.stack.addWidget(self.dashboard)
-        self.devices = DevicesPage(sample=sample, settings=settings)
+        self.devices = DevicesPage(
+            sample=sample, settings=settings, review=device_review
+        )
         self.recordings = RecordingsCard(self.devices.cameras)
         dashboard_controls = self.dashboard.columns[0].layout()
         assert isinstance(dashboard_controls, QVBoxLayout)

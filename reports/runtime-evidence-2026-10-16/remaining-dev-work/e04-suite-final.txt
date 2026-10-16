@@ -1,0 +1,60 @@
+........................................................................ [  4%]
+........................................................................ [  8%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 20%]
+........................................................................ [ 24%]
+........................................................................ [ 28%]
+........................................................................ [ 32%]
+........................................................................ [ 36%]
+........................................................................ [ 40%]
+........................................................................ [ 44%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 72%]
+................................sssss................................... [ 76%]
+........................................................................ [ 80%]
+........................................................................ [ 84%]
+..................................................FF.................... [ 88%]
+........................................................................ [ 92%]
+........................................................................ [ 96%]
+..............................................................           [100%]
+=================================== FAILURES ===================================
+____________ test_output_counts_use_completed_writer_evidence[True] ____________
+
+evidence_closed = True
+
+    @pytest.mark.parametrize("evidence_closed", [True, False])
+    def test_output_counts_use_completed_writer_evidence(evidence_closed):
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.visual_stimulus.recording.outcomes import closed_results
+        from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+    
+>       schedule = visual.WorkerSchedule()
+                   ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'cephvr.visual_stimulus.v1.runtime_pb2' has no attribute 'WorkerSchedule'
+
+tests/visual_stimulus/test_recording.py:1670: AttributeError
+___________ test_output_counts_use_completed_writer_evidence[False] ____________
+
+evidence_closed = False
+
+    @pytest.mark.parametrize("evidence_closed", [True, False])
+    def test_output_counts_use_completed_writer_evidence(evidence_closed):
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.visual_stimulus.recording.outcomes import closed_results
+        from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+    
+>       schedule = visual.WorkerSchedule()
+                   ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'cephvr.visual_stimulus.v1.runtime_pb2' has no attribute 'WorkerSchedule'
+
+tests/visual_stimulus/test_recording.py:1670: AttributeError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_recording.py::test_output_counts_use_completed_writer_evidence[True]
+FAILED tests/visual_stimulus/test_recording.py::test_output_counts_use_completed_writer_evidence[False]
+2 failed, 1783 passed, 5 skipped, 5 deselected in 27.12s

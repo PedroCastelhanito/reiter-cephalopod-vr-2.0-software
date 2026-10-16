@@ -1,0 +1,143 @@
+........................................................................ [ 12%]
+........................................................................ [ 25%]
+........................................................................ [ 38%]
+......FFF............................................................... [ 51%]
+........................................................................ [ 64%]
+........................................................................ [ 77%]
+........................................................................ [ 90%]
+....................................................                     [100%]
+=================================== FAILURES ===================================
+______ test_camera_policy_load_rechecks_lifecycle_before_dispatch[phase] _______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2024/test_camera_policy_load_rechec0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1078e3490>
+blocker = 'phase'
+
+    @pytest.mark.parametrize("blocker", ["phase", "manual_cleanup", "startup"])
+    async def test_camera_policy_load_rechecks_lifecycle_before_dispatch(
+        tmp_path, monkeypatch, blocker
+    ):
+        from cephvr.acquisition.config.file_policies import (
+            load_file_policies as acquisition_policies,
+        )
+    
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _runtime(tmp_path, backend)
+        monkeypatch.setattr(runtime.control_operations, "authorized", lambda *a, **k: "")
+        settings = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        settings.acquisition.behavioral.device.device_id = "assigned"
+        entered, release = threading.Event(), threading.Event()
+    
+        def loader(names):
+            entered.set()
+            assert release.wait(2)
+            return {
+                "acquisition": acquisition_policies(Path(__file__).resolve().parents[2])
+            }
+    
+        runtime.camera.file_policy_loader = loader
+        request = svc.CameraCommandRequest(
+            camera=camera_pb.CAMERA_ROLE_BEHAVIORAL,
+            kind=svc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
+            expected_configuration_revision=1,
+        )
+        request.command.operator.command_id = _id()
+        task = asyncio.create_task(runtime.camera.execute_camera_command(request))
+        try:
+>           assert await asyncio.to_thread(entered.wait, 2)
+E           assert False
+
+tests/controller/test_device_admission.py:1125: AssertionError
+__ test_camera_policy_load_rechecks_lifecycle_before_dispatch[manual_cleanup] __
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2024/test_camera_policy_load_rechec1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1078c37d0>
+blocker = 'manual_cleanup'
+
+    @pytest.mark.parametrize("blocker", ["phase", "manual_cleanup", "startup"])
+    async def test_camera_policy_load_rechecks_lifecycle_before_dispatch(
+        tmp_path, monkeypatch, blocker
+    ):
+        from cephvr.acquisition.config.file_policies import (
+            load_file_policies as acquisition_policies,
+        )
+    
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _runtime(tmp_path, backend)
+        monkeypatch.setattr(runtime.control_operations, "authorized", lambda *a, **k: "")
+        settings = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        settings.acquisition.behavioral.device.device_id = "assigned"
+        entered, release = threading.Event(), threading.Event()
+    
+        def loader(names):
+            entered.set()
+            assert release.wait(2)
+            return {
+                "acquisition": acquisition_policies(Path(__file__).resolve().parents[2])
+            }
+    
+        runtime.camera.file_policy_loader = loader
+        request = svc.CameraCommandRequest(
+            camera=camera_pb.CAMERA_ROLE_BEHAVIORAL,
+            kind=svc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
+            expected_configuration_revision=1,
+        )
+        request.command.operator.command_id = _id()
+        task = asyncio.create_task(runtime.camera.execute_camera_command(request))
+        try:
+>           assert await asyncio.to_thread(entered.wait, 2)
+E           assert False
+
+tests/controller/test_device_admission.py:1125: AssertionError
+_____ test_camera_policy_load_rechecks_lifecycle_before_dispatch[startup] ______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2024/test_camera_policy_load_rechec2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10796ed50>
+blocker = 'startup'
+
+    @pytest.mark.parametrize("blocker", ["phase", "manual_cleanup", "startup"])
+    async def test_camera_policy_load_rechecks_lifecycle_before_dispatch(
+        tmp_path, monkeypatch, blocker
+    ):
+        from cephvr.acquisition.config.file_policies import (
+            load_file_policies as acquisition_policies,
+        )
+    
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _runtime(tmp_path, backend)
+        monkeypatch.setattr(runtime.control_operations, "authorized", lambda *a, **k: "")
+        settings = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        settings.acquisition.behavioral.device.device_id = "assigned"
+        entered, release = threading.Event(), threading.Event()
+    
+        def loader(names):
+            entered.set()
+            assert release.wait(2)
+            return {
+                "acquisition": acquisition_policies(Path(__file__).resolve().parents[2])
+            }
+    
+        runtime.camera.file_policy_loader = loader
+        request = svc.CameraCommandRequest(
+            camera=camera_pb.CAMERA_ROLE_BEHAVIORAL,
+            kind=svc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
+            expected_configuration_revision=1,
+        )
+        request.command.operator.command_id = _id()
+        task = asyncio.create_task(runtime.camera.execute_camera_command(request))
+        try:
+>           assert await asyncio.to_thread(entered.wait, 2)
+E           assert False
+
+tests/controller/test_device_admission.py:1125: AssertionError
+=========================== short test summary info ============================
+FAILED tests/controller/test_device_admission.py::test_camera_policy_load_rechecks_lifecycle_before_dispatch[phase]
+FAILED tests/controller/test_device_admission.py::test_camera_policy_load_rechecks_lifecycle_before_dispatch[manual_cleanup]
+FAILED tests/controller/test_device_admission.py::test_camera_policy_load_rechecks_lifecycle_before_dispatch[startup]
+3 failed, 553 passed in 16.50s

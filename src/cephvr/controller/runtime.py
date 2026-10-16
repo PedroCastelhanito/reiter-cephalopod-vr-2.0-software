@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 import uuid
 from collections.abc import Awaitable, Callable, Coroutine, Mapping
-from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal
@@ -132,6 +131,9 @@ class ControllerRuntime:
         self.device_state = DeviceState()
         if history_warning:
             self.control.add_warning("configuration_history", history_warning)
+        if startup_settings is not None:
+            for warning in startup_settings.backend_warnings:
+                self.control.add_warning("configuration", warning)
         self._tasks: set[asyncio.Task[object]] = set()
         self.lifecycle.startup_warning_id = _id() if initial_startup_blocker else ""
         components = assemble_controller(
@@ -204,9 +206,7 @@ class ControllerRuntime:
             components.spikeglx_inventory
         )
         self.leases.observe_owner_loss(self.tracking_diagnostic.owner_lost)
-        self.publisher.observe_owner_loss(self.tracking_diagnostic.owner_lost)
         self.leases.observe_owner_loss(self.display_calibration.owner_lost)
-        self.publisher.observe_owner_loss(self.display_calibration.owner_lost)
         self.microcontroller_lifecycle = None
         if microcontroller_device is not None:
             microcontroller_device.changed = self.publisher.publish
@@ -227,7 +227,6 @@ class ControllerRuntime:
                 ),
             )
             self.leases.observe_owner_loss(self.microcontroller_lifecycle.owner_lost)
-            self.publisher.observe_owner_loss(self.microcontroller_lifecycle.owner_lost)
 
     def start_microcontroller_health(self) -> asyncio.Task[Any] | None:
         if self.microcontroller_lifecycle is None:
@@ -296,7 +295,7 @@ class ControllerRuntime:
 
     async def record_warning(self, warning: pb.Warning) -> None:
         async with self.lifecycle.lock:
-            self.control.warnings.append(deepcopy(warning))
+            self.control.retain_warning(warning)
             self.publisher.publish()
 
     async def cancel_background_tasks(self) -> None:

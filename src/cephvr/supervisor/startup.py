@@ -34,6 +34,7 @@ from cephvr.shared.managed_modules import (
     no_tracking_from_bootstrap,
 )
 from cephvr.shared.transport_deadlines import remaining_seconds
+from cephvr.supervisor.gui_relaunch import GuiRelaunch
 from cephvr.supervisor.outbound import GrpcOutbound
 from cephvr.supervisor.registry import LaunchRegistry
 from cephvr.supervisor.runtime import SupervisorRuntime
@@ -420,56 +421,32 @@ async def run_supervisor(
         runtime.acknowledge_controller_registration()
         await role_launches
 
-        active_gui_command = {"command_id": role_plans["gui"].command_id}
-        gui_launch_lock = asyncio.Lock()
-
-        async def relaunch_gui(
+        async def launch_gui(
             request: wire.PlanLaunchRequest,
             planned: wire.LaunchState,
             token: str,
             deadline_ns: int,
-        ) -> wire.LaunchState:
-            async with gui_launch_lock:
-                if (
-                    request.owner != identity
-                    or request.child.role != "gui"
-                    or request.executable != str(bootstrap["interpreter"])
-                    or not request.python_worker
-                    or request.stop_method != "grpc_shutdown"
-                    or request.HasField("work")
-                    or request.HasField("parent_operation")
-                ):
-                    raise WindowsLaunchError(
-                        "GUI relaunch plan is outside launcher policy"
-                    )
-                if request.command_id == active_gui_command["command_id"]:
-                    return runtime.registry.refresh(request.command_id)
-                previous = runtime.registry.refresh(active_gui_command["command_id"])
-                if previous.phase != wire.LAUNCH_PHASE_RELEASED:
-                    raise WindowsLaunchError(
-                        "prior GUI launch is not confirmed released"
-                    )
-                active_gui_command["command_id"] = request.command_id
-                role_child = await _launch_role_plan(
-                    inputs,
-                    "gui",
-                    "cephvr.gui.main",
-                    child,
-                    request.child.generation,
-                    token,
-                    request,
-                    planned,
-                    deadline_ns,
-                )
-                await outbound.register_gui_launch(
-                    request.child,
-                    request.command_id,
-                    role_child.pid,
-                    role_child.creation_time_100ns,
-                )
-                return runtime.registry.refresh(request.command_id)
+        ) -> SuspendedProcess:
+            return await _launch_role_plan(
+                inputs,
+                "gui",
+                "cephvr.gui.main",
+                child,
+                request.child.generation,
+                token,
+                request,
+                planned,
+                deadline_ns,
+            )
 
-        runtime.service.gui_launch_handler = relaunch_gui
+        runtime.service.gui_launch_handler = GuiRelaunch(
+            owner=identity,
+            interpreter=str(bootstrap["interpreter"]),
+            command_id=role_plans["gui"].command_id,
+            refresh=runtime.registry.refresh,
+            launch=launch_gui,
+            register=outbound.register_gui_launch,
+        )
         await runtime.wait_until_shutdown()
     finally:
         if role_launches is not None and not role_launches.done():

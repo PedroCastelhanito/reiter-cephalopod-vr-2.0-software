@@ -139,9 +139,8 @@ class Boundary(Model):
     operations: tuple[Transition, ...]
 
 
-class ReviewTiming(
-    Model
-):  # E13: constant rate; frame n is the n-th admitted render group.
+class ReviewTiming(Model):
+    # E13: nominal playback rate only; source timestamps live in group evidence.
     pacing_output_id: OutputId | None = None  # Null for common-rate all-output VSync.
     rate_numerator: Pos
     rate_denominator: Pos
@@ -162,7 +161,12 @@ class ReviewEncoding(
     composite_height: Pos
     scale_denominator: Pos  # Tile = output size // k; Encoder-fit divisor times the configured review scale factor.
     tiles: Annotated[tuple[CompositeTile, ...], Field(min_length=1)]
-    native_pixel_format: Literal["rgba8_bottom_up", "r10g10b10a2_le_bottom_up"]
+    native_pixel_format: Literal[
+        "rgba8_top_down",
+        "r10g10b10a2_le_top_down",
+        "rgba8_bottom_up",
+        "r10g10b10a2_le_bottom_up",
+    ]
     input_pixel_format: str
     encoder_pixel_format: str
     encoder_gpu_ordinal: Annotated[int, Field(ge=0)]
@@ -265,8 +269,10 @@ class PreparedTrial(Model):
             bits = [o.rgb_bits_per_channel for o in self.display.active_outputs]
             if [
                 t.source_code_bits for t in r.tiles
-            ] != bits or r.native_pixel_format != (
-                "rgba8_bottom_up" if max(bits) == 8 else "r10g10b10a2_le_bottom_up"
+            ] != bits or r.native_pixel_format not in (
+                ("rgba8_top_down", "rgba8_bottom_up")
+                if max(bits) == 8
+                else ("r10g10b10a2_le_top_down", "r10g10b10a2_le_bottom_up")
             ):
                 raise ValueError(
                     "composite depth must be the largest output depth, with tile source depths retained"
