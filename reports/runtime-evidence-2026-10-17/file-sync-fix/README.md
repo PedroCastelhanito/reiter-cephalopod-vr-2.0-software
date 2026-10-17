@@ -108,3 +108,33 @@ verified regenerable caches are eligible for cleanup. Evidence manifest records
 which byte artifacts are committed versus ignored/local-only.
 
 Final preservation: scientific-records.zip contains all 24 scientific JSON/JSONL files (3,217,832 compressed bytes), verified after archive extraction. media-manifest.json hashes all nine local videos. cache-cleanup.json records 70 verified regenerable directories / 52,714,154 bytes removed. No experiment outputs or operator data were deleted.
+
+
+## Review on another machine
+
+After pulling this branch, open this README, the owning backend reports,
+validated-recipe.json, counts.json and managed-assessment.json. These files,
+scientific-records.zip, its SHA256/entry manifest, source/provenance snapshots and
+validation logs are committed. Viewing them does not require the rig or its SDKs.
+From the repository root, standard Python can check and list the archive:
+
+```sh
+python -m zipfile -t reports/runtime-evidence-2026-10-17/file-sync-fix/scientific-records.zip
+python -m zipfile -l reports/runtime-evidence-2026-10-17/file-sync-fix/scientific-records.zip
+```
+
+Extract it into a new review directory with `python -m zipfile -e ARCHIVE DIRECTORY`
+if desired. Archive entries use relative run/file names; Windows `source_path` and
+video paths in manifests are provenance, not requirements for viewing the records.
+All 24 entry hashes and the archive SHA256 were reverified before synchronization.
+
+The nine raw MP4 videos remain only on the rig under the .tmp paths recorded in
+media-manifest.json. Git push does **not** transfer them; independent full video
+decoding requires a separate copy matching those hashes. Recorded decode/count
+results and complete scientific records are available from Git. Re-running native
+trial/camera scripts requires the documented rig setup, devices, settings and GPU
+mapping; do not run the historical capture harness merely to review results.
+
+Repository cleanup for synchronization removes only the two reproducible Oct16
+build packages (3,477,382 bytes); sync-portability-cleanup.json records exact paths
+and hashes. Unique media/scientific evidence, toolchains and operator settings stay.

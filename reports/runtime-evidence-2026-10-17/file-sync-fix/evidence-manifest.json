@@ -543,8 +543,8 @@
     },
     {
       "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/README.md",
-      "bytes": 7636,
-      "sha256": "dbe275b26717284d7cc4c0967fc3dfd81c433994042aa137417e45fa7b30fd24",
+      "bytes": 9352,
+      "sha256": "a1c962bbfa7876aaed6f9a909eafbe603a09175ae0d834249096b02be7f530e6",
       "git_excluded_local_only": false
     },
     {
@@ -779,6 +779,12 @@
       "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/validated-recipe.json",
       "bytes": 1879,
       "sha256": "ba699be2ef01c8f8c1cedcba8b0575fb6f99591df9cf14f59de08e64344a54ad",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/sync-portability-cleanup.json",
+      "bytes": 903,
+      "sha256": "99e95ae4ec92943e15f8b1a71ac9eb550b11c7686f4df12265f238d153d5f828",
       "git_excluded_local_only": false
     }
   ]

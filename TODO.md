@@ -10,8 +10,6 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-
-
 Completed open-loop endurance, bounded camera-codec lossless checks,
 restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 [Acquisition](reports/acquisition.md); remaining acceptance work is listed below.

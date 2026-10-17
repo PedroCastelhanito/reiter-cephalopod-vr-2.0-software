@@ -4033,3 +4033,17 @@ nine current videos and matches retained mappings; primary decoded counts are
 all nine local videos are hashed. Removed70 verified regenerable cache directories
 (52,714,154 bytes), preserving all scientific outputs and raw evidence. Final local
 reference/whitespace checks and Astra staged review precede the authorized commit.
+
+
+## 2026-10-17 — repository cleanup and cross-machine synchronization
+
+[repo] [acquisition] [visual_stimulus] Fresh main checkout was clean and one commit
+ahead of origin/main; fetch confirms no divergence. Preserved all source, settings,
+unique scientific/media evidence and prior user commits. Removed only two exact
+reproducible Oct16 build artifacts (3,477,382 bytes) after containment, reparse and
+tracked-file checks. Verified the committed science ZIP/24 entry hashes with Python
+stdlib and documented portable archive inspection, exact recipe/results locations
+and raw MP4 local-only limitations. No rig/hardware/product code changed; existing
+acceptance gaps remain in TODO. Whitespace/archive/reference checks cover this
+increment; a normal non-force push follows Astra review, with remote HEAD checked
+against local HEAD afterward.
