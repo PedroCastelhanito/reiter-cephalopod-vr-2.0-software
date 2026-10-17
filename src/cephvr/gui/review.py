@@ -8,7 +8,8 @@ from PyQt6.QtCore import QObject, QRect, QSettings, pyqtSignal
 from PyQt6.QtGui import QAction, QActionGroup, QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
-from cephvr.gui.layouts import fit_window_to_screen
+from cephvr.gui.layouts import show_maximized
+from cephvr.gui.preview_placement import preview_window_placement
 from cephvr.gui.projectors import DisplayInfo
 from cephvr.gui.review_draft import draft_path, load_review_draft, save_review_draft
 from cephvr.gui.theme import apply_theme
@@ -81,6 +82,7 @@ class ReviewControls(QObject):
         *,
         simulate_projectors: bool = False,
         real_devices: bool = False,
+        fake_previews: bool = False,
     ) -> None:
         super().__init__(window)
         menu_bar = window.menuBar()
@@ -108,6 +110,21 @@ class ReviewControls(QObject):
         self.observer.toggled.connect(lambda checked: self.set_phase(self.phase))
         self.phase_actions[self.phase].setChecked(True)
         self.window = window
+        self.preview_windows = None
+        if fake_previews:
+            from cephvr.gui.review_preview import ReviewPreviews
+
+            self.preview_windows = ReviewPreviews(
+                self,
+                lambda: preview_window_placement(window),
+                lambda key: self.preview_visibility(key, False),
+                window.devices.cameras.console.appendPlainText,
+            )
+            if isinstance(window, ReviewDashboardWindow):
+                window.closing.connect(self.preview_windows.close)
+            app = QApplication.instance()
+            if app is not None:
+                app.aboutToQuit.connect(self.preview_windows.close)
         window.dashboard.action_requested.connect(
             lambda action: window.dashboard.log_console.appendPlainText(
                 f"LOCAL REVIEW · {action} selected; no command sent."
@@ -214,6 +231,11 @@ class ReviewControls(QObject):
             )
             for key, name, active in sources
         )
+        if self.preview_windows is not None:
+            active_keys = {item.key for item in previews if item.active}
+            for key in tuple(self.preview_windows.windows):
+                if key not in active_keys:
+                    self.preview_windows.visibility(key, "", False)
         self.window.apply_view(replace(dashboard.view, previews=previews))
 
     def preview_visibility(self, key: str, visible: bool) -> None:
@@ -226,6 +248,8 @@ class ReviewControls(QObject):
             or not source.available
         ):
             return
+        if self.preview_windows is not None:
+            visible = self.preview_windows.visibility(key, source.name, visible)
         self.window.apply_view(
             replace(
                 dashboard.view,
@@ -237,7 +261,11 @@ class ReviewControls(QObject):
         )
         dashboard.log_console.appendPlainText(
             f"LOCAL REVIEW · {key} sample visibility {'on' if visible else 'off'}; "
-            "no viewer command sent."
+            + (
+                "synthetic viewer only."
+                if self.preview_windows
+                else "no viewer command sent."
+            )
         )
 
 
@@ -256,6 +284,11 @@ def main() -> None:
         help="Use isolated device fixtures (the review default).",
     )
     parser.add_argument(
+        "--fake-previews",
+        action="store_true",
+        help="Open blank OpenCV windows (default in isolated Review).",
+    )
+    parser.add_argument(
         "--real-devices",
         action="store_true",
         help="Explicitly inspect attached local devices without a managed controller.",
@@ -263,6 +296,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.simulated_devices and args.real_devices:
         parser.error("Select either simulated or real devices")
+    if args.fake_previews and (not args.review or args.real_devices):
+        parser.error("--fake-previews requires --review with simulated devices")
     app = QApplication(sys.argv[:1])
     app.setApplicationName("CephVR2.0 Dashboard")
     apply_theme(app)
@@ -273,6 +308,7 @@ def main() -> None:
             window,
             simulate_projectors=not args.real_devices,
             real_devices=args.real_devices,
+            fake_previews=not args.real_devices,
         )
         try:
             if load_review_draft(window, draft_path()):
@@ -297,8 +333,7 @@ def main() -> None:
                 "Review draft not restored",
                 f"The saved review draft was preserved but could not be restored: {exc}",
             )
-    fit_window_to_screen(window)
-    window.showMaximized()
+    show_maximized(window)
     window.raise_()
     window.activateWindow()
     sys.exit(app.exec())

@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree",
+  "scope": "isolated native macOS Retro Review, maximized Dashboard and restored Cameras, no real devices",
+  "results": [
+    {
+      "target": [
+        875,
+        716,
+        567,
+        212
+      ],
+      "native_frame": [
+        1058,
+        716,
+        200,
+        208
+      ],
+      "contained": true,
+      "center_error": [
+        -1,
+        -2
+      ]
+    },
+    {
+      "target": [
+        649,
+        671,
+        423,
+        212
+      ],
+      "native_frame": [
+        760,
+        671,
+        200,
+        208
+      ],
+      "contained": true,
+      "center_error": [
+        -1,
+        -2
+      ]
+    }
+  ]
+}

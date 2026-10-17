@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree before minimum native width accounting",
+  "method": "first execution of card-fit-native.py, captured tool output",
+  "assessment": "Contained, but 8px horizontal center error exposed Cocoa's 200px minimum frame width; subsequent run accounts for it.",
+  "results": [
+    {"target": [875, 716, 567, 212], "native_frame": [1067, 716, 200, 208], "contained": true, "center_error": [8, -2]},
+    {"target": [649, 671, 423, 212], "native_frame": [769, 671, 200, 208], "contained": true, "center_error": [8, -2]}
+  ]
+}

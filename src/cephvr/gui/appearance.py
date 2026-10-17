@@ -10,7 +10,7 @@ from PyQt6.QtCore import QByteArray, QObject, QSettings
 from PyQt6.QtGui import QAction, QActionGroup, QFontDatabase
 from PyQt6.QtWidgets import QApplication, QComboBox, QLabel, QLineEdit, QWidget
 
-from cephvr.gui.components import Button, Card, StatusColumn
+from cephvr.gui.components import Button, Card, Console, FittedConsole, StatusColumn
 from cephvr.gui.dashboard import Dashboard
 from cephvr.gui.icons import device_icon
 from cephvr.gui.retro_instruments import FocusBrackets
@@ -139,6 +139,11 @@ class DashboardAppearance(QObject):
         for card, title in self.card_titles.items():
             card.caption.setText(title.upper() if retro else title)
         self.refresh_device_icons()
+        for console in self.window.findChildren(Console):
+            console.ensurePolished()
+            console.set_entry_prompts(retro)
+            if isinstance(console, FittedConsole):
+                console.fit_height()
         for status in self.window.findChildren(StatusColumn):
             status.render_hud()
         self.dashboard.render_hud()

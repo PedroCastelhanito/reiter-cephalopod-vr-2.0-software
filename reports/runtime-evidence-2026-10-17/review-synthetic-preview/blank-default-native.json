@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree",
+  "method": "actual review.main with --review only; active-source Show; native HighGUI visibility and blank frame checks",
+  "visible": true,
+  "black": true,
+  "shape": [
+    180,
+    180,
+    3
+  ],
+  "scope": "local macOS simulated Review; no camera or managed runtime",
+  "closed": true
+}

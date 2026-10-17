@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree",
+  "method": "native macOS Qt, saved local review draft, Retro, synthetic previews",
+  "maximized": true,
+  "frame": [
+    82,
+    33,
+    1388,
+    923
+  ],
+  "available": [
+    82,
+    33,
+    1388,
+    923
+  ],
+  "scope": "startup state and native frame bounds; no real devices or Windows acceptance"
+}

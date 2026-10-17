@@ -1,6 +1,6 @@
 # CephVR2.0 architecture
 
-Last updated: 2026-10-16
+Last updated: 2026-10-17
 
 This overview and the linked records in `docs/architecture/` form the authoritative
 architecture. Each decision has one home; this register locates it by permanent ID.
@@ -63,8 +63,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
 | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 25 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 216 |
-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 74 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 221 |
+| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 76 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
 | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 35 |

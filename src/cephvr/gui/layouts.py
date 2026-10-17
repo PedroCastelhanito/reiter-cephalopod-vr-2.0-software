@@ -1,6 +1,6 @@
 """Shared responsive placement with stable editor ownership."""
 
-from PyQt6.QtCore import QPoint, QRect, QSize, Qt
+from PyQt6.QtCore import QPoint, QRect, QSize, Qt, QTimer
 from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import QFrame, QGridLayout, QScrollArea, QVBoxLayout, QWidget
 
@@ -35,6 +35,13 @@ def fit_window_to_screen(window: QWidget) -> None:
             min(window.width(), area.width() - inset),
             min(window.height(), area.height() - inset),
         )
+
+
+def show_maximized(window: QWidget) -> None:
+    """Maximize at launch and after the first native/layout event pass."""
+    fit_window_to_screen(window)
+    window.showMaximized()
+    QTimer.singleShot(0, window.showMaximized)
 
 
 def tool_window_position(anchor: QRect, size: QSize, area: QRect) -> QPoint:

@@ -1,30 +1,22 @@
 """Small themed components with explicit widget ownership."""
 
-from math import ceil
-
 from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
 from PyQt6.QtGui import (
     QColor,
-    QContextMenuEvent,
     QPainter,
     QPaintEvent,
     QPen,
     QRegion,
     QResizeEvent,
-    QTextBlockUserData,
-    QTextOption,
 )
 from PyQt6.QtWidgets import (
     QAbstractSpinBox,
-    QApplication,
     QComboBox,
-    QDialog,
     QDoubleSpinBox,
     QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPlainTextEdit,
     QPushButton,
     QRadioButton,
     QSizePolicy,
@@ -35,13 +27,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from cephvr.gui.consoles import Console as Console
+from cephvr.gui.consoles import FittedConsole as FittedConsole
+from cephvr.gui.consoles import LogConsole as LogConsole
 from cephvr.gui.formatting import HudRows, hud_text
 from cephvr.gui.retro_instruments import (
-    blink,
     card_marks,
     paint_status_lamp,
-    prompt_cursor,
-    terminal_marks,
 )
 from cephvr.gui.table_header import TableHeader
 from cephvr.gui.theme import SIZES, colors_for, retro_console
@@ -261,172 +253,6 @@ class StatusIndicator(QRadioButton):
 
     def nextCheckState(self) -> None:
         pass
-
-
-class Console(QPlainTextEdit):
-    def __init__(self, *, lines: int = 6, grow: bool = True) -> None:
-        super().__init__()
-        self.setProperty("role", "console")
-        self.setTabChangesFocus(True)
-        self.setReadOnly(True)
-        self.setMaximumBlockCount(256)
-        height = lines * (SIZES.console_font + 5) + 32
-        if grow:
-            self.setMinimumHeight(height)
-        else:
-            self.setFixedHeight(height)
-        self.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding if grow else QSizePolicy.Policy.Fixed,
-        )
-
-    def sizeHint(self) -> QSize:
-        size = super().sizeHint()
-        size.setHeight(self.minimumHeight())
-        return size
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        super().paintEvent(event)
-        if not retro_console(self) or event is None:
-            return
-        terminal_marks(self, event)
-
-
-class FittedConsole(Console):
-    """Fit the rendered text, including wrapped lines, without consuming spare height."""
-
-    def __init__(self) -> None:
-        super().__init__(lines=1, grow=False)
-        self.textChanged.connect(self.fit_height)
-
-    def fit_height(self) -> None:
-        document = self.document()
-        assert document is not None
-        layout = document.documentLayout()
-        assert layout is not None
-        block = document.begin()
-        height = 2 * (self.frameWidth() + document.documentMargin())
-        while block.isValid():
-            height += layout.blockBoundingRect(block).height()
-            block = block.next()
-        target = ceil(height)
-        if self.height() != target:
-            self.setFixedHeight(target)
-
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
-        super().resizeEvent(event)
-        self.fit_height()
-
-
-class LogConsole(Console):
-    """Follow new messages only while the reader is already at the bottom."""
-
-    def __init__(self, *, lines: int = 7) -> None:
-        super().__init__(lines=lines)
-        self.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
-        self.setWordWrapMode(QTextOption.WrapMode.WordWrap)
-        blink().toggled.connect(self.blink_cursor)
-
-    def blink_cursor(self) -> None:
-        viewport = self.viewport()
-        if viewport is not None and retro_console(self):
-            viewport.update()
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        super().paintEvent(event)
-        if retro_console(self) and blink().on:
-            prompt_cursor(self)
-
-    def appendPlainText(self, text: str | None) -> None:
-        if not text:
-            return
-        vertical = self.verticalScrollBar()
-        horizontal = self.horizontalScrollBar()
-        assert vertical is not None and horizontal is not None
-        following = vertical.value() >= vertical.maximum()
-        x = horizontal.value()
-        anchor = self.firstVisibleBlock()
-        document = self.document()
-        assert document is not None
-        preceding_lines = 0
-        block = document.begin()
-        while block.isValid() and block != anchor:
-            preceding_lines += block.lineCount()
-            block = block.next()
-        line_offset = max(0, vertical.value() - preceding_lines)
-        super().appendPlainText(text)
-        position = 0
-        if not following and anchor.isValid():
-            block = document.begin()
-            while block.isValid() and block != anchor:
-                position += block.lineCount()
-                block = block.next()
-            position += line_offset
-        vertical.setValue(vertical.maximum() if following else position)
-        horizontal.setValue(x)
-
-    def append_entry(self, summary: str, details: str) -> None:
-        """Append a concise row with diagnostics bound to its document block."""
-        summary = summary.replace("\r\n", "\n").replace("\r", "\n")
-        summary = " · ".join(summary.splitlines())
-        self.appendPlainText(summary)
-        document = self.document()
-        assert document is not None
-        document.lastBlock().setUserData(_LogDetails(details))
-        self.setToolTip(
-            "Right-click or use the context-menu key on an entry for details."
-        )
-
-    def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
-        if event is None:
-            return
-        cursor = (
-            self.textCursor()
-            if event.reason() == QContextMenuEvent.Reason.Keyboard
-            else self.cursorForPosition(event.pos())
-        )
-        data = cursor.block().userData()
-        keyboard = event.reason() == QContextMenuEvent.Reason.Keyboard
-        local_position = (
-            self.cursorRect(cursor).bottomRight() if keyboard else event.pos()
-        )
-        menu = self.createStandardContextMenu(local_position)
-        if menu is None:
-            return
-        if isinstance(data, _LogDetails):
-            menu.addSeparator()
-            view_action = menu.addAction("View details")
-            copy_action = menu.addAction("Copy details")
-        else:
-            view_action = copy_action = None
-        global_position = (
-            self.mapToGlobal(local_position) if keyboard else event.globalPos()
-        )
-        chosen = menu.exec(global_position)
-        if isinstance(data, _LogDetails) and chosen == view_action:
-            dialog = QDialog(self)
-            dialog.setWindowTitle("Log entry details")
-            layout = QVBoxLayout(dialog)
-            detail_view = QPlainTextEdit(dialog)
-            detail_view.setTabChangesFocus(True)
-            detail_view.setProperty("role", "source")
-            detail_view.setReadOnly(True)
-            detail_view.setPlainText(data.details)
-            layout.addWidget(detail_view)
-            dialog.resize(640, 360)
-            dialog.exec()
-            dialog.deleteLater()
-        elif isinstance(data, _LogDetails) and chosen == copy_action:
-            clipboard = QApplication.clipboard()
-            if clipboard is not None:
-                clipboard.setText(data.details)
-        menu.deleteLater()
-
-
-class _LogDetails(QTextBlockUserData):
-    def __init__(self, details: str) -> None:
-        super().__init__()
-        self.details = details
 
 
 class StatusColumn(QWidget):

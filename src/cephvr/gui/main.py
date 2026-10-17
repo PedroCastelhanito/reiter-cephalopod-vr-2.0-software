@@ -17,7 +17,7 @@ from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.controller_bridge import ControllerBridge
 from cephvr.gui.gui_history import GuiHistory, history_path
-from cephvr.gui.layouts import fit_window_to_screen
+from cephvr.gui.layouts import show_maximized
 from cephvr.gui.managed_cameras import ManagedCameras
 from cephvr.gui.managed_close import save_failure_choice
 from cephvr.gui.managed_configuration import ConfigurationPages, ManagedConfiguration
@@ -438,6 +438,7 @@ class ManagedGui(QObject):
         self.window.dashboard.log_console.append_entry(
             f"{action_label(action)} accepted; awaiting completion.",
             f"Action: {action}\nCommand ID: {command_id}\nState: admitted; completion is pending.",
+            error=False,
         )
 
     def operation_finished(
@@ -453,6 +454,7 @@ class ManagedGui(QObject):
         self.window.dashboard.log_console.append_entry(
             summary,
             f"Action: {action}\nCommand ID: {command_id}\nStatus: {status}\nMessage: {message}",
+            error=status in {"failed", "rejected", "unconfirmed"},
         )
         self.prompts.operation_finished(action)
         if action == "spikeglx_inventory_update" and status == "completed":
@@ -709,7 +711,9 @@ class ManagedGui(QObject):
             action != "tracking_diagnostic_frame" or not success
         ):
             self.window.dashboard.log_console.append_entry(
-                rendered, f"Action: {action}\nSuccess: {success}\nMessage: {message}"
+                rendered,
+                f"Action: {action}\nSuccess: {success}\nMessage: {message}",
+                error=not success and not message.startswith("Cancelled"),
             )
         mcu_actions = {
             "mcu",
@@ -850,8 +854,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             manager = ManagedGui(window, bridge)
             app.aboutToQuit.connect(manager.shutdown)
-            fit_window_to_screen(window)
-            window.showMaximized()
+            show_maximized(window)
             return app.exec()
         finally:
             store.remove_client(principal)

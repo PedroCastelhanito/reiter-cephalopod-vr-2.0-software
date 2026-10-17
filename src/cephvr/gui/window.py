@@ -1,6 +1,6 @@
 """Frontend shell with shared status columns and local configuration pages."""
 
-from PyQt6.QtCore import QEvent, QSettings, Qt
+from PyQt6.QtCore import QEvent, QSettings
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QButtonGroup,
@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.appearance import DashboardAppearance
-from cephvr.gui.components import button, label
+from cephvr.gui.components import StatusColumn, button, label
 from cephvr.gui.dashboard import Dashboard
 from cephvr.gui.devices import DevicesPage
 from cephvr.gui.gui_snapshot import GuiSnapshot, SnapshotPages
@@ -144,13 +144,10 @@ class DashboardWindow(QMainWindow):
         self.page_header.setFixedHeight(
             max(control.sizeHint().height() for control in header_controls)
         )
-        content = QHBoxLayout()
-        content.setSpacing(SIZES.column_gap)
-        content.addWidget(self.stack, 3)
         self.preview_slot = PreviewSlot()
-        content.addWidget(self.preview_slot, 2, Qt.AlignmentFlag.AlignTop)
-        body.addLayout(content, 1)
+        body.addWidget(self.stack, 1)
         self.devices.tabs.currentChanged.connect(self.update_preview_slot)
+        self.update_preview_slot()
         layout.addWidget(page, 1)
         self.navigation.idClicked.connect(self.select_page)
         self.apply_view(DashboardView())
@@ -176,9 +173,18 @@ class DashboardWindow(QMainWindow):
 
     def update_preview_slot(self) -> None:
         page = self.stack.currentIndex()
-        self.preview_slot.setVisible(
-            page in (0, 3) or (page == 2 and self.devices.tabs.currentIndex() == 0)
-        )
+        status: StatusColumn | None = None
+        if page == 0:
+            status = self.dashboard.status_column
+        elif page == 2 and self.devices.tabs.currentIndex() == 0:
+            status = self.devices.cameras.status_column
+        elif page == 3:
+            status = self.tracking.status
+        if status is not None and self.preview_slot.parentWidget() is not status:
+            column = status.layout()
+            assert isinstance(column, QVBoxLayout)
+            column.addWidget(self.preview_slot, 1)
+        self.preview_slot.setVisible(status is not None)
 
     def apply_view(self, view: DashboardView) -> None:
         self.dashboard.apply_view(view)

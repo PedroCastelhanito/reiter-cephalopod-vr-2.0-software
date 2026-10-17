@@ -1,5 +1,6 @@
 """Initial display-only placement hints for acquisition-owned camera windows."""
 
+import sys
 from math import ceil
 
 from PyQt6.QtCore import QPoint, QRect, Qt
@@ -14,16 +15,19 @@ from cephvr.platform.windows.window_coordinates import (
     preview_frame_extra,
 )
 
+_MINIMUM_FRAME_WIDTH = 200 if sys.platform == "darwin" else 0
+
 
 class PreviewSlot(Card):
     """Reserve the initial detached frame's footprint below the card heading."""
 
     def __init__(self) -> None:
-        super().__init__("Preview")
-        self.setMinimumWidth(200)
-        self.setMaximumWidth(658)
+        super().__init__("Preview", grow=True)
+        self.setMinimumWidth(max(200, _MINIMUM_FRAME_WIDTH + 16))
+        self.setMinimumHeight(180)
         self.body.setContentsMargins(8, 0, 8, 8)
         self.body.setSpacing(4)
+        self.body.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.header.setContentsMargins(0, 0, 0, 0)
         self.target = QWidget()
         self.target.setObjectName("ExternalPreviewSlot")
@@ -38,13 +42,18 @@ class PreviewSlot(Card):
         super().resizeEvent(event)
         scale = self.devicePixelRatioF()
         extra_width, extra_height = preview_frame_extra(scale)
+        heading = self.header.sizeHint().height() + 12
+        self.setMinimumHeight(max(180, heading + ceil((128 + extra_height) / scale)))
+        width_side = min(
+            round(640 * scale), round((self.width() - 16) * scale) - extra_width
+        )
+        self.setMaximumHeight(heading + ceil((width_side + extra_height) / scale))
         side = max(
             128,
-            min(round(640 * scale), round((self.width() - 16) * scale) - extra_width),
+            min(width_side, round((self.height() - heading) * scale) - extra_height),
         )
         height = ceil((side + extra_height) / scale)
         self.target.setFixedHeight(height)
-        self.setFixedHeight(self.header.sizeHint().height() + 4 + height + 8)
 
 
 def square_preview_placement(
@@ -115,13 +124,26 @@ def slot_preview_placement(
     """Fit the detached square and its native frame within the reserved area."""
     bounds = slot.intersected(area)
     extra_width, extra_height = preview_frame_extra(scale)
-    side = max(
-        128,
-        min(
-            round(640 * scale),
-            2048,
-            bounds.width() - extra_width,
-            bounds.height() - extra_height,
-        ),
+    side = min(
+        round(640 * scale),
+        2048,
+        bounds.width() - extra_width,
+        bounds.height() - extra_height,
     )
-    return rpc.PreviewWindowPlacement(x=bounds.x(), y=bounds.y(), side=side)
+    frame_width = max(side + extra_width, _MINIMUM_FRAME_WIDTH)
+    if side < 128 or frame_width > bounds.width():
+        raise ValueError(
+            "Preview card has insufficient visible space for a preview window"
+        )
+    return rpc.PreviewWindowPlacement(
+        x=bounds.x() + (bounds.width() - frame_width) // 2,
+        y=bounds.y() + (bounds.height() - side - extra_height) // 2,
+        side=side,
+    )
+
+
+def cocoa_preview_position(
+    x: int, y: int, primary_height: int, current_work_height: int
+) -> tuple[int, int]:
+    """Convert Qt top-origin coordinates to HighGUI Cocoa's work-height origin."""
+    return x, y - (primary_height - current_work_height)

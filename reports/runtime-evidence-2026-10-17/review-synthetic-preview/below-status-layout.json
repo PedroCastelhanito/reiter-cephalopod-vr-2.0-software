@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree",
+  "method": "QT_QPA_PLATFORM=offscreen; QApplication/apply_theme; DashboardWindow(sample=True), ReviewControls; resize(1440,940), show, processEvents, QWidget.grab; select_page(2) for Cameras",
+  "scope": "local Qt render/geometry, no native Windows or real camera acceptance",
+  "dashboard_status_bounds": [
+    625,
+    0,
+    609,
+    820
+  ],
+  "dashboard_preview_bounds_in_status": [
+    0,
+    502,
+    609,
+    318
+  ],
+  "tests": "46 passed, 540 deselected; preview/HUD/device-tab selection"
+}

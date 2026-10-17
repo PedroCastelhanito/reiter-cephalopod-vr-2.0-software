@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree",
+  "method": "QT_QPA_PLATFORM=offscreen; QApplication/apply_theme; DashboardWindow(sample=True), ReviewControls; Retro appearance; clear Dashboard log; append explicit normal/error, plain Transport error and explicit normal entries; show at1440x940; process Qt events; LogConsole.grab",
+  "scope": "inspected Qt sample render, no actual camera or transport error",
+  "image": "log-error-colors.png",
+  "outcome": "Error rows and their prompts coral red; adjacent normal entries pale green. Stored text/details unchanged in owning tests."
+}

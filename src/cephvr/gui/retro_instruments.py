@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from cephvr.gui.log_colors import log_block_is_error
 from cephvr.gui.theme import RETRO_COLORS, retro_console
 
 
@@ -100,17 +101,31 @@ def terminal_marks(console: QPlainTextEdit, event: QPaintEvent) -> None:
     for index, y in enumerate(range(8, viewport.height() - 8, 20)):
         length = 8 if index % 5 == 4 else 4
         painter.drawLine(viewport.width() - 2 - length, y, viewport.width() - 2, y)
-    if console.property("terminal") == "telemetry":
-        block = console.firstVisibleBlock()
-        while block.isValid():
-            rect = console.blockBoundingGeometry(block).translated(
-                console.contentOffset()
-            )
-            if rect.top() > viewport.height():
-                break
-            if not block.text() and rect.bottom() >= 0:
+    block = console.firstVisibleBlock()
+    painter.setFont(console.font())
+    while block.isValid():
+        rect = console.blockBoundingGeometry(block).translated(console.contentOffset())
+        if rect.top() > viewport.height():
+            break
+        if rect.bottom() >= 0:
+            if block.text():
+                layout = block.layout()
+                if layout is not None and layout.lineCount():
+                    line = layout.lineAt(0)
+                    error = console.property(
+                        "terminal"
+                    ) != "telemetry" and log_block_is_error(block)
+                    painter.setPen(
+                        QColor(
+                            RETRO_COLORS.error if error else RETRO_COLORS.console_text
+                        )
+                    )
+                    painter.drawText(
+                        QPointF(2, rect.top() + line.y() + line.ascent()), ">"
+                    )
+            elif console.property("terminal") == "telemetry":
                 dashed_rule(painter, 4, viewport.width() - 16, rect.center().y())
-            block = block.next()
+        block = block.next()
 
 
 def paint_status_lamp(indicator: QRadioButton, status: str) -> None:

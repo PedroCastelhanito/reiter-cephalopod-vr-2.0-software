@@ -1,0 +1,1 @@
+{"date": "2026-10-17", "source_revision": "uncommitted working tree", "method": ".venv/bin/python /private/tmp/cephvr-review-preview-smoke.py with desktop access", "native_visible": true, "image_shape": [320, 320, 3], "closed": true, "errors": [], "scope": "synthetic macOS HighGUI creation, timer animation and cleanup; no real camera or Windows acceptance"}

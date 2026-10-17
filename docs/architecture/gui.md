@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 216
+**Status:** Accepted · **Revision:** 221
 
 - Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
 
@@ -537,12 +537,21 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Connect starts A10 manual capture and then Shows its acquisition-owned OpenCV
   window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
   visibility evidence updates the GUI selector. Show snaps the visible preview frame
-  into the reserved right-side Preview area on Dashboard, Devices/Cameras and
-  Tracking. The shared runtime/review shell opens maximized and keeps this area
-  separate from controls; other tabs reclaim its space. Previews remain detached,
+  into the Preview area below the existing HUD and log console in their original
+  status column on Dashboard, Devices/Cameras and Tracking. Keep the HUD and log
+  at their existing top/right alignment; do not add a third column that shifts or
+  narrows them. Share remaining column height between log and Preview, fitting the
+  initial image to available space. The shared runtime/review shell opens maximized
+  and reapplies maximization once after the first native/layout event pass; later
+  operator Restore remains available.
+  Other tabs reclaim Preview space. Previews remain detached,
   never embedded or reparented. Place the native frame inside the card below its
-  heading; size the card to the initial square and native chrome with only border
-  padding, rather than stretching it to page height. Use physical client-to-screen
+  heading. Choose the largest initial square within the existing size bounds that
+  fits the card's visible intersection with the desktop, and center its native
+  frame there. Include title bar, borders and platform minimum frame width; report
+  insufficient visible space instead of opening a frame over neighboring controls.
+  Local Cocoa Review converts its work-height window origin to the Qt desktop
+  origin; Windows retains physical client-to-screen
   coordinates and native DPI metrics. Keep detached previews topmost without
   activating them so GUI interaction cannot cover them. Reopening samples the
   current layout. When no slot
@@ -958,7 +967,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   path. Cancellation preserves the draft; selection rechecks editing availability.
   Camera Connect and the Dashboard selector target the same source identity and
   visibility state, with one backend-owned external viewer per source. The local
-  review updates visibility fixtures only and creates no image window.
+  isolated Review opens blank black detached OpenCV windows by default on camera
+  Connect or an active source's Show, using the same placement helper. Keep the
+  review label in the native title; omit image annotations, grids and animation.
+  Disconnect/Hide and Review exit close
+  them. Native X closure clears visibility while leaving the fixture connected.
+  These blank images have no camera reader or runtime connection and establish
+  layout review only, not acquisition or rig acceptance.
   Path display is compact when unfocused, with the full path in its tooltip and
   unchanged full text for editing/copying. Activity logs follow new messages only
   when already at the bottom; otherwise preserve the retained message being read,
@@ -981,7 +996,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 74
+**Status:** Accepted · **Revision:** 76
 
 - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
@@ -1054,7 +1069,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   cosmetic preference. Unknown saved styles fall back to Standard.
   Retro uses bundled IBM Plex Mono Regular with its OFL license, inverse-video hover/selection,
   bracketed button labels (disabled labels lowercase), a selected-navigation prompt,
-  and blinking block cursors in Runtime logs. Styled input fields use one native block
+  and blinking block cursors in Runtime logs. Prefix each nonempty HUD/log entry
+  visually with `>` in a reserved gutter, including Dashboard and all device pages.
+  Leave section separators and wrapped continuation lines unmarked; preserve stored
+  text, per-entry details and copy/selection content across style changes.
+  Log error entries use the palette's coral-red error color, including the Retro
+  prompt; normal entries retain the current console color. Use explicit command
+  success/failure when supplied, with recognizable error wording as a fallback
+  for unstructured local messages. Ordinary cancellation and negated error wording
+  are not errors. Preserve diagnostics, selection and scroll-follow behavior.
+  Styled input fields use one native block
   caret at the insertion position: typed text sits directly to its left, without a
   floating gap or second caret. Qt owns editing, selection, scrolling and cursor blinking.
   Icon-only buttons retain a dark hover/pressed fill with an accent border so their

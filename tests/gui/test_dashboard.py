@@ -62,6 +62,91 @@ def test_square_preview_initial_edge_placement(
     assert (result.x, result.y, result.side) == expected
 
 
+def test_review_blank_preview_connect_close_and_disconnect(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sys
+
+    import cephvr.gui.review_preview as previews
+
+    visible: set[str] = set()
+    shown: list[str] = []
+    cv = SimpleNamespace(
+        WINDOW_AUTOSIZE=1,
+        WND_PROP_VISIBLE=1,
+        error=RuntimeError,
+        namedWindow=lambda title, _: visible.add(title),
+        imshow=lambda title, _: shown.append(title),
+        waitKey=lambda _: None,
+        moveWindow=lambda *_: None,
+        destroyWindow=lambda title: visible.discard(title),
+        getWindowProperty=lambda title, _: int(title in visible),
+    )
+    monkeypatch.setitem(sys.modules, "cv2", cv)
+    monkeypatch.setattr(previews, "position_preview_frame", lambda *_: None)
+    target = DashboardWindow(sample=True)
+    controls = ReviewControls(target, fake_previews=True)
+    viewers = controls.preview_windows
+    assert viewers is not None
+    cameras = target.devices.cameras
+    try:
+        cameras.table.selectRow(0)
+        camera = cameras.selected
+        assert camera is not None
+        cameras.toggle_connection()
+        assert camera.connected and camera.capture_running
+        assert camera.key in viewers.windows and len(visible) == 1
+        frame = viewers.windows[camera.key][1]
+        assert not frame.any()
+        viewers.poll_windows()
+        assert len(shown) == 1
+        assert not frame.any()
+        # Native X clears Show without disconnecting the fixture or recreating it.
+        visible.clear()
+        viewers.poll_windows()
+        assert not viewers.windows and not viewers.timer.isActive()
+        assert camera.connected and camera.capture_running
+        assert not next(
+            p for p in target.dashboard.view.previews if p.key == camera.key
+        ).visible
+        controls.preview_visibility(camera.key, True)
+        assert len(visible) == 1
+        cameras.toggle_connection()
+        assert not camera.connected and not viewers.windows and not visible
+        cameras.toggle_connection()
+        viewers.close()
+        assert not visible and not viewers.timer.isActive()
+        controls.preview_visibility("stimulus", True)
+        assert "stimulus" in viewers.windows
+        assert not viewers.windows["stimulus"][1].any()
+        controls.preview_visibility("stimulus", False)
+        assert not visible and not viewers.timer.isActive()
+    finally:
+        viewers.close()
+        target.close()
+        target.deleteLater()
+        app.processEvents()
+
+
+def test_startup_maximize_survives_first_layout_and_allows_later_restore(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.layouts import show_maximized
+
+    target = QWidget()
+    try:
+        show_maximized(target)
+        assert target.isMaximized()
+        target.showNormal()
+        app.processEvents()
+        assert target.isMaximized()
+        target.showNormal()
+        app.processEvents()
+        assert not target.isMaximized()
+    finally:
+        target.close()
+
+
 def test_square_preview_placement_fits_small_work_area() -> None:
     from cephvr.gui.preview_placement import square_preview_placement
 
@@ -79,10 +164,60 @@ def test_preview_slot_fits_native_frame(scale: float) -> None:
 
     slot = QRect(-900, 100, round(400 * scale), round(500 * scale))
     result = slot_preview_placement(slot, QRect(-1920, 0, 3840, 2160), scale)
-    assert (result.x, result.y) == (slot.x(), slot.y())
     width, height = preview_frame_extra(scale)
     assert result.side + width == slot.width()
     assert result.side + height <= slot.height()
+    assert result.x == slot.x()
+    assert result.y == slot.y() + (slot.height() - result.side - height) // 2
+
+
+@pytest.mark.parametrize("scale", [1.0, 1.5, 2.0])
+def test_preview_slot_centers_frame_in_visible_card(scale: float) -> None:
+    from cephvr.gui.preview_placement import slot_preview_placement
+    from cephvr.platform.windows.window_coordinates import preview_frame_extra
+
+    slot = QRect(-1100, -100, round(900 * scale), round(500 * scale))
+    area = QRect(-1000, 0, 3000, 1600)
+    bounds = slot.intersected(area)
+    result = slot_preview_placement(slot, area, scale)
+    width, height = preview_frame_extra(scale)
+    frame = QRect(result.x, result.y, result.side + width, result.side + height)
+    assert bounds.contains(frame)
+    assert abs(frame.center().x() - bounds.center().x()) <= 1
+    assert abs(frame.center().y() - bounds.center().y()) <= 1
+    assert result.side == min(
+        round(640 * scale), 2048, bounds.width() - width, bounds.height() - height
+    )
+
+
+@pytest.mark.parametrize("slot", [QRect(0, 0, 100, 100), QRect(3000, 0, 500, 500)])
+def test_preview_slot_rejects_insufficient_visible_space(slot: QRect) -> None:
+    from cephvr.gui.preview_placement import slot_preview_placement
+
+    with pytest.raises(ValueError, match="insufficient visible space"):
+        slot_preview_placement(slot, QRect(0, 0, 1920, 1080))
+
+
+def test_cocoa_preview_position_converts_work_height_origin() -> None:
+    from cephvr.gui.preview_placement import cocoa_preview_position
+
+    assert cocoa_preview_position(900, 650, 982, 923) == (900, 591)
+    assert cocoa_preview_position(-1200, -500, 982, 1440) == (-1200, -42)
+
+
+def test_preview_slot_accounts_for_native_minimum_width(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import cephvr.gui.preview_placement as placement
+
+    monkeypatch.setattr(placement, "_MINIMUM_FRAME_WIDTH", 200)
+    result = placement.slot_preview_placement(
+        QRect(0, 0, 400, 200), QRect(0, 0, 1920, 1080)
+    )
+    assert result.side < 200
+    assert result.x == 100
+    with pytest.raises(ValueError, match="insufficient visible space"):
+        placement.slot_preview_placement(QRect(0, 0, 190, 200), QRect(0, 0, 1920, 1080))
 
 
 def test_preview_slot_tracks_relevant_tabs(
@@ -111,14 +246,34 @@ def test_preview_slot_tracks_relevant_tabs(
             assert slot.height() < window.stack.height()
             assert target.geometry().top() > slot.caption.geometry().bottom()
             assert target.geometry().left() == 8
-            assert target.geometry().bottom() + 9 == slot.height()
+            assert target.geometry().bottom() + 9 <= slot.height()
+            panel = window.stack.currentWidget()
+            if panel is window.devices:
+                panel = window.devices.cameras
+            status = panel.columns[1]
+            assert slot.parentWidget() is status
+            assert slot.y() > status.log_card.geometry().bottom()
+            assert status.hud_card.y() == 0
+            if panel.mode == "wide":
+                assert (
+                    status.mapTo(window, QPoint()).x()
+                    > panel.columns[0].mapTo(window, QPoint()).x()
+                )
             assert (
-                window.preview_slot.geometry().left() > window.stack.geometry().right()
+                status.hud_card.geometry().left() == status.log_card.geometry().left()
             )
+            assert slot.geometry().left() == status.log_card.geometry().left()
+            assert slot.geometry().bottom() < status.height()
             if QApplication.platformName() != "windows":
                 hint = preview_window_placement(window)
                 origin = target.mapToGlobal(QPoint())
-                assert (hint.x, hint.y) == (origin.x(), origin.y())
+                from cephvr.platform.windows.window_coordinates import (
+                    preview_frame_extra,
+                )
+
+                width, height = preview_frame_extra()
+                frame = QRect(hint.x, hint.y, hint.side + width, hint.side + height)
+                assert QRect(origin, target.size()).contains(frame)
 
 
 @pytest.fixture(scope="module")
@@ -2436,10 +2591,58 @@ def test_log_keeps_reading_position_during_append_and_retention(
     assert console.toPlainText() == "Fresh"
 
 
+@pytest.mark.parametrize(
+    "text,error,expected",
+    [
+        ("Camera failed: timeout", None, True),
+        ("Transport error: lost connection", None, True),
+        ("Cannot open camera", None, True),
+        ("Setup rejected", None, True),
+        ("No error reported", None, False),
+        ("Completed without error", None, False),
+        ("0 errors", None, False),
+        ("Controller connected", None, False),
+        ("Calibration file is missing", True, True),
+        ("Previous failed operation recovered", False, False),
+    ],
+)
+def test_log_error_color_preserves_text_details_and_style_switch(
+    app: QApplication, text: str, error: bool | None, expected: bool
+) -> None:
+    from cephvr.gui.components import LogConsole
+    from cephvr.gui.log_colors import log_block_is_error
+    from cephvr.gui.theme import COLORS, RETRO_COLORS
+
+    console = LogConsole()
+    try:
+        console.setProperty("retroConsole", True)
+        console.append_entry(text, "exact command details", error=error)
+        console.appendPlainText("Next normal entry")
+        app.processEvents()
+        block = console.document().begin()
+        assert log_block_is_error(block) is expected
+        formats = block.layout().formats()
+        assert bool(formats) is expected
+        if expected:
+            assert formats[0].format.foreground().color().name() == RETRO_COLORS.error
+        assert not block.next().layout().formats()
+        console.setProperty("retroConsole", False)
+        console.set_entry_prompts(False)
+        if expected:
+            assert (
+                block.layout().formats()[0].format.foreground().color().name()
+                == COLORS.error
+            )
+        assert console.toPlainText() == text + "\nNext normal entry"
+        assert block.userData().details == "exact command details"
+    finally:
+        console.deleteLater()
+
+
 def test_log_entry_details_follow_their_own_bounded_document_block(
     app: QApplication,
 ) -> None:
-    from cephvr.gui.components import LogConsole, _LogDetails
+    from cephvr.gui.consoles import LogConsole, _LogDetails
 
     console = LogConsole(lines=3)
     console.setMaximumBlockCount(2)
@@ -2500,6 +2703,8 @@ def test_managed_operation_log_distinguishes_admission_completion_and_failure(
         block = block.next()
     assert "Command ID: command-1" in details[0]
     assert "<unknown> renderer failure" in details[-1]
+    assert document.lastBlock().userData().error is True
+    assert document.begin().userData().error is False
     console.deleteLater()
 
 
@@ -2815,19 +3020,26 @@ def test_hud_fits_content_and_log_fills_available_height(
     dashboard = window.dashboard
     panel_heights = []
     log_heights = []
+    preview_heights = []
     for height in (883, 1100):
         window.resize(1920, height)
         app.processEvents()
         assert dashboard.mode == "wide"
         right = dashboard.columns[1]
         assert dashboard.hud_card.y() == 0
-        assert dashboard.log_card.geometry().bottom() == right.height() - 1
+        assert window.preview_slot.geometry().bottom() == right.height() - 1
+        assert dashboard.log_card.geometry().bottom() < window.preview_slot.y()
         assert dashboard.runtime_console.verticalScrollBar().maximum() == 0
         assert dashboard.log_console.height() > dashboard.log_console.minimumHeight()
         log_heights.append(dashboard.log_console.height())
+        preview_heights.append(window.preview_slot.height())
         panel_heights.append(dashboard.runtime_console.height())
     assert panel_heights[1] == panel_heights[0]
-    assert log_heights[1] - log_heights[0] == 1100 - 883
+    assert log_heights[1] > log_heights[0]
+    assert (
+        log_heights[1] - log_heights[0] + preview_heights[1] - preview_heights[0]
+        == 1100 - 883
+    )
     original = dashboard.runtime_console.toPlainText()
     dashboard.runtime_console.setPlainText(
         original + "\nEXTRA  additional runtime evidence"
@@ -16099,6 +16311,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
         ]
         original_application_style = app.styleSheet()
         standard_hud = review.dashboard.runtime_console.toPlainText()
+        log_margin = review.dashboard.log_console.document().documentMargin()
         current_view = review.dashboard.view
         brackets = next(
             item
@@ -16147,6 +16360,12 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
             assert review.snapshots.capture() == before
             assert review.dashboard.subject_editors == editors
             assert review.dashboard.log_console.toPlainText() == "Existing log entry"
+            margin = review.dashboard.log_console.document().documentMargin()
+            assert (
+                (margin > log_margin)
+                if name == "retro_console"
+                else (margin == log_margin)
+            )
             assert review.dashboard.view == current_view
             assert selector.isVisible()
             assert selector.views == preview_views and not preview_requests

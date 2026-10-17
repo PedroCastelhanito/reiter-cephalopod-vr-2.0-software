@@ -3984,3 +3984,108 @@ success remain unchanged. Updated the existing audit assessment and storage-sync
 follow-up only; no hardware, benchmark, configuration or policy changes. Fresh
 working tree was clean before edits. Documentation whitespace and local-link checks
 cover this clarification; no runtime result is implied.
+
+## 2026-10-17 — review-synthetic-preview
+
+[gui] Implemented the owner's requested maximized Review with optional synthetic
+OpenCV previews on camera Connect (`--review --fake-previews`). G01 revision217
+records the local presentation exception; ARCH-002 keeps generation/window ownership
+in a focused callback-based helper. Connect/Show, Disconnect/Hide, detected X closure,
+inactive-source cleanup and Review exit share fixture visibility without real-device
+access. Existing preview selection42pass; placement/lifecycle selection12pass,
+including the new owning Dashboard regression. Scoped Ruff/format, Win32 mypy2,
+boundaries716/zero violations and whitespace pass. Native macOS smoke creates a
+visible320x320 animated HighGUI image and confirms closure without errors; dated
+method/result/source are linked in reports/runtime.md. Initial sandbox launch
+failed because display screens were unavailable; desktop-authorized launch succeeds
+and Review remains open. Computer Use cannot bind this unbundled Python app,
+so native button/X interaction and visual layout acceptance remain owner review;
+no real camera, Windows-native or rig acceptance is claimed.
+
+## 2026-10-17 — preview-below-status
+
+[gui] Applied the owner's correction: Preview belongs below HUD and log in their
+original status column. Removed the extra shell column, restored original column
+widths/top alignment and moved the single slot between Dashboard, Cameras and
+Tracking status columns. Log and Preview share available height and the initial
+image fits the allotted card. G01 revision218 records this correction. ARCH-002
+review keeps changes in the existing shell/placement helpers. Owning regressions
+now assert below-log placement plus HUD/log alignment and shared height growth;
+preview/HUD/device-tab selection46pass. Initial focused checks exposed stale
+third-column/log-bottom assertions and a log allocation at its minimum; corrected
+expected layout and equalized log/Preview stretch before the passing run. Scoped
+Ruff/format, Win32 mypy2, boundaries716/zero violations and whitespace pass.
+Offscreen Cameras inspected and Dashboard geometry retained with dated captures
+and method in the existing evidence directory. Opened a fresh maximized Review
+with fake previews for owner inspection. No Windows/native-camera acceptance
+is implied, and the previous native placement coordinates remain historical.
+
+## 2026-10-17 — retro-entry-maximized-start
+
+[gui] Added the owner's `>` prompt to each nonempty Retro HUD/log entry through
+shared console painting and reserved margins; no log text or metadata rewriting.
+Standard restores its original margin; section gaps/wrapped continuations are
+unmarked. G02 revision75 records the rule. The owner clarified startup means local
+Review. Initial native probe already fills available desktop with maximized true,
+so the original symptom remains unreproduced. G01 revision219/shared startup helper
+now repeats maximization once after the first event pass, preserving later manual
+Restore. Saved-draft Retro Review reopened with synthetic previews and confirmed
+native maximized frame(82,33,1388,923), exactly matching available desktop.
+No claim about the original cause or Windows/rig acceptance. Dated native method,
+result and inspected offscreen HUD/log renders are linked in reports/runtime.md.
+ARCH-002 review keeps code in existing painting/layout helpers, no dependency or
+runtime state; main only replaces duplicated launch calls. Appearance/HUD/startup/
+placement selection17pass; scoped Ruff/format, Win32 mypy6, boundaries716/zero
+violations and whitespace pass. Initial mypy exposed a nullable viewport access,
+corrected with the existing assertion convention before the passing static run.
+
+## 2026-10-17 — preview-card-fit
+
+[gui] Centered preview frames in the current visible card/desktop intersection,
+with largest permitted fitting square, native chrome/minimum-width reservation
+and explicit insufficient-space errors. Local synthetic Cocoa previews correct
+HighGUI's work-height origin after selecting the target screen. G01 revision220
+records the rule. ARCH-002 reuses existing placement/review helpers without new
+dependencies, protocols, camera readers or continuous repositioning. Source review
+and an isolated real Cocoa probe identified the origin mismatch; the first card
+probe exposed an8px horizontal center error due to the200px minimum width. The
+final actual-frame probes are contained on maximized Dashboard and restored
+Cameras with center errors(-1,-2)px. Dated initial/final evidence and method are
+retained together and linked in reports/runtime.md. Placement/closure selection
+19pass; scoped Ruff/format, Win32 mypy2, boundaries716/zero violations and whitespace
+pass. Fresh maximized Retro Review with synthetic previews opened for the owner.
+No real-camera, mixed-monitor Cocoa or Windows-native placement acceptance claimed.
+
+## 2026-10-17 — log-error-color
+
+[gui] Added coral-red log errors and matching Retro prompts under G02 revision76.
+Existing command outcome flags override wording; plain local error text has a
+negation-aware fallback. Syntax highlighting preserves text/details and resets
+normal rows/style colors. ARCH-002 review extracted the shared console classes
+from the500-line components module before extending them; existing import paths
+remain compatibility exports. Focused log_colors owns the coloring rules, with
+no new dependency or runtime reference. Owning Dashboard scenarios retained;
+10parameter cases added,604total collected versus594previously. Log/appearance/HUD
+selection38pass; scoped Ruff/format, Win32 mypy5, boundaries718/zero violations and
+whitespace pass. Initial mypy caught Qt's nullable highlighter override signature;
+corrected before passing validation. Inspected offscreen fixture render shows
+error rows/prompts coral red and normal rows pale green; dated image/method in the
+existing evidence directory, linked from reports/runtime.md. Fresh maximized Retro
+Review reopened with synthetic previews. No actual device fault, Windows-native
+or rig validation claimed.
+
+## 2026-10-17 — review-blank-preview
+
+[gui] Changed isolated Review preview actions to open blank black OpenCV windows
+by default, including active noncamera selector sources. Removed grid, labels in
+the image and animation; the Review identity remains in the title. Existing card
+fit, native event polling, X/Hide/Disconnect and exit cleanup remain. The standard
+Review launcher needs no additional flag; retained --fake-previews compatibility
+and real-device inspection boundary. G01 revision221 records the owner's update.
+ARCH-002 review simplifies the existing helper without new dependencies or runtime
+state. Extended the owning lifecycle scenario to verify black pixels remain black,
+one initial image presentation and noncamera Show/Hide. Placement/lifecycle
+selection19pass; scoped Ruff/format, Win32 mypy2, boundaries718/zero violations and
+whitespace pass. Native actual review.main with --review alone confirms a visible
+black180x180 OpenCV image and closure; dated method/result linked in reports/runtime.md.
+Updated Review left open for the owner. No real-camera or Windows/rig acceptance.
