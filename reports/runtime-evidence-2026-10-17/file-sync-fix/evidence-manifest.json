@@ -1,0 +1,791 @@
+{
+  "scope": "Actual existing bytes only; self excluded. Scientific archive is committed; all nine .tmp video paths/checksums are in media-manifest.json and retained locally. Empty initial inherited-baseline.zip is local-only because start tree was clean.",
+  "files": [
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/acquisition-tests-r2.log",
+      "bytes": 750,
+      "sha256": "58fd5562a5cf27b4c39fd9dbd324c1a6dc150c5ecf6a2b491fd503986df45a16",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/acquisition-tests-r3.log",
+      "bytes": 750,
+      "sha256": "a07292d829720232c80819d4a925d65c492a65912a45b123433d9677128c0704",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/acquisition-tests.log",
+      "bytes": 750,
+      "sha256": "f6c1c8889f4e846f6832a0f671678c32df0b7f4480a0ffed9703fabb9cb93190",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/archive_scientific.py",
+      "bytes": 1558,
+      "sha256": "2fde3ba33fe3c5ac67fa99572fd9687e962a29c95e8e19c3e48806ba9a8f743c",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/backend-final.log",
+      "bytes": 2559,
+      "sha256": "4263d6b07ed7c623e5ce0d39b5f6b9bd4b203988eb551ef9f499e066652c43b3",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/backend-final.xml",
+      "bytes": 341769,
+      "sha256": "b0a4fa2ba343b3ef0327215a15b07952be9ddf48c0477c92bf20435e33831dbd",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/baseline.json",
+      "bytes": 1819,
+      "sha256": "c5f2225fb87b9e206364e63414ffc29edd20230efb56f749c65f0b327bc72989",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/baseline.py",
+      "bytes": 1947,
+      "sha256": "765c019495f370d0e3ef4f60a1f9e20c7c93c94a3ee74ef5de71d82469c431a6",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/before-profile-shutdown.json",
+      "bytes": 235,
+      "sha256": "4535f5cefba5899e9d09d7dc5a2fca32aa6cea0389b1e8ef8bd5fc8109eb0219",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/boundaries-final.log",
+      "bytes": 3521,
+      "sha256": "7381e33f19f4f30237a3ee9bb37165c447af31ef98855d59032faf7c75eac81f",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/cache-cleanup.json",
+      "bytes": 15319,
+      "sha256": "2740ca9f65489b25bcd898c484742bf80d041d033e8125a3df8b0b637f15d1d0",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/camera-40065509-baseline.pfs",
+      "bytes": 40798,
+      "sha256": "931716fc6a894081c3102c89e6869222b9312ad871d93c9270a67d295349f05b",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/camera-40065509-restored.pfs",
+      "bytes": 40798,
+      "sha256": "931716fc6a894081c3102c89e6869222b9312ad871d93c9270a67d295349f05b",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/camera-40278236-baseline.pfs",
+      "bytes": 43207,
+      "sha256": "770058f5d63fd99b0bfcfbf754ef4fab16c2de661b84b25c21962d4e04cd1532",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/camera-40278236-restored.pfs",
+      "bytes": 43207,
+      "sha256": "770058f5d63fd99b0bfcfbf754ef4fab16c2de661b84b25c21962d4e04cd1532",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/camera-40747103-baseline.pfs",
+      "bytes": 40304,
+      "sha256": "775b5b3f92e4e305c705f2a161c2b0b47b0f7f39dd3906fe86ded382e7158886",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/camera-40747103-restored.pfs",
+      "bytes": 40304,
+      "sha256": "775b5b3f92e4e305c705f2a161c2b0b47b0f7f39dd3906fe86ded382e7158886",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/collect_managed.py",
+      "bytes": 6900,
+      "sha256": "24f90f50391f9d45b77355afeaa4114198f54df1c3f61e9e296de2c4c49f316d",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/collect_primary.py",
+      "bytes": 6852,
+      "sha256": "2ffd4a5ea3ffc6a5bb00394d00bb48f48732b958361656ed8160523c697eefc5",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/before.pb",
+      "bytes": 141405,
+      "sha256": "76ae6474bb8553844b4e2ec1324a1da67a55cea6be96faea4b15dd626e9fbf7e",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/candidate.json",
+      "bytes": 149323,
+      "sha256": "ec4fb53aa1f09390f0505a2a923a4dac059db006988416cc3115f9893e9dd51f",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/candidate.pb",
+      "bytes": 139305,
+      "sha256": "4f17b28246f9c2fa7228bed03da3563eded1d1f5bd9a06b9fccd40eb03d1af15",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/final.pb",
+      "bytes": 143493,
+      "sha256": "83709dde4432c559df43c5a46b672162345c662aee7527c9f0149f27647f3d4a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/monitor.jsonl",
+      "bytes": 482571,
+      "sha256": "e9e40fc554c75e636e0e20bf6fd509276beda9978a8212656a9e0fde7c584d93",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/ready.pb",
+      "bytes": 141753,
+      "sha256": "be38536c34cfe4b8192152b48a627f0665ffddad19a6bdec12e5df6ad23f25c9",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1/run.json",
+      "bytes": 491678,
+      "sha256": "0f53180aeafc4c86425076ec01e627017ad0c6f3f5197af7863bb291e615401c",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1-exit.json",
+      "bytes": 252,
+      "sha256": "7da8d181a9b1857f6c3e0429767d56c2700d318afa037b4a590d3e035c9360a3",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-p4-r1.log",
+      "bytes": 5210,
+      "sha256": "0e27b3edfccbe3243dc587a3018ea03bb914714a23bbd50a86b0db913119d28c",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/before.pb",
+      "bytes": 141117,
+      "sha256": "7989a7d4c897f7ba47ee59ce4388adc4b072fe5c9c3103414d914d9333e21f6f",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/candidate.json",
+      "bytes": 149323,
+      "sha256": "804b0dd2cae6499e411d1b7cc9e32a869ffe03dd4c33d54217d655052f49304e",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/candidate.pb",
+      "bytes": 139305,
+      "sha256": "5f607267499576b2e952fa67f93b5f2b1eecb00f6c715b374b1ca328d7bbf605",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/final.pb",
+      "bytes": 143207,
+      "sha256": "776ba591ac0e3493485b140672b60609cc7c6228e095d957ad2e8401429f7588",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/monitor.jsonl",
+      "bytes": 482321,
+      "sha256": "3b3c1e982beeee52e688e14c5e59dd30f8048f4876f11f0f6006ba59e992eff0",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/program.json",
+      "bytes": 20057,
+      "sha256": "579da8e38c22620d7812525a4c4c8a6aeba6f028a6927b7fad73260f93397e5a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/ready.pb",
+      "bytes": 141467,
+      "sha256": "0c32fd3ecff769a6fbc66d557ca9764c5d85f448178d64ee9ce1ee9ea21ec034",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2/run.json",
+      "bytes": 489118,
+      "sha256": "b7fbd350fd3e50d369008da00898ad7a6ce5c20a24c16856a47a66fee8b3813a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2-exit.json",
+      "bytes": 252,
+      "sha256": "1a5c6952e1fa9f74c86b4c1f31a5a1822bdedaca3e7086ce175890327d7d6f46",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/concurrent-lossless-profile-r2.log",
+      "bytes": 5210,
+      "sha256": "2bbbeb9c138357d26af9ee9086f8e4f4945ea82a6157a74494a3dc5e6a951f02",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/counts.json",
+      "bytes": 12907,
+      "sha256": "05bc339684124c19512a338271a3153fd4ae1dfe55e0cb7bf3e8b8e9ee9d2256",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/ffmpeg-version.txt",
+      "bytes": 1500,
+      "sha256": "711056f2bc922237113d5defe7da4dbd97beaab41098e5f8d425753dbfea99ff",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/final-exit.json",
+      "bytes": 252,
+      "sha256": "b473767bd3ef9959c7a8e63e67487aaa19c27dcc93ec6636587414bea32eab0a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/final-restoration.json",
+      "bytes": 6528,
+      "sha256": "2face0de3e67651fd42fccb8b98e4d87b6471a2540081b5be4aebb77f01cdfe2",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/final-restoration.log",
+      "bytes": 6528,
+      "sha256": "2face0de3e67651fd42fccb8b98e4d87b6471a2540081b5be4aebb77f01cdfe2",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/final-shutdown.json",
+      "bytes": 235,
+      "sha256": "36e7d900ba7a7e287c13448f095fd8461f8a848c76e119d57c9a4ae0f70e824e",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/format-final.log",
+      "bytes": 29,
+      "sha256": "652e71caa4d640924c16b090d5ea8342269b5550d7c046b37121a9871f09115a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/gpu-inventory.txt",
+      "bytes": 287,
+      "sha256": "07748a43deacb0b41469a8405b2bfac3500aac65b3cbce6702b4624fd2943645",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/h264-capability.txt",
+      "bytes": 10571,
+      "sha256": "6e690dbb6008c46a7661446f430f3cdb52c1fe3562d6b11a7cd9d94743ea54c8",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/hevc-capability.txt",
+      "bytes": 10908,
+      "sha256": "6f19ee333087205422457924a00558659d0dbf9ffeebcd334a6690b55f295dfd",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/inherited-baseline.zip",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+      "git_excluded_local_only": true
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/inherited.patch",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/inventory.json",
+      "bytes": 3667,
+      "sha256": "7411569d250487a1e15068b747aa01e92d0676d87ae49cc0e92ff993b09a15d9",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/inventory.log",
+      "bytes": 2326,
+      "sha256": "47eda6fa87a9afeac9cd267a38d91d88d8bca2cd9bf46517dc7cced4059293d9",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/inventory.py",
+      "bytes": 2596,
+      "sha256": "6dbb0670b784d5077781d2ac4025028664effe9474b3909ea7ce60a68a76c59a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/launcher-primary.log",
+      "bytes": 2187,
+      "sha256": "4959e67137087aa313db715bd48da0f4409ab502465e3552a1d781e781de7aa3",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/launcher-profile.log",
+      "bytes": 6115,
+      "sha256": "bb1826ab21045ab846efb487608562b350f4dfb50f12d829e9a7388d69c1a597",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/launcher.log",
+      "bytes": 2312,
+      "sha256": "523f3dc36ba8875e33dddfb97a4bb5f578b1fd1f17e6c0d5e7f0cad47b0f009c",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/managed-assessment.json",
+      "bytes": 64070,
+      "sha256": "787eee5f41a33fb663fec6708d202c99fae2543fb75505b296743cdd673bd789",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/managed_trial.py",
+      "bytes": 12970,
+      "sha256": "97afb719150f77cb5d0529a35a4ab0efc044430acbecea90440a9973a4cbc4e8",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/media-manifest.json",
+      "bytes": 4030,
+      "sha256": "adf402ed25c6c95ab795f21936fbcf8af23530342ea483afad44ea693cb1cfeb",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/media-verification.log",
+      "bytes": 225,
+      "sha256": "9a5f719c92a8872d4531c956d828d628c8f6f43ed101f421d0f9ece4f814231f",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/mypy-acquisition-r2.log",
+      "bytes": 46,
+      "sha256": "5409d6f5cb021cd2035edd1736f9ceb3facf6e5d46eaebbd5fe2ecd1368d5c8c",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/mypy-acquisition-r3.log",
+      "bytes": 46,
+      "sha256": "5409d6f5cb021cd2035edd1736f9ceb3facf6e5d46eaebbd5fe2ecd1368d5c8c",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/mypy-acquisition.log",
+      "bytes": 46,
+      "sha256": "5409d6f5cb021cd2035edd1736f9ceb3facf6e5d46eaebbd5fe2ecd1368d5c8c",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/mypy-final.log",
+      "bytes": 46,
+      "sha256": "e58c2d27d58f016062e834417c176cdf255c39e73a78a55ecaa6dd4ddd41d167",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/native_stage_profile.py",
+      "bytes": 3384,
+      "sha256": "18881ec43d275ba5f0025c93ba483a42936f7ffd3c12d8e00aac27d9f81eb24f",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/acquisition_config.toml",
+      "bytes": 12763,
+      "sha256": "2e06a645260da6cdb54d83ec174f62cb4a1a171173196732b219d0e45939d8b0",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/experiment_config.toml",
+      "bytes": 6801,
+      "sha256": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/gui_config.toml",
+      "bytes": 675,
+      "sha256": "e5498d0b0864531b98595760ea8cb17880c010fffa57d168c88ceff6d8f53c30",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/last_configuration.json",
+      "bytes": 146671,
+      "sha256": "9714f21fa0149a1c5a8a9159da0ea9d08b10e52a10cb9fe19e8e1e1f05219479",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/microcontroller_config.toml",
+      "bytes": 1304,
+      "sha256": "3fb97389300d23739be336f11226c9471903497820259e153496c9413b518607",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/runtime_gui.json",
+      "bytes": 50253,
+      "sha256": "c7ba71b8327a85035a7e777742ccc97fea916a26734bdbc24bd3700f40f029b2",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/supervisor_config.toml",
+      "bytes": 2211,
+      "sha256": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/synchronization_config.toml",
+      "bytes": 2370,
+      "sha256": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/tracking_config.toml",
+      "bytes": 8347,
+      "sha256": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/original-settings/visual_stimulus_config.toml",
+      "bytes": 6263,
+      "sha256": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/owner-tests-r2.log",
+      "bytes": 103996,
+      "sha256": "a72f1c3ebfe54c9cacede2b26a50ce4849b744b448b1a3a280a42d1b735c04ab",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/owner-tests-r3.log",
+      "bytes": 101,
+      "sha256": "54f868b21fbf6e8dd82a346d25ec3d6ecf3d990a42678702442ac09bc915dda2",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/owner-tests-r4.log",
+      "bytes": 101,
+      "sha256": "3242c3aa25ee15010c63071a72d69c2f1ae366db060bd6886976182ea20f46aa",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/owner-tests.log",
+      "bytes": 101,
+      "sha256": "1038fde8ab260b2bc58b476cf328a7d4cb8fa6374851c50a1fe4111952fd6ebc",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/primary-media-assessment.json",
+      "bytes": 21300,
+      "sha256": "fdcf248e26869697f2753e6134a3266ca5800975fd8c9bc9b82fe6428cdb5827",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/primary-media-verification.log",
+      "bytes": 68,
+      "sha256": "b6007df27e612c9ed84a26aba731939c5840117ee6c1c1aae6b9ab5ecd80e672",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/prior-owned-recovery.json",
+      "bytes": 690,
+      "sha256": "11b5c8d632b30900b940221efc098e61e8127602299d90f44d007e1b8e1b5c79",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/profile-assessment.json",
+      "bytes": 5849,
+      "sha256": "2a8c0fd498c455377d0fe398f41d1fa0fff1627f6a9738ab4595581bcfd7cd9b",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/profile-shutdown.json",
+      "bytes": 235,
+      "sha256": "68252a1ac47d613e49794bc13ea186be712580a0f3c73e93d6994b890ee9052d",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/profile-source-provenance.json",
+      "bytes": 221,
+      "sha256": "93ef32e339bef3b849c2197893e8570647808b9694765e593557db23f3b1d317",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/r1-counts.json",
+      "bytes": 2669,
+      "sha256": "1c61028c2786f9354c5ca7ae1106e66a0bd0ff17b0e9b8c54d9d6f1b3ef26222",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/r1-drop-times.json",
+      "bytes": 1046,
+      "sha256": "b5fc00ed36fd413abdabcc6a8fce123ac22b16cf5f89ae23b9fbf3e6221904cc",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/README.md",
+      "bytes": 9352,
+      "sha256": "a1c962bbfa7876aaed6f9a909eafbe603a09175ae0d834249096b02be7f530e6",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-before-profile/before.pb",
+      "bytes": 141092,
+      "sha256": "b726734994c48bb2ffa9fa0fe7445c74c4af0e194cc79e32d7d602aa2a2944fa",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-before-profile/candidate.json",
+      "bytes": 150881,
+      "sha256": "e19111ca1acfe1a3f2bdb67f193f128d7cd47c4e01b41639ff99cee9d7348d30",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-before-profile/candidate.pb",
+      "bytes": 140451,
+      "sha256": "c474bd35e4a62225e2de6c7fcfc21a8912579eccec022b0afbb33a2dd0e1d4b8",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-before-profile/run.json",
+      "bytes": 518,
+      "sha256": "89738f90cf44940b2755e7419a39ad2f5530332ba4a35ea2ab10f0305dd04fac",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-before-profile.log",
+      "bytes": 174,
+      "sha256": "7dfbe60a7fcc355b0d30bf56c7e0960a42bc1f6fb2f7c2c644dd35c46bcd33ad",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-final/before.pb",
+      "bytes": 140826,
+      "sha256": "311565611b3e85ab60f9aaee79ee3315b729daef3dd2c126eb051270411d8501",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-final/candidate.json",
+      "bytes": 150881,
+      "sha256": "e19111ca1acfe1a3f2bdb67f193f128d7cd47c4e01b41639ff99cee9d7348d30",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-final/candidate.pb",
+      "bytes": 140451,
+      "sha256": "c474bd35e4a62225e2de6c7fcfc21a8912579eccec022b0afbb33a2dd0e1d4b8",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-final/run.json",
+      "bytes": 518,
+      "sha256": "ca8368e2bd0d823fa6aaca024ee1ef77af1661f51b10018deb0434905892ad17",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-final.log",
+      "bytes": 174,
+      "sha256": "c38ff1d003fd8691d4de6e17e7a1e0ee858e2e5ddc0f7805377795bc5d28d177",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-profile/before.pb",
+      "bytes": 140806,
+      "sha256": "51c2b25a897c6f1e598e36d3e5e46813221bca80481240875d21a4165985a7ec",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-profile/candidate.json",
+      "bytes": 150881,
+      "sha256": "e19111ca1acfe1a3f2bdb67f193f128d7cd47c4e01b41639ff99cee9d7348d30",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-profile/candidate.pb",
+      "bytes": 140451,
+      "sha256": "c474bd35e4a62225e2de6c7fcfc21a8912579eccec022b0afbb33a2dd0e1d4b8",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-profile/run.json",
+      "bytes": 518,
+      "sha256": "d6ea99e6a6d1a8882f371db9b5fdaad8afa24e8f854434b24d46076d8d8cb5dc",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore-profile.log",
+      "bytes": 174,
+      "sha256": "1630d6f9085eb5de9311cfe1a6038b859ffb17d3e55ac8a9a5de370101213678",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/restore_original.py",
+      "bytes": 3772,
+      "sha256": "e2154bb82734d5692787e4e75b027b1eb04b935bf01cfbb3a1dd95bf1e0f1c34",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/rig-final.log",
+      "bytes": 100,
+      "sha256": "9459a7d273f5dc2761dee270a3ace79b1c9eccb1111157c448cdbd69b14743f3",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/ruff-final.log",
+      "bytes": 20,
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/runtime-original-configuration.pb",
+      "bytes": 140451,
+      "sha256": "c474bd35e4a62225e2de6c7fcfc21a8912579eccec022b0afbb33a2dd0e1d4b8",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/before.pb",
+      "bytes": 141117,
+      "sha256": "f377f0bd00f2bc864411b49da906adb758062fb0f8b49277bd5bca02d8073874",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/candidate.json",
+      "bytes": 149377,
+      "sha256": "49e918b13449e6a2fcbd77abbdb36cb08de484aea419b1234c009c0eee9f4384",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/candidate.pb",
+      "bytes": 139325,
+      "sha256": "100dcedb63d2d4cafbbda89f8d1b9fe2750c13441a67e94314bd694968f39e62",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/final.pb",
+      "bytes": 143192,
+      "sha256": "1d664951eaf6d21abbc45e6663988c49a64059ddb61c12ea20f733a5779b297a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/monitor.jsonl",
+      "bytes": 890786,
+      "sha256": "80f5715d170e72c374a3171cad961af41799eb5beaec2a0a4b977061b7a5a73a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/monitor.stop",
+      "bytes": 10,
+      "sha256": "5963977da4c2cb333a978aa0daa86f36234831cd8bc416443ca9087268bc8645",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/program.json",
+      "bytes": 20057,
+      "sha256": "2202010e907db228140831689a6343163f9a569bf17fc981088526e25ffad32b",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/ready.pb",
+      "bytes": 141473,
+      "sha256": "7f59bfd8929a066b616cfdad4ffc263f5a91324402c3576532227cddc523d873",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3/run.json",
+      "bytes": 489287,
+      "sha256": "dceea533eada0bb7946c38db2881561d3dd499b8a73b7be37198f18327374d2a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3-exit.json",
+      "bytes": 252,
+      "sha256": "b473767bd3ef9959c7a8e63e67487aaa19c27dcc93ec6636587414bea32eab0a",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/saved-cq23-120-r3.log",
+      "bytes": 5210,
+      "sha256": "08f34c71ab69397cbfe5aac4b7acd68183d67bf6244f9e2eee28638054f160aa",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/scientific-records-manifest.json",
+      "bytes": 9820,
+      "sha256": "fecabc6a586e1fe2db1bc616805cde104be8d0e9ae0c05928084c228dee2dce5",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/scientific-records.zip",
+      "bytes": 3217832,
+      "sha256": "5766d6e8125e01db5ce468853093e0429bfdb24398e673599638ebe7d148ec3e",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/session-before-profile.py",
+      "bytes": 25965,
+      "sha256": "5346fc095bededd9b74d1e847ba7c2eea877731498d9502000c6254dc5b2303f",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/settle_owned_session.py",
+      "bytes": 2790,
+      "sha256": "76dd179f5bdb3a255b101ec3f77362578dd87e3f1493ea153ebde99b78bd3ce4",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/shutdown.py",
+      "bytes": 1535,
+      "sha256": "018890754932ba5e045cf74a35a1c925ebbbcd3cc2dbc1b0102b2206ba4ab8b7",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/source-provenance.json",
+      "bytes": 1525,
+      "sha256": "6288ce34786f5b662a9a074d26f746d90474f13574df2b776dfc0e2b388a8a62",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/staged-provenance.json",
+      "bytes": 27196,
+      "sha256": "dabe95f868315f6e82574558aeca8d97c0543655d5d8012db9768b11e9e50e62",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/storage-mapping.json",
+      "bytes": 120,
+      "sha256": "760bf79d29022b0f8ce81c85575dcde7f492e81c8a00b10d98a324b98cd5f9bf",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/validated-recipe.json",
+      "bytes": 1879,
+      "sha256": "ba699be2ef01c8f8c1cedcba8b0575fb6f99591df9cf14f59de08e64344a54ad",
+      "git_excluded_local_only": false
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-17/file-sync-fix/sync-portability-cleanup.json",
+      "bytes": 903,
+      "sha256": "99e95ae4ec92943e15f8b1a71ac9eb550b11c7686f4df12265f238d153d5f828",
+      "git_excluded_local_only": false
+    }
+  ]
+}

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from cephvr.acquisition.recording.frame_log import FrameLogCompletion, FrameLogWriter
 from cephvr.acquisition.recording.session_contracts import EncoderProcess, VideoSync
+from cephvr.acquisition.recording.video_sync import sync_video_until
 
 
 @dataclass
@@ -50,7 +51,7 @@ def close_encoder_and_sync_video(
     # argument captured by the caller.
     video_sync = observe_video()
     if video_sync is not None and not progress.video_synced:
-        video_sync.sync()
+        progress.late |= sync_video_until(video_sync, deadline_ns)
         progress.video_synced = True
         progress.late |= clock_ns() > deadline_ns
     return progress.exit_code, video_sync

@@ -6,3 +6,5 @@ reports/**/*.pb binary
 # Preserve the byte hashes of this audit's raw captures and restoration backups.
 reports/runtime-evidence-2026-10-15/comprehensive-audit/** -text
 reports/runtime-evidence-2026-10-16/** -text
+
+reports/runtime-evidence-2026-10-17/file-sync-fix/** -text

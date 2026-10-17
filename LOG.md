@@ -4089,3 +4089,89 @@ selection19pass; scoped Ruff/format, Win32 mypy2, boundaries718/zero violations 
 whitespace pass. Native actual review.main with --review alone confirms a visible
 black180x180 OpenCV image and closure; dated method/result linked in reports/runtime.md.
 Updated Review left open for the owner. No real-camera or Windows/rig acceptance.
+
+
+## 2026-10-17 — lossless-storage-sync-capacity repair and owning validation
+
+[acquisition] [shared] Fresh clean baseline/settings/PFS captured. Reviewed the
+simpler standard-library single-flight recording-layer sync owner under ARCH-002
+and A08's existing independent sync contract; native exact-handle primitive stays
+unchanged. Due periodic flush no longer blocks encoder feeding; overdue work is
+coalesced without backlog. Finalization joins pending work then performs a distinct
+post-encoder flush with the original absolute bound. Timeout retains ownership;
+completed flush failure can release exact resources without certifying durability.
+Frame-log sync, cadence, defaults and original recording lifecycle bounds remain.
+58 owning and 627 full acquisition tests pass; Windows-target acquisition mypy
+passes. Astra reviews source and native workload admission before live capture.
+
+
+## 2026-10-17 — lossless-storage-sync-capacity primary acceptance
+
+[acquisition] [visual_stimulus] [shared] [controller] [supervisor] Completed the
+reviewed independent single-flight video sync owner and exact-handle hot-path
+simplification. Native 120 s concurrent saved-quality workload receives/retains
+Behavior 3598/3598, Tracking 7188/7188 and stimulus 7200/7200, with zero capacity
+omissions, native counter gaps, invalid frames or duplicate mappings/counters.
+Original CQ23 camera/CQ18 review quality, one-second sync cadence, mandatory final
+sync and deadlines are unchanged. Temporary 16 stimulus slots are explicit; saved
+three slots are restored and their startup limitation is not certified.
+
+Earlier experimental pixel-exact runs (1710/1798 and profiled 1512/1798) precede
+the final hot-path guard. Final code's pixel-exact capacity remains unvalidated,
+not proven failing or fixed. A profiled concurrent flush totals 18.507 s; consumer
+and concurrent totals are not summed. No hardware deficiency or isolated per-change
+speedup is inferred. Native Abort/failed-Setup/old Shutdown findings remain open.
+
+Final backend 2209 passed/5 privilege skips; 629 acquisition and 60 owning cases,
+explicit NVOF rig 1 passed; Ruff/format, Win32mypy 815 files, 717modules/zero boundary
+violations pass. GUI unchanged, so no new GUI/native-picker acceptance. Normal
+Cleanup/NewSession/Shutdown and exact absence confirm; all 3 fresh PFS/readbacks,
+closed cameras and 10 operator files match baseline. Temporary profile hook is removed.
+User evidence-only commit f447b4f during task is preserved. Launch-time production
+hash snapshot was not captured; final hashes/chronology are explicitly qualified.
+Reports/dated evidence retain exact recipes, source and validation scope.
+
+
+[acquisition] [visual_stimulus] [shared] Final media verification fully decodes all
+nine current videos and matches retained mappings; primary decoded counts are
+3598/7188/7200. The exact24 scientific JSON/JSONL files are archived and verified;
+all nine local videos are hashed. Removed70 verified regenerable cache directories
+(52,714,154 bytes), preserving all scientific outputs and raw evidence. Final local
+reference/whitespace checks and Astra staged review precede the authorized commit.
+
+
+## 2026-10-17 — repository cleanup and cross-machine synchronization
+
+[repo] [acquisition] [visual_stimulus] Fresh main checkout was clean and one commit
+ahead of origin/main; fetch confirms no divergence. Preserved all source, settings,
+unique scientific/media evidence and prior user commits. Removed only two exact
+reproducible Oct16 build artifacts (3,477,382 bytes) after containment, reparse and
+tracked-file checks. Verified the committed science ZIP/24 entry hashes with Python
+stdlib and documented portable archive inspection, exact recipe/results locations
+and raw MP4 local-only limitations. No rig/hardware/product code changed; existing
+acceptance gaps remain in TODO. Whitespace/archive/reference checks cover this
+increment; a normal non-force push follows Astra review, with remote HEAD checked
+against local HEAD afterward.
+
+
+## 2026-10-17 — merge-main-oct17
+
+[repo] [gui] [acquisition] Merging local GUI commit595ab681 with fetched
+origin/main1314a743 (including recording-sync commitcf3565c8). Only LOG and
+runtime report conflicted; preserved both log histories, local G01/G02 GUI
+assessment and latest A08 recording assessment. Product source/tests merge
+unchanged from their owning parents; no new architecture or behavior.
+Initial fetch required sandbox escalation. Initial Win32 mypy exposed stale
+ignored Protobuf bindings; regenerated all19 authoritative sources, then mypy
+passes361 files. Scoped Ruff/format passes386 files; boundaries719/zero
+violations with inherited cohesion advisories; no source edits warrant a split.
+Standalone acquisition622 passed/5 skipped/2 deselected; focused Dashboard
+preview/log/Retro/startup55 passed/549 deselected. Full offscreen Dashboard rerun
+stops at107 passed/one camera-trigger reflow failure (298px boundary). Earlier
+combined run was interrupted after GUI failures and aborted in Qt construction.
+Concurrent preview-card-visibility source/test edits appeared during validation;
+preserved uncommitted and excluded from the merge. GUI results therefore describe
+the working tree, not isolated committed-tree acceptance. Runtime report and
+existing devices-narrow-overflow task retain this limitation. Both log histories
+retained, conflict markers absent and whitespace checks pass. Merge committed
+with parents595ab681/1314a743; no native/rig test or remote push performed.

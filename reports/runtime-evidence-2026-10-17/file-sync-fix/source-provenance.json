@@ -1,0 +1,28 @@
+{
+  "baseline_head": "6f3afad1e0d2dfa45525b04b2d7895e40532dc15",
+  "external_evidence_only_commit": "f447b4f05614e15dbbbe317e4bc7760e3bcb0ef4",
+  "observed_unix_time": 1792224116.9105763,
+  "scope": "Post-workload hashes. No launch-time production hash snapshot was captured; unchanged source between owning validation, workload and full final suite is supported by tool chronology/mtimes, not a conclusive launch-hash comparison. External commit only records evidence/settings; all production fixes remain reviewed working-tree changes.",
+  "files": {
+    "src/cephvr/acquisition/recording/video_sync.py": {
+      "sha256": "3f5553a8c7fc3d7f7c43bc5fff06df9faaac0bc8ab4ca624e2204c220e0bc7a2",
+      "mtime_ns": 1792223399989801400
+    },
+    "src/cephvr/acquisition/recording/session.py": {
+      "sha256": "f63a6270b7ab7ef2af59da2d05dcbeec89b3ea735e6138974c00ed7f47a14327",
+      "mtime_ns": 1792223799168044100
+    },
+    "src/cephvr/acquisition/recording/session_storage.py": {
+      "sha256": "a2b58f10e66fee0602949c3136fd86026f48bbc50b96758a0cad2a089a50fa8e",
+      "mtime_ns": 1792223345323123000
+    },
+    "src/cephvr/acquisition/recording/session_finalizer.py": {
+      "sha256": "22d28d404857952f2b60ebfd3289f80be757b50d75db15942fd68ffc88f352ba",
+      "mtime_ns": 1792223311852514300
+    },
+    "src/cephvr/acquisition/recording/session_cleanup.py": {
+      "sha256": "727d66f24f3dfd8bca2eaaec1482ed0b60e9f7850beea6be895f5be1f64451c6",
+      "mtime_ns": 1792223413172983200
+    }
+  }
+}

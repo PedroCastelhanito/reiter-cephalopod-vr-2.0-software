@@ -1,0 +1,2512 @@
+...........................FFFFFFFFFFFF.................                 [100%]
+================================== FAILURES ===================================
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-applied_mcu_rate-behavioral] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv12')
+role = 'behavioral', rate_source = 'applied_mcu_rate', outcome = 'completed'
+background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D3400D0>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-applied_mcu_rate-tracking] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv13')
+role = 'tracking', rate_source = 'applied_mcu_rate', outcome = 'completed'
+background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32CBFEA50>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-applied_mcu_rate-eye_tracking] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv14')
+role = 'eye_tracking', rate_source = 'applied_mcu_rate', outcome = 'completed'
+background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D3E6B90>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-free_running_frame_rate-behavioral] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv15')
+role = 'behavioral', rate_source = 'free_running_frame_rate'
+outcome = 'completed', background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D5DAB10>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-free_running_frame_rate-tracking] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv16')
+role = 'tracking', rate_source = 'free_running_frame_rate'
+outcome = 'completed', background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D5C72D0>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-free_running_frame_rate-eye_tracking] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv17')
+role = 'eye_tracking', rate_source = 'free_running_frame_rate'
+outcome = 'completed', background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D5F6350>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-applied_mcu_rate-behavioral] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv18')
+role = 'behavioral', rate_source = 'applied_mcu_rate', outcome = 'interrupted'
+background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32C2039D0>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-applied_mcu_rate-tracking] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv19')
+role = 'tracking', rate_source = 'applied_mcu_rate', outcome = 'interrupted'
+background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D5D9C50>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-applied_mcu_rate-eye_tracking] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv20')
+role = 'eye_tracking', rate_source = 'applied_mcu_rate', outcome = 'interrupted'
+background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D51BA10>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-free_running_frame_rate-behavioral] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv21')
+role = 'behavioral', rate_source = 'free_running_frame_rate'
+outcome = 'interrupted', background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D5C4110>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-free_running_frame_rate-tracking] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv22')
+role = 'tracking', rate_source = 'free_running_frame_rate'
+outcome = 'interrupted', background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D340810>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+_ test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-free_running_frame_rate-eye_tracking] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-sync-owner-r2/test_recording_session_preserv23')
+role = 'eye_tracking', rate_source = 'free_running_frame_rate'
+outcome = 'interrupted', background_sync = True
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
+    @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+    @pytest.mark.parametrize("background_sync", [False, True])
+    def test_recording_session_preserves_all_images_and_timestamps_without_padding(
+        tmp_path: Path,
+        role: str,
+        rate_source: str,
+        outcome: str,
+        background_sync: bool,
+    ) -> None:
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    
+        now = [1_000_000_000]
+    
+        class Encoder(_Encoder):
+            def __init__(self) -> None:
+                super().__init__(identity="owned-video")
+                self.progress_frame = 0
+                self.deadlines: list[int] = []
+                self.payloads: list[bytes] = []
+    
+            def write(self, frame, *, deadline_ns: int) -> None:
+                self.deadlines.append(deadline_ns)
+                super().write(frame, deadline_ns=deadline_ns)
+                self.payloads.append(bytes(frame))
+                self.progress_frame += 1
+                now[0] += 2
+    
+        class FileSync:
+            def __init__(self) -> None:
+                self.calls = 0
+    
+            def sync(self, _file) -> None:
+                self.calls += 1
+    
+        class VideoSync(_Video):
+            file_identity = "owned-video"
+            fail_sync = False
+    
+            def sync(self):
+                if self.fail_sync:
+                    self.fail_sync = False
+                    raise OSError("temporary video sync failure")
+                super().sync()
+    
+        class Preparer:
+            layout = SimpleNamespace(pixel_format=SimpleNamespace(effective_bits=8))
+    
+            def prepare_recording_into(self, pixels, buffer, *, target_bits):
+                buffer[:] = pixels
+                return SimpleNamespace(
+                    data=memoryview(buffer),
+                    effective_bits=target_bits,
+                    source_effective_bits=8,
+                )
+    
+        start_ns = now[0]
+        video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+        schedule = _schedule(video_path, log_path)
+        schedule.start_monotonic_ns = start_ns
+        schedule.end_monotonic_ns = start_ns + 30_000_000_000
+        camera_clock = camera.CameraClockDescriptor(
+            device_id="device-17",
+            timestamp_source="unavailable",
+            timestamp_semantics="raw",
+            reset_semantics="per-process",
+            wrap_semantics="unknown",
+            unavailable_reason="SDK unavailable",
+            counter_source="unavailable",
+            counter_semantics="raw",
+            counter_width_bits=0,
+            counter_wrap_semantics="unknown",
+            counter_unavailable_reason="SDK unavailable",
+            conversion_available=False,
+        )
+        identity = RecordingIdentity(
+            str(uuid4()),
+            str(uuid4()),
+            1,
+            role,
+            "device-17",
+            "config.json",
+            camera_clock,
+        )
+        file_sync = FileSync()
+        frame_log = FrameLogWriter(
+            log_path,
+            identity,
+            start_ns=start_ns,
+            nominal_frame_rate_hz=29.97002997002997,
+            nominal_rate_source=rate_source,
+            sync_interval_ns=1,
+            syncer=file_sync,
+        )
+        frame_log.create()
+        queue = RecordingQueue(capacity_frames=3, pending_records_capacity=3)
+        pool = PixelBufferPool(payload_bytes=4, capacity=3)
+        for frame_id, receipt_ns, pixels in (
+            (0, start_ns + 70_000_000, b"aaaa"),
+            (1, start_ns + 71_000_000, b"bbbb"),
+            (2, start_ns + 140_000_000, b"cccc"),
+        ):
+            owned = pool.acquire_nowait()
+            owned[:] = pixels
+            queue.enqueue(
+                FrameRecord(
+                    frame_id, receipt_ns, 100 + frame_id, 900 + frame_id, True, None
+                ),
+                owned,
+            )
+    
+        encoder = Encoder()
+        video_sync = VideoSync()
+        import threading
+    
+        from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+    
+        release_sync = threading.Event()
+        entered_sync = threading.Event()
+        if background_sync:
+            original_sync = video_sync.sync
+    
+            def blocked_sync():
+                entered_sync.set()
+                assert release_sync.wait(2)
+                original_sync()
+    
+            video_sync.sync = blocked_sync
+            owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+            assert owned_sync.request()
+            assert entered_sync.wait(1)
+        else:
+            owned_sync = video_sync
+        session = object.__new__(RecordingSession)
+        session.settings = SimpleNamespace(
+            metadata_only=False,
+            recording_bit_depth=8,
+            video_sync_interval_ns=1,
+            frame_log_sync_interval_ns=1,
+        )
+        session.identity = identity
+        session.queue = queue
+        session.pixel_pool = pool
+        session.pixel_preparer = Preparer()
+        session.clock_ns = lambda: now[0]
+        session._released = True
+        session._scheduled = schedule
+        session._encoder = encoder
+        session._frame_log = frame_log
+        session._prepared_buffer = bytearray(4)
+        session._started = False
+        session.started_observed = lambda _observed_ns: None
+        session._watchdog = EncoderProgressWatchdog(
+            encoder,
+            queue,
+            1_000_000_000,
+            session.clock_ns,  # type: ignore[arg-type]
+        )
+        session._video_sync = owned_sync
+        session._video_identity = "owned-video"
+        session._video_path = video_path
+        session._frame_log_path = log_path
+        session._received = 0
+        session._submitted = 0
+        session._logged = 0
+        session._last_frame_id = -1
+        session._diagnostics = RecordingDiagnostics(lambda *_args: None)
+        session._last_video_sync_ns = start_ns
+        session._active_io_deadline_ns = None
+        session._finish_arguments = None
+        session._original_finish_deadline_ns = None
+        session._finish_results = None
+        session._error = None
+        session._finished = False
+        session._finalization = FinalizationProgress()
+        session._observe_video_identity = lambda: owned_sync
+        session._stat_identity = lambda _path: "owned-video"
+    
+        assert session.process_available(max_entries=3) == 3
+        assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+        cutoff_ns = start_ns + 667_333_333
+        end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
+        completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
+        original_deadline = start_ns + 100
+        if background_sync:
+            # All three real frames/mappings were consumed while flush stayed blocked.
+            assert not release_sync.is_set() and video_sync.sync_count == 0
+            release_sync.set()
+        else:
+            video_sync.fail_sync = True
+            with pytest.raises(OSError, match="temporary video sync failure"):
+                session.finish(
+                    end, PulseEvidence(), completion, deadline_ns=original_deadline
+                )
+        now[0] += 5
+        session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
+>       assert session._original_finish_deadline_ns == original_deadline
+E       assert 1000000500 == 1000000100
+E        +  where 1000000500 = <cephvr.acquisition.recording.session.RecordingSession object at 0x000001B32D5E0710>._original_finish_deadline_ns
+
+tests\acquisition\test_recording_cleanup.py:782: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-applied_mcu_rate-behavioral]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-applied_mcu_rate-tracking]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-applied_mcu_rate-eye_tracking]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-free_running_frame_rate-behavioral]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-free_running_frame_rate-tracking]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-completed-free_running_frame_rate-eye_tracking]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-applied_mcu_rate-behavioral]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-applied_mcu_rate-tracking]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-applied_mcu_rate-eye_tracking]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-free_running_frame_rate-behavioral]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-free_running_frame_rate-tracking]
+FAILED tests/acquisition/test_recording_cleanup.py::test_recording_session_preserves_all_images_and_timestamps_without_padding[True-interrupted-free_running_frame_rate-eye_tracking]
+12 failed, 44 passed in 0.60s

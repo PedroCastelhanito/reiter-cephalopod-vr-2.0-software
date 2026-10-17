@@ -1,0 +1,1673 @@
+{
+  "concurrent-lossless-p4-r1": {
+    "generation": "33bec822-36ac-41b7-86c4-7a3dd726e2bd",
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "33bec822-36ac-41b7-86c4-7a3dd726e2bd",
+        "session_id": "0e83e5c5-37fe-4c65-bcd0-35da9318d0a7"
+      },
+      "outcome": "SESSION_OUTCOME_COMPLETED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200",
+      "trial_count": 1,
+      "activated": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "33bec822-36ac-41b7-86c4-7a3dd726e2bd",
+          "session_id": "0e83e5c5-37fe-4c65-bcd0-35da9318d0a7"
+        },
+        "trial_id": "fbb18c18-827c-467e-a5f7-9e3596ceda58",
+        "trial_number": 1
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "245960565841200",
+      "scheduled_end_monotonic_ns": "246020565841200",
+      "actual_end_monotonic_ns": "246020565841200"
+    },
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data",
+    "videos": {
+      "DUMMY_165205_behavioral_cam.mp4": {
+        "bytes": 7243993368,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_behavioral_cam.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High 4:4:4 Predictive",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.f40032",
+              "width": 1760,
+              "height": 1716,
+              "coded_width": 1760,
+              "coded_height": 1728,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "40:39",
+              "pix_fmt": "gbrp",
+              "level": 50,
+              "color_range": "pc",
+              "color_space": "gbr",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "1000000/33333",
+              "avg_frame_rate": "1000000/33333",
+              "time_base": "1/1000000",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 56999430,
+              "duration": "56.999430",
+              "bit_rate": "1016705837",
+              "bits_per_raw_sample": "8",
+              "nb_frames": "1710",
+              "nb_read_frames": "1710",
+              "extradata_size": 60,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 1710,
+        "count_matches": true
+      },
+      "DUMMY_165205_stimulus.mp4": {
+        "bytes": 93641081,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_stimulus.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High 4:4:4 Predictive",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.f4002a",
+              "width": 1280,
+              "height": 1000,
+              "coded_width": 1280,
+              "coded_height": 1008,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "32:25",
+              "pix_fmt": "yuvj444p",
+              "level": 42,
+              "color_range": "pc",
+              "color_space": "bt709",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "60/1",
+              "avg_frame_rate": "60/1",
+              "time_base": "1/15360",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 921344,
+              "duration": "59.983333",
+              "bit_rate": "12485868",
+              "bits_per_raw_sample": "8",
+              "nb_read_frames": "3599",
+              "extradata_size": 66,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 3599,
+        "count_matches": true
+      },
+      "DUMMY_165205_tracking_cam.mp4": {
+        "bytes": 11079607,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_tracking_cam.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High 4:4:4 Predictive",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.f4002a",
+              "width": 1588,
+              "height": 1344,
+              "coded_width": 1600,
+              "coded_height": 1344,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "397:336",
+              "pix_fmt": "yuvj420p",
+              "level": 42,
+              "color_range": "pc",
+              "color_space": "bt709",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "60/1",
+              "avg_frame_rate": "60/1",
+              "time_base": "1/15360",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 918528,
+              "duration": "59.800000",
+              "bit_rate": "1477046",
+              "bits_per_raw_sample": "8",
+              "nb_frames": "3588",
+              "nb_read_frames": "3588",
+              "extradata_size": 60,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 3588,
+        "count_matches": true
+      }
+    },
+    "camera_evidence": {
+      "DUMMY_165205_behavioral_cam_frames.jsonl": {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_behavioral_cam_frames.jsonl",
+        "source_frames": 1798,
+        "source_drop_flags": 88,
+        "invalid_images": 0,
+        "native_counter_gap_count": 0,
+        "video_records": 1710,
+        "mapping_contiguous": true,
+        "mapping_sources_unique": true,
+        "headers": [
+          {
+            "type": "header",
+            "schema_version": 5,
+            "identity": {
+              "session_id": "0e83e5c5-37fe-4c65-bcd0-35da9318d0a7",
+              "trial_id": "fbb18c18-827c-467e-a5f7-9e3596ceda58",
+              "trial_number": 1,
+              "camera_role": "behavioral",
+              "device_id": "40065509",
+              "session_config_reference": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200",
+              "recording_identity_version": 1
+            },
+            "clocks": {
+              "host_clock": "cephvr.host.perf_counter_ns.v1",
+              "timestamp_unit": "ns",
+              "trial_start_monotonic_ns": 245960565841200,
+              "camera_clock": "cephvr.camera.native.v1",
+              "camera_clock_source": "ChunkTimestamp",
+              "camera_clock_conversion_available": true,
+              "camera_clock_tick_ns_numerator": 1,
+              "camera_clock_tick_ns_denominator": 1,
+              "camera_clock_timestamp_semantics": "exposure_start",
+              "camera_clock_reset_semantics": "unknown",
+              "camera_clock_wrap_semantics": "unknown",
+              "camera_clock_unavailable_reason": "",
+              "camera_counter_source": "CGrabResultData.GetBlockID",
+              "camera_counter_semantics": "frames",
+              "camera_counter_width_bits": 64,
+              "camera_counter_wrap_semantics": "unknown",
+              "camera_counter_unavailable_reason": ""
+            },
+            "video": {
+              "enabled": true,
+              "nominal_frame_rate_hz": 30.000300003,
+              "nominal_rate_source": "free_running_frame_rate"
+            }
+          }
+        ],
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246020565841200,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 1798,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 1710,
+            "selected_source_frame_count": 1710,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 0,
+            "last_native_counter": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        },
+        "mapping_sources_present": true,
+        "received_span_ns": 59899659200,
+        "received_cadence_fps": 30.000170685445234
+      },
+      "DUMMY_165205_tracking_cam_frames.jsonl": {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_tracking_cam_frames.jsonl",
+        "source_frames": 3588,
+        "source_drop_flags": 0,
+        "invalid_images": 0,
+        "native_counter_gap_count": 0,
+        "video_records": 3588,
+        "mapping_contiguous": true,
+        "mapping_sources_unique": true,
+        "headers": [
+          {
+            "type": "header",
+            "schema_version": 5,
+            "identity": {
+              "session_id": "0e83e5c5-37fe-4c65-bcd0-35da9318d0a7",
+              "trial_id": "fbb18c18-827c-467e-a5f7-9e3596ceda58",
+              "trial_number": 1,
+              "camera_role": "tracking",
+              "device_id": "40747103",
+              "session_config_reference": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200",
+              "recording_identity_version": 1
+            },
+            "clocks": {
+              "host_clock": "cephvr.host.perf_counter_ns.v1",
+              "timestamp_unit": "ns",
+              "trial_start_monotonic_ns": 245960565841200,
+              "camera_clock": "cephvr.camera.native.v1",
+              "camera_clock_source": "ChunkTimestamp",
+              "camera_clock_conversion_available": true,
+              "camera_clock_tick_ns_numerator": 1,
+              "camera_clock_tick_ns_denominator": 1,
+              "camera_clock_timestamp_semantics": "exposure_start",
+              "camera_clock_reset_semantics": "unknown",
+              "camera_clock_wrap_semantics": "unknown",
+              "camera_clock_unavailable_reason": "",
+              "camera_counter_source": "CGrabResultData.GetBlockID",
+              "camera_counter_semantics": "frames",
+              "camera_counter_width_bits": 64,
+              "camera_counter_wrap_semantics": "unknown",
+              "camera_counter_unavailable_reason": ""
+            },
+            "video": {
+              "enabled": true,
+              "nominal_frame_rate_hz": 60.0,
+              "nominal_rate_source": "free_running_frame_rate"
+            }
+          }
+        ],
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246020565841200,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3588,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3588,
+            "selected_source_frame_count": 3588,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 3588
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        },
+        "mapping_sources_present": true,
+        "received_span_ns": 59784961800,
+        "received_cadence_fps": 59.998365675965026
+      }
+    },
+    "stimulus_evidence": {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_stimulus_frames.jsonl",
+      "groups": 3599,
+      "input_submissions": 3599,
+      "capacity_drop_groups": [],
+      "mapping_contiguous": true,
+      "mapping_sources_unique": true,
+      "encoder_outcome": {
+        "kind": "encoder_outcome",
+        "admitted_count": 3599,
+        "input_submitted_count": 3599,
+        "capacity_drop_count": 0,
+        "selected_real_count": 3599,
+        "same_slot_omission_count": 0,
+        "encoded_frame_count": 3599,
+        "duplicate_frame_count": 0,
+        "final_input_group_id": 3598,
+        "cutoff_host_ns": 246020565841200,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      },
+      "completion": {
+        "kind": "completion",
+        "cutoff_host_ns": 246020565841200,
+        "last_group_id": 3598,
+        "state_count": 3599,
+        "submission_attempt_count": 14396,
+        "capture_admission_count": 3599,
+        "capture_drop_count": 0,
+        "same_slot_omission_count": 0,
+        "unresolved_attempt_count": 0,
+        "outcome": "completed"
+      },
+      "header": {
+        "kind": "header",
+        "format_version": 6,
+        "video_enabled": true,
+        "identity": {
+          "session_id": "0e83e5c5-37fe-4c65-bcd0-35da9318d0a7",
+          "trial_id": "fbb18c18-827c-467e-a5f7-9e3596ceda58",
+          "configuration_revision": 3,
+          "prepared_generation": "88f30e8f-cdad-44df-a06d-74c8e7bb8af5",
+          "renderer_generation": "dc7a44b5-b10e-4fee-a474-990b84968be5",
+          "resource_generation": "77093adb-f81e-4681-a994-492c7959c859"
+        },
+        "writer_generation": "5b75d20e-dbed-4fa0-bb6e-9b96fdfc3bb2",
+        "recipe": {
+          "relative_path": "DUMMY_165205_stimulus_LOG.json",
+          "sha256": "8c80776af066e6c5b1e2fe6fd156ed240a13c1a2d6e3c36985e7a1a8383c5e58",
+          "byte_length": 38846,
+          "schema_id": "cephvr.visual_stimulus.prepared_trial.v2"
+        },
+        "trial_start_host_ns": 245960565841200,
+        "required_output_ids": [
+          "calibration_front",
+          "calibration_left",
+          "calibration_right",
+          "calibration_bottom"
+        ],
+        "renderer_compatibility": "cephvr-visual-stimulus-renderer-v1"
+      },
+      "capacity_drop_seconds_from_start": [],
+      "render_group_intervals_ns": {
+        "count": 3598,
+        "mean": 16670415.369649805,
+        "p50": 16660450.0,
+        "p95": 17827590.0,
+        "max": 49374600
+      }
+    },
+    "scientific_files": [
+      "DUMMY_165205_behavioral_cam_frames.jsonl",
+      "DUMMY_165205_LOG.json",
+      "DUMMY_165205_stimulus_frames.jsonl",
+      "DUMMY_165205_stimulus_LOG.json",
+      "DUMMY_165205_tracking_cam_frames.jsonl",
+      "SCHEMA.json",
+      "SESSION_CONFIG.json",
+      "SESSION_LOG.jsonl"
+    ]
+  },
+  "concurrent-lossless-profile-r2": {
+    "generation": "b84372f3-de72-44cf-b28d-8fd8ea61abdb",
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "b84372f3-de72-44cf-b28d-8fd8ea61abdb",
+        "session_id": "b9e54f9c-cfb6-48a3-b910-118f2b00f7cb"
+      },
+      "outcome": "SESSION_OUTCOME_COMPLETED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449",
+      "trial_count": 1,
+      "activated": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "b84372f3-de72-44cf-b28d-8fd8ea61abdb",
+          "session_id": "b9e54f9c-cfb6-48a3-b910-118f2b00f7cb"
+        },
+        "trial_id": "2afa16e0-626f-4dd3-b665-9d75408b8ba0",
+        "trial_number": 1
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "246129194015700",
+      "scheduled_end_monotonic_ns": "246189194015700",
+      "actual_end_monotonic_ns": "246189194015700"
+    },
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data",
+    "videos": {
+      "DUMMY_165454_behavioral_cam.mp4": {
+        "bytes": 6193158276,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_behavioral_cam.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High 4:4:4 Predictive",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.f40032",
+              "width": 1760,
+              "height": 1716,
+              "coded_width": 1760,
+              "coded_height": 1728,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "40:39",
+              "pix_fmt": "gbrp",
+              "level": 50,
+              "color_range": "pc",
+              "color_space": "gbr",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "1000000/33333",
+              "avg_frame_rate": "1000000/33333",
+              "time_base": "1/1000000",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 50399496,
+              "duration": "50.399496",
+              "bit_rate": "983045639",
+              "bits_per_raw_sample": "8",
+              "nb_frames": "1512",
+              "nb_read_frames": "1512",
+              "extradata_size": 60,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 1512,
+        "count_matches": true
+      },
+      "DUMMY_165454_stimulus.mp4": {
+        "bytes": 92593234,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_stimulus.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High 4:4:4 Predictive",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.f4002a",
+              "width": 1280,
+              "height": 1000,
+              "coded_width": 1280,
+              "coded_height": 1008,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "32:25",
+              "pix_fmt": "yuvj444p",
+              "level": 42,
+              "color_range": "pc",
+              "color_space": "bt709",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "60/1",
+              "avg_frame_rate": "60/1",
+              "time_base": "1/15360",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 921600,
+              "duration": "60.000000",
+              "bit_rate": "12342686",
+              "bits_per_raw_sample": "8",
+              "nb_read_frames": "3600",
+              "extradata_size": 66,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 3600,
+        "count_matches": true
+      },
+      "DUMMY_165454_tracking_cam.mp4": {
+        "bytes": 10752282,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_tracking_cam.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High 4:4:4 Predictive",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.f4002a",
+              "width": 1588,
+              "height": 1344,
+              "coded_width": 1600,
+              "coded_height": 1344,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "397:336",
+              "pix_fmt": "yuvj420p",
+              "level": 42,
+              "color_range": "pc",
+              "color_space": "bt709",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "60/1",
+              "avg_frame_rate": "60/1",
+              "time_base": "1/15360",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 918528,
+              "duration": "59.800000",
+              "bit_rate": "1433256",
+              "bits_per_raw_sample": "8",
+              "nb_frames": "3588",
+              "nb_read_frames": "3588",
+              "extradata_size": 60,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 3588,
+        "count_matches": true
+      }
+    },
+    "camera_evidence": {
+      "DUMMY_165454_behavioral_cam_frames.jsonl": {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_behavioral_cam_frames.jsonl",
+        "source_frames": 1798,
+        "source_drop_flags": 286,
+        "invalid_images": 0,
+        "native_counter_gap_count": 0,
+        "video_records": 1512,
+        "mapping_contiguous": true,
+        "mapping_sources_unique": true,
+        "headers": [
+          {
+            "type": "header",
+            "schema_version": 5,
+            "identity": {
+              "session_id": "b9e54f9c-cfb6-48a3-b910-118f2b00f7cb",
+              "trial_id": "2afa16e0-626f-4dd3-b665-9d75408b8ba0",
+              "trial_number": 1,
+              "camera_role": "behavioral",
+              "device_id": "40065509",
+              "session_config_reference": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449",
+              "recording_identity_version": 1
+            },
+            "clocks": {
+              "host_clock": "cephvr.host.perf_counter_ns.v1",
+              "timestamp_unit": "ns",
+              "trial_start_monotonic_ns": 246129194015700,
+              "camera_clock": "cephvr.camera.native.v1",
+              "camera_clock_source": "ChunkTimestamp",
+              "camera_clock_conversion_available": true,
+              "camera_clock_tick_ns_numerator": 1,
+              "camera_clock_tick_ns_denominator": 1,
+              "camera_clock_timestamp_semantics": "exposure_start",
+              "camera_clock_reset_semantics": "unknown",
+              "camera_clock_wrap_semantics": "unknown",
+              "camera_clock_unavailable_reason": "",
+              "camera_counter_source": "CGrabResultData.GetBlockID",
+              "camera_counter_semantics": "frames",
+              "camera_counter_width_bits": 64,
+              "camera_counter_wrap_semantics": "unknown",
+              "camera_counter_unavailable_reason": ""
+            },
+            "video": {
+              "enabled": true,
+              "nominal_frame_rate_hz": 30.000300003,
+              "nominal_rate_source": "free_running_frame_rate"
+            }
+          }
+        ],
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246189194015700,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 1798,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 1512,
+            "selected_source_frame_count": 1512,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 0,
+            "last_native_counter": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        },
+        "mapping_sources_present": true,
+        "received_span_ns": 59900015300,
+        "received_cadence_fps": 29.999992337230672
+      },
+      "DUMMY_165454_tracking_cam_frames.jsonl": {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_tracking_cam_frames.jsonl",
+        "source_frames": 3588,
+        "source_drop_flags": 0,
+        "invalid_images": 0,
+        "native_counter_gap_count": 0,
+        "video_records": 3588,
+        "mapping_contiguous": true,
+        "mapping_sources_unique": true,
+        "headers": [
+          {
+            "type": "header",
+            "schema_version": 5,
+            "identity": {
+              "session_id": "b9e54f9c-cfb6-48a3-b910-118f2b00f7cb",
+              "trial_id": "2afa16e0-626f-4dd3-b665-9d75408b8ba0",
+              "trial_number": 1,
+              "camera_role": "tracking",
+              "device_id": "40747103",
+              "session_config_reference": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449",
+              "recording_identity_version": 1
+            },
+            "clocks": {
+              "host_clock": "cephvr.host.perf_counter_ns.v1",
+              "timestamp_unit": "ns",
+              "trial_start_monotonic_ns": 246129194015700,
+              "camera_clock": "cephvr.camera.native.v1",
+              "camera_clock_source": "ChunkTimestamp",
+              "camera_clock_conversion_available": true,
+              "camera_clock_tick_ns_numerator": 1,
+              "camera_clock_tick_ns_denominator": 1,
+              "camera_clock_timestamp_semantics": "exposure_start",
+              "camera_clock_reset_semantics": "unknown",
+              "camera_clock_wrap_semantics": "unknown",
+              "camera_clock_unavailable_reason": "",
+              "camera_counter_source": "CGrabResultData.GetBlockID",
+              "camera_counter_semantics": "frames",
+              "camera_counter_width_bits": 64,
+              "camera_counter_wrap_semantics": "unknown",
+              "camera_counter_unavailable_reason": ""
+            },
+            "video": {
+              "enabled": true,
+              "nominal_frame_rate_hz": 60.0,
+              "nominal_rate_source": "free_running_frame_rate"
+            }
+          }
+        ],
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246189194015700,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3588,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3588,
+            "selected_source_frame_count": 3588,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 3588
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        },
+        "mapping_sources_present": true,
+        "received_span_ns": 59785186500,
+        "received_cadence_fps": 59.99814017474044
+      }
+    },
+    "stimulus_evidence": {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_stimulus_frames.jsonl",
+      "groups": 3600,
+      "input_submissions": 3600,
+      "capacity_drop_groups": [],
+      "mapping_contiguous": true,
+      "mapping_sources_unique": true,
+      "encoder_outcome": {
+        "kind": "encoder_outcome",
+        "admitted_count": 3600,
+        "input_submitted_count": 3600,
+        "capacity_drop_count": 0,
+        "selected_real_count": 3600,
+        "same_slot_omission_count": 0,
+        "encoded_frame_count": 3600,
+        "duplicate_frame_count": 0,
+        "final_input_group_id": 3599,
+        "cutoff_host_ns": 246189194015700,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      },
+      "completion": {
+        "kind": "completion",
+        "cutoff_host_ns": 246189194015700,
+        "last_group_id": 3599,
+        "state_count": 3600,
+        "submission_attempt_count": 14400,
+        "capture_admission_count": 3600,
+        "capture_drop_count": 0,
+        "same_slot_omission_count": 0,
+        "unresolved_attempt_count": 0,
+        "outcome": "completed"
+      },
+      "header": {
+        "kind": "header",
+        "format_version": 6,
+        "video_enabled": true,
+        "identity": {
+          "session_id": "b9e54f9c-cfb6-48a3-b910-118f2b00f7cb",
+          "trial_id": "2afa16e0-626f-4dd3-b665-9d75408b8ba0",
+          "configuration_revision": 3,
+          "prepared_generation": "e39ad451-7482-418b-af74-f5f692eee45c",
+          "renderer_generation": "9ee51090-8d42-402a-bd98-9cf0de98988f",
+          "resource_generation": "11ac9744-3461-4d55-b3f5-8ae5eb798638"
+        },
+        "writer_generation": "84deda8b-6e40-4fb3-995d-27b43786f34b",
+        "recipe": {
+          "relative_path": "DUMMY_165454_stimulus_LOG.json",
+          "sha256": "2fcf880bbdc6990d119f801d7af5be520fb11f70c194a94bc0d14bc546dff82c",
+          "byte_length": 38846,
+          "schema_id": "cephvr.visual_stimulus.prepared_trial.v2"
+        },
+        "trial_start_host_ns": 246129194015700,
+        "required_output_ids": [
+          "calibration_front",
+          "calibration_left",
+          "calibration_right",
+          "calibration_bottom"
+        ],
+        "renderer_compatibility": "cephvr-visual-stimulus-renderer-v1"
+      },
+      "capacity_drop_seconds_from_start": [],
+      "render_group_intervals_ns": {
+        "count": 3599,
+        "mean": 16665739.872186719,
+        "p50": 16675400.0,
+        "p95": 17533060.0,
+        "max": 39696800
+      }
+    },
+    "scientific_files": [
+      "DUMMY_165454_behavioral_cam_frames.jsonl",
+      "DUMMY_165454_LOG.json",
+      "DUMMY_165454_stimulus_frames.jsonl",
+      "DUMMY_165454_stimulus_LOG.json",
+      "DUMMY_165454_tracking_cam_frames.jsonl",
+      "SCHEMA.json",
+      "SESSION_CONFIG.json",
+      "SESSION_LOG.jsonl"
+    ]
+  },
+  "saved-cq23-120-r3": {
+    "generation": "3e7397c1-9b11-4a78-be67-53e8976c3f12",
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "3e7397c1-9b11-4a78-be67-53e8976c3f12",
+        "session_id": "588c8c7e-d7f7-492b-b7c9-a33c4bd67f01"
+      },
+      "outcome": "SESSION_OUTCOME_COMPLETED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718",
+      "trial_count": 1,
+      "activated": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "3e7397c1-9b11-4a78-be67-53e8976c3f12",
+          "session_id": "588c8c7e-d7f7-492b-b7c9-a33c4bd67f01"
+        },
+        "trial_id": "e59d6d4e-67d4-46b2-865d-d2f1f798cc1b",
+        "trial_number": 1
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "246278272495400",
+      "scheduled_end_monotonic_ns": "246398272495400",
+      "actual_end_monotonic_ns": "246398272495400"
+    },
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data",
+    "videos": {
+      "DUMMY_165723_behavioral_cam.mp4": {
+        "bytes": 304050324,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_behavioral_cam.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High 4:4:4 Predictive",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.f40032",
+              "width": 1760,
+              "height": 1716,
+              "coded_width": 1760,
+              "coded_height": 1728,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "40:39",
+              "pix_fmt": "yuvj444p",
+              "level": 50,
+              "color_range": "pc",
+              "color_space": "bt709",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "1000000/33333",
+              "avg_frame_rate": "1000000/33333",
+              "time_base": "1/1000000",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 119932134,
+              "duration": "119.932134",
+              "bit_rate": "20278102",
+              "bits_per_raw_sample": "8",
+              "nb_frames": "3598",
+              "nb_read_frames": "3598",
+              "extradata_size": 66,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 3598,
+        "count_matches": true
+      },
+      "DUMMY_165723_stimulus.mp4": {
+        "bytes": 187530108,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_stimulus.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High 4:4:4 Predictive",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.f4002a",
+              "width": 1280,
+              "height": 1000,
+              "coded_width": 1280,
+              "coded_height": 1008,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "32:25",
+              "pix_fmt": "yuvj444p",
+              "level": 42,
+              "color_range": "pc",
+              "color_space": "bt709",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "60/1",
+              "avg_frame_rate": "60/1",
+              "time_base": "1/15360",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 1843200,
+              "duration": "120.000000",
+              "bit_rate": "12498984",
+              "bits_per_raw_sample": "8",
+              "nb_read_frames": "7200",
+              "extradata_size": 66,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 7200,
+        "count_matches": true
+      },
+      "DUMMY_165723_tracking_cam.mp4": {
+        "bytes": 1870042,
+        "probe_command": [
+          "ffprobe",
+          "-v",
+          "error",
+          "-count_frames",
+          "-show_streams",
+          "-of",
+          "json",
+          "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_tracking_cam.mp4"
+        ],
+        "probe_exit": 0,
+        "probe": {
+          "streams": [
+            {
+              "index": 0,
+              "codec_name": "h264",
+              "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+              "profile": "High",
+              "codec_type": "video",
+              "codec_tag_string": "avc1",
+              "codec_tag": "0x31637661",
+              "mime_codec_string": "avc1.64002a",
+              "width": 1588,
+              "height": 1344,
+              "coded_width": 1600,
+              "coded_height": 1344,
+              "has_b_frames": 0,
+              "sample_aspect_ratio": "1:1",
+              "display_aspect_ratio": "397:336",
+              "pix_fmt": "yuvj420p",
+              "level": 42,
+              "color_range": "pc",
+              "color_space": "bt709",
+              "chroma_location": "left",
+              "field_order": "progressive",
+              "refs": 3,
+              "is_avc": "true",
+              "nal_length_size": "4",
+              "id": "0x1",
+              "r_frame_rate": "60/1",
+              "avg_frame_rate": "60/1",
+              "time_base": "1/15360",
+              "start_pts": 0,
+              "start_time": "0.000000",
+              "duration_ts": 1840128,
+              "duration": "119.800000",
+              "bit_rate": "119857",
+              "bits_per_raw_sample": "8",
+              "nb_frames": "7188",
+              "nb_read_frames": "7188",
+              "extradata_size": 62,
+              "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0,
+                "multilayer": 0
+              },
+              "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "encoder": "Lavc63.1.102 h264_nvenc"
+              }
+            }
+          ]
+        },
+        "probe_stderr": "",
+        "decode_exit": 0,
+        "decode_stderr": "",
+        "expected_retained_count": 7188,
+        "count_matches": true
+      }
+    },
+    "camera_evidence": {
+      "DUMMY_165723_behavioral_cam_frames.jsonl": {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_behavioral_cam_frames.jsonl",
+        "source_frames": 3598,
+        "source_drop_flags": 0,
+        "invalid_images": 0,
+        "native_counter_gap_count": 0,
+        "video_records": 3598,
+        "mapping_contiguous": true,
+        "mapping_sources_unique": true,
+        "headers": [
+          {
+            "type": "header",
+            "schema_version": 5,
+            "identity": {
+              "session_id": "588c8c7e-d7f7-492b-b7c9-a33c4bd67f01",
+              "trial_id": "e59d6d4e-67d4-46b2-865d-d2f1f798cc1b",
+              "trial_number": 1,
+              "camera_role": "behavioral",
+              "device_id": "40065509",
+              "session_config_reference": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718",
+              "recording_identity_version": 1
+            },
+            "clocks": {
+              "host_clock": "cephvr.host.perf_counter_ns.v1",
+              "timestamp_unit": "ns",
+              "trial_start_monotonic_ns": 246278272495400,
+              "camera_clock": "cephvr.camera.native.v1",
+              "camera_clock_source": "ChunkTimestamp",
+              "camera_clock_conversion_available": true,
+              "camera_clock_tick_ns_numerator": 1,
+              "camera_clock_tick_ns_denominator": 1,
+              "camera_clock_timestamp_semantics": "exposure_start",
+              "camera_clock_reset_semantics": "unknown",
+              "camera_clock_wrap_semantics": "unknown",
+              "camera_clock_unavailable_reason": "",
+              "camera_counter_source": "CGrabResultData.GetBlockID",
+              "camera_counter_semantics": "frames",
+              "camera_counter_width_bits": 64,
+              "camera_counter_wrap_semantics": "unknown",
+              "camera_counter_unavailable_reason": ""
+            },
+            "video": {
+              "enabled": true,
+              "nominal_frame_rate_hz": 30.000300003,
+              "nominal_rate_source": "free_running_frame_rate"
+            }
+          }
+        ],
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246398272495400,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3598,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3598,
+            "selected_source_frame_count": 3598,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 3598
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        },
+        "mapping_sources_present": true,
+        "received_span_ns": 119900255600,
+        "received_cadence_fps": 29.999936046841924
+      },
+      "DUMMY_165723_tracking_cam_frames.jsonl": {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_tracking_cam_frames.jsonl",
+        "source_frames": 7188,
+        "source_drop_flags": 0,
+        "invalid_images": 0,
+        "native_counter_gap_count": 0,
+        "video_records": 7188,
+        "mapping_contiguous": true,
+        "mapping_sources_unique": true,
+        "headers": [
+          {
+            "type": "header",
+            "schema_version": 5,
+            "identity": {
+              "session_id": "588c8c7e-d7f7-492b-b7c9-a33c4bd67f01",
+              "trial_id": "e59d6d4e-67d4-46b2-865d-d2f1f798cc1b",
+              "trial_number": 1,
+              "camera_role": "tracking",
+              "device_id": "40747103",
+              "session_config_reference": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718",
+              "recording_identity_version": 1
+            },
+            "clocks": {
+              "host_clock": "cephvr.host.perf_counter_ns.v1",
+              "timestamp_unit": "ns",
+              "trial_start_monotonic_ns": 246278272495400,
+              "camera_clock": "cephvr.camera.native.v1",
+              "camera_clock_source": "ChunkTimestamp",
+              "camera_clock_conversion_available": true,
+              "camera_clock_tick_ns_numerator": 1,
+              "camera_clock_tick_ns_denominator": 1,
+              "camera_clock_timestamp_semantics": "exposure_start",
+              "camera_clock_reset_semantics": "unknown",
+              "camera_clock_wrap_semantics": "unknown",
+              "camera_clock_unavailable_reason": "",
+              "camera_counter_source": "CGrabResultData.GetBlockID",
+              "camera_counter_semantics": "frames",
+              "camera_counter_width_bits": 64,
+              "camera_counter_wrap_semantics": "unknown",
+              "camera_counter_unavailable_reason": ""
+            },
+            "video": {
+              "enabled": true,
+              "nominal_frame_rate_hz": 60.0,
+              "nominal_rate_source": "free_running_frame_rate"
+            }
+          }
+        ],
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246398272495400,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 7188,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 7188,
+            "selected_source_frame_count": 7188,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 7188
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        },
+        "mapping_sources_present": true,
+        "received_span_ns": 119787288200,
+        "received_cadence_fps": 59.9980190552473
+      }
+    },
+    "stimulus_evidence": {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_stimulus_frames.jsonl",
+      "groups": 7200,
+      "input_submissions": 7200,
+      "capacity_drop_groups": [],
+      "mapping_contiguous": true,
+      "mapping_sources_unique": true,
+      "encoder_outcome": {
+        "kind": "encoder_outcome",
+        "admitted_count": 7200,
+        "input_submitted_count": 7200,
+        "capacity_drop_count": 0,
+        "selected_real_count": 7200,
+        "same_slot_omission_count": 0,
+        "encoded_frame_count": 7200,
+        "duplicate_frame_count": 0,
+        "final_input_group_id": 7199,
+        "cutoff_host_ns": 246398272495400,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      },
+      "completion": {
+        "kind": "completion",
+        "cutoff_host_ns": 246398272495400,
+        "last_group_id": 7199,
+        "state_count": 7200,
+        "submission_attempt_count": 28800,
+        "capture_admission_count": 7200,
+        "capture_drop_count": 0,
+        "same_slot_omission_count": 0,
+        "unresolved_attempt_count": 0,
+        "outcome": "completed"
+      },
+      "header": {
+        "kind": "header",
+        "format_version": 6,
+        "video_enabled": true,
+        "identity": {
+          "session_id": "588c8c7e-d7f7-492b-b7c9-a33c4bd67f01",
+          "trial_id": "e59d6d4e-67d4-46b2-865d-d2f1f798cc1b",
+          "configuration_revision": 3,
+          "prepared_generation": "8f0dfbe6-f309-456f-9fdd-69e5796540cd",
+          "renderer_generation": "c524c9f8-acbd-44c8-901a-70d667a74e1f",
+          "resource_generation": "69f03591-c068-44cf-8520-8a297815b1b5"
+        },
+        "writer_generation": "43967cef-d728-41d6-a682-0d89fbebd5b2",
+        "recipe": {
+          "relative_path": "DUMMY_165723_stimulus_LOG.json",
+          "sha256": "547c82cb72206f0e8fb535c351732f2b10a7fd3c584ca019351cb496b2f07bf9",
+          "byte_length": 38848,
+          "schema_id": "cephvr.visual_stimulus.prepared_trial.v2"
+        },
+        "trial_start_host_ns": 246278272495400,
+        "required_output_ids": [
+          "calibration_front",
+          "calibration_left",
+          "calibration_right",
+          "calibration_bottom"
+        ],
+        "renderer_compatibility": "cephvr-visual-stimulus-renderer-v1"
+      },
+      "capacity_drop_seconds_from_start": [],
+      "render_group_intervals_ns": {
+        "count": 7199,
+        "mean": 16665285.567439923,
+        "p50": 16663000.0,
+        "p95": 17816120.0,
+        "max": 42031300
+      }
+    },
+    "scientific_files": [
+      "DUMMY_165723_behavioral_cam_frames.jsonl",
+      "DUMMY_165723_LOG.json",
+      "DUMMY_165723_stimulus_frames.jsonl",
+      "DUMMY_165723_stimulus_LOG.json",
+      "DUMMY_165723_tracking_cam_frames.jsonl",
+      "SCHEMA.json",
+      "SESSION_CONFIG.json",
+      "SESSION_LOG.jsonl"
+    ]
+  }
+}

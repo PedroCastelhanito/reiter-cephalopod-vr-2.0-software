@@ -1,0 +1,19 @@
+{
+  "time_unix": 1792224507.9330661,
+  "scope": "Exact task-owned reproducible Oct16 packaging artifacts only; resolved inside workspace, no self/descendant reparse or tracked files. Unique science/media, SDK/toolchain, settings and conflict evidence preserved.",
+  "removed_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\encoding-audit-build-20261016",
+  "removed": true,
+  "files": [
+    {
+      "path": ".tmp\\encoding-audit-build-20261016\\cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl",
+      "bytes": 1965113,
+      "sha256": "68f2e060fd037a7fcaeb7e977259e8bdca9541e12273f131d47c72937bc9e528"
+    },
+    {
+      "path": ".tmp\\encoding-audit-build-20261016\\cephvr-2.0.0.dev0.tar.gz",
+      "bytes": 1512269,
+      "sha256": "829b630667cd0215d67d65bc6cfa19e787513911c1ebd2aa8993446b9c476049"
+    }
+  ],
+  "bytes_removed": 3477382
+}

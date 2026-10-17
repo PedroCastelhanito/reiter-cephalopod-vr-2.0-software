@@ -18,6 +18,7 @@ from cephvr.acquisition.recording.session_finalizer import (
     close_encoder_and_sync_video,
 )
 from cephvr.acquisition.recording.session_outputs import output_result
+from cephvr.acquisition.recording.video_sync import VideoSyncFailure
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 
@@ -53,14 +54,19 @@ def close_failed_recording(
     """Close known resources without writing a misleading normal completion row."""
     drain_pending(queue, pool)
     finalization.completion_failed = True
-    _, video_sync = close_encoder_and_sync_video(
-        finalization,
-        encoder,
-        video_sync,
-        deadline_ns=deadline_ns,
-        clock_ns=clock_ns,
-        observe_video=observe_video,
-    )
+    try:
+        _, video_sync = close_encoder_and_sync_video(
+            finalization,
+            encoder,
+            video_sync,
+            deadline_ns=deadline_ns,
+            clock_ns=clock_ns,
+            observe_video=observe_video,
+        )
+    except VideoSyncFailure:
+        # The exact operation has returned with failure, not pending ownership.
+        # Release its resources while retaining unconfirmed video durability.
+        video_sync = observe_video()
     if frame_log is not None and not finalization.frame_log_closed:
         frame_log.close_failed()
         finalization.frame_log_closed = True

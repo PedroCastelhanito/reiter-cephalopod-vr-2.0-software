@@ -1,0 +1,149 @@
+{
+  "observed_unix_time": 1792224013.9229057,
+  "exit_receipt": "reports\\runtime-evidence-2026-10-17\\file-sync-fix\\final-exit.json",
+  "exit": {
+    "all_owned_processes_absent": true,
+    "controller_channel_loss": "eof",
+    "controller_generation": "3e7397c1-9b11-4a78-be67-53e8976c3f12",
+    "format_version": 1,
+    "observed_monotonic_ns": 246446201389400,
+    "supervisor_generation": "24c1316a-789d-42aa-b0a8-2b3d91bdb70f"
+  },
+  "cameras": [
+    {
+      "serial": "40065509",
+      "readback": {
+        "Width": "1760",
+        "Height": "1716",
+        "OffsetX": "396",
+        "OffsetY": "336",
+        "PixelFormat": "BayerRG8",
+        "ExposureTime": "25000.0",
+        "Gain": "0.00000",
+        "AcquisitionFrameRateEnable": "0",
+        "AcquisitionFrameRate": "30.00030",
+        "TriggerSelector": "FrameStart",
+        "TriggerMode": "Off",
+        "TriggerSource": "Line4",
+        "TriggerActivation": "RisingEdge",
+        "LineSelector": "Line1",
+        "DeviceLinkThroughputLimit": "360000000",
+        "TestImageSelector": "Off"
+      },
+      "restored_pfs_sha256": "931716fc6a894081c3102c89e6869222b9312ad871d93c9270a67d295349f05b",
+      "pfs_bytes_match": true,
+      "all_original_readbacks_match": true,
+      "closed": true
+    },
+    {
+      "serial": "40278236",
+      "readback": {
+        "Width": "1920",
+        "Height": "1200",
+        "OffsetX": "8",
+        "OffsetY": "8",
+        "PixelFormat": "Mono8",
+        "ExposureTime": "5000.0",
+        "Gain": "0.000",
+        "AcquisitionFrameRateEnable": "0",
+        "AcquisitionFrameRate": "100.0",
+        "TriggerSelector": "FrameStart",
+        "TriggerMode": "Off",
+        "TriggerSource": "Line3",
+        "TriggerActivation": "RisingEdge",
+        "LineSelector": "Line1",
+        "DeviceLinkThroughputLimit": "360000000"
+      },
+      "restored_pfs_sha256": "770058f5d63fd99b0bfcfbf754ef4fab16c2de661b84b25c21962d4e04cd1532",
+      "pfs_bytes_match": true,
+      "all_original_readbacks_match": true,
+      "closed": true
+    },
+    {
+      "serial": "40747103",
+      "readback": {
+        "Width": "1588",
+        "Height": "1344",
+        "OffsetX": "0",
+        "OffsetY": "135",
+        "PixelFormat": "Mono8",
+        "ExposureTime": "5000.0",
+        "Gain": "0.000",
+        "AcquisitionFrameRateEnable": "0",
+        "AcquisitionFrameRate": "60.0",
+        "TriggerSelector": "FrameStart",
+        "TriggerMode": "Off",
+        "TriggerSource": "Line2",
+        "TriggerActivation": "RisingEdge",
+        "LineSelector": "Line1",
+        "DeviceLinkThroughputLimit": "419000000"
+      },
+      "restored_pfs_sha256": "775b5b3f92e4e305c705f2a161c2b0b47b0f7f39dd3906fe86ded382e7158886",
+      "pfs_bytes_match": true,
+      "all_original_readbacks_match": true,
+      "closed": true
+    }
+  ],
+  "files": {
+    "config\\last_configuration.json": {
+      "before_sha256": "9714f21fa0149a1c5a8a9159da0ea9d08b10e52a10cb9fe19e8e1e1f05219479",
+      "after_sha256": "9714f21fa0149a1c5a8a9159da0ea9d08b10e52a10cb9fe19e8e1e1f05219479",
+      "original_sha256": "9714f21fa0149a1c5a8a9159da0ea9d08b10e52a10cb9fe19e8e1e1f05219479",
+      "bytes_match": true
+    },
+    "config\\runtime_gui.json": {
+      "before_sha256": "c7ba71b8327a85035a7e777742ccc97fea916a26734bdbc24bd3700f40f029b2",
+      "after_sha256": "c7ba71b8327a85035a7e777742ccc97fea916a26734bdbc24bd3700f40f029b2",
+      "original_sha256": "c7ba71b8327a85035a7e777742ccc97fea916a26734bdbc24bd3700f40f029b2",
+      "bytes_match": true
+    },
+    "config\\backends\\acquisition_config.toml": {
+      "before_sha256": "2e06a645260da6cdb54d83ec174f62cb4a1a171173196732b219d0e45939d8b0",
+      "after_sha256": "2e06a645260da6cdb54d83ec174f62cb4a1a171173196732b219d0e45939d8b0",
+      "original_sha256": "2e06a645260da6cdb54d83ec174f62cb4a1a171173196732b219d0e45939d8b0",
+      "bytes_match": true
+    },
+    "config\\backends\\experiment_config.toml": {
+      "before_sha256": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115",
+      "after_sha256": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115",
+      "original_sha256": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115",
+      "bytes_match": true
+    },
+    "config\\backends\\gui_config.toml": {
+      "before_sha256": "e5498d0b0864531b98595760ea8cb17880c010fffa57d168c88ceff6d8f53c30",
+      "after_sha256": "e5498d0b0864531b98595760ea8cb17880c010fffa57d168c88ceff6d8f53c30",
+      "original_sha256": "e5498d0b0864531b98595760ea8cb17880c010fffa57d168c88ceff6d8f53c30",
+      "bytes_match": true
+    },
+    "config\\backends\\microcontroller_config.toml": {
+      "before_sha256": "3fb97389300d23739be336f11226c9471903497820259e153496c9413b518607",
+      "after_sha256": "3fb97389300d23739be336f11226c9471903497820259e153496c9413b518607",
+      "original_sha256": "3fb97389300d23739be336f11226c9471903497820259e153496c9413b518607",
+      "bytes_match": true
+    },
+    "config\\backends\\supervisor_config.toml": {
+      "before_sha256": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe",
+      "after_sha256": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe",
+      "original_sha256": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe",
+      "bytes_match": true
+    },
+    "config\\backends\\synchronization_config.toml": {
+      "before_sha256": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94",
+      "after_sha256": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94",
+      "original_sha256": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94",
+      "bytes_match": true
+    },
+    "config\\backends\\tracking_config.toml": {
+      "before_sha256": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c",
+      "after_sha256": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c",
+      "original_sha256": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c",
+      "bytes_match": true
+    },
+    "config\\backends\\visual_stimulus_config.toml": {
+      "before_sha256": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212",
+      "after_sha256": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212",
+      "original_sha256": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212",
+      "bytes_match": true
+    }
+  }
+}

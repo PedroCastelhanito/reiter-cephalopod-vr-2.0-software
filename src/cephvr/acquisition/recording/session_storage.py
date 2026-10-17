@@ -14,6 +14,7 @@ from cephvr.acquisition.recording.session_contracts import (
     VideoSync,
     VideoSyncFactory,
 )
+from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
 
 
 @dataclass(frozen=True)
@@ -50,7 +51,7 @@ def observe_video_identity(
     if current_identity is not None and identity != current_identity:
         raise RecordingFailure("encoder output file identity changed during recording")
     if current_sync is None:
-        current_sync = factory.open(path, identity)
+        current_sync = PeriodicVideoSync(factory.open(path, identity), clock_ns)
         last_sync_ns = clock_ns()
     elif current_sync.file_identity != identity:
         raise RecordingFailure("video sync handle refers to another file identity")
@@ -67,8 +68,14 @@ def sync_due(
     """Append/sync ready frame rows and sync video on its own cadence."""
     if frame_log is not None:
         frame_log.sync_if_due(now_ns)
+    if isinstance(video_sync, PeriodicVideoSync):
+        video_sync.poll()
     if video_sync is not None and now_ns - last_video_sync_ns >= video_sync_interval_ns:
-        video_sync.sync()
+        if isinstance(video_sync, PeriodicVideoSync):
+            if not video_sync.request():
+                return last_video_sync_ns
+        else:
+            video_sync.sync()
         return now_ns
     return last_video_sync_ns
 

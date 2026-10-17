@@ -1,0 +1,165 @@
+{
+  "scope": "One instrumented lossless run before final hot-path guard. Video flush runs concurrently; do not sum it into consumer time. Process-lifetime single-trial aggregate; sampled queue maxima, not continuous. Remaining path-reopen contention suspected, not isolated by this profile.",
+  "metrics": [
+    {
+      "event": "audit_acquisition_stage_metrics",
+      "installation_count": 1,
+      "pid": 31476,
+      "role": "tracking",
+      "frame_log_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_tracking_cam_frames.jsonl",
+      "stages": {
+        "encoder_drain_and_release": {
+          "count": 6,
+          "total_ns": 143003200,
+          "max_ns": 54618900,
+          "over_33ms": 2,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246189427338400
+        },
+        "pixel_preparation": {
+          "count": 3588,
+          "total_ns": 8364590400,
+          "max_ns": 6762700,
+          "over_33ms": 0,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246176281933000
+        },
+        "frame_evidence_append": {
+          "count": 3588,
+          "total_ns": 132066400,
+          "max_ns": 128000,
+          "over_33ms": 0,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246131073777100
+        },
+        "encoder_pipe_write": {
+          "count": 3588,
+          "total_ns": 1592333600,
+          "max_ns": 101338200,
+          "over_33ms": 1,
+          "over_100ms": 1,
+          "max_end_monotonic_ns": 246129542267900
+        },
+        "mapping_evidence_append": {
+          "count": 3588,
+          "total_ns": 74107800,
+          "max_ns": 112500,
+          "over_33ms": 0,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246186345460300
+        },
+        "consumer_entry_total_nested": {
+          "count": 3588,
+          "total_ns": 12209866800,
+          "max_ns": 103976300,
+          "over_33ms": 13,
+          "over_100ms": 2,
+          "max_end_monotonic_ns": 246129542698900
+        },
+        "frame_evidence_sync": {
+          "count": 59,
+          "total_ns": 888203700,
+          "max_ns": 105606200,
+          "over_33ms": 11,
+          "over_100ms": 1,
+          "max_end_monotonic_ns": 246182682887000
+        },
+        "video_sync": {
+          "count": 60,
+          "total_ns": 727435200,
+          "max_ns": 87689100,
+          "over_33ms": 8,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246173814776900
+        }
+      },
+      "queue_samples": {
+        "sample_count": 3588,
+        "max_waiting_pixels": 5,
+        "max_pending_records": 6,
+        "capacity_frames": 20
+      },
+      "scope": "Single-trial process-lifetime aggregate; sampled queue maxima at consumer boundaries, not continuous peak. Consumer total nests preparation/write/evidence/sync; no altered deadlines/queues or active-run added fsync"
+    },
+    {
+      "event": "audit_acquisition_stage_metrics",
+      "installation_count": 1,
+      "pid": 30584,
+      "role": "behavioral",
+      "frame_log_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_behavioral_cam_frames.jsonl",
+      "stages": {
+        "encoder_drain_and_release": {
+          "count": 6,
+          "total_ns": 495036400,
+          "max_ns": 406977500,
+          "over_33ms": 2,
+          "over_100ms": 1,
+          "max_end_monotonic_ns": 246191152292100
+        },
+        "pixel_preparation": {
+          "count": 1512,
+          "total_ns": 9195632800,
+          "max_ns": 13646700,
+          "over_33ms": 0,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246176284531700
+        },
+        "frame_evidence_append": {
+          "count": 1798,
+          "total_ns": 62317500,
+          "max_ns": 94200,
+          "over_33ms": 0,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246162364183300
+        },
+        "encoder_pipe_write": {
+          "count": 1512,
+          "total_ns": 2190240200,
+          "max_ns": 84292100,
+          "over_33ms": 1,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246129447105800
+        },
+        "mapping_evidence_append": {
+          "count": 1512,
+          "total_ns": 37655500,
+          "max_ns": 79300,
+          "over_33ms": 0,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246187033378600
+        },
+        "consumer_entry_total_nested": {
+          "count": 1798,
+          "total_ns": 29086956700,
+          "max_ns": 4003948200,
+          "over_33ms": 41,
+          "over_100ms": 12,
+          "max_end_monotonic_ns": 246181095359300
+        },
+        "frame_evidence_sync": {
+          "count": 53,
+          "total_ns": 320219300,
+          "max_ns": 31138200,
+          "over_33ms": 0,
+          "over_100ms": 0,
+          "max_end_monotonic_ns": 246171730841500
+        },
+        "video_sync": {
+          "count": 54,
+          "total_ns": 18507335100,
+          "max_ns": 3991111900,
+          "over_33ms": 38,
+          "over_100ms": 11,
+          "max_end_monotonic_ns": 246181104161100
+        }
+      },
+      "queue_samples": {
+        "sample_count": 1798,
+        "max_waiting_pixels": 20,
+        "max_pending_records": 120,
+        "capacity_frames": 20
+      },
+      "scope": "Single-trial process-lifetime aggregate; sampled queue maxima at consumer boundaries, not continuous peak. Consumer total nests preparation/write/evidence/sync; no altered deadlines/queues or active-run added fsync"
+    }
+  ]
+}

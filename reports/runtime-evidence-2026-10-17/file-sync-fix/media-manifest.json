@@ -1,0 +1,68 @@
+{
+  "scope": "All nine exact videos remain local under .tmp; complete science is in scientific-records.zip. Hashing occurs after workload.",
+  "files": [
+    {
+      "run": "concurrent-lossless-p4-r1",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_behavioral_cam.mp4",
+      "bytes": 7243993368,
+      "sha256": "00f71e80c01f7ed5d167e36133398525c7a5c57d9b7ee23db59dba541aaa67d6",
+      "git_excluded_local_only": true
+    },
+    {
+      "run": "concurrent-lossless-p4-r1",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_stimulus.mp4",
+      "bytes": 93641081,
+      "sha256": "f0343dc26f454d2e12e7befa63d71b39b73b9665bc80994ddadf5171b028512d",
+      "git_excluded_local_only": true
+    },
+    {
+      "run": "concurrent-lossless-p4-r1",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200\\protocol-data\\DUMMY_165205_tracking_cam.mp4",
+      "bytes": 11079607,
+      "sha256": "92d45cdf9046ab6f411d166d108d53aecfce06422cee5a855d880fbcaabafaf7",
+      "git_excluded_local_only": true
+    },
+    {
+      "run": "concurrent-lossless-profile-r2",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_behavioral_cam.mp4",
+      "bytes": 6193158276,
+      "sha256": "129b26b8effdf25c9b09f7f6607fd27618374eb6832756b672b1ea98873631ac",
+      "git_excluded_local_only": true
+    },
+    {
+      "run": "concurrent-lossless-profile-r2",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_stimulus.mp4",
+      "bytes": 92593234,
+      "sha256": "0c39d3fa9235228a5a2a9c0fea55a7a6a182bd19b36ebce4d7511d28becfc426",
+      "git_excluded_local_only": true
+    },
+    {
+      "run": "concurrent-lossless-profile-r2",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449\\protocol-data\\DUMMY_165454_tracking_cam.mp4",
+      "bytes": 10752282,
+      "sha256": "88089108f804833574c15fa7d51cbee2fff7fa036b5d0a5efd71db91d215ae8c",
+      "git_excluded_local_only": true
+    },
+    {
+      "run": "saved-cq23-120-r3",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_behavioral_cam.mp4",
+      "bytes": 304050324,
+      "sha256": "1abccf274233d4f22e243d07a3f18f0d950342551ef88b7d1bd62435e806f87f",
+      "git_excluded_local_only": true
+    },
+    {
+      "run": "saved-cq23-120-r3",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_stimulus.mp4",
+      "bytes": 187530108,
+      "sha256": "e9282686e1210f918ea6cd2dc45b2eb3e6b8977b24aa48a3e4ca7f18cde165c3",
+      "git_excluded_local_only": true
+    },
+    {
+      "run": "saved-cq23-120-r3",
+      "local_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718\\protocol-data\\DUMMY_165723_tracking_cam.mp4",
+      "bytes": 1870042,
+      "sha256": "8d6078025ee61f19024e93819a086b24bc736a394bfd52e969681a9be5066051",
+      "git_excluded_local_only": true
+    }
+  ]
+}
