@@ -1,4 +1,4 @@
-"""Per-worker recording state machine. File writes and encoder I/O stay on owner thread."""
+"""Per-worker recording state machine with independently owned video flushes."""
 
 from __future__ import annotations
 
@@ -570,7 +570,9 @@ class RecordingSession:
         self._last_frame_id = frame_id
         self._received += 1
         self._logged += 1
-        self._observe_video_identity()
+        # The exact adopted handle stays owned; revalidate the path at closure.
+        if self._video_sync is None:
+            self._observe_video_identity()
 
     def _create_trial_outputs(self) -> None:
         assert self._scheduled is not None

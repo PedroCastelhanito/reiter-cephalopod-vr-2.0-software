@@ -1,33 +1,22 @@
 # Visual Stimulus status
 
-Current Oct16 encoding/overload audit follows sequential [V12/V28](../docs/architecture/visual_stimulus.md#v12)
-and lossy-review [E13](../docs/architecture/system-contracts.md#e13). Rendering
-remains on RTX 5060 Ti and NVENC on RTX 2080 Ti; no cross-GPU sharing or new GPU
-filter policy was introduced. Existing GPU orientation/PBO reuse makes measured
-normalization negligible. Removing a forced host write-poll deferral reduces mean
-native stimulus frame-input time from 14.30 ms to 1.93 ms in the tested p4 fixture.
-Cold-start buffering remains distinct: three slots omit groups 5–12, while a
-bounded temporary 16-slot fixture encodes all 3,599 real groups once with no drops,
-confirmed drain, session cleanup and NewSession. Peak occupancy is eight slots.
-Saved three-slot/half-resolution settings are restored, not silently retuned.
+Current Oct17 concurrent acceptance run retains all 7200 real stimulus groups
+exactly once over 120 s, alongside Behavior 3598/3598 and Tracking 7188/7188.
+Rendering/projection and three encoders run concurrently; no capacity omissions,
+duplicates or padding occur in this fixture. Its explicit temporary 16 capture
+slots/half-resolution recording pass unchanged budgets. Saved three slots are
+restored; their earlier startup limitation remains distinct and is not closed.
+The saved lossy p4/CQ18 review recipe is unchanged under E13/V12/V28; GPU placement
+remains SYS-002. Scientific JSONL is independent of optional review video.
 
-A higher-demand full-review-resolution/eight-slot 60-second fixture submits four
-times the review bytes per frame within unchanged resource budgets. It completes
-normally with 3,597 real groups, 3,592 encoded once and five explicit capacity
-omissions at startup groups 10–14 (0.176–0.242 s); no later capacity omissions,
-duplicates or nominal padding are observed. Mean frame input is 6.11 ms. This is
-bounded higher-demand evidence, not proof of sustained saturation or universal
-loss-free recording. Full external decode/count verification passes for retained media; source omissions remain explicit.
-Scientific JSONL/renderer state remains independent of optional video saving.
-
-Normal cleanup now strictly joins frozen Setup output identities to controller
-scheduled paths; native completed trials/NewSession/Shutdown pass. Early Abort
-still exposes a separate acquisition interrupted-Finished/cleanup failure, retained
-in the [current audit assessment](runtime-evidence-2026-10-16/encoding-overload-audit/README.md).
-The earlier successful Abort observations below are historical and do not close
-this current regression. Final live shutdown has an exact absence receipt and no
-new emergency; settings/cameras are restored byte-exact. See the single
-[remaining rig checklist](rig-verification.md) for acceptance gaps.
+The acquisition recording sync owner now independently services one flush per
+exact file, with mandatory distinct final sync and strict timeout/closure proof.
+Normal completed session, Cleanup/NewSession and Shutdown pass. All camera/settings
+baselines restore exactly. Older acquisition Abort Finished, failed-Setup late
+report and final Shutdown resource-registration triggers remain open. No optical,
+external-trigger or Tracking-processing equivalence follows from software counts.
+[Current assessment](runtime-evidence-2026-10-17/file-sync-fix/README.md),
+[single outstanding checklist](rig-verification.md).
 
 Historical Oct15 comprehensive recheck confirms fresh managed Idle initialization on
 all four60Hz outputs with8-bit channels and swap interval1. This is software
@@ -468,7 +457,7 @@ in the [rig checklist](rig-verification.md).
 Oct15 encoder matrix completes31/31 cases:10s all-source warm-up plus three
 repetitions of five source combinations at CQ16/CQ23, each requesting60s of frames;
 all external counts and full decodes pass. Enabled camera dimensions/rates are
-Behavior1760x3000RGB24/30Hz and Tracking1588x1344gray/60Hz; synthetic Stimulus is
+Behavior1760x3000RGB24/30Hz and Tracking 1588x1344gray/60Hz; synthetic Stimulus is
 1280x1000RGBA/60Hz. Actual FFmpeg GPU UUID is RTX2080Ti; matched FFmpeg/ffprobe9.0.2
 is selected process-locally, leaving default PATH4.3.2 unchanged. A separately opened
 application renderer appears on RTX5060Ti during r1-cameras-cq23 and thereafter;

@@ -1,0 +1,95 @@
+{
+  "DUMMY_165205_behavioral_cam_frames.jsonl": {
+    "received": 1798,
+    "retained": 1710,
+    "drops": 88,
+    "counter_gaps": 0,
+    "unique_sources": 1710,
+    "completion": {
+      "type": "completion",
+      "outcome": "completed",
+      "timing": {
+        "recording_end_monotonic_ns": 246020565841200,
+        "first_recorded_frame_id": 0,
+        "final_received_frame_count": 1798,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 1710,
+        "selected_source_frame_count": 1710,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": null,
+        "on_dispatched_monotonic_ns": null,
+        "on_acknowledged_monotonic_ns": null,
+        "off_outcome": null,
+        "off_dispatched_monotonic_ns": null,
+        "off_acknowledged_monotonic_ns": null
+      },
+      "post_cutoff": {
+        "accounting_complete": true,
+        "excluded_frame_count": 0,
+        "last_native_counter": null
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    }
+  },
+  "DUMMY_165205_tracking_cam_frames.jsonl": {
+    "received": 3588,
+    "retained": 3588,
+    "drops": 0,
+    "counter_gaps": 0,
+    "unique_sources": 3588,
+    "completion": {
+      "type": "completion",
+      "outcome": "completed",
+      "timing": {
+        "recording_end_monotonic_ns": 246020565841200,
+        "first_recorded_frame_id": 0,
+        "final_received_frame_count": 3588,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 3588,
+        "selected_source_frame_count": 3588,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": null,
+        "on_dispatched_monotonic_ns": null,
+        "on_acknowledged_monotonic_ns": null,
+        "off_outcome": null,
+        "off_dispatched_monotonic_ns": null,
+        "off_acknowledged_monotonic_ns": null
+      },
+      "post_cutoff": {
+        "accounting_complete": true,
+        "excluded_frame_count": 1,
+        "last_native_counter": 3588
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    }
+  },
+  "stimulus": {
+    "groups": 3599,
+    "retained": 3599,
+    "drops": 0
+  }
+}

@@ -585,11 +585,13 @@ def test_camera_video_keeps_same_interval_sources_without_gap_padding() -> None:
 @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
 @pytest.mark.parametrize("rate_source", ["applied_mcu_rate", "free_running_frame_rate"])
 @pytest.mark.parametrize("outcome", ["completed", "interrupted"])
+@pytest.mark.parametrize("background_sync", [False, True])
 def test_recording_session_preserves_all_images_and_timestamps_without_padding(
     tmp_path: Path,
     role: str,
     rate_source: str,
     outcome: str,
+    background_sync: bool,
 ) -> None:
     from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
 
@@ -694,6 +696,26 @@ def test_recording_session_preserves_all_images_and_timestamps_without_padding(
 
     encoder = Encoder()
     video_sync = VideoSync()
+    import threading
+
+    from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+
+    release_sync = threading.Event()
+    entered_sync = threading.Event()
+    if background_sync:
+        original_sync = video_sync.sync
+
+        def blocked_sync():
+            entered_sync.set()
+            assert release_sync.wait(2)
+            original_sync()
+
+        video_sync.sync = blocked_sync
+        owned_sync = PeriodicVideoSync(video_sync, lambda: now[0])
+        assert owned_sync.request()
+        assert entered_sync.wait(1)
+    else:
+        owned_sync = video_sync
     session = object.__new__(RecordingSession)
     session.settings = SimpleNamespace(
         metadata_only=False,
@@ -719,7 +741,7 @@ def test_recording_session_preserves_all_images_and_timestamps_without_padding(
         1_000_000_000,
         session.clock_ns,  # type: ignore[arg-type]
     )
-    session._video_sync = video_sync
+    session._video_sync = owned_sync
     session._video_identity = "owned-video"
     session._video_path = video_path
     session._frame_log_path = log_path
@@ -736,18 +758,33 @@ def test_recording_session_preserves_all_images_and_timestamps_without_padding(
     session._error = None
     session._finished = False
     session._finalization = FinalizationProgress()
-    session._observe_video_identity = lambda: video_sync
+    identity_observations = []
+
+    def observe_owned():
+        identity_observations.append(True)
+        return owned_sync
+
+    session._observe_video_identity = observe_owned
     session._stat_identity = lambda _path: "owned-video"
 
     assert session.process_available(max_entries=3) == 3
     assert encoder.payloads == [b"aaaa", b"bbbb", b"cccc"]
+    assert identity_observations == []
     cutoff_ns = start_ns + 667_333_333
     end = CaptureEndMarker(3, cutoff_ns, cutoff_ns, 0, None, True)
     completion = RecordingCompletionContext(outcome, cutoff_ns, cutoff_ns, None)
-    original_deadline = start_ns + 100
-    video_sync.fail_sync = True
-    with pytest.raises(OSError, match="temporary video sync failure"):
+    original_deadline = start_ns + (1_000_000_000 if background_sync else 100)
+    if background_sync:
+        # All three real frames/mappings were consumed while flush stayed blocked.
+        assert not release_sync.is_set() and video_sync.sync_count == 0
+        release_sync.set()
         session.finish(end, PulseEvidence(), completion, deadline_ns=original_deadline)
+    else:
+        video_sync.fail_sync = True
+        with pytest.raises(OSError, match="temporary video sync failure"):
+            session.finish(
+                end, PulseEvidence(), completion, deadline_ns=original_deadline
+            )
     now[0] += 5
     session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 500)
     assert session._original_finish_deadline_ns == original_deadline
@@ -787,9 +824,11 @@ def test_recording_session_preserves_all_images_and_timestamps_without_padding(
     }
     assert lines[-1]["timing"]["recording_end_monotonic_ns"] == cutoff_ns
     assert encoder.writes == 3
-    assert file_sync.calls >= 3 and video_sync.sync_count >= 3
+    assert file_sync.calls >= 3
+    assert video_sync.sync_count >= (2 if background_sync else 3)
     assert session._finish_results[0].closure == control.OUTPUT_CLOSURE_CLOSED
     assert video_sync.closed and session._finished
+    assert identity_observations  # Explicit finalization still revalidates.
 
 
 def test_unproved_terminal_stop_never_generates_trailing_video_slots(
@@ -1163,3 +1202,249 @@ def test_failed_video_presence_is_independent_of_ownership(tmp_path, present, ow
     )
     assert outputs[1].closure == control.OUTPUT_CLOSURE_FAILED
     assert video.exists() is present
+
+
+def test_periodic_video_sync_is_single_flight_and_final_flush_is_distinct():
+    import threading
+    import time
+
+    from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+
+    started = threading.Event()
+    release = threading.Event()
+
+    class Video(_Video):
+        def sync(self):
+            super().sync()
+            if self.sync_count == 1:
+                started.set()
+                assert release.wait(2)
+
+    video = Video()
+    owner = PeriodicVideoSync(video, time.perf_counter_ns)
+    assert owner.request()
+    assert started.wait(1)
+    for _ in range(100):
+        assert not owner.request()
+    assert video.sync_count == 1
+    with pytest.raises(RuntimeError, match="retains its handle"):
+        owner.close()
+    # Closing fences further periodic work without releasing pending ownership.
+    release.set()
+    owner.sync_until(time.perf_counter_ns() + 1_000_000_000)
+    assert video.sync_count == 2
+    owner.sync_until(time.perf_counter_ns() + 1_000_000_000)
+    assert video.sync_count == 2
+    owner.close()
+    assert video.closed
+    with pytest.raises(RuntimeError, match="fenced"):
+        owner.request()
+
+
+def test_periodic_video_sync_timeout_retains_exact_operation_and_late_retry():
+    import threading
+    import time
+
+    from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+
+    started = threading.Event()
+    release = threading.Event()
+
+    class Video(_Video):
+        def sync(self):
+            super().sync()
+            started.set()
+            assert release.wait(2)
+
+    video = Video()
+    owner = PeriodicVideoSync(video, time.perf_counter_ns)
+    with pytest.raises(TimeoutError, match="pending"):
+        owner.sync_until(time.perf_counter_ns() + 10_000_000)
+    assert started.is_set() and not video.closed
+    with pytest.raises(RuntimeError, match="retains its handle"):
+        owner.close()
+    release.set()
+    owner.sync_until(time.perf_counter_ns() + 1_000_000_000)
+    assert video.sync_count == 1 and owner.late
+    owner.close()
+    assert video.closed
+
+
+def test_periodic_video_sync_failure_latches_and_does_not_restart():
+    import time
+
+    from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+
+    class Video(_Video):
+        def sync(self):
+            super().sync()
+            raise OSError("storage failure")
+
+    video = Video()
+    owner = PeriodicVideoSync(video, time.perf_counter_ns)
+    with pytest.raises(RuntimeError, match="synchronization failed"):
+        owner.sync_until(time.perf_counter_ns() + 1_000_000_000)
+    with pytest.raises(RuntimeError, match="synchronization failed"):
+        owner.poll()
+    assert video.sync_count == 1
+    owner.close()
+    assert video.closed
+
+
+def test_periodic_video_sync_cadence_does_not_reset_while_pending():
+    import threading
+    import time
+
+    from cephvr.acquisition.recording.session_storage import sync_due
+    from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+
+    release = threading.Event()
+
+    class Video(_Video):
+        def sync(self):
+            super().sync()
+            assert release.wait(2)
+
+    owner = PeriodicVideoSync(Video(), time.perf_counter_ns)
+    last = sync_due(None, owner, 0, 10, 10)
+    assert last == 10
+    assert sync_due(None, owner, last, 10, 30) == 10
+    release.set()
+    owner.sync_until(time.perf_counter_ns() + 1_000_000_000)
+    owner.close()
+
+
+def test_periodic_video_sync_thread_start_failure_retains_close_owner(monkeypatch):
+    import threading
+    import time
+
+    from cephvr.acquisition.recording.video_sync import (
+        PeriodicVideoSync,
+        VideoSyncFailure,
+    )
+
+    video = _Video()
+    owner = PeriodicVideoSync(video, time.perf_counter_ns)
+
+    def fail_start(_thread):
+        raise RuntimeError("thread start failed")
+
+    monkeypatch.setattr(threading.Thread, "start", fail_start)
+    with pytest.raises(VideoSyncFailure, match="could not start"):
+        owner.sync_until(time.perf_counter_ns() + 1_000_000_000)
+    with pytest.raises(VideoSyncFailure, match="synchronization failed"):
+        owner.sync_until(time.perf_counter_ns() + 1_000_000_000)
+    owner.close()
+    assert video.closed and video.sync_count == 0
+
+
+def test_failed_periodic_flush_cleanup_closes_exact_handles_without_durability(
+    tmp_path,
+):
+    import time
+
+    from cephvr.acquisition.recording.session_cleanup import close_failed_recording
+    from cephvr.acquisition.recording.video_sync import (
+        PeriodicVideoSync,
+        VideoSyncFailure,
+    )
+
+    class Video(_Video):
+        def sync(self):
+            raise OSError("disk sync failed")
+
+    native = Video()
+    owner = PeriodicVideoSync(native, time.perf_counter_ns)
+    with pytest.raises(VideoSyncFailure):
+        owner.sync_until(time.perf_counter_ns() + 1_000_000_000)
+    log = _FrameLog()
+    progress = FinalizationProgress()
+    video_path, log_path = tmp_path / "trial.mp4", tmp_path / "trial.jsonl"
+    results, retained = close_failed_recording(
+        _schedule(video_path, log_path),
+        video_path,
+        log_path,
+        queue=RecordingQueue(capacity_frames=1, pending_records_capacity=1),
+        pool=PixelBufferPool(payload_bytes=4, capacity=1),
+        encoder=_Encoder(identity="original"),
+        frame_log=log,
+        video_sync=owner,
+        finalization=progress,
+        submitted=1,
+        observe_video=lambda: owner,
+        stat_identity=lambda _path: "original",
+        clock_ns=time.perf_counter_ns,
+        deadline_ns=time.perf_counter_ns() + 1_000_000_000,
+    )
+    assert retained is owner and native.closed
+    assert progress.video_closed and not progress.video_synced
+    assert log.failed_closes == 1
+    assert [r.closure for r in results] == [
+        control.OUTPUT_CLOSURE_UNCONFIRMED,
+        control.OUTPUT_CLOSURE_FAILED,
+    ]
+
+
+def test_pending_periodic_sync_does_not_extend_recording_run_deadline():
+    import threading
+
+    from cephvr.acquisition.recording.video_sync import PeriodicVideoSync
+
+    release = threading.Event()
+
+    class Video(_Video):
+        def sync(self):
+            assert release.wait(2)
+
+    now = [10]
+    owner = PeriodicVideoSync(Video(), lambda: now[0])
+    assert owner.request()
+    session = object.__new__(RecordingSession)
+    session._released = True
+    session._frame_log = object()
+    session._scheduled = None
+    session._active_io_deadline_ns = None
+    session.queue = SimpleNamespace(pending_records=0, waiting_pixels=0)
+    session.clock_ns = lambda: now[0]
+    deadlines = []
+
+    def process(**_kwargs):
+        now[0] = 20
+        assert not owner.request()
+
+    session.process_available = process
+    session.fail_cleanup = lambda *, deadline_ns: deadlines.append(deadline_ns) or []
+    marker = SimpleNamespace(
+        abort_request=lambda: None, completion_deadline_ns=None, poll=lambda: None
+    )
+    try:
+        assert session.run(marker, lambda: None, lambda: None, deadline_ns=20) == []
+        assert deadlines == [20] and session._active_io_deadline_ns == 20
+    finally:
+        release.set()
+        owner.sync_until(1_000_000_020)
+        owner.close()
+
+
+@pytest.mark.parametrize("current_identity", [None, "replacement"])
+def test_adopted_video_handle_still_rejects_path_change_at_final_observation(
+    tmp_path, current_identity
+):
+    from cephvr.acquisition.recording.session_storage import observe_video_identity
+
+    native = _Video()
+    observed = []
+    factory = SimpleNamespace(
+        identity=lambda path: observed.append(path) or current_identity
+    )
+    with pytest.raises(RecordingFailure, match="path is absent|path identity differs"):
+        observe_video_identity(
+            _Encoder(identity="original"),
+            tmp_path / "video.mp4",
+            "original",
+            native,
+            10,
+            factory=factory,
+            clock_ns=lambda: 20,
+        )
+    assert len(observed) == 1 and not native.closed

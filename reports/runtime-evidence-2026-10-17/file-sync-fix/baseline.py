@@ -13,7 +13,7 @@ assert not (out / "baseline.json").exists()
 changed = subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines()
 untracked = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard"], text=True).splitlines()
 paths = sorted(set(changed + [p for p in untracked if not (root/p).is_relative_to(out)]))
-record = {"date": "2026-10-16", "observed_unix_time": time.time(), "head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(), "inherited_files": {}, "operator_files": {}}
+record = {"date": "2026-10-17", "observed_unix_time": time.time(), "head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(), "inherited_files": {}, "operator_files": {}}
 with zipfile.ZipFile(out / "inherited-baseline.zip", "x", compression=zipfile.ZIP_DEFLATED) as backup:
     for relative in paths:
         path = root/relative

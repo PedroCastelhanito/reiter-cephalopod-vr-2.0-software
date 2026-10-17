@@ -1,0 +1,383 @@
+{
+  "concurrent-lossless-p4-r1": {
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "33bec822-36ac-41b7-86c4-7a3dd726e2bd",
+        "session_id": "0e83e5c5-37fe-4c65-bcd0-35da9318d0a7"
+      },
+      "outcome": "SESSION_OUTCOME_COMPLETED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-p4-r\\DUMMY-165200",
+      "trial_count": 1,
+      "activated": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "33bec822-36ac-41b7-86c4-7a3dd726e2bd",
+          "session_id": "0e83e5c5-37fe-4c65-bcd0-35da9318d0a7"
+        },
+        "trial_id": "fbb18c18-827c-467e-a5f7-9e3596ceda58",
+        "trial_number": 1
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "245960565841200",
+      "scheduled_end_monotonic_ns": "246020565841200",
+      "actual_end_monotonic_ns": "246020565841200"
+    },
+    "counts": {
+      "DUMMY_165205_behavioral_cam_frames.jsonl": {
+        "received": 1798,
+        "retained": 1710,
+        "drops": 88,
+        "counter_gaps": 0,
+        "duplicate_counter_count": 0,
+        "unique_sources": 1710,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246020565841200,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 1798,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 1710,
+            "selected_source_frame_count": 1710,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 0,
+            "last_native_counter": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      "DUMMY_165205_tracking_cam_frames.jsonl": {
+        "received": 3588,
+        "retained": 3588,
+        "drops": 0,
+        "counter_gaps": 0,
+        "duplicate_counter_count": 0,
+        "unique_sources": 3588,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246020565841200,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3588,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3588,
+            "selected_source_frame_count": 3588,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 3588
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      "stimulus": {
+        "groups": 3599,
+        "retained": 3599,
+        "unique_sources": 3599,
+        "drops": 0
+      }
+    }
+  },
+  "concurrent-lossless-profile-r2": {
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "b84372f3-de72-44cf-b28d-8fd8ea61abdb",
+        "session_id": "b9e54f9c-cfb6-48a3-b910-118f2b00f7cb"
+      },
+      "outcome": "SESSION_OUTCOME_COMPLETED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_concurrent-lossless-prof\\DUMMY-165449",
+      "trial_count": 1,
+      "activated": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "b84372f3-de72-44cf-b28d-8fd8ea61abdb",
+          "session_id": "b9e54f9c-cfb6-48a3-b910-118f2b00f7cb"
+        },
+        "trial_id": "2afa16e0-626f-4dd3-b665-9d75408b8ba0",
+        "trial_number": 1
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "246129194015700",
+      "scheduled_end_monotonic_ns": "246189194015700",
+      "actual_end_monotonic_ns": "246189194015700"
+    },
+    "counts": {
+      "DUMMY_165454_behavioral_cam_frames.jsonl": {
+        "received": 1798,
+        "retained": 1512,
+        "drops": 286,
+        "counter_gaps": 0,
+        "duplicate_counter_count": 0,
+        "unique_sources": 1512,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246189194015700,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 1798,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 1512,
+            "selected_source_frame_count": 1512,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 0,
+            "last_native_counter": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      "DUMMY_165454_tracking_cam_frames.jsonl": {
+        "received": 3588,
+        "retained": 3588,
+        "drops": 0,
+        "counter_gaps": 0,
+        "duplicate_counter_count": 0,
+        "unique_sources": 3588,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246189194015700,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3588,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3588,
+            "selected_source_frame_count": 3588,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 3588
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      "stimulus": {
+        "groups": 3600,
+        "retained": 3600,
+        "unique_sources": 3600,
+        "drops": 0
+      }
+    }
+  },
+  "saved-cq23-120-r3": {
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "3e7397c1-9b11-4a78-be67-53e8976c3f12",
+        "session_id": "588c8c7e-d7f7-492b-b7c9-a33c4bd67f01"
+      },
+      "outcome": "SESSION_OUTCOME_COMPLETED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\sync-fix-20261017\\20261017_audit_saved-cq23-120-r3\\DUMMY-165718",
+      "trial_count": 1,
+      "activated": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "3e7397c1-9b11-4a78-be67-53e8976c3f12",
+          "session_id": "588c8c7e-d7f7-492b-b7c9-a33c4bd67f01"
+        },
+        "trial_id": "e59d6d4e-67d4-46b2-865d-d2f1f798cc1b",
+        "trial_number": 1
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "246278272495400",
+      "scheduled_end_monotonic_ns": "246398272495400",
+      "actual_end_monotonic_ns": "246398272495400"
+    },
+    "counts": {
+      "DUMMY_165723_behavioral_cam_frames.jsonl": {
+        "received": 3598,
+        "retained": 3598,
+        "drops": 0,
+        "counter_gaps": 0,
+        "duplicate_counter_count": 0,
+        "unique_sources": 3598,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246398272495400,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3598,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3598,
+            "selected_source_frame_count": 3598,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 3598
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      "DUMMY_165723_tracking_cam_frames.jsonl": {
+        "received": 7188,
+        "retained": 7188,
+        "drops": 0,
+        "counter_gaps": 0,
+        "duplicate_counter_count": 0,
+        "unique_sources": 7188,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 246398272495400,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 7188,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 7188,
+            "selected_source_frame_count": 7188,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": null,
+            "on_dispatched_monotonic_ns": null,
+            "on_acknowledged_monotonic_ns": null,
+            "off_outcome": null,
+            "off_dispatched_monotonic_ns": null,
+            "off_acknowledged_monotonic_ns": null
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 7188
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      "stimulus": {
+        "groups": 7200,
+        "retained": 7200,
+        "unique_sources": 7200,
+        "drops": 0
+      }
+    }
+  }
+}

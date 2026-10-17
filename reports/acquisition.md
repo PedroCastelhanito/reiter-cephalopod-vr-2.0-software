@@ -1,43 +1,39 @@
 # Acquisition status
 
-Oct16 encoding audit preserves current [A08/A09](../docs/architecture/acquisition.md#a08)
-sequential source-once rules. Two real cameras run concurrently with four projector
-outputs and three encoders. The reviewed shared input adapter polls immediate
-completion once, preserving pending-buffer ownership and original deadlines. Native
-8-bit GBR capability/profile aliases now match installed FFmpeg and exact-device
-NVENC evidence; build, device, profile and lossless feature gates remain required.
-No 10-bit expansion or saved encoding default change was made.
+Current Oct17 [A08](../docs/architecture/acquisition.md#a08) sync repair passes
+its primary no-omission/no-duplication criterion at unchanged saved camera quality:
+120 s concurrent Behavior 3598/3598, Tracking 7188/7188 and stimulus 7200/7200.
+All camera counters and mapping identities are unique, with zero native gaps,
+invalid images or capacity omissions in this fixture. Cleanup/NewSession and
+normal Shutdown confirm exact output/process closure. An explicit temporary
+16-slot stimulus configuration is part of this result; saved three-slot defaults
+are restored and are not certified by it.
 
-A deterministic full-resolution high-entropy synthetic RGB/gray reference verifies
-H264 lossless output byte-for-byte, including every decoded frame in the matched
-HEVC camera comparison. This establishes prepared-pixel capability, not raw Bayer
-preservation or hashes of live camera pixels. **Real-time lossless is not achieved**:
-the completed 60 s p4 run receives 1798 Behavior frames but retains 1416, with 382
-explicit recording-capacity omissions between 16.4 and 43.0 s. Tracking retains
-3588/3588. The Behavior file is 5.82 GB. HEVC saves about 14.6% in the short matched
-repeated-pool test but misses all three tested input-rate targets.
+Periodic video flushes now have one independent exact-file owner, retaining at
+most one pending helper. The original cadence and final sync remain. Finalization
+joins pending work then performs a distinct post-encoder-exit flush under the
+original bound. Pending timeout retains the handle; a completed failure can close
+resources without claiming successful durability. Frame-log sync stays unchanged.
+Redundant per-frame path reopen stops after exact handle adoption; initial and
+final identity checks still reject a replaced/deleted output. Existing accepted
+[Windows ownership](../contracts/acquisition/windows-resources.md#ownership-ledger-and-storage-synchronization)
+already requires independent single-pending flushes; no policy/default changed.
 
-One p1-camera diagnostic, also adding bounded instrumentation, interrupts around
-53 s. Behavior video sync takes 25.20 s over 44 calls (maximum 3.01 s); preparation
-averages 5.50 ms and pipe writes 1.34 ms. Its sampled queue reaches 20/20. These
-measurements identify synchronous video-file flush stalls in this run, not a GPU
-bottleneck or proof of deficient storage hardware. No isolated preset causality is
-claimed. Preserve A08's persistence cadence and final sync; further storage-path
-and concurrent-sync ownership work is needed before promising full retention.
+Experimental pixel-exact runs before the final hot-path guard still omit Behavior
+frames (1710/1798 and instrumented 1512/1798), while their normal cleanup confirms.
+The profiled flush totals 18.507 s concurrently; it cannot be added to consumer
+work. Final source's pixel-exact real-time capacity remains unvalidated. Prior
+synthetic prepared-RGB fidelity is not raw Bayer fidelity or a live pixel hash.
+The owner prioritizes full frame retention; saved CQ23 is used without arbitrary
+quality reduction. Source gaps and retained counts remain separate.
 
-The diagnostic also lacks exact Behavior frame-log closure; its failed cleanup
-is retained. Save Off normally completes with scientific evidence retained. Early
-Abort after Save On rejects interrupted Finished evidence and cleanup remains
-unconfirmed. Failed-Setup retired-attempt reporting remains separate. The native
-wait ACK is now published before waking the private event; a deterministic wrapper
-regression proves ordering, and 75 owning/native wait checks pass. The observed
-Setup failure is consistent with this race, not conclusively attributed to it.
-
-Final backend checks: 2188 passed, 5 Windows symlink-privilege skips, 1 rig test
-excluded and separately passed (NVOF). All three camera PFS/readbacks and ten
-operator files are restored exactly; cameras are closed and temporary profiling
-source is restored to its original hash. [Methods/results/limits](runtime-evidence-2026-10-16/encoding-overload-audit/README.md),
-[restoration](runtime-evidence-2026-10-16/encoding-overload-audit/final-restoration-r3.json).
+Final backend 2209 passed/5 privilege skips, explicit rig NVOF passed; acquisition
+629 passed, owning cleanup 60 passed. Ruff/format, Win32 mypy and boundaries pass.
+All three fresh PFS/readbacks and ten settings files match originals, cameras are
+closed and the temporary profile hook is removed. Native Abort exact-Finished,
+failed-Setup retired reports and older Shutdown findings remain open; normal
+closure does not close those separate triggers. [Current methods/results](runtime-evidence-2026-10-17/file-sync-fix/README.md),
+[restoration](runtime-evidence-2026-10-17/file-sync-fix/final-restoration.json).
 
 Oct16 `gui-preview-slot`: [G01](../docs/architecture/gui.md#g01)'s detached display
 placement now keeps the existing process-owned HighGUI window topmost without

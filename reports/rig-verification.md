@@ -1,19 +1,19 @@
 # Rig verification — outstanding checks
 
-Current Oct16 audit verifies prepared RGB/gray lossless capability, but not
-real-time complete retention: Behavior retains 1416/1798 received frames, with
-382 explicit capacity omissions. Final diagnostic video-file sync stalls dominate
-its consumer time; it interrupts with unconfirmed frame-log closure. Normal
-stimulus 16-slot fixture retains 3599/3599; higher-demand full-resolution/eight-slot
-fixture loses five startup groups and none later observed. Save Off normally
-retains science; early Abort and failed-Setup retired reports remain open.
+Current Oct17 sync repair passes bounded frame-retention acceptance at unchanged
+saved camera CQ23/stimulus CQ18: 120 s Behavior 3598/3598, Tracking 7188/7188,
+stimulus 7200/7200, no native counter gaps, capacity omissions, duplicate mappings
+or padding. Exact normal closure, Cleanup/NewSession and Shutdown/process absence
+confirm. Temporary 16 stimulus slots are part of the fixture; saved three-slot
+startup behavior is not certified. Full final-source pixel-exact capacity remains
+unvalidated; pre-hotpath-guard lossless failures are separate historical evidence.
 
-Final backend 2188 passed/5 privilege skips, explicit rig NVOF passed; GUI 586
-passed offscreen/28 selected native passes, seven native picker roundtrips remain
-unvalidated. All three camera baselines and ten settings files are restored.
-These results do not establish external-trigger/optical/Tracking-processing
-acceptance. MCU outputs stay disabled, firmware unchanged, fresh compatibility
-unestablished. [Current assessment](runtime-evidence-2026-10-16/encoding-overload-audit/README.md).
+All three fresh camera PFS/readbacks and ten settings files restore exactly. Full
+backend 2209/5privilege skips and explicit NVOF rig pass; GUI was not rerun because
+unchanged. Native Abort exact Finished, failed-Setup retired reports, old Shutdown
+resource registration and optical/external-trigger/Tracking-processing acceptance
+remain outstanding. MCU outputs stay disabled, firmware unchanged. [Current results
+and limitations](runtime-evidence-2026-10-17/file-sync-fix/README.md).
 
 Historical comprehensive Oct15 audit supersedes the availability limits of earlier
 runs below: owner confirmed an empty rig with cameras and projection available;
@@ -164,7 +164,7 @@ validation fails, while a separate current-profile grid lifecycle passes. Combin
 recording is blocked by unset camera drain margins; failed-Setup cleanup additionally
 exits the renderer on an unknown cleanup command. A separate unpaired stimulus-only
 60s trial completes, video fully decodes and outputs close, with30.33 real render
-groups/s and60fps video padding. Exact final application absence and configuration
+groups/s and 60fps video padding. Exact final application absence and configuration
 restoration pass. See the [current failure/remedy inventory](runtime.md) and
 [new raw evidence](rig-evidence-2026-10-13/workflow-tests/); previous results below
 retain their historical scopes.

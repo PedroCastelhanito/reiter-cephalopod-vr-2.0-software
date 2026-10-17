@@ -3984,3 +3984,52 @@ success remain unchanged. Updated the existing audit assessment and storage-sync
 follow-up only; no hardware, benchmark, configuration or policy changes. Fresh
 working tree was clean before edits. Documentation whitespace and local-link checks
 cover this clarification; no runtime result is implied.
+
+
+## 2026-10-17 — lossless-storage-sync-capacity repair and owning validation
+
+[acquisition] [shared] Fresh clean baseline/settings/PFS captured. Reviewed the
+simpler standard-library single-flight recording-layer sync owner under ARCH-002
+and A08's existing independent sync contract; native exact-handle primitive stays
+unchanged. Due periodic flush no longer blocks encoder feeding; overdue work is
+coalesced without backlog. Finalization joins pending work then performs a distinct
+post-encoder flush with the original absolute bound. Timeout retains ownership;
+completed flush failure can release exact resources without certifying durability.
+Frame-log sync, cadence, defaults and original recording lifecycle bounds remain.
+58 owning and 627 full acquisition tests pass; Windows-target acquisition mypy
+passes. Astra reviews source and native workload admission before live capture.
+
+
+## 2026-10-17 — lossless-storage-sync-capacity primary acceptance
+
+[acquisition] [visual_stimulus] [shared] [controller] [supervisor] Completed the
+reviewed independent single-flight video sync owner and exact-handle hot-path
+simplification. Native 120 s concurrent saved-quality workload receives/retains
+Behavior 3598/3598, Tracking 7188/7188 and stimulus 7200/7200, with zero capacity
+omissions, native counter gaps, invalid frames or duplicate mappings/counters.
+Original CQ23 camera/CQ18 review quality, one-second sync cadence, mandatory final
+sync and deadlines are unchanged. Temporary 16 stimulus slots are explicit; saved
+three slots are restored and their startup limitation is not certified.
+
+Earlier experimental pixel-exact runs (1710/1798 and profiled 1512/1798) precede
+the final hot-path guard. Final code's pixel-exact capacity remains unvalidated,
+not proven failing or fixed. A profiled concurrent flush totals 18.507 s; consumer
+and concurrent totals are not summed. No hardware deficiency or isolated per-change
+speedup is inferred. Native Abort/failed-Setup/old Shutdown findings remain open.
+
+Final backend 2209 passed/5 privilege skips; 629 acquisition and 60 owning cases,
+explicit NVOF rig 1 passed; Ruff/format, Win32mypy 815 files, 717modules/zero boundary
+violations pass. GUI unchanged, so no new GUI/native-picker acceptance. Normal
+Cleanup/NewSession/Shutdown and exact absence confirm; all 3 fresh PFS/readbacks,
+closed cameras and 10 operator files match baseline. Temporary profile hook is removed.
+User evidence-only commit f447b4f during task is preserved. Launch-time production
+hash snapshot was not captured; final hashes/chronology are explicitly qualified.
+Reports/dated evidence retain exact recipes, source and validation scope.
+
+
+[acquisition] [visual_stimulus] [shared] Final media verification fully decodes all
+nine current videos and matches retained mappings; primary decoded counts are
+3598/7188/7200. The exact24 scientific JSON/JSONL files are archived and verified;
+all nine local videos are hashed. Removed70 verified regenerable cache directories
+(52,714,154 bytes), preserving all scientific outputs and raw evidence. Final local
+reference/whitespace checks and Astra staged review precede the authorized commit.

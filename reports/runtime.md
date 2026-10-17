@@ -1,19 +1,20 @@
 # Controller and supervisor status
 
-Oct16 audit repairs exact scheduled-output Cleanup path validation, immediate
-encoder write polling and 8-bit GBR capability gates. The native wait ACK now
-precedes its private wake; ordering regression passes. Final backend validation:
-2188 passed, 5 privilege skips; explicit rig NVOF separately passes. GUI: 586
-passed offscreen, 28 selected native passes; seven native picker roundtrips remain
-unvalidated, without proving operator picker failure.
+Current Oct17 recording sync repair completes a 120 s concurrent workload at
+unchanged saved quality, with Behavior 3598/3598, Tracking 7188/7188 and stimulus
+7200/7200 retained exactly once, zero native counter gaps/capacity omissions.
+The explicit fixture uses temporary 16 stimulus slots; restored saved three-slot
+startup behavior is not certified. Normal output closure, Cleanup/NewSession and
+Shutdown/process absence confirm; original sync cadence and lifecycle bounds stay.
 
-Real-time lossless camera retention is not achieved: Behavior retains 1416/1798
-frames in the completed p4 run. One final p1/instrumented diagnostic interrupts;
-video sync dominates measured consumer time and exact frame-log closure is missing.
-Earlier normal completed trials/Shutdown remain valid, while failed Setup late
-reports and early Abort Finished validation remain separate open findings. All
-three camera baselines and ten operator files are restored; temporary source hook
-is removed. [Current methods, results and limits](runtime-evidence-2026-10-16/encoding-overload-audit/README.md).
+Full backend validation is 2209 passed/5 privilege skips; explicit NVOF rig case
+passes. Ruff/format, Win32 mypy 815 files and 717 backend modules/zero boundary
+violations pass. GUI source is unchanged; prior GUI evidence is historical, not a
+new native GUI run. All three camera baselines and ten operator files restore.
+Earlier Abort Finished, failed-Setup late report and historical Shutdown findings
+remain open. Pixel-exact performance on final source remains unvalidated; failed
+pre-hotpath-guard experiments cannot establish current success or failure.
+[Current evidence and provenance](runtime-evidence-2026-10-17/file-sync-fix/README.md).
 
 Oct16 `device-action-cancel` implements owner-selected safe cancellation under
 [G01](../docs/architecture/gui.md#g01) and [A11](../docs/architecture/acquisition.md#a11).
@@ -178,7 +179,7 @@ retained interrupted/setup fences; safe context retirement is a separate follow-
 | Rendering/encoding capacity |CQ23/CQ18 camera+offscreen-shader workloads, native4096 variant, full counts/decodes |Tracking imagery sampled black, native4096 one BlockID gap; initial CPU sample confounded |
 
 The final isolated production workload runs exactly60seconds with Behavioral
-1760×1716/30Hz and Tracking1588×1344/60Hz, camera CQ23, stimulus CQ18/YUV444,
+1760×1716/30Hz and Tracking 1588×1344/60Hz, camera CQ23, stimulus CQ18/YUV444,
 four60Hz projector outputs and the explicit512-pixel arena derivative. No other
 test runs during this interval. Current machine is Ryzen9 9950X16cores/32threads,
 66,094,223,360bytes usable RAM,2TB CT2000P3PSSD8, RTX5060Ti16,311MiB and
