@@ -3969,3 +3969,18 @@ Final generation exits with exact absence; all 3 PFS/readbacks/closed cameras an
 10 operator files match originals. Temporary profiling source hash restored. Dated
 raw science, failures, emergencies and provenance remain; only verified reproducible
 caches are cleaned. See current reports and dated audit README/manifest for scope.
+
+
+## 2026-10-17 — encoding-overload-audit priority clarification
+
+[acquisition] [visual_stimulus] [shared] Recorded the owner's late answer:
+"No dropped or duplicated frames is the priority." The next acceptance criterion
+is all received usable source frames retained exactly once, with zero capacity
+omissions, duplicates or padding; source/acquisition gaps remain separately
+reported. Prepared-pixel fidelity is secondary, without authorization for arbitrary
+quality reduction or weaker persistence, deadlines, ownership or output closure.
+The measured Behavior 1416/1798 failure and fixture-specific stimulus 3599/3599
+success remain unchanged. Updated the existing audit assessment and storage-sync
+follow-up only; no hardware, benchmark, configuration or policy changes. Fresh
+working tree was clean before edits. Documentation whitespace and local-link checks
+cover this clarification; no runtime result is implied.

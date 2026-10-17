@@ -7,6 +7,15 @@ retains 1416 and records 382 explicit recording-capacity omissions from 16.392 t
 complete acquisition retention. Synthetic RGB/gray references, rather than live
 camera pixel hashes, prove the prepared-pixel fidelity of the selected recipe.
 
+Owner priority clarified on 2026-10-17: **no dropped or duplicated frames comes
+first**. Primary acceptance requires every received usable source frame to be
+retained exactly once, with zero capacity omissions, duplicates or padding.
+Report source/acquisition gaps separately so matching retained-video counts cannot
+hide missing source frames. Prepared-pixel fidelity is secondary; this clarification
+does not authorize arbitrary quality reduction or weaker persistence, deadlines,
+resource ownership or exact output closure. The 1416/1798 Behavior result fails
+this primary criterion; the stimulus 3599/3599 result is fixture-specific evidence.
+
 One final p1-camera diagnostic also adds bounded instrumentation and interrupts
 around 53 s. Behavior video sync totals 25.20 s in 44 calls, maximum 3.01 s, with
 15 calls above 100 ms. Preparation averages 5.50 ms; pipe writes average 1.34 ms.
