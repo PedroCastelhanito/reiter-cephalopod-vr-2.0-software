@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-16",
+  "observed_unix_time": 1792223287.2567744,
+  "head": "6f3afad1e0d2dfa45525b04b2d7895e40532dc15",
+  "inherited_files": {},
+  "operator_files": {
+    "config\\last_configuration.json": {
+      "bytes": 146671,
+      "sha256": "9714f21fa0149a1c5a8a9159da0ea9d08b10e52a10cb9fe19e8e1e1f05219479"
+    },
+    "config\\runtime_gui.json": {
+      "bytes": 50253,
+      "sha256": "c7ba71b8327a85035a7e777742ccc97fea916a26734bdbc24bd3700f40f029b2"
+    },
+    "config\\backends\\acquisition_config.toml": {
+      "bytes": 12763,
+      "sha256": "2e06a645260da6cdb54d83ec174f62cb4a1a171173196732b219d0e45939d8b0"
+    },
+    "config\\backends\\experiment_config.toml": {
+      "bytes": 6801,
+      "sha256": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115"
+    },
+    "config\\backends\\gui_config.toml": {
+      "bytes": 675,
+      "sha256": "e5498d0b0864531b98595760ea8cb17880c010fffa57d168c88ceff6d8f53c30"
+    },
+    "config\\backends\\microcontroller_config.toml": {
+      "bytes": 1304,
+      "sha256": "3fb97389300d23739be336f11226c9471903497820259e153496c9413b518607"
+    },
+    "config\\backends\\supervisor_config.toml": {
+      "bytes": 2211,
+      "sha256": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe"
+    },
+    "config\\backends\\synchronization_config.toml": {
+      "bytes": 2370,
+      "sha256": "f4905cac33e546c83d103d8e3d355731c7569c4f72e1aaecc04a2f8f59c16e94"
+    },
+    "config\\backends\\tracking_config.toml": {
+      "bytes": 8347,
+      "sha256": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c"
+    },
+    "config\\backends\\visual_stimulus_config.toml": {
+      "bytes": 6263,
+      "sha256": "a54cc7ab737d851970a505ed4e77e30b7263db98bf566592d8956b634c32d212"
+    }
+  }
+}
