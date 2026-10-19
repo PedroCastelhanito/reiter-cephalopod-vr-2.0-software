@@ -6101,3 +6101,7 @@ existing CRLF conversion notices only. Supplemental fixture Ruff/format pass.
 Raw evidence staging check found Git line-ending normalization changed the bytes of
 final-runtime-reload.json. Extended the existing dated-capture -text attribute to
 the October19 evidence directory to preserve original capture bytes and hashes.
+
+### 2026-10-19 - post-rig-code-review completed and synced
+
+[repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Committed reviewed shared changes and dated evidence as 6b03c40507323b2217c676ab33a0ed4df0529fa7 and pushed main to origin successfully. Local HEAD and origin/main match; working tree was clean before this task-status reconciliation. All744 dated evidence files match staged raw Git blob hashes; independent changed-file byte comparison677/677 also passes. A read-only CIM process probe during the longer byte check was denied by the sandbox; the comparison itself completed normally. Sol issue hunt/Astra review, verified fixes, cleanup and sync are complete, so post-rig-code-review leaves TODO. Physical GUI acceptance, native-camera darkness and the E08 brightness-helper decision remain explicitly blocked in their existing tasks; no new acceptance or behavior choice is implied. This final TODO/LOG-only reconciliation needs whitespace validation and sync, not repeated runtime tests.

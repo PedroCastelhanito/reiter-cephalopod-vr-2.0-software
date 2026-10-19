@@ -10,8 +10,6 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `post-rig-code-review` [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Review the requested Sol 6.1 chat findings with Astra, apply verified fixes, remove disposable artifacts and commit/sync validated changes. Owner: rig validation coordinating chat. Done when findings, checks and sync outcome are recorded. — [Rig evidence](reports/runtime-evidence-2026-10-19/gui-full-rig/verification.json)
-
 - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).
 
 Completed open-loop endurance, bounded camera-codec lossless checks,
