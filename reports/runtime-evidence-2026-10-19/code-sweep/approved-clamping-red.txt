@@ -1,0 +1,108 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_legacy_polar_texture_requires_complete_geometry_and_matches_reference __
+
+    def test_legacy_polar_texture_requires_complete_geometry_and_matches_reference():
+        import hashlib
+        import json
+    
+        import numpy as np
+    
+        from cephvr.visual_stimulus.resources.texture_recipe import (
+            TextureRecipe,
+            generate_texture_recipe,
+            parse_texture_recipe,
+        )
+    
+        corners = {
+            "front": np.array(
+                [[-50, 0, 0], [50, 0, 0], [50, 0, 80], [-50, 0, 80]], dtype=np.float32
+            ),
+            "left": np.array(
+                [[-50, -100, 0], [-50, 0, 0], [-50, 0, 80], [-50, -100, 80]],
+                dtype=np.float32,
+            ),
+            "right": np.array(
+                [[50, 0, 0], [50, 100, 0], [50, 100, 80], [50, 0, 80]], dtype=np.float32
+            ),
+            "bottom": np.array(
+                [[-50, -100, 0], [50, -100, 0], [50, 0, 0], [-50, 0, 0]], dtype=np.float32
+            ),
+        }
+        recipe = TextureRecipe(
+            "polar_grating",
+            {
+                "origin_screen": "front",
+                "target_screen": "right",
+                "bar_count": 8,
+                "phase_deg": 12,
+                "bar_width_mm": 10,
+                "feature_sharpness": 0.7,
+                "inner_radius_mm": 3,
+                "outer_radius_mm": 200,
+            },
+            64,
+            None,
+            None,
+        )
+        with pytest.raises(ValueError, match="surface corners"):
+            generate_texture_recipe(recipe)
+        with pytest.raises(ValueError, match="corners for bottom"):
+            generate_texture_recipe(
+                recipe,
+                surface_corners={
+                    key: value for key, value in corners.items() if key != "bottom"
+                },
+            )
+        pixels = generate_texture_recipe(recipe, surface_corners=corners)
+        assert (
+            hashlib.sha256(pixels.tobytes()).hexdigest()
+            == "bfb631bdbde155bc01cea1a4d81cde8fea509aac0eb7128d5bc57bc84fab4ab3"
+        )
+        for pattern in ("grating", "polar_grating"):
+            for channel in ("color_a", "color_b"):
+                for values, clamped in (
+                    ([1e308, -1e308, 0.5], [1, 0, 0.5]),
+                    ([-1e308, 0.5, 1e308], [0, 0.5, 1]),
+                ):
+>                   rasters = [
+                        generate_texture_recipe(
+                            parse_texture_recipe(
+                                json.dumps(
+                                    {"pattern": pattern, "params": {"size": 8, channel: rgb}}
+                                ).encode()
+                            ),
+                            surface_corners=corners,
+                        )
+                        for rgb in (values, clamped)
+                    ]
+
+tests/visual_stimulus/test_rendering.py:1579: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/visual_stimulus/test_rendering.py:1580: in <listcomp>
+    generate_texture_recipe(
+src/cephvr/visual_stimulus/resources/texture_recipe.py:233: in generate_texture_recipe
+    result = generate_pattern(
+src/cephvr/visual_stimulus/resources/texture_recipe_patterns.py:78: in generate_pattern
+    return _polar_grating(params, size, surface_corners or {})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/visual_stimulus/resources/texture_recipe_geometry.py:123: in _polar_grating
+    _color(params.get("color_a"), (255, 255, 255)),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/visual_stimulus/resources/texture_recipe_geometry.py:42: in _color
+    return tuple(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <range_iterator object at 0x1077b42a0>
+
+    return tuple(
+>       max(0, min(255, int(_num(value[i], default[i] / 255) * 255)))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        for i in range(3)
+    )  # type: ignore[return-value]
+E   OverflowError: cannot convert float infinity to integer
+
+src/cephvr/visual_stimulus/resources/texture_recipe_geometry.py:43: OverflowError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_rendering.py::test_legacy_polar_texture_requires_complete_geometry_and_matches_reference
+1 failed, 80 deselected in 1.64s

@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree",
+  "method": "actual Retro Review entry; open all active independent sources, own-process native frame/visibility queries, Qt minimize/restore and close one",
+  "scope": "local macOS Review only; no Windows-native or hardware acceptance",
+  "result": {
+    "windows": {
+      "camera-1": {
+        "target": [
+          911,
+          565,
+          200,
+          160
+        ],
+        "native_frame": [
+          911,
+          565,
+          200,
+          156
+        ],
+        "contained": true
+      },
+      "camera-2": {
+        "target": [
+          1206,
+          565,
+          200,
+          160
+        ],
+        "native_frame": [
+          1206,
+          565,
+          200,
+          156
+        ],
+        "contained": true
+      },
+      "stimulus": {
+        "target": [
+          1206,
+          768,
+          200,
+          160
+        ],
+        "native_frame": [
+          1206,
+          768,
+          200,
+          156
+        ],
+        "contained": true
+      }
+    },
+    "all_open": true,
+    "no_overlap": true,
+    "maximized": true,
+    "gui_frame": [
+      82,
+      33,
+      1388,
+      923
+    ],
+    "desktop": [
+      82,
+      33,
+      1388,
+      923
+    ],
+    "all_hidden_minimized": true,
+    "retained": true,
+    "all_restored": true,
+    "independent_close": true,
+    "remaining_positions_unchanged": true
+  }
+}

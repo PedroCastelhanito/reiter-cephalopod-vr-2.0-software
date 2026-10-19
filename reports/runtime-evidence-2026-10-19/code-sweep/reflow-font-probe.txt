@@ -1,0 +1,8 @@
+qt.qpa.fonts: Populating font family aliases took 110 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+field minima [0, 0, 0] narrow 42
+This plugin does not support propagateSizeHints()
+request 42 actual 145 form 197 stacked True contained True controls [197, 125, 62]
+request 572 actual 572 form 540 stacked False contained True controls [173, 174, 173]
+request 42 actual 145 form 197 stacked True contained True controls [197, 125, 62]

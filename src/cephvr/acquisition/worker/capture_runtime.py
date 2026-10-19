@@ -46,7 +46,6 @@ class WorkerCaptureResources:
         self._locked_settings: CameraSettings | None = None
         self._active = False
         self._preview_max_hz: float | None = None
-        self._session_preview = False
         self._scheduled_start_ns: int | None = None
         self._scheduled_end_ns: int | None = None
         self._released = False
@@ -127,7 +126,6 @@ class WorkerCaptureResources:
             and payload.capture.session_preview_max_hz > 0
             else None
         )
-        self._session_preview = session_preview
         self._preview_run_id = _uuid_or_none(preview_run_id)
         clock = (
             payload.camera_clock

@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree",
+  "method": "actual Retro Cameras Review; open enabled cameras, fill/scroll overflowing log, native frame/visibility queries, minimize/restore and close one",
+  "scope": "local macOS Review only; no Windows-native or hardware acceptance",
+  "result": {
+    "camera_slots": [
+      "camera-1",
+      "camera-2"
+    ],
+    "enabled_cameras": [
+      "camera-1",
+      "camera-2"
+    ],
+    "log_scrollbar_visible": true,
+    "log_scrollbar_width": 10,
+    "log_scroll_range": 89,
+    "log_can_scroll": true,
+    "page": 2,
+    "windows": {
+      "camera-1": {
+        "target": [
+          911,
+          698,
+          200,
+          230
+        ],
+        "native_frame": [
+          911,
+          698,
+          200,
+          226
+        ],
+        "contained": true
+      },
+      "camera-2": {
+        "target": [
+          1206,
+          698,
+          200,
+          230
+        ],
+        "native_frame": [
+          1206,
+          698,
+          200,
+          226
+        ],
+        "contained": true
+      }
+    },
+    "all_open": true,
+    "no_overlap": true,
+    "maximized": true,
+    "gui_frame": [
+      82,
+      33,
+      1388,
+      923
+    ],
+    "desktop": [
+      82,
+      33,
+      1388,
+      923
+    ],
+    "all_hidden_minimized": true,
+    "retained": true,
+    "all_restored": true,
+    "independent_close": true,
+    "remaining_positions_unchanged": true
+  }
+}

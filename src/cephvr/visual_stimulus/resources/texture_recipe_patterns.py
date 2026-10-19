@@ -8,7 +8,12 @@ from collections.abc import Callable, Mapping
 
 import numpy as np
 
-from cephvr.visual_stimulus.resources.texture_recipe_geometry import _polar_grating
+from cephvr.visual_stimulus.resources.texture_recipe_geometry import (
+    _mix,
+    _num,
+    _polar_grating,
+    _smoothstep,
+)
 
 _FACES = ("front", "left", "right", "bottom")
 _VERTICAL_FACES = ("left", "front", "right")
@@ -147,14 +152,6 @@ def _check(check: Callable[[], None] | None) -> None:
         check()
 
 
-def _num(value: object, default: float) -> float:
-    try:
-        result = float(value)  # type: ignore[arg-type]
-    except (TypeError, ValueError, OverflowError):
-        return float(default)
-    return result if math.isfinite(result) else float(default)
-
-
 def _safe_ratio(numerator: float, denominator: float, name: str) -> float:
     result = numerator / denominator
     if not math.isfinite(result):
@@ -222,21 +219,6 @@ def _color(value: object, default: tuple[int, int, int]) -> tuple[int, int, int]
             channel(2),
         )
     return default
-
-
-def _smoothstep(low: float, high: float, values: np.ndarray) -> np.ndarray:
-    t = np.clip((values - low) / max(1e-8, high - low), 0, 1)
-    return t * t * (3 - 2 * t)
-
-
-def _mix(
-    a: tuple[int, int, int], b: tuple[int, int, int], alpha: np.ndarray
-) -> np.ndarray:
-    ca, cb = np.asarray(a, dtype=np.float32), np.asarray(b, dtype=np.float32)
-    return np.asarray(
-        np.clip(np.rint(ca * (1 - alpha[..., None]) + cb * alpha[..., None]), 0, 255),
-        dtype=np.uint8,
-    )
 
 
 def _blur(image: np.ndarray, pixels: float) -> np.ndarray:

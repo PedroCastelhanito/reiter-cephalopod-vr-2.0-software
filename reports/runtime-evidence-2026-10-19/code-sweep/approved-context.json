@@ -1,0 +1,162 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "f6cb9f4e9498c12ad155d3095ac69366302c52bf",
+  "provenance": "Modified working tree; earlier sweep baseline.json retains initial status and fingerprints. subject_history.py was already untracked and GUI tests/docs already modified by other work; only approved ordering/clamping and focused tests amended here.",
+  "authorization": "Owner: Yes, apply chronological ordering and clamping, then run the relevant checks.",
+  "decisions": [
+    "G02 revision 79",
+    "V04 revision 16",
+    "ARCH-002",
+    "E15"
+  ],
+  "sha256": {
+    "src/cephvr/gui/subject_history.py": "e6e41cf32068c7202170a0fc95eaa66d0d9ca7cbdbbbdd5f9b10b3f816831463",
+    "src/cephvr/visual_stimulus/resources/texture_recipe_geometry.py": "ab38e203ca508f9a2c06f717e83def3113043c5edb6c5f6de86865209cc81f0e",
+    "tests/gui/test_dashboard.py": "c7c567163cef590b454a64472380683e80c2de146050330d7c49dbf0a33a42d4",
+    "tests/visual_stimulus/test_rendering.py": "4b5507cfd406eaad321d277e200f1e7774ace1ac85600c27add82538d66dca03",
+    "architecture.md": "c64372b12a5d4b5c94fa292337a2eea46943a5575a8c6dcee973d9183b64ef7a",
+    "docs/architecture/gui.md": "679bc59b830db1be24145b69222a7bf3704a551a5a2045c612e9176dfd05c42d",
+    "docs/architecture/visual_stimulus.md": "59e424f7951438d0cc4bc6c4b1ed7c0b5b8f0ecc92d157fb1aac3635a39e0a41"
+  },
+  "checks": {
+    "ruff": {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "src/cephvr/gui",
+        "src/cephvr/visual_stimulus",
+        "tests/gui",
+        "tests/visual_stimulus"
+      ],
+      "exit_code": 0,
+      "output": "approved-ruff.txt"
+    },
+    "format": {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src/cephvr/gui",
+        "src/cephvr/visual_stimulus",
+        "tests/gui",
+        "tests/visual_stimulus"
+      ],
+      "exit_code": 0,
+      "output": "approved-format.txt"
+    },
+    "boundaries": {
+      "command": [
+        ".venv/bin/python",
+        "tools/check_backend_boundaries.py"
+      ],
+      "exit_code": 0,
+      "output": "approved-boundaries.txt"
+    },
+    "probes": {
+      "command": [
+        ".venv/bin/python",
+        "reports/runtime-evidence-2026-10-19/code-sweep/probes.py"
+      ],
+      "exit_code": 0,
+      "output": "approved-probes.txt"
+    },
+    "ordering_red": {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/gui/test_dashboard.py",
+        "-q",
+        "-k",
+        "subject_history_orders"
+      ],
+      "environment": {
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "output": "approved-ordering-red.txt",
+      "outcome": "2 failed, 2 passed, 630 deselected before production fix"
+    },
+    "clamping_red": {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/visual_stimulus/test_rendering.py",
+        "-q",
+        "-k",
+        "legacy_polar_texture"
+      ],
+      "environment": {},
+      "output": "approved-clamping-red.txt",
+      "outcome": "1 failed, 80 deselected before production fix: OverflowError"
+    },
+    "gui": {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/gui/test_dashboard.py",
+        "-q",
+        "-k",
+        "subject_history or confirms_same_day_reuse"
+      ],
+      "environment": {
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "output": "approved-gui-green.txt",
+      "outcome": "6 passed, 628 deselected"
+    },
+    "visual": {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/visual_stimulus/test_rendering.py",
+        "tests/visual_stimulus/test_resources.py",
+        "-q",
+        "-m",
+        "not windows and not rig"
+      ],
+      "environment": {},
+      "output": "approved-visual-green.txt",
+      "outcome": "133 passed"
+    },
+    "mypy": {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "mypy",
+        "--platform",
+        "win32",
+        "src/cephvr/gui",
+        "src/cephvr/visual_stimulus"
+      ],
+      "environment": {},
+      "output": "approved-mypy.txt",
+      "outcome": "Success: no issues found in 336 source files"
+    },
+    "whitespace": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output": "approved-whitespace.txt"
+    },
+    "documents": {
+      "method": "Resolve new report links, explicit anchors and G02/V04 register revision parity",
+      "outcome": "10 links and both revisions verified",
+      "output": "approved-document-links.json"
+    }
+  },
+  "limits": [
+    "Focused GUI selection, not a fresh full GUI run.",
+    "No native Windows, hardware, GL rendering or rig acceptance.",
+    "Existing backend cohesion advisories remain; two small focused production edits add no ownership or dependency."
+  ]
+}

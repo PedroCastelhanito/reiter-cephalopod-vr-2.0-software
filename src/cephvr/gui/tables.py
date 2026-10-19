@@ -1,6 +1,7 @@
 """Shared camera-style tables with optional persistent form controls."""
 
 from PyQt6.QtCore import QEvent, QSize, Qt, QTimer, pyqtSlot
+from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -13,7 +14,7 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.components import ActionHeader, button
 from cephvr.gui.icons import device_icon
 from cephvr.gui.table_header import TableHeader
-from cephvr.gui.theme import SIZES
+from cephvr.gui.theme import SIZES, colors_for
 
 
 def refresh_button(hint: str) -> QPushButton:
@@ -29,6 +30,7 @@ class DataTable(QTableWidget):
     def __init__(self, rows: int, columns: int) -> None:
         super().__init__(rows, columns)
         self._hide_empty_header = False
+        self.empty_text = ""
         self._extra_height = 0
         self.fit_timer = QTimer(self)
         self.fit_timer.setSingleShot(True)
@@ -45,6 +47,22 @@ class DataTable(QTableWidget):
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+    def has_visible_rows(self) -> bool:
+        return any(not self.isRowHidden(row) for row in range(self.rowCount()))
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        super().paintEvent(event)
+        viewport = self.viewport()
+        if viewport is None or not self.empty_text or self.has_visible_rows():
+            return
+        painter = QPainter(viewport)
+        painter.setPen(QColor(colors_for(self).muted))
+        painter.drawText(
+            viewport.rect().adjusted(12, 0, -12, 0),
+            Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
+            self.empty_text,
+        )
 
     def add_refresh_action(self, hint: str) -> QPushButton:
         """Use one inventory header/selection pattern; the last column holds Refresh."""
@@ -137,4 +155,5 @@ class DataTable(QTableWidget):
             )
             + 2 * self.frameWidth()
             + self._extra_height
+            + (0 if self.has_visible_rows() or not self.empty_text else 56)
         )

@@ -18,7 +18,7 @@ from cephvr.gui.components import (
     equal_row_height,
     field,
 )
-from cephvr.gui.configuration_files import ConfigurationFiles
+from cephvr.gui.configuration_files import LOCKED_REASON, ConfigurationFiles
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.tracking_annotation import TrackingAnnotation
@@ -358,7 +358,12 @@ class TrackingPage(ResponsiveColumns):
         self.pages.setEnabled(self.can_edit and not self._diagnostic_locked)
         self.annotation.setEnabled(self.can_edit and not self._diagnostic_locked)
         if hasattr(self, "config_files"):
-            self.config_files.set_enabled(self.can_edit and not self._diagnostic_locked)
+            self.config_files.set_enabled(
+                self.can_edit and not self._diagnostic_locked,
+                "Unavailable now: close the live diagnostic first."
+                if self.can_edit
+                else LOCKED_REASON,
+            )
         self.diagnostic_viewer_button.setEnabled(viewer_available)
         timings: tuple[tuple[str, str], ...] = ()
         if last_duration_ns is not None and maximum_duration_ns is not None:
@@ -427,7 +432,12 @@ class TrackingPage(ResponsiveColumns):
             control.setEnabled(self.can_edit and not self._diagnostic_locked)
         self.annotation.setEnabled(self.can_edit and not self._diagnostic_locked)
         if hasattr(self, "config_files"):
-            self.config_files.set_enabled(self.can_edit and not self._diagnostic_locked)
+            self.config_files.set_enabled(
+                self.can_edit and not self._diagnostic_locked,
+                "Unavailable now: close the live diagnostic first."
+                if self.can_edit
+                else LOCKED_REASON,
+            )
         self.notice.setEnabled(self.can_edit)
 
     def browse_model(self) -> None:

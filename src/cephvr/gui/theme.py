@@ -109,6 +109,13 @@ RETRO_COLORS = Palette(
     error="#ef8b70",
     disabled="#557174",
 )
+# Identity tints for Retro stimulus tiles, drawn from the existing accents.
+RETRO_TINTS = (
+    RETRO_COLORS.accent,
+    RETRO_COLORS.projection,
+    RETRO_COLORS.error,
+    RETRO_COLORS.mirror,
+)
 RETRO_SIZES = replace(
     SIZES,
     card_radius=0,
@@ -222,6 +229,12 @@ def stylesheet(
     QTabBar::tab:last {{ margin-right: 0; }}
     QTabBar::tab:selected {{ color: {c.coral}; background: {c.selection}; border-color: {c.accent}; }}
     QTabBar::tab:hover {{ border-color: {c.focus}; }}
+    QTreeWidget[role='rail'] {{ background: transparent; border: none; outline: none; }}
+    QTreeWidget[role='rail']::item {{ color: {c.muted}; padding: 9px 8px;
+        border: 1px solid transparent; border-radius: {s.field_radius}px; }}
+    QTreeWidget[role='rail']::item:hover {{ border-color: {c.focus}; }}
+    QTreeWidget[role='rail']::item:selected {{ background: {c.selection}; color: {c.coral};
+        border-color: {c.accent}; }}
     QLabel[role='selector-heading'] {{ color: {c.accent}; font-size: {s.label_font}px;
                                        font-weight: 700; min-height: 20px; }}
     QLabel[role='selector-source'] {{ color: {c.text}; min-height: 22px; }}
@@ -260,6 +273,9 @@ def stylesheet(
     QScrollArea, QScrollArea > QWidget > QWidget {{ background: transparent; border: none; }}
     QScrollBar:vertical {{ width: 0px; }}
     QScrollBar:horizontal {{ height: 0px; }}
+    QScrollBar#ConsoleLogScroll:vertical {{ width: 10px; background: {c.console}; border-radius: 4px; }}
+    QScrollBar#ConsoleLogScroll::handle:vertical {{ background: {c.border}; min-height: 24px; border-radius: 4px; }}
+    QScrollBar#ConsoleLogScroll::handle:vertical:hover {{ background: {c.muted}; }}
     QScrollBar#TimelineScroll:horizontal {{ height: 10px; background: {c.input}; border-radius: 5px; }}
     QScrollBar#TimelineScroll::handle:horizontal {{ background: {c.border}; min-width: 28px; border-radius: 5px; }}
     QScrollBar#TimelineScroll::handle:horizontal:hover {{ background: {c.muted}; }}
@@ -290,7 +306,7 @@ def retro_stylesheet() -> str:
     QCheckBox::indicator:checked {{ background: {c.ready}; border-color: {c.ready}; }}
     QRadioButton[role='status-indicator']::indicator {{ border-radius: 0; width: 8px; height: 8px; }}
     QRadioButton[role='status-indicator'] {{ min-height: 36px; }}
-    QPlainTextEdit[role='console'] {{ font-family: {RETRO_FONT}; padding: 12px;
+    QPlainTextEdit[role='console'] {{ font-family: {RETRO_FONT}; padding: 6px 8px;
         border: 1px solid {c.input_border}; border-radius: 0; }}
     QPlainTextEdit[terminal='telemetry'] {{ color: {c.mirror}; }}
     QPushButton:hover, QPushButton[role='primary']:hover {{
@@ -308,12 +324,32 @@ def retro_stylesheet() -> str:
     QMenu::item:selected {{ background: {c.accent}; color: {c.window}; }}
     QListWidget[role='trials']::item {{ border-radius: 0; }}
     QListWidget[role='trials']::item:selected {{ background: {c.accent}; color: {c.window}; }}
+    QScrollBar#ConsoleLogScroll:vertical, QScrollBar#ConsoleLogScroll::handle:vertical,
     QScrollBar#TimelineScroll:horizontal, QScrollBar#TimelineScroll::handle:horizontal {{
         border-radius: 0; }}
     QTableView::item:selected {{ background: {c.primary}; color: {c.text}; }}
     QTabBar::tab:selected {{ background: {c.accent}; color: {c.window}; }}
+    QTreeWidget[role='rail']::item:selected {{ background: {c.accent}; color: {c.window}; }}
     """
     )
+
+
+def suggestion_popup_stylesheet(retro: bool) -> str:
+    """Completer popups are top-level widgets, so they take the style explicitly."""
+    c = RETRO_COLORS if retro else COLORS
+    family = RETRO_FONT if retro else "'Segoe UI', 'Helvetica Neue'"
+    selected = (
+        f"background: {c.accent}; color: {c.window};"
+        if retro
+        else f"background: {c.selection}; color: {c.text};"
+    )
+    return f"""
+    QListView {{ background: {c.input}; color: {c.text}; border: 1px solid {c.border};
+        font-family: {family}; font-size: {RETRO_SIZES.body_font if retro else SIZES.body_font}px;
+        outline: none; padding: 2px; }}
+    QListView::item {{ padding: 6px 10px; }}
+    QListView::item:selected {{ {selected} }}
+    """
 
 
 def retro_chrome_stylesheet() -> str:

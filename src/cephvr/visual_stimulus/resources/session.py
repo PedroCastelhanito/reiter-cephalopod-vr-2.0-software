@@ -610,9 +610,6 @@ class NativePreparation:
 
         return artifacts
 
-    def create_engine(self) -> RendererEngine:
-        return self.engine
-
     def cleanup(self, deadline_ns: int | None = None) -> ResourceReleaseReport:
         released: list[str] = []
         outstanding: list[str] = []

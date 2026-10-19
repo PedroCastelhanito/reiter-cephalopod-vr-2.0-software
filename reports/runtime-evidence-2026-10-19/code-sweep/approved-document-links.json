@@ -1,0 +1,42 @@
+[
+  {
+    "source": "reports/runtime.md",
+    "target": "../docs/architecture/gui.md#g02"
+  },
+  {
+    "source": "reports/runtime.md",
+    "target": "runtime-evidence-2026-10-19/code-sweep/probes.txt"
+  },
+  {
+    "source": "reports/runtime.md",
+    "target": "runtime-evidence-2026-10-19/code-sweep/approved-ordering-red.txt"
+  },
+  {
+    "source": "reports/runtime.md",
+    "target": "runtime-evidence-2026-10-19/code-sweep/approved-gui-green.txt"
+  },
+  {
+    "source": "reports/runtime.md",
+    "target": "runtime-evidence-2026-10-19/code-sweep/approved-context.json"
+  },
+  {
+    "source": "reports/visual_stimulus.md",
+    "target": "../docs/architecture/visual_stimulus.md#v04"
+  },
+  {
+    "source": "reports/visual_stimulus.md",
+    "target": "runtime-evidence-2026-10-19/code-sweep/probes.txt"
+  },
+  {
+    "source": "reports/visual_stimulus.md",
+    "target": "runtime-evidence-2026-10-19/code-sweep/approved-clamping-red.txt"
+  },
+  {
+    "source": "reports/visual_stimulus.md",
+    "target": "runtime-evidence-2026-10-19/code-sweep/approved-visual-green.txt"
+  },
+  {
+    "source": "reports/visual_stimulus.md",
+    "target": "runtime-evidence-2026-10-19/code-sweep/approved-context.json"
+  }
+]

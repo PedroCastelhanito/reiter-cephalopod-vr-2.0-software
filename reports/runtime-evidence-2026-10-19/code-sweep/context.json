@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-19",
+  "revision": "f6cb9f4e9498c12ad155d3095ac69366302c52bf",
+  "baseline": "baseline.json",
+  "scope": "Repository-wide static/import sweep with targeted caller review and behavior-preserving cleanup; current dirty tree, not clean HEAD or rig certification.",
+  "final_changed_source_sha256": {
+    "src/cephvr/acquisition/coordinator/state/workers.py": "a385d44acbb00b040106706bb28c710ae2ad7ba6ee7a753a868c14e0af68f8f9",
+    "src/cephvr/acquisition/recording/session.py": "59e4cbcc6d19853e265ac419d0aa78dbdf15728e8d1fd5ea357aa8cfae142430",
+    "src/cephvr/acquisition/worker/trial_state.py": "5ba5351d84d00e97939ae610b6f11314f65dd2fd0ba2f067617efbf14aa3a743",
+    "src/cephvr/acquisition/worker/owner.py": "539306dd7e98ab93e31f03e10966bce5231637759c017cc16c3bbd0f3892bb57",
+    "src/cephvr/acquisition/worker/trial_lifecycle.py": "70e66c53890b8d9434e0bd01a86fd330513d7da1b39f0e800f7091358e4c6bbb",
+    "src/cephvr/acquisition/worker/capture_runtime.py": "0ee434209f6a3768d7f9090c21a1593bef18cfc8612a768c74bc6132bd9045fb",
+    "src/cephvr/visual_stimulus/resources/session.py": "c346b1373996b92d79cb1a4061203880ba78979ff9a33a7a81e91e663bb16ee7",
+    "src/cephvr/visual_stimulus/resources/texture_recipe_patterns.py": "3c41b8bd6aa63a8732849628759eba98a88533b86895edbc22e05d7141acdb81",
+    "src/cephvr/visual_stimulus/rendering/color.py": "beceee162bb197c9b0d04bd13050aba1b8b9960db689670233fb04a4fd9ea9f0",
+    "src/cephvr/shared/nominal_video_grid.py": null,
+    "src/cephvr/gui/batch_create.py": "9d938171619687ae2a202c74274c4c84c9d51083b60ecf5974f585236b82cae7",
+    "src/cephvr/gui/protocol_editor.py": "961bb2b90c3c7b2ee97655c6fb1e27d95c744c580726f90bef06a7ed89d3ef58",
+    "src/cephvr/gui/batch_edit_rows.py": null,
+    "tests/acquisition/test_worker_foundations.py": "900540a1b791f9bcd3312b10b0d5dab289552a342e5be3121d80973c148c94ab",
+    "tests/shared/test_invariants.py": "e206c487eac2bf7d95ce5acde70429f37375b6ad644cfbdb42d65fbbef11e598",
+    "tests/gui/test_dashboard.py": "23b259fb74f87cf26ecb02d47dc85c10357a3a349318a56239f664fd276a9993"
+  },
+  "diff_provenance": "changes.patch covers initially clean files only; gui-tests-working-tree.patch includes pre-existing edits. Other initial user changes preserved.",
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest tests --ignore=tests/gui -q -m \"not windows and not rig\"",
+      "result": "2215 passed, 6 skipped, 14 deselected; loopback permission enabled",
+      "log": "backend-final.txt"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m \"not windows and not rig\"",
+      "result": "630 passed, one pre-existing font-dependent fixture failure; original collection predates fixture correction, whose final targeted rerun passes",
+      "log": "gui-after.txt"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"batch_image_fit or image_fit_and_motion or camera_trigger_form_reflows\"",
+      "result": "3 passed, 627 deselected after final deletion",
+      "log": "gui-removal-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_rendering.py -q -k \"texture or recipe\"",
+      "result": "16 passed, 65 deselected after final helper consolidation",
+      "log": "texture-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src tests tools scripts",
+      "result": "pass",
+      "log": "ruff-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src tests tools scripts",
+      "result": "947 files already formatted",
+      "log": "format-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr",
+      "result": "824 source files pass",
+      "log": "mypy-final.txt"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "722 backend modules; zero boundary violations; existing cohesion advisories retained",
+      "log": "boundaries-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pip check",
+      "result": "No broken requirements",
+      "log": "dependencies.txt"
+    },
+    {
+      "command": ".venv/bin/python tools/generate_contracts.py --output /tmp/cephvr-oct19-contract-check",
+      "result": "19 sources; all 57 generated bindings byte-match src",
+      "log": "contracts.txt"
+    },
+    {
+      "command": ".venv/bin/python -m build --no-isolation --outdir /tmp/cephvr-code-sweep-oct19-dist",
+      "result": "source and wheel builds pass; obsolete modules absent from wheel",
+      "log": "build.txt"
+    },
+    {
+      "command": ".venv/bin/python -m vulture --min-confidence 60",
+      "result": "299 advisory hits; 275 source, five confidence-100 test arguments; no automatic deletion/whitelist",
+      "log": "vulture-final.txt"
+    },
+    {
+      "command": ".venv/bin/python reports/runtime-evidence-2026-10-19/code-sweep/probes.py",
+      "result": "two pre-existing logic defects reproduced; changes await owner decision",
+      "log": "probes.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass",
+      "log": "whitespace-final.txt"
+    }
+  ],
+  "limits": [
+    "Windows/native/rig checks unrun.",
+    "Remaining Vulture suggestions are not classified as dead without tracing.",
+    "Broad GUI collection predates final test corrections/deletion; all affected cases pass a separate final-tree rerun. No fresh full final-tree GUI pass is claimed."
+  ],
+  "retained_attempts": [
+    "backend-before.txt: 33 sandbox loopback binding failures/errors, resolved by permission-enabled reruns.",
+    "acquisition-after.txt: four new fixture failures due to unstarted owner, corrected before worker-after.txt and full backend-final.txt.",
+    "gui-reflow.txt: original hardcoded font-width failure; geometry probe and gui-reflow-after.txt verify fixture correction."
+  ],
+  "pending_owner_decisions": [
+    "subject-history-latest-order",
+    "polar-color-overflow"
+  ]
+}

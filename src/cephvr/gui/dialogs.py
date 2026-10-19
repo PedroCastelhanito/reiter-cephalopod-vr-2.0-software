@@ -54,3 +54,45 @@ class StopDialog(QDialog):
         if self.choice_buttons[action].isEnabled():
             self.action_selected.emit(action)
             self.accept()
+
+
+class SubjectReuseDialog(QDialog):
+    """Same subject, same experiment, same day: likely a repeated run, so ask once."""
+
+    confirmed = pyqtSignal()
+
+    def __init__(
+        self, subject: str, experiment: str, count: int, latest: str, parent: QWidget
+    ) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Subject already recorded today")
+        self.setMinimumWidth(480)
+        body = QVBoxLayout(self)
+        body.setContentsMargins(*([SIZES.page_margin] * 4))
+        body.setSpacing(SIZES.card_gap)
+        body.addWidget(label("Subject already recorded today", "title"))
+        body.addWidget(
+            label(
+                f"{subject} already has {count} session{'s' if count != 1 else ''} "
+                f"in this output directory, including one for {experiment} today "
+                f"(latest: {latest}). A new session is saved separately and nothing "
+                "is overwritten. Continue only if this is a new run.",
+                "hint",
+                wrap=True,
+            )
+        )
+        actions = QHBoxLayout()
+        actions.setSpacing(SIZES.field_x_gap)
+        self.change = button("Change Subject ID")
+        self.change.setDefault(True)
+        self.change.clicked.connect(self.reject)
+        self.proceed = button("Continue setup", "primary")
+        self.proceed.setAutoDefault(False)
+        self.proceed.clicked.connect(self.confirm)
+        actions.addWidget(self.change)
+        actions.addWidget(self.proceed)
+        body.addLayout(actions)
+
+    def confirm(self) -> None:
+        self.confirmed.emit()
+        self.accept()

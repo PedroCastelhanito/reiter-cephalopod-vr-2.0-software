@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "uncommitted working tree",
+  "scope": "macOS local Review only; no Windows/hardware acceptance",
+  "checks": {
+    "manual_detected": true,
+    "geometry_restored": true,
+    "automatic_restored": true,
+    "closed_not_reopened": true,
+    "test_previews_closed": true
+  }
+}

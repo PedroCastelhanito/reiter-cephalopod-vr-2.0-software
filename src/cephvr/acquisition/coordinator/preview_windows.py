@@ -62,8 +62,14 @@ class PreviewWindows:
             if current.run_id != preview.run_id:
                 raise RuntimeError("another exact preview run still owns a window")
             if not current.reader.done.done():
+                if placement is not None:
+                    current.reader.update_placement(placement)
+                return
+            if placement is not None and placement.update_existing_only:
                 return
             await self.close(role, preview.run_id, deadline_ns=deadline_ns)
+        if placement is not None and placement.update_existing_only:
+            return
         if preview.viewer is not None:
             raise RuntimeError(
                 "an external consumer already owns this latest-frame slot"

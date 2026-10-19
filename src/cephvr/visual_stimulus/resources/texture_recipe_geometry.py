@@ -40,7 +40,7 @@ def _color(value: object, default: tuple[int, int, int]) -> tuple[int, int, int]
                 return default
     if isinstance(value, (tuple, list)) and len(value) >= 3:
         return tuple(
-            max(0, min(255, int(_num(value[i], default[i] / 255) * 255)))
+            int(min(1, max(0, _num(value[i], default[i] / 255))) * 255)
             for i in range(3)
         )  # type: ignore[return-value]
     return default

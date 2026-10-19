@@ -1,0 +1,290 @@
+........................................................................ [ 11%]
+........................................................................ [ 22%]
+........................................................................ [ 33%]
+........................................................................ [ 44%]
+........................................................................ [ 55%]
+........................................................................ [ 66%]
+........................................................................ [ 77%]
+........................................................................ [ 88%]
+............................FF..FF...................................... [ 99%]
+.sssss                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_camera_owner_preserves_wakes_across_control_clear[command-capture_handoff] _
+
+method = 'capture_handoff', pending = 'command'
+
+    @pytest.mark.parametrize("method", ["capture_handoff", "acknowledge_control_if_idle"])
+    @pytest.mark.parametrize(
+        "pending",
+        ["none", "command", "external", "command_during_clear", "external_during_clear"],
+    )
+    def test_camera_owner_preserves_wakes_across_control_clear(method, pending) -> None:
+        wake = Event()
+        clears = []
+    
+        def make_pending(kind):
+            if kind == "command":
+                owner.reserve("Cleanup", object(), 100).commit()
+            elif kind == "external":
+                owner.external_wake()
+    
+        def clear():
+            clears.append(True)
+            wake.clear()
+            if pending.endswith("_during_clear"):
+                make_pending(pending.removesuffix("_during_clear"))
+    
+        owner = SerializedCameraOwner(
+            capacity=1,
+            safety_capacity=1,
+            execute=lambda *_: None,
+            capture_once=lambda handoff: handoff(),
+            capture_active=lambda: False,
+            next_deadline_ns=lambda: None,
+            advance_due_stages=lambda: None,
+            wait_control=lambda _: None,
+            wake_control=wake.set,
+            clear_control=clear,
+            operation_failed=lambda *_: None,
+            owner_failed=lambda _: None,
+            idle_maintenance_interval_ns=1,
+        )
+>       make_pending(pending)
+
+tests/acquisition/test_worker_foundations.py:1549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/acquisition/test_worker_foundations.py:1524: in make_pending
+    owner.reserve("Cleanup", object(), 100).commit()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.acquisition.worker.owner.SerializedCameraOwner object at 0x11191da90>
+operation = 'Cleanup', request = <object object at 0x111357cb0>
+deadline_ns = 100
+
+    def reserve(
+        self, operation: str, request: object, deadline_ns: int
+    ) -> WorkerOperationTicket:
+        with self._condition:
+            if self._failure is not None:
+                raise RuntimeError("camera owner thread failed") from self._failure
+            if self._thread is None or self._stopping.is_set():
+>               raise RuntimeError("camera owner is not accepting commands")
+E               RuntimeError: camera owner is not accepting commands
+
+src/cephvr/acquisition/worker/owner.py:114: RuntimeError
+_ test_camera_owner_preserves_wakes_across_control_clear[command-acknowledge_control_if_idle] _
+
+method = 'acknowledge_control_if_idle', pending = 'command'
+
+    @pytest.mark.parametrize("method", ["capture_handoff", "acknowledge_control_if_idle"])
+    @pytest.mark.parametrize(
+        "pending",
+        ["none", "command", "external", "command_during_clear", "external_during_clear"],
+    )
+    def test_camera_owner_preserves_wakes_across_control_clear(method, pending) -> None:
+        wake = Event()
+        clears = []
+    
+        def make_pending(kind):
+            if kind == "command":
+                owner.reserve("Cleanup", object(), 100).commit()
+            elif kind == "external":
+                owner.external_wake()
+    
+        def clear():
+            clears.append(True)
+            wake.clear()
+            if pending.endswith("_during_clear"):
+                make_pending(pending.removesuffix("_during_clear"))
+    
+        owner = SerializedCameraOwner(
+            capacity=1,
+            safety_capacity=1,
+            execute=lambda *_: None,
+            capture_once=lambda handoff: handoff(),
+            capture_active=lambda: False,
+            next_deadline_ns=lambda: None,
+            advance_due_stages=lambda: None,
+            wait_control=lambda _: None,
+            wake_control=wake.set,
+            clear_control=clear,
+            operation_failed=lambda *_: None,
+            owner_failed=lambda _: None,
+            idle_maintenance_interval_ns=1,
+        )
+>       make_pending(pending)
+
+tests/acquisition/test_worker_foundations.py:1549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/acquisition/test_worker_foundations.py:1524: in make_pending
+    owner.reserve("Cleanup", object(), 100).commit()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.acquisition.worker.owner.SerializedCameraOwner object at 0x13383c750>
+operation = 'Cleanup', request = <object object at 0x1113579f0>
+deadline_ns = 100
+
+    def reserve(
+        self, operation: str, request: object, deadline_ns: int
+    ) -> WorkerOperationTicket:
+        with self._condition:
+            if self._failure is not None:
+                raise RuntimeError("camera owner thread failed") from self._failure
+            if self._thread is None or self._stopping.is_set():
+>               raise RuntimeError("camera owner is not accepting commands")
+E               RuntimeError: camera owner is not accepting commands
+
+src/cephvr/acquisition/worker/owner.py:114: RuntimeError
+_ test_camera_owner_preserves_wakes_across_control_clear[command_during_clear-capture_handoff] _
+
+method = 'capture_handoff', pending = 'command_during_clear'
+
+    @pytest.mark.parametrize("method", ["capture_handoff", "acknowledge_control_if_idle"])
+    @pytest.mark.parametrize(
+        "pending",
+        ["none", "command", "external", "command_during_clear", "external_during_clear"],
+    )
+    def test_camera_owner_preserves_wakes_across_control_clear(method, pending) -> None:
+        wake = Event()
+        clears = []
+    
+        def make_pending(kind):
+            if kind == "command":
+                owner.reserve("Cleanup", object(), 100).commit()
+            elif kind == "external":
+                owner.external_wake()
+    
+        def clear():
+            clears.append(True)
+            wake.clear()
+            if pending.endswith("_during_clear"):
+                make_pending(pending.removesuffix("_during_clear"))
+    
+        owner = SerializedCameraOwner(
+            capacity=1,
+            safety_capacity=1,
+            execute=lambda *_: None,
+            capture_once=lambda handoff: handoff(),
+            capture_active=lambda: False,
+            next_deadline_ns=lambda: None,
+            advance_due_stages=lambda: None,
+            wait_control=lambda _: None,
+            wake_control=wake.set,
+            clear_control=clear,
+            operation_failed=lambda *_: None,
+            owner_failed=lambda _: None,
+            idle_maintenance_interval_ns=1,
+        )
+        make_pending(pending)
+    
+>       assert getattr(owner, method)() is (pending == "none")
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/acquisition/test_worker_foundations.py:1551: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/acquisition/worker/owner.py:290: in capture_handoff
+    return self.acknowledge_control_if_idle()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/worker/owner.py:170: in acknowledge_control_if_idle
+    self._clear_control()
+tests/acquisition/test_worker_foundations.py:1532: in clear
+    make_pending(pending.removesuffix("_during_clear"))
+tests/acquisition/test_worker_foundations.py:1524: in make_pending
+    owner.reserve("Cleanup", object(), 100).commit()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.acquisition.worker.owner.SerializedCameraOwner object at 0x13383e9d0>
+operation = 'Cleanup', request = <object object at 0x111357a70>
+deadline_ns = 100
+
+    def reserve(
+        self, operation: str, request: object, deadline_ns: int
+    ) -> WorkerOperationTicket:
+        with self._condition:
+            if self._failure is not None:
+                raise RuntimeError("camera owner thread failed") from self._failure
+            if self._thread is None or self._stopping.is_set():
+>               raise RuntimeError("camera owner is not accepting commands")
+E               RuntimeError: camera owner is not accepting commands
+
+src/cephvr/acquisition/worker/owner.py:114: RuntimeError
+_ test_camera_owner_preserves_wakes_across_control_clear[command_during_clear-acknowledge_control_if_idle] _
+
+method = 'acknowledge_control_if_idle', pending = 'command_during_clear'
+
+    @pytest.mark.parametrize("method", ["capture_handoff", "acknowledge_control_if_idle"])
+    @pytest.mark.parametrize(
+        "pending",
+        ["none", "command", "external", "command_during_clear", "external_during_clear"],
+    )
+    def test_camera_owner_preserves_wakes_across_control_clear(method, pending) -> None:
+        wake = Event()
+        clears = []
+    
+        def make_pending(kind):
+            if kind == "command":
+                owner.reserve("Cleanup", object(), 100).commit()
+            elif kind == "external":
+                owner.external_wake()
+    
+        def clear():
+            clears.append(True)
+            wake.clear()
+            if pending.endswith("_during_clear"):
+                make_pending(pending.removesuffix("_during_clear"))
+    
+        owner = SerializedCameraOwner(
+            capacity=1,
+            safety_capacity=1,
+            execute=lambda *_: None,
+            capture_once=lambda handoff: handoff(),
+            capture_active=lambda: False,
+            next_deadline_ns=lambda: None,
+            advance_due_stages=lambda: None,
+            wait_control=lambda _: None,
+            wake_control=wake.set,
+            clear_control=clear,
+            operation_failed=lambda *_: None,
+            owner_failed=lambda _: None,
+            idle_maintenance_interval_ns=1,
+        )
+        make_pending(pending)
+    
+>       assert getattr(owner, method)() is (pending == "none")
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/acquisition/test_worker_foundations.py:1551: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/acquisition/worker/owner.py:170: in acknowledge_control_if_idle
+    self._clear_control()
+tests/acquisition/test_worker_foundations.py:1532: in clear
+    make_pending(pending.removesuffix("_during_clear"))
+tests/acquisition/test_worker_foundations.py:1524: in make_pending
+    owner.reserve("Cleanup", object(), 100).commit()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.acquisition.worker.owner.SerializedCameraOwner object at 0x111bfb350>
+operation = 'Cleanup', request = <object object at 0x1113579c0>
+deadline_ns = 100
+
+    def reserve(
+        self, operation: str, request: object, deadline_ns: int
+    ) -> WorkerOperationTicket:
+        with self._condition:
+            if self._failure is not None:
+                raise RuntimeError("camera owner thread failed") from self._failure
+            if self._thread is None or self._stopping.is_set():
+>               raise RuntimeError("camera owner is not accepting commands")
+E               RuntimeError: camera owner is not accepting commands
+
+src/cephvr/acquisition/worker/owner.py:114: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_worker_foundations.py::test_camera_owner_preserves_wakes_across_control_clear[command-capture_handoff]
+FAILED tests/acquisition/test_worker_foundations.py::test_camera_owner_preserves_wakes_across_control_clear[command-acknowledge_control_if_idle]
+FAILED tests/acquisition/test_worker_foundations.py::test_camera_owner_preserves_wakes_across_control_clear[command_during_clear-capture_handoff]
+FAILED tests/acquisition/test_worker_foundations.py::test_camera_owner_preserves_wakes_across_control_clear[command_during_clear-acknowledge_control_if_idle]
+4 failed, 645 passed, 5 skipped, 2 deselected in 26.28s

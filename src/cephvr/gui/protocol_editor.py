@@ -544,10 +544,6 @@ class ProtocolEditor(PlannerControls):
         if isinstance(node_at(self.program, self.path), Group):
             self.navigate_group(self.path)
 
-    def leave_group(self) -> None:
-        if self.scope:
-            self.navigate_group(self.scope[:-1])
-
     def open_preview(self) -> None:
         if self.flush_parameters():
             self.popups.open_preview(self.program)

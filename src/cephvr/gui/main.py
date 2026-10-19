@@ -137,13 +137,14 @@ class ManagedGui(QObject):
             lambda role, kind, **options: self.cameras.queue(
                 "camera", role=role, kind=kind, **options
             ),
-            lambda: preview_window_placement(window).SerializeToString(),
+            lambda key: preview_window_placement(window, key).SerializeToString(),
         )
+        window.preview_slot.snap_requested.connect(self.preview_viewers.snap)
         self.cameras = ManagedCameras(
             cameras,
             bridge,
             self.preview_viewers.viewer_state,
-            lambda: preview_window_placement(window).SerializeToString(),
+            lambda key: preview_window_placement(window, key).SerializeToString(),
             self.camera_submission_options,
         )
         cameras.inventory_refreshed.connect(self.refresh_camera_state)

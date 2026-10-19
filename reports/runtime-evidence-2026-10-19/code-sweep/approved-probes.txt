@@ -1,0 +1,6 @@
+Subject history: SubjectSessions(count=2, latest='2026-10-19 Alpha 18:00', same_experiment_today=True)
+Expected latest: 2026-10-19 Alpha 18:00
+grating parse accepted
+grating generated (8, 8, 3)
+polar_grating parse accepted
+polar_grating generated (8, 8, 3)

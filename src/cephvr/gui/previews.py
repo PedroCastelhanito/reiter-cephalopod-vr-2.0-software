@@ -1,4 +1,4 @@
-"""Modeless viewer selector; emits visibility intents without owning images."""
+"""External preview workspace; acquisition retains native windows and pixels."""
 
 from dataclasses import replace
 
@@ -30,7 +30,11 @@ class PreviewDialog(QDialog):
             settings.value("windows/preview-selector") if settings is not None else None
         )
         self.saved_geometry = saved if isinstance(saved, QByteArray) else QByteArray()
+        self._opened = False
         self.setWindowTitle("Previews")
+        self.setWindowFlag(Qt.WindowType.WindowMinMaxButtonsHint, True)
+        self.setMinimumSize(600, 450)
+        self.resize(900, 700)
         self.setWindowModality(Qt.WindowModality.NonModal)
         body = QVBoxLayout(self)
         body.setContentsMargins(*([SIZES.compact_card_padding] * 4))
@@ -44,7 +48,18 @@ class PreviewDialog(QDialog):
         self.rows.setColumnStretch(0, 1)
         self.card.body.addLayout(self.rows)
         self.scroll_area.setWidget(self.card)
+        self.scroll_area.setMaximumHeight(200)
         body.addWidget(self.scroll_area)
+        self.preview_host = QWidget(self)
+        self.preview_layout = QVBoxLayout(self.preview_host)
+        self.preview_layout.setContentsMargins(0, 0, 0, 0)
+        self.empty_hint = label(
+            "Select streams above to show their previews.", wrap=True
+        )
+        self.empty_hint.setObjectName("PreviewWorkspaceEmpty")
+        self.empty_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_layout.addWidget(self.empty_hint)
+        body.addWidget(self.preview_host, 1)
         self.views: dict[str, PreviewView] = {}
         self.controls: dict[str, QCheckBox] = {}
         self.statuses: dict[str, QLabel] = {}
@@ -53,11 +68,14 @@ class PreviewDialog(QDialog):
 
     def show_saved(self, main: QWidget) -> None:
         if not self.isVisible():
-            restored = bool(self.saved_geometry) and self.restoreGeometry(
-                self.saved_geometry
+            restored = (
+                self._opened
+                or bool(self.saved_geometry)
+                and self.restoreGeometry(self.saved_geometry)
             )
             self.fit_contents()
             self.show()
+            self._opened = True
             if not restored:
                 snap_tool_window(main, self)
         self.raise_()
@@ -140,6 +158,8 @@ class PreviewDialog(QDialog):
             self.fit_contents()
 
     def fit_contents(self) -> None:
+        self.card.ensurePolished()
+        self.rows.invalidate()
         self.rows.activate()
         screen = self.screen()
         available = (
@@ -166,9 +186,8 @@ class PreviewDialog(QDialog):
         )
         self.card.body.activate()
         height = self.card.sizeHint().height() + margin + 4
-        self.setMinimumWidth(min(width, available.width()))
-        self.setFixedHeight(min(height, max(1, available.height() - 40)))
-        self.resize(self.minimumWidth(), self.height())
+        self.scroll_area.setFixedHeight(min(height, 200))
+        self.setMinimumWidth(min(max(600, width), available.width()))
 
     def request(self, key: str, visible: bool) -> None:
         view = self.views.get(key)

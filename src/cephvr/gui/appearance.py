@@ -6,7 +6,7 @@ from functools import cache
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QByteArray, QObject, QSettings
+from PyQt6.QtCore import QByteArray, QEvent, QObject, QSettings
 from PyQt6.QtGui import QAction, QActionGroup, QFontDatabase
 from PyQt6.QtWidgets import QApplication, QComboBox, QLabel, QLineEdit, QWidget
 
@@ -105,6 +105,13 @@ class DashboardAppearance(QObject):
         )
         self.crt_action.toggled.connect(self.set_crt)
         menu.addAction(self.crt_action)
+        self.band_action = QAction("Refresh band", menu)
+        self.band_action.setCheckable(True)
+        self.band_action.setChecked(
+            settings.value("review/crt_band", False, type=bool) if settings else False
+        )
+        self.band_action.toggled.connect(self.set_band)
+        menu.addAction(self.band_action)
         saved = (
             settings.value(
                 "appearance/style", settings.value("review/appearance", "standard")
@@ -128,6 +135,8 @@ class DashboardAppearance(QObject):
             surface.setProperty("retroConsole", retro)
             surface.setStyleSheet(retro_stylesheet() if retro else "")
             for control in surface.findChildren(Button):
+                # Polish first so layouts never use pre-style metrics (clipped labels).
+                control.ensurePolished()
                 control.updateGeometry()
             for editor in surface.findChildren((QLineEdit, QComboBox)):
                 if editor.findChild(FocusBrackets) is None:
@@ -159,6 +168,10 @@ class DashboardAppearance(QObject):
             "-- NO ENTRIES --" if retro else ""
         )
         self.apply_crt()
+        # Settle layouts before the first repaint; otherwise one frame keeps old card
+        # heights and squeezes fixed-height controls.
+        for _ in range(3):
+            QApplication.sendPostedEvents(None, QEvent.Type.LayoutRequest)
         for brackets in self.focus_brackets:
             brackets.refresh()
         if self.dashboard.preview_dialog.isVisible():
@@ -172,6 +185,12 @@ class DashboardAppearance(QObject):
         self.apply_crt()
         if self.settings is not None:
             self.settings.setValue("review/crt", enabled)
+            self.settings.sync()
+
+    def set_band(self, enabled: bool) -> None:
+        self.apply_crt()
+        if self.settings is not None:
+            self.settings.setValue("review/crt_band", enabled)
             self.settings.sync()
 
     def refresh_protocol_cards(self) -> None:
@@ -191,8 +210,9 @@ class DashboardAppearance(QObject):
 
     def apply_crt(self) -> None:
         enabled = self.name == "retro_console" and self.crt_action.isChecked()
-        self.crt.apply(enabled)
-        self.preview_crt.apply(enabled)
+        band = self.band_action.isChecked()
+        self.crt.apply(enabled, band=band)
+        self.preview_crt.apply(enabled, band=band)
         for indicator in self.dashboard.backend_indicators.values():
             indicator.setProperty("crtGlow", enabled)
             indicator.update()
@@ -210,6 +230,7 @@ class DashboardAppearance(QObject):
                 else COLORS.accent
             )
             bar.setTabIcon(index, device_icon(key, color))
+        self.window.devices.rail.refresh_icons()
 
     @property
     def focus_brackets(self) -> list[FocusBrackets]:

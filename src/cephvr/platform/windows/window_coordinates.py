@@ -108,12 +108,42 @@ def preview_frame_extra(scale: float = 1.0) -> tuple[int, int]:
     return 2 * metric(5, dpi), sum(metric(key, dpi) for key in (4, 33, 92, 6))
 
 
-def position_preview_frame(title: str, x: int, y: int) -> None:
-    """Place this process's visible preview corner, excluding invisible borders."""
+def preview_window_handle(title: str) -> int:
+    """Return this process's window with an exact title; resolve before blanking it."""
+    api = ctypes.WinDLL("user32", use_last_error=True)
+    api.FindWindowW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR]
+    api.FindWindowW.restype = wintypes.HWND
+    api.GetWindowThreadProcessId.argtypes = [
+        wintypes.HWND,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    handle = api.FindWindowW(None, title)
+    owner = wintypes.DWORD()
+    if not handle or not api.GetWindowThreadProcessId(handle, ctypes.byref(owner)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    if owner.value != os.getpid():
+        raise RuntimeError("Preview placement targets another process's window")
+    return int(handle)
+
+
+def blank_preview_caption(handle: int) -> None:
+    """Clear the native caption text; the title bar keeps move/close behavior."""
+    api = ctypes.WinDLL("user32", use_last_error=True)
+    api.SetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPCWSTR]
+    if not api.SetWindowTextW(handle, ""):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def position_preview_frame(
+    window: str | int, x: int, y: int, *, topmost: bool = True
+) -> None:
+    """Place this process's visible preview corner, excluding invisible borders.
+
+    A title resolves the window; once the caption is blank, callers pass its handle.
+    """
+    handle = preview_window_handle(window) if isinstance(window, str) else window
     with physical_coordinates():
         api = ctypes.WinDLL("user32", use_last_error=True)
-        api.FindWindowW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR]
-        api.FindWindowW.restype = wintypes.HWND
         api.GetWindowThreadProcessId.argtypes = [
             wintypes.HWND,
             ctypes.POINTER(wintypes.DWORD),
@@ -128,9 +158,8 @@ def position_preview_frame(title: str, x: int, y: int) -> None:
             ctypes.c_int,
             wintypes.UINT,
         ]
-        handle = api.FindWindowW(None, title)
         owner = wintypes.DWORD()
-        if not handle or not api.GetWindowThreadProcessId(handle, ctypes.byref(owner)):
+        if not api.GetWindowThreadProcessId(handle, ctypes.byref(owner)):
             raise ctypes.WinError(ctypes.get_last_error())
         if owner.value != os.getpid():
             raise RuntimeError("Preview placement targets another process's window")
@@ -141,7 +170,7 @@ def position_preview_frame(title: str, x: int, y: int) -> None:
         # HWND_TOPMOST keeps the detached viewer above the GUI without activation.
         if not api.SetWindowPos(
             handle,
-            wintypes.HWND(-1),
+            wintypes.HWND(-1 if topmost else -2),
             x - (visible.left - outer.left),
             y - (visible.top - outer.top),
             0,

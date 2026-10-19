@@ -1515,12 +1515,14 @@ def test_legacy_texture_recipe_pixels_match_cephvr1_reference_hashes():
 
 def test_legacy_polar_texture_requires_complete_geometry_and_matches_reference():
     import hashlib
+    import json
 
     import numpy as np
 
     from cephvr.visual_stimulus.resources.texture_recipe import (
         TextureRecipe,
         generate_texture_recipe,
+        parse_texture_recipe,
     )
 
     corners = {
@@ -1568,6 +1570,27 @@ def test_legacy_polar_texture_requires_complete_geometry_and_matches_reference()
         hashlib.sha256(pixels.tobytes()).hexdigest()
         == "bfb631bdbde155bc01cea1a4d81cde8fea509aac0eb7128d5bc57bc84fab4ab3"
     )
+    for pattern in ("grating", "polar_grating"):
+        for channel in ("color_a", "color_b"):
+            for values, clamped in (
+                ([1e308, -1e308, 0.5], [1, 0, 0.5]),
+                ([-1e308, 0.5, 1e308], [0, 0.5, 1]),
+            ):
+                rasters = [
+                    generate_texture_recipe(
+                        parse_texture_recipe(
+                            json.dumps(
+                                {
+                                    "pattern": pattern,
+                                    "params": {"size": 8, channel: rgb},
+                                }
+                            ).encode()
+                        ),
+                        surface_corners=corners,
+                    )
+                    for rgb in (values, clamped)
+                ]
+                np.testing.assert_array_equal(*rasters)
 
 
 def test_legacy_image_recipe_requires_explicit_decoded_rgb_pixels():

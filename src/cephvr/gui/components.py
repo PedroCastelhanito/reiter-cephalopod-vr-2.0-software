@@ -270,6 +270,7 @@ class StatusColumn(QWidget):
         self.hud_card.body.addWidget(self.hud)
         self.log_card = Card("Runtime log", grow=True)
         self.console = LogConsole()
+        self.log_minimum_height = self.console.minimumHeight()
         self.log_card.body.addWidget(self.console, 1)
         body.addWidget(self.hud_card)
         body.addWidget(self.log_card, 1)

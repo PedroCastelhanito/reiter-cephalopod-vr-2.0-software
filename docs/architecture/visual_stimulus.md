@@ -220,7 +220,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 15
+**Status:** Accepted · **Revision:** 16
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -241,8 +241,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   preparation using explicit seeds and configured geometry for polar patterns.
   Preview PNGs are optional, nonauthoritative outputs. Preserve legacy RGB8 pattern
   semantics with explicit linear interpretation unless a supported color override
-  is supplied. Reject unsupported pattern/parameters, missing dependencies or
-  insufficient resources; never silently use flat/preview/unblurred substitutes.
+  is supplied. Clamp finite recipe RGB channels to 0–1 before RGB8 scaling for both
+  ordinary and polar patterns. Reject unsupported pattern/parameters, missing
+  dependencies or insufficient resources; never silently use flat/preview/unblurred substitutes.
   Reuse NumPy and pinned Pillow for legacy pixel/blur parity; no frame-time generator,
   second renderer or runtime recipe editor is introduced.
 - One linear RGB working space, 32-bit floating-point composition and premultiplied

@@ -81,6 +81,9 @@ class CamerasPanel(ResponsiveColumns):
         self.table = DataTable(len(self.drafts), 4)
         self.refresh_button = self.table.add_refresh_action("Refresh available cameras")
         self.table.setHorizontalHeaderLabels(["Use", "Camera", "Role", ""])
+        self.table.empty_text = (
+            "No cameras listed. Use the refresh button above to scan."
+        )
         self.table.setShowGrid(False)
         vertical = self.table.verticalHeader()
         header = self.table.horizontalHeader()

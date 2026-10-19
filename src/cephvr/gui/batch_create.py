@@ -17,10 +17,8 @@ from cephvr.gui.batch_insertion import Insertion
 from cephvr.gui.batch_values import materialize_values
 from cephvr.gui.batch_variation import BatchVariationRow
 from cephvr.gui.components import Card, button, combo, equal_row_height, field, label
-from cephvr.gui.epoch_batch import epoch_paths
 from cephvr.gui.epoch_composer import EpochComposer
 from cephvr.gui.notices import FormNotice, passive_validation
-from cephvr.gui.program_editing import node_at
 from cephvr.gui.projector_layers import detach_layer, layer_title, layers_for
 from cephvr.gui.protocol_groups import make_group
 from cephvr.gui.stimulus_scope import surfaces
@@ -52,7 +50,6 @@ class BatchCreate(QWidget):
         self.append_only = append_only
         self.show_copies = show_copies
         self.destination = "trial"
-        self._bound_scope: tuple[int, tuple[int, ...]] | None = None
         self.composer = composer if composer is not None else EpochComposer()
         body.addWidget(self.composer)
         self.variation_host = Card("Variation rules", compact=True)
@@ -213,30 +210,6 @@ class BatchCreate(QWidget):
     def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         self.arrange_fields()
-
-    def bind_trial(self, program: Program, scope: tuple[int, ...] = ()) -> None:
-        identity = (id(program), scope)
-        if identity == self._bound_scope:
-            return
-        self._bound_scope = identity
-        self.destination = "group" if scope else "trial"
-        self.insert.setItemText(
-            self.insert.findData("replace"), f"Replace {self.destination}"
-        )
-        previous = self.target_label.currentText()
-        counts: dict[str, int] = {}
-        for path in epoch_paths(program):
-            epoch = node_at(program, path)
-            assert isinstance(epoch, Epoch)
-            if path[: len(scope)] == scope and epoch.batch_label:
-                counts[epoch.batch_label] = counts.get(epoch.batch_label, 0) + 1
-        self.label_counts = counts
-        self.target_label.blockSignals(True)
-        self.target_label.clear()
-        self.target_label.addItems(sorted(counts))
-        self.target_label.setCurrentIndex(max(0, self.target_label.findText(previous)))
-        self.target_label.blockSignals(False)
-        self.arrange_insertion()
 
     def queue_preview(self) -> None:
         self.preview_timer.start()

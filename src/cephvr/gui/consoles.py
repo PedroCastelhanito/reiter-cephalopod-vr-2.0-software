@@ -2,7 +2,7 @@
 
 from math import ceil
 
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtGui import (
     QContextMenuEvent,
     QPaintEvent,
@@ -19,7 +19,12 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.log_colors import LogHighlighter
-from cephvr.gui.retro_instruments import blink, prompt_cursor, terminal_marks
+from cephvr.gui.retro_instruments import (
+    PromptGutter,
+    blink,
+    prompt_cursor,
+    terminal_marks,
+)
 from cephvr.gui.theme import SIZES, colors_for, retro_console
 
 
@@ -30,6 +35,8 @@ class Console(QPlainTextEdit):
         document = self.document()
         assert document is not None
         self._plain_margin = document.documentMargin()
+        self.gutter_width = 0
+        self.gutter = PromptGutter(self)
         self.setTabChangesFocus(True)
         self.setReadOnly(True)
         self.setMaximumBlockCount(256)
@@ -52,14 +59,17 @@ class Console(QPlainTextEdit):
         """Reserve a visual prompt gutter without rewriting retained text blocks."""
         document = self.document()
         assert document is not None
-        document.setDocumentMargin(
-            self._plain_margin + self.fontMetrics().horizontalAdvance("> ")
-            if enabled
-            else self._plain_margin
-        )
+        document.setDocumentMargin(self._plain_margin)
+        self.gutter_width = self.fontMetrics().horizontalAdvance("> ") if enabled else 0
+        self.setViewportMargins(self.gutter_width, 0, 0, 0)
+        self.gutter.place(self.gutter_width)
         viewport = self.viewport()
         assert viewport is not None
         viewport.update()
+
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        super().resizeEvent(event)
+        self.gutter.place(self.gutter_width)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         super().paintEvent(event)
@@ -99,6 +109,12 @@ class LogConsole(Console):
 
     def __init__(self, *, lines: int = 7) -> None:
         super().__init__(lines=lines)
+        self.preview_compact = False
+        self._expanded_minimum = self.minimumHeight()
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll = self.verticalScrollBar()
+        assert scroll is not None
+        scroll.setObjectName("ConsoleLogScroll")
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
         self.setWordWrapMode(QTextOption.WrapMode.WordWrap)
         document = self.document()
@@ -109,6 +125,39 @@ class LogConsole(Console):
     def set_entry_prompts(self, enabled: bool) -> None:
         super().set_entry_prompts(enabled)
         self.highlighter.rehighlight()
+        if self.preview_compact:
+            self._fit_four_lines()
+
+    def _fit_four_lines(self) -> None:
+        self.ensurePolished()
+        document = self.document()
+        viewport = self.viewport()
+        assert document is not None and viewport is not None
+        chrome = self.height() - viewport.height()
+        self.setFixedHeight(
+            ceil(
+                4 * self.fontMetrics().lineSpacing()
+                + 2 * document.documentMargin()
+                + chrome
+            )
+        )
+
+    def set_preview_compact(self, compact: bool, *, follow: bool = True) -> None:
+        changed = compact != self.preview_compact
+        self.preview_compact = compact
+        if compact:
+            self._fit_four_lines()
+        else:
+            self.setMaximumHeight(16777215)
+            self.setMinimumHeight(self._expanded_minimum)
+        if changed and compact and follow:
+            self.scroll_to_latest()
+            QTimer.singleShot(0, self.scroll_to_latest)
+
+    def scroll_to_latest(self) -> None:
+        scroll = self.verticalScrollBar()
+        assert scroll is not None
+        scroll.setValue(scroll.maximum())
 
     def blink_cursor(self) -> None:
         viewport = self.viewport()

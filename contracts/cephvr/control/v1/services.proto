@@ -288,9 +288,14 @@ message AcquisitionMicrocontrollerCommand {
   string firmware_sha256 = 8;
 }
 message PreviewWindowPlacement {
-  sint32 x = 1; // Physical desktop pixels; initial visible-frame position only.
+  sint32 x = 1; // Physical desktop pixels; display-only visible-frame position.
   sint32 y = 2;
   uint32 side = 3; // Square image area, bounded 128..2048 pixels.
+  uint64 gui_window_handle = 4; // Optional display owner, all three owner fields or none.
+  uint32 gui_process_id = 5;
+  uint64 gui_process_creation_time_100ns = 6; // Reject stale/recycled owner processes.
+  bool update_existing_only = 7; // Display layout refresh must never reopen an X-closed viewer.
+  bool snap_to_grid = 8; // Explicit operator reset of manual position/size.
 }
 message CameraCommandRequest {
   OperatorCommand command = 1;

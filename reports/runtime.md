@@ -1,5 +1,55 @@
 # Controller and supervisor status
 
+Oct19 `dashboard-log-expand` ([G01](../docs/architecture/gui.md#g01) rev232):
+Dashboard log now fills its available column height with external previews open.
+Four-line compaction applies only to the status column hosting an in-page preview
+grid (Cameras/Tracking); collapse-follow-latest and subsequent manual scrolling
+remain unchanged. ARCH-002 uses the existing host identity, with no added state or
+dependencies. Both-style preview/page-transition tests7pass and Dashboard height
+tests2pass. Scoped Ruff/format, Win32 mypy and boundaries721/zero violations pass.
+Offscreen test windows close automatically; only the final updated Review is left
+open. This display-only change has no new Windows/rig acceptance evidence.
+
+Oct19 `preview-snap-workspace` implements [G01](../docs/architecture/gui.md#g01)
+rev231 and [A10](../docs/architecture/acquisition.md#a10) rev62. Centered Snap
+buttons restore only their named existing preview and resume automatic placement.
+Dashboard Previews now opens/raises a resizable external workspace containing the
+source controls and native-window grid; Cameras retains its in-page grid. The owner
+selected OpenCV over the grid, streams now and plots later. Closing/hiding the
+workspace hides viewers while retaining logical Show/capture; reopening restores
+them. Same-GUI-process native host changes preserve exact process identity, manual
+opt-outs and reader ownership. Restoring refreshes only the automatic geometry
+baseline so OS repositioning is not mistaken for a manual move.
+
+ARCH-002 reuses the existing workspace, placement and display-thread owners; the
+snap flag is display-only, coalesced without dropping an unconsumed explicit snap.
+No new image transport, package or capture state. [Native method](runtime-evidence-2026-10-19/preview-snap/native-workspace.py)
+and [result](runtime-evidence-2026-10-19/preview-snap/native-workspace.json) pass
+snap/reset/no-reopen, three-source containment, move/hide/restore and return to
+Cameras in actual local macOS Review. Every native test closes all its windows;
+retained initial failures show the restore baseline issue and its correction.
+Portable selections pass26 owner/display/workspace cases and18 snap/grid/placement
+cases. A broader preview selection56pass/9fail used old in-page/toggle assumptions
+and pre-caption mocks; after updates the affected cases pass as8cases plus the final
+first-placement/tab case. Settling source-control height before measurement fixes
+initial grid drift. Win32 mypy11sources (final2rechecked), scoped Ruff/format16files
+and whitespace pass; boundaries721/zero violations.
+Windows native/DPI and real streams remain pending in the existing native-follow
+task. Concurrent device navigation, empty-frame styling and blank-caption changes
+are preserved; local evidence is for the uncommitted combined working tree.
+
+Oct19 `preview-four-line-log`: [G01](../docs/architecture/gui.md#g01) rev229/
+[G02](../docs/architecture/gui.md#g02) rev78 remove the trial-position strip.
+Open previews fix logs to four rendered lines and scroll to latest on collapse;
+subsequent manual reading remains stable. Last close restores expansion. Initial
+placement measures the same geometry without changing reading position. ARCH-002
+reuses focused owners and removes the unused strip widget without dependencies.
+Both-style four-line/rollback checks3pass; broader affected selection13pass and
+four obsolete-strip assertion failures, corrected appearance cases4pass on rerun.
+Ruff/format6files, Win32 mypy5sources and boundaries721/zero violations pass.
+Offscreen tests close their windows; final local Review alone is opened for review.
+Windows-native acceptance remains pending; concurrent navigation edits preserved.
+
 Oct17 `merge-main-oct17` integrates local GUI595ab681 with recording/evidence
 origin/main1314a743. Only LOG and this report conflicted; both records and
 committed product sources/tests are preserved. Fresh acquisition selection passes
@@ -14,6 +64,74 @@ are working-tree evidence rather than an isolated committed-tree certification.
 An earlier combined run was interrupted after GUI failures and aborted in Qt
 fixture construction; no full GUI or native/rig pass is claimed. Existing
 `devices-narrow-overflow` tracks the reflow finding; cause remains unverified.
+
+Oct19 `adaptive-preview-grid` implements [G01](../docs/architecture/gui.md#g01)
+revision228. Both Dashboard and Cameras retain external resizable OpenCV windows.
+Only open eligible sources occupy slots: one centered, two side by side, then
+additional two-column rows. Untouched windows follow grid changes; any operator
+move or resize preserves that geometry until close/reopen. Cameras still excludes
+disabled cameras and non-camera streams. Height can constrain one and two previews
+to the same square size even though their horizontal layout changes.
+
+ARCH-002 uses a small shared geometry guard, platform-owned owner-relative frame
+measurement and existing placement/command owners; no package, image transport or
+whole-runtime references. Runtime serializes changed hints through existing command
+authority and coalesces them on the display thread. Existing-only hints cannot
+reopen an X-closed viewer. All affected source modules remain cohesive; boundary
+size advisories are inherited and unchanged by this increment.
+
+[Native method](runtime-evidence-2026-10-19/adaptive-previews/native.py) and
+[result](runtime-evidence-2026-10-19/adaptive-previews/native.json) verify maximized
+local Retro Review, one/two/three layouts, containment, centering, reflow on close,
+manual move/resize preservation and reset on reopen. The first observation retained
+in the same directory showed an obsolete Cocoa minimum-width allowance for the now
+resizable windows; the corrected run centers the actual small frames. Its initial
+strict one-greater-than-two assertion was too strong for a height-limited area and
+was replaced by centering and one-versus-three resizing checks. Qt-only screenshot
+inspection verifies the underlying shell; native frames are measured separately.
+Final focused selection:37pass and one obsolete minimum-width assertion; its
+replacement resizable-frame centering/narrow-fit case passes in isolation. Scoped
+Ruff/format16files, Win32 mypy11sources and boundaries720/zero violations pass.
+Portable owning tests cover one through six slots, update coalescing/copying,
+authority/visibility gates, manual opt-out, no recreation, and cleanup. Windows
+native/DPI and real camera acceptance remain pending in `preview-windows-native-follow`.
+
+Oct17 `log-scroll-camera-preview-scope` refines
+[G01](../docs/architecture/gui.md#g01) revision227 and
+[G02](../docs/architecture/gui.md#g02) revision77. LogConsole already retained
+native scrolling, but global zero-width scrollbar styling hid its control. A
+log-specific named vertical bar now has a10px track/visible handle and AsNeeded
+policy; short logs hide it. Shared Console/HUD behavior remains unchanged. Both
+appearances retain reading anchors and follow-at-bottom semantics.
+
+Cameras filters placement footprints and Preview/log visibility to enabled camera
+keys from current drafts/readback, excluding disabled cameras even if connected
+and excluding Tracking/Visual stimulus streams. Dashboard retains all source types. A10 diagnostic Connect remains independent
+of experiment enablement: a source with no eligible slot uses the existing
+monitor-constrained fallback instead of blocking capture admission.
+The previous open-viewer membership freeze prevented changing page/eligibility;
+removing that redundant restriction refreshes footprints for membership changes,
+with the subsequent adaptive-grid rule above now also refreshing on Show/Hide.
+ARCH-002 extends the existing focused console/theme/shell/placement owners with no
+new module, dependency, transport or capture state.
+
+Actual native Retro Cameras Review shows only the two enabled camera frames;
+both native200×226px windows fit their200×230px targets without overlap. The
+100-line log exposes a10px scrollbar with range89 and navigates from end to start.
+Both previews minimize/restore together and independent close preserves the other
+position. [Source/method](runtime-evidence-2026-10-17/review-synthetic-preview/camera-slots-log-native.py)
+and [result/scope](runtime-evidence-2026-10-17/review-synthetic-preview/camera-slots-log-native.json)
+record local macOS Review evidence; no real devices or Windows-native acceptance.
+Four added page-scope/overflow cases span both styles and include pointer scrollbar
+navigation, overflow hiding, preserved reading anchor, enable/disable while open,
+stream-only/no-enabled-camera Cameras hiding/log expansion, disabled-camera
+placement fallback and return to full Dashboard sources.
+The focused preview/log/HUD selection passes34cases/581deselected.
+The existing multi-preview cases now require two camera windows on Cameras and
+three camera/stream windows on Dashboard. A generic camera test fixture was updated
+to an actual enabled identity for the new filtering. Scoped Ruff/format5files,
+Win32 mypy4sources, boundaries720/zero violations and whitespace pass. Existing
+unrelated cohesion and narrow-layout limitations remain; the fresh Review is open.
 
 Oct17 `log-error-color` implements [G02](../docs/architecture/gui.md#g02) revision76:
 error log blocks and Retro prompts use the existing coral-red error palette token.
@@ -94,24 +212,78 @@ ARCH-002 review reuses focused console painting and layout helpers without new
 dependencies; the oversized main entry point only replaces its duplicate launch
 calls with the shared helper. Existing unrelated cohesion advisories remain.
 
-Oct17 `preview-below-status` implements the owner's placement correction in
-[G01](../docs/architecture/gui.md#g01) revision218: Preview sits below HUD and log
-inside their original status column on Dashboard, Cameras and Tracking. Removing
-the extra shell column restores the original control/status widths and top/right
-alignment. Log and Preview share available height; the square image fits below
-the card heading. A single slot moves between owning status columns on navigation;
-other tabs retain their original layout. Existing helpers own the change under
-ARCH-002, with no new dependency or runtime state.
+Oct17 `preview-window-follow` refines `preview-card-visibility` under
+[G01](../docs/architecture/gui.md#g01) revision224. The ordinary card is replaced
+by a centered `[ PREVIEW ]` caption and tall bracketed native-window footprint.
+`preview-multiple-frames` adds a two-column grid of named source frames on Dashboard
+and Cameras. Review and managed camera Connect/Show pass the exact source key to
+placement; independent windows no longer receive the same coordinates. Keep positions stable for ordinary Show/Hide; page or enabled-camera membership
+changes refresh the relevant source footprint set. Native chrome and headers fit each tile;
+compact log minimum64px during Preview is also used by speculative placement and
+restored on failure/last close. The fitted frame uses explicit geometry to avoid
+fixed-child minimum-size feedback in the grid.
+HUD/log retain their original column/alignment. Preview appears only while at
+least one viewer is logically open; the log shares its height then and reclaims
+it after the last close. First-open measurement temporarily expands the layout,
+propagates ancestor geometry and restores visibility even on failure. Observer X
+closure updates presentation without admitting commands.
 
-The owning preview/HUD/device-tab selection passes46cases, including original HUD
-alignment, fitted telemetry, log growth, below-log placement/containment and source
-closure. Scoped Ruff/format, Win32 mypy2, boundaries716/zero violations and whitespace
-pass. The offscreen Cameras render was inspected and Dashboard geometry checked;
-[captures/method](runtime-evidence-2026-10-17/review-synthetic-preview/below-status-layout.json)
-retain local scope. A fresh maximized Review with fake previews was opened for the
-owner. Native Windows placement at the new vertical location remains unverified;
-the Oct16 coordinates below are historical and do not establish this layout's native
-acceptance. No real device or runtime was restarted.
+Review uses focused Cocoa/Win32 native owner helpers; Windows runtime camera
+HighGUI uses the same Win32 helper on its existing display thread. Separate native
+windows stay above the GUI, follow its translation and minimize/restore together,
+without global topmost status. Minimization retains Show/window/reader state;
+latest private pixels redraw on restore, including without a new frame. The
+optional display owner identity crosses the existing placement contract; Windows
+checks top-level HWND/PID/process creation time and retains a query/synchronize
+handle, rejects stale owners and reports cleanup failure. Capture/pulse ownership
+and deadlines remain A10's. Runtime Tracking/stimulus viewer integration remains
+unfinished under its existing scope; this does not certify those implementations.
+
+ARCH-002 review chooses native owner links over embedding or another process;
+no dependency, image transport or capture state is added. Placement, display
+lifecycle and native mechanisms remain separate focused modules. The new platform
+test module owns native display mechanisms/fixtures rather than a per-fix suite.
+Boundaries720/zero violations; inherited size advisories concern other modules.
+Regenerated19 protobuf sources. Acquisition manual-preview plus portable platform
+checks130pass/2 Windows deselected; focused GUI placement/blank lifecycle/HUD
+checks27pass/579deselected. Scoped Ruff/format13files and Win32 mypy8sources pass.
+These are local checks, not Windows or rig acceptance. The separate full-GUI
+merge/narrow-overflow limitation above remains open.
+
+Actual native Retro Review verifies a200×206px native frame inside the200×210px
+footprint, native parent identity, hidden preview while GUI is minimized with
+Show retained, and visible preview above the restored GUI; explicit Hide closes
+both window/link. Retina measurement initially exposed insufficient minimum
+footprint sizing and was corrected. A subsequent native test exposed Qt/native
+minimize-state disagreement; passing Review's Qt minimized state fixes it
+([initial failed observation](runtime-evidence-2026-10-17/review-synthetic-preview/preview-follow-native-before-visibility-check.json),
+[final result](runtime-evidence-2026-10-17/review-synthetic-preview/preview-follow-native.json),
+[method/source](runtime-evidence-2026-10-17/review-synthetic-preview/preview-follow-native.py)).
+The [Retro frame render](runtime-evidence-2026-10-17/review-synthetic-preview/preview-frame-retro.png)
+was inspected; QWidget rendering excludes the separate native OpenCV pixels.
+Additional actual Retro Review tests open Behavior cam, Tracking cam and Visual
+stimulus together on both Dashboard and Cameras: all three native200×156px frames
+fit independent200×160px targets, do not overlap, minimize/restore together and
+retain their positions when one closes. Initial native test caught second-row
+clipping; reducing the log minimum and settling tile geometry before measurement
+fixes it. Preserved
+[initial failure](runtime-evidence-2026-10-17/review-synthetic-preview/multiple-previews-native-before-fit.json),
+[Dashboard result](runtime-evidence-2026-10-17/review-synthetic-preview/multiple-previews-native.json),
+[Cameras result](runtime-evidence-2026-10-17/review-synthetic-preview/multiple-previews-native-cameras.json)
+and [source/method](runtime-evidence-2026-10-17/review-synthetic-preview/multiple-previews-native.py).
+The [Cameras frame render](runtime-evidence-2026-10-17/review-synthetic-preview/multiple-preview-frames-cameras-retro.png)
+was inspected. Four added cases span both pages/styles and independent Show/Hide/X,
+nonoverlap, stable coordinates and log restoration; the combined selection passes
+25cases/585deselected, including existing camera admission/cancellation checks.
+Scoped Ruff/format9files, Win32 mypy8sources and boundaries720/zero violations pass.
+ARCH-002 retains grid/placement logic in its small owner; the oversized main module
+only wires source-key callbacks, with no new responsibility or dependency.
+Concurrent Retro styling edits are preserved; these tests describe the working tree.
+Updated maximized Review remains open with multiple blank windows. The prior
+[log growth native result](runtime-evidence-2026-10-17/review-synthetic-preview/card-visibility-native.json)
+records439→144→439px before the bracket refinement. Windows native owner test is
+included but unrun on macOS; actual Windows HighGUI/DPI/device acceptance remains
+pending. No camera or rig pass is claimed.
 
 Oct17 `review-blank-preview` updates the initial `review-synthetic-preview` under
 [G01](../docs/architecture/gui.md#g01) revision221. Default isolated `--review`
@@ -2768,6 +2940,68 @@ and SpikeGLX pairing were disabled. Remaining acceptance lives in the
 ## Current scope and review
 
 <a id="maintainability-review"></a>
+Oct19 `code-sweep-oct19` follows [ARCH-002](../architecture.md#arch-002) and the
+owner's restriction to behavior-preserving edits. Repository-wide static scanning
+and caller review remove unused batch-binding and parent-navigation
+helpers; live subgroup binding, asset editing and breadcrumb navigation retain
+their existing owners under [G01](../docs/architecture/gui.md#g01).
+The whole obsolete `ProjectorEditRow` module is also removed: its sole caller was
+an old test. That test retains the unique Fit-edit/legacy-default/invalid-value
+schema assertions through the live patch operation; existing ImageParameters
+coverage still verifies Cover selection and saved state. The post-removal focused
+GUI selection passes all three cases. Acquisition and Visual Stimulus cleanup
+details belong to their owning reports.
+Native buffer-retention references, Qt/gRPC callbacks, model validators and
+contract-exported interfaces are retained; an unused-name report alone is not
+deletion evidence. Source-only import tracing also retains explicit compatibility
+exports, generated-schema adapters and manual/managed module entry points. The
+refreshed Vulture advisory falls from 314 hits (290 source) to 299 (275 source);
+five 100%-confidence hits remain unused test-double arguments. Lower-confidence
+hits remain advisory, without a whitelist or CI gate. The sweep starts from an extensively modified working tree;
+[baseline fingerprints](runtime-evidence-2026-10-19/code-sweep/baseline.json)
+and [reproduction method](runtime-evidence-2026-10-19/code-sweep/probes.py) preserve
+provenance. Initial Ruff, Win32 mypy (826 sources), dependencies and 57 generated
+bindings pass. The final backend rerun passes 2,215 tests (six skips, 14 deselections)
+with loopback access, resolving all 33 initial sandbox bind failures/errors. The
+obsolete `NominalVideoGrid` module and its five self-tests are retired: no source/
+contract/entry-point caller remains, and A08/E13 use sequential recording. Current
+sequential frame/mapping tests remain. Final Ruff/format (947 files), Win32 mypy
+(824 sources), boundaries (722 modules, zero violations), whitespace and source/
+wheel builds pass. Wheel inspection confirms removed modules are absent and live
+owners match source. Existing cohesion advisories remain with their owning reviews;
+no new runtime dependency, architecture rule or hardware setting is introduced.
+[Exact commands, provenance and limits](runtime-evidence-2026-10-19/code-sweep/context.json).
+
+The pre-existing CameraTriggerForm test failure reproduces independently: with local
+font metrics the three controls fit the requested 298-pixel panel, so expecting a
+stacked form is incorrect. The fixture now derives narrow/wide widths from actual
+control hints and retains every geometry, value and destruction assertion; all three
+narrow/wide/narrow cycles pass. No product layout changed.
+[Original failure](runtime-evidence-2026-10-19/code-sweep/gui-reflow.txt),
+[geometry probe](runtime-evidence-2026-10-19/code-sweep/reflow-probe.txt),
+[corrected check](runtime-evidence-2026-10-19/code-sweep/gui-reflow-after.txt).
+The broad offscreen GUI run passes 630 cases and reports only that original fixture
+failure. Its collection predates the correction and final unused editor removal;
+all three affected final-tree cases pass separately. This is not a fresh full
+final-tree GUI or native/rig pass. [Broad result](runtime-evidence-2026-10-19/code-sweep/gui-after.txt),
+[final affected cases](runtime-evidence-2026-10-19/code-sweep/gui-removal-final.txt).
+
+Owner-approved Oct19 correction: `subject_history.find_subject_sessions` now selects
+by date, then time including seconds, with experiment name only breaking timestamp
+ties ([G02](../docs/architecture/gui.md#g02), revision 79). The original probe selected
+Zulu 09:00 over Alpha 18:00; it now reports Alpha 18:00. Four ordering cases cover
+same-day cross-experiment ordering, date precedence, seconds and deterministic ties.
+Before the fix, two cases failed; all six subject-history/reuse cases now pass,
+including the existing read-only scan and Setup confirmation checks. Output
+reservation, scan limits and stored data remain unchanged.
+[Original probe](runtime-evidence-2026-10-19/code-sweep/probes.txt),
+[regression failures](runtime-evidence-2026-10-19/code-sweep/approved-ordering-red.txt),
+[passing checks](runtime-evidence-2026-10-19/code-sweep/approved-gui-green.txt).
+Both approved fixes pass scoped Ruff/format (354 files), Win32 mypy (336 sources),
+boundaries (722 modules, zero violations) and whitespace checks. Existing cohesion
+advisories remain unchanged. No full GUI rerun, native Windows or rig acceptance
+is claimed. [Follow-up provenance and commands](runtime-evidence-2026-10-19/code-sweep/approved-context.json).
+
 Oct16 owner-authorized maintainability implementation follows the Astra architectural
 review under ARCH-002/E08/E14. All seven reviewed source changes are implemented;
 final integrated validation is recorded in the

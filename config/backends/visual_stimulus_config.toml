@@ -25,7 +25,7 @@ decoded_frames_per_instance = 3
 decoded_bytes_total = 268_435_456
 decoder_working_bytes_total = 268_435_456
 # V12: GPU readback slots between the GL thread and the recording thread (in-process).
-capture_slots = 3
+capture_slots = 15
 recording_bytes_total = 268_435_456
 # V12/V28: evidence lines waiting for the recording thread; exhaustion is a
 # required-logging failure.

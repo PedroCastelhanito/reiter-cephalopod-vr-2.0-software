@@ -21,13 +21,6 @@ def clamp_with_flag(
     return result, result != value
 
 
-def srgb_to_linear(channel: float) -> float:
-    if not math.isfinite(channel):
-        raise ValueError("sRGB channel must be finite")
-    c = min(1.0, max(0.0, channel))
-    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
-
-
 def linear_to_srgb(channel: float) -> float:
     if not math.isfinite(channel):
         raise ValueError("linear channel must be finite")

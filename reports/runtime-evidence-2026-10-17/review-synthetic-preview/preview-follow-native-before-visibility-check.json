@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "uncommitted working tree",
+  "method": "actual Review --review entry, own-process Cocoa parent/frame/order queries; native Qt minimize and restore",
+  "scope": "local macOS Review only, no real devices or Windows-native acceptance",
+  "result": {
+    "bracket_caption": "[ PREVIEW ]",
+    "ordinary_card": false,
+    "target": [
+      1058,
+      718,
+      200,
+      210
+    ],
+    "frame": [
+      1058,
+      718,
+      200,
+      206
+    ],
+    "contained": true,
+    "native_parent_matches_gui": true,
+    "gui_minimized": true,
+    "preview_hidden_while_minimized": false,
+    "preview_retained": true,
+    "show_retained": true,
+    "gui_restored": true,
+    "preview_visible_after_restore": true,
+    "preview_above_gui": true,
+    "closed": true
+  }
+}

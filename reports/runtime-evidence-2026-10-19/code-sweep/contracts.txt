@@ -1,0 +1,2 @@
+Generated 19 Protobuf sources into /private/tmp/cephvr-oct19-contract-check.
+Checked 57 bindings; differences: []

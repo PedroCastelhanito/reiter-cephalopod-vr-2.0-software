@@ -1,0 +1,20 @@
+[
+  "../architecture.md#arch-002",
+  "../docs/architecture/gui.md#g01",
+  "runtime-evidence-2026-10-19/code-sweep/baseline.json",
+  "runtime-evidence-2026-10-19/code-sweep/probes.py",
+  "runtime-evidence-2026-10-19/code-sweep/context.json",
+  "runtime-evidence-2026-10-19/code-sweep/gui-reflow.txt",
+  "runtime-evidence-2026-10-19/code-sweep/reflow-probe.txt",
+  "runtime-evidence-2026-10-19/code-sweep/gui-reflow-after.txt",
+  "runtime-evidence-2026-10-19/code-sweep/gui-after.txt",
+  "runtime-evidence-2026-10-19/code-sweep/gui-removal-final.txt",
+  "runtime-evidence-2026-10-19/code-sweep/probes.txt",
+  "../architecture.md#arch-002",
+  "runtime-evidence-2026-10-19/code-sweep/context.json",
+  "runtime-evidence-2026-10-19/code-sweep/baseline.json",
+  "runtime-evidence-2026-10-19/code-sweep/visual-after.txt",
+  "runtime-evidence-2026-10-19/code-sweep/equivalence.txt",
+  "runtime-evidence-2026-10-19/code-sweep/probes.txt",
+  "../docs/architecture/visual_stimulus.md#v04"
+]

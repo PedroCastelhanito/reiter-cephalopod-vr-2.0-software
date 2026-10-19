@@ -1,0 +1,196 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "uncommitted working tree",
+  "scope": "macOS local Review only; no Windows/hardware acceptance",
+  "checks": {
+    "manual_detected": true,
+    "geometry_restored": true,
+    "automatic_restored": true,
+    "closed_not_reopened": true,
+    "workspace_three": true,
+    "external_grid": true,
+    "geometry": [
+      {
+        "camera-1": {
+          "target": [
+            750,
+            482,
+            130,
+            160
+          ],
+          "native": [
+            750,
+            482,
+            128,
+            156
+          ],
+          "manual": false
+        },
+        "camera-2": {
+          "target": [
+            1042,
+            482,
+            130,
+            160
+          ],
+          "native": [
+            1042,
+            482,
+            128,
+            156
+          ],
+          "manual": false
+        },
+        "stimulus": {
+          "target": [
+            750,
+            683,
+            130,
+            160
+          ],
+          "native": [
+            750,
+            683,
+            128,
+            156
+          ],
+          "manual": false
+        }
+      },
+      {
+        "camera-1": {
+          "target": [
+            775,
+            502,
+            130,
+            160
+          ],
+          "native": [
+            775,
+            502,
+            128,
+            156
+          ],
+          "manual": false
+        },
+        "camera-2": {
+          "target": [
+            1067,
+            502,
+            130,
+            160
+          ],
+          "native": [
+            1067,
+            502,
+            128,
+            156
+          ],
+          "manual": false
+        },
+        "stimulus": {
+          "target": [
+            775,
+            703,
+            130,
+            160
+          ],
+          "native": [
+            775,
+            703,
+            128,
+            156
+          ],
+          "manual": false
+        }
+      },
+      {
+        "camera-1": {
+          "target": [
+            750,
+            502,
+            130,
+            160
+          ],
+          "native": [
+            750,
+            502,
+            128,
+            156
+          ],
+          "manual": false
+        },
+        "camera-2": {
+          "target": [
+            1042,
+            502,
+            130,
+            160
+          ],
+          "native": [
+            1042,
+            502,
+            128,
+            156
+          ],
+          "manual": false
+        },
+        "stimulus": {
+          "target": [
+            750,
+            703,
+            130,
+            160
+          ],
+          "native": [
+            750,
+            703,
+            128,
+            156
+          ],
+          "manual": false
+        }
+      },
+      {
+        "camera-1": {
+          "target": [
+            875,
+            598,
+            272,
+            302
+          ],
+          "native": [
+            875,
+            598,
+            270,
+            298
+          ],
+          "manual": false
+        },
+        "camera-2": {
+          "target": [
+            1171,
+            599,
+            271,
+            301
+          ],
+          "native": [
+            1171,
+            599,
+            269,
+            297
+          ],
+          "manual": false
+        }
+      }
+    ],
+    "workspace_contained": true,
+    "move_contained": true,
+    "hidden_retains_three": true,
+    "all_hidden": true,
+    "all_restored": true,
+    "restore_contained": true,
+    "cameras_retarget": true,
+    "test_previews_closed": true
+  }
+}

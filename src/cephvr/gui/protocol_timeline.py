@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import QScrollBar, QWidget
 from cephvr.gui.formatting import clock_duration
 from cephvr.gui.projector_layers import layers_for
 from cephvr.gui.protocol_document import node_name
+from cephvr.gui.retro_instruments import tile_tint, unselected_epoch_brush
 from cephvr.gui.theme import colors_for, retro_console
 from cephvr.gui.timeline_actions import TimelineActions
 from cephvr.gui.timeline_details import (
@@ -309,23 +310,23 @@ class ProgramTimeline(QWidget):
             )
             selected = self.paths[i] in self.selection
             group = isinstance(node, Group)
+            tint = tile_tint(self.type_keys[i]) if retro and not group else None
             painter.setBrush(
                 QColor(colors.accent)
                 if retro and selected
                 else QColor(colors.selection if selected else colors.input)
                 if group
+                else unselected_epoch_brush(tint)
+                if tint is not None
                 else stimulus_color(self.type_keys[i])
             )
-            painter.setPen(
-                QPen(
-                    QColor(
-                        (colors.accent if group else colors.text)
-                        if selected
-                        else colors.border
-                    ),
-                    2 if selected else 1,
-                )
+            edge = QColor(
+                (colors.accent if group else colors.text) if selected else colors.border
             )
+            if tint is not None and not selected:
+                edge = QColor(tint)
+                edge.setAlpha(170)
+            painter.setPen(QPen(edge, 2 if selected else 1))
             painter.drawRoundedRect(rect, 0 if retro else 6, 0 if retro else 6)
             painter.setPen(QColor(colors.window if retro and selected else colors.text))
             name = node_name(node).replace("_", " ")

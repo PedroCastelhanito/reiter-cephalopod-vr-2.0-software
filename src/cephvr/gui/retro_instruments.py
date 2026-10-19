@@ -1,6 +1,6 @@
 """Static Review instrument decoration; no device or experiment ownership."""
 
-from math import ceil
+import hashlib
 
 from PyQt6.QtCore import QEvent, QObject, QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent, QPen, QTextCursor
@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.log_colors import log_block_is_error
-from cephvr.gui.theme import RETRO_COLORS, retro_console
+from cephvr.gui.theme import RETRO_COLORS, RETRO_TINTS, retro_console
 
 
 class Blink(QObject):
@@ -73,6 +73,29 @@ def prompt_cursor(console: QPlainTextEdit) -> None:
         QPainter(viewport).fillRect(block, QColor(RETRO_COLORS.accent))
 
 
+def tile_tint(key: str) -> QColor:
+    """Stable identity tint for a stimulus type, drawn from the Retro tint set."""
+    index = int.from_bytes(hashlib.sha256(key.encode()).digest()[:2], "big")
+    return QColor(RETRO_TINTS[index % len(RETRO_TINTS)])
+
+
+def blend(base: str, ink: QColor, amount: float) -> QColor:
+    """Mix ink into a surface color; amount 0 is the surface, 1 is the ink."""
+    surface = QColor(base)
+    return QColor.fromRgbF(
+        *(
+            getattr(surface, channel)() * (1 - amount)
+            + getattr(ink, channel)() * amount
+            for channel in ("redF", "greenF", "blueF")
+        )
+    )
+
+
+def unselected_epoch_brush(tint: QColor) -> QColor:
+    """Dim tinted fill for an unselected Retro epoch tile."""
+    return blend(RETRO_COLORS.card, tint, 0.18)
+
+
 def dashed_rule(painter: QPainter, left: float, right: float, y: float) -> None:
     ink = QColor(RETRO_COLORS.border)
     ink.setAlpha(120)
@@ -101,31 +124,55 @@ def terminal_marks(console: QPlainTextEdit, event: QPaintEvent) -> None:
     for index, y in enumerate(range(8, viewport.height() - 8, 20)):
         length = 8 if index % 5 == 4 else 4
         painter.drawLine(viewport.width() - 2 - length, y, viewport.width() - 2, y)
+    if console.property("terminal") != "telemetry":
+        return
     block = console.firstVisibleBlock()
-    painter.setFont(console.font())
     while block.isValid():
         rect = console.blockBoundingGeometry(block).translated(console.contentOffset())
         if rect.top() > viewport.height():
             break
-        if rect.bottom() >= 0:
-            if block.text():
-                layout = block.layout()
-                if layout is not None and layout.lineCount():
-                    line = layout.lineAt(0)
-                    error = console.property(
-                        "terminal"
-                    ) != "telemetry" and log_block_is_error(block)
-                    painter.setPen(
-                        QColor(
-                            RETRO_COLORS.error if error else RETRO_COLORS.console_text
-                        )
-                    )
-                    painter.drawText(
-                        QPointF(2, rect.top() + line.y() + line.ascent()), ">"
-                    )
-            elif console.property("terminal") == "telemetry":
-                dashed_rule(painter, 4, viewport.width() - 16, rect.center().y())
+        if rect.bottom() >= 0 and not block.text():
+            dashed_rule(painter, 4, viewport.width() - 16, rect.center().y())
         block = block.next()
+
+
+class PromptGutter(QWidget):
+    """'>' column in a console's left viewport margin; text blocks stay unmodified."""
+
+    def __init__(self, console: QPlainTextEdit) -> None:
+        super().__init__(console)
+        self.console = console
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        console.updateRequest.connect(lambda *_: self.update())
+        self.hide()
+
+    def place(self, width: int) -> None:
+        viewport = self.console.viewport()
+        assert viewport is not None
+        self.setGeometry(viewport.x() - width, viewport.y(), width, viewport.height())
+        self.setVisible(width > 0)
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        console = self.console
+        painter = QPainter(self)
+        painter.setFont(console.font())
+        telemetry = console.property("terminal") == "telemetry"
+        block = console.firstVisibleBlock()
+        while block.isValid():
+            rect = console.blockBoundingGeometry(block).translated(
+                console.contentOffset()
+            )
+            if rect.top() > self.height():
+                break
+            layout = block.layout()
+            if rect.bottom() >= 0 and block.text() and layout and layout.lineCount():
+                line = layout.lineAt(0)
+                error = not telemetry and log_block_is_error(block)
+                painter.setPen(
+                    QColor(RETRO_COLORS.error if error else RETRO_COLORS.console_text)
+                )
+                painter.drawText(QPointF(2, rect.top() + line.y() + line.ascent()), ">")
+            block = block.next()
 
 
 def paint_status_lamp(indicator: QRadioButton, status: str) -> None:
@@ -143,7 +190,7 @@ def paint_status_lamp(indicator: QRadioButton, status: str) -> None:
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     lamp = QColor(ink)
     halo = QColor(lamp)
-    halo.setAlpha(25)
+    halo.setAlpha(45)
     glyph = (
         "●"
         if ink == colors.ready
@@ -225,50 +272,3 @@ class FocusBrackets(QWidget):
         ):
             painter.drawLine(point, point + QPointF(7 * dx, 0))
             painter.drawLine(point, point + QPointF(0, 7 * dy))
-
-
-class TrialPosition(QWidget):
-    """Bounded segment count with exact current-trial text, not a completion claim."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.index = 0
-        self.count = 0
-        self.setFixedHeight(37)
-        self.setToolTip("Current trial position in the session.")
-        self.hide()
-
-    def set_position(self, index: int, count: int) -> None:
-        self.index, self.count = index, count
-        self.setAccessibleName(f"Trial position {index} of {count}")
-        self.setVisible(retro_console(self) and count > 0)
-        self.update()
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        if self.count <= 0:
-            return
-        painter = QPainter(self)
-        font = painter.font()
-        font.setPixelSize(10)
-        painter.setFont(font)
-        painter.setPen(QColor(RETRO_COLORS.label))
-        painter.drawText(0, 11, "TRIAL POSITION")
-        painter.drawText(
-            self.rect().adjusted(0, 0, 0, -20),
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop,
-            f"{self.index} / {self.count}",
-        )
-        segments = min(self.count, 24)
-        position = ceil(max(0, min(self.index, self.count)) * segments / self.count)
-        font.setPixelSize(13)
-        painter.setFont(font)
-        glyph_width = painter.fontMetrics().horizontalAdvance("▓")
-        cells = max(segments, int(self.width() / glyph_width))
-        painter.scale(self.width() / (cells * glyph_width), 1)
-        for cell in range(cells):
-            index = cell * segments // cells
-            painter.setPen(
-                QColor(RETRO_COLORS.mirror if index < position else RETRO_COLORS.border)
-            )
-            glyph = "▒" if index == position - 1 else "▓" if index < position else "░"
-            painter.drawText(cell * glyph_width, 33, glyph)

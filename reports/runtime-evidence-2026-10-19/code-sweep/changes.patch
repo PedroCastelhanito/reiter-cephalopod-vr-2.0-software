@@ -1,0 +1,633 @@
+diff --git a/src/cephvr/acquisition/coordinator/state/workers.py b/src/cephvr/acquisition/coordinator/state/workers.py
+index fd7d31b3..b46eeccb 100644
+--- a/src/cephvr/acquisition/coordinator/state/workers.py
++++ b/src/cephvr/acquisition/coordinator/state/workers.py
+@@ -32,7 +32,6 @@ class WorkerPreview:
+     tracking_allocation_id: str | None = None
+     tracking_attachment: acq.FrameBufferAttachment | None = None
+     tracking_worker_attachment: acq.FrameBufferAttachment | None = None
+-    tracking_transfer_confirmed: bool = False
+     tracking_viewer: control.ProcessIdentity | None = None
+     tracking_viewer_transfer_id: str | None = None
+     tracking_viewer_released_event: asyncio.Event = field(default_factory=asyncio.Event)
+diff --git a/src/cephvr/acquisition/recording/session.py b/src/cephvr/acquisition/recording/session.py
+index 715ff19a..8f266f5e 100644
+--- a/src/cephvr/acquisition/recording/session.py
++++ b/src/cephvr/acquisition/recording/session.py
+@@ -110,7 +110,6 @@ class RecordingSession:
+         self._scheduled: acq.WorkerSchedule | None = None
+         self._released = False
+         self._started = False
+-        self._release_deadline_ns: int | None = None
+         self._active_io_deadline_ns: int | None = None
+         self._finished = False
+         self._encoder: EncoderProcess | None = None
+@@ -129,7 +128,6 @@ class RecordingSession:
+         self._error: str | None = None
+         self._last_video_sync_ns = 0
+         self._prepared_buffer: bytearray | None = None
+-        self._input_pixel_format = ""
+         self._finish_arguments: tuple[object, ...] | None = None
+         self._original_finish_deadline_ns: int | None = None
+         self._finish_results: list[control.OutputResult] | None = None
+@@ -152,17 +150,15 @@ class RecordingSession:
+             self._prepared = True
+             return
+         assert self.pixel_preparer is not None and self.capabilities is not None
+-        self._encoding, self._prepared_buffer, self._input_pixel_format = (
+-            prepare_recording(
+-                self.settings,
+-                self.layout,
+-                self.identity,
+-                self.paths,
+-                self.queue,
+-                self.pixel_preparer,
+-                self.capabilities,
+-                role=self.role,
+-            )
++        self._encoding, self._prepared_buffer, _ = prepare_recording(
++            self.settings,
++            self.layout,
++            self.identity,
++            self.paths,
++            self.queue,
++            self.pixel_preparer,
++            self.capabilities,
++            role=self.role,
+         )
+         self._prepared = True
+ 
+@@ -237,7 +233,6 @@ class RecordingSession:
+                 "ReleaseTrial does not match exact retained schedule"
+             )
+         self._released = True
+-        self._release_deadline_ns = deadline_ns
+ 
+     def process_available(self, *, timeout: float = 0.0, max_entries: int = 64) -> int:
+         """Process ordered queue entries; no capture or control thread performs I/O."""
+diff --git a/src/cephvr/acquisition/worker/capture_runtime.py b/src/cephvr/acquisition/worker/capture_runtime.py
+index ff4ad9bc..e9d928b3 100644
+--- a/src/cephvr/acquisition/worker/capture_runtime.py
++++ b/src/cephvr/acquisition/worker/capture_runtime.py
+@@ -46,7 +46,6 @@ class WorkerCaptureResources:
+         self._locked_settings: CameraSettings | None = None
+         self._active = False
+         self._preview_max_hz: float | None = None
+-        self._session_preview = False
+         self._scheduled_start_ns: int | None = None
+         self._scheduled_end_ns: int | None = None
+         self._released = False
+@@ -127,7 +126,6 @@ class WorkerCaptureResources:
+             and payload.capture.session_preview_max_hz > 0
+             else None
+         )
+-        self._session_preview = session_preview
+         self._preview_run_id = _uuid_or_none(preview_run_id)
+         clock = (
+             payload.camera_clock
+diff --git a/src/cephvr/acquisition/worker/owner.py b/src/cephvr/acquisition/worker/owner.py
+index f98a28e9..7d2128c6 100644
+--- a/src/cephvr/acquisition/worker/owner.py
++++ b/src/cephvr/acquisition/worker/owner.py
+@@ -287,11 +287,4 @@ class SerializedCameraOwner:
+ 
+     def capture_handoff(self) -> bool:
+         """Recheck commands and reset the control wake atomically after SDK wait."""
+-        with self._condition:
+-            if self._has_ready_locked() or self._external_wake_pending_locked():
+-                return False
+-            self._clear_control()
+-            if self._has_ready_locked() or self._external_wake_pending_locked():
+-                self._wake_control()
+-                return False
+-            return True
++        return self.acknowledge_control_if_idle()
+diff --git a/src/cephvr/acquisition/worker/trial_lifecycle.py b/src/cephvr/acquisition/worker/trial_lifecycle.py
+index 09a0a2ed..7b0b256b 100644
+--- a/src/cephvr/acquisition/worker/trial_lifecycle.py
++++ b/src/cephvr/acquisition/worker/trial_lifecycle.py
+@@ -75,7 +75,6 @@ class WorkerTrialLifecycle:
+         self._begin_warning_scope = begin_warning_scope
+         self._complete_warning_scope = complete_warning_scope
+         self.external_wake = external_wake
+-        self.recording_first_frame_callback = recording_first_frame
+         self._require_ready_session_callback = require_ready_session
+         self.activity = TrialActivityEvidence(
+             bootstrap, state, source, report_lifecycle
+diff --git a/src/cephvr/acquisition/worker/trial_state.py b/src/cephvr/acquisition/worker/trial_state.py
+index 38cedae5..45e79bbb 100644
+--- a/src/cephvr/acquisition/worker/trial_state.py
++++ b/src/cephvr/acquisition/worker/trial_state.py
+@@ -30,4 +30,3 @@ class WorkerTrialState:
+     transport_start: TransportCounters | None = None
+     transport_summary: dict[str, int | None] | None = None
+     transport_observed_ns: int | None = None
+-    camera_first_frame_seen: bool = False
+diff --git a/src/cephvr/gui/batch_create.py b/src/cephvr/gui/batch_create.py
+index 8cb0b975..9803b82d 100644
+--- a/src/cephvr/gui/batch_create.py
++++ b/src/cephvr/gui/batch_create.py
+@@ -17,10 +17,8 @@ from cephvr.gui.batch_insertion import Insertion
+ from cephvr.gui.batch_values import materialize_values
+ from cephvr.gui.batch_variation import BatchVariationRow
+ from cephvr.gui.components import Card, button, combo, equal_row_height, field, label
+-from cephvr.gui.epoch_batch import epoch_paths
+ from cephvr.gui.epoch_composer import EpochComposer
+ from cephvr.gui.notices import FormNotice, passive_validation
+-from cephvr.gui.program_editing import node_at
+ from cephvr.gui.projector_layers import detach_layer, layer_title, layers_for
+ from cephvr.gui.protocol_groups import make_group
+ from cephvr.gui.stimulus_scope import surfaces
+@@ -52,7 +50,6 @@ class BatchCreate(QWidget):
+         self.append_only = append_only
+         self.show_copies = show_copies
+         self.destination = "trial"
+-        self._bound_scope: tuple[int, tuple[int, ...]] | None = None
+         self.composer = composer if composer is not None else EpochComposer()
+         body.addWidget(self.composer)
+         self.variation_host = Card("Variation rules", compact=True)
+@@ -214,30 +211,6 @@ class BatchCreate(QWidget):
+         super().resizeEvent(event)
+         self.arrange_fields()
+ 
+-    def bind_trial(self, program: Program, scope: tuple[int, ...] = ()) -> None:
+-        identity = (id(program), scope)
+-        if identity == self._bound_scope:
+-            return
+-        self._bound_scope = identity
+-        self.destination = "group" if scope else "trial"
+-        self.insert.setItemText(
+-            self.insert.findData("replace"), f"Replace {self.destination}"
+-        )
+-        previous = self.target_label.currentText()
+-        counts: dict[str, int] = {}
+-        for path in epoch_paths(program):
+-            epoch = node_at(program, path)
+-            assert isinstance(epoch, Epoch)
+-            if path[: len(scope)] == scope and epoch.batch_label:
+-                counts[epoch.batch_label] = counts.get(epoch.batch_label, 0) + 1
+-        self.label_counts = counts
+-        self.target_label.blockSignals(True)
+-        self.target_label.clear()
+-        self.target_label.addItems(sorted(counts))
+-        self.target_label.setCurrentIndex(max(0, self.target_label.findText(previous)))
+-        self.target_label.blockSignals(False)
+-        self.arrange_insertion()
+-
+     def queue_preview(self) -> None:
+         self.preview_timer.start()
+ 
+diff --git a/src/cephvr/gui/batch_edit_rows.py b/src/cephvr/gui/batch_edit_rows.py
+deleted file mode 100644
+index e60a4bf4..00000000
+--- a/src/cephvr/gui/batch_edit_rows.py
++++ /dev/null
+@@ -1,191 +0,0 @@
+-"""Per-projector value editors for one selected batch parameter."""
+-
+-from PyQt6.QtCore import pyqtSignal
+-from PyQt6.QtWidgets import QHBoxLayout, QWidget
+-
+-from cephvr.gui.components import button, combo, label
+-from cephvr.gui.epoch_batch import (
+-    END_BEHAVIORS,
+-    LayerTarget,
+-    matching_layer,
+-    parameter_value,
+-)
+-from cephvr.gui.paths import PathEdit
+-from cephvr.gui.program_editing import node_at
+-from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
+-
+-
+-class ProjectorEditRow(QWidget):
+-    """One projector/layer selector and one pending value for the chosen parameter."""
+-
+-    browse_requested = pyqtSignal(object)
+-    change_requested = pyqtSignal(object)
+-
+-    def __init__(self, face: str) -> None:
+-        super().__init__()
+-        self.face = face
+-        self.targets: list[LayerTarget] = []
+-        self.program: Program | None = None
+-        self.paths: tuple[tuple[int, ...], ...] = ()
+-        self.parameter = ""
+-        self.dirty = False
+-        self.bound_layer = 0
+-        layout = QHBoxLayout(self)
+-        layout.setContentsMargins(0, 0, 0, 0)
+-        self.caption = label(face or "3D arena", "label")
+-        self.caption.setMinimumWidth(84)
+-        layout.addWidget(self.caption)
+-        self.layer = combo(())
+-        self.layer.setMinimumWidth(0)
+-        self.layer.currentIndexChanged.connect(self.choose_layer)
+-        layout.addWidget(self.layer, 2)
+-        self.value = PathEdit()
+-        self.value.setMinimumWidth(0)
+-        self.value.textEdited.connect(self.mark_changed)
+-        layout.addWidget(self.value, 3)
+-        self.fit = combo(("Contain", "Cover", "Stretch"))
+-        self.fit.hide()
+-        self.fit.currentTextChanged.connect(self.set_fit)
+-        layout.addWidget(self.fit, 3)
+-        self.browse = button("…", hint="Choose prepared asset")
+-        self.browse.clicked.connect(lambda: self.browse_requested.emit(self))
+-        layout.addWidget(self.browse)
+-
+-    @property
+-    def target(self) -> LayerTarget | None:
+-        index = self.layer.currentIndex()
+-        return self.targets[index] if 0 <= index < len(self.targets) else None
+-
+-    def bind(
+-        self,
+-        program: Program,
+-        paths: tuple[tuple[int, ...], ...],
+-        parameter: str,
+-        targets: list[LayerTarget],
+-    ) -> None:
+-        previous = self.target
+-        self.program, self.paths, self.parameter = program, paths, parameter
+-        self.targets = targets
+-        self.dirty = False
+-        self.layer.blockSignals(True)
+-        self.layer.clear()
+-        for target in targets:
+-            title = target.family.replace("Looming image", "Looming")
+-            self.layer.addItem(f"{title} · layer {target.ordinal + 1}")
+-        self.layer.setCurrentIndex(
+-            targets.index(previous) if previous in targets else (0 if targets else -1)
+-        )
+-        self.layer.blockSignals(False)
+-        self.layer.setEnabled(bool(targets))
+-        self.browse.setVisible(parameter == "Asset")
+-        self.browse.setEnabled(bool(targets))
+-        self.refresh_value()
+-
+-    def choose_layer(self) -> None:
+-        self.change_requested.emit(self)
+-
+-    def restore_layer(self) -> None:
+-        self.layer.blockSignals(True)
+-        self.layer.setCurrentIndex(self.bound_layer)
+-        self.layer.blockSignals(False)
+-
+-    def refresh_value(self) -> None:
+-        self.bound_layer = self.layer.currentIndex()
+-        target = self.target
+-        self.value.clear()
+-        self.value.setPlaceholderText("Unavailable")
+-        self.value.setEnabled(target is not None)
+-        self.value.setVisible(self.parameter not in ("Fit", "At end"))
+-        self.fit.setVisible(self.parameter in ("Fit", "At end"))
+-        self.fit.setEnabled(target is not None)
+-        self.fit.blockSignals(True)
+-        self.fit.clear()
+-        self.fit.addItems(
+-            ("Contain", "Cover", "Stretch")
+-            if self.parameter == "Fit"
+-            else ("Loop", "Hold final frame")
+-        )
+-        self.fit.setCurrentIndex(-1)
+-        self.fit.blockSignals(False)
+-        if self.program is None or target is None:
+-            return
+-        values: list[str] = []
+-        units: set[str] = set()
+-        for path in self.paths:
+-            try:
+-                epoch = node_at(self.program, path)
+-                assert isinstance(epoch, Epoch)
+-                setting = epoch.settings[
+-                    matching_layer(self.program, path, target)
+-                ].model_dump(mode="json")
+-                if self.parameter == "Asset":
+-                    identity = setting.get(
+-                        "asset_id", setting.get("pattern", {}).get("asset_id")
+-                    )
+-                    value = next(
+-                        asset.logical_path
+-                        for asset in self.program.assets
+-                        if asset.asset_id == identity
+-                    )
+-                else:
+-                    raw = parameter_value(setting, self.parameter)
+-                    value = f"{raw:g}" if isinstance(raw, (float, int)) else str(raw)
+-                length = (
+-                    "mm"
+-                    if setting["kind"] == "arena"
+-                    or setting["space"]["kind"] == "physical_surface"
+-                    else "°"
+-                )
+-                units.add(
+-                    {
+-                        "Speed": length + "/s",
+-                        "Direction": "°",
+-                        "Angular speed": "°/s",
+-                        "Start size": length,
+-                        "End size": length,
+-                        "Growth duration": "s",
+-                        "Playback start": "s",
+-                    }.get(self.parameter, "")
+-                )
+-                values.append(value)
+-            except (ValueError, KeyError, AssertionError, StopIteration):
+-                values.append("Custom / unavailable")
+-        if len(units) > 1:
+-            self.value.setEnabled(False)
+-            self.value.setPlaceholderText("Mixed units")
+-        elif values and len(set(values)) == 1 and values[0] != "Custom / unavailable":
+-            self.value.setText(values[0])
+-        else:
+-            self.value.setPlaceholderText(
+-                "Mixed" if len(set(values)) > 1 else values[0] if values else ""
+-            )
+-        unit = next(iter(units)) if len(units) == 1 else ""
+-        if self.parameter in ("Fit", "At end"):
+-            self.fit.blockSignals(True)
+-            self.fit.setCurrentIndex(
+-                self.fit.findText(
+-                    self.value.text().replace("_", " ").capitalize()
+-                    if self.parameter == "At end"
+-                    else self.value.text().title()
+-                )
+-            )
+-            self.fit.blockSignals(False)
+-        self.value.setAccessibleName(
+-            f"{self.face or '3D arena'} {self.parameter}"
+-            + (f" ({unit})" if unit else "")
+-        )
+-
+-    def mark_changed(self, _text: str) -> None:
+-        self.dirty = True
+-
+-    def set_fit(self, text: str) -> None:
+-        self.value.setText(
+-            END_BEHAVIORS.get(text.lower(), text.lower())
+-            if self.parameter == "At end"
+-            else text.lower()
+-        )
+-        self.dirty = True
+-
+-    def set_asset(self, path: str) -> None:
+-        self.value.setText(path)
+-        self.dirty = True
+diff --git a/src/cephvr/gui/protocol_editor.py b/src/cephvr/gui/protocol_editor.py
+index 38256bcc..606cffcb 100644
+--- a/src/cephvr/gui/protocol_editor.py
++++ b/src/cephvr/gui/protocol_editor.py
+@@ -544,10 +544,6 @@ class ProtocolEditor(PlannerControls):
+         if isinstance(node_at(self.program, self.path), Group):
+             self.navigate_group(self.path)
+ 
+-    def leave_group(self) -> None:
+-        if self.scope:
+-            self.navigate_group(self.scope[:-1])
+-
+     def open_preview(self) -> None:
+         if self.flush_parameters():
+             self.popups.open_preview(self.program)
+diff --git a/src/cephvr/shared/nominal_video_grid.py b/src/cephvr/shared/nominal_video_grid.py
+deleted file mode 100644
+index a56a04da..00000000
+--- a/src/cephvr/shared/nominal_video_grid.py
++++ /dev/null
+@@ -1,37 +0,0 @@
+-"""Exact host-time mapping between source samples and nominal video slots."""
+-
+-from __future__ import annotations
+-
+-from fractions import Fraction
+-
+-
+-class NominalVideoGrid:
+-    """Map half-open source intervals to CFR slots without storing trial slots."""
+-
+-    def __init__(self, start_ns: int, rate_hz: float | Fraction) -> None:
+-        if start_ns < 0:
+-            raise ValueError("video start must be nonnegative")
+-        try:
+-            rate = Fraction(str(rate_hz))
+-        except (ValueError, ZeroDivisionError) as exc:
+-            raise ValueError("video rate must be finite and positive") from exc
+-        if rate <= 0:
+-            raise ValueError("video rate must be finite and positive")
+-        self.start_ns = start_ns
+-        self.rate = rate
+-
+-    def slot_for(self, source_ns: int) -> int:
+-        """Return n for [T+n/R,T+(n+1)/R), using exact rational arithmetic."""
+-        if source_ns < self.start_ns:
+-            raise ValueError("source time precedes video start")
+-        return ((source_ns - self.start_ns) * self.rate.numerator) // (
+-            1_000_000_000 * self.rate.denominator
+-        )
+-
+-    def slots_before(self, cutoff_ns: int) -> int:
+-        """Count slots with starts strictly before cutoff (ceil(duration * rate))."""
+-        if cutoff_ns < self.start_ns:
+-            raise ValueError("video cutoff precedes video start")
+-        numerator = (cutoff_ns - self.start_ns) * self.rate.numerator
+-        denominator = 1_000_000_000 * self.rate.denominator
+-        return (numerator + denominator - 1) // denominator
+diff --git a/src/cephvr/visual_stimulus/rendering/color.py b/src/cephvr/visual_stimulus/rendering/color.py
+index 8b55df92..5483cfb7 100644
+--- a/src/cephvr/visual_stimulus/rendering/color.py
++++ b/src/cephvr/visual_stimulus/rendering/color.py
+@@ -21,13 +21,6 @@ def clamp_with_flag(
+     return result, result != value
+ 
+ 
+-def srgb_to_linear(channel: float) -> float:
+-    if not math.isfinite(channel):
+-        raise ValueError("sRGB channel must be finite")
+-    c = min(1.0, max(0.0, channel))
+-    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+-
+-
+ def linear_to_srgb(channel: float) -> float:
+     if not math.isfinite(channel):
+         raise ValueError("linear channel must be finite")
+diff --git a/src/cephvr/visual_stimulus/resources/session.py b/src/cephvr/visual_stimulus/resources/session.py
+index c67d7189..7bd3b420 100644
+--- a/src/cephvr/visual_stimulus/resources/session.py
++++ b/src/cephvr/visual_stimulus/resources/session.py
+@@ -610,9 +610,6 @@ class NativePreparation:
+ 
+         return artifacts
+ 
+-    def create_engine(self) -> RendererEngine:
+-        return self.engine
+-
+     def cleanup(self, deadline_ns: int | None = None) -> ResourceReleaseReport:
+         released: list[str] = []
+         outstanding: list[str] = []
+diff --git a/src/cephvr/visual_stimulus/resources/texture_recipe_patterns.py b/src/cephvr/visual_stimulus/resources/texture_recipe_patterns.py
+index 4d88a481..0d7ecf8e 100644
+--- a/src/cephvr/visual_stimulus/resources/texture_recipe_patterns.py
++++ b/src/cephvr/visual_stimulus/resources/texture_recipe_patterns.py
+@@ -8,7 +8,12 @@ from collections.abc import Callable, Mapping
+ 
+ import numpy as np
+ 
+-from cephvr.visual_stimulus.resources.texture_recipe_geometry import _polar_grating
++from cephvr.visual_stimulus.resources.texture_recipe_geometry import (
++    _mix,
++    _num,
++    _polar_grating,
++    _smoothstep,
++)
+ 
+ _FACES = ("front", "left", "right", "bottom")
+ _VERTICAL_FACES = ("left", "front", "right")
+@@ -147,14 +152,6 @@ def _check(check: Callable[[], None] | None) -> None:
+         check()
+ 
+ 
+-def _num(value: object, default: float) -> float:
+-    try:
+-        result = float(value)  # type: ignore[arg-type]
+-    except (TypeError, ValueError, OverflowError):
+-        return float(default)
+-    return result if math.isfinite(result) else float(default)
+-
+-
+ def _safe_ratio(numerator: float, denominator: float, name: str) -> float:
+     result = numerator / denominator
+     if not math.isfinite(result):
+@@ -224,21 +221,6 @@ def _color(value: object, default: tuple[int, int, int]) -> tuple[int, int, int]
+     return default
+ 
+ 
+-def _smoothstep(low: float, high: float, values: np.ndarray) -> np.ndarray:
+-    t = np.clip((values - low) / max(1e-8, high - low), 0, 1)
+-    return t * t * (3 - 2 * t)
+-
+-
+-def _mix(
+-    a: tuple[int, int, int], b: tuple[int, int, int], alpha: np.ndarray
+-) -> np.ndarray:
+-    ca, cb = np.asarray(a, dtype=np.float32), np.asarray(b, dtype=np.float32)
+-    return np.asarray(
+-        np.clip(np.rint(ca * (1 - alpha[..., None]) + cb * alpha[..., None]), 0, 255),
+-        dtype=np.uint8,
+-    )
+-
+-
+ def _blur(image: np.ndarray, pixels: float) -> np.ndarray:
+     if pixels <= 0:
+         return image
+diff --git a/tests/acquisition/test_worker_foundations.py b/tests/acquisition/test_worker_foundations.py
+index f064e6e1..321a382d 100644
+--- a/tests/acquisition/test_worker_foundations.py
++++ b/tests/acquisition/test_worker_foundations.py
+@@ -1510,6 +1510,60 @@ def test_camera_owner_serializes_safety_work_ahead_of_committed_normal_work() ->
+     assert [item[2] for item in observed] == [200, 100]
+ 
+ 
++@pytest.mark.parametrize("method", ["capture_handoff", "acknowledge_control_if_idle"])
++@pytest.mark.parametrize(
++    "pending",
++    ["none", "command", "external", "command_during_clear", "external_during_clear"],
++)
++def test_camera_owner_preserves_wakes_across_control_clear(method, pending) -> None:
++    wake = Event()
++    entered_capture = Event()
++    release_capture = Event()
++    clears = []
++
++    def capture(_handoff):
++        entered_capture.set()
++        return release_capture.wait(5)
++
++    def make_pending(kind):
++        if kind == "command":
++            owner.reserve("Cleanup", object(), 100).commit()
++        elif kind == "external":
++            owner.external_wake()
++
++    def clear():
++        clears.append(True)
++        wake.clear()
++        if pending.endswith("_during_clear"):
++            make_pending(pending.removesuffix("_during_clear"))
++
++    owner = SerializedCameraOwner(
++        capacity=1,
++        safety_capacity=1,
++        execute=lambda *_: None,
++        capture_once=capture,
++        capture_active=lambda: True,
++        next_deadline_ns=lambda: None,
++        advance_due_stages=lambda: None,
++        wait_control=lambda _: None,
++        wake_control=wake.set,
++        clear_control=clear,
++        operation_failed=lambda *_: None,
++        owner_failed=lambda _: None,
++        idle_maintenance_interval_ns=1,
++    )
++    owner.start()
++    try:
++        assert entered_capture.wait(1)
++        make_pending(pending)
++        assert getattr(owner, method)() is (pending == "none")
++        assert wake.is_set() is (pending != "none")
++        assert len(clears) == (0 if pending in {"command", "external"} else 1)
++    finally:
++        release_capture.set()
++        assert owner.stop(1)
++
++
+ def test_preview_start_reports_only_first_usable_frame_for_retained_run() -> None:
+     state = _worker_state()
+     run_id = str(uuid4())
+diff --git a/tests/shared/test_invariants.py b/tests/shared/test_invariants.py
+index 41894c99..da6dbbde 100644
+--- a/tests/shared/test_invariants.py
++++ b/tests/shared/test_invariants.py
+@@ -4,7 +4,6 @@ from __future__ import annotations
+ 
+ import sys
+ import uuid
+-from fractions import Fraction
+ from pathlib import Path
+ 
+ import pytest
+@@ -33,7 +32,6 @@ from cephvr.shared.deadlines import (
+ )
+ from cephvr.shared.identity import require_uuid4
+ from cephvr.shared.ingress import BoundedEventIngress, IngressOverload
+-from cephvr.shared.nominal_video_grid import NominalVideoGrid
+ from cephvr.shared.transport_deadlines import (
+     DeadlineMetadataError,
+     deadline_metadata,
+@@ -75,26 +73,6 @@ def test_process_software_version_is_owned_and_unknown_without_distribution(
+         software.software_version.cache_clear()
+ 
+ 
+-def test_nominal_video_grid_uses_half_open_rational_slots_and_ceil_cutoff() -> None:
+-    grid = NominalVideoGrid(10_000_000_000, Fraction(30_000, 1_001))
+-    first_boundary = grid.start_ns + (1_001_000_000 + 29) // 30
+-    assert grid.slot_for(grid.start_ns) == 0
+-    assert grid.slot_for(first_boundary - 1) == 0
+-    assert grid.slot_for(first_boundary) == 1
+-    assert grid.slots_before(grid.start_ns) == 0
+-    assert grid.slots_before(first_boundary - 1) == 1
+-    assert grid.slots_before(first_boundary) == 2
+-    assert grid.slots_before(first_boundary + 1) == 2
+-    integral_grid = NominalVideoGrid(0, Fraction(25, 1))
+-    assert integral_grid.slots_before(40_000_000) == 1
+-
+-
+-@pytest.mark.parametrize("rate", [0, -1, float("inf"), float("nan")])
+-def test_nominal_video_grid_rejects_nonpositive_or_nonfinite_rate(rate: float) -> None:
+-    with pytest.raises(ValueError, match="finite and positive"):
+-        NominalVideoGrid(0, rate)
+-
+-
+ @pytest.mark.windows
+ @pytest.mark.skipif(sys.platform != "win32", reason="native Windows credential ACLs")
+ def test_windows_runtime_namespace_does_not_touch_legacy_files(

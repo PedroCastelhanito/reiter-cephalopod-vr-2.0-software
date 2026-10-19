@@ -1,0 +1,76 @@
+F.F.                                                                     [100%]
+=================================== FAILURES ===================================
+_ test_subject_history_orders_by_date_then_time[20261019_Zulu/090000-20261019_Alpha/180000-2026-10-19 Alpha 18:00] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2189/test_subject_history_orders_by0')
+earlier = '20261019_Zulu/090000', later = '20261019_Alpha/180000'
+expected = '2026-10-19 Alpha 18:00'
+
+    @pytest.mark.parametrize(
+        ("earlier", "later", "expected"),
+        [
+            ("20261019_Zulu/090000", "20261019_Alpha/180000", "2026-10-19 Alpha 18:00"),
+            ("20261018_Zulu/230000", "20261019_Alpha/010000", "2026-10-19 Alpha 01:00"),
+            ("20261019_Zulu/180001", "20261019_Alpha/180002", "2026-10-19 Alpha 18:00"),
+            ("20261019_Alpha/180000", "20261019_Zulu/180000", "2026-10-19 Zulu 18:00"),
+        ],
+    )
+    def test_subject_history_orders_by_date_then_time(
+        tmp_path: Path, earlier: str, later: str, expected: str
+    ) -> None:
+        from datetime import date
+    
+        from cephvr.gui.subject_history import find_subject_sessions
+    
+        for session in (later, earlier):
+            experiment, clock = session.split("/")
+            (tmp_path / experiment / f"CEPH-007-{clock}").mkdir(parents=True)
+        found = find_subject_sessions(str(tmp_path), "CEPH-007", "Alpha", date(2026, 10, 19))
+        assert found is not None and found.count == 2
+>       assert found.latest == expected
+E       AssertionError: assert '2026-10-19 Zulu 09:00' == '2026-10-19 Alpha 18:00'
+E         
+E         - 2026-10-19 Alpha 18:00
+E         + 2026-10-19 Zulu 09:00
+
+tests/gui/test_dashboard.py:18841: AssertionError
+_ test_subject_history_orders_by_date_then_time[20261019_Zulu/180001-20261019_Alpha/180002-2026-10-19 Alpha 18:00] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2189/test_subject_history_orders_by2')
+earlier = '20261019_Zulu/180001', later = '20261019_Alpha/180002'
+expected = '2026-10-19 Alpha 18:00'
+
+    @pytest.mark.parametrize(
+        ("earlier", "later", "expected"),
+        [
+            ("20261019_Zulu/090000", "20261019_Alpha/180000", "2026-10-19 Alpha 18:00"),
+            ("20261018_Zulu/230000", "20261019_Alpha/010000", "2026-10-19 Alpha 01:00"),
+            ("20261019_Zulu/180001", "20261019_Alpha/180002", "2026-10-19 Alpha 18:00"),
+            ("20261019_Alpha/180000", "20261019_Zulu/180000", "2026-10-19 Zulu 18:00"),
+        ],
+    )
+    def test_subject_history_orders_by_date_then_time(
+        tmp_path: Path, earlier: str, later: str, expected: str
+    ) -> None:
+        from datetime import date
+    
+        from cephvr.gui.subject_history import find_subject_sessions
+    
+        for session in (later, earlier):
+            experiment, clock = session.split("/")
+            (tmp_path / experiment / f"CEPH-007-{clock}").mkdir(parents=True)
+        found = find_subject_sessions(str(tmp_path), "CEPH-007", "Alpha", date(2026, 10, 19))
+        assert found is not None and found.count == 2
+>       assert found.latest == expected
+E       AssertionError: assert '2026-10-19 Zulu 18:00' == '2026-10-19 Alpha 18:00'
+E         
+E         - 2026-10-19 Alpha 18:00
+E         ?            ^ ^^^
+E         + 2026-10-19 Zulu 18:00
+E         ?            ^^ ^
+
+tests/gui/test_dashboard.py:18841: AssertionError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_subject_history_orders_by_date_then_time[20261019_Zulu/090000-20261019_Alpha/180000-2026-10-19 Alpha 18:00]
+FAILED tests/gui/test_dashboard.py::test_subject_history_orders_by_date_then_time[20261019_Zulu/180001-20261019_Alpha/180002-2026-10-19 Alpha 18:00]
+2 failed, 2 passed, 630 deselected in 7.84s

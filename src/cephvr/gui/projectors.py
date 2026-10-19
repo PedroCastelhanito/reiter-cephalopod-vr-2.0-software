@@ -140,6 +140,9 @@ class ProjectorsPanel(DevicePanel):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         self.table.setFixedHeight(180)
+        self.table.empty_text = (
+            "No displays listed. Use the refresh button above to detect displays."
+        )
         self.configuration.body.insertWidget(1, self.table)
         self.assignment_preferences = AssignmentPreferences(
             settings, self.console.appendPlainText

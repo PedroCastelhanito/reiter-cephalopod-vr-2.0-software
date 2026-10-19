@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import sys
 import uuid
-from fractions import Fraction
 from pathlib import Path
 
 import pytest
@@ -33,7 +32,6 @@ from cephvr.shared.deadlines import (
 )
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.ingress import BoundedEventIngress, IngressOverload
-from cephvr.shared.nominal_video_grid import NominalVideoGrid
 from cephvr.shared.transport_deadlines import (
     DeadlineMetadataError,
     deadline_metadata,
@@ -73,26 +71,6 @@ def test_process_software_version_is_owned_and_unknown_without_distribution(
         assert calls == ["cephvr"]
     finally:
         software.software_version.cache_clear()
-
-
-def test_nominal_video_grid_uses_half_open_rational_slots_and_ceil_cutoff() -> None:
-    grid = NominalVideoGrid(10_000_000_000, Fraction(30_000, 1_001))
-    first_boundary = grid.start_ns + (1_001_000_000 + 29) // 30
-    assert grid.slot_for(grid.start_ns) == 0
-    assert grid.slot_for(first_boundary - 1) == 0
-    assert grid.slot_for(first_boundary) == 1
-    assert grid.slots_before(grid.start_ns) == 0
-    assert grid.slots_before(first_boundary - 1) == 1
-    assert grid.slots_before(first_boundary) == 2
-    assert grid.slots_before(first_boundary + 1) == 2
-    integral_grid = NominalVideoGrid(0, Fraction(25, 1))
-    assert integral_grid.slots_before(40_000_000) == 1
-
-
-@pytest.mark.parametrize("rate", [0, -1, float("inf"), float("nan")])
-def test_nominal_video_grid_rejects_nonpositive_or_nonfinite_rate(rate: float) -> None:
-    with pytest.raises(ValueError, match="finite and positive"):
-        NominalVideoGrid(0, rate)
 
 
 @pytest.mark.windows

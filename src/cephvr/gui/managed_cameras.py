@@ -25,7 +25,7 @@ class ManagedCameras(QObject):
         panel: CamerasPanel,
         bridge: ControllerBridge,
         viewer_state: Callable[[int, bool, str], bool],
-        preview_placement: Callable[[], bytes] | None = None,
+        preview_placement: Callable[[str], bytes] | None = None,
         submission_options: Callable[[str], dict[str, object]] | None = None,
     ) -> None:
         super().__init__(panel)
@@ -351,7 +351,7 @@ class ManagedCameras(QObject):
             options["show_preview"] = True
             if self.preview_placement is not None:
                 try:
-                    options["placement"] = self.preview_placement()
+                    options["placement"] = self.preview_placement(key)
                 except Exception as exc:
                     self.panel.console.appendPlainText(
                         f"Preview placement unavailable: {exc}"
@@ -392,7 +392,7 @@ class ManagedCameras(QObject):
             if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW:
                 options["show_preview"] = True
                 if self.preview_placement is not None:
-                    options["placement"] = self.preview_placement()
+                    options["placement"] = self.preview_placement(key)
         except (ValueError, RuntimeError) as error:
             self.panel.console.appendPlainText(str(error))
             return

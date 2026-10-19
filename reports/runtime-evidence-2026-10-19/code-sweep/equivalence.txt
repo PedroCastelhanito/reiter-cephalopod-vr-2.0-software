@@ -1,0 +1,4 @@
+Worker: both original wake operations and retained implementation have identical AST bodies.
+Texture: _mix retained implementation has identical AST body.
+Texture: _smoothstep retained implementation has identical AST body.
+Texture: _num retained implementation has identical AST definition.

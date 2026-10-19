@@ -116,9 +116,25 @@ class ReviewControls(QObject):
 
             self.preview_windows = ReviewPreviews(
                 self,
-                lambda: preview_window_placement(window),
-                lambda key: self.preview_visibility(key, False),
+                lambda key: preview_window_placement(window, key),
+                lambda key: self._set_preview_visibility(key, False),
                 window.devices.cameras.console.appendPlainText,
+                owner_handle=lambda: int(
+                    (window.preview_slot.window() or window).winId()
+                ),
+                owner_minimized=lambda: (
+                    window.isMinimized()
+                    or (window.preview_slot.window() or window).isMinimized()
+                    or not (window.preview_slot.window() or window).isVisible()
+                ),
+            )
+            window.preview_slot.snap_requested.connect(
+                lambda key: (
+                    self.preview_windows.snap(key)
+                    if self.preview_windows is not None
+                    and window.dashboard.view.has_control
+                    else None
+                )
             )
             if isinstance(window, ReviewDashboardWindow):
                 window.closing.connect(self.preview_windows.close)
@@ -250,6 +266,18 @@ class ReviewControls(QObject):
             return
         if self.preview_windows is not None:
             visible = self.preview_windows.visibility(key, source.name, visible)
+        self._set_preview_visibility(key, visible)
+        dashboard.log_console.appendPlainText(
+            f"LOCAL REVIEW · {key} sample visibility {'on' if visible else 'off'}; "
+            + (
+                "synthetic viewer only."
+                if self.preview_windows
+                else "no viewer command sent."
+            )
+        )
+
+    def _set_preview_visibility(self, key: str, visible: bool) -> None:
+        dashboard = self.window.dashboard
         self.window.apply_view(
             replace(
                 dashboard.view,
@@ -257,14 +285,6 @@ class ReviewControls(QObject):
                     replace(item, visible=visible) if item.key == key else item
                     for item in dashboard.view.previews
                 ),
-            )
-        )
-        dashboard.log_console.appendPlainText(
-            f"LOCAL REVIEW · {key} sample visibility {'on' if visible else 'off'}; "
-            + (
-                "synthetic viewer only."
-                if self.preview_windows
-                else "no viewer command sent."
             )
         )
 

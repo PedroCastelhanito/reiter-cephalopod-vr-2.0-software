@@ -30,4 +30,3 @@ class WorkerTrialState:
     transport_start: TransportCounters | None = None
     transport_summary: dict[str, int | None] | None = None
     transport_observed_ns: int | None = None
-    camera_first_frame_seen: bool = False

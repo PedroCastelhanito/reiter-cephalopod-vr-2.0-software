@@ -2,9 +2,10 @@
 
 from math import hypot
 
-from PyQt6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt
+from PyQt6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt, QTimer
 from PyQt6.QtGui import (
     QColor,
+    QLinearGradient,
     QPainter,
     QPaintEvent,
     QPixmap,
@@ -15,8 +16,12 @@ from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QWidget
 from cephvr.gui.theme import RETRO_COLORS
 
 SCANLINE_PITCH = 3
-SCANLINE_ALPHA = 13
-VIGNETTE_ALPHA = 32
+SCANLINE_ALPHA = 18
+VIGNETTE_ALPHA = 55
+GLOW_ALPHA = 140
+BAND_HEIGHT = 90
+BAND_SPEED = 70  # px per second; the band crosses a 900px window in about 13 s
+BAND_INTERVAL_MS = 50
 
 
 class CrtOverlay(QWidget):
@@ -26,16 +31,36 @@ class CrtOverlay(QWidget):
         super().__init__(host)
         self.host = host
         self.film: QPixmap | None = None
+        self.band_y = -BAND_HEIGHT
+        self.band_timer = QTimer(self)
+        self.band_timer.setInterval(BAND_INTERVAL_MS)
+        self.band_timer.timeout.connect(self.advance_band)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         host.installEventFilter(self)
         self.hide()
 
-    def set_active(self, active: bool) -> None:
+    def set_active(self, active: bool, *, band: bool = False) -> None:
         self.setGeometry(self.host.rect())
         self.setVisible(active)
         self.raise_()
+        # The rolling band repaints continuously, so it runs only when requested.
+        if active and band:
+            self.band_timer.start()
+        else:
+            self.band_timer.stop()
+            self.update()
+
+    def band_rect(self) -> QRect:
+        return QRect(0, self.band_y, self.width(), BAND_HEIGHT)
+
+    def advance_band(self) -> None:
+        before = self.band_rect()
+        self.band_y += BAND_SPEED * BAND_INTERVAL_MS // 1000
+        if self.band_y > self.height():
+            self.band_y = -BAND_HEIGHT
+        self.update(before.united(self.band_rect()))
 
     def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
         if event is not None and event.type() == QEvent.Type.Resize:
@@ -70,6 +95,13 @@ class CrtOverlay(QWidget):
             self.film = self.render_film(self.size(), ratio)
         painter = QPainter(self)
         painter.drawPixmap(0, 0, self.film)
+        if self.band_timer.isActive():
+            band = QLinearGradient(0, self.band_y, 0, self.band_y + BAND_HEIGHT)
+            ink = QColor(RETRO_COLORS.accent)
+            for position, alpha in ((0.0, 0), (0.7, 9), (1.0, 0)):
+                ink.setAlpha(alpha)
+                band.setColorAt(position, ink)
+            painter.fillRect(self.band_rect(), band)
 
 
 class CrtEffects:
@@ -79,16 +111,16 @@ class CrtEffects:
         self.overlay = CrtOverlay(host)
         self.glow_labels = glow_labels
 
-    def apply(self, enabled: bool) -> None:
-        self.overlay.set_active(enabled)
+    def apply(self, enabled: bool, *, band: bool = False) -> None:
+        self.overlay.set_active(enabled, band=band)
         for label in self.glow_labels:
             if not enabled:
                 label.setGraphicsEffect(None)
                 continue
             glow = QGraphicsDropShadowEffect(label)
             glow.setOffset(0, 0)
-            glow.setBlurRadius(10)
+            glow.setBlurRadius(12)
             color = QColor(RETRO_COLORS.accent)
-            color.setAlpha(110)
+            color.setAlpha(GLOW_ALPHA)
             glow.setColor(color)
             label.setGraphicsEffect(glow)

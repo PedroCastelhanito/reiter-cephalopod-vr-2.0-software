@@ -287,11 +287,4 @@ class SerializedCameraOwner:
 
     def capture_handoff(self) -> bool:
         """Recheck commands and reset the control wake atomically after SDK wait."""
-        with self._condition:
-            if self._has_ready_locked() or self._external_wake_pending_locked():
-                return False
-            self._clear_control()
-            if self._has_ready_locked() or self._external_wake_pending_locked():
-                self._wake_control()
-                return False
-            return True
+        return self.acknowledge_control_if_idle()

@@ -129,6 +129,36 @@ def test_preview_placement_admission_bounds(
     assert not valid_preview_placement(request)
 
 
+@pytest.mark.parametrize(
+    "message_type", [wire.CameraCommandRequest, wire.AcquisitionCameraCommand]
+)
+@pytest.mark.parametrize(
+    "values,valid",
+    [
+        ((0, 0, 0), True),
+        ((1, 2, 3), True),
+        ((1, 0, 0), False),
+        ((0, 2, 3), False),
+        ((1, 2, 0), False),
+    ],
+)
+def test_preview_gui_owner_requires_complete_identity(
+    message_type: object, values: tuple[int, int, int], valid: bool
+) -> None:
+    from cephvr.shared.preview_placement import valid_preview_placement
+
+    request = message_type(kind=wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW)
+    request.preview_placement.CopyFrom(
+        wire.PreviewWindowPlacement(
+            side=128,
+            gui_window_handle=values[0],
+            gui_process_id=values[1],
+            gui_process_creation_time_100ns=values[2],
+        )
+    )
+    assert valid_preview_placement(request) is valid
+
+
 @pytest.mark.windows
 @pytest.mark.skipif(sys.platform != "win32", reason="Win32 HighGUI windows")
 def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
@@ -252,7 +282,15 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         ]
         native.PostMessageW.restype = ctypes.c_bool
         first, second = resources[0][2], resources[1][2]
-        handle = native.FindWindowW(None, first.title)
+        handle = first.native_handle  # The caption is blank, so no title lookup.
+        native.GetWindowTextW.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_wchar_p,
+            ctypes.c_int,
+        ]
+        caption = ctypes.create_unicode_buffer(8)
+        native.GetWindowTextW(handle, caption, len(caption))
+        assert handle and caption.value == ""
         native.GetWindow.argtypes = [ctypes.c_void_p, ctypes.c_uint]
         native.GetWindow.restype = ctypes.c_void_p
         native.GetWindowRect.argtypes = [
@@ -295,7 +333,7 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         assert native.GetWindowLongW(handle, -20) & 0x00000008  # WS_EX_TOPMOST
         native.GetForegroundWindow.restype = ctypes.c_void_p
         foreground = native.GetForegroundWindow()
-        position_preview_frame(first.title, 410, 110)
+        position_preview_frame(handle, 410, 110)
         assert native.GetForegroundWindow() == foreground
         assert operator_window_geometry(handle)[0][:2] == (410, 110)
         point = ((rect.top + 128) & 0xFFFF) << 16 | ((rect.left + 128) & 0xFFFF)
@@ -321,9 +359,23 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
             ring.close()
 
 
-@pytest.mark.parametrize("failure", ["", "display", "release"])
+@pytest.mark.parametrize(
+    "failure,minimized,layout",
+    [
+        ("", False, ""),
+        ("display", False, ""),
+        ("release", False, ""),
+        ("", True, ""),
+        ("", False, "auto"),
+        ("", False, "move"),
+        ("", False, "resize"),
+        ("", False, "snap"),
+        ("", False, "host"),
+        ("", True, "host"),
+    ],
+)
 def test_highgui_private_latest_frame_thread_and_x_close(
-    monkeypatch: pytest.MonkeyPatch, failure: str
+    monkeypatch: pytest.MonkeyPatch, failure: str, minimized: bool, layout: str
 ) -> None:
     import threading
 
@@ -336,6 +388,33 @@ def test_highgui_private_latest_frame_thread_and_x_close(
     sequences: list[int] = []
     native = b"\x11\x22\x33"
     closed = threading.Event()
+    owner_state = {"hidden": False, "closed": False}
+
+    class Owner:
+        calls = 0
+
+        def __init__(self, _title: str, hwnd: int, pid: int, creation: int) -> None:
+            assert (hwnd, pid, creation) == (91, 92, 93)
+
+        def sync(self) -> bool:
+            self.calls += 1
+            owner_state["hidden"] = minimized and self.calls <= 3
+            return owner_state["hidden"]
+
+        def retarget(self, handle):
+            assert layout == "host" and handle == 94
+            owner_state["retargeted"] = True
+
+        def geometry(self):
+            return (
+                30 if layout in ("move", "snap") and self.calls > 1 else 0,
+                0,
+                600 if layout == "resize" and self.calls > 1 else 640,
+                680,
+            )
+
+        def close(self) -> None:
+            owner_state["closed"] = True
 
     class CV:
         import cv2 as native_cv
@@ -353,7 +432,11 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             def operation(*args: object) -> object:
                 calls.append((name, threading.get_ident()))
                 if name == "getWindowProperty":
-                    return 1 if len(self.images) < 3 and not self.destroyed else 0
+                    return int(
+                        not owner_state["hidden"]
+                        and len(self.images) < (2 if minimized else 3)
+                        and not self.destroyed
+                    )
                 if name == "destroyWindow":
                     self.destroyed = True
                 if name == "imshow":
@@ -416,7 +499,35 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             image_payload_bytes=3,
         )
     )
-    reader = highgui.HighGuiPreview(attachment, 8, "test", lambda _reader: closed.set())
+    monkeypatch.setattr(highgui, "WindowsPreviewOwner", Owner)
+    monkeypatch.setattr(highgui, "position_preview_frame", lambda *_, **kw: None)
+    placement = (
+        wire.PreviewWindowPlacement(
+            x=0,
+            y=0,
+            side=640,
+            gui_window_handle=91,
+            gui_process_id=92,
+            gui_process_creation_time_100ns=93,
+        )
+        if minimized or layout
+        else None
+    )
+    reader = highgui.HighGuiPreview(
+        attachment, 8, "test", lambda _reader: closed.set(), placement=placement
+    )
+    if layout:
+        hint = wire.PreviewWindowPlacement()
+        hint.CopyFrom(placement)
+        if layout == "host":
+            hint.gui_window_handle = 94
+        hint.side = 240
+        hint.snap_to_grid = layout == "snap"
+        reader.update_placement(hint)
+        hint.snap_to_grid = False
+        hint.side = 320
+        reader.update_placement(hint)
+        hint.side = 400  # Submission copies and coalesces, rather than borrowing.
     reader.start()
     if failure == "display":
         with pytest.raises(RuntimeError, match="display failed"):
@@ -427,11 +538,22 @@ def test_highgui_private_latest_frame_thread_and_x_close(
     assert closed.wait(3)
     assert sequences == ([2] if failure == "display" else [2, 5])
     assert ring.released == (failure != "release")
+    assert owner_state["closed"] is bool(minimized or layout)
+    assert owner_state.get("retargeted", False) == (layout == "host")
     assert len({identity for _, identity in calls}) == 1
     assert calls[0][1] != threading.get_ident()
     if not failure:
         assert np.array_equal(
-            cv.images[-1], np.full((640, 640, 3), [0x33, 0x22, 0x11], dtype=np.uint8)
+            cv.images[-1],
+            np.full(
+                (
+                    320 if layout in ("auto", "snap", "host") else 640,
+                    320 if layout in ("auto", "snap", "host") else 640,
+                    3,
+                ),
+                [0x33, 0x22, 0x11],
+                dtype=np.uint8,
+            ),
         )
         assert reader.failure == ""
     else:
@@ -472,7 +594,11 @@ async def test_backend_window_release_gates_native_owner(
             self.done: Future[bool] = Future()
             self.failure = "" if released else "native release unconfirmed"
             self.visible = not released
+            self.layouts = []
             previews.append(self)
+
+        def update_placement(self, placement):
+            self.layouts.append(placement)
 
         def start(self) -> None:
             self.ready.set_result(None)
@@ -500,10 +626,17 @@ async def test_backend_window_release_gates_native_owner(
     await owner.show(1, preview, deadline_ns=1_000_000_000)
     assert not ledger.may_close_owner(key)
     assert ledger.snapshot(key).transfers[0].attached
+    refresh = wire.PreviewWindowPlacement(
+        x=10, y=20, side=240, update_existing_only=True
+    )
+    await owner.show(1, preview, deadline_ns=1_000_000_000, placement=refresh)
+    assert len(previews) == 1 and previews[0].layouts == [refresh]
     if released:
         await owner.close(1, preview.run_id, deadline_ns=1_000_000_000)
         assert ledger.may_close_owner(key)
         assert not owner.owns(1)
+        await owner.show(1, preview, deadline_ns=1_000_000_000, placement=refresh)
+        assert len(previews) == 1 and not owner.owns(1)
     else:
         with pytest.raises(RuntimeError, match="release unconfirmed"):
             await owner.close(1, preview.run_id, deadline_ns=1_000_000_000)

@@ -1,7 +1,7 @@
 """Frontend shell with shared status columns and local configuration pages."""
 
 from PyQt6.QtCore import QEvent, QSettings
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtGui import QAction, QCloseEvent
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -154,6 +154,33 @@ class DashboardWindow(QMainWindow):
         self.appearance = DashboardAppearance(
             self, self.dashboard, self.page_header, settings
         )
+        self.install_view_menu(settings)
+
+    def install_view_menu(self, settings: QSettings | None) -> None:
+        """Layout trials live in View; Style stays about appearance only."""
+        menu_bar = self.menuBar()
+        assert menu_bar is not None
+        menu = menu_bar.addMenu("View")
+        assert menu is not None
+        self.side_rail_action = QAction("Devices side navigation", menu)
+        self.side_rail_action.setCheckable(True)
+        self.side_rail_action.setToolTip(
+            "Show devices and their sections as one list beside the Devices page."
+        )
+        self.side_rail_action.setChecked(
+            settings.value("devices/side_rail", False, type=bool) if settings else False
+        )
+        self.side_rail_action.toggled.connect(
+            lambda enabled: self.set_side_rail(enabled, settings)
+        )
+        menu.addAction(self.side_rail_action)
+        self.devices.set_side_rail(self.side_rail_action.isChecked())
+
+    def set_side_rail(self, enabled: bool, settings: QSettings | None) -> None:
+        self.devices.set_side_rail(enabled)
+        if settings is not None:
+            settings.setValue("devices/side_rail", enabled)
+            settings.sync()
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
         self.tracking.annotation.close()
@@ -180,11 +207,39 @@ class DashboardWindow(QMainWindow):
             status = self.devices.cameras.status_column
         elif page == 3:
             status = self.tracking.status
-        if status is not None and self.preview_slot.parentWidget() is not status:
-            column = status.layout()
+        workspace = self.dashboard.preview_dialog
+        host = workspace.preview_host if page == 0 else status
+        if page != 0:
+            workspace.hide()
+        if host is not None and self.preview_slot.parentWidget() is not host:
+            column = host.layout()
             assert isinstance(column, QVBoxLayout)
             column.addWidget(self.preview_slot, 1)
-        self.preview_slot.setVisible(status is not None)
+        workspace.empty_hint.setVisible(
+            not any(item.visible for item in self.dashboard.view.previews)
+        )
+        sources = self.dashboard.view.previews
+        if page == 2:
+            enabled = {
+                camera.key for camera in self.devices.cameras.drafts if camera.enabled
+            }
+            sources = tuple(source for source in sources if source.key in enabled)
+        self.preview_slot.set_sources(sources)
+        for key, frame in self.preview_slot.frames.items():
+            frame.snap_button.setEnabled(bool(key) and self.dashboard.view.has_control)
+        for column_status in (
+            self.dashboard.status_column,
+            self.devices.cameras.status_column,
+            self.tracking.status,
+        ):
+            compact = column_status is host and any(item.visible for item in sources)
+            column_status.console.set_preview_compact(compact)
+            layout = column_status.layout()
+            assert isinstance(layout, QVBoxLayout)
+            layout.setStretchFactor(column_status.log_card, 0 if compact else 1)
+        self.preview_slot.setVisible(
+            status is not None and any(item.visible for item in sources)
+        )
 
     def apply_view(self, view: DashboardView) -> None:
         self.dashboard.apply_view(view)
@@ -192,6 +247,7 @@ class DashboardWindow(QMainWindow):
         self.recordings.apply_view(view)
         self.protocol.apply_view(view)
         self.tracking.apply_view(view)
+        self.update_preview_slot()
         self.config_files.set_enabled(self.snapshots.available())
         if not self.protocol.can_edit and self.trial_preview is not None:
             self.trial_preview.close()

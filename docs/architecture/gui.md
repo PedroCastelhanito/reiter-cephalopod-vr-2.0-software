@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 221
+**Status:** Accepted · **Revision:** 234
 
 - Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
 
@@ -537,25 +537,65 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Connect starts A10 manual capture and then Shows its acquisition-owned OpenCV
   window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
   visibility evidence updates the GUI selector. Show snaps the visible preview frame
-  into the Preview area below the existing HUD and log console in their original
-  status column on Dashboard, Devices/Cameras and Tracking. Keep the HUD and log
+  into the current Preview grid: Dashboard's modeless external workspace, or
+  below the existing HUD/log column on Devices/Cameras and Tracking. Keep the HUD and log
   at their existing top/right alignment; do not add a third column that shifts or
-  narrows them. Share remaining column height between log and Preview, fitting the
-  initial image to available space. The shared runtime/review shell opens maximized
+  narrows them. Show Preview only while at least one preview is reported open;
+  share remaining height with the log then. When the last preview closes, hide
+  Preview and let the log reclaim its height. To place the first opening, measure
+  the expanded-frame layout temporarily and restore its prior visibility even on
+  failure; measurement does not declare a viewer open. Native Review X closure
+  updates visibility even in Observer mode. Fit the initial image to available
+  space. The shared runtime/review shell opens maximized
   and reapplies maximization once after the first native/layout event pass; later
   operator Restore remains available.
   Other tabs reclaim Preview space. Previews remain detached,
-  never embedded or reparented. Place the native frame inside the card below its
-  heading. Choose the largest initial square within the existing size bounds that
-  fits the card's visible intersection with the desktop, and center its native
-  frame there. Include title bar, borders and platform minimum frame width; report
+  never embedded or reparented. Preview uses bracketed native-window footprints instead of
+  ordinary cards, each captioned with its source (`[ BEHAVIOR CAM ]`); the native window
+  carries no title text and `[ PREVIEW ]` names only the empty footprint. Retro doubles
+  each bracket and shows `-- NO SIGNAL --` with the block cursor in an empty footprint. Dashboard
+  uses named footprints for open camera/stream windows. Cameras includes only
+  enabled camera identities from its current drafts/readback, excluding Tracking
+  and Visual stimulus streams and disabled cameras even if connected or visible.
+  Its Preview visibility/log compaction follows only those eligible cameras;
+  Dashboard retains all its source types. Arrange only open eligible windows: one
+  centered full-area footprint, two side by side, three/four in two rows, then
+  additional two-column rows. Fit the largest bounded square in each footprint.
+  Reflow existing untouched native windows when the grid changes. Any operator
+  move or resize opts that window out of automatic placement until close/reopen
+  or an explicit centered Snap button restores that source's grid position/size;
+  GUI translation and minimize/restore preserve this choice. A layout refresh may
+  update only an existing viewer and must never reopen one closed through X.
+  Both pages retain external OpenCV previews; no embedded image tiles or plots
+  are introduced. Dashboard's Previews action opens/raises a resizable modeless
+  workspace with source controls above the adaptive grid. Closing/minimizing it
+  hides its native viewers without ending capture or clearing their Show state;
+  reopening restores them. Cameras retains its in-page grid. Switching pages
+  retargets the native display owner only within the same verified GUI process;
+  native windows remain above their current host, following its movement and
+  hide/minimize/restore. Restore refreshes the geometry baseline without clearing
+  a previously observed manual opt-out.
+  Dashboard log fills its available height even while the external workspace
+  shows previews. Fix the Cameras/Tracking log to four visible text lines while
+  its in-page Preview is shown; on this
+  collapse scroll to the latest entry. Retain manual scrolling thereafter and
+  restore expanding height on last close.
+  Initial measurement uses the same compact log geometry and restores it on failure.
+  Choose the
+  largest initial square within the existing size bounds that fits the footprint's
+  visible intersection with the desktop, and center its native frame there. Include title bar, borders and platform minimum frame width; report
   insufficient visible space instead of opening a frame over neighboring controls.
   Local Cocoa Review converts its work-height window origin to the Qt desktop
   origin; Windows retains physical client-to-screen
-  coordinates and native DPI metrics. Keep detached previews topmost without
-  activating them so GUI interaction cannot cover them. Reopening samples the
-  current layout. When no slot
-  is visible, retain monitor-constrained placement beside the GUI;
+  coordinates and native DPI metrics. Review and Windows runtime previews use
+  a native owner link to remain above their GUI without global topmost status or
+  activation. Follow GUI movement and minimize/restore; minimization retains the
+  open viewer and Show state, without changing capture or interpreting it as X
+  closure. Windows verifies the exact GUI process lifetime and top-level window
+  before linking; stale/missing owners fail the display only, requiring explicit
+  Show after reconnection. The GUI identity hint grants no device/process authority.
+  Reopening samples the current layout. When the requested source has no eligible
+  slot on the current page, retain monitor-constrained placement beside the GUI;
   an open window remains freely movable. A10 owns padding and wheel zoom/reset.
   The GUI owns no camera display reader. Disconnect releases an
   editing/cleanup owner when no capture is running. Camera/pulse settings remain
@@ -931,17 +971,17 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Camera experiment enablement belongs to Devices. Dashboard shows a video-recording
   switch for each camera role and Visual Stimulus, plus Tracking velocities.
   Recording selections are retained but disabled while their source is inactive.
-- A secondary **Previews…** button at the right of the Dashboard header opens one reusable modeless
-  selector, with one checkbox per available camera/tracking/stimulus viewer and no
-  open-window count. The same button toggles the selector open/closed. First opening without valid saved geometry snaps the selector's
-  outer frame to the right of the main window with a shared 12-pixel gap and aligned
-  top edges, constrained to the available screen. Remember its position across
-  close/reopen and frontend restarts using local GUI preferences; Qt restores saved
-  geometry within available screens, then fits width/height to the current rows. Closing the selector via its toggle or
-  window controls leaves viewer visibility unchanged.
+- A secondary **Previews…** button at the right of the Dashboard header opens or
+  raises one reusable modeless preview workspace, with one checkbox per available
+  camera/tracking/stimulus viewer and no open-window count. The source controls sit
+  above the adaptive native-window grid. First opening without valid saved geometry
+  uses the shared monitor-constrained tool-window placement. Remember its position
+  and size across close/reopen and frontend restarts using local GUI preferences.
+  Closing hides the workspace and its native viewers while retaining logical Show
+  state and capture; reopening restores the same viewers. Plots remain future work.
   The selector uses a compact bordered Source/Show grid, with source labels left,
   aligned visibility checkboxes right, blue column captions and shared hover/focus
-  styling. It contains no duplicate window heading, instructions,
+  styling. An empty workspace prompts source selection. It contains no duplicate window heading,
   footer buttons or redundant Open/Hidden labels. Pending/error/unavailable status
   remains visible; the local review label lives in the window title.
   Checkboxes reflect reported visibility, including external-window closure; pending
@@ -996,7 +1036,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 76
+**Status:** Accepted · **Revision:** 79
+
+- Log consoles expose a vertical scrollbar only while retained/wrapped lines
+  overflow the viewport, with a visible theme-matched handle in both appearances.
+  Preserve G01's reading position and follow-at-bottom behavior.
 
 - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
@@ -1049,9 +1093,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   pairs. Omit Control and separate Phase and Outcome rows.
   Live values use authoritative timing; unavailable totals remain unknown, while
   Review supplies explicitly simulated values. Omit Outputs, Reservation and Metadata rows.
-  Status captions use brackets. A full-width block-character trial-position strip appears only when
-  a count is available, with the exact current index/count; it represents position,
-  not completed trials. Ready lamps are green,
+  Status captions use brackets. Omit the trial-position strip; the HUD trial
+  row retains the current index/count. Ready lamps are green,
   preparation/waiting amber, explicit faults red and unavailable states neutral;
   preserve the exact status in the label/tooltip. No synthetic plots or telemetry.
   Switch live using the existing widgets, preserving drafts, command gates,
@@ -1088,11 +1131,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Retro uses a single-line CEPHVR wordmark with a thin lower rule and no text-drawn box
   (version appears only in the sidebar footer). Review also stages
   double-line frames on every Retro card (an owner-review trial) and shape-coded status glyphs
-  (ready ●, waiting ◐, fault ▲, unavailable ○) for owner review.
-  One mouse-transparent window overlay caches scanlines at 5% alpha and a faint
+  (ready ●, waiting ◐, fault ▲, unavailable ○) for owner review. Unselected Retro epoch
+  tiles use a stable identity tint from the Retro accents (dim fill, tinted frame) in
+  place of the Standard hash colors; selection remains the inverse accent fill.
+  One mouse-transparent window overlay caches scanlines (about 7% alpha) and a
   vignette; the separate Previews window has its own matching cached film.
   The local Style-menu CRT toggle controls the films and heading/lamp glow;
-  main page headings share the card-title glow.
+  main page headings share the card-title glow. An off-by-default Refresh band
+  toggle adds a faint rolling band; it repaints continuously, so it stays opt-in.
+  Retro console text sits close to its frame: the log's `>` prompt gutter is a left
+  viewport margin, so top/bottom padding stays small.
   Standard has neither. Omit the extra review/phase/clock banner; phase remains in
   the HUD. The Previews selector uses the shared compact card frame; its modeless
   visibility/authority/pending gates remain unchanged. Device diagram geometry and
@@ -1114,6 +1162,28 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   with the HUD card’s painted top border. The right HUD stays at the same top position across pages and
   device subtabs in the two-column layout. Use the existing stacked layout on narrow
   windows; tab overflow scrolls without replacing navigation with a dropdown.
+- View > Devices side navigation (off by default; owner trial, local preference) shows
+  one rail beside the Devices page listing Cameras, Microcontroller, Projectors (with
+  Screen calibration, Rig geometry and Synchronization beneath it) and SpikeGLX. It
+  mirrors and drives the existing device tabs and Projectors section tabs, which stay
+  the source of state, and replaces both tab strips while the page is at least 1000 px
+  wide; narrower pages show the tab strips as before. Control, authority and selection
+  gates are unchanged.
+- Empty inventory tables and the Displays layout say what to do (for example, use the
+  refresh button) instead of showing a blank body. A disabled Load/Save as button's
+  tooltip states why: editing is locked (controller not connected, another window holds
+  control, or a session is in progress), or the live diagnostic must be closed first.
+- Species and Condition suggest the last 10 distinct values (case-insensitive,
+  most recent first) from the local GUI settings, recorded only when Setup is accepted
+  for request, and never part of the experiment configuration. After Subject ID or
+  Output directory editing finishes, an ID with earlier sessions in that directory gets a
+  tooltip and one activity-log line (scan of `<root>/<date>_<experiment>/<subject>-<time>`,
+  bounded and read-only, silent when unreadable). Select the latest session by date,
+  then time including seconds, using experiment name only to break timestamp ties.
+  If the same Subject ID already has a
+  session for the same experiment today, Setup first asks once (Change Subject ID or
+  Continue setup); it closes without a request if authority is lost. A reused ID never
+  overwrites a session, so this is advice, not validation.
 - Wheel/trackpad events never change combo, spinbox or slider input values, even
   with focus; route them to the enclosing scroll container. Explicit clicks, typing
   and keyboard edits remain available. Apply this once at application scope.

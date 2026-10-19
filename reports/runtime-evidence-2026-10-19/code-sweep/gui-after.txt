@@ -1,0 +1,59 @@
+........................................................................ [ 11%]
+...........................................F............................ [ 22%]
+........................................................................ [ 34%]
+........................................................................ [ 45%]
+........................................................................ [ 57%]
+........................................................................ [ 68%]
+........................................................................ [ 79%]
+........................................................................ [ 91%]
+.......................................................                  [100%]
+=================================== FAILURES ===================================
+_________ test_camera_trigger_form_reflows_and_destroys_owned_editors __________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x123a041f0>
+
+    def test_camera_trigger_form_reflows_and_destroys_owned_editors(app):
+        from cephvr.gui.cameras import CamerasPanel
+    
+        destroyed = []
+        for cycle in range(3):
+            panel = CamerasPanel(sample=True)
+            panel.destroyed.connect(lambda: destroyed.append(True))
+            panel.apply_view(review_view(Phase.CONFIGURATION))
+            panel.show()
+            app.processEvents()
+            form = panel.trigger_form
+            fields = form.fields
+            source, rate, pin = form.controls
+            source.setFocus()
+            QTest.keyClick(source, Qt.Key.Key_End)
+            rate.setText("60")
+            pin.setText("9")
+            for width in (298, 572, 298):
+                panel.resize(width, 883)
+                app.processEvents()
+                assert form.grid.count() == 3 and form.fields == fields
+                assert all(form.rect().contains(item.geometry()) for item in fields)
+                assert all(
+                    item.rect().contains(control.geometry())
+                    for item, control in zip(fields, form.controls, strict=True)
+                )
+                assert all(control.width() > 0 for control in form.controls)
+                assert source.currentText() == source.toolTip() == "External controller"
+                assert (
+                    source.fontMetrics().horizontalAdvance(source.currentText())
+                    < source.width()
+                )
+                assert rate.text() == "60" and pin.text() == "9"
+>               assert form.stacked is (width == 298)
+E               assert False is (298 == 298)
+E                +  where False = <cephvr.gui.camera_trigger_form.CameraTriggerForm object at 0x12381fc70>.stacked
+
+tests/gui/test_dashboard.py:2856: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_camera_trigger_form_reflows_and_destroys_owned_editors
+1 failed, 630 passed in 683.08s (0:11:23)

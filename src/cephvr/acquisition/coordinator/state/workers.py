@@ -32,7 +32,6 @@ class WorkerPreview:
     tracking_allocation_id: str | None = None
     tracking_attachment: acq.FrameBufferAttachment | None = None
     tracking_worker_attachment: acq.FrameBufferAttachment | None = None
-    tracking_transfer_confirmed: bool = False
     tracking_viewer: control.ProcessIdentity | None = None
     tracking_viewer_transfer_id: str | None = None
     tracking_viewer_released_event: asyncio.Event = field(default_factory=asyncio.Event)

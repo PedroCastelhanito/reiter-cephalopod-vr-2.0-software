@@ -1,5 +1,7 @@
 """Dashboard presentation, with no transport, SDK or experiment ownership."""
 
+from datetime import date
+
 from PyQt6.QtCore import QSettings, pyqtSignal
 from PyQt6.QtWidgets import (
     QGridLayout,
@@ -16,12 +18,13 @@ from cephvr.gui.components import (
     combo,
     field,
 )
-from cephvr.gui.dialogs import StopDialog
+from cephvr.gui.dialogs import StopDialog, SubjectReuseDialog
 from cephvr.gui.formatting import duration
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import DirectoryField
 from cephvr.gui.previews import PreviewDialog
-from cephvr.gui.retro_instruments import TrialPosition
+from cephvr.gui.recent_values import RecentValues, suggest_values
+from cephvr.gui.subject_history import SubjectSessions, find_subject_sessions
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView, Phase
 
@@ -54,6 +57,7 @@ class Dashboard(ResponsiveColumns):
         self.preview_button.clicked.connect(self.show_previews)
         self.session_controls = self.build_controls()
         self.subject_card = self.build_subject(sample)
+        self.install_subject_helpers(settings)
         for card in (self.session_controls, self.subject_card):
             left_layout.addWidget(card)
         left_layout.addStretch()
@@ -61,8 +65,6 @@ class Dashboard(ResponsiveColumns):
         self.log_card = right.log_card
         self.runtime_console = right.hud
         self.log_console = right.console
-        self.trial_position = TrialPosition()
-        self.hud_card.body.addWidget(self.trial_position)
         self.apply_view(self.view)
 
     def build_controls(self) -> Card:
@@ -149,6 +151,65 @@ class Dashboard(ResponsiveColumns):
         card.body.addLayout(details)
         return card
 
+    def install_subject_helpers(self, settings: QSettings | None) -> None:
+        """Recent-value suggestions and the earlier-sessions hint; local aids only."""
+        self.recent_species = RecentValues(settings, "dashboard/recent_species")
+        self.recent_conditions = RecentValues(settings, "dashboard/recent_conditions")
+        suggest_values(self.species, self.recent_species)
+        suggest_values(self.condition, self.recent_conditions)
+        self.reuse_dialog: SubjectReuseDialog | None = None
+        self.announced_subject: tuple[str, str, int] | None = None
+        for editor in (self.subject_id, self.output_root):
+            editor.editingFinished.connect(self.refresh_subject_history)
+
+    def subject_history(self) -> SubjectSessions | None:
+        return find_subject_sessions(
+            self.output_root.text(),
+            self.subject_id.text(),
+            self.experiment.text(),
+            date.today(),
+        )
+
+    def refresh_subject_history(self) -> None:
+        """Quiet hint (tooltip and one log line) when this ID already has sessions."""
+        history = self.subject_history()
+        subject = self.subject_id.text().strip()
+        if history is None:
+            self.subject_id.setToolTip("")
+            self.announced_subject = None
+            return
+        plural = "s" if history.count != 1 else ""
+        note = (
+            f"Subject {subject} already has {history.count} earlier session{plural} "
+            f"in this output directory (latest: {history.latest})."
+        )
+        self.subject_id.setToolTip(note + " Check for typos if this is a new animal.")
+        key = (self.output_root.text().strip(), subject, history.count)
+        if key != self.announced_subject:
+            self.announced_subject = key
+            self.log_console.appendPlainText(note)
+
+    def confirm_subject_reuse(self, history: SubjectSessions) -> None:
+        if self.reuse_dialog is not None:
+            self.reuse_dialog.raise_()
+            return
+        dialog = SubjectReuseDialog(
+            self.subject_id.text().strip(),
+            self.experiment.text().strip(),
+            history.count,
+            history.latest,
+            self,
+        )
+        self.reuse_dialog = dialog
+        dialog.confirmed.connect(lambda: self.request_action("Setup"))
+        dialog.rejected.connect(self.subject_id.setFocus)
+        dialog.finished.connect(self.reuse_dialog_finished)
+        dialog.finished.connect(dialog.deleteLater)
+        dialog.open()
+
+    def reuse_dialog_finished(self, result: int) -> None:
+        self.reuse_dialog = None
+
     def can_request(self, action: str) -> bool:
         view = self.view
         return (
@@ -159,21 +220,26 @@ class Dashboard(ResponsiveColumns):
         )
 
     def show_previews(self) -> None:
-        if self.preview_dialog.isVisible():
-            self.preview_dialog.close()
-            return
         main = self.window()
         if main is not None:
             self.preview_dialog.show_saved(main)
 
     def request_action(self, action: str) -> None:
         if self.can_request(action):
+            if action == "Setup":
+                self.recent_species.remember(self.species.text())
+                self.recent_conditions.remember(self.condition.text())
             self.action_requested.emit(action)
 
     def setup(self) -> None:
-        self.request_action(
-            "New session" if self.view.phase == Phase.ENDED else "Setup"
-        )
+        if self.view.phase == Phase.ENDED:
+            self.request_action("New session")
+            return
+        history = self.subject_history() if self.can_request("Setup") else None
+        if history is not None and history.same_experiment_today:
+            self.confirm_subject_reuse(history)
+        else:
+            self.request_action("Setup")
 
     def stop_choices(self) -> frozenset[str]:
         return frozenset(
@@ -204,6 +270,8 @@ class Dashboard(ResponsiveColumns):
 
     def apply_view(self, view: DashboardView) -> None:
         self.view = view
+        if self.reuse_dialog is not None and not self.can_request("Setup"):
+            self.reuse_dialog.reject()
         self.preview_dialog.apply_views(
             view.previews,
             allowed=view.has_control and (view.connected or view.sample),
@@ -240,7 +308,6 @@ class Dashboard(ResponsiveColumns):
     def render_hud(self) -> None:
         """Refresh presentation from the current view without touching controls."""
         view = self.view
-        self.trial_position.set_position(view.trial_index, view.trial_count)
         rows = (
             ("STATUS", view.outcome if view.outcome != "—" else view.phase.value),
             (

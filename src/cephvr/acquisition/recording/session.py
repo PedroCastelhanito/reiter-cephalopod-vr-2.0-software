@@ -110,7 +110,6 @@ class RecordingSession:
         self._scheduled: acq.WorkerSchedule | None = None
         self._released = False
         self._started = False
-        self._release_deadline_ns: int | None = None
         self._active_io_deadline_ns: int | None = None
         self._finished = False
         self._encoder: EncoderProcess | None = None
@@ -129,7 +128,6 @@ class RecordingSession:
         self._error: str | None = None
         self._last_video_sync_ns = 0
         self._prepared_buffer: bytearray | None = None
-        self._input_pixel_format = ""
         self._finish_arguments: tuple[object, ...] | None = None
         self._original_finish_deadline_ns: int | None = None
         self._finish_results: list[control.OutputResult] | None = None
@@ -152,17 +150,15 @@ class RecordingSession:
             self._prepared = True
             return
         assert self.pixel_preparer is not None and self.capabilities is not None
-        self._encoding, self._prepared_buffer, self._input_pixel_format = (
-            prepare_recording(
-                self.settings,
-                self.layout,
-                self.identity,
-                self.paths,
-                self.queue,
-                self.pixel_preparer,
-                self.capabilities,
-                role=self.role,
-            )
+        self._encoding, self._prepared_buffer, _ = prepare_recording(
+            self.settings,
+            self.layout,
+            self.identity,
+            self.paths,
+            self.queue,
+            self.pixel_preparer,
+            self.capabilities,
+            role=self.role,
         )
         self._prepared = True
 
@@ -237,7 +233,6 @@ class RecordingSession:
                 "ReleaseTrial does not match exact retained schedule"
             )
         self._released = True
-        self._release_deadline_ns = deadline_ns
 
     def process_available(self, *, timeout: float = 0.0, max_entries: int = 64) -> int:
         """Process ordered queue entries; no capture or control thread performs I/O."""

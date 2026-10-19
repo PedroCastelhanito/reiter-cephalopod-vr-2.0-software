@@ -642,7 +642,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 61
+**Status:** Accepted · **Revision:** 63
 
 **Capture lifetime**
 
@@ -741,11 +741,13 @@ stamping/filtering and the mappings still need runtime implementation.
   Explicit external latest-frame transfers remain available to authenticated clients,
   with one display consumer per slot. Closing a viewer is distinct from Stop Preview
   and from loss of the controlling client.
-- The OpenCV image area is a fixed square with aspect-preserving fit and black
+- The OpenCV image area is a resizable square with aspect-preserving fit and black
   padding. Mouse wheel zooms the private image about the pointer, bounded from
   fitted size to 16×; double-click restores fit. Repaint cached pixels without a
-  new frame. Show may supply bounded initial physical-desktop placement/size from
-  the GUI; subsequent movement is operator-owned. Display transforms never edit
+  new frame. Show may supply bounded physical-desktop placement/size from
+  the GUI under G01. Untouched windows follow layout changes; manual move/resize
+  opts out until explicit Snap or close/reopen. Existing-only hints never reopen
+  a closed window. Display transforms never edit
   source coordinates, camera settings or recording/tracking pixels.
 - Preview may explicitly open a session-disabled camera without changing session
   enablement or recording flags. Validate its device/settings and required trigger

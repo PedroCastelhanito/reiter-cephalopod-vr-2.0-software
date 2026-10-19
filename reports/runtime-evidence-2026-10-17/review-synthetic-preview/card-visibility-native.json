@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-17",
+  "source_revision": "f6cb9f4e plus uncommitted preview visibility changes",
+  "method": "actual Review --review entry, native Cocoa frame queried from this process; Show/Hide through Review controls",
+  "scope": "local macOS sample only; no real device or Windows acceptance",
+  "result": {
+    "initial_card_hidden": true,
+    "log_before": 439,
+    "card_open": true,
+    "log_open": 144,
+    "target": [
+      875,
+      676,
+      567,
+      252
+    ],
+    "native_frame": [
+      1047,
+      676,
+      220,
+      248
+    ],
+    "native_contained": true,
+    "card_hidden_after_close": true,
+    "log_after": 439,
+    "preview_closed": true
+  }
+}

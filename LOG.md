@@ -4175,3 +4175,340 @@ the working tree, not isolated committed-tree acceptance. Runtime report and
 existing devices-narrow-overflow task retain this limitation. Both log histories
 retained, conflict markers absent and whitespace checks pass. Merge committed
 with parents595ab681/1314a743; no native/rig test or remote push performed.
+
+## 2026-10-17 — preview-card-visibility
+
+[gui] Applied the owner's conditional Preview card: any reported open preview
+shows the card below HUD/log; last close hides it and returns its height to the
+runtime log. Existing tabs/column widths and HUD top alignment remain. First-open
+placement temporarily measures the expanded-card layout and restores visibility,
+including errors. Review X closure now updates presentation even in Observer mode,
+without admitting commands or changing capture. G01 revision222 records the rule.
+ARCH-002 review keeps the change in focused shell/placement/presentation helpers,
+with no new dependencies, protocols or duplicate backend state.
+
+Initial focused checks exposed insufficient virtual-desktop room and unsettled
+responsive geometry in the old fixtures; used a declared wide test work area and
+propagated changed size hints/geometry through ancestors before measurement.
+Final preview/HUD/device-tab selection54pass plus one rollback case passes.
+Scoped Ruff/format, Win32 mypy3, boundaries719/zero violations and whitespace pass.
+Actual native Review verifies hidden/log439px → open/log144px with contained native
+frame → hidden/log439px after Hide; dated source/result linked in reports/runtime.md.
+Updated local Review left open. Unrelated merge/staging was preserved; this GUI
+increment remains uncommitted. Existing full-suite narrow-overflow finding remains
+separate. No real-camera, Windows-native or rig acceptance claimed.
+
+
+## 2026-10-17 — stimulus-capture-slots-trial owner setting
+
+[visual_stimulus] Set operator resources.capture_slots3→15 at the owner's explicit
+request for later rig testing under V12/E14. No policy, other configuration or
+runtime code change. Updated current report and existing deferred verification
+task; historical3/15/16-slot evidence is retained with its original scope. Parsed
+TOML, compared all values against HEAD (only capture_slots differs), confirmed
+matching policy versions and passed whitespace checks. No runtime/rig test or
+live reconfiguration; fresh Setup is required. Concurrent GUI work is preserved.
+
+## 2026-10-17 — preview-window-follow
+
+[gui] [acquisition] [shared] Applied the owner's scope to Review and Windows
+runtime camera previews: bracketed `[ PREVIEW ]` footprint replaces the ordinary
+card; original HUD/log positions and conditional log growth remain. Separate
+native windows use GUI owner links for movement, stacking and minimize/restore.
+Minimization retains Show/window/reader state; restore redraws latest pixels.
+Windows validates top-level window/PID/process creation and retains a query handle;
+stale owner or failed cleanup is reported without changing camera/pulse authority.
+G01 revision223, contract/schema and owning reports updated; generated19 protobuf
+sources. ARCH-002 selects focused native helpers over embedding/new processes,
+with no new dependency. New platform test module owns native display fixtures.
+
+Native Retina probe first failed insufficient footprint measurement; corrected
+logical/physical minimum sizing. Next probe found Qt/native minimize disagreement;
+Review now passes Qt state to its owner helper. Preserved initial failed native
+observation and final actual Retro Review source/result/render. Final native
+frame200×206 fits footprint200×210; minimize hides but retains preview/Show,
+restore shows above GUI, Hide cleans up. Retro frame render inspected; updated
+maximized Review left open. Acquisition manual-preview plus platform130pass/
+2Windows deselected; focused GUI placement/lifecycle/HUD27pass/579deselected.
+Scoped Ruff/format13files, Win32 mypy8sources, boundaries720/zero violations and
+whitespace pass. Existing unrelated cohesion/narrow-overflow findings remain.
+Windows native test included but unrun here; actual Windows HighGUI/DPI acceptance
+tracked separately, with no device or rig pass claimed. Concurrent visual stimulus
+settings/merge work preserved; changes remain uncommitted.
+
+Changed-document local target scan confirms the new evidence links; it also finds
+one pre-existing missing runtime report target,
+`runtime-evidence-2026-10-14/tank-screen-plot/tank-screens.png`, outside this increment.
+
+## 2026-10-17 — preview-multiple-frames
+
+[gui] Added named source footprints in a two-column Preview grid for simultaneous
+camera/stream windows on Dashboard and Cameras. Review and managed camera
+Connect/Show now request placement by source key. Reserve source positions until
+last close, retaining remaining windows/coordinates on independent Hide or X.
+HUD/log alignment remains; the log minimum compacts during Preview and restores
+on last close or failed speculative measurement. G01 revision224 and owning
+contract/report reflect the behavior. ARCH-002 uses focused grid/geometry helpers;
+main's only change is callback wiring, with no new dependencies or capture state.
+
+Initial native test caught second-row clipping and fixed-size layout feedback;
+manual tile geometry and matching compact-log measurement correct them. Preserved
+initial failed observation plus final Dashboard/Cameras native source/results and
+inspected Retro frame render. Each page opens both cameras and stimulus without
+overlap; all minimize/restore together and one close leaves the rest in place.
+Four added page/style cases and existing preview/camera admission/cancellation
+selection25pass/585deselected. Scoped Ruff/format9files, Win32 mypy8sources,
+boundaries720/zero violations and whitespace pass. Updated Review left open with
+multiple blank previews. Windows native/rig acceptance remains pending in the
+existing task; no real camera/runtime stream pass is claimed. Concurrent Retro
+styling, stimulus settings and prior uncommitted work preserved.
+
+- 2026-10-17 `gui-retro-style-polish` [gui]: owner-requested Retro console polish under G01 rev225/G02, ARCH-002 reviewed (focused helpers, no new dependencies). One frame per card and a single log tick rail; selected timeline tiles use a dim tinted fill, bright frame and inverse label bar with stable identity tints; table rows use accent text; muted/disabled text and field borders raised for contrast (single-hue palette tried and reverted at owner request, multi-colour kept); bold glyph status lamps; log prompt gutter moved to a viewport margin so console padding shrinks; layouts settle before the first repaint after a style switch (squeezed button labels); CRT film/glow strengthened plus an opt-in Refresh band toggle. Offscreen renders of all four pages inspected. Scoped Ruff/format, Win32 mypy of gui, boundaries (720/0) and the affected appearance/protocol-style/palette tests pass; a full tests/gui run before the last test/palette edits had six appearance/protocol-style failures, all fixed and re-run passing in isolation; the full suite was not rerun afterwards, and test_camera_trigger_form_reflows_and_destroys_owned_editors fails identically on clean HEAD. No Windows/native display check performed. Status-strip and extra box-drawing frames not applied. Concurrent preview-placement work preserved.
+
+- 2026-10-17 `gui-retro-style-polish` [gui]: correction/supersession of the preceding entry at owner request. Reverted every change from that increment (single frame/tick rail, selection styling, bold lamps, contrast colours, console padding/gutter, layout-settle, CRT strength and Refresh band) by restoring appearance, components, consoles, theme, retro_instruments, retro_overlay and protocol_timeline from HEAD, preserving the unrelated StatusColumn log-minimum line, then re-adding only the Retro epoch tint: unselected epoch tiles use a stable accent-set tint (dim fill, tinted frame); selection and groups are unchanged. G01 text now describes only that tint (rev225); the test edits were reverted and a tint helper test added. Offscreen render inspected; targeted appearance/protocol-style/tint tests, Win32 mypy of gui and boundaries pass; full tests/gui run pending when written. Earlier committed Retro work (bracket buttons, cursors, overlay, inverse hover) is untouched.
+- 2026-10-17 `gui-retro-style-polish` [gui]: addendum to the revert entry: full tests/gui run completed, 611 passed and 1 failed (test_camera_trigger_form_reflows_and_destroys_owned_editors, which fails identically on clean HEAD).
+
+## 2026-10-17 — log-scroll-camera-preview-scope
+
+[gui] Added a named AsNeeded vertical scrollbar to LogConsole; the global style
+previously rendered scrollbars at zero width. Both appearances now expose a10px
+track/handle only on overflow, preserving native scrolling, bounded retention,
+reading anchors and follow-at-bottom. Cameras footprints and Preview/log visibility
+now include only enabled camera keys, excluding disabled/connected cameras and
+Tracking/stimulus streams. Dashboard retains its complete source list. Removed the
+previous membership freeze so page/enable changes refresh the correct footprint
+set; ordinary Show/Hide retains positions. Sources without an eligible current-page
+slot use the existing monitor-constrained placement fallback, preserving A10's
+experiment-enable-independent diagnostic Connect. G01 revision227/G02 revision77,
+register and owning report updated. ARCH-002 uses existing focused helpers without
+new modules, dependencies, transport or capture state.
+
+Added four owning cases across both styles for pointer scrollbar navigation,
+short-log hiding, reading anchors, camera enable/disable/no-enabled cases while
+open, stream-only Cameras log expansion, disabled-camera placement fallback and
+Dashboard restoration. Updated multi-preview cases to require two Cameras windows
+versus three Dashboard sources; adapted the prior generic-identity fixture to an
+actual enabled camera. Focused preview/log/HUD selection34pass/581deselected;
+final fallback/no-enabled/rollback selection3pass/612deselected. Native actual Retro
+Cameras Review verifies enabled-only slots, independent nonoverlapping native
+windows inside brackets, minimize/restore/close, and100log lines with visible10px
+scrollbar/range89 and successful navigation. Dated source/result retained; updated
+Review left open. Scoped Ruff/format5files, Win32 mypy4sources (placement rechecked
+after fallback), boundaries720/zero violations and whitespace pass. Existing
+unrelated narrow-layout/cohesion findings and Windows-native acceptance remain.
+Concurrent Retro styling/tint and stimulus changes preserved; work uncommitted.
+- 2026-10-17 `gui-retro-style-polish` [gui]: owner-requested re-apply of two Retro items under G01 rev226/ARCH-002 (focused helpers, no new dependencies). Console padding: 12px to 6px 8px with the `>` prompt gutter moved from a four-sided document margin to a left viewport margin (PromptGutter), so HUD/log text starts close to the frame and the log gains rows. CRT: scanlines alpha 13 to 18, vignette 32 to 55, stronger heading glow and lamp halo, plus an off-by-default Refresh band Style-menu toggle (persisted as review/crt_band; it repaints continuously, so it is opt-in). Offscreen render and console geometry inspected; appearance/protocol-style/tint tests, Win32 mypy of gui, boundaries (720/0) and whitespace pass; full tests/gui 611 passed, 1 failed (test_camera_trigger_form_reflows_and_destroys_owned_editors, also failing on clean HEAD). No Windows/native display check. The first-frame squeezed command-button labels after a style switch are present again because that fix was reverted earlier.
+- 2026-10-19 `gui-retro-style-polish` [gui]: owner-requested re-apply of the squeezed-label fix. After a style switch the appearance now polishes Buttons and settles pending layout requests before the first repaint, so fixed-height command buttons keep their size hint (38px) instead of one frame at 30px; test asserts Setup height >= size hint in Retro. Offscreen height trace, appearance/protocol-style/tint tests, Win32 mypy of gui and boundaries (720/0) pass; full tests/gui not rerun for this small change. No Windows/native display check.
+
+## 2026-10-19 — adaptive-preview-grid
+
+[gui] [acquisition] [shared] Owner retained external Dashboard previews. G01
+revision228 now arranges open eligible windows: one centered, two side by side,
+then two-column rows. Untouched native windows reflow/resize; any manual move or
+resize opts out until close/reopen. Cameras retains enabled-camera-only eligibility.
+ARCH-002 review uses a small shared owner-relative geometry guard, existing
+platform owners and display-thread/command paths without new packages or transport.
+Resizable HighGUI windows replace autosize. Runtime copies/coalesces hints on the
+owning thread; update_existing_only prevents X-close races from reopening viewers.
+The coordinator preserves exact-run capture/reader ownership. Regenerated19 proto
+sources; contracts, architecture register and owning reports updated together.
+
+Actual macOS Retro Review verifies maximized launch, one/two/three layouts,
+centering/containment, resize/reflow, manual move and resize preservation and reset
+on reopen. Retained initial observation and corrected result in
+reports/runtime-evidence-2026-10-19/adaptive-previews: removed obsolete Cocoa minimum
+width for resizable windows; corrected the harness assumption that one must be
+larger than two even when height is limiting. Updated Review remains open.
+Portable focused selection initially28pass, expanded32pass; six one-to-six-slot
+cases pass. Final combined selection37pass with one obsolete minimum-width test
+failure; that test now checks actual resizable-frame centering/narrow fit and passes
+in isolation. No outstanding failure in this affected selection. Scoped Ruff,
+format16files, Win32 mypy11sources, boundaries720/zero violations and whitespace
+pass. An intermediate unused-import/removed-constant static failure was corrected.
+Native Windows/DPI/real-camera acceptance remains in preview-windows-native-follow;
+full GUI suite not rerun, existing unrelated narrow-layout failure remains tracked.
+Concurrent Retro/stimulus edits preserved. Work remains uncommitted.
+
+## 2026-10-19 — preview-four-line-log
+
+[gui] Removed the trial-position strip and its unused widget; HUD trial text stays.
+Preview-mode logs now have a fixed four-rendered-line viewport using current font,
+margin and widget chrome, and the log card stops consuming spare preview height.
+Collapse follows the latest entry once; manual scrolling thereafter is preserved.
+Last preview close restores expanding log height. Prospective placement uses the
+same dimensions without scrolling and restores bounds/scroll on failure.
+G01 rev229/G02 rev78 and root register updated. ARCH-002 reuses the focused console
+owner and existing shell/placement paths, removes unused drawing code and adds no
+dependency. Concurrent device navigation and other GUI edits preserved.
+
+Offscreen selection:13pass plus4 appearance failures from obsolete strip assertions;
+after removing those assertions, all4 appearance cases pass. Dedicated four-line
+both-style/placement-rollback selection3pass. Scoped Ruff/format6files, Win32
+mypy5sources, boundaries721/zero violations and whitespace pass. No Windows/native
+acceptance claimed; inherited cohesion advisories unchanged by this increment.
+All test windows were closed by fixture/finally cleanup. Previous local Review
+replaced with the completed GUI for user review only, following the owner's new
+close-after-testing instruction. No native test GUI was left running.
+
+## 2026-10-19 — preview-snap-workspace
+
+[gui] [acquisition] [shared] Added a centered Snap button to each open source frame.
+It resets only that existing window's grid size/position and resumes automatic
+placement; it never reopens X-closed viewers. Owner selected an external Dashboard
+workspace with movable OpenCV windows over its grid, streams now/plots later.
+Previews opens/raises that resizable workspace with source controls above the grid;
+Cameras retains its in-page grid. Close/minimize hides native viewers while keeping
+Show/capture state, and reopen restores them. Display hosts can retarget only inside
+the verified live GUI process. Native readers and exact-run capture ownership stay
+intact. Coalescing retains unconsumed explicit snap intent. G01 rev231/A10 rev62,
+contracts, root register and owning reports updated. ARCH-002 uses the existing
+focused workspace/placement/display-thread owners without packages or new image
+transport; no new whole-runtime references. Regenerated19 protobuf sources.
+
+Actual local Mac Review native checks pass snap/manual reset/no reopen, three-source
+workspace containment, move, hide, restore and return to Cameras. Every native test
+closes all its windows; sources/results and initial restore failures retained under
+reports/runtime-evidence-2026-10-19/preview-snap. OS workspace repositioning after
+hide was initially mistaken for manual movement; refreshing the automatic baseline
+on restore fixes it without clearing an established manual opt-out. Source-controls
+height is settled before prospective placement, fixing first-open layout drift.
+
+Portable owner/display/workspace selection26pass; snap/grid/placement18pass.
+Broader GUI preview selection56pass/9fail while concurrent caption changes landed:
+updated native mocks and old in-page/toggle assumptions; the nine affected cases
+then pass as8cases plus the final first-placement/tab case. Scoped Ruff/format16
+files, Win32 mypy11sources (final placement/workspace2 rechecked), boundaries721/zero
+violations and whitespace pass. Intermediate static checks caught an in-progress
+concurrent caption method; current checks pass. No full GUI suite or native Windows
+rig acceptance claimed; existing native-follow task remains. Concurrent navigation,
+empty-frame styling and caption edits preserved. Previous Review replaced with one
+final completed GUI/workspace, left open for user review only. Uncommitted work.
+
+
+## 2026-10-19 — dashboard-log-expand
+
+[gui] G01 rev232 restores full available Dashboard log height regardless of external
+preview visibility. Existing four-line mode now follows the actual in-page grid
+host, preserving Cameras/Tracking behavior and collapse-follow-latest. ARCH-002
+review: one existing host condition, no added state/dependency or module needed.
+Updated owning assertions for Dashboard expansion and both-style Cameras/page
+transitions. Focused tests7pass plus height tests2pass; scoped Ruff/format, Win32
+mypy1source, boundaries721/zero violations and whitespace pass. Inherited size
+advisories unchanged; no native Windows/rig check. Concurrent edits preserved.
+Offscreen test windows closed; previous Review replaced with the completed GUI
+and external workspace for review only.
+- 2026-10-19 `gui-devices-nav-empty-states` [gui]: owner-requested items under G01 rev230/ARCH-002 (focused new module devices_rail.py; no new dependencies). (1) Empty states: DataTable.empty_text hints for the Displays and Available cameras tables and a clearer Displays-layout message; Load/Save as buttons now carry a tooltip saying why they are disabled (shared LOCKED_REASON; Tracking names the live-diagnostic lock; calibration Load/Save follow their widget's enabled state). SpikeGLX's intentionally collapsed empty table was kept as is (its test requires zero height). (2) Owner trial: View > Devices side navigation (off by default, persisted as devices/side_rail) shows one rail mirroring/driving the device tabs and Projectors section tabs, replacing both strips on pages >= 1000 px wide and yielding to the tabs below that. Offscreen Standard/Retro renders inspected; two new tests plus appearance/device-tab/SpikeGLX/camera-trigger tests, scoped Ruff/format, Win32 mypy of gui and boundaries (721/0) pass. Full tests/gui: 624 passed, 3 failed before the SpikeGLX fix; test_camera_trigger_form_reflows_and_destroys_owned_editors fails on clean HEAD too, SpikeGLX was mine and fixed, and test_hud_fits_content_and_log_fills_available_height[True] (preview slot height) still fails while another agent was concurrently editing preview/dashboard/window files, so it is unattributed and not claimed fixed. No Windows/native display check. Concurrent preview work preserved. Not done: readiness view (decision pending) and recent-values/duplicate-ID entry help.
+
+## 2026-10-19 — preview-card-retro-style
+
+[gui] [acquisition] [shared] Retro preview footprints now draw a doubled corner
+bracket (accent inner, border outer 3px outside; Standard unchanged) and an empty
+footprint shows `-- NO SIGNAL --` with the shared block cursor above Snap (a
+transparent child, since the native-window target paints an opaque themed background). Every
+footprint caption names its source (`[ BEHAVIOR CAM ]`), including a single open
+preview; `[ PREVIEW ]` remains only for the empty footprint. OpenCV windows (runtime
+HighGUI and Review) now have blank caption text: Win32 resolves the HWND from the
+title once, blanks it with SetWindowTextW, and later places by handle
+(`position_preview_frame` accepts a title or handle; `HighGuiPreview.native_handle`
+exposes it); Review on macOS uses `cv2.setWindowTitle`. The title bar stays for move
+and native X. Edge ticks were not added: the footprint margin outside the brackets is
+too small to render them legibly. G01 rev233, A10 rev63, preview-control contract and
+register updated; ARCH-002 reuses `retro_instruments.blink`, adds one module-level
+`bracket` helper and no dependency. Concurrent Snap/workspace edits by another
+session preserved.
+
+Checks: GUI preview selection67pass (earlier transient failures coincided with the
+concurrent session's in-progress edits and did not recur); platform and manual-preview
+selection192pass, one skipped; new tests cover Retro bracket pixels, placeholder,
+role captions and handle placement after blanking. Scoped Ruff, Win32 mypy36 sources,
+boundaries721/zero violations and whitespace pass. A real cv2 probe on macOS confirms
+a blank title keeps name-keyed resize/move/imshow/destroy working. Windows native
+behavior is unverified (native test updated to use the exposed handle but not run);
+tracked in preview-windows-native-follow.
+
+## 2026-10-19 — code-sweep-oct19: review and safe cleanup
+
+[repo] [gui] [acquisition] [visual_stimulus] [shared] Reviewed the dirty working
+source under ARCH-002 and the owner's behavior-preservation restriction. Removed
+six unused acquisition values and six unused GUI/renderer methods/functions;
+shared identical wake-clear and texture blend/smoothstep implementations. Retained
+native lifetime references, validation side effects and dynamic interfaces. No
+new dependency, protocol or policy. Two reproducible logic defects await owner
+choices: same-day subject history orders by experiment name, and parsed polar
+colors can overflow before saturation. Source fingerprints and bounded probes are
+in reports/runtime-evidence-2026-10-19/code-sweep; findings reach owning reports/TODO.
+
+Initial Ruff, Win32 mypy826, dependency check, 57 generated bindings and boundaries
+723/zero violations pass. Broad backend run: 2177 passed, six skipped, 14 deselected;
+13 failures/20 errors are sandbox loopback bind denials. Socket-enabled transport
+rerun: 74 passed. Visual owning selection: 184 passed. Acquisition first pass:
+645 passed, five skipped, two deselected, four failures in the new test's unstarted
+owner fixture; corrected to park a real owner thread, then worker module84 passed.
+GUI and final static checks are still running. A combined documentation patch
+failed context verification and made no edits; corrected patch applied. Native/rig
+acceptance remains separate, and pre-existing concurrent edits are preserved.
+- 2026-10-19 `gui-subject-entry-help` [gui]: owner-requested subject entry help under G01 rev234/ARCH-002 (new focused modules recent_values.py and subject_history.py; no new dependencies). Species and Condition suggest the last 10 distinct values from local QSettings (recorded when Setup is accepted for request; popup styled per Standard/Retro at show time). Subject ID reuse: after Subject ID/Output directory editing, earlier sessions in `<root>/<date>_<experiment>/<subject>-<time>` (the controller reservation layout; bounded, read-only, silent when unreadable) give a tooltip and one log line; same subject, same experiment, same local day makes Setup ask once (Change Subject ID / Continue setup), closing without a request if authority is lost. A reused ID cannot overwrite a session because the folder name carries the time, so this is advice, not validation; the date check uses the GUI's local date and may differ from the controller anchor near midnight or across time zones. Three new tests; full tests/gui 630 passed, 1 failed (test_camera_trigger_form_reflows_and_destroys_owned_editors, failing on clean HEAD too); Ruff/format, Win32 mypy of gui and boundaries (723/0) pass. No Windows/native display check, and the scan was only exercised on a local temp directory (not a network share). Concurrent preview work preserved.
+
+## 2026-10-19 — code-sweep-oct19: integrated checks and obsolete grid
+
+[repo] [shared] [gui] [acquisition] [visual_stimulus] Full socket-enabled backend
+rerun passes2220 tests, six skips/14 deselections. Source-only import review found
+the old NominalVideoGrid used solely by its five own tests after A08/E13 moved to
+sequential recording; removed the module and those obsolete tests. Existing live
+recording accounting/mapping coverage remains, and shared/recording183 passes.
+The GUI's known camera reflow failure is a font-dependent fixture assumption:
+actual298px panel/266px form fits three controls. Sizes now derive from control
+hints; three narrow/wide/narrow cycles and disposal assertions pass without product
+changes. The obsolete ProjectorEditRow's only remaining test is being migrated to
+its live schema-editing operation; active ImageParameters already tests Cover UI
+selection and saved state. Broad GUI validation continues on the earlier collection.
+
+## 2026-10-19 — code-sweep-oct19: safe-fix phase complete
+
+[repo] [shared] [gui] [acquisition] [visual_stimulus] Completed source/caller sweep
+and behavior-preserving cleanup under ARCH-002, preserving the initial dirty work.
+Removed two obsolete modules (NominalVideoGrid and ProjectorEditRow), six unused
+acquisition values, unused GUI/renderer helpers and duplicate wake/texture logic:
+304 net production lines removed across13 files. The old editor's unique schema
+assertions remain on the live patch operation; live ImageParameters still covers
+Cover selection/persistence. Five obsolete grid self-tests retired; ten wake-clear
+cases added to the existing owner module. Three texture helpers have exact AST
+parity. No architecture/policy/contract/device setting changed.
+
+Final backend:2215 passed, six skipped,14 deselected with loopback access. Broad
+GUI:630 passed/one original font-dependent fixture failure in its old collection;
+corrected reflow and both affected image-fit cases:3passed on final source. Full
+GUI was not repeated after those test edits/dead module removal. Texture/recipe16
+passes after helper consolidation. Ruff/format947, Win32 mypy824, boundaries722/
+zero violations, dependencies,57 generated bindings, whitespace and source/wheel
+builds pass; wheel excludes both removed modules and matches live source. Remaining
+size advisories retain owning cohesion assessments. No Windows/native/rig check.
+Vulture2.16:314→299 advisory hits (275 source); five100%-confidence test arguments
+remain, with no blanket deletion/whitelist. Evidence and exact commands are in
+reports/runtime-evidence-2026-10-19/code-sweep/context.json. Both reproduced logic
+findings remain explicit owner decisions in TODO: subject-history-latest-order and
+polar-color-overflow. Safe sweep task closes; those behavior changes are unmodified.
+
+## 2026-10-19 — code-sweep-oct19: approved ordering and clamping fixes
+
+[gui] [visual_stimulus] Owner approved `subject-history-latest-order` and
+`polar-color-overflow`. Subject history now compares date, full time, then
+experiment-name tie-break; polar RGB clamps before scaling to prevent finite
+input multiplication overflow. These are two focused production-line changes,
+with no new dependency/state or relaxed scan/parser guards (ARCH-002). Recorded
+the approved behavior in G02 revision 79 and V04 revision 16 and updated the root
+register and existing runtime/Visual Stimulus reports.
+
+Regressions reproduced two chronological-ordering failures and one polar
+OverflowError before fixes. All six subject-history/reuse cases now pass,
+including four new date/time/seconds/tie cases. Rendering/resources: 133 passed;
+the existing polar reference hash and public parsed-recipe comparisons cover
+both colors, positive/negative extremes and an in-range channel against clamped
+inputs for ordinary/polar patterns. Original probe now selects Alpha 18:00 and
+both patterns generate. Ruff and format pass 354 files, Win32 mypy 336 sources,
+boundaries 722 modules/zero violations; existing cohesion warnings remain.
+Documentation links/register and whitespace checked with follow-up evidence in
+reports/runtime-evidence-2026-10-19/code-sweep/approved-context.json. Both tasks
+are complete and removed from TODO. Prior dirty/concurrent edits are preserved.
+Full GUI, native Windows, hardware/GL and rig acceptance were not rerun; E15
+limits remain. Earlier pre-fix failures and sweep evidence are retained.

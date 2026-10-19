@@ -1,0 +1,274 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "uncommitted working tree",
+  "scope": "actual local macOS Review; no Windows/hardware acceptance",
+  "checks": {
+    "one_expands": false,
+    "one_restores": true,
+    "automatic_contained": true,
+    "move_preserved": true,
+    "resize_preserved": true,
+    "dashboard_three": true,
+    "maximized": true
+  },
+  "result": {
+    "one": {
+      "camera-1": {
+        "frame": [
+          1058,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          1058,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": false
+      }
+    },
+    "two": {
+      "camera-1": {
+        "frame": [
+          911,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          911,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": false
+      },
+      "camera-2": {
+        "frame": [
+          1206,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          1206,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": false
+      }
+    },
+    "one_again": {
+      "camera-1": {
+        "frame": [
+          1058,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          1058,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": false
+      }
+    },
+    "moved": {
+      "camera-1": {
+        "frame": [
+          1089,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          1058,
+          698,
+          200,
+          230
+        ],
+        "contained": false,
+        "manual": true
+      }
+    },
+    "moved_two": {
+      "camera-1": {
+        "frame": [
+          1089,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          911,
+          698,
+          200,
+          230
+        ],
+        "contained": false,
+        "manual": true
+      },
+      "camera-2": {
+        "frame": [
+          1206,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          1206,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": false
+      }
+    },
+    "reopened": {
+      "camera-2": {
+        "frame": [
+          1206,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          1206,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": false
+      },
+      "camera-1": {
+        "frame": [
+          911,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          911,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": false
+      }
+    },
+    "resized": {
+      "camera-2": {
+        "frame": [
+          1206,
+          698,
+          198,
+          226
+        ],
+        "target": [
+          1206,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": false
+      },
+      "camera-1": {
+        "frame": [
+          911,
+          698,
+          180,
+          208
+        ],
+        "target": [
+          911,
+          698,
+          200,
+          230
+        ],
+        "contained": true,
+        "manual": true
+      }
+    },
+    "resized_one": {
+      "camera-1": {
+        "frame": [
+          911,
+          698,
+          180,
+          208
+        ],
+        "target": [
+          1058,
+          698,
+          200,
+          230
+        ],
+        "contained": false,
+        "manual": true
+      }
+    },
+    "dashboard": {
+      "camera-1": {
+        "frame": [
+          911,
+          565,
+          128,
+          156
+        ],
+        "target": [
+          911,
+          565,
+          200,
+          160
+        ],
+        "contained": true,
+        "manual": false
+      },
+      "camera-2": {
+        "frame": [
+          1206,
+          565,
+          128,
+          156
+        ],
+        "target": [
+          1206,
+          565,
+          200,
+          160
+        ],
+        "contained": true,
+        "manual": false
+      },
+      "stimulus": {
+        "frame": [
+          911,
+          768,
+          128,
+          156
+        ],
+        "target": [
+          911,
+          768,
+          200,
+          160
+        ],
+        "contained": true,
+        "manual": false
+      }
+    }
+  }
+}

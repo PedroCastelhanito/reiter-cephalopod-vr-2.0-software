@@ -1,5 +1,11 @@
 # Visual Stimulus status
 
+Oct17 owner selects `resources.capture_slots = 15` in the operator defaults for
+a later rig test under V12/E14. Other settings and policy versions are unchanged.
+This selection supersedes the restored three-slot baseline described in historical
+evidence below; it does not change those results or certify zero-loss capacity.
+Apply through fresh Setup; no rig run or running-session change was performed.
+
 Current Oct17 concurrent acceptance run retains all 7200 real stimulus groups
 exactly once over 120 s, alongside Behavior 3598/3598 and Tracking 7188/7188.
 Rendering/projection and three encoders run concurrently; no capacity omissions,
@@ -1907,6 +1913,32 @@ pre-session renderer launch shape and reconciles exact retained executor complet
 admission is not treated as cleanup success.
 
 ## ARCH-002 implementation review
+
+Oct19 `code-sweep-oct19` removes the unused engine-access wrapper and unused scalar
+sRGB decoder. Texture patterns reuse the identical existing `_mix`, `_smoothstep` and `_num`
+functions from the geometry module they already import. This adds no dependency or
+owner, and preserves V04 pixel formulas and resource lifetimes. The owning resources,
+rendering and lifecycle selection passes 184 tests, including existing reference
+raster hashes; native rendering/rig acceptance remains separate.
+[Raw checks](runtime-evidence-2026-10-19/code-sweep/visual-after.txt);
+the final numeric-helper consolidation also passes all 16 texture/recipe cases.
+[AST equivalence](runtime-evidence-2026-10-19/code-sweep/equivalence.txt) confirms
+the three retained function bodies match their removed duplicates.
+
+Owner-approved Oct19 correction: polar geometry now clamps finite RGB channels
+to 0–1 before multiplying by 255, matching ordinary patterns under
+[V04](../docs/architecture/visual_stimulus.md#v04), revision 16. The parser continues
+to accept finite out-of-range channels. The original parsed 8x8 polar recipe with
+`color_a=[1e308,0,0]` raised `OverflowError`; it now generates successfully. The owning
+reference-pixel test additionally compares positive/negative extreme channels and
+an in-range midpoint against clamped inputs for both colors of ordinary and polar
+gratings. Its original reference hash still passes. Rendering and resource tests:
+133 passed. Scoped Ruff/format, Win32 mypy, boundaries and whitespace pass; this
+does not establish native rendering or rig equivalence.
+[Original probe](runtime-evidence-2026-10-19/code-sweep/probes.txt),
+[regression failure](runtime-evidence-2026-10-19/code-sweep/approved-clamping-red.txt),
+[passing tests](runtime-evidence-2026-10-19/code-sweep/approved-visual-green.txt),
+[commands and provenance](runtime-evidence-2026-10-19/code-sweep/approved-context.json).
 
 The Oct13 texture increment separates recipe parsing, formula rasterization, geometry,
 protected dependencies and preparation admission. Linked-motion validation, compiler

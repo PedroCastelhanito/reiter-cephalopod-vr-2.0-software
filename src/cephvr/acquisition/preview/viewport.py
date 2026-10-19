@@ -15,6 +15,15 @@ class SquareViewport:
         self.ty = (side - height * self.fit) / 2
         self.dirty = False
 
+    def resize(self, side: int) -> None:
+        ratio = side / self.side
+        self.side = side
+        self.fit = side / max(self.width, self.height)
+        self.tx *= ratio
+        self.ty *= ratio
+        self._clamp()
+        self.dirty = True
+
     def wheel(self, x: int, y: int, flags: int) -> None:
         delta = (flags >> 16) & 0xFFFF
         if delta >= 0x8000:

@@ -75,7 +75,6 @@ class WorkerTrialLifecycle:
         self._begin_warning_scope = begin_warning_scope
         self._complete_warning_scope = complete_warning_scope
         self.external_wake = external_wake
-        self.recording_first_frame_callback = recording_first_frame
         self._require_ready_session_callback = require_ready_session
         self.activity = TrialActivityEvidence(
             bootstrap, state, source, report_lifecycle

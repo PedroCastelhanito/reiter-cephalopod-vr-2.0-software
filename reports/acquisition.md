@@ -35,16 +35,49 @@ failed-Setup retired reports and older Shutdown findings remain open; normal
 closure does not close those separate triggers. [Current methods/results](runtime-evidence-2026-10-17/file-sync-fix/README.md),
 [restoration](runtime-evidence-2026-10-17/file-sync-fix/final-restoration.json).
 
-Oct16 `gui-preview-slot`: [G01](../docs/architecture/gui.md#g01)'s detached display
-placement now keeps the existing process-owned HighGUI window topmost without
-activation, using the same physical visible-frame positioning helper. Reader,
-frame conversion, capture and release behavior are unchanged. Three owning
-thread/failure cases and the native two-window ring case pass, including exact
-position/chrome, nonactivation, wheel/reset and independent closure. Native shared
-memory required an unsandboxed test; no camera hardware was used. See the
-[current GUI assessment](runtime.md) and
-[native slot evidence](runtime-evidence-2026-10-16/preview-slot/native-slot-results.json)
-for presentation scope and DPI limits.
+Oct19 `preview-snap-workspace` extends the display-only path under
+[G01](../docs/architecture/gui.md#g01) rev231 / [A10](../docs/architecture/acquisition.md#a10)
+rev62. Explicit existing-only Snap overrides manual geometry once, then restores
+automatic placement. Coalescing retains unconsumed snap intent. A workspace/main
+host switch validates the new top-level handle in the already verified live GUI
+process; a different PID/lifetime is never adopted. Hidden hosts defer drawing and
+retain readers; restore resets the placement baseline without clearing a prior
+manual opt-out. No new attachment, capture or image transport. Portable tests cover
+snap, coalescing and host changes including while minimized; native Windows remains
+pending. [GUI assessment/evidence](runtime.md) records actual local Review scope.
+
+Oct19 `adaptive-preview-grid` refines the [G01](../docs/architecture/gui.md#g01)
+revision228 display path under unchanged A10 capture ownership. The
+[preview contract](../contracts/acquisition/preview-control.md#backend-owned-camera-windows)
+adds existing-only layout hints. The coordinator retains its exact-run reader;
+the display thread coalesces copied hints and updates only untouched native
+geometry with the same GUI owner identity. Manual move/resize opts out until
+reopen; native X is checked before layout/drawing and a completed reader is never
+reopened by an automatic hint. Viewport resize preserves zoom and source pixels.
+ARCH-002 keeps geometry tracking in a small shared helper and native measurement
+in the platform owner. Owning portable tests exercise automatic resize, manual
+move/resize preservation, coalescing, no recreation and release gating. Local
+Review native evidence and Windows acceptance limits are in [the GUI assessment](runtime.md).
+
+Oct17 `preview-window-follow` updates the earlier `gui-preview-slot` display path
+under [G01](../docs/architecture/gui.md#g01) revision223 and
+[A10](../docs/architecture/acquisition.md#a10). The optional
+[placement owner identity](../contracts/acquisition/preview-control.md#backend-owned-camera-windows)
+links the existing HighGUI window to the exact live GUI process/window. It follows
+GUI movement, stays above its owner without global topmost status, and retains its
+window/reader while minimized. Latest converted private pixels redraw on restore;
+minimization never masquerades as native X closure or changes capture/pulses.
+Owner loss fails the display only; cleanup detaches and confirms handle release.
+No new device/process ownership or image transport is introduced. Legacy unowned
+placement retains its prior behavior.
+
+ARCH-002 keeps the native primitive separate from the display-thread lifecycle.
+Manual-preview and portable platform checks130pass/2Windows deselected cover
+owner identity, move/minimize/restore, retained frame delivery, X/no recreation,
+release errors and placement admission. Scoped Ruff/format, Win32 mypy and
+boundaries720/zero violations pass. The local Mac Review native result establishes
+only Review behavior; Windows-native owner and actual HighGUI/DPI acceptance are
+pending under E15. See [current GUI assessment and raw evidence](runtime.md).
 
 Oct16 `camera-timestamp-yellow-preview`: repaired A09/A10 timestamp capability
 detection in the existing small metadata owner. Exact documented USB models now
@@ -1351,6 +1384,25 @@ transitions was not independently observed. GUI pin requests now reach the A11
 serial owner; output channels D9/D10/D11 still have no physical test evidence.
 
 ## Ownership and review
+
+Oct19 `code-sweep-oct19` applies [ARCH-002](../architecture.md#arch-002) under
+the owner's behavior-preservation constraint. Removed six unused stored values:
+recording release deadline/input-format copies, capture session-preview copy,
+duplicate first-frame callback reference, never-used first-frame flag and tracking
+transfer flag. Release deadline checks, resolved encoder input and actual readiness/
+attachment evidence retain their existing owners under A02/A07/A08/E06. The
+write-only session UUID is retained because its conversion also validates input.
+`capture_handoff` now calls the identical existing idle acknowledgement operation;
+the same condition lock and before/after-clear command/external-wake checks remain.
+Ten cases extend the owning worker-foundations module to exercise both entry points
+with no work, queued work and arrivals during clear. No package or policy added;
+cohesive capture/recording/lifecycle owners retain their existing size exceptions.
+The worker module passes 84 tests; the final integrated backend rerun passes 2,215
+tests (six skips, 14 deselections), including all acquisition cases. Static checks
+and packaging also pass; the current [check context](runtime-evidence-2026-10-19/code-sweep/context.json)
+retains actual commands and initial fixture/sandbox failures.
+[Sweep evidence](runtime-evidence-2026-10-19/code-sweep/baseline.json) records the
+dirty-tree baseline. No native/rig acceptance is inferred.
 
 Final Windows repair snapshot (2026-10-01, baseline HEAD
 `826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): acquisition

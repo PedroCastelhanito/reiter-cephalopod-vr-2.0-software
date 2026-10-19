@@ -1,0 +1,3228 @@
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 26%]
+...............................................................sssss.... [ 29%]
+......EEE.EEEEEEEEEEE................................................... [ 32%]
+........................................................................ [ 35%]
+........................................................................ [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 45%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 65%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+.FF..................................................................... [ 74%]
+........................................................................ [ 78%]
+.................................................................EEEEEE. [ 81%]
+..............................FFFFFFF................................... [ 84%]
+........................................................................ [ 87%]
+........................................................................ [ 91%]
+........................................................................ [ 94%]
+........................................................................ [ 97%]
+.................................................FFFF..                  [100%]
+==================================== ERRORS ====================================
+____________ ERROR at setup of test_forged_credentials_are_rejected ____________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_forged_credentials_are_re0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:00.044602 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+___ ERROR at setup of test_spikeglx_diagnostic_requires_authenticated_client ___
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_spikeglx_diagnostic_requi0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:00.752627 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_spikeglx_inventory_rpc_auth_lease_revision_and_digest_guards _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_spikeglx_inventory_rpc_au0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:00.910112 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+______ ERROR at setup of test_gui_observes_before_explicit_control_claim _______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_gui_observes_before_expli0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:01.185949 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+__ ERROR at setup of test_gui_can_save_current_configuration_history_on_close __
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_gui_can_save_current_conf0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:01.392675 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+__ ERROR at setup of test_control_takeover_and_real_missing_backend_rejection __
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_control_takeover_and_real0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:01.551454 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_pending_setup_cancel_and_prompt_response_are_independent_loopback_commands _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_pending_setup_cancel_and_0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:01.654154 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_camera_trigger_rpc_authenticates_exact_peer_and_original_deadline _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_camera_trigger_rpc_authen0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:01.761928 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[hex] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_general_microcontroller_c0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:01.874106 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[ino] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_general_microcontroller_c1')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:01.969800 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_normal_shutdown_releases_controller_owned_microcontroller _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_normal_shutdown_releases_0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:02.097225 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_old_camera_projection_cannot_replace_controller_microcontroller_state _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_old_camera_projection_can0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:02.187494 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_controller_cleanup_waits_for_camera_off_and_claim_release[control_loss] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_controller_cleanup_waits_0')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:02.410607 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_controller_cleanup_waits_for_camera_off_and_claim_release[shutdown] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_controller_cleanup_waits_1')
+
+    @pytest_asyncio.fixture
+    async def controller(
+        tmp_path: Path,
+    ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        repository = Path(__file__).resolve().parents[2]
+        (tmp_path / "config/backends").mkdir(parents=True)
+        (tmp_path / "contracts").mkdir()
+        shutil.copyfile(
+            repository / "config/backends/synchronization_config.toml",
+            tmp_path / "config/backends/synchronization_config.toml",
+        )
+        shutil.copyfile(
+            repository / "contracts/spikeglx_mapping_reference.json",
+            tmp_path / "contracts/spikeglx_mapping_reference.json",
+        )
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+            configuration_history_path=tmp_path / "last_configuration.json",
+            software_root=tmp_path,
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+    
+        class Diagnostic:
+            async def check(self) -> rpc.SpikeGLXConnectionResult:
+                return rpc.SpikeGLXConnectionResult(
+                    connected=True,
+                    address="169.254.240.108",
+                    port=4142,
+                    version="SpikeGLX test",
+                    running=False,
+                    saving=False,
+                )
+    
+        service = ExperimentControllerService(
+            runtime,
+            client_authentication=authenticate,
+            peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+            spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:02.519453 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_authenticated_setup_duplicate_conflict_stale_and_cleanup _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11c207290>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_authenticated_setup_dupli0')
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch, tmp_path):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(
+            identity, peer, peer, ledger, clock=clock, recovery_ns=10_000_000_000
+        )
+        viewer_credentials = CredentialStore(
+            tmp_path / "viewer-credentials", identity.controller.generation
+        )
+        viewer_credentials.provision_client(
+            "gui", generation=str(uuid4()), token="viewer-token"
+        )
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            diagnostic=runtime.diagnostic,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            viewer_credentials=viewer_credentials,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:66: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:21.673124 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_real_movement_baseline_start_and_separate_stop_finish[False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11c29d490>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_real_movement_baseline_st0')
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch, tmp_path):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(
+            identity, peer, peer, ledger, clock=clock, recovery_ns=10_000_000_000
+        )
+        viewer_credentials = CredentialStore(
+            tmp_path / "viewer-credentials", identity.controller.generation
+        )
+        viewer_credentials.provision_client(
+            "gui", generation=str(uuid4()), token="viewer-token"
+        )
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            diagnostic=runtime.diagnostic,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            viewer_credentials=viewer_credentials,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:66: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:21.769676 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_real_movement_baseline_start_and_separate_stop_finish[True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11c57b850>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_real_movement_baseline_st1')
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch, tmp_path):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(
+            identity, peer, peer, ledger, clock=clock, recovery_ns=10_000_000_000
+        )
+        viewer_credentials = CredentialStore(
+            tmp_path / "viewer-credentials", identity.controller.generation
+        )
+        viewer_credentials.provision_client(
+            "gui", generation=str(uuid4()), token="viewer-token"
+        )
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            diagnostic=runtime.diagnostic,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            viewer_credentials=viewer_credentials,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:66: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:21.851977 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_preonset_stop_never_opens_recording_or_reports_started _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11c57bf10>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_preonset_stop_never_opens0')
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch, tmp_path):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(
+            identity, peer, peer, ledger, clock=clock, recovery_ns=10_000_000_000
+        )
+        viewer_credentials = CredentialStore(
+            tmp_path / "viewer-credentials", identity.controller.generation
+        )
+        viewer_credentials.provision_client(
+            "gui", generation=str(uuid4()), token="viewer-token"
+        )
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            diagnostic=runtime.diagnostic,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            viewer_credentials=viewer_credentials,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:66: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:21.919999 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_cleanup_failure_retains_catalogue_and_prevents_new_setup _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11c5f5810>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_cleanup_failure_retains_c0')
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch, tmp_path):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(
+            identity, peer, peer, ledger, clock=clock, recovery_ns=10_000_000_000
+        )
+        viewer_credentials = CredentialStore(
+            tmp_path / "viewer-credentials", identity.controller.generation
+        )
+        viewer_credentials.provision_client(
+            "gui", generation=str(uuid4()), token="viewer-token"
+        )
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            diagnostic=runtime.diagnostic,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            viewer_credentials=viewer_credentials,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:66: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:21.976901 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_supervisor_accepts_real_tracking_heartbeat_catalogue __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11c211ad0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_supervisor_accepts_real_t0')
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch, tmp_path):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(
+            identity, peer, peer, ledger, clock=clock, recovery_ns=10_000_000_000
+        )
+        viewer_credentials = CredentialStore(
+            tmp_path / "viewer-credentials", identity.controller.generation
+        )
+        viewer_credentials.provision_client(
+            "gui", generation=str(uuid4()), token="viewer-token"
+        )
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            diagnostic=runtime.diagnostic,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            viewer_credentials=viewer_credentials,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:66: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1019 07:12:22.181898 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+=================================== FAILURES ===================================
+____ test_preview_terminal_handoff_authenticates_controller_or_consumer[3] _____
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_preview_terminal_handoff_0')
+result = 3
+
+    @pytest.mark.parametrize(
+        "result",
+        [wire.PREVIEW_CONSUMER_RESULT_FAILED, wire.PREVIEW_CONSUMER_RESULT_RELEASED],
+    )
+    async def test_preview_terminal_handoff_authenticates_controller_or_consumer(
+        tmp_path, result
+    ):
+        import grpc
+    
+        from cephvr.control.v1 import services_pb2_grpc as rpc
+        from cephvr.controller.backend import GrpcSupervisorPort
+        from cephvr.shared.auth import Principal
+    
+        runtime, _, _, _ = make_runtime(tmp_path)
+        consumer = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+        runtime.credentials[(consumer.role, consumer.generation)] = "consumer-secret"
+        runtime.registration.source_registered = lambda source, **kw: source == consumer
+        report = wire.PreviewConsumerReport(
+            client_id=consumer.generation,
+            consumer=consumer,
+            controller_generation=runtime.controller.generation,
+            preview_run_id=str(uuid4()),
+            allocation_id=str(uuid4()),
+            transfer_id=str(uuid4()),
+            result=result,
+        )
+        server = grpc.aio.server()
+        rpc.add_SupervisorServiceServicer_to_server(runtime.service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/supervisor/test_registration.py:996: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:17.241870 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+____ test_preview_terminal_handoff_authenticates_controller_or_consumer[2] _____
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_preview_terminal_handoff_1')
+result = 2
+
+    @pytest.mark.parametrize(
+        "result",
+        [wire.PREVIEW_CONSUMER_RESULT_FAILED, wire.PREVIEW_CONSUMER_RESULT_RELEASED],
+    )
+    async def test_preview_terminal_handoff_authenticates_controller_or_consumer(
+        tmp_path, result
+    ):
+        import grpc
+    
+        from cephvr.control.v1 import services_pb2_grpc as rpc
+        from cephvr.controller.backend import GrpcSupervisorPort
+        from cephvr.shared.auth import Principal
+    
+        runtime, _, _, _ = make_runtime(tmp_path)
+        consumer = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+        runtime.credentials[(consumer.role, consumer.generation)] = "consumer-secret"
+        runtime.registration.source_registered = lambda source, **kw: source == consumer
+        report = wire.PreviewConsumerReport(
+            client_id=consumer.generation,
+            consumer=consumer,
+            controller_generation=runtime.controller.generation,
+            preview_run_id=str(uuid4()),
+            allocation_id=str(uuid4()),
+            transfer_id=str(uuid4()),
+            result=result,
+        )
+        server = grpc.aio.server()
+        rpc.add_SupervisorServiceServicer_to_server(runtime.service, server)
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/supervisor/test_registration.py:996: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:17.267305 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware _
+
+    @pytest.mark.asyncio
+    async def test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware():
+        from cephvr.acquisition.transport.services import AcquisitionBackendService
+        from cephvr.shared.admission import CommandAdmissionTransport
+    
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "authenticated-backend-query"
+        credentials = {("controller", identity.controller.generation): token}
+        acquisition = acquisition_runtime(identity)
+        admission = CommandAdmissionTransport(acquisition.commands)
+        acq_server = grpc.aio.server()
+        rpc.add_BackendServiceServicer_to_server(
+            AcquisitionBackendService(acquisition, credentials, admission), acq_server
+        )
+>       acq_port = acq_server.add_insecure_port("127.0.0.1:0")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/visual_stimulus/test_controller_communication.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:22.765493 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[None] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_controller_initialize_dis0')
+startup_issue = None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("startup_issue", [None, "monitor", "adapter"])
+    async def test_controller_initialize_display_retains_confirmed_idle_separately_from_ready(
+        tmp_path,
+        startup_issue,
+    ):
+        missing_output = startup_issue is not None
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "loopback-test-credential"
+        sink = SupervisorReceipt()
+        pending = PendingPeer()
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=pending,
+            controller=sink,
+            supervisor=sink,
+            ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+        )
+>       listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:261: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:22.798841 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[monitor] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_controller_initialize_dis1')
+startup_issue = 'monitor'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("startup_issue", [None, "monitor", "adapter"])
+    async def test_controller_initialize_display_retains_confirmed_idle_separately_from_ready(
+        tmp_path,
+        startup_issue,
+    ):
+        missing_output = startup_issue is not None
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "loopback-test-credential"
+        sink = SupervisorReceipt()
+        pending = PendingPeer()
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=pending,
+            controller=sink,
+            supervisor=sink,
+            ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+        )
+>       listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:261: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:22.833579 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[adapter] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_controller_initialize_dis2')
+startup_issue = 'adapter'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("startup_issue", [None, "monitor", "adapter"])
+    async def test_controller_initialize_display_retains_confirmed_idle_separately_from_ready(
+        tmp_path,
+        startup_issue,
+    ):
+        missing_output = startup_issue is not None
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "loopback-test-credential"
+        sink = SupervisorReceipt()
+        pending = PendingPeer()
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=pending,
+            controller=sink,
+            supervisor=sink,
+            ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+        )
+>       listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:261: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:22.866956 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_authenticated_live_calibration_update_transport_and_exact_receipt[frame_grid] _
+
+calibration_view = 'frame_grid'
+
+    @pytest.mark.parametrize(
+        "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+    )
+    @pytest.mark.asyncio
+    async def test_authenticated_live_calibration_update_transport_and_exact_receipt(
+        calibration_view,
+    ):
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        calls = []
+    
+        loop = asyncio.get_running_loop()
+    
+        class Driver:
+            def __init__(self):
+                self.failures = []
+    
+            def execute(self, method, request, deadline_ns):
+                calls.append((method, request, deadline_ns))
+                rejected = (
+                    request.adjustments and request.adjustments[0].mapping_id == "reject"
+                ) or '"x": 999' in request.placement_json
+                report = pb.VisualStimulusDisplayView(
+                    source=identity.worker,
+                    backend=identity.backend,
+                    controller=identity.controller,
+                    command_id=request.command.command_id,
+                    requested_revision=4,
+                    complete=True,
+                )
+                report.outputs.add(output_id="projector/main")
+                report.calibration.CopyFrom(runtime.state.display.calibration)
+                if rejected:
+                    report.calibration.failure_code = "CALIBRATION_ADJUSTMENT_REJECTED"
+                else:
+                    report.calibration.adjustment_sequence = request.adjustment_sequence
+                    report.calibration.presented = True
+                    report.calibration.ClearField("failure_code")
+                asyncio.run_coroutine_threadsafe(
+                    runtime.report("ReportDisplay", report, ingress_ns=host_time_ns()),
+                    loop,
+                ).result(timeout=1)
+                if rejected:
+                    from cephvr.visual_stimulus.config.calibration_adjustments import (
+                        CalibrationAdjustmentRejected,
+                    )
+    
+                    raise CalibrationAdjustmentRejected(
+                        "stale mapping rejected before GL writes"
+                    )
+    
+            def advance(self, now_ns):
+                return None
+    
+            def fail(self, error):
+                self.failures.append(error)
+    
+        driver = Driver()
+        owner = RenderOwner(lambda _: driver)
+        worker = VisualStimulusWorkerRuntime(
+            visual_stimulus.WorkerContext(worker=identity.worker, owner=identity.process),
+            identity.supervisor,
+            owner,
+            SupervisorReceipt(),
+            command_ledger(identity.worker.generation, 10**12, 1_000_000),
+        )
+        worker_token = "live-grid-renderer-test"
+>       worker_listener = await serve(
+            worker,
+            {("visual_stimulus", identity.process.generation): worker_token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            worker=True,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:527: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:22.895722 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_authenticated_live_calibration_update_transport_and_exact_receipt[photodiode_placement] _
+
+calibration_view = 'photodiode_placement'
+
+    @pytest.mark.parametrize(
+        "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+    )
+    @pytest.mark.asyncio
+    async def test_authenticated_live_calibration_update_transport_and_exact_receipt(
+        calibration_view,
+    ):
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        calls = []
+    
+        loop = asyncio.get_running_loop()
+    
+        class Driver:
+            def __init__(self):
+                self.failures = []
+    
+            def execute(self, method, request, deadline_ns):
+                calls.append((method, request, deadline_ns))
+                rejected = (
+                    request.adjustments and request.adjustments[0].mapping_id == "reject"
+                ) or '"x": 999' in request.placement_json
+                report = pb.VisualStimulusDisplayView(
+                    source=identity.worker,
+                    backend=identity.backend,
+                    controller=identity.controller,
+                    command_id=request.command.command_id,
+                    requested_revision=4,
+                    complete=True,
+                )
+                report.outputs.add(output_id="projector/main")
+                report.calibration.CopyFrom(runtime.state.display.calibration)
+                if rejected:
+                    report.calibration.failure_code = "CALIBRATION_ADJUSTMENT_REJECTED"
+                else:
+                    report.calibration.adjustment_sequence = request.adjustment_sequence
+                    report.calibration.presented = True
+                    report.calibration.ClearField("failure_code")
+                asyncio.run_coroutine_threadsafe(
+                    runtime.report("ReportDisplay", report, ingress_ns=host_time_ns()),
+                    loop,
+                ).result(timeout=1)
+                if rejected:
+                    from cephvr.visual_stimulus.config.calibration_adjustments import (
+                        CalibrationAdjustmentRejected,
+                    )
+    
+                    raise CalibrationAdjustmentRejected(
+                        "stale mapping rejected before GL writes"
+                    )
+    
+            def advance(self, now_ns):
+                return None
+    
+            def fail(self, error):
+                self.failures.append(error)
+    
+        driver = Driver()
+        owner = RenderOwner(lambda _: driver)
+        worker = VisualStimulusWorkerRuntime(
+            visual_stimulus.WorkerContext(worker=identity.worker, owner=identity.process),
+            identity.supervisor,
+            owner,
+            SupervisorReceipt(),
+            command_ledger(identity.worker.generation, 10**12, 1_000_000),
+        )
+        worker_token = "live-grid-renderer-test"
+>       worker_listener = await serve(
+            worker,
+            {("visual_stimulus", identity.process.generation): worker_token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            worker=True,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:527: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:22.918792 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_authenticated_live_calibration_update_transport_and_exact_receipt[blackout_placement] _
+
+calibration_view = 'blackout_placement'
+
+    @pytest.mark.parametrize(
+        "calibration_view", ["frame_grid", "photodiode_placement", "blackout_placement"]
+    )
+    @pytest.mark.asyncio
+    async def test_authenticated_live_calibration_update_transport_and_exact_receipt(
+        calibration_view,
+    ):
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        calls = []
+    
+        loop = asyncio.get_running_loop()
+    
+        class Driver:
+            def __init__(self):
+                self.failures = []
+    
+            def execute(self, method, request, deadline_ns):
+                calls.append((method, request, deadline_ns))
+                rejected = (
+                    request.adjustments and request.adjustments[0].mapping_id == "reject"
+                ) or '"x": 999' in request.placement_json
+                report = pb.VisualStimulusDisplayView(
+                    source=identity.worker,
+                    backend=identity.backend,
+                    controller=identity.controller,
+                    command_id=request.command.command_id,
+                    requested_revision=4,
+                    complete=True,
+                )
+                report.outputs.add(output_id="projector/main")
+                report.calibration.CopyFrom(runtime.state.display.calibration)
+                if rejected:
+                    report.calibration.failure_code = "CALIBRATION_ADJUSTMENT_REJECTED"
+                else:
+                    report.calibration.adjustment_sequence = request.adjustment_sequence
+                    report.calibration.presented = True
+                    report.calibration.ClearField("failure_code")
+                asyncio.run_coroutine_threadsafe(
+                    runtime.report("ReportDisplay", report, ingress_ns=host_time_ns()),
+                    loop,
+                ).result(timeout=1)
+                if rejected:
+                    from cephvr.visual_stimulus.config.calibration_adjustments import (
+                        CalibrationAdjustmentRejected,
+                    )
+    
+                    raise CalibrationAdjustmentRejected(
+                        "stale mapping rejected before GL writes"
+                    )
+    
+            def advance(self, now_ns):
+                return None
+    
+            def fail(self, error):
+                self.failures.append(error)
+    
+        driver = Driver()
+        owner = RenderOwner(lambda _: driver)
+        worker = VisualStimulusWorkerRuntime(
+            visual_stimulus.WorkerContext(worker=identity.worker, owner=identity.process),
+            identity.supervisor,
+            owner,
+            SupervisorReceipt(),
+            command_ledger(identity.worker.generation, 10**12, 1_000_000),
+        )
+        worker_token = "live-grid-renderer-test"
+>       worker_listener = await serve(
+            worker,
+            {("visual_stimulus", identity.process.generation): worker_token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            worker=True,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:527: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:22.941768 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+______ test_authenticated_first_use_calibration_repeat_and_close_recovery ______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_authenticated_first_use_c0')
+
+    @pytest.mark.asyncio
+    async def test_authenticated_first_use_calibration_repeat_and_close_recovery(tmp_path):
+        import hashlib
+        from types import SimpleNamespace
+    
+        from cephvr.shared.transport_deadlines import deadline_metadata
+        from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+        from cephvr.visual_stimulus.rendering.types import (
+            OutputActivity,
+            ResourceReleaseReport,
+        )
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+        from cephvr.visual_stimulus.worker.reporting import ReportBridge
+    
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "sessionless-calibration-test"
+        sink = ReportSink()
+        provisional = Peer(
+            "127.0.0.1:1",
+            Principal("visual_stimulus", identity.process.generation, token),
+            2_000_000,
+            kind="worker",
+        )
+        command_ledger = ledger(identity.process.generation)
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=provisional,
+            controller=sink,
+            supervisor=sink,
+            ledger=command_ledger,
+        )
+>       coordinator_listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=2_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_transport.py:348: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:34.956569 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_____ test_authenticated_coordinator_renderer_replay_and_stale_generation ______
+
+    @pytest.mark.asyncio
+    async def test_authenticated_coordinator_renderer_replay_and_stale_generation():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "local-test-secret"
+        sink = ReportSink()
+        provisional = Peer(
+            "127.0.0.1:1",
+            Principal("visual_stimulus", identity.process.generation, token),
+            1_000_000,
+            kind="worker",
+        )
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=provisional,
+            controller=sink,
+            supervisor=sink,
+            ledger=ledger(identity.process.generation),
+        )
+>       listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_transport.py:715: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:35.009551 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+____ test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state ____
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-2181/test_authenticated_supervisor_0')
+
+    @pytest.mark.asyncio
+    async def test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state(
+        tmp_path,
+    ):
+        from tests.supervisor.support import make_runtime
+    
+        from cephvr.supervisor.outbound import GrpcOutbound
+    
+        supervisor, native, _, _ = make_runtime(tmp_path)
+        identity = Identity(
+            pb.ProcessIdentity(role="visual_stimulus", generation=str(uuid4())),
+            supervisor.controller,
+            supervisor.identity,
+            pb.ProcessIdentity(role="visual_stimulus_renderer", generation=str(uuid4())),
+        )
+        token = "local-test-secret"
+        sink = ReportSink()
+        session = pb.SessionContext(
+            controller_generation=identity.controller.generation, session_id=str(uuid4())
+        )
+        work = pb.WorkContext(session=session)
+        context = visual_stimulus.WorkerContext(
+            worker=identity.worker,
+            owner=identity.process,
+            work=work,
+            configuration_revision=7,
+        )
+        device = Device()
+        owner = RenderOwner(lambda _: device)
+        worker = VisualStimulusWorkerRuntime(
+            context,
+            identity.supervisor,
+            owner,
+            sink,
+            ledger(identity.worker.generation),
+        )
+>       listener = await serve(
+            worker,
+            {("supervisor", identity.supervisor.generation): token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            worker=True,
+        )
+
+tests/visual_stimulus/test_transport.py:857: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:35.061555 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_____ test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial _____
+
+    @pytest.mark.asyncio
+    async def test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "prepared-handoff-test"
+        revision = 11
+        session = pb.SessionContext(
+            controller_generation=identity.controller.generation, session_id=str(uuid4())
+        )
+        trial = pb.TrialContext(session=session, trial_id=str(uuid4()))
+        work = pb.WorkContext(session=session)
+        context = visual_stimulus.WorkerContext(
+            worker=identity.worker,
+            owner=identity.process,
+            work=work,
+            configuration_revision=revision,
+        )
+        artifact = make_prepared_trial(
+            session_id=session.session_id, trial_id=trial.trial_id
+        )
+        reports = LifecycleReports()
+        recorder = Recorder()
+        graphics_clock = Clock()
+        graphics = Graphics(graphics_clock, artifact)
+        driver = LifecycleDriver(
+            worker=identity.worker,
+            owner=identity.process,
+            controller=identity.controller,
+            policies=pb.ControlPolicies(
+                start_evidence_allowance_ns=1_000_000,
+                stop_evidence_allowance_ns=1_000_000,
+                recovery_ns=10_000_000,
+            ),
+            engine=graphics,
+            preparation=Preparation(artifact),
+            recording=recorder,
+            reports=reports,
+            cancelled=threading.Event(),
+            clock=host_time_ns,
+            shutdown=lambda: None,
+        )
+        device = LifecycleDevice(driver)
+        owner = RenderOwner(lambda _: device)
+        worker = VisualStimulusWorkerRuntime(
+            context,
+            identity.supervisor,
+            owner,
+            reports,
+            ledger(identity.worker.generation),
+        )
+>       listener = await serve(
+            worker,
+            {("visual_stimulus", identity.process.generation): token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=2_000_000,
+            worker=True,
+        )
+
+tests/visual_stimulus/test_transport.py:996: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1019 07:12:35.116556 9625752 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+=========================== short test summary info ============================
+FAILED tests/supervisor/test_registration.py::test_preview_terminal_handoff_authenticates_controller_or_consumer[3]
+FAILED tests/supervisor/test_registration.py::test_preview_terminal_handoff_authenticates_controller_or_consumer[2]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[None]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[monitor]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[adapter]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt[frame_grid]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt[photodiode_placement]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt[blackout_placement]
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_first_use_calibration_repeat_and_close_recovery
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_coordinator_renderer_replay_and_stale_generation
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial
+ERROR tests/client/test_controller_rpc.py::test_forged_credentials_are_rejected
+ERROR tests/client/test_controller_rpc.py::test_spikeglx_diagnostic_requires_authenticated_client
+ERROR tests/client/test_controller_rpc.py::test_spikeglx_inventory_rpc_auth_lease_revision_and_digest_guards
+ERROR tests/client/test_controller_rpc.py::test_gui_observes_before_explicit_control_claim
+ERROR tests/client/test_controller_rpc.py::test_gui_can_save_current_configuration_history_on_close
+ERROR tests/client/test_controller_rpc.py::test_control_takeover_and_real_missing_backend_rejection
+ERROR tests/client/test_controller_rpc.py::test_pending_setup_cancel_and_prompt_response_are_independent_loopback_commands
+ERROR tests/client/test_controller_rpc.py::test_camera_trigger_rpc_authenticates_exact_peer_and_original_deadline
+ERROR tests/client/test_controller_rpc.py::test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[hex]
+ERROR tests/client/test_controller_rpc.py::test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[ino]
+ERROR tests/client/test_controller_rpc.py::test_normal_shutdown_releases_controller_owned_microcontroller
+ERROR tests/client/test_controller_rpc.py::test_old_camera_projection_cannot_replace_controller_microcontroller_state
+ERROR tests/client/test_controller_rpc.py::test_controller_cleanup_waits_for_camera_off_and_claim_release[control_loss]
+ERROR tests/client/test_controller_rpc.py::test_controller_cleanup_waits_for_camera_off_and_claim_release[shutdown]
+ERROR tests/tracking/test_runtime.py::test_authenticated_setup_duplicate_conflict_stale_and_cleanup
+ERROR tests/tracking/test_runtime.py::test_real_movement_baseline_start_and_separate_stop_finish[False]
+ERROR tests/tracking/test_runtime.py::test_real_movement_baseline_start_and_separate_stop_finish[True]
+ERROR tests/tracking/test_runtime.py::test_preonset_stop_never_opens_recording_or_reports_started
+ERROR tests/tracking/test_runtime.py::test_cleanup_failure_retains_catalogue_and_prevents_new_setup
+ERROR tests/tracking/test_runtime.py::test_supervisor_accepts_real_tracking_heartbeat_catalogue
+13 failed, 2177 passed, 6 skipped, 14 deselected, 20 errors in 68.37s (0:01:08)

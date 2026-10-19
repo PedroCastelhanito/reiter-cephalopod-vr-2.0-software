@@ -1,0 +1,47 @@
+{
+  "ruff": {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "ruff",
+      "check",
+      "src/cephvr/gui",
+      "src/cephvr/visual_stimulus",
+      "tests/gui",
+      "tests/visual_stimulus"
+    ],
+    "exit_code": 0,
+    "output": "approved-ruff.txt"
+  },
+  "format": {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "src/cephvr/gui",
+      "src/cephvr/visual_stimulus",
+      "tests/gui",
+      "tests/visual_stimulus"
+    ],
+    "exit_code": 0,
+    "output": "approved-format.txt"
+  },
+  "boundaries": {
+    "command": [
+      ".venv/bin/python",
+      "tools/check_backend_boundaries.py"
+    ],
+    "exit_code": 0,
+    "output": "approved-boundaries.txt"
+  },
+  "probes": {
+    "command": [
+      ".venv/bin/python",
+      "reports/runtime-evidence-2026-10-19/code-sweep/probes.py"
+    ],
+    "exit_code": 0,
+    "output": "approved-probes.txt"
+  }
+}

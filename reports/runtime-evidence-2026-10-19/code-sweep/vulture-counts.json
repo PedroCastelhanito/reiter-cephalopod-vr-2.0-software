@@ -1,0 +1,12 @@
+{
+  "before": {
+    "total": 314,
+    "source": 290,
+    "confidence_100": 5
+  },
+  "final": {
+    "total": 299,
+    "source": 275,
+    "confidence_100": 5
+  }
+}

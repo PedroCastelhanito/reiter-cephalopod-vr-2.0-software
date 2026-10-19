@@ -19,6 +19,15 @@ class DisplayLayout(QWidget):
     def sizeHint(self) -> QSize:
         return QSize(260, 145)
 
+    def paint_text(self) -> str:
+        """Empty-state message: what to do, or what refreshing found."""
+        if self.refreshed:
+            return "No available projectors have been identified"
+        return (
+            "No displays listed yet. Use the refresh button in the Displays table "
+            "to detect them."
+        )
+
     def paintEvent(self, event: QPaintEvent | None) -> None:
         colors = colors_for(self)
         painter = QPainter(self)
@@ -28,9 +37,7 @@ class DisplayLayout(QWidget):
             painter.drawText(
                 self.rect(),
                 Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
-                "No available projectors have been identified"
-                if self.refreshed
-                else "Refresh displays",
+                self.paint_text(),
             )
             return
         bounds = QRect()

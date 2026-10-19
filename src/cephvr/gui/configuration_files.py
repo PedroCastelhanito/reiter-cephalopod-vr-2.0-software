@@ -14,6 +14,10 @@ from cephvr.gui.components import button
 from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
 
 JSON = dict[str, Any]
+LOCKED_REASON = (
+    "Unavailable now: editing is locked. The controller must be connected, this "
+    "window must hold control, and no session may be in progress."
+)
 SNAPSHOT_LIMIT = 32 * 1024 * 1024
 
 
@@ -125,15 +129,21 @@ class ConfigurationFiles(QObject):
         self.save_button = (
             save_button if save_button is not None else button("Save as…")
         )
-        self.load_button.setToolTip(f"Load {title} configuration JSON")
-        self.save_button.setToolTip(f"Save {title} configuration JSON")
+        self.load_hint = f"Load {title} configuration JSON"
+        self.save_hint = f"Save {title} configuration JSON"
+        self.load_button.setToolTip(self.load_hint)
+        self.save_button.setToolTip(self.save_hint)
         if connect_actions:
             self.load_button.clicked.connect(lambda: self.choose(save=False))
             self.save_button.clicked.connect(lambda: self.choose(save=True))
 
-    def set_enabled(self, enabled: bool) -> None:
+    def set_enabled(self, enabled: bool, reason: str = LOCKED_REASON) -> None:
+        """Enable the file buttons; a disabled button's tooltip says why."""
         self.load_button.setEnabled(enabled)
         self.save_button.setEnabled(enabled)
+        suffix = "" if enabled else f"\n{reason}"
+        self.load_button.setToolTip(self.load_hint + suffix)
+        self.save_button.setToolTip(self.save_hint + suffix)
         if not enabled and self.dialog is not None:
             self.dialog.reject()
 

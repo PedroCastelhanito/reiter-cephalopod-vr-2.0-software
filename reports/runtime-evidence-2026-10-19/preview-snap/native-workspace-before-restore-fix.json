@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "uncommitted working tree",
+  "scope": "macOS local Review only; no Windows/hardware acceptance",
+  "checks": {
+    "manual_detected": true,
+    "geometry_restored": true,
+    "automatic_restored": true,
+    "closed_not_reopened": true,
+    "workspace_three": true,
+    "external_grid": true,
+    "workspace_contained": true,
+    "move_contained": true,
+    "hidden_retains_three": true,
+    "all_hidden": true,
+    "all_restored": true,
+    "restore_contained": false,
+    "cameras_retarget": false,
+    "test_previews_closed": true
+  }
+}

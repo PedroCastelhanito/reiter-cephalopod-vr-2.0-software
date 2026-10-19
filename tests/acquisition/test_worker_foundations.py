@@ -1510,6 +1510,60 @@ def test_camera_owner_serializes_safety_work_ahead_of_committed_normal_work() ->
     assert [item[2] for item in observed] == [200, 100]
 
 
+@pytest.mark.parametrize("method", ["capture_handoff", "acknowledge_control_if_idle"])
+@pytest.mark.parametrize(
+    "pending",
+    ["none", "command", "external", "command_during_clear", "external_during_clear"],
+)
+def test_camera_owner_preserves_wakes_across_control_clear(method, pending) -> None:
+    wake = Event()
+    entered_capture = Event()
+    release_capture = Event()
+    clears = []
+
+    def capture(_handoff):
+        entered_capture.set()
+        return release_capture.wait(5)
+
+    def make_pending(kind):
+        if kind == "command":
+            owner.reserve("Cleanup", object(), 100).commit()
+        elif kind == "external":
+            owner.external_wake()
+
+    def clear():
+        clears.append(True)
+        wake.clear()
+        if pending.endswith("_during_clear"):
+            make_pending(pending.removesuffix("_during_clear"))
+
+    owner = SerializedCameraOwner(
+        capacity=1,
+        safety_capacity=1,
+        execute=lambda *_: None,
+        capture_once=capture,
+        capture_active=lambda: True,
+        next_deadline_ns=lambda: None,
+        advance_due_stages=lambda: None,
+        wait_control=lambda _: None,
+        wake_control=wake.set,
+        clear_control=clear,
+        operation_failed=lambda *_: None,
+        owner_failed=lambda _: None,
+        idle_maintenance_interval_ns=1,
+    )
+    owner.start()
+    try:
+        assert entered_capture.wait(1)
+        make_pending(pending)
+        assert getattr(owner, method)() is (pending == "none")
+        assert wake.is_set() is (pending != "none")
+        assert len(clears) == (0 if pending in {"command", "external"} else 1)
+    finally:
+        release_capture.set()
+        assert owner.stop(1)
+
+
 def test_preview_start_reports_only_first_usable_frame_for_retained_run() -> None:
     state = _worker_state()
     run_id = str(uuid4())

@@ -8,6 +8,7 @@ from PyQt6.QtCore import QEvent, QIODevice, QSaveFile, pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QFileDialog, QHBoxLayout, QLineEdit, QWidget
 
 from cephvr.gui.components import button
+from cephvr.gui.configuration_files import LOCKED_REASON
 from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
 from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.config.calibration_bars import reference_lengths
@@ -39,6 +40,13 @@ class CalibrationFiles(QWidget):
         row.addWidget(self.save_button, 1)
         self.load_button.clicked.connect(lambda: self.choose(save=False))
         self.save_button.clicked.connect(lambda: self.choose(save=True))
+        self.sync_hints()
+
+    def sync_hints(self) -> None:
+        """A disabled Load/Save explains why; the owner disables the whole widget."""
+        suffix = "" if self.isEnabled() else f"\n{LOCKED_REASON}"
+        self.load_button.setToolTip("Load a calibration configuration JSON" + suffix)
+        self.save_button.setToolTip("Save a calibration configuration JSON" + suffix)
 
     def snapshot(self) -> dict[str, object]:
         values: dict[str, object] = {}
@@ -387,10 +395,8 @@ class CalibrationFiles(QWidget):
 
     def changeEvent(self, event: QEvent | None) -> None:
         super().changeEvent(event)
-        if (
-            event is not None
-            and event.type() == QEvent.Type.EnabledChange
-            and not self.isEnabled()
-            and self.dialog is not None
-        ):
+        if event is None or event.type() != QEvent.Type.EnabledChange:
+            return
+        self.sync_hints()
+        if not self.isEnabled() and self.dialog is not None:
             self.dialog.reject()

@@ -77,7 +77,8 @@ current configuration revision and exact active manual `preview_run_id`; no path
 external consumer. Show attaches a private capacity-one reader in the acquisition
 coordinator and creates an OpenCV window on its owning Win32 thread. Capture and
 pulses are unchanged; Show completes after the first converted image reaches
-the visible window and is idempotent for that live window. Hide or native X
+the visible window (or is ready for its existing window while its GUI owner is
+minimized), and is idempotent for that live window. Hide or native X
 closes only the window/reader. Closing or failing a window never recreates it
 implicitly; explicit Show is required. Only one display consumer owns a slot.
 
@@ -86,13 +87,39 @@ coordinates of the visible frame's top-left corner (absolute value at most
 1,000,000) and square image `side` of 128–2048
 pixels. Controller forwards this display-only hint; acquisition validates it before
 reserving an operation. Hide/other camera commands reject it. Without a hint use
-a 640-pixel square at native default placement. An already visible Show is
-idempotent and does not reposition the window. GUI reads its own physical visible
-frame, monitor work area and DPI. Prefer a square fitting outside its top-right
-edge, reducing the image side to available room before left fallback or work-area
-clamping. Acquisition positions only its own native window, accounting for invisible
-resize borders so visible edges align without a tool-window gap. No native GUI
-handle crosses the RPC boundary.
+a 640-pixel square at native default placement. An already visible Show preserves reader/capture ownership and may coalesce a
+new placement on its display thread. Apply it only while native geometry remains
+at the last automatic size and owner-relative position; an operator move or resize
+opts out until close/reopen or an explicit `snap_to_grid` hint restores the grid
+position/size and automatic following. Coalescing retains an unconsumed explicit
+snap through subsequent automatic hints. The verified GUI process lifetime cannot
+change in place. A layout hint may retarget the native display owner to another
+live top-level window within that same process (Dashboard workspace or main
+Cameras page); validate the handle before rebinding.
+`update_existing_only` marks automatic layout refreshes: if the exact-run viewer
+is absent or closed, succeed without allocating/reopening it. Check native X before
+applying hints or drawing. Unowned legacy viewers retain their existing placement.
+GUI measures the requested source's named bracketed footprint in the Preview grid
+in the Dashboard workspace or below Cameras/Tracking HUD/log, including native chrome and DPI, and centers its fitting frame
+there; without a visible slot it falls back beside the GUI within the work
+area. Acquisition positions only its own native window, accounting for invisible
+resize borders. The window's title text is blank: the GUI card names the source, and
+the title bar remains for move and native X. Win32 resolves its handle from the title
+once at creation, blanks the caption, then places by handle; Review does likewise.
+
+The optional `gui_window_handle`, `gui_process_id` and
+`gui_process_creation_time_100ns` owner identity must be supplied together or all
+absent. The display thread verifies a live top-level window, matching PID and
+process creation time, then retains a query/synchronize process handle. The native
+owner link keeps the separate OpenCV window above its GUI without global topmost
+status. Follow GUI translation while retaining an operator-adjusted offset;
+host hiding and minimize/restore follow the GUI without closing/recreating the viewer or changing
+capture/pulses. While minimized, retain latest private pixels and defer drawing;
+restore redraws them even without a fresh frame. This state remains logically open.
+A stale/exited owner fails only the display, closes its reader/link and requires
+explicit Show; it grants no process, camera or controller authority. Cleanup
+reports handle-release failure rather than claiming confirmation. With no owner
+identity retain legacy detached behavior.
 
 Fit preserves source aspect ratio with black padding inside the square image area.
 Windows wheel deltas, including fractional steps, zoom by 1.2 per notch about the

@@ -10,13 +10,21 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `preview-card-visibility` [gui] Show Preview only while a preview is open, reclaiming its height for the runtime log otherwise; preserve opening placement. Owner: layout-review chat. Done when: opening/last-close and layout/placement checks pass. — [G01](docs/architecture/gui.md#g01)
+
+
+
+
+
+
+
 
 Completed open-loop endurance, bounded camera-codec lossless checks,
 restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 [Acquisition](reports/acquisition.md); remaining acceptance work is listed below.
 
 ## Next
+
+- [ ] `preview-windows-native-follow` [gui] [acquisition] [shared] Run native owner test and actual Windows Review/runtime HighGUI placement, movement, minimize/restore, adaptive grid reflow, explicit Snap, Dashboard workspace hide/restore and same-process host switching, manual move/resize preservation and independent multi-source close across relevant DPI settings. Status: implementation and portable checks pass; actual Mac Review passes; Windows native checks, including the new HWND-based placement and caption blanking, unrun on this host. Done when: native frames fit their brackets, remain above their GUI, minimize without closure and restore without recreation, and blank-caption windows are still placed by handle (no title text, caption bar still moves/closes). — [Assessment/evidence](reports/runtime.md), [G01](docs/architecture/gui.md#g01)
 
 - [ ] `pixel-exact-current-source-validation` [acquisition] [shared] Measure final sync-owner/hot-path source with prepared-pixel-exact encoding as a secondary objective, preserving full source retention, deadlines and durability. Done when: a bounded concurrent native run retains every received usable frame exactly once and independently verifies its prepared-pixel recipe and closure. Status: primary saved-quality 120 s criterion passes; prior pixel-exact omissions predate the final hot-path guard, so current-source capacity remains unvalidated. No quality/default change adopted. — [Current assessment](reports/acquisition.md), [evidence](reports/runtime-evidence-2026-10-17/file-sync-fix/README.md)
 
@@ -38,7 +46,7 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 - [ ] `hud-live-total-timing` [gui] [controller] Supply authoritative total elapsed/planned duration for the new HUD pair when promoting the Review timing display. Done when: live session start/end and resolved-plan total survive reconnect and early stop without estimates; current Snapshot lacks these totals and GUI displays unknown. — [Timing assessment](reports/runtime.md), [G02](docs/architecture/gui.md#g02)
 
-- [ ] `vulture-low-confidence-triage` [repo] Review remaining advisory dead-code candidates before any further removal. Done when: selected source candidates are traced against dynamic callbacks, contracts/native fields and callers with owning verification; no blanket whitelist or CI gate. Status: Vulture2.16 reports311 lower-confidence suggestions (286 in source), unverified; high-confidence findings are five unused test-double arguments. — [Assessment](reports/runtime.md#maintainability-review), [Raw audit](reports/runtime-evidence-2026-10-16/code-maintainability-review/implementation/maint-vulture-config60.txt)
+- [ ] `vulture-low-confidence-triage` [repo] Review remaining advisory dead-code candidates before any further removal. Done when: selected source candidates are traced against dynamic callbacks, contracts/native fields and callers with owning verification; no blanket whitelist or CI gate. Status: Oct19 sweep reduces the fresh Vulture2.16 advisory from314 to299 suggestions (275 in source); remaining hits are not deletion approvals, and the five100%-confidence hits are test-double arguments. — [Assessment](reports/runtime.md#maintainability-review), [Raw audit](reports/runtime-evidence-2026-10-19/code-sweep/vulture-final.txt)
 
 - [ ] `review-device-layout-promotion` [gui] [controller] [visual_stimulus] Promote the remaining inline input/output draft authoring and multi-screen pulse placement to runtime with the required backend contracts. Shared appearance and camera action layout are merged. Physical/serial input support retains A11's deferral. Done when: compatible profile/live-placement/rendering/evidence contracts preserve the file-owned pacing target and apply VSync to additional pulse outputs, with owning local checks; physical acceptance remains separate. Status: Review prototype merged; shared appearance and camera action layout promoted, while controller-backed input/output and multi-screen behavior remains separate work. — [Review implementation and limits](reports/runtime.md), [G01](docs/architecture/gui.md#g01)
 
@@ -70,7 +78,7 @@ SpikeGLX availability and pulse mappings remain prerequisites; projector power i
 
 ## Deferred
 
-- [ ] `stimulus-capture-slots-trial` [visual_stimulus] Decide whether to retain the tested capture-slot override after reviewing full memory accounting and measured startup stalls. Status: temporary 3→15 slots removes startup drops in short runs; the 900-second run still has one startup drop and reaches 15/15 occupancy. GPU memory is stable; original TOML is restored and tested settings are packaged. Done when: any retained default is justified by measured burst needs within recording_bytes_total; no further speculative queue increase or guaranteed headroom. — [Assessment](reports/visual_stimulus.md), [V12](docs/architecture/visual_stimulus.md#v12) Reason: native startup correlation and measured full memory comparison remain required; Oct16 modeled 3/15-slot accounting is complete, restored default3 unchanged.
+- [ ] `stimulus-capture-slots-trial` [visual_stimulus] Verify owner-selected15 capture slots in a later representative rig run. Done when: source retention, startup drops, peak occupancy, full memory accounting and exact closure are checked at the intended settings. Status: Oct17 operator default changed3→15 at owner request; TOML validation only, no fresh rig acceptance. Historical15-slot900s run has one startup drop; latest120s zero-omission run uses16 slots. — [Assessment](reports/visual_stimulus.md), [V12](docs/architecture/visual_stimulus.md#v12) Reason: owner will test later; native verification remains pending.
 
 - [ ] `stimulus-encode-benchmark` [visual_stimulus] Resolve the remaining startup capture-stall cause using retained full-path measurements. Status: 31 synthetic cases and live 900-second/short combined runs are complete; renderer recording_metrics, full decodes, real-frame/CFR accounting and CPU/GPU data are retained. One capacity drop occurs at T+0.2947451 seconds, none later; peak slots 15/15, maximum slot hold 261.51 ms. Done when: the remaining stall is attributed or bounded without claiming zero-loss/headroom from nominal video counts. Further slot/default decisions belong to stimulus-capture-slots-trial. — [Assessment](reports/visual_stimulus.md), [Measurements](reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/combined900-final-r1/completion-summary.json), [Test plan](reports/rig-verification.md#encoding-test-plan) Reason: remaining attribution requires native rig execution; Oct16 bounded stage examples/full-frame input diagnostics and retained memory analysis complete locally.
 
