@@ -30,6 +30,59 @@ def test_adapter_construction_does_not_load_pypylon() -> None:
     assert adapter._camera is None
 
 
+@pytest.mark.parametrize("expired", [False, True])
+def test_terminal_purge_yields_without_sdk_flush_and_resumes_exact_counts(
+    monkeypatch, expired
+):
+    from cephvr.acquisition.camera.drain import PurgeProgress
+
+    adapter = BaslerCameraAdapter()
+    buffered = [11, 12, 13]
+    released = []
+    stopped = []
+    adapter._camera = SimpleNamespace(
+        IsOpen=lambda: True,
+        NumReadyBuffers=SimpleNamespace(GetValue=lambda: len(buffered)),
+        StopGrabbing=lambda: stopped.append(True),
+    )
+    adapter._grabbing = True
+    adapter._device_info = object()
+    adapter._opened = True
+    adapter._terminal_generation_stopped = True
+    adapter._drain_margin_confirmed = True
+    adapter._terminal_purge = PurgeProgress()
+    clock = [100]
+    monkeypatch.setattr(
+        "cephvr.acquisition.camera.basler.host_time_ns", lambda: clock[0]
+    )
+
+    def retrieve(_timeout):
+        counter = buffered.pop(0)
+        return SimpleNamespace(
+            camera_frame_counter=counter, release=lambda: released.append(counter)
+        )
+
+    monkeypatch.setattr(adapter, "retrieve", retrieve)
+    first = adapter.stop_capture(
+        200, should_continue_drain=lambda: len(buffered) == 3, resumable=True
+    )
+    assert first is None
+    assert adapter._grabbing and stopped == []
+    assert released == [11]
+    assert adapter._last_purge_evidence is None
+    if expired:
+        clock[0] = 201
+    resumed = adapter.stop_capture(
+        200, should_continue_drain=lambda: True, resumable=True
+    )
+    assert resumed is not None and resumed.accounting_complete == (not expired)
+    assert resumed.discarded_frame_count == (None if expired else 3)
+    assert resumed.last_native_counter == (11 if expired else 13)
+    assert released == ([11] if expired else [11, 12, 13])
+    assert stopped == [True]
+    assert not adapter._grabbing
+
+
 @pytest.mark.parametrize(
     "model,interface,frequency,expected",
     [
@@ -122,7 +175,7 @@ def test_preview_reopen_retires_only_closed_device_purge_guard(
         adapter.configure_capture(timing, 3)
         adapter._grabbing = True
         adapter._drain_margin_confirmed = True
-        # Pending control work interrupts the observable drain; never guess zero.
+        # Nonresumable cleanup retains unknown accounting; never guess zero.
         evidence = adapter.stop_capture(200, should_continue_drain=lambda: False)
         assert not evidence.accounting_complete
         assert evidence.discarded_frame_count is None

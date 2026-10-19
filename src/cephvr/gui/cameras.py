@@ -31,13 +31,13 @@ from cephvr.gui.view import DashboardView, Phase
 
 class CamerasPanel(ResponsiveColumns):
     test_requested = pyqtSignal()
-    selected_test_requested = pyqtSignal(str)
     inventory_refreshed = pyqtSignal()
     role_requested = pyqtSignal(str, str)
     participation_changed = pyqtSignal()
     drafts_changed = pyqtSignal()
     preview_requested = pyqtSignal(str, bool)
     connection_requested = pyqtSignal(str, bool)
+    all_connections_requested = pyqtSignal(bool)
     enable_requested = pyqtSignal(str, bool)
     settings_requested = pyqtSignal(str, str, str, str, str)
     preset_import_requested = pyqtSignal(str, str, str, str, str)
@@ -73,6 +73,7 @@ class CamerasPanel(ResponsiveColumns):
         self.controller_trigger_rates: dict[str, float] = {}
         self.controller_trigger_sources: dict[str, str] = {}
         self.operation_pending = False
+        self.bulk_pending = False
         self.pending_action = PendingAction()
         self.pending_enable: dict[str, bool] = {}
         self.loading = False
@@ -101,13 +102,15 @@ class CamerasPanel(ResponsiveColumns):
         self.inventory_actions = actions = QGridLayout()
         actions.setContentsMargins(0, 0, 0, 0)
         actions.setHorizontalSpacing(SIZES.field_x_gap)
-        self.selected_test_button = button(
-            "Test selected", hint="Verify the assigned camera identity without capture"
-        )
-        self.selected_test_button.clicked.connect(self.test_selected)
         self.connect_button = button(
-            "Connect", "primary", hint="Start capture and open the external preview"
+            "Connect selected",
+            "primary",
+            hint="Start capture and open the selected camera preview",
         )
+        self.connect_all_button = button(
+            "Connect all", "primary", hint="Connect all enabled cameras"
+        )
+        self.connect_all_button.clicked.connect(self.toggle_all_connections)
         self.wiring_button = button(
             "MCU wiring…",
             "secondary",
@@ -116,10 +119,10 @@ class CamerasPanel(ResponsiveColumns):
         self.wiring_button.clicked.connect(self.wiring_requested.emit)
         self.refresh_button.clicked.connect(self.refresh_inventory)
         self.connect_button.clicked.connect(self.toggle_connection)
-        actions.addWidget(self.selected_test_button, 0, 0)
         self.wiring_button.setParent(self)
         self.wiring_button.hide()
-        actions.addWidget(self.connect_button, 0, 1)
+        actions.addWidget(self.connect_button, 0, 0)
+        actions.addWidget(self.connect_all_button, 0, 1)
         actions.setColumnStretch(0, 1)
         actions.setColumnStretch(1, 1)
         inventory.body.addLayout(actions)
@@ -241,8 +244,9 @@ class CamerasPanel(ResponsiveColumns):
             self.table.selectRow(row)
         else:
             self.load_selected()
-        self.participation_changed.emit()
+        # Build recording controls before participation observers refresh previews.
         self.drafts_changed.emit()
+        self.participation_changed.emit()
         self.console.appendPlainText(
             f"{len(self.drafts)} Basler cameras discovered; no camera opened."
         )
@@ -272,7 +276,7 @@ class CamerasPanel(ResponsiveColumns):
 
     @property
     def can_edit_camera_settings(self) -> bool:
-        return (
+        return not self.bulk_pending and (
             self.can_edit
             or self.managed
             and self.can_operate
@@ -437,9 +441,11 @@ class CamerasPanel(ResponsiveColumns):
     def toggle_connection(self) -> None:
         if self.pending_action.cancel(self.connect_button):
             return
-        if self.can_operate and (draft := self.selected):
+        if self.can_operate and not self.bulk_pending and (draft := self.selected):
             if self.managed:
-                self.connection_requested.emit(draft.key, not draft.connected)
+                self.connection_requested.emit(
+                    draft.key, not (draft.connected or draft.cleanup_pending)
+                )
                 return
             draft.connected = not draft.connected
             draft.capture_running = draft.connected
@@ -447,18 +453,32 @@ class CamerasPanel(ResponsiveColumns):
             self.refresh_controls()
             self.preview_requested.emit(draft.key, draft.connected)
 
-    def test_selected(self) -> None:
-        if self.pending_action.cancel(self.selected_test_button):
+    @property
+    def all_connected(self) -> bool:
+        enabled = [draft for draft in self.drafts if draft.enabled]
+        return bool(enabled) and (
+            all(draft.connected for draft in enabled)
+            or any(draft.cleanup_pending for draft in enabled)
+        )
+
+    def toggle_all_connections(self) -> None:
+        if self.pending_action.cancel(self.connect_all_button):
             return
-        draft = self.selected
-        if not self.can_operate or draft is None or draft.role not in CAMERA_ROLES:
+        if not self.can_operate or self.bulk_pending:
             return
+        start = not self.all_connected
         if self.managed:
-            self.selected_test_requested.emit(draft.key)
-        else:
-            self.console.appendPlainText(
-                "Review · Selected camera identity was not tested."
-            )
+            self.all_connections_requested.emit(start)
+            return
+        for draft in self.drafts:
+            if (
+                draft.enabled
+                and draft.role in CAMERA_ROLES
+                and draft.connected != start
+            ):
+                draft.connected = draft.capture_running = start
+                self.preview_requested.emit(draft.key, start)
+        self.refresh_controls()
 
     def test_enabled(self) -> None:
         if not self.can_operate:
@@ -497,7 +517,9 @@ class CamerasPanel(ResponsiveColumns):
         draft = self.selected
         if not self.can_operate:
             return
-        if action != "Refresh inventory" and (not draft or not draft.connected):
+        if action != "Refresh inventory" and (
+            not draft or not (draft.connected or draft.cleanup_pending)
+        ):
             if action not in {"Disconnect", "Stop capture"}:
                 return
         self.console.appendPlainText(f"Review · {action}; no hardware command sent.")
@@ -510,11 +532,10 @@ class CamerasPanel(ResponsiveColumns):
         draft = self.selected
         if hasattr(self, "config_files"):
             self.config_files.set_enabled(self.snapshots.available())
-        self.selected_test_button.setEnabled(
-            self.can_operate and draft is not None and draft.role in CAMERA_ROLES
-        )
         self.refresh_button.setEnabled(
-            not self.operation_pending and (self.can_operate or self.managed)
+            not self.operation_pending
+            and not self.bulk_pending
+            and (self.can_operate or self.managed)
         )
         self.wiring_button.setEnabled(
             self.can_edit_camera_settings
@@ -527,6 +548,7 @@ class CamerasPanel(ResponsiveColumns):
         )
         self.connect_button.setEnabled(
             self.can_operate
+            and not self.bulk_pending
             and draft is not None
             and (
                 not self.managed
@@ -536,7 +558,9 @@ class CamerasPanel(ResponsiveColumns):
             )
         )
         self.connect_button.setText(
-            "Disconnect" if draft and draft.connected else "Connect"
+            "Disconnect selected"
+            if draft and (draft.connected or draft.cleanup_pending)
+            else "Connect selected"
         )
         role = "danger" if draft and draft.connected else "primary"
         if self.connect_button.property("role") != role:
@@ -551,6 +575,21 @@ class CamerasPanel(ResponsiveColumns):
             if draft and draft.connected
             else "Start capture and open the external preview"
         )
+        enabled = [camera for camera in self.drafts if camera.enabled]
+        self.connect_all_button.setEnabled(
+            self.can_operate
+            and not self.bulk_pending
+            and bool(enabled)
+            and all(camera.role in CAMERA_ROLES for camera in enabled)
+        )
+        self.connect_all_button.setText(
+            "Disconnect all" if self.all_connected else "Connect all"
+        )
+        self.connect_all_button.setToolTip(
+            "Disconnect all enabled cameras"
+            if self.all_connected
+            else "Connect all enabled cameras"
+        )
         for index, control in enumerate(self.enable_controls):
             camera = self.drafts[index]
             control.blockSignals(True)
@@ -559,6 +598,7 @@ class CamerasPanel(ResponsiveColumns):
             control.setAccessibleName(f"Enable {camera.role} for experiment")
             control.setEnabled(
                 not self.pending_enable
+                and not self.bulk_pending
                 and (
                     self.can_edit
                     or self.managed
@@ -592,7 +632,11 @@ class CamerasPanel(ResponsiveColumns):
                 ("CAMERA ROLE", draft.role if draft else "—"),
                 (
                     "STATUS",
-                    "Connected" if draft and draft.connected else "Not connected",
+                    "Cleanup pending"
+                    if draft and draft.cleanup_pending
+                    else "Connected"
+                    if draft and draft.connected
+                    else "Not connected",
                 ),
                 ("TRIGGER SOURCE", source),
                 ("TRIGGER RATE", f"{rate:g} Hz" if rate is not None else "—"),

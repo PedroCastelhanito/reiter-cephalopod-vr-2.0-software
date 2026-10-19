@@ -1,0 +1,170 @@
+..FF                                                                     [100%]
+================================== FAILURES ===================================
+_____ test_backend_begin_accepts_empty_diagnostic_stage_mask[source_size] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000230704853D0>
+prepare_failure = 'source_size'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "prepare_failure", [None, "prepare", "source_size", "constructor"]
+    )
+    async def test_backend_begin_accepts_empty_diagnostic_stage_mask(
+        monkeypatch, prepare_failure
+    ):
+        process = pb.ProcessIdentity(role="tracking", generation=str(uuid4()))
+        controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+        run_id = str(uuid4())
+        prepared_deadlines: list[int] = []
+    
+        class Pipeline:
+            status = []
+    
+            def __init__(self, request, _identity):
+                if prepare_failure == "constructor":
+                    raise ValueError("invalid diagnostic file limits")
+                prepared_deadlines.append(request.deadline_monotonic_ns)
+    
+            def prepare(self):
+                if prepare_failure == "prepare":
+                    raise ValueError("invalid diagnostic draft")
+    
+            def next_frame(self):
+                return None, 0, 0, 0
+    
+            def close(self, _deadline_ns):
+                return True
+    
+        monkeypatch.setattr(diagnostic_module, "DiagnosticPipeline", Pipeline)
+        request_deadline = host_time_ns() + 5_000_000_000
+        request = tracking.TrackingDiagnosticCommand(
+            deadline_monotonic_ns=request_deadline,
+            diagnostic_id=str(uuid4()),
+            configuration_revision=4,
+            source_camera_serial="tracking-camera",
+            maximum_frame_bytes=4096,
+            maximum_overlay_items=8,
+            settings=pb.TrackingSettings(input_camera_role=camera_pb2.CAMERA_ROLE_TRACKING),
+            file_policies=load_file_policies(ROOT),
+            frames=acq.FrameBufferAttachment(
+                buffer=acq.FrameBufferDescriptor(
+                    allocation_id=str(uuid4()),
+                    camera=camera_pb2.CAMERA_ROLE_TRACKING,
+                    consumer=process,
+                    kind=acq.FRAME_BUFFER_KIND_TRACKING,
+                    configuration_revision=4,
+                    preview=acq.PreviewBufferContext(
+                        controller=controller, acquisition_run_id=run_id
+                    ),
+                ),
+                sync=acq.RingSyncNames(transfer_id=str(uuid4()), target=process),
+            ),
+        )
+        diagnostic = TrackingDiagnostic(process, recovery_ns=1_000_000_000)
+        try:
+            if prepare_failure:
+                expected_failure = {
+                    "prepare": "invalid diagnostic draft",
+                    "source_size": "image scale dimensions differ",
+                    "constructor": "invalid diagnostic file limits",
+                }[prepare_failure]
+                if prepare_failure == "source_size":
+                    request.settings.image_scale.image_width_px = 100
+                    request.settings.image_scale.image_height_px = 100
+                with pytest.raises(ValueError, match=expected_failure):
+                    await diagnostic.begin(request, deadline_ns=request_deadline)
+                state = diagnostic.state()
+                assert state.diagnostic_id == request.diagnostic_id
+                assert state.preview_run_id == run_id
+                assert state.configuration_revision == 4
+>               assert state.close_confirmed and not state.active
+E               assert (False)
+E                +  where False = diagnostic_id: "6b6071e1-6d0e-48a5-91b8-d0197dd79378"\nconfiguration_revision: 4\npreview_run_id: "6d6ab383-ebc8-4611-88..."\n  transfer_id: "c516b8c6-a791-42cd-9e0b-8922ccfaf912"\n}\nlast_processing_duration_ns: 0\nmax_processing_duration_ns: 0\n.close_confirmed
+
+tests\tracking\test_runtime.py:662: AssertionError
+_____ test_backend_begin_accepts_empty_diagnostic_stage_mask[constructor] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023070485B10>
+prepare_failure = 'constructor'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "prepare_failure", [None, "prepare", "source_size", "constructor"]
+    )
+    async def test_backend_begin_accepts_empty_diagnostic_stage_mask(
+        monkeypatch, prepare_failure
+    ):
+        process = pb.ProcessIdentity(role="tracking", generation=str(uuid4()))
+        controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+        run_id = str(uuid4())
+        prepared_deadlines: list[int] = []
+    
+        class Pipeline:
+            status = []
+    
+            def __init__(self, request, _identity):
+                if prepare_failure == "constructor":
+                    raise ValueError("invalid diagnostic file limits")
+                prepared_deadlines.append(request.deadline_monotonic_ns)
+    
+            def prepare(self):
+                if prepare_failure == "prepare":
+                    raise ValueError("invalid diagnostic draft")
+    
+            def next_frame(self):
+                return None, 0, 0, 0
+    
+            def close(self, _deadline_ns):
+                return True
+    
+        monkeypatch.setattr(diagnostic_module, "DiagnosticPipeline", Pipeline)
+        request_deadline = host_time_ns() + 5_000_000_000
+        request = tracking.TrackingDiagnosticCommand(
+            deadline_monotonic_ns=request_deadline,
+            diagnostic_id=str(uuid4()),
+            configuration_revision=4,
+            source_camera_serial="tracking-camera",
+            maximum_frame_bytes=4096,
+            maximum_overlay_items=8,
+            settings=pb.TrackingSettings(input_camera_role=camera_pb2.CAMERA_ROLE_TRACKING),
+            file_policies=load_file_policies(ROOT),
+            frames=acq.FrameBufferAttachment(
+                buffer=acq.FrameBufferDescriptor(
+                    allocation_id=str(uuid4()),
+                    camera=camera_pb2.CAMERA_ROLE_TRACKING,
+                    consumer=process,
+                    kind=acq.FRAME_BUFFER_KIND_TRACKING,
+                    configuration_revision=4,
+                    preview=acq.PreviewBufferContext(
+                        controller=controller, acquisition_run_id=run_id
+                    ),
+                ),
+                sync=acq.RingSyncNames(transfer_id=str(uuid4()), target=process),
+            ),
+        )
+        diagnostic = TrackingDiagnostic(process, recovery_ns=1_000_000_000)
+        try:
+            if prepare_failure:
+                expected_failure = {
+                    "prepare": "invalid diagnostic draft",
+                    "source_size": "image scale dimensions differ",
+                    "constructor": "invalid diagnostic file limits",
+                }[prepare_failure]
+                if prepare_failure == "source_size":
+                    request.settings.image_scale.image_width_px = 100
+                    request.settings.image_scale.image_height_px = 100
+                with pytest.raises(ValueError, match=expected_failure):
+                    await diagnostic.begin(request, deadline_ns=request_deadline)
+                state = diagnostic.state()
+                assert state.diagnostic_id == request.diagnostic_id
+                assert state.preview_run_id == run_id
+                assert state.configuration_revision == 4
+>               assert state.close_confirmed and not state.active
+E               assert (False)
+E                +  where False = diagnostic_id: "abab770d-aab2-40f1-96e1-8773b585ab8f"\nconfiguration_revision: 4\npreview_run_id: "d11c20cb-3124-482a-ae..."\n  transfer_id: "fc638d3d-4f38-4902-8b6d-d48c3280cfc9"\n}\nlast_processing_duration_ns: 0\nmax_processing_duration_ns: 0\n.close_confirmed
+
+tests\tracking\test_runtime.py:662: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tracking/test_runtime.py::test_backend_begin_accepts_empty_diagnostic_stage_mask[source_size]
+FAILED tests/tracking/test_runtime.py::test_backend_begin_accepts_empty_diagnostic_stage_mask[constructor]
+2 failed, 2 passed, 21 deselected in 0.49s

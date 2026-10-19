@@ -1,0 +1,89 @@
+{
+  "commit": "83ae3e9e1f8cfe16f52905609f5bd420c651dae1",
+  "files": [
+    {
+      "path": "Src-main/Version.h",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-main/Version.h",
+      "bytes": 465,
+      "sha256": "632975cd69d4ba95a162f7aba795ce757847dfe90737b5aeec19ea615f575df2"
+    },
+    {
+      "path": "Markdown/UserManual.md",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Markdown/UserManual.md",
+      "bytes": 55330,
+      "sha256": "539e74640d37d9b66d92e50c798fb77b8b0968dad5ce9cc965844cbaa3f14506"
+    },
+    {
+      "path": "Src-params/DAQ.cpp",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-params/DAQ.cpp",
+      "bytes": 17451,
+      "sha256": "c82170fb78a518d00efb3bd8b779141e2ad3ccd7e66f24d6dbcd577aaa5c2038"
+    },
+    {
+      "path": "Src-params/DAQ.h",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-params/DAQ.h",
+      "bytes": 4657,
+      "sha256": "8968972d794ddb3ca1db628fa898c6a0456a21564c9f00e44cde6b6dd7d7d98a"
+    },
+    {
+      "path": "Src-params/CimCfg.cpp",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-params/CimCfg.cpp",
+      "bytes": 79877,
+      "sha256": "f18ae9166a613b64122d285567ea01896a2e4b33ed6bc866aedab3fc071e4df0"
+    },
+    {
+      "path": "Src-params/ConfigCtl.cpp",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-params/ConfigCtl.cpp",
+      "bytes": 76620,
+      "sha256": "aa3af8aa6f91224cfc06778fec13551da06c1bad5648b0b73b82828d2c1f6659"
+    },
+    {
+      "path": "Src-remote/CmdServer.cpp",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-remote/CmdServer.cpp",
+      "bytes": 59111,
+      "sha256": "13e9d2f86a2d35c078157a347464478caeb3b4214902a983fcc089b02a6f29ef"
+    },
+    {
+      "path": "Src-triggers/TrigBase.cpp",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-triggers/TrigBase.cpp",
+      "bytes": 29863,
+      "sha256": "a810ff1eefe0a5720303dd783089d4be9c99f291e70473300f3c995b24c2b008"
+    },
+    {
+      "path": "Src-datafile/DataFile.cpp",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-datafile/DataFile.cpp",
+      "bytes": 27632,
+      "sha256": "8082414f20535d9046c7cc190a8e94e52f0309b774c15646a0eb703db67352b2"
+    },
+    {
+      "path": "Src-datafile/DataFileIMAP.h",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-datafile/DataFileIMAP.h",
+      "bytes": 2283,
+      "sha256": "e1c342b0e814a33a5bd262cffd9d04d6460120995feb25a27bb389f0059729c1"
+    },
+    {
+      "path": "Src-datafile/DataFileIMLF.h",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-datafile/DataFileIMLF.h",
+      "bytes": 2272,
+      "sha256": "60c2eb3496e17b2c91a4863ac4b746a408b6c9ac1914f975d6e79a5d75e17b5b"
+    },
+    {
+      "path": "Src-datafile/DataFileIMLF.cpp",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-datafile/DataFileIMLF.cpp",
+      "bytes": 13667,
+      "sha256": "0dec3b535a5f85c9d6ce66997b3bf3a4ea55857e0349d7f36c92fe1560e69f0a"
+    },
+    {
+      "path": "Src-datafile/DataFileOB.h",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-datafile/DataFileOB.h",
+      "bytes": 2248,
+      "sha256": "6e1afa8fae6903a1bc9cf2b89c178966b3fec8175b7fcb4f386250d42a2c5a7a"
+    },
+    {
+      "path": "Src-datafile/DataFileNI.h",
+      "url": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/83ae3e9e1f8cfe16f52905609f5bd420c651dae1/Src-datafile/DataFileNI.h",
+      "bytes": 2170,
+      "sha256": "1a54013af0e907a8c54daff01c5c3007f6cff087891031b5714c3780e26a8372"
+    }
+  ]
+}

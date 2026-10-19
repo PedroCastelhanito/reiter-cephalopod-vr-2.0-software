@@ -1,0 +1,24 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\review.py", line 255, in refresh_preview_sources
+    self.window.apply_view(replace(dashboard.view, previews=previews))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 280, in apply_view
+    self.update_preview_slot()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 207, in update_preview_slot
+    workspace.recording_enabled = {
+                                  ^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 208, in <dictcomp>
+    camera.key: self.recordings.record[camera.key].isChecked()
+                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+KeyError: 'camera-40065509'
+tests/gui/test_dashboard.py::test_real_camera_inventory_preserves_roles_and_tests_open_close PASSED
+
+============================== 1 passed in 1.05s ==============================

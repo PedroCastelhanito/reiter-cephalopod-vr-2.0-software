@@ -1,0 +1,145 @@
+diff --git a/src/cephvr/platform/windows/byte_stream_native.py b/src/cephvr/platform/windows/byte_stream_native.py
+index 7a1da29..cd2ff7c 100644
+--- a/src/cephvr/platform/windows/byte_stream_native.py
++++ b/src/cephvr/platform/windows/byte_stream_native.py
+@@ -15,7 +15,6 @@ ERROR_IO_INCOMPLETE = 996
+ ERROR_NOT_FOUND = 1168
+ WAIT_OBJECT_0 = 0
+ WAIT_TIMEOUT = 0x102
+-WAIT_FAILED = 0xFFFFFFFF
+ _NATIVE_API: ctypes.WinDLL | None = None
+ 
+ 
+diff --git a/src/cephvr/platform/windows/events.py b/src/cephvr/platform/windows/events.py
+index 36acb81..188044c 100644
+--- a/src/cephvr/platform/windows/events.py
++++ b/src/cephvr/platform/windows/events.py
+@@ -17,7 +17,6 @@ WAIT_OBJECT_0 = 0
+ WAIT_TIMEOUT = 0x00000102
+ INFINITE = 0xFFFFFFFF
+ ERROR_ALREADY_EXISTS = 183
+-EVENT_MANUAL_RESET = 0x00000100
+ 
+ 
+ class NativeEventError(RuntimeError):
+diff --git a/src/cephvr/platform/windows/jobs.py b/src/cephvr/platform/windows/jobs.py
+index 64af2bb..d3dcb00 100644
+--- a/src/cephvr/platform/windows/jobs.py
++++ b/src/cephvr/platform/windows/jobs.py
+@@ -33,10 +33,8 @@ JOB_OBJECT_TERMINATE = 0x0008
+ PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+ PROCESS_TERMINATE = 0x0001
+ SYNCHRONIZE = 0x00100000
+-STILL_ACTIVE = 259
+ WAIT_OBJECT_0 = 0
+ WAIT_TIMEOUT = 0x102
+-WAIT_FAILED = 0xFFFFFFFF
+ ERROR_INVALID_PARAMETER = 87
+ _INSPECTION_PASSES = 3
+ 
+diff --git a/src/cephvr/platform/windows/mappings.py b/src/cephvr/platform/windows/mappings.py
+index f688b66..48cb5c5 100644
+--- a/src/cephvr/platform/windows/mappings.py
++++ b/src/cephvr/platform/windows/mappings.py
+@@ -145,7 +145,6 @@ def _page_rounded(size: int) -> int:
+ PAGE_READWRITE = 0x04
+ SECTION_MAP_READ = 0x0004
+ SECTION_MAP_WRITE = 0x0002
+-SECTION_QUERY = 0x0001
+ # CPython SharedMemory attaches through mmap(tagname=...), which requests all
+ # non-execute file-mapping rights even when the caller only reads/writes pixels.
+ SECTION_ACCESS = 0xF001F
+diff --git a/src/cephvr/platform/windows/nvenc_capabilities.py b/src/cephvr/platform/windows/nvenc_capabilities.py
+index 430f338..efc0eb7 100644
+--- a/src/cephvr/platform/windows/nvenc_capabilities.py
++++ b/src/cephvr/platform/windows/nvenc_capabilities.py
+@@ -31,7 +31,6 @@ from cephvr.platform.windows.nvenc_features import (
+ from cephvr.platform.windows.nvidia_device import NvidiaDevice, resolve_cuda_ordinal
+ 
+ _CUDA_DEVICE_TYPE = 1
+-NV_ENC_PARAMS_RC_CONSTQP = 0x0
+ NV_ENC_PARAMS_RC_VBR = 0x1
+ NV_ENC_PARAMS_RC_CBR = 0x2
+ 
+diff --git a/src/cephvr/tracking/processing/movement.py b/src/cephvr/tracking/processing/movement.py
+index 7e1868d..87d8a2d 100644
+--- a/src/cephvr/tracking/processing/movement.py
++++ b/src/cephvr/tracking/processing/movement.py
+@@ -74,7 +74,6 @@ class Movement:
+         self.inflight: FlowLease | None = None
+         self.current: PrivateFrame | None = None
+         self.pending_since_ns: int | None = None
+-        self.last_completion_ns: int | None = None
+         self.result_sequence = 0
+         self.first = False
+ 
+@@ -168,7 +167,6 @@ class Movement:
+                 disposition = evidence.validity
+                 p.flow.release(self.inflight)
+                 self.inflight = None
+-            self.last_completion_ns = self.clock()
+             self.pending_since_ns = None
+             self._commit(frame, evidence, disposition, use)
+             if self.baseline is not None:
+diff --git a/src/cephvr/tracking/processing/pose.py b/src/cephvr/tracking/processing/pose.py
+index 459519d..d2ec57e 100644
+--- a/src/cephvr/tracking/processing/pose.py
++++ b/src/cephvr/tracking/processing/pose.py
+@@ -68,7 +68,6 @@ class PoseWorker:
+         self.waiting: _Job | None = None
+         self.running = False
+         self.pending_since_ns: int | None = None
+-        self.last_completion_ns: int | None = None
+         self.stopping = False
+         self.close_deadline = 0
+         self.closed = False
+@@ -138,7 +137,6 @@ class PoseWorker:
+                 assert job is not None
+                 try:
+                     self._compute(operations, job)
+-                    self.last_completion_ns = self.clock()
+                 finally:
+                     self.pool.release(job.frame)
+                     with self.condition:
+diff --git a/src/cephvr/tracking/processing/session.py b/src/cephvr/tracking/processing/session.py
+index e616c15..f79a608 100644
+--- a/src/cephvr/tracking/processing/session.py
++++ b/src/cephvr/tracking/processing/session.py
+@@ -28,7 +28,6 @@ from cephvr.tracking.config.models.methods import (
+ )
+ from cephvr.tracking.config.validation import validate_settings
+ from cephvr.tracking.feedback.delivery import FeedbackDelivery
+-from cephvr.tracking.methods.association import Association
+ from cephvr.tracking.methods.contour import ContourPose
+ from cephvr.tracking.methods.geometry import EllipseGeometry
+ from cephvr.tracking.methods.landmarks import qualified
+@@ -80,7 +79,6 @@ class NativeSession:
+         self.history = PoseHistory(max(1, spec.settings.pose_history_capacity))
+         self.methods: PreparedMethods | None = None
+         self.diagnostic_resolution: DiagnosticResolution | None = None
+-        self.diagnostic_association: Association | None = None
+         self.pose_method: ContourPose | ModelPose | None = None
+         self.pose_geometry: EllipseGeometry | None = None
+         self.closed = False
+diff --git a/src/cephvr/visual_stimulus/resources/session.py b/src/cephvr/visual_stimulus/resources/session.py
+index 7bd3b42..7a153a9 100644
+--- a/src/cephvr/visual_stimulus/resources/session.py
++++ b/src/cephvr/visual_stimulus/resources/session.py
+@@ -115,8 +115,6 @@ class NativePreparation:
+         self._display_calibration: PreparedCalibration | None = None
+         self._display_budget: BoundedBudget | None = None
+         self._display_asset_root: Path | None = None
+-        self._display_asset_limit = 0
+-        self._display_document_limit = 0
+         self._display_profile: DisplayProfile | None = None
+         self.video_playback: VideoPlayback | None = None
+         self.video_session: VideoSession | None = None
+@@ -173,8 +171,6 @@ class NativePreparation:
+             clock_ns=self.clock_ns,
+         )
+         self._display_asset_root = Path(request.asset_root).resolve(strict=True)
+-        self._display_asset_limit = request.limits.max_asset_cpu_bytes
+-        self._display_document_limit = request.limits.max_document_bytes
+         calibration = prepare_calibration(
+             display,
+             Path(request.asset_root),

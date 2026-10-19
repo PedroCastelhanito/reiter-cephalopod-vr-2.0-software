@@ -98,6 +98,8 @@ class LifecycleDriver:
             clock=clock,
             emit=self.lifecycle,
         )
+        self.preview_revision = 0
+        self._preview_state: tuple[bool, bool, str] | None = None
         self.command: visual_stimulus.WorkerCommand | None = None
         self.deadline_ns = 0
         self.preparation_job: PreparationJob | None = None
@@ -141,6 +143,28 @@ class LifecycleDriver:
             clock=clock,
         )
 
+    def preview_changed(self, available: bool, visible: bool, failure: str) -> None:
+        setup = self.state.setup
+        state = available, visible, failure
+        if setup is None or self._preview_state == state:
+            return
+        self._preview_state = state
+        self.preview_revision += 1
+        self.reports.send(
+            "ReportStimulusPreview",
+            pb.StimulusPreviewState(
+                source=self.worker,
+                backend=self.backend,
+                session=setup.session.context,
+                configuration_revision=setup.session.configuration_revision,
+                revision=self.preview_revision,
+                available=available,
+                visible=visible,
+                failure=failure,
+            ),
+            self.clock() + self.policies.supervisor_registration.initial_ns,
+        )
+
     def execute(
         self, method: str, request: Message, deadline_ns: int
     ) -> Future[None] | None:
@@ -148,6 +172,18 @@ class LifecycleDriver:
 
         self.command = worker_command(request)
         self.deadline_ns = deadline_ns
+        if isinstance(request, visual_stimulus.StimulusPreviewCommand):
+            if (
+                self.state.setup is None
+                or self.state.interrupted
+                or not self.state.ready
+            ):
+                raise ValueError("Visual Stimulus preview requires a prepared session")
+            operation = getattr(self.engine, "set_stimulus_preview", None)
+            if operation is None:
+                raise ValueError("Visual Stimulus preview unavailable")
+            operation(request.visible, request.placement)
+            return None
         if isinstance(request, visual_stimulus.InitializeDisplay):
             return self.initialize(request)
         elif isinstance(request, visual_stimulus.OpenDisplayCalibrationCommand):

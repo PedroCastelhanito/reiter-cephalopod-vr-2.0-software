@@ -1,0 +1,16 @@
+[
+  "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "tests/gui/test_dashboard.py::test_demo_assets_can_be_selected_and_review_path_restores",
+  "tests/gui/test_dashboard.py::test_subgroup_rules_persist_and_random_projectors_are_independent",
+  "tests/gui/test_dashboard.py::test_large_random_group_stays_compact_and_layer_controls_are_indices",
+  "tests/visual_stimulus/test_resources.py::test_demo_image_recipes_preserve_authored_png_pixels[checkerboard]",
+  "tests/visual_stimulus/test_resources.py::test_demo_image_recipes_preserve_authored_png_pixels[noise]",
+  "tests/visual_stimulus/test_resources.py::test_demo_image_recipes_preserve_authored_png_pixels[sine_grating]",
+  "-q",
+  "-m",
+  "not windows and not rig",
+  "--basetemp",
+  "C:\\Users\\REITER~1\\AppData\\Local\\Temp\\cephvr-ponytail-retry-48958bdf615c4c96bb4ba99673b79753"
+]

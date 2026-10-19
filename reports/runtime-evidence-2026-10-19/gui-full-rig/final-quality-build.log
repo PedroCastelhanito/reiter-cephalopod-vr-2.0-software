@@ -1,0 +1,33 @@
+* Creating isolated environment: venv+pip...
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\build\__main__.py", line 289, in _handle_build_error
+    yield
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\build\__main__.py", line 755, in main
+    built = run_build(args.srcdir, outdir)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\build\__main__.py", line 405, in build_package_via_sdist
+    sdist = _build(
+            ^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\build\__main__.py", line 272, in _build
+    with _bootstrap_build_env(
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ERROR [WinError 5] Access is denied: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Packages\\sandbox.{d4682c87-b46b-49eb-9dbc-5d7b28df50e0}\\AC\\Temp\\build-env-l0cnnu29\\Include'
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\build\__main__.py", line 217, in _bootstrap_build_env
+    with DefaultIsolatedEnv(installer=installer, path=env_dir) as env:
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\build\env.py", line 158, in __enter__
+    self._env_backend.create(self._path)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\build\env.py", line 365, in create
+    venv.EnvBuilder(symlinks=_USE_SYMLINKS, with_pip=with_pip).create(path)
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\venv\__init__.py", line 69, in create
+    context = self.ensure_directories(env_dir)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\venv\__init__.py", line 146, in ensure_directories
+    create_if_needed(incpath)
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\venv\__init__.py", line 116, in create_if_needed
+    os.makedirs(d)
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Packages\\sandbox.{d4682c87-b46b-49eb-9dbc-5d7b28df50e0}\\AC\\Temp\\build-env-l0cnnu29\\Include'
+

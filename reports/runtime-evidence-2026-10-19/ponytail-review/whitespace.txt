@@ -1,0 +1,7 @@
+warning: in the working copy of 'TODO.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'architecture.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/architecture/acquisition.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/architecture/gui.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/cephvr/gui/batch_create.py', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/cephvr/gui/main.py', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'tests/gui/test_dashboard.py', CRLF will be replaced by LF the next time Git touches it

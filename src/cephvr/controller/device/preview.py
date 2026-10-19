@@ -17,6 +17,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.clock import host_time_ns
 
 
 class PreviewHandling:
@@ -56,6 +57,7 @@ class PreviewHandling:
     async def report_preview_consumer_state(
         self, report: svc.PreviewConsumerReport
     ) -> pb.ReportReceipt:
+        deadline = host_time_ns() + self.limits.current.registration_ns
         async with self.lifecycle.lock:
             try:
                 self.projections.preview_result(report)
@@ -77,11 +79,13 @@ class PreviewHandling:
             results = await asyncio.wait_for(
                 asyncio.gather(
                     *(
-                        owner.report_preview_consumer_state(report)
+                        owner.report_preview_consumer_state(
+                            report, deadline_ns=deadline
+                        )
                         for owner in recipients
                     )
                 ),
-                self.limits.current.registration_ns / 1e9,
+                max(0.0, (deadline - host_time_ns()) / 1e9),
             )
         except Exception as exc:
             return rejected_receipt("HANDOFF", str(exc))

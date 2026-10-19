@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+import sys
 import threading
 from pathlib import Path
 from types import SimpleNamespace as NS
 
 import pytest
 
+from cephvr.platform.windows.paths import extended_path
 from cephvr.visual_stimulus.config.models.evidence_model import (
     ArtifactRef,
     Clipping,
@@ -130,11 +132,14 @@ def test_pixel_normalization_does_not_hold_capture_admission_lock(
     assert worker.drain_once()
 
 
-def test_recipe_publication_is_precomputed_and_never_overwrites(tmp_path: Path) -> None:
+@pytest.mark.parametrize("long_path", [False, True])
+def test_recipe_publication_is_precomputed_and_never_overwrites(
+    tmp_path: Path, long_path: bool
+) -> None:
     data = b'{"format_version":2}\n'
     digest = hashlib.sha256(data).hexdigest()
     recipe = PreparedRecipe(data, digest)
-    path = tmp_path / "trial_stimulus_LOG.json"
+    path = tmp_path / (("trial_" * 30 if long_path else "") + "trial_stimulus_LOG.json")
     with pytest.raises(ValueError, match="before released"):
         publish_recipe(
             path,
@@ -154,7 +159,10 @@ def test_recipe_publication_is_precomputed_and_never_overwrites(tmp_path: Path) 
         trial_start_host_ns=10,
         now_host_ns=10,
     )
-    assert path.read_bytes() == data
+    assert (
+        Path(extended_path(path) if sys.platform == "win32" else path).read_bytes()
+        == data
+    )
     assert reference.sha256 == digest
     with pytest.raises(FileExistsError):
         publish_recipe(
@@ -168,8 +176,10 @@ def test_recipe_publication_is_precomputed_and_never_overwrites(tmp_path: Path) 
         )
 
 
+@pytest.mark.parametrize("long_path", [False, True])
 def test_recording_worker_copies_frames_and_prioritizes_evidence(
     tmp_path: Path,
+    long_path: bool,
 ) -> None:
     recipe_data = b"recipe"
     recipe_path = tmp_path / "recipe.json"
@@ -190,7 +200,7 @@ def test_recording_worker_copies_frames_and_prioritizes_evidence(
         renderer_compatibility="renderer-v1",
     )
     writer = EvidenceWriter(max_pending_bytes=4096)
-    evidence_path = tmp_path / "evidence.jsonl"
+    evidence_path = tmp_path / (("frame_" * 30 if long_path else "") + "evidence.jsonl")
     writer.open_after_recipe(evidence_path, header, header.recipe)
     writer.enqueue(
         Interval(
@@ -233,7 +243,12 @@ def test_recording_worker_copies_frames_and_prioritizes_evidence(
     )
     assert worker.drain_once()  # Header + interval are written before FFmpeg input.
     assert encoder.data == b""
-    assert b'"kind":"header"' in evidence_path.read_bytes()
+    assert (
+        b'"kind":"header"'
+        in Path(
+            extended_path(evidence_path) if sys.platform == "win32" else evidence_path
+        ).read_bytes()
+    )
     while worker.drain_once():
         pass
     counts = worker.counts()

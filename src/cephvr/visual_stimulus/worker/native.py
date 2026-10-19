@@ -91,5 +91,6 @@ def assemble_driver(
         clock=host_time_ns,
         shutdown=shutdown,
     )
+    port.preview_changed = driver.preview_changed
     declare.operation = driver.announce
     return driver

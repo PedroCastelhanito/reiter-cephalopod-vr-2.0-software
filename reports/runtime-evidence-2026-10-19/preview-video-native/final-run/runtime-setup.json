@@ -1,0 +1,18 @@
+[
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "df391761-fabc-4ae1-b0a7-2a32aad3610c",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "Setup",
+    "command_id": "8384797f-b7af-4027-82ee-29d5a7f8b429",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+]

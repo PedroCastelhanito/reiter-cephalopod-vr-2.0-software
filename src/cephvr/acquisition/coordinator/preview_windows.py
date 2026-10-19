@@ -150,6 +150,17 @@ class PreviewWindows:
                 remaining_seconds(deadline_ns, clock=self.clock),
             )
 
+    def placement(self, role: int) -> tuple[bool, rpc.PreviewWindowPlacement | None]:
+        window = self._windows.get(role)
+        if window is None or window.reader.done.done():
+            return False, None
+        hint = window.reader.placement
+        if hint is None:
+            return True, None
+        retained = rpc.PreviewWindowPlacement.FromString(hint.SerializeToString())
+        retained.update_existing_only = False
+        return True, retained
+
     def owns(self, role: int) -> bool:
         return role in self._windows
 

@@ -249,8 +249,8 @@ class OutputReservation:
     def inspect_marker(self) -> ReservationMarker:
         """Read bounded marker evidence only while this process holds the lock.
 
-        Recovery authority and old-process absence are checked by the controller
-        startup path, not inferred from an available OS lock or this marker.
+        The controller startup path checks recovery authority. An available lock
+        or this marker never establishes old-process absence.
         """
         try:
             raw = self._read_marker_bytes()
@@ -320,6 +320,24 @@ class OutputReservation:
             replace=True,
         )
         self.release()
+
+    def discard_recovery(self, expected_marker_sha256: str, deadline_ns: int) -> None:
+        """Delete an explicitly chosen session while retaining namespace ownership."""
+        from cephvr.controller.metadata.recovery_deletion import delete_contents
+
+        if self.marker_fingerprint() != expected_marker_sha256:
+            raise StorageError("reservation marker changed during recovery")
+        self._require_own_open_marker("marker identity mismatch; deletion blocked")
+        if self.session_directory.resolve(strict=True) != self.session_directory:
+            raise StorageError("recovery namespace changed; deletion blocked")
+        delete_contents(self.session_directory, deadline_ns)
+        # Reuse the owned empty-namespace quarantine path, never a recursive shell.
+        self._created = [
+            self.session_directory,
+            self.protocol_directory,
+            self.spikeglx_directory,
+        ]
+        self.cancel()
 
     def resolve_collisions(self, listed_paths: list[Path]) -> None:
         """One explicit operator choice authorizes only the paths displayed."""

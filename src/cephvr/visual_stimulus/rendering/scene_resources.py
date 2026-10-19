@@ -189,6 +189,8 @@ class SceneOutputBuilder:
                 ):
                     x0, y0, x1, y1 = profile.valid_area
                     size = (round((x1 - x0) * width), round((y1 - y0) * height))
+                    if profile.vertices[1].uv[0] == profile.vertices[0].uv[0]:
+                        size = size[::-1]
                 texture = track(context.texture(size, 4, dtype="f4"))
                 depth = track(context.depth_renderbuffer(size))
                 framebuffer = track(
@@ -333,12 +335,17 @@ class SceneOutputBuilder:
             )
             for mapping in mappings:
                 viewport = mapping.viewport
-                texture = track(
-                    context.texture((viewport.width, viewport.height), 4, dtype="f4")
+                profile = cast(
+                    GeometricProfile, calibration.content[mapping.mapping_id]
                 )
-                depth = track(
-                    context.depth_renderbuffer((viewport.width, viewport.height))
-                )
+                size = (viewport.width, viewport.height)
+                if (
+                    profile.calibration_id.startswith("diagnostic_")
+                    and profile.vertices[1].uv[0] == profile.vertices[0].uv[0]
+                ):
+                    size = size[::-1]
+                texture = track(context.texture(size, 4, dtype="f4"))
+                depth = track(context.depth_renderbuffer(size))
                 framebuffer = track(
                     context.framebuffer(
                         color_attachments=(texture,), depth_attachment=depth
@@ -346,9 +353,6 @@ class SceneOutputBuilder:
                 )
                 surface_textures[mapping.mapping_id] = texture
                 surface_fbos[mapping.mapping_id] = framebuffer
-                profile = cast(
-                    GeometricProfile, calibration.content[mapping.mapping_id]
-                )
                 warp_arrays[mapping.mapping_id] = self._make_warp_array(
                     context,
                     warp_program,

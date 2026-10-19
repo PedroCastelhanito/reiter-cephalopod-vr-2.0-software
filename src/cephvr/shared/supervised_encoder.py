@@ -476,7 +476,3 @@ class SupervisedEncoderLauncher:
         except Exception:
             # Preserve the supervisor's planned job as a cleanup obligation.
             return False
-
-    def retry_storage_cleanup(self) -> None:
-        """Reconcile retained native storage handles for this worker."""
-        self.file_sync_owner.retry_cleanup()

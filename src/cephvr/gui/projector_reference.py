@@ -11,13 +11,42 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import button, combo, equal_row_height, label
+from cephvr.gui.components import SelectionBox, button, combo, equal_row_height, label
 from cephvr.gui.projector_layers import layer_title, layers_for
 from cephvr.gui.reference_fields import reference_fields
 from cephvr.gui.reference_layers import ReferenceLayers
 from cephvr.gui.stimulus_parameters import StimulusParameters
 from cephvr.gui.stimulus_presets import FILE_TYPES
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
+
+
+class LayerSelector(SelectionBox):
+    """Layer choices and management actions share one dropdown."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setProperty("chevron", True)
+        self.menu = QMenu(self)
+        self.operations = QMenu(self)
+
+    def showPopup(self) -> None:
+        self.menu.clear()
+        for index in range(self.count()):
+            action = self.menu.addAction(self.itemText(index))
+            assert action is not None
+            action.setCheckable(True)
+            action.setChecked(index == self.currentIndex())
+            action.setToolTip(self.itemData(index, Qt.ItemDataRole.ToolTipRole) or "")
+            action.triggered.connect(
+                lambda checked=False, i=index: self.setCurrentIndex(i)
+            )
+        self.menu.addSeparator()
+        self.menu.addActions(self.operations.actions())
+        self.menu.popup(self.mapToGlobal(QPoint(0, self.height())))
+
+    def hidePopup(self) -> None:
+        self.menu.hide()
+        super().hidePopup()
 
 
 class ProjectorReference(QWidget):
@@ -50,7 +79,7 @@ class ProjectorReference(QWidget):
         body.addLayout(self.grid)
         self.caption = label(face or "Rig-wide", "label")
         self.caption.setWordWrap(True)
-        self.layer = combo(())
+        self.layer = LayerSelector()
         self.layer.setFixedWidth(64)
         self.layer.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.layer.setAccessibleName(f"{face or 'Rig-wide'} layer")
@@ -62,11 +91,10 @@ class ProjectorReference(QWidget):
         for kind in ("3D arena",) if not face else ("None", *FILE_TYPES[:-1]):
             self.stimulus.addItem(kind.replace("Looming image", "Looming"), kind)
         self.stimulus.currentIndexChanged.connect(self.change_type)
-        self.actions_button = button(
-            "…", "icon", hint="Layer actions and advanced settings"
-        )
-        self.actions_button.setAccessibleName(f"{face or 'Rig-wide'} stimulus actions")
-        menu = QMenu(self.actions_button)
+        self.actions_button = button("…", "icon", hint="Advanced settings")
+        self.actions_button.setAccessibleName(f"{face or 'Rig-wide'} advanced settings")
+        self.actions_button.setCheckable(True)
+        menu = self.layer.operations
         add_action = menu.addAction("Add layer")
         assert add_action is not None
         self.add = add_action
@@ -82,17 +110,12 @@ class ProjectorReference(QWidget):
         self.remove.triggered.connect(self.remove_requested)
         self.forward.triggered.connect(self.forward_requested)
         self.backward.triggered.connect(self.backward_requested)
-        menu.addSeparator()
-        advanced = menu.addAction("Advanced settings")
-        assert advanced is not None
-        self.advanced = advanced
-        self.advanced.setCheckable(True)
-        self.actions_button.setMenu(menu)
         equal_row_height(self.stimulus, self.actions_button)
         self.actions_button.setFixedWidth(self.actions_button.height())
         self.parameters = StimulusParameters(compact=True)
         body.addWidget(self.parameters)
-        self.advanced.toggled.connect(self.parameters.more.setChecked)
+        self.actions_button.toggled.connect(self.parameters.more.setChecked)
+        self.parameters.more.toggled.connect(self.actions_button.setChecked)
         self.parameters.bound.connect(self.render_fields)
 
     def minimumSizeHint(self) -> QSize:
@@ -187,7 +210,7 @@ class ProjectorReference(QWidget):
                 self.grid.setColumnStretch(col, 1)
         empty = self.parameters.layer_index < 0
 
-        self.advanced.setEnabled(not empty)
+        self.actions_button.setEnabled(not empty)
         self.actions_button.setVisible(bool(self.face) or not empty)
         self.parameters.more.hide()
         if not self.narrow:
@@ -277,7 +300,7 @@ class ProjectorReference(QWidget):
         if not self.slots.order:
             self.layer.addItem("—", "")
         self.layer.setCurrentIndex(max(0, self.layer.findData(self.slots.selected)))
-        self.layer.setEnabled(len(self.slots.order) > 1)
+        self.layer.setEnabled(True)
         self.layer.blockSignals(False)
         kind = (
             layer_title(program, epoch.settings[selected]).split(" · ")[0]

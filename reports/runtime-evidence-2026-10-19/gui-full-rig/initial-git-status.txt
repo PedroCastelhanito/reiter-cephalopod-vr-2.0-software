@@ -1,0 +1,324 @@
+ M LOG.md
+ M TODO.md
+ M architecture.md
+ M assets/calibration/frame_grid.glb
+ M config/backends/microcontroller_config.toml
+ M config/backends/synchronization_config.toml
+ M config/backends/visual_stimulus_config.toml
+ M contracts/acquisition/README.md
+ M contracts/acquisition/microcontroller.md
+ M contracts/acquisition/preview-control.md
+ M contracts/acquisition/recording-lifecycle.md
+ M contracts/central-metadata.md
+ M contracts/cephvr/control/v1/services.proto
+ M contracts/cephvr/control/v1/types.proto
+ M contracts/cephvr/visual_stimulus/v1/messages.proto
+ M contracts/cephvr/visual_stimulus/v1/services.proto
+ M contracts/gui-calibration.md
+ M contracts/gui-configuration-files.md
+ M contracts/policy/microcontroller_policy.toml
+ M contracts/policy/visual_stimulus_policy.toml
+ M contracts/spikeglx-control.md
+ M contracts/spikeglx_mapping_reference.json
+ M contracts/visual_stimulus/display-profile.schema.json
+ M contracts/visual_stimulus/photodiode.md
+ M contracts/visual_stimulus/prepared-trial.schema.json
+ M contracts/visual_stimulus/presentation.md
+ M contracts/visual_stimulus/recorded-outputs.md
+ M contracts/visual_stimulus/runtime-bindings.md
+ M contracts/visual_stimulus/stimulus-schema.md
+ M docs/architecture/acquisition.md
+ M docs/architecture/gui.md
+ M docs/architecture/supervisor.md
+ M docs/architecture/synchronization.md
+ M docs/architecture/system-contracts.md
+ M docs/architecture/visual_stimulus.md
+ M firmware/uno/README.md
+ M firmware/uno/cephvr2_mcu/cephvr2_mcu.ino
+ M pyproject.toml
+ M reports/acquisition.md
+ M reports/rig-verification.md
+ M reports/runtime.md
+ M reports/tracking.md
+ M reports/visual_stimulus.md
+ M src/cephvr/acquisition/camera/basler.py
+ M src/cephvr/acquisition/camera/types.py
+ M src/cephvr/acquisition/coordinator/cleanup.py
+ M src/cephvr/acquisition/coordinator/evidence_cleanup.py
+ M src/cephvr/acquisition/coordinator/evidence_operations.py
+ M src/cephvr/acquisition/coordinator/manual_device_status.py
+ M src/cephvr/acquisition/coordinator/manual_preview.py
+ M src/cephvr/acquisition/coordinator/manual_preview_pulse.py
+ M src/cephvr/acquisition/coordinator/manual_preview_start.py
+ M src/cephvr/acquisition/coordinator/manual_pulses.py
+ M src/cephvr/acquisition/coordinator/preview_windows.py
+ M src/cephvr/acquisition/coordinator/state/workers.py
+ M src/cephvr/acquisition/coordinator/trial_termination.py
+ M src/cephvr/acquisition/microcontroller_client.py
+ M src/cephvr/acquisition/preview/highgui.py
+ M src/cephvr/acquisition/preview/viewport.py
+ M src/cephvr/acquisition/recording/frame_log.py
+ M src/cephvr/acquisition/runtime.py
+ M src/cephvr/acquisition/worker/capture_runtime.py
+ M src/cephvr/acquisition/worker/execution.py
+ M src/cephvr/acquisition/worker/owner.py
+ M src/cephvr/acquisition/worker/trial_lifecycle.py
+ M src/cephvr/acquisition/worker/trial_state.py
+ M src/cephvr/acquisition/worker/trial_stop.py
+ M src/cephvr/controller/assembly.py
+ M src/cephvr/controller/backend.py
+ M src/cephvr/controller/control/configuration.py
+ M src/cephvr/controller/control/operations.py
+ M src/cephvr/controller/control/prompts.py
+ M src/cephvr/controller/control/snapshots.py
+ M src/cephvr/controller/device/camera.py
+ M src/cephvr/controller/device/microcontroller.py
+ M src/cephvr/controller/device/owner_cleanup.py
+ M src/cephvr/controller/device/ports.py
+ M src/cephvr/controller/device/readback.py
+ M src/cephvr/controller/lifecycle/commands.py
+ M src/cephvr/controller/lifecycle/preparation_context.py
+ M src/cephvr/controller/lifecycle/setup_execution.py
+ M src/cephvr/controller/metadata/reservation.py
+ M src/cephvr/controller/microcontroller/channel.py
+ M src/cephvr/controller/microcontroller/config.py
+ M src/cephvr/controller/microcontroller/device.py
+ M src/cephvr/controller/microcontroller/owner.py
+ M src/cephvr/controller/microcontroller/protocol.py
+ M src/cephvr/controller/ports.py
+ M src/cephvr/controller/recovery.py
+ M src/cephvr/controller/runtime.py
+ M src/cephvr/controller/service.py
+ M src/cephvr/controller/startup/recovery.py
+ M src/cephvr/controller/state.py
+ M src/cephvr/controller/transport/admission.py
+ M src/cephvr/gui/appearance.py
+ M src/cephvr/gui/batch_create.py
+ M src/cephvr/gui/calibration_profile.py
+ M src/cephvr/gui/camera_inventory.py
+ M src/cephvr/gui/cameras.py
+ M src/cephvr/gui/controller_bridge.py
+ M src/cephvr/gui/devices.py
+ M src/cephvr/gui/epoch_composer.py
+ M src/cephvr/gui/epoch_motion.py
+ M src/cephvr/gui/initial_pose.py
+ M src/cephvr/gui/main.py
+ M src/cephvr/gui/managed_actions.py
+ M src/cephvr/gui/managed_cameras.py
+ M src/cephvr/gui/managed_device_commands.py
+ M src/cephvr/gui/managed_mcu.py
+ M src/cephvr/gui/managed_preview_viewers.py
+ M src/cephvr/gui/managed_prompts.py
+ M src/cephvr/gui/managed_status.py
+ M src/cephvr/gui/microcontroller.py
+ M src/cephvr/gui/microcontroller_signals.py
+ M src/cephvr/gui/placement_calibration.py
+ M src/cephvr/gui/preview_follow.py
+ M src/cephvr/gui/preview_placement.py
+ M src/cephvr/gui/previews.py
+ M src/cephvr/gui/projector_codec.py
+ M src/cephvr/gui/projector_extent.py
+ M src/cephvr/gui/projector_files.py
+ M src/cephvr/gui/projector_profile.py
+ M src/cephvr/gui/projector_reference.py
+ M src/cephvr/gui/projectors.py
+ M src/cephvr/gui/protocol_timeline.py
+ M src/cephvr/gui/retro_overlay.py
+ D src/cephvr/gui/review_devices.py
+ M src/cephvr/gui/review_draft.py
+ D src/cephvr/gui/review_mcu_inputs.py
+ D src/cephvr/gui/review_mcu_outputs.py
+ D src/cephvr/gui/review_mcu_snapshot.py
+ M src/cephvr/gui/review_placement.py
+ M src/cephvr/gui/review_preview.py
+ D src/cephvr/gui/review_projector_files.py
+ D src/cephvr/gui/review_timing.py
+ M src/cephvr/gui/spikeglx.py
+ M src/cephvr/gui/stimulus_parameters.py
+ M src/cephvr/gui/subgroup_operations.py
+ M src/cephvr/gui/timeline_details.py
+ M src/cephvr/gui/tracking.py
+ M src/cephvr/gui/trial_preview.py
+ M src/cephvr/gui/trial_preview_canvas.py
+ M src/cephvr/gui/trial_preview_media.py
+ M src/cephvr/gui/trial_preview_plan.py
+ M src/cephvr/gui/trial_preview_rig.py
+ M src/cephvr/gui/trial_preview_surfaces.py
+ M src/cephvr/gui/window.py
+ M src/cephvr/platform/macos/preview_owner.py
+ M src/cephvr/platform/windows/byte_stream.py
+ M src/cephvr/platform/windows/byte_stream_factory.py
+ M src/cephvr/platform/windows/byte_stream_native.py
+ M src/cephvr/platform/windows/events.py
+ M src/cephvr/platform/windows/jobs.py
+ M src/cephvr/platform/windows/mappings.py
+ M src/cephvr/platform/windows/nvenc_capabilities.py
+ M src/cephvr/platform/windows/preview_owner.py
+ M src/cephvr/platform/windows/security.py
+ M src/cephvr/shared/commands.py
+ M src/cephvr/shared/ffmpeg_filters.py
+ M src/cephvr/shared/pixels/preparer.py
+ M src/cephvr/shared/preview_geometry.py
+ M src/cephvr/shared/supervised_encoder.py
+ M src/cephvr/synchronization/client.py
+ M src/cephvr/synchronization/native.py
+ M src/cephvr/synchronization/sdk_io.py
+ M src/cephvr/tracking/processing/movement.py
+ M src/cephvr/tracking/processing/pose.py
+ M src/cephvr/tracking/processing/session.py
+ M src/cephvr/visual_stimulus/config/calibration_adjustments.py
+ M src/cephvr/visual_stimulus/config/calibration_placement.py
+ M src/cephvr/visual_stimulus/config/models/artifact_models.py
+ M src/cephvr/visual_stimulus/config/models/display_profile.py
+ M src/cephvr/visual_stimulus/config/pacing.py
+ M src/cephvr/visual_stimulus/config/texture_links.py
+ M src/cephvr/visual_stimulus/configuration.py
+ M src/cephvr/visual_stimulus/coordinator/commands.py
+ M src/cephvr/visual_stimulus/coordinator/reports.py
+ M src/cephvr/visual_stimulus/recording/encoding.py
+ M src/cephvr/visual_stimulus/recording/evidence.py
+ M src/cephvr/visual_stimulus/recording/recipe.py
+ M src/cephvr/visual_stimulus/rendering/calibration_placement.py
+ M src/cephvr/visual_stimulus/rendering/capture.py
+ M src/cephvr/visual_stimulus/rendering/display_calibration.py
+ M src/cephvr/visual_stimulus/rendering/engine.py
+ M src/cephvr/visual_stimulus/rendering/layer_projection.py
+ M src/cephvr/visual_stimulus/rendering/native.py
+ M src/cephvr/visual_stimulus/rendering/scene.py
+ M src/cephvr/visual_stimulus/rendering/scene_resources.py
+ M src/cephvr/visual_stimulus/resources/media.py
+ M src/cephvr/visual_stimulus/resources/session.py
+ M src/cephvr/visual_stimulus/runtime.py
+ M src/cephvr/visual_stimulus/transport/boundary.py
+ M src/cephvr/visual_stimulus/transport/messages.py
+ M src/cephvr/visual_stimulus/transport/services.py
+ M src/cephvr/visual_stimulus/worker/lifecycle.py
+ M src/cephvr/visual_stimulus/worker/native.py
+ M src/cephvr/visual_stimulus/worker/owner.py
+ M src/cephvr/visual_stimulus/worker/runtime.py
+ M tests/acquisition/test_camera_adapter_contracts.py
+ M tests/acquisition/test_coordinator.py
+ M tests/acquisition/test_manual_devices.py
+ M tests/acquisition/test_manual_preview.py
+ M tests/acquisition/test_recording_filter_expressions.py
+ M tests/acquisition/test_recording_paths.py
+ M tests/acquisition/test_trial_lifecycle.py
+ M tests/acquisition/test_worker_foundations.py
+ M tests/client/test_controller_rpc.py
+ M tests/controller/test_camera_evidence.py
+ M tests/controller/test_configuration_transactions.py
+ M tests/controller/test_device_admission.py
+ M tests/controller/test_lifecycle_commands.py
+ M tests/controller/test_microcontroller_owner.py
+ M tests/controller/test_microcontroller_protocol.py
+ M tests/controller/test_setup.py
+ M tests/controller/test_spikeglx.py
+ M tests/controller/test_startup_recovery.py
+ M tests/gui/test_dashboard.py
+ M tests/platform/test_window_coordinates.py
+ M tests/visual_stimulus/test_compilation.py
+ M tests/visual_stimulus/test_configuration.py
+ M tests/visual_stimulus/test_display_calibration_rendering.py
+ M tests/visual_stimulus/test_evidence_contract.py
+ M tests/visual_stimulus/test_recording.py
+ M tests/visual_stimulus/test_rendering.py
+ M tests/visual_stimulus/test_resources.py
+ M tests/visual_stimulus/test_transport.py
+?? .pytest_tmp_dashboard_final/
+?? .pytest_tmp_dashboard_focused/
+?? .pytest_tmp_linked_texture_20261019/
+?? .pytest_tmp_preview_controls_all/
+?? .pytest_tmp_preview_controls_final/
+?? .pytest_tmp_preview_motion_final/
+?? .pytest_tmp_preview_motion_readability/
+?? .pytest_tmp_projector_final/
+?? .pytest_tmp_projector_gui_focused/
+?? .pytest_tmp_projector_permitted/
+?? .pytest_tmp_projector_permitted2/
+?? .pytest_tmp_startup_recovery/
+?? contracts/projector-brightness.md
+?? reports/emergency-394060259638300-a6fe6a6d-dc24-46e3-ab72-0d0aa007ecf1.json
+?? reports/emergency-395998150261700-1f333a8d-59ba-42fd-9138-4502727583ff.json
+?? reports/emergency-396719339244000-daef641b-b5fc-42e8-9d39-107277bdab7e.json
+?? reports/emergency-403267881605300-acd7cdde-92ad-4c5c-85c0-52f51fbee2b8.json
+?? reports/emergency-403368999813800-8418dc08-dc84-4caa-9f28-00df83cf5271.json
+?? reports/emergency-404404089788300-bb275452-d65e-43a5-8a4c-643ce704ee76.json
+?? reports/emergency-406173416376100-ab874cd4-3fba-4446-a140-b6e0c2eb9a87.json
+?? reports/emergency-406762538960300-fc932512-3c7b-46f2-ae55-2de84f12c0f7.json
+?? reports/emergency-408766934123400-723c5e7e-34e0-42f2-9e63-5b40a977a653.json
+?? reports/emergency-408897485670000-3e842911-0c23-40c4-aa75-902de2727228.json
+?? reports/emergency-409359441152900-554015af-4972-499c-8080-ced164e7f484.json
+?? reports/emergency-409877090079900-3c497d5c-68e2-4399-8b06-cd1da6f6e7b6.json
+?? reports/emergency-412524133051300-47d3e9ce-f0f9-497c-b01a-a1222029b78c.json
+?? reports/emergency-413146702921600-57940174-f6ab-4fed-9148-d8ad49e3d560.json
+?? reports/emergency-413617199158000-0b087164-9ddd-4a61-82d0-97fa89077c79.json
+?? reports/emergency-413737448722700-021993d4-a24b-4b29-9c59-fd29d0d88392.json
+?? reports/emergency-414295423924300-9687bfd3-d24f-42db-9bd4-39fb145d483a.json
+?? reports/emergency-415035109710500-b5b87b51-b6e9-43f5-a023-4f40b29fb5bb.json
+?? reports/emergency-416014722097700-2e0b24ce-e3a9-4a7f-8db4-f0d4246ea40a.json
+?? reports/emergency-416212436168300-eed35d0d-5c7e-4b41-8488-a22abfcbe0f5.json
+?? reports/emergency-416500215292500-81547c35-b142-467d-80c9-494642382278.json
+?? reports/emergency-417548267736600-a036a7f1-125d-4ff7-a81d-1644492e7590.json
+?? reports/emergency-417701748969900-02460201-4583-42c7-b3c6-4fa1e9f78de3.json
+?? reports/emergency-418152689782700-8a87ac21-1247-4e56-bdee-a8122c4dedff.json
+?? reports/emergency-419318620652000-154c0566-3b5e-477d-b6e1-2104d956e5d1.json
+?? reports/runtime-evidence-2026-10-19/abort-finalization/
+?? reports/runtime-evidence-2026-10-19/abort-late-report/
+?? reports/runtime-evidence-2026-10-19/abort-pulse-retention/
+?? reports/runtime-evidence-2026-10-19/action-progress-logging/
+?? reports/runtime-evidence-2026-10-19/bottom-direction-tearing/
+?? reports/runtime-evidence-2026-10-19/bottom-preview/
+?? reports/runtime-evidence-2026-10-19/camera-connect-continuity/
+?? reports/runtime-evidence-2026-10-19/camera-timing-verification/
+?? reports/runtime-evidence-2026-10-19/dashboard-preview/
+?? reports/runtime-evidence-2026-10-19/gui-restart-paste/
+?? reports/runtime-evidence-2026-10-19/linked-fullscreen/
+?? reports/runtime-evidence-2026-10-19/mcu-upload-recovery/
+?? reports/runtime-evidence-2026-10-19/output-audit/
+?? reports/runtime-evidence-2026-10-19/ponytail-review/
+?? reports/runtime-evidence-2026-10-19/ponytail-vulture/
+?? reports/runtime-evidence-2026-10-19/preview-click-first-show/
+?? reports/runtime-evidence-2026-10-19/preview-connect-setup/
+?? reports/runtime-evidence-2026-10-19/preview-coverage/
+?? reports/runtime-evidence-2026-10-19/preview-rig-clicks/
+?? reports/runtime-evidence-2026-10-19/preview-rig-repair/
+?? reports/runtime-evidence-2026-10-19/preview-video-native/
+?? reports/runtime-evidence-2026-10-19/projector-brightness/
+?? reports/runtime-evidence-2026-10-19/recipe-preview/
+?? reports/runtime-evidence-2026-10-19/recipe-setup/
+?? reports/runtime-evidence-2026-10-19/setup-scale15-recipe/
+?? reports/runtime-evidence-2026-10-19/shared-controls/
+?? reports/runtime-evidence-2026-10-19/spikeglx-pairing/
+?? reports/runtime-evidence-2026-10-19/startup-recovery-block/
+?? reports/runtime-evidence-2026-10-19/stimulus-composite-preview/
+?? reports/runtime-evidence-2026-10-19/stimulus-drift-speed/
+?? reports/runtime-evidence-2026-10-19/stop-now-investigation/
+?? reports/runtime-evidence-2026-10-19/texture-retain-static/
+?? src/cephvr/acquisition/camera/drain.py
+?? src/cephvr/acquisition/coordinator/session_preview.py
+?? src/cephvr/acquisition/preview/window_thread.py
+?? src/cephvr/acquisition/worker/capture_drain.py
+?? src/cephvr/controller/device/projector_brightness.py
+?? src/cephvr/controller/device/stimulus_preview.py
+?? src/cephvr/controller/metadata/recovery_deletion.py
+?? src/cephvr/gui/action_progress.py
+?? src/cephvr/gui/managed_stimulus_preview.py
+?? src/cephvr/gui/mcu_inputs.py
+?? src/cephvr/gui/mcu_outputs.py
+?? src/cephvr/gui/mcu_snapshot.py
+?? src/cephvr/gui/preview_frame.py
+?? src/cephvr/gui/preview_motion_plot.py
+?? src/cephvr/gui/preview_timeline.py
+?? src/cephvr/gui/projector_brightness.py
+?? src/cephvr/gui/projector_pulse_files.py
+?? src/cephvr/gui/projector_pulses.py
+?? src/cephvr/platform/windows/placement_events.py
+?? src/cephvr/platform/windows/preview_creation.py
+?? src/cephvr/platform/windows/projector_brightness.ps1
+?? src/cephvr/platform/windows/projector_brightness.py
+?? src/cephvr/synchronization/configuration.py
+?? src/cephvr/visual_stimulus/config/review_layout.py
+?? src/cephvr/visual_stimulus/rendering/preview.py
+?? tests/controller/firmware_harness/
+?? tests/controller/test_microcontroller_firmware.py
+?? tests/platform/test_projector_brightness.py

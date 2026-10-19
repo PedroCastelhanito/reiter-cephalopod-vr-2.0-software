@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-19",
+  "task": "mcu-output-card-spacing",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "worktree": "dirty and shared with concurrent chats; source hashes identify the final inspected snapshot, receipts state their execution/continuation scope",
+  "decisions": [
+    "G01 revision 240 (shared-control promotion introduced at 238; concurrent amendments retained)",
+    "V20 revision 11",
+    "V22 revision 8",
+    "ARCH-002",
+    "E15"
+  ],
+  "source_sha256": {
+    "src/cephvr/gui/microcontroller.py": "26aa6cee37690f293b96f504241b05fcc87b0c0a03a12046dbbdd66328feeecc",
+    "src/cephvr/gui/microcontroller_signals.py": "793ff4e43c8ab639cd90abeae47aa6dc05696c4f90586265d443dcb28fbac486",
+    "src/cephvr/gui/mcu_inputs.py": "86a17fffc651a1ceb2d2d0cdffffa3bca0f19162973a23085384595d4355902f",
+    "src/cephvr/gui/mcu_outputs.py": "43480edfcf1d6e7e370eabb8213d5b0c57e5051f5c74db772780b39efab1eefd",
+    "src/cephvr/gui/mcu_snapshot.py": "95c3416da7528435907da63919e856149af1b61b111fa2ec59aa2d56b4b8e7fa",
+    "src/cephvr/gui/devices.py": "792554c4521774ec0e0c5903c8518ed1889f5eb59940fbe62b8f243c7ed7466f",
+    "src/cephvr/gui/projectors.py": "b42cfbe2e65813fd443be5080cd41c9ad65bd853b47e63a78fe6dd9be5c46f4d",
+    "src/cephvr/gui/projector_pulses.py": "88342b28ba1a4320758b1b7244d8f223a9f6a8eb9c56f1fe33fc511b059ec33a",
+    "src/cephvr/gui/projector_pulse_files.py": "08c76eb32e2ac4efbd3081ad68125a039047f302d9459e33296e0b8f620bcf2a",
+    "src/cephvr/gui/projector_profile.py": "05950777c510ec854c9a23fc5d4f6b73bfb7ea9d2d0843947fba300746d32212",
+    "src/cephvr/gui/projector_files.py": "8deb38e5e40599a5f838804247d64bc4b637d527ec69eb44418b96836ffa99c2",
+    "src/cephvr/gui/projector_codec.py": "0e518ec8488ac7ff4636d2880db9513d23611ef559661a8cc930175c65abc228",
+    "src/cephvr/gui/review_draft.py": "3ee40147b95bd19d9dfce1464be011d5d5c5d8987018bbe8e96f29606aae5792",
+    "src/cephvr/gui/placement_calibration.py": "cd6484678ee7f23eb72028e6b0c02cec447479350b1868386c484e27d1cb1808",
+    "src/cephvr/gui/calibration_profile.py": "fc2350ce8d91824d0491b74fb1a627760ed1ede4f0aec771e646a29e0c079d73",
+    "src/cephvr/visual_stimulus/config/models/display_profile.py": "0a22a974e4e6e801a96d3ef7e9706e0288601af12535a34ae0ca01b279ec47fd",
+    "src/cephvr/visual_stimulus/config/pacing.py": "8d1eb00c1d678f0e16708a35b5f409bf04a64d8f262290bd6a76e970c6671809",
+    "src/cephvr/visual_stimulus/config/calibration_placement.py": "da7aa4ada12420d3e68d022a08bee8ad985098885e8b5e1a9459cc8a278ea2a2",
+    "src/cephvr/visual_stimulus/rendering/engine.py": "5d418f623bfc2fb8237ad16df4806da672eb1684f26faa2a5f281d262fb59fcc",
+    "src/cephvr/visual_stimulus/rendering/scene.py": "963683f60ce6dbde40466f18bdfa9b21ccc8d31e9f53309059c62b2976755646",
+    "src/cephvr/visual_stimulus/rendering/calibration_placement.py": "1f955a2357be28f3b5c2806c1f2240c672975b0c6d461ac2cf0d94cc88c359a2",
+    "src/cephvr/gui/review_placement.py": "a7212b43917359b6764183dcb4c5cde25a49f0b2e06118017d1a72165a10d528"
+  },
+  "checks": {
+    "visual_stimulus": "427 passed, 1 deselected on final concurrent worktree; local non-Windows/non-rig suite, permitted loopback and external demo assets",
+    "contracts": "42 passed, 82 subtests passed",
+    "schema_drift": "11 checked, no drift; two schemas regenerated",
+    "mypy": "Win32, 335 GUI/Visual Stimulus sources passed",
+    "boundaries": "724 modules, zero violations; see boundaries.txt",
+    "gui": "669 unique current GUI cases passed across full-prefix/continuation batches; every current non-Windows/non-rig collected ID covered",
+    "shared_editors": "10 focused editor/gate/persistence tests passed; additional legacy-pacing and restore/placement selections pass after repairs",
+    "lint": "GUI/Visual Stimulus sources and tests passed",
+    "format": "25 changed source/test files passed; unrelated main.py CRLF remains outside this change",
+    "documents": "changed local targets, governing anchors and current decision register passed",
+    "toml": "comment-only Visual Stimulus operator TOML parses; values and policy binding identical to HEAD"
+  },
+  "screenshots": {
+    "method": "Offscreen PyQt6 render of DashboardWindow with ReviewControls supplying fixture state; no managed controller or hardware commands",
+    "sizes": [
+      [
+        1920,
+        1032
+      ],
+      [
+        900,
+        940
+      ]
+    ],
+    "assessment": "Wide cards are adjacent with Inputs visible; narrow controls remain in their independently scrollable configuration column."
+  },
+  "limits": [
+    "No live Dashboard restart",
+    "No firmware upload or COM-port operations",
+    "No native driver, electrical, optical or full scientific-workload acceptance",
+    "Broad format check also reports pre-existing CRLF in gui/main.py; preserve that unrelated file"
+  ],
+  "gui_receipts": [
+    "gui-prefix-tests.xml",
+    "gui-suffix-first-tests.xml",
+    "gui-suffix-second-tests.xml",
+    "gui-suffix-tests.xml"
+  ],
+  "gui_coverage": {
+    "selected": 669,
+    "passed": 669,
+    "missing": [],
+    "latest_failures": [],
+    "single_execution": false
+  }
+}

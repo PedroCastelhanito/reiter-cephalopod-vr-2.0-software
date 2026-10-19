@@ -10,6 +10,7 @@ from PyQt6.QtGui import QGuiApplication
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.gui.preview_follow import PreviewOwner, bind_preview_owner
 from cephvr.gui.preview_placement import cocoa_preview_position
+from cephvr.platform.windows.preview_creation import StagedPreviewWindow
 from cephvr.platform.windows.window_coordinates import (
     blank_preview_caption,
     position_preview_frame,
@@ -75,19 +76,31 @@ class ReviewPreviews(QObject):
             placement = self.placement(key)
             side = placement.side
             frame = np.zeros((side, side, 3), dtype=np.uint8)
-            cv2.namedWindow(title, cv2.WINDOW_NORMAL)
-            cv2.imshow(title, frame)
-            cv2.waitKey(1)
-            self._place(cv2, title, placement, linked=False)
-            self.windows[key] = (title, frame)
-            if self.owner_handle is not None:
-                self.owner_handles[key] = self.owner_handle()
-                self.owners[key] = bind_preview_owner(title, self.owner_handles[key])
-                guard = PreviewGeometryGuard()
-                guard.arranged(self.owners[key].geometry())
-                self.guards[key] = guard
-            self.placements[key] = placement.SerializeToString()
-            self.refs[key] = self._blank_caption(cv2, title)
+            with StagedPreviewWindow(title) as staged:
+                cv2.namedWindow(title, cv2.WINDOW_NORMAL)
+                cv2.imshow(title, frame)
+                cv2.waitKey(1)
+                self._place(cv2, title, placement, linked=False)
+                self.windows[key] = (title, frame)
+                if self.owner_handle is not None:
+                    self.owner_handles[key] = self.owner_handle()
+                    self.owners[key] = bind_preview_owner(
+                        title, self.owner_handles[key]
+                    )
+                    guard = PreviewGeometryGuard()
+                    guard.arranged(
+                        self.owners[key].geometry(),
+                        self.owners[key].placement_revision(),
+                    )
+                    self.guards[key] = guard
+                self.placements[key] = placement.SerializeToString()
+                self.refs[key] = self._blank_caption(cv2, title)
+                minimized = (
+                    self.owner_minimized()
+                    if self.owner_minimized is not None
+                    else False
+                )
+                staged.show(not minimized)
             self.timer.start()
             return True
         except Exception as exc:
@@ -113,7 +126,7 @@ class ReviewPreviews(QObject):
             placement = self.placement(key)
             self._place(cv2, entry[0], placement, linked=True)
             guard = PreviewGeometryGuard()
-            guard.arranged(owner.geometry())
+            guard.arranged(owner.geometry(), owner.placement_revision())
             self.guards[key] = guard
             self.placements[key] = placement.SerializeToString()
         except Exception as exc:
@@ -134,13 +147,17 @@ class ReviewPreviews(QObject):
                     if handle and handle != self.owner_handles.get(key):
                         owner.retarget(handle)
                         self.owner_handles[key] = handle
-                        self.guards[key].arranged(owner.geometry())
+                        self.guards[key].arranged(
+                            owner.geometry(), owner.placement_revision()
+                        )
                     if owner.sync(minimized):
                         self.suspended.add(key)
                         continue
                     if key in self.suspended:
                         self.suspended.discard(key)
-                        self.guards[key].arranged(owner.geometry())
+                        self.guards[key].arranged(
+                            owner.geometry(), owner.placement_revision()
+                        )
                         self.placements.pop(key, None)
             except Exception as exc:
                 self.report(f"Preview owner link failed: {exc}")
@@ -198,13 +215,13 @@ class ReviewPreviews(QObject):
     def _relayout(self, key: str, title: str, owner: PreviewOwner, cv: Any) -> None:
         try:
             guard = self.guards[key]
-            if not guard.observe(owner.geometry()):
+            if not guard.observe(owner.geometry(), owner.placement_revision()):
                 return
             placement = self.placement(key)
             serialized = placement.SerializeToString()
             if serialized != self.placements.get(key):
                 self._place(cv, title, placement, linked=True, ref=self.refs.get(key))
-                guard.arranged(owner.geometry())
+                guard.arranged(owner.geometry(), owner.placement_revision())
                 self.placements[key] = serialized
             self.layout_errors.pop(key, None)
         except Exception as exc:

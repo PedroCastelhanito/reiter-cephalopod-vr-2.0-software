@@ -168,7 +168,11 @@ class VisualStimulusWorkerRuntime:
             rejected_adjustment = method == "UpdateDisplayCalibration" and isinstance(
                 exc, CalibrationAdjustmentRejected
             )
-            if not unavailable and not rejected_adjustment:
+            if (
+                not unavailable
+                and not rejected_adjustment
+                and method != "SetStimulusPreview"
+            ):
                 self.interrupted = True
                 self.owner.cancel()
             outcome = pb.OperationState(

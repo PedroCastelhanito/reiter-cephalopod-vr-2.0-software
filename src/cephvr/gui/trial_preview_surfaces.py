@@ -2,6 +2,7 @@
 
 import math
 from dataclasses import dataclass
+from functools import cached_property
 from types import SimpleNamespace
 from typing import Any
 
@@ -92,6 +93,7 @@ class PreviewSurface:
     correction: PreviewCorrection | None = None
     blackout_zones: tuple[tuple[float, float, float, float], ...] = ()
     marker_rect: tuple[float, float, float, float] | None = None
+    physical_corners: tuple[tuple[float, float, float], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -137,6 +139,7 @@ class PreviewGeometry:
                     if rig
                     else ()
                 )
+                physical = corners
                 resolution = (resolutions or {}).get(face)
                 if resolution and any(
                     values.get(f"reference_{axis}_mm", "") for axis in ("x", "y")
@@ -155,6 +158,8 @@ class PreviewGeometry:
                     pixels = valid_pixels(numeric, face, *resolution)
                     pitch = measured_pitch(numeric, face, *resolution)
                     width, height = pixels[0] * pitch[0], pixels[1] * pitch[1]
+                    if face == "Bottom":
+                        width, height = height, width
                     if corners:
                         corners = tuple(
                             usable_corners(corners, numeric, face, *resolution)
@@ -168,17 +173,26 @@ class PreviewGeometry:
                     ),
                     tuple((overlays or {}).get(face, ([], None))[0]),
                     (overlays or {}).get(face, ([], None))[1],
+                    physical,
                 )
             except (KeyError, ValueError):
                 continue
         return cls(result, rig.subject if rig else None, rig)
 
+    @cached_property
+    def projection_settings(self) -> dict[str, float]:
+        from cephvr.visual_stimulus.configuration import load_projection_settings
+
+        return load_projection_settings()
+
     def artifact(self) -> Any:
+
         surfaces = tuple(
             SimpleNamespace(
                 surface_id=face.lower(),
                 bottom_left_mm=s.corners[0],
                 bottom_right_mm=s.corners[1],
+                top_right_mm=s.corners[2],
                 top_left_mm=s.corners[3],
             )
             for face, s in self.surfaces.items()
@@ -186,6 +200,10 @@ class PreviewGeometry:
         )
         return SimpleNamespace(
             display=SimpleNamespace(
-                geometry=SimpleNamespace(observer_mm=self.observer, surfaces=surfaces)
+                geometry=SimpleNamespace(
+                    observer_mm=self.observer,
+                    surfaces=surfaces,
+                    **self.projection_settings,
+                )
             )
         )

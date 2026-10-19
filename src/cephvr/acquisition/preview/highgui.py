@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 import sys
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from concurrent.futures import Future
 from typing import Any
 from uuid import UUID
@@ -13,12 +13,13 @@ from uuid import UUID
 from cephvr.acquisition.buffers.ring import RingAllocationError, SharedRing
 from cephvr.acquisition.camera.native_formats import pylon_pixel_format
 from cephvr.acquisition.preview.viewport import SquareViewport
+from cephvr.acquisition.preview.window_thread import window_thread
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as rpc
+from cephvr.platform.windows.preview_creation import StagedPreviewWindow
 from cephvr.platform.windows.preview_owner import WindowsPreviewOwner
 from cephvr.platform.windows.window_coordinates import (
     blank_preview_caption,
-    physical_coordinates,
     position_preview_frame,
     preview_window_handle,
 )
@@ -40,7 +41,7 @@ def display_array(image: PreparedImage, numpy: Any) -> Any:
 
 
 class HighGuiPreview:
-    """Run all calls for this Win32 window on its owning thread.
+    """Share one HighGUI owner; wait for this viewer's frames independently.
 
     The bounded event wait pumps native messages even without frames. Arriving
     frames wake it immediately; neither a software rate limiter nor a backlog is used.
@@ -98,8 +99,23 @@ class HighGuiPreview:
 
     def _run(self) -> None:
         try:
-            with physical_coordinates():
-                self._run_window()
+            steps = self._run_window()
+            wakeup: bool | None = None
+
+            def advance() -> Any:
+                try:
+                    return steps.send(wakeup)
+                except StopIteration:
+                    return None
+
+            try:
+                while (ring := window_thread.call(advance)) is not None:
+                    wakeup = ring.wait(10_000_000)
+            except Exception as exc:
+                self.failure = str(exc)
+                raise
+            finally:
+                window_thread.call(steps.close)
         except Exception as exc:
             self.failure = str(exc)
             if not self.ready.done():
@@ -108,7 +124,7 @@ class HighGuiPreview:
                 self.done.set_result(True)
                 self.on_closed(self)
 
-    def _run_window(self) -> None:
+    def _run_window(self) -> Generator[Any, bool | None, None]:
         ring: Any = None
         cv: Any = None
         window = False
@@ -129,9 +145,14 @@ class HighGuiPreview:
                 image.row_stride_bytes,
                 image.image_payload_bytes,
             )
-            if descriptor.WhichOneof("scope") != "preview":
-                raise ValueError("OpenCV viewer requires an exact manual preview run")
-            run_id = UUID(descriptor.preview.acquisition_run_id)
+            scope = descriptor.WhichOneof("scope")
+            if scope not in {"preview", "session"}:
+                raise ValueError("OpenCV viewer requires an exact preview or session")
+            run_id = UUID(
+                descriptor.preview.acquisition_run_id
+                if scope == "preview"
+                else descriptor.session.session_id
+            )
             ring = SharedRing.attach(
                 self.attachment, layout, self.attachment.sync.target
             )
@@ -145,35 +166,48 @@ class HighGuiPreview:
                     viewport.wheel(x, y, flags)
                 elif event == cv.EVENT_LBUTTONDBLCLK:
                     viewport.reset()
+                elif event == cv.EVENT_LBUTTONDOWN:
+                    viewport.start_pan(x, y)
+                elif event == cv.EVENT_MOUSEMOVE:
+                    if flags & cv.EVENT_FLAG_LBUTTON:
+                        viewport.pan(x, y)
+                    else:
+                        viewport.end_pan()
+                elif event == cv.EVENT_LBUTTONUP:
+                    viewport.end_pan()
 
-            cv.namedWindow(self.title, cv.WINDOW_NORMAL)
-            window = True
-            cv.imshow(self.title, numpy.zeros((side, side), numpy.uint8))
-            cv.resizeWindow(self.title, side, side)
-            cv.setMouseCallback(self.title, mouse)
-            cv.waitKey(1)
-            if self.placement is not None:
-                position_preview_frame(self.title, self.placement.x, self.placement.y)
-                if self.placement.gui_window_handle:
-                    owner = WindowsPreviewOwner(
-                        self.title,
-                        self.placement.gui_window_handle,
-                        self.placement.gui_process_id,
-                        self.placement.gui_process_creation_time_100ns,
+            with StagedPreviewWindow(self.title) as staged:
+                cv.namedWindow(self.title, cv.WINDOW_NORMAL)
+                window = True
+                cv.imshow(self.title, numpy.zeros((side, side), numpy.uint8))
+                cv.resizeWindow(self.title, side, side)
+                cv.setMouseCallback(self.title, mouse)
+                cv.waitKey(1)
+                if self.placement is not None:
+                    position_preview_frame(
+                        self.title, self.placement.x, self.placement.y
                     )
-            # The card names the source; Win32 later positions by handle, not title.
-            native: str | int = self.title
-            if sys.platform == "win32":
-                native = self.native_handle = preview_window_handle(self.title)
-                blank_preview_caption(native)
-            owner_minimized = owner.sync() if owner is not None else False
+                    if self.placement.gui_window_handle:
+                        owner = WindowsPreviewOwner(
+                            self.title,
+                            self.placement.gui_window_handle,
+                            self.placement.gui_process_id,
+                            self.placement.gui_process_creation_time_100ns,
+                        )
+                # The card names the source; Win32 later positions by handle, not title.
+                native: str | int = self.title
+                if sys.platform == "win32":
+                    native = self.native_handle = preview_window_handle(self.title)
+                    blank_preview_caption(native)
+                owner_minimized = owner.sync() if owner is not None else False
+                staged.show(not owner_minimized)
             if (
                 not owner_minimized
                 and cv.getWindowProperty(self.title, cv.WND_PROP_VISIBLE) < 1
             ):
                 raise RuntimeError("OpenCV window did not become visible")
             if owner is not None:
-                geometry.arranged(owner.geometry())
+                geometry.arranged(owner.geometry(), owner.placement_revision())
             self.visible = True
             last = -1
             frame_wakeup = True
@@ -201,11 +235,11 @@ class HighGuiPreview:
                     ):
                         owner.retarget(placement.gui_window_handle)
                         self.placement.gui_window_handle = placement.gui_window_handle
-                        geometry.arranged(owner.geometry())
+                        geometry.arranged(owner.geometry(), owner.placement_revision())
                 was_minimized = owner_minimized
                 owner_minimized = owner.sync() if owner is not None else False
                 if was_minimized and not owner_minimized and owner is not None:
-                    geometry.arranged(owner.geometry())
+                    geometry.arranged(owner.geometry(), owner.placement_revision())
                     if placement is None:
                         placement = self.placement
                 if owner_minimized and placement is not None:
@@ -222,7 +256,9 @@ class HighGuiPreview:
                     self.visible = False
                     break
                 if owner is not None and not owner_minimized:
-                    automatic = geometry.observe(owner.geometry())
+                    automatic = geometry.observe(
+                        owner.geometry(), owner.placement_revision()
+                    )
                     if (
                         placement is not None
                         and (automatic or placement.snap_to_grid)
@@ -244,12 +280,18 @@ class HighGuiPreview:
                             )
                             viewport.resize(placement.side)
                             geometry = PreviewGeometryGuard()
-                            geometry.arranged(owner.geometry())
+                            geometry.arranged(
+                                owner.geometry(), owner.placement_revision()
+                            )
                             self.placement = placement
                             self.placement.snap_to_grid = False
                 if not owner_minimized and viewport.dirty and latest is not None:
                     cv.imshow(self.title, viewport.render(latest, cv, numpy))
-                count = ring.published_count if frame_wakeup else 0
+                if scope == "session":
+                    current_run = ring.run_id
+                    if current_run != run_id:
+                        run_id, last = current_run, -1
+                count = ring.published_count if frame_wakeup and run_id.int else 0
                 if count > 0 and count - 1 != last:
                     sequence = count - 1
                     read = ring.read_into(sequence, pixels, expected_run_id=run_id)
@@ -266,21 +308,16 @@ class HighGuiPreview:
                                 )
                             self.ready.set_result(None)
                         last = sequence
+                        frame_wakeup = (yield ring) is True
                         continue
                     if read.status == "retired":
                         break
-                frame_wakeup = ring.wait(10_000_000)
+                frame_wakeup = (yield ring) is True
         except Exception as exc:
             if isinstance(exc, RingAllocationError):
                 ring = exc.partial
             self.failure = str(exc)
         finally:
-            if owner is not None:
-                try:
-                    owner.close()
-                except Exception as exc:
-                    self.failure = f"Preview GUI owner cleanup failed: {exc}"
-                    closed = False
             if window:
                 try:
                     # A native X may already have destroyed it.
@@ -297,6 +334,12 @@ class HighGuiPreview:
                     self.visible = False
                 except Exception as exc:
                     self.failure = f"OpenCV window cleanup unconfirmed: {exc}"
+                    closed = False
+            if owner is not None:
+                try:
+                    owner.close()
+                except Exception as exc:
+                    self.failure = f"Preview GUI owner cleanup failed: {exc}"
                     closed = False
             if ring is not None:
                 try:

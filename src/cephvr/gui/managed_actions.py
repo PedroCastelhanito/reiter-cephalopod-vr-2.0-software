@@ -7,6 +7,8 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any, cast
 
+import grpc
+
 from cephvr.client.session import ClientError, HeadlessClient
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
@@ -35,6 +37,7 @@ class ManagedActions:
     command_finished: Callable[[str, bool, str], None]
     command_admitted: Callable[[str, str], None]
     operation_finished: Callable[[str, str, str, str], None]
+    action_progress: Callable[[str, str], None]
     spikeglx_inventory_received: Callable[[int, str, bytes], None]
     device_configuration_accepted: Callable[[int, bytes], None]
     track_request: Callable[[HeadlessClient, str, str, Any], Awaitable[None]]
@@ -46,6 +49,22 @@ class ManagedActions:
     async def dispatch(
         self, client: HeadlessClient, action: str, options: dict[str, Any]
     ) -> None:
+        if action == "set_stimulus_preview":
+            state = client.snapshot
+            if (
+                state.configuration.revision != options["expected_revision"]
+                or state.session.context.session_id != options["session_id"]
+            ):
+                raise ClientError("Stimulus preview session or configuration changed")
+            request = rpc.SetStimulusPreviewRequest(
+                command=client.operator_command(),
+                expected_configuration_revision=options["expected_revision"],
+                visible=options["visible"],
+                placement=rpc.PreviewWindowPlacement.FromString(options["placement"]),
+            )
+            request.command.expected_work.session.CopyFrom(state.session.context)
+            await self.track_request(client, action, "SetStimulusPreview", request)
+            return
         if await self._device(client, action, options):
             return
         if action in {"get_spikeglx_inventory", "spikeglx_inventory_update"}:
@@ -193,7 +212,15 @@ class ManagedActions:
         if device_result is not None:
             success, message = device_result
             if (
-                action == "set_spikeglx_enabled"
+                action
+                in {
+                    "set_spikeglx_enabled",
+                    "set_camera_enabled",
+                    "assign_camera_role",
+                    "save_camera_settings",
+                    "save_mcu_pins",
+                    "add_mcu_output",
+                }
                 and success
                 and (client.snapshot.configuration.revision != base_revision)
             ):
@@ -207,17 +234,35 @@ class ManagedActions:
         self, client: HeadlessClient, action: str, options: dict[str, Any]
     ) -> None:
         if action == "get_spikeglx_inventory":
+            if client.snapshot.session.phase not in (
+                pb.SESSION_PHASE_CONFIGURATION,
+                pb.SESSION_PHASE_READY,
+            ):
+                raise ClientError(
+                    "SpikeGLX inventory refresh deferred until Configuration or Ready."
+                )
             inventory_request = spikeglx_inventory_request(client)
             expected_revision = int(options.get("expected_revision", -1))
             if inventory_request.expected_configuration_revision != expected_revision:
                 raise ClientError(
                     "SpikeGLX inventory request is for an older configuration."
                 )
-            result = await client.stub.GetSpikeGLXInventory(
-                inventory_request,
-                metadata=client.principal.metadata(),
-                timeout=client.rpc_timeout_s,
-            )
+            try:
+                result = await client.stub.GetSpikeGLXInventory(
+                    inventory_request,
+                    metadata=client.principal.metadata(),
+                    timeout=client.rpc_timeout_s,
+                )
+            except grpc.aio.AioRpcError as exc:
+                if (
+                    exc.code() == grpc.StatusCode.FAILED_PRECONDITION
+                    and exc.details()
+                    == "SpikeGLX inventory is unavailable in this session phase"
+                ):
+                    raise ClientError(
+                        "Session phase changed; SpikeGLX inventory refresh deferred until Configuration or Ready."
+                    ) from exc
+                raise
             validate_inventory_snapshot(result, expected_revision)
             identity = options.get("dispatch_identity")
             if not isinstance(identity, tuple) or len(identity) != 2:
@@ -417,6 +462,13 @@ class ManagedActions:
                 "The controller still requires operator input.",
             )
         elif result.complete and result.succeeded is True:
+            if set(stamped.permitted_choices) == {"recover", "delete"}:
+                self.action_progress(
+                    action,
+                    "Recovery · Unfinished session files deleted."
+                    if options["choice"] == "delete"
+                    else "Recovery · Recovery completed; existing files preserved.",
+                )
             self.operation_finished(
                 action, admission.command_id, "completed", "Choice accepted."
             )

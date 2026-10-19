@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-19",
+  "task": "dashboard-preview-workspace",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_scope": "Dirty shared checkout; hashes describe this increment, not a committed clean tree.",
+  "source_sha256": {
+    "src/cephvr/gui/preview_timeline.py": "831bfbb7f1a4f872357ff4146c86834ac8da22405f56c13d466d84393c62c574",
+    "src/cephvr/gui/previews.py": "10a66f9fcde14d35444710a1f8d5dc17bc86fb3cc2da640fef353a7a526e9299",
+    "src/cephvr/gui/preview_placement.py": "b93042acda3ecfee1e94aba3ac2ea4789118e5f6c22e25fc8828e959a3e080f9",
+    "src/cephvr/gui/window.py": "c41f15bce8adbe05a3b03151f3d872d931f60566b15845cbfd7ad690223f6bcc",
+    "tests/gui/test_dashboard.py": "92f7dbe117baabbb00e2a8a0e2f6577946f952758ee74d8048397ac5cc7afe73"
+  },
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"preview_slot or preview_workspace or preview_grid or preview_log or preview_selector or preview_geometry_survives or preview_button_restores or preview_timeline_speed or review_blank_preview or multiple_review_previews or preview_placement_failure or preview_cards_name or preview_waits_for_report or unavailable_preview or preview_participation or managed_preview_relayout or managed_stimulus_preview\" --basetemp=.pytest_tmp_dashboard_final",
+    "environment": {
+      "QT_QPA_PLATFORM": "offscreen"
+    },
+    "passed": 43,
+    "deselected": 694
+  },
+  "checks": {
+    "ruff_check": "5 affected Python files pass",
+    "ruff_format_check": "5 files pass",
+    "mypy_win32": "4 source files pass",
+    "backend_boundaries": "735 modules; zero violations; existing unrelated size advisories",
+    "git_diff_check": "Pass; existing CRLF conversion warnings"
+  },
+  "screenshots": {
+    "method": "Offscreen QApplication with apply_theme, DashboardWindow, review_program TrialDraft and five active PreviewView fixtures; grab dialog at 1440x960 and 800x800 in Standard/Retro themes. No backend attachment.",
+    "files": [
+      "standard.png",
+      "retro_console.png",
+      "narrow.png"
+    ]
+  },
+  "limits": [
+    "No application restart or live hardware operation.",
+    "No actual renderer telemetry or measured speed; bounded sampled planned translational speed only.",
+    "Unsupported or unresolved motion/order/timing displays explanation.",
+    "Native DPI/full-workload acceptance remains in reports/rig-verification.md.",
+    "Overbroad preview test run stalled and was interrupted; final test result is only the focused selection above."
+  ]
+}

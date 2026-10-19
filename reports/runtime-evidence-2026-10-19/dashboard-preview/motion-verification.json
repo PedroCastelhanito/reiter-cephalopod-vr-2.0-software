@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-19",
+  "task": "dashboard-preview-motion-plots",
+  "base_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "provenance": "Dirty shared checkout with concurrent changes; hashes identify tested files.",
+  "source_sha256": {
+    "src/cephvr/gui/preview_timeline.py": "4f1a9f7a6b5619a631159322ef0814e65bec10fdf34ecb34e3a86f0525584fe1",
+    "src/cephvr/gui/preview_motion_plot.py": "0cfd6ab0a394ca5d2d34924c2be706beb140acdf3ba2437f9b004ab0d5211503",
+    "src/cephvr/gui/previews.py": "9219332e9580b16ed99673133f99da41885b63b81092c7d43d9cbbe9dc1d479d",
+    "src/cephvr/gui/window.py": "367c842294982cdd966905625162be5c44d300295ea3f437a283f2ff4f208be4",
+    "tests/gui/test_dashboard.py": "a1d93873bbba5e0a151aa9aaf7486a144436f6ccac9d8b27c1a7f18f07c7e942"
+  },
+  "pytest": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"preview_motion or preview_slot or preview_workspace or preview_grid or preview_log or preview_selector or preview_geometry_survives or preview_button_restores or preview_timeline_speed or review_blank_preview or multiple_review_previews or preview_placement_failure or preview_cards_name or preview_waits_for_report or unavailable_preview or preview_participation or managed_preview_relayout or managed_stimulus_preview or preview_inline_controls or review_appearance_switch\" --basetemp=.pytest_tmp_preview_motion_readability",
+    "environment": "QT_QPA_PLATFORM=offscreen",
+    "passed": 54,
+    "deselected": 690,
+    "seconds": 33.39
+  },
+  "static_checks": {
+    "ruff": "check and format --check: all five files pass",
+    "mypy": "--platform win32: four source files pass",
+    "boundaries": "737 modules, 0 violations; existing unrelated size warnings"
+  },
+  "screenshots": {
+    "files": [
+      "motion-standard.png",
+      "motion-retro_console.png"
+    ],
+    "method": "Offscreen DashboardWindow, two stream placeholders, review_program fixture with Bottom reference and linked follower, -15 deg/s rotation, elapsed 12 s; no devices connected."
+  },
+  "limitations": [
+    "Planned local motion only, not measured stimulus output.",
+    "No running application restart, native viewer/DPI or hardware acceptance.",
+    "Feedback, combined texture translation and position/angle trajectories remain unsupported."
+  ],
+  "initial_failures": "New polar minimum caused standard-theme five-stream overflow at 800x800; reduced minimum and reran all focused checks successfully."
+}

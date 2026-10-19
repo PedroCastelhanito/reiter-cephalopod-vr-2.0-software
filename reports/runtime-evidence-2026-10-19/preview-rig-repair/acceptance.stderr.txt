@@ -1,0 +1,33 @@
+{"active_capture_slots": 0, "cancelled_captures": 0, "event": "recording_metrics", "evidence_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewrepair\\20261019_previewrepair\\PREVIEW-104031\\protocol-data\\PREVIEW_104103_stimulus_frames.jsonl", "peak_capture_slots": 0, "queued_captures": 0, "stages_ns": {"capture_ready": {"count": 0, "max": 0, "total": 0}, "frame_input": {"count": 0, "max": 0, "total": 0}, "normalization": {"count": 0, "max": 0, "total": 0}, "pipe_write": {"count": 0, "max": 0, "total": 0}, "queue_wait": {"count": 0, "max": 0, "total": 0}, "readback_poll_pending": {"count": 0, "max": 0, "total": 0}, "readback_poll_ready": {"count": 0, "max": 0, "total": 0}, "slot_hold": {"count": 0, "max": 0, "total": 0}}, "submitted_bytes": 0, "unfinished_frame_input": null, "worst_stage_samples": {}, "zero_progress_writes": 0}
+ExecuteCameraCommand 01a755b7-f2ed-4200-9f4f-003969d065da failed: PREVIEW_RUN: Stop Preview does not match the live run
+ExecuteCameraCommand f9a5cb81-84c3-4ce8-a73b-5edf779bca56 failed: PREVIEW_RUN: Stop Preview does not match the live run
+ExecuteCameraCommand f1e7eb50-640d-412d-9dba-7d050e1998fe failed: PREVIEW_RUN: Stop Preview does not match the live run
+ExecuteCameraCommand 6a591143-87a3-4bcc-94ce-e41cd138a790 failed: PREVIEW_RUN: Stop Preview does not match the live run
+ExecuteCameraCommand dea068aa-94af-4b7d-ba13-a2adbc2fb37c failed: PREVIEW_RUN: Stop Preview does not match the live run
+ExecuteCameraCommand f8e53257-bb02-4b26-b39b-505b6d28cb77 failed: PREVIEW_RUN: Stop Preview does not match the live run
+ExecuteCameraCommand f641f9ce-efa6-4976-892b-ba6140ee8d2b failed: PREVIEW_RUN: Stop Preview does not match the live run
+ExecuteCameraCommand e3d7590f-30ba-4541-b058-73c196aa8dfa failed: PREVIEW_RUN: Stop Preview does not match the live run
+CephVR launcher controller channel lost: eof
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: cleanup returned an unregistered resource
+Task exception was never retrieved
+future: <Task finished name='Task-1622' coro=<GrpcOutbound.report_interruption() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\supervisor\outbound.py:74> exception=<AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+>>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\supervisor\outbound.py", line 75, in report_interruption
+    receipt = await self.controller.ReportInterruption(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_call.py", line 333, in __await__
+    raise _create_rpc_error(
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+>
+CephVR launcher supervisor channel lost: eof

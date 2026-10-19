@@ -1,0 +1,3 @@
+ExecuteCameraCommand 46b55d92-5e34-4a91-89ec-69574ace5260 failed: PREVIEW_STOP_FAILED: Controller authority cannot admit new Microcontroller execution
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

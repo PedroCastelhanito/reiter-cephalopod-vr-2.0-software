@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "dirty_source": true,
+  "initial_manifest": "initial-source-manifest.json",
+  "final_manifest": "final-source-manifest.json",
+  "session": "GUIRIG-172845",
+  "duration_s": 600,
+  "method": "Authenticated controller API; no physical GUI inputs",
+  "outputs": [
+    "native-assessment.json",
+    "association-assessment.json",
+    "remote-files.json"
+  ],
+  "telemetry": "telemetry-summary.json",
+  "telemetry_scope_s": [
+    40.070641,
+    598.92396
+  ],
+  "gui": {
+    "native": "unavailable: capture hung507.8s then186.4s after reset; no input issued",
+    "fixture_states": 48,
+    "repeated_control_rows": 7932,
+    "tests": "751 passed in363.98s",
+    "context": "gui-offscreen-context.md"
+  },
+  "owner_tests": {
+    "command": "python -m pytest tests/controller tests/tracking tests/acquisition/test_transport_admission.py -q -m \"not windows and not rig\"",
+    "result": "805 passed,4 skipped,7 deselected in11.68s",
+    "log": "owner-final-tests.log"
+  },
+  "static": [
+    "diagnostic-ruff.log",
+    "diagnostic-format.log",
+    "diagnostic-mypy.log",
+    "final-boundaries.log",
+    "gui-ruff-check.log",
+    "gui-ruff-format.log",
+    "gui-mypy.log",
+    "gui-source-hash-check.log"
+  ],
+  "native_diagnostic": [
+    "invalid-diagnostic-reuse.json",
+    "native-image-assessment.json",
+    "image-diagnostic-restoration.json",
+    "final-diagnostic-idle.json"
+  ],
+  "restoration": [
+    "restoration.json",
+    "image-diagnostic-restoration.json"
+  ],
+  "limits": [
+    "Physical GUI/menu/dialog/DPI actions untested",
+    "First40s telemetry missing; sampled aggregate utilization does not establish per-core headroom",
+    "Eye/Tracking native inputs nearly black; physical cause unknown and encoding workload not representative",
+    "Scientific Tracking disabled",
+    "Native ephys contents and optical/electrical alignment unverified",
+    "Decode/pixel-format tags do not prove lossless or calibrated color"
+  ],
+  "review": "Astra independently reviewed repair boundaries, audit associations, raw image hashes/statistics and native closure; no new critical behavior choice requested",
+  "document_config_check": "final-document-config-check.json",
+  "whitespace": "final-diff-check.log",
+  "runtime_state": "Managed runtime left running idle with Tracking process available for image-only diagnostics; saved scientific participation remains unchanged/disabled.",
+  "subsequent_review_fix": "preallocation-verification.json",
+  "final_quality": "final-quality-context.md",
+  "cleanup": "cleanup-manifest.json",
+  "added_document_links": "final-link-check.json",
+  "final_runtime_reload": "final-runtime-reload.json"
+}

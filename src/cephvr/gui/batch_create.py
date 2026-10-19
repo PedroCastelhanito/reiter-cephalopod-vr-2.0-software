@@ -325,6 +325,26 @@ class BatchCreate(QWidget):
                     raise ValueError(
                         "A varied layer changed; remove and recreate its variation rule"
                     )
+                setting = node.settings[layer]
+                parameter = row.parameter.currentData()
+                if (
+                    setting.kind == "texture"
+                    and setting.linked_to is not None
+                    and parameter in ("Speed", "Direction", "Angular speed")
+                ):
+                    source = next(
+                        s for s in node.settings if s.instance_id == setting.linked_to
+                    )
+                    screen = " / ".join(
+                        surfaces(source.model_dump(mode="json"))
+                    ).title()
+                    raise ValueError(
+                        f"{parameter} variation targets linked texture "
+                        f"'{setting.instance_id}'. Change the variation's Projector "
+                        f"target to {screen} (reference '{setting.linked_to}'), or remove "
+                        "that motion variation before linking. Linked screens "
+                        "inherit their reference's motion."
+                    )
         if rules:
             program = materialize_values(
                 program, rules, max_variations=2000 if random_rows else 512

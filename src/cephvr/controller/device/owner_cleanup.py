@@ -284,7 +284,9 @@ class ManualControlCleanup:
                     self.device.camera_operation_changed.clear()
                     continue
                 return bool(
-                    operation.admission_rejected or operation.final_status is not None
+                    operation.admission_rejected
+                    or operation.final_status is not None
+                    or operation.is_projector
                 )
 
     def _settings(self) -> pb.AcquisitionSettings | None:

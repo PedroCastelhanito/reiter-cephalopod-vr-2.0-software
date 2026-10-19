@@ -6,7 +6,11 @@ from cephvr.acquisition.recording.filter_expressions import (
     ExpressionError,
     resolve_dimensions,
 )
-from cephvr.acquisition.recording.filters import source_format, validate_filter_chain
+from cephvr.acquisition.recording.filters import (
+    ImageFormat,
+    source_format,
+    validate_filter_chain,
+)
 
 
 def test_dimensions_resolve_oh_dependency_without_substituting_input_height() -> None:
@@ -78,3 +82,37 @@ def test_packed_review_rgb10_requires_explicit_matrix_without_precision_loss():
     )
     assert result.image.depth == 10
     assert (result.image.width, result.image.height) == (640, 480)
+
+
+@pytest.mark.parametrize(
+    ("expression", "width", "height", "color_range", "matrix"),
+    [
+        ("crop=w=320:h=240", 320, 240, "full", "bt709"),
+        ("pad=w=800:h=600", 800, 600, "full", "bt709"),
+        (
+            "scale=w=320:h=240:in_range=full:out_range=limited:"
+            "in_color_matrix=bt709:out_color_matrix=bt2020",
+            320,
+            240,
+            "limited",
+            "bt2020",
+        ),
+    ],
+)
+def test_geometry_filters_preserve_pixel_layout_and_resolve_color_metadata(
+    expression: str, width: int, height: int, color_range: str, matrix: str
+) -> None:
+    source = ImageFormat("yuv420p10le", 10, 640, 480, 2, 2, "full", "bt709")
+    result = validate_filter_chain(
+        f"{expression},format=pix_fmts=yuv420p10le",
+        source=source,
+        target_depth=10,
+        accepted_pixel_formats=frozenset({"yuv420p10le"}),
+        terminal_pixel_format="yuv420p10le",
+        output_range=color_range,
+        output_matrix=matrix,
+    )
+    expected = ImageFormat("yuv420p10le", 10, width, height, 2, 2, color_range, matrix)
+    assert result.stages == (source, expected, expected)
+    assert result.image == expected
+    assert source == ImageFormat("yuv420p10le", 10, 640, 480, 2, 2, "full", "bt709")

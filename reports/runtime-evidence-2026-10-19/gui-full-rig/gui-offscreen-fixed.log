@@ -1,0 +1,299 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 751 items
+
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor0-area0-1.0-expected0] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor1-area1-1.0-expected1] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor2-area2-1.0-expected2] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor3-area3-1.0-expected3] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor4-area4-1.0-expected4] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor5-area5-2.0-expected5] PASSED [  0%]
+tests/gui/test_dashboard.py::test_review_blank_preview_connect_close_and_disconnect PASSED [  0%]
+tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-0] PASSED [  1%]
+tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-2] PASSED [  1%]
+tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-0] PASSED [  1%]
+tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-2] PASSED [  1%]
+tests/gui/test_dashboard.py::test_camera_preview_slots_only_include_enabled_cameras[standard] PASSED [  1%]
+tests/gui/test_dashboard.py::test_camera_preview_slots_only_include_enabled_cameras[retro_console] PASSED [  1%]
+tests/gui/test_dashboard.py::test_startup_maximize_survives_first_layout_and_allows_later_restore PASSED [  1%]
+tests/gui/test_dashboard.py::test_square_preview_placement_fits_small_work_area PASSED [  1%]
+tests/gui/test_dashboard.py::test_preview_slot_fits_native_frame[1.0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_fits_native_frame[1.5] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_fits_native_frame[2.0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_centers_frame_in_visible_card[1.0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_centers_frame_in_visible_card[1.5] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_centers_frame_in_visible_card[2.0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_rejects_insufficient_visible_space[slot0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_rejects_insufficient_visible_space[slot1] PASSED [  3%]
+tests/gui/test_dashboard.py::test_cocoa_preview_position_converts_work_height_origin PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_slot_centers_resizable_native_frame PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_placement_failure_restores_hidden_card_and_expanded_log PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_cards_name_their_source_and_draw_retro_frame PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_slot_tracks_relevant_tabs PASSED [  3%]
+tests/gui/test_dashboard.py::test_offline_frontend_cannot_request_commands PASSED [  3%]
+tests/gui/test_dashboard.py::test_protocol_config_round_trip_retains_complete_schedule PASSED [  3%]
+tests/gui/test_dashboard.py::test_microcontroller_config_load_is_local_and_collects_for_normal_submission PASSED [  4%]
+tests/gui/test_dashboard.py::test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity PASSED [  4%]
+tests/gui/test_dashboard.py::test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[protocol] PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[cameras] PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[microcontroller] PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[projectors] PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[spikeglx] PASSED [  5%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[tracking] PASSED [  5%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[gui] PASSED [  5%]
+tests/gui/test_dashboard.py::test_full_gui_config_round_trip_restores_all_sections_without_commands PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[experiment] PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[protocol] PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[microcontroller] PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[projectors] PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[spikeglx] PASSED [  6%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[tracking] PASSED [  6%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"format": "a", "format": "b"}] PASSED [  6%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"n": NaN}] PASSED [  6%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[[1,2]] PASSED [  6%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"invalid":] PASSED [  6%]
+tests/gui/test_dashboard.py::test_snapshot_limits_and_failed_save_preserve_existing_file PASSED [  6%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[False-False] PASSED [  7%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[False-True] PASSED [  7%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[True-False] PASSED [  7%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[True-True] PASSED [  7%]
+tests/gui/test_dashboard.py::test_started_config_chooser_closes_on_authority_loss[False] PASSED [  7%]
+tests/gui/test_dashboard.py::test_started_config_chooser_closes_on_authority_loss[True] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-protocol] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-tracking] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-cameras] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-microcontroller] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-spikeglx] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-gui] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-protocol] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-tracking] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-cameras] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-microcontroller] PASSED [  9%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-spikeglx] PASSED [  9%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-gui] PASSED [  9%]
+tests/gui/test_dashboard.py::test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling PASSED [  9%]
+tests/gui/test_dashboard.py::test_loaded_camera_presets_cannot_claim_sdk_import_provenance PASSED [  9%]
+tests/gui/test_dashboard.py::test_loaded_camera_timing_keeps_only_applicable_activation[Internal clock] PASSED [  9%]
+tests/gui/test_dashboard.py::test_loaded_camera_timing_keeps_only_applicable_activation[External controller] PASSED [  9%]
+tests/gui/test_dashboard.py::test_camera_settings_timing_keeps_only_applicable_activation[Internal clock] PASSED [  9%]
+tests/gui/test_dashboard.py::test_camera_settings_timing_keeps_only_applicable_activation[External controller] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic PASSED [ 10%]
+tests/gui/test_dashboard.py::test_camera_save_validation_error_routes_to_other_camera_row PASSED [ 10%]
+tests/gui/test_dashboard.py::test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit PASSED [ 10%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[camera] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[camera_pending] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[mcu] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[tracking] PASSED [ 11%]
+tests/gui/test_dashboard.py::test_full_gui_snapshot_cannot_load_during_device_work[projector] PASSED [ 11%]
+tests/gui/test_dashboard.py::test_managed_subject_metadata_preserves_absence_and_numeric_zero PASSED [ 11%]
+tests/gui/test_dashboard.py::test_managed_subject_metadata_preserves_unknown_sex_value PASSED [ 11%]
+tests/gui/test_dashboard.py::test_managed_runtime_editors_are_enabled_without_review_samples PASSED [ 11%]
+tests/gui/test_dashboard.py::test_dashboard_control_status_matches_connection_and_authority PASSED [ 11%]
+tests/gui/test_dashboard.py::test_shared_theme_styles_menu_bar_and_menu_states PASSED [ 11%]
+tests/gui/test_dashboard.py::test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking PASSED [ 11%]
+tests/gui/test_dashboard.py::test_managed_status_uses_readiness_and_output_closure_evidence PASSED [ 12%]
+tests/gui/test_dashboard.py::test_retained_summary_keeps_incidents_ahead_of_completed_operation_history PASSED [ 12%]
+tests/gui/test_dashboard.py::test_auto_retained_review_filters_only_exact_routine_warnings PASSED [ 12%]
+tests/gui/test_dashboard.py::test_auto_retained_review_operation_and_recovery_truth_table PASSED [ 12%]
+tests/gui/test_dashboard.py::test_retained_ack_guard_reassesses_fresh_snapshot_but_preserves_same_identity PASSED [ 12%]
+tests/gui/test_dashboard.py::test_manual_history_review_opens_without_ack_guard PASSED [ 12%]
+tests/gui/test_dashboard.py::test_mandatory_review_can_be_reopened_after_same_identity_history_empties PASSED [ 12%]
+tests/gui/test_dashboard.py::test_managed_prompt_window_is_single_and_responds_with_displayed_snapshot PASSED [ 13%]
+tests/gui/test_dashboard.py::test_prompt_completion_preserves_current_lease_authority PASSED [ 13%]
+tests/gui/test_dashboard.py::test_managed_retained_summary_uses_one_acknowledgement_window PASSED [ 13%]
+tests/gui/test_dashboard.py::test_old_retained_dialog_cannot_acknowledge_a_new_connection PASSED [ 13%]
+tests/gui/test_dashboard.py::test_startup_recovery_buttons_are_explicit_and_close_is_not_a_choice PASSED [ 13%]
+tests/gui/test_dashboard.py::test_closing_retained_review_does_not_acknowledge PASSED [ 13%]
+tests/gui/test_dashboard.py::test_long_retained_review_scrolls_without_hiding_actions PASSED [ 13%]
+tests/gui/test_dashboard.py::test_retained_summary_keeps_ids_in_details_and_all_actionable_operations_visible PASSED [ 13%]
+tests/gui/test_dashboard.py::test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch PASSED [ 14%]
+tests/gui/test_dashboard.py::test_prompt_completion_wait_failure_retains_admitted_id_as_unconfirmed PASSED [ 14%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_connection_emits_read_only_intent[False] PASSED [ 14%]
+tests/gui/test_dashboard.py::test_managed_spikeglx_connection_emits_read_only_intent[True] PASSED [ 14%]
+tests/gui/test_dashboard.py::test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits PASSED [ 14%]
+tests/gui/test_dashboard.py::test_preview_window_waits_for_backend_completion[True] PASSED [ 14%]
+tests/gui/test_dashboard.py::test_preview_window_waits_for_backend_completion[False] PASSED [ 14%]
+tests/gui/test_dashboard.py::test_managed_camera_controls_emit_intent_without_changing_local_device_state PASSED [ 15%]
+tests/gui/test_dashboard.py::test_devices_draft_icons_local_edits_and_command_gates PASSED [ 15%]
+tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[720] PASSED [ 15%]
+tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[1175] PASSED [ 15%]
+tests/gui/test_dashboard.py::test_camera_trigger_form_reflows_and_destroys_owned_editors PASSED [ 15%]
+tests/gui/test_dashboard.py::test_folder_picker_selection_cancellation_and_phase_lock PASSED [ 15%]
+tests/gui/test_dashboard.py::test_compact_path_keeps_full_text_tooltip_and_editing PASSED [ 15%]
+tests/gui/test_dashboard.py::test_log_overflow_has_visible_working_scrollbar[standard] PASSED [ 15%]
+tests/gui/test_dashboard.py::test_log_overflow_has_visible_working_scrollbar[retro_console] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_log_keeps_reading_position_during_append_and_retention PASSED [ 16%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[Camera failed: timeout-None-True] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[Transport error: lost connection-None-True] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[Cannot open camera-None-True] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[Setup rejected-None-True] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[No error reported-None-False] PASSED [ 16%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[Completed without error-None-False] PASSED [ 17%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[0 errors-None-False] PASSED [ 17%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[Controller connected-None-False] PASSED [ 17%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[Calibration file is missing-True-True] PASSED [ 17%]
+tests/gui/test_dashboard.py::test_log_error_color_preserves_text_details_and_style_switch[Previous failed operation recovered-False-False] PASSED [ 17%]
+tests/gui/test_dashboard.py::test_log_entry_details_follow_their_own_bounded_document_block PASSED [ 17%]
+tests/gui/test_dashboard.py::test_managed_operation_log_suppresses_success_and_preserves_failure PASSED [ 17%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[success-recover] PASSED [ 17%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[success-delete] PASSED [ 18%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[success-continue] PASSED [ 18%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[failed-recover] PASSED [ 18%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[failed-delete] PASSED [ 18%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[failed-continue] PASSED [ 18%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[unconfirmed-recover] PASSED [ 18%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[unconfirmed-delete] PASSED [ 18%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[unconfirmed-continue] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[needs_input-recover] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[needs_input-delete] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_recovery_result_feedback_waits_for_confirmed_prompt_completion[needs_input-continue] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_dispatched_action_log_uses_actions_without_poll_results[camera-options0-] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_dispatched_action_log_uses_actions_without_poll_results[Setup-options1-Setup \xb7 Validating configuration\u2026] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_dispatched_action_log_uses_actions_without_poll_results[spikeglx_connection-options2-SpikeGLX \xb7 Connecting\u2026] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_dispatched_action_log_uses_actions_without_poll_results[begin_tracking_diagnostic-options3-Tracking \xb7 Preparing pipeline\u2026] PASSED [ 19%]
+tests/gui/test_dashboard.py::test_dispatched_action_log_uses_actions_without_poll_results[Abort now-options4-Session \xb7 Stopping active work\u2026] PASSED [ 20%]
+tests/gui/test_dashboard.py::test_dispatched_action_log_uses_actions_without_poll_results[save_configuration_history-options5-Shutdown \xb7 Saving configuration\u2026] PASSED [ 20%]
+tests/gui/test_dashboard.py::test_dispatched_action_log_uses_actions_without_poll_results[tracking_diagnostic_frame-options6-] PASSED [ 20%]
+tests/gui/test_dashboard.py::test_action_log_tracks_evidence_once_without_success_results PASSED [ 20%]
+tests/gui/test_dashboard.py::test_action_log_covers_session_backends_recording_recovery_and_shutdown PASSED [ 20%]
+tests/gui/test_dashboard.py::test_successful_tracking_frame_poll_does_not_add_routine_log_row PASSED [ 20%]
+tests/gui/test_dashboard.py::test_preview_geometry_survives_recreation PASSED [ 20%]
+tests/gui/test_dashboard.py::test_preview_button_restores_minimized_workspace[Configuration-False] PASSED [ 21%]
+tests/gui/test_dashboard.py::test_preview_button_restores_minimized_workspace[Configuration-True] PASSED [ 21%]
+tests/gui/test_dashboard.py::test_preview_button_restores_minimized_workspace[Running-False] PASSED [ 21%]
+tests/gui/test_dashboard.py::test_preview_button_restores_minimized_workspace[Running-True] PASSED [ 21%]
+tests/gui/test_dashboard.py::test_review_intent_does_not_advance_session PASSED [ 21%]
+tests/gui/test_dashboard.py::test_preview_selector_reuses_modeless_window_and_keeps_visibility PASSED [ 21%]
+tests/gui/test_dashboard.py::test_preview_snap_gap_and_available_screen_bounds[anchor0-area0-expected0] PASSED [ 21%]
+tests/gui/test_dashboard.py::test_preview_snap_gap_and_available_screen_bounds[anchor1-area1-expected1] PASSED [ 21%]
+tests/gui/test_dashboard.py::test_preview_snap_gap_and_available_screen_bounds[anchor2-area2-expected2] PASSED [ 22%]
+tests/gui/test_dashboard.py::test_preview_waits_for_report_and_handles_failure_closure_and_control_loss PASSED [ 22%]
+tests/gui/test_dashboard.py::test_unavailable_preview_retains_reported_state_without_commands PASSED [ 22%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Configuration-actions0-True] PASSED [ 22%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Setting up-actions1-False] PASSED [ 22%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Ready-actions2-True] PASSED [ 22%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Starting-actions3-False] PASSED [ 22%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Running-actions4-False] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Stopping-actions5-False] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Finalizing-actions6-False] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_review_phase_locks_and_actions[Ended-actions7-False] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_observer_locks_preserve_local_draft PASSED [ 23%]
+tests/gui/test_dashboard.py::test_responsive_navigation_preserves_widget_identity PASSED [ 23%]
+tests/gui/test_dashboard.py::test_review_selector_renders_completion_and_observer_lock PASSED [ 23%]
+tests/gui/test_dashboard.py::test_wide_layout_keeps_status_and_logs_visible[dimensions0] PASSED [ 23%]
+tests/gui/test_dashboard.py::test_wide_layout_keeps_status_and_logs_visible[dimensions1] PASSED [ 24%]
+tests/gui/test_dashboard.py::test_dashboard_has_only_requested_cards PASSED [ 24%]
+tests/gui/test_dashboard.py::test_hud_fits_content_and_log_fills_available_height[False] PASSED [ 24%]
+tests/gui/test_dashboard.py::test_hud_fits_content_and_log_fills_available_height[True] PASSED [ 24%]
+tests/gui/test_dashboard.py::test_setup_serves_as_new_session_after_completion PASSED [ 24%]
+tests/gui/test_dashboard.py::test_stop_cancels_setup_without_a_dialog[Setting up] PASSED [ 24%]
+tests/gui/test_dashboard.py::test_stop_cancels_setup_without_a_dialog[Ready] PASSED [ 24%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Abort now-expected0] PASSED [ 25%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Stop after trial-expected1] PASSED [ 25%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Cancel-expected2] PASSED [ 25%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Escape-expected3] PASSED [ 25%]
+tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Close-expected4] PASSED [ 25%]
+tests/gui/test_dashboard.py::test_stop_dialog_updates_choices_and_closes_on_control_loss PASSED [ 25%]
+tests/gui/test_dashboard.py::test_runtime_indicators_are_independent_and_read_only PASSED [ 25%]
+tests/gui/test_dashboard.py::test_preview_participation_gates_and_camera_draft_selection PASSED [ 25%]
+tests/gui/test_dashboard.py::test_camera_role_uniqueness_and_extra_preview_rows PASSED [ 26%]
+tests/gui/test_dashboard.py::test_camera_pfs_picker_preserves_camera_identity_and_editing_gate PASSED [ 26%]
+tests/gui/test_dashboard.py::test_all_pages_share_fitted_hud_and_expanding_log PASSED [ 26%]
+tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud PASSED [ 26%]
+tests/gui/test_dashboard.py::test_camera_batch_check_preserves_selection_and_connections PASSED [ 26%]
+tests/gui/test_dashboard.py::test_pfs_trigger_hint_and_per_camera_drafts PASSED [ 26%]
+tests/gui/test_dashboard.py::test_real_camera_inventory_preserves_roles_and_tests_open_close PASSED [ 26%]
+tests/gui/test_dashboard.py::test_microcontroller_camera_rows_and_discovery PASSED [ 27%]
+tests/gui/test_dashboard.py::test_wrapped_log_preserves_whole_words_and_reading_anchor PASSED [ 27%]
+tests/gui/test_dashboard.py::test_projector_refresh_preserves_assignment PASSED [ 27%]
+tests/gui/test_dashboard.py::test_projector_assignments_survive_restart_and_changed_inventory[False] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_projector_assignments_survive_restart_and_changed_inventory[True] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_saved_projector_assignments_restore_as_managed_drafts[False-False] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_saved_projector_assignments_restore_as_managed_drafts[False-True] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_saved_projector_assignments_restore_as_managed_drafts[True-False] PASSED [ 27%]
+tests/gui/test_dashboard.py::test_saved_projector_assignments_restore_as_managed_drafts[True-True] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_invalid_saved_projector_assignments_are_preserved_and_reported[broken] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_invalid_saved_projector_assignments_are_preserved_and_reported[{"version":1,"assignments":{"one":"Front","two":"Front"}}] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_invalid_saved_projector_assignments_are_preserved_and_reported[{"version":1,"assignments":{"one":"Front","one":"Left"}}] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_invalid_saved_projector_assignments_are_preserved_and_reported[{"version":2,"assignments":{"one":"Front"}}] PASSED [ 28%]
+tests/gui/test_dashboard.py::test_projector_assignment_save_failure_keeps_draft_and_warns PASSED [ 28%]
+tests/gui/test_dashboard.py::test_gui_display_number_is_local_and_shared_with_layout PASSED [ 28%]
+tests/gui/test_dashboard.py::test_microcontroller_fixed_signal_tests_and_layout PASSED [ 29%]
+tests/gui/test_dashboard.py::test_microcontroller_role_outputs_clear_without_changing_camera_use PASSED [ 29%]
+tests/gui/test_dashboard.py::test_microcontroller_file_restores_camera_output_rows_without_commands PASSED [ 29%]
+tests/gui/test_dashboard.py::test_local_review_microcontroller_does_not_open_serial PASSED [ 29%]
+tests/gui/test_dashboard.py::test_simulated_review_inventory_does_not_enumerate_com_ports PASSED [ 29%]
+tests/gui/test_dashboard.py::test_managed_microcontroller_emits_controller_intents FAILED [ 29%]
+
+================================== FAILURES ===================================
+____________ test_managed_microcontroller_emits_controller_intents ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001EB8DD62F80>
+
+    def test_managed_microcontroller_emits_controller_intents(
+        window: DashboardWindow,
+    ) -> None:
+        panel = window.devices.microcontroller
+        panel.managed = True
+        connections: list[bool] = []
+        saves: list[
+            tuple[str, str, bool, str, bool, str | None, str | None, str | None]
+        ] = []
+        pin_tests: list[tuple[str, bool]] = []
+        panel.connection_requested.connect(lambda: connections.append(True))
+        panel.save_requested.connect(lambda *values: saves.append(values))
+        panel.pin_test_requested.connect(lambda key, start: pin_tests.append((key, start)))
+        window.apply_view(
+            DashboardView(
+                connected=True,
+                has_control=True,
+                configuration_wired=False,
+                phase=Phase.CONFIGURATION,
+            )
+        )
+        panel.set_saved_pins("COM8", "D9", True, "D2", True)
+        assert panel.port.isEnabled()
+        assert panel.scan_button.isEnabled()
+        panel.pin_editors["behavioral"].setText("D10")
+        panel.pin_editors["tracking"].setText("D11")
+        assert saves == []  # Controller snapshots and unfinished drafts stay silent.
+        panel.pin_editors["tracking"].editingFinished.emit()
+        panel.test_connection_button.click()
+        panel.test_buttons["trial-state"].click()
+        panel.set_diagnostic("trial-state", True, 1)
+        assert not panel.port.isEnabled()
+        assert not panel.scan_button.isEnabled()
+        panel.test_buttons["trial-state"].click()
+    
+        assert saves == []  # Incomplete/local edits are adopted by the next action.
+        assert connections == [True]
+        assert pin_tests == [("trial-state", True), ("trial-state", False)]
+        assert "no command sent" not in panel.console.toPlainText().splitlines()[-1]
+        assert "Save pins" not in [b.text() for b in panel.findChildren(QPushButton)]
+        assert not panel.enable_controls["projector-flip"].isEnabled()
+        panel.set_diagnostic("trial-state", False, 1)
+        assert panel.port.isEnabled()
+        assert panel.scan_button.isEnabled()
+>       assert (
+            "output LOW, 1 rising transitions generated by MCU"
+            in panel.console.toPlainText()
+        )
+E       AssertionError: assert 'output LOW, 1 rising transitions generated by MCU' in 'No connection checks performed.\nConnecting to COM8\u2026'
+E        +  where 'No connection checks performed.\nConnecting to COM8\u2026' = <built-in method toPlainText of LogConsole object at 0x000001EB8DD6A950>()
+E        +    where <built-in method toPlainText of LogConsole object at 0x000001EB8DD6A950> = <cephvr.gui.consoles.LogConsole object at 0x000001EB8DD6A950>.toPlainText
+E        +      where <cephvr.gui.consoles.LogConsole object at 0x000001EB8DD6A950> = <cephvr.gui.microcontroller.MicrocontrollerPanel object at 0x000001EB8DD68430>.console
+
+tests\gui\test_dashboard.py:4794: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_managed_microcontroller_emits_controller_intents - AssertionError: assert 'output LOW, 1 rising transitions generated by MCU' in 'No connection checks performed.\nConnecting to COM8\u2026'
+ +  where 'No connection checks performed.\nConnecting to COM8\u2026' = <built-in method toPlainText of LogConsole object at 0x000001EB8DD6A950>()
+ +    where <built-in method toPlainText of LogConsole object at 0x000001EB8DD6A950> = <cephvr.gui.consoles.LogConsole object at 0x000001EB8DD6A950>.toPlainText
+ +      where <cephvr.gui.consoles.LogConsole object at 0x000001EB8DD6A950> = <cephvr.gui.microcontroller.MicrocontrollerPanel object at 0x000001EB8DD68430>.console
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+================== 1 failed, 222 passed in 92.49s (0:01:32) ===================

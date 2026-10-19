@@ -223,7 +223,8 @@ def test_idle_uses_prepared_valid_area_union_and_restores_scissor():
     assert len(calls) == 1 and calls[0][1] == (0.3, 0.4, 0.5)
 
 
-def test_photodiode_pulse_renders_after_blackouts_and_black_frame():
+@pytest.mark.parametrize("per_output", [False, True])
+def test_photodiode_pulse_renders_after_blackouts_and_black_frame(per_output):
     from cephvr.visual_stimulus.config.models.display_profile import (
         PhotodiodePatch,
         PixelRect,
@@ -245,6 +246,14 @@ def test_photodiode_pulse_renders_after_blackouts_and_black_frame():
             "photodiode_output_id": output.output_id,
         }
     )
+    if per_output:
+        display = display.model_copy(
+            update={
+                "photodiode_output_id": None,
+                "photodiode_patch": None,
+                "photodiode_patches": {output.output_id: patch},
+            }
+        )
     artifact = artifact.model_copy(update={"display": display})
     calls = []
     context = NS(scissor=None, screen=None, disable=lambda *_: None)
@@ -280,6 +289,39 @@ def test_photodiode_pulse_renders_after_blackouts_and_black_frame():
     assert program["marker_rect"].value == (0.12, 0.13, 0.2, 0.19)
     assert program["marker_rgb"].value == (1, 1, 1)
     assert context.scissor is None
+    if per_output:
+        other = output.model_copy(
+            update={
+                "output_id": "other",
+                "device_identity": "other",
+                "blackout_zones": (),
+            }
+        )
+        extra = patch.model_copy(
+            update={
+                "rect": PixelRect(x=20, y=21, width=2, height=3),
+                "background_rect": None,
+            }
+        )
+        display = display.model_copy(
+            update={
+                "outputs": (output, other),
+                "photodiode_patches": {output.output_id: patch, "other": extra},
+            }
+        )
+        second = artifact.model_copy(update={"display": display})
+        calls.clear()
+        renderer._apply_output(frame, second, "other", False, 0)
+        assert calls == ["marker/output"]
+        assert program["marker_rect"].value == (0.2, 0.21, 0.22, 0.24)
+        assert program["marker_rgb"].value == (0, 0, 0)
+        display = display.model_copy(
+            update={"photodiode_patches": {output.output_id: patch}}
+        )
+        renderer._apply_output(
+            frame, artifact.model_copy(update={"display": display}), "other", True, 0
+        )
+        assert program["marker_active"].value == 0
     with pytest.raises(ValueError, match="fit inside"):
         PhotodiodePatch.model_validate(
             dict(patch.model_dump(), rect=dict(x=0, y=0, width=1, height=1))
@@ -461,7 +503,10 @@ def test_projected_layer_vertices_are_retained_as_exact_shader_words() -> None:
 
 
 @pytest.mark.parametrize("pulse_enabled", [True, False])
-def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> None:
+@pytest.mark.parametrize("multiple", [False, True])
+def test_engine_freezes_exact_provider_evidence_for_recording(
+    pulse_enabled, multiple
+) -> None:
     from dataclasses import replace
 
     from cephvr.visual_stimulus.rendering.types import ImageSnapshot
@@ -481,15 +526,46 @@ def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> 
         )
     display = artifact.display
     output = display.outputs[0]
+    if multiple:
+        outputs = (
+            output,
+            output.model_copy(
+                update={"output_id": "second", "device_identity": "second"}
+            ),
+            output.model_copy(
+                update={"output_id": "blank", "device_identity": "blank"}
+            ),
+        )
+        display = display.model_copy(
+            update={
+                "outputs": outputs,
+                "photodiode_output_id": None,
+                "photodiode_patch": None,
+                "photodiode_patches": {
+                    o.output_id: artifact.display.photodiode_patch for o in outputs[:2]
+                },
+                "pacing_output_id": output.output_id,
+            }
+        )
+        artifact = artifact.model_copy(update={"display": display})
+    outputs = display.active_outputs
 
     class Port:
         def initialize_display(self, selected):
             return DisplayInitialization(
-                (output.output_id,),
-                ((output.output_id, 8, 8, 8),),
-                ((output.output_id, output.width_px, output.height_px),),
-                ((output.output_id, 1),),
-                (OutputActivity(output.output_id, 1, 2, 1),),
+                tuple(o.output_id for o in outputs),
+                tuple((o.output_id, 8, 8, 8) for o in outputs),
+                tuple((o.output_id, o.width_px, o.height_px) for o in outputs),
+                tuple(
+                    (o.output_id, display.requested_swap_interval(o.output_id))
+                    for o in outputs
+                ),
+                tuple(
+                    OutputActivity(
+                        o.output_id, 1, 2, display.requested_swap_interval(o.output_id)
+                    )
+                    for o in outputs
+                ),
             )
 
         def prepare_trial(self, prepared, resources):
@@ -510,10 +586,9 @@ def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> 
 
         def render(self, scene, state):
             return RenderPassResult(
-                (
-                    RenderedOutput(
-                        output.output_id, output.width_px, output.height_px, 8, object()
-                    ),
+                tuple(
+                    RenderedOutput(o.output_id, o.width_px, o.height_px, 8, object())
+                    for o in outputs
                 ),
                 (),
                 (),
@@ -521,10 +596,20 @@ def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> 
             )
 
         def present(self, frames):
-            return (OutputActivity(output.output_id, 10, 11, 1),)
+            return tuple(
+                OutputActivity(
+                    o.output_id, 10, 11, display.requested_swap_interval(o.output_id)
+                )
+                for o in outputs
+            )
 
         def show_idle(self, selected):
-            return (OutputActivity(output.output_id, 20, 21, 1),)
+            return tuple(
+                OutputActivity(
+                    o.output_id, 20, 21, display.requested_swap_interval(o.output_id)
+                )
+                for o in outputs
+            )
 
     engine = RendererEngine(
         Port(), clock_ns=lambda: 0, resource_provider=lambda _: object()
@@ -532,7 +617,7 @@ def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> 
     engine.initialize_display(display)
     engine.prepare_trial(artifact)
     cancelled_idle = engine.stop_trial()
-    assert len(cancelled_idle) == 1 and cancelled_idle[0].output_id == output.output_id
+    assert {o.output_id for o in cancelled_idle} == {o.output_id for o in outputs}
     engine.begin_trial(artifact.identity.trial_id, 0)
     update = engine.render_tick(0)
 
@@ -542,14 +627,18 @@ def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> 
     assert update.evidence_state.images[0].requested_image_index == 1
     assert update.evidence_state.images[0].repeated
     assert update.evidence_state.active_instance_ids
-    assert len(update.evidence_submissions) == 1
-    assert update.evidence_submissions[0].phase == "returned"
-    assert update.evidence_submissions[0].marker_high == update.group.photodiode_high
+    assert len(update.evidence_submissions) == len(outputs)
+    for submission in update.evidence_submissions:
+        assert submission.phase == "returned"
+        expected_marker = submission.output_id in display.marker_patches
+        assert submission.marker_high == (
+            update.group.photodiode_high if expected_marker else None
+        )
+        assert submission.marker_index == (0 if expected_marker else None)
     if not pulse_enabled:
         assert update.group.photodiode_high is None
-        assert update.evidence_submissions[0].marker_index is None
     stopped_idle = engine.stop_trial(1)
-    assert len(stopped_idle) == 1 and stopped_idle[0].output_id == output.output_id
+    assert {o.output_id for o in stopped_idle} == {o.output_id for o in outputs}
 
 
 def test_arena_state_snapshot_has_no_planar_appearance_requirements():
@@ -1033,6 +1122,12 @@ def test_native_trial_skips_source_only_recipe_image_dependency():
         announce=lambda key, value: events.append(key),
         scene_renderer=Scene(),
     )
+    from cephvr.visual_stimulus.config.review_layout import review_layout
+
+    artifact = artifact.model_copy(
+        update={"preview_layout": review_layout(artifact.display)}
+    )
+    port.preview = NS()  # This source-dependency test uses an already prepared viewer.
     port._display = artifact.display
     port._moderngl = object()
     port.prepare_trial(artifact, resources)
@@ -2423,3 +2518,201 @@ def test_native_capture_cleanup_activates_owner_before_scene_release(
     assert not result.outstanding
     assert calls[:2] == ["first", "scene"]
     assert port.scene_renderer is None and not port._outputs
+
+
+@pytest.mark.parametrize("angle", [0, 48, 90, 173])
+def test_physical_texture_coverage_preserves_tile_scale_and_anchor(angle):
+    import math
+
+    from cephvr.visual_stimulus.rendering.layer_projection import covering_texture
+    from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
+
+    surface = NS(
+        surface_id="bottom",
+        bottom_left_mm=(0, 0, 0),
+        bottom_right_mm=(160, 0, 0),
+        top_left_mm=(0, 120, 0),
+    )
+    artifact = NS(display=NS(geometry=NS(surfaces=[surface])))
+    mapping = NS(surface_id="bottom", matrix=((1, 0, 0), (0, 1, 0)))
+    setting = NS(
+        kind="texture",
+        pattern=NS(kind="image_tile"),
+        space=NS(kind="physical_surface", mappings=[mapping]),
+    )
+    values = dict(
+        x=15.0,
+        y=-9.0,
+        rotation=float(angle),
+        width=90.0,
+        height=90.0,
+        period_x=20.0,
+        period_y=30.0,
+        phase_x=0.2,
+        phase_y=0.3,
+    )
+    snapshot = InstanceSnapshot("tile", "texture", True, tuple(values.items()), setting)
+    result = dict(covering_texture(artifact, snapshot, "bottom").state)
+    for axis, name in enumerate(("width", "height")):
+        period = values["period_x" if axis == 0 else "period_y"]
+        added_cycles = (result[name] - values[name]) / (2 * period)
+        assert added_cycles == pytest.approx(round(added_cycles))
+    for x in (-80, 80):
+        for y in (-60, 60):
+            dx, dy = x - values["x"], y - values["y"]
+            a = math.radians(angle)
+            assert (
+                abs(dx * math.cos(a) + dy * math.sin(a)) <= result["width"] / 2 + 1e-8
+            )
+            assert (
+                abs(-dx * math.sin(a) + dy * math.cos(a)) <= result["height"] / 2 + 1e-8
+            )
+    assert dict(snapshot.state) == values
+    assert result["phase_x"] == values["phase_x"]
+    assert result["period_y"] == values["period_y"]
+    image = NS(kind="image")
+    from dataclasses import replace
+
+    unchanged = replace(snapshot, settings=image)
+    assert covering_texture(artifact, unchanged, "bottom") is unchanged
+
+
+def test_stimulus_native_close_hides_and_failed_release_retains_ownership(monkeypatch):
+    import cephvr.visual_stimulus.rendering.preview as module
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.visual_stimulus.rendering.preview import StimulusPreview
+
+    monkeypatch.setattr(module.sys, "platform", "test")
+    events = []
+    glfw = NS(
+        hide_window=lambda w: events.append("hide"),
+        show_window=lambda w: events.append("show"),
+        window_should_close=lambda w: True,
+        set_window_should_close=lambda *args: None,
+        make_context_current=lambda w: None,
+        destroy_window=lambda w: events.append("destroy"),
+    )
+    preview = StimulusPreview(glfw, NS(), lambda *state: events.append(state))
+    preview.window = object()
+    preview.context = NS(release=lambda: events.append("context"))
+    preview.set_visible(True, rpc.PreviewWindowPlacement())
+    preview.service()
+    assert not preview.visible and events[-1] == (True, False, "")
+    failures = [True]
+
+    def release():
+        if failures.pop():
+            raise RuntimeError("retained resource")
+
+    resource = NS(release=release)
+    preview.resources.append(resource)
+    with pytest.raises(RuntimeError, match="retained resource"):
+        preview.release()
+    assert preview.window is not None and preview.resources == [resource]
+    failures.append(False)
+    preview.release()
+    assert preview.window is None and not preview.resources
+    assert events[-1] == (False, False, "")
+
+
+@pytest.mark.windows
+def test_native_review_layouts_crop_only_preview_and_rotate_full_recording():
+    moderngl = pytest.importorskip("moderngl")
+    from cephvr.visual_stimulus.config.models.artifact_models import ReviewEncoding
+    from cephvr.visual_stimulus.config.models.display_profile import PixelRect
+    from cephvr.visual_stimulus.config.review_layout import (
+        layout_from_crops,
+        recording_layout,
+    )
+    from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+    from cephvr.visual_stimulus.rendering.types import RenderedOutput
+
+    context = moderngl.create_standalone_context(require=430)
+    capture = ReviewCapture()
+    preview = ReviewCapture()
+    sources = []
+    try:
+        ids = ("left", "front", "right", "bottom")
+        display = NS(
+            active_outputs=tuple(
+                NS(output_id=i, rgb_bits_per_channel=8, width_px=64, height_px=64)
+                for i in ids
+            )
+        )
+        display.active_mappings = tuple(
+            NS(
+                output_id=i,
+                mapping_id=i,
+                surface_id=i,
+                viewport=PixelRect(x=0, y=0, width=64, height=64),
+            )
+            for i in ids
+        )
+        crop = PixelRect(x=16, y=16, width=32, height=32)
+        layout = layout_from_crops(display, tuple((i, i.title(), crop) for i in ids), 1)
+        pixels = bytearray()
+        for y in range(64):
+            for x in range(64):
+                pixels.extend(
+                    (0, 255 if y >= 32 else 0, 255 if x >= 32 else 0, 255)
+                    if 16 <= x < 48 and 16 <= y < 48
+                    else (255, 0, 0, 255)
+                )
+        sources = [context.texture((64, 64), 4, bytes(pixels)) for _ in ids]
+        outputs = tuple(
+            RenderedOutput(i, 64, 64, 8, t) for i, t in zip(ids, sources, strict=True)
+        )
+        image = preview.compose(outputs, layout)
+        assert not preview._labels and not capture._labels
+        preview_bytes = image.read()
+        width, height = image.size
+
+        def pixel(x, y):
+            offset = (y * width + x) * 4
+            return preview_bytes[offset : offset + 3]
+
+        for tile in layout.tiles:
+            r = tile.rect
+            for x in (8, 24):
+                for y in (8, 24):
+                    source_x = 31 - x if tile.label in {"Left", "Right"} else x
+                    source_y = 31 - y if tile.label == "Bottom" else y
+                    assert pixel(r.x + x, r.y + y) == bytes(
+                        (0, 255 if source_y >= 16 else 0, 255 if source_x >= 16 else 0)
+                    )
+        assert bytes((255, 0, 0, 0)) not in [
+            preview_bytes[i : i + 4] for i in range(0, len(preview_bytes), 4)
+        ]
+        layout = recording_layout(display)
+        image = capture.compose(outputs, layout)
+        assert not preview._labels and not capture._labels
+        preview_bytes = image.read()
+        width, height = image.size
+        for tile in layout.tiles:
+            assert tile.source_rect == PixelRect(x=0, y=0, width=64, height=64)
+            assert pixel(tile.rect.x + 4, tile.rect.y + 4) == bytes((255, 0, 0))
+        bottom = layout.tiles[-1].rect
+        assert pixel(bottom.x + 24, bottom.y + 24) == bytes((0, 0, 255))
+        assert pixel(bottom.x + 40, bottom.y + 24) == bytes((0, 255, 255))
+        for tile in layout.tiles[:-1]:
+            assert pixel(tile.rect.x + 24, tile.rect.y + 24) == bytes((0, 0, 0))
+            assert pixel(tile.rect.x + 40, tile.rect.y + 40) == bytes((0, 255, 255))
+        encoding = ReviewEncoding.model_construct(
+            **layout.model_dump(), native_pixel_format="rgba8_top_down"
+        )
+        # model_construct does not deserialize nested tiles.
+        encoding = encoding.model_copy(update={"tiles": layout.tiles})
+        pending = capture.capture(outputs, encoding)
+        context.finish()
+        recorded = capture.poll(pending)
+        row = width * 4
+        expected = b"".join(
+            preview_bytes[y * row : (y + 1) * row] for y in reversed(range(height))
+        )
+        assert recorded == expected
+    finally:
+        capture.release()
+        preview.release()
+        for texture in sources:
+            texture.release()
+        context.release()

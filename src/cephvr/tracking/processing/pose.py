@@ -68,7 +68,6 @@ class PoseWorker:
         self.waiting: _Job | None = None
         self.running = False
         self.pending_since_ns: int | None = None
-        self.last_completion_ns: int | None = None
         self.stopping = False
         self.close_deadline = 0
         self.closed = False
@@ -138,7 +137,6 @@ class PoseWorker:
                 assert job is not None
                 try:
                     self._compute(operations, job)
-                    self.last_completion_ns = self.clock()
                 finally:
                     self.pool.release(job.frame)
                     with self.condition:

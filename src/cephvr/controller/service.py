@@ -192,6 +192,23 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             lambda: self.runtime.update_configuration(request),
         )
 
+    async def SetStimulusPreview(
+        self, request: svc.SetStimulusPreviewRequest, context: grpc.aio.ServicerContext
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "SetStimulusPreview",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.stimulus_preview.execute(request),
+        )
+
+    async def ReportStimulusPreview(
+        self, request: pb.StimulusPreviewState, context: grpc.aio.ServicerContext
+    ) -> pb.ReportReceipt:
+        await self._peer(context, "visual_stimulus", request.backend.backend_generation)
+        return await self.runtime.stimulus_preview.report(request)
+
     async def OpenDisplayCalibration(
         self,
         request: svc.OpenDisplayCalibrationRequest,
@@ -437,6 +454,17 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         )
         return await self._reports.enqueue(
             "projection:display", request, self.runtime.clock()
+        )
+
+    async def AdjustProjectorBrightness(
+        self, request: svc.ProjectorBrightnessRequest, context: grpc.aio.ServicerContext
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "AdjustProjectorBrightness",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.projector_brightness.execute(request),
         )
 
     async def ExecuteCameraCommand(

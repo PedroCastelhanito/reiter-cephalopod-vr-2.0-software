@@ -143,7 +143,12 @@ class CommandAdmissionGate:
             command_id
             if synchronous
             or name
-            in {"Setup", "ExecuteCameraCommand", "ExecuteMicrocontrollerCommand"}
+            in {
+                "Setup",
+                "ExecuteCameraCommand",
+                "ExecuteMicrocontrollerCommand",
+                "AdjustProjectorBrightness",
+            }
             or current_work is None
             else current_work
         )
@@ -207,7 +212,11 @@ class CommandAdmissionGate:
                 current_work = self._work.current_work_key()
                 if current_work is not None:
                     self._session_work_key = current_work
-            elif name in {"ExecuteCameraCommand", "ExecuteMicrocontrollerCommand"}:
+            elif name in {
+                "ExecuteCameraCommand",
+                "ExecuteMicrocontrollerCommand",
+                "AdjustProjectorBrightness",
+            }:
                 self._camera_work_keys.add(work_key)
             elif work_key == command_id:
                 # Admitted outside any session scope: its own scope ends here.

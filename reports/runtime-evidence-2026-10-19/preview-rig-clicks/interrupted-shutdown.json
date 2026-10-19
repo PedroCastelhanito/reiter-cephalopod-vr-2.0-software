@@ -1,0 +1,10 @@
+{
+  "controller_generation": "00649a47-557b-4f5e-a8c7-7bceaea27597",
+  "shutdown": {
+    "command_id": "861c06c3-d5e6-4819-8251-143bf2e38c2a",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: cleanup could not be confirmed"
+  }
+}

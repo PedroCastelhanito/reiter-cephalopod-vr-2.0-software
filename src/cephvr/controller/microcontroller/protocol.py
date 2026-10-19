@@ -1,4 +1,4 @@
-"""Strict bounded ASCII protocol-v4 parsing for the pulse microcontroller (A11)."""
+"""Strict bounded ASCII protocol-v5 parsing for the pulse microcontroller (A11)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
 MAX_LINE_BYTES = 512
-PROTOCOL_VERSION = 4
+PROTOCOL_VERSION = 5
 FREQUENCY_STEP = Decimal("0.1")
 _TOKEN = re.compile(r"^[!-~]+$")
 _UINT = re.compile(r"^[0-9]+$")
@@ -20,7 +20,7 @@ ROLES = ("behavioral", "tracking", "eye_tracking")
 
 
 class ProtocolError(ValueError):
-    """The complete serial line is malformed or incompatible with protocol v4."""
+    """The complete serial line is malformed or incompatible with protocol v5."""
 
 
 @dataclass(frozen=True)
@@ -232,7 +232,7 @@ def _require_ok(
     missing = required - reply.fields.keys()
     if unknown or missing:
         raise ProtocolError(
-            f"reply fields differ from protocol v4; missing={sorted(missing)}, unknown={sorted(unknown)}"
+            f"reply fields differ from protocol v5; missing={sorted(missing)}, unknown={sorted(unknown)}"
         )
 
 

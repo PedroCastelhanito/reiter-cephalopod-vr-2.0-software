@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-19",
+  "source": "dirty workspace",
+  "tests": "7 passed, 638 deselected",
+  "saved_configuration_equal": true,
+  "native_after_reload": "blocked: foreground window did not report a process id",
+  "scope": "physical plane geometry; no optical acceptance"
+}

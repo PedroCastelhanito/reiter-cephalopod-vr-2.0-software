@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-19",
+  "task": "preview-connect-setup-diagnostics",
+  "findings": {
+    "preview": "internal camera Connect needlessly reconfigured MCU; transient viewer closure collapsed grid and recreated all targets",
+    "media": "runtime_gui.json contains8 references to untagged GaussianNoise PNG with no override; sibling texture recipe explicitly identifies it as preview_file",
+    "pairing": "startup optional configuration-provider discovery finds no cephvr.synchronization.configuration; enabled gate returns VALIDATOR_UNAVAILABLE; rejection omitted unavailable_reason",
+    "inventory": "automatic read queued in Configuration/Ready can reach server after phase transition"
+  },
+  "changes": [
+    "internal camera Connect skips shared pulse change",
+    "pending reconnect retains footprints without claiming visible/live; surviving target widgets reused",
+    "configuration rejection includes unavailable component/code/message",
+    "PNG missing encoding error names asset/path and required override",
+    "inventory read rechecks phase and explains exact phase-race rejection"
+  ],
+  "validation": {
+    "pytest": "293 passed,1 skipped,567 deselected; affected acquisition/controller/media modules and focused GUI preview/inventory selection",
+    "mypy": "8 affected source files clean for win32",
+    "boundaries": "724 modules,0 violations; existing unrelated cohesion warnings",
+    "failed_attempts": "sandbox asyncio stalled/interrupted; initial test expected bridge outer error signal from direct dispatch, corrected to ClientError; mypy optional-variable reuse corrected"
+  },
+  "limits": [
+    "native smoothing not rerun",
+    "external-camera MCU reconfiguration still briefly stops/restarts affected viewers with exact cleanup",
+    "saved scientific color interpretation not altered; owner question pending",
+    "paired validator/lifecycle readiness not implemented or promoted; requires separate implementation and rig verification",
+    "staged MCU I/O/multi-screen controls remain separate"
+  ]
+}

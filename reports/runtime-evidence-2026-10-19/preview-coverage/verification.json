@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-19",
+  "source": "dirty workspace",
+  "test_selection": "front_attached_screens or trial_preview or planning_preview or preview_calibration",
+  "result": "15 passed,638 deselected",
+  "configuration_sha256": "1d4084ed82d6f578bc4fdf6ba37ba8d94ac033761c40cf48bb95b532ece5f852",
+  "configuration_byte_identical": true,
+  "native": "blocked before restart: foreground window did not report a process id"
+}

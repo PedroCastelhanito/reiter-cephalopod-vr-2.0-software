@@ -214,6 +214,7 @@ class Boundary:
                 (
                     visual_stimulus.WorkerLifecycle,
                     pb.VisualStimulusDisplayView,
+                    pb.StimulusPreviewState,
                     pb.HeartbeatReport,
                 ),
             )

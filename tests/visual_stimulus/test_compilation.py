@@ -547,7 +547,7 @@ def test_linked_translation_unfolds_without_losing_speed_and_keeps_independent_t
     ]
 
 
-def test_linked_clockwise_rotation_uses_each_subject_distance_and_reverses():
+def test_linked_clockwise_rotation_uses_rig_distance_and_reverses():
     import math
 
     import pytest
@@ -838,12 +838,12 @@ def test_linked_spin_pivot_preflight_rejects_unknown_history_until_reset():
     )
     validate_spin_pivot(spin, geometry, (0.0, 0.0))
     for point in (None, (1.0, 0.0)):
-        with pytest.raises(ValueError, match="subject projection"):
+        with pytest.raises(ValueError, match="calibrated screen"):
             validate_spin_pivot(spin, geometry, point)
     off_center = geometry.model_copy(update={"observer_mm": (10.0, 0.0, 0.0)})
-    with pytest.raises(ValueError, match=r"\(10, 0\)"):
-        validate_spin_pivot(spin, off_center, (0.0, 0.0))
-    validate_spin_pivot(spin, off_center, (10.0, 0.0))
+    validate_spin_pivot(spin, off_center, (0.0, 0.0))
+    with pytest.raises(ValueError, match="calibrated screen"):
+        validate_spin_pivot(spin, off_center, (10.0, 0.0))
     moved = source.model_copy(
         update={"motion": source.motion.model_copy(update={"x": _texture_rate(1)})}
     )
@@ -861,7 +861,7 @@ def test_linked_spin_pivot_preflight_rejects_unknown_history_until_reset():
         )
         for i, values in enumerate(((moved,), (spin, target)))
     ]
-    with pytest.raises(ValueError, match="subject projection"):
+    with pytest.raises(ValueError, match="calibrated screen"):
         validate_link_geometry(epochs, compile_boundaries(epochs), geometry)
     epochs[1] = epochs[1].model_copy(
         update={"settings": (spin.model_copy(update={"reset": True}), target)}
@@ -1000,3 +1000,70 @@ def test_arena_file_convex_geometry_requires_convex_finite_vertices():
                 }
             )
         )
+
+
+def test_linked_rotation_depends_on_reference_screen_center_not_observer():
+    import math
+
+    import pytest
+
+    from cephvr.visual_stimulus.config.texture_links import (
+        linked_rates,
+        validate_spin_pivot,
+    )
+    from cephvr.visual_stimulus.rendering.state import InstanceState
+    from cephvr.visual_stimulus.rendering.texture_links import bind_texture_links
+
+    geometry, settings = _linked_texture_fixture()
+    source = settings[0].model_copy(
+        update={
+            "motion": settings[0].motion.model_copy(
+                update={"rotation": _texture_rate(90)}
+            )
+        }
+    )
+    # Move Bottom's center 10 mm toward Right; the calibrated side planes stay fixed.
+    bottom = geometry.surfaces[0]
+    shifted = bottom.model_copy(
+        update={
+            name: (getattr(bottom, name)[0] + 10, *getattr(bottom, name)[1:])
+            for name in (
+                "bottom_left_mm",
+                "bottom_right_mm",
+                "top_left_mm",
+                "top_right_mm",
+            )
+        }
+    )
+    for observer in ((0.0, 0.0, 0.0), (20.0, 15.0, 70.0)):
+        rig = geometry.model_copy(
+            update={
+                "surfaces": (shifted, *geometry.surfaces[1:]),
+                "observer_mm": observer,
+            }
+        )
+        validate_spin_pivot(source, rig, (0.0, 0.0))
+        for target, radius in ((settings[2], 50), (settings[3], 50)):
+            expected = -math.radians(90) * radius / target.pattern.period_x.value
+            assert linked_rates(
+                source, target, rig, source_rotation=0, target_rotation=0
+            ) == pytest.approx((expected, 0, 0))
+            states = {
+                s.instance_id: InstanceState.initialize(s, now_ns=0, epoch_start_ns=0)
+                for s in (source, target)
+            }
+            bind_texture_links(states, rig, now_ns=0)
+            states[target.instance_id].advance(1_000_000_000)
+            assert states[target.instance_id].values["phase_x"].value == pytest.approx(
+                expected
+            )
+    # Mapping translation changes the required texture-space pivot, not its rig radius.
+    mapping = source.space.mappings[0].model_copy(
+        update={"matrix": ((2.0, 0.0, 7.0), (0.0, 2.0, -3.0))}
+    )
+    mapped = source.model_copy(
+        update={"space": source.space.model_copy(update={"mappings": (mapping,)})}
+    )
+    validate_spin_pivot(mapped, geometry, (7.0, -3.0))
+    with pytest.raises(ValueError, match="calibrated screen"):
+        validate_spin_pivot(mapped, geometry, (0.0, 0.0))

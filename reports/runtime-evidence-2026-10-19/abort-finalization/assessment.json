@@ -1,0 +1,216 @@
+{
+  "observed_at": "2026-10-19T15:10:39.027947+09:00",
+  "session": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-150713",
+  "method": "read-only session events, output plans/completion records and independent full video decode",
+  "abort_to_session_end_s": 40.026709,
+  "events": [
+    {
+      "monotonic_ns": 412480770340700,
+      "wall_time": "2026-10-19T15:07:24.062069+09:00",
+      "event_type": "session_started",
+      "source": "controller"
+    },
+    {
+      "monotonic_ns": 412481549489000,
+      "wall_time": "2026-10-19T15:07:24.841217+09:00",
+      "event_type": "trial_started",
+      "source": "controller",
+      "trial_number": 1
+    },
+    {
+      "monotonic_ns": 412513913259300,
+      "wall_time": "2026-10-19T15:07:57.204988+09:00",
+      "event_type": "command_accepted",
+      "source": "controller",
+      "details": {
+        "command": "AbortNow"
+      }
+    },
+    {
+      "monotonic_ns": 412553936243900,
+      "wall_time": "2026-10-19T15:08:37.227972+09:00",
+      "event_type": "trial_finished",
+      "source": "controller",
+      "trial_number": 1,
+      "outcome": "interrupted",
+      "details": {
+        "output_closure_confirmed": false,
+        "start_unconfirmed": [],
+        "actual_end_monotonic_ns": null,
+        "interruption_issued_monotonic_ns": 412513913543000
+      }
+    },
+    {
+      "monotonic_ns": 412553939968300,
+      "wall_time": "2026-10-19T15:08:37.231697+09:00",
+      "event_type": "session_ended",
+      "source": "controller",
+      "outcome": "interrupted"
+    }
+  ],
+  "frame_log_completions": {
+    "DUMMY_2_150724_behavioral_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "interrupted",
+      "timing": {
+        "recording_end_monotonic_ns": 412513917023100,
+        "first_recorded_frame_id": 0,
+        "final_received_frame_count": 969,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 969,
+        "selected_source_frame_count": 969,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 412481560791700,
+        "on_acknowledged_monotonic_ns": 412481586079700,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 412513918361500,
+        "off_acknowledged_monotonic_ns": 412513942770800
+      },
+      "post_cutoff": {
+        "accounting_complete": false,
+        "excluded_frame_count": null,
+        "last_native_counter": null
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    },
+    "DUMMY_2_150724_eye_tracking_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "interrupted",
+      "timing": {
+        "recording_end_monotonic_ns": 412513917035700,
+        "first_recorded_frame_id": null,
+        "final_received_frame_count": 1939,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 0,
+        "selected_source_frame_count": 0,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 412481560791700,
+        "on_acknowledged_monotonic_ns": 412481586079700,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 412513918361500,
+        "off_acknowledged_monotonic_ns": 412513942770800
+      },
+      "post_cutoff": {
+        "accounting_complete": false,
+        "excluded_frame_count": null,
+        "last_native_counter": null
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    },
+    "DUMMY_2_150724_stimulus_frames.jsonl": {
+      "payload": {
+        "kind": "completion",
+        "cutoff_host_ns": 412513914400800,
+        "last_group_id": 1942,
+        "state_count": 1943,
+        "submission_attempt_count": 7772,
+        "capture_admission_count": 1943,
+        "capture_drop_count": 0,
+        "same_slot_omission_count": 0,
+        "unresolved_attempt_count": 0,
+        "outcome": "completed"
+      }
+    },
+    "DUMMY_2_150724_tracking_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "interrupted",
+      "timing": {
+        "recording_end_monotonic_ns": 412513917066800,
+        "first_recorded_frame_id": null,
+        "final_received_frame_count": 1939,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 0,
+        "selected_source_frame_count": 0,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 412481560791700,
+        "on_acknowledged_monotonic_ns": 412481586079700,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 412513918361500,
+        "off_acknowledged_monotonic_ns": 412513942770800
+      },
+      "post_cutoff": {
+        "accounting_complete": false,
+        "excluded_frame_count": null,
+        "last_native_counter": null
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    }
+  },
+  "video_decodes": [
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-150713\\protocol-data\\DUMMY_2_150724_behavioral_cam.mp4",
+      "exit_code": 0,
+      "stderr": "",
+      "sha256": "e5c61092e23e1abb2156627feb2d89cab8f8f4e2aece7c46874ef3a9212bec42"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-150713\\protocol-data\\DUMMY_2_150724_stimulus.mp4",
+      "exit_code": 0,
+      "stderr": "",
+      "sha256": "5ae1f77b6754c3ee65650698480b98aef8d311afc5f7342a6909c5063076d7d3"
+    }
+  ],
+  "limits": "Decode success does not establish complete camera drain, exact output ownership closure or synchronized durability. No session file mutation.",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "ffmpeg_executable": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+  "ffmpeg_version": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+  "assessment": "Incomplete camera post-cutoff accounting produced UNCONFIRMED video closure; interrupted Finished was rejected and cleanup waited to its deadline. Exact native drain-failure branch is unknown. Added bounded diagnostics; root cause remains unresolved.",
+  "checks": [
+    {
+      "command": "python -m pytest tests/acquisition/test_worker_foundations.py tests/acquisition/test_camera_adapter_contracts.py tests/acquisition/test_recording_paths.py tests/acquisition/test_recording_cleanup.py -q -m \"not windows and not rig\" --basetemp <temporary directory> --tb=short",
+      "outcome": "223 passed; permitted loopback"
+    },
+    {
+      "command": "python -m pytest tests/acquisition/test_worker_foundations.py -q -k \"terminal_stage_consumes or capture_stop\" --basetemp <temporary directory> --tb=short",
+      "outcome": "10 passed, 80 deselected"
+    },
+    {
+      "command": "Ruff check/format3; Win32 mypy2; python tools/check_backend_boundaries.py; git diff --check",
+      "outcome": "pass; 728 backend modules, zero violations; cohesive size advisories reviewed"
+    }
+  ],
+  "source_sha256": {
+    "src\\cephvr\\acquisition\\worker\\capture_runtime.py": "89a31aeb15bded380e2f1532295b38d776b4a328ac533c8455b502feca7a4e1f",
+    "src\\cephvr\\acquisition\\camera\\basler.py": "fb9937628838f7d17e987605280bb611e2a355ad5c8c836425b558f31c0a3102",
+    "tests\\acquisition\\test_worker_foundations.py": "24129128deaba825e9214319456329a7bc4c0c8dfcd19656a3f45fbd3920dff2"
+  }
+}

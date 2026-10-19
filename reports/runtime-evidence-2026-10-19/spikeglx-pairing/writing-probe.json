@@ -1,0 +1,198 @@
+[
+  {
+    "wall_time": 1792397147.4704432,
+    "prepared": {
+      "spikeglxVersion": "SpikeGLX v20251218 api v4.1.3",
+      "sdkVersion": "unknown",
+      "mappingId": "spikeglx-20251218-reference-v1",
+      "runName": "PAIRPROBE-170546",
+      "dataDirectory": "C:/SGL_DATA",
+      "streams": [
+        {
+          "family": "STREAM_FAMILY_ONEBOX",
+          "hardwareSerial": "23190268",
+          "sampleRateHz": 30303.0,
+          "acquiredChannelCounts": [
+            12,
+            1,
+            1
+          ],
+          "savedChannelIndices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ]
+        }
+      ],
+      "gateMode": "immediate",
+      "triggerMode": "immediate",
+      "pulseChannels": [
+        {
+          "role": "PULSE_ROLE_TRIAL_STATE",
+          "family": "STREAM_FAMILY_ONEBOX"
+        },
+        {
+          "role": "PULSE_ROLE_PHOTODIODE",
+          "family": "STREAM_FAMILY_ONEBOX",
+          "channelIndex": 1
+        },
+        {
+          "role": "PULSE_ROLE_BEHAVIORAL_CAMERA",
+          "family": "STREAM_FAMILY_ONEBOX",
+          "channelIndex": 2
+        },
+        {
+          "role": "PULSE_ROLE_TRACKING_CAMERA",
+          "family": "STREAM_FAMILY_ONEBOX",
+          "channelIndex": 3
+        },
+        {
+          "role": "PULSE_ROLE_EYE_TRACKING_CAMERA",
+          "family": "STREAM_FAMILY_ONEBOX",
+          "channelIndex": 4
+        }
+      ],
+      "address": "169.254.240.108",
+      "port": 4142
+    }
+  },
+  {
+    "wall_time": 1792397147.7305822,
+    "elapsed": 0.01600000000325963,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397148.7486095,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397149.7676272,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397150.7845743,
+    "elapsed": 0.015000000013969839,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397151.7986877,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397152.814646,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397153.8321385,
+    "elapsed": 0.015000000013969839,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397154.8460846,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397155.86654,
+    "elapsed": 0.014999999955762178,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397156.8788018,
+    "elapsed": 0.01600000000325963,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397157.8978896,
+    "elapsed": 0.01600000000325963,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397158.91289,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397159.9325929,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397160.9453387,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397161.9667342,
+    "elapsed": 0.0,
+    "running": true,
+    "saving": false,
+    "name": "PAIRPROBE-170546",
+    "counts": []
+  },
+  {
+    "wall_time": 1792397162.4759314,
+    "writing_gate": false
+  },
+  {
+    "wall_time": 1792397164.8285556,
+    "stopped": true
+  }
+]

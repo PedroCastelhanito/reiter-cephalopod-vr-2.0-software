@@ -1,0 +1,74 @@
+[
+  {
+    "path": ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-110205\\protocol-data\\PREVIEW_110450_behavioral_cam.mp4",
+    "returncode": 0,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 1760,
+          "height": 1716,
+          "duration": "239.766667",
+          "nb_read_frames": "7193"
+        }
+      ]
+    },
+    "stderr": ""
+  },
+  {
+    "path": ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-110205\\protocol-data\\PREVIEW_110450_eye_tracking_cam.mp4",
+    "returncode": 0,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 1920,
+          "height": 1200,
+          "duration": "239.933333",
+          "nb_read_frames": "14396"
+        }
+      ]
+    },
+    "stderr": ""
+  },
+  {
+    "path": ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-110205\\protocol-data\\PREVIEW_110450_stimulus.mp4",
+    "returncode": 0,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 1280,
+          "height": 1000,
+          "duration": "238.366667",
+          "nb_read_frames": "14302"
+        }
+      ]
+    },
+    "stderr": ""
+  },
+  {
+    "path": ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-110205\\protocol-data\\PREVIEW_110450_tracking_cam.mp4",
+    "returncode": 0,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 1588,
+          "height": 1344,
+          "duration": "239.800000",
+          "nb_read_frames": "14388"
+        }
+      ]
+    },
+    "stderr": ""
+  }
+]

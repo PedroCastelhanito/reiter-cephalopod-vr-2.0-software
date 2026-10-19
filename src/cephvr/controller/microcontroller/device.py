@@ -127,6 +127,8 @@ class MicrocontrollerDevice:
         request: wire.MicrocontrollerCommandRequest,
         pulses: camera.CameraPulseConfiguration,
         deadline_ns: int,
+        *,
+        progress: Callable[[str], None] = lambda _action: None,
     ) -> None:
         self.ensure_idle()
         if self.acquisition_claimed or self.io_active:
@@ -146,6 +148,7 @@ class MicrocontrollerDevice:
                 or request.expected_connection_id != self.view.observation.connection_id
             ):
                 raise RuntimeError("MCU connection identity changed before disconnect")
+            progress("Releasing port…")
             await self.close(deadline_ns=deadline_ns, permanent=False)
             return
         self.reload_idle_policy()
@@ -156,6 +159,7 @@ class MicrocontrollerDevice:
             if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE:
                 if self.view.diagnostic.active:
                     raise RuntimeError("Stop diagnostics before firmware upload")
+                progress("Compiling, uploading and verifying firmware…")
                 await self.firmware.execute(
                     request.firmware_path,
                     request.firmware_sha256,
@@ -170,6 +174,7 @@ class MicrocontrollerDevice:
                 request.kind == wire.MICROCONTROLLER_COMMAND_KIND_CONNECT
                 or not self.view.HasField("observation")
             ):
+                progress("Opening port and checking firmware…")
                 self.port_owned = True
                 self.view.observation.CopyFrom(
                     await self.serial.connect(deadline_ns=deadline_ns)
@@ -178,6 +183,7 @@ class MicrocontrollerDevice:
             if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_CONNECT:
                 self.view.ClearField("diagnostic")
             elif request.kind == wire.MICROCONTROLLER_COMMAND_KIND_START:
+                progress("Configuring pin test…")
                 if self.view.diagnostic.active:
                     raise RuntimeError(
                         "Stop the active pin test before starting another"
@@ -190,6 +196,7 @@ class MicrocontrollerDevice:
                         )
                     )
                 self._diagnostic_uncertain = True
+                progress("Starting pin test…")
                 try:
                     active, _, _, edges = await self.serial.diagnostic_start(
                         kind, pin, frequency_hz=frequency, deadline_ns=deadline_ns
@@ -210,6 +217,8 @@ class MicrocontrollerDevice:
                 )
                 self._diagnostic_uncertain = False
             else:
+                if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_STOP:
+                    progress("Stopping pin test…")
                 active, kind, pin, edges = (
                     await self.serial.diagnostic_status(deadline_ns=deadline_ns)
                     if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_STATUS

@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 25
+**Status:** Accepted · **Revision:** 27
 
 - Sessionless photodiode_placement and blackout_placement views use the same protected diagnostic ownership and native output pixel coordinates. Photodiode placement starts black when no complete initial pulse exists, then continuously presents a valid configured pulse bright/dark on black using V22; blackout placement shows black zones on neutral gray (0.25), without a photodiode. Bounded complete output snapshots update rectangles atomically after validation against the prepared active outputs, retaining exact identity/revision/deadline and increasing-sequence presentation evidence. Close restores Idle and releases diagnostic resources. These previews have no trial clock or recording. The existing GL-owner service loop repeats photodiode submissions while Active; presentation failure marks Unknown and enters existing renderer failure handling.
 
@@ -39,6 +39,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   owns the backend's public control endpoint, preparation coordination and aggregate
   lifecycle evidence; the renderer owns display/GPU resources and live stimulus state.
   Controller configuration and trial authority remain under E05/E07/E08.
+- The renderer also owns one optional native Visual Stimulus review window, prepared
+  at Setup and controlled through authenticated controller/coordinator commands with
+  exact session, configuration and process identity. Show/Hide and native X change
+  only visibility; status reports attest availability/visibility. Use the separate E13 preview/recording layouts without pixel RPCs. Viewer failures disable the
+  viewer without aborting the experiment; retain failed cleanup ownership. Hide
+  trial content at Idle and release the window with session resources.
 - One rendering worker serves the configured outputs and keeps running across trials
   to provide E05's configurable Idle presentation. Programs follow V02/V03, rendering
   stack V04, surface views V15; V12 owns the renderer's recording thread and FFmpeg
@@ -107,7 +113,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v02"></a>
 ### V02 — Structured trial stimulus programs
 
-**Status:** Accepted · **Revision:** 13
+**Status:** Accepted · **Revision:** 14
 
 - Author each trial as reusable scenes arranged in timed epochs, with groups for
   repetitions and condition-table parameter sweeps. A scene combines simultaneous
@@ -147,10 +153,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   and unsupported geometry before Ready. Appearance feedback remains independent.
   At each epoch boundary derive rates using retained orientations; ordinary V07
   state fields integrate them without copying the reference phase or resetting followers.
-- Linked angular flow uses each target's perpendicular subject distance: clockwise
-  Bottom rotation about the subject drives Right front→back and Left back→front;
-  reversal reverses both. Require the reference's known retained center to coincide
-  with the subject projection; uncertain or mismatched pivots block preparation with
+- Physical texture motion uses calibrated rig surfaces, never subject position.
+  Linked angular flow uses the signed perpendicular distance from the reference
+  screen's geometric center to each target plane. Clockwise Bottom rotation about
+  that center drives Right front→back and Left back→front; reversal reverses both.
+  Require the reference's known retained pivot at its screen center, transformed
+  through its physical map; uncertain or mismatched pivots block preparation with
   the required coordinates. Parallel targets receive projected spin; perpendicular
   targets receive translation. The [motion contract](../../contracts/visual_stimulus/stimulus-schema.md#reference-linked-texture-motion)
   specifies this convention and its bounds; it is not a rigid sheet simulation.
@@ -523,7 +531,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v12"></a>
 ### V12 — Visual Stimulus recording thread and overload
 
-**Status:** Accepted · **Revision:** 15
+**Status:** Accepted · **Revision:** 18
 
 - The rendering worker always runs one recording thread for required trial evidence
   (V28). E13 video saving additionally enables an FFmpeg/NVENC subprocess and the
@@ -552,6 +560,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   submission observations, known capture dispositions) and separate update lines for
   late outcomes. Rendering never waits for encoding or disk sync. Evidence is bounded
   by `evidence_pending_bytes`; exhaustion is a required-logging failure.
+- Preview reuses E13's compositor implementation and final output textures with
+  separate preview/recording targets. With video Off,
+  preview has no capture slots, readback or encoder. Setup budgets composite targets,
+  and the bounded native viewer buffers; shared-context fences protect
+  output/composite storage from overwrite. A preview update does not admit a video
+  sample or change its source-group accounting.
 - Video admission loss is nonfatal; frame/state evidence is not optional.
   Encoder/storage errors or progress failure follow E06/E08. Rendering misses (V10),
   recording omissions and physical presentation evidence stay distinct.
@@ -621,8 +635,13 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v14"></a>
 ### V14 — Explicit stimulus coordinate spaces
 
-**Status:** Accepted · **Revision:** 4
+**Status:** Accepted · **Revision:** 5
 
+- Physical-surface image-tile textures cover the entire calibrated screen in runtime
+  and planning preview. Extend their field by whole tiles at composition time,
+  preserving tile periods, phase anchor, position and rotation; saved layer dimensions
+  remain loadable without file migration. Images, videos and angular stimuli retain
+  their explicit finite extents.
 - 2D stimuli support physical-surface and observer-centered visual-angle
   coordinates. Each stimulus explicitly selects its space; the GUI shows matching
   units and the versioned program retains the selection. No implicit default or
@@ -645,7 +664,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v15"></a>
 ### V15 — Four calibrated off-axis surface views
 
-**Status:** Accepted · **Revision:** 20
+**Status:** Accepted · **Revision:** 22
 
 - Optional per-output blackout rectangles replace final mapped scene pixels with
   linear black before output correction. Validate positive whole-pixel rectangles
@@ -697,8 +716,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   mm/pixel define the usable physical view, centered on the measured frame-placed
   screen plane. Newly prepared GUI affine surface targets use valid pixel resolution;
   V14 physical texture sizes/frequencies and common pattern phase retain their units
-  across different projector pitches. Never resize physical parameters to fit a crop.
-  Preview and prepared views use the same extents/mapping. Live diagnostics prepare a full-native-raster grid at measured pitch and isolate
+  across different projector pitches. Drift speed is physical mm/s: resolve V02 links
+  in physical coordinates, then map each output through its own measured X/Y pitch
+  exactly once. Equal mm/s may require different pixels/s; projector throw distance
+  is not a substitute for measured pitch. Never resize physical parameters to fit a crop.
+  Preview and prepared views use the same extents/mapping. G01's Bottom output
+  rotation swaps the surface raster dimensions and measured-pitch axes while keeping
+  crop/offset/marker coordinates in native output pixels. Live grid translation
+  preserves the prepared UV orientation and original fixed pixel pitch. Live diagnostics
+  prepare a full-native-raster grid at measured pitch and isolate
   each face plane, so larger crops reveal additional lines without stretching.
   G01 owns capped center-relative pixel offsets. Validate all bounds/vertices
   before updates and present all outputs before confirmation.
@@ -846,10 +872,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v20"></a>
 ### V20 — Configurable projector presentation pacing
 
-**Status:** Accepted · **Revision:** 10
+**Status:** Accepted · **Revision:** 11
 
-- Default: VSync on the explicitly designated pacing projector, immediate
-  presentation on the other outputs (current CephVR rig behavior). All-output VSync
+- Default: VSync on every enabled pulse output, immediate presentation on other
+  outputs. Legacy single-pulse profiles retain their explicitly designated pacing
+  projector behavior. All-output VSync
   stays selectable for rig testing; Free run requests interval zero on every output,
   including any retained pacing/photodiode target. None of these modes requires an
   MCU input; A11 keeps camera-trigger offsets owner-deferred. Select the mode at Setup, preserve saved
@@ -863,17 +890,20 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   request and adopted calibration profile before startup Idle/Ready; no automatic
   precision selection or downgrade. Float32 working color, review-video
   representation and physical signal precision stay distinct.
-- Mixed mode requires an unambiguous configured pacing output and independent
-  presentation control for outputs with different intervals; reject incompatible
-  configurations rather than changing modes or guessing the pacing face.
+- Mixed mode uses the explicit per-output V22 pulse set. Blank screens request
+  no VSync; disabled pulses request none. Legacy profiles without that set require
+  an unambiguous configured pacing output. Keep independent presentation control
+  for different intervals; reject incompatible configurations, never guess a face.
 - The pacing target is 60 Hz, configured with the pacing output identity only in
   the Visual Stimulus config file, not a GUI field. Adopt and validate it before
   startup Idle/Setup; no timing guarantee follows from the requested value alone.
 - Pacing selection is independent of V22 pulse visibility/placement. Existing profiles
   without an explicit pacing ID retain their enabled photodiode target as a legacy
-  fallback. Mixed mode requires explicit pacing when the pulse is disabled;
-  all-output VSync and Free run may have no designated pacer. In that case validate the file-owned
-  nominal refresh target against every enabled output without selecting a face.
+  fallback. Legacy mixed mode requires explicit pacing when the pulse is disabled;
+  per-output pulse profiles, all-output VSync and Free run may have no designated
+  pacer. In that case validate the file-owned nominal refresh target against every
+  enabled output without selecting a face. With pulses disabled and no pacer,
+  recording uses their common nominal refresh while requesting immediate swaps.
   E13 owns the common-rate recording requirement.
 - VSync requests and sequential swaps do not establish simultaneous scanout or
   effective driver behavior. Immediate outputs may tear; one photodiode measures only
@@ -907,7 +937,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v22"></a>
 ### V22 — Photodiode frame alternation with landmarks
 
-**Status:** Accepted · **Revision:** 7
+**Status:** Accepted · **Revision:** 8
 
 - Pulse enablement and target/rectangle are operator settings independent of V20
   pacing. When disabled, retain placement but require neither target participation
@@ -919,9 +949,13 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   correction. Preserve legacy standalone rectangles; new pulse/frame geometry
   rejects overflow instead of clipping. Outside V01's explicit spatial placement diagnostic, the frame is trial-only and hidden with
   the pulse; independent V15 blackout zones persist into Idle.
-- The enabled designated photodiode output shows a bright/dark frame-alternating patch with
-  periodic distinctive markers. Detailed E13/V13 evidence associates intended states
-  and marker positions with trial-relative output-frame identities.
+- Each explicitly configured pulse output shows its own in-bounds Frame/Pulse
+  rectangle using the same trial-relative bright/dark sequence and periodic
+  landmarks. Blank screens draw none; retain legacy single-output profiles.
+  Validate active output identities and every rectangle before Setup. A render group
+  evaluates the sequence once; per-output submission evidence records the index,
+  intended state and actual swap outcome independently. This does not imply
+  simultaneous scanout or an optical result on any other screen.
 - Each 60-submission cycle starts with six marker frames (three bright, then three
   dark), then alternates bright/dark for the other 54 frames. Restart at trial index
   zero, not at epoch changes; physical placement/levels remain unset.
@@ -1098,7 +1132,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="e13"></a>
 ### E13 — Save Visual Stimulus data
 
-**Status:** Accepted · **Revision:** 26
+**Status:** Accepted · **Revision:** 30
 
 - Active experiment Visual Stimulus always saves scientific data and metadata:
   recipe/program provenance, effective state, per-output submission/marker evidence,
@@ -1108,10 +1142,28 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   saved Off value disables review video, never required scientific evidence.
   Output files retain E11's trial-only boundaries. Required evidence remains bounded
   and its loss follows V12/E06, including when video is disabled.
-- Save one tiled review video per trial: every configured output's final renderer
-  image, after configured renderer-applied corrections, in the fixed
-  [tile layout](../../contracts/visual_stimulus/recorded-outputs.md#tiled-composite) retained in
-  the recipe. Reuse those images; never rerender a recording viewpoint.
+- Save one uncropped review video per trial using every active output's full final
+  renderer image after renderer-applied corrections. Use equal cells in two columns:
+  Left / Front above Right / Bottom for four outputs. Rotate the Bottom-only output
+  90 degrees clockwise in the review image; preserve all other output orientations.
+  Fit and center complete rasters without stretching or clipping, using black padding
+  only for unequal oriented sizes. Matching post-rotation resolutions stitch
+  edge-to-edge with no labels, headers or gutters. Physical projection and
+  reconstruction inputs remain unchanged.
+- The native preview instead crops to configured calibrated valid-area bounds
+  (intended-coverage bounds when absent), never to detected black pixels. For four
+  independent screens place Left–Front–Right above Bottom centered beneath Front,
+  mirroring Left/Right horizontally and Bottom vertically for operator viewing;
+  keep Front unchanged and preserve cropped aspect ratios, without labels or
+  label-strip spacing. Preview and recording
+  use the same compositor implementation with separate retained layouts and targets.
+- Retain both layouts, full output dimensions, mapping/mesh/valid-area values and
+  photometric calibration values in each immutable prepared recipe, including video
+  Off. Tile metadata records source and destination rectangles, labels and review
+  rotation. This permits later display-layout conversion without reopening calibration
+  assets; lossy/downscaled review video cannot restore discarded precision. The
+  conversion script remains deferred. See the
+  [layout contract](../../contracts/visual_stimulus/recorded-outputs.md#tiled-composite).
 - One NVENC session in an FFmpeg subprocess encodes the composite from raw frames fed
   by V12's recording thread (never the render thread), as operator-tuned lossy video
   for posthoc visualization only, not a replay input. V13 owns exact per-output
@@ -1124,8 +1176,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Review recording uses configurable monochrome lossy quality; future color uses
   4:4:4. A file-owned positive integer review scale factor multiplies the encoder-fit
   tile divisor before GPU readback; the prepared recipe retains actual dimensions
-  and tile rectangles. Rendering and reconstruction evidence stay full resolution.
-  Reject empty or encoder-incompatible dimensions; never silently crop. Encoding
+  and source-crop, image and cell rectangles. Rendering and reconstruction evidence stay full resolution.
+  Reject empty or encoder-incompatible dimensions; never crop recording inputs. Encoding
   tuning remains in the owning FFmpeg argument list.
 - Explicitly configured review-video depth reduction is allowed with validated
   conversion and retained source/target representation evidence; silent negotiation

@@ -179,6 +179,24 @@ class VisualStimulusCoordinatorRuntime:
                 and request.operation.complete
             ):
                 self.shutdown_requested.set()
+        elif method == "ReportStimulusPreview" and isinstance(
+            request, pb.StimulusPreviewState
+        ):
+            if (
+                request.source != self.identity.worker
+                or request.backend != self.identity.backend
+            ):
+                raise ValueError("preview renderer generation differs")
+            if (
+                self.state.setup is None
+                or request.session != self.state.setup.plan.context
+            ):
+                raise ValueError("preview session differs")
+            await self.controller.receipt(
+                "ReportStimulusPreview",
+                request,
+                deadline_ns=self.clock() + 5_000_000_000,
+            )
         elif method == "ReportDisplay" and isinstance(
             request, pb.VisualStimulusDisplayView
         ):

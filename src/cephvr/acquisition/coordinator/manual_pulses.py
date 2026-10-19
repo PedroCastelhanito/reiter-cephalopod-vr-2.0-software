@@ -18,6 +18,7 @@ from cephvr.acquisition.coordinator.manual_operation_results import (
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
     invalidate_released_idle_proof,
     release_idle_claim,
+    retain_applied_pulse_state,
     retain_observation,
 )
 from cephvr.acquisition.coordinator.manual_session_access import (
@@ -176,6 +177,16 @@ class ManualPulses:
                 requested_pulses=request.application.requested,
             )
             if active_roles:
+                invalidate_released_idle_proof(self.pulse)
+                evidence = await self.serial.off(
+                    tuple(active_roles),
+                    scheduled_boundary_ns=None,
+                    stop_issued_ns=self.clock(),
+                    deadline_ns=deadline_ns,
+                )
+                retain_applied_pulse_state(
+                    self.pulse, evidence, deadline_ns=deadline_ns
+                )
                 preview_token = await self.preview.pause_for_pulse_change(
                     active_roles, deadline_ns=deadline_ns
                 )

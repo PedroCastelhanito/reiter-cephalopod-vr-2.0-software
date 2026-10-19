@@ -1,0 +1,133 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_scope": "Dirty shared working tree; per-file SHA256 binds this increment; other GUI/stimulus work remained concurrent.",
+  "source_sha256": {
+    "src/cephvr/acquisition/worker/capture_runtime.py": "c385ac769bbe548d77504fd31400b34ce0f979e6f4228f205b0927fc6e6373a3",
+    "src/cephvr/acquisition/worker/trial_stop.py": "ed7fad917bb6ccef4dc5332a63c0d82566772e6a34b298a061b9c5e23d28cec5",
+    "src/cephvr/acquisition/worker/execution.py": "4f7a162c9ba7ef74927204d66df318685af4bf7077a25fb00b0ebca6795d83de",
+    "tests/acquisition/test_worker_foundations.py": "bdbe13d2292f27aac3db29f2afcd8818a158961361cd31e6e34e9af81658d26c"
+  },
+  "governing_decisions": [
+    "A10 revision69",
+    "A07",
+    "A08",
+    "A09",
+    "E05",
+    "E06",
+    "E15",
+    "ARCH-002"
+  ],
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/acquisition tests/controller/test_lifecycle_commands.py tests/controller/test_camera_evidence.py tests/controller/test_output_evidence.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_lifecycle.py -q -m \"not windows and not rig\" --basetemp=.tmp/ctfix-owner --tb=short",
+    "passed": 1002,
+    "deselected": 3
+  },
+  "static_checks": {
+    "ruff": "4 affected files passed",
+    "format": "4 affected files passed",
+    "mypy": "Win32 acquisition/worker:41 files passed",
+    "boundaries": "736 modules,0 violations; existing cohesive-size advisories",
+    "whitespace": "scoped git diff --check passed"
+  },
+  "runs": [
+    {
+      "session": "VERIFY-164205",
+      "cameras": {
+        "behavioral": {
+          "source_frames": 335,
+          "video_frames": 335,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        },
+        "eye_tracking": {
+          "source_frames": 671,
+          "video_frames": 671,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        },
+        "tracking": {
+          "source_frames": 671,
+          "video_frames": 671,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        }
+      },
+      "archive": "reports\\runtime-evidence-2026-10-19\\camera-timing-verification\\fixed-run\\recordings\\VERIFY-164205",
+      "archive_note": "Copies of closed test artifacts; metadata retains original source paths."
+    },
+    {
+      "session": "VERIFY-164223",
+      "cameras": {
+        "behavioral": {
+          "source_frames": 335,
+          "video_frames": 335,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        },
+        "eye_tracking": {
+          "source_frames": 672,
+          "video_frames": 672,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        },
+        "tracking": {
+          "source_frames": 672,
+          "video_frames": 672,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        }
+      },
+      "archive": "reports\\runtime-evidence-2026-10-19\\camera-timing-verification\\fixed-run\\recordings\\VERIFY-164223",
+      "archive_note": "Copies of closed test artifacts; metadata retains original source paths."
+    },
+    {
+      "session": "VERIFY-164243",
+      "cameras": {
+        "behavioral": {
+          "source_frames": 1797,
+          "video_frames": 1797,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        },
+        "eye_tracking": {
+          "source_frames": 3596,
+          "video_frames": 3596,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        },
+        "tracking": {
+          "source_frames": 3596,
+          "video_frames": 3596,
+          "native_counter_nonunit_steps": 0,
+          "dropped": 0,
+          "invalid": 0
+        }
+      },
+      "archive": "reports\\runtime-evidence-2026-10-19\\camera-timing-verification\\fixed-run\\recordings\\VERIFY-164243",
+      "archive_note": "Copies of closed test artifacts; metadata retains original source paths."
+    }
+  ],
+  "restoration": {
+    "runtime_configuration_equal": true,
+    "saved_file_byte_equal": true
+  },
+  "limits": [
+    "Native open-loop3-camera/4-projector workload; Tracking processing and SpikeGLX excluded.",
+    "Two early Aborts and one60-second normal run do not establish all interruption/fault timing or full scientific endurance.",
+    "Software cadence is not instrumented optical/electrical timing.",
+    "First Abort run has one explicit startup review-video capacity drop; all render state evidence retained."
+  ],
+  "verification_attempts": [
+    "First inspection incorrectly compared stimulus video count to all render groups rather than encoded admissions; corrected to compare encoder_outcome.encoded_frame_count, preserving recorded capacity-drop accounting.",
+    "Sandbox disallowed raw-artifact hard links; copied closed artifacts into dated evidence instead."
+  ]
+}

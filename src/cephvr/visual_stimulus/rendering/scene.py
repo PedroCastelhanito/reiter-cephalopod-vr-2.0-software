@@ -20,6 +20,7 @@ from cephvr.visual_stimulus.rendering.evidence import (
 )
 from cephvr.visual_stimulus.rendering.layer_projection import (
     angular_corners,
+    covering_texture,
     physical_corners,
 )
 from cephvr.visual_stimulus.rendering.output_masks import clear_regions
@@ -58,6 +59,7 @@ class ModernGLSceneRenderer:
         from cephvr.visual_stimulus.rendering.capture import ReviewCapture
 
         self._review_capture = ReviewCapture()
+        self._preview_composite = ReviewCapture()
 
     def bind_graphics_api(self, moderngl: Any) -> None:
         if self._moderngl is not None and self._moderngl is not moderngl:
@@ -279,6 +281,7 @@ class ModernGLSceneRenderer:
             elif mapping.surface_id not in settings.space.surfaces:
                 continue
             if surface_map is not None:
+                snapshot = covering_texture(artifact, snapshot, mapping.surface_id)
                 normalized = physical_corners(
                     artifact, snapshot, mapping.surface_id, surface_map
                 )
@@ -472,13 +475,9 @@ class ModernGLSceneRenderer:
             for item in artifact.display.active_outputs
             if item.output_id == output_id
         )
-        patch = artifact.display.photodiode_patch
+        patch = artifact.display.marker_patches.get(output_id)
         regions = list(output.blackout_zones)
-        if (
-            output_id == artifact.display.marker_output_id
-            and patch is not None
-            and patch.background_rect is not None
-        ):
+        if patch is not None and patch.background_rect is not None:
             regions.append(patch.background_rect)
         if regions:
             clear_regions(context, frame.output_fbo.clear, regions)
@@ -496,10 +495,7 @@ class ModernGLSceneRenderer:
             artifact.display.photometric_mode == "calibrated"
         )
         frame.output_program["lut_size"].value = max(2, frame.lut_texture.size[0])
-        marker_output = output_id == artifact.display.marker_output_id
-        frame.output_program["marker_active"].value = float(
-            marker_output and patch is not None
-        )
+        frame.output_program["marker_active"].value = float(patch is not None)
         if patch is not None:
             low, high = patch.rect.x / output.width_px, patch.rect.y / output.height_px
             right = (patch.rect.x + patch.rect.width) / output.width_px
@@ -514,6 +510,9 @@ class ModernGLSceneRenderer:
         screen = getattr(context, "screen", None)
         if screen is not None:
             context.copy_framebuffer(screen, frame.device_fbo)
+
+    def compose_review(self, outputs: tuple[RenderedOutput, ...], layout: Any) -> Any:
+        return self._preview_composite.compose(outputs, layout)
 
     def capture_review_composite(
         self,
@@ -532,6 +531,10 @@ class ModernGLSceneRenderer:
 
     def release(self) -> None:
         failures: list[str] = []
+        try:
+            self._preview_composite.release()
+        except Exception as exc:
+            failures.append(f"preview composite: {exc}")
         try:
             self._review_capture.release()
         except Exception as exc:

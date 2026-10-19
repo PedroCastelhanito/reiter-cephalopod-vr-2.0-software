@@ -1,0 +1,82 @@
+{'command': 'UpdateConfiguration', 'command_id': '0af09088-c54f-4c4e-9847-006dacf61805', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'ExecuteCameraCommand', 'command_id': '4529cfce-d04e-4778-9f6d-b4c349e4a2d2', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 500, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 279, in execute
+    return await self.wait_result(admission.command_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 282, in wait_result
+    state = await self._wait(
+            ^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 145, in _wait
+    await self._changed.wait()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py", line 267, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 62, in main
+    await execute(client, 'BeginTrackingDiagnostic', rpc.BeginTrackingDiagnosticRequest(command=client.operator_command(), expected_configuration_revision=client.snapshot.configuration.revision, preview_run_id=run_id, selected_stages=[], diagnostic_settings=tracking.tracking))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 23, in execute
+    result = await asyncio.wait_for(client.execute(name, request), 90)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 502, in wait_for
+    raise exceptions.TimeoutError() from exc
+TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 82, in main
+    await execute(client,'CloseTrackingDiagnostic',rpc.CloseTrackingDiagnosticRequest(command=client.operator_command(),expected_configuration_revision=client.snapshot.configuration.revision,diagnostic_id=current.diagnostic_id,preview_run_id=run_id))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 23, in execute
+    result = await asyncio.wait_for(client.execute(name, request), 90)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 274, in execute
+    admission = await self._admit(
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 173, in _admit
+    raise ClientError(
+cephvr.client.session.ClientError: TRACKING_DIAGNOSTIC: <AioRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "exactly one authenticated deadline is required"
+	debug_error_string = "INVALID_ARGUMENT:exactly one authenticated deadline is required"
+>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 93, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 85, in main
+    await update(original)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 43, in update
+    await execute(client, 'UpdateConfiguration', rpc.UpdateConfigurationRequest(command=client.operator_command(), expected_revision=client.snapshot.configuration.revision, proposed=config))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 23, in execute
+    result = await asyncio.wait_for(client.execute(name, request), 90)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 274, in execute
+    admission = await self._admit(
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 173, in _admit
+    raise ClientError(
+cephvr.client.session.ClientError: REJECTED: Tracking diagnostic must confirm closure before configuration changes

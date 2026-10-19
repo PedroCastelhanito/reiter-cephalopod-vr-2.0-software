@@ -240,6 +240,14 @@ def action_label(action: str) -> str:
     if action == "set_spikeglx_enabled":
         return "SpikeGLX pairing"
     known = {
+        "ExecuteCameraCommand": "Camera",
+        "ExecuteMicrocontrollerCommand": "Microcontroller",
+        "StartupRecovery": "Recovery",
+        "StartSession": "Session",
+        "InitializeDisplay": "Visual stimulus",
+        "CancelSetup": "Setup",
+        "ShutdownApplication": "Shutdown",
+        "SaveConfigurationHistory": "Shutdown",
         "setup": "Setup",
         "start": "Start",
         "stop": "Stop",

@@ -77,7 +77,7 @@ is not runtime or rig validation (E15).
   it supplies no eye-position analysis or locomotion input. When externally triggered,
   its wiring/source/rate remain explicit operator inputs; missing inputs block
   capture. A10's acknowledged free-running mode needs no MCU pin or pulse alignment.
-  A11 supplies its independent protocol-4 external output; electrical/timing
+  A11 supplies its independent external output; electrical/timing
   and actual camera acceptance remain separate rig checks under E15.
 - Assignments are configurable under E07 before the session and locked during it;
   changing a prepared assignment invalidates Ready and requires fresh Setup. Supplied
@@ -92,7 +92,7 @@ Remaining format mappings and integration are classified in the contract worklis
 <a id="a02"></a>
 ### A02 — Acquisition service and camera workers
 
-**Status:** Accepted · **Revision:** 32
+**Status:** Accepted · **Revision:** 34
 
 - One acquisition coordinator serves Behavioral, Tracking and Eye tracking roles through one external control
   endpoint; it aggregates readiness/closure and never relays pixels.
@@ -121,6 +121,13 @@ Remaining format mappings and integration are classified in the contract worklis
   scheduling/release, stop/interruption and cleanup/shutdown, reusing shared
   identities, command admission and lifecycle semantics. Only the coordinator exposes
   the public BackendService; supervisor interruption remains direct.
+  Under E06, retain exact terminal Stop/Interrupt/Cleanup/Shutdown and pulse-evidence
+  command status for the matching interrupted session even after its deadline.
+  This is status retention only: keep original ingress/deadline failure, require
+  separate exact file/resource evidence, reject active-session/stale/incomplete
+  reports and late configuration readback; never resume work. Interrupted Finished
+  retains exact Unconfirmed output results as uncertainty, not invalid worker evidence;
+  it cannot produce normal Finished or discharge successful cleanup closure.
 - Prepare enabled cameras concurrently in their own workers, preserving each camera
   path's dependencies and A03's readback-before-allocation order. Overall Ready
   requires every required participant. Concurrency adds no timeout/retry allowance;
@@ -642,7 +649,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 63
+**Status:** Accepted · **Revision:** 69
 
 **Capture lifetime**
 
@@ -657,9 +664,14 @@ stamping/filtering and the mappings still need runtime implementation.
 - At cutoff, seal trial admission but keep bounded excluded-frame retrieval until
   external OFF has a terminal outcome plus the prepared drain margin (exposure,
   transfer and one frame period). Count final purge discards when observable; unknown
-  counts stay unknown. Free-running cameras stop generation promptly and drain only
+  counts stay unknown. Control handoffs yield terminal drain without flushing SDK
+  buffers or sealing the end marker; resume after control on the same generation,
+  cutoff, first stop observation, fixed margin and original deadline, retaining purge
+  counts. Cleanup waits for that continuation. Free-running cameras stop generation promptly and drain only
   buffered results. This cannot extend trial data or the E05 Stopped deadline; SDK
-  cleanup/accounting uses the remaining original finalization budget. See the
+  cleanup/accounting uses the remaining original finalization budget. Complete
+  the Stop/Interrupt operation after proven activity stop, retaining the same
+  capture continuation and work scope until Finished; cleanup cannot release it early. See the
   [recording lifecycle](../../contracts/acquisition/recording-lifecycle.md).
 - During Setup, request supported native timestamp/frame-counter metadata when
   needed, before final readback/layout and buffer preparation; retain usable metadata
@@ -731,8 +743,12 @@ stamping/filtering and the mappings still need runtime implementation.
   Storage width and physical display precision are separate from this setting.
 - Preview capture can run headlessly. The acquisition coordinator owns OpenCV
   windows and private latest-frame readers; GUI/headless Show/Hide commands bind the
-  exact active manual run. Each Win32 window pumps HighGUI on its owning thread,
-  outside the coordinator event loop. Native X closure hides only that window.
+  exact active manual run or the Running session and its existing preview allocation.
+  Session viewers follow that allocation across trial run IDs without opening capture
+  outside trials; 0 Hz disables attachment. Session cleanup closes readers before
+  releasing their mappings. All acquisition Win32 viewers share one HighGUI/native
+  window owner thread outside the coordinator event loop; independent bounded frame
+  waits never block that thread or another viewer. Native X closure hides only that window.
   Publish monotone visibility/failure observations for the exact run; stale callbacks
   cannot change a replacement run or complete a camera command. Viewer availability
   gates neither Ready nor capture start. Retain each local reader in the native
@@ -743,9 +759,14 @@ stamping/filtering and the mappings still need runtime implementation.
   and from loss of the controlling client.
 - The OpenCV image area is a resizable square with aspect-preserving fit and black
   padding. Mouse wheel zooms the private image about the pointer, bounded from
-  fitted size to 16×; double-click restores fit. Repaint cached pixels without a
+  fitted size to 16×; double-click restores fit. While zoomed, left-button drag pans
+  the private image, clamped to its edges with smaller axes kept centered. Release
+  or a pointer move without the button ends panning; zoom/reset/resize also end the
+  current gesture. Repaint cached pixels without a
   new frame. Show may supply bounded physical-desktop placement/size from
-  the GUI under G01. Untouched windows follow layout changes; manual move/resize
+  the GUI under G01. Keep a new Win32 viewer hidden until initial size, physical
+  placement, blank caption and exact GUI-owner binding are applied; first reveal
+  never activates it. Untouched windows follow layout changes; manual move/resize
   opts out until explicit Snap or close/reopen. Existing-only hints never reopen
   a closed window. Display transforms never edit
   source coordinates, camera settings or recording/tracking pixels.
@@ -761,8 +782,14 @@ stamping/filtering and the mappings still need runtime implementation.
   promptly stop preview/pulses and begin normal safe release (E03: no grace period).
   A new control claim cannot cancel cleanup or restart preview automatically; explicit
   restart waits for confirmed release. Active experiments are not stopped.
-- Editable preview changes, including pulses and buffer layout, follow
-  stop/apply/restart; restart only on success, otherwise capture/pulses stay stopped.
+- Connecting an additional camera preserves existing unchanged preview captures,
+  run/buffer/viewer identities and external pulse phase. Resolve/prepare only the new
+  camera, apply A11's complete configuration without touching unchanged outputs,
+  then ON only its output after capture is ready. Invalid additions leave existing
+  previews/pulses unchanged; shared faults retain E06 stopping. No older-firmware
+  fallback may claim continuity.
+- Editable preview settings and buffer changes retain stop/apply/restart for affected
+  captures; restart only on success, otherwise those captures/pulses stay stopped.
   Session locking and control ownership remain E07's.
 - A camera-local preview failure reports the error and stops/releases only that
   preview; independent previews may continue, and shared-component failures stop every
@@ -913,7 +940,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 49
+**Status:** Accepted · **Revision:** 50
 
 **Board and firmware**
 
@@ -938,14 +965,14 @@ hardware information and later implementation; no new deferral is implied.
   or pulses. Failed/uncertain upload reports failure; unresolved helper cleanup blocks
   Setup and manual device access until exact cleanup succeeds. Setup still rejects
   incompatible firmware. Native flashing and electrical acceptance remain E15 rig work.
-- Serial protocol version is integer **4**, separate from firmware release, and must
+- Serial protocol version is integer **5**, separate from firmware release, and must
   match exactly at Setup; future wire changes increment published versions. Firmware,
   not host monitoring alone, implements A10's watchdog.
-- Version 4 controls independent Behavioral, Tracking and Eye tracking outputs.
+- Version 5 controls independent Behavioral, Tracking and Eye tracking outputs.
   Externally triggered Eye requires an explicit unique pin, camera FrameStart line and rate; never map
   it onto another camera output or choose these values by discovery. Host masks,
   readback, diagnostic identity, boundary evidence and cleanup include Eye.
-  Firmware upload remains explicit/manual; protocol-3 firmware rejects until
+  Firmware upload remains explicit/manual; older firmware rejects until
   upgraded. Electrical/timing and camera acceptance remain E15 rig work.
 
 **Connection**
@@ -1078,11 +1105,15 @@ hardware information and later implementation; no new deferral is implied.
   never silently reconfiguring or adopting a new rate. Nominal rate is not measured
   oscillator accuracy; preserve timing precision without inventing a rounding
   tolerance.
-- An authorized valid update during preview stops pulses, applies the full update and
-  restarts only previously running, still-enabled outputs; old pins are released LOW.
-  Validation rejection leaves outputs unchanged; application failure after stop
-  leaves them off. Fault/Stop takes precedence over restoration. Boot configuration
-  starts off.
+- Protocol 5 CONFIGURE validates the complete update before application and preserves
+  unchanged outputs' phase, HIGH/LOW state and running state without rewriting their
+  pins or timer state. Only changed outputs stop/apply/restart when previously running
+  and still enabled; release all changed old pins LOW before assigning new ones.
+  Newly enabled outputs remain stopped until explicit ON. Validation rejection leaves
+  every output unchanged; application faults retain E06 stopping and never restore
+  uncertain outputs. Fault/Stop and watchdog stopping take precedence. Boot starts off.
+  Exact-version capability checks reject older firmware before configuration;
+  deployment remains an explicitly authorized upload, separate from source/build tests.
 
 **Operator I/O diagnostics**
 

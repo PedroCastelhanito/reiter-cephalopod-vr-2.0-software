@@ -329,7 +329,11 @@ class ProgramTimeline(QWidget):
             painter.setPen(QPen(edge, 2 if selected else 1))
             painter.drawRoundedRect(rect, 0 if retro else 6, 0 if retro else 6)
             painter.setPen(QColor(colors.window if retro and selected else colors.text))
-            name = node_name(node).replace("_", " ")
+            name = (
+                f"Epoch {i + 1}"
+                if isinstance(node, Epoch)
+                else node_name(node).replace("_", " ")
+            )
             value = self.durations[i]
             summary = clock_duration(value) if value is not None else "Timing at Setup"
             lines: tuple[tuple[int, str], ...] = ((5, name), (29, summary))

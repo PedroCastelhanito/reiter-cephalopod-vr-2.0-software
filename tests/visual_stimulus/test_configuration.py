@@ -120,6 +120,62 @@ if __name__ == "__main__":
     unittest.main()
 
 
+def test_per_output_pulses_validate_targets_bounds_and_vsync():
+    import pytest
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+    from cephvr.visual_stimulus.config.pacing import apply_pacing_settings
+
+    source = json.loads(valid_display_json())
+    patch = source.pop("photodiode_patch")
+    source["photodiode_output_id"] = None
+    prototype = source["outputs"][0]
+    names = ("front", "left", "right", "bottom")
+    source["outputs"] = [
+        dict(prototype, output_id=name, device_identity=name) for name in names
+    ]
+    for mapping, name in zip(source["mappings"], names, strict=True):
+        mapping["output_id"] = name
+    source["photodiode_patches"] = {name: patch for name in ("front", "left")}
+    display = DisplayProfile.model_validate_json(json.dumps(source))
+    display.require_trial_marker()
+    assert set(display.marker_patches) == {"front", "left"}
+    assert [display.requested_swap_interval(name) for name in names] == [1, 1, 0, 0]
+    assert display.selected_pacing_output_id is None
+    assert display.review_refresh_rate() == (60, 1)
+    assert apply_pacing_settings(display, refresh_hz=60.0, output_id=None) == display
+    for mode, intervals in (("free_run", [0] * 4), ("all_outputs_vsync", [1] * 4)):
+        selected = DisplayProfile.model_validate_json(
+            json.dumps(dict(source, presentation_mode=mode))
+        )
+        assert [selected.requested_swap_interval(name) for name in names] == intervals
+    for invalid in (
+        {"missing": patch},
+        {"front": dict(patch, rect=dict(x=999999, y=0, width=1, height=1))},
+    ):
+        with pytest.raises(ValueError):
+            DisplayProfile.model_validate_json(
+                json.dumps(dict(source, photodiode_patches=invalid))
+            )
+    disabled = [dict(o, enabled=o["output_id"] != "left") for o in source["outputs"]]
+    with pytest.raises(ValueError, match="enabled"):
+        DisplayProfile.model_validate_json(json.dumps(dict(source, outputs=disabled)))
+    inactive = DisplayProfile.model_validate_json(
+        json.dumps(
+            dict(
+                source,
+                outputs=disabled,
+                photodiode_enabled=False,
+                pacing_output_id="front",
+            )
+        )
+    )
+    assert not inactive.marker_patches
+    assert [inactive.requested_swap_interval(name) for name in names] == [0] * 4
+    assert len(inactive.photodiode_patches) == 2
+
+
 def test_output_subsets_preserve_rig_geometry_and_calibrated_mappings():
     from itertools import product
 
@@ -407,28 +463,130 @@ def test_review_reduction_scales_capture_tiles_without_changing_display() -> Non
 
     import pytest
 
-    from cephvr.shared.ffmpeg_types import EncodingOptionsError
-    from cephvr.visual_stimulus.recording.encoding import _composite_geometry
+    from cephvr.visual_stimulus.config.models.display_profile import PixelRect
+    from cephvr.visual_stimulus.config.review_layout import (
+        fit_review_layout,
+        recording_layout,
+        validate_layout,
+    )
 
     outputs = tuple(
-        NS(width_px=1280, height_px=1000, output_id=str(i)) for i in range(4)
+        NS(
+            width_px=1000 if i == 3 else 1280,
+            height_px=1280 if i == 3 else 1000,
+            output_id=str(i),
+            rgb_bits_per_channel=8,
+        )
+        for i in range(4)
     )
-    display = NS(active_outputs=outputs)
-    full = _composite_geometry(display, (4096, 4096))
-    reduced = _composite_geometry(display, (4096, 4096), 2)
-    assert full[:3] == (2560, 2000, 1)
-    assert reduced[:3] == (1280, 1000, 2)
-    assert reduced[0] * reduced[1] * 4 == full[0] * full[1]
-    assert all((o.width_px, o.height_px) == (1280, 1000) for o in outputs)
-    assert reduced[3] == (
-        ("0", 0, 500, 640, 500),
-        ("1", 640, 500, 640, 500),
-        ("2", 0, 0, 640, 500),
-        ("3", 640, 0, 640, 500),
+    mappings = tuple(
+        NS(
+            output_id=str(i),
+            mapping_id=str(i),
+            surface_id=face,
+            viewport=PixelRect(
+                x=0, y=0, width=outputs[i].width_px, height=outputs[i].height_px
+            ),
+        )
+        for i, face in enumerate(("left", "front", "right", "bottom"))
     )
-    # Apply extra reduction after the existing encoder-fit divisor.
-    assert _composite_geometry(display, (1300, 1100), 2)[:3] == (640, 500, 4)
+    display = NS(active_outputs=outputs, active_mappings=mappings)
+    full = fit_review_layout(display, (4096, 4096))
+    reduced = fit_review_layout(display, (4096, 4096), 2)
+    assert (full.composite_width, full.composite_height) == (2560, 2000)
+    assert (reduced.composite_width, reduced.composite_height) == (1280, 1000)
+    assert all(t.rect.width == 640 and t.rect.height == 500 for t in reduced.tiles)
+    assert (reduced.tiles[3].rect.width, reduced.tiles[3].rect.height) == (640, 500)
+    assert reduced.tiles[3].rotation_clockwise_degrees == 90
+    assert all(
+        (t.source_rect.width, t.source_rect.height) == (o.width_px, o.height_px)
+        for t, o in zip(reduced.tiles, outputs, strict=True)
+    )
+    assert [(t.cell.x, t.cell.y) for t in reduced.tiles] == [
+        (0, 500),
+        (640, 500),
+        (0, 0),
+        (640, 0),
+    ]
+    assert [t.label for t in reduced.tiles] == ["Left", "Front", "Right", "Bottom"]
+    assert all(t.rect == t.cell for t in reduced.tiles)
+    assert (
+        sum(t.rect.width * t.rect.height for t in reduced.tiles)
+        == reduced.composite_width * reduced.composite_height
+    )
+    legacy = recording_layout(display, layout_version=2)
+    validate_layout(display, legacy)
+    assert legacy.tiles[0].cell.height > legacy.tiles[0].rect.height
+    fitted = fit_review_layout(display, (1300, 1100), 2)
+    assert (
+        fitted.composite_width,
+        fitted.composite_height,
+        fitted.scale_denominator,
+    ) == (640, 500, 4)
     for factor in (0, -1, True, 2000):
-        with pytest.raises(EncodingOptionsError):
-            _composite_geometry(display, (4096, 4096), factor)
+        with pytest.raises(ValueError):
+            fit_review_layout(display, (4096, 4096), factor)
     assert load_file_policies(_ROOT).review_scale_factor == 2
+
+
+def test_review_crops_use_calibration_and_fit_mixed_aspect_without_rotation():
+    from types import SimpleNamespace as NS
+
+    from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
+    from cephvr.visual_stimulus.config.models.display_profile import PixelRect
+    from cephvr.visual_stimulus.config.review_layout import (
+        review_layout,
+        validate_layout,
+    )
+
+    outputs = tuple(
+        NS(output_id=face, width_px=1000, height_px=800, rgb_bits_per_channel=8)
+        for face in ("bottom", "right", "front", "left")
+    )
+    viewport = PixelRect(x=100, y=80, width=800, height=640)
+    mappings = tuple(
+        NS(
+            output_id=o.output_id,
+            mapping_id=o.output_id,
+            surface_id=o.output_id,
+            viewport=viewport,
+        )
+        for o in outputs
+    )
+    display = NS(active_outputs=outputs, active_mappings=mappings)
+    profiles = {
+        o.output_id: GeometricProfile.model_construct(
+            valid_area=(0.2, 0.25, 0.8, 0.75),
+            intended_coverage=((0, 0), (1, 0), (1, 1), (0, 1)),
+        )
+        for o in outputs
+    }
+    profiles["bottom"] = profiles["bottom"].model_copy(
+        update={"valid_area": (0.4, 0.1, 0.6, 0.9)}
+    )
+    profiles["front"] = profiles["front"].model_copy(
+        update={
+            "valid_area": None,
+            "intended_coverage": (
+                (0.25, 0.25),
+                (0.75, 0.25),
+                (0.75, 0.75),
+                (0.25, 0.75),
+            ),
+        }
+    )
+    layout = review_layout(display, 2, profiles)
+    validate_layout(display, layout)
+    assert [t.output_id for t in layout.tiles] == ["left", "front", "right", "bottom"]
+    left, front, right, bottom = layout.tiles
+    assert left.source_rect == PixelRect(x=200, y=200, width=600, height=400)
+    assert front.source_rect == PixelRect(x=300, y=240, width=400, height=320)
+    assert bottom.source_rect == PixelRect(x=400, y=80, width=200, height=640)
+    assert (layout.composite_width, layout.composite_height) == (800, 520)
+    assert (bottom.rect.width, bottom.rect.height) == (100, 320)
+    assert bottom.rect.x == 350
+    assert left.rect.y == 320
+    assert left.rect.y == right.rect.y == front.rect.y
+    assert left.rect.y > bottom.rect.y and left.rect.x < front.rect.x < right.rect.x
+    # Cropping has no image input, so black content cannot change the layout.
+    assert review_layout(display, 2, profiles) == layout

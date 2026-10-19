@@ -583,6 +583,3 @@ class TrackingPage(ResponsiveColumns):
 
     def save_settings(self) -> None:
         self.config_files.choose(save=True)
-
-    def load_settings(self) -> None:
-        self.config_files.choose(save=False)

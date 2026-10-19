@@ -1,0 +1,46 @@
+{
+  ".cephvr-reservation.json": {
+    "bytes": 151,
+    "sha256": "0bae9152b93900fc87224dc7d5529a263396f91daecac2d24172133c3af55266"
+  },
+  ".cephvr.lock": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "protocol-data\\PREVIEW_104531_behavioral_cam_frames.jsonl": {
+    "bytes": 808913,
+    "sha256": "0e26f03e000f736311c8f9b7cae31e78a5a4dd8c09980570515474dc6843ee79"
+  },
+  "protocol-data\\PREVIEW_104531_eye_tracking_cam_frames.jsonl": {
+    "bytes": 1618824,
+    "sha256": "509cdf3571fcea4cb07f403f8d812523a7c62c3c2fc4fcbb25a1bd082dcd089c"
+  },
+  "protocol-data\\PREVIEW_104531_LOG.json": {
+    "bytes": 14842,
+    "sha256": "8d161761edc24684f83683a84d6d5824f99dd0bcc8b77e437fd4b84faac6bee4"
+  },
+  "protocol-data\\PREVIEW_104531_stimulus_frames.jsonl": {
+    "bytes": 33568350,
+    "sha256": "195743364ab62d8a02d1ccd4263f46129f677286c5812c58df200af0da6e7d23"
+  },
+  "protocol-data\\PREVIEW_104531_stimulus_LOG.json": {
+    "bytes": 37725,
+    "sha256": "f38d8bbe96e54d01ff0f53cdb473b40947bf7993001a406189923e6ba23a86e4"
+  },
+  "protocol-data\\PREVIEW_104531_tracking_cam_frames.jsonl": {
+    "bytes": 1618461,
+    "sha256": "40ae84098a1b1d24959f9e07f57feb507c2fe2da3ff2321e11bae00d83e8e4e0"
+  },
+  "protocol-data\\SCHEMA.json": {
+    "bytes": 8937,
+    "sha256": "a00b9371c9a2032e2b4dc6cfa0e4335a7e018b10c51d7b96a4d5d403f34d403b"
+  },
+  "protocol-data\\SESSION_CONFIG.json": {
+    "bytes": 33408,
+    "sha256": "04d04db5237b4778b26f3cf5d3bc8f3ea11e423136c41a9e4396e1d10c75492f"
+  },
+  "protocol-data\\SESSION_LOG.jsonl": {
+    "bytes": 605,
+    "sha256": "1504a6bbf3de4db339dd1c73ef6e779e203147aa47eadd2cdf494a07e8ed1428"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-19",
+  "task": "preview-windows-native-follow",
+  "source": "native-events/source-hashes.json",
+  "method": "Windows computer-use clicks/drag/display Settings, authenticated controller snapshots, native test, full ffprobe decode/count",
+  "final_generation": "d05983ec-01ce-4b81-9250-be4c7e1fa75f",
+  "final_session": "15f0a602-4a53-497a-9373-c6f0c68bffb3",
+  "duration_seconds": 240,
+  "fixture": {
+    "camera_video": "all three enabled",
+    "stimulus_video": true,
+    "stimulus_capture_slots": 15,
+    "quality": "saved settings unchanged",
+    "tracking_processing": false,
+    "stimulus": "texture-only two epochs, unused image/arena removed from test candidate"
+  },
+  "fix": "Use native WM_EXITSIZEMOVE revision instead of automatic geometry changes to detect manual placement on Windows; shared Runtime/Review guard; staged MCU I/O and multi-screen pulse edits remain separate",
+  "observed_passes": [
+    "workspace drag with all three previews during recording at100%",
+    "all three bracket alignment at125% during recording",
+    "all three visually aligned at150%; authenticated follow-up already terminal, not sustained runtime acceptance",
+    "Eye Snap at125% in intermediate run",
+    "240s trial completed with cleanup confirmed",
+    "all four videos fully decode and counts match closed receipts",
+    "normal Shutdown succeeded and runtime processes absent",
+    "11 settings files SHA256-identical after restoration",
+    "Windows Settings restored to100%"
+  ],
+  "limitations": [
+    "Native child X/individual dragging blocked by computer-use cross-process targeting of blank-title windows; requested manual assistance unanswered",
+    "Actual multi-source minimize/restore, sustained150% and reverse-DPI runtime alignment remain open",
+    "Isolated native owner test is not operator-action acceptance",
+    "SDK transport counters include unknown values",
+    "Shutdown stderr retains pre-existing unconfirmed MCU claim-release acknowledgement after exact controller departure",
+    "Tracking processing, optical timing, multi-trial/fault/full long-root and full-workload acceptance not established"
+  ],
+  "failed_candidates": {
+    "root": "original geometry guard false manual opt-out at125%",
+    "rerun": "DPI baseline repair failed",
+    "final-run": "pending DPI repair failed",
+    "verified-run": "child DPI polling still failed"
+  },
+  "final_evidence": "native-events/",
+  "initial_video_decode": "video-probe.json",
+  "restoration": "restoration.json",
+  "validation": {
+    "final_owner_acquisition": "148 passed,2 deselected",
+    "final_focused_review": "5 passed",
+    "final_native_owner_notification": "1 passed,18 deselected",
+    "mypy_windows": "39 sources clean",
+    "ruff_format": "10 files pass",
+    "boundaries": "724 modules,zero violations; existing warnings reviewed",
+    "broad_intermediate": "778 passed,5 Review fixture failures; mocks corrected and focused5 pass; predates final adapter",
+    "whitespace": "git diff --check pass"
+  },
+  "video_counts": {
+    "behavioral_cam": 7193,
+    "tracking_cam": 14387,
+    "eye_tracking_cam": 14396,
+    "stimulus": 14231
+  }
+}

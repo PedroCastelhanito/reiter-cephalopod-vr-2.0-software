@@ -6,6 +6,7 @@ import "cephvr/visual_stimulus/v1/messages.proto";
 // Private registered loopback services. E08 admission/auth/retention/deadlines;
 // the renderer is the only worker (V01/V12). No pixels or per-frame evidence RPC.
 service VisualStimulusWorkerService {
+  rpc SetStimulusPreview(StimulusPreviewCommand) returns (cephvr.control.v1.CommandAdmission);
   rpc InitializeDisplay(cephvr.visual_stimulus.v1.InitializeDisplay) returns (cephvr.control.v1.CommandAdmission);
   rpc OpenDisplayCalibration(OpenDisplayCalibrationCommand) returns (cephvr.control.v1.CommandAdmission);
   rpc UpdateDisplayCalibration(UpdateDisplayCalibrationCommand) returns (cephvr.control.v1.CommandAdmission);
@@ -24,6 +25,7 @@ service VisualStimulusWorkerService {
 }
 // Hosted alongside public BackendService in the existing coordinator.
 service VisualStimulusCoordinatorService {
+  rpc ReportStimulusPreview(cephvr.control.v1.StimulusPreviewState) returns (cephvr.control.v1.ReportReceipt);
   rpc ReportWorkerOperation(WorkerOperation) returns (cephvr.control.v1.ReportReceipt);
   rpc ReportWorkerLifecycle(WorkerLifecycle) returns (cephvr.control.v1.ReportReceipt);
   rpc ReportDisplay(cephvr.control.v1.VisualStimulusDisplayView) returns (cephvr.control.v1.ReportReceipt);

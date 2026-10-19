@@ -3,7 +3,7 @@
 Derived from [A10/A11](../../docs/architecture/acquisition.md) and
 [E06/E08](../../docs/architecture/system-contracts.md). Typed host evidence is in
 [microcontroller.proto](../cephvr/acquisition/v1/microcontroller.proto).
-This specifies protocol version 4 with independent Behavioral, Tracking and Eye
+This specifies protocol version 5 with independent Behavioral, Tracking and Eye
 camera outputs. The matching Uno source is under `firmware/uno`; compile and local
 host verification do not establish upload, electrical or camera acceptance. See
 [rig verification](../../reports/rig-verification.md) for remaining checks.
@@ -14,7 +14,8 @@ cannot restart an expired test. The GUI polls every 500 ms while Configuration/c
 is held. Expiry stops outputs LOW (or detaches the input observer) and retains counts.
 Existing camera watchdog and controller cleanup remain independent. Older firmware
 rejects `duration_ms=0`; report that failure without falling back to bounded tests.
-Install `cephvr2_uno_4` manually to use continuous tests; no automatic upload.
+Protocol 5 requires `cephvr2_uno_5`; older firmware is incompatible. Source/build
+verification does not install it; upload requires explicit authorization.
 
 ## Line grammar
 
@@ -94,7 +95,7 @@ controller's existing `rising_edges` field carries this count, distinguished by 
 GUI output labels explicitly say generated transitions. Protocol 2 output-zero replies
 are incompatible and rejected at connection rather than treated as measured zero.
 
-`protocol` is uint32 and must equal 4; watchdog values are uint32. Applied Hz is
+`protocol` is uint32 and must equal 5; watchdog values are uint32. Applied Hz is
 positive and finite decimal text (ordinary or exponent notation), parsed into the
 host's binary64 `applied_frequency_hz`. It is not restricted to the 0.1-Hz request grid.
 Firmware emits sufficient significant digits to preserve its computed rate on a
@@ -151,13 +152,24 @@ cancels scheduling and forces LOW immediately, including mid-pulse. Prevent call
 from reasserting HIGH after stop. ON/OFF validate the entire mask before applying;
 OFF on an already disabled selected role is harmless, while ON is rejected.
 
-CONFIGURE on running preview outputs stops, applies and restores only previously
-running outputs still enabled, unless Stop/fault intervenes. Validation rejection
-leaves the pre-command state unchanged; application failure leaves outputs off.
-For CephVR edits requiring controller adoption, the coordinator first pauses affected
-capture and turns off dependent external previews, so CONFIGURE cannot prematurely
-restart them. After matching confirmation and re-preparation, restore only those
-previously requested runs still authorized. Free-running independent previews need
+CONFIGURE preserves unchanged outputs' running state, phase accumulator, current
+HIGH/LOW level and pending edge schedule; it never stops, restarts or rewrites their
+pins/timer state. An output is unchanged when enablement, and for an enabled output
+its pin and requested rate/resolved timing, are identical. The firmware validates the
+whole request and bounded reply before touching outputs. It releases all changed old
+pins LOW before assigning changed pins; only changed, previously running, still-enabled
+outputs restart. Newly enabled outputs stay stopped until ON. Repeated identical
+CONFIGURE is phase-preserving. Validation rejection leaves all outputs unchanged;
+application faults retain output-off handling. Stop/fault/watchdog takes precedence.
+
+For additional-camera Connect, the coordinator leaves existing captures, rings and
+viewers running, resolves/prepares only the new camera and sends ON for that camera
+only after Ready. The host verifies the preserved running mask in CONFIGURE readback;
+serial state is not electrical continuity proof. Older firmware is rejected at CAPS.
+For settings edits requiring controller adoption, the coordinator still first pauses
+affected capture and turns off dependent external previews, so CONFIGURE cannot
+prematurely restart them. After matching confirmation and re-preparation, restore only
+those previously requested runs still authorized. Free-running independent previews need
 not pause for an unrelated MCU update. This is internal coordination, not another
 operator confirmation or firmware proposal phase.
 

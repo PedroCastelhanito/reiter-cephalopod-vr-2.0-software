@@ -6,7 +6,10 @@ import ctypes
 from dataclasses import dataclass
 from typing import Any, cast
 
-from cephvr.visual_stimulus.config.models.artifact_models import ReviewEncoding
+from cephvr.visual_stimulus.config.models.artifact_models import (
+    ReviewEncoding,
+    ReviewLayout,
+)
 from cephvr.visual_stimulus.rendering.types import RenderedOutput
 
 _VERTEX = """#version 430
@@ -19,7 +22,22 @@ _FRAGMENT = """#version 430
 in vec2 uv;
 out vec4 color;
 uniform sampler2D source_tex;
-void main() { color = vec4(texture(source_tex, uv).rgb, 0.0); }
+uniform vec4 source_rect;
+uniform int rotate_clockwise;
+uniform bvec2 mirror_axes;
+void main() {
+    vec2 half_pixel = 0.5 / vec2(textureSize(source_tex, 0));
+    vec2 sample_uv = uv;
+    if (rotate_clockwise == 90) sample_uv = vec2(1.0 - uv.y, uv.x);
+    else if (rotate_clockwise == 180) sample_uv = 1.0 - uv;
+    else if (rotate_clockwise == 270) sample_uv = vec2(uv.y, 1.0 - uv.x);
+    if (mirror_axes.x) sample_uv.x = 1.0 - sample_uv.x;
+    if (mirror_axes.y) sample_uv.y = 1.0 - sample_uv.y;
+    vec2 point = clamp(source_rect.xy + sample_uv * source_rect.zw,
+                       source_rect.xy + half_pixel,
+                       source_rect.xy + source_rect.zw - half_pixel);
+    color = vec4(texture(source_tex, point).rgb, 0.0);
+}
 """
 
 
@@ -46,6 +64,7 @@ class ReviewCapture:
         self._context: Any | None = None
         self._dimensions: tuple[int, int, str] | None = None
         self._shared: list[Any] = []
+        self._labels: dict[tuple[str, int], Any] = {}
 
     def capture(
         self,
@@ -60,7 +79,6 @@ class ReviewCapture:
             raise RuntimeError(
                 "the Visual Stimulus graphics extra must include PyOpenGL for asynchronous PBO capture"
             ) from exc
-        import moderngl
 
         context = cast(Any, cast(Any, outputs[0].texture_handle).ctx)
         if context is None:
@@ -72,18 +90,7 @@ class ReviewCapture:
         _texture, framebuffer, program, _buffer, array, _flipped, readback = (
             self._shared
         )
-        by_id = {item.output_id: item for item in outputs}
-        framebuffer.use()
-        cast(Any, context).viewport = (0, 0, width, height)
-        framebuffer.clear(0, 0, 0, 0)
-        program["source_tex"].value = 0
-        for tile in encoding.tiles:
-            rendered = by_id[tile.output_id]
-            cast(Any, rendered.texture_handle).use(0)
-            rect = tile.rect
-            cast(Any, context).viewport = (rect.x, rect.y, rect.width, rect.height)
-            array.render(mode=moderngl.TRIANGLE_STRIP)
-        cast(Any, context).viewport = (0, 0, width, height)
+        self.compose(outputs, encoding)
         byte_count = width * height * 4
         # The upstream capture reservation bounds pending+CPU-owned frames. Reusing
         # idle buffers first keeps this pool at that admitted concurrency high-water.
@@ -130,6 +137,91 @@ class ReviewCapture:
         finally:
             GL.glBindBuffer(GL.GL_PIXEL_PACK_BUFFER, 0)
             framebuffer.use()
+
+    def compose(self, outputs: tuple[RenderedOutput, ...], layout: ReviewLayout) -> Any:
+        """Compose declared crops/rotations; preview and recording supply separate layouts."""
+        import moderngl
+
+        if not outputs:
+            raise ValueError("review requires rendered outputs")
+        context = cast(Any, outputs[0].texture_handle).ctx
+        pixel_format = getattr(layout, "native_pixel_format", None) or (
+            "rgba8_top_down"
+            if max(t.source_code_bits for t in layout.tiles) == 8
+            else "r10g10b10a2_le_top_down"
+        )
+        self._ensure_compositor(
+            context, layout.composite_width, layout.composite_height, pixel_format
+        )
+        texture, framebuffer, program, _buffer, array, _flipped, _readback = (
+            self._shared
+        )
+        by_id = {item.output_id: item for item in outputs}
+        framebuffer.use()
+        framebuffer.clear(0, 0, 0, 0)
+        program["source_tex"].value = 0
+        for tile in layout.tiles:
+            program["mirror_axes"].value = (
+                layout.layout_kind == "preview" and tile.label in {"Left", "Right"},
+                layout.layout_kind == "preview" and tile.label == "Bottom",
+            )
+            program["rotate_clockwise"].value = tile.rotation_clockwise_degrees
+            rendered = by_id[tile.output_id]
+            cast(Any, rendered.texture_handle).use(0)
+            crop = tile.source_rect
+            program["source_rect"].value = (
+                (0.0, 0.0, 1.0, 1.0)
+                if crop is None
+                else (
+                    crop.x / rendered.width,
+                    crop.y / rendered.height,
+                    crop.width / rendered.width,
+                    crop.height / rendered.height,
+                )
+            )
+            rect = tile.rect
+            context.viewport = (rect.x, rect.y, rect.width, rect.height)
+            array.render(mode=moderngl.TRIANGLE_STRIP)
+            if layout.layout_version == 2 and tile.cell is not None and tile.label:
+                from cephvr.visual_stimulus.config.review_layout import LABEL_HEIGHT
+
+                cell = tile.cell
+                self._label(context, tile.label, cell.width).use(0)
+                program["rotate_clockwise"].value = 0
+                program["mirror_axes"].value = (False, False)
+                program["source_rect"].value = (0.0, 0.0, 1.0, 1.0)
+                context.viewport = (
+                    cell.x,
+                    cell.y + cell.height - LABEL_HEIGHT,
+                    cell.width,
+                    LABEL_HEIGHT,
+                )
+                array.render(mode=moderngl.TRIANGLE_STRIP)
+        context.viewport = (0, 0, layout.composite_width, layout.composite_height)
+        return texture
+
+    def _label(self, context: Any, label: str, width: int) -> Any:
+        from PIL import Image, ImageDraw, ImageFont
+
+        from cephvr.visual_stimulus.config.review_layout import LABEL_HEIGHT
+
+        key = label, width
+        if key not in self._labels:
+            image = Image.new("RGB", (width, LABEL_HEIGHT))
+            draw = ImageDraw.Draw(image)
+            font = ImageFont.load_default(size=16)
+            draw.text(
+                (width / 2, LABEL_HEIGHT / 2),
+                label,
+                font=font,
+                fill="white",
+                anchor="mm",
+            )
+            image = image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+            self._labels[key] = context.texture(
+                image.size, 3, image.tobytes(), alignment=1
+            )
+        return self._labels[key]
 
     @staticmethod
     def _orient_for_readback(
@@ -276,6 +368,9 @@ class ReviewCapture:
         while self._available:
             self._delete_buffer(self._available[-1])
             self._available.pop()
+        for key, label in tuple(self._labels.items()):
+            label.release()
+            del self._labels[key]
         while self._shared:
             self._shared[-1].release()
             self._shared.pop()

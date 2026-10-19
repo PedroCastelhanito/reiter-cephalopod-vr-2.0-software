@@ -91,13 +91,25 @@ Startup treats a pointer with such a marker as finished and clears it without a 
 On controller loss, supervisor uses its independent emergency report and bounded E08
 shutdown. Preserve unknown central metadata state and unfinished marker; do not append
 or repair normal files in the lost controller's place. Startup reconciliation requires
-controller-held exclusive reservation, supervisor-confirmed old-process absence and the
+controller-held exclusive reservation and the
 existing recovery authorization; the new controller performs any permitted repair and
 marker/lock updates through this same serialized writer. The single owner-private
 unfinished pointer identifies the exact old session; an immutable prior-launcher
-receipt proves outer-job emptiness for those old generations. `open_existing` never
+receipt proves outer-job emptiness for those old generations. If the receipt is
+missing, E04 permits the explicit operator action with the exclusive session lock,
+without a Windows reboot. The prompt discloses unconfirmed prior process absence;
+the recovery report records `old_process_absence: unconfirmed_exclusive_session_lock`.
+Never fabricate exit proof or perform automatic pointer/namespace settlement in
+this case. A present invalid/mismatched receipt remains a blocker. `open_existing` never
 creates a path, `adopt_recovery_log` requires exact previously validated file
 identity/size, and a new `RECOVERY-UUID.json` report can preserve corrupt evidence.
 `finish_recovery` compares the original bounded marker fingerprint before marking
-complete. Missing proof or changed evidence retains the pointer and blocker.
+complete. Startup prompt choices are `recover` (Start recovery) and `delete` (Cancel
+and delete files); both are asynchronous, exact prompt/work/operation/control-bound
+operations. Closing the dialog submits neither. Delete explicitly authorizes all
+contents in this session's `protocol-data` and local `spikeglx-data`, after marker
+identity/fingerprint checks and link/reparse/root-entry preflight. Keep namespace
+ownership through bounded removal and quarantine; clear the pointer only on
+confirmed success. Missing reservation ownership, changed evidence or failure retains the pointer
+and blocker, including after partial deletion. Remote files are never deleted.
 Supervisor owns emergency reports.

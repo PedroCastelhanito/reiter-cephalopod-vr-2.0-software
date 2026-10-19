@@ -1,0 +1,57 @@
+{
+  "observed_at": "2026-10-19T15:20:42.447441+09:00",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_scope": "dirty shared working tree; per-file SHA256 binds final source; concurrent edits preserved",
+  "governing_decisions": [
+    "A10 revision 68",
+    "A07",
+    "A08",
+    "A09",
+    "E06",
+    "E08",
+    "ARCH-002"
+  ],
+  "failure": "Control handoff during terminal margin or SDK purge previously flushed grab buffers and sealed incomplete accounting. Rejected Interrupted Finished then left missing cleanup output evidence.",
+  "repair": "Yield without stopping grab queue, keep fixed terminal generation/margin/deadline/cutoff and accumulated purge counters, service control and resume. Keep first stop observation and report exactly once. Preview cleanup remains nonresumable. No closure guard or timeout changes.",
+  "checks": [
+    {
+      "command": "python reports/runtime-evidence-2026-10-19/abort-finalization/reproduce_original_drain.py",
+      "scope": "isolated committed original stop method injected into current test process; live sources unmodified",
+      "outcome": "expected exit1; 3 failed/3 passed/86 deselected; fresh wakes produced incomplete False rather than yielding None"
+    },
+    {
+      "command": "python -m pytest tests/acquisition tests/controller/test_lifecycle_reports.py tests/controller/test_lifecycle_commands.py -q -m \"not windows and not rig\" --basetemp <temporary directory> --tb=short",
+      "outcome": "748 passed, 2 deselected; permitted loopback"
+    },
+    {
+      "command": "python -m pytest tests/acquisition/test_worker_foundations.py tests/acquisition/test_camera_adapter_contracts.py -q -k \"serialized_stop or terminal_stage or terminal_purge or preview_reopen\" --basetemp <temporary directory> --tb=short",
+      "outcome": "26 passed, 119 deselected; final code"
+    },
+    {
+      "command": "python -m mypy --platform win32 src/cephvr/acquisition/camera src/cephvr/acquisition/worker",
+      "outcome": "55 source files pass"
+    },
+    {
+      "command": "python -m ruff check <10 affected files>; python -m ruff format --check <10 affected files>",
+      "outcome": "pass"
+    },
+    {
+      "command": "python tools/check_backend_boundaries.py",
+      "outcome": "730 backend modules, 0 violations; SDK purge/capture continuation extracted before extending oversized owners; cohesive residual responsibilities reviewed"
+    }
+  ],
+  "source_sha256": {
+    "src/cephvr/acquisition/camera/basler.py": "953a62adc0c2cbfcd9972542731dc661786d352ea9b1579478233bf15de51ca9",
+    "src/cephvr/acquisition/camera/drain.py": "3f063a910373d111478991082579899f0b1a154ab251a0f53fe2ebcc0afc7ff8",
+    "src/cephvr/acquisition/camera/types.py": "49ade7653fffed096fd80ceff67455b1dfd941a06c19ccd6ba89edb916ffbb09",
+    "src/cephvr/acquisition/worker/capture_runtime.py": "e2b5e27e625e1a4f340ebed50b06b1812bdbc733ba99aef214aa113c3e5b464f",
+    "src/cephvr/acquisition/worker/capture_drain.py": "603634aaebfb84d34065e572ac3f50c16a175864204cec8088f2efd31ed6956e",
+    "src/cephvr/acquisition/worker/trial_state.py": "087742f176d9893af3e084d3cb5ee6ba7caf75bbc313695dd3b878b174b721f4",
+    "src/cephvr/acquisition/worker/trial_lifecycle.py": "ca219e4f87f9d153f3737949a676037792ecdc1c0f4a3d72f9afd6f7f0134e3f",
+    "src/cephvr/acquisition/worker/trial_stop.py": "42d6d5c170eb23e40423b791d5ede9d9b5fa148363c2650396f9e18c8eba0bd4",
+    "tests/acquisition/test_camera_adapter_contracts.py": "a157650ebb2669b4eeb865197ec03560e265f52cfdbb28991da5829cb087a99b",
+    "tests/acquisition/test_worker_foundations.py": "7adbba0fd61cf289e6c074bd4a814bea27e3b4ac228ca8221ae8f3a3adb2c3ae"
+  },
+  "limitations": "No fresh native camera/encoder/workload trial, managed app restart or current session repair/deletion. Local control-handoff defect reproduced and fixed; exact historical native command sequence not retained, so unique incident causality and native timing remain unverified.",
+  "initial_attempts": "5 fake SDK/clock binding failures corrected before final pass; initial architecture amendment script targeted the wrong owning section and made no architecture edit before focused A10 correction."
+}

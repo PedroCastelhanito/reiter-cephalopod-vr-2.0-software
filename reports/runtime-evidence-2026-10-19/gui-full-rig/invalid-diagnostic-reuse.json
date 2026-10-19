@@ -1,0 +1,30 @@
+{
+  "error": "TRACKING_DIAGNOSTIC: ValueError: preprocessing requires explicit crop and scale values",
+  "elapsed_s": 0.0470000000204891,
+  "state": {
+    "diagnostic_id": "cca0cba0-6da3-4b9b-95ad-284bf6bcc84c",
+    "configuration_revision": "2",
+    "preview_run_id": "9c709eaf-efd6-4621-ac4a-7c11d88e0e44",
+    "source_camera_serial": "40747103",
+    "closed": true,
+    "failure": "ValueError: preprocessing requires explicit crop and scale values",
+    "tracking_endpoint": "127.0.0.1:50055",
+    "tracking_process": {
+      "role": "tracking",
+      "generation": "09b740c6-3017-4317-86e4-e1fe4e47a566"
+    }
+  },
+  "operation": {
+    "context": {
+      "command_id": "dfb18977-a968-4443-84ec-84d2900ab4bc"
+    },
+    "command": "BeginTrackingDiagnostic",
+    "complete": true,
+    "succeeded": false,
+    "progress": "BeginTrackingDiagnostic",
+    "failure": {
+      "code": "OPERATION_FAILED",
+      "message": "ValueError: preprocessing requires explicit crop and scale values"
+    }
+  }
+}

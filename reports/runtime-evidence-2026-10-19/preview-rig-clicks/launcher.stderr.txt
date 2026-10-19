@@ -1,0 +1,8 @@
+ExecuteCameraCommand 6564655f-9db7-4791-86f7-0788990e33cd failed: PREVIEW_START_FAILED: CONFIGURE unexpectedly resumed behavioral output
+ExecuteCameraCommand ea56a463-08d3-4ee6-a69d-09431d72a823 failed: PREVIEW_STOP_FAILED: Preview GUI owner cleanup failed: [WinError 1400] Invalid window handle.
+ExecuteCameraCommand e9240fa3-fe04-4efb-8852-ab4ecdd7257a failed: PREVIEW_STOP_FAILED: Preview GUI owner cleanup failed: [WinError 1400] Invalid window handle.
+ExecuteCameraCommand f3cef1af-f9bd-40e4-bbf0-e8281a02ee74 failed: PREVIEW_STOP_FAILED: Preview GUI owner cleanup failed: [WinError 1400] Invalid window handle.
+ExecuteCameraCommand 4a119831-2369-440c-97f8-2a1a8dac5ce2 failed: PREVIEW_STOP_FAILED: Preview GUI owner cleanup failed: [WinError 1400] Invalid window handle.
+ExecuteCameraCommand cf505530-7f99-4561-b58e-a7a824b3acff failed: PREVIEW_STOP_FAILED: Preview GUI owner cleanup failed: [WinError 1400] Invalid window handle.
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

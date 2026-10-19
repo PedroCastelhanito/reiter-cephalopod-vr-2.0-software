@@ -1,0 +1,26 @@
+[
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "1a25693b-2d27-4bb7-b2cf-65dcf95a4672",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "Setup",
+    "command_id": "f35572d3-d202-4fbb-aa1b-3ba433c06c9c",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "SETUP_FAILED: supervisor did not register Setup work identity"
+  },
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "432dc526-8073-4c2c-8376-badeb244e66f",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+]

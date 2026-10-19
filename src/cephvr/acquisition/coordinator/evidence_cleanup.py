@@ -70,11 +70,29 @@ class WorkerCleanupEvidence:
                     control.OUTPUT_CLOSURE_CLOSED,
                     control.OUTPUT_CLOSURE_FAILED,
                     control.OUTPUT_CLOSURE_NOT_STARTED,
+                    control.OUTPUT_CLOSURE_UNCONFIRMED,
                 }
                 for result in outputs
             )
         ):
-            raise ValueError("interrupted Finished differs from exact trial outputs")
+            # Retain the rejected claims in the existing command error, not as closure.
+            reported = [
+                {
+                    "key": result.output_key,
+                    "path": result.path,
+                    "presence": result.artifact_present
+                    if result.HasField("artifact_present")
+                    else None,
+                    "closure": result.closure,
+                    "failure": result.failure.message,
+                }
+                for result in outputs
+            ]
+            planned = {key: plan.path for key, plan in expected.items()}
+            raise ValueError(
+                "interrupted Finished differs from exact trial outputs: "
+                f"expected={planned!r}; reported={reported!r}"
+            )
         session.preflight_output_results(outputs, worker.commands)
         for result in outputs:
             session.retain_output_result(result, worker.commands)

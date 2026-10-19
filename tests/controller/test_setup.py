@@ -158,8 +158,9 @@ async def test_setup_admission_is_blocked_while_manual_loss_cleanup_is_unresolve
     assert runtime.lifecycle.attempt is None
 
 
-async def test_startup_recovery_cancel_preserves_blocker_then_continue_clears_after_handler(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("choice", ["recover", "delete"])
+async def test_startup_recovery_choice_clears_only_after_handler(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, choice: str
 ) -> None:
     runtime = _runtime(
         tmp_path,
@@ -173,11 +174,13 @@ async def test_startup_recovery_cancel_preserves_blocker_then_continue_clears_af
         setup=pb.SessionContext(controller_generation=_id(), session_id=_id()),
         operation=pb.OperationContext(command_id=_id()),
         explanation="Prior reservation requires repair",
-        permitted_choices=["continue", "cancel"],
+        permitted_choices=["recover", "delete"],
     )
     gate = asyncio.Event()
+    choices: list[str] = []
 
-    async def handler() -> None:
+    async def handler(selected: str) -> None:
+        choices.append(selected)
         await gate.wait()
 
     await runtime.install_startup_recovery(
@@ -189,35 +192,31 @@ async def test_startup_recovery_cancel_preserves_blocker_then_continue_clears_af
     monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
     tasks = TaskCapture(runtime.prompts.spawn)
     runtime.prompts.spawn = tasks.spawn
-    cancel = svc.PromptResponse(
+    response = svc.PromptResponse(
         prompt_id=prompt.prompt_id,
         setup=prompt.setup,
         setup_operation=prompt.operation,
-        choice="cancel",
+        choice=choice,
     )
-    cancel.command.operator.command_id = _id()
-    accepted_cancel = await runtime.respond_to_prompt(cancel)
-    assert accepted_cancel.result == pb.COMMAND_RESULT_ACCEPTED
+    response.command.operator.command_id = _id()
+    accepted = await runtime.respond_to_prompt(response)
+    assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
     assert runtime.lifecycle.startup_blocker
     assert runtime.lifecycle.startup_prompt == prompt
-    assert runtime.control.operations[cancel.command.operator.command_id].complete
-
-    proceed = svc.PromptResponse(
-        prompt_id=prompt.prompt_id,
-        setup=prompt.setup,
-        setup_operation=prompt.operation,
-        choice="continue",
-    )
-    proceed.command.operator.command_id = _id()
-    accepted_continue = await runtime.respond_to_prompt(proceed)
-    assert accepted_continue.result == pb.COMMAND_RESULT_ACCEPTED
-    assert runtime.lifecycle.startup_blocker
+    assert not runtime.control.operations[response.command.operator.command_id].complete
+    duplicate = svc.PromptResponse()
+    duplicate.CopyFrom(response)
+    duplicate.command.operator.command_id = _id()
+    assert (
+        await runtime.respond_to_prompt(duplicate)
+    ).result == pb.COMMAND_RESULT_REJECTED
     gate.set()
     await tasks.drain()
+    assert choices == [choice]
     assert not runtime.lifecycle.startup_blocker
     assert runtime.lifecycle.startup_prompt is None
-    assert runtime.control.operations[proceed.command.operator.command_id].complete
-    assert runtime.control.operations[proceed.command.operator.command_id].succeeded
+    operation = runtime.control.operations[response.command.operator.command_id]
+    assert operation.complete and operation.succeeded
     assert any(
         "remote stop remains unconfirmed" in warning.message
         for warning in runtime.control.warnings

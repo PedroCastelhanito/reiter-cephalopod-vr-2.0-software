@@ -809,10 +809,28 @@ async def test_abort_uses_exact_cleanup_before_trial_and_session_metadata(
     assert runtime.lifecycle.session.cleanup_confirmed
     assert runtime.lifecycle.trial.outcome == pb.TRIAL_OUTCOME_INTERRUPTED
     assert not runtime.control.warnings
+    runtime.projections.devices = pb.AcquisitionDeviceViews(
+        behavioral=pb.CameraDeviceView(
+            device_open=True,
+            preview_running=True,
+            preview_visible=True,
+            preview_run_id=attempt.context.session_id,
+        ),
+        tracking=pb.CameraDeviceView(
+            device_open=True,
+            preview_running=True,
+            preview_visible=True,
+            preview_run_id="unrelated-manual-run",
+        ),
+    )
     receipt = await runtime.new_session(operator_command(runtime))
     assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
     assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
     assert runtime.lifecycle.attempt is None
+    assert not runtime.projections.devices.behavioral.device_open
+    assert not runtime.projections.devices.behavioral.preview_run_id
+    assert runtime.projections.devices.tracking.device_open
+    assert runtime.projections.devices.tracking.preview_run_id == "unrelated-manual-run"
     replacement = _attempt(runtime, tmp_path, dict(attempt.required))
     runtime.lifecycle.attempt = replacement
     stale = await runtime.report_lifecycle(

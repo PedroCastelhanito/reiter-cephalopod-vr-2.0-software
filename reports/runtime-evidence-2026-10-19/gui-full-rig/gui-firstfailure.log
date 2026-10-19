@@ -1,0 +1,150 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 751 items
+
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor0-area0-1.0-expected0] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor1-area1-1.0-expected1] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor2-area2-1.0-expected2] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor3-area3-1.0-expected3] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor4-area4-1.0-expected4] PASSED [  0%]
+tests/gui/test_dashboard.py::test_square_preview_initial_edge_placement[anchor5-area5-2.0-expected5] PASSED [  0%]
+tests/gui/test_dashboard.py::test_review_blank_preview_connect_close_and_disconnect PASSED [  0%]
+tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-0] PASSED [  1%]
+tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-2] PASSED [  1%]
+tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-0] PASSED [  1%]
+tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-2] PASSED [  1%]
+tests/gui/test_dashboard.py::test_camera_preview_slots_only_include_enabled_cameras[standard] PASSED [  1%]
+tests/gui/test_dashboard.py::test_camera_preview_slots_only_include_enabled_cameras[retro_console] PASSED [  1%]
+tests/gui/test_dashboard.py::test_startup_maximize_survives_first_layout_and_allows_later_restore PASSED [  1%]
+tests/gui/test_dashboard.py::test_square_preview_placement_fits_small_work_area PASSED [  1%]
+tests/gui/test_dashboard.py::test_preview_slot_fits_native_frame[1.0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_fits_native_frame[1.5] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_fits_native_frame[2.0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_centers_frame_in_visible_card[1.0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_centers_frame_in_visible_card[1.5] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_centers_frame_in_visible_card[2.0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_rejects_insufficient_visible_space[slot0] PASSED [  2%]
+tests/gui/test_dashboard.py::test_preview_slot_rejects_insufficient_visible_space[slot1] PASSED [  3%]
+tests/gui/test_dashboard.py::test_cocoa_preview_position_converts_work_height_origin PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_slot_centers_resizable_native_frame PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_placement_failure_restores_hidden_card_and_expanded_log PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_cards_name_their_source_and_draw_retro_frame PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_slot_tracks_relevant_tabs PASSED [  3%]
+tests/gui/test_dashboard.py::test_offline_frontend_cannot_request_commands PASSED [  3%]
+tests/gui/test_dashboard.py::test_protocol_config_round_trip_retains_complete_schedule PASSED [  3%]
+tests/gui/test_dashboard.py::test_microcontroller_config_load_is_local_and_collects_for_normal_submission PASSED [  4%]
+tests/gui/test_dashboard.py::test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity PASSED [  4%]
+tests/gui/test_dashboard.py::test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[protocol] PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[cameras] PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[microcontroller] PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[projectors] PASSED [  4%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[spikeglx] PASSED [  5%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[tracking] PASSED [  5%]
+tests/gui/test_dashboard.py::test_tab_config_buttons_roundtrip_into_fresh_gui[gui] PASSED [  5%]
+tests/gui/test_dashboard.py::test_full_gui_config_round_trip_restores_all_sections_without_commands PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[experiment] PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[protocol] PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[microcontroller] PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[projectors] PASSED [  5%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[spikeglx] PASSED [  6%]
+tests/gui/test_dashboard.py::test_invalid_full_gui_config_changes_no_section[tracking] PASSED [  6%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"format": "a", "format": "b"}] PASSED [  6%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"n": NaN}] PASSED [  6%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[[1,2]] PASSED [  6%]
+tests/gui/test_dashboard.py::test_gui_snapshot_rejects_invalid_json_before_editing[{"invalid":] PASSED [  6%]
+tests/gui/test_dashboard.py::test_snapshot_limits_and_failed_save_preserve_existing_file PASSED [  6%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[False-False] PASSED [  7%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[False-True] PASSED [  7%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[True-False] PASSED [  7%]
+tests/gui/test_dashboard.py::test_native_file_picker_immediate_cancel_and_parent_cleanup[True-True] PASSED [  7%]
+tests/gui/test_dashboard.py::test_started_config_chooser_closes_on_authority_loss[False] PASSED [  7%]
+tests/gui/test_dashboard.py::test_started_config_chooser_closes_on_authority_loss[True] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-protocol] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-tracking] PASSED [  7%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-cameras] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-microcontroller] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-spikeglx] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-gui] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-protocol] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-tracking] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-cameras] PASSED [  8%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-microcontroller] PASSED [  9%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-spikeglx] PASSED [  9%]
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-gui] PASSED [  9%]
+tests/gui/test_dashboard.py::test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling PASSED [  9%]
+tests/gui/test_dashboard.py::test_loaded_camera_presets_cannot_claim_sdk_import_provenance PASSED [  9%]
+tests/gui/test_dashboard.py::test_loaded_camera_timing_keeps_only_applicable_activation[Internal clock] PASSED [  9%]
+tests/gui/test_dashboard.py::test_loaded_camera_timing_keeps_only_applicable_activation[External controller] PASSED [  9%]
+tests/gui/test_dashboard.py::test_camera_settings_timing_keeps_only_applicable_activation[Internal clock] PASSED [  9%]
+tests/gui/test_dashboard.py::test_camera_settings_timing_keeps_only_applicable_activation[External controller] PASSED [ 10%]
+tests/gui/test_dashboard.py::test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic PASSED [ 10%]
+tests/gui/test_dashboard.py::test_camera_save_validation_error_routes_to_other_camera_row FAILED [ 10%]
+
+================================== FAILURES ===================================
+________ test_camera_save_validation_error_routes_to_other_camera_row _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002F1B52C09D0>
+
+    def test_camera_save_validation_error_routes_to_other_camera_row(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.acquisition.config.validation import validate_configuration
+        from cephvr.acquisition.v1 import camera_pb2
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_cameras import ManagedCameras
+    
+        panel = window.devices.cameras
+        panel.drafts[0].role = "Behavior cam"
+        panel.drafts[1].role = "Tracking cam"
+        behavior, tracking = panel.drafts
+        behavior_before = behavior.values.copy()
+        candidate = pb.ExperimentConfiguration()
+        acquisition = candidate.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        acquisition.behavioral.enabled = True
+        acquisition.behavioral.device.device_id = behavior.serial
+        acquisition.behavioral.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
+        acquisition.behavioral.device.unaligned_free_running = True
+        acquisition.tracking.enabled = True
+        acquisition.tracking.device.device_id = tracking.serial
+        validation = validate_configuration(candidate)
+        issue = next(item for item in validation.issues if "tracking." in item.field_path)
+        message = (
+            f"configuration validation failed: {issue.field_path}: {issue.failure.message}"
+        )
+        cameras = ManagedCameras(panel, SimpleNamespace(), lambda *_: False)
+        cameras.pending = "save_camera_settings"
+        cameras.finished("save_camera_settings", False, message)
+    
+        assert panel.table.currentRow() == 1
+        assert panel.focusWidget() is panel.trigger_source
+        assert behavior.values == behavior_before
+    
+        panel.drafts[1].values["trigger_clock"] = "Internal clock"
+        acquisition.tracking.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
+        acquisition.tracking.device.unaligned_free_running = True
+        corrected = validate_configuration(candidate)
+        assert corrected.valid
+        cameras.pending = "save_camera_settings"
+        cameras.finished("save_camera_settings", True, "Completed")
+>       assert "save_camera_settings: Completed" in panel.console.toPlainText()
+E       AssertionError: assert 'save_camera_settings: Completed' in 'Camera inventory uses local review samples.\nsave_camera_settings: configuration validation failed: backends.acquisition.tracking.device.frame_timing: enabled camera requires an explicit frame timing mode'
+E        +  where 'Camera inventory uses local review samples.\nsave_camera_settings: configuration validation failed: backends.acquisition.tracking.device.frame_timing: enabled camera requires an explicit frame timing mode' = <built-in method toPlainText of LogConsole object at 0x000002F1AE7124D0>()
+E        +    where <built-in method toPlainText of LogConsole object at 0x000002F1AE7124D0> = <cephvr.gui.consoles.LogConsole object at 0x000002F1AE7124D0>.toPlainText
+E        +      where <cephvr.gui.consoles.LogConsole object at 0x000002F1AE7124D0> = <cephvr.gui.cameras.CamerasPanel object at 0x000002F1B52BC310>.console
+
+tests\gui\test_dashboard.py:1577: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_camera_save_validation_error_routes_to_other_camera_row - AssertionError: assert 'save_camera_settings: Completed' in 'Camera inventory uses local review samples.\nsave_camera_settings: configuration validation failed: backends.acquisition.tracking.device.frame_timing: enabled camera requires an explicit frame timing mode'
+ +  where 'Camera inventory uses local review samples.\nsave_camera_settings: configuration validation failed: backends.acquisition.tracking.device.frame_timing: enabled camera requires an explicit frame timing mode' = <built-in method toPlainText of LogConsole object at 0x000002F1AE7124D0>()
+ +    where <built-in method toPlainText of LogConsole object at 0x000002F1AE7124D0> = <cephvr.gui.consoles.LogConsole object at 0x000002F1AE7124D0>.toPlainText
+ +      where <cephvr.gui.consoles.LogConsole object at 0x000002F1AE7124D0> = <cephvr.gui.cameras.CamerasPanel object at 0x000002F1B52BC310>.console
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+======================== 1 failed, 77 passed in 42.77s ========================

@@ -6,6 +6,7 @@ from PyQt6.QtGui import (
     QImage,
     QMouseEvent,
     QPainter,
+    QPainterPath,
     QPaintEvent,
     QPen,
     QPolygonF,
@@ -49,7 +50,7 @@ class PreviewRig(TankDiagram):
 
     def screen_planes(self) -> dict[str, list[Point3]]:
         return {
-            face: list(surface.corners)
+            face: list(surface.physical_corners or surface.corners)
             for face, surface in self.snapshot.surfaces.items()
             if surface.corners
         }
@@ -69,17 +70,29 @@ class PreviewRig(TankDiagram):
         painter.setPen(QPen(QColor(COLORS.accent if enabled else COLORS.muted), 1.5))
         if enabled:
             image = self.frames[face]
+            correction = self.snapshot.surfaces[face].correction
+            # Projector margins lie outside the physical screen, not on its surface.
+            bounds = (
+                correction.valid_area if correction and not correction.error else None
+            )
+            x0, y0, x1, y1 = bounds or (0.0, 0.0, 1.0, 1.0)
             source = QPolygonF(
                 [
-                    QPointF(0, image.height()),
-                    QPointF(image.width(), image.height()),
-                    QPointF(image.width(), 0),
-                    QPointF(0, 0),
+                    QPointF(x0 * image.width(), (1 - y0) * image.height()),
+                    QPointF(x1 * image.width(), (1 - y0) * image.height()),
+                    QPointF(x1 * image.width(), (1 - y1) * image.height()),
+                    QPointF(x0 * image.width(), (1 - y1) * image.height()),
                 ]
             )
+            if face == "Bottom":
+                # Folded portrait raster: top faces the head, right faces subject-left.
+                source = QPolygonF([source[i] for i in (2, 1, 0, 3)])
             transform = QTransform()
             if QTransform.quadToQuad(source, polygon, transform):
                 painter.save()
+                clip = QPainterPath()
+                clip.addPolygon(polygon)
+                painter.setClipPath(clip, Qt.ClipOperation.IntersectClip)
                 painter.setTransform(transform, True)
                 painter.drawImage(QPointF(0, 0), image)
                 painter.restore()

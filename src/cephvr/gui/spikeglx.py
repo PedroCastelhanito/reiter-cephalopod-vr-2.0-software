@@ -412,14 +412,6 @@ class SpikeGLXPanel(DevicePanel):
             raise ValueError("active pulse sources cannot be disabled")
         return tuple(result)
 
-    def request_inventory_update(self) -> None:
-        if not self.can_review or not self.inventory_file_sha256:
-            return
-        try:
-            self.inventory_update_requested.emit(self.inventory_for_submit())
-        except ValueError as exc:
-            self.console.appendPlainText(f"Pulse mapping is invalid: {exc}")
-
     def apply_view(self, view: DashboardView) -> None:
         super().apply_view(view)
         self.action_buttons[0].setEnabled(view.connected and not view.sample)

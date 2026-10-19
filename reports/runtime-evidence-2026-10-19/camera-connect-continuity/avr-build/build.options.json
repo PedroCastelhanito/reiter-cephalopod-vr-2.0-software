@@ -1,0 +1,9 @@
+{
+  "additionalFiles": "",
+  "compiler.optimization_flags": "",
+  "customBuildProperties": "",
+  "fqbn": "arduino:avr:uno",
+  "hardwareFolders": "C:\\Users\\ReiterU_PC\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.8,C:\\Users\\ReiterU_PC\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.8",
+  "otherLibrariesFolders": "C:\\Users\\ReiterU_PC\\OneDrive - OIST\\Documents\\Arduino\\libraries",
+  "sketchLocation": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\firmware\\uno\\cephvr2_mcu"
+}

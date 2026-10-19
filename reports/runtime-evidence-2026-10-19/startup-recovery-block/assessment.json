@@ -1,0 +1,62 @@
+{
+  "observed_at": "2026-10-19T14:26:29.517381+09:00",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_scope": "dirty working tree; concurrent unrelated changes retained",
+  "method": "read-only pointer, exact receipt existence, marker, session-log tail, launcher endpoint and Windows CIM process inventory",
+  "pointer": {
+    "controller_generation": "ecd7f297-dba2-4905-bb6c-3c51c05d46b5",
+    "format_version": 1,
+    "session_directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY-142302",
+    "session_id": "bb36d478-08ad-4a70-9a25-a2c767e558ce",
+    "supervisor_generation": "8b193000-0d19-443b-9573-b24afe59a3f0"
+  },
+  "exact_receipt_exists": false,
+  "reservation": {
+    "schema_version": 1,
+    "session_id": "bb36d478-08ad-4a70-9a25-a2c767e558ce",
+    "controller_generation": "ecd7f297-dba2-4905-bb6c-3c51c05d46b5",
+    "complete": false
+  },
+  "session_log_last_events": [
+    {
+      "monotonic_ns": 409866836355700,
+      "wall_time": "2026-10-19T14:23:50.143295+09:00",
+      "event_type": "command_accepted",
+      "source": "controller",
+      "details": {
+        "command": "AbortNow"
+      }
+    },
+    {
+      "monotonic_ns": 409906849211000,
+      "wall_time": "2026-10-19T14:24:30.156150+09:00",
+      "event_type": "trial_finished",
+      "source": "controller",
+      "trial_number": 1,
+      "outcome": "interrupted",
+      "details": {
+        "output_closure_confirmed": false,
+        "start_unconfirmed": [],
+        "actual_end_monotonic_ns": null,
+        "interruption_issued_monotonic_ns": 409866836639700
+      }
+    },
+    {
+      "monotonic_ns": 409906853501000,
+      "wall_time": "2026-10-19T14:24:30.160440+09:00",
+      "event_type": "session_ended",
+      "source": "controller",
+      "outcome": "interrupted"
+    }
+  ],
+  "session_log_sha256": "e8c9882dd2c58584dc56f37eadc0f0b5c817f34ecae4ace4769125653e93c316",
+  "current_endpoint": {
+    "controller_generation": "6eca7a14-5f51-4f0f-8008-1450b69a65f9",
+    "supervisor_generation": "abdc2ca0-d05c-41b2-920f-7790c7742694",
+    "event_id": "8a158cf3-5d75-4413-85a6-4f73a673d762",
+    "replacement_timeout_ns": 92000000000,
+    "gui_relaunch_event_id": "09f53a10-9470-4adc-bcde-88dc61e6c195"
+  },
+  "assessment": "Missing exact launcher receipt explains Setup rejection. Current application starts at 14:24:32; observed process inventory is not exact old application Job absence proof. Cause of lost receipt unknown; old outer Job is unnamed and its handle cannot be reacquired from the pointer.",
+  "limits": "No runtime mutation, process termination, pointer clearing, file repair, process absence certification or rig/runtime pass. E04 requires missing proof to remain a blocker."
+}

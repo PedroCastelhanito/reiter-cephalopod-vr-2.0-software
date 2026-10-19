@@ -1,0 +1,581 @@
+{
+  "trial_start": {
+    "monotonic_ns": 420970757963600,
+    "wall_time": "2026-10-19T17:28:54.053444+09:00",
+    "event_type": "trial_started",
+    "source": "controller",
+    "trial_number": 1
+  },
+  "trial_end": {
+    "monotonic_ns": 421570757963600,
+    "wall_time": "2026-10-19T17:38:54.053444+09:00",
+    "event_type": "trial_finished",
+    "source": "controller",
+    "trial_number": 1,
+    "outcome": "completed"
+  },
+  "trial_duration_s": 600.0,
+  "sample_count": 264,
+  "first_sample_offset_s": 40.070641040802,
+  "last_sample_before_end_s": 1.0760397911071777,
+  "max_sample_gap_s": 2.4185540676116943,
+  "gaps_over_5s": [],
+  "logical_cpu_count": 32,
+  "method": "Arithmetic sampled mean/p95/max; host CPU is Windows total. Process CPU normalizes cumulative CPU delta by elapsed time and logical CPUs; only adjacent surviving PIDs counted. Windows engines sum process instances sharing one physical engine, then select busiest engine per adapter; independent engines are never summed into a GPU percent. NVIDIA utilization/encoder are separate driver metrics. Sampling is not frame timing or optical evidence.",
+  "limits": "Monitor stopped on startup invalid-instance error; resumed explicitly. Missing interval is not interpolated. Invalid engine statuses excluded and counted. Background OS/Codex work remains in host/GPU figures. Tracking processing disabled in original open-loop configuration.",
+  "invalid_samples": {},
+  "metrics": {
+    "CPU host percent": {
+      "n": 264,
+      "mean": 19.045252990045892,
+      "p95": 23.639857121661855,
+      "max": 31.17621098582123
+    },
+    "NVIDIA GeForce RTX 5060 Ti GPU percent": {
+      "n": 264,
+      "mean": 10.875,
+      "p95": 11.0,
+      "max": 11.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti encoder percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti decoder percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti memory MiB": {
+      "n": 264,
+      "mean": 830.0,
+      "p95": 830.0,
+      "max": 830.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti power W": {
+      "n": 264,
+      "mean": 36.004090909090905,
+      "p95": 36.51,
+      "max": 36.59
+    },
+    "NVIDIA GeForce RTX 5060 Ti temperature C": {
+      "n": 264,
+      "mean": 50.753787878787875,
+      "p95": 52.0,
+      "max": 52.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti GPU percent": {
+      "n": 264,
+      "mean": 31.09090909090909,
+      "p95": 32.0,
+      "max": 32.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti encoder percent": {
+      "n": 264,
+      "mean": 58.84469696969697,
+      "p95": 59.0,
+      "max": 60.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti decoder percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti memory MiB": {
+      "n": 264,
+      "mean": 941.0,
+      "p95": 941.0,
+      "max": 941.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti power W": {
+      "n": 264,
+      "mean": 65.02518939393939,
+      "p95": 65.65,
+      "max": 66.03
+    },
+    "NVIDIA GeForce RTX 2080 Ti temperature C": {
+      "n": 264,
+      "mean": 46.14393939393939,
+      "p95": 47.0,
+      "max": 47.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_0_engtype_3d percent": {
+      "n": 264,
+      "mean": 5.59078679878026,
+      "p95": 6.672620039690414,
+      "max": 10.024523900069827
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_10_engtype_video codec 0 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_1_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.09850882710766082,
+      "p95": 0.1967308746570811,
+      "max": 0.65419430190724
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_2_engtype_compute 0 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_3_engtype_compute 1 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_4_engtype_timer 0 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_5_engtype_security 1 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_6_engtype_high priority compute percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_7_engtype_high priority 3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_8_engtype_video jpeg 0 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows phys_0_eng_9_engtype_video decode 1 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_0_engtype_3d percent": {
+      "n": 264,
+      "mean": 10.687907986273494,
+      "p95": 10.905244076023603,
+      "max": 10.95332847030665
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_10_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_11_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_12_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_13_engtype_security_1 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_1_engtype_videodecode percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_2_engtype_copy percent": {
+      "n": 264,
+      "mean": 1.1532044858482289,
+      "p95": 1.203028656387499,
+      "max": 1.2470468219824726
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_3_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.06029799260328678,
+      "p95": 0.06562575783892678,
+      "max": 0.07187869794277214
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_4_engtype_security percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_5_engtype_videoencode percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_6_engtype_ofa_0 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_7_engtype_jpeg_decode_0 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_8_engtype_vr percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows phys_0_eng_9_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.00011031690193601317,
+      "p95": 0.0,
+      "max": 0.02912366211110748
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_0_engtype_3d percent": {
+      "n": 264,
+      "mean": 82.03096878783793,
+      "p95": 84.89449921306223,
+      "max": 85.88038434702383
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_10_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_11_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_12_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_13_engtype_security_1 percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_1_engtype_legacyoverlay percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_2_engtype_videodecode percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_3_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_4_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_5_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_6_engtype_security percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_7_engtype_videoencode percent": {
+      "n": 264,
+      "mean": 59.62137125927258,
+      "p95": 60.044667341887035,
+      "max": 60.1826962483539
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_8_engtype_vr percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows phys_0_eng_9_engtype_copy percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_0_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_10_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_11_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_12_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_13_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_14_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_15_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_16_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_17_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_18_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_19_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_1_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_20_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_21_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_22_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_23_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_24_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_25_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_26_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_27_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_28_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_29_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_2_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_30_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_31_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_32_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_3_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_4_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_5_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_6_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_7_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_8_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "Microsoft Basic Render Driver Windows phys_0_eng_9_engtype_3d percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "AMD Radeon(TM) Graphics Windows busiest engine percent": {
+      "n": 264,
+      "mean": 5.59078679878026,
+      "p95": 6.672620039690414,
+      "max": 10.024523900069827
+    },
+    "NVIDIA GeForce RTX 5060 Ti Windows busiest engine percent": {
+      "n": 264,
+      "mean": 10.687907986273494,
+      "p95": 10.905244076023603,
+      "max": 10.95332847030665
+    },
+    "NVIDIA GeForce RTX 2080 Ti Windows busiest engine percent": {
+      "n": 264,
+      "mean": 82.03096878783793,
+      "p95": 84.89449921306223,
+      "max": 85.88038434702383
+    },
+    "Microsoft Basic Render Driver Windows busiest engine percent": {
+      "n": 264,
+      "mean": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "cephvr-python CPU host-capacity percent (adjacent surviving PIDs)": {
+      "n": 263,
+      "mean": 4.7570067438126635,
+      "p95": 5.308878879081073,
+      "max": 5.661383616589051
+    },
+    "ffmpeg CPU host-capacity percent (adjacent surviving PIDs)": {
+      "n": 263,
+      "mean": 8.36897053493269,
+      "p95": 10.140153896407366,
+      "max": 12.135544464585358
+    },
+    "python CPU host-capacity percent (adjacent surviving PIDs)": {
+      "n": 263,
+      "mean": 0.020100794236826192,
+      "p95": 0.06941782241578767,
+      "max": 0.2076592837512244
+    }
+  }
+}

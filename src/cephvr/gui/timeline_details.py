@@ -52,7 +52,7 @@ def stimulus_color(key: str) -> QColor:
 def epoch_heading(epoch: Epoch, index: int) -> str:
     seconds = duration(epoch)
     timing = clock_duration(seconds) if seconds is not None else "Variable duration"
-    return f"{index + 1} · {epoch.epoch_id.replace('_', ' ')} · {timing}"
+    return f"Epoch {index + 1} · {timing}"
 
 
 def layer_description(program: Program, setting: Settings) -> str:

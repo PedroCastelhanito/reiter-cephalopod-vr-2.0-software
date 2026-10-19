@@ -1,0 +1,21 @@
+{'command': 'UpdateConfiguration', 'command_id': '2cf21fa2-dabb-4629-a5a0-9ccfe2a56bd1', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'ExecuteCameraCommand', 'command_id': '7c741b30-d204-484d-adcc-509df89e56c5', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'BeginTrackingDiagnostic', 'command_id': '0e51f478-5cec-4ba3-8ea4-2857f2075969', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+tracking 0 0 2 1.4524859062012715e-05
+tracking 1 0 1 8.902332973491663e-06
+tracking 2 0 2 1.12450521770421e-05
+tracking 3 0 1 1.12450521770421e-05
+tracking 4 0 2 8.902332973491663e-06
+{'command': 'CloseTrackingDiagnostic', 'command_id': '11cab4a7-3def-4b3c-a84e-8fbf10807191', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'ExecuteCameraCommand', 'command_id': 'f3965dbc-6581-4533-98f3-094892104b7b', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'UpdateConfiguration', 'command_id': '98fe548b-833a-46e2-b53b-34fcfea3cca4', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'ExecuteCameraCommand', 'command_id': '6e543eea-ce54-4135-b778-346a383f1df9', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'BeginTrackingDiagnostic', 'command_id': 'dada3ecc-2f01-4514-887a-ea5f2f545578', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+eye_tracking 0 0 27 0.0024743923611111112
+eye_tracking 1 0 27 0.0025980902777777777
+eye_tracking 2 0 30 0.0024652777777777776
+eye_tracking 3 0 27 0.0026024305555555557
+eye_tracking 4 0 27 0.002661892361111111
+{'command': 'CloseTrackingDiagnostic', 'command_id': '540e0e5f-1956-4afd-b5e1-000d0b430d35', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'ExecuteCameraCommand', 'command_id': '1f33fa82-8537-4485-bc2d-37a9525b2b14', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'UpdateConfiguration', 'command_id': 'f5b47ab1-c700-4aa6-ab29-39da262296ee', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}

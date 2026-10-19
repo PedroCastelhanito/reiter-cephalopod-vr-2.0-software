@@ -1,0 +1,18 @@
+MOUSE QWindow ManagedDashboardWindowClassWindow 2
+MOUSE Button  2
+MOUSE QWindow ManagedDashboardWindowClassWindow 3
+MOUSE Button  3
+MOUSE QWindow ManagedDashboardWindowClassWindow 2
+MOUSE Button  2
+MOUSE QWindow ManagedDashboardWindowClassWindow 3
+MOUSE Button  3
+MOUSE QWindow ManagedDashboardWindowClassWindow 2
+MOUSE Button  2
+MOUSE QWindow ManagedDashboardWindowClassWindow 3
+MOUSE Button  3
+MOUSE QWindow CrtOverlayClassWindow 2
+MOUSE CrtOverlay  2
+MOUSE ManagedDashboardWindow  2
+MOUSE QWindow CrtOverlayClassWindow 3
+MOUSE CrtOverlay  3
+MOUSE ManagedDashboardWindow  3

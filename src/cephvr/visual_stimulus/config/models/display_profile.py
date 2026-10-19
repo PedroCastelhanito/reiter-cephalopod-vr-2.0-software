@@ -207,6 +207,19 @@ class DisplayProfile(Model):
     pacing_output_id: OutputId | None = None
     photodiode_output_id: OutputId | None = None
     photodiode_patch: PhotodiodePatch | None = None
+    photodiode_patches: Annotated[
+        dict[OutputId, PhotodiodePatch] | None, Field(max_length=4)
+    ] = None
+
+    @property
+    def marker_patches(self) -> dict[str, PhotodiodePatch]:
+        if not self.photodiode_enabled:
+            return {}
+        if self.photodiode_patches is not None:
+            return self.photodiode_patches
+        if self.photodiode_output_id is not None and self.photodiode_patch is not None:
+            return {self.photodiode_output_id: self.photodiode_patch}
+        return {}
 
     @property
     def selected_pacing_output_id(self) -> str | None:
@@ -217,6 +230,11 @@ class DisplayProfile(Model):
 
     def requested_swap_interval(self, output_id: str) -> int:
         """V20 presentation requests never depend on MCU inputs."""
+        if (
+            self.photodiode_patches is not None
+            and self.presentation_mode == "photodiode_only_vsync"
+        ):
+            return int(output_id in self.marker_patches)
         return int(
             self.presentation_mode == "all_outputs_vsync"
             or (
@@ -227,6 +245,7 @@ class DisplayProfile(Model):
 
     @property
     def marker_output_id(self) -> str | None:
+        """Legacy single-output identity; multi-output callers use marker_patches."""
         return self.photodiode_output_id if self.photodiode_enabled else None
 
     @property
@@ -246,11 +265,15 @@ class DisplayProfile(Model):
         outputs = tuple(
             output
             for output in self.active_outputs
-            if selected is None or output.output_id == selected
+            if (
+                output.output_id == selected
+                if selected is not None
+                else self.presentation_mode != "photodiode_only_vsync"
+                or not self.marker_patches
+                or output.output_id in self.marker_patches
+            )
         )
-        if not outputs or (
-            selected is None and self.presentation_mode == "photodiode_only_vsync"
-        ):
+        if not outputs:
             raise ValueError(
                 "review recording requires a pacing output or a common nominal output refresh"
             )
@@ -275,6 +298,10 @@ class DisplayProfile(Model):
             if len(values) != len(set(values)):
                 raise ValueError(f"duplicate {label}")
         outputs = {x.output_id: x for x in self.outputs}
+        if self.photodiode_patches is not None and (
+            self.photodiode_output_id is not None or self.photodiode_patch is not None
+        ):
+            raise ValueError("Use either per-output pulses or a legacy single pulse")
         if not self.active_outputs:
             raise ValueError("at least one display output must be enabled")
         if (
@@ -309,6 +336,7 @@ class DisplayProfile(Model):
         if (
             self.presentation_mode == "photodiode_only_vsync"
             and self.selected_pacing_output_id is None
+            and self.photodiode_patches is None
         ):
             raise ValueError("mixed pacing requires an explicit pacing output")
         pacing = self.selected_pacing_output_id
@@ -327,6 +355,12 @@ class DisplayProfile(Model):
                     self.photodiode_patch.background_rect,
                     outputs[self.photodiode_output_id],
                 )
+        for output_id, patch in self.marker_patches.items():
+            if output_id not in outputs or not outputs[output_id].enabled:
+                raise ValueError("photodiode output must exist and be enabled")
+            self._check_rect(patch.rect, outputs[output_id])
+            if patch.background_rect is not None:
+                self._check_rect(patch.background_rect, outputs[output_id])
         return self
 
     @staticmethod
@@ -342,11 +376,10 @@ class DisplayProfile(Model):
         if (
             self.presentation_mode == "photodiode_only_vsync"
             and self.selected_pacing_output_id is None
+            and self.photodiode_patches is None
         ):
             raise ValueError("trial Setup requires an explicit pacing output")
-        if self.photodiode_enabled and (
-            self.photodiode_output_id is None or self.photodiode_patch is None
-        ):
+        if self.photodiode_enabled and not self.marker_patches:
             raise ValueError("trial Setup requires the photodiode output and patch")
 
 

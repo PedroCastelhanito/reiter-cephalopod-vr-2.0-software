@@ -199,6 +199,17 @@ class SessionCommands:
                     command.operator.command_id,
                     error=error or "New session requires confirmed cleanup",
                 )
+            # NewSession is admitted only after exact session cleanup proof.
+            if self.projections.devices is not None:
+                for role in ("behavioral", "tracking", "eye_tracking"):
+                    view = getattr(self.projections.devices, role)
+                    if view.preview_run_id == self.lifecycle.session.context.session_id:
+                        view.device_open = False
+                        view.preview_prepared = False
+                        view.preview_running = False
+                        view.preview_visible = False
+                        view.cleanup_pending = False
+                        view.preview_run_id = ""
             self.lifecycle.attempt = None
             self.lifecycle.session = pb.SessionState(
                 phase=pb.SESSION_PHASE_CONFIGURATION, cleanup_confirmed=True

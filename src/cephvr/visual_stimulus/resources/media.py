@@ -220,7 +220,10 @@ def decode_image(
         transfer = "bt709"
     if not transfer:
         raise MediaPreparationError(
-            "image transfer/primaries are not explicit; add a supported color override"
+            f"asset {asset.asset_id!r} ({asset.logical_path}): image transfer/primaries "
+            "are not explicit; set color_override with the source's declared transfer "
+            "(linear, srgb or bt709), primaries=rec709_d65, range, matrix, "
+            "chroma_location and reason; do not guess the source encoding"
         )
     if profile == "jpeg8_v1" and getattr(asset, "color_override", None) is None:
         # JPEG source samples are transformed by the decoder to RGB; its YCbCr

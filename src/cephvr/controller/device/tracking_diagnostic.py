@@ -12,6 +12,7 @@ from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acquisition_wire
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.tracking_diagnostic_state import (
     copy_status as _copy_status,
 )
@@ -58,9 +59,11 @@ class TrackingDiagnosticController:
         file_policy_loader: Callable[[frozenset[str]], Mapping[str, Message]] | None,
         publish: Callable[[], None],
         maximum_frame_bytes: int,
+        hooks: DeviceHooks,
         clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.generation = generation
+        self.hooks = hooks
         self.lifecycle, self.configuration, self.control = (
             lifecycle,
             configuration,
@@ -79,6 +82,41 @@ class TrackingDiagnosticController:
         self.maximum_frame_bytes = maximum_frame_bytes
         self._attachment: svc.PreviewAttachmentResult | None = None
         self._viewer = pb.ProcessIdentity()
+
+    async def execute_operator(
+        self,
+        request: svc.BeginTrackingDiagnosticRequest
+        | svc.CloseTrackingDiagnosticRequest,
+    ) -> pb.CommandAdmission:
+        name = (
+            "BeginTrackingDiagnostic"
+            if isinstance(request, svc.BeginTrackingDiagnosticRequest)
+            else "CloseTrackingDiagnostic"
+        )
+        command_id = request.command.operator.command_id
+        async with self.lifecycle.lock:
+            error = self.hooks.authorized(request.command)
+            if error:
+                return _reject(command_id, error)
+            self.hooks.operation(command_id, name)
+            self._publish_locked()
+        try:
+            result = (
+                await self.begin(request)
+                if isinstance(request, svc.BeginTrackingDiagnosticRequest)
+                else await self.close(request)
+            )
+        except Exception as exc:
+            result = _reject(command_id, str(exc))
+        async with self.lifecycle.lock:
+            self.hooks.complete_operation(
+                command_id,
+                success=result.result == pb.COMMAND_RESULT_ACCEPTED,
+                progress=name,
+                error=result.failure.message,
+            )
+            self._publish_locked()
+        return result
 
     async def begin(
         self, request: svc.BeginTrackingDiagnosticRequest
@@ -674,8 +712,8 @@ class TrackingDiagnosticController:
             raise TimeoutError("original diagnostic release deadline expired")
         results = await asyncio.wait_for(
             asyncio.gather(
-                acquisition.report_preview_consumer_state(report),
-                supervisor.report_preview_consumer_state(report),
+                acquisition.report_preview_consumer_state(report, deadline_ns=deadline),
+                supervisor.report_preview_consumer_state(report, deadline_ns=deadline),
             ),
             timeout=remaining,
         )
@@ -700,6 +738,8 @@ class TrackingDiagnosticController:
                 raise RuntimeError(
                     "Tracking response names different diagnostic resources"
                 )
+            if active and not status.active and status.failure_message:
+                raise RuntimeError(status.failure_message)
             if status.active is active and status.close_confirmed is not active:
                 return status
             await asyncio.sleep(

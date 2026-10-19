@@ -1388,3 +1388,100 @@ def test_tracking_bootstrap_omission_requires_explicit_declaration(
             assert decoded.tracking == control.ProcessIdentity()
         else:
             assert decoded.tracking.generation == document["tracking_generation"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "kind,command",
+    [
+        ("interrupt_session", "InterruptSession"),
+        ("stop_trial", "StopTrial"),
+        ("cleanup", "Cleanup"),
+        ("shutdown", "Shutdown"),
+        ("record_pulse_evidence", "RecordPulseEvidence"),
+    ],
+)
+@pytest.mark.parametrize(
+    "invalid",
+    ["", "active", "incomplete", "command", "readback", "session", "generation"],
+)
+@pytest.mark.parametrize("succeeded", [False, True])
+async def test_late_interrupted_operation_retained_without_deadline_success(
+    kind, command, invalid, succeeded
+):
+    from cephvr.acquisition.coordinator.commands import wait_child_operation
+
+    owner = await _retained_operation_test_owner(late_started=True)
+    work = control.WorkContext(session=control.SessionContext(session_id=_id()))
+    owner.context.work.CopyFrom(work)
+    owner.record.launch.work.CopyFrom(work)
+    session_work = control.WorkContext.FromString(work.SerializeToString())
+    if kind in {"stop_trial", "record_pulse_evidence"}:
+        work = control.WorkContext(
+            trial=control.TrialContext(session=session_work.session, trial_id=_id())
+        )
+        owner.context.work.CopyFrom(work)
+    owner.child.work.CopyFrom(work)
+    owner.child.kind = kind
+    session = SessionRecord(
+        work=session_work,
+        operation=owner.operation,
+        configuration_revision=1,
+        required_cameras={owner.context.camera},
+    )
+    session.interrupted = invalid != "active"
+    if work.WhichOneof("work") == "trial":
+        session.trial = TrialRecord(
+            work=work,
+            plan=control.TrialPlan(),
+            preparation=owner.operation,
+            configuration_revision=1,
+        )
+    owner.evidence.operations.current_session = lambda: session
+    report = acq.WorkerOperationReport(
+        source=owner.context,
+        state_revision=1,
+        operation=control.OperationState(
+            context=control.OperationContext(command_id=owner.child_id),
+            command=command,
+            work=work,
+            complete=True,
+            succeeded=succeeded,
+            failure=control.Failure(
+                code="TIMEOUT", message="original deadline expired"
+            ),
+        ),
+    )
+    if succeeded:
+        report.operation.ClearField("failure")
+    if invalid == "incomplete":
+        report.operation.complete = False
+    elif invalid == "command":
+        report.operation.command = "StartPreview"
+    elif invalid == "readback":
+        report.resolved_camera.device.configured_id = "CAM-1"
+    elif invalid == "session":
+        report.source.work.session.session_id = _id()
+        report.operation.work.CopyFrom(report.source.work)
+    elif invalid == "generation":
+        report.source.worker.generation = _id()
+    receipt = await owner.evidence.operations.report_operation(
+        report, deadline_ns=600, ingress_ns=500
+    )
+    assert receipt.result == (
+        control.COMMAND_RESULT_REJECTED if invalid else control.COMMAND_RESULT_ACCEPTED
+    )
+    assert not owner.controller.lifecycles
+    assert session.interrupted == (invalid != "active")
+    assert not session.output_results
+    assert owner.child.deadline_ns == 100
+    if invalid:
+        assert owner.child.report is None
+        assert owner.child_id in receipt.failure.message
+    else:
+        assert owner.child.report == report.operation
+        assert owner.child.report_ingress_ns == 500
+        with pytest.raises(TimeoutError, match="original deadline"):
+            await wait_child_operation(
+                owner.child, 600, asyncio.Lock(), clock=lambda: 500
+            )

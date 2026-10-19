@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-19",
+  "timezone": "Asia/Tokyo",
+  "task": "camera-connect-continuity",
+  "evidence_source": "Codex exec command outputs; summarized here after execution",
+  "base_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_tree_dirty": true,
+  "source_hashes": {
+    "firmware/uno/cephvr2_mcu/cephvr2_mcu.ino": "d422575f9868a0374b268aa7ac879809922b6d41e2dac7a62052efb5de9c57fd",
+    "src/cephvr/acquisition/coordinator/manual_preview_start.py": "f0d0e5179ab829af109b2a812e1aa1d01b2ccecad457675cfec56de1195b3b8b",
+    "src/cephvr/acquisition/runtime.py": "7aaa407c20bfbd69385665cac757142d72a2840944992390e73ea2dcbd3d2ee8",
+    "src/cephvr/controller/microcontroller/owner.py": "d26ca344c783a17158e1c6315363c2ddbeef53d3d4c78c95c4ca0868b518a79e",
+    "src/cephvr/controller/microcontroller/protocol.py": "f97960e60b7cb83a03fe3e88dbcb0a3bcd4bbb5d3717653eb9749c6d9069a3f7",
+    "src/cephvr/controller/microcontroller/channel.py": "f26b73450507e6733a657e7955d5589063987b21eaec7a4caa5eaac24127d250",
+    "src/cephvr/controller/microcontroller/config.py": "4df63eaa792f8fcdc68565d1e0820b09238ef55e172a24a6bb20a6e13a7f1153",
+    "contracts/policy/microcontroller_policy.toml": "45c257eaa8f636024475438d9ace865e1eafdc4bf9c9e9dc6ce746becade4cca",
+    "config/backends/microcontroller_config.toml": "a9d806849fa01aaf8afd38f3e8a2509695858065d5121cd72181242b77e20731",
+    "contracts/acquisition/microcontroller.md": "84c2c113dc748c298303374768a8cb25064f387f1bafd2c769ca6db484e07f48",
+    "contracts/acquisition/preview-control.md": "02c8a20125770263ac471bf340623320ae73bf19fbb09ee9dc2df03120f212dc",
+    "docs/architecture/acquisition.md": "0c69002da16032e39f6194dde60a451a757f0aa0db8850f66c53ce0ca3e8a17a",
+    "architecture.md": "b7de312c2912b436ae47743274bafebc00f3bf08c980a752c5f4133743b4c9e0",
+    "firmware/uno/README.md": "0e8ff87c88527dc765735a7c27f6a3f1f78f3282b34c681517bfaa8493416a5f",
+    "contracts/acquisition/README.md": "1828bc6396c94a2ff4249ecd395de7f64f7b9dec29909c8f6d6f4071d517b03d",
+    "tests/acquisition/test_manual_preview.py": "fffd7baa790af49340a27c68ab05a6743c72d3d1e7b774a6322f213b881008bb",
+    "tests/controller/test_microcontroller_owner.py": "c096752d7ca1ea45aec337df127d4f547ff8091c65396fc348c4969a139396da",
+    "tests/controller/test_microcontroller_protocol.py": "44cd48ac2b26ca886484d88db9bf95d0ec155198e0937c5644eb5d086460e662",
+    "tests/controller/test_microcontroller_firmware.py": "743d2cdd8120e9bf8dcf4a7674072431b715f405b70c36f09a9077535aacea7b",
+    "tests/controller/test_camera_evidence.py": "fc3a31584c2e8a70398cf09e6c839ecb934c8cae738ace12e292ee209113feb5",
+    "tests/controller/firmware_harness/Arduino.h": "dbe3b1799f17294bc54beab44e72c3e9cbfb6269b0235346763036f36a3b9be5",
+    "tests/controller/firmware_harness/continuity.cpp": "275095a86113e2f51b7ac92bb40c7c24ffb6adc2e3076a36c37744315f5064e1",
+    "tests/controller/firmware_harness/avr/interrupt.h": "d1801ae2ed6e70bbc954fa7e37471df5dc73bd4ecdbb57942bc90f4a2b1291ae"
+  },
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/acquisition tests/controller -q -m \"not windows and not rig\"",
+      "outcome": "1302 passed, 4 skipped, 7 deselected in 19.66s",
+      "scope": "Before final second/third-camera parametrization; final parametrization verified separately. Compiler not on PATH in this broad run."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_manual_preview.py -q -k \"additional_external_preview or internal_preview_does_not_restart_existing_external_previews or failed_new_camera_connect\"",
+      "outcome": "5 passed, 130 deselected in 0.29s"
+    },
+    {
+      "command": "cmd /c reports/runtime-evidence-2026-10-19/camera-connect-continuity/native-test.cmd",
+      "outcome": "1 passed in 1.55s (final selective-ON/invalid-rate additions)",
+      "scope": "Actual sketch compiled with MSVC native Arduino adapter; no electrical or interrupt-latency model"
+    },
+    {
+      "command": "arduino-cli compile --fqbn arduino:avr:uno --build-path reports/runtime-evidence-2026-10-19/camera-connect-continuity/avr-build firmware/uno/cephvr2_mcu",
+      "outcome": "pass; program 13874/32256 bytes; globals1199/2048 bytes",
+      "scope": "Compile only; no serial or upload"
+    },
+    {
+      "command": "Ruff check and format --check affected Python owners/tests",
+      "outcome": "pass;26 files already formatted"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/acquisition/coordinator/manual_preview_start.py src/cephvr/acquisition/runtime.py src/cephvr/controller/microcontroller",
+      "outcome": "Success: no issues found in21 source files"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "outcome": "724 backend modules;0 boundary violations;existing cohesion warnings reviewed"
+    },
+    {
+      "command": "Microcontroller load_pair and operator-value comparison against HEAD",
+      "outcome": "pass;policy4/protocol5;operator settings identical"
+    },
+    {
+      "command": "New report/decision/rig links and anchors checked locally",
+      "outcome": "pass"
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass; existing CRLF normalization notices only"
+    }
+  ],
+  "build_artifacts": {
+    "avr-build/cephvr2_mcu.ino.hex": "76393998fe9c689a05efdadb442f1698adc39d6b205814f3a125a77d10a05b5e",
+    "avr-build/cephvr2_mcu.ino.with_bootloader.hex": "1dd7fd2c4bd79908eb011672f1b8dc45a00fee5395e0f27f10a02b1e75eb6feb"
+  },
+  "failed_attempts": [
+    "Sandbox asyncio tests stalled in Windows socketpair accept; interrupted. Permitted loopback reruns pass without weakening tests.",
+    "New host fixture initially replaced eye_tracking substring too; fixed field-delimited replacement.",
+    "Broad test initially retained protocol4 completion expectation; fixture updated to check3/4 rejection and5 acceptance.",
+    "Initial architecture edit script did not find Unicode revision text and made no edit; targeted patch succeeded.",
+    "Sandbox Arduino profile lacked installed platform; compile using existing host tools succeeded without installation.",
+    "Initial nested cmd quoting failed before compiler launch; recorded batch wrapper succeeded."
+  ],
+  "limits": [
+    "Firmware not flashed; no COM port or connected device touched by task.",
+    "No live application restart, camera continuity trial or electrical/jitter measurement.",
+    "Old firmware cannot satisfy the new host protocol5 gate after restart.",
+    "Native adapter does not establish AVR ISR latency, physical edge timing or full rig equivalence."
+  ]
+}

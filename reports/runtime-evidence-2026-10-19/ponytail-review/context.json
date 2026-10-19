@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-19",
+  "baseline": "baseline.json",
+  "scope": "Repository-wide static/AST scans and targeted caller/source review; six handwritten shared/Windows modules simplified. Not an exhaustive manual audit of every module.",
+  "governing_decisions": [
+    "ARCH-002",
+    "E08",
+    "E15",
+    "A08",
+    "V12"
+  ],
+  "changes": "Use existing dataclasses.replace for CommandLedger finalization and scale/crop/pad format updates. Remove four APIs without source/test/contract/docs/tool/script callers: retry_storage_cleanup, ensure_owner_only (and exclusive native declaration/constant), has_pending_io, inherited_handle.",
+  "preservation": "Active security functions/classes are AST-identical. Command deadlines, lock scope, pixel validation, native pending-I/O ownership and storage cleanup implementations are unchanged. No settings, policy, architecture choices or dependencies changed.",
+  "review_limits": "Callback hooks, native ABI fields, declarative interfaces and native-owner references retained. Size warnings alone do not prove separable responsibilities; no file split solely for size.",
+  "source_sha256": {
+    "src/cephvr/shared/ffmpeg_filters.py": "72cd551b0d338d3ba460e324a3b8262d73dd9cf4298472ca6e232e42f0ed2dce",
+    "src/cephvr/shared/supervised_encoder.py": "3b630d0980ac144d48b8db94ab187fb0cd701204b87fb368b92113427cb3e359",
+    "src/cephvr/platform/windows/security.py": "9772759b3cf697b990d13212078d70d4827b8011e8e7e57957d23b58885b50a0",
+    "src/cephvr/platform/windows/byte_stream.py": "b3c69c4018bfedb2c8c14069c63404564224f449e4332bf5e0b78925396be569",
+    "src/cephvr/platform/windows/byte_stream_factory.py": "f5aba3ce8e1af146f14d72f56073a115046eef228dc0030d1fc0293dcbe08bb0",
+    "src/cephvr/shared/commands.py": "93471b3900d279123658b08d8fe7ca7f1e38ba146cb44c1800d6f05288f13cba",
+    "tests/acquisition/test_recording_filter_expressions.py": "04722fcb9467385035e378dd2d50aba859fff732f0f0e0267c70146faf34b954"
+  },
+  "checks": {
+    "ruff": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "tools",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "output_tail": [
+        "All checks passed!"
+      ]
+    },
+    "format": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "tools",
+        "scripts"
+      ],
+      "exit_code": 1,
+      "output_tail": [
+        "1 file would be reformatted, 948 files already formatted"
+      ]
+    },
+    "mypy": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "--platform",
+        "win32",
+        "src/cephvr"
+      ],
+      "exit_code": 0,
+      "output_tail": [
+        "Success: no issues found in 826 source files"
+      ]
+    },
+    "boundaries": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "tools/check_backend_boundaries.py"
+      ],
+      "exit_code": 0,
+      "output_tail": [
+        "Checked 724 backend modules; 0 boundary violations."
+      ]
+    },
+    "whitespace": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output": "whitespace.txt"
+    },
+    "format-scoped": {
+      "command": "ruff format --check on the seven changed source/test files",
+      "exit_code": 0,
+      "output": "format-scoped.txt"
+    }
+  },
+  "owner_tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/shared tests/platform tests/acquisition/test_recording_filter_expressions.py tests/acquisition/test_recording_capabilities.py -q -x -m \"not windows and not rig\" --basetemp .pytest-ponytail-owner-permitted-01",
+    "result": "206 passed, 1 skipped, 23 deselected in 1.02s; normal temp/loopback access"
+  },
+  "attempts": [
+    "Initial sandbox owner run failed creating default pytest temp paths; interrupted. Workspace-temp sandbox reruns stalled and were interrupted; normal-permission rerun passed.",
+    "New geometry test initially omitted the source entry in FilterResult.stages; corrected the test expectation without changing product behavior.",
+    "Fresh Vulture unavailable in current Windows Python environment (No module named vulture); reviewed prior retained advisory with independent caller searches. No fresh suggestion count is claimed.",
+    "Broad test runner selected in-repository --basetemp; six demo-asset fixtures correctly rejected it. Six exact node IDs pass in external-temp retry. No test weakening."
+  ],
+  "format_limit": "Broad format check fails only on pre-existing CRLF-only gui/main.py (865 CRLFs). Normalizing its bytes in memory yields identical Ruff-formatted LF source; concurrent file left untouched. All seven changed files pass scoped format.",
+  "integration": {
+    "command": "QT_QPA_PLATFORM=offscreen PYTHONUTF8=1 .venv/Scripts/python.exe -m pytest tests -q -m \"not windows and not rig\" --basetemp .pytest-ponytail-integration-01",
+    "result": "2867 passed, 4 skipped, 32 deselected, 6 fixture errors in 337.40s; all six errors are demo-assets rejecting in-repository temp path.",
+    "output": "integration-tests.txt",
+    "corrected_retry_command": "fixture-retry-command.json",
+    "corrected_retry_result": "6 passed in 4.22s using fresh external temp directory; no product/assertion change.",
+    "retry_output": "fixture-retry.txt",
+    "combined_coverage": "2873 passing local cases across the two runs; not a single clean full-suite invocation."
+  },
+  "native_rig": "Not run. E15 acceptance remains separate. No performance, timing, scientific, hardware or native ACL certification.",
+  "production_diff": {
+    "insertions": 10,
+    "deletions": 97,
+    "net_lines_removed": 87,
+    "files": 6
+  },
+  "documentation": "New report links/anchors resolve; final git diff --check passes; LOG records completion and only this chat task removed from TODO. One concurrent CP1252 punctuation byte repaired to UTF-8 after apply_patch rejected the invalid file."
+}

@@ -1,0 +1,367 @@
+{
+  "date": "2026-10-19",
+  "source": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data",
+  "method": "read-only session events, final camera records, trial output closures, emergency report",
+  "events": [
+    {
+      "monotonic_ns": 413645872390900,
+      "wall_time": "2026-10-19T15:26:49.158689+09:00",
+      "event_type": "session_started",
+      "source": "controller"
+    },
+    {
+      "monotonic_ns": 413646650014500,
+      "wall_time": "2026-10-19T15:26:49.936312+09:00",
+      "event_type": "trial_started",
+      "source": "controller",
+      "trial_number": 1
+    },
+    {
+      "monotonic_ns": 413727138060000,
+      "wall_time": "2026-10-19T15:28:10.424358+09:00",
+      "event_type": "command_accepted",
+      "source": "controller",
+      "details": {
+        "command": "AbortNow"
+      }
+    },
+    {
+      "monotonic_ns": 413767142019300,
+      "wall_time": "2026-10-19T15:28:50.428317+09:00",
+      "event_type": "trial_finished",
+      "source": "controller",
+      "trial_number": 1,
+      "outcome": "interrupted",
+      "details": {
+        "output_closure_confirmed": false,
+        "start_unconfirmed": [],
+        "actual_end_monotonic_ns": null,
+        "interruption_issued_monotonic_ns": 413727138565200
+      }
+    },
+    {
+      "monotonic_ns": 413767145931800,
+      "wall_time": "2026-10-19T15:28:50.432230+09:00",
+      "event_type": "session_ended",
+      "source": "controller",
+      "outcome": "interrupted"
+    }
+  ],
+  "emergency": {
+    "schema_version": 1,
+    "cause": "COORDINATOR_HEALTH_LOST",
+    "supervisor_generation": "55b85004-4c35-480e-acb7-666d0c4846dd",
+    "controller_generation": "3584e449-aaf6-4477-a479-b63b241a53e1",
+    "work": "0a4c0a2433353834653434392d616166362d343437372d613437392d623633623234316135336531122435616362633037622d376339612d343530392d386338382d363234643562366436303631",
+    "errors": [
+      {
+        "id": "7e6a9587-ed41-4440-95be-fc0ad96c9cfe",
+        "component": "acquisition_behavioral_worker",
+        "code": "COORDINATOR_HEALTH_LOST",
+        "message": "worker report rejected: INVALID_OPERATION: late worker evidence is not a terminal sessionless camera operation"
+      }
+    ],
+    "spikeglx_stop_unconfirmed": false
+  },
+  "camera_completions": {
+    "DUMMY_2_152649_behavioral_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "interrupted",
+      "timing": {
+        "recording_end_monotonic_ns": 413727142879400,
+        "first_recorded_frame_id": 0,
+        "final_received_frame_count": 2412,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 2412,
+        "selected_source_frame_count": 2412,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 413646656770500,
+        "on_acknowledged_monotonic_ns": 413646681855600,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 413727145572700,
+        "off_acknowledged_monotonic_ns": 413727171844400
+      },
+      "post_cutoff": {
+        "accounting_complete": false,
+        "excluded_frame_count": null,
+        "last_native_counter": null
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    },
+    "DUMMY_2_152649_eye_tracking_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "completed",
+      "timing": {
+        "recording_end_monotonic_ns": 413727143189800,
+        "first_recorded_frame_id": null,
+        "final_received_frame_count": 4825,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 0,
+        "selected_source_frame_count": 0,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 413646656770500,
+        "on_acknowledged_monotonic_ns": 413646681855600,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 413727145572700,
+        "off_acknowledged_monotonic_ns": 413727171844400
+      },
+      "post_cutoff": {
+        "accounting_complete": true,
+        "excluded_frame_count": 1,
+        "last_native_counter": 4825
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    },
+    "DUMMY_2_152649_tracking_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "completed",
+      "timing": {
+        "recording_end_monotonic_ns": 413727142937300,
+        "first_recorded_frame_id": null,
+        "final_received_frame_count": 4825,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 0,
+        "selected_source_frame_count": 0,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 413646656770500,
+        "on_acknowledged_monotonic_ns": 413646681855600,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 413727145572700,
+        "off_acknowledged_monotonic_ns": 413727171844400
+      },
+      "post_cutoff": {
+        "accounting_complete": true,
+        "excluded_frame_count": 1,
+        "last_native_counter": 4825
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    }
+  },
+  "outputs": [
+    {
+      "output_key": "72592fda-9759-4b24-b133-23d442f72015:acquisition:behavioral_cam_frames",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam_frames.jsonl",
+      "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+      "failure": {
+        "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+        "message": "no exact output closure by original completion deadline"
+      },
+      "backend": {
+        "backend_name": "acquisition",
+        "backend_generation": "fcbca2d8-0306-4b4a-9cf6-219753fadd6b"
+      },
+      "output_tag": "behavioral_cam_frames",
+      "extension": "jsonl",
+      "format": "jsonl",
+      "schema_version": 5,
+      "artifact_present": null,
+      "counts": {}
+    },
+    {
+      "output_key": "72592fda-9759-4b24-b133-23d442f72015:acquisition:behavioral_cam",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam.mp4",
+      "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+      "failure": {
+        "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+        "message": "no exact output closure by original completion deadline"
+      },
+      "backend": {
+        "backend_name": "acquisition",
+        "backend_generation": "fcbca2d8-0306-4b4a-9cf6-219753fadd6b"
+      },
+      "output_tag": "behavioral_cam",
+      "extension": "mp4",
+      "format": "mp4",
+      "schema_version": 1,
+      "artifact_present": null,
+      "counts": {}
+    },
+    {
+      "output_key": "72592fda-9759-4b24-b133-23d442f72015:acquisition:tracking_cam_frames",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_tracking_cam_frames.jsonl",
+      "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+      "failure": {
+        "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+        "message": "no exact output closure by original completion deadline"
+      },
+      "backend": {
+        "backend_name": "acquisition",
+        "backend_generation": "fcbca2d8-0306-4b4a-9cf6-219753fadd6b"
+      },
+      "output_tag": "tracking_cam_frames",
+      "extension": "jsonl",
+      "format": "jsonl",
+      "schema_version": 5,
+      "artifact_present": null,
+      "counts": {}
+    },
+    {
+      "output_key": "72592fda-9759-4b24-b133-23d442f72015:acquisition:eye_tracking_cam_frames",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_eye_tracking_cam_frames.jsonl",
+      "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+      "failure": {
+        "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+        "message": "no exact output closure by original completion deadline"
+      },
+      "backend": {
+        "backend_name": "acquisition",
+        "backend_generation": "fcbca2d8-0306-4b4a-9cf6-219753fadd6b"
+      },
+      "output_tag": "eye_tracking_cam_frames",
+      "extension": "jsonl",
+      "format": "jsonl",
+      "schema_version": 5,
+      "artifact_present": null,
+      "counts": {}
+    },
+    {
+      "output_key": "72592fda-9759-4b24-b133-23d442f72015:visual_stimulus:stimulus_LOG",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus_LOG.json",
+      "closure": "OUTPUT_CLOSURE_CLOSED",
+      "artifact_present": true,
+      "counts": {
+        "documents": 1
+      },
+      "backend": {
+        "backend_name": "visual_stimulus",
+        "backend_generation": "f413018d-2965-467d-ac71-e5da0a6a7dd3"
+      },
+      "output_tag": "stimulus_LOG",
+      "extension": "json",
+      "format": "json",
+      "schema_version": 2
+    },
+    {
+      "output_key": "72592fda-9759-4b24-b133-23d442f72015:visual_stimulus:stimulus_frames",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus_frames.jsonl",
+      "closure": "OUTPUT_CLOSURE_CLOSED",
+      "artifact_present": true,
+      "counts": {
+        "render_groups": 4830
+      },
+      "backend": {
+        "backend_name": "visual_stimulus",
+        "backend_generation": "f413018d-2965-467d-ac71-e5da0a6a7dd3"
+      },
+      "output_tag": "stimulus_frames",
+      "extension": "jsonl",
+      "format": "jsonl",
+      "schema_version": 6
+    },
+    {
+      "output_key": "72592fda-9759-4b24-b133-23d442f72015:visual_stimulus:stimulus",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus.mp4",
+      "closure": "OUTPUT_CLOSURE_CLOSED",
+      "artifact_present": true,
+      "visual_stimulus_review_video_content": "VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED",
+      "counts": {
+        "input_frames": 4830,
+        "frames": 4830,
+        "duplicate_frames": 0
+      },
+      "backend": {
+        "backend_name": "visual_stimulus",
+        "backend_generation": "f413018d-2965-467d-ac71-e5da0a6a7dd3"
+      },
+      "output_tag": "stimulus",
+      "extension": "mp4",
+      "format": "mp4",
+      "schema_version": 3
+    }
+  ],
+  "files_before": {
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam.mp4": {
+      "size": 197282767,
+      "mtime_ns": 1792391290688911300
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam_frames.jsonl": {
+      "size": 840630,
+      "mtime_ns": 1792391290745163000
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_eye_tracking_cam_frames.jsonl": {
+      "size": 1085379,
+      "mtime_ns": 1792391290663790000
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_LOG.json": {
+      "size": 64481,
+      "mtime_ns": 1792391330427966400
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus.mp4": {
+      "size": 58484447,
+      "mtime_ns": 1792391290464328800
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus_frames.jsonl": {
+      "size": 26398745,
+      "mtime_ns": 1792391290519804200
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus_LOG.json": {
+      "size": 951811,
+      "mtime_ns": 1792391209950792500
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_tracking_cam_frames.jsonl": {
+      "size": 1085375,
+      "mtime_ns": 1792391290634335900
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\SCHEMA.json": {
+      "size": 10210,
+      "mtime_ns": 1792391209131664100
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\SESSION_CONFIG.json": {
+      "size": 89363,
+      "mtime_ns": 1792391209131664100
+    },
+    "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\SESSION_LOG.jsonl": {
+      "size": 926,
+      "mtime_ns": 1792391330427966400
+    }
+  },
+  "config_sha256": "5805a52fc037ee02a6be6f2a4382b47e195d153c5fe491624fa813291755f971",
+  "limit": "Full rejected operation RPC is not present in saved session/emergency evidence; worker identity and rejection cause are known, command ID/kind are not.",
+  "validation": {
+    "tests": "346 passed: coordinator, trial lifecycle, worker foundations, recording cleanup, controller lifecycle commands",
+    "baseline": "5 valid late terminal status cases fail committed handler in memory; first wider baseline also fails diagnostic-message assertions",
+    "static": "Ruff/format2, Win32 mypy1, boundaries730/zero",
+    "preservation_changed_files": [],
+    "config_hash_matches": true,
+    "scope": "local implementation tests; no native rerun or application restart; precise original command and native lateness cause unretained"
+  }
+}

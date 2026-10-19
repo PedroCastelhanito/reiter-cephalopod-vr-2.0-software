@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-19",
+  "revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "working_tree": "Dirty concurrent GUI/backend work preserved; selected source files initially match HEAD.",
+  "files": {
+    "src/cephvr/tracking/processing/movement.py": "f2cb65337ec515a3a5eae87a5e22ae9f1d412cecb7c885dee77eff0b5182e77b",
+    "src/cephvr/tracking/processing/pose.py": "da3f1ba40601dae0a506bb5fe428e775ee1f90726577148c72da5ef8eedd9ae9",
+    "src/cephvr/tracking/processing/session.py": "a6bff6e557247ee1e875e7f4898b989acc3825bf76a80647e058cda59ade0081",
+    "src/cephvr/visual_stimulus/resources/session.py": "c346b1373996b92d79cb1a4061203880ba78979ff9a33a7a81e91e663bb16ee7",
+    "src/cephvr/platform/windows/byte_stream_native.py": "d1b59ed78240a5f6ea89df18f83df8c534a95289099f1ad150ee5458bfc26cac",
+    "src/cephvr/platform/windows/events.py": "d59182a29b2e97c4ee33adbf306b98d551e6f6a12996a521629f45035875f496",
+    "src/cephvr/platform/windows/jobs.py": "3dcbdf45725ebe4f55decbba63b42ebc01a90649e334373484d0ea6c433e4619",
+    "src/cephvr/platform/windows/mappings.py": "86d858ce652ce639f87a2831b1bdf43837a808dfb53c5dbb12b02218194767b9",
+    "src/cephvr/platform/windows/nvenc_capabilities.py": "dc4695c4562e06dd5d1045ec281c84d940653923f3553d0fbc848124827915f1"
+  }
+}

@@ -62,3 +62,4 @@ class DeviceHooks:
     prune_operations: Callable[[], None]
     publish: Callable[[], None]
     spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]]
+    update_progress: Callable[[str, str], None] = lambda _command_id, _progress: None

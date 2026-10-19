@@ -194,6 +194,9 @@ class SerializedCameraOwner:
         self._owner_thread_id = get_ident()
         try:
             while not self._stopping.is_set():
+                with self._condition:
+                    # Safety commands also service this wake before terminal drain.
+                    self._external_wake_consumed = self._external_wake_generation
                 pending = self._take_safety_ready()
                 if pending is not None:
                     try:
@@ -203,11 +206,7 @@ class SerializedCameraOwner:
                     except BaseException as exc:
                         self._operation_failed(pending.operation, exc)
                     continue
-                with self._condition:
-                    observed_external_generation = self._external_wake_generation
                 self._advance_due_stages()
-                with self._condition:
-                    self._external_wake_consumed = observed_external_generation
                 pending = self._take_ready()
                 if pending is not None:
                     try:

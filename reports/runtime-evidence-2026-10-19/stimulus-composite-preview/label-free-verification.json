@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "working_tree": "concurrent pre-existing changes retained",
+  "request": "Remove labels from preview/recording; stitch full recording rasters after Bottom rotation. Owner confirmed Bottom dimensions match after rotation.",
+  "validation": {
+    "visual_stimulus_pytest_not_windows_not_rig": "435 passed, 2 deselected; external writable basetemp and unsandboxed authenticated loopback/hard-link access",
+    "native_review_layouts": "1 passed, 89 deselected; standalone OpenGL, no projector windows",
+    "ruff": "check and format pass, 7 affected files",
+    "mypy_win32": "160 Visual Stimulus source files pass",
+    "boundaries": "734 modules, zero violations; existing cohesion advisories",
+    "contracts": "policy18 loader, schema/model equality and relative links pass",
+    "git_diff_check": "pass"
+  },
+  "changes": "Layout3 removes header strips and label drawing; matching oriented resolutions fill exact adjoining cells. Old version2 parsing/label geometry retained for historical metadata. Labels remain identifiers in metadata. Fresh Setup omits label-memory reservation.",
+  "limits": "No managed restart, full-workload native viewer/encoding or optical acceptance. Existing recordings unchanged.",
+  "sha256": {
+    "src/cephvr/visual_stimulus/config/review_layout.py": "d2fedf6f22537b1c4ef4311e4b97f4db78d2cd99893c24920701bee6f61632df",
+    "src/cephvr/visual_stimulus/config/models/artifact_models.py": "ddc4c21e9eca2e8d851084cf1ee09fe6c7ebd90d2d3aa33580e5502367405b68",
+    "src/cephvr/visual_stimulus/rendering/capture.py": "9ce71789a3e8ffc46a390cb331b100c014c6117fab11c85141532c8cf93d3901",
+    "src/cephvr/visual_stimulus/resources/session.py": "1ff276f1dde969047af7c76f5d3d92a267526d38fa50f0dee631bd046ab5438e",
+    "src/cephvr/visual_stimulus/configuration.py": "ed7ffef9bcba8911514d3eb5d25746bc6cdd4043f22cc567934ab0f55957df7e"
+  }
+}

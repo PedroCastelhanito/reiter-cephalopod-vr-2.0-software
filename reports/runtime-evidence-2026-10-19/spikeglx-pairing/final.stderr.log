@@ -1,0 +1,3 @@
+CephVR launcher controller channel lost: eof
+Acquisition MCU claim release remains unconfirmed: registered controller exited before Close RPC completed.
+CephVR launcher supervisor channel lost: eof

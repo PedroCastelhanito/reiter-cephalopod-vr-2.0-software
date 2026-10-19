@@ -76,21 +76,40 @@ class WorkerOperationReports:
             if child.deadline_ns is None:
                 raise ValueError("worker operation has no retained deadline")
             late_terminal = retained_query or ingress_ns > child.deadline_ns
-            if late_terminal and (
-                not report.operation.complete
-                or report.source.work.WhichOneof("work") is not None
-                or child.kind
-                not in {
-                    "apply_camera",
-                    "stop_preview",
-                    "prepare_preview",
-                    "start_preview",
-                }
+            session = self._matching_session(report.source.work)
+            late_session_terminal = (
+                session is not None
+                and session.interrupted
+                and report.operation.complete
+                and not report.HasField("resolved_camera")
+                and not report.HasField("exported_pfs_path")
+                and report.operation.command
+                == {
+                    "interrupt_session": "InterruptSession",
+                    "stop_trial": "StopTrial",
+                    "cleanup": "Cleanup",
+                    "shutdown": "Shutdown",
+                    "record_pulse_evidence": "RecordPulseEvidence",
+                }.get(child.kind)
+            )
+            if (
+                late_terminal
+                and (
+                    not report.operation.complete
+                    or report.source.work.WhichOneof("work") is not None
+                    or child.kind
+                    not in {
+                        "apply_camera",
+                        "stop_preview",
+                        "prepare_preview",
+                        "start_preview",
+                    }
+                )
+                and not late_session_terminal
             ):
                 raise ValueError(
-                    "late worker evidence is not a terminal sessionless camera operation"
+                    "late worker evidence is not an exact terminal camera or interrupted-session operation"
                 )
-            session = self._matching_session(report.source.work)
             pending_resolution: wire.AcquisitionResolutionReport | None = None
             if report.HasField("resolved_camera"):
                 if (
@@ -209,7 +228,11 @@ class WorkerOperationReports:
                     session.pending_resolution_report = None
                     session.pending_resolution_deadline_ns = None
                     session.pending_resolution_attempts = 0
-            if late_terminal and self.configuration_resolution is not None:
+            if (
+                late_terminal
+                and not late_session_terminal
+                and self.configuration_resolution is not None
+            ):
                 await self.configuration_resolution.retire_failed_if_quiescent(
                     child.parent_operation
                 )
@@ -236,7 +259,13 @@ class WorkerOperationReports:
                     return receipt
             return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
         except (ValueError, OverflowError) as exc:
-            return _report_rejected("INVALID_OPERATION", str(exc))
+            return _report_rejected(
+                "INVALID_OPERATION",
+                f"{exc}; worker={report.source.worker.generation} "
+                f"command={report.operation.command} "
+                f"command_id={report.operation.context.command_id} "
+                f"complete={report.operation.complete} ingress_ns={ingress_ns}",
+            )
 
     async def reconcile_retained_operation(
         self,

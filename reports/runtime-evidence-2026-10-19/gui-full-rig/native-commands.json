@@ -1,0 +1,42 @@
+[
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "f0361a92-9fc3-4585-88f6-356400dd8edf",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "Setup",
+    "command_id": "5d08da93-9fe9-4550-ac0a-47c347438325",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "StartSession",
+    "command_id": "227b9691-6075-4bd4-a399-5ec016cb632b",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "NewSession",
+    "command_id": "94279004-f313-4651-a3db-b3f0ff2c9515",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "d3ce5aac-8217-4a4b-a8c5-4bfa89a4ca62",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+]

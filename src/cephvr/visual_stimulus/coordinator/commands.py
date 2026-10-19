@@ -213,6 +213,14 @@ def bind_command(
         return visual_stimulus.CloseDisplayCalibrationCommand(
             command=child, diagnostic_id=request.diagnostic_id
         ), link
+    if isinstance(request, wire.StimulusPreviewRequest):
+        if request.configuration_revision != revision:
+            raise ValueError("preview configuration revision differs")
+        return visual_stimulus.StimulusPreviewCommand(
+            command=child,
+            visible=request.visible,
+            placement=request.placement.SerializeToString(),
+        ), link
     if isinstance(request, wire.SetupSessionRequest):
         setup = visual_stimulus.WorkerSetup(
             command=child,

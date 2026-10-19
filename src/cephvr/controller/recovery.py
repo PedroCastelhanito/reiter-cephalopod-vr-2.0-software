@@ -1,4 +1,4 @@
-"""Explicit E04 recovery of one known unfinished session after verified exit.
+"""Explicit E04 recovery of one known unfinished session under exclusive ownership.
 
 No output is scanned or certified. Intact administrative logs receive missing
 terminal outcomes; incomplete logs are preserved and a separate report records
@@ -137,9 +137,11 @@ class StartupRecovery:
         self.reservation: OutputReservation | None = None
         self.inspection: RecoveryInspection | None = None
         self.writer: MetadataWriter | None = None
+        self.deletion: Future[None] | None = None
         self.attempted = False
         self.notice: str | None = None
         self.operation_id = str(uuid.uuid4())
+        self.absence_evidence = ""
 
     async def prepare(
         self, query: Callable[[str], Awaitable[svc.RecoverySnapshot]]
@@ -158,9 +160,10 @@ class StartupRecovery:
             remaining_seconds(deadline, clock=host_time_ns),
         )
         receipt = proof.prior_application_exit
-        if (
-            not proof.HasField("prior_application_exit")
-            or receipt.controller_generation != pointer.controller_generation
+        if not proof.HasField("prior_application_exit"):
+            self.absence_evidence = "unconfirmed_exclusive_session_lock"
+        elif (
+            receipt.controller_generation != pointer.controller_generation
             or receipt.supervisor_generation != pointer.supervisor_generation
             or receipt.format_version != 1
             or not receipt.all_owned_processes_absent
@@ -169,10 +172,15 @@ class StartupRecovery:
             raise StorageError(
                 "prior application process absence is unconfirmed; old files are preserved and Setup is blocked"
             )
+        else:
+            self.absence_evidence = "supervisor_verified_launcher_receipt"
         directory = Path(pointer.session_directory)
-        if await run_pipe_io_daemon(
-            lambda: _settle_cancelled_namespace(directory),
-            timeout_s=remaining_seconds(deadline, clock=host_time_ns),
+        if (
+            self.absence_evidence == "supervisor_verified_launcher_receipt"
+            and await run_pipe_io_daemon(
+                lambda: _settle_cancelled_namespace(directory),
+                timeout_s=remaining_seconds(deadline, clock=host_time_ns),
+            )
         ):
             # Crash between cancelled-Setup namespace removal and pointer clear.
             await run_pipe_io_daemon(
@@ -189,7 +197,10 @@ class StartupRecovery:
             remaining_seconds(deadline, clock=host_time_ns),
         )
         reservation = self.reservation
-        if reservation.marker_issue == "reservation marker already complete":
+        if (
+            reservation.marker_issue == "reservation marker already complete"
+            and self.absence_evidence == "supervisor_verified_launcher_receipt"
+        ):
             # A crash can happen after durable marker completion but before pointer clear.
             try:
                 await run_pipe_io_daemon(
@@ -209,17 +220,28 @@ class StartupRecovery:
             reservation.release()
             self.reservation = None
             raise
-        details = (
-            self.inspection.issue
-            or "Intact administrative logs can receive evidence-based terminal recovery events."
+        return self._prompt()
+
+    def _prompt(self) -> pb.Prompt:
+        pointer = self.pointer
+        assert pointer is not None
+        inspection = self.inspection
+        details = (inspection.issue if inspection is not None else "") or (
+            "Intact administrative logs can receive evidence-based terminal recovery events."
         )
-        endpoint = self.inspection.spikeglx_endpoint
+        if self.absence_evidence == "unconfirmed_exclusive_session_lock":
+            details += (
+                " The prior launcher receipt is missing; prior process absence remains"
+                " unconfirmed. Your choice explicitly authorizes this action using the"
+                " exclusive session lock, without a Windows reboot."
+            )
+        endpoint = inspection.spikeglx_endpoint if inspection else None
         remote = ""
-        if self.inspection.spikeglx_stop_unconfirmed:
+        if inspection is not None and inspection.spikeglx_stop_unconfirmed:
             remote = (
                 " SpikeGLX stopping remains unconfirmed for endpoint "
                 + (f"{endpoint[0]}:{endpoint[1]}" if endpoint else "unknown")
-                + f", run {self.inspection.spikeglx_run or 'unknown'}; inspect/stop"
+                + f", run {inspection.spikeglx_run or 'unknown'}; inspect/stop"
                 " that exact remote run manually before another paired session."
             )
         return pb.Prompt(
@@ -229,8 +251,63 @@ class StartupRecovery:
                 session_id=pointer.session_id,
             ),
             operation=pb.OperationContext(command_id=self.operation_id),
-            permitted_choices=["continue", "cancel"],
-            explanation=f"Recover unfinished session at {pointer.session_directory}. {details} Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker.{remote}",
+            permitted_choices=["recover", "delete"],
+            explanation=f"Unfinished session: {pointer.session_directory}. {details} Start recovery preserves scientific files and writes a recovery report; it does not certify unknown outputs or resume the experiment. Cancel and delete files permanently deletes this entire session, including protocol-data and any imported spikeglx-data. Both actions require the exclusive session lock. Close leaves files and the Setup blocker unchanged.{remote}",
+        )
+
+    async def resolve(self, choice: str) -> None:
+        if choice not in {"recover", "delete"}:
+            raise StorageError("unknown startup recovery choice")
+        if (
+            not self.absence_evidence
+            or self.reservation is None
+            or not self.reservation.held
+        ):
+            raise StorageError(
+                "startup recovery authorization/held reservation unavailable"
+            )
+        if self.pointer is None or self.store.read_pointer() != self.pointer:
+            raise StorageError("unfinished pointer changed or is missing")
+        if choice == "recover":
+            await self.recover()
+            return
+        pointer, reservation, inspection = (
+            self.pointer,
+            self.reservation,
+            self.inspection,
+        )
+        if reservation is None or inspection is None or self.attempted:
+            raise StorageError("startup deletion proof/held reservation unavailable")
+        self.attempted = True
+        deadline = host_time_ns() + self.timeout_ns
+        completed: Future[None] = Future()
+        self.deletion = completed
+
+        def discard() -> None:
+            try:
+                reservation.discard_recovery(inspection.marker_digest, deadline)
+            except BaseException as exc:
+                completed.set_exception(exc)
+            else:
+                completed.set_result(None)
+
+        threading.Thread(
+            target=discard, daemon=True, name="cephvr-recovery-delete"
+        ).start()
+        result = asyncio.wrap_future(completed)
+        try:
+            await asyncio.wait_for(
+                asyncio.shield(result),
+                remaining_seconds(deadline, clock=host_time_ns),
+            )
+        except BaseException:
+            result.add_done_callback(
+                lambda late: None if late.cancelled() else late.exception()
+            )
+            raise
+        await run_pipe_io_daemon(
+            lambda: self.store.clear_pointer(pointer),
+            timeout_s=remaining_seconds(deadline, clock=host_time_ns),
         )
 
     async def recover(self) -> None:
@@ -361,7 +438,7 @@ class StartupRecovery:
                     "prior_controller_generation": pointer.controller_generation,
                     "recovery_controller_generation": self.current_generation,
                     "observed_wall_time": datetime.now(UTC).isoformat(),
-                    "old_process_absence": "supervisor_verified_launcher_receipt",
+                    "old_process_absence": self.absence_evidence,
                     "original_marker_base64": base64.b64encode(
                         inspection.marker_bytes
                     ).decode(),
@@ -401,7 +478,12 @@ class StartupRecovery:
             raise
 
     def close(self) -> None:
-        if self.reservation is not None and (
-            self.writer is None or self.writer.seal(0)
+        reservation = self.reservation
+        if (
+            reservation is not None
+            and self.deletion is not None
+            and not self.deletion.done()
         ):
-            self.reservation.release()
+            self.deletion.add_done_callback(lambda _completed: reservation.release())
+        elif reservation is not None and (self.writer is None or self.writer.seal(0)):
+            reservation.release()

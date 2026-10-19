@@ -952,6 +952,45 @@
           ],
           "title": "Source Code Bits",
           "type": "integer"
+        },
+        "source_rect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PixelRect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cell": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PixelRect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "default": "",
+          "maxLength": 128,
+          "title": "Label",
+          "type": "string"
+        },
+        "rotation_clockwise_degrees": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rotation Clockwise Degrees",
+          "type": "integer"
         }
       },
       "required": [
@@ -1200,6 +1239,26 @@
             }
           ],
           "default": null
+        },
+        "photodiode_patches": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/PhotodiodePatch"
+              },
+              "maxProperties": 4,
+              "propertyNames": {
+                "maxLength": 128,
+                "minLength": 1
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Photodiode Patches"
         }
       },
       "required": [
@@ -1622,6 +1681,211 @@
       "title": "GainUnit",
       "type": "object"
     },
+    "GeometricProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "calibration_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Calibration Id",
+          "type": "string"
+        },
+        "mapping_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Mapping Id",
+          "type": "string"
+        },
+        "surface_id": {
+          "enum": [
+            "front",
+            "left",
+            "right",
+            "bottom"
+          ],
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Id",
+          "type": "string"
+        },
+        "output_width": {
+          "exclusiveMinimum": 0,
+          "title": "Output Width",
+          "type": "integer"
+        },
+        "output_height": {
+          "exclusiveMinimum": 0,
+          "title": "Output Height",
+          "type": "integer"
+        },
+        "viewport": {
+          "$ref": "#/$defs/PixelRect"
+        },
+        "rows": {
+          "minimum": 2,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "columns": {
+          "minimum": 2,
+          "title": "Columns",
+          "type": "integer"
+        },
+        "vertices": {
+          "items": {
+            "$ref": "#/$defs/Vertex"
+          },
+          "title": "Vertices",
+          "type": "array"
+        },
+        "orientation": {
+          "enum": [
+            "preserving",
+            "mirrored"
+          ],
+          "title": "Orientation",
+          "type": "string"
+        },
+        "diagonal": {
+          "const": "bottom_left_to_top_right",
+          "title": "Diagonal",
+          "type": "string"
+        },
+        "mask": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Grid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "weight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Grid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "overlap_group": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Overlap Group"
+        },
+        "valid_area": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid Area"
+        },
+        "intended_coverage": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "minItems": 3,
+          "title": "Intended Coverage",
+          "type": "array"
+        },
+        "coverage_tolerance": {
+          "exclusiveMinimum": 0,
+          "title": "Coverage Tolerance",
+          "type": "number"
+        },
+        "triangle_area_tolerance": {
+          "exclusiveMinimum": 0,
+          "title": "Triangle Area Tolerance",
+          "type": "number"
+        }
+      },
+      "required": [
+        "format_version",
+        "calibration_id",
+        "mapping_id",
+        "surface_id",
+        "output_id",
+        "output_width",
+        "output_height",
+        "viewport",
+        "rows",
+        "columns",
+        "vertices",
+        "orientation",
+        "diagonal",
+        "mask",
+        "weight",
+        "overlap_group",
+        "intended_coverage",
+        "coverage_tolerance",
+        "triangle_area_tolerance"
+      ],
+      "title": "GeometricProfile",
+      "type": "object"
+    },
     "Geometry": {
       "additionalProperties": false,
       "properties": {
@@ -1734,6 +1998,43 @@
         "frequency"
       ],
       "title": "Grating",
+      "type": "object"
+    },
+    "Grid": {
+      "additionalProperties": false,
+      "properties": {
+        "rows": {
+          "minimum": 2,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "columns": {
+          "minimum": 2,
+          "title": "Columns",
+          "type": "integer"
+        },
+        "values": {
+          "items": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "title": "Values",
+          "type": "array"
+        },
+        "sampling": {
+          "const": "bilinear",
+          "title": "Sampling",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rows",
+        "columns",
+        "values",
+        "sampling"
+      ],
+      "title": "Grid",
       "type": "object"
     },
     "Group": {
@@ -2590,6 +2891,45 @@
       "title": "Mapping",
       "type": "object"
     },
+    "MeasurementProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "measurement_id": {
+          "minLength": 1,
+          "title": "Measurement Id",
+          "type": "string"
+        },
+        "measured_at": {
+          "minLength": 1,
+          "title": "Measured At",
+          "type": "string"
+        },
+        "method": {
+          "minLength": 1,
+          "title": "Method",
+          "type": "string"
+        },
+        "instrument": {
+          "minLength": 1,
+          "title": "Instrument",
+          "type": "string"
+        },
+        "reference": {
+          "minLength": 1,
+          "title": "Reference",
+          "type": "string"
+        }
+      },
+      "required": [
+        "measurement_id",
+        "measured_at",
+        "method",
+        "instrument",
+        "reference"
+      ],
+      "title": "MeasurementProvenance",
+      "type": "object"
+    },
     "Motion2D": {
       "additionalProperties": false,
       "properties": {
@@ -2666,6 +3006,27 @@
         "rotation"
       ],
       "title": "Motion2D",
+      "type": "object"
+    },
+    "OperatingCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "title": "OperatingCondition",
       "type": "object"
     },
     "Output": {
@@ -2759,6 +3120,89 @@
       "title": "Output",
       "type": "object"
     },
+    "OutputBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Id",
+          "type": "string"
+        },
+        "device_identity": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Device Identity",
+          "type": "string"
+        },
+        "width_px": {
+          "exclusiveMinimum": 0,
+          "title": "Width Px",
+          "type": "integer"
+        },
+        "height_px": {
+          "exclusiveMinimum": 0,
+          "title": "Height Px",
+          "type": "integer"
+        },
+        "refresh_numerator": {
+          "exclusiveMinimum": 0,
+          "title": "Refresh Numerator",
+          "type": "integer"
+        },
+        "refresh_denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Refresh Denominator",
+          "type": "integer"
+        },
+        "rgb_bits": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            }
+          ],
+          "title": "Rgb Bits",
+          "type": "array"
+        },
+        "signal_encoding": {
+          "const": "full_range_rgb_device_codes",
+          "title": "Signal Encoding",
+          "type": "string"
+        },
+        "conditions": {
+          "items": {
+            "$ref": "#/$defs/OperatingCondition"
+          },
+          "minItems": 1,
+          "title": "Conditions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "output_id",
+        "device_identity",
+        "width_px",
+        "height_px",
+        "refresh_numerator",
+        "refresh_denominator",
+        "rgb_bits",
+        "signal_encoding",
+        "conditions"
+      ],
+      "title": "OutputBinding",
+      "type": "object"
+    },
     "PhotodiodePatch": {
       "additionalProperties": false,
       "properties": {
@@ -2817,6 +3261,92 @@
         "low_linear_rgb"
       ],
       "title": "PhotodiodePatch",
+      "type": "object"
+    },
+    "PhotometricProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "profile_id": {
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "model": {
+          "const": "per_channel_measured_inverse_lut_v1",
+          "title": "Model",
+          "type": "string"
+        },
+        "working_space": {
+          "const": "linear_rec709_d65_relative",
+          "title": "Working Space",
+          "type": "string"
+        },
+        "normalization": {
+          "const": "per_channel_measured_black_to_white",
+          "title": "Normalization",
+          "type": "string"
+        },
+        "interpolation": {
+          "const": "piecewise_linear_uniform_input_grid",
+          "title": "Interpolation",
+          "type": "string"
+        },
+        "output": {
+          "$ref": "#/$defs/OutputBinding"
+        },
+        "measurement": {
+          "$ref": "#/$defs/MeasurementProvenance"
+        },
+        "red": {
+          "items": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Red",
+          "type": "array"
+        },
+        "green": {
+          "items": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Green",
+          "type": "array"
+        },
+        "blue": {
+          "items": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Blue",
+          "type": "array"
+        }
+      },
+      "required": [
+        "format_version",
+        "profile_id",
+        "model",
+        "working_space",
+        "normalization",
+        "interpolation",
+        "output",
+        "measurement",
+        "red",
+        "green",
+        "blue"
+      ],
+      "title": "PhotometricProfile",
       "type": "object"
     },
     "PhysicalSpace": {
@@ -3453,6 +3983,25 @@
     "ReviewEncoding": {
       "additionalProperties": false,
       "properties": {
+        "layout_version": {
+          "default": 1,
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "title": "Layout Version",
+          "type": "integer"
+        },
+        "layout_kind": {
+          "default": "recording",
+          "enum": [
+            "recording",
+            "preview"
+          ],
+          "title": "Layout Kind",
+          "type": "string"
+        },
         "composite_width": {
           "exclusiveMinimum": 0,
           "title": "Composite Width",
@@ -3528,6 +4077,61 @@
         "timing"
       ],
       "title": "ReviewEncoding",
+      "type": "object"
+    },
+    "ReviewLayout": {
+      "additionalProperties": false,
+      "properties": {
+        "layout_version": {
+          "default": 1,
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "title": "Layout Version",
+          "type": "integer"
+        },
+        "layout_kind": {
+          "default": "recording",
+          "enum": [
+            "recording",
+            "preview"
+          ],
+          "title": "Layout Kind",
+          "type": "string"
+        },
+        "composite_width": {
+          "exclusiveMinimum": 0,
+          "title": "Composite Width",
+          "type": "integer"
+        },
+        "composite_height": {
+          "exclusiveMinimum": 0,
+          "title": "Composite Height",
+          "type": "integer"
+        },
+        "scale_denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Scale Denominator",
+          "type": "integer"
+        },
+        "tiles": {
+          "items": {
+            "$ref": "#/$defs/CompositeTile"
+          },
+          "minItems": 1,
+          "title": "Tiles",
+          "type": "array"
+        }
+      },
+      "required": [
+        "composite_width",
+        "composite_height",
+        "scale_denominator",
+        "tiles"
+      ],
+      "title": "ReviewLayout",
       "type": "object"
     },
     "ReviewTiming": {
@@ -4616,6 +5220,53 @@
       "title": "VariationDraft",
       "type": "object"
     },
+    "Vertex": {
+      "additionalProperties": false,
+      "properties": {
+        "uv": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          ],
+          "title": "Uv",
+          "type": "array"
+        },
+        "xy": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          ],
+          "title": "Xy",
+          "type": "array"
+        }
+      },
+      "required": [
+        "uv",
+        "xy"
+      ],
+      "title": "Vertex",
+      "type": "object"
+    },
     "VideoSettings": {
       "additionalProperties": false,
       "properties": {
@@ -4891,6 +5542,33 @@
           "type": "null"
         }
       ]
+    },
+    "preview_layout": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReviewLayout"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "geometric_calibration": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/GeometricProfile"
+      },
+      "title": "Geometric Calibration",
+      "type": "array"
+    },
+    "photometric_calibration": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PhotometricProfile"
+      },
+      "title": "Photometric Calibration",
+      "type": "array"
     }
   },
   "required": [

@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-10-19T15:04:20.504394+09:00",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_scope": "dirty shared working tree; concurrent work preserved",
+  "decision": "E04 revision 91; owner removed reboot requirement",
+  "checks": [
+    {
+      "command": "python -m pytest tests/controller/test_startup_recovery.py tests/controller/test_setup.py tests/shared/test_recovery.py tests/client/test_controller_rpc.py -q --basetemp <temporary directory> --tb=short",
+      "outcome": "76 passed, 1 skipped; permitted local loopback"
+    },
+    {
+      "command": "python -m mypy --platform win32 src/cephvr/controller/recovery.py src/cephvr/shared/recovery.py",
+      "outcome": "2 source files pass"
+    },
+    {
+      "command": "python tools/check_backend_boundaries.py",
+      "outcome": "728 backend modules, 0 violations; no new mixed responsibilities"
+    },
+    {
+      "command": "python -m ruff check <6 affected files>; python -m ruff format --check <6 affected files>; git diff --check",
+      "outcome": "pass"
+    }
+  ],
+  "source_sha256": {
+    "src/cephvr/controller/recovery.py": "1a75405d2e4c19a0cd8764501a730d3ca9c9a711844ccb6e9c0483574ac7e2c1",
+    "src/cephvr/controller/metadata/reservation.py": "395e30de8ac89647d7251e92f525fc94f080340c0711435ccbbd2034cf7021b2",
+    "src/cephvr/shared/recovery.py": "2fa71b3e1fc7c91b743c78df4459ab2b21b597db4f936265d353e47fef3dc27b",
+    "tests/controller/test_startup_recovery.py": "03792348b52617ba3bdafcbfb9da7f5c9a748a57a980ac32b8634ce8adc4ed75"
+  },
+  "limits": "No GUI/app restart, retained-session recovery/deletion, runtime-state edit or subsequent live Setup. Prior process absence remains unconfirmed when using only the session lock. Existing private reboot witness is unused historical evidence."
+}

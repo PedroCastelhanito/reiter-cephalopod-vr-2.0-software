@@ -41,6 +41,7 @@ class SnapshotPublisher:
         self.microcontroller_view: Callable[[], pb.MicrocontrollerDeviceView] | None = (
             None
         )
+        self.stimulus_preview_view: Callable[[], pb.StimulusPreviewState] | None = None
         self.generation = generation
         self.clock = clock
         self.configuration_state = configuration
@@ -82,6 +83,8 @@ class SnapshotPublisher:
                     message="Configuration has nonfatal preparation warnings",
                     issues=validation.issues,
                 )
+        if self.stimulus_preview_view is not None:
+            view.stimulus_preview.CopyFrom(self.stimulus_preview_view())
         view.configuration.locked = self.lifecycle.session.phase in (
             pb.SESSION_PHASE_STARTING,
             pb.SESSION_PHASE_RUNNING,

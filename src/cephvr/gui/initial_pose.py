@@ -103,9 +103,9 @@ def initial_pose_fields(
     )
     # Nested array/object forms must retain enough height inside compact cards.
     editor.setMinimumHeight(editor.minimumSizeHint().height())
-    caption = (
-        "Initial texture center / orientation"
-        if values["kind"] == "texture"
-        else "Initial position / orientation"
+    return (
+        editor,
+        editor
+        if values["kind"] == "arena"
+        else field("Initial position / orientation", editor),
     )
-    return editor, editor if values["kind"] == "arena" else field(caption, editor)

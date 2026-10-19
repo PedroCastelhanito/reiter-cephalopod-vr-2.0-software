@@ -1,0 +1,92 @@
+diff --git a/src/cephvr/gui/managed_mcu.py b/src/cephvr/gui/managed_mcu.py
+index 562ea98..412cd15 100644
+--- a/src/cephvr/gui/managed_mcu.py
++++ b/src/cephvr/gui/managed_mcu.py
+@@ -119,26 +119,6 @@ class ManagedMcu(QObject):
+             return
+         self.send(rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT)
+ 
+-    def add_output(self, key: str, pin: str) -> None:
+-        if self.pending or not self.panel.can_review:
+-            return
+-        camera = next((row for row in self.panel.camera_rows if row.key == key), None)
+-        role = (
+-            key
+-            if key in _CAMERA_ROLES.values()
+-            else _CAMERA_ROLES.get(camera.role if camera else "")
+-        )
+-        if role is None:
+-            return
+-        if self.panel.snapshots.draft_loaded:
+-            self.panel.pin_editors[role].setText(pin)
+-            self.panel.draft_changed.emit()
+-            return
+-        if self.bridge.request("add_mcu_output", role=role, pin=pin):
+-            self.pending = True
+-            self.panel.connection_pending = True
+-            self.panel.refresh_tests()
+-
+     def save_pins(
+         self,
+         port: str,
+diff --git a/src/cephvr/gui/spikeglx.py b/src/cephvr/gui/spikeglx.py
+index 913287b..aa86af4 100644
+--- a/src/cephvr/gui/spikeglx.py
++++ b/src/cephvr/gui/spikeglx.py
+@@ -412,14 +412,6 @@ class SpikeGLXPanel(DevicePanel):
+             raise ValueError("active pulse sources cannot be disabled")
+         return tuple(result)
+ 
+-    def request_inventory_update(self) -> None:
+-        if not self.can_review or not self.inventory_file_sha256:
+-            return
+-        try:
+-            self.inventory_update_requested.emit(self.inventory_for_submit())
+-        except ValueError as exc:
+-            self.console.appendPlainText(f"Pulse mapping is invalid: {exc}")
+-
+     def apply_view(self, view: DashboardView) -> None:
+         super().apply_view(view)
+         self.action_buttons[0].setEnabled(view.connected and not view.sample)
+diff --git a/src/cephvr/gui/tracking.py b/src/cephvr/gui/tracking.py
+index 406d912..4f24798 100644
+--- a/src/cephvr/gui/tracking.py
++++ b/src/cephvr/gui/tracking.py
+@@ -583,6 +583,3 @@ class TrackingPage(ResponsiveColumns):
+ 
+     def save_settings(self) -> None:
+         self.config_files.choose(save=True)
+-
+-    def load_settings(self) -> None:
+-        self.config_files.choose(save=False)
+diff --git a/src/cephvr/shared/pixels/preparer.py b/src/cephvr/shared/pixels/preparer.py
+index e76f5cb..0dbc263 100644
+--- a/src/cephvr/shared/pixels/preparer.py
++++ b/src/cephvr/shared/pixels/preparer.py
+@@ -35,7 +35,7 @@ class PixelPreparer:
+ 
+     The pypylon wrapper exposes ``Convert(source)`` and allocates the result image
+     inside the binding. Its memoryview attachment can make a private source copy;
+-    CephVR-owned outputs remain caller buffers or one reusable bytearray.
++    CephVR-owned outputs remain caller buffers or cached preview bytearrays.
+     """
+ 
+     def __init__(self, layout: PixelLayout) -> None:
+@@ -71,17 +71,11 @@ class PixelPreparer:
+         )
+         self._row_bytes = layout.width * self._channels * (self._container_bits // 8)
+         self._output_bytes = self._row_bytes * layout.height
+-        self._reusable_output = bytearray(self._output_bytes)
+         self._preview_outputs: dict[int, bytearray] = {}
+         self._scale_scratch = self._numpy.empty(
+             layout.width * layout.height * self._channels, dtype=self._numpy.uint64
+         )
+ 
+-    def prepare_source_depth(
+-        self, native_pixels: bytes | bytearray | memoryview
+-    ) -> PreparedImage:
+-        return self.prepare_source_depth_into(native_pixels, self._reusable_output)
+-
+     def prepare_source_depth_into(
+         self,
+         native_pixels: bytes | bytearray | memoryview,

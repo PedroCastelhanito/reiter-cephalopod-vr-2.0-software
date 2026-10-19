@@ -3,10 +3,52 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from typing import Any
 
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
+
+
+def covering_texture(
+    artifact: PreparedTrial, snapshot: InstanceSnapshot, surface_id: str
+) -> InstanceSnapshot:
+    """Extend a physical texture's tile field without changing its scale or anchor."""
+    setting = snapshot.settings
+    if (
+        setting is None
+        or setting.kind != "texture"
+        or setting.space.kind != "physical_surface"
+        or setting.pattern.kind != "image_tile"
+    ):
+        return snapshot
+    mapping = next(m for m in setting.space.mappings if m.surface_id == surface_id)
+    surface = next(
+        s for s in artifact.display.geometry.surfaces if s.surface_id == surface_id
+    )
+    sx = math.dist(surface.bottom_left_mm, surface.bottom_right_mm) / 2
+    sy = math.dist(surface.bottom_left_mm, surface.top_left_mm) / 2
+    values = dict(snapshot.state)
+    angle = math.radians(float(values["rotation"]))
+    a, b = mapping.matrix
+    points = []
+    for x, y in ((-sx, -sy), (sx, -sy), (sx, sy), (-sx, sy)):
+        dx = a[0] * x + a[1] * y + a[2] - float(values["x"])
+        dy = b[0] * x + b[1] * y + b[2] - float(values["y"])
+        points.append(
+            (
+                dx * math.cos(angle) + dy * math.sin(angle),
+                -dx * math.sin(angle) + dy * math.cos(angle),
+            )
+        )
+    for axis, name in enumerate(("width", "height")):
+        old = float(values[name])
+        extent = max(old, 2 * max(abs(p[axis]) for p in points))
+        period = float(values["period_x" if axis == 0 else "period_y"])
+        # Whole tiles preserve the shader's corner-anchored phase.
+        extent = old + 2 * math.ceil(max(0.0, extent - old) / (2 * period)) * period
+        values[name] = extent
+    return replace(snapshot, state=tuple(values.items()))
 
 
 def physical_corners(

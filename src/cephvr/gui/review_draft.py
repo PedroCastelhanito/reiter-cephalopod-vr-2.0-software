@@ -9,11 +9,11 @@ from typing import Any
 from PyQt6.QtCore import QIODevice, QSaveFile
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QLineEdit
 
+from cephvr.gui.mcu_outputs import validate_outputs
 from cephvr.gui.microcontroller_signals import ROLE_OUTPUTS
 from cephvr.gui.pin_numbers import firmware_pin, pin_number
 from cephvr.gui.protocol_document import TrialDraft
 from cephvr.gui.protocol_history import EditHistory
-from cephvr.gui.review_mcu_outputs import ReviewMicrocontrollerSignals, validate_outputs
 from cephvr.gui.window import DashboardWindow
 from cephvr.visual_stimulus.config.models.program_model import parse_program_json
 from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
@@ -139,14 +139,9 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
             },
         },
     }
-    if mcu.review_inputs is not None:
-        data["microcontroller"]["inputs"] = mcu.review_inputs.snapshot()
-        assert isinstance(mcu.signals, ReviewMicrocontrollerSignals)
-        data["microcontroller"]["output_drafts"] = mcu.signals.snapshot()
-    from cephvr.gui.review_timing import ReviewProjectorTiming
-
-    if isinstance(projectors.timing, ReviewProjectorTiming):
-        data["projectors"]["pulse"]["screens"] = projectors.timing.drafts
+    data["microcontroller"]["inputs"] = mcu.inputs.snapshot()
+    data["microcontroller"]["output_drafts"] = mcu.signals.snapshot()
+    data["projectors"]["pulse"]["screens"] = projectors.timing.drafts
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode(
         "utf-8"
     )
@@ -323,14 +318,10 @@ def _restore(
         data["microcontroller"]["flip_enabled"],
     )
 
-    if mcu.review_inputs is not None:
-        mcu.review_inputs.restore(data["microcontroller"].get("inputs", []))
-        assert isinstance(mcu.signals, ReviewMicrocontrollerSignals)
-        mcu.signals.restore(
-            data["microcontroller"].get(
-                "output_drafts", dict(selected=[], templates=[])
-            )
-        )
+    mcu.inputs.restore(data["microcontroller"].get("inputs", []))
+    mcu.signals.restore(
+        data["microcontroller"].get("output_drafts", dict(selected=[], templates=[]))
+    )
 
     page = window.protocol
     page.assets.folders["root"].editor.setText(data["protocol"]["assets_root"])
@@ -376,15 +367,12 @@ def _restore(
     )
     for key, field in projectors.timing.fields.items():
         field.setText(pulse["fields"].get(key, ""))
-    from cephvr.gui.review_timing import ReviewProjectorTiming
-
-    if isinstance(projectors.timing, ReviewProjectorTiming):
-        timing = projectors.timing
-        drafts = pulse.get("screens")
-        if drafts is not None:
-            timing.restore_drafts(drafts)
-        else:
-            timing.edited()
+    timing = projectors.timing
+    drafts = pulse.get("screens")
+    if drafts is not None:
+        timing.restore_drafts(drafts)
+    else:
+        timing.edited()
     projectors.update_geometry()
 
     spike = window.devices.spikeglx

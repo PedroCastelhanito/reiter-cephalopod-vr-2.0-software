@@ -1,0 +1,1 @@
+All nine selected baseline hashes match HEAD. Removing only the reviewed assignments and one now-unused Association import produces an AST identical to the final source; no other executable statements changed. Baseline caller traces include code, tests, contracts, docs, tools and scripts, excluding generated v1 bindings.

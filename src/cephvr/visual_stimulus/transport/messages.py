@@ -29,6 +29,7 @@ def backend_command(request: Message) -> wire.BackendCommand:
     if isinstance(
         request,
         (
+            wire.StimulusPreviewRequest,
             wire.SetupSessionRequest,
             wire.PrepareTrialRequest,
             wire.ScheduleTrialRequest,
@@ -48,6 +49,7 @@ def worker_command(request: Message) -> visual_stimulus.WorkerCommand:
     if isinstance(
         request,
         (
+            visual_stimulus.StimulusPreviewCommand,
             visual_stimulus.InitializeDisplay,
             visual_stimulus.WorkerSetup,
             visual_stimulus.WorkerPrepareTrial,

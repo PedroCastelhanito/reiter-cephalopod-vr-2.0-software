@@ -9,13 +9,17 @@ class PreviewGeometryGuard:
     def __init__(self) -> None:
         self.last: Geometry | None = None
         self.manual = False
+        self.revision: int | None = None
 
-    def observe(self, geometry: Geometry) -> bool:
-        if self.last is not None and any(
+    def observe(self, geometry: Geometry, revision: int | None = None) -> bool:
+        if revision is not None:
+            self.manual |= self.revision is not None and revision != self.revision
+        elif self.last is not None and any(
             abs(a - b) > 2 for a, b in zip(self.last, geometry, strict=True)
         ):
             self.manual = True
         return not self.manual
 
-    def arranged(self, geometry: Geometry) -> None:
+    def arranged(self, geometry: Geometry, revision: int | None = None) -> None:
         self.last = geometry
+        self.revision = revision

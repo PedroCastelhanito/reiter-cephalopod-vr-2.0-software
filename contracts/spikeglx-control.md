@@ -6,9 +6,8 @@ Authority: [E12/E09](../docs/architecture/synchronization.md),
 [E06/E08](../docs/architecture/system-contracts.md). Wire types:
 [spikeglx.proto](cephvr/synchronization/v1/spikeglx.proto); client boundary:
 [spikeglx_client.pyi](spikeglx_client.pyi); reference native keys/codes:
-[spikeglx_mapping_reference.json](spikeglx_mapping_reference.json). A read-only
-controller connection diagnostic is implemented; the session lifecycle client
-remains unimplemented and unverified.
+[spikeglx_mapping_reference.json](spikeglx_mapping_reference.json). The controller connection diagnostic and session lifecycle client are implemented;
+full paired rig acceptance remains separate.
 
 ## Owner, transport and security
 
@@ -54,14 +53,17 @@ SpikeGLX calls.
 3. Read getParams (plus the applicable imec/OneBox groups), enumerate streams per
    family and read each stream's sample rate, acquired channels and saved channels
    (getStreamSaveChans). Require gate and trigger modes that start saving on startRun
-   (reference codes: `immediate`); anything else blocks Ready with the setting named.
+   (reference codes: `immediate`), and a disabled manual override or recording
+   initially enabled. Unknown override values or an initially-OFF override block
+   Ready with the setting named; CephVR does not change acquisition settings.
 4. Check `[pulse_inventory]` against the saved channels (E12). Enabled externally
    triggered Behavioral, Tracking and Eye cameras require their respective
    `behavioral_camera`, `tracking_camera` and `eye_tracking_camera` OneBox mappings.
    Missing mappings or unsaved required channels block Ready; disabled/free-running
    cameras do not require mappings. Channel/bit assignments remain operator inputs
    pending rig verification; this check does not verify wiring. Read getDataDir.
-5. Set the run name `<experiment_slug>_<subject>_<setup_YYYYMMDD>_<setup_HHMMSS>`
+5. Set the run name to the exact basename of the reserved CephVR session directory,
+   `<subject>-<setup_HHMMSS>`
    (E04 Setup anchor; characters restricted to `[A-Za-z0-9_-]`) and read it back.
 6. Return `SpikeGLXPreparation` for SESSION_CONFIG.json: version, run name, data
    directory, streams/rates/saved channels, gate/trigger modes and resolved pulse

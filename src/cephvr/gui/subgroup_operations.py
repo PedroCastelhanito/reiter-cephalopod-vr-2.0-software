@@ -55,7 +55,16 @@ def patch_value(current: Any, before: Any, after: Any) -> Any:
         and before.keys() == after.keys() == current.keys()
         and before.get("kind") == after.get("kind") == current.get("kind")
     ):
-        return {k: patch_value(current[k], before[k], after[k]) for k in after}
+        result = {k: patch_value(current[k], before[k], after[k]) for k in after}
+        if (
+            after.get("kind") == "texture"
+            and after.get("linked_to") is not None
+            and before.get("linked_to") != after["linked_to"]
+        ):
+            # Linking replaces sampled motion even when the template was stationary.
+            for key in ("phase_x", "phase_y", "motion"):
+                result[key] = deepcopy(after[key])
+        return result
     return deepcopy(after)
 
 

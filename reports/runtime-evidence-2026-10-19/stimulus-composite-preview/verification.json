@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "working_tree": "pre-existing concurrent changes retained; hashes identify tested sources",
+  "scope": "cropped display-net preview; full-output 2x2 recording with Bottom 90 degrees clockwise; embedded calibration metadata",
+  "method": "Observed tool receipts; no managed-runtime restart or projector/camera operation in this implementation turn",
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -u -m pytest tests/visual_stimulus tests/controller/test_device_admission.py tests/controller/test_command_admission.py tests/controller/test_control_leases.py tests/controller/test_configuration.py tests/controller/test_setup.py tests/client -q -m \"not windows and not rig\" --basetemp=<external writable test directory> -x",
+      "result": "571 passed, 2 deselected; outside sandbox for Windows hard links and authenticated loopback"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -u -m pytest tests/gui/test_dashboard.py -q -k \"preview or managed_stimulus\" --basetemp=.pytest_stimulus_gui_final2 -x",
+      "result": "82 passed, 632 deselected; outside sandbox for existing local runtime connections"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -u -m pytest tests/visual_stimulus/test_rendering.py -q -k \"native_review_layouts or stimulus_native_close\" --basetemp=.pytest_stimulus_gpu2",
+      "result": "2 passed, 88 deselected; standalone OpenGL only, no projector windows"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_configuration.py -q --basetemp=.pytest_policy_final",
+      "result": "12 passed after final policy/digest update"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/visual_stimulus src/cephvr/controller src/cephvr/gui",
+      "result": "452 source files pass"
+    },
+    {
+      "command": "ruff check and format --check for all three affected owners and seven changed behavior test modules",
+      "result": "pass; 459 formatted files"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "734 modules, zero boundary violations; cohesion advisories retained"
+    },
+    {
+      "command": "git diff --check; generated schema/model equality; policy pair/parser/digest; root decision register consistency",
+      "result": "pass (Git line-ending warnings only)"
+    }
+  ],
+  "broader_runs": [
+    "Default pytest temp directory denied; workspace/external basetemp used. Sandbox denied os.link publication and local connection tests stalled; rerun outside sandbox without weakening assertions.",
+    "Broad native-Qt GUI attempt stopped at sample preview placement against actual desktop after 472 passes; offscreen rerun stopped after 545 passes at test_camera_save_validation_error_routes_to_other_camera_row (success console text absent).",
+    "Broad controller run stopped after 495 passes at test_controller_recovers_expired_owned_edit_status_before_camera_stop: _DeviceStatus fixture lacks progress. Camera cases are outside the changed preview path and not repaired here. No clean full-suite claim."
+  ],
+  "limits": [
+    "Fresh managed restart/Setup, native viewer placement/close/reopen, both save modes and full-workload pacing/throughput remain rig checks.",
+    "Later offline conversion script is deferred; saved calibration metadata is implemented.",
+    "Full-frame review retains black margins and uses aspect-preserving padding; lossy/downsampled video is not exact pixel reconstruction."
+  ],
+  "sha256": {
+    "src/cephvr/visual_stimulus/config/review_layout.py": "4ed6b4b5424c3d7f1d2c7b9c5bc923df4b618f1de65426fb632fdbc0ec54d53d",
+    "src/cephvr/visual_stimulus/config/models/artifact_models.py": "ab3c4c50609b46f1a6338e3bf10c7685290d0f6a5ac33e01497b785d92867d5a",
+    "src/cephvr/visual_stimulus/rendering/capture.py": "1e4adc6c8bc11955b45eb9898269791dd3afb2ecc42f5b092f143a292a66c064",
+    "src/cephvr/visual_stimulus/rendering/preview.py": "4a80158db4feeec4cc9a072057c82ee45fe110a2b1b1ad56ff858dfc69599810",
+    "src/cephvr/visual_stimulus/rendering/native.py": "64ab634b2bee5324a27d195fdfdc64fbdb11519bb56c3d2f6df79deeb08efc67",
+    "src/cephvr/visual_stimulus/rendering/scene.py": "435aaecfd27e53090ad23e7eb7a51a67bedd32c35341f0e94eeba0702f244ab2",
+    "src/cephvr/visual_stimulus/resources/session.py": "b110105d0f1eb88dfb15988e3b1b6f19e6e9b46934209361a97fa90176283ad6",
+    "src/cephvr/controller/device/stimulus_preview.py": "9e6df417f3dbb655f36b222c26ad3bc32d71ae878d9f9d1bd1e5db29d903072a",
+    "src/cephvr/gui/managed_stimulus_preview.py": "915d3808e7561321c97375ff4a3ce4b1b8063940c4aeb86f5e3289426a01e46f",
+    "contracts/visual_stimulus/prepared-trial.schema.json": "0ae3b8b064fe6f8ea0a7b912ab1bdde2920c678cbbaf87268621d6d206bfc1a0"
+  },
+  "raw_evidence": {
+    "initial-superseded-layout-tests.txt": "Historical initial cropped-2x2 implementation test failures; fixtures subsequently corrected and owner superseded recording layout. Not final validation.",
+    "initial-demo-temp-tests.txt": "Historical demo asset generation refusal inside repository; later external temp and unsandboxed runs passed.",
+    "boundaries.txt": "Final boundary scan including cohesion advisories."
+  }
+}

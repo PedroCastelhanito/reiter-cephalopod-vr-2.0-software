@@ -193,6 +193,8 @@ class ProjectorFiles(CalibrationFiles):
             }
             target = payload.get("photodiode_output_id")
             patch_config = payload.get("photodiode_patch", {})
+            if patch_config is None:
+                patch_config = {}
             if not isinstance(patch_config, dict) or not isinstance(
                 patch_config.get("rect", {}), dict
             ):

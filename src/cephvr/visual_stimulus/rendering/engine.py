@@ -84,6 +84,13 @@ class RendererEngine:
         self._stopped = False
         self._state = TrialState()
 
+    def set_stimulus_preview(self, visible: bool, placement: bytes) -> None:
+        self._assert_owner()
+        operation = getattr(self._port, "set_stimulus_preview", None)
+        if operation is None:
+            raise ValueError("render port has no stimulus preview")
+        operation(visible, placement)
+
     def _assert_owner(self) -> None:
         if threading.get_ident() != self._owner_thread:
             raise RendererStateError(
@@ -573,8 +580,8 @@ class RendererEngine:
             raise RendererStateError(
                 "presentation did not report exactly one outcome per output"
             )
-        photodiode_id = self._display.marker_output_id
-        if photodiode_id is not None and photodiode_id not in expected:
+        photodiode_ids = self._display.marker_patches.keys()
+        if not photodiode_ids <= expected:
             raise RendererStateError(
                 "trial display lacks its required photodiode output"
             )
@@ -607,9 +614,9 @@ class RendererEngine:
                     return_host_ns=observation.swap_return_ns,
                     swap_interval=observation.requested_swap_interval,
                     marker_index=(
-                        self._photodiode_index if output_id == photodiode_id else None
+                        self._photodiode_index if output_id in photodiode_ids else None
                     ),
-                    marker_high=(marker if output_id == photodiode_id else None),
+                    marker_high=(marker if output_id in photodiode_ids else None),
                     failure_code=observation.error,
                 )
             )
@@ -622,7 +629,7 @@ class RendererEngine:
             snapshots,
             activities,
             rendered.clipping_stages,
-            marker if self._display.photodiode_enabled else None,
+            marker if photodiode_ids else None,
         )
         self._photodiode_index += 1
         self._group_id += 1

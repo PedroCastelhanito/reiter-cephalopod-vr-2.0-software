@@ -1,0 +1,37 @@
+ExecuteCameraCommand aed3fcdf-0222-4332-8481-d4203491552d failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand 7d32c0e6-8a63-444d-acff-ea3513f366f4 failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand 9d0b6e8b-6e50-464b-a070-a6825f290913 failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand f732c680-f1dc-444a-916f-71b851f6bcaf failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand a23f2ff0-bad6-4182-bc49-220bef82daec failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand 70016d85-7f51-4206-83e0-dc23be48d2cb failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand 423e2582-781d-41e6-8311-c9a099f5507e failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand c524e2bc-f58e-402d-8ae0-d2853ce5c2f8 failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand bbff47af-3737-408e-a6fd-acc8827a8b8f failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+ExecuteCameraCommand 87884b79-bef1-4de9-b982-fdef127e1d6f failed: COMMAND_UNCONFIRMED: ExecuteCameraCommand outcome is unconfirmed; do not retry with a new command ID: work scope has no retained commands
+{"active_capture_slots": 0, "cancelled_captures": 0, "event": "recording_metrics", "evidence_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewrepair\\20261019_previewrepair\\PREVIEW-102954\\protocol-data\\PREVIEW_103019_stimulus_frames.jsonl", "peak_capture_slots": 0, "queued_captures": 0, "stages_ns": {"capture_ready": {"count": 0, "max": 0, "total": 0}, "frame_input": {"count": 0, "max": 0, "total": 0}, "normalization": {"count": 0, "max": 0, "total": 0}, "pipe_write": {"count": 0, "max": 0, "total": 0}, "queue_wait": {"count": 0, "max": 0, "total": 0}, "readback_poll_pending": {"count": 0, "max": 0, "total": 0}, "readback_poll_ready": {"count": 0, "max": 0, "total": 0}, "slot_hold": {"count": 0, "max": 0, "total": 0}}, "submitted_bytes": 0, "unfinished_frame_input": null, "worst_stage_samples": {}, "zero_progress_writes": 0}
+Cleanup 01f85e17-8509-4ebb-a3bc-15f6df194127 failed: PREVIEW_RELEASE_UNCONFIRMED: Preview GUI owner cleanup failed: [WinError 1400] Invalid window handle.
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+Exception ignored in: <function SharedMemory.__del__ at 0x00000196B7F9E160>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 187, in __del__
+    self.close()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 230, in close
+    self._mmap.close()
+BufferError: cannot close exported pointers exist
+Exception ignored in: <function SharedMemory.__del__ at 0x00000196B7F9E160>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 187, in __del__
+    self.close()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 230, in close
+    self._mmap.close()
+BufferError: cannot close exported pointers exist
+Exception ignored in: <function SharedMemory.__del__ at 0x00000196B7F9E160>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 187, in __del__
+    self.close()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 230, in close
+    self._mmap.close()
+BufferError: cannot close exported pointers exist
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: heartbeat rejected: INVALID_HEARTBEAT: worker heartbeat carries stale acquisition work
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

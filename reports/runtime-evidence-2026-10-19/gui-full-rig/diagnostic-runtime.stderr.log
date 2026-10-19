@@ -1,0 +1,27 @@
+CephVR supervisor shutdown: COMMAND_UNCONFIRMED: BeginDiagnostic outcome is unconfirmed; do not retry with a new command ID: preprocessing requires explicit crop and scale values
+Task exception was never retrieved
+future: <Task finished name='Task-58' coro=<CommandAdmissionTransport._execute_first() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\admission.py:137> exception=CommandConflict('executor result changed after completion')>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\admission.py", line 175, in _execute_first
+    self._ledger.complete_executor(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\commands.py", line 235, in complete_executor
+    raise CommandConflict("executor result changed after completion")
+cephvr.shared.commands.CommandConflict: executor result changed after completion
+Task exception was never retrieved
+future: <Task finished name='Task-63' coro=<CommandAdmissionTransport._execute_first() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\admission.py:137> exception=CommandConflict('executor result changed after completion')>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\admission.py", line 175, in _execute_first
+    self._ledger.complete_executor(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\commands.py", line 235, in complete_executor
+    raise CommandConflict("executor result changed after completion")
+cephvr.shared.commands.CommandConflict: executor result changed after completion
+Task exception was never retrieved
+future: <Task finished name='Task-68' coro=<CommandAdmissionTransport._execute_first() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\admission.py:137> exception=CommandConflict('executor result changed after completion')>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\admission.py", line 175, in _execute_first
+    self._ledger.complete_executor(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\shared\commands.py", line 235, in complete_executor
+    raise CommandConflict("executor result changed after completion")
+cephvr.shared.commands.CommandConflict: executor result changed after completion
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

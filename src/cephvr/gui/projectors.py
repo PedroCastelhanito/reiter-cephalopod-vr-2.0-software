@@ -34,9 +34,9 @@ from cephvr.gui.projector_assignments import (
     AssignmentPreferences,
     sync_assignment_controls,
 )
+from cephvr.gui.projector_brightness import ProjectorBrightnessCard
 from cephvr.gui.projector_calibration import CalibrationTable
 from cephvr.gui.projector_codec import display_document, merge_projector_draft
-from cephvr.gui.projector_files import ProjectorFiles
 from cephvr.gui.projector_geometry import (
     RigGeometryEditor,
     ScreenGeometryEditor,
@@ -46,7 +46,6 @@ from cephvr.gui.projector_measured_profiles import measured_profiles
 from cephvr.gui.projector_measurements import ProjectorMeasurements
 from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
 from cephvr.gui.projector_profile import bind_profile, current_outputs, portable_profile
-from cephvr.gui.projector_timing import ProjectorTiming
 from cephvr.gui.tables import DataTable
 from cephvr.gui.tank_diagram import TankDiagram
 from cephvr.gui.theme import SIZES
@@ -144,6 +143,9 @@ class ProjectorsPanel(DevicePanel):
             "No displays listed. Use the refresh button above to detect displays."
         )
         self.configuration.body.insertWidget(1, self.table)
+        self.brightness = ProjectorBrightnessCard()
+        self.configuration.body.addWidget(self.brightness)
+        self.brightness.requested.connect(self.adjust_brightness)
         self.assignment_preferences = AssignmentPreferences(
             settings, self.console.appendPlainText
         )
@@ -178,12 +180,9 @@ class ProjectorsPanel(DevicePanel):
             )
         self.review = review
         self.live_tuning_available = True
-        if review:
-            from cephvr.gui.review_timing import ReviewProjectorTiming
+        from cephvr.gui.projector_pulses import ProjectorPulses
 
-            self.timing: ProjectorTiming = ReviewProjectorTiming(self)
-        else:
-            self.timing = ProjectorTiming()
+        self.timing = ProjectorPulses(self, local_preview=review)
         if not review:
             self.timing.placement_button.clicked.connect(
                 lambda: self.request_placement("photodiode_placement")
@@ -222,12 +221,9 @@ class ProjectorsPanel(DevicePanel):
         for (face, key), editor in self.calibration.controls.items():
             assert isinstance(editor, (QLineEdit, QCheckBox))
             calibration_fields[f"screens.{face}.{key}"] = editor
-        files_class = ProjectorFiles
-        if review:
-            from cephvr.gui.review_projector_files import ReviewProjectorFiles
+        from cephvr.gui.projector_pulse_files import ProjectorPulseFiles
 
-            files_class = ReviewProjectorFiles
-        self.calibration_files = files_class(
+        self.calibration_files = ProjectorPulseFiles(
             calibration_fields,
             self.timing,
             self.face_participation,
@@ -288,6 +284,13 @@ class ProjectorsPanel(DevicePanel):
         self.screen_editor.changed.connect(self.update_geometry)
         self.measurements.changed.connect(self.update_geometry)
         self.table.currentCellChanged.connect(lambda *_: self.show_selected())
+
+    def adjust_brightness(self, current_ma: int) -> None:
+        if self.review:
+            self.console.appendPlainText(
+                f"REVIEW · Adjust all projector RGB LED currents to {current_ma} mA; no hardware command sent."
+            )
+            self.brightness.finish()
 
     def _mark_geometry_dirty(self) -> None:
         self._geometry_dirty = True
@@ -437,6 +440,10 @@ class ProjectorsPanel(DevicePanel):
         self.timing.target.setCurrentIndex(
             self.timing.target.findData(identity) if identity is not None else -1
         )
+        if not self.timing.target.signalsBlocked() and (
+            face is not None or self.timing.face is not None
+        ):
+            self.timing.select_screen()
 
     def configuration_for_submit(
         self, base_display: visual_stimulus_pb.DisplayConfiguration
@@ -485,6 +492,12 @@ class ProjectorsPanel(DevicePanel):
             ),
             presentation_mode=self.timing.presentation_mode,
             pulse_patch=pulse_patch,
+            pulse_patches={
+                face: patch.model_dump(include={"rect", "background_rect"})
+                for face, patch in self.timing.patches(enabled_only=False).items()
+            }
+            if self.timing.drafts
+            else None,
             blackout_zones=self.timing.blackouts.snapshot(),
             geometry=geometry,
         )
@@ -695,7 +708,7 @@ class ProjectorsPanel(DevicePanel):
                     self.keys, self.diagram.outputs, strict=True
                 )
             )
-            from cephvr.gui.placement_calibration import initial_photodiode_patch
+            from cephvr.gui.placement_calibration import initial_photodiode_patches
 
             path = write_diagnostic_bundle(
                 calibration_asset_root(),
@@ -703,8 +716,7 @@ class ProjectorsPanel(DevicePanel):
                 rows,
                 monitors,
                 view=view,
-                photodiode_face=self.pulse_face(),
-                photodiode_patch=initial_photodiode_patch(self)
+                photodiode_patches=initial_photodiode_patches(self)
                 if view == "photodiode_placement"
                 else None,
                 blackout_zones=(
@@ -883,6 +895,7 @@ class ProjectorsPanel(DevicePanel):
 
     def apply_view(self, view: DashboardView) -> None:
         super().apply_view(view)
+        self.brightness.apply_view(view)
         self.refresh_button.setEnabled(self.can_review)
         self.calibration_files.setEnabled(self.can_review)
         self.calibration.setEnabled(self.can_review)

@@ -1,5 +1,5 @@
 # SpikeGLX session control and alignment scope: SYS-004, E04, E09, E12, E14.
-# Operator settings; controller client and other hardware mappings remain pending.
+# Operator settings; full scientific pulse verification remains pending.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/synchronization_policy.toml; versions must match.
 policy_version = 5
@@ -17,6 +17,12 @@ port = 4142
 # link and the ephys firewall admits only the rig's address.
 
 [pulse_inventory]
+# Owner-confirmed OneBox0 analog channels,2026-10-19; wiring needs pulse evidence.
+trial_state = { stream = "onebox", stream_index = 0, channel = 0 }
+photodiode = { stream = "onebox", stream_index = 0, channel = 1 }
+behavioral_camera = { stream = "onebox", stream_index = 0, channel = 2 }
+tracking_camera = { stream = "onebox", stream_index = 0, channel = 3 }
+eye_tracking_camera = { stream = "onebox", stream_index = 0, channel = 4 }
 # E12: alignment role -> SpikeGLX saved channel. Edit freely to reassign a role;
 # reread at each Setup (no restart). One channel/bit per role; no two roles share one.
 # Camera trigger roles must use stream = "onebox". channel = saved acquisition channel
@@ -29,7 +35,8 @@ port = 4142
 [monitor]
 # E14 operational starting values; validate native call and finalization relationships
 # at Setup. These are failure-detection budgets, not measured hardware latency.
-native_call_timeout_s = 1
+# Native paired Setup exceeded1s reading the complete configuration on this rig.
+native_call_timeout_s = 5
 writing_start_timeout_s = 5
 observation_interval_s = 1
 no_progress_timeout_s = 10

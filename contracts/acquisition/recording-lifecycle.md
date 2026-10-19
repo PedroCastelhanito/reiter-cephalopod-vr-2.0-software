@@ -58,6 +58,13 @@ worker copy to the supervisor). Stopped stays prompt: it never waits for the rec
 thread to drain. Stop/Interrupt fences future execution but does not discard already
 admitted frames; the recording thread drains them.
 
+If control work arrives during terminal capture drain, yield without stopping the
+SDK grab queue or sealing an incomplete end marker. After servicing control, resume
+the same generation, fixed cutoff, first stop observation, margin end and original
+deadline, retaining counts from every retrieved/released result. Cleanup waits for
+this continuation before releasing capture resources. SDK queue shutdown follows
+complete purge or the original deadline/failure; a wake alone is not a drain failure.
+
 At cutoff, stop admitting new trial pixels and frame records immediately, but keep
 retrieving/ releasing excluded results through the same bounded capture loop. For an
 externally triggered camera, wait for the original OFF attempt's terminal outcome
@@ -75,6 +82,10 @@ MCU outputs confirmed off within E05's original deadline; admission sealing alon
 insufficient. If the SDK cannot separate acquisition stop from buffer drain, that drain
 must also fit the stop-report budget. Never report the camera stopped while still active.
 Retrieval/accounting after proven activity stop may use remaining finalization time.
+Stop/Interrupt operation completion acknowledges that physical-stop proof promptly;
+it does not await SDK shutdown or finalize the work scope. The same continuation
+retains the original Finished bound and publishes the end marker/Finished before
+cleanup releases capture ownership.
 The original finalization deadline caps all drain/cleanup; no fresh timeout on OFF reply,
 empty retrieval or repeated Stop. Recheck control/deadlines between retrieved results.
 

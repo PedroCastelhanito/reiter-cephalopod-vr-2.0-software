@@ -130,6 +130,9 @@ class CocoaPreviewOwner:
             return result
         return cast(_Rect, self._send(_Rect, window, "frame"))
 
+    def placement_revision(self) -> int | None:
+        return None
+
     def geometry(self) -> tuple[int, int, int, int]:
         child, parent = self._frame(self.child), self._frame(self.parent)
         return (

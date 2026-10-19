@@ -98,6 +98,11 @@ class ManualPreviewPulseLifecycle:
                 continue
             if worker is None:
                 raise RuntimeError("preview worker disappeared before pulse pause")
+            visible, placement = (
+                self.windows.placement(role)
+                if self.windows is not None
+                else (False, None)
+            )
             command, child, port = retain_worker_command(
                 worker,
                 work=None,
@@ -149,6 +154,8 @@ class ManualPreviewPulseLifecycle:
                         preview.resolved_camera.SerializeToString(deterministic=True)
                     ),
                     preview.preview_output_bit_depth,
+                    placement=placement,
+                    visible=visible,
                 )
             )
             preview.stopping = False
@@ -210,6 +217,16 @@ class ManualPreviewPulseLifecycle:
                 cleanup_pending=False,
                 configuration_revision=preview.configuration_revision,
             )
+
+        if self.windows is not None:
+            for item, (_worker, preview) in zip(token, restarted, strict=True):
+                if item.visible:
+                    await self.windows.show(
+                        item.role,
+                        preview,
+                        deadline_ns=deadline_ns,
+                        placement=item.placement,
+                    )
 
     async def _prepare_restart(
         self,

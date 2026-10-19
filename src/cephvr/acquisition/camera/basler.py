@@ -8,6 +8,7 @@ from collections.abc import Callable
 from threading import Event
 from typing import Any
 
+from cephvr.acquisition.camera.drain import PurgeProgress, drain_and_stop
 from cephvr.acquisition.camera.errors import CameraAdapterError
 from cephvr.acquisition.camera.features import (
     get_node,
@@ -64,6 +65,7 @@ class BaslerCameraAdapter:
         self._last_purge_evidence: PurgeEvidence | None = None
         self._terminal_generation_stopped = False
         self._drain_margin_confirmed = False
+        self._terminal_purge = PurgeProgress()
 
     def open(self, device_id: str) -> None:
         if not device_id:
@@ -312,6 +314,7 @@ class BaslerCameraAdapter:
             result = self._drain_and_stop(
                 camera, deadline_monotonic_ns, should_continue_drain
             )
+            assert result is not None
             self._last_purge_evidence = result
             return result
         except Exception as exc:
@@ -325,6 +328,7 @@ class BaslerCameraAdapter:
         try:
             self._terminal_generation_stopped = self._stop_device_generation(camera)
             self._drain_margin_confirmed = False
+            self._terminal_purge = PurgeProgress()
             return self._terminal_generation_stopped
         except Exception as exc:
             raise _sdk_error("begin_terminal_drain", exc) from exc
@@ -434,15 +438,20 @@ class BaslerCameraAdapter:
         deadline_monotonic_ns: int,
         *,
         should_continue_drain: Callable[[], bool],
-    ) -> PurgeEvidence:
+        resumable: bool = False,
+    ) -> PurgeEvidence | None:
         if not self._grabbing:
             return self._last_purge_evidence or PurgeEvidence(0, None, True)
         try:
             camera, _ = self._require_open()
             result = self._drain_and_stop(
-                camera, deadline_monotonic_ns, should_continue_drain
+                camera,
+                deadline_monotonic_ns,
+                should_continue_drain,
+                progress=self._terminal_purge if resumable else None,
             )
-            self._last_purge_evidence = result
+            if result is not None:
+                self._last_purge_evidence = result
             return result
         except Exception as exc:
             raise _sdk_error("stop_capture", exc) from exc
@@ -523,56 +532,29 @@ class BaslerCameraAdapter:
         camera: Any,
         deadline_ns: int,
         should_continue_drain: Callable[[], bool],
-    ) -> PurgeEvidence:
-        retrieved_count = 0
-        last_counter: int | None = None
-        terminal_known = (
-            self._terminal_generation_stopped or self._stop_device_generation(camera)
-        )
-        margin_confirmed = self._drain_margin_confirmed
-        drained_to_empty = False
-        stopped_in_time = False
+        *,
+        progress: PurgeProgress | None = None,
+    ) -> PurgeEvidence | None:
         try:
-            if not terminal_known:
-                # Without an applicable AcquisitionStop command, draining while the
-                # device keeps generating is unbounded and cannot prove closure.
-                camera.StopGrabbing()
-                stopped_in_time = host_time_ns() <= deadline_ns
+            evidence = drain_and_stop(
+                camera,
+                deadline_ns=deadline_ns,
+                should_continue=should_continue_drain,
+                retrieve=self.retrieve,
+                generation_stopped=(
+                    self._terminal_generation_stopped
+                    or self._stop_device_generation(camera)
+                ),
+                margin_confirmed=self._drain_margin_confirmed,
+                clock=host_time_ns,
+                progress=progress,
+            )
+            if evidence is not None:
                 self._grabbing = False
                 self._wait_gate.remove()
-                _ = stopped_in_time
-                return PurgeEvidence(None, None, False)
-            while True:
-                if host_time_ns() >= deadline_ns or not should_continue_drain():
-                    break
-                ready = int(camera.NumReadyBuffers.GetValue())
-                if ready == 0:
-                    drained_to_empty = True
-                    break
-                result = self.retrieve(0)
-                if result is None:
-                    break
-                if result.camera_frame_counter is not None:
-                    last_counter = result.camera_frame_counter
-                result.release()
-                retrieved_count += 1
-            camera.StopGrabbing()
-            stopped_in_time = host_time_ns() <= deadline_ns
-            self._grabbing = False
-            self._wait_gate.remove()
-            if int(camera.NumReadyBuffers.GetValue()) != 0:
-                terminal_known = False
+            return evidence
         except Exception as exc:
             raise _sdk_error("drain_and_stop", exc) from exc
-        # The SDK may flush buffers internally on StopGrabbing. No pinned counter
-        # exposes that hidden portion, so the total and accounting outcome stay
-        # unknown even after the observable result queue drains.
-        accounting_complete = (
-            terminal_known and margin_confirmed and drained_to_empty and stopped_in_time
-        )
-        if accounting_complete:
-            return PurgeEvidence(retrieved_count, last_counter, True)
-        return PurgeEvidence(None, last_counter, False)
 
     def _stop_device_generation(self, camera: Any) -> bool:
         node = get_node(camera.GetNodeMap(), "AcquisitionStop")

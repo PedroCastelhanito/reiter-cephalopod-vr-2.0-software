@@ -101,11 +101,17 @@ class ControllerMicrocontrollerClient(SerialOwnerPort):
         # Remember the claim even if transport fails; cleanup must address any admitted CONNECT.
         if self.claim_id:
             return await self.status(deadline_ns=deadline_ns)
-        result = await self._call(
-            wire.MICROCONTROLLER_IO_KIND_CONNECT,
-            deadline_ns,
-            requested=self.requested(),
-        )
+        try:
+            result = await self._call(
+                wire.MICROCONTROLLER_IO_KIND_CONNECT,
+                deadline_ns,
+                requested=self.requested(),
+            )
+        except Exception:
+            # Release a failed startup claim so explicit firmware Upload can proceed.
+            # An unconfirmed CLOSE retains the claim and the original deadline.
+            await self.close(deadline_ns=deadline_ns)
+            raise
         return result.observation
 
     async def configure(

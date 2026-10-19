@@ -22,6 +22,8 @@ class WorkerTrialState:
     stopped_schedule: acq.WorkerSchedule | None = None
     released: bool = False
     end_marker: CaptureEndMarker | None = None
+    actual_stop_ns: int | None = None
+    stopped_reported: bool = False
     purge_evidence: PurgeEvidence | None = None
     pulses: TrialPulseEvidence = field(default_factory=TrialPulseEvidence)
     finished_future: Future[list[control.OutputResult]] | None = None

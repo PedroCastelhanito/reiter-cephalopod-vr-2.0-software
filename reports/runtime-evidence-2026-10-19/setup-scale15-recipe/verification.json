@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-19",
+  "source": "owner-pasted Setup failure for asset_6",
+  "changes": [
+    {
+      "location": "/protocol/trials/0/program/assets/9",
+      "asset_id": "asset_6",
+      "before": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "after": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "pattern": "filtered_noise"
+    },
+    {
+      "location": "/protocol/trials/0/program/assets/10",
+      "asset_id": "asset_7",
+      "before": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "after": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "pattern": "filtered_noise"
+    },
+    {
+      "location": "/protocol/trials/0/program/assets/11",
+      "asset_id": "asset_8",
+      "before": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "after": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "pattern": "filtered_noise"
+    },
+    {
+      "location": "/protocol/trials/0/program/assets/12",
+      "asset_id": "asset_9",
+      "before": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "after": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "pattern": "filtered_noise"
+    },
+    {
+      "location": "/protocol/trials/0/program/assets/13",
+      "asset_id": "asset_10",
+      "before": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "after": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "pattern": "filtered_noise"
+    },
+    {
+      "location": "/protocol/trials/0/program/assets/14",
+      "asset_id": "asset_11",
+      "before": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "after": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "pattern": "filtered_noise"
+    },
+    {
+      "location": "/protocol/trials/0/program/assets/15",
+      "asset_id": "asset_12",
+      "before": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "after": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "pattern": "filtered_noise"
+    },
+    {
+      "location": "/protocol/trials/0/program/assets/16",
+      "asset_id": "asset_13",
+      "before": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.png",
+      "after": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "pattern": "filtered_noise"
+    }
+  ],
+  "before_sha256": "e9d11e0f795e26f8f646ef2733cf51cf449e5b5257a749fd0be2b124939ea5ad",
+  "after_sha256": "8e6d4a45e2322edd6cd48c08f655e540349c5cb1079eb9100cc864804ea3f2c7",
+  "validation": "8 matching recipes parsed; Asset models parsed; exact path/profile-only semantic diff; unrelated bytes retained; all corrected trial Program models pass",
+  "live_setup": "not run",
+  "controller_history": "unchanged",
+  "gui_load": {
+    "method": "Windows Computer Use Protocol Load dialog",
+    "result": "Dashboard runtime log confirms corrected-protocol.json loaded",
+    "timeline": "200 epochs, 1 block, 00:50:00",
+    "final_state": "Dashboard Configuration; no Setup or Start"
+  }
+}

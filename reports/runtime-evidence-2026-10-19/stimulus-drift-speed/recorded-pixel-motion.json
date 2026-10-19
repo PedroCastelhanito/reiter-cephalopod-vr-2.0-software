@@ -1,0 +1,103 @@
+{
+  "source": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus.mp4",
+  "method": "OpenCV normalized template matching of central100x100 patch in220x220 search; half-resolution recording, Bottom90-degree rotation; integer-pixel uncertainty up to2 native pixels. Host intervals from matched render groups; zero duplicate/drop/omission encoder outcome.",
+  "measurements": [
+    {
+      "face": "Front",
+      "frames": [
+        1230,
+        1242
+      ],
+      "host_interval_s": 0.1995756,
+      "composite_displacement_px": [
+        0,
+        41
+      ],
+      "native_displacement_px": 82.0,
+      "matching_correlation": 0.9991708993911743,
+      "mm_per_native_motion_pixel": 0.12222222222222222,
+      "inferred_mm_s": 50.21767301324522
+    },
+    {
+      "face": "Bottom",
+      "frames": [
+        1230,
+        1242
+      ],
+      "host_interval_s": 0.1995756,
+      "composite_displacement_px": [
+        36,
+        0
+      ],
+      "native_displacement_px": 72.0,
+      "matching_correlation": 0.9978821277618408,
+      "mm_per_native_motion_pixel": 0.1375,
+      "inferred_mm_s": 49.60526236674223
+    },
+    {
+      "face": "Front",
+      "frames": [
+        1290,
+        1302
+      ],
+      "host_interval_s": 0.2004131,
+      "composite_displacement_px": [
+        0,
+        41
+      ],
+      "native_displacement_px": 82.0,
+      "matching_correlation": 0.9999216794967651,
+      "mm_per_native_motion_pixel": 0.12222222222222222,
+      "inferred_mm_s": 50.00781995898582
+    },
+    {
+      "face": "Bottom",
+      "frames": [
+        1290,
+        1302
+      ],
+      "host_interval_s": 0.2004131,
+      "composite_displacement_px": [
+        36,
+        0
+      ],
+      "native_displacement_px": 72.0,
+      "matching_correlation": 0.9919174909591675,
+      "mm_per_native_motion_pixel": 0.1375,
+      "inferred_mm_s": 49.397968496071364
+    },
+    {
+      "face": "Front",
+      "frames": [
+        1350,
+        1362
+      ],
+      "host_interval_s": 0.200422,
+      "composite_displacement_px": [
+        0,
+        41
+      ],
+      "native_displacement_px": 82.0,
+      "matching_correlation": 0.9999411106109619,
+      "mm_per_native_motion_pixel": 0.12222222222222222,
+      "inferred_mm_s": 50.0055992965953
+    },
+    {
+      "face": "Bottom",
+      "frames": [
+        1350,
+        1362
+      ],
+      "host_interval_s": 0.200422,
+      "composite_displacement_px": [
+        36,
+        0
+      ],
+      "native_displacement_px": 72.0,
+      "matching_correlation": 0.9932830333709717,
+      "mm_per_native_motion_pixel": 0.1375,
+      "inferred_mm_s": 49.395774914929504
+    }
+  ],
+  "scope": "Saved final GPU output pixels only, not optical measurement or confirmation of current live configuration."
+}

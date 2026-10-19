@@ -74,7 +74,6 @@ class Movement:
         self.inflight: FlowLease | None = None
         self.current: PrivateFrame | None = None
         self.pending_since_ns: int | None = None
-        self.last_completion_ns: int | None = None
         self.result_sequence = 0
         self.first = False
 
@@ -168,7 +167,6 @@ class Movement:
                 disposition = evidence.validity
                 p.flow.release(self.inflight)
                 self.inflight = None
-            self.last_completion_ns = self.clock()
             self.pending_since_ns = None
             self._commit(frame, evidence, disposition, use)
             if self.baseline is not None:

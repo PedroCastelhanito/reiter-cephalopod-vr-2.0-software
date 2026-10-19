@@ -1,0 +1,3249 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "provenance_limit": "Dirty concurrent checkout; recorded runtime source revision unknown. File fingerprints identify inspected artifacts.",
+  "scope": "Four retained Desktop open-loop Abort sessions; read-only JSON, file identities, mappings, recipe/resource hashes, ffprobe frame count and full ffmpeg decode. No hardware or optical/electrical execution.",
+  "sessions": [
+    {
+      "session": "DUMMY_2-152638",
+      "trial_outcome": "interrupted",
+      "trial_complete": true,
+      "duration_to_abort_s": 80.4880455,
+      "abort_to_session_end_s": 40.0078718,
+      "files": [
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\.cephvr-reservation.json",
+          "bytes": 151,
+          "sha256": "bb62c7a05d4bca249009ae1515be9509633ee8c08a202c28fb68e194ae294e70"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\.cephvr.lock",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam.mp4",
+          "bytes": 197282767,
+          "sha256": "46eede062e7aa8e8800ae9a3420980b3fd7586efd5cfa874f055b2544b752d62"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam_frames.jsonl",
+          "bytes": 840630,
+          "sha256": "d615f92fab9e75b09f913e6a463c05e5919746f7096c15491a7c4bffbee8e0e5"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_eye_tracking_cam_frames.jsonl",
+          "bytes": 1085379,
+          "sha256": "d16a042c2d6375ac6c550aef4c270231f25cdcd5f2fd7f1255acd214f4aa19ce"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_LOG.json",
+          "bytes": 64481,
+          "sha256": "ae48a92d25d1bd3ba25a934088d61dc6132aae65dd74e85679ba2c954219bff1"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus.mp4",
+          "bytes": 58484447,
+          "sha256": "e5b6f43f14db15045c959633867806743b757dec6ed3023601f8eb89f6f5fb99"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus_frames.jsonl",
+          "bytes": 26398745,
+          "sha256": "57bca2282fb540565afda80269769eeed9b6e655123e038b56fad682935401d2"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus_LOG.json",
+          "bytes": 951811,
+          "sha256": "e5c7105ea96231c7d00b467e473764e948625102c1c903da5a18352ec2c71505"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_tracking_cam_frames.jsonl",
+          "bytes": 1085375,
+          "sha256": "32e0838f6d68f4cd7f8732884c1b95c4b9a1b5979eb79a7fa2b12a04c0134939"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\RECOVERY-1c1ee7cc-246a-42f6-9c24-eecf93b6e9fc.json",
+          "bytes": 846,
+          "sha256": "d185531bff4addaa80ecc9df28bd37289489cc7382db9ee5aac8894e48f392a4"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\SCHEMA.json",
+          "bytes": 10210,
+          "sha256": "21ef1fd0efc75121d46b4c4a994680f5bfe28480cb61d4c21dd4c4f1a60bfb36"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\SESSION_CONFIG.json",
+          "bytes": 89363,
+          "sha256": "5805a52fc037ee02a6be6f2a4382b47e195d153c5fe491624fa813291755f971"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\SESSION_LOG.jsonl",
+          "bytes": 1298,
+          "sha256": "92905ba33890f5f9c95d4902fdcec58d28fd6a763ea48d15166f556aa5b22128"
+        }
+      ],
+      "outputs": [
+        {
+          "output_key": "72592fda-9759-4b24-b133-23d442f72015:acquisition:behavioral_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+          "failure": {
+            "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+            "message": "no exact output closure by original completion deadline"
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "fcbca2d8-0306-4b4a-9cf6-219753fadd6b"
+          },
+          "output_tag": "behavioral_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5,
+          "artifact_present": null,
+          "counts": {}
+        },
+        {
+          "output_key": "72592fda-9759-4b24-b133-23d442f72015:acquisition:behavioral_cam",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam.mp4",
+          "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+          "failure": {
+            "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+            "message": "no exact output closure by original completion deadline"
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "fcbca2d8-0306-4b4a-9cf6-219753fadd6b"
+          },
+          "output_tag": "behavioral_cam",
+          "extension": "mp4",
+          "format": "mp4",
+          "schema_version": 1,
+          "artifact_present": null,
+          "counts": {}
+        },
+        {
+          "output_key": "72592fda-9759-4b24-b133-23d442f72015:acquisition:tracking_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_tracking_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+          "failure": {
+            "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+            "message": "no exact output closure by original completion deadline"
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "fcbca2d8-0306-4b4a-9cf6-219753fadd6b"
+          },
+          "output_tag": "tracking_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5,
+          "artifact_present": null,
+          "counts": {}
+        },
+        {
+          "output_key": "72592fda-9759-4b24-b133-23d442f72015:acquisition:eye_tracking_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_eye_tracking_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+          "failure": {
+            "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+            "message": "no exact output closure by original completion deadline"
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "fcbca2d8-0306-4b4a-9cf6-219753fadd6b"
+          },
+          "output_tag": "eye_tracking_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5,
+          "artifact_present": null,
+          "counts": {}
+        },
+        {
+          "output_key": "72592fda-9759-4b24-b133-23d442f72015:visual_stimulus:stimulus_LOG",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus_LOG.json",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "documents": 1
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "f413018d-2965-467d-ac71-e5da0a6a7dd3"
+          },
+          "output_tag": "stimulus_LOG",
+          "extension": "json",
+          "format": "json",
+          "schema_version": 2
+        },
+        {
+          "output_key": "72592fda-9759-4b24-b133-23d442f72015:visual_stimulus:stimulus_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "render_groups": 4830
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "f413018d-2965-467d-ac71-e5da0a6a7dd3"
+          },
+          "output_tag": "stimulus_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 6
+        },
+        {
+          "output_key": "72592fda-9759-4b24-b133-23d442f72015:visual_stimulus:stimulus",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus.mp4",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "visual_stimulus_review_video_content": "VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED",
+          "counts": {
+            "input_frames": 4830,
+            "frames": 4830,
+            "duplicate_frames": 0
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "f413018d-2965-467d-ac71-e5da0a6a7dd3"
+          },
+          "output_tag": "stimulus",
+          "extension": "mp4",
+          "format": "mp4",
+          "schema_version": 3
+        }
+      ],
+      "cameras": {
+        "behavioral": {
+          "source_rows": 2412,
+          "mapping_rows": 2412,
+          "video_enabled": true,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "interrupted",
+            "timing": {
+              "recording_end_monotonic_ns": 413727142879400,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 2412,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 2412,
+              "selected_source_frame_count": 2412,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 413646656770500,
+              "on_acknowledged_monotonic_ns": 413646681855600,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 413727145572700,
+              "off_acknowledged_monotonic_ns": 413727171844400
+            },
+            "post_cutoff": {
+              "accounting_complete": false,
+              "excluded_frame_count": null,
+              "last_native_counter": null
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        },
+        "eye_tracking": {
+          "source_rows": 4825,
+          "mapping_rows": 0,
+          "video_enabled": false,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 413727143189800,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 4825,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 413646656770500,
+              "on_acknowledged_monotonic_ns": 413646681855600,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 413727145572700,
+              "off_acknowledged_monotonic_ns": 413727171844400
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 4825
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        },
+        "tracking": {
+          "source_rows": 4825,
+          "mapping_rows": 0,
+          "video_enabled": false,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 413727142937300,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 4825,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 413646656770500,
+              "on_acknowledged_monotonic_ns": 413646681855600,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 413727145572700,
+              "off_acknowledged_monotonic_ns": 413727171844400
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 4825
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        }
+      },
+      "videos": {
+        "DUMMY_2_152649_behavioral_cam.mp4": {
+          "probe_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+            "-v",
+            "error",
+            "-count_frames",
+            "-show_streams",
+            "-show_format",
+            "-of",
+            "json",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam.mp4"
+          ],
+          "probe_exit": 0,
+          "probe_stderr": "",
+          "probe": {
+            "streams": [
+              {
+                "index": 0,
+                "codec_name": "h264",
+                "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                "profile": "High 4:4:4 Predictive",
+                "codec_type": "video",
+                "codec_tag_string": "avc1",
+                "codec_tag": "0x31637661",
+                "mime_codec_string": "avc1.f40032",
+                "width": 1760,
+                "height": 1716,
+                "coded_width": 1760,
+                "coded_height": 1728,
+                "has_b_frames": 0,
+                "sample_aspect_ratio": "1:1",
+                "display_aspect_ratio": "40:39",
+                "pix_fmt": "yuvj444p",
+                "level": 50,
+                "color_range": "pc",
+                "color_space": "bt709",
+                "chroma_location": "left",
+                "field_order": "progressive",
+                "refs": 3,
+                "is_avc": "true",
+                "nal_length_size": "4",
+                "id": "0x1",
+                "r_frame_rate": "30/1",
+                "avg_frame_rate": "30/1",
+                "time_base": "1/15360",
+                "start_pts": 0,
+                "start_time": "0.000000",
+                "duration_ts": 1234944,
+                "duration": "80.400000",
+                "bit_rate": "19626592",
+                "bits_per_raw_sample": "8",
+                "nb_frames": "2412",
+                "nb_read_frames": "2412",
+                "extradata_size": 66,
+                "disposition": {
+                  "default": 1,
+                  "dub": 0,
+                  "original": 0,
+                  "comment": 0,
+                  "lyrics": 0,
+                  "karaoke": 0,
+                  "forced": 0,
+                  "hearing_impaired": 0,
+                  "visual_impaired": 0,
+                  "clean_effects": 0,
+                  "attached_pic": 0,
+                  "timed_thumbnails": 0,
+                  "non_diegetic": 0,
+                  "captions": 0,
+                  "descriptions": 0,
+                  "metadata": 0,
+                  "dependent": 0,
+                  "still_image": 0,
+                  "multilayer": 0
+                },
+                "tags": {
+                  "language": "und",
+                  "handler_name": "VideoHandler",
+                  "encoder": "Lavc63.1.102 h264_nvenc"
+                }
+              }
+            ],
+            "format": {
+              "filename": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam.mp4",
+              "nb_streams": 1,
+              "nb_programs": 0,
+              "nb_stream_groups": 0,
+              "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+              "format_long_name": "QuickTime / MOV",
+              "start_time": "0.000000",
+              "duration": "80.400000",
+              "size": "197282767",
+              "bit_rate": "19630126",
+              "probe_score": 100,
+              "tags": {
+                "major_brand": "isom",
+                "minor_version": "512",
+                "compatible_brands": "isomiso6iso2avc1mp41",
+                "cephvr_identity_version": "1",
+                "cephvr_session_id": "5acbc07b-7c9a-4509-8c88-624d5b6d6061",
+                "cephvr_trial_id": "72592fda-9759-4b24-b133-23d442f72015",
+                "cephvr_camera_role": "behavioral",
+                "cephvr_device_id": "40065509",
+                "encoder": "Lavf63.1.102"
+              }
+            }
+          },
+          "decode_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+            "-v",
+            "error",
+            "-xerror",
+            "-i",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_behavioral_cam.mp4",
+            "-map",
+            "0:v:0",
+            "-f",
+            "null",
+            "-"
+          ],
+          "decode_exit": 0,
+          "decode_stderr": "",
+          "identity_checks": {
+            "session_id": true,
+            "trial_id": true,
+            "camera_role": true,
+            "device_id": true,
+            "identity_version": true
+          }
+        },
+        "DUMMY_2_152649_stimulus.mp4": {
+          "probe_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+            "-v",
+            "error",
+            "-count_frames",
+            "-show_streams",
+            "-show_format",
+            "-of",
+            "json",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus.mp4"
+          ],
+          "probe_exit": 0,
+          "probe_stderr": "",
+          "probe": {
+            "streams": [
+              {
+                "index": 0,
+                "codec_name": "h264",
+                "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                "profile": "High 4:4:4 Predictive",
+                "codec_type": "video",
+                "codec_tag_string": "avc1",
+                "codec_tag": "0x31637661",
+                "mime_codec_string": "avc1.f4002a",
+                "width": 1280,
+                "height": 1000,
+                "coded_width": 1280,
+                "coded_height": 1008,
+                "has_b_frames": 0,
+                "sample_aspect_ratio": "1:1",
+                "display_aspect_ratio": "32:25",
+                "pix_fmt": "yuvj444p",
+                "level": 42,
+                "color_range": "pc",
+                "color_space": "bt709",
+                "chroma_location": "left",
+                "field_order": "progressive",
+                "refs": 3,
+                "is_avc": "true",
+                "nal_length_size": "4",
+                "id": "0x1",
+                "r_frame_rate": "60/1",
+                "avg_frame_rate": "60/1",
+                "time_base": "1/15360",
+                "start_pts": 0,
+                "start_time": "0.000000",
+                "duration_ts": 1236480,
+                "duration": "80.500000",
+                "bit_rate": "5809062",
+                "bits_per_raw_sample": "8",
+                "nb_read_frames": "4830",
+                "extradata_size": 66,
+                "disposition": {
+                  "default": 1,
+                  "dub": 0,
+                  "original": 0,
+                  "comment": 0,
+                  "lyrics": 0,
+                  "karaoke": 0,
+                  "forced": 0,
+                  "hearing_impaired": 0,
+                  "visual_impaired": 0,
+                  "clean_effects": 0,
+                  "attached_pic": 0,
+                  "timed_thumbnails": 0,
+                  "non_diegetic": 0,
+                  "captions": 0,
+                  "descriptions": 0,
+                  "metadata": 0,
+                  "dependent": 0,
+                  "still_image": 0,
+                  "multilayer": 0
+                },
+                "tags": {
+                  "language": "und",
+                  "handler_name": "VideoHandler",
+                  "encoder": "Lavc63.1.102 h264_nvenc"
+                }
+              }
+            ],
+            "format": {
+              "filename": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus.mp4",
+              "nb_streams": 1,
+              "nb_programs": 0,
+              "nb_stream_groups": 0,
+              "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+              "format_long_name": "QuickTime / MOV",
+              "start_time": "0.000000",
+              "duration": "80.500000",
+              "size": "58484447",
+              "bit_rate": "5812118",
+              "probe_score": 100,
+              "tags": {
+                "major_brand": "iso5",
+                "minor_version": "512",
+                "compatible_brands": "iso5iso6mp41",
+                "encoder": "Lavf63.1.102"
+              }
+            }
+          },
+          "decode_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+            "-v",
+            "error",
+            "-xerror",
+            "-i",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-152638\\protocol-data\\DUMMY_2_152649_stimulus.mp4",
+            "-map",
+            "0:v:0",
+            "-f",
+            "null",
+            "-"
+          ],
+          "decode_exit": 0,
+          "decode_stderr": ""
+        }
+      },
+      "missing_planned_outputs": [],
+      "stimulus": {
+        "record_types": {
+          "header": 1,
+          "render_group": 4830,
+          "clipping": 19320,
+          "group_update": 9660,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 413727148623400,
+          "last_group_id": 4829,
+          "state_count": 4830,
+          "submission_attempt_count": 19320,
+          "capture_admission_count": 4830,
+          "capture_drop_count": 0,
+          "same_slot_omission_count": 0,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        },
+        "encoder": [
+          {
+            "kind": "encoder_outcome",
+            "admitted_count": 4830,
+            "input_submitted_count": 4830,
+            "capacity_drop_count": 0,
+            "selected_real_count": 4830,
+            "same_slot_omission_count": 0,
+            "encoded_frame_count": 4830,
+            "duplicate_frame_count": 0,
+            "final_input_group_id": 4829,
+            "cutoff_host_ns": 413727148623400,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          }
+        ],
+        "max_group_gap_ms": 34.1374,
+        "group_gaps_over_25ms": 1,
+        "submission_failures": 0,
+        "assets": [
+          {
+            "resource_id": "asset_1",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_2",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_3",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_4",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_1",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_2",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_3",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_4",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_5",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_6",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_7",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_8",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_9",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_10",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_11",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_12",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_13",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_14",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_15",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_16",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_17",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_18",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_19",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_20",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_21",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_front",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_front_a2e084fb458523608b3e2951ce2cea6b75eaaca00857e5c9ea9f5896b145a289.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_left",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_left_f132919bc6fa57a5f290492768d2967bfc9c3e93f5f987f950bc9147f64c4feb.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_right",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_right_0aa9e7c1334c218ba8e166652b5b8856381ed07428d491e483bdf9f1f17f29e4.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_bottom",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_bottom_b7b611d084d5435c38a9f6f1684ac3dcc9530aa42709767784c0db50e7cfe073.json",
+            "exists": true,
+            "hash_matches": true
+          }
+        ],
+        "photometric_mode": "uncalibrated",
+        "layout_version": 1
+      },
+      "source_files_unchanged_during_audit": true
+    },
+    {
+      "session": "DUMMY_2-155008",
+      "trial_outcome": "interrupted",
+      "trial_complete": true,
+      "duration_to_abort_s": 41.0952284,
+      "abort_to_session_end_s": 0.3453795,
+      "files": [
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\.cephvr-reservation.json",
+          "bytes": 151,
+          "sha256": "f9fa6ae68c889a086bbbc3e50c2a1323029caa3bff4072aa72c3bed872e4e393"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\.cephvr.lock",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_behavioral_cam.mp4",
+          "bytes": 99899312,
+          "sha256": "c08e350a1adee717b8d8e3819eae3a705a6b6378fba32eecb4371671c2ee6a95"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_behavioral_cam_frames.jsonl",
+          "bytes": 426924,
+          "sha256": "079dbde18d06a92207ff0fe68a3bd68111a9d599cfbed9862c50750fffb9586f"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_eye_tracking_cam_frames.jsonl",
+          "bytes": 553710,
+          "sha256": "cf28912b7c68e98b9d6d1b105fb959ad5be3b9961ef8f0caf30892bb8c592b50"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_LOG.json",
+          "bytes": 64133,
+          "sha256": "c0526bacf33675f67173b2e09014c4fe97de8b96cae84f8264352afe36c9fd8b"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus.mp4",
+          "bytes": 25247667,
+          "sha256": "7f2ef1f59d4c870776a8bf3753fcaa0ce33d5d913393ae5972e4d5690d0d9104"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus_frames.jsonl",
+          "bytes": 13429126,
+          "sha256": "476ec297e0cb5636ab2c22ebd1b8ac4dd7f24657b04e8dd715063cf4d6965b6f"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus_LOG.json",
+          "bytes": 952326,
+          "sha256": "80e591e59920f2eb5d7a7f3719a2e831c9bd17e7712d3a6c617cc8464fb5bc3b"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_tracking_cam_frames.jsonl",
+          "bytes": 553700,
+          "sha256": "b3186eafc8903b608925418ba8e615297cafa47899ced58586da7ea2911f4a7f"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\SCHEMA.json",
+          "bytes": 10210,
+          "sha256": "365ef763454733a5ad9ba70d74a2640e657066b8da436992120217899f478da2"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\SESSION_CONFIG.json",
+          "bytes": 89359,
+          "sha256": "946ffd73a96ba4e52318d361620e14af84a2faef4f819ba1211914582522ad04"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\SESSION_LOG.jsonl",
+          "bytes": 925,
+          "sha256": "9cbbf7e806b3cc563d159677eedb7547958cac228222aecdae5388e74f8d1ac9"
+        }
+      ],
+      "outputs": [
+        {
+          "output_key": "9e2541db-d460-4383-aa2a-d54e13ef0dff:acquisition:behavioral_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_behavioral_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "video_frames": 1230,
+            "source_frames": 1230
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "50825c1a-9f86-4246-8fa9-2cb413866f23"
+          },
+          "output_tag": "behavioral_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5
+        },
+        {
+          "output_key": "9e2541db-d460-4383-aa2a-d54e13ef0dff:acquisition:behavioral_cam",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_behavioral_cam.mp4",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "camera_video_content": "CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED",
+          "counts": {
+            "frames": 1230
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "50825c1a-9f86-4246-8fa9-2cb413866f23"
+          },
+          "output_tag": "behavioral_cam",
+          "extension": "mp4",
+          "format": "mp4",
+          "schema_version": 1
+        },
+        {
+          "output_key": "9e2541db-d460-4383-aa2a-d54e13ef0dff:acquisition:tracking_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_tracking_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "source_frames": 2462
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "50825c1a-9f86-4246-8fa9-2cb413866f23"
+          },
+          "output_tag": "tracking_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5
+        },
+        {
+          "output_key": "9e2541db-d460-4383-aa2a-d54e13ef0dff:acquisition:eye_tracking_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_eye_tracking_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_FAILED",
+          "artifact_present": true,
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "50825c1a-9f86-4246-8fa9-2cb413866f23"
+          },
+          "output_tag": "eye_tracking_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5,
+          "counts": {}
+        },
+        {
+          "output_key": "9e2541db-d460-4383-aa2a-d54e13ef0dff:visual_stimulus:stimulus_LOG",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus_LOG.json",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "documents": 1
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "498d78cf-3b01-4bb6-b4fa-a96eeb445eae"
+          },
+          "output_tag": "stimulus_LOG",
+          "extension": "json",
+          "format": "json",
+          "schema_version": 2
+        },
+        {
+          "output_key": "9e2541db-d460-4383-aa2a-d54e13ef0dff:visual_stimulus:stimulus_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "render_groups": 2462
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "498d78cf-3b01-4bb6-b4fa-a96eeb445eae"
+          },
+          "output_tag": "stimulus_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 6
+        },
+        {
+          "output_key": "9e2541db-d460-4383-aa2a-d54e13ef0dff:visual_stimulus:stimulus",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus.mp4",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "visual_stimulus_review_video_content": "VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED",
+          "counts": {
+            "input_frames": 2462,
+            "frames": 2462,
+            "duplicate_frames": 0
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "498d78cf-3b01-4bb6-b4fa-a96eeb445eae"
+          },
+          "output_tag": "stimulus",
+          "extension": "mp4",
+          "format": "mp4",
+          "schema_version": 3
+        }
+      ],
+      "cameras": {
+        "behavioral": {
+          "source_rows": 1230,
+          "mapping_rows": 1230,
+          "video_enabled": true,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 415094712247600,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 1230,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 1230,
+              "selected_source_frame_count": 1230,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 415053633869900,
+              "on_acknowledged_monotonic_ns": 415053659170300,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 415094713565200,
+              "off_acknowledged_monotonic_ns": 415094739845000
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 2,
+              "last_native_counter": 1231
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        },
+        "eye_tracking": {
+          "source_rows": 2462,
+          "mapping_rows": 0,
+          "video_enabled": false,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "interrupted",
+            "timing": {
+              "recording_end_monotonic_ns": 415094712262800,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 2462,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 415053633869900,
+              "on_acknowledged_monotonic_ns": 415053659170300,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 415094713565200,
+              "off_acknowledged_monotonic_ns": 415094739845000
+            },
+            "post_cutoff": {
+              "accounting_complete": false,
+              "excluded_frame_count": null,
+              "last_native_counter": null
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        },
+        "tracking": {
+          "source_rows": 2462,
+          "mapping_rows": 0,
+          "video_enabled": false,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 415094712248600,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 2462,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 415053633869900,
+              "on_acknowledged_monotonic_ns": 415053659170300,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 415094713565200,
+              "off_acknowledged_monotonic_ns": 415094739845000
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 2,
+              "last_native_counter": 2463
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        }
+      },
+      "videos": {
+        "DUMMY_2_155016_behavioral_cam.mp4": {
+          "probe_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+            "-v",
+            "error",
+            "-count_frames",
+            "-show_streams",
+            "-show_format",
+            "-of",
+            "json",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_behavioral_cam.mp4"
+          ],
+          "probe_exit": 0,
+          "probe_stderr": "",
+          "probe": {
+            "streams": [
+              {
+                "index": 0,
+                "codec_name": "h264",
+                "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                "profile": "High 4:4:4 Predictive",
+                "codec_type": "video",
+                "codec_tag_string": "avc1",
+                "codec_tag": "0x31637661",
+                "mime_codec_string": "avc1.f40032",
+                "width": 1760,
+                "height": 1716,
+                "coded_width": 1760,
+                "coded_height": 1728,
+                "has_b_frames": 0,
+                "sample_aspect_ratio": "1:1",
+                "display_aspect_ratio": "40:39",
+                "pix_fmt": "yuvj444p",
+                "level": 50,
+                "color_range": "pc",
+                "color_space": "bt709",
+                "chroma_location": "left",
+                "field_order": "progressive",
+                "refs": 3,
+                "is_avc": "true",
+                "nal_length_size": "4",
+                "id": "0x1",
+                "r_frame_rate": "30/1",
+                "avg_frame_rate": "30/1",
+                "time_base": "1/15360",
+                "start_pts": 0,
+                "start_time": "0.000000",
+                "duration_ts": 629760,
+                "duration": "41.000000",
+                "bit_rate": "19488803",
+                "bits_per_raw_sample": "8",
+                "nb_frames": "1230",
+                "nb_read_frames": "1230",
+                "extradata_size": 66,
+                "disposition": {
+                  "default": 1,
+                  "dub": 0,
+                  "original": 0,
+                  "comment": 0,
+                  "lyrics": 0,
+                  "karaoke": 0,
+                  "forced": 0,
+                  "hearing_impaired": 0,
+                  "visual_impaired": 0,
+                  "clean_effects": 0,
+                  "attached_pic": 0,
+                  "timed_thumbnails": 0,
+                  "non_diegetic": 0,
+                  "captions": 0,
+                  "descriptions": 0,
+                  "metadata": 0,
+                  "dependent": 0,
+                  "still_image": 0,
+                  "multilayer": 0
+                },
+                "tags": {
+                  "language": "und",
+                  "handler_name": "VideoHandler",
+                  "encoder": "Lavc63.1.102 h264_nvenc"
+                }
+              }
+            ],
+            "format": {
+              "filename": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_behavioral_cam.mp4",
+              "nb_streams": 1,
+              "nb_programs": 0,
+              "nb_stream_groups": 0,
+              "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+              "format_long_name": "QuickTime / MOV",
+              "start_time": "0.000000",
+              "duration": "41.000000",
+              "size": "99899312",
+              "bit_rate": "19492548",
+              "probe_score": 100,
+              "tags": {
+                "major_brand": "isom",
+                "minor_version": "512",
+                "compatible_brands": "isomiso6iso2avc1mp41",
+                "cephvr_identity_version": "1",
+                "cephvr_session_id": "c672f2e2-3f07-4c29-9409-31f67f940f14",
+                "cephvr_trial_id": "9e2541db-d460-4383-aa2a-d54e13ef0dff",
+                "cephvr_camera_role": "behavioral",
+                "cephvr_device_id": "40065509",
+                "encoder": "Lavf63.1.102"
+              }
+            }
+          },
+          "decode_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+            "-v",
+            "error",
+            "-xerror",
+            "-i",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_behavioral_cam.mp4",
+            "-map",
+            "0:v:0",
+            "-f",
+            "null",
+            "-"
+          ],
+          "decode_exit": 0,
+          "decode_stderr": "",
+          "identity_checks": {
+            "session_id": true,
+            "trial_id": true,
+            "camera_role": true,
+            "device_id": true,
+            "identity_version": true
+          }
+        },
+        "DUMMY_2_155016_stimulus.mp4": {
+          "probe_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+            "-v",
+            "error",
+            "-count_frames",
+            "-show_streams",
+            "-show_format",
+            "-of",
+            "json",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus.mp4"
+          ],
+          "probe_exit": 0,
+          "probe_stderr": "",
+          "probe": {
+            "streams": [
+              {
+                "index": 0,
+                "codec_name": "h264",
+                "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                "profile": "High 4:4:4 Predictive",
+                "codec_type": "video",
+                "codec_tag_string": "avc1",
+                "codec_tag": "0x31637661",
+                "mime_codec_string": "avc1.f40028",
+                "width": 1032,
+                "height": 988,
+                "coded_width": 1040,
+                "coded_height": 992,
+                "has_b_frames": 0,
+                "sample_aspect_ratio": "1:1",
+                "display_aspect_ratio": "258:247",
+                "pix_fmt": "yuvj444p",
+                "level": 40,
+                "color_range": "pc",
+                "color_space": "bt709",
+                "chroma_location": "left",
+                "field_order": "progressive",
+                "refs": 3,
+                "is_avc": "true",
+                "nal_length_size": "4",
+                "id": "0x1",
+                "r_frame_rate": "60/1",
+                "avg_frame_rate": "60/1",
+                "time_base": "1/15360",
+                "start_pts": 0,
+                "start_time": "0.000000",
+                "duration_ts": 630272,
+                "duration": "41.033333",
+                "bit_rate": "4919218",
+                "bits_per_raw_sample": "8",
+                "nb_read_frames": "2462",
+                "extradata_size": 66,
+                "disposition": {
+                  "default": 1,
+                  "dub": 0,
+                  "original": 0,
+                  "comment": 0,
+                  "lyrics": 0,
+                  "karaoke": 0,
+                  "forced": 0,
+                  "hearing_impaired": 0,
+                  "visual_impaired": 0,
+                  "clean_effects": 0,
+                  "attached_pic": 0,
+                  "timed_thumbnails": 0,
+                  "non_diegetic": 0,
+                  "captions": 0,
+                  "descriptions": 0,
+                  "metadata": 0,
+                  "dependent": 0,
+                  "still_image": 0,
+                  "multilayer": 0
+                },
+                "tags": {
+                  "language": "und",
+                  "handler_name": "VideoHandler",
+                  "encoder": "Lavc63.1.102 h264_nvenc"
+                }
+              }
+            ],
+            "format": {
+              "filename": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus.mp4",
+              "nb_streams": 1,
+              "nb_programs": 0,
+              "nb_stream_groups": 0,
+              "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+              "format_long_name": "QuickTime / MOV",
+              "start_time": "0.000000",
+              "duration": "41.033333",
+              "size": "25247667",
+              "bit_rate": "4922372",
+              "probe_score": 100,
+              "tags": {
+                "major_brand": "iso5",
+                "minor_version": "512",
+                "compatible_brands": "iso5iso6mp41",
+                "encoder": "Lavf63.1.102"
+              }
+            }
+          },
+          "decode_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+            "-v",
+            "error",
+            "-xerror",
+            "-i",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-155008\\protocol-data\\DUMMY_2_155016_stimulus.mp4",
+            "-map",
+            "0:v:0",
+            "-f",
+            "null",
+            "-"
+          ],
+          "decode_exit": 0,
+          "decode_stderr": ""
+        }
+      },
+      "missing_planned_outputs": [],
+      "stimulus": {
+        "record_types": {
+          "header": 1,
+          "render_group": 2462,
+          "clipping": 9848,
+          "group_update": 4924,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 415094720481600,
+          "last_group_id": 2461,
+          "state_count": 2462,
+          "submission_attempt_count": 9848,
+          "capture_admission_count": 2462,
+          "capture_drop_count": 0,
+          "same_slot_omission_count": 0,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        },
+        "encoder": [
+          {
+            "kind": "encoder_outcome",
+            "admitted_count": 2462,
+            "input_submitted_count": 2462,
+            "capacity_drop_count": 0,
+            "selected_real_count": 2462,
+            "same_slot_omission_count": 0,
+            "encoded_frame_count": 2462,
+            "duplicate_frame_count": 0,
+            "final_input_group_id": 2461,
+            "cutoff_host_ns": 415094720481600,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          }
+        ],
+        "max_group_gap_ms": 129.844,
+        "group_gaps_over_25ms": 3,
+        "submission_failures": 0,
+        "assets": [
+          {
+            "resource_id": "asset_1",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_2",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_3",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_4",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_1",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_2",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_3",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_4",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_5",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_6",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_7",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_8",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_9",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_10",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_11",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_12",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_13",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_14",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_15",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_16",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_17",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_18",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_19",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_20",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_21",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_front",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_front_a2e084fb458523608b3e2951ce2cea6b75eaaca00857e5c9ea9f5896b145a289.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_left",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_left_f132919bc6fa57a5f290492768d2967bfc9c3e93f5f987f950bc9147f64c4feb.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_right",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_right_0aa9e7c1334c218ba8e166652b5b8856381ed07428d491e483bdf9f1f17f29e4.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_bottom",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_bottom_b7b611d084d5435c38a9f6f1684ac3dcc9530aa42709767784c0db50e7cfe073.json",
+            "exists": true,
+            "hash_matches": true
+          }
+        ],
+        "photometric_mode": "uncalibrated",
+        "layout_version": 2
+      },
+      "source_files_unchanged_during_audit": true
+    },
+    {
+      "session": "DUMMY_2-160507",
+      "trial_outcome": "interrupted",
+      "trial_complete": true,
+      "duration_to_abort_s": 35.6314679,
+      "abort_to_session_end_s": 0.3311701,
+      "files": [
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\.cephvr-reservation.json",
+          "bytes": 151,
+          "sha256": "fa0922616b5c26098942249734e11b9e15a3ea1c11a5a2fd8e48951fb143b905"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\.cephvr.lock",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_behavioral_cam.mp4",
+          "bytes": 86856254,
+          "sha256": "6dc165996944441b8c913c6d3cddaa0c5db19a17ddd81913996462698b616a33"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_behavioral_cam_frames.jsonl",
+          "bytes": 369874,
+          "sha256": "839c63998e52d32ba0c2d13676beb26003047a386926d2e600b5d72de51b55e8"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_eye_tracking_cam_frames.jsonl",
+          "bytes": 480129,
+          "sha256": "0783698c4fa25d4111aee4bb78420e61a58ec30eb9e7bd52df5d3af793b9c1b4"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_LOG.json",
+          "bytes": 64153,
+          "sha256": "4b85c6d2d4303d53eedd99091f0e8298bc7d89f4df936082d603d0339c5343ca"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus.mp4",
+          "bytes": 30971400,
+          "sha256": "eac65ec1b870e68586fef1c4106bf97cce41b1c2e3b1aae7cb9ac914c3b49843"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus_frames.jsonl",
+          "bytes": 11223588,
+          "sha256": "2e4ffd4f2469976969104881468892177000e499d21acd6c5dc60768b61d22a6"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus_LOG.json",
+          "bytes": 957325,
+          "sha256": "0bf4655909954c23df471259010ac7cf07c69346745a6481b74143a2d9622c05"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_tracking_cam_frames.jsonl",
+          "bytes": 480125,
+          "sha256": "f469f8d8e15c714d54b869418ff12f7a7166061d3a56ac29fdc9d325939d6458"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\SCHEMA.json",
+          "bytes": 10210,
+          "sha256": "e8485009cd21e9b4a3f2df6aca6fcba35121ec6504e1bc569d78d04789a9ba58"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\SESSION_CONFIG.json",
+          "bytes": 89359,
+          "sha256": "a74d43225a7f27fd8b75a30a01acd0c38437894ceddd017fc2d8ed9728d76021"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\SESSION_LOG.jsonl",
+          "bytes": 925,
+          "sha256": "8d2e1384528971ec93c95e484522471c5f1cd7077626edd36d6ad1a1fc1f19d4"
+        }
+      ],
+      "outputs": [
+        {
+          "output_key": "5c345414-da35-46c4-89bc-a8c69f93c825:acquisition:behavioral_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_behavioral_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "video_frames": 1067,
+            "source_frames": 1067
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "e59b27ff-ad91-4555-81cc-a2812ea1af2a"
+          },
+          "output_tag": "behavioral_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5
+        },
+        {
+          "output_key": "5c345414-da35-46c4-89bc-a8c69f93c825:acquisition:behavioral_cam",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_behavioral_cam.mp4",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "camera_video_content": "CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED",
+          "counts": {
+            "frames": 1067
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "e59b27ff-ad91-4555-81cc-a2812ea1af2a"
+          },
+          "output_tag": "behavioral_cam",
+          "extension": "mp4",
+          "format": "mp4",
+          "schema_version": 1
+        },
+        {
+          "output_key": "5c345414-da35-46c4-89bc-a8c69f93c825:acquisition:tracking_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_tracking_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "source_frames": 2135
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "e59b27ff-ad91-4555-81cc-a2812ea1af2a"
+          },
+          "output_tag": "tracking_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5
+        },
+        {
+          "output_key": "5c345414-da35-46c4-89bc-a8c69f93c825:acquisition:eye_tracking_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_eye_tracking_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "source_frames": 2135
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "e59b27ff-ad91-4555-81cc-a2812ea1af2a"
+          },
+          "output_tag": "eye_tracking_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5
+        },
+        {
+          "output_key": "5c345414-da35-46c4-89bc-a8c69f93c825:visual_stimulus:stimulus_LOG",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus_LOG.json",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "documents": 1
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "8d188f4a-f376-44ee-b73b-068f6666c686"
+          },
+          "output_tag": "stimulus_LOG",
+          "extension": "json",
+          "format": "json",
+          "schema_version": 2
+        },
+        {
+          "output_key": "5c345414-da35-46c4-89bc-a8c69f93c825:visual_stimulus:stimulus_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "render_groups": 2059
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "8d188f4a-f376-44ee-b73b-068f6666c686"
+          },
+          "output_tag": "stimulus_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 6
+        },
+        {
+          "output_key": "5c345414-da35-46c4-89bc-a8c69f93c825:visual_stimulus:stimulus",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus.mp4",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "visual_stimulus_review_video_content": "VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED",
+          "counts": {
+            "input_frames": 2059,
+            "frames": 2059,
+            "duplicate_frames": 0
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "8d188f4a-f376-44ee-b73b-068f6666c686"
+          },
+          "output_tag": "stimulus",
+          "extension": "mp4",
+          "format": "mp4",
+          "schema_version": 3
+        }
+      ],
+      "cameras": {
+        "behavioral": {
+          "source_rows": 1067,
+          "mapping_rows": 1067,
+          "video_enabled": true,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 415988295124800,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 1067,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 1067,
+              "selected_source_frame_count": 1067,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 415952663743600,
+              "on_acknowledged_monotonic_ns": 415952688773500,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 415988296390400,
+              "off_acknowledged_monotonic_ns": 415988321874500
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 1067
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        },
+        "eye_tracking": {
+          "source_rows": 2135,
+          "mapping_rows": 0,
+          "video_enabled": false,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 415988295315000,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 2135,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 415952663743600,
+              "on_acknowledged_monotonic_ns": 415952688773500,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 415988296390400,
+              "off_acknowledged_monotonic_ns": 415988321874500
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 2,
+              "last_native_counter": 2136
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        },
+        "tracking": {
+          "source_rows": 2135,
+          "mapping_rows": 0,
+          "video_enabled": false,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 415988295242200,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 2135,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 415952663743600,
+              "on_acknowledged_monotonic_ns": 415952688773500,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 415988296390400,
+              "off_acknowledged_monotonic_ns": 415988321874500
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 2,
+              "last_native_counter": 2136
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        }
+      },
+      "videos": {
+        "DUMMY_2_160515_behavioral_cam.mp4": {
+          "probe_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+            "-v",
+            "error",
+            "-count_frames",
+            "-show_streams",
+            "-show_format",
+            "-of",
+            "json",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_behavioral_cam.mp4"
+          ],
+          "probe_exit": 0,
+          "probe_stderr": "",
+          "probe": {
+            "streams": [
+              {
+                "index": 0,
+                "codec_name": "h264",
+                "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                "profile": "High 4:4:4 Predictive",
+                "codec_type": "video",
+                "codec_tag_string": "avc1",
+                "codec_tag": "0x31637661",
+                "mime_codec_string": "avc1.f40032",
+                "width": 1760,
+                "height": 1716,
+                "coded_width": 1760,
+                "coded_height": 1728,
+                "has_b_frames": 0,
+                "sample_aspect_ratio": "1:1",
+                "display_aspect_ratio": "40:39",
+                "pix_fmt": "yuvj444p",
+                "level": 50,
+                "color_range": "pc",
+                "color_space": "bt709",
+                "chroma_location": "left",
+                "field_order": "progressive",
+                "refs": 3,
+                "is_avc": "true",
+                "nal_length_size": "4",
+                "id": "0x1",
+                "r_frame_rate": "30/1",
+                "avg_frame_rate": "30/1",
+                "time_base": "1/15360",
+                "start_pts": 0,
+                "start_time": "0.000000",
+                "duration_ts": 546304,
+                "duration": "35.566667",
+                "bit_rate": "19532725",
+                "bits_per_raw_sample": "8",
+                "nb_frames": "1067",
+                "nb_read_frames": "1067",
+                "extradata_size": 66,
+                "disposition": {
+                  "default": 1,
+                  "dub": 0,
+                  "original": 0,
+                  "comment": 0,
+                  "lyrics": 0,
+                  "karaoke": 0,
+                  "forced": 0,
+                  "hearing_impaired": 0,
+                  "visual_impaired": 0,
+                  "clean_effects": 0,
+                  "attached_pic": 0,
+                  "timed_thumbnails": 0,
+                  "non_diegetic": 0,
+                  "captions": 0,
+                  "descriptions": 0,
+                  "metadata": 0,
+                  "dependent": 0,
+                  "still_image": 0,
+                  "multilayer": 0
+                },
+                "tags": {
+                  "language": "und",
+                  "handler_name": "VideoHandler",
+                  "encoder": "Lavc63.1.102 h264_nvenc"
+                }
+              }
+            ],
+            "format": {
+              "filename": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_behavioral_cam.mp4",
+              "nb_streams": 1,
+              "nb_programs": 0,
+              "nb_stream_groups": 0,
+              "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+              "format_long_name": "QuickTime / MOV",
+              "start_time": "0.000000",
+              "duration": "35.566667",
+              "size": "86856254",
+              "bit_rate": "19536551",
+              "probe_score": 100,
+              "tags": {
+                "major_brand": "isom",
+                "minor_version": "512",
+                "compatible_brands": "isomiso6iso2avc1mp41",
+                "cephvr_identity_version": "1",
+                "cephvr_session_id": "950c6255-cfe5-42c0-8ac5-32846b2088ff",
+                "cephvr_trial_id": "5c345414-da35-46c4-89bc-a8c69f93c825",
+                "cephvr_camera_role": "behavioral",
+                "cephvr_device_id": "40065509",
+                "encoder": "Lavf63.1.102"
+              }
+            }
+          },
+          "decode_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+            "-v",
+            "error",
+            "-xerror",
+            "-i",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_behavioral_cam.mp4",
+            "-map",
+            "0:v:0",
+            "-f",
+            "null",
+            "-"
+          ],
+          "decode_exit": 0,
+          "decode_stderr": "",
+          "identity_checks": {
+            "session_id": true,
+            "trial_id": true,
+            "camera_role": true,
+            "device_id": true,
+            "identity_version": true
+          }
+        },
+        "DUMMY_2_160515_stimulus.mp4": {
+          "probe_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+            "-v",
+            "error",
+            "-count_frames",
+            "-show_streams",
+            "-show_format",
+            "-of",
+            "json",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus.mp4"
+          ],
+          "probe_exit": 0,
+          "probe_stderr": "",
+          "probe": {
+            "streams": [
+              {
+                "index": 0,
+                "codec_name": "h264",
+                "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                "profile": "High 4:4:4 Predictive",
+                "codec_type": "video",
+                "codec_tag_string": "avc1",
+                "codec_tag": "0x31637661",
+                "mime_codec_string": "avc1.f4002a",
+                "width": 1280,
+                "height": 1328,
+                "coded_width": 1280,
+                "coded_height": 1328,
+                "has_b_frames": 0,
+                "sample_aspect_ratio": "1:1",
+                "display_aspect_ratio": "80:83",
+                "pix_fmt": "yuvj444p",
+                "level": 42,
+                "color_range": "pc",
+                "color_space": "bt709",
+                "chroma_location": "left",
+                "field_order": "progressive",
+                "refs": 3,
+                "is_avc": "true",
+                "nal_length_size": "4",
+                "id": "0x1",
+                "r_frame_rate": "60/1",
+                "avg_frame_rate": "60/1",
+                "time_base": "1/15360",
+                "start_pts": 0,
+                "start_time": "0.000000",
+                "duration_ts": 527104,
+                "duration": "34.316667",
+                "bit_rate": "7216960",
+                "bits_per_raw_sample": "8",
+                "nb_read_frames": "2059",
+                "extradata_size": 65,
+                "disposition": {
+                  "default": 1,
+                  "dub": 0,
+                  "original": 0,
+                  "comment": 0,
+                  "lyrics": 0,
+                  "karaoke": 0,
+                  "forced": 0,
+                  "hearing_impaired": 0,
+                  "visual_impaired": 0,
+                  "clean_effects": 0,
+                  "attached_pic": 0,
+                  "timed_thumbnails": 0,
+                  "non_diegetic": 0,
+                  "captions": 0,
+                  "descriptions": 0,
+                  "metadata": 0,
+                  "dependent": 0,
+                  "still_image": 0,
+                  "multilayer": 0
+                },
+                "tags": {
+                  "language": "und",
+                  "handler_name": "VideoHandler",
+                  "encoder": "Lavc63.1.102 h264_nvenc"
+                }
+              }
+            ],
+            "format": {
+              "filename": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus.mp4",
+              "nb_streams": 1,
+              "nb_programs": 0,
+              "nb_stream_groups": 0,
+              "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+              "format_long_name": "QuickTime / MOV",
+              "start_time": "0.000000",
+              "duration": "34.316667",
+              "size": "30971400",
+              "bit_rate": "7220141",
+              "probe_score": 100,
+              "tags": {
+                "major_brand": "iso5",
+                "minor_version": "512",
+                "compatible_brands": "iso5iso6mp41",
+                "encoder": "Lavf63.1.102"
+              }
+            }
+          },
+          "decode_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+            "-v",
+            "error",
+            "-xerror",
+            "-i",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160507\\protocol-data\\DUMMY_2_160515_stimulus.mp4",
+            "-map",
+            "0:v:0",
+            "-f",
+            "null",
+            "-"
+          ],
+          "decode_exit": 0,
+          "decode_stderr": ""
+        }
+      },
+      "missing_planned_outputs": [],
+      "stimulus": {
+        "record_types": {
+          "header": 1,
+          "render_group": 2059,
+          "clipping": 8236,
+          "group_update": 4118,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 415988299641300,
+          "last_group_id": 2058,
+          "state_count": 2059,
+          "submission_attempt_count": 8236,
+          "capture_admission_count": 2059,
+          "capture_drop_count": 0,
+          "same_slot_omission_count": 0,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        },
+        "encoder": [
+          {
+            "kind": "encoder_outcome",
+            "admitted_count": 2059,
+            "input_submitted_count": 2059,
+            "capacity_drop_count": 0,
+            "selected_real_count": 2059,
+            "same_slot_omission_count": 0,
+            "encoded_frame_count": 2059,
+            "duplicate_frame_count": 0,
+            "final_input_group_id": 2058,
+            "cutoff_host_ns": 415988299641300,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          }
+        ],
+        "max_group_gap_ms": 649.2921,
+        "group_gaps_over_25ms": 7,
+        "submission_failures": 0,
+        "assets": [
+          {
+            "resource_id": "asset_1",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_2",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_3",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_4",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_1",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_2",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_3",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_4",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_5",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_6",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_7",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_8",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_9",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_10",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_11",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_12",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_13",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_14",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_15",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_16",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_17",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_18",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_19",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_20",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_21",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_front",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_front_a2e084fb458523608b3e2951ce2cea6b75eaaca00857e5c9ea9f5896b145a289.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_left",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_left_f132919bc6fa57a5f290492768d2967bfc9c3e93f5f987f950bc9147f64c4feb.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_right",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_right_0aa9e7c1334c218ba8e166652b5b8856381ed07428d491e483bdf9f1f17f29e4.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_bottom",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_bottom_b7b611d084d5435c38a9f6f1684ac3dcc9530aa42709767784c0db50e7cfe073.json",
+            "exists": true,
+            "hash_matches": true
+          }
+        ],
+        "photometric_mode": "uncalibrated",
+        "layout_version": 2
+      },
+      "source_files_unchanged_during_audit": true
+    },
+    {
+      "session": "DUMMY_2-160948",
+      "trial_outcome": "interrupted",
+      "trial_complete": true,
+      "duration_to_abort_s": 31.3872871,
+      "abort_to_session_end_s": 0.3318755,
+      "files": [
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\.cephvr-reservation.json",
+          "bytes": 151,
+          "sha256": "acc1d007f33089cb0c6b126b30120d713c1f4301663595ccf7af218e0f711a49"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\.cephvr.lock",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_behavioral_cam.mp4",
+          "bytes": 76489045,
+          "sha256": "5a30e2e0fcd21021e4653037be786c90f9f5290b78fd41c455a658a333b32762"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_behavioral_cam_frames.jsonl",
+          "bytes": 325720,
+          "sha256": "98f052736adb735f51718b22ddee59140dcd2d66b6e18fbcf3b6d6eb657a9680"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_eye_tracking_cam_frames.jsonl",
+          "bytes": 422754,
+          "sha256": "973fd905273650eb34116a99992b90b03bea2f6d423f05169731d8030f10deb5"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_LOG.json",
+          "bytes": 64150,
+          "sha256": "c776e6e0c89315d694ee269f57bd7cbacc6c59b04eb80a862a21d2832a408773"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus.mp4",
+          "bytes": 23362151,
+          "sha256": "7dd709ae9c19983dbd78fe32a6a3a2202869febf7588ce579f04b4ac4ed127f7"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus_frames.jsonl",
+          "bytes": 10261832,
+          "sha256": "896a376be86996b5e9f9144345ae70e2e22cd13d04b61ade9638414b77e0b094"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus_LOG.json",
+          "bytes": 957320,
+          "sha256": "d95bbb2ffccc4e2fd3487e30be49934a653b3cdd8cca80997ef8bdc3ada62f13"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_tracking_cam_frames.jsonl",
+          "bytes": 422750,
+          "sha256": "51b8e6b9fe0ead5ed86a26aa2261cc73334657456fe46779528b837b02c542bb"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\SCHEMA.json",
+          "bytes": 10210,
+          "sha256": "f585dc3fff518857debd5275ee47c7c18c2633ca3bf0db42fbb598ce0811ad7e"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\SESSION_CONFIG.json",
+          "bytes": 89359,
+          "sha256": "8894edc1840c419b4cd515195363e4ce91140f68bdda895fc107f57a131f8b4d"
+        },
+        {
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\SESSION_LOG.jsonl",
+          "bytes": 925,
+          "sha256": "edfe1444412bb88c70aed3e0dde8ec98dba1abbd8c7010c984129d2611848c75"
+        }
+      ],
+      "outputs": [
+        {
+          "output_key": "ca27107d-530b-4112-9ae5-63953ba62a42:acquisition:behavioral_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_behavioral_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "video_frames": 940,
+            "source_frames": 940
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "adaefab8-243a-4dbf-b002-bd726e90878e"
+          },
+          "output_tag": "behavioral_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5
+        },
+        {
+          "output_key": "ca27107d-530b-4112-9ae5-63953ba62a42:acquisition:behavioral_cam",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_behavioral_cam.mp4",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "camera_video_content": "CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED",
+          "counts": {
+            "frames": 940
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "adaefab8-243a-4dbf-b002-bd726e90878e"
+          },
+          "output_tag": "behavioral_cam",
+          "extension": "mp4",
+          "format": "mp4",
+          "schema_version": 1
+        },
+        {
+          "output_key": "ca27107d-530b-4112-9ae5-63953ba62a42:acquisition:tracking_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_tracking_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "source_frames": 1880
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "adaefab8-243a-4dbf-b002-bd726e90878e"
+          },
+          "output_tag": "tracking_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5
+        },
+        {
+          "output_key": "ca27107d-530b-4112-9ae5-63953ba62a42:acquisition:eye_tracking_cam_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_eye_tracking_cam_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "source_frames": 1880
+          },
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "adaefab8-243a-4dbf-b002-bd726e90878e"
+          },
+          "output_tag": "eye_tracking_cam_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 5
+        },
+        {
+          "output_key": "ca27107d-530b-4112-9ae5-63953ba62a42:visual_stimulus:stimulus_LOG",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus_LOG.json",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "documents": 1
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "8d73d61f-d87f-4b65-b799-134ff342e304"
+          },
+          "output_tag": "stimulus_LOG",
+          "extension": "json",
+          "format": "json",
+          "schema_version": 2
+        },
+        {
+          "output_key": "ca27107d-530b-4112-9ae5-63953ba62a42:visual_stimulus:stimulus_frames",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus_frames.jsonl",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "counts": {
+            "render_groups": 1884
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "8d73d61f-d87f-4b65-b799-134ff342e304"
+          },
+          "output_tag": "stimulus_frames",
+          "extension": "jsonl",
+          "format": "jsonl",
+          "schema_version": 6
+        },
+        {
+          "output_key": "ca27107d-530b-4112-9ae5-63953ba62a42:visual_stimulus:stimulus",
+          "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus.mp4",
+          "closure": "OUTPUT_CLOSURE_CLOSED",
+          "artifact_present": true,
+          "visual_stimulus_review_video_content": "VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED",
+          "counts": {
+            "input_frames": 1884,
+            "frames": 1884,
+            "duplicate_frames": 0
+          },
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "8d73d61f-d87f-4b65-b799-134ff342e304"
+          },
+          "output_tag": "stimulus",
+          "extension": "mp4",
+          "format": "mp4",
+          "schema_version": 3
+        }
+      ],
+      "cameras": {
+        "behavioral": {
+          "source_rows": 940,
+          "mapping_rows": 940,
+          "video_enabled": true,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 416281345670700,
+              "first_recorded_frame_id": 0,
+              "final_received_frame_count": 940,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 940,
+              "selected_source_frame_count": 940,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 416249966869300,
+              "on_acknowledged_monotonic_ns": 416249993304000,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 416281345951500,
+              "off_acknowledged_monotonic_ns": 416281372757700
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 1,
+              "last_native_counter": 940
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        },
+        "eye_tracking": {
+          "source_rows": 1880,
+          "mapping_rows": 0,
+          "video_enabled": false,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 416281344525100,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 1880,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 416249966869300,
+              "on_acknowledged_monotonic_ns": 416249993304000,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 416281345951500,
+              "off_acknowledged_monotonic_ns": 416281372757700
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 2,
+              "last_native_counter": 1881
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        },
+        "tracking": {
+          "source_rows": 1880,
+          "mapping_rows": 0,
+          "video_enabled": false,
+          "dropped_rows": 0,
+          "invalid_rows": 0,
+          "native_counter_nonunit_steps": 0,
+          "completion": {
+            "type": "completion",
+            "outcome": "completed",
+            "timing": {
+              "recording_end_monotonic_ns": 416281344536200,
+              "first_recorded_frame_id": null,
+              "final_received_frame_count": 1880,
+              "accounting_complete": true
+            },
+            "video": {
+              "recorded_frame_count": 0,
+              "selected_source_frame_count": 0,
+              "duplicate_frame_count": 0
+            },
+            "pulses": {
+              "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "on_dispatched_monotonic_ns": 416249966869300,
+              "on_acknowledged_monotonic_ns": 416249993304000,
+              "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+              "off_dispatched_monotonic_ns": 416281345951500,
+              "off_acknowledged_monotonic_ns": 416281372757700
+            },
+            "post_cutoff": {
+              "accounting_complete": true,
+              "excluded_frame_count": 2,
+              "last_native_counter": 1881
+            },
+            "transport_summary": {
+              "buffer_underruns": null,
+              "failed_buffers": 0,
+              "missed_frames": 0,
+              "resend_requests": null,
+              "resend_packets": null,
+              "resynchronizations": 0
+            },
+            "diagnostics": []
+          }
+        }
+      },
+      "videos": {
+        "DUMMY_2_161013_behavioral_cam.mp4": {
+          "probe_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+            "-v",
+            "error",
+            "-count_frames",
+            "-show_streams",
+            "-show_format",
+            "-of",
+            "json",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_behavioral_cam.mp4"
+          ],
+          "probe_exit": 0,
+          "probe_stderr": "",
+          "probe": {
+            "streams": [
+              {
+                "index": 0,
+                "codec_name": "h264",
+                "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                "profile": "High 4:4:4 Predictive",
+                "codec_type": "video",
+                "codec_tag_string": "avc1",
+                "codec_tag": "0x31637661",
+                "mime_codec_string": "avc1.f40032",
+                "width": 1760,
+                "height": 1716,
+                "coded_width": 1760,
+                "coded_height": 1728,
+                "has_b_frames": 0,
+                "sample_aspect_ratio": "1:1",
+                "display_aspect_ratio": "40:39",
+                "pix_fmt": "yuvj444p",
+                "level": 50,
+                "color_range": "pc",
+                "color_space": "bt709",
+                "chroma_location": "left",
+                "field_order": "progressive",
+                "refs": 3,
+                "is_avc": "true",
+                "nal_length_size": "4",
+                "id": "0x1",
+                "r_frame_rate": "30/1",
+                "avg_frame_rate": "30/1",
+                "time_base": "1/15360",
+                "start_pts": 0,
+                "start_time": "0.000000",
+                "duration_ts": 481280,
+                "duration": "31.333333",
+                "bit_rate": "19525206",
+                "bits_per_raw_sample": "8",
+                "nb_frames": "940",
+                "nb_read_frames": "940",
+                "extradata_size": 66,
+                "disposition": {
+                  "default": 1,
+                  "dub": 0,
+                  "original": 0,
+                  "comment": 0,
+                  "lyrics": 0,
+                  "karaoke": 0,
+                  "forced": 0,
+                  "hearing_impaired": 0,
+                  "visual_impaired": 0,
+                  "clean_effects": 0,
+                  "attached_pic": 0,
+                  "timed_thumbnails": 0,
+                  "non_diegetic": 0,
+                  "captions": 0,
+                  "descriptions": 0,
+                  "metadata": 0,
+                  "dependent": 0,
+                  "still_image": 0,
+                  "multilayer": 0
+                },
+                "tags": {
+                  "language": "und",
+                  "handler_name": "VideoHandler",
+                  "encoder": "Lavc63.1.102 h264_nvenc"
+                }
+              }
+            ],
+            "format": {
+              "filename": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_behavioral_cam.mp4",
+              "nb_streams": 1,
+              "nb_programs": 0,
+              "nb_stream_groups": 0,
+              "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+              "format_long_name": "QuickTime / MOV",
+              "start_time": "0.000000",
+              "duration": "31.333333",
+              "size": "76489045",
+              "bit_rate": "19529118",
+              "probe_score": 100,
+              "tags": {
+                "major_brand": "isom",
+                "minor_version": "512",
+                "compatible_brands": "isomiso6iso2avc1mp41",
+                "cephvr_identity_version": "1",
+                "cephvr_session_id": "4f3ea8c5-1a31-4158-8b4f-a52c78e80196",
+                "cephvr_trial_id": "ca27107d-530b-4112-9ae5-63953ba62a42",
+                "cephvr_camera_role": "behavioral",
+                "cephvr_device_id": "40065509",
+                "encoder": "Lavf63.1.102"
+              }
+            }
+          },
+          "decode_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+            "-v",
+            "error",
+            "-xerror",
+            "-i",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_behavioral_cam.mp4",
+            "-map",
+            "0:v:0",
+            "-f",
+            "null",
+            "-"
+          ],
+          "decode_exit": 0,
+          "decode_stderr": "",
+          "identity_checks": {
+            "session_id": true,
+            "trial_id": true,
+            "camera_role": true,
+            "device_id": true,
+            "identity_version": true
+          }
+        },
+        "DUMMY_2_161013_stimulus.mp4": {
+          "probe_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+            "-v",
+            "error",
+            "-count_frames",
+            "-show_streams",
+            "-show_format",
+            "-of",
+            "json",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus.mp4"
+          ],
+          "probe_exit": 0,
+          "probe_stderr": "",
+          "probe": {
+            "streams": [
+              {
+                "index": 0,
+                "codec_name": "h264",
+                "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                "profile": "High 4:4:4 Predictive",
+                "codec_type": "video",
+                "codec_tag_string": "avc1",
+                "codec_tag": "0x31637661",
+                "mime_codec_string": "avc1.f40020",
+                "width": 1280,
+                "height": 720,
+                "coded_width": 1280,
+                "coded_height": 720,
+                "has_b_frames": 0,
+                "sample_aspect_ratio": "1:1",
+                "display_aspect_ratio": "16:9",
+                "pix_fmt": "yuvj444p",
+                "level": 32,
+                "color_range": "pc",
+                "color_space": "bt709",
+                "chroma_location": "left",
+                "field_order": "progressive",
+                "refs": 3,
+                "is_avc": "true",
+                "nal_length_size": "4",
+                "id": "0x1",
+                "r_frame_rate": "60/1",
+                "avg_frame_rate": "60/1",
+                "time_base": "1/15360",
+                "start_pts": 0,
+                "start_time": "0.000000",
+                "duration_ts": 482304,
+                "duration": "31.400000",
+                "bit_rate": "5948942",
+                "bits_per_raw_sample": "8",
+                "nb_read_frames": "1884",
+                "extradata_size": 62,
+                "disposition": {
+                  "default": 1,
+                  "dub": 0,
+                  "original": 0,
+                  "comment": 0,
+                  "lyrics": 0,
+                  "karaoke": 0,
+                  "forced": 0,
+                  "hearing_impaired": 0,
+                  "visual_impaired": 0,
+                  "clean_effects": 0,
+                  "attached_pic": 0,
+                  "timed_thumbnails": 0,
+                  "non_diegetic": 0,
+                  "captions": 0,
+                  "descriptions": 0,
+                  "metadata": 0,
+                  "dependent": 0,
+                  "still_image": 0,
+                  "multilayer": 0
+                },
+                "tags": {
+                  "language": "und",
+                  "handler_name": "VideoHandler",
+                  "encoder": "Lavc63.1.102 h264_nvenc"
+                }
+              }
+            ],
+            "format": {
+              "filename": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus.mp4",
+              "nb_streams": 1,
+              "nb_programs": 0,
+              "nb_stream_groups": 0,
+              "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+              "format_long_name": "QuickTime / MOV",
+              "start_time": "0.000000",
+              "duration": "31.400000",
+              "size": "23362151",
+              "bit_rate": "5952140",
+              "probe_score": 100,
+              "tags": {
+                "major_brand": "iso5",
+                "minor_version": "512",
+                "compatible_brands": "iso5iso6mp41",
+                "encoder": "Lavf63.1.102"
+              }
+            }
+          },
+          "decode_command": [
+            "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+            "-v",
+            "error",
+            "-xerror",
+            "-i",
+            "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus.mp4",
+            "-map",
+            "0:v:0",
+            "-f",
+            "null",
+            "-"
+          ],
+          "decode_exit": 0,
+          "decode_stderr": ""
+        }
+      },
+      "missing_planned_outputs": [],
+      "stimulus": {
+        "record_types": {
+          "header": 1,
+          "render_group": 1884,
+          "clipping": 7536,
+          "group_update": 3768,
+          "encoder_outcome": 1,
+          "completion": 1
+        },
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 416281355415500,
+          "last_group_id": 1883,
+          "state_count": 1884,
+          "submission_attempt_count": 7536,
+          "capture_admission_count": 1884,
+          "capture_drop_count": 0,
+          "same_slot_omission_count": 0,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        },
+        "encoder": [
+          {
+            "kind": "encoder_outcome",
+            "admitted_count": 1884,
+            "input_submitted_count": 1884,
+            "capacity_drop_count": 0,
+            "selected_real_count": 1884,
+            "same_slot_omission_count": 0,
+            "encoded_frame_count": 1884,
+            "duplicate_frame_count": 0,
+            "final_input_group_id": 1883,
+            "cutoff_host_ns": 416281355415500,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          }
+        ],
+        "max_group_gap_ms": 33.049,
+        "group_gaps_over_25ms": 2,
+        "submission_failures": 0,
+        "assets": [
+          {
+            "resource_id": "asset_1",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_2",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_3",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_4",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_1",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_2",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_3",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "Asset_4",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_5",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_6",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_7",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_8",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_9",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_10",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_11",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_12",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_13",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_14",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_15",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_16",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_17",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_18",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_19",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_20",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "asset_21",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_front",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_front_a2e084fb458523608b3e2951ce2cea6b75eaaca00857e5c9ea9f5896b145a289.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_left",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_left_f132919bc6fa57a5f290492768d2967bfc9c3e93f5f987f950bc9147f64c4feb.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_right",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_right_0aa9e7c1334c218ba8e166652b5b8856381ed07428d491e483bdf9f1f17f29e4.json",
+            "exists": true,
+            "hash_matches": true
+          },
+          {
+            "resource_id": "diagnostic_bottom",
+            "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_bottom_b7b611d084d5435c38a9f6f1684ac3dcc9530aa42709767784c0db50e7cfe073.json",
+            "exists": true,
+            "hash_matches": true
+          }
+        ],
+        "photometric_mode": "uncalibrated",
+        "layout_version": 3
+      },
+      "source_files_unchanged_during_audit": true
+    }
+  ]
+}

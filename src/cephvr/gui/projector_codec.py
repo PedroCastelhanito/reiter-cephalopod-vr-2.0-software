@@ -52,6 +52,7 @@ def merge_projector_draft(
     pulse_patch: Mapping[str, Any] | None,
     geometry: Mapping[str, object] | None,
     blackout_zones: list[dict[str, Any]] | None = None,
+    pulse_patches: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> runtime_pb2.DisplayConfiguration:
     """Update this page's fields without normalizing unrelated calibration data."""
     document = display_document(base)
@@ -105,14 +106,33 @@ def merge_projector_draft(
     if type(pulse_enabled) is not bool:
         raise ValueError("Photodiode enable must be true or false")
     document["photodiode_enabled"] = pulse_enabled
-    if pulse_output_identity is not None:
+    if pulse_patches is not None:
+        previous = document.get("photodiode_patches") or {}
+        if document.get("photodiode_output_id") and document.get("photodiode_patch"):
+            previous[document["photodiode_output_id"]] = document["photodiode_patch"]
+        document["photodiode_output_id"] = None
+        document["photodiode_patch"] = None
+        document["photodiode_patches"] = {}
+        for face, patch in pulse_patches.items():
+            output_id = face_outputs.get(face.lower())
+            if output_id is None:
+                raise ValueError(f"Assign a display for the {face} pulse")
+            document["photodiode_patches"][output_id] = {
+                "high_linear_rgb": [1.0, 1.0, 1.0],
+                "low_linear_rgb": [0.0, 0.0, 0.0],
+                **previous.get(output_id, {}),
+                **patch,
+            }
+    elif pulse_output_identity is not None:
         output = outputs_by_identity.get(pulse_output_identity)
         if output is None or not isinstance(output.get("output_id"), str):
             raise ValueError("Photodiode display is absent from imported profile")
         document["photodiode_output_id"] = output["output_id"]
-    if pulse_patch is not None:
+    if pulse_patches is None and pulse_patch is not None:
         current_patch = document.get("photodiode_patch")
         merged_patch = dict(current_patch) if isinstance(current_patch, dict) else {}
+        merged_patch.setdefault("high_linear_rgb", [1.0, 1.0, 1.0])
+        merged_patch.setdefault("low_linear_rgb", [0.0, 0.0, 0.0])
         merged_patch.update(pulse_patch)
         document["photodiode_patch"] = merged_patch
     if geometry is not None:

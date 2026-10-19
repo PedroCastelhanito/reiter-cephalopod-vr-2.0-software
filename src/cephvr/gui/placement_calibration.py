@@ -9,7 +9,6 @@ from cephvr.visual_stimulus.config.calibration_placement import (
     PlacementOutput,
 )
 from cephvr.visual_stimulus.config.models.display_profile import (
-    PhotodiodePatch,
     PixelRect,
 )
 
@@ -17,14 +16,13 @@ if TYPE_CHECKING:
     from cephvr.gui.projectors import ProjectorsPanel
 
 
-def initial_photodiode_patch(panel: "ProjectorsPanel") -> dict[str, object] | None:
+def initial_photodiode_patches(panel: "ProjectorsPanel") -> dict[str, object] | None:
     """Start black until the draft defines a complete in-bounds pulse."""
     try:
         placement = placement_snapshot(panel, "photodiode_placement")
     except (ValueError, TypeError, KeyError):
         return None
-    assert placement.photodiode_patch is not None
-    return placement.photodiode_patch.model_dump(include={"rect", "background_rect"})
+    return {key: patch.model_dump() for key, patch in placement.marker_patches.items()}
 
 
 def request_placement(panel: "ProjectorsPanel", view: str) -> None:
@@ -107,9 +105,12 @@ def placement_snapshot(panel: "ProjectorsPanel", view: str) -> CalibrationPlacem
                     {key: zone[key] for key in ("x", "y", "width", "height")}
                 )
             )
-    face = panel.pulse_face() if view == "photodiode_placement" else None
-    patch = panel.timing.patch_draft() if face is not None else None
-    if view == "photodiode_placement" and (face is None or patch is None):
+    patches = (
+        panel.timing.patches(enabled_only=False)
+        if view == "photodiode_placement"
+        else {}
+    )
+    if view == "photodiode_placement" and not patches:
         raise ValueError("Select a display and complete the pulse rectangle")
     result = CalibrationPlacement(
         outputs=tuple(
@@ -119,14 +120,9 @@ def placement_snapshot(panel: "ProjectorsPanel", view: str) -> CalibrationPlacem
             )
             for face in FACES
         ),
-        photodiode_output_id=f"calibration_{face.lower()}"
-        if face is not None
-        else None,
-        photodiode_patch=PhotodiodePatch.model_validate(
-            dict(**patch, high_linear_rgb=(1, 1, 1), low_linear_rgb=(0, 0, 0))
-        )
-        if patch is not None
-        else None,
+        photodiode_patches={
+            f"calibration_{face.lower()}": patch for face, patch in patches.items()
+        },
     )
 
     resolutions = {
@@ -137,11 +133,11 @@ def placement_snapshot(panel: "ProjectorsPanel", view: str) -> CalibrationPlacem
     for output in result.outputs:
         width, height = resolutions[output.output_id]
         rects = list(output.blackout_zones)
-        if output.output_id == result.photodiode_output_id:
-            assert result.photodiode_patch is not None
-            rects.append(result.photodiode_patch.rect)
-            if result.photodiode_patch.background_rect is not None:
-                rects.append(result.photodiode_patch.background_rect)
+        patch = result.marker_patches.get(output.output_id)
+        if patch is not None:
+            rects.append(patch.rect)
+            if patch.background_rect is not None:
+                rects.append(patch.background_rect)
         if any(
             rect.x + rect.width > width or rect.y + rect.height > height
             for rect in rects

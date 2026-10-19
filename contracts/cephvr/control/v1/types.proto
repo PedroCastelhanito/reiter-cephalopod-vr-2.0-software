@@ -875,6 +875,7 @@ message TrialPulseEvidence {
   cephvr.acquisition.v1.PulseCommandEvidence off = 3;
 }
 message Snapshot {
+  StimulusPreviewState stimulus_preview = 30;
   string controller_generation = 1;
   int64 captured_monotonic_ns = 2;
   uint64 state_revision = 3; // Complete views may skip revisions; no replay cursor.
@@ -933,4 +934,15 @@ message MicrocontrollerDeviceView {
   MicrocontrollerDiagnosticView diagnostic = 2;
   bool cleanup_pending = 3;
   string failure = 4;
+}
+
+message StimulusPreviewState {
+  ProcessIdentity source = 1;
+  BackendContext backend = 2;
+  SessionContext session = 3;
+  uint64 configuration_revision = 4;
+  uint64 revision = 5;
+  bool available = 6;
+  bool visible = 7;
+  string failure = 8;
 }

@@ -1,0 +1,3 @@
+ExecuteCameraCommand f4edc40d-71dc-449f-ba9d-58c74fbb69eb failed: PREVIEW_STOP_FAILED: Preview GUI owner cleanup failed: [WinError 1400] Invalid window handle.
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -465,13 +465,19 @@ def _interrupted_finished_case(save_video: bool):
 
 @pytest.mark.parametrize("save_video", [False, True])
 @pytest.mark.parametrize("late", [False, True])
+@pytest.mark.parametrize("unconfirmed", [False, True])
 async def test_interrupted_finished_retains_outputs_for_cleanup_without_normal_aggregate(
-    save_video, late
+    save_video, late, unconfirmed
 ):
     owner, worker, evidence, session, trial, backend = _interrupted_finished_case(
         save_video
     )
     child = worker.child_operations[evidence.operation.command_id]
+    if unconfirmed:
+        evidence.finished.outputs[-1].closure = control.OUTPUT_CLOSURE_UNCONFIRMED
+    expected_closures = {
+        output.output_key: output.closure for output in evidence.finished.outputs
+    }
     original_report = child.report.SerializeToString()
     receipt = await owner.lifecycle.report_lifecycle(
         evidence, ingress_ns=1000 if late else 150, deadline_ns=1100
@@ -499,6 +505,18 @@ async def test_interrupted_finished_retains_outputs_for_cleanup_without_normal_a
         clock=lambda: 1200,
     )
     # The recycled writer can return no outputs; the session must retain closure.
+    if unconfirmed:
+        with pytest.raises(ValueError, match="lacks cleanup closure proof"):
+            builder.build(
+                session,
+                str(uuid4()),
+                {worker.context.camera: acq.WorkerCleanupEvidence()},
+                True,
+            )
+        assert {
+            key: output.closure for key, output in session.output_results.items()
+        } == expected_closures
+        return
     report = builder.build(
         session,
         str(uuid4()),
@@ -508,9 +526,9 @@ async def test_interrupted_finished_retains_outputs_for_cleanup_without_normal_a
     assert set(output.output_key for output in report.outputs) == set(
         session.output_results
     )
-    assert all(
-        output.closure == control.OUTPUT_CLOSURE_CLOSED for output in report.outputs
-    )
+    assert {
+        output.output_key: output.closure for output in report.outputs
+    } == expected_closures
     evidence.finished.outputs[0].path = "mutated caller"
     assert all(
         result.path != "mutated caller" for result in session.output_results.values()
@@ -573,11 +591,22 @@ async def test_interrupted_finished_rejects_mismatched_scope_or_output_batch(inv
         )
         owner.lifecycle.current_session = lambda: replacement
     else:
-        evidence.finished.outputs[-1].closure = control.OUTPUT_CLOSURE_UNCONFIRMED
+        evidence.finished.outputs[-1].closure = control.OUTPUT_CLOSURE_UNSPECIFIED
     receipt = await owner.lifecycle.report_lifecycle(
         evidence, ingress_ns=150, deadline_ns=200
     )
     assert receipt.result == control.COMMAND_RESULT_REJECTED
+    if invalid in {"missing", "duplicate", "path", "presence", "unknown_closure"}:
+        assert "expected=" in receipt.failure.message
+        assert "reported=" in receipt.failure.message
+        for result in evidence.finished.outputs:
+            assert result.output_key in receipt.failure.message
+            assert repr(result.path) in receipt.failure.message
+        if invalid == "unknown_closure":
+            assert (
+                f"'closure': {control.OUTPUT_CLOSURE_UNSPECIFIED}"
+                in receipt.failure.message
+            )
     assert not session.output_results and not worker.lifecycle_evidence
 
 
@@ -983,3 +1012,73 @@ async def test_retired_boundary_failure_cannot_stop_reused_session(
         boundary_ns=100,
     )
     assert trial.stop is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("first_applied", [False, True])
+async def test_repeated_safety_off_preserves_first_trial_terminal_evidence(
+    first_applied,
+):
+    trial = _trial()
+    sent = []
+    calls = []
+
+    class Serial:
+        async def cancel_on_reservations(self, *, deadline_ns):
+            pass
+
+        async def off(
+            self, selected, *, scheduled_boundary_ns, stop_issued_ns, deadline_ns
+        ):
+            calls.append(stop_issued_ns)
+            applied = first_applied or len(calls) > 1
+            return mcu.PulseCommandEvidence(
+                connection_id="connection",
+                request_id=str(len(calls)),
+                command=mcu.PULSE_BOUNDARY_COMMAND_OFF,
+                behavioral_selected=True,
+                stop_issued_monotonic_ns=stop_issued_ns,
+                dispatched_monotonic_ns=stop_issued_ns,
+                acknowledged_monotonic_ns=stop_issued_ns + 1,
+                applied=applied,
+                outcome=(
+                    mcu.PULSE_COMMAND_OUTCOME_APPLIED
+                    if applied
+                    else mcu.PULSE_COMMAND_OUTCOME_REJECTED
+                ),
+                resulting_state=mcu.MicrocontrollerState(),
+            )
+
+    async def send(trial, evidence, deadline_ns):
+        sent.append(evidence.SerializeToString(deterministic=True))
+
+    owner = TrialTermination(
+        identity=cast(CoordinatorIdentity, None),
+        session_slot=SessionSlot(),
+        workers={},
+        serial=cast(SerialOwnerPort, Serial()),
+        pulse=PulseRecord(
+            observation=mcu.MicrocontrollerObservation(connection_id="connection")
+        ),
+        pulse_boundaries=cast(
+            TrialPulseBoundaries, SimpleNamespace(send_evidence=send)
+        ),
+        stop_evidence_allowance_ns=100,
+        start_evidence_allowance_ns=100,
+        lifecycle_delivery_ns=100,
+        valid_command=lambda *_: True,
+        lock=asyncio.Lock(),
+        clock=lambda: 10,
+    )
+    first = await owner._force_outputs_off(
+        trial, (camera.CAMERA_ROLE_BEHAVIORAL,), 100, 1000
+    )
+    assert bool(first) is (not first_applied)
+    retained = trial.pulse_off.SerializeToString(deterministic=True)
+    second = await owner._force_outputs_off(
+        trial, (camera.CAMERA_ROLE_BEHAVIORAL,), 200, 1000
+    )
+    assert not second
+    assert calls == [100, 200]  # Repeat safety OFF still reaches hardware.
+    assert sent == [retained]
+    assert trial.pulse_off.SerializeToString(deterministic=True) == retained

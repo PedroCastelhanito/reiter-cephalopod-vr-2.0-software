@@ -21,12 +21,8 @@ def draw_placement(
     try:
         output = next(item for item in placement.outputs if item.output_id == output_id)
         rectangles = [(rect, 0.0) for rect in output.blackout_zones]
-        if (
-            view == "photodiode_placement"
-            and output_id == placement.photodiode_output_id
-        ):
-            patch = placement.photodiode_patch
-            assert patch is not None
+        patch = placement.marker_patches.get(output_id)
+        if view == "photodiode_placement" and patch is not None:
             if patch.background_rect is not None:
                 rectangles.append((patch.background_rect, 0.0))
             rectangles.append((patch.rect, float(pulse_high)))

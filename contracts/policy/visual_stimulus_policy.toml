@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 16
+policy_version = 18
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_required_evidence_thread"
@@ -113,9 +113,9 @@ evidence_suffix = "_stimulus_frames.jsonl"
 video_suffix = "_stimulus.mp4"
 plan_log_owner = "coordinator_bounded_background_writer"
 video_source = "final_output_images_after_renderer_corrections"
-video_layout = "one_tiled_composite_per_trial"
-tile_order = "display_output_order_row_major"
-tile_grid_columns = "ceil_sqrt_output_count"
+video_layout = "uncropped_edge_to_edge_no_labels_bottom_clockwise_90"
+tile_order = "left_front_right_bottom_then_output_id"
+tile_grid_columns = "two_equal_columns_one_for_single_output"
 tile_scale = "encoder_fit_integer_divisor_times_configured_review_scale_factor"
 tile_resampling = "bilinear"
 composite_depth = "largest_output_depth_widened_codes"

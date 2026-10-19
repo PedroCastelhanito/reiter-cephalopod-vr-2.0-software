@@ -22,6 +22,7 @@ class CameraDraft:
     enabled: bool = True
     connected: bool = False
     capture_running: bool = False
+    cleanup_pending: bool = False
     values: dict[str, str] = data_field(default_factory=dict)
 
 

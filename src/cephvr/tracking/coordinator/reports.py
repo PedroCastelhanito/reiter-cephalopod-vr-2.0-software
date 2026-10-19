@@ -103,6 +103,11 @@ class Reports:
         self.ledger.complete_executor(
             command.command_id, operation.SerializeToString(), self.clock()
         )
+        if method in {
+            "BeginDiagnostic",
+            "CloseDiagnostic",
+        } and not command.work.WhichOneof("work"):
+            return  # Sessionless diagnostic completion uses GetDiagnosticState.
         await self.lifecycle(
             pb.LifecycleReport(
                 operation=pb.BackendOperationReport(

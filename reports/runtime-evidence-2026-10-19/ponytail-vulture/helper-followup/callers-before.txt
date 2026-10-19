@@ -1,0 +1,6 @@
+src\cephvr\gui\managed_mcu.py:122:    def add_output(self, key: str, pin: str) -> None:
+src\cephvr\shared\pixels\preparer.py:74:        self._reusable_output = bytearray(self._output_bytes)
+src\cephvr\shared\pixels\preparer.py:80:    def prepare_source_depth(
+src\cephvr\shared\pixels\preparer.py:83:        return self.prepare_source_depth_into(native_pixels, self._reusable_output)
+src\cephvr\gui\spikeglx.py:415:    def request_inventory_update(self) -> None:
+src\cephvr\gui\tracking.py:587:    def load_settings(self) -> None:

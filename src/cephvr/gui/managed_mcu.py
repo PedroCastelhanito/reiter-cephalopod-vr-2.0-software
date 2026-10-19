@@ -119,26 +119,6 @@ class ManagedMcu(QObject):
             return
         self.send(rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT)
 
-    def add_output(self, key: str, pin: str) -> None:
-        if self.pending or not self.panel.can_review:
-            return
-        camera = next((row for row in self.panel.camera_rows if row.key == key), None)
-        role = (
-            key
-            if key in _CAMERA_ROLES.values()
-            else _CAMERA_ROLES.get(camera.role if camera else "")
-        )
-        if role is None:
-            return
-        if self.panel.snapshots.draft_loaded:
-            self.panel.pin_editors[role].setText(pin)
-            self.panel.draft_changed.emit()
-            return
-        if self.bridge.request("add_mcu_output", role=role, pin=pin):
-            self.pending = True
-            self.panel.connection_pending = True
-            self.panel.refresh_tests()
-
     def save_pins(
         self,
         port: str,
@@ -309,12 +289,6 @@ class ManagedMcu(QObject):
         self.panel.pending_test_key = key
         self.pending_kind = kind
         self.panel.refresh_tests()
-        if kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
-            self.panel.console.appendPlainText(
-                f"{key}: submitting diagnostic settings before test."
-                if submission is not None
-                else f"{key}: test queued for controller."
-            )
 
     def read_status(self) -> None:
         if self.panel.can_test and self.panel.managed_test_key:

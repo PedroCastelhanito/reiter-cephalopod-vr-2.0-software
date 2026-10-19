@@ -1,0 +1,204 @@
+{
+  "date": "2026-10-19",
+  "source_run": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY-141422\\protocol-data\\DUMMY_141433_stimulus_LOG.json",
+  "source_run_sha256": "d6be3b8eb01ea59e010cfa7089104cc78e58be1cc3983e722f89a914c72e85a2",
+  "original_source_matches_saved_gui": true,
+  "changes": [
+    {
+      "surface": "left",
+      "old_instance": "stimulus_2",
+      "new_instance": "Instance_2",
+      "old_asset": "asset_15",
+      "new_asset": "asset_19"
+    },
+    {
+      "surface": "right",
+      "old_instance": "stimulus_3",
+      "new_instance": "Instance_3",
+      "old_asset": "asset_16",
+      "new_asset": "asset_20"
+    },
+    {
+      "surface": "bottom",
+      "old_instance": "stimulus_4",
+      "new_instance": "Instance_4",
+      "old_asset": "asset_17",
+      "new_asset": "asset_21"
+    },
+    {
+      "surface": "front",
+      "old_instance": "stimulus_5",
+      "new_instance": "Instance_1",
+      "old_asset": "asset_14",
+      "new_asset": "asset_18"
+    }
+  ],
+  "validation": {
+    "program_parser": "pass",
+    "exact_semantic_diff": "only static instance/asset IDs and its scene layer references",
+    "epochs": 200,
+    "continued_boundaries": 199,
+    "all_four_states_continuous": true,
+    "all_static_epochs_hold": true,
+    "all_drifting_epochs_move": true
+  },
+  "samples": [
+    {
+      "epoch": 0,
+      "start_phase": {
+        "Instance_2": [
+          0.0,
+          0.0
+        ],
+        "Instance_3": [
+          0.0,
+          0.0
+        ],
+        "Instance_4": [
+          0.0,
+          0.0
+        ],
+        "Instance_1": [
+          0.0,
+          0.0
+        ]
+      },
+      "end_phase": {
+        "Instance_2": [
+          0.0,
+          0.0
+        ],
+        "Instance_3": [
+          0.0,
+          0.0
+        ],
+        "Instance_4": [
+          0.0,
+          0.0
+        ],
+        "Instance_1": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "epoch": 1,
+      "start_phase": {
+        "Instance_2": [
+          0.0,
+          0.0
+        ],
+        "Instance_3": [
+          0.0,
+          0.0
+        ],
+        "Instance_4": [
+          0.0,
+          0.0
+        ],
+        "Instance_1": [
+          0.0,
+          0.0
+        ]
+      },
+      "end_phase": {
+        "Instance_2": [
+          -4.8076923076923075,
+          0.0
+        ],
+        "Instance_3": [
+          4.8076923076923075,
+          0.0
+        ],
+        "Instance_4": [
+          -4.8076923076923075,
+          0.0
+        ],
+        "Instance_1": [
+          0.0,
+          4.8076923076923075
+        ]
+      }
+    },
+    {
+      "epoch": 2,
+      "start_phase": {
+        "Instance_2": [
+          -4.8076923076923075,
+          0.0
+        ],
+        "Instance_3": [
+          4.8076923076923075,
+          0.0
+        ],
+        "Instance_4": [
+          -4.8076923076923075,
+          0.0
+        ],
+        "Instance_1": [
+          0.0,
+          4.8076923076923075
+        ]
+      },
+      "end_phase": {
+        "Instance_2": [
+          -4.8076923076923075,
+          0.0
+        ],
+        "Instance_3": [
+          4.8076923076923075,
+          0.0
+        ],
+        "Instance_4": [
+          -4.8076923076923075,
+          0.0
+        ],
+        "Instance_1": [
+          0.0,
+          4.8076923076923075
+        ]
+      }
+    },
+    {
+      "epoch": 3,
+      "start_phase": {
+        "Instance_2": [
+          -4.8076923076923075,
+          0.0
+        ],
+        "Instance_3": [
+          4.8076923076923075,
+          0.0
+        ],
+        "Instance_4": [
+          -4.8076923076923075,
+          0.0
+        ],
+        "Instance_1": [
+          0.0,
+          4.8076923076923075
+        ]
+      },
+      "end_phase": {
+        "Instance_2": [
+          -9.615384615384615,
+          0.0
+        ],
+        "Instance_3": [
+          9.615384615384615,
+          0.0
+        ],
+        "Instance_4": [
+          -9.615384615384615,
+          0.0
+        ],
+        "Instance_1": [
+          0.0,
+          9.615384615384615
+        ]
+      }
+    }
+  ],
+  "limits": "Local compiler and live-state/link handler evaluation; no GL rendering or physical rig acceptance. GUI closed; saved draft updated for next launch."
+}

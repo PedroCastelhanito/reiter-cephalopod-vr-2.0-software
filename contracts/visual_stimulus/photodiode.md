@@ -35,8 +35,12 @@ Stop at the actual trial cutoff even if the final landmark is incomplete.
 
 ## Ownership and frame association
 
-Use one configured output-space patch on the designated photodiode projector.
-`photodiode_patch.rect` remains the absolute bottom-left pixel rectangle. Optional
+Use `photodiode_patches`, a map of explicit output IDs to independent patches (at
+most four), for per-screen authoring. Absent/null preserves the legacy
+`photodiode_output_id`/`photodiode_patch` pair; reject simultaneous use of both forms.
+An empty map draws none, and enabled trial pulses require at least one valid patch.
+Validate every enabled target and rectangle at Setup. A screen without a definition
+has no pulse. Each patch's `rect` is the absolute bottom-left pixel rectangle. Optional
 `background_rect` reserves a black area; when present, `rect` must be a pulse rectangle fully
 contained by it. GUI Pulse origins are relative to that area and resolve to absolute
 coordinates before submission. Omitted background retains the legacy patch exactly.
@@ -55,7 +59,8 @@ follows V23 and finite clipping V21. The [color pipeline](color-pipeline.md) pla
 its opaque linear-RGB patch after scene/spatial composition and before the shared
 per-output correction. Preparation checks distinct resulting code triplets. Trial stimuli do not directly write the reserved patch.
 
-Use a trial-relative sequence index tied to photodiode-output submission attempts,
+Use one trial-relative sequence index evaluated per all-output render group and
+associate it independently with each configured pulse output's submission attempt,
 not `elapsed_time * nominal_refresh_rate`, video-source frame count or a recording
 worker's admitted-video count. Associate the intended patch state, landmark identity/
 position, sequence version, render-group ID and output ID before the corresponding

@@ -1,0 +1,12 @@
+{
+  "revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "working_tree": {
+    "src/cephvr/platform/windows/placement_events.py": "c87fe8c7f30e69ed8c68e1248a3ad96007e2393c1bf26ccf2459b56370464ec3",
+    "src/cephvr/platform/windows/preview_owner.py": "1d5da6a5e10dcedae9921ea8ae20f831ab0aca6d72a431f5ec1197874c2a801b",
+    "src/cephvr/platform/macos/preview_owner.py": "69a759c7c31c019b7fc03c86095c56f8ed0dc6075853a63b509af73ce0a206e8",
+    "src/cephvr/shared/preview_geometry.py": "41ec770dd919cacfedd5b0cbe1af89ec84eaaba278adc8a3f4f8715946511bb7",
+    "src/cephvr/gui/preview_follow.py": "580d273abd5688545331b9c13c579e2bc2320894925e7a2046be68d25424c51d",
+    "src/cephvr/gui/review_preview.py": "868c5276c8295ba258d4492f588ddd787e9386240e8f3b676bf4847c4a99db94",
+    "src/cephvr/acquisition/preview/highgui.py": "fe49ba7cc605a10deeb5028fee37323583fd2c8927b23e458c81c07c606339d7"
+  }
+}

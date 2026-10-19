@@ -22,6 +22,7 @@ from cephvr.visual_stimulus.rendering.color import linear_to_srgb
 from cephvr.visual_stimulus.rendering.image_fit import fitted_uv_scale
 from cephvr.visual_stimulus.rendering.layer_projection import (
     angular_corners,
+    covering_texture,
     physical_corners,
 )
 from cephvr.visual_stimulus.rendering.motion import evaluate_function
@@ -151,7 +152,10 @@ class PreviewCanvas(QWidget):
         correction = surface.correction if surface else None
         if correction is None:
             return image
-        output = QImage(image.size(), image.format())
+        size = image.size()
+        if self.face == "Bottom":
+            size.transpose()
+        output = QImage(size, image.format())
         output.fill(QColor("black"))
         painter = QPainter(output)
         if correction.error:
@@ -172,7 +176,7 @@ class PreviewCanvas(QWidget):
             )
             target = QPolygonF(
                 [
-                    QPointF(x * image.width(), (1 - y) * image.height())
+                    QPointF(x * output.width(), (1 - y) * output.height())
                     for x, y in correction.corners
                 ]
             )
@@ -226,6 +230,20 @@ class PreviewCanvas(QWidget):
 
     def draw_layer(self, painter: QPainter, rect: QRectF, layer: PreviewLayer) -> None:
         setting, values = layer.setting, layer.values
+        surface = self.rig_geometry.surfaces.get(self.face)
+        if surface and surface.corners:
+            snapshot = covering_texture(
+                self.rig_geometry.artifact(),
+                InstanceSnapshot(
+                    setting.instance_id,
+                    setting.kind,
+                    True,
+                    tuple(values.items()),
+                    setting,
+                ),
+                self.face.lower(),
+            )
+            values = {key: float(value) for key, value in snapshot.state}
         if setting.kind == "arena":
             return
         if setting.kind == "texture":
@@ -278,7 +296,7 @@ class PreviewCanvas(QWidget):
                 tile.end()
                 raise ValueError("Texture periods must be positive")
             transform = QTransform()
-            transform.translate(-values["phase_x"] * px, values["phase_y"] * py)
+            transform.translate(-values["phase_x"] * px, 512 + values["phase_y"] * py)
             transform.scale(px / image.width(), py / image.height())
             brush.setTransform(transform)
             tile.fillRect(texture.rect(), brush)

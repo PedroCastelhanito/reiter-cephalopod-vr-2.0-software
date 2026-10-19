@@ -54,6 +54,26 @@ async def dispatch_device_action(
         if proposed != state.configuration_values.current:
             await _update_configuration(client, state, proposed, "SpikeGLX pairing")
         return True, "Pairing enabled" if backend.enabled else "Pairing disabled"
+    if action == "projector_brightness":
+        outcome = await client.execute(
+            "AdjustProjectorBrightness",
+            rpc.ProjectorBrightnessRequest(
+                command=client.operator_command(),
+                expected_configuration_revision=client.snapshot.configuration.revision,
+                current_ma=options["current_ma"],
+            ),
+        )
+        if not outcome.succeeded:
+            raise ClientError(
+                outcome.failure
+                or "Projector adjustment failed; hardware state unconfirmed."
+            )
+        operation = next(
+            op
+            for op in client.snapshot.operations
+            if op.context.command_id == outcome.command_id
+        )
+        return True, operation.progress
     if action == "camera":
         await _camera(client, options)
         return True, "Completed"
@@ -206,9 +226,16 @@ async def _camera(
         rpc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
     ):
         camera = getattr(state.acquisition_devices, camera_role_name(role))
-        if not camera.preview_run_id:
+        session_view = state.session.phase == pb.SESSION_PHASE_RUNNING and kind in (
+            rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+            rpc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
+        )
+        run_id = (
+            state.session.context.session_id if session_view else camera.preview_run_id
+        )
+        if not run_id:
             raise ClientError("No current preview run for this camera.")
-        request.preview_run_id = camera.preview_run_id
+        request.preview_run_id = run_id
     outcome = await client.execute("ExecuteCameraCommand", request)
     checkpoint(options)
     if not outcome.succeeded:

@@ -1,0 +1,50 @@
+{'command': 'UpdateConfiguration', 'command_id': '0a035282-1e28-4e31-9e17-2b5fd4860b02', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'ExecuteCameraCommand', 'command_id': '5146734b-2bec-462b-9ada-dae772ba8851', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'BeginTrackingDiagnostic', 'command_id': '6afbb1ca-e1c9-4dc4-83cb-7c7b8735ad21', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+tracking 0 0 1 9.839420654911839e-06
+tracking 1 0 2 1.0776508336332014e-05
+tracking 2 0 1 7.028157610651313e-06
+tracking 3 0 1 1.12450521770421e-05
+tracking 4 0 1 1.171359601775219e-05
+{'command': 'CloseTrackingDiagnostic', 'command_id': '26486725-d80d-4952-b7f9-4014585bd2fe', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'ExecuteCameraCommand', 'command_id': 'c9913d58-ae38-4a5b-91a7-b6299b8565dc', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'UpdateConfiguration', 'command_id': 'eb9c35d5-aadd-4ea6-b8b7-c2fd2d1e7e54', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{'command': 'ExecuteCameraCommand', 'command_id': 'cc543d44-d3fc-4f47-b45b-56160bf32e6d', 'complete': True, 'succeeded': False, 'needs_input': False, 'failure': 'OPERATION_FAILED: exact completion missing'}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 59, in main
+    await execute(client, 'ExecuteCameraCommand', rpc.CameraCommandRequest(command=client.operator_command(), expected_configuration_revision=client.snapshot.configuration.revision, camera=camera_pb2.CAMERA_ROLE_TRACKING, kind=rpc.CAMERA_COMMAND_KIND_START_PREVIEW))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 28, in execute
+    assert result.succeeded, result
+           ^^^^^^^^^^^^^^^^
+AssertionError: CommandOutcome(command_id='cc543d44-d3fc-4f47-b45b-56160bf32e6d', complete=True, succeeded=False, needs_input=False, failure='OPERATION_FAILED: exact completion missing')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 106, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 98, in main
+    await update(original)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 44, in update
+    await execute(client, 'UpdateConfiguration', rpc.UpdateConfigurationRequest(command=client.operator_command(), expected_revision=client.snapshot.configuration.revision, proposed=config))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-19\gui-full-rig\native_image_diagnostic.py", line 24, in execute
+    result = await asyncio.wait_for(client.execute(name, request), 90)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 274, in execute
+    admission = await self._admit(
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 173, in _admit
+    raise ClientError(
+cephvr.client.session.ClientError: REJECTED: acquisition configuration edit failed: prior camera device work is not terminal and quiescent

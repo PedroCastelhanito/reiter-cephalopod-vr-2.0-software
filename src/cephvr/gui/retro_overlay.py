@@ -36,6 +36,8 @@ class CrtOverlay(QWidget):
         self.band_timer.setInterval(BAND_INTERVAL_MS)
         self.band_timer.timeout.connect(self.advance_band)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        # Native preview hosts can promote sibling overlays to HWNDs.
+        self.setWindowFlag(Qt.WindowType.WindowTransparentForInput, True)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         host.installEventFilter(self)

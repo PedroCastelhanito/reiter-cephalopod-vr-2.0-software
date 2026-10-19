@@ -1,7 +1,12 @@
 # CephVR2 Arduino Uno firmware
 
-`cephvr2_mcu/cephvr2_mcu.ino` implements the controller-owned A11 serial protocol v4
-for the Arduino Uno. Owner-authorized manual uploads to COM8 ran on 2026-10-05
+`cephvr2_mcu/cephvr2_mcu.ino` implements the controller-owned A11 serial protocol v5
+for the Arduino Uno. On 2026-10-19 the owner's GUI upload reported verification
+failure, but independent flash readback matches all13874 current application bytes
+and live CAPS confirms protocol5 / `cephvr2_uno_5` on COM8. All camera outputs are
+stopped/disabled; electrical acceptance remains pending. See the
+[readback evidence](../../reports/runtime-evidence-2026-10-19/mcu-upload-recovery/board-check.json).
+Owner-authorized manual uploads to COM8 ran on 2026-10-05
 and 2026-10-07. The current protocol-3 image, pre-upload flash backup, verified
 upload and matching board CAPS are recorded in
 [installation evidence](../../reports/rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md).
@@ -9,7 +14,7 @@ The [earlier protocol-2 evidence](../../reports/mcu-evidence-2026-10-05/README.m
 retains its original image and flash readback.
 
 Keep each independent sketch in its own directory. Select
-`cephvr2_mcu/cephvr2_mcu.ino` for this GUI's protocol-4 backend.
+`cephvr2_mcu/cephvr2_mcu.ino` for this GUI's protocol-5 backend.
 `cephvr1_mcu/cephvr1_mcu.ino` is the legacy program; its required
 `projector_clock.h` is beside it. It compiles for Uno but lacks the CAPS protocol
 required by CephVR2. Both sketches must not share one sketch directory: Arduino
@@ -28,15 +33,15 @@ the projector-flip rising-edge input must use D2 or D3, the Uno external
 interrupt pins. One diagnostic can run for at most two seconds. The firmware
 counts actual generated output rising transitions, including the initial HIGH;
 Trial state's held-HIGH test counts one. Camera counters increment at the timer's
-HIGH writes, not from requested rate or elapsed time. Input diagnostics count
-observed rising edges. Counts persist after Stop until a new test, with atomic
-readback and uint32 saturation. Protocol 4 requires a matching firmware image
-before the updated host can connect; the previously uploaded image is protocol 3.
-The new third Eye output is compiled locally; upload remains manual. Assign an Eye
-camera in Cameras, select External controller and the actual FrameStart source/rate,
-then set its unique pin in Microcontroller. Projector flip is available through Add
-input. Pin/rate changes after this firmware update use serial configuration and
-do not require reflashing.
+HIGH writes, not from requested rate or elapsed time. Counts persist after Stop
+until a new test, with atomic readback and uint32 saturation. Protocol 5 requires a
+matching firmware image before the updated host can connect; older firmware is
+rejected before CONFIGURE. Unchanged outputs retain phase and HIGH/LOW/running
+state; only changed outputs are updated and newly enabled outputs await ON.
+Additional-camera Connect leaves existing captures running. Source/build/native
+adapter tests do not prove electrical timing or install firmware. This change is
+explicit-upload only; never flash automatically. Projector-flip input remains
+deferred under A11.
 The managed GUI provides explicit Configuration Upload for a selected `.ino` sketch
 or compiled application `.hex`. For `.ino`, controller snapshots the sketch and its
 companion sources, compiles for Uno with installed Arduino CLI, validates the generated
@@ -64,7 +69,7 @@ need rig verification.
 | Projector flip | D2 input and GND | Projector flip source and signal ground | Pin assigned; bounded input test counted zero edges; source voltage unconfirmed |
 | Behavioral trigger | D10 output and GND | Behavioral camera trigger input and signal ground | Pin assigned; electrical test and preview pending |
 | Tracking trigger | D11 output and GND | Tracking camera trigger input and signal ground | Pin assigned; electrical test and preview pending |
-| Eye trigger | Explicit unique output pin and GND | Eye camera FrameStart input and signal ground | Pin/source/rate unset; protocol-4 upload and rig acceptance pending |
+| Eye trigger | Explicit unique output pin and GND | Eye camera FrameStart input and signal ground | Protocol5 readback confirmed Oct19; physical mapping/electrical acceptance remain in the rig checklist |
 
 Confirm the destination input tolerates the Uno's 5 V logic and the flip source
 is safe for an Uno input before attaching signal wires. Save the actual pin

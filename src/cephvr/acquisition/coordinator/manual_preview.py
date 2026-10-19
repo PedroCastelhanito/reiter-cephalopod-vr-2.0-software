@@ -411,6 +411,12 @@ class ManualPreview:
         device_cleanup_established = False
         try:
             if active_roles:
+                await self.device_status.progress(
+                    request.command,
+                    request.camera,
+                    "Stopping external triggers…",
+                    deadline_ns=deadline_ns,
+                )
                 if self.pulse.observation is None:
                     invalidate_released_idle_proof(self.pulse)
                     retain_observation(
@@ -427,6 +433,12 @@ class ManualPreview:
                 retain_applied_pulse_state(
                     self.pulse, evidence, deadline_ns=deadline_ns
                 )
+            await self.device_status.progress(
+                request.command,
+                request.camera,
+                "Stopping capture and releasing camera…",
+                deadline_ns=deadline_ns,
+            )
             if uncertain_preview:
                 # A late Start or timed-out Stop cannot be inferred from its
                 # admission result. Retire this exact worker through its existing
@@ -491,6 +503,12 @@ class ManualPreview:
                         "manual preview stop lacks retained resolved camera"
                     )
                 device_cleanup_established = True
+            await self.device_status.progress(
+                request.command,
+                request.camera,
+                "Releasing preview resources…",
+                deadline_ns=deadline_ns,
+            )
             if not uncertain_preview:
                 await self.windows.close(
                     request.camera, preview.run_id, deadline_ns=deadline_ns

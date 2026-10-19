@@ -165,6 +165,14 @@ class EpochComposer(QWidget):
         self.program = program
         epoch = program.sequence[0]
         assert isinstance(epoch, Epoch)
+        paths = source.parameters.asset_forms.values()
+        if source.parameters.asset_forms and all(
+            field.text().strip() for field in paths
+        ):
+            # Pasted paths have passed the same commit validation as picker selections.
+            self.pending_assets.discard(
+                epoch.settings[source.parameters.layer_index].instance_id
+            )
         for row in self.rows.values():
             if row is not source:
                 row.parameters.program = program
@@ -228,7 +236,7 @@ class EpochComposer(QWidget):
         epoch = program.sequence[0]
         assert isinstance(epoch, Epoch)
         if any(s.instance_id in self.pending_assets for s in epoch.settings):
-            raise ValueError("Choose an asset for each stimulus before adding epochs")
+            raise ValueError("Choose an asset for each stimulus")
         return program
 
     def clear_pending_path(self, face: str) -> None:

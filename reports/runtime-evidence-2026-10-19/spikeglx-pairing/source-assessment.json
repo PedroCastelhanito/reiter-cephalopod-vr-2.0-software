@@ -1,0 +1,33 @@
+{
+  "installed_version": "SpikeGLX v20251218 api v4.1.3",
+  "official_commit": "83ae3e9e1f8cfe16f52905609f5bd420c651dae1",
+  "method": "Reviewed exact-release Version.h, DAQ gate/trigger enums, CmdServer stream family/type orders and run/parameter controls, native data file naming declarations; downloaded14 source files and SHA256 provenance retained.",
+  "scope": "Source mapping reference now pins exact installed release; strict version gate remains. Source review is not pulse or paired recording acceptance.",
+  "owner_inventory": {
+    "trial_state": {
+      "stream": "onebox",
+      "stream_index": 0,
+      "channel": 0
+    },
+    "photodiode": {
+      "stream": "onebox",
+      "stream_index": 0,
+      "channel": 1
+    },
+    "behavioral_camera": {
+      "stream": "onebox",
+      "stream_index": 0,
+      "channel": 2
+    },
+    "tracking_camera": {
+      "stream": "onebox",
+      "stream_index": 0,
+      "channel": 3
+    },
+    "eye_tracking_camera": {
+      "stream": "onebox",
+      "stream_index": 0,
+      "channel": 4
+    }
+  }
+}

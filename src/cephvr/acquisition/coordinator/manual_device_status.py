@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from typing import cast
 
@@ -54,6 +55,8 @@ class ManualDeviceStatusReporter:
             )
         }
         self._reports: dict[str, tuple[bytes, wire.AcquisitionDeviceStatusReport]] = {}
+        self._pending_progress: tuple[control.LifecycleReport, int] | None = None
+        self._progress_task: asyncio.Task[None] | None = None
 
     def reserve(self, command: wire.BackendCommand) -> None:
         """Reserve result retention before a manual command can touch hardware."""
@@ -120,6 +123,12 @@ class ManualDeviceStatusReporter:
             view.device_open or view.preview_running or view.cleanup_pending
             for view in self._views.values()
         )
+
+    def retire_session_preview(self, session_id: str) -> None:
+        """Clear only matching session views after exact local cleanup proof."""
+        for role, view in self._views.items():
+            if view.preview_run_id == session_id:
+                self.update_camera_state(role, device_open=False)
 
     def begin_device_access(self, role: int, serial: str) -> control.CameraDeviceView:
         """Retain possible ownership until the worker confirms readback or release."""
@@ -198,6 +207,41 @@ class ManualDeviceStatusReporter:
             raise RuntimeError(
                 receipt.failure.message or "Preview visibility was rejected"
             )
+
+    async def progress(
+        self, command: wire.BackendCommand, role: int, action: str, *, deadline_ns: int
+    ) -> None:
+        """Best-effort action detail never supplies device or completion evidence."""
+        label = {1: "Behavior camera", 2: "Tracking camera", 3: "Eye camera"}[role]
+        self._pending_progress = (
+            control.LifecycleReport(
+                operation=control.BackendOperationReport(
+                    source=self.identity.backend,
+                    operation=control.OperationState(
+                        context=control.OperationContext(command_id=command.command_id),
+                        command="CameraAction",
+                        work=command.work,
+                        progress=f"{label} · {action}",
+                    ),
+                )
+            ),
+            deadline_ns,
+        )
+        if self._progress_task is None or self._progress_task.done():
+            self._progress_task = asyncio.create_task(self._deliver_progress())
+
+    async def _deliver_progress(self) -> None:
+        # One sender and one replaceable pending action cannot delay hardware OFF.
+        while self._pending_progress is not None:
+            report, deadline_ns = self._pending_progress
+            self._pending_progress = None
+            if self.clock() >= deadline_ns:
+                continue
+            try:
+                await self.controller.report_lifecycle(report, deadline_ns=deadline_ns)
+            except Exception:
+                # Required terminal evidence has its own reporting/failure path.
+                continue
 
     async def report(
         self,
@@ -304,7 +348,10 @@ class ManualDeviceStatusReporter:
         )
 
     def finalize_command(self, command_id: str) -> None:
-        self.commands.finalize_work(command_id, self.clock())
+        record = self.commands.get(command_id)
+        # Session-bound viewer evidence remains retained until session cleanup.
+        if record is not None and record.work_key == command_id:
+            self.commands.finalize_work(command_id, self.clock())
         self._prune_reports()
 
     def _prune_reports(self) -> None:

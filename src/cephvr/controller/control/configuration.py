@@ -226,6 +226,18 @@ class ConfigurationCommands:
                 if first_issue is not None
                 else ""
             )
+            if not detail:
+                unavailable = next(
+                    result
+                    for result in results
+                    if not result.completed or not result.valid
+                )
+                reason = unavailable.unavailable_reason
+                detail = (
+                    f": {unavailable.component}: {reason.code}: {reason.message}"
+                    if reason.message
+                    else f": {unavailable.component}: validation did not complete successfully"
+                )
             return self.control_operations.admission(
                 command_id, error=f"configuration validation failed{detail}"
             )

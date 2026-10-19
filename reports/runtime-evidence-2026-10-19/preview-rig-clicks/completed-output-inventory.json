@@ -1,0 +1,57 @@
+[
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\.cephvr-reservation.json",
+    "bytes": 151,
+    "sha256": "66a9ea783ea46f824a411ff6499095efa0c96e3e6493c08791b6258e913a5f2e"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\.cephvr.lock",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\PREVIEW_100238_behavioral_cam_frames.jsonl",
+    "bytes": 808905,
+    "sha256": "b5c093aadc78e6488ff90940fd999c9e12e8cefac79d6f1206930197aa2e109e"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\PREVIEW_100238_eye_tracking_cam_frames.jsonl",
+    "bytes": 1618816,
+    "sha256": "8c5d815dd801f67701f1e22a803dfdb159b0c9b035d3bd387a662898710a8c1e"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\PREVIEW_100238_LOG.json",
+    "bytes": 14802,
+    "sha256": "2c9d9e151784eb28b92b93ec2e86956bc68f9ae4173e4a76e81e663087b0d54e"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\PREVIEW_100238_stimulus_frames.jsonl",
+    "bytes": 33563697,
+    "sha256": "7e7dfa576fe953edc93eca30dc45b57520b2d929a29a0d178f52378f76c086dc"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\PREVIEW_100238_stimulus_LOG.json",
+    "bytes": 37725,
+    "sha256": "7b1cd52e30aa990d00ee29d50f241a3653c143e66cb194f91e13ac4cfd83991a"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\PREVIEW_100238_tracking_cam_frames.jsonl",
+    "bytes": 1618228,
+    "sha256": "0623fe4bfb0196fb6139e23e1de8b439418cd16844bac24fe13bfb279d235e50"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\SCHEMA.json",
+    "bytes": 8937,
+    "sha256": "1b82c4832c8da655315099ec400be367e0ae08a47e1432bcdda23a5bee727f53"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\SESSION_CONFIG.json",
+    "bytes": 33400,
+    "sha256": "d431b555f3299f639ee9c8bc902b10f23a15ee949eb0d7513d23c6b2ab23c29d"
+  },
+  {
+    "path": ".tmp\\preview19\\20261019_preview19\\PREVIEW-100212\\protocol-data\\SESSION_LOG.jsonl",
+    "bytes": 605,
+    "sha256": "539cfdd0bb27d4da886ac32fd522251bcb81098b42c4f474fce7e2eb4fcf456c"
+  }
+]

@@ -17,7 +17,7 @@ class InstallRecovery(Protocol):
         self,
         *,
         prompt: pb.Prompt | None,
-        handler: Callable[[], Awaitable[None]] | None,
+        handler: Callable[[str], Awaitable[None]] | None,
         blocker: str | None,
         completion_warning: str | None = None,
         notice: str | None = None,
@@ -75,7 +75,7 @@ async def prepare_recovery(
             )
         await install(
             prompt=prompt,
-            handler=recovery.recover if prompt is not None else None,
+            handler=recovery.resolve if prompt is not None else None,
             blocker=prompt.explanation if prompt is not None else None,
             completion_warning=completion_warning,
             notice=recovery.notice,

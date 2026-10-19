@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-19",
+  "source": "working tree; uncommitted changes, exact native loaded revision unknown",
+  "defect": "Observed external wake remained pending inside due stage and aborted capture drain.",
+  "before_fix": "handoff regression: 1 failed, 1 passed",
+  "after_fix": "228 tests passed including real nonzero-margin drain and preserved fresh wake",
+  "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_worker_foundations.py tests/acquisition/test_trial_lifecycle.py tests/acquisition/test_recording_cleanup.py tests/acquisition/test_recording_paths.py tests/acquisition/test_worker_admission.py -q",
+  "static": "Ruff and format four files pass; Win32 mypy two production files pass; 724 modules, zero boundary violations; git diff --check pass",
+  "limits": "Original rejected RPC/wake sequence unavailable. Saved incomplete accounting consistent, not unique causal proof. Native GUI observed Interrupted / Abort now awaiting completion; no input or restart; no new native acceptance.",
+  "diagnostics": "Invalid interrupted Finished error now includes expected paths and actual output key/path/presence/closure/failure claims; guard unchanged."
+}

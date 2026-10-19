@@ -951,3 +951,46 @@ def test_canceled_pfs_export_retires_only_its_readback_barrier() -> None:
         )
 
     asyncio.run(run())
+
+
+def test_session_viewer_result_retains_its_session_scope_until_cleanup():
+    session_id, command_id = _id(), _id()
+    ledger = CommandLedger(
+        _id(), 100, max_records=8, max_bytes=100000, result_reservation_bytes=4096
+    )
+    ledger.admit(command_id, b"show", 1, work_key=session_id)
+    ledger.complete(command_id, b"shown", 2)
+    reporter = object.__new__(ManualDeviceStatusReporter)
+    reporter.commands = ledger
+    reporter.clock = lambda: 3
+    reporter._reports = {}
+    reporter.finalize_command(command_id)
+    assert ledger.get(command_id).finalized_ns is None
+    assert ledger.prune(200) == 0
+    ledger.finalize_work(session_id, 200)
+    ledger.prune(301)
+    assert ledger.get(command_id) is None
+
+
+def test_session_preview_retirement_preserves_unrelated_manual_run():
+    reporter = object.__new__(ManualDeviceStatusReporter)
+    reporter._views = {
+        1: control.CameraDeviceView(
+            device_open=True,
+            preview_running=True,
+            preview_run_id="session",
+            preview_visible=True,
+        ),
+        2: control.CameraDeviceView(
+            device_open=True,
+            preview_running=True,
+            preview_run_id="manual",
+            preview_visible=True,
+        ),
+    }
+    reporter.retire_session_preview("session")
+    assert not reporter._views[1].device_open
+    assert not reporter._views[1].preview_running
+    assert not reporter._views[1].preview_run_id
+    assert reporter._views[2].preview_visible
+    assert reporter._views[2].device_open

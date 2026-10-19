@@ -1,0 +1,146 @@
+{
+  "date": "2026-10-19",
+  "run": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY-142302",
+  "method": "Read-only camera completion rows and administrative output claims; focused local pytest and static checks. No rig rerun.",
+  "camera_logs": {
+    "DUMMY_142317_behavioral_cam_frames.jsonl": {
+      "sha256": "fd72ea30707beceea44c61f8ed9a9e337b0a9281686234bcd006388b15acd896",
+      "completion": {
+        "type": "completion",
+        "outcome": "interrupted",
+        "timing": {
+          "recording_end_monotonic_ns": 409866839765900,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 970,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 970,
+          "selected_source_frame_count": 970,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 409834428876900,
+          "on_acknowledged_monotonic_ns": 409834453486100,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 409866841141400,
+          "off_acknowledged_monotonic_ns": 409866867437800
+        },
+        "post_cutoff": {
+          "accounting_complete": false,
+          "excluded_frame_count": null,
+          "last_native_counter": null
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    },
+    "DUMMY_142317_eye_tracking_cam_frames.jsonl": {
+      "sha256": "6ac8a266e5e991bce12e56511164c1ddcf081959ac29be77467ea711a2eb685d",
+      "completion": {
+        "type": "completion",
+        "outcome": "interrupted",
+        "timing": {
+          "recording_end_monotonic_ns": 409866839823000,
+          "first_recorded_frame_id": null,
+          "final_received_frame_count": 1942,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 0,
+          "selected_source_frame_count": 0,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 409834428876900,
+          "on_acknowledged_monotonic_ns": 409834453486100,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 409866841141400,
+          "off_acknowledged_monotonic_ns": 409866867437800
+        },
+        "post_cutoff": {
+          "accounting_complete": false,
+          "excluded_frame_count": null,
+          "last_native_counter": null
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    },
+    "DUMMY_142317_tracking_cam_frames.jsonl": {
+      "sha256": "57769a8bdbb1086c2207541e78af0a04a27738f1a395a8fe2a9f6c1d26baf702",
+      "completion": {
+        "type": "completion",
+        "outcome": "interrupted",
+        "timing": {
+          "recording_end_monotonic_ns": 409866839749000,
+          "first_recorded_frame_id": null,
+          "final_received_frame_count": 1942,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 0,
+          "selected_source_frame_count": 0,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 409834428876900,
+          "on_acknowledged_monotonic_ns": 409834453486100,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 409866841141400,
+          "off_acknowledged_monotonic_ns": 409866867437800
+        },
+        "post_cutoff": {
+          "accounting_complete": false,
+          "excluded_frame_count": null,
+          "last_native_counter": null
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    }
+  },
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_worker_foundations.py tests/acquisition/test_trial_lifecycle.py tests/acquisition/test_pulse_evidence.py tests/acquisition/test_recording_cleanup.py tests/acquisition/test_worker_admission.py -q --tb=short",
+    "result": "245 passed",
+    "before_fix": "StopTrial and InterruptSession old-wake drain cases fail; stage/new-wake cases pass"
+  },
+  "checks": {
+    "ruff": "4 files pass",
+    "format": "4 files pass",
+    "mypy_win32": "2 source files pass",
+    "boundaries": "724 modules, zero violations; existing size warnings outside changed source",
+    "whitespace": "pass"
+  },
+  "limits": "Native wake ordering not captured; reproductions establish code defects consistent with observed symptoms, not unique causation. Existing camera outputs stay unconfirmed. No scientific files modified.",
+  "source_sha256": {
+    "src/cephvr/acquisition/worker/owner.py": "796d84d3a84d65427f0ada0cd60010cfd1fc7ce38dc0663e5c802f6b93e143ca",
+    "src/cephvr/acquisition/coordinator/trial_termination.py": "f71c2981ef99bf55c0295e8803835c7d950686911fd4c3fed496927a4bdd7290",
+    "tests/acquisition/test_worker_foundations.py": "ebc1d5849db2aac7db58eedc3a20de263656808af4df9541d9f5a98b67de0509",
+    "tests/acquisition/test_trial_lifecycle.py": "07d7c2d0a91ebe002c3d05251867f5326eb41dcfdfae77ba4d30c4b5e66fb006"
+  }
+}

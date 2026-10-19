@@ -10,6 +10,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 
 from cephvr.client.session import ClientError, HeadlessClient, loopback_channel
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.action_progress import requested_action
 from cephvr.gui.managed_actions import ManagedActions
 from cephvr.gui.managed_configuration_transport import submit_configuration
 from cephvr.gui.tracking_frame_transport import fetch_tracking_diagnostic_frame
@@ -22,6 +23,7 @@ class ControllerBridge(QThread):
     snapshot_received = pyqtSignal(int, str, bytes)
     connection_changed = pyqtSignal(bool, str, int, str)
     command_finished = pyqtSignal(str, bool, str)
+    action_progress = pyqtSignal(str, str)
     command_admitted = pyqtSignal(str, str)
     operation_finished = pyqtSignal(str, str, str, str)
     spikeglx_inventory_received = pyqtSignal(int, str, bytes)
@@ -398,9 +400,13 @@ class ControllerBridge(QThread):
     async def _dispatch(
         self, client: HeadlessClient, action: str, options: dict[str, Any]
     ) -> None:
+        message = requested_action(action, options)
+        if message:
+            self.action_progress.emit(action, message)
         await ManagedActions(
             principal=self.principal,
             command_finished=self.command_finished.emit,
+            action_progress=self.action_progress.emit,
             command_admitted=self.command_admitted.emit,
             operation_finished=self.operation_finished.emit,
             spikeglx_inventory_received=self.spikeglx_inventory_received.emit,

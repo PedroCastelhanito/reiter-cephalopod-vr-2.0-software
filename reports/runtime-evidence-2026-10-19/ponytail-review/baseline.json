@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "working_tree": "Dirty; unrelated concurrent work preserved. Selected source files initially match HEAD.",
+  "files": {
+    "src/cephvr/shared/ffmpeg_filters.py": "cd451fa632674555b193699878f7e672d156d9da5ec18416eea286be503722ce",
+    "src/cephvr/shared/supervised_encoder.py": "e4ba2738167e5618c1fd3749f6fbf9ff93aa0e6f870af82b4b30f70ea7008c1b",
+    "src/cephvr/platform/windows/security.py": "4dc8627d64bccfa2e8f5c45fa27872b487d5a263acba5a9916c2475607fb4cb9",
+    "src/cephvr/platform/windows/byte_stream.py": "ef29db03dd3307944d21dc3febe95fd99f15fca09ffbe01d5c32d566a4ec55bb",
+    "src/cephvr/platform/windows/byte_stream_factory.py": "55061773ee18a780deaa7ef2aa6fcf524c33815eeffa731b60bcd25dd1d40b07",
+    "src/cephvr/shared/commands.py": "01967442d97f9e1e4949bb0feea06cc8a8a469e4af79becab84385db025978f3",
+    "tests/acquisition/test_recording_filter_expressions.py": "a458db9d2b9bab95b6c49a7a768777ea482553a3fd1c5c60f5de97b847d8c4ec"
+  }
+}

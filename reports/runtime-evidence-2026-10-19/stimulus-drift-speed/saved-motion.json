@@ -1,0 +1,18 @@
+{
+  "source": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY_2-160948\\protocol-data\\DUMMY_2_161013_stimulus_frames.jsonl",
+  "recipe_sha256": "d95bbb2ffccc4e2fd3487e30be49934a653b3cdd8cca80997ef8bdc3ada62f13",
+  "interval_seconds": 1.0005195,
+  "outputs": {
+    "front": {
+      "inferred_mm_s_from_logged_uniforms": 49.999996166721964,
+      "native_y_mm_per_pixel": 0.12222222222222219,
+      "native_y_pixel_speed": 409.0908777277253
+    },
+    "bottom": {
+      "inferred_mm_s_from_logged_uniforms": 49.99999914502802,
+      "native_y_mm_per_pixel": 0.1375,
+      "native_y_pixel_speed": 363.63635741838556
+    }
+  },
+  "scope": "Recorded shader uniforms and saved calibration only; current live session and physical accuracy unconfirmed."
+}

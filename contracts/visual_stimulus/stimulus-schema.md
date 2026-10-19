@@ -89,15 +89,18 @@ Convert into the target's map, retained orientation and periods to obtain its ph
 rates. Antiparallel-to-Bottom normals and nonuniform/sheared/reflected stimulus maps
 are unsupported; output warp/reflection is separate and remains supported.
 
-For source angular rate `a` in rad/s and target perpendicular subject distance `d`,
+For source angular rate `a` in rad/s, let `c` be the reference screen center
+(midpoint of its calibrated bottom-left and top-right corners) and let
+`d = dot(c - target.bottom_left_mm, n_target)` be the signed perpendicular
+rig distance to the target plane. Subject/observer position is not an input. Then
 add physical velocity `a*d*(n_source cross n_target)`; target spin is
 `a*(n_source dot n_target)`. Rotation linking requires parallel/perpendicular planes,
 with accepted near-zero/unit dot products clamped to exactly zero/signed one.
 This preserves V02's Bottom/side convention. It is a coordinated-flow definition,
 not a rigid-body rotation or seamless texture wrap.
 
-The source pivot for spin must equal the subject projection in the existing
-renderer’s centered local face coordinates, transformed into its stimulus plane.
+The source pivot for spin must equal its calibrated screen center: local `(0, 0)`
+transformed into its stimulus plane (the physical map’s translation components).
 Carry known center positions through compiled transition actions; uncertain prior
 position writers require an explicit reset before spin linking. Fail Setup with the
 required coordinates if unknown/mismatched. Recheck actual retained centers during

@@ -31,7 +31,6 @@ from cephvr.platform.windows.nvenc_features import (
 from cephvr.platform.windows.nvidia_device import NvidiaDevice, resolve_cuda_ordinal
 
 _CUDA_DEVICE_TYPE = 1
-NV_ENC_PARAMS_RC_CONSTQP = 0x0
 NV_ENC_PARAMS_RC_VBR = 0x1
 NV_ENC_PARAMS_RC_CBR = 0x2
 

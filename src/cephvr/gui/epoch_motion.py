@@ -84,6 +84,13 @@ class EpochMotion(QWidget):
             row.addWidget(field(name, control), 1)
         layout.addWidget(self.basic)
         self.direction.setToolTip("0° = local +X; 90° = local +Y")
+        if values.get("space", {}).get("kind") == "physical_surface":
+            self.speed.setToolTip(
+                "Physical speed on the screen in mm/s. Each projector's measured "
+                "X/Y pixel-to-mm calibration determines its pixel speed, including "
+                "linked textures. Save reference-bar measurements and run Setup "
+                "again after changing calibration."
+            )
         self.extra = QWidget()
         details = QVBoxLayout(self.extra)
         details.setContentsMargins(0, 0, 0, 0)

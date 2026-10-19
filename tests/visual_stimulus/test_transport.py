@@ -810,6 +810,65 @@ async def test_authenticated_coordinator_renderer_replay_and_stale_generation():
         assert (
             coordinator.state.display is None
         )  # Operation completion cannot fabricate Idle.
+        # Preview commands use the same authenticated, retained executor path.
+        coordinator.state.setup = wire.SetupSessionRequest()
+        coordinator.state.setup.plan.context.session_id = str(uuid4())
+        coordinator.state.setup.plan.configuration_revision = 3
+        worker.context.work.session.CopyFrom(coordinator.state.setup.plan.context)
+        preview = wire.StimulusPreviewRequest(
+            configuration_revision=3,
+            visible=True,
+            command=wire.BackendCommand(
+                command_id=str(uuid4()),
+                issuer=identity.controller,
+                target=identity.backend,
+                work=worker.context.work,
+            ),
+        )
+        preview.placement.side = 640
+        accepted = await stub.SetStimulusPreview(preview, metadata=metadata, timeout=2)
+        assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
+        for _ in range(100):
+            record = coordinator.ledger.get(preview.command.command_id)
+            if record is not None and record.executor_result:
+                break
+            await asyncio.sleep(0.01)
+        assert record is not None and record.executor_result
+        assert pb.OperationState.FromString(record.executor_result).succeeded
+        assert device.commands[-1] == "SetStimulusPreview"
+        await reports.receipt(
+            "ReportStimulusPreview",
+            pb.StimulusPreviewState(
+                source=identity.worker,
+                backend=identity.backend,
+                session=worker.context.work.session,
+                configuration_revision=3,
+                revision=1,
+                available=True,
+                visible=True,
+            ),
+            deadline_ns=deadline,
+        )
+        assert sink.messages[-1][0] == "ReportStimulusPreview"
+        previous_execute = device.execute
+
+        def reject_preview(method, request, deadline_ns):
+            if method == "SetStimulusPreview":
+                raise ValueError("viewer unavailable")
+            return previous_execute(method, request, deadline_ns)
+
+        device.execute = reject_preview
+        preview.command.command_id = str(uuid4())
+        preview.visible = False
+        await stub.SetStimulusPreview(preview, metadata=metadata, timeout=2)
+        for _ in range(100):
+            record = coordinator.ledger.get(preview.command.command_id)
+            if record is not None and record.executor_result:
+                break
+            await asyncio.sleep(0.01)
+        assert record is not None and record.executor_result
+        assert not pb.OperationState.FromString(record.executor_result).succeeded
+        assert not worker.interrupted and not coordinator.state.interrupted
     finally:
         await listener.close(deadline)
         await worker_listener.close(deadline)

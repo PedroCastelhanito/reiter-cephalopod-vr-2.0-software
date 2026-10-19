@@ -63,6 +63,7 @@ class CoordinatorCleanup:
         ],
         lock: asyncio.Lock,
         close_preview_windows: Callable[..., Awaitable[None]] | None = None,
+        retire_preview_status: Callable[[str], None] | None = None,
         clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.identity = identity
@@ -89,6 +90,7 @@ class CoordinatorCleanup:
         )
         self._active = False
         self.close_preview_windows = close_preview_windows
+        self.retire_preview_status = retire_preview_status
         self.sessionless = SessionlessCleanup(
             workers=workers,
             resources=resources,
@@ -296,6 +298,8 @@ class CoordinatorCleanup:
         """Retire closed local mappings independently from report receipts."""
         finalized_ns = self.clock()
         session_id = session.work.session.session_id
+        if self.retire_preview_status is not None:
+            self.retire_preview_status(session_id)
         self.commands.finalize_work(session_id, finalized_ns)
         for worker in self.workers.values():
             if worker.context.work == session.work:

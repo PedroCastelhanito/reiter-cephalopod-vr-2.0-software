@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-19",
+  "source_baseline": "source-baseline.json",
+  "vulture_version": "2.16",
+  "installation": {
+    "command": ".venv/Scripts/python.exe -m pip install vulture==2.16",
+    "result": "Successfully installed vulture-2.16; uses the existing dev dependency pin in pyproject.toml. No dependency declaration changed."
+  },
+  "scope": "Continued Ponytail review of fresh Vulture candidates; individual caller/interface/ownership review, not automatic deletion or exhaustive certification of remaining findings.",
+  "decisions": [
+    "ARCH-002",
+    "E08",
+    "E14",
+    "E15",
+    "T08",
+    "T09",
+    "V15"
+  ],
+  "advisory_counts": {
+    "before": {
+      "total": 302,
+      "source": 278,
+      "high_confidence": 6,
+      "generated_swig": 6
+    },
+    "after": {
+      "total": 287,
+      "source": 263,
+      "high_confidence": 6,
+      "generated_swig": 6
+    }
+  },
+  "caller_evidence": "caller-trace.json",
+  "source_check": "source-check.txt",
+  "changes": "changes.patch",
+  "removed": {
+    "tracking": [
+      "Write-only last_completion_ns initialization/completion observations in pose and movement workers; active pending_since_ns watchdog and output timestamps retained.",
+      "Never-read diagnostic_association placeholder and now-unused Association import; concrete association implementations retained."
+    ],
+    "visual_stimulus": [
+      "Two write-only duplicate cached display limits; request limits/budgets/strict root validation remain."
+    ],
+    "windows": [
+      "Six unused constant assignments: WAIT_FAILED in byte_stream_native and jobs, EVENT_MANUAL_RESET, STILL_ACTIVE, SECTION_QUERY, NV_ENC_PARAMS_RC_CONSTQP. Active flags, ABI declarations, error handling and native ownership unchanged."
+    ]
+  },
+  "retained_categories": [
+    {
+      "category": "Unused callback/test-double parameters",
+      "reason": "Signatures retain their positional ABI/call compatibility; six high-confidence reports are not removable operations."
+    },
+    {
+      "category": "Generated SWIG source",
+      "reason": "Generated local binding is not hand-edited."
+    },
+    {
+      "category": "Schema, protocol and Protobuf members; RPC/Qt/validator hooks",
+      "reason": "Used by serialization, structural contracts, generated dispatch or frameworks; static name absence is not proof of dead code."
+    },
+    {
+      "category": "Native ABI fields and owner references",
+      "reason": "Native calls access fields and private references pin buffer/resources; no ownership removal."
+    },
+    {
+      "category": "Assignments with validation/diagnostic effects",
+      "reason": "Keep strict path resolution, required-policy validation, failure evidence and diagnostic state pending further individual review."
+    }
+  ],
+  "checks": {
+    "ruff": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "tools",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "output": "ruff.txt"
+    },
+    "format": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src/cephvr/tracking/processing/movement.py",
+        "src/cephvr/tracking/processing/pose.py",
+        "src/cephvr/tracking/processing/session.py",
+        "src/cephvr/visual_stimulus/resources/session.py",
+        "src/cephvr/platform/windows/byte_stream_native.py",
+        "src/cephvr/platform/windows/events.py",
+        "src/cephvr/platform/windows/jobs.py",
+        "src/cephvr/platform/windows/mappings.py",
+        "src/cephvr/platform/windows/nvenc_capabilities.py"
+      ],
+      "exit_code": 0,
+      "output": "format.txt"
+    },
+    "mypy": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "--platform",
+        "win32",
+        "src/cephvr"
+      ],
+      "exit_code": 0,
+      "output": "mypy.txt"
+    },
+    "boundaries": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "tools/check_backend_boundaries.py"
+      ],
+      "exit_code": 0,
+      "output": "boundaries.txt"
+    },
+    "vulture-high": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "vulture"
+      ],
+      "exit_code": 3,
+      "output": "vulture-high.txt"
+    },
+    "pip-check": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "exit_code": 0,
+      "output": "pip-check.txt"
+    }
+  },
+  "owner_tests": {
+    "command": "owner-command.json",
+    "result": "352 passed, 1 skipped, 24 deselected in 3.33s",
+    "output": "owner-tests.txt"
+  },
+  "integration_tests": {
+    "command": "integration-command.json",
+    "result": "2233 passed, 4 skipped, 32 deselected in 23.23s",
+    "output": "integration-tests.txt"
+  },
+  "source_sha256": {
+    "src/cephvr/tracking/processing/movement.py": "4fd1a9c56395219e8818742a3e706f11fa52a4e6617b68123c93dcf4b8473db9",
+    "src/cephvr/tracking/processing/pose.py": "0b2182ca16efe3197e87de4f6f9c369b2abaa9aa10f4c3f0dd628389337e6bd3",
+    "src/cephvr/tracking/processing/session.py": "3546049ba1a59a3d67062ffd985be700ed3a12833e450582a964818cb09d228c",
+    "src/cephvr/visual_stimulus/resources/session.py": "61ada014cd67a5b99cd24516d9222e4447c84cef7d226a7593941af9fbd35f18",
+    "src/cephvr/platform/windows/byte_stream_native.py": "4464f6147532b94e0d3555ab7513119f01d115dca9a2beaed5fc2244c6477888",
+    "src/cephvr/platform/windows/events.py": "3d3f9ec50e81a92830695bd26eb8fc972b84d34ff46d74047e29187d8b533e3a",
+    "src/cephvr/platform/windows/jobs.py": "27c96a1c41447158b590e50e7f87c7687d4a6f540a2051d052e2b2d8b748a5c3",
+    "src/cephvr/platform/windows/mappings.py": "1684c01394708993eddada7cbe602c88537c085ff32136b3334f1d11662ebf32",
+    "src/cephvr/platform/windows/nvenc_capabilities.py": "1d6e52f3885de49c3de6af8acbc68cb967e773824bd2933a0f9682d0cf0650f2"
+  },
+  "changes_summary": "Nine source files, 16 lines deleted, no added logic or test assertion changes. Existing owning behavior suites cover progress, resource preparation and native-boundary adapters.",
+  "limits": "GUI tests not rerun (no GUI edit in this increment); Windows/rig tests excluded; no native ABI, hardware, scientific timing, throughput or performance certification. Vulture exits 3 for advisory findings; it is not a CI gate. Existing unrelated/concurrent edits preserved.",
+  "documentation": "New backend-report links/anchors resolve. TODO leaves remaining advisory triage in Next; LOG records the completed increment. Final whitespace check and all nine validated source fingerprints pass."
+}

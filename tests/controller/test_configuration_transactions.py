@@ -837,3 +837,59 @@ async def test_configuration_commit_rechecks_edit_guard_without_rejecting_unrela
     assert runtime.configuration_state.current.subject == (
         "" if conflicting_edit else "changed"
     )
+
+
+async def test_configuration_rejection_explains_missing_provider(monkeypatch):
+    runtime = _runtime()
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    runtime.configuration_commands.validators = {
+        "synchronization": lambda _: pb.ValidationResult(
+            component="synchronization",
+            completed=False,
+            valid=False,
+            unavailable_reason=pb.Failure(
+                code="VALIDATOR_UNAVAILABLE",
+                message="synchronization configuration validator is not installed",
+            ),
+        )
+    }
+    admission = await runtime.update_configuration(_update_request(runtime, "changed"))
+    assert admission.result == pb.COMMAND_RESULT_REJECTED
+    assert "synchronization: VALIDATOR_UNAVAILABLE" in admission.failure.message
+    assert "configuration validator is not installed" in admission.failure.message
+
+
+@pytest.mark.parametrize("typed_settings", [False, True])
+async def test_installed_synchronization_validator_accepts_pairing_and_later_edits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, typed_settings: bool
+) -> None:
+    runtime = _runtime()
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    # Discovery and pure edits need neither host TOMLs nor a running command server.
+    validators = controller_validators(_installed_validators(tmp_path))
+    runtime.configuration_commands.validators = validators
+    request = _update_request(runtime, "paired")
+    backend = request.proposed.backends.add(
+        backend_name="synchronization", enabled=True
+    )
+    if typed_settings:
+        backend.synchronization.SetInParent()
+    revision = runtime.configuration_state.revision
+
+    admission = await runtime.update_configuration(request)
+
+    assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+    assert runtime.configuration_state.revision == revision + 1
+    assert runtime.configuration_state.current.backends[0].enabled
+    result = validators["synchronization"](runtime.configuration_state.current)
+    assert result.completed and result.valid
+    assert result.configuration_module_version != "inactive"
+
+    request = _update_request(runtime, "changed")
+    request.proposed.CopyFrom(runtime.configuration_state.current)
+    request.proposed.subject = "changed"
+    admission = await runtime.update_configuration(request)
+
+    assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+    assert runtime.configuration_state.current.subject == "changed"
+    assert runtime.configuration_state.current.backends[0].enabled

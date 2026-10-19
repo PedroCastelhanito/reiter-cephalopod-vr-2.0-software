@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// A11 protocol v4 for the COM8 Arduino Uno. Installation is manual.
+// A11 protocol v5 for the COM8 Arduino Uno. Installation is manual.
 // Timer1 owns camera edges; serial parsing and diagnostics stay in loop().
 namespace {
 
@@ -246,10 +246,10 @@ void command(char *buffer) {
   if (strcmp(verb, "CAPS") == 0) {
     const char *allowed[] = {"id"};
     if (!knownFields(keys, count, allowed, 1)) { error(id, F("UNKNOWN_FIELD")); return; }
-    ReplySize size; prefix(id, size); size.println(F(" protocol=4 firmware=cephvr2_uno_4 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    ReplySize size; prefix(id, size); size.println(F(" protocol=5 firmware=cephvr2_uno_5 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
     if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
     lastRequestMs = millis(); prefix(id);
-    Serial.println(F(" protocol=4 firmware=cephvr2_uno_4 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    Serial.println(F(" protocol=5 firmware=cephvr2_uno_5 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
     return;
   }
   if (strcmp(verb, "STATUS") == 0 || strcmp(verb, "PING") == 0) {
@@ -309,8 +309,17 @@ void command(char *buffer) {
           error(id, F("TIMER_CONFLICT")); return;
         }
     }
-    stopAll();
+    bool changed[kOutputCount] = {};
     for (uint8_t i = 0; i < kOutputCount; ++i) {
+      changed[i] = outputs[i].enabled != requested[i].enabled ||
+        (requested[i].enabled && (outputs[i].pin != requested[i].pin ||
+          outputs[i].requestedHz != requested[i].requestedHz ||
+          outputs[i].step != requested[i].step));
+    }
+    // Release every changed old pin before assigning any new one (including swaps).
+    for (uint8_t i = 0; i < kOutputCount; ++i) if (changed[i]) stopOutput(i);
+    for (uint8_t i = 0; i < kOutputCount; ++i) {
+      if (!changed[i]) continue;
       outputs[i].enabled = requested[i].enabled;
       outputs[i].pin = requested[i].pin;
       outputs[i].step = requested[i].step;
@@ -323,7 +332,8 @@ void command(char *buffer) {
     }
     watchdogMs = requestedWatchdog; configured = true; watchdogStopped = false;
     lastRequestMs = millis();
-    for (uint8_t i = 0; i < kOutputCount; ++i) if (resume[i]) startOutput(i);
+    for (uint8_t i = 0; i < kOutputCount; ++i)
+      if (changed[i] && resume[i]) startOutput(i);
     status(id); return;
   }
   if (strcmp(verb, "DIAG_STATUS") == 0 || strcmp(verb, "DIAG_STOP") == 0) {

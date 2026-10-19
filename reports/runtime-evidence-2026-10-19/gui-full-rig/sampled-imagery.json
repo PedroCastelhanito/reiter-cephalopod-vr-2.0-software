@@ -1,0 +1,62 @@
+[
+  {
+    "video": "GUIRIG_172854_behavioral_cam.mp4",
+    "sample_time_s": 300,
+    "mean_rgb": [
+      102.66486543759271,
+      128.82069426785336,
+      142.20938890654799
+    ],
+    "stddev_rgb": [
+      52.22356388199567,
+      59.23564332275145,
+      59.52328013493891
+    ],
+    "image": "reports\\runtime-evidence-2026-10-19\\gui-full-rig\\GUIRIG_172854_behavioral_cam-300s.png"
+  },
+  {
+    "video": "GUIRIG_172854_eye_tracking_cam.mp4",
+    "sample_time_s": 300,
+    "mean_rgb": [
+      3.255208333333333e-05,
+      0.00017230902777777777,
+      3.255208333333333e-05
+    ],
+    "stddev_rgb": [
+      0.009478538408524315,
+      0.020863848415622114,
+      0.009478538408524315
+    ],
+    "image": "reports\\runtime-evidence-2026-10-19\\gui-full-rig\\GUIRIG_172854_eye_tracking_cam-300s.png"
+  },
+  {
+    "video": "GUIRIG_172854_stimulus.mp4",
+    "sample_time_s": 300,
+    "mean_rgb": [
+      78.11679361979166,
+      78.11679361979166,
+      78.11679361979166
+    ],
+    "stddev_rgb": [
+      102.84877860484808,
+      102.84877860484808,
+      102.84877860484808
+    ],
+    "image": "reports\\runtime-evidence-2026-10-19\\gui-full-rig\\GUIRIG_172854_stimulus-300s.png"
+  },
+  {
+    "video": "GUIRIG_172854_tracking_cam.mp4",
+    "sample_time_s": 300,
+    "mean_rgb": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "stddev_rgb": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "image": "reports\\runtime-evidence-2026-10-19\\gui-full-rig\\GUIRIG_172854_tracking_cam-300s.png"
+  }
+]

@@ -187,7 +187,12 @@ class ManagedPrompts:
         self.prompt_buttons.clear()
         allowed = can_respond and prompt.prompt_id not in self.pending_prompt_ids
         for choice in prompt.permitted_choices:
-            button = QPushButton(choice, self.prompt_dialog)
+            label = {
+                "recover": "Start recovery",
+                "delete": "Cancel and delete files",
+            }.get(choice, choice)
+            button = QPushButton(label, self.prompt_dialog)
+            button.setAutoDefault(False)
             button.setEnabled(allowed)
             button.clicked.connect(
                 lambda _checked=False, value=choice, encoded=stamped: self._respond(

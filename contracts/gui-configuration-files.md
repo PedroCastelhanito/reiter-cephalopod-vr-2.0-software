@@ -59,6 +59,13 @@ and `eye_tracking`. Pins are wiring for logical roles, independent of camera
 inventory and participation. No camera Use flags are stored or restored here;
 Cameras/full GUI files own participation. Unset pins and port remain valid local drafts.
 
+The recognized `review_inputs` and `review_outputs` extensions are shared by runtime
+and Review; their historical names remain for file compatibility. Inputs is a list
+of `{name: text, pin: text, enabled: boolean}` drafts. Outputs has exactly `selected`
+(unique supported signal identities) and `templates` (unassigned pin text). Retain
+unfinished definitions; legacy files without these fields restore empty drafts.
+Input authoring does not enable A11's deferred physical input capture/diagnostics.
+
 Version 1/2 files migrate camera-keyed pins through the current known camera-role
 mapping, or the saved camera roles when embedded in a full GUI file; reject unknown
 or ambiguous assignments without changing current drafts.
@@ -98,7 +105,7 @@ and acquired-source lineage. Source mismatch invalidates spatial calibration as
 required by T20/G01. Inactive loaded drafts survive local submission until Tracking
 is enabled, when ordinary strict encoding/validation applies.
 
-Projector-only Load…/Save as… keeps portable full version 7/numeric version 4,
+Projector-only Load…/Save as… keeps portable full version 11/numeric version 8,
 older format migrations and calibration/profile references under
 [its contract](gui-calibration.md). It does not replace physical display assignments.
 

@@ -539,6 +539,26 @@
         }
       ],
       "default": null
+    },
+    "photodiode_patches": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/PhotodiodePatch"
+          },
+          "maxProperties": 4,
+          "propertyNames": {
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Photodiode Patches"
     }
   },
   "required": [

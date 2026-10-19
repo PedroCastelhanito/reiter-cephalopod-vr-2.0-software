@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
-from typing import Protocol
 
 from cephvr.acquisition.coordinator.commands import (
     retain_worker_command,
@@ -33,7 +32,6 @@ from cephvr.acquisition.ports import ResourcePort, SerialOwnerPort
 from cephvr.acquisition.state import (
     ConfigurationRecord,
     CoordinatorIdentity,
-    PausedPreview,
     PulseRecord,
     ResourceRecord,
     WorkerPreview,
@@ -48,24 +46,6 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.deadlines import remaining_seconds
-
-
-class PreviewPulseLifecycle(Protocol):
-    async def pause_for_pulse_change(
-        self,
-        roles: tuple[int, ...],
-        *,
-        deadline_ns: int,
-        parent_operation: control.OperationContext | None = None,
-    ) -> tuple[PausedPreview, ...]: ...
-
-    async def resume_after_pulse_change(
-        self,
-        token: tuple[PausedPreview, ...],
-        *,
-        deadline_ns: int,
-        parent_operation: control.OperationContext | None = None,
-    ) -> None: ...
 
 
 class ManualPreviewStart:
@@ -97,13 +77,6 @@ class ManualPreviewStart:
         self.device_status = device_status
         self.lock = lock
         self.clock = clock
-        self.pulse_lifecycle: PreviewPulseLifecycle | None = None
-
-    def bind_pulse_lifecycle(self, lifecycle: PreviewPulseLifecycle) -> None:
-        """Bind the composed preview lifecycle used for cross-camera MCU edits."""
-        if self.pulse_lifecycle is not None:
-            raise RuntimeError("manual preview pulse lifecycle is already bound")
-        self.pulse_lifecycle = lifecycle
 
     async def start(
         self,
@@ -115,54 +88,37 @@ class ManualPreviewStart:
         run_id: str,
         deadline_ns: int,
     ) -> None:
-        pause_roles = tuple(role for role in external_roles if role != request.camera)
-        paused: tuple[PausedPreview, ...] = ()
-        if pause_roles:
-            if self.pulse_lifecycle is None:
-                raise RuntimeError(
-                    "cross-camera external preview lifecycle is unavailable"
-                )
-            paused = await self.pulse_lifecycle.pause_for_pulse_change(
-                pause_roles, deadline_ns=deadline_ns
-            )
-        try:
-            resolved, revision = await self._resolve_camera_and_pulses(
-                request, worker, setting, policy, external_roles, deadline_ns
-            )
-            if paused:
-                assert self.pulse_lifecycle is not None
-                await self.pulse_lifecycle.resume_after_pulse_change(
-                    paused, deadline_ns=deadline_ns
-                )
-                paused = ()
-            self.device_status.resolve_camera(
-                int(request.camera),
-                resolved,
-                device_open=True,
-                configuration_revision=revision,
-            )
-            preview = await self._prepare_preview_run(
-                request,
-                worker,
-                setting,
-                policy,
-                resolved,
-                run_id,
-                revision,
-                deadline_ns,
-            )
-            new_role = (
-                (int(request.camera),) if request.camera in external_roles else ()
-            )
-            await self._start_prepared_preview(
-                request, worker, preview, new_role, deadline_ns
-            )
-        except BaseException:
-            if paused and self.pulse_lifecycle is not None:
-                await self.pulse_lifecycle.resume_after_pulse_change(
-                    paused, deadline_ns=deadline_ns
-                )
-            raise
+        # An internally clocked camera does not change the shared MCU mask.
+        if request.camera not in external_roles:
+            external_roles = ()
+        await self.device_status.progress(
+            request.command,
+            request.camera,
+            "Applying camera settings…",
+            deadline_ns=deadline_ns,
+        )
+        resolved, revision = await self._resolve_camera_and_pulses(
+            request, worker, setting, policy, external_roles, deadline_ns
+        )
+        self.device_status.resolve_camera(
+            int(request.camera),
+            resolved,
+            device_open=True,
+            configuration_revision=revision,
+        )
+        await self.device_status.progress(
+            request.command,
+            request.camera,
+            "Preparing capture buffers…",
+            deadline_ns=deadline_ns,
+        )
+        preview = await self._prepare_preview_run(
+            request, worker, setting, policy, resolved, run_id, revision, deadline_ns
+        )
+        new_role = (int(request.camera),) if request.camera in external_roles else ()
+        await self._start_prepared_preview(
+            request, worker, preview, new_role, deadline_ns
+        )
 
     async def _resolve_camera_and_pulses(
         self,
@@ -390,6 +346,12 @@ class ManualPreviewStart:
             configuration_revision=preview.configuration_revision,
             preview_run_id=preview.run_id,
         )
+        await self.device_status.progress(
+            command,
+            request.camera,
+            "Arming capture…" if external_roles else "Starting free-running capture…",
+            deadline_ns=deadline_ns,
+        )
         receipt = await start_port.start_preview(start, deadline_ns=deadline_ns)
         if receipt.result != control.COMMAND_RESULT_ACCEPTED:
             raise RuntimeError("manual preview start was rejected")
@@ -399,6 +361,12 @@ class ManualPreviewStart:
         if not state.succeeded:
             raise RuntimeError(state.failure.message or "manual preview start failed")
         if external_roles:
+            await self.device_status.progress(
+                command,
+                request.camera,
+                "Starting external triggers…",
+                deadline_ns=deadline_ns,
+            )
             invalidate_released_idle_proof(self.pulse)
             evidence = await self.serial.on(
                 external_roles,
@@ -406,6 +374,9 @@ class ManualPreviewStart:
                 deadline_ns=deadline_ns,
             )
             retain_applied_pulse_state(self.pulse, evidence, deadline_ns=deadline_ns)
+        await self.device_status.progress(
+            command, request.camera, "Waiting for frames…", deadline_ns=deadline_ns
+        )
         await _wait_event(preview.started_event, deadline_ns, self.clock)
         if not preview.started:
             raise RuntimeError("manual preview has no retained first usable frame")

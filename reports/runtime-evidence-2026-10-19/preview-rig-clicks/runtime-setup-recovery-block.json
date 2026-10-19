@@ -1,0 +1,10 @@
+[
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "d441060d-06f5-4cdf-aed8-e5304cf63d93",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+]

@@ -1,0 +1,54 @@
+{
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_behavioral_cam.mp4": {
+    "bytes": 619627485,
+    "sha256": "205ed7be750849eed81015449e2db5336e9558bf00437bed9a68c1113aa588e0"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_behavioral_cam_frames.jsonl": {
+    "bytes": 2514033,
+    "sha256": "9048674cc6dd5bbe7e8b5b54c4eceaf19953e9fd92073fa20f2eff7c04d059f6"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_eye_tracking_cam.mp4": {
+    "bytes": 606563139,
+    "sha256": "b2f6e15ea67afc0a7ba3dce9b0eb8783607332f7df51f0078b5d82ff22a8d1ba"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_eye_tracking_cam_frames.jsonl": {
+    "bytes": 5056978,
+    "sha256": "19f6ecc9a0de38dbb811247793ef4e8b44093eaeca5d2e541beca679dfc30889"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_LOG.json": {
+    "bytes": 17381,
+    "sha256": "ac8ab7bceb3ab106bba9c0f268433493b6834ecc51ff14b3dc21786f3aeec2d8"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_stimulus.mp4": {
+    "bytes": 383528899,
+    "sha256": "6eea17bb781e45c02ba0a2bf64d1f98cc13a6510d9a2fe50a83de6adba6adaad"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_stimulus_frames.jsonl": {
+    "bytes": 75100332,
+    "sha256": "b24cfaa5a8d595d69ce83505f91bfc64efd5287a065111bb6bd3b7ef224495e8"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_stimulus_LOG.json": {
+    "bytes": 38853,
+    "sha256": "9f21a5f8833b1de064686b0b7113e77bd94b86d7a195348c5a8352c33bc82030"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_tracking_cam.mp4": {
+    "bytes": 2345943,
+    "sha256": "d428ac2ad1ed91f0e63832578feb925ff2253cfe8d6fb7604278e73bb56a484c"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_tracking_cam_frames.jsonl": {
+    "bytes": 5053870,
+    "sha256": "3267acd230a8c5377799c70134aed408d49258f48ff4940277760bfb5157af9d"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\SCHEMA.json": {
+    "bytes": 11462,
+    "sha256": "8efd2723449c9b2e75160829049505028926eef3e38faca4d5649ab356747ac0"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\SESSION_CONFIG.json": {
+    "bytes": 35141,
+    "sha256": "60cc45653ffac1024639ce8f371acf5e1ccb17aa60ec60f5c23e849f23f30e22"
+  },
+  ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\SESSION_LOG.jsonl": {
+    "bytes": 605,
+    "sha256": "1265719fbb11f1c243de7230e36f96ec4574299b4393aacafc8bd2c1e5eff204"
+  }
+}

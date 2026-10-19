@@ -34,7 +34,7 @@ class TrialPreview(QDialog):
         super().__init__(parent)
         if not screens:
             raise ValueError("Enable a projector in Devices before opening Preview")
-        self.plan = PreviewPlan(program)
+        self.plan = PreviewPlan(program, geometry.artifact().display.geometry)
         self.setWindowTitle("Trial preview")
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.resize(960, 720)

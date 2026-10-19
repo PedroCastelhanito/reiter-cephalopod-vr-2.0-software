@@ -57,11 +57,7 @@ class DevicesPage(QWidget):
         self.side_rail = False
         self.rail_mode = False
         self.cameras = CamerasPanel(sample=sample)
-        self.microcontroller = MicrocontrollerPanel(settings=settings, review=review)
-        if review:
-            from cephvr.gui.review_devices import arrange_devices
-
-            arrange_devices(self.microcontroller)
+        self.microcontroller = MicrocontrollerPanel(settings=settings)
         self.wiring_dialog: McuWiringEditor | None = None
         self.wiring_identity: tuple[object, ...] | None = None
         self.cameras.drafts_changed.connect(self.sync_cameras)

@@ -76,10 +76,6 @@ class OverlappedPipe:
             maximum_read_bytes=maximum_read_bytes,
         )
 
-    @property
-    def has_pending_io(self) -> bool:
-        return self._pending is not None
-
     def write(self, data: bytes | memoryview, *, deadline_ns: int) -> None:
         if not self.writable or self._closed:
             raise WindowsLaunchError("byte-stream endpoint is not writable")

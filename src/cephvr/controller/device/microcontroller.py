@@ -164,8 +164,17 @@ class MicrocontrollerCommands:
     ) -> None:
         assert self.owner is not None
         failure = ""
+
+        def progress(action: str) -> None:
+            self.hooks.update_progress(
+                operation.operator_id, f"Microcontroller · {action}"
+            )
+            self.hooks.publish()
+
         try:
-            await self.owner.execute(request, pulses, operation.deadline_ns)
+            await self.owner.execute(
+                request, pulses, operation.deadline_ns, progress=progress
+            )
             if self.clock() >= operation.deadline_ns:
                 raise TimeoutError(
                     "Microcontroller completion missed its original deadline"

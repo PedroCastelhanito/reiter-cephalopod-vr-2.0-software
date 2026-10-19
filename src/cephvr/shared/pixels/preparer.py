@@ -35,7 +35,7 @@ class PixelPreparer:
 
     The pypylon wrapper exposes ``Convert(source)`` and allocates the result image
     inside the binding. Its memoryview attachment can make a private source copy;
-    CephVR-owned outputs remain caller buffers or one reusable bytearray.
+    CephVR-owned outputs remain caller buffers or cached preview bytearrays.
     """
 
     def __init__(self, layout: PixelLayout) -> None:
@@ -71,16 +71,10 @@ class PixelPreparer:
         )
         self._row_bytes = layout.width * self._channels * (self._container_bits // 8)
         self._output_bytes = self._row_bytes * layout.height
-        self._reusable_output = bytearray(self._output_bytes)
         self._preview_outputs: dict[int, bytearray] = {}
         self._scale_scratch = self._numpy.empty(
             layout.width * layout.height * self._channels, dtype=self._numpy.uint64
         )
-
-    def prepare_source_depth(
-        self, native_pixels: bytes | bytearray | memoryview
-    ) -> PreparedImage:
-        return self.prepare_source_depth_into(native_pixels, self._reusable_output)
 
     def prepare_source_depth_into(
         self,

@@ -1,0 +1,28 @@
+...FFF                                                                   [100%]
+================================== FAILURES ===================================
+___ test_terminal_stage_consumes_its_wake_before_capture_drain[True-stage] ____
+tests\acquisition\test_worker_foundations.py:2228: in test_terminal_stage_consumes_its_wake_before_capture_drain
+    assert observed == ([None] if new_wake else [True])
+E   assert [False] == [None]
+E     
+E     At index 0 diff: False != None
+E     Use -v to get more diff
+_ test_terminal_stage_consumes_its_wake_before_capture_drain[True-StopTrial] __
+tests\acquisition\test_worker_foundations.py:2228: in test_terminal_stage_consumes_its_wake_before_capture_drain
+    assert observed == ([None] if new_wake else [True])
+E   assert [False] == [None]
+E     
+E     At index 0 diff: False != None
+E     Use -v to get more diff
+_ test_terminal_stage_consumes_its_wake_before_capture_drain[True-InterruptSession] _
+tests\acquisition\test_worker_foundations.py:2228: in test_terminal_stage_consumes_its_wake_before_capture_drain
+    assert observed == ([None] if new_wake else [True])
+E   assert [False] == [None]
+E     
+E     At index 0 diff: False != None
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_worker_foundations.py::test_terminal_stage_consumes_its_wake_before_capture_drain[True-stage]
+FAILED tests/acquisition/test_worker_foundations.py::test_terminal_stage_consumes_its_wake_before_capture_drain[True-StopTrial]
+FAILED tests/acquisition/test_worker_foundations.py::test_terminal_stage_consumes_its_wake_before_capture_drain[True-InterruptSession]
+3 failed, 3 passed, 86 deselected in 0.20s

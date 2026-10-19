@@ -136,7 +136,7 @@ async def test_release_requires_both_exact_owner_receipts() -> None:
             self.accepted = accepted
             self.reports: list[svc.PreviewConsumerReport] = []
 
-        async def report_preview_consumer_state(self, report):
+        async def report_preview_consumer_state(self, report, *, deadline_ns):
             self.reports.append(report)
             await asyncio.sleep(0)
             return pb.ReportReceipt(
@@ -193,7 +193,7 @@ async def test_close_retains_controller_ownership_when_release_receipt_is_reject
         def __init__(self, accepted: bool):
             self.accepted = accepted
 
-        async def report_preview_consumer_state(self, _report):
+        async def report_preview_consumer_state(self, _report, *, deadline_ns):
             return pb.ReportReceipt(
                 result=(
                     pb.COMMAND_RESULT_ACCEPTED
@@ -226,6 +226,16 @@ async def test_close_retains_controller_ownership_when_release_receipt_is_reject
     assert owner._attachment is attachment
 
     owner.backends["acquisition"] = Recipient(True)
+    closed_status.failure_message = "invalid diagnostic draft"
+    with pytest.raises(RuntimeError, match="invalid diagnostic draft"):
+        await owner._wait_for_status(
+            backend,
+            expected,
+            attachment,
+            pb.ProcessIdentity(role="gui", generation=str(uuid4())),
+            1_000_000_000,
+            active=True,
+        )
     result = await owner._close_owned(
         expected,
         backend,
@@ -401,3 +411,69 @@ async def test_tracking_diagnostic_begin_rejection_matrix_leaves_no_admitted_own
         reply.result == pb.COMMAND_RESULT_REJECTED and reason in reply.failure.message
     )
     assert owner.control.tracking_diagnostic.SerializeToString() == before
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("begin", [False, True])
+@pytest.mark.parametrize("result_kind", ["accepted", "rejected", "capacity"])
+async def test_operator_diagnostic_reserves_before_work_and_retains_terminal_outcome(
+    begin, result_kind
+):
+    owner = TrackingDiagnosticController.__new__(TrackingDiagnosticController)
+    owner.lifecycle = SimpleNamespace(lock=asyncio.Lock())
+    owner._publish_locked = lambda: None
+    operations = {}
+    effects = []
+
+    def reserve(command_id, name):
+        operations[command_id] = pb.OperationState(
+            context=pb.OperationContext(command_id=command_id), command=name
+        )
+
+    def complete(command_id, *, success, progress, error):
+        operation = operations[command_id]
+        operation.complete = True
+        operation.succeeded = success
+        operation.failure.message = error
+
+    owner.hooks = SimpleNamespace(
+        authorized=lambda _: (
+            "retained operation capacity exhausted" if result_kind == "capacity" else ""
+        ),
+        operation=reserve,
+        complete_operation=complete,
+    )
+    request = (
+        svc.BeginTrackingDiagnosticRequest()
+        if begin
+        else svc.CloseTrackingDiagnosticRequest()
+    )
+    request.command.operator.command_id = str(uuid4())
+    command_id = request.command.operator.command_id
+
+    async def action(_request):
+        assert command_id in operations and not operations[command_id].complete
+        await asyncio.sleep(0)
+        effects.append("exact backend and release evidence")
+        return pb.CommandAdmission(
+            command_id=command_id,
+            result=pb.COMMAND_RESULT_ACCEPTED
+            if result_kind == "accepted"
+            else pb.COMMAND_RESULT_REJECTED,
+            failure=pb.Failure(
+                message="" if result_kind == "accepted" else "release unconfirmed"
+            ),
+        )
+
+    owner.begin = owner.close = action
+    reply = await owner.execute_operator(request)
+    if result_kind == "capacity":
+        assert not effects and not operations
+        assert reply.result == pb.COMMAND_RESULT_REJECTED
+    else:
+        retained = operations[command_id]
+        assert retained.complete and retained.succeeded is (result_kind == "accepted")
+        assert retained.command == (
+            "BeginTrackingDiagnostic" if begin else "CloseTrackingDiagnostic"
+        )
+        assert bool(retained.failure.message) is (result_kind == "rejected")

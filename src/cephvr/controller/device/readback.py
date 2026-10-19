@@ -64,10 +64,32 @@ class CameraReadback:
     async def accept_operation_completion(
         self, payload: pb.BackendOperationReport, ingress_ns: int
     ) -> pb.ReportReceipt:
-        """Acknowledge only the operation already proved by exact device status."""
+        """Project live action detail; require exact device proof for completion."""
         async with self.lifecycle.lock:
             operation = self.status_retention.find(payload.operation.context.command_id)
             backend = self.backends.get("acquisition")
+            if not payload.operation.complete:
+                if (
+                    operation is None
+                    or operation is not self.device.camera_operation
+                    or backend is None
+                    or payload.source != backend.context
+                    or payload.operation.work != operation.work
+                    or payload.operation.command != "CameraAction"
+                    or payload.operation.HasField("succeeded")
+                    or payload.operation.HasField("failure")
+                    or not payload.operation.progress
+                    or len(payload.operation.progress.encode("utf-8")) > 2048
+                    or ingress_ns > operation.deadline_ns
+                    or operation.final_status is not None
+                    or operation.timed_out
+                ):
+                    return rejected_receipt("EVIDENCE", "camera action is not current")
+                self.hooks.update_progress(
+                    operation.operator_id, payload.operation.progress
+                )
+                self.hooks.publish()
+                return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
             if (
                 operation is None
                 or backend is None
@@ -272,8 +294,11 @@ class CameraReadback:
                 success
                 and view.preview_run_id == operation.preview_run_id
                 and view.HasField("preview_visible")
-                and view.preview_visible
-                == (operation.kind == svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW)
+                and (
+                    operation.preview_update_only
+                    or view.preview_visible
+                    == (operation.kind == svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW)
+                )
             )
         elif (
             operation.kind == svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER and success

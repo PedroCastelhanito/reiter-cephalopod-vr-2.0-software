@@ -1,0 +1,18 @@
+[
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\cameras.py",
+    "Hash": "EE3539FDDBBFC289A32ED84096BDA1FEAA2293179F50C1C05CAED262277839E8"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_preview_surfaces.py",
+    "Hash": "898D138E5E5A1232D0AD51D0000EFF2BBBE7BD5F3D4A544FE223A1670A69D3F0"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\gui\\test_dashboard.py",
+    "Hash": "D2AE22BF4766E72993255586F9EABA1E0C059B184FA2627DD96C29A33231F5AA"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\gui\\test_tracking_live.py",
+    "Hash": "66F49BC149F98E13E77BC3BAD139FECCCDBB2AC17F9256FB4EE21B71CA9BC86E"
+  }
+]

@@ -400,6 +400,13 @@ class TrackingRuntime:
         outcome: pb.OperationState,
         deadline_ns: int,
     ) -> None:
+        if (
+            method in {"BeginDiagnostic", "CloseDiagnostic"}
+            and command.work.WhichOneof("work") is None
+            and not self.diagnostic.active
+            and self.diagnostic.close_confirmed
+        ):
+            return
         self.state.interrupted = True
         self.bound.set()
         self.gate.seal(self.clock())

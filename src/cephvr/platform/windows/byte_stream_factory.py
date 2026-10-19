@@ -44,10 +44,6 @@ class InheritedEndpoint:
     parent: OverlappedPipe
     child_handle: int
 
-    @property
-    def inherited_handle(self) -> int:
-        return self.child_handle
-
     def close_child_copy(self) -> None:
         if self.child_handle:
             if not native_api().CloseHandle(self.child_handle):

@@ -1,0 +1,217 @@
+{
+  "date": "2026-10-19",
+  "method": "read recorded prepared trial and all render-group submission records; inspect saved calibration and current canonical motion resolver",
+  "source_recipe": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY-140646\\protocol-data\\DUMMY_140658_stimulus_LOG.json",
+  "source_sha256": "b645dc3ab35ebc311970e19ed5472f633615f5aafbad16dda2e372a258d96153",
+  "renderer_provenance": {
+    "content_sha256": "5082a4683ab93f9df3e85f2fa4e9b3d24fefa3356aeb8f71db56594edcab6b59",
+    "implementation": "cephvr.visual_stimulus.python-source-v1",
+    "role": "renderer",
+    "version": "2.0.0.dev0"
+  },
+  "owner_observation": "Preview direction correct; Bottom physical motion right-to-left instead of head-to-tail during linked drifting epoch; tearing on Left/Front",
+  "reference": {
+    "instance": "Instance_4",
+    "surface": "bottom",
+    "local_rates": [
+      50.0,
+      0.0,
+      0.0
+    ],
+    "surface_basis": {
+      "surface_id": "bottom",
+      "bottom_left_mm": [
+        124.625,
+        24.333333333333336,
+        2.0
+      ],
+      "bottom_right_mm": [
+        124.625,
+        115.66666666666666,
+        2.0
+      ],
+      "top_right_mm": [
+        -4.625,
+        115.66666666666666,
+        2.0
+      ],
+      "top_left_mm": [
+        -4.625,
+        24.333333333333336,
+        2.0
+      ]
+    }
+  },
+  "follower_phase_rates": {
+    "front": [
+      -0.0,
+      0.4807692307692308,
+      0.0
+    ],
+    "left": [
+      -0.4807692307692308,
+      -0.0,
+      0.0
+    ],
+    "right": [
+      0.4807692307692308,
+      -0.0,
+      0.0
+    ]
+  },
+  "render_groups": 1932,
+  "requested_swap_interval_counts": {
+    "calibration_bottom": {
+      "0": 1932
+    },
+    "calibration_front": {
+      "0": 1932
+    },
+    "calibration_left": {
+      "0": 1932
+    },
+    "calibration_right": {
+      "1": 1932
+    }
+  },
+  "first_phase_samples": [
+    {
+      "group": 0,
+      "host_ns": 408854949017300,
+      "phases": {
+        "Instance_1-phase": [
+          0.0,
+          0.003672115271911025
+        ],
+        "Instance_2-phase": [
+          -0.003672115271911025,
+          0.0
+        ],
+        "Instance_3-phase": [
+          0.003672115271911025,
+          0.0
+        ],
+        "Instance_4-phase": [
+          -0.003672115271911025,
+          0.0
+        ]
+      }
+    },
+    {
+      "group": 1,
+      "host_ns": 408854981240000,
+      "phases": {
+        "Instance_1-phase": [
+          0.0,
+          0.019163798540830612
+        ],
+        "Instance_2-phase": [
+          -0.019163798540830612,
+          0.0
+        ],
+        "Instance_3-phase": [
+          0.019163798540830612,
+          0.0
+        ],
+        "Instance_4-phase": [
+          -0.019163798540830612,
+          0.0
+        ]
+      }
+    }
+  ],
+  "bottom_mapping_path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\calibration\\reference_bottom_a55fd771de44b30f2c1203c221e29154d26118376cff0726b4840c6d53ca4a40.json",
+  "bottom_mapping": {
+    "format_version": 1,
+    "calibration_id": "reference_bottom",
+    "mapping_id": "diagnostic_bottom",
+    "surface_id": "bottom",
+    "output_id": "calibration_bottom",
+    "output_width": 720,
+    "output_height": 1280,
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "width": 720,
+      "height": 1280
+    },
+    "rows": 2,
+    "columns": 2,
+    "vertices": [
+      {
+        "uv": [
+          0.0,
+          0.0
+        ],
+        "xy": [
+          0.010416666666666685,
+          0.87265625
+        ]
+      },
+      {
+        "uv": [
+          1.0,
+          0.0
+        ],
+        "xy": [
+          0.9618055555555556,
+          0.87265625
+        ]
+      },
+      {
+        "uv": [
+          0.0,
+          1.0
+        ],
+        "xy": [
+          0.010416666666666685,
+          0.13828125000000002
+        ]
+      },
+      {
+        "uv": [
+          1.0,
+          1.0
+        ],
+        "xy": [
+          0.9618055555555556,
+          0.13828125000000002
+        ]
+      }
+    ],
+    "orientation": "mirrored",
+    "diagonal": "bottom_left_to_top_right",
+    "mask": null,
+    "weight": null,
+    "overlap_group": null,
+    "valid_area": [
+      0.010416666666666666,
+      0.13828125,
+      0.9618055555555556,
+      0.87265625
+    ],
+    "intended_coverage": [
+      [
+        0.010416666666666685,
+        0.13828125000000002
+      ],
+      [
+        0.9618055555555556,
+        0.13828125000000002
+      ],
+      [
+        0.9618055555555556,
+        0.87265625
+      ],
+      [
+        0.010416666666666685,
+        0.87265625
+      ]
+    ],
+    "coverage_tolerance": 1e-06,
+    "triangle_area_tolerance": 1e-09
+  },
+  "assessment": "Recorded Bottom phase moves along local +X, declared +rig Y (head-to-tail); physical sideways report indicates output-axis calibration discrepancy. Exact quarter-turn/sign needs physical corner identification; no motion code defect established. Left/Front interval zero permits tearing; all-output VSync is an available diagnostic choice, not yet selected.",
+  "changes": "No runtime source, operator configuration, live GUI or hardware changed",
+  "limitations": "No optical inspection; recorded swap interval is requested mode, not driver/scanout proof; this specific run may need owner confirmation."
+}

@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_state": "Shared dirty checkout; listed source hashes bind this assessment. Other chats have concurrent edits.",
+  "source_sha256": {
+    "src/cephvr/controller/lifecycle/setup_execution.py": "38a9e2812448b767594b02da073802289ac0cd12d1ade64d6963fae221750d15",
+    "src/cephvr/controller/lifecycle/preparation_context.py": "dfcee4b3c4a004f4fd23933827a3a6495d5a8020c99bae34da77f2348f6d897e",
+    "src/cephvr/synchronization/client.py": "a586310d8e2c1195436110e7cfec9d03c06a5b69d4e02af31eb9e1beb0b895bb",
+    "src/cephvr/synchronization/native.py": "fab6df4ab09e1930a7da35ccd978e5e0796231230bba7396c911d03372965c18",
+    "src/cephvr/synchronization/sdk_io.py": "ebc5fb9fd08d461f2239c935fcebee642c065bd67003ef6a3d00445dee545a00",
+    "config/backends/synchronization_config.toml": "084c6c470ac786ef3aa00bde6db35d216c220814d285d44bb7c4f4d6c8771338",
+    "contracts/spikeglx_mapping_reference.json": "ae4d7c9ed34d197cc9134ca3de94a2c504aec5015feae5894e7b57e18c337d1c"
+  },
+  "governing_decisions": [
+    "E12 rev23",
+    "E09",
+    "E04",
+    "SYS-004",
+    "E14",
+    "ARCH-002",
+    "E15"
+  ],
+  "method": "Authenticated controller native Setup/Start/60s normal completion/NewSession; second Setup/Start/Abort after12s/NewSession; official SDK saving/readback and read-only remote filenames; inspect_native.py camera/frame accounting and ffprobe counts/full ffmpeg decode; dated raw session copies.",
+  "runs": [
+    {
+      "session_name": "PAIRVERIFY-170744",
+      "trial_outcome": "completed",
+      "closed_outputs": 9,
+      "complete_camera_logs": 3,
+      "decoded_videos": 4,
+      "renderer_groups": 3600,
+      "max_render_gap_ms": 62.5651,
+      "render_gaps_over_100ms": 0,
+      "writing_confirmation_after_session_started_s": 1.2775855,
+      "remote_stop_confirmation_after_trial_cutoff_s": 3.7171105
+    },
+    {
+      "session_name": "PAIRVERIFY-170856",
+      "trial_outcome": "interrupted",
+      "closed_outputs": 9,
+      "complete_camera_logs": 3,
+      "decoded_videos": 4,
+      "renderer_groups": 676,
+      "max_render_gap_ms": 21.5153,
+      "render_gaps_over_100ms": 0,
+      "writing_confirmation_after_session_started_s": 1.2763042,
+      "remote_stop_confirmation_after_trial_cutoff_s": 3.6472985
+    }
+  ],
+  "remote_files": {
+    "method": "official SDK enumDataDir(0), read-only paths, no native-file transfer",
+    "entries": [
+      "C:/SGL_DATA/PAIRVERIFY-170744_g0/PAIRVERIFY-170744_g0_t0.obx0.obx.bin",
+      "C:/SGL_DATA/PAIRVERIFY-170744_g0/PAIRVERIFY-170744_g0_t0.obx0.obx.meta",
+      "C:/SGL_DATA/PAIRVERIFY-170856_g0/PAIRVERIFY-170856_g0_t0.obx0.obx.bin",
+      "C:/SGL_DATA/PAIRVERIFY-170856_g0/PAIRVERIFY-170856_g0_t0.obx0.obx.meta"
+    ],
+    "total_entries": 16
+  },
+  "configuration_restoration": {
+    "runtime_configuration_equal": true,
+    "saved_configuration_equals_original": true,
+    "saved_file_byte_equal": true,
+    "saved_file_reference": "reports\\runtime-evidence-2026-10-19\\camera-timing-verification\\saved-configuration-before.json",
+    "scope": "Restored pre-test DUMMY_2 configuration and exact prior saved bytes whose configuration equals the pinned pre-pair runtime; intermediate failed retries had saved a PAIRVERIFY candidate."
+  },
+  "restored_runtime_equals_original": true,
+  "final_phase": {
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true
+  },
+  "checks": {
+    "focused_controller_tests": "100 passed",
+    "authenticated_rpc_tests": "3 passed,14 deselected",
+    "ruff_check": "6 files pass",
+    "ruff_format": "6 files pass",
+    "mypy_win32": "14 source files pass",
+    "boundaries": "737 modules,0 violations; existing unrelated size/cohesion warnings",
+    "git_diff_check": "pass; existing CRLF normalization notices",
+    "document_links": "New report/checklist sections and complete synchronization/control documents pass local target checks. Whole existing runtime report has pre-existing missing historical log-error-colors.png; unchanged."
+  },
+  "findings_fixed": [
+    "Exact reserved session basename replaces independently composed SpikeGLX name",
+    "Premature SpikeGLX prepared function registration blocked native paired Setup",
+    "Initial-OFF manual recording override now rejects Setup with actionable feedback",
+    "Native SDK timeout now names duration and retains native ownership; operator native timeout5s after initial1s failed read"
+  ],
+  "limits": [
+    "Native file paths verified, file contents not transferred or validated; E09 operator transfer remains",
+    "Pulse reception/electrical or optical alignment not measured",
+    "Tracking processing disabled; three camera recordings enabled",
+    "No stalled-stream/link-loss/recovery/controller-loss or long endurance acceptance",
+    "Hardware event timing is not established by control timestamps; renderer gaps remain software evidence"
+  ]
+}

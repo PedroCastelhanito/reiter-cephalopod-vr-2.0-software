@@ -134,7 +134,7 @@ class RenderOwner:
                             )
                     except BaseException as exc:
                         item.future.set_exception(exc)
-                        if not (
+                        if item.method != "SetStimulusPreview" and not (
                             item.method == "UpdateDisplayCalibration"
                             and isinstance(exc, CalibrationAdjustmentRejected)
                         ):

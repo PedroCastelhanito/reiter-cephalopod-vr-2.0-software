@@ -7,7 +7,6 @@ import shutil
 import uuid
 from collections.abc import Awaitable, Callable, Coroutine, Mapping
 from copy import deepcopy
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +18,6 @@ from cephvr.controller.lifecycle.evidence_wait import EvidenceWaiter
 from cephvr.controller.lifecycle.handoffs import PreparationHandoffs
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.lifecycle.setup_resolution import SetupResolution
-from cephvr.controller.metadata.files import safe_component as _safe_component
 from cephvr.controller.ports import SpikeGLXPort, SupervisorPort
 from cephvr.controller.state import (
     Attempt,
@@ -99,6 +97,7 @@ class SetupExecution:
 
     async def run_setup(self, attempt: Attempt, command_id: str, deadline: int) -> None:
         try:
+            await self._action(command_id, "Checking recording destination…")
             retained_deadline = await self._reserve_output(
                 attempt, command_id, deadline
             )
@@ -107,13 +106,20 @@ class SetupExecution:
             deadline, supervisor = await self._prepare_participants(
                 attempt, command_id, retained_deadline
             )
+            await self._action(command_id, "Resolving settings and recording outputs…")
             await self.resolution.resolve_settings_and_outputs(attempt, deadline)
+            await self._action(command_id, "Registering prepared outputs…")
             await self._register_final_context(
                 attempt, command_id, deadline, supervisor
             )
             await self._publish_ready(attempt, command_id)
         except Exception as exc:
             await self.fail_setup(attempt, command_id, str(exc))
+
+    async def _action(self, command_id: str, action: str) -> None:
+        async with self.lifecycle.lock:
+            self.control_operations.update_progress(command_id, action)
+            self.publisher.publish()
 
     async def _reserve_output(
         self, attempt: Attempt, command_id: str, deadline: int
@@ -215,7 +221,9 @@ class SetupExecution:
     ) -> tuple[int, SupervisorPort]:
         """Confirm paired ephys, preliminary authority, backend Setup and Ready."""
         if attempt.paired:
+            await self._action(command_id, "Preparing SpikeGLX…")
             await self._prepare_spikeglx(attempt, deadline)
+        await self._action(command_id, "Registering backend ownership…")
         supervisor = await self._register_preliminary_context(
             attempt, command_id, deadline
         )
@@ -224,10 +232,15 @@ class SetupExecution:
         )
         for name in attempt.required:
             attempt.setup_operations.setdefault(name, str(uuid.uuid4()))
+        if "acquisition" in attempt.required:
+            await self._action(command_id, "Preparing cameras…")
         await self._setup_acquisition(attempt, deadline)
+        if any(name != "acquisition" for name in attempt.required):
+            await self._action(command_id, "Preparing remaining backends…")
         await self._setup_other_backends(attempt, deadline, closed_loop_handoff)
         if attempt.handoff is not None:
             await self.handoffs.complete_preparation_handoff(attempt, deadline)
+        await self._action(command_id, "Waiting for backend readiness…")
         if await self.evidence_waiter.wait_lifecycle_with_recovery(
             attempt, "setup_ready", frozenset(attempt.required), deadline
         ):
@@ -237,8 +250,7 @@ class SetupExecution:
     async def _prepare_spikeglx(self, attempt: Attempt, deadline: int) -> None:
         """Prepare the paired SpikeGLX run and validate its readback identity."""
         assert self.spikeglx is not None
-        anchor = datetime.fromisoformat(attempt.prepared.anchor_wall_time)
-        expected_run = f"{_safe_component(attempt.prepared.configuration.experiment)}_{_safe_component(attempt.prepared.configuration.subject)}_{anchor.strftime('%Y%m%d')}_{anchor.strftime('%H%M%S')}"
+        expected_run = attempt.reservation.session_directory.name
         preparation = await asyncio.wait_for(
             self.spikeglx.prepare(
                 attempt.prepared.configuration, attempt.context, expected_run
@@ -277,7 +289,14 @@ class SetupExecution:
             initial_registration.admission.result != pb.COMMAND_RESULT_ACCEPTED
             or initial_registration.registered.work.session != attempt.context
         ):
-            raise RuntimeError("supervisor did not register Setup work identity")
+            raise RuntimeError(
+                "supervisor did not register Setup work identity: "
+                + (
+                    initial_registration.failure.message
+                    or initial_registration.admission.failure.message
+                    or "registered work context differs"
+                )
+            )
         attempt.registered_context = deepcopy(initial_registration.registered)
         return supervisor
 

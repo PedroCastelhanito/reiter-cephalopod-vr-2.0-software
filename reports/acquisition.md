@@ -1,5 +1,363 @@
 # Acquisition status
 
+Oct19 `gui-full-rig-test`:600s paired Gaussian run under A07/A08/A09 saves
+17986 Behavior,35973 Tracking and35973 Eye frames. All camera accounting is complete,
+including post-cutoff disposition; zero received-frame drops/invalids and contiguous
+native counters. Every video index/source ID/time association matches; all three
+videos fully decode. Behavior is1760×1716 yuvj444p, Eye1920×1200 and Tracking1588×1344
+yuvj420p, full-range BT709 tags. Durations599.533333/599.55/599.55s follow actual
+frame count divided by nominal30/60Hz under A08; no padding is required. Tags/decode
+do not prove lossless pixels or calibrated color. Exact planned file set and resource
+fingerprints pass. Original runtime/saved bytes restored and all cameras closed.
+
+Early/middle/late Eye/Tracking videos are nearly black, consistent with prior paired
+recordings. Supported image-only diagnostics then acquired five native Mono8 Tracking
+and five BayerRG8 Eye frames using unchanged saved device settings and trigger pins.
+Tracking mean is approximately0.000011 and Eye0.00256 on0–255 scale, with at least
+99.9986%/99.9481% zeros. Thus missing scene content already exists before conversion
+and NVENC; physical cause remains unknown. Exposure/lighting were not changed.
+Operator scene/illumination/lens verification remains required; this workload cannot
+establish representative detailed-image encoding capacity. Diagnostic retry/closure
+and temporary camera-role/pulse assignment restoration are confirmed.
+[Output assessment](runtime-evidence-2026-10-19/gui-full-rig/native-assessment.json),
+[exact associations](runtime-evidence-2026-10-19/gui-full-rig/association-assessment.json),
+[raw input statistics](runtime-evidence-2026-10-19/gui-full-rig/native-image-assessment.json),
+[verification and limits](runtime-evidence-2026-10-19/gui-full-rig/verification.json),
+[remaining acceptance](rig-verification.md).
+
+Oct19 `camera-finalization-stimulus-timing-check`: reproduced early-Abort failure
+with native all-three-camera recording, including a fresh current-source run.
+Diagnostics prove device generation stopped, OFF applied,150ms margin confirmed and
+SDK queue drained; SDK shutdown crossed the250ms activity deadline by2.7/16.5ms.
+The worker incorrectly capped accounting at that activity deadline. Under
+[A10rev69](../docs/architecture/acquisition.md#a10), A07/A08/A09 and E05/E06,
+Stop/Interrupt now acknowledges proven activity stop promptly, then retains the same
+capture continuation and original Finished deadline for SDK drain/accounting.
+The no-writer work scope stays live until Finished, including Cleanup handoff;
+post-ack drain errors still propagate. No timeout, margin, config, output format,
+dependency or process added. ARCH-002 retains focused capture/finalizer/executor
+ownership; existing capture/execution size advisories reflect cohesive ownership.
+
+Fresh corrected runtime: two early Abort/reuse cycles and a60s normal trial save
+all3 camera videos plus stimulus. All27 planned output results are Closed; all9
+camera completions have complete in-trial/post-cutoff accounting and APPLIED ON/OFF.
+No received-camera drops, invalid rows or native-counter gaps; exact source/video
+mappings, identities and counts pass. All12 MP4s fully decode. Abort-to-session-end
+is0.363739s/0.360223s, with cleanup and NewSession confirmed after each run. Normal
+completion also confirms cleanup; later normal execution passes both retired trial
+end times. Owner-authorized Abort of Desktop DUMMY_2-163814 also succeeds. Original
+saved configuration bytes and authoritative runtime configuration are restored;
+final runtime is Configuration/cleanup confirmed.1002 owner/controller/renderer tests
+(3 deselected), scoped Ruff/format4, Win32 mypy41, boundaries736/zero and scoped
+whitespace pass. Dated raw copies, hashes, commands and limitations:
+[verification](runtime-evidence-2026-10-19/camera-timing-verification/verification.json),
+[native artifacts](runtime-evidence-2026-10-19/camera-timing-verification/fixed-run/native-assessment.json).
+Historical failures retain their original uncertainty. Full-load Tracking/SpikeGLX,
+instrumented timing, forced cleanup/finalization races and idle300s/fault matrices
+remain in the [single rig checklist](rig-verification.md).
+
+
+Oct19 `pre-experiment-output-audit`: read-only inspection of four retained Desktop
+open-loop sessions (DUMMY_2-152638/155008/160507/160948), governed by
+[E04](../docs/architecture/supervisor.md#e04),
+[A07](../docs/architecture/acquisition.md#a07) and A09. All planned files exist;
+all JSON/JSONL parse with complete final lines. Camera IDs, contiguous source and
+encoded mappings/counts agree; no logged dropped/invalid images or native-counter
+gaps. All four Behavior MP4s fully decode, match mapping counts and retain exact
+session/trial/role/device tags. Eye/Tracking video was explicitly Off; their required
+source logs exist, but images cannot be recovered from those logs. Tracking processing
+and SpikeGLX were not participants in these open-loop sessions.
+
+Closure remains a pre-experiment blocker: 152638 retains four Unconfirmed acquisition
+outputs and Behavior post-cutoff accounting=false; startup recovery did not certify
+scientific closure. 155008 has Failed Eye-log closure and Eye post-cutoff=false.
+160507/160948 report all outputs Closed with post-cutoff proofs true; their short
+Abort runs do not resolve the separately reported unavailable 161258 recurrence.
+Abort-to-session-end is40.008s,0.345s,0.331s,0.332s respectively. Keep the existing
+`interrupted-finished-abort-proof` task open. No original recording was modified.
+[File hashes, commands, frame counts and assessment](runtime-evidence-2026-10-19/output-audit/assessment.json).
+No new hardware, durability, optical/electrical or full-experiment acceptance.
+
+
+Oct19 DUMMY_2-161258 recurrence: supplied Interrupted Finished keys/paths match;
+video=Unconfirmed, frame log=Closed. Read-only completion inspection found1934
+Behavior admitted/recorded frames but post-cutoff accounting=false; Eye/Tracking
+post-cutoff proofs=true. A02rev34 retains exact Unconfirmed results without normal
+Finished or successful cleanup discharge.4 baseline cases reproduce rejection;258
+coordinator/trial/recording/controller tests pass. Updated tests explicitly retain
+the cleanup closure guard. Ruff/format2, Win32 mypy1, boundaries734/zero pass.
+ARCH-002 keeps the existing validator and owning test module, no new dependency.
+Native drain cause remains unresolved. Session directory became unavailable during
+subsequent evidence capture; no deletion or modification was performed by this task.
+No live restart/recovery/native pass claimed. Existing native Abort task stays open.
+
+Oct19 `abort-late-report`: DUMMY_2-152638/152649 Abort15:28:10.424358 to
+session-end15:28:50.432230 retained the screenshot rejection in the supervisor
+emergency record, attributed to acquisition_behavioral_worker. The session log
+has command/lifecycle events, not the rejected operation RPC. Its command ID/kind
+and exact lateness cause cannot be recovered from these records. Behavior post-cutoff
+accounting is incomplete; Eye/Tracking accounting complete; central acquisition
+outputs remain UNCONFIRMED. Historical recordings/metadata must retain those states.
+
+Fixed the reproducible rejection/escalation mechanism under [A02](../docs/architecture/acquisition.md#a02)
+rev33 and [E06](../docs/architecture/system-contracts.md#e06): exact late complete
+StopTrial/InterruptSession/Cleanup/Shutdown/RecordPulseEvidence status for the matching
+interrupted session is retained without camera readback or parent-success relay.
+Source generation, child ID, work, revision and command-kind matching remain mandatory.
+Active sessions, progress-only reports, readback and stale contexts remain rejected.
+Retained ingress time still makes wait_child_operation raise its original timeout;
+status alone cannot close files/release resources. Rejection messages now identify
+worker generation, command name/ID, completeness and ingress timestamp. No new
+policy duration, process, retry or dependency. ARCH-002 extends the existing small
+operation-evidence owner; unchanged large-module advisories do not require extraction.
+
+Five valid late reports fail the old handler with the screenshot error;346 current
+coordinator/worker/trial/recording/controller tests pass. Ruff/format2, Win32 mypy1,
+boundaries730/zero pass. Initial verification found all11 original files unchanged.
+Diagnostic restart then used Start recovery: only SESSION_LOG.jsonl changed among
+those files (administrative recovery event); other10 retain size/mtime and config
+SHA256 matches. Setup with restored configuration failed before Start: cannot import
+ReviewLayout from visual_stimulus.config.models.artifact_models during concurrent
+composite-preview work. GUI remains in Configuration; no native Abort occurred.
+The346 focused tests passed again. This establishes the
+local rejection bug, not unique original command attribution or a native closure pass.
+Fresh native Abort and underlying late-drain cause remain in interrupted-finished-abort-proof
+and the [rig checklist](rig-verification.md). [Read-only evidence and verification](runtime-evidence-2026-10-19/abort-late-report/assessment.json).
+
+Oct19 `interrupted-finished-abort-proof`: repaired a reproducible terminal-drain
+failure under [A10](../docs/architecture/acquisition.md#a10) rev68,
+[A07/A08/A09](../docs/architecture/acquisition.md#a07) and
+[E06](../docs/architecture/system-contracts.md#e06). A fresh control wake or pending
+Cleanup during drain previously called SDK StopGrabbing with unfinished accounting.
+The video result became UNCONFIRMED, the exact Interrupted Finished guard rejected
+it, and aggregate cleanup could wait to its deadline. The isolated committed stop
+method fails all three new-wake regressions (stage, StopTrial, InterruptSession);
+the repaired path yields and resumes successfully. This establishes the local bug,
+not the exact unretained command sequence of historical DUMMY_2-150713.
+
+Trial drain now keeps the stopped generation, admission cutoff, first stop observation,
+fixed margin end and original deadline across control handoffs. It services control
+without SDK queue flush or premature end-marker sealing, then resumes with retained
+purge counts/native counters. Cleanup waits for this continuation; Stopped is emitted
+once, independently of final file closure. A deadline/failure still produces truthful
+incomplete evidence, never an upgraded success. Preview cleanup retains its existing
+nonresumable contract. The recording writer still drains admitted frames, completes
+encoding, syncs/closes video/frame log and returns exact output evidence; no new
+output format, timeout, policy choice or weakened coordinator guard.
+
+ARCH-002 extracts native purge and capture-drain continuation from the oversized
+adapter/capture modules into focused helpers with explicit resource/callback/clock
+inputs. The667-line adapter remains SDK device/configuration ownership; the601-line
+capture owner retains buffer/window/resource ownership. Single-owner trial state
+retains the first stop timestamp and publication flag, reset with each trial.
+No whole-runtime reference, process, dependency or per-frame logging added.
+Owning behavior modules were extended, including real serialized Stop/Interrupt plus
+Cleanup arriving during drain, single stop evidence, exact cutoff/deadline retention,
+cumulative partial purge and expired-deadline failure. Existing saved-file sync/
+closure, failed/pending file writes, duplicate outputs and cleanup guards remain tested.
+
+Validation:748 acquisition/controller lifecycle tests pass/2 deselected; final26
+handoff/purge/preview cases pass. Scoped Ruff/format10, Win32 mypy55 and boundaries730/
+zero pass; focused decision/link checks and whitespace pass. Earlier refactor run
+found5 fake-SDK/clock-binding failures (264 passed); corrected before final runs.
+Initial269- and689-case runs passed before final extraction/additional coverage.
+[Source-hashed verification and before-fix reproduction](runtime-evidence-2026-10-19/abort-finalization/fix-verification.json).
+Fresh native camera stop/encoder/cleanup/NewSession timing remains in the
+[single rig checklist](rig-verification.md). Reopen the managed application to load
+this repair; no live restart, hardware command or fresh rig pass was performed.
+
+Historical DUMMY_2-150713 Abort15:07:57.204988 to session end15:08:37.231697 took
+40.026709s. Saved camera completions have complete in-trial counts/APPLIED ON/OFF
+but incomplete post-cutoff accounting; camera closure remains UNCONFIRMED while
+stimulus outputs are CLOSED. Behavior/stimulus MP4s fully decode; Tracking/Eye
+videos were not planned. Decodability does not certify accounting/durable cleanup.
+Those scientific files, reservation and metadata were not changed/recovered/deleted.
+[Original read-only evidence](runtime-evidence-2026-10-19/abort-finalization/assessment.json).
+
+Oct19 `action-progress-logging`: manual camera Connect/Disconnect reports action
+detail through the existing lifecycle channel under [G02](../docs/architecture/gui.md#g02),
+[A10](../docs/architecture/acquisition.md#a10) and the
+[preview contract](../contracts/acquisition/preview-control.md). Settings, buffers,
+arming/free-running start, external ON, first-frame waiting, external OFF and release
+steps reflect actual execution. One background sender and one replaceable pending
+action bound best-effort telemetry without blocking device/safety work. Controller
+checks the live child/source/work/deadline and rejects result-bearing or stale action
+reports; progress cannot satisfy readback, first-frame or release requirements.
+380 acquisition/controller tests pass (1 skip/1 deselected), including nonblocking
+coalescence, exact progress scope and no premature Live/success evidence. Scoped
+static checks pass; native device timing/cleanup acceptance is untested. The
+[runtime assessment](runtime.md) owns complete GUI/static results and limits;
+[rig verification](rig-verification.md) owns the live checklist.
+
+Oct19 `abort-pulse-retention`: DUMMY-142302 Abort at14:23:50 retains APPLIED
+ON/OFF but incomplete post-cutoff camera accounting; administrative camera closure
+remains UNCONFIRMED while stimulus outputs are CLOSED. Source review exposes
+repeated Stop/Interrupt safety OFF overwriting the trial terminal outcome and
+forwarding a conflicting replacement. Keep the first retained trial OFF immutable
+while later safety OFF still reaches hardware and updates live MCU observation.
+Failed first outcomes are not upgraded. Existing worker conflict and exact-output
+guards remain intact under [A08/A09](../docs/architecture/acquisition.md#a08) and
+[E06/E08](../docs/architecture/system-contracts.md#e06).
+
+The prior wake repair covered due stages but missed safety-command entry: StopTrial
+and InterruptSession could drain before consuming the already-observed external
+wake. Moved consumption before both paths; subsequent wakes and queued commands
+still interrupt. Both safety-entry regressions fail before the change and pass
+afterward. Repeated OFF tests cover successful and rejected first outcomes.245
+owner/lifecycle/pulse/recording-cleanup/admission tests, Ruff/format4, Win32 mypy2,
+boundaries724/zero and whitespace pass. ARCH-002 uses the existing two focused
+owners, no dependency/state additions; size warnings are outside changed source.
+Native wake sequence was not captured, so these reproduced defects do not prove
+unique incident causation. No scientific files modified or unknown outputs certified.
+[Source/run evidence](runtime-evidence-2026-10-19/abort-pulse-retention/verification.json);
+restart and bounded Abort/cleanup acceptance remain in [rig verification](rig-verification.md).
+
+Oct19 `stop-now-wake-drain` / `interrupted-finished-abort-proof`: repaired a
+reproduced owner-loop defect under [A08/A09](../docs/architecture/acquisition.md#a08)
+and [E06/E08](../docs/architecture/system-contracts.md#e06). An external wake was
+consumed only after due-stage processing. A terminal drain inside that stage saw
+its own already-serviced wake as pending and aborted, leaving post-cutoff accounting
+incomplete. Consume the observed generation before the stage; later wakes and queued
+commands still interrupt. Original deadlines, SDK ownership and closure guards remain.
+ARCH-002 review: existing owner and evidence modules suffice, no new state/dependency;
+boundary size warnings are in unchanged modules, with no new oversized source file.
+
+The saved DUMMY-140646/140658 completion lines have exactly the incomplete post-cutoff
+symptom, but the original rejected RPC and wake sequence were not retained. Thus the
+wake defect is proven locally, not yet proven the unique cause of that native incident.
+Incomplete evidence maps successful encoder exit to UNCONFIRMED, which the interrupted
+Finished guard rejects. The guard now returns expected paths plus rejected output keys,
+paths, presence, numeric closure and failure text in the existing error response; it
+still retains none of an invalid batch. No validation was relaxed.
+
+Regression: old-wake handoff failed before the fix; new-wake case passed. Enhanced
+regression exercises real WorkerCaptureResources.stop with a nonzero drain margin:
+serviced wake completes accounting; a new wake still interrupts.228 owner, admission,
+trial-lifecycle and recording tests pass; scoped Ruff/format, Win32 mypy2, boundary
+checker724/zero and whitespace pass. Sandbox asyncio socketpair hung; rerun with
+loopback permission passed. Read-only native GUI inspection now works and shows an
+already Interrupted session with Abort now awaiting completion and calibration output
+windows. No input/restart, configuration change or new rig run was performed; current
+processes have not been verified to load this fix. Native Abort/cleanup/NewSession
+acceptance remains in the [single rig checklist](rig-verification.md).
+[Saved trial assessment](runtime-evidence-2026-10-19/stop-now-investigation/assessment.json)
+and [source/test evidence](runtime-evidence-2026-10-19/stop-now-investigation/fix-validation.json).
+
+Oct19 `preview-zoom-pan`: owner-requested left-button drag pans zoomed manual/session
+viewer images under [A10](../docs/architecture/acquisition.md#a10) rev67. The existing
+viewport clamps enlarged axes at image edges and centers smaller axes; drag at fit
+does nothing. Release or motion without the left button ends the gesture, as do
+wheel zoom, reset and resize. Cached pixels repaint without another source frame;
+camera/recording/tracking coordinates and source pixels remain intact. ARCH-002
+extends the existing small viewport and native callback, with no new module,
+dependency or duplicated transform state. Existing owning preview suite144 passed
+with six pypylon SWIG deprecation warnings, including native down/move/up after
+zoom with a stationary generated-image producer, cached-image repaint, double-click
+reset and exact cleanup. Unit cases cover square/portrait/landscape bounds, immediate
+edge reversal, centered padding, gesture cancellation and source immutability.
+Scoped Ruff/format, Win32 mypy2, boundaries724/zero and whitespace pass. No running
+application restart or real-camera drag acceptance; full restart loads the feature.
+Physical follow-up remains in the [single rig checklist](rig-verification.md#managed-device-gui).
+
+Oct19 `preview-click-and-first-show`: acquisition Win32 viewers now share one
+HighGUI/native window thread, with independent frame-event waits. New windows stay
+hidden until initial geometry and owner binding are complete, then reveal without
+activation under [A10](../docs/architecture/acquisition.md#a10) rev66 /
+[G01](../docs/architecture/gui.md#g01) rev239.169 acquisition/Windows tests pass,
+including three native generated-image windows with bounded repeated activation/
+click checks and hidden initial-size/position assertions.79 GUI preview/Review tests
+and scoped static checks pass. Suspected shared-lock/focus deadlock is source-inferred;
+no stalled live-process stack collected. No real camera or scientific configuration
+changed, no runtime restart or performance claim. [Current assessment](runtime.md)
+and [dated evidence](runtime-evidence-2026-10-19/preview-click-first-show/verification.json)
+retain implementation, failures and limits. Physical acceptance remains in the
+[single rig checklist](rig-verification.md#managed-device-gui).
+
+Oct19 `mcu-upload-recovery`: owner's screenshot reports Arduino upload/verification
+exit1 with STK500 sync errors during flash readback. Independent AVRDUDE8 read-only
+COM8 backup succeeds: ATmega328P signature1E950F,32768 flash bytes retained. All13874
+application-image bytes match the protocol5 AVR build exactly. Live read-only CAPS
+reports protocol5 / `cephvr2_uno_5`; STATUS reports all three camera outputs disabled
+and stopped, unconfigured with watchdog unarmed. The owner's upload installed the
+new image despite the failed verification operation. Do not relabel that operation
+successful: original complete tool output/timing is unavailable, and the sync-error
+cause remains unestablished. Installed AVR core1.8.8 selects AVRDUDE8.0-arduino.1;
+successful independent readback does not implicate this version or prove the GUI
+upload path reliable. No new flash, CONFIGURE/ON, diagnostics, application restart or
+electrical test in this investigation. No production-code change or automatic retry.
+[Dated backup, method, hashes and board replies](runtime-evidence-2026-10-19/mcu-upload-recovery/board-check.json)
+retain source revision and limits under [A11](../docs/architecture/acquisition.md#a11)
+and E15. Remaining acceptance stays in the [single rig checklist](rig-verification.md#managed-device-gui).
+
+Oct19 `mcu-failed-connect-upload`: owner requests the ability to upload protocol5.
+Source-confirmed failed acquisition CONNECT retained its exact device claim after
+protocol mismatch, blocking explicit Upload even without an open camera. The
+acquisition client now sends exact CLOSE on failed startup under the original
+deadline. Only confirmed CLOSE clears the claim; failed cleanup still blocks Upload.
+This implements existing [A11](../docs/architecture/acquisition.md#a11) ownership /
+release rules without changing policy, active-camera gates or firmware. ARCH-002
+keeps cleanup in the existing focused client and extends its owning behavior tests;
+no dependencies or new modules. Tests cover mismatch, exact claim/deadline, failed
+cleanup fencing, explicit upload admission after release and fresh reconnect.
+Focused selection31 passed; MCU owner/manual-device/manual-preview/authenticated
+controller RPC regression270 passed,1 skipped,1 deselected. Ruff/format, scoped
+Win32 mypy and boundaries723/zero violations pass; existing size warnings concern
+other modules and require no extraction for this focused client change. Initial
+sandbox pytest emitted setup errors/stalled and was interrupted; permitted loopback
+reruns pass. No actual flash, COM access, application restart or electrical test.
+Restart the whole application to replace the already-retained in-memory claim and
+load the repair, then use explicit Configuration Upload with the protocol5 sketch.
+This enables the owner's upload workflow; it does not assert board installation or
+close remaining [rig checks](rig-verification.md#managed-device-gui).
+
+Oct19 `camera-connect-continuity`: owner authorizes source implementation under
+[A10](../docs/architecture/acquisition.md#a10) rev65 /
+[A11](../docs/architecture/acquisition.md#a11) rev50 and explicitly prohibits flashing.
+Connect no longer pauses/stops/resumes existing captures or replaces their runs,
+rings or viewers. It configures the complete active mask and starts only the new
+output after its camera is Ready. Uno protocol5 preserves unchanged outputs' phase,
+HIGH/LOW and running state, releases changed old pins before reassignments, and
+leaves new outputs stopped until ON. Settings edits retain their existing dependent
+capture pause/confirmation/restart path. Exact CAPS compatibility rejects old
+firmware; a newly started host therefore requires a later authorized upload before
+MCU use. Operator values are preserved; policy4 binds the changed semantics.
+
+Host readback checks the expected running mask instead of requiring every output
+stopped. Regressions cover second/third-camera additions, new-camera failures,
+unexpected stopped/started readback and protocol4 rejection. The native C++ adapter
+executes the actual sketch and checks phase/level retention during both pulse halves,
+third-output addition, invalid pin/reply-size rejection, selective settings restart,
+pin-swap LOW ordering and watchdog no-resurrection. It models neither ISR latency
+nor electrical timing. New test-module responsibility is the native compiler fixture;
+existing Python owning modules are extended. ARCH-002 removes the Connect-only
+lifecycle binding; the serial owner remains cohesive at584 lines and runtime wiring
+only shrinks. Existing edit/transport owners remain separate; no dependency added.
+
+Validation: acquisition/controller1302 passed,4 skipped,7 deselected; final Connect
+selection5 passed; explicit compiler-equipped actual-sketch test1 passed. AVR compile
+passes (13874-byte program,1199-byte globals); no upload/COM operation. Scoped Ruff /
+format26 files, Win32 mypy21 sources, policy loader tests and boundaries724/zero
+violations pass. Initial sandbox asyncio stalls are traced to socketpair creation;
+permitted loopback reruns pass. Fixed new tracking-field substring fixture and old
+protocol4 completion expectation; those initial failures are not runtime defects.
+Native continuous captures and electrical continuity/jitter remain unverified in the
+[single rig checklist](rig-verification.md#managed-device-gui).
+[Dated evidence](runtime-evidence-2026-10-19/camera-connect-continuity/verification.json).
+
+Earlier Oct19 follow-up removed shared MCU pause/configure for internally clocked
+camera Connect; its external-mask restart behavior is superseded by the change above.
+GUI reconnect layout remains stable without reporting stale frames as live. Focused
+checks pass; native transition smoothness remains unverified. [Assessment](runtime.md).
+
+Oct19 preview repairs pass bounded native concurrent Connect, workspace close/reopen,
+independent Show/Hide and Disconnect. Session viewers use existing A03 slots under A10;
+exact cleanup/NewSession retire their status. Final 120-second three-camera trial,
+subsequent Setup/CancelSetup and Shutdown pass. That earlier trial had videos off. Subsequent240-second video-on verification retains
+Behavior7193, Tracking14387 and Eye14396 received frames exactly once, with zero native
+counter gaps or dropped source frames. DPI repair and bounded validation are in the
+linked runtime assessment; native X/individual drag and failure-injected reuse remain open. Native long-filename writer tests pass;
+full long-root trial remains pending. See [assessment and evidence](runtime.md).
+
 Current Oct17 [A08](../docs/architecture/acquisition.md#a08) sync repair passes
 its primary no-omission/no-duplication criterion at unchanged saved camera quality:
 120 s concurrent Behavior 3598/3598, Tracking 7188/7188 and stimulus 7200/7200.

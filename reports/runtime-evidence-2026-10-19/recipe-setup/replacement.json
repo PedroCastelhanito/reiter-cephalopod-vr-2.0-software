@@ -1,0 +1,16 @@
+{
+  "live_asset_ids": [
+    "asset_1",
+    "asset_2",
+    "asset_3",
+    "asset_4",
+    "Asset_1",
+    "Asset_2",
+    "Asset_3",
+    "Asset_4"
+  ],
+  "saved_gui_references": 8,
+  "recipe": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\textures\\gaussian-noise\\GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+  "old": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.png",
+  "new": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json"
+}

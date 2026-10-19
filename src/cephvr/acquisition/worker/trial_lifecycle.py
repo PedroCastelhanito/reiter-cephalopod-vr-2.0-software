@@ -319,6 +319,8 @@ class WorkerTrialLifecycle:
             raise ValueError("trial preparation identity must be UUIDv4")
 
         self.trial_state.end_marker = None
+        self.trial_state.actual_stop_ns = None
+        self.trial_state.stopped_reported = False
         self.trial_state.purge_evidence = None
         self.trial_state.stop_request = None
         self.trial_state.finish_deadline_ns = None

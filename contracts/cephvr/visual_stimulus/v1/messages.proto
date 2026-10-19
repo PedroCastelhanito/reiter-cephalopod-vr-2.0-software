@@ -132,3 +132,9 @@ message WorkerRecipePublication {
   bool published = 4;
   cephvr.control.v1.Failure failure = 5;
 }
+
+message StimulusPreviewCommand {
+  WorkerCommand command = 1;
+  bool visible = 2;
+  bytes placement = 3; // Serialized control.v1.PreviewWindowPlacement, maximum 256 bytes.
+}

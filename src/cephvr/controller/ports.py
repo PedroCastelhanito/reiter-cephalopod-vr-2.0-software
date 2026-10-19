@@ -56,7 +56,7 @@ class BackendPort(Protocol):
         self, request: svc.TrackingInputConfirmation, *, deadline_ns: int
     ) -> pb.CommandAdmission: ...
     async def report_preview_consumer_state(
-        self, request: svc.PreviewConsumerReport
+        self, request: svc.PreviewConsumerReport, *, deadline_ns: int
     ) -> pb.ReportReceipt: ...
     async def apply_incident_scope(
         self, request: svc.IncidentScopeRequest, *, deadline_ns: int
@@ -66,6 +66,9 @@ class BackendPort(Protocol):
     ) -> svc.RetainedResult: ...
     async def confirm_configuration(
         self, request: svc.AcquisitionConfigurationConfirmation, *, deadline_ns: int
+    ) -> pb.CommandAdmission: ...
+    async def set_stimulus_preview(
+        self, request: svc.StimulusPreviewRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission: ...
     async def initialize_display(
         self,
@@ -116,7 +119,7 @@ class SupervisorPort(Protocol):
         self, request: svc.ApplicationShutdownRequest
     ) -> pb.CommandAdmission: ...
     async def report_preview_consumer_state(
-        self, request: svc.PreviewConsumerReport
+        self, request: svc.PreviewConsumerReport, *, deadline_ns: int
     ) -> pb.ReportReceipt: ...
 
 

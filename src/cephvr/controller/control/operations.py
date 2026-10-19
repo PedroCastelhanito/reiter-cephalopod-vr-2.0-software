@@ -68,6 +68,11 @@ class ControlOperations:
             self.control.operation_finished_ns[command_id] = self.clock()
         return operation
 
+    def update_progress(self, command_id: str, progress: str) -> None:
+        operation = self.control.operations.get(command_id)
+        if operation is not None and not operation.complete:
+            operation.progress = progress
+
     def complete_operation(
         self,
         command_id: str,

@@ -53,6 +53,17 @@ viewer to an exact process generation. At most one viewer may be attached at a t
 
 ## Start capture
 
+Manual camera actions may publish best-effort `LifecycleReport.operation` progress
+with command `CameraAction`, the admitted backend child operation ID, exact backend
+generation and work scope, and at most 2048 UTF-8 bytes of action text. The operation
+is incomplete with neither `succeeded` nor `failure` set. Controller projects it only
+for the live, unexpired camera operation before its terminal device status. Progress
+never proves SDK/readback, frame reception, completion or release, changes no deadline,
+and does not replace the required terminal evidence. A single background sender and
+one replaceable pending action bound telemetry without awaiting controller delivery
+on the camera execution/safety path. Telemetry and WatchState may coalesce steps;
+the GUI displays observed changes under [G02](../../docs/architecture/gui.md#g02).
+
 1. Controller authorizes Start Preview without a viewer identity. Coordinator resolves
    camera/pulse settings and obtains controller adoption under the existing workflow.
 2. Allocate the slot after confirmed native layout. WorkerPreparePreview supplies the
@@ -124,12 +135,19 @@ identity retain legacy detached behavior.
 Fit preserves source aspect ratio with black padding inside the square image area.
 Windows wheel deltas, including fractional steps, zoom by 1.2 per notch about the
 pointer from fit to 16×. Clamp image translation to avoid empty space on enlarged
-axes; keep padding centered on smaller axes. Double-click restores fit. Render
+axes; keep padding centered on smaller axes. While zoomed, left-button drag pans
+the image using the same translation bounds; at fit it has no effect. Release or
+pointer motion without the left button ends panning. Zoom, reset and resize cancel
+the active gesture. Double-click restores fit. Render
 the current private image directly into the bounded square rather than allocating
 a full enlarged source; idle interaction redraws cached pixels without reading a
 new shared frame. Native caption/borders remain outside the square image area.
 
-Each window pumps HighGUI outside the coordinator event loop. A bounded native
+All acquisition Win32 windows share one HighGUI/native owner thread outside the
+coordinator event loop. Each viewer waits independently on its frame event; no
+frame wait blocks another viewer's message pump. New windows stay hidden through
+initial image sizing, physical placement, caption clearing and exact owner binding,
+then reveal without activation under G01. A bounded native
 event wait also allows message pumping with no new frames; idle timeouts do not
 poll frame counters. On attachment or frame wakeup select the newest valid image,
 convert private pixels with the common Basler converter, and adapt RGB to OpenCV's
@@ -234,6 +252,11 @@ remain to be implemented/verified; SDK availability alone is not proof of compat
 calibration or change camera exposure, gain or white-balance settings.
 
 ## Stop, edits and failures
+
+Connecting an additional camera leaves existing captures, run/buffer/viewer identities
+and unchanged MCU pulse phase intact under A10/A11. Resolve/prepare only the new
+camera and enable only its pulse output after Ready. A rejected addition does not
+stop existing independent previews; shared faults still follow E06.
 
 Stop Preview stops capture/pulses and fences the run. Complete outstanding copies,
 release camera/viewer attachments and close the camera before reporting cleanup.

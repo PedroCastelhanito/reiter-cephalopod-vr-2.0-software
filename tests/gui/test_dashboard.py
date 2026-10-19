@@ -86,6 +86,13 @@ def test_review_blank_preview_connect_close_and_disconnect(
     )
     monkeypatch.setitem(sys.modules, "cv2", cv)
     monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+    monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+    monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+    monkeypatch.setattr(
+        previews,
+        "StagedPreviewWindow",
+        lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+    )
     owner_state = {"minimized": False}
     monkeypatch.setattr(
         previews,
@@ -94,6 +101,7 @@ def test_review_blank_preview_connect_close_and_disconnect(
             sync=lambda _minimized=None: owner_state["minimized"],
             close=lambda: None,
             geometry=lambda: (0, 0, 300, 330),
+            placement_revision=lambda: None,
             retarget=lambda _handle: None,
         ),
     )
@@ -113,7 +121,7 @@ def test_review_blank_preview_connect_close_and_disconnect(
         target.dashboard.show_previews()
         app.processEvents()
         log_height = target.dashboard.log_console.height()
-        assert target.preview_slot.isHidden()
+        assert target.preview_slot.isVisible()
         cameras.table.selectRow(0)
         camera = cameras.selected
         assert camera is not None
@@ -144,7 +152,7 @@ def test_review_blank_preview_connect_close_and_disconnect(
         assert not viewers.windows and not viewers.timer.isActive()
         assert camera.connected and camera.capture_running
         app.processEvents()
-        assert target.preview_slot.isHidden()
+        assert target.preview_slot.isVisible()
         assert target.dashboard.log_console.height() == log_height
         assert not next(
             p for p in target.dashboard.view.previews if p.key == camera.key
@@ -155,7 +163,7 @@ def test_review_blank_preview_connect_close_and_disconnect(
         cameras.toggle_connection()
         assert not camera.connected and not viewers.windows and not visible
         app.processEvents()
-        assert target.preview_slot.isHidden()
+        assert target.preview_slot.isVisible()
         controls.preview_visibility("stimulus", True)
         assert "stimulus" in viewers.windows
         assert not viewers.windows["stimulus"][1].any()
@@ -165,7 +173,7 @@ def test_review_blank_preview_connect_close_and_disconnect(
         assert target.preview_slot.isVisible()
         cameras.toggle_connection()
         app.processEvents()
-        assert target.preview_slot.isHidden()
+        assert target.preview_slot.isVisible()
         assert target.dashboard.log_console.height() == log_height
         assert not visible and not viewers.timer.isActive()
     finally:
@@ -204,6 +212,13 @@ def test_multiple_review_previews_have_independent_source_frames(
         ),
     )
     monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+    monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+    monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+    monkeypatch.setattr(
+        previews,
+        "StagedPreviewWindow",
+        lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+    )
     monkeypatch.setattr(
         previews,
         "bind_preview_owner",
@@ -211,6 +226,7 @@ def test_multiple_review_previews_have_independent_source_frames(
             sync=lambda *_: False,
             close=lambda: None,
             geometry=lambda: (0, 0, 300, 330),
+            placement_revision=lambda: None,
             retarget=lambda _handle: None,
         ),
     )
@@ -257,7 +273,7 @@ def test_multiple_review_previews_have_independent_source_frames(
             if p.active and (page == 0 or p.key in enabled)
         ][:3]
         assert len(keys) == (3 if page == 0 else 2)
-        assert target.preview_slot.isHidden()
+        assert target.preview_slot.isHidden() is (page != 0)
         for key in keys:
             controls.preview_visibility(key, True)
             app.processEvents()
@@ -281,7 +297,11 @@ def test_multiple_review_previews_have_independent_source_frames(
         app.processEvents()
         assert set(viewers.windows) == set(keys[1:])
         viewers.poll_windows()
-        assert set(target.preview_slot.frames) == set(keys[1:])
+        assert set(target.preview_slot.frames) == (
+            {source.key for source in target.dashboard.view.previews if source.active}
+            if page == 0
+            else set(keys[1:])
+        )
         # An external X closes just its own source, preserving the other stream.
         visible.remove(viewers.windows[keys[1]][0])
         viewers.poll_windows()
@@ -289,7 +309,7 @@ def test_multiple_review_previews_have_independent_source_frames(
         for key in keys[2:]:
             controls.preview_visibility(key, False)
         app.processEvents()
-        assert target.preview_slot.isHidden()
+        assert target.preview_slot.isHidden() is (page != 0)
         assert status.console.height() == original_log_height
     finally:
         viewers.close()
@@ -472,7 +492,7 @@ def test_preview_placement_failure_restores_hidden_card_and_expanded_log(
     monkeypatch.setattr(placement, "slot_preview_placement", unavailable)
     with pytest.raises(ValueError, match="Preview placement unavailable"):
         placement.preview_window_placement(window)
-    assert window.preview_slot.isHidden()
+    assert not window.preview_slot.isVisible()
     assert window.dashboard.log_console.height() == height
 
 
@@ -529,7 +549,7 @@ def test_preview_slot_tracks_relevant_tabs(
     window.resize(1440, 940)
     for _ in range(4):
         app.processEvents()
-    assert window.preview_slot.isHidden()
+    assert not window.preview_slot.isVisible()  # Reserved in the closed workspace.
     window.dashboard.show_previews()
     app.processEvents()
     expanded_log_height = window.dashboard.log_console.height()
@@ -565,7 +585,7 @@ def test_preview_slot_tracks_relevant_tabs(
             frame_widget = next(iter(slot.frames.values()))
             target = frame_widget.target
             assert slot.height() < window.stack.height()
-            assert target.geometry().top() > slot.caption.geometry().bottom()
+            assert target.geometry().top() > frame_widget.header.geometry().bottom()
             assert (
                 abs(target.geometry().center().x() - frame_widget.rect().center().x())
                 <= 1
@@ -820,6 +840,7 @@ def test_microcontroller_config_load_is_local_and_collects_for_normal_submission
     panel.managed = True
     assert panel.config_files.load_path(str(path))
     data["projector_flip"]["enabled"] = False
+    data["review_outputs"]["selected"] = sorted(["trial-state", *data["camera_pins"]])
     assert panel.snapshots.capture() == data
     assert requests == []
     assert "Apply pin settings" not in [
@@ -904,9 +925,9 @@ def test_camera_config_round_trip_is_local_and_requires_matching_stopped_invento
     assert requests == []
     panel.table.selectRow(1)
     tests = []
-    panel.selected_test_requested.connect(tests.append)
-    panel.selected_test_button.click()
-    assert tests == [panel.drafts[1].key]
+    panel.connection_requested.connect(lambda *args: tests.append(args))
+    panel.connect_button.click()
+    assert tests == [(panel.drafts[1].key, True)]
     assert not panel.drafts[1].enabled
     saved = tmp_path / "saved-cameras.json"
     assert panel.config_files.save_path(str(saved))
@@ -1300,6 +1321,7 @@ def test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling(
         }
     desired["microcontroller"]["port"] = "COM93"
     desired["microcontroller"]["trial_state"]["pin"] = "D7"
+    desired["microcontroller"]["review_outputs"]["selected"] = ["trial-state"]
     desired["tracking"]["distance_mm"] = (
         ""  # Dormant, uncalibrated Tracking is a valid saved draft.
     )
@@ -1552,7 +1574,8 @@ def test_camera_save_validation_error_routes_to_other_camera_row(
     assert corrected.valid
     cameras.pending = "save_camera_settings"
     cameras.finished("save_camera_settings", True, "Completed")
-    assert "save_camera_settings: Completed" in panel.console.toPlainText()
+    assert message in panel.console.toPlainText()
+    assert "save_camera_settings: Completed" not in panel.console.toPlainText()
 
 
 def test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit(
@@ -2343,6 +2366,42 @@ def test_old_retained_dialog_cannot_acknowledge_a_new_connection(
     app.processEvents()
 
 
+def test_startup_recovery_buttons_are_explicit_and_close_is_not_a_choice(
+    app: QApplication,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    choices: list[str] = []
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=lambda _encoded, choice: choices.append(choice) or True,
+        acknowledged=lambda _epoch, _generation: None,
+        log=lambda _message: None,
+    )
+    state = pb.Snapshot(controller_generation="controller-1")
+    state.prompts.add(
+        prompt_id="startup-recovery",
+        explanation="Unfinished session: chosen path",
+        permitted_choices=["recover", "delete"],
+    )
+    prompts.update(state, require_acknowledgement=False, can_respond=True)
+    assert [button.text() for button in prompts.prompt_buttons] == [
+        "Start recovery",
+        "Cancel and delete files",
+    ]
+    assert all(not button.autoDefault() for button in prompts.prompt_buttons)
+    assert prompts.prompt_dialog is not None
+    prompts.prompt_dialog.reject()
+    assert choices == []
+    prompts.review_prompt(can_respond=True)
+    prompts.prompt_buttons[1].click()
+    assert choices == ["delete"]
+    parent.close()
+    parent.deleteLater()
+
+
 def test_closing_retained_review_does_not_acknowledge(
     app: QApplication,
 ) -> None:
@@ -3036,7 +3095,7 @@ def test_log_entry_details_follow_their_own_bounded_document_block(
     console.deleteLater()
 
 
-def test_managed_operation_log_distinguishes_admission_completion_and_failure(
+def test_managed_operation_log_suppresses_success_and_preserves_failure(
     app: QApplication,
 ) -> None:
     from cephvr.gui.components import LogConsole
@@ -3047,19 +3106,14 @@ def test_managed_operation_log_distinguishes_admission_completion_and_failure(
         window=SimpleNamespace(dashboard=SimpleNamespace(log_console=console)),
         prompts=SimpleNamespace(operation_finished=lambda _action: None),
     )
-    ManagedGui.command_admitted(manager, "Setup", "command-1")
     ManagedGui.operation_finished(
         manager, "Setup", "command-1", "completed", "Completed."
     )
-    ManagedGui.command_admitted(manager, "Setup", "command-2")
     ManagedGui.operation_finished(
         manager, "Setup", "command-2", "failed", "<unknown> renderer failure"
     )
     rows = console.toPlainText().splitlines()
     assert rows == [
-        "Setup accepted; awaiting completion.",
-        "Setup completed.",
-        "Setup accepted; awaiting completion.",
         "Setup: failed — <unknown> renderer failure",
     ]
     document = console.document()
@@ -3071,11 +3125,233 @@ def test_managed_operation_log_distinguishes_admission_completion_and_failure(
         if user_data is not None:
             details.append(user_data.details)
         block = block.next()
-    assert "Command ID: command-1" in details[0]
+    assert "Command ID: command-2" in details[0]
     assert "<unknown> renderer failure" in details[-1]
     assert document.lastBlock().userData().error is True
-    assert document.begin().userData().error is False
+    assert document.begin().userData().error is True
     console.deleteLater()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("choice", ["recover", "delete", "continue"])
+@pytest.mark.parametrize("outcome", ["success", "failed", "unconfirmed", "needs_input"])
+async def test_recovery_result_feedback_waits_for_confirmed_prompt_completion(
+    choice, outcome
+):
+    import asyncio
+
+    from cephvr.client.session import ClientError
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+    progress, completions = [], []
+    bridge.action_progress.connect(
+        lambda action, message: progress.append((action, message))
+    )
+    bridge.operation_finished.connect(lambda *args: completions.append(args))
+    state = pb.Snapshot()
+    prompt = state.prompts.add(
+        prompt_id="prompt",
+        permitted_choices=["continue", "cancel"]
+        if choice == "continue"
+        else ["recover", "delete"],
+    )
+    entered, release = asyncio.Event(), asyncio.Event()
+
+    async def admit(_method, request):
+        assert request.choice == choice
+        return pb.CommandAdmission(
+            command_id="command", result=pb.COMMAND_RESULT_ACCEPTED
+        )
+
+    async def wait_result(_command_id):
+        entered.set()
+        await release.wait()
+        if outcome == "unconfirmed":
+            raise ClientError("Connection lost before completion")
+        return SimpleNamespace(
+            needs_input=outcome == "needs_input",
+            complete=outcome != "needs_input",
+            succeeded=outcome == "success",
+            failure="Deletion failed" if outcome == "failed" else "",
+        )
+
+    client = SimpleNamespace(
+        snapshot=state,
+        operator_command=lambda: rpc.OperatorCommand(),
+        _admit=admit,
+        wait_result=wait_result,
+    )
+    task = asyncio.create_task(
+        bridge._dispatch(
+            client,
+            "respond_prompt",
+            {"prompt": prompt.SerializeToString(), "choice": choice},
+        )
+    )
+    await asyncio.wait_for(entered.wait(), 1)
+    assert progress == []
+    release.set()
+    await task
+    if outcome == "success" and choice != "continue":
+        assert progress == [
+            (
+                "respond_prompt",
+                "Recovery · Unfinished session files deleted."
+                if choice == "delete"
+                else "Recovery · Recovery completed; existing files preserved.",
+            )
+        ]
+    else:
+        assert progress == []
+    assert (
+        completions[-1][2]
+        == {
+            "success": "completed",
+            "failed": "failed",
+            "unconfirmed": "unconfirmed",
+            "needs_input": "needs_input",
+        }[outcome]
+    )
+
+
+@pytest.mark.parametrize(
+    "action,options,expected",
+    [
+        ("camera", {"role": 1, "kind": 5}, ""),
+        ("Setup", {}, "Setup · Validating configuration…"),
+        ("spikeglx_connection", {}, "SpikeGLX · Connecting…"),
+        ("begin_tracking_diagnostic", {}, "Tracking · Preparing pipeline…"),
+        ("Abort now", {}, "Session · Stopping active work…"),
+        ("save_configuration_history", {}, "Shutdown · Saving configuration…"),
+        ("tracking_diagnostic_frame", {}, ""),
+    ],
+)
+def test_dispatched_action_log_uses_actions_without_poll_results(
+    action, options, expected
+):
+    from cephvr.gui.action_progress import requested_action
+
+    # Viewer Show/Hide and background frame polls add no capture-status claims.
+    if action == "camera":
+        from cephvr.control.v1 import services_pb2 as rpc
+
+        options["kind"] = rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+    assert requested_action(action, options) == expected
+
+
+def test_action_log_tracks_evidence_once_without_success_results():
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_progress import ActionProgress, requested_action
+
+    rows = []
+    log = ActionProgress(lambda target, message: rows.append((target, message)))
+    log.requested(
+        "camera",
+        requested_action(
+            "camera", {"role": 1, "kind": rpc.CAMERA_COMMAND_KIND_START_PREVIEW}
+        ),
+    )
+    state = pb.Snapshot(controller_generation="controller")
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    operation = state.operations.add(
+        command="ExecuteCameraCommand", progress="acquisition command pending"
+    )
+    operation.context.command_id = "connect"
+    log.install(1, state)
+    assert rows == [("cameras", "Behavior camera · Connecting…")]
+    for action in (
+        "Applying camera settings…",
+        "Arming capture…",
+        "Starting external triggers…",
+        "Waiting for frames…",
+    ):
+        operation.progress = f"Behavior camera · {action}"
+        log.install(1, state)
+        log.install(1, state)
+    assert len(rows) == 5
+    assert not any("Live" in message for _, message in rows)
+    operation.complete, operation.succeeded = True, True
+    operation.progress = "camera command confirmed"
+    device = state.acquisition_devices.behavioral
+    device.device_open, device.preview_prepared = True, True
+    device.preview_run_id = "run-1"
+    log.install(1, state)
+    assert len(rows) == 5  # Open/armed is not first-frame evidence.
+    device.preview_running = True
+    log.install(1, state)
+    assert rows[-1] == ("cameras", "Behavior camera · Live")
+    for count in range(5):
+        state.captured_monotonic_ns = count
+        poll = state.operations.add(
+            command="ExecuteMicrocontrollerCommand",
+            complete=True,
+            succeeded=True,
+            progress="Microcontroller command completed",
+        )
+        poll.context.command_id = str(count)
+        log.install(1, state)
+    assert len(rows) == 6
+    log.install(2, state)
+    assert rows[-1] == ("cameras", "Behavior camera · Live")
+    assert len(rows) == 7  # Reconnect shows current state, not old completions.
+
+
+def test_action_log_covers_session_backends_recording_recovery_and_shutdown():
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_progress import ActionProgress
+
+    rows = []
+    log = ActionProgress(lambda target, message: rows.append((target, message)))
+    state = pb.Snapshot(controller_generation="controller")
+    state.session.context.session_id = "session"
+    state.session.phase = pb.SESSION_PHASE_SETTING_UP
+    for name in ("visual_stimulus", "tracking"):
+        state.participants.add().process.role = name
+    log.install(1, state)
+    assert ("projectors", "Visual stimulus · Preparing…") in rows
+    assert ("tracking", "Tracking · Preparing…") in rows
+    state.session.phase = pb.SESSION_PHASE_READY
+    log.install(1, state)
+    assert rows[-1] == ("", "Session · Ready")
+    state.session.phase = pb.SESSION_PHASE_RUNNING
+    state.trial.context.trial_id = "trial"
+    state.trial.context.trial_number = 2
+    for phase, action in (
+        (pb.TRIAL_PHASE_PREPARING, "Preparing recording…"),
+        (pb.TRIAL_PHASE_RUNNING, "Recording"),
+        (pb.TRIAL_PHASE_FINALIZING, "Finalizing files…"),
+    ):
+        state.trial.phase = phase
+        log.install(1, state)
+        assert rows[-1] == ("", f"Trial 2 · {action}")
+    state.session.phase = pb.SESSION_PHASE_FINALIZING
+    state.trial.phase = pb.TRIAL_PHASE_ENDED
+    log.install(1, state)
+    assert rows[-1] == ("", "Session · Finalizing session…")
+    state.session.phase = pb.SESSION_PHASE_ENDED
+    log.install(1, state)
+    assert not any(message.endswith("Idle") for _, message in rows)
+    state.session.cleanup_confirmed = True
+    log.install(1, state)
+    assert rows[-1] == ("", "Session · Idle")
+    recovery = state.recoveries.add(attempt_id="recovery", progress="Releasing camera…")
+    log.install(1, state)
+    assert rows[-1] == ("", "Recovery · Releasing camera…")
+    recovery.completion_monotonic_ns = 1
+    recovery.progress = "Completed"
+    count = len(rows)
+    log.install(1, state)
+    assert len(rows) == count
+    state.session.shutdown_requested = True
+    log.install(1, state)
+    assert rows[-1] == ("", "Shutdown · Stopping backends and releasing devices…")
 
 
 def test_successful_tracking_frame_poll_does_not_add_routine_log_row(
@@ -3128,6 +3404,32 @@ def test_preview_geometry_survives_recreation(
     second.close()
     second.deleteLater()
     app.processEvents()
+
+
+@pytest.mark.parametrize("maximized", [False, True])
+@pytest.mark.parametrize("phase", [Phase.CONFIGURATION, Phase.RUNNING])
+def test_preview_button_restores_minimized_workspace(window, app, maximized, phase):
+    dashboard = window.dashboard
+    dashboard.apply_view(replace(dashboard.view, phase=phase))
+    dashboard.preview_button.click()
+    dialog = dashboard.preview_dialog
+    if maximized:
+        dialog.showMaximized()
+    app.processEvents()
+    handle = int(dialog.winId())
+    views = dict(dialog.views)
+    requests = []
+    dialog.visibility_requested.connect(lambda *args: requests.append(args))
+    dialog.showMinimized()
+    app.processEvents()
+    assert dialog.isMinimized()
+    dashboard.preview_button.click()
+    app.processEvents()
+    assert dialog.isVisible() and not dialog.isMinimized()
+    assert dialog.isMaximized() == maximized
+    assert int(dialog.winId()) == handle
+    assert dialog.views == views
+    assert not requests
 
 
 def test_review_intent_does_not_advance_session(window: DashboardWindow) -> None:
@@ -3807,7 +4109,7 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
                 assert panel.scan_button.parentWidget() is panel.port.parentWidget()
                 assert panel.scan_button.size() == QSize(26, 26)
             if index == 1:
-                assert panel.io.isHidden()
+                assert not panel.io.isHidden()
                 assert panel.output_table.isVisible()
                 assert panel.triggers.rect().contains(panel.output_table.geometry())
                 assert set(panel.pin_editors) == {
@@ -3852,21 +4154,22 @@ def test_camera_batch_check_preserves_selection_and_connections(
     assert cameras.selected is cameras.drafts[1]
     assert not any(draft.connected for draft in cameras.drafts)
     cameras.connect_button.click()
-    assert cameras.connect_button.text() == "Disconnect"
+    assert cameras.connect_button.text() == "Disconnect selected"
     assert cameras.selected.capture_running
     cameras.connect_button.click()
-    assert cameras.connect_button.text() == "Connect"
+    assert cameras.connect_button.text() == "Connect selected"
     assert not cameras.selected.capture_running
     assert "Disconnect; no hardware command sent" in cameras.console.toPlainText()
     cameras.enable_controls[0].setChecked(False)
-    assert cameras.selected_test_button.isEnabled()
+    assert not cameras.connect_all_button.isEnabled()
+    assert cameras.connect_button.isEnabled()
     assert "Test enabled" not in [b.text() for b in cameras.findChildren(QPushButton)]
     cameras.enable_controls[0].setChecked(True)
     window.apply_view(review_view(Phase.RUNNING))
     before = cameras.console.toPlainText()
     cameras.test_enabled()
     assert cameras.console.toPlainText() == before
-    assert not cameras.selected_test_button.isEnabled()
+    assert not cameras.connect_all_button.isEnabled()
 
 
 def test_pfs_trigger_hint_and_per_camera_drafts(
@@ -3939,10 +4242,15 @@ def test_real_camera_inventory_preserves_roles_and_tests_open_close(
 
     monkeypatch.setattr(cameras, "BaslerCameraAdapter", Adapter)
     panel = window.devices.cameras
+    recording_keys = []
+    panel.participation_changed.connect(
+        lambda: recording_keys.append(set(window.recordings.record))
+    )
     panel.real_devices = True
     panel.refresh_inventory()
     assert [draft.serial for draft in panel.drafts] == ["40065509", "40747103"]
     assert [draft.role for draft in panel.drafts] == ["Behavior cam", "Tracking cam"]
+    assert {draft.key for draft in panel.drafts} <= recording_keys[-1]
     Adapter.events.clear()
     panel.drafts[1].enabled = False
     panel.test_enabled()
@@ -4267,7 +4575,7 @@ def test_microcontroller_fixed_signal_tests_and_layout(window: DashboardWindow) 
     before = panel.console.toPlainText()
     panel.test_buttons["projector-flip"].click()
     assert panel.console.toPlainText() == before
-    assert panel.io.isHidden()
+    assert not panel.io.isHidden()
     assert not panel.test_buttons["projector-flip"].isEnabled()
     panel.test_pin("trial-state")
     assert not panel.review_tests
@@ -4278,7 +4586,6 @@ def test_microcontroller_fixed_signal_tests_and_layout(window: DashboardWindow) 
 
 def test_microcontroller_role_outputs_clear_without_changing_camera_use(
     window: DashboardWindow,
-    monkeypatch,
 ) -> None:
     panel = window.devices.microcontroller
     cameras = window.devices.cameras
@@ -4305,19 +4612,16 @@ def test_microcontroller_role_outputs_clear_without_changing_camera_use(
     panel.snapshots.restore(data)
     assert panel.input_table.horizontalHeader().isHidden()
     assert panel.output_table.horizontalHeader().isHidden()
-    from PyQt6.QtWidgets import QInputDialog
-
-    monkeypatch.setattr(QInputDialog, "getInt", lambda *_args: (8, True))
     panel.signals.add("behavioral")
     assert not panel.output_table.isRowHidden(panel.role_rows["behavioral"])
     assert not panel.output_table.horizontalHeader().isHidden()
-    assert panel.pin_editors["behavioral"].text() == "8"
-    monkeypatch.setattr(QInputDialog, "getInt", lambda *_args: (3, True))
+    assert panel.pin_editors["behavioral"].text() == ""
+    panel.pin_editors["behavioral"].setText("8")
     panel.signals.add("projector-flip")
     assert not panel.enable_controls["projector-flip"].isChecked()
     assert panel.input_table.horizontalHeader().isHidden()
-    assert panel.io.isHidden()
-    assert "projector-flip" not in panel.signals.add_actions
+    assert not panel.io.isHidden()
+    assert "projector-flip" not in panel.signals.editors
     assert original == [
         (camera.role, camera.enabled, dict(camera.values)) for camera in cameras.drafts
     ]
@@ -4489,8 +4793,9 @@ def test_managed_microcontroller_emits_controller_intents(
     assert panel.scan_button.isEnabled()
     assert (
         "output LOW, 1 rising transitions generated by MCU"
-        in panel.console.toPlainText()
+        in panel.status_column.hud.toPlainText()
     )
+    assert "rising transitions generated by MCU" not in panel.console.toPlainText()
     panel.set_diagnostic("behavioral", False, 59)
     assert (
         "59 rising transitions generated by MCU"
@@ -5239,6 +5544,7 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly(
     generation = str(uuid4())
     client_id = str(uuid4())
     state = pb.Snapshot(controller_generation=generation)
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
     state.configuration.revision = 6
     state.configuration_values.revision = 6
     state.control.holder_client_id = client_id
@@ -5308,6 +5614,18 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly(
     assert (
         rpc.SpikeGLXInventorySnapshot.FromString(received[0][2]).file_sha256 == "digest"
     )
+
+    from cephvr.client.session import ClientError
+
+    state.session.phase = pb.SESSION_PHASE_SETTING_UP
+    with pytest.raises(ClientError, match="deferred until Configuration or Ready"):
+        await bridge._dispatch(
+            Client(),
+            "get_spikeglx_inventory",
+            {"expected_revision": 6, "dispatch_identity": (3, generation)},
+        )
+    assert len(get_requests) == 1
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
 
     channel = spikeglx_pb2.PulseChannel(role=spikeglx_pb2.PULSE_ROLE_CUSTOM)
     channel.source_id = "custom-trigger"
@@ -5445,6 +5763,116 @@ async def test_spikeglx_pairing_bridge_publishes_accepted_device_revision() -> N
     assert accepted[0][1].configuration.revision == 8
     assert accepted[0][1].configuration_values.current.backends[0].enabled
     assert finished == [("set_spikeglx_enabled", True, "Pairing enabled")]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "action,options",
+    [
+        ("set_camera_enabled", {"serial": "eye", "enabled": True}),
+        ("assign_camera_role", {"serial": "eye", "role": "Eye tracking"}),
+        (
+            "save_camera_settings",
+            {
+                "serial": "eye",
+                "clock": "External controller",
+                "source": "Line1",
+                "preset": "",
+                "rate": "60",
+            },
+        ),
+        (
+            "save_mcu_pins",
+            {
+                "port": "COM8",
+                "trial_pin": "12",
+                "trial_enabled": True,
+                "flip_pin": "",
+                "flip_enabled": False,
+                "behavioral_pin": "11",
+                "tracking_pin": "10",
+                "eye_tracking_pin": "9",
+            },
+        ),
+        ("add_mcu_output", {"role": "eye_tracking", "pin": "9"}),
+    ],
+)
+@pytest.mark.parametrize("rejected", [False, True])
+async def test_device_settings_acknowledgement_keeps_camera_connect_current(
+    window: DashboardWindow, action, options, rejected
+) -> None:
+    from cephvr.client.session import ClientError, CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.gui.main import ManagedGui
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = state.configuration_values.revision = 7
+    settings = state.configuration_values.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition
+    settings.eye_tracking.device.device_id = "eye"
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            window.devices.cameras,
+            window.devices.projectors,
+            window.tracking,
+            window.devices.microcontroller,
+        )
+    )
+    assert manager.install(state)
+    window.dashboard.subject_id.setText("unsent subject")
+    manager.dirty = True
+    gui = SimpleNamespace(state=state, configuration=manager, window=window)
+    acknowledgements = []
+
+    def accepted(base_revision, payload):
+        acknowledged = pb.Snapshot.FromString(payload)
+        acknowledgements.append(acknowledged)
+        assert manager.note_device_revision(acknowledged, base_revision)
+
+    class Client:
+        snapshot = state
+
+        def operator_command(self):
+            return rpc.OperatorCommand()
+
+        async def execute(self, method, request):
+            assert method == "UpdateConfiguration"
+            assert request.expected_revision == 7
+            if not rejected:
+                state.configuration_values.current.CopyFrom(request.proposed)
+            state.configuration.revision = state.configuration_values.revision = 8
+            # A streamed snapshot may arrive before the operation's acknowledgement.
+            assert not manager.install(state)
+            return CommandOutcome("device", True, not rejected, failure="rejected")
+
+    bridge = ControllerBridge(
+        Principal("gui", str(uuid4()), "token"), 50051, 1024, (0,)
+    )
+    bridge.device_configuration_accepted.connect(accepted)
+    if rejected:
+        with pytest.raises(ClientError, match="rejected"):
+            await bridge._dispatch(Client(), action, options)
+        assert not acknowledgements and manager.stale and manager.revision == 7
+        with pytest.raises(ValueError, match="configuration changed"):
+            ManagedGui.camera_submission_options(gui, "eye")
+    else:
+        await bridge._dispatch(Client(), action, options)
+        assert len(acknowledgements) == 1
+        assert manager.revision == 8 and not manager.stale
+        assert ManagedGui.camera_submission_options(gui, "eye")["base_revision"] == 8
+    assert manager.dirty and window.dashboard.subject_id.text() == "unsent subject"
 
 
 @pytest.mark.parametrize("queued", [True, False])
@@ -6378,16 +6806,13 @@ def test_eye_role_projects_and_tests_selected_without_capture(
     )
     binding.install(state)
     assert panel.drafts[0].role == "Eye tracking"
-    binding.test_selected(panel.drafts[0].key)
-    token = panel.pending_action.token
-    assert token is not None and not token.requested.is_set()
+    binding.queue("camera", role=3, kind=rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION)
     assert calls == [
         (
             "camera",
             {
                 "role": 3,
                 "kind": rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
-                "cancellation": token,
             },
         )
     ]
@@ -6448,7 +6873,9 @@ def test_loaded_camera_action_queues_parameters_without_setup(
         lambda *_: False,
         submission_options=lambda _key: {"base_revision": 4, "pin": "12"},
     )
-    (panel.connect_button if connect else panel.selected_test_button).click()
+    panel.connect_button.click() if connect else binding.prepare_action(
+        panel.selected.key, rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+    )
     assert len(calls) == 1 and calls[0][0] == "prepare_camera"
     assert calls[0][1]["preset"] == "new.pfs"
     assert calls[0][1]["clock"] == "Internal clock"
@@ -7207,7 +7634,7 @@ def test_projector_sync_modes_without_mcu_preserve_saved_drafts(window, mode):
     assert not hasattr(timing, "wiring_button")
     assert [timing.mode.itemText(i) for i in range(timing.mode.count())] == [
         "Free run (no VSync)",
-        "VSync on pulse display",
+        "VSync on pulse displays",
         "VSync on all displays",
     ]
     timing.set_presentation_mode(mode)
@@ -10155,10 +10582,10 @@ def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
     values = composer.program.sequence[0].settings
     assert motion_numbers(values[0].model_dump(mode="json"))[0] == pytest.approx(17.5)
     assert motion_numbers(values[1].model_dump(mode="json"))[0] == 0
-    left.advanced.trigger()
+    left.actions_button.click()
     app.processEvents()
     assert left.parameters.advanced.isVisible()
-    left.advanced.trigger()
+    left.actions_button.click()
     assert not left.parameters.advanced.isVisible()
     composer.remove_layer("Left")
     app.processEvents()
@@ -10166,8 +10593,9 @@ def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
     assert not left.actions_button.isHidden()
 
 
+@pytest.mark.parametrize("selection", ["picker", "paste"])
 def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
-    window: DashboardWindow, app: QApplication, tmp_path: Path
+    window: DashboardWindow, app: QApplication, tmp_path: Path, selection: str
 ) -> None:
     from PyQt6.QtGui import QImage
 
@@ -10195,7 +10623,20 @@ def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
     with pytest.raises(ValueError, match="Choose an asset"):
         composer.value()
     asset_id = next(iter(row.parameters.asset_forms))
-    row.parameters.set_media_path(asset_id, str(path))
+    if selection == "picker":
+        row.parameters.set_media_path(asset_id, str(path))
+    else:
+        field = row.parameters.asset_forms[asset_id]
+        field.setFocus()
+        app.clipboard().setText("images/missing.png")
+        QTest.keyClick(field, Qt.Key.Key_V, Qt.KeyboardModifier.ControlModifier)
+        with pytest.raises(ValueError):
+            composer.value()
+        assert composer.pending_assets
+        field.selectAll()
+        app.clipboard().setText("images/tile.png")
+        QTest.keyClick(field, Qt.Key.Key_V, Qt.KeyboardModifier.ControlModifier)
+        composer.value()
     assert not composer.pending_assets
     field = next(iter(row.parameters.asset_forms.values()))
     assert field.text() == "images/tile.png" and field.filename_only
@@ -10461,6 +10902,30 @@ def test_front_attached_screens_share_plot_and_prepared_corners(
     assert bottom[1][1] - bottom[0][1] == 126
     assert bottom[3][0] - bottom[0][0] == -94
     assert {p[0] for p in bottom} == {53, 147}
+    # Portrait output calibration must not resize the physical floor in Trial Preview.
+    from cephvr.gui.trial_preview_rig import PreviewRig
+
+    drafts = {face: dict(values) for face, values in panel.screen_editor.drafts.items()}
+    drafts["Bottom"].update(
+        reference_width_px="720",
+        reference_height_px="1280",
+        reference_x_px="180",
+        reference_y_px="320",
+        reference_x_mm="24",
+        reference_y_mm="44",
+        valid_width_px="685",
+        valid_height_px="940",
+    )
+    geometry = PreviewGeometry.from_drafts(
+        panel.rig_editor.dimensions(), drafts, {"Bottom": (720, 1280)}
+    )
+    view = PreviewRig(geometry, {})
+    assert view.screen_planes()["Bottom"] == bottom
+    surface = geometry.surfaces["Bottom"]
+    assert surface.corners != surface.physical_corners
+    assert surface.width == pytest.approx(940 * 44 / 320)
+    assert surface.height == pytest.approx(685 * 24 / 180)
+    view.deleteLater()
     current = panel.calibration_files.calibration_snapshot()
     legacy = dict(current, version=4, values=dict(current["values"]))
     for face in ("Front", "Left", "Right", "Bottom"):
@@ -10490,10 +10955,10 @@ def test_front_attached_screens_share_plot_and_prepared_corners(
         measured, "Bottom", MonitorBinding("", 0, 0, 720, 1280, 60, 8)
     )
     assert (vertices[1]["xy"][0] - vertices[0]["xy"][0]) * 196 == pytest.approx(
-        round(126 / 196 * 720) * 196 / 720
+        round(94 / 196 * 720) * 196 / 720
     )
     assert (vertices[2]["xy"][1] - vertices[0]["xy"][1]) * 148 == pytest.approx(
-        round(94 / 148 * 1280) * 148 / 1280
+        round(126 / 148 * 1280) * 148 / 1280
     )
 
     old_crop = dict(measured, version=5, values=dict(measured["values"]))
@@ -10508,10 +10973,10 @@ def test_front_attached_screens_share_plot_and_prepared_corners(
     old_crop["values"]["screens.Bottom.scale_v"] = 1.08
     migrated = panel.calibration_files.validate(old_crop)
     assert migrated["screens.Bottom.valid_width_px"] == pytest.approx(
-        round(round(126 / 196 * 720) * 1.02)
+        round(round(94 / 196 * 720) * 1.02)
     )
     assert migrated["screens.Bottom.valid_height_px"] == pytest.approx(
-        round(round(94 / 148 * 1280) * 1.08)
+        round(round(126 / 148 * 1280) * 1.08)
     )
     assert migrated["screens.Bottom.reference_x_mm"] == 49
     assert migrated["screens.Bottom.reference_y_mm"] == 37
@@ -11178,7 +11643,12 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
     assert profile.geometry.positional_tolerance_mm == 0.000166
     assert profile.geometry.orthogonality_tolerance == 0.000001
     assert set(meshes) == {face.lower() for face in FACES}
-    assert all(mesh.vertices[0].uv == mesh.vertices[0].xy for mesh in meshes.values())
+    assert all(
+        mesh.vertices[0].uv == mesh.vertices[0].xy
+        for face, mesh in meshes.items()
+        if face != "bottom"
+    )
+    assert meshes["bottom"].vertices[0].uv == (0, 1)
     assert all(mesh.orientation == "preserving" for mesh in meshes.values())
 
     bars, bar_meshes = diagnostic_display_profile(
@@ -11678,7 +12148,7 @@ def test_reference_advanced_controls_align_to_layer_and_retain_first(window, app
     composer.set_screens(("Front", "Bottom"))
     composer.change_type("Front", "Texture")
     row = composer.rows["Front"]
-    row.advanced.setChecked(True)
+    row.actions_button.setChecked(True)
     for width in (1350, 720):
         window.resize(width, 900)
         app.processEvents()
@@ -12062,7 +12532,7 @@ def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
     assert image.save(str(path))
     composer.add_file("Texture", str(path), "Front")
     composer.add_file("Texture", str(path), "Front")
-    composer.rows["Front"].advanced.setChecked(True)
+    composer.rows["Front"].actions_button.setChecked(True)
     form = editor.subgroup
     assert not hasattr(form, "vary") and form.add_rule.isVisible()
     form.add_rule.click()
@@ -12167,10 +12637,23 @@ def test_layer_actions_offer_up_down_and_preserve_projector_values(
         composer.add_file("Texture", str(path), face)
     left = composer.rows["Left"]
     assert [
-        a.text() for a in left.actions_button.menu().actions() if not a.isSeparator()
-    ] == ["Add layer", "Remove layer", "Move layer", "Advanced settings"]
+        a.text() for a in left.layer.operations.actions() if not a.isSeparator()
+    ] == ["Add layer", "Remove layer", "Move layer"]
     assert [a.text() for a in left.move_menu.actions()] == ["Move up", "Move down"]
-    assert left.advanced.isCheckable()
+    assert left.actions_button.isCheckable()
+    assert left.actions_button.menu() is None
+    assert left.layer.isEnabled()
+    left.layer.showPopup()
+    assert [a.text() for a in left.layer.menu.actions() if not a.isSeparator()] == [
+        "1",
+        "2",
+        "Add layer",
+        "Remove layer",
+        "Move layer",
+    ]
+    left.layer.menu.actions()[0].trigger()
+    left.layer.hidePopup()
+    assert left.layer.currentIndex() == 0
     original = composer.program
     right = tuple(s for s in original.sequence[0].settings if "right" in str(s.space))
     left.select_layer(0)
@@ -13012,8 +13495,8 @@ def test_managed_mcu_pending_completion_and_final_status(
     ManagedGui.command_finished(manager, "mcu", True, "Stopped")
     assert not binding.settle.isActive()
     assert panel.test_buttons["trial-state"].text() == "Test"
-    assert "output LOW, 10 rising transitions" in panel.console.toPlainText()
-    assert "MCU command: Stopped" in panel.console.toPlainText()
+    assert "output LOW, 10 rising transitions" in panel.status_column.hud.toPlainText()
+    assert "MCU command: Stopped" not in panel.console.toPlainText()
     assert (
         sum(
             options["kind"] == rpc.MICROCONTROLLER_COMMAND_KIND_START
@@ -13185,7 +13668,7 @@ def test_managed_camera_projection_distinguishes_open_capture_and_cleanup(
             previews=previews,
         )
     )
-    assert panel.connect_button.text() == "Disconnect"
+    assert panel.connect_button.text() == "Disconnect selected"
     assert not panel.preset_field.isEnabled()
     panel.connect_button.click()
     assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_FINISH_EDITING
@@ -13201,7 +13684,7 @@ def test_managed_camera_projection_distinguishes_open_capture_and_cleanup(
             previews=previews,
         )
     )
-    assert panel.connect_button.text() == "Disconnect"
+    assert panel.connect_button.text() == "Disconnect selected"
     viewers = ManagedPreviewViewers(
         lambda: state,
         panel,
@@ -13357,6 +13840,8 @@ def test_initial_and_reopened_retained_warnings_gate_auto_claim() -> None:
         mcu=SimpleNamespace(install=lambda _state, _held: None),
         prompts=SimpleNamespace(update=install_prompts),
         tracking_diagnostics=SimpleNamespace(install_snapshot=lambda _state: None),
+        action_progress=SimpleNamespace(install=lambda _epoch, _state: None),
+        stimulus_preview=SimpleNamespace(pending=""),
         review_retained=Action(),
         take=Action(),
         takeover=Action(),
@@ -13813,6 +14298,7 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
         replace(camera, values=dict(camera.values))
         for camera in review.devices.cameras.drafts
     ]
+    runtime.devices.cameras.drafts_changed.emit()
     runtime.apply_view(replace(review.dashboard.view, sample=False, connected=True))
     projectors = runtime.devices.projectors
     projectors.review_displays = review.devices.projectors.review_displays
@@ -13884,6 +14370,7 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
         QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         for window in (review, runtime):
             window.resize(width, 940)
+            window.update_preview_timeline()
             window.show()
         assert [b.text() for b in review.page_buttons] == [
             b.text() for b in runtime.page_buttons
@@ -14420,9 +14907,11 @@ def test_projector_configuration_json_restores_all_settings_without_screen_mappi
         == "color/front.json"
     )
     assert result["outputs"][1]["enabled"] is False
-    assert result["photodiode_output_id"] == "front"
+    assert set(result["photodiode_patches"]) == {"front"}
     assert result["photodiode_enabled"] is False
-    assert result["photodiode_patch"]["rect"] == dict(x=10, y=20, width=30, height=40)
+    assert result["photodiode_patches"]["front"]["rect"] == dict(
+        x=10, y=20, width=30, height=40
+    )
 
 
 @pytest.mark.parametrize("invalid", ["pulse", "mapping", "nonfinite", "duplicate"])
@@ -14597,13 +15086,20 @@ def test_authoritative_photodiode_area_installs_relative_square_and_zones(window
     patch = dict(
         background_rect=dict(x=100, y=200, width=180, height=120),
         rect=dict(x=120, y=230, width=40, height=40),
+        high_linear_rgb=[1, 1, 1],
+        low_linear_rgb=[0, 0, 0],
     )
     timing.install_overlays(
-        {"photodiode_patch": patch},
+        {"photodiode_patch": patch, "photodiode_output_id": "front"},
         {"output": "Front"},
-        {"output": {"blackout_zones": [dict(x=5, y=10, width=15, height=20)]}},
+        {
+            "output": {
+                "output_id": "front",
+                "blackout_zones": [dict(x=5, y=10, width=15, height=20)],
+            }
+        },
     )
-    assert timing.patch_draft() == patch
+    assert timing.patch_draft() == {k: patch[k] for k in ("rect", "background_rect")}
     assert timing.blackouts.snapshot() == [
         dict(face="Front", x=5, y=10, width=15, height=20)
     ]
@@ -14938,8 +15434,12 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(
         )
         extent_x = math.dist(surface["bottom_left_mm"], surface["bottom_right_mm"])
         extent_y = math.dist(surface["bottom_left_mm"], surface["top_left_mm"])
-        assert extent_x == pytest.approx(round(90 / 0.8 * extra_x) * 0.8)
-        assert extent_y == pytest.approx(round(80 / 0.9 * extra_y) * 0.9)
+        pixels = (round(90 / 0.8 * extra_x), round(80 / 0.9 * extra_y))
+        pitch = (0.8, 0.9)
+        if face == "Bottom":
+            pixels, pitch = pixels[::-1], pitch[::-1]
+        assert extent_x == pytest.approx(pixels[0] * pitch[0])
+        assert extent_y == pytest.approx(pixels[1] * pitch[1])
         projected = physical_corners(
             SimpleNamespace(
                 display=DisplayProfile.model_validate_json(json.dumps(document))
@@ -14949,12 +15449,12 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(
             SimpleNamespace(matrix=((1, 0, 0), (0, 1, 0))),
         )
         # A 20-by-10 mm texture retains its physical period, irrespective of view crop.
-        assert (projected[1][0] - projected[0][0]) / 2 * round(
-            90 / 0.8 * extra_x
-        ) == pytest.approx(20 / 0.8)
-        assert (projected[3][1] - projected[0][1]) / 2 * round(
-            80 / 0.9 * extra_y
-        ) == pytest.approx(10 / 0.9)
+        assert (projected[1][0] - projected[0][0]) / 2 * pixels[0] == pytest.approx(
+            20 / pitch[0]
+        )
+        assert (projected[3][1] - projected[0][1]) / 2 * pixels[1] == pytest.approx(
+            10 / pitch[1]
+        )
         # Cropping changes visible extents while physical pixel pitch stays fixed.
         bounds = submitted["valid_area"]
         assert (bounds[2] - bounds[0]) * 1280 == pytest.approx(
@@ -16317,6 +16817,9 @@ def test_texture_reference_link_keeps_appearance_and_disables_reparented_motion(
     panel.setParent(window)
     panel.bind(program, 0, 1, "Left")
     assert panel.linked_to.isEnabled()
+    assert not any(
+        "initial" in getattr(form, "children_by_key", {}) for form in panel.forms
+    )
     panel.linked_to.setCurrentIndex(panel.linked_to.findData(source.instance_id))
     reference_fields(panel)
     motion = next(f for f in panel.forms if isinstance(f, EpochMotion))
@@ -16576,12 +17079,15 @@ def test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors():
             )
         )
         for surface in display.geometry.surfaces:
+            extent_x, extent_y = native_width * pitch_x, native_height * pitch_y
+            if surface.surface_id == "bottom":
+                extent_x, extent_y = extent_y, extent_x
             assert math.dist(
                 surface.bottom_left_mm, surface.bottom_right_mm
-            ) == pytest.approx(native_width * pitch_x)
+            ) == pytest.approx(extent_x)
             assert math.dist(
                 surface.bottom_left_mm, surface.top_left_mm
-            ) == pytest.approx(native_height * pitch_y)
+            ) == pytest.approx(extent_y)
             corners = physical_corners(
                 SimpleNamespace(display=display),
                 SimpleNamespace(
@@ -16597,12 +17103,11 @@ def test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors():
             output_span_y = (
                 mesh.vertices[2].xy[1] - mesh.vertices[0].xy[1]
             ) * native_height
-            assert (
-                corners[1][0] - corners[0][0]
-            ) / 2 * output_span_x * pitch_x == pytest.approx(20)
-            assert (
-                corners[3][1] - corners[0][1]
-            ) / 2 * output_span_y * pitch_y == pytest.approx(10)
+            span_x, span_y = output_span_x * pitch_x, output_span_y * pitch_y
+            if surface.surface_id == "bottom":
+                span_x, span_y = span_y, span_x
+            assert (corners[1][0] - corners[0][0]) / 2 * span_x == pytest.approx(20)
+            assert (corners[3][1] - corners[0][1]) / 2 * span_y == pytest.approx(10)
     assert geometries[0] != geometries[1]
     assert matrices[0] != matrices[1]
 
@@ -16739,8 +17244,8 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                 control.isEnabled() == enabled
                 for control, enabled in device_gates.items()
             )
-            assert selector.card.caption.text() == (
-                "PREVIEW SOURCES" if name == "retro_console" else "Preview sources"
+            assert selector.timeline.caption.text() == (
+                "STIMULUS TIMELINE" if name == "retro_console" else "Stimulus timeline"
             )
             assert review.devices.config_cards[0].caption.text() == (
                 "CONFIGURATION FILE"
@@ -17042,7 +17547,7 @@ def test_protocol_arena_limits_default_edit_undo_and_saved_region(window, app):
     )
     parameters = editor.subgroup.composer.rows[""].parameters
     limits = parameters.arena_limits
-    editor.subgroup.composer.rows[""].advanced.setChecked(True)
+    editor.subgroup.composer.rows[""].actions_button.setChecked(True)
     from cephvr.gui.stimulus_form import ValueEditor
 
     initial = next(
@@ -17154,7 +17659,7 @@ def test_arena_xyz_orientation_default_subject_height_and_alignment(
     assert composer.program.sequence[0].settings[0].fixed_height_mm == 67.5
     row = composer.rows[""]
     row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
-    row.advanced.setChecked(True)
+    row.actions_button.setChecked(True)
     parameters = row.parameters
     pose = next(form for form in parameters.forms if isinstance(form, ArenaPose))
     from PyQt6.QtWidgets import QComboBox
@@ -17281,13 +17786,13 @@ def test_placement_buttons_live_edits_and_unknown_close(
         panel.assignments[f"screen{i}"] = face
         panel.display_pixels[f"screen{i}"] = (1280, 720)
     panel.select_pulse_face("Front")
-    from cephvr.gui.placement_calibration import initial_photodiode_patch
+    from cephvr.gui.placement_calibration import initial_photodiode_patches
 
     for control in (*panel.timing.fields.values(), *panel.timing.pulse_fields.values()):
         control.clear()
-    assert initial_photodiode_patch(panel) is None
+    assert initial_photodiode_patches(panel) is None
     panel.timing.fields["X"].setText("5")
-    assert initial_photodiode_patch(panel) is None
+    assert initial_photodiode_patches(panel) is None
     for key, value in (("X", "10"), ("Y", "20"), ("Width", "100"), ("Height", "80")):
         panel.timing.fields[key].setText(value)
     for key, value in (("X", "5"), ("Y", "6"), ("Width", "20"), ("Height", "10")):
@@ -17346,7 +17851,7 @@ def test_placement_buttons_live_edits_and_unknown_close(
     assert len(sent) == 1 and not sent[0]["adjustments"]
     parsed = parse_placement(sent[0]["placement_json"])
     assert (
-        parsed.photodiode_patch.rect.x
+        parsed.marker_patches["calibration_front"].rect.x
         if view == "photodiode_placement"
         else parsed.outputs[0].blackout_zones[0].x
     ) == (35 if view == "photodiode_placement" else 30)
@@ -17378,7 +17883,9 @@ def test_placement_buttons_live_edits_and_unknown_close(
             control.textEdited.emit(value)
         live.flush()
         assert len(sent) == 3
-        patch = parse_placement(sent[-1]["placement_json"]).photodiode_patch
+        patch = parse_placement(sent[-1]["placement_json"]).marker_patches[
+            "calibration_front"
+        ]
         assert (patch.rect.x, patch.rect.y, patch.rect.width, patch.rect.height) == (
             47,
             28,
@@ -17482,7 +17989,7 @@ def test_placement_bundle_uses_native_pixels_without_reference_measurements(
 
 
 @pytest.mark.parametrize("width", [720, 1280])
-def test_review_device_layout_candidates_stay_out_of_runtime(app, tmp_path, width):
+def test_device_layout_shared_with_runtime(app, tmp_path, width):
     from PyQt6.QtWidgets import QVBoxLayout
 
     from cephvr.gui.review import ReviewDashboardWindow
@@ -17496,15 +18003,15 @@ def test_review_device_layout_candidates_stay_out_of_runtime(app, tmp_path, widt
         reviewed.show()
         app.processEvents()
         cameras = reviewed.devices.cameras
-        left = cameras.selected_test_button.mapTo(cameras, QPoint())
-        right = cameras.connect_button.mapTo(cameras, QPoint())
+        left = cameras.connect_button.mapTo(cameras, QPoint())
+        right = cameras.connect_all_button.mapTo(cameras, QPoint())
         assert left.y() == right.y()
-        assert left.x() + cameras.selected_test_button.width() <= right.x()
+        assert left.x() + cameras.connect_button.width() <= right.x()
         assert not cameras.wiring_button.isVisible()
         assert runtime.devices.cameras.wiring_button.isHidden()
         assert (
             runtime.devices.cameras.inventory_actions.itemAtPosition(0, 1).widget()
-            is runtime.devices.cameras.connect_button
+            is runtime.devices.cameras.connect_all_button
         )
         mcu = reviewed.devices.microcontroller
         reviewed.devices.tabs.setCurrentIndex(1)
@@ -17515,16 +18022,32 @@ def test_review_device_layout_candidates_stay_out_of_runtime(app, tmp_path, widt
         assert layout.indexOf(mcu.triggers) == layout.indexOf(mcu.io) + 1
         assert mcu.io.isVisible()
         assert not mcu.flip_pin.isEnabled()
-        assert runtime.devices.microcontroller.io.isHidden()
+        runtime_mcu = runtime.devices.microcontroller
+        runtime_layout = runtime_mcu.columns[0].layout()
+        assert (
+            runtime_layout.indexOf(runtime_mcu.io)
+            == runtime_layout.indexOf(runtime_mcu.configuration) + 1
+        )
+        assert (
+            runtime_layout.indexOf(runtime_mcu.triggers)
+            == runtime_layout.indexOf(runtime_mcu.io) + 1
+        )
+        assert not runtime_mcu.io.isHidden()
+        assert (
+            runtime_layout.itemAt(
+                runtime_layout.indexOf(runtime_mcu.triggers) + 1
+            ).spacerItem()
+            is not None
+        )
     finally:
         reviewed.deleteLater()
         runtime.deleteLater()
 
 
 def test_review_per_screen_pulses_blank_vsync_and_local_restore(app, tmp_path):
+    from cephvr.gui.projector_pulses import ProjectorPulses
     from cephvr.gui.review import ReviewDashboardWindow
     from cephvr.gui.review_draft import load_review_draft, save_review_draft
-    from cephvr.gui.review_timing import ReviewProjectorTiming
 
     reviewed = ReviewDashboardWindow(sample=True)
     restored = ReviewDashboardWindow(sample=True)
@@ -17532,7 +18055,7 @@ def test_review_per_screen_pulses_blank_vsync_and_local_restore(app, tmp_path):
         for target in (reviewed, restored):
             ReviewControls(target, simulate_projectors=True)
         timing = reviewed.devices.projectors.timing
-        assert isinstance(timing, ReviewProjectorTiming)
+        assert isinstance(timing, ProjectorPulses)
         timing.pulse.setChecked(True)
         timing.target.setCurrentIndex(0)
         for key, value in zip(
@@ -17588,8 +18111,8 @@ def test_review_per_screen_pulses_blank_vsync_and_local_restore(app, tmp_path):
         restored.devices.projectors.calibration_files.apply_snapshot(saved_config)
         runtime = DashboardWindow(sample=True)
         try:
-            with pytest.raises(ValueError, match="complete projector configuration"):
-                runtime.devices.projectors.calibration_files.validate(saved_config)
+            runtime.devices.projectors.calibration_files.apply_snapshot(saved_config)
+            assert runtime.devices.projectors.timing.drafts == timing.drafts
         finally:
             runtime.deleteLater()
         assert fresh.vsync_faces() == ("Front", "Left")
@@ -17644,10 +18167,11 @@ def test_inventory_camera_roles_require_active_external_trigger(
 
 
 @pytest.mark.parametrize("width", [720, 1280])
-def test_review_mcu_inputs_define_remove_and_hide_empty_header(app, width):
+@pytest.mark.parametrize("runtime", [False, True])
+def test_mcu_inputs_define_remove_and_hide_empty_header(app, width, runtime):
     from cephvr.gui.review import ReviewDashboardWindow
 
-    reviewed = ReviewDashboardWindow(sample=True)
+    reviewed = (DashboardWindow if runtime else ReviewDashboardWindow)(sample=True)
     try:
         ReviewControls(reviewed, simulate_projectors=True)
         reviewed.resize(width, 940)
@@ -17656,7 +18180,7 @@ def test_review_mcu_inputs_define_remove_and_hide_empty_header(app, width):
         reviewed.show()
         app.processEvents()
         panel = reviewed.devices.microcontroller
-        inputs = panel.review_inputs
+        inputs = panel.inputs
         assert inputs is not None
         header = panel.input_table.horizontalHeader()
         assert header is not None
@@ -17696,7 +18220,7 @@ def test_review_mcu_inputs_define_remove_and_hide_empty_header(app, width):
         reviewed.deleteLater()
 
 
-def test_review_mcu_inputs_persist_and_respect_editing_gates(app, tmp_path):
+def test_mcu_inputs_persist_and_respect_editing_gates(app, tmp_path):
     from cephvr.gui.review import ReviewDashboardWindow
     from cephvr.gui.review_draft import load_review_draft, save_review_draft
 
@@ -17707,8 +18231,8 @@ def test_review_mcu_inputs_persist_and_respect_editing_gates(app, tmp_path):
         for target in (reviewed, restored):
             ReviewControls(target, simulate_projectors=True)
         panel = reviewed.devices.microcontroller
-        inputs = panel.review_inputs
-        fresh = restored.devices.microcontroller.review_inputs
+        inputs = panel.inputs
+        fresh = restored.devices.microcontroller.inputs
         assert inputs is not None and fresh is not None
         inputs.add_button.click()
         row = inputs.rows[0]
@@ -17724,9 +18248,8 @@ def test_review_mcu_inputs_persist_and_respect_editing_gates(app, tmp_path):
         fresh.restore([])
         restored.devices.microcontroller.snapshots.restore(document)
         assert fresh.snapshot() == expected
-        with pytest.raises(ValueError, match="field inventory"):
-            runtime.devices.microcontroller.snapshots.validate(document)
-        assert runtime.devices.microcontroller.review_inputs is None
+        runtime.devices.microcontroller.snapshots.restore(document)
+        assert runtime.devices.microcontroller.inputs.snapshot() == expected
         legacy = dict(document)
         legacy.pop("review_inputs")
         restored.devices.microcontroller.snapshots.restore(legacy)
@@ -17817,9 +18340,9 @@ def test_review_inline_output_templates_keep_pins_and_unfinished_rows(
 ):
     from PyQt6.QtWidgets import QInputDialog
 
+    from cephvr.gui.mcu_outputs import MicrocontrollerOutputDrafts
     from cephvr.gui.review import ReviewDashboardWindow
     from cephvr.gui.review_draft import load_review_draft, save_review_draft
-    from cephvr.gui.review_mcu_outputs import ReviewMicrocontrollerSignals
 
     monkeypatch.setattr(
         QInputDialog, "getInt", lambda *_: pytest.fail("Pin dialog must not open")
@@ -17835,7 +18358,7 @@ def test_review_inline_output_templates_keep_pins_and_unfinished_rows(
         app.processEvents()
         panel = reviewed.devices.microcontroller
         signals = panel.signals
-        assert isinstance(signals, ReviewMicrocontrollerSignals)
+        assert isinstance(signals, MicrocontrollerOutputDrafts)
         add = signals.add_buttons[0][0]
         assert add.menu() is None
         before = [
@@ -18482,6 +19005,147 @@ async def test_cancel_camera_test_does_not_close_preexisting_preview():
 
 
 @pytest.mark.parametrize("wired", [False, True])
+@pytest.mark.parametrize(
+    "outcome",
+    [
+        "complete",
+        "partial",
+        "failed",
+        "cancel",
+        "queue",
+        "authority",
+        "selection",
+        "disconnect_failure",
+    ],
+)
+def test_enabled_camera_bulk_connections_use_sequential_confirmed_intents(
+    window, app, wired, outcome
+):
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.gui.camera_inventory import CameraDraft
+    from cephvr.gui.managed_cameras import ManagedCameras
+
+    panel = window.devices.cameras
+    panel.managed = panel.snapshot_draft = True
+    panel.drafts.append(
+        CameraDraft(
+            "disabled",
+            "Eye tracking",
+            "disabled",
+            "sample",
+            enabled=False,
+            connected=True,
+        )
+    )
+    panel.populate_inventory()
+    for draft in panel.drafts:
+        draft.values["trigger_clock"] = "Internal clock"
+    if outcome == "partial":
+        panel.drafts[0].connected = panel.drafts[0].capture_running = True
+    panel.apply_view(
+        DashboardView(connected=True, has_control=True, configuration_wired=wired)
+    )
+    calls = []
+    revision = 4
+
+    def request(action, **options):
+        calls.append((action, options))
+        return outcome != "queue"
+
+    binding = ManagedCameras(
+        panel,
+        SimpleNamespace(request=request),
+        lambda *_: False,
+        preview_placement=lambda key: key.encode(),
+        submission_options=lambda _: {"base_revision": revision},
+    )
+    assert not hasattr(panel, "selected_test_button")
+    assert panel.connect_all_button.text() == "Connect all"
+    panel.connect_all_button.click()
+    assert len(calls) == 1
+    assert calls[0][0] == "prepare_camera"
+    assert calls[0][1]["camera_role"] == (2 if outcome == "partial" else 1)
+    assert calls[0][1]["show_preview"]
+    if outcome == "queue":
+        assert not binding.pending and not panel.bulk_pending
+        assert panel.pending_action.token is None
+        return
+    assert not panel.connect_button.isEnabled()
+    assert panel.connect_all_button.text() == "Cancel"
+    panel.table.selectRow(1)  # Selection changes do not retarget the in-flight request.
+    if outcome == "selection":
+        panel.drafts[1].role = "Eye tracking"
+        panel.drafts[0].connected = panel.drafts[0].capture_running = True
+        binding.finished("prepare_camera", True, "connected")
+        app.processEvents()
+        assert len(calls) == 1 and not panel.bulk_pending
+        return
+    if outcome in {"failed", "cancel", "authority"}:
+        if outcome == "cancel":
+            panel.connect_all_button.click()
+            assert calls[0][1]["cancellation"].requested.is_set()
+        if outcome == "authority":
+            panel.apply_view(DashboardView(connected=True, has_control=False))
+        binding.finished("prepare_camera", outcome == "authority", "terminal")
+        app.processEvents()
+        assert len(calls) == 1 and not panel.bulk_pending
+        assert not panel.drafts[1].connected
+        return
+    first = 1 if outcome == "partial" else 0
+    for index in range(first, 2):
+        assert calls[-1][1]["camera_role"] == index + 1
+        assert calls[-1][1]["base_revision"] == revision
+        # Apply the confirmed result before allowing the next camera command.
+        panel.drafts[index].connected = panel.drafts[index].capture_running = True
+        revision += 1
+        binding.finished("prepare_camera", True, "connected")
+        app.processEvents()
+    assert not panel.bulk_pending and not binding.pending
+    assert panel.connect_button.text() == "Disconnect selected"
+    assert panel.connect_all_button.text() == "Disconnect all"
+    assert len(calls) == (1 if outcome == "partial" else 2)
+    panel.connect_all_button.click()
+    for index in range(2):
+        assert calls[-1][0] == "camera"
+        assert calls[-1][1]["role"] == index + 1
+        assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+        success = outcome != "disconnect_failure" or index != 0
+        if success:
+            panel.drafts[index].connected = panel.drafts[index].capture_running = False
+        binding.finished("camera", success, "terminal")
+        app.processEvents()
+    assert not panel.bulk_pending and not binding.pending
+    assert panel.drafts[0].connected == (outcome == "disconnect_failure")
+    assert not panel.drafts[1].connected
+    assert panel.drafts[2].connected  # Disabled cameras are outside the bulk selection.
+    assert panel.connect_all_button.text() == "Connect all"
+
+
+def test_review_camera_selected_and_all_controls_follow_enabled_state(window):
+    panel = window.devices.cameras
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    requests = []
+    panel.preview_requested.connect(lambda *args: requests.append(args))
+    panel.connect_button.click()
+    assert panel.connect_button.text() == "Disconnect selected"
+    assert panel.connect_all_button.text() == "Connect all"
+    panel.connect_all_button.click()
+    assert all(draft.connected for draft in panel.drafts)
+    assert requests == [(panel.drafts[0].key, True), (panel.drafts[1].key, True)]
+    assert panel.connect_all_button.text() == "Disconnect all"
+    panel.connect_all_button.click()
+    assert not any(draft.connected for draft in panel.drafts)
+    assert panel.connect_button.text() == "Connect selected"
+    assert panel.connect_all_button.text() == "Connect all"
+    panel.enable_controls[1].setChecked(False)
+    panel.connect_all_button.click()
+    assert panel.drafts[0].connected and not panel.drafts[1].connected
+    panel.connect_all_button.click()
+    panel.enable_controls[0].setChecked(False)
+    assert not panel.connect_all_button.isEnabled()
+
+
+@pytest.mark.parametrize("wired", [False, True])
 def test_pending_camera_button_cancel_is_bound_to_original_request(window, wired):
     from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.gui.managed_cameras import ManagedCameras
@@ -18508,7 +19172,7 @@ def test_pending_camera_button_cancel_is_bound_to_original_request(window, wired
     panel.refresh_controls()
     assert control.text().startswith("Cancelling") and not control.isEnabled()
     binding.finished("camera", False, "Cancelled; cleanup confirmed")
-    assert control.text() in {"Connect", "Disconnect"}
+    assert control.text() in {"Connect selected", "Disconnect selected"}
     assert panel.pending_action.token is None
 
 
@@ -18903,3 +19567,1142 @@ def test_dashboard_warns_quietly_and_confirms_same_day_reuse(
         assert dashboard.subject_id.toolTip() == ""
     finally:
         dashboard.close()
+
+
+def test_runtime_per_screen_pulses_submit_restore_and_keep_disabled_placement(window):
+    import json
+
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+    from cephvr.visual_stimulus.v1 import runtime_pb2
+
+    panel = window.devices.projectors
+    source = json.loads(valid_display_json())
+    prototype = source["outputs"][0]
+    faces = ("front", "left", "right", "bottom")
+    source["outputs"] = [
+        dict(prototype, output_id=face, device_identity=face) for face in faces
+    ]
+    for mapping, face in zip(source["mappings"], faces, strict=True):
+        mapping["output_id"] = face
+    source["photodiode_output_id"] = "front"
+    source["photodiode_patch"]["high_linear_rgb"] = [0.8, 0.7, 0.6]
+    base = runtime_pb2.DisplayConfiguration(profile_json=json.dumps(source))
+    panel.install_configuration(base)
+    panel.select_pulse_face("Left")
+    for name, value in zip(
+        ("X", "Y", "Width", "Height"), ("20", "30", "40", "50"), strict=True
+    ):
+        panel.timing.fields[name].setText(value)
+    assert set(panel.timing.patches()) == {"Front", "Left"}
+    submitted = panel.configuration_for_submit(base)
+    parsed = DisplayProfile.model_validate_json(submitted.profile_json)
+    assert set(parsed.marker_patches) == {"front", "left"}
+    assert parsed.marker_patches["left"].rect.x == 20
+    assert parsed.marker_patches["front"].high_linear_rgb == (0.8, 0.7, 0.6)
+    assert [parsed.requested_swap_interval(face) for face in faces] == [1, 1, 0, 0]
+    panel.install_configuration(submitted)
+    assert set(panel.timing.patches()) == {"Front", "Left"}
+    panel.timing.pulse.setChecked(False)
+    disabled = panel.configuration_for_submit(submitted)
+    parsed = DisplayProfile.model_validate_json(disabled.profile_json)
+    assert not parsed.marker_patches and len(parsed.photodiode_patches) == 2
+    assert parsed.photodiode_patches["front"].high_linear_rgb == (0.8, 0.7, 0.6)
+    panel.calibration_files.apply_snapshot(json.loads(disabled.profile_json))
+    assert set(panel.timing.drafts) == {"Front", "Left"}
+    panel.timing.pulse.setChecked(True)
+    assert set(panel.timing.patches()) == {"Front", "Left"}
+    panel.timing.target.addItem("Unassigned display", "unassigned")
+    panel.timing.target.setCurrentIndex(panel.timing.target.findData("unassigned"))
+    assert panel.timing.face is None
+    assert set(panel.timing.drafts) == {"Front", "Left"}
+
+
+def test_projector_new_pulse_patch_supplies_colors_without_overwriting_explicit_values():
+    import json
+
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.gui.projector_codec import merge_projector_draft
+    from cephvr.visual_stimulus.v1 import runtime_pb2
+
+    document = json.loads(valid_display_json())
+    document.pop("photodiode_patch", None)
+    base = runtime_pb2.DisplayConfiguration(profile_json=json.dumps(document))
+    for patch, expected in [
+        ({"rect": {"x": 0, "y": 0, "width": 10, "height": 10}}, [1.0, 1.0, 1.0]),
+        ({"high_linear_rgb": [0.7, 0.8, 0.9]}, [0.7, 0.8, 0.9]),
+    ]:
+        result = merge_projector_draft(
+            base,
+            assignments={},
+            participation={},
+            pulse_enabled=False,
+            pulse_output_identity=None,
+            presentation_mode="free_run",
+            pulse_patch=patch,
+            geometry=None,
+        )
+        merged = json.loads(result.profile_json)["photodiode_patch"]
+        assert merged["high_linear_rgb"] == expected
+        assert merged["low_linear_rgb"] == [0.0, 0.0, 0.0]
+
+
+def test_crt_overlay_remains_input_transparent_when_native(app):
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QWidget
+
+    from cephvr.gui.retro_overlay import CrtOverlay
+
+    host = QWidget()
+    overlay = CrtOverlay(host)
+    assert overlay.testAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+    assert overlay.windowFlags() & Qt.WindowType.WindowTransparentForInput
+    host.close()
+
+
+def test_preview_workspace_close_preserves_native_owner(app):
+    from PyQt6.QtGui import QCloseEvent
+    from PyQt6.QtWidgets import QWidget
+
+    from cephvr.gui.previews import PreviewDialog
+
+    host = QWidget()
+    preview = PreviewDialog(host)
+    preview.show()
+    app.processEvents()
+    handle = int(preview.winId())
+    event = QCloseEvent()
+    preview.closeEvent(event)
+    assert not event.isAccepted()
+    assert not preview.isVisible()
+    preview.show()
+    app.processEvents()
+    assert int(preview.winId()) == handle
+    preview.reject()
+    assert not preview.isVisible()
+    assert int(preview.winId()) == handle
+    host.close()
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+def test_preview_workspace_reserves_active_streams_and_timeline(
+    window, app, style, monkeypatch
+):
+    from cephvr.gui.preview_placement import preview_window_placement
+    from cephvr.gui.protocol_document import TrialDraft, review_program
+
+    window.appearance.select(style, persist=False)
+    monkeypatch.setattr(
+        window.screen(), "availableGeometry", lambda: QRect(0, 0, 1920, 1080)
+    )
+    sources = tuple(
+        PreviewView(str(i), name, active=i < 5, available=i < 4, reason="")
+        for i, name in enumerate(
+            ("Behavior", "Tracking cam", "Eye", "Stimulus", "Tracking", "Disabled")
+        )
+    )
+    window.protocol.editor.drafts = [TrialDraft("Motion", review_program())]
+    view = DashboardView(
+        connected=True, has_control=True, previews=sources, trial_index=1, elapsed_s=12
+    )
+    window.apply_view(view)
+    window.dashboard.preview_button.click()
+    dialog = window.dashboard.preview_dialog
+    dialog.resize(1440, 960)
+    app.processEvents()
+    assert tuple(window.preview_slot.frames) == ("0", "1", "2", "3", "4")
+    targets = {key: frame.target for key, frame in window.preview_slot.frames.items()}
+    assert window.preview_slot.columns == 3
+    assert all(
+        frame.status.isVisible() for frame in window.preview_slot.frames.values()
+    )
+    assert not dialog.empty_hint.isVisible()
+    assert dialog.timeline.y() > dialog.preview_host.geometry().bottom()
+    assert dialog.timeline.plot.elapsed == 12
+    assert not dialog.timeline.plot.message
+    assert not dialog.grab().isNull()
+    if QApplication.platformName() != "windows":
+        placements = [preview_window_placement(window, key) for key in targets]
+        assert all(p.side >= 128 for p in placements)
+    window.apply_view(
+        replace(view, previews=(replace(sources[0], visible=True), *sources[1:]))
+    )
+    assert {
+        key: frame.target for key, frame in window.preview_slot.frames.items()
+    } == targets
+    assert window.preview_slot.frames["0"].status.isHidden()
+    dialog.resize(800, 800)
+    app.processEvents()
+    assert window.preview_slot.columns == 3
+    assert dialog.timeline.y() > dialog.preview_host.geometry().bottom()
+    for frame in window.preview_slot.frames.values():
+        assert window.preview_slot.rect().contains(frame.geometry())
+        assert frame.target.width() >= 128
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+def test_preview_inline_controls_follow_camera_recording_choices(app, style):
+    from cephvr.gui.camera_inventory import CameraDraft
+
+    window = DashboardWindow(sample=True)
+    window.appearance.select(style, persist=False)
+    cameras = window.devices.cameras.drafts
+    cameras.append(
+        CameraDraft("camera-eye", "Eye tracking", "REVIEW-003", "Basler · sample")
+    )
+    window.recordings.sync_cameras()
+    behavior = next(camera for camera in cameras if "behavior" in camera.role.lower())
+    others = [camera for camera in cameras if camera is not behavior]
+    for camera in cameras:
+        camera.enabled = True
+    sources = tuple(
+        PreviewView(camera.key, camera.role, active=True, available=True, reason="")
+        for camera in cameras
+    )
+    state = DashboardView(connected=True, has_control=True, previews=sources)
+    window.recordings.install_values({behavior.key: True})
+    window.apply_view(state)
+    window.show()
+    window.dashboard.show_previews()
+    dialog = window.dashboard.preview_dialog
+    requests = []
+    dialog.visibility_requested.connect(lambda *args: requests.append(args))
+    app.processEvents()
+    assert tuple(window.preview_slot.frames) == (behavior.key,)
+    for camera in others:
+        assert not dialog.controls[camera.key].isEnabled()
+        assert not dialog.source_widgets[camera.key].isVisible()
+        dialog.request(camera.key, True)
+    assert not requests
+    frame = window.preview_slot.frames[behavior.key]
+    control = dialog.controls[behavior.key]
+    assert frame.header.isAncestorOf(control)
+    assert control.isVisible() and control.isEnabled()
+    assert control.mapTo(frame, QPoint()).y() + control.height() <= frame.target.y()
+    added = others[0].key
+    window.recordings.record[added].setChecked(True)
+    app.processEvents()
+    assert set(window.preview_slot.frames) == {behavior.key, added}
+    assert window.preview_slot.frames[added].header.isAncestorOf(dialog.controls[added])
+    dialog.controls[added].click()
+    assert requests == [(added, True)] and not dialog.controls[added].isEnabled()
+    visible = replace(
+        state,
+        previews=tuple(
+            replace(source, visible=source.key == added) for source in sources
+        ),
+    )
+    window.apply_view(visible)
+    window.recordings.record[added].setChecked(False)
+    assert added in window.preview_slot.frames  # Keep an already-open viewer closable.
+    dialog.controls[added].click()
+    assert requests[-1] == (added, False)
+    window.apply_view(state)
+    app.processEvents()
+    assert added not in window.preview_slot.frames
+    window.select_page(2)
+    app.processEvents()
+    assert not dialog.source_widgets[behavior.key].isVisible()
+    window.select_page(0)
+    window.dashboard.show_previews()
+    app.processEvents()
+    assert window.preview_slot.frames[behavior.key].header.isAncestorOf(control)
+    window.apply_view(replace(state, has_control=False))
+    assert not control.isEnabled()
+    window.close()
+    window.deleteLater()
+    app.processEvents()
+
+
+def test_preview_timeline_speed_units_epochs_and_unresolved_order(app):
+    from cephvr.gui.preview_timeline import StimulusTimeline, planned_speed
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.visual_stimulus.config.models.program_model import (
+        Constant,
+        ImageTile,
+        Rate,
+    )
+
+    program = review_program()
+    texture = program.sequence[1].settings[0]
+    assert planned_speed(texture, 0) == pytest.approx(
+        30
+    )  # 1.5 cycles/s / 0.05 cycles/deg.
+    tile = texture.model_copy(
+        update={
+            "pattern": ImageTile(
+                kind="image_tile",
+                asset_id="tile",
+                period_x=Constant(kind="constant", value=20),
+                period_y=Constant(kind="constant", value=10),
+                sampling="linear",
+            ),
+            "phase_y": Rate(kind="rate", function=Constant(kind="constant", value=4)),
+        }
+    )
+    assert planned_speed(tile, 0) == pytest.approx(50)
+    with pytest.raises(ValueError, match="Linked motion"):
+        planned_speed(tile.model_copy(update={"linked_to": "reference"}), 0)
+    timeline = StimulusTimeline()
+    timeline.set_program(program, "", "Trial 1")
+    assert [(e.start, e.end) for e in timeline.plot.epochs] == [
+        (0, 5),
+        (5, 25),
+        (25, 60),
+    ]
+    assert {value for _, value in timeline.plot.traces[0]} == {0}
+    assert {value for _, value in timeline.plot.traces[1]} == {30}
+    assert {value for _, value in timeline.plot.traces[2]} == {0}
+    assert timeline.plot.unit == "deg/s"
+    grouped = grouped_program(program)
+    group = grouped.sequence[0].model_copy(update={"order": "shuffle_each_repetition"})
+    shuffled = grouped.model_copy(update={"sequence": (group,)})
+    timeline.set_program(shuffled, "", "Shuffled")
+    assert "seed" in timeline.plot.message and not timeline.plot.traces
+    timeline.set_program(shuffled, "42", "Shuffled")
+    assert not timeline.plot.message and timeline.plot.traces
+    timeline.close()
+
+
+def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
+    from PyQt6.QtCore import QPoint, Qt
+    from PyQt6.QtTest import QTest
+
+    from cephvr.gui.preview_timeline import StimulusTimeline, planned_rotation
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.visual_stimulus.config.models.program_model import Constant, Hold, Rate
+
+    program = review_program()
+    epoch = program.sequence[1]
+    source = epoch.settings[0]
+    source = source.model_copy(
+        update={
+            "space": source.space.model_copy(update={"surfaces": ("bottom",)}),
+            "motion": source.motion.model_copy(
+                update={
+                    "rotation": Rate(
+                        kind="rate", function=Constant(kind="constant", value=-15)
+                    )
+                }
+            ),
+        }
+    )
+    follower = source.model_copy(
+        update={"instance_id": "follower", "linked_to": source.instance_id}
+    )
+    epoch = epoch.model_copy(update={"settings": (follower, source)})
+    program = program.model_copy(
+        update={"sequence": (program.sequence[0], epoch, program.sequence[2])}
+    )
+    timeline = StimulusTimeline()
+    timeline.resize(1000, 340)
+    timeline.set_program(program, "", "Trial")
+    timeline.show()
+    app.processEvents()
+    assert timeline.trace_selector.count() == 1
+    assert timeline.trace_selector.currentText() == "Bottom · reference · deg/s"
+    assert timeline.epoch_strip.epochs == timeline.plot.epochs
+    assert (
+        timeline.epoch_strip.mapTo(
+            timeline, QPoint(0, timeline.epoch_strip.height())
+        ).y()
+        <= timeline.plot.mapTo(timeline, QPoint(0, 0)).y()
+    )
+    timeline.set_elapsed(12)
+    assert timeline.polar.direction == pytest.approx(180)
+    assert timeline.polar.angular_speed == -15
+    assert not timeline.polar.message
+    assert (
+        planned_rotation(
+            source.model_copy(
+                update={
+                    "motion": source.motion.model_copy(
+                        update={
+                            "rotation": Rate(
+                                kind="rate",
+                                function=Constant(kind="constant", value=15),
+                            )
+                        }
+                    )
+                }
+            ),
+            0,
+        )
+        == 15
+    )
+    timeline.set_elapsed(45)
+    assert timeline.epoch_strip.elapsed == timeline.plot.elapsed == 45
+    bounds = timeline.plot.plot_bounds()
+    QTest.mouseClick(
+        timeline.plot,
+        Qt.MouseButton.LeftButton,
+        pos=QPoint(
+            round(bounds.left() + bounds.width() / 2), round(bounds.center().y())
+        ),
+    )
+    assert timeline.plot.elapsed == pytest.approx(30, abs=0.1)
+    assert timeline.polar.direction is None
+    assert timeline.polar.angular_speed == 0
+    assert timeline.polar.message == "No stimulus"
+    stopped = source.model_copy(
+        update={"phase_x": Hold(kind="hold"), "phase_y": Hold(kind="hold")}
+    )
+    program = program.model_copy(
+        update={"sequence": (epoch.model_copy(update={"settings": (stopped,)}),)}
+    )
+    timeline.set_program(program, "", "Rotate only")
+    timeline.set_elapsed(0)
+    assert timeline.polar.direction is None and not timeline.polar.message
+    assert timeline.polar.angular_speed == -15
+    timeline.clear("Unavailable")
+    assert timeline.polar.direction is timeline.polar.angular_speed is None
+    assert not timeline.plot.traces and not timeline.epoch_strip.epochs
+    timeline.close()
+
+
+@pytest.mark.parametrize(
+    "maximum, expected",
+    [
+        (0, (0, 5)),
+        (9, (0, 5, 10)),
+        (30, (0, 10, 20, 30)),
+        (96, (0, 20, 40, 60, 80, 100)),
+    ],
+)
+def test_preview_motion_ticks(maximum, expected):
+    from cephvr.gui.preview_motion_plot import plot_ticks
+
+    assert plot_ticks(maximum) == expected
+
+
+@pytest.mark.parametrize(
+    "elapsed, expected",
+    [
+        (None, (0, 30)),
+        (0, (0, 30)),
+        (12, (0, 30)),
+        (30, (0, 30)),
+        (45, (15, 45)),
+        (60.5, (30.5, 60.5)),
+    ],
+)
+def test_preview_motion_sliding_window(elapsed, expected):
+    from cephvr.gui.preview_motion_plot import time_window
+
+    assert time_window(elapsed) == expected
+
+
+def test_preview_grid_retains_pending_footprints_and_existing_targets(app):
+    from cephvr.gui.preview_placement import PreviewSlot
+
+    slot = PreviewSlot()
+    slot.set_sources((PreviewView("a", "A", visible=True),))
+    original = slot.frames["a"]
+    slot.set_sources(
+        (PreviewView("a", "A", pending=True), PreviewView("b", "B", visible=True))
+    )
+    assert slot.frames["a"] is original
+    assert tuple(slot.frames) == ("a", "b")
+    slot.set_sources(
+        (PreviewView("a", "A", visible=True), PreviewView("b", "B", visible=True))
+    )
+    assert slot.frames["a"] is original
+    slot.close()
+
+
+def test_managed_camera_reconnect_retains_layout_without_claiming_visibility(window):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_cameras import ManagedCameras
+
+    panel = window.devices.cameras
+    state = pb.Snapshot()
+    state.configuration.revision = 1
+    camera = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition.behavioral
+    camera.device.device_id = panel.drafts[0].serial
+    camera.enabled = True
+    state.acquisition_devices.behavioral.device_open = True
+    panel.apply_view(
+        DashboardView(
+            previews=(PreviewView(panel.drafts[0].key, "Behavior cam", visible=True),)
+        )
+    )
+    binding = ManagedCameras(panel, SimpleNamespace(), lambda *_: False)
+    binding.pending = "camera"
+    view = binding.install(state)[0]
+    assert view.pending and not view.visible
+    assert view.reason == "Reconnecting preview…"
+    binding.pending = ""
+    assert not binding.install(state)[0].pending
+
+
+@pytest.mark.parametrize("parameter", ["Speed", "Direction", "Angular speed"])
+def test_linked_texture_motion_variation_reports_reference_and_recovers(
+    window, app, parameter
+):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.visual_stimulus.config.repetition_values import resolve_repetition
+
+    program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+    program = add_stimulus(program, 0, "Texture", ("Left",))
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens(("Bottom", "Left"))
+    editor.set_program(grouped_program(program))
+    form = editor.subgroup
+    form.add_variation()
+    row = form.rows[0]
+    row.target.setCurrentIndex(row.target.findText("All projectors"))
+    row.parameter.setCurrentIndex(row.parameter.findData(parameter))
+    row.method.setCurrentText("Random")
+    row.random_fields["minimum"].setText("1")
+    row.random_fields["maximum"].setText("10")
+    form.apply()
+    assert not form.notice.text()
+    before = editor.program
+    source = before.sequence[0].body[0].settings[0].instance_id
+    panel = form.composer.rows["Left"].parameters
+    assert panel.linked_to.findData(source) >= 0, [
+        (panel.linked_to.itemText(i), panel.linked_to.itemData(i))
+        for i in range(panel.linked_to.count())
+    ]
+    panel.linked_to.setCurrentIndex(panel.linked_to.findData(source))
+    form.queue_update()
+    QTest.qWait(50)
+    assert editor.program == before
+    assert f"{parameter} variation targets linked texture" in form.notice.text()
+    assert "target to Bottom" in form.notice.text()
+    assert form.notice.dialog is None
+    row.target.setCurrentIndex(row.target.findText("Bottom"))
+    form.queue_update()
+    QTest.qWait(50)
+    assert not form.notice.text() and not form.dirty
+    epoch = editor.program.sequence[0].body[0]
+    assert all(rule.instance_id == source for rule in epoch.repetition_rules)
+    for repetition in (0, 1, 99):
+        follower = resolve_repetition(
+            epoch.settings, epoch.repetition_rules, repetition
+        )[1]
+        assert follower.linked_to == source
+        assert follower.phase_x.kind == follower.phase_y.kind == "hold"
+        assert follower.motion.rotation.kind == "hold"
+
+
+@pytest.mark.parametrize("pattern", ["flat", "filtered_noise"])
+def test_trial_preview_generates_recipe_pixels_and_caches_errors(
+    app, tmp_path, pattern
+):
+    import json
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_file_stimulus
+    from cephvr.gui.trial_preview_media import PreviewMedia
+
+    path = tmp_path / "stimulus.texture.json"
+    recipe = {
+        "kind": "texture",
+        "pattern": pattern,
+        "params": {
+            "texture_resolution": 32,
+            "seed": 5,
+            "color_a": [0.25, 0.25, 0.25],
+            "color_b": [0.0, 0.0, 0.0],
+        },
+        "preview_file": "does-not-exist.png",
+    }
+    path.write_text(json.dumps(recipe))
+    program = add_file_stimulus(
+        blank_program(), 0, "Texture", ("Front",), str(tmp_path), str(path)
+    )
+    asset = program.sequence[0].settings[0].pattern.asset_id
+    media = PreviewMedia(program, str(tmp_path), None)
+    image = media.image(asset)
+    assert not image.isNull() and image.width() == image.height() == 32
+    assert not media.errors
+    assert any(image.pixelColor(x, y).red() > 0 for x in range(32) for y in range(32))
+    assert media.image(asset) is image
+    media.close()
+    path.write_text('{"pattern":"flat","params":{"texture_resolution":100000}}')
+    assert media.image(asset).isNull()
+    assert "allocation limit" in media.errors[asset]
+    media.close()
+
+
+@pytest.mark.parametrize("face", ["Front", "Left", "Right", "Bottom"])
+@pytest.mark.parametrize("flip", [False, True])
+def test_trial_preview_maps_usable_pixels_to_screen_without_margins(app, face, flip):
+    from PyQt6.QtCore import QPointF
+    from PyQt6.QtGui import QColor, QImage, QPainter, QPolygonF
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.trial_preview_canvas import PreviewCanvas
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_rig import PreviewRig
+    from cephvr.gui.trial_preview_surfaces import (
+        PreviewCorrection,
+        PreviewGeometry,
+        PreviewSurface,
+    )
+
+    # Noncentral crop on landscape walls and a portrait Bottom output.
+    width, height = (200, 100) if face != "Bottom" else (100, 200)
+    correction = PreviewCorrection.from_draft(
+        face,
+        {
+            "width": "80",
+            "height": "80",
+            "reference_width_px": str(width),
+            "reference_height_px": str(height),
+            "reference_x_px": "20",
+            "reference_y_px": "20",
+            "reference_x_mm": "20",
+            "reference_y_mm": "20",
+            "valid_width_px": "80",
+            "valid_height_px": "80",
+            "offset_x_px": "5",
+            "offset_y_px": "-5",
+            "flip_x": str(flip),
+            "flip_y": str(flip),
+        },
+        (width, height),
+    )
+    assert not correction.error
+    geometry = PreviewGeometry(
+        {face: PreviewSurface(80, 80, correction=correction)}, None
+    )
+    media = PreviewMedia(blank_program(), "", None)
+    canvas = PreviewCanvas(face, media, geometry)
+    source = QImage(width, height, QImage.Format.Format_RGB32)
+    source.fill(QColor("red"))
+    painter = QPainter(source)
+    painter.fillRect(0, 0, width, height // 2, QColor("blue"))
+    painter.end()
+    view = PreviewRig(geometry, {face: canvas})
+    view.frames[face] = canvas.correct_frame(source)
+    target = QImage(120, 120, QImage.Format.Format_RGB32)
+    target.fill(QColor("green"))
+    painter = QPainter(target)
+    view.draw_screen(
+        painter,
+        face,
+        QPolygonF(
+            [
+                QPointF(10, 110),
+                QPointF(110, 110),
+                QPointF(110, 10),
+                QPointF(10, 10),
+            ]
+        ),
+    )
+    painter.end()
+    for x in (15, 50, 105):
+        assert target.pixelColor(x, 20) == QColor("red" if flip else "blue")
+        assert target.pixelColor(x, 100) == QColor("blue" if flip else "red")
+    # Unused output pixels must not spill outside the physical screen.
+    assert target.pixelColor(5, 60) == QColor("green")
+    assert target.pixelColor(115, 60) == QColor("green")
+    view.deleteLater()
+    canvas.deleteLater()
+    media.close()
+
+
+@pytest.mark.parametrize("spin", [False, True])
+def test_preview_linked_motion_moves_followers_and_replays_boundaries(spin):
+    from cephvr.gui.projector_geometry import RigDimensions
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.gui.trial_preview_surfaces import PreviewGeometry
+    from cephvr.visual_stimulus.config.models.program_model import Rate, Time
+
+    program = blank_program()
+    for face in ("Bottom", "Front", "Left", "Right"):
+        program = add_stimulus(program, 0, "Texture", (face,))
+    epoch = program.sequence[0]
+    settings = list(epoch.settings)
+    source = settings[0]
+    rate = Rate.model_validate(
+        {"kind": "rate", "function": {"kind": "constant", "value": 12 if spin else 0.2}}
+    )
+    source = source.model_copy(
+        update={
+            "initial": source.initial.model_copy(
+                update={"x": 0.0 if spin else -5.0, "y": 0.0}
+            ),
+            **(
+                {"motion": source.motion.model_copy(update={"rotation": rate})}
+                if spin
+                else {"phase_x": rate}
+            ),
+        }
+    )
+    settings = [source] + [
+        s.model_copy(update={"linked_to": source.instance_id}) for s in settings[1:]
+    ]
+    epoch = epoch.model_copy(
+        update={
+            "settings": tuple(settings),
+            "duration": epoch.duration.model_copy(
+                update={"duration": Time(seconds="2")}
+            ),
+        }
+    )
+    program = program.model_copy(
+        update={"sequence": (epoch, epoch.model_copy(update={"epoch_id": "second"}))}
+    )
+    geometry = (
+        PreviewGeometry.from_drafts(
+            RigDimensions(200, 300, 150, (100, 100, 75)),
+            {
+                face: {"width": "200", "height": "150", "subject_distance": "100"}
+                for face in ("Front", "Left", "Right", "Bottom")
+            },
+        )
+        .artifact()
+        .display.geometry
+    )
+    with pytest.raises(ValueError, match="four screen planes"):
+        PreviewPlan(program)
+    plan = PreviewPlan(program, geometry)
+
+    def states(t):
+        return {
+            layer.setting.instance_id: tuple(
+                layer.values[k] for k in ("phase_x", "phase_y", "rotation")
+            )
+            for layer in plan.seek(t)
+        }
+
+    zero, one, three = states(0), states(1_000_000_000), states(3_000_000_000)
+    assert all(one[k] != zero[k] for k in one)
+    for k in one:
+        assert tuple(three[k][i] - zero[k][i] for i in range(3)) == pytest.approx(
+            tuple(3 * (one[k][i] - zero[k][i]) for i in range(3))
+        )
+    assert states(1_000_000_000) == one
+    assert states(3_000_000_000) == three
+
+
+@pytest.mark.parametrize("removed", [0, 1, 2])
+@pytest.mark.parametrize("nested", [False, True])
+def test_epoch_display_numbers_follow_deletion_and_restore(app, removed, nested):
+    import json
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_nodes import edit_epoch
+    from cephvr.gui.protocol_timeline import ProgramTimeline
+    from cephvr.gui.timeline_details import epoch_heading
+    from cephvr.visual_stimulus.config.models.program_model import Group
+
+    original = blank_program()
+    original, _ = edit_epoch(original, 0, "add")
+    original, _ = edit_epoch(original, 1, "add")
+    scope = ()
+    if nested:
+        group = Group.model_validate_json(
+            json.dumps(
+                dict(
+                    kind="group",
+                    group_id="Test",
+                    repetitions=100,
+                    order="as_listed",
+                    order_unit="child_blocks",
+                    conditions=None,
+                    body=[n.model_dump(mode="json") for n in original.sequence],
+                )
+            )
+        )
+        original = original.model_copy(update={"sequence": (group,)})
+        scope = (0,)
+    timeline = ProgramTimeline(details=False)
+    timeline.resize(1000, 250)
+    timeline.show()
+    timeline.set_program(original, scope=scope)
+    old_ids = [n.epoch_id for n in timeline.nodes]
+    changed, index = edit_epoch(original, (*scope, removed), "remove")
+    timeline.set_program(changed, index, scope=scope)
+    timeline.grab()
+    labels = [
+        text.split("\n")[0]
+        for _, text in timeline.hover_text
+        if text.startswith("Epoch ")
+    ]
+    assert labels == ["Epoch 1", "Epoch 2"]
+    assert [n.epoch_id for n in timeline.nodes] == [
+        v for i, v in enumerate(old_ids) if i != removed
+    ]
+    assert epoch_heading(timeline.nodes[index], index).startswith(
+        f"Epoch {index + 1} ·"
+    )
+    timeline.set_program(original, scope=scope)
+    timeline.grab()
+    labels = [
+        text.split("\n")[0]
+        for _, text in timeline.hover_text
+        if text.startswith("Epoch ")
+    ]
+    assert labels == ["Epoch 1", "Epoch 2", "Epoch 3"]
+    timeline.close()
+    timeline.deleteLater()
+
+
+@pytest.mark.parametrize(
+    "dx,dy", [(10.0, 0.0), (-10.0, 0.0), (0.0, 10.0), (0.0, -10.0)]
+)
+def test_bottom_portrait_mapping_preserves_rig_motion_and_measured_pitch(dx, dy):
+    from PyQt6.QtCore import QPointF
+    from PyQt6.QtGui import QPolygonF, QTransform
+
+    from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+    from cephvr.gui.projector_extent import usable_corners, valid_pixels
+    from cephvr.gui.projector_geometry import RigDimensions, screen_corners
+    from cephvr.gui.trial_preview_surfaces import PreviewCorrection
+
+    values = dict(
+        width=126,
+        height=94,
+        subject_distance=51,
+        reference_width_px=720,
+        reference_height_px=1280,
+        reference_x_px=180,
+        reference_y_px=320,
+        reference_x_mm=24,
+        reference_y_mm=44,
+        valid_width_px=685,
+        valid_height_px=940,
+        offset_x_px=-10,
+        offset_y_px=7,
+        flip_x=False,
+        flip_y=True,
+    )
+    numeric = {f"screens.Bottom.{k}": v for k, v in values.items()}
+    corners = screen_corners(
+        RigDimensions(120, 166, 110, (60, 93, 53)),
+        "Bottom",
+        {k: str(v) for k, v in values.items()},
+        front_distance="91",
+    )
+    usable = usable_corners(corners, numeric, "Bottom", 720, 1280)
+    depth = usable[1][1] - usable[0][1]
+    cross_span = usable[0][0] - usable[3][0]
+    assert depth == pytest.approx(940 * 44 / 320)
+    assert cross_span == pytest.approx(685 * 24 / 180)
+    assert valid_pixels(numeric, "Bottom", 720, 1280) == (685, 940)
+    vertices, mirrored = face_mapping(
+        {"values": numeric}, "Bottom", MonitorBinding("bottom", 0, 0, 720, 1280, 60, 8)
+    )
+    assert mirrored
+    correction = PreviewCorrection.from_draft(
+        "Bottom", {k: str(v) for k, v in values.items()}, (720, 1280)
+    )
+    assert not correction.error
+    order = (0, 1, 3, 2)
+    assert correction.source_uv == tuple(vertices[i]["uv"] for i in order)
+    assert correction.corners == tuple(vertices[i]["xy"] for i in order)
+    transform = QTransform()
+    assert QTransform.quadToQuad(
+        QPolygonF([QPointF(*vertices[i]["uv"]) for i in order]),
+        QPolygonF([QPointF(*vertices[i]["xy"]) for i in order]),
+        transform,
+    )
+    start = transform.map(QPointF(0.5, 0.5))
+    end = transform.map(QPointF(0.5 + dx / depth, 0.5 + dy / cross_span))
+    # Raw image top faces the head; raw +X faces subject-left through the mirror.
+    assert (end.y() - start.y()) * 1280 * (44 / 320) == pytest.approx(-dx)
+    assert (end.x() - start.x()) * 720 * (24 / 180) == pytest.approx(-dy)
+
+
+def test_owned_dialogs_follow_style_changes_and_new_dialogs(window, app):
+    from PyQt6.QtGui import QPalette
+    from PyQt6.QtWidgets import QDialog, QMessageBox, QVBoxLayout
+
+    from cephvr.gui.theme import COLORS, RETRO_COLORS
+
+    warning = QMessageBox(
+        QMessageBox.Icon.Warning, "Warning", "Keep these details", parent=window
+    )
+    tool = QDialog(window)
+    layout = QVBoxLayout(tool)
+    text = QLabel("External window")
+    layout.addWidget(text)
+    warning.show()
+    tool.show()
+    try:
+        for name, colors in (
+            ("retro_console", RETRO_COLORS),
+            ("standard", COLORS),
+            ("retro_console", RETRO_COLORS),
+        ):
+            window.appearance.select(name, persist=False)
+            app.processEvents()
+            fresh = QMessageBox(
+                QMessageBox.Icon.Information,
+                "New warning",
+                "New details",
+                parent=window,
+            )
+            fresh.show()
+            app.processEvents()
+            try:
+                for dialog in (warning, tool, fresh):
+                    assert (
+                        dialog.palette().color(QPalette.ColorRole.Window).name()
+                        == colors.window
+                    )
+                    for label in dialog.findChildren(QLabel):
+                        if label.text():
+                            assert (
+                                label.palette()
+                                .color(QPalette.ColorRole.WindowText)
+                                .name()
+                                == colors.text
+                            )
+                            assert ("IBM Plex Mono" in label.font().family()) == (
+                                name == "retro_console"
+                            )
+                assert warning.text() == "Keep these details"
+                assert tool.isVisible()
+            finally:
+                fresh.close()
+                fresh.deleteLater()
+    finally:
+        warning.close()
+        tool.close()
+        warning.deleteLater()
+        tool.deleteLater()
+
+
+def test_projector_brightness_adjust_review_and_authority_gates(
+    window: DashboardWindow,
+) -> None:
+    panel = window.devices.projectors
+    panel.review = True
+    control = panel.brightness
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    assert control.current.minimum() == 101 and control.current.maximum() == 2500
+    control.current.setValue(350)
+    control.adjust.click()
+    assert "350 mA; no hardware command sent" in panel.console.toPlainText()
+    assert not control.pending
+    for view in (
+        review_view(Phase.RUNNING),
+        review_view(Phase.READY),
+        review_view(Phase.CONFIGURATION, observer=True),
+    ):
+        window.apply_view(view)
+        assert not control.adjust.isEnabled()
+    control.apply_view(review_view(Phase.CONFIGURATION))
+    panel.review = False
+    values = []
+    control.requested.connect(values.append)
+    control.adjust.click()
+    control.submit()
+    assert values == [350] and control.pending
+    assert not control.adjust.isEnabled()
+    control.apply_view(review_view(Phase.CONFIGURATION, observer=True))
+    control.finish()
+    assert not control.adjust.isEnabled()
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+@pytest.mark.parametrize("width", [320, 580])
+def test_projector_brightness_layout(app, style, width):
+    from PyQt6.QtWidgets import QAbstractSpinBox
+
+    from cephvr.gui.projector_brightness import ProjectorBrightnessCard
+    from cephvr.gui.theme import retro_stylesheet, stylesheet
+
+    card = ProjectorBrightnessCard()
+    card.setStyleSheet(retro_stylesheet() if style == "retro_console" else stylesheet())
+    card.resize(width, card.sizeHint().height())
+    card.show()
+    app.processEvents()
+    try:
+        editor = QRect(card.current.mapTo(card, QPoint()), card.current.size())
+        action = QRect(card.adjust.mapTo(card, QPoint()), card.adjust.size())
+        assert abs(editor.bottom() - action.bottom()) <= 1
+        assert editor.right() < action.left()
+        assert card.rect().contains(editor) and card.rect().contains(action)
+        assert card.adjust.width() >= card.adjust.sizeHint().width()
+        assert card.current.buttonSymbols() == QAbstractSpinBox.ButtonSymbols.NoButtons
+        assert card.current.value() == 101
+    finally:
+        card.close()
+        card.deleteLater()
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+def test_mcu_test_buttons_fit_action_labels(window, app, style):
+    window.page_buttons[2].click()
+    window.devices.tabs.setCurrentIndex(1)
+    window.appearance.select(style, persist=False)
+    panel = window.devices.microcontroller
+    for text in ("Test", "Stop", "Cancel"):
+        for control in panel.test_buttons.values():
+            control.setText(text)
+        for _ in range(3):
+            app.processEvents()
+        for control in panel.test_buttons.values():
+            if control.isVisible():
+                assert control.width() >= control.sizeHint().width()
+                assert control.parentWidget().rect().contains(control.geometry())
+
+
+def test_managed_stimulus_preview_requires_current_setup_and_tracks_native_close():
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_stimulus_preview import stimulus_preview_view
+
+    state = pb.Snapshot()
+    state.configuration_values.current.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
+    assert (
+        stimulus_preview_view(state).active
+        and not stimulus_preview_view(state).available
+    )
+    state.session.context.session_id = str(uuid4())
+    state.session.phase = pb.SESSION_PHASE_READY
+    state.configuration.revision = 7
+    participant = state.participants.add(connected=True, process_running=True)
+    participant.process.role = "visual_stimulus"
+    participant.process.generation = str(uuid4())
+    view = state.stimulus_preview
+    view.backend.backend_generation = participant.process.generation
+    view.session.CopyFrom(state.session.context)
+    view.configuration_revision = 7
+    view.available = True
+    view.visible = True
+    assert (
+        stimulus_preview_view(state).available and stimulus_preview_view(state).visible
+    )
+    view.visible = False
+    assert (
+        stimulus_preview_view(state).available
+        and not stimulus_preview_view(state).visible
+    )
+    view.configuration_revision = 6
+    assert not stimulus_preview_view(state).available
+    view.configuration_revision = 7
+    participant.connected = False
+    assert not stimulus_preview_view(state).available
+
+
+@pytest.mark.parametrize("linked", [False, True])
+@pytest.mark.parametrize("velocity", [(30.0, 40.0), (-40.0, 30.0)])
+def test_texture_drift_preserves_mm_speed_across_projector_pitches(linked, velocity):
+    import math
+    from types import SimpleNamespace
+
+    from tests.visual_stimulus.test_compilation import (
+        _linked_texture_fixture,
+        _texture_rate,
+    )
+
+    from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+    from cephvr.gui.projector_extent import usable_corners
+    from cephvr.visual_stimulus.config.texture_links import linked_rates, rates
+    from cephvr.visual_stimulus.rendering.layer_projection import physical_corners
+
+    geometry, settings = _linked_texture_fixture()
+    source = settings[0].model_copy(
+        update={
+            "phase_x": _texture_rate(-velocity[0] / 100),
+            "phase_y": _texture_rate(-velocity[1] / 100),
+        }
+    )
+    pixel_speeds = []
+    for index, setting in enumerate([source, *settings[1:]]):
+        face = setting.instance_id.title()
+        width, height = (720, 1280) if face == "Bottom" else (1280, 720)
+        pitch_x, pitch_y = 0.1 + index * 0.04, 0.15 + index * 0.06
+        values = {
+            f"screens.{face}.{key}": value
+            for key, value in dict(
+                width=120,
+                height=120,
+                reference_width_px=width,
+                reference_height_px=height,
+                reference_x_px=200,
+                reference_y_px=200,
+                reference_x_mm=200 * pitch_x,
+                reference_y_mm=200 * pitch_y,
+                valid_width_px=width - 100,
+                valid_height_px=height - 80,
+                offset_x_px=10,
+                offset_y_px=-7,
+            ).items()
+        }
+        surface = geometry.surfaces[index]
+        names = ("bottom_left_mm", "bottom_right_mm", "top_right_mm", "top_left_mm")
+        corners = usable_corners(
+            [getattr(surface, name) for name in names], values, face, width, height
+        )
+        calibrated = surface.model_copy(update=dict(zip(names, corners, strict=True)))
+        artifact = SimpleNamespace(
+            display=SimpleNamespace(
+                geometry=geometry.model_copy(update={"surfaces": (calibrated,)})
+            )
+        )
+        if linked and index:
+            phase_x, phase_y, _ = linked_rates(
+                source, setting, geometry, source_rotation=0, target_rotation=0
+            )
+            vx = -phase_x * setting.pattern.period_x.value
+            vy = -phase_y * setting.pattern.period_y.value
+        else:
+            independent = setting.model_copy(
+                update={
+                    "linked_to": None,
+                    "phase_x": _texture_rate(
+                        -velocity[0] / setting.pattern.period_x.value
+                    ),
+                    "phase_y": _texture_rate(
+                        -velocity[1] / setting.pattern.period_y.value
+                    ),
+                }
+            )
+            vx, vy, _ = rates(independent)
+        vertices, _ = face_mapping(
+            {"values": values}, face, MonitorBinding(face, 0, 0, width, height, 60, 8)
+        )
+        by_uv = {tuple(v["uv"]): v["xy"] for v in vertices}
+
+        def output_position(
+            x,
+            y,
+            artifact=artifact,
+            surface=surface,
+            setting=setting,
+            by_uv=by_uv,
+            width=width,
+            height=height,
+        ):
+            snapshot = SimpleNamespace(
+                state=(("x", x), ("y", y), ("width", 1), ("height", 1), ("rotation", 0))
+            )
+            projected = physical_corners(
+                artifact, snapshot, surface.surface_id, setting.space.mappings[0]
+            )
+            u, v = (0.5 + sum(p[i] for p in projected) / 8 for i in (0, 1))
+            return tuple(
+                (
+                    by_uv[0, 0][i]
+                    + u * (by_uv[1, 0][i] - by_uv[0, 0][i])
+                    + v * (by_uv[0, 1][i] - by_uv[0, 0][i])
+                )
+                * size
+                for i, size in enumerate((width, height))
+            )
+
+        start, end = output_position(0, 0), output_position(vx, vy)
+        dx, dy = (end[i] - start[i] for i in (0, 1))
+        # A feature's displacement over one second must remain 50 mm on every face.
+        assert math.hypot(dx * pitch_x, dy * pitch_y) == pytest.approx(50)
+        pixel_speeds.append(math.hypot(dx, dy))
+    assert len({round(speed, 6) for speed in pixel_speeds}) == 4

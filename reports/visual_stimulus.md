@@ -1,5 +1,294 @@
 # Visual Stimulus status
 
+Oct19 `gui-full-rig-test`:600s Gaussian derivative uses20 repetitions of the
+existing20s static/10s drift group, retaining accepted calibrated geometry/settings.
+Four-output rendering and review encoding produce36001 groups/144004 submissions;
+capture/capacity drops, omissions, duplicates and unresolved groups are zero. Full
+1280×720 h264 yuvj444p review decode/count passes (600.016667s =36001/60).
+Software evaluation-gap median16.659ms, p9919.732ms, max51.765ms; two gaps exceed25ms,
+none100ms. Both worst gaps are mainly before first swap; no optical cause or perfect
+frame-timing claim follows. All29 resource fingerprints and exact source recipe JSON
+match. Current telemetry supports bounded rendering/encoding measurements, with the
+first40s missing and scientific Tracking disabled. Original configuration restored.
+No renderer/pacing change was justified. Physical speed/tearing/alignment acceptance
+and representative full scientific load remain open.
+[Assessment](runtime-evidence-2026-10-19/gui-full-rig/native-assessment.json),
+[resource/association audit](runtime-evidence-2026-10-19/gui-full-rig/association-assessment.json),
+[verification](runtime-evidence-2026-10-19/gui-full-rig/verification.json),
+[outstanding rig work](rig-verification.md).
+
+Oct19 `camera-finalization-stimulus-timing-check`: current native software cadence
+checked with all3 camera videos and four projector outputs, under
+[E13](../docs/architecture/visual_stimulus.md#e13), V10/V12/V28 and E15. Corrected
+camera-runtime runs retain671/675/3602 render groups. Median/99th-percentile cadence
+and individual worst gaps are in the [native assessment](runtime-evidence-2026-10-19/camera-timing-verification/fixed-run/native-assessment.json).
+Max gaps are54.5658/25.8199/48.3826ms; p99 is19.2888/19.0619/18.915ms, with no gap
+over100ms. The historical649.2921ms stall did not recur. Historical decomposition
+places645.567ms before the first swap, within one static epoch; swap itself peaks
+0.8991ms for that group. Its unique cause remains unknown; this is not evidence
+that the old stall never recurs. No speculative renderer/pacing change was made.
+
+First Abort run records one startup review-video capacity drop (15/15 slot peak):
+670 encoded images for671 render states. All states remain saved. Next Abort and
+normal60s encode675/3602 groups with zero capacity drops. All3 stimulus MP4s fully
+decode and match submitted encoder counts. Capture loss, renderer cadence and
+physical presentation are distinct; occasional25-55ms software gaps mean perfect
+frame timing is not established. No instrumented optical/electrical measurements,
+Tracking/SpikeGLX workload or full-duration scientific endurance was performed.
+Owner confirms photometric calibration works; the old recipe label alone is not a
+current calibration defect. Current configuration restored exactly.
+[Checks and retained raw evidence](runtime-evidence-2026-10-19/camera-timing-verification/verification.json).
+
+
+Oct19 `texture-rig-geometry-motion`: [V02](../docs/architecture/visual_stimulus.md#v02)
+rev14 and the linked-motion contract now use the reference screen's geometric
+center and signed perpendicular distances to target planes for angular flow.
+Removed observer dependence from both rates and retained-pivot validation; physical
+map translation determines the required texture-space pivot. Reused the existing
+compiler/runtime helper and state ownership without new settings/dependencies
+(ARCH-002). Drift remains physical mm/s with per-output calibration. Existing
+programs with an explicitly subject-centered, off-screen-center spin pivot must
+correct that center/reset before Setup; no silent migration. Added coverage for
+observer invariance, moved rig planes/center, mapped pivots and runtime integration.
+All436 non-Windows/non-rig Visual Stimulus tests pass (2 deselected); Ruff check/
+format2, Windows-target mypy1 and boundaries735/zero pass. Existing oversized-owner
+advisories are unchanged; this focused helper remains below the review threshold.
+Initial sandboxed full-suite run stalled after33 tests and was interrupted; the
+permitted rerun completed. Live runtime was not restarted and physical acceptance
+remains pending. This angular-motion correction does not establish the cause of
+the separately reported linear Front/Bottom speed discrepancy below.
+
+
+Oct19 open `stimulus-physical-speed-mismatch`: owner observes Front downward motion
+faster than Bottom backward motion on physical screens. Earlier synthetic checks
+cannot close this finding. Read-only inspection of DUMMY_2_161013's actual logged
+phase/period/clip uniforms over1.0005195s infers50 mm/s on both surfaces under its
+saved calibration: Front0.122222 mm/pixel (409.091 pixels/s), Bottom0.1375 mm/pixel
+(363.636 pixels/s). [Evidence](runtime-evidence-2026-10-19/stimulus-drift-speed/saved-motion.json)
+identifies source and recipe hash. This older saved trial is not confirmed as the
+current live configuration. Owner confirms current reference measurements are
+Front Y22 mm/180 pixels and Bottom Y44 mm/320 pixels. Final recorded-pixel template
+matching at three20.5-22.7s intervals gives Front50.0-50.2 and Bottom49.4-49.6 mm/s
+within integer-pixel uncertainty (up to2 native pixels), using logged host intervals
+and a zero-drop/duplicate/omission encoder outcome. Correlations exceed0.99;
+[recorded-pixel evidence](runtime-evidence-2026-10-19/stimulus-drift-speed/recorded-pixel-motion.json).
+This checks the recorded GPU result beyond the previous uniform arithmetic, not
+optical motion. Need a same-measured-distance travel comparison on the physical
+screens and current session binding. No cause established, corrective multiplier
+applied or live output changed. V15 is not proof of optical speed.
+
+
+Oct19 `pre-experiment-output-audit`: four retained Desktop dummy sessions contain
+required recipe/state files and their planned review MP4s under
+[E13](../docs/architecture/visual_stimulus.md#e13), V12/V13/V28. Recipe byte lengths/
+SHA-256 match the evidence references; all29 resource fingerprints per recipe match
+currently available external originals. Every review video fully decodes and its
+frame count equals retained render groups (4830/2462/2059/1884). Recorded completion
+has zero capture drops/unresolved attempts; group IDs are contiguous and all logged
+presentation calls returned. These are software submission/recording facts, not
+physical presentation or exact-pixel proof.
+
+A timing concern requires bounded investigation before timing-sensitive experiments:
+DUMMY_2-160507 has a649.2921ms maximum state-evaluation gap, four gaps over100ms,
+and2059 rendered groups across35.621s. 155008 peaks129.844ms; latest160948 peaks
+33.049ms. Zero capture drops does not mean uninterrupted rendering. Cause/physical
+impact are unverified; continue existing rig timing acceptance rather than infer
+encoder loss. All four historical recipes explicitly use photometric_mode=uncalibrated.
+The owner confirms photometric calibration is working; that historical label alone
+is not a current calibration defect or outstanding acceptance blocker. Preserve
+external originals: fingerprints verify availability today, not archival retention.
+[Read-only audit and exact evidence](runtime-evidence-2026-10-19/output-audit/assessment.json).
+No projector commands, optical measurements, replay/export or full-duration run.
+
+
+
+Oct19 `stimulus-calibrated-drift-speed`: [V15](../docs/architecture/visual_stimulus.md#v15)
+rev22 makes the existing per-projector physical drift mapping explicit. Independent
+and V02-linked texture rates stay in physical coordinates; measured X/Y pitch,
+usable geometry and output mapping convert to pixels exactly once. No second
+speed multiplier or runtime state was added (ARCH-002). The GUI speed tooltip
+explains measured calibration and fresh Setup. Regression coverage follows linked
+or independent diagonal drift through unequal anisotropic pitches, cropped/offset
+affine maps and portrait Bottom rotation, checking 50 mm displacement in one second
+while pixel displacements differ. Nine focused GUI/calibration tests and all20
+compilation tests pass. Ruff check/format2, Win32 mypy1 and boundaries734/zero pass;
+existing size advisories concern unchanged owners, with no responsibility added to
+them. Initial new fixtures omitted required screen dimensions; corrected before
+passing. These are mathematical mapping tests, not optical or live presentation
+measurements; rig accuracy remains pending in [rig verification](rig-verification.md).
+
+Oct19 `preview-image-flips`: E13rev30 applies horizontal mirrors to Left/Right
+and a vertical mirror to Bottom in native preview composition only; Front,
+projection and recording remain unchanged. Uses existing compositor uniforms and
+layout kind/surface labels, no new schema/dependency/state owner (ARCH-002).
+Standalone Windows GL test checks asymmetric quadrant pixels on all four preview
+tiles and unchanged recording pixels/readback; passes.89 renderer unit tests pass;
+Ruff/format2, Win32 mypy1 and boundaries734/zero pass. Existing cohesive-size
+advisories unchanged. No live GUI restart or optical acceptance performed.
+
+Oct19 `stimulus-composite-preview`: implements the owner's revised choice under
+[E13](../docs/architecture/visual_stimulus.md#e13),
+[V01](../docs/architecture/visual_stimulus.md#v01),
+[V12](../docs/architecture/visual_stimulus.md#v12) and
+[G01](../docs/architecture/gui.md#g01). Dashboard Visual stimulus uses a renderer-owned
+native window after Setup: calibrated crops in Left–Front–Right / Bottom arrangement.
+Recording uses uncropped full outputs in equal 2x2 cells, Bottom rotated 90 degrees
+clockwise. Layout3 has no labels/header strips; matching post-rotation dimensions
+fill adjoining cells exactly. Preview also omits labels and label-strip spacing. Separate targets share one compositor
+implementation; projector pixels and video admission/accounting remain unchanged.
+The recipe embeds both layouts, source/destination rectangles/rotation and protected
+geometric/photometric values for later conversion. Policy pair18 and schema updated. Layout2 metadata remains readable.
+
+Label-free follow-up:435 Visual Stimulus tests (2 deselected), one standalone GL
+pixel test, scoped Ruff/format7, Win32 mypy160 and boundaries734/zero pass. The
+rectangular fixture uses a portrait Bottom raster that matches the other landscape
+rasters after rotation and asserts complete cell coverage. Native pixels allocate
+no label textures. [Follow-up evidence](runtime-evidence-2026-10-19/stimulus-composite-preview/label-free-verification.json).
+ARCH-002 keeps the geometry change in the existing pure helper; no new dependency.
+
+Earlier integration baseline:571 scoped backend/client tests,82 preview GUI tests and2 explicit native pixel/cleanup
+checks pass;12 policy checks pass after the final digest update. Ruff/format, Win32
+mypy452 and boundaries734/zero pass. The GL check verifies preview-only cropping,
+full recorded borders, Bottom rotation and captured row orientation. Metadata round-trip
+checks need no source calibration files. Broader camera-test failures, sandbox retry
+limits and exact commands/hashes are in the
+[verification evidence](runtime-evidence-2026-10-19/stimulus-composite-preview/verification.json).
+This is not a clean full-suite or full-workload rig pass.
+
+ARCH-002: pure layout/metadata rules, native viewer ownership, controller authority
+and GUI intents have focused owners with no runtime back-references or dependencies.
+Existing large native/scene/worker/preparation modules retain only their established
+GL/lifecycle orchestration; recording/native only uses the revised geometry provider.
+No app restart, original-recording edit, physical projection or optical pass was made.
+[Fresh-session preview/recording acceptance](rig-verification.md) remains pending;
+the offline conversion script remains deferred.
+
+Oct19 `texture-retain-static`: DUMMY-141422 recipe exactly matches the saved GUI
+program and confirms separate static `stimulus_2/3/4/5` and drifting `Instance_1/2/3/4`
+identities. At30s the compiled plan pauses drift and resumes the static instances
+at their unchanged phase. Under [V07](../docs/architecture/visual_stimulus.md#v07),
+Retain state applies per compatible instance; matching texture files alone do not
+connect their state. Corrected only static instance IDs, their identical asset aliases
+and scene references to reuse the drifting instances. Rates, timing, layer order,
+texture recipes and all other settings remain unchanged. ARCH-002 favors this
+protocol correction; no runtime changes or dependencies are needed.
+
+Program parsing and exact semantic-diff assertions pass. Existing compiler and
+runtime state/link handlers verify all199 internal boundaries across200 epochs:
+all four states continue, every static interval holds its incoming phase, and every
+drifting interval moves from that phase. GUI was closed; saved draft updated for
+next launch with a byte-exact backup and an importable protocol. No native/optical
+pass is claimed. [Evidence and corrected protocol](runtime-evidence-2026-10-19/texture-retain-static/)
+and [physical acceptance](rig-verification.md).
+
+Oct19 `bottom-direction-tearing`: owner confirms Bottom portrait top faces the head;
+projector is below Right in the same physical orientation. Under
+[G01 revision242](../docs/architecture/gui.md#g01)/[V15 revision21](../docs/architecture/visual_stimulus.md#v15),
+GUI-generated Bottom mappings now rotate surface UVs before saved output flips.
+Measured raw Y supplies physical depth and raw X the cross-span; current retained
+values give129.25mm depth/91.333mm cross-span instead of the exchanged extents.
+Preview places the corrected raster through the folded orientation. Trial/calibration
+surface targets swap raster dimensions; live translations retain UV orientation and
+pixel pitch. Raw reference bars/crops/offsets/masks/pulses and imported warps keep their
+coordinate ownership. Linked source/follower motion is unchanged. No settings file
+was edited; application restart and fresh Setup regenerate GUI profiles.
+
+All432 local Visual Stimulus tests pass (1 deselected);99 affected GUI cases pass.
+Scoped Ruff/format, Win32 mypy8 and boundaries724/zero pass. Focused direction tests check
+four motion directions at the saved anisotropic pitch; native optical acceptance is
+still pending. ARCH-002 reuses existing affine generation, resource builder and preview
+helpers without dependencies or new state; scene_resources remains a cohesive GL
+allocation owner. Detailed commands, source hashes and test receipts are in
+[verification evidence](runtime-evidence-2026-10-19/bottom-direction-tearing/).
+
+Original DUMMY-140646 evidence retains1932 groups with requested interval0 on
+Front/Left/Bottom and1 on Right. Immediate swaps can tear under
+[V20](../docs/architecture/visual_stimulus.md#v20); the existing all-output VSync option
+is the comparison to run after cleanup/restart. Saved pulse-only mode is unchanged.
+[Outstanding physical direction/pitch/tearing checks](rig-verification.md) remain open.
+
+Oct19 `setup-scale15-recipe`: the newly pasted Setup failure identifies scale-15
+`asset_6`; current saved GUI draft has eight scale-15 PNG references without a color
+override, in addition to previously selected recipe assets. Applied the prior owner
+recipe choice to these eight paths/profiles only; kept a byte-exact backup and
+exported the corrected protocol for loading into the open GUI. Recipe, Asset and
+all trial Program parsers pass; exact semantic diff confirms no other setting change.
+This corrects the present draft and does not extend the earlier successful Setup
+evidence to this larger protocol. Subsequently loaded corrected-protocol.json through
+the native GUI Protocol Load dialog at owner request; Dashboard runtime log confirms
+the path, and timeline shows 200 epochs/50 minutes. GUI remains Configuration;
+Setup/Start were not clicked and controller history was not submitted. Under
+[V13](../docs/architecture/visual_stimulus.md#v13), color validation still rejects
+undeclared PNG encodings. Recipes can regenerate pixels differently from previews.
+[Backup, corrected protocol and validation](runtime-evidence-2026-10-19/setup-scale15-recipe/verification.json).
+
+Oct19 `preview-linked-fullscreen`: owner approved full-screen physical image-tile
+textures in runtime and preview (V14 revision5); G01 revision240 binds preview links
+through the runtime resolver with boundary/pivot validation. Whole-tile symmetric
+extension covers calibrated surfaces under rotation/translation without stretching
+periods or shifting phase; saved dimensions/configuration are not rewritten. GUI
+brush Y anchoring now matches bottom-origin phase. Preview backward seeks replay
+linked bindings; missing geometry rejects before playback.20 focused preview/coverage
+cases and108 rendering/compilation cases pass. Saved actual protocol coverage passes
+all four screens at six seeks with a white diagnostic tile; configuration byte equality
+verified. Initial evidence script used strict Python validation on JSON lists; rerun
+through model_validate_json succeeds. Ruff/format, Win32 mypy6 and boundaries724/zero
+pass. ARCH-002 reuses the focused layer projection and canonical link helpers; no
+new dependency or ownership. Existing scene orchestration remains cohesive.
+Native inspection unavailable (Computer Use: foreground window did not report a
+process id); GUI/runtime restart and physical output verification remain pending.
+No live process restart, scientific config edits or staged promotion performed by
+this change; concurrent work preserved. Evidence:
+`runtime-evidence-2026-10-19/linked-fullscreen/verification.json`.
+
+
+Oct19 shared GUI promotion implements per-output Frame/Pulse maps under
+[V20](../docs/architecture/visual_stimulus.md#v20)/[V22](../docs/architecture/visual_stimulus.md#v22).
+Every configured active output is bounds-checked and rendered with the group's
+marker sequence; each submission keeps its own output/index/state/outcome evidence.
+Explicit maps select every enabled pulse output for mixed VSync; blank/disabled
+pulses request none. Legacy single-output profiles preserve their pacing behavior.
+Portable rebinding and diagnostic updates retain all pulse screens; default files,
+MCU ownership and physical input scope are unchanged. The complete local Visual
+Stimulus suite passes427 tests (1 deselected); schema and contract checks pass.
+[Evidence and scope](runtime-evidence-2026-10-19/shared-controls/context.json) remain
+separate from [native/optical acceptance](rig-verification.md).
+
+Oct19 Ponytail/Vulture maintenance removes two write-only cached display-limit
+attributes. Preparation still uses request limits and its bounded budget; strict
+asset-root resolution and protected resource retention remain unchanged under
+[V15](../docs/architecture/visual_stimulus.md#v15)/[E14](../docs/architecture/system-contracts.md#e14).
+Owning local tests pass; [caller review and validation scope](runtime.md#maintainability-review)
+do not establish native/rig acceptance or performance.
+
+Oct19 owner-selected GaussianNoise recipe replacement is complete:8 PNG asset
+references now use the matching `.texture.json` and `cephvr1_texture_json_v1` profile.
+Program/recipe parsing and exact candidate-diff assertions pass. Native Setup command
+`be321de5-cf00-4a23-9276-fc1c4211ff0c` succeeds; session
+`0813eb4e-fbbf-48e9-8642-ee975a7287fe` reaches Ready. Prior failed reservation required
+administrative recovery preserving scientific files/unknown evidence. No trial was
+started. Both saved configurations verify8 recipe references; corrected protocol was
+also loaded into the open GUI, left on Ready. Other settings/staged scope are unchanged.
+This supersedes the pending color-choice note below; recipe pixels need not match the
+old PNG preview. [Raw evidence](runtime-evidence-2026-10-19/recipe-setup/verification.json).
+
+Oct19 reported Setup failure is reproduced by an untagged PNG without color_override;
+V13 rejects guessed color interpretation. Error now identifies asset/path and required
+override. Saved GaussianNoise source has a sibling authoritative texture recipe naming
+the PNG as preview; selecting the recipe is an alternative if intended, not a silent
+pixel-equivalence substitution. Saved settings unchanged pending owner color intent.
+Owning decoder regression passes. [Assessment](runtime.md).
+
+Oct19 repair supplies missing GUI photodiode white/black RGB defaults, preserving
+explicit values. Native texture-only 120-second preview trial completes with cleanup;
+full saved-draft GUI Setup and optical timing remain unaccepted. Stimulus evidence
+and recipe writers use extended paths; native >260-character filename tests pass,
+but full long-root trial remains open. Subsequent240-second three-camera video-on
+verification records14231 stimulus states/admissions, zero capture drops/same-slot
+omissions/unresolved attempts at saved quality and15 slots. Tracking processing is
+omitted; this does not certify optical timing or full-workload capacity. Saved defaults restore
+exactly. See [assessment and evidence](runtime.md).
+
 Oct17 owner selects `resources.capture_slots = 15` in the operator defaults for
 a later rig test under V12/E14. Other settings and policy versions are unchanged.
 This selection supersedes the restored three-slot baseline described in historical

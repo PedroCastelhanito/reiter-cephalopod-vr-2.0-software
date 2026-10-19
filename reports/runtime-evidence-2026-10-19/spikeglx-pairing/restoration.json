@@ -1,0 +1,7 @@
+{
+  "runtime_configuration_equal": true,
+  "saved_configuration_equals_original": true,
+  "saved_file_byte_equal": true,
+  "saved_file_reference": "reports\\runtime-evidence-2026-10-19\\camera-timing-verification\\saved-configuration-before.json",
+  "scope": "Restored pre-test DUMMY_2 configuration and exact prior saved bytes whose configuration equals the pinned pre-pair runtime; intermediate failed retries had saved a PAIRVERIFY candidate."
+}

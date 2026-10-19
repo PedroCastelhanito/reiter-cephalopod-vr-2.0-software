@@ -1,0 +1,21 @@
+{
+  "gui_config_equal": true,
+  "gui_differences": [],
+  "controller_generation_equal": true,
+  "controller_configuration_equal": true,
+  "controller_differences": [
+    "/operations",
+    "/retained_truncated",
+    "/captured_monotonic_ns",
+    "/state_revision",
+    "/control"
+  ],
+  "controller_configuration_values_equal": true,
+  "native_tests": [
+    "Front Static Ctrl+C/Ctrl+V then switch to Drifting: pass",
+    "Left Drifting Ctrl+V copied Front path then switch to Static: pass",
+    "Ellipsis opens Advanced settings directly: pass"
+  ],
+  "preservation_scope": "Saved current draft after resolving existing Front pending-asset flag with same recipe picker; post-test saved draft exactly equal. Original disk snapshot predates pending Front replacement and is also retained.",
+  "limitations": "No Setup, Start, rendering or camera tests; pending-family paste regression covered by prior offscreen tests, native paste exercised existing texture fields."
+}

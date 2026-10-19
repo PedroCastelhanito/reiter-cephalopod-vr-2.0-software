@@ -1,5 +1,47 @@
 # Tracking status
 
+Oct19 `gui-full-rig-test` image-only investigation repaired confirmed
+[T08](../docs/architecture/tracking.md#t08)/[E08](../docs/architecture/system-contracts.md#e08)
+diagnostic ownership/completion defects. Failed preparation now retains exact closed
+identity and error; sessionless Begin/Close retain completion on the dedicated query
+route rather than experiment lifecycle delivery. Only proven closed failures are
+contained; unknown cleanup still escalates. Controller immediately recognizes exact
+failed preparation under E06, reserves operator outcomes before effects, and reports
+success only after exact Active or both release receipts. Preview release RPCs retain
+one original authenticated deadline across Acquisition and supervisor. No ledger
+conflict guard, deadline or cleanup guarantee was weakened.
+
+The subsequent Sol review found source-size validation and resource-free construction
+outside the preparation failure handler. Those failures now retain the exact error
+and confirmed closure; pending preparation and uncertain cleanup retain their original
+deadline and escalation. Two pre-fix failures become four focused passes, including
+wrong-identity rejection, idempotent Close and valid reuse; the current Tracking suite
+passes116 cases/1 deselected with scoped static checks. This later pre-resource fix
+has separate [source hashes and verification](runtime-evidence-2026-10-19/gui-full-rig/preallocation-verification.json);
+the earlier native-run manifests retain their original provenance. No additional
+native or full-workload acceptance is claimed for this increment.
+
+Fresh native malformed preparation returns its actual error/closed identity and failed
+operator outcome in less than0.1s, immediately followed by successful valid reuse.
+Tracking and Eye each deliver five progressing native images, then confirmed Close,
+Stop and configuration restoration. All3 cameras are closed/no pending cleanup.
+The images are already nearly black upstream of conversion/NVENC; see
+[Acquisition](acquisition.md) for statistics and operator follow-up. Scientific stages
+and feedback remained disabled. No accuracy/physical-unit/full-load acceptance follows.
+Final controller/Tracking/acquisition-transport selection805 passed,4 skipped,
+7 deselected; scoped static checks pass. ARCH-002 keeps the cohesive diagnostic owner,
+focused operation/state/ports interfaces and existing owning tests, without dependencies;
+its existing size advisory is not resolved by an artificial split.
+[Native outcomes, commands, source hashes and limitations](runtime-evidence-2026-10-19/gui-full-rig/verification.json),
+[current rig checklist](rig-verification.md).
+
+Oct19 owner-requested Ponytail/Vulture maintenance removes unconsumed completion
+timestamp attributes and a never-used diagnostic association placeholder/import.
+[T08/T09](../docs/architecture/tracking.md#t08) progress deadlines, source/pose
+timestamps, history and native ownership retain their existing consumers. Owning
+local tests pass; [review evidence and integration limits](runtime.md#maintainability-review)
+remain distinct from native/scientific acceptance. No Tracking feature is enabled.
+
 Latest comprehensive Oct15 recheck repeats the explicit native CUDA/NVOF same-image
 lease/readback/closure smoke successfully (one test,0.37seconds), alongside the
 1920-pass non-rig backend suite. [Fresh native result](runtime-evidence-2026-10-15/comprehensive-audit/final-tracking-rig.log).

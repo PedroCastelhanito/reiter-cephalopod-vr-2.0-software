@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-19",
+  "timezone": "Asia/Tokyo",
+  "base_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_tree_dirty": true,
+  "port": "COM8",
+  "method": "AVRDUDE8 read-only flash backup; compare every application-image address; CAPS/STATUS only",
+  "application_bytes": 13874,
+  "mismatch_count": 0,
+  "sha256": {
+    "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\cephvr2_mcu.ino.hex": "76393998fe9c689a05efdadb442f1698adc39d6b205814f3a125a77d10a05b5e",
+    "reports\\runtime-evidence-2026-10-19\\mcu-upload-recovery\\flash-before-avrdude8.hex": "15dd6a6cecfca157598efc6e20ff5c582dfe494b614cb4d7e0499db2ce6c75f3",
+    "firmware\\uno\\cephvr2_mcu\\cephvr2_mcu.ino": "d422575f9868a0374b268aa7ac879809922b6d41e2dac7a62052efb5de9c57fd"
+  },
+  "replies": {
+    "CAPS": {
+      "protocol": "5",
+      "firmware": "cephvr2_uno_5",
+      "pins": "D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13",
+      "input_pins": "D2,D3",
+      "min_hz": "0.1",
+      "max_hz": "100.0",
+      "watchdog_min_ms": "500",
+      "watchdog_max_ms": "10000"
+    },
+    "STATUS": {
+      "valid": "0",
+      "watchdog_stopped": "0",
+      "watchdog_ms": "0",
+      "behavioral_enabled": "0",
+      "behavioral_running": "0",
+      "tracking_enabled": "0",
+      "tracking_running": "0",
+      "eye_tracking_enabled": "0",
+      "eye_tracking_running": "0"
+    }
+  },
+  "limits": "No upload, CONFIGURE, ON, diagnostics or electrical/timing acceptance in this check. Original GUI upload command/complete output unavailable; screenshot documents failure."
+}

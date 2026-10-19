@@ -12,16 +12,26 @@ its adopted calibration profile. This does not change the float32 working pipeli
 or establish physical projector precision.
 
 `pacing_output_id` owns timing independently of pulse visibility and placement.
-The legacy enum spelling `photodiode_only_vsync` is retained for compatibility; it
-now refers to the selected pacing output even with the pulse disabled or elsewhere.
+Legacy profiles without a per-output pulse map use `photodiode_only_vsync` for the
+selected pacing output, even with the pulse disabled or elsewhere.
 Absent explicit pacing, legacy pulse-enabled profiles retain their marker target.
-Pulse-disabled mixed-mode configurations require explicit active pacing.
+Profiles with an explicit `photodiode_patches` map use interval 1 on every enabled
+pulse output and 0 on the other outputs in `photodiode_only_vsync`. Disabled pulses
+request no VSync in that mode; Free run/all-output modes still request 0/1 everywhere.
+The optional file-owned pacing ID retains nominal recording-rate and swap-order
+ownership; it does not add a pulse or another VSync target to the explicit map.
+With no pacing ID, validate the common recording refresh of the pulse outputs
+instead of choosing a screen. Preserve sequential swap evidence; no scanout
+simultaneity follows from using the same marker sequence on several outputs.
+Legacy pulse-disabled mixed-mode configurations require explicit active pacing.
+With an explicit map and no active pulse or pacer, recording uses the common nominal
+refresh of all active outputs and mixed mode requests immediate swaps.
 All-output VSync and Free run allow no designated pacer; validate every enabled output's native
 rate against the file-owned target. No output identity is guessed.
 
 Use three session modes with explicit requested swap intervals:
 
-| Mode | Pacing output | Other outputs |
+| Mode | Pulse outputs (legacy: pacing output) | Other outputs |
 | --- | --- | --- |
 | `free_run` | 0 | 0 |
 | `photodiode_only_vsync` (default for new profiles) | 1 | 0 |
@@ -34,7 +44,8 @@ or retained pacing identity. It does not disable the independent V22 patch.
 
 Resolve the designated pacing output through a stable output identity, not a
 hard-coded tank face, monitor enumeration index or window creation order. The mixed
-mode requires exactly one designated active output. Output identity names a physical
+mode in legacy profiles requires one designated active output. Per-output pulse
+profiles use their explicit set. Output identity names a physical
 presentation target; surface-to-output mappings remain separate under V15.
 
 Apply the requested interval with the corresponding OpenGL context current under

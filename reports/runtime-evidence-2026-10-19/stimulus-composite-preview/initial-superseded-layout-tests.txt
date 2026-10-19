@@ -1,0 +1,515 @@
+..........F..................................F.....FF................... [ 47%]
+.....FFFF
+================================== FAILURES ===================================
+_____ test_review_reduction_scales_capture_tiles_without_changing_display _____
+
+    def test_review_reduction_scales_capture_tiles_without_changing_display() -> None:
+        from types import SimpleNamespace as NS
+    
+        import pytest
+    
+        from cephvr.shared.ffmpeg_types import EncodingOptionsError
+        from cephvr.visual_stimulus.recording.encoding import _composite_geometry
+    
+        outputs = tuple(
+            NS(width_px=1280, height_px=1000, output_id=str(i)) for i in range(4)
+        )
+        display = NS(active_outputs=outputs)
+>       full = _composite_geometry(display, (4096, 4096))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\visual_stimulus\test_configuration.py:473: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\recording\encoding.py:223: in _composite_geometry
+    layout = review_layout(display, scale)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\visual_stimulus\config\review_layout.py:67: in review_layout
+    crops = screen_crops(display, profiles)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+display = namespace(active_outputs=(namespace(width_px=1280, height_px=1000, output_id='0'), namespace(width_px=1280, height_px=...1'), namespace(width_px=1280, height_px=1000, output_id='2'), namespace(width_px=1280, height_px=1000, output_id='3')))
+profiles = None
+
+    def screen_crops(
+        display: DisplayProfile, profiles: Mapping[str, object] | None = None
+    ) -> tuple[tuple[str, str, PixelRect], ...]:
+        """Use declared valid-area/coverage bounds; black stimulus pixels never crop."""
+        result = []
+        for output in display.active_outputs:
+>           mappings = [m for m in display.active_mappings if m.output_id == output.output_id]
+                                   ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'types.SimpleNamespace' object has no attribute 'active_mappings'
+
+src\cephvr\visual_stimulus\config\review_layout.py:28: AttributeError
+_________ test_native_trial_skips_source_only_recipe_image_dependency _________
+
+    def test_native_trial_skips_source_only_recipe_image_dependency():
+        from pathlib import Path
+    
+        from cephvr.visual_stimulus.config.models.artifact_models import (
+            Fingerprint,
+            Resource,
+            ResourceManifest,
+        )
+        from cephvr.visual_stimulus.rendering.native import ModernGLPort
+        from cephvr.visual_stimulus.resources.assets import (
+            PreparedAssetSet,
+            PreparedResourceBundle,
+        )
+    
+        artifact = make_prepared_trial()
+        source = Resource(
+            fingerprint=Fingerprint(
+                resource_id="recipe-source",
+                logical_path="source.png",
+                subresource=None,
+                sha256="0" * 64,
+                bytes=12,
+            ),
+            kind="image",
+            profile_id="Pillow-cephvr1-rgb8-input-v1",
+            dependencies=(),
+            interpretation=None,
+            cpu_bytes=12,
+            gpu_bytes=0,
+            provider_compatibility="Pillow-cephvr1-rgb8-input-v1",
+        )
+        manifest = ResourceManifest(format_version=1, resources=(source,), provenance=())
+        artifact = artifact.model_copy(update={"manifest": manifest})
+        resources = PreparedResourceBundle(
+            asset_set=PreparedAssetSet(assets=(), cpu_bytes=0),
+            manifest=manifest,
+            uniform_layouts=(),
+            prepared_content={},
+        )
+        events = []
+    
+        class Scene:
+            def bind_graphics_api(self, api):
+                pass
+    
+            def prepare_trial(self, prepared, bundle, outputs, gpu_resources):
+                events.append("scene")
+    
+        port = ModernGLPort(
+            Path("."),
+            announce=lambda key, value: events.append(key),
+            scene_renderer=Scene(),
+        )
+        port._display = artifact.display
+        port._moderngl = object()
+>       port.prepare_trial(artifact, resources)
+
+tests\visual_stimulus\test_rendering.py:1127: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\rendering\native.py:378: in prepare_trial
+    self._review_layout = artifact.review_encoding or artifact.preview_layout or review_layout(
+src\cephvr\visual_stimulus\config\review_layout.py:67: in review_layout
+    crops = screen_crops(display, profiles)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+display = DisplayProfile(calibration_view='frame_grid', format_version=1, geometry=Geometry(frame_id='frame', observer_mm=(0.0, ...t=10), background_rect=None, high_linear_rgb=(1.0, 1.0, 1.0), low_linear_rgb=(0.0, 0.0, 0.0)), photodiode_patches=None)
+profiles = {}
+
+    def screen_crops(
+        display: DisplayProfile, profiles: Mapping[str, object] | None = None
+    ) -> tuple[tuple[str, str, PixelRect], ...]:
+        """Use declared valid-area/coverage bounds; black stimulus pixels never crop."""
+        result = []
+        for output in display.active_outputs:
+            mappings = [m for m in display.active_mappings if m.output_id == output.output_id]
+            bounds = []
+            for mapping in mappings:
+                profile = profiles.get(mapping.mapping_id) if profiles is not None else None
+                if profiles is not None and not isinstance(profile, GeometricProfile):
+>                   raise ValueError(f"review crop lacks calibration: {mapping.mapping_id}")
+E                   ValueError: review crop lacks calibration: map-front
+
+src\cephvr\visual_stimulus\config\review_layout.py:33: ValueError
+_ test_review_capture_clears_framebuffer_in_creation_order[rgba8_top_down-f1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019B998F1D50>
+pixel_format = 'rgba8_top_down', dtype = 'f1'
+
+    @pytest.mark.parametrize(
+        ("pixel_format", "dtype"),
+        [("rgba8_top_down", "f1"), ("r10g10b10a2_le_top_down", "f4")],
+    )
+    def test_review_capture_clears_framebuffer_in_creation_order(
+        monkeypatch, pixel_format, dtype
+    ):
+        from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+    
+        gl = ModuleType("OpenGL.GL")
+        gl.GL_PIXEL_PACK_BUFFER = 1
+        gl.glBindBuffer = lambda *_args: None
+    
+        def stop(*_args):
+            raise RuntimeError("reached PBO allocation")
+    
+        gl.glGenBuffers = stop
+        root = ModuleType("OpenGL")
+        root.GL = gl
+        monkeypatch.setitem(sys.modules, "OpenGL", root)
+        monkeypatch.setitem(sys.modules, "OpenGL.GL", gl)
+        modern = ModuleType("moderngl")
+        modern.TRIANGLE_STRIP = 1
+        monkeypatch.setitem(sys.modules, "moderngl", modern)
+        events = []
+        texture = NS()
+        fbo = NS(
+            use=lambda: events.append("use"), clear=lambda *_args: events.append("clear")
+        )
+        texture_types = []
+    
+        def allocate_texture(*_args, **kwargs):
+            texture_types.append(kwargs["dtype"])
+            return texture
+    
+        context = NS(
+            texture=allocate_texture,
+            framebuffer=lambda **_kwargs: fbo,
+            program=lambda **_kwargs: {"source_tex": NS(value=None)},
+            buffer=lambda *_args: NS(),
+            vertex_array=lambda *_args, **_kwargs: NS(),
+        )
+        capture = ReviewCapture()
+        with pytest.raises(RuntimeError, match="reached PBO allocation"):
+>           capture.capture(
+                (NS(output_id="one", texture_handle=NS(ctx=context)),),
+                NS(
+                    composite_width=2,
+                    composite_height=2,
+                    tiles=(),
+                    native_pixel_format=pixel_format,
+                ),
+            )
+
+tests\visual_stimulus\test_rendering.py:1266: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\rendering\capture.py:79: in capture
+    self.compose(outputs, encoding)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x0000019B998F27D0>
+outputs = (namespace(output_id='one', texture_handle=namespace(ctx=namespace(texture=<function test_review_capture_clears_frameb..._array=<function test_review_capture_clears_framebuffer_in_creation_order.<locals>.<lambda> at 0x0000019B99791440>))),)
+layout = namespace(composite_width=2, composite_height=2, tiles=(), native_pixel_format='rgba8_top_down')
+
+    def compose(self, outputs: tuple[RenderedOutput, ...], layout: ReviewLayout) -> Any:
+        """The exact same cropped, labelled GPU image feeds the viewer and capture."""
+        import moderngl
+    
+        if not outputs:
+            raise ValueError("review requires rendered outputs")
+        context = cast(Any, outputs[0].texture_handle).ctx
+>       pixel_format = "rgba8_top_down" if max(t.source_code_bits for t in layout.tiles) == 8 else "r10g10b10a2_le_top_down"
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: max() arg is an empty sequence
+
+src\cephvr\visual_stimulus\rendering\capture.py:134: ValueError
+_ test_review_capture_clears_framebuffer_in_creation_order[r10g10b10a2_le_top_down-f4] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019B99F10A50>
+pixel_format = 'r10g10b10a2_le_top_down', dtype = 'f4'
+
+    @pytest.mark.parametrize(
+        ("pixel_format", "dtype"),
+        [("rgba8_top_down", "f1"), ("r10g10b10a2_le_top_down", "f4")],
+    )
+    def test_review_capture_clears_framebuffer_in_creation_order(
+        monkeypatch, pixel_format, dtype
+    ):
+        from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+    
+        gl = ModuleType("OpenGL.GL")
+        gl.GL_PIXEL_PACK_BUFFER = 1
+        gl.glBindBuffer = lambda *_args: None
+    
+        def stop(*_args):
+            raise RuntimeError("reached PBO allocation")
+    
+        gl.glGenBuffers = stop
+        root = ModuleType("OpenGL")
+        root.GL = gl
+        monkeypatch.setitem(sys.modules, "OpenGL", root)
+        monkeypatch.setitem(sys.modules, "OpenGL.GL", gl)
+        modern = ModuleType("moderngl")
+        modern.TRIANGLE_STRIP = 1
+        monkeypatch.setitem(sys.modules, "moderngl", modern)
+        events = []
+        texture = NS()
+        fbo = NS(
+            use=lambda: events.append("use"), clear=lambda *_args: events.append("clear")
+        )
+        texture_types = []
+    
+        def allocate_texture(*_args, **kwargs):
+            texture_types.append(kwargs["dtype"])
+            return texture
+    
+        context = NS(
+            texture=allocate_texture,
+            framebuffer=lambda **_kwargs: fbo,
+            program=lambda **_kwargs: {"source_tex": NS(value=None)},
+            buffer=lambda *_args: NS(),
+            vertex_array=lambda *_args, **_kwargs: NS(),
+        )
+        capture = ReviewCapture()
+        with pytest.raises(RuntimeError, match="reached PBO allocation"):
+>           capture.capture(
+                (NS(output_id="one", texture_handle=NS(ctx=context)),),
+                NS(
+                    composite_width=2,
+                    composite_height=2,
+                    tiles=(),
+                    native_pixel_format=pixel_format,
+                ),
+            )
+
+tests\visual_stimulus\test_rendering.py:1266: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\rendering\capture.py:79: in capture
+    self.compose(outputs, encoding)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x0000019B99F10D90>
+outputs = (namespace(output_id='one', texture_handle=namespace(ctx=namespace(texture=<function test_review_capture_clears_frameb..._array=<function test_review_capture_clears_framebuffer_in_creation_order.<locals>.<lambda> at 0x0000019B97C977E0>))),)
+layout = namespace(composite_width=2, composite_height=2, tiles=(), native_pixel_format='r10g10b10a2_le_top_down')
+
+    def compose(self, outputs: tuple[RenderedOutput, ...], layout: ReviewLayout) -> Any:
+        """The exact same cropped, labelled GPU image feeds the viewer and capture."""
+        import moderngl
+    
+        if not outputs:
+            raise ValueError("review requires rendered outputs")
+        context = cast(Any, outputs[0].texture_handle).ctx
+>       pixel_format = "rgba8_top_down" if max(t.source_code_bits for t in layout.tiles) == 8 else "r10g10b10a2_le_top_down"
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: max() arg is an empty sequence
+
+src\cephvr\visual_stimulus\rendering\capture.py:134: ValueError
+_ test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage[rgba8_top_down-1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019B9A109850>
+height = 1, pixel_format = 'rgba8_top_down'
+
+    @pytest.mark.parametrize("height", [1, 3, 4])
+    @pytest.mark.parametrize("pixel_format", ["rgba8_top_down", "r10g10b10a2_le_top_down"])
+    def test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage(
+        monkeypatch, height, pixel_format
+    ):
+        from cephvr.visual_stimulus.recording.capture import (
+            CompositeFrame,
+            _ffmpeg_input_order,
+        )
+    
+        width = 3
+        source = bytes((i * 37) % 256 for i in range(width * height * 4))
+        gl = _CaptureGL(source, width, height)
+        capture, outputs, encoding, released = _review_capture_fixture(
+            monkeypatch, gl, pixel_format
+        )
+        old = CompositeFrame(
+            0, 0, width, height, pixel_format.replace("top_down", "bottom_up"), source
+        )
+        expected = _ffmpeg_input_order(old).pixels
+        first_pixels = None
+        old_pending = None
+        for _ in range(30):
+>           pending = capture.capture(outputs, encoding)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\visual_stimulus\test_rendering.py:2312: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\rendering\capture.py:79: in capture
+    self.compose(outputs, encoding)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x0000019B9A0D3110>
+outputs = (namespace(output_id='one', texture_handle=namespace(ctx=namespace())),)
+layout = namespace(composite_width=3, composite_height=1, tiles=(), native_pixel_format='rgba8_top_down')
+
+    def compose(self, outputs: tuple[RenderedOutput, ...], layout: ReviewLayout) -> Any:
+        """The exact same cropped, labelled GPU image feeds the viewer and capture."""
+        import moderngl
+    
+        if not outputs:
+            raise ValueError("review requires rendered outputs")
+        context = cast(Any, outputs[0].texture_handle).ctx
+>       pixel_format = "rgba8_top_down" if max(t.source_code_bits for t in layout.tiles) == 8 else "r10g10b10a2_le_top_down"
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: max() arg is an empty sequence
+
+src\cephvr\visual_stimulus\rendering\capture.py:134: ValueError
+_ test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage[rgba8_top_down-3] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019B99BD2F90>
+height = 3, pixel_format = 'rgba8_top_down'
+
+    @pytest.mark.parametrize("height", [1, 3, 4])
+    @pytest.mark.parametrize("pixel_format", ["rgba8_top_down", "r10g10b10a2_le_top_down"])
+    def test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage(
+        monkeypatch, height, pixel_format
+    ):
+        from cephvr.visual_stimulus.recording.capture import (
+            CompositeFrame,
+            _ffmpeg_input_order,
+        )
+    
+        width = 3
+        source = bytes((i * 37) % 256 for i in range(width * height * 4))
+        gl = _CaptureGL(source, width, height)
+        capture, outputs, encoding, released = _review_capture_fixture(
+            monkeypatch, gl, pixel_format
+        )
+        old = CompositeFrame(
+            0, 0, width, height, pixel_format.replace("top_down", "bottom_up"), source
+        )
+        expected = _ffmpeg_input_order(old).pixels
+        first_pixels = None
+        old_pending = None
+        for _ in range(30):
+>           pending = capture.capture(outputs, encoding)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\visual_stimulus\test_rendering.py:2312: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\rendering\capture.py:79: in capture
+    self.compose(outputs, encoding)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x0000019B99CF4090>
+outputs = (namespace(output_id='one', texture_handle=namespace(ctx=namespace())),)
+layout = namespace(composite_width=3, composite_height=3, tiles=(), native_pixel_format='rgba8_top_down')
+
+    def compose(self, outputs: tuple[RenderedOutput, ...], layout: ReviewLayout) -> Any:
+        """The exact same cropped, labelled GPU image feeds the viewer and capture."""
+        import moderngl
+    
+        if not outputs:
+            raise ValueError("review requires rendered outputs")
+        context = cast(Any, outputs[0].texture_handle).ctx
+>       pixel_format = "rgba8_top_down" if max(t.source_code_bits for t in layout.tiles) == 8 else "r10g10b10a2_le_top_down"
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: max() arg is an empty sequence
+
+src\cephvr\visual_stimulus\rendering\capture.py:134: ValueError
+_ test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage[rgba8_top_down-4] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019B9A11D650>
+height = 4, pixel_format = 'rgba8_top_down'
+
+    @pytest.mark.parametrize("height", [1, 3, 4])
+    @pytest.mark.parametrize("pixel_format", ["rgba8_top_down", "r10g10b10a2_le_top_down"])
+    def test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage(
+        monkeypatch, height, pixel_format
+    ):
+        from cephvr.visual_stimulus.recording.capture import (
+            CompositeFrame,
+            _ffmpeg_input_order,
+        )
+    
+        width = 3
+        source = bytes((i * 37) % 256 for i in range(width * height * 4))
+        gl = _CaptureGL(source, width, height)
+        capture, outputs, encoding, released = _review_capture_fixture(
+            monkeypatch, gl, pixel_format
+        )
+        old = CompositeFrame(
+            0, 0, width, height, pixel_format.replace("top_down", "bottom_up"), source
+        )
+        expected = _ffmpeg_input_order(old).pixels
+        first_pixels = None
+        old_pending = None
+        for _ in range(30):
+>           pending = capture.capture(outputs, encoding)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\visual_stimulus\test_rendering.py:2312: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\rendering\capture.py:79: in capture
+    self.compose(outputs, encoding)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x0000019B9A11D710>
+outputs = (namespace(output_id='one', texture_handle=namespace(ctx=namespace())),)
+layout = namespace(composite_width=3, composite_height=4, tiles=(), native_pixel_format='rgba8_top_down')
+
+    def compose(self, outputs: tuple[RenderedOutput, ...], layout: ReviewLayout) -> Any:
+        """The exact same cropped, labelled GPU image feeds the viewer and capture."""
+        import moderngl
+    
+        if not outputs:
+            raise ValueError("review requires rendered outputs")
+        context = cast(Any, outputs[0].texture_handle).ctx
+>       pixel_format = "rgba8_top_down" if max(t.source_code_bits for t in layout.tiles) == 8 else "r10g10b10a2_le_top_down"
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: max() arg is an empty sequence
+
+src\cephvr\visual_stimulus\rendering\capture.py:134: ValueError
+_ test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage[r10g10b10a2_le_top_down-1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019B99F40750>
+height = 1, pixel_format = 'r10g10b10a2_le_top_down'
+
+    @pytest.mark.parametrize("height", [1, 3, 4])
+    @pytest.mark.parametrize("pixel_format", ["rgba8_top_down", "r10g10b10a2_le_top_down"])
+    def test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage(
+        monkeypatch, height, pixel_format
+    ):
+        from cephvr.visual_stimulus.recording.capture import (
+            CompositeFrame,
+            _ffmpeg_input_order,
+        )
+    
+        width = 3
+        source = bytes((i * 37) % 256 for i in range(width * height * 4))
+        gl = _CaptureGL(source, width, height)
+        capture, outputs, encoding, released = _review_capture_fixture(
+            monkeypatch, gl, pixel_format
+        )
+        old = CompositeFrame(
+            0, 0, width, height, pixel_format.replace("top_down", "bottom_up"), source
+        )
+        expected = _ffmpeg_input_order(old).pixels
+        first_pixels = None
+        old_pending = None
+        for _ in range(30):
+>           pending = capture.capture(outputs, encoding)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\visual_stimulus\test_rendering.py:2312: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\rendering\capture.py:79: in capture
+    self.compose(outputs, encoding)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.visual_stimulus.rendering.capture.ReviewCapture object at 0x0000019B99F42B10>
+outputs = (namespace(output_id='one', texture_handle=namespace(ctx=namespace())),)
+layout = namespace(composite_width=3, composite_height=1, tiles=(), native_pixel_format='r10g10b10a2_le_top_down')
+
+    def compose(self, outputs: tuple[RenderedOutput, ...], layout: ReviewLayout) -> Any:
+        """The exact same cropped, labelled GPU image feeds the viewer and capture."""
+        import moderngl
+    
+        if not outputs:
+            raise ValueError("review requires rendered outputs")
+        context = cast(Any, outputs[0].texture_handle).ctx
+>       pixel_format = "rgba8_top_down" if max(t.source_code_bits for t in layout.tiles) == 8 else "r10g10b10a2_le_top_down"
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: max() arg is an empty sequence
+
+src\cephvr\visual_stimulus\rendering\capture.py:134: ValueError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_configuration.py::test_review_reduction_scales_capture_tiles_without_changing_display
+FAILED tests/visual_stimulus/test_rendering.py::test_native_trial_skips_source_only_recipe_image_dependency
+FAILED tests/visual_stimulus/test_rendering.py::test_review_capture_clears_framebuffer_in_creation_order[rgba8_top_down-f1]
+FAILED tests/visual_stimulus/test_rendering.py::test_review_capture_clears_framebuffer_in_creation_order[r10g10b10a2_le_top_down-f4]
+FAILED tests/visual_stimulus/test_rendering.py::test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage[rgba8_top_down-1]
+FAILED tests/visual_stimulus/test_rendering.py::test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage[rgba8_top_down-3]
+FAILED tests/visual_stimulus/test_rendering.py::test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage[rgba8_top_down-4]
+FAILED tests/visual_stimulus/test_rendering.py::test_gpu_oriented_readback_matches_previous_cpu_input_and_reuses_storage[r10g10b10a2_le_top_down-1]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 8 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+8 failed, 73 passed in 1.54s

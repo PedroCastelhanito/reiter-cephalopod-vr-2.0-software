@@ -1,0 +1,94 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\review.py", line 255, in refresh_preview_sources
+    self.window.apply_view(replace(dashboard.view, previews=previews))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 280, in apply_view
+    self.update_preview_slot()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 207, in update_preview_slot
+    workspace.recording_enabled = {
+                                  ^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 208, in <dictcomp>
+    camera.key: self.recordings.record[camera.key].isChecked()
+                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+KeyError: 'camera-40065509'
+tests/gui/test_dashboard.py::test_real_camera_inventory_preserves_roles_and_tests_open_close FAILED
+
+================================== FAILURES ===================================
+_______ test_real_camera_inventory_preserves_roles_and_tests_open_close _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000024EEEF37760>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024EE3E308D0>
+
+    def test_real_camera_inventory_preserves_roles_and_tests_open_close(
+        window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from cephvr.gui import cameras
+    
+        class Info:
+            def __init__(self, serial: str, model: str) -> None:
+                self.serial = serial
+                self.model = model
+    
+            def GetSerialNumber(self) -> str:
+                return self.serial
+    
+            def GetModelName(self) -> str:
+                return self.model
+    
+        found = [Info("40065509", "Basler A"), Info("40747103", "Basler B")]
+    
+        class Factory:
+            def EnumerateDevices(self):
+                return found
+    
+        class Adapter:
+            events: list[str] = []
+    
+            def _sdk(self):
+                return SimpleNamespace(
+                    TlFactory=SimpleNamespace(GetInstance=lambda: Factory())
+                )
+    
+            def open(self, serial: str) -> None:
+                self.events.append(f"open {serial}")
+                self.serial = serial
+    
+            def read_device_identity(self):
+                return SimpleNamespace(physical_id=self.serial, model="Basler A")
+    
+            def close(self) -> None:
+                self.events.append("close")
+    
+        monkeypatch.setattr(cameras, "BaslerCameraAdapter", Adapter)
+        panel = window.devices.cameras
+        recording_keys = []
+        panel.participation_changed.connect(
+            lambda: recording_keys.append(set(window.recordings.record))
+        )
+        panel.real_devices = True
+        panel.refresh_inventory()
+        assert [draft.serial for draft in panel.drafts] == ["40065509", "40747103"]
+        assert [draft.role for draft in panel.drafts] == ["Behavior cam", "Tracking cam"]
+>       assert {draft.key for draft in panel.drafts} <= recording_keys[-1]
+E       AssertionError: assert {'camera-40065509', 'camera-40747103'} <= {'camera-1', 'stimulus', 'camera-2'}
+E         
+E         Extra items in the left set:
+E         'camera-40065509'
+E         'camera-40747103'
+
+tests\gui\test_dashboard.py:4253: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_real_camera_inventory_preserves_roles_and_tests_open_close - AssertionError: assert {'camera-40065509', 'camera-40747103'} <= {'camera-1', 'stimulus', 'camera-2'}
+  
+  Extra items in the left set:
+  'camera-40065509'
+  'camera-40747103'
+============================== 1 failed in 3.63s ==============================

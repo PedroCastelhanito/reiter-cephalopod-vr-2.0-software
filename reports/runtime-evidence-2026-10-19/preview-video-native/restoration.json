@@ -1,0 +1,17 @@
+{
+  "files": {
+    "config\\last_configuration.json": true,
+    "config\\backends\\acquisition_config.toml": true,
+    "config\\backends\\experiment_config.toml": true,
+    "config\\backends\\gui_config.toml": true,
+    "config\\backends\\microcontroller_config.toml": true,
+    "config\\backends\\supervisor_config.toml": true,
+    "config\\backends\\synchronization_config.toml": true,
+    "config\\backends\\tracking_config.toml": true,
+    "config\\backends\\visual_stimulus_config.toml": true,
+    "config\\review_draft.json": true,
+    "config\\runtime_gui.json": true
+  },
+  "display_scale": "100% visually confirmed in Windows Settings",
+  "runtime_processes": "absent; only offline verification Python remained"
+}

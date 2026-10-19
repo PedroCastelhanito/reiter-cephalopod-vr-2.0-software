@@ -19,7 +19,8 @@ or versions reject the entire saved value without overwriting it. Explicit assig
 changes sync immediately; inventory/loading is read-only. Restoration follows G01's
 local-draft/controller synchronization rule and does not alter this portable format.
 
-The root has exactly five keys:
+The root has five base keys and the optional `review_pulse_screens` extension,
+accepted in both Runtime and Review under G01:
 
 - `format`: `"cephvr-rig-calibration"` (retained for existing files).
 - `version`: integer `11`.
@@ -47,6 +48,13 @@ The root has exactly five keys:
   bind these to the current explicit display choices/properties. Preserve shared-output
   coverage; absent required roles fail rather than guessing a display. Pacing remains
   owned by backend configuration, without a GUI editor.
+- `review_pulse_screens`: retained compatibility spelling for a logical-face map
+  of independent `frame` and `pulse` drafts, each four text fields in X/Y/Width/Height
+  order. Preserve empty and unfinished screens; blank definitions add no runtime
+  patch. Legacy files without the extension migrate their selected screen.
+  Portable `screen_profile.photodiode_patches` uses logical projector roles as keys
+  and retains each patch's explicit levels; bind roles to current output IDs only
+  at submission. Runtime profiles use the output-ID map under V22.
 
 Numeric-only versions 1/2/3/4/5/6/7/8 remain loadable and leave synchronization, participation
 and screen-profile references untouched. Legacy runtime display profiles use the
@@ -86,7 +94,14 @@ offsets from the tank walls. Side and Bottom front edges start 5 mm behind the F
 plane under the fixed GUI policy frame gap. Front/Left/Right lower edges are at
 `rig.subject_z - screens.Bottom.subject_distance + 5`; upper edges add their retained
 physical heights. Bottom image width/X runs toward the tank back (+rig Y) and
-height/Y across tank width (-rig X); 126×94 mm spans 94 mm across and 126 mm deep. Bottom distance
+height/Y across tank width (-rig X); 126×94 mm spans 94 mm across and 126 mm deep.
+Bottom's projector sits below Right with the same physical orientation; its portrait
+raster top faces the head. GUI affine export maps surface `(u,v)` to raw `(1-v,u)`
+before existing output X/Y inversions. With Bottom Y inversion, +surface X moves
+head-to-tail down the raster. The folded rig preview maps raw raster corners back
+onto the physical plane; prepared surface targets swap their pixel axes. Reference
+bars, crop rectangles, offsets and overlays remain native-output coordinates.
+Bottom distance
 is required for every plane, and changing it moves all four elevations. This placement
 is derived during GUI geometry conversion; it adds no stored calibration field.
 Invalid/missing inputs leave derived geometry invalid.
@@ -123,7 +138,8 @@ distances remain historical display values; no scale is inferred from them.
 Both measured axes and matching native output dimensions are required when applying
 measurements. The exporter uses measured physical screen/image ratios for fixed mm/px. Width/Height
 in whole output pixels define a valid rectangle translated by center-relative offsets. Usable physical view dimensions
-are Width × measured X mm/px and Height × measured Y mm/px, centered on the
+are Width × measured X mm/px and Height × measured Y mm/px, swapped into depth/cross-span
+for Bottom, centered on the
 measured screen plane. Preview/preparation share those views; prepared GUI affine
 render targets match valid pixel dimensions. Texture sizes/frequencies keep V14
 units and phase across projectors. Center-relative `offset_x_px` / `offset_y_px` translate the window right/up in

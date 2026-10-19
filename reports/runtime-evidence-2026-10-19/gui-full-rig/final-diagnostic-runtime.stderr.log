@@ -1,0 +1,10 @@
+ExecuteCameraCommand 3382e244-0b0c-4558-9d7c-98c78719f663 failed: PREVIEW_START_FAILED: 
+Camera SDK purge incomplete: generation_stopped=True margin_confirmed=False queue_drained=False stopped_in_time=False retrieved_count=0 original_deadline_ns=423222864975500 observed_ns=423223082365900
+Camera terminal drain incomplete: timing=external_trigger generation_stopped=True terminal_off_confirmed=True margin_ns=0 margin_completed=False control_handoff_interrupted=False original_deadline_ns=423222864975500 observed_ns=423223084749800
+CephVR supervisor shutdown: WORKER_OWNER_FAILURE: manual preview produced no usable frame by its deadline
+ApplyCameraSettings 5dadb3f6-ed9c-4aec-bd2f-7ef8f4883fde failed: CAMERA_EDIT_FAILED: prior camera device work is not terminal and quiescent
+ExecuteCameraCommand d31c5195-e275-460e-b03a-be87a3b8f8e4 failed: PREVIEW_STOP_FAILED: manual preview or Tracking diagnostic ring ownership is not fully released
+ExecuteCameraCommand ecf6c79c-0f8a-4519-abba-764304867250 failed: CAMERA_NOT_OWNED: camera is not connected for Configuration editing
+ExecuteCameraCommand 45f2cfbd-2428-433b-8449-26fcfc86dfbc failed: CAMERA_NOT_OWNED: camera is not connected for Configuration editing
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

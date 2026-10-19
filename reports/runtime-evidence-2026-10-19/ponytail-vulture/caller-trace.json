@@ -1,0 +1,35 @@
+{
+  "NV_ENC_PARAMS_RC_CONSTQP": [
+    "src\\cephvr\\platform\\windows\\nvenc_capabilities.py:34: NV_ENC_PARAMS_RC_CONSTQP = 0x0"
+  ],
+  "STILL_ACTIVE": [
+    "src\\cephvr\\platform\\windows\\jobs.py:36: STILL_ACTIVE = 259"
+  ],
+  "diagnostic_association": [
+    "src\\cephvr\\tracking\\processing\\session.py:83: self.diagnostic_association: Association | None = None"
+  ],
+  "WAIT_FAILED": [
+    "src\\cephvr\\platform\\windows\\byte_stream_native.py:18: WAIT_FAILED = 0xFFFFFFFF",
+    "src\\cephvr\\platform\\windows\\jobs.py:39: WAIT_FAILED = 0xFFFFFFFF"
+  ],
+  "_display_document_limit": [
+    "src\\cephvr\\visual_stimulus\\resources\\session.py:119: self._display_document_limit = 0",
+    "src\\cephvr\\visual_stimulus\\resources\\session.py:177: self._display_document_limit = request.limits.max_document_bytes"
+  ],
+  "last_completion_ns": [
+    "src\\cephvr\\tracking\\processing\\movement.py:77: self.last_completion_ns: int | None = None",
+    "src\\cephvr\\tracking\\processing\\movement.py:171: self.last_completion_ns = self.clock()",
+    "src\\cephvr\\tracking\\processing\\pose.py:71: self.last_completion_ns: int | None = None",
+    "src\\cephvr\\tracking\\processing\\pose.py:141: self.last_completion_ns = self.clock()"
+  ],
+  "SECTION_QUERY": [
+    "src\\cephvr\\platform\\windows\\mappings.py:148: SECTION_QUERY = 0x0001"
+  ],
+  "EVENT_MANUAL_RESET": [
+    "src\\cephvr\\platform\\windows\\events.py:20: EVENT_MANUAL_RESET = 0x00000100"
+  ],
+  "_display_asset_limit": [
+    "src\\cephvr\\visual_stimulus\\resources\\session.py:118: self._display_asset_limit = 0",
+    "src\\cephvr\\visual_stimulus\\resources\\session.py:176: self._display_asset_limit = request.limits.max_asset_cpu_bytes"
+  ]
+}

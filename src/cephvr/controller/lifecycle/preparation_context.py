@@ -155,9 +155,13 @@ class PreparationContext:
         )
         request.context.session_directory = str(attempt.reservation.session_directory)
         request.context.paired_spikeglx = attempt.paired
-        if attempt.paired:
+        if (
+            attempt.paired
+            and attempt.ready
+            and attempt.ready.keys() == attempt.required.keys()
+        ):
             # The remote recorder is controlled by this registered controller,
-            # not by an invented backend process or worker identity.
+            # with the local prepared topology, before recording can start.
             request.context.prepared_functions.add(
                 resource_id="spikeglx_recording",
                 owner=request.context.controller,

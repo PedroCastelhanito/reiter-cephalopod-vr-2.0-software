@@ -24,12 +24,145 @@ from cephvr.synchronization.client import (
     SpikeGLXControllerClient,
     _validate_inventory,
 )
+from cephvr.synchronization.configuration import validate_configuration
 from cephvr.synchronization.inventory import read_inventory, update_inventory
 from cephvr.synchronization.monitor import SpikeGLXProgressIO
-from cephvr.synchronization.native import Readback
+from cephvr.synchronization.native import Readback, _recording_starts_enabled
 from cephvr.synchronization.sdk_io import SpikeGLXIOBusy, SpikeGLXIOOwner
 from cephvr.synchronization.settings import HostSettings, load_host_settings
 from cephvr.synchronization.v1 import spikeglx_pb2 as wire
+
+
+def _unmapped_host_configuration(repository: Path) -> str:
+    """Inventory fixtures are independent of the operator's saved wiring."""
+    text = (repository / "config/backends/synchronization_config.toml").read_text()
+    start = text.index("[pulse_inventory]")
+    end = text.index("[monitor]", start)
+    section = "".join(
+        line
+        for line in text[start:end].splitlines(keepends=True)
+        if line.startswith("[") or not line.strip() or line.lstrip().startswith("#")
+    )
+    return text[:start] + section + text[end:]
+
+
+@pytest.mark.parametrize(
+    ("shown", "off", "expected"),
+    [
+        ("true", "true", False),
+        ("true", "false", True),
+        ("false", "true", True),
+        ("false", "false", True),
+        ("1", "1", False),
+        ("unknown", "true", None),
+    ],
+)
+def test_recording_override_readback(shown, off, expected) -> None:
+    parameters = {"0:manOvShowBut": shown, "0:manOvInitOff": off}
+    if expected is None:
+        with pytest.raises(ValueError, match="recording override parameter"):
+            _recording_starts_enabled(parameters, {})
+    else:
+        assert _recording_starts_enabled(parameters, {}) is expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mismatched_readback", [False, True])
+async def test_setup_sends_exact_reserved_session_folder_as_spikeglx_run_name(
+    tmp_path: Path, mismatched_readback: bool
+) -> None:
+    from tests.controller.support_components import _attempt, _runtime
+
+    runtime = _runtime(tmp_path, pb.BackendContext(backend_name="visual_stimulus"))
+    attempt = _attempt(runtime, tmp_path, {})
+    attempt.prepared.configuration.experiment = "different-experiment"
+    attempt.prepared.configuration.subject = "different-subject"
+    attempt.prepared.anchor_wall_time = "2026-10-19T10:20:30+09:00"
+    expected = attempt.reservation.session_directory.name
+    sent = []
+
+    class Remote:
+        async def prepare(self, configuration, session, run_name):
+            sent.append((configuration, session, run_name))
+            return wire.SpikeGLXPreparation(
+                address="169.254.240.108",
+                port=4142,
+                run_name="wrong-session" if mismatched_readback else run_name,
+                spikeglx_version="observed",
+                sdk_version="unknown",
+                mapping_id="verified-map",
+                data_directory="C:/SGL_DATA",
+                streams=[wire.NativeStream(family=wire.STREAM_FAMILY_ONEBOX)],
+            )
+
+    runtime.setup_execution.spikeglx = Remote()  # type: ignore[assignment]
+    if mismatched_readback:
+        with pytest.raises(RuntimeError, match="run identity"):
+            await runtime.setup_execution._prepare_spikeglx(attempt, 1_000_000_000)
+        assert not attempt.prepared.HasField("spikeglx")
+    else:
+        await runtime.setup_execution._prepare_spikeglx(attempt, 1_000_000_000)
+        assert attempt.prepared.spikeglx.run_name == expected
+    assert sent == [(attempt.prepared.configuration, attempt.context, expected)]
+
+
+def test_paired_registration_keeps_preliminary_local_catalogues_unprepared(
+    tmp_path: Path,
+) -> None:
+    from uuid import uuid4
+
+    from tests.controller.support_components import _attempt, _runtime
+
+    backend = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=str(uuid4())
+    )
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(
+        runtime, tmp_path, {"visual_stimulus": SimpleNamespace(context=backend)}
+    )
+    attempt.paired = True
+    preparation = runtime.setup_execution.preparation_context
+    preliminary = preparation.registration(attempt, str(uuid4()))
+    assert preliminary.context.paired_spikeglx
+    assert not preliminary.context.prepared_functions
+
+    attempt.ready["visual_stimulus"] = pb.ReadyReport()
+    final = preparation.registration(attempt, str(uuid4()))
+    assert final.context.paired_spikeglx
+    assert [f.resource_id for f in final.context.prepared_functions] == [
+        "spikeglx_recording"
+    ]
+    assert final.context.prepared_functions[0].owner == final.context.controller
+
+
+@pytest.mark.parametrize(
+    ("settings", "enabled", "duplicate", "code"),
+    [
+        (None, True, False, ""),
+        ("synchronization", True, False, ""),
+        (None, False, False, ""),
+        ("acquisition", True, False, "INVALID_SETTINGS"),
+        (None, True, True, "DUPLICATE_BACKEND"),
+    ],
+)
+def test_pure_pairing_configuration(settings, enabled, duplicate, code) -> None:
+    candidate = pb.ExperimentConfiguration()
+    backend = candidate.backends.add(backend_name="synchronization", enabled=enabled)
+    if settings is not None:
+        getattr(backend, settings).SetInParent()
+    if duplicate:
+        candidate.backends.add(backend_name="synchronization", enabled=True)
+    before = candidate.SerializeToString()
+
+    result = validate_configuration(candidate)
+
+    assert result.completed
+    assert result.valid == (not code)
+    assert result.component == "synchronization"
+    assert result.configuration_module_version
+    assert [issue.failure.code for issue in result.issues] == ([code] if code else [])
+    assert candidate.SerializeToString() == before
+    assert validate_configuration(pb.ExperimentConfiguration()).valid
 
 
 def test_installed_host_configuration_is_file_only_and_mapping_is_pinned() -> None:
@@ -38,8 +171,7 @@ def test_installed_host_configuration_is_file_only_and_mapping_is_pinned() -> No
     assert settings.address
     assert settings.port == 4142
     assert len(settings.file_sha256) == 64
-    assert settings.mapping["mapping_id"] == "spikeglx-20260901-reference-v1"
-    assert settings.inventory == ()
+    assert settings.mapping["mapping_id"] == "spikeglx-20251218-reference-v1"
 
 
 def test_inventory_requires_all_source_roles_and_preserves_optional_bit_presence() -> (
@@ -712,8 +844,10 @@ async def test_finalization_deadline_cancels_pending_stop_before_new_sdk_calls(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("recording_starts_enabled", [False, True])
 async def test_preparation_does_not_claim_mapping_api_as_installed_sdk_build(
     monkeypatch: pytest.MonkeyPatch,
+    recording_starts_enabled: bool,
 ) -> None:
     settings = HostSettings(
         "10.0.0.1",
@@ -740,6 +874,7 @@ async def test_preparation_does_not_claim_mapping_api_as_installed_sdk_build(
         "immediate",
         "immediate",
         (),
+        recording_starts_enabled,
     )
     after = Readback(
         "SpikeGLX v20260901",
@@ -781,6 +916,13 @@ async def test_preparation_does_not_claim_mapping_api_as_installed_sdk_build(
         return operation()  # type: ignore[operator]
 
     monkeypatch.setattr(client, "_run", immediate)
+    if not recording_starts_enabled:
+        with pytest.raises(RuntimeError, match="manual recording override starts OFF"):
+            await client.prepare(
+                pb.ExperimentConfiguration(), pb.SessionContext(), "managed_run"
+            )
+        assert next(readbacks) is after
+        return
     preparation = await client.prepare(
         pb.ExperimentConfiguration(), pb.SessionContext(), "managed_run"
     )
@@ -1003,10 +1145,9 @@ def test_inventory_file_update_is_digest_guarded_and_preserves_other_settings(
     tmp_path: Path,
 ) -> None:
     repository = Path(__file__).resolve().parents[2]
-    source = repository / "config/backends/synchronization_config.toml"
     target = tmp_path / "config/backends/synchronization_config.toml"
     target.parent.mkdir(parents=True)
-    shutil.copyfile(source, target)
+    target.write_text(_unmapped_host_configuration(repository))
     mapping_source = repository / "contracts/spikeglx_mapping_reference.json"
     mapping_target = tmp_path / "contracts/spikeglx_mapping_reference.json"
     mapping_target.parent.mkdir(parents=True)
@@ -1099,7 +1240,7 @@ def test_inventory_update_preserves_valid_nested_table_comments(
     repository = Path(__file__).resolve().parents[2]
     config = tmp_path / "config/backends/synchronization_config.toml"
     config.parent.mkdir(parents=True)
-    text = (repository / "config/backends/synchronization_config.toml").read_text()
+    text = _unmapped_host_configuration(repository)
     text = text.replace(
         "[monitor]",
         f"""[pulse_inventory.{key}]
@@ -1145,7 +1286,7 @@ def test_inventory_delete_then_insert_custom_stays_in_pulse_table(
     repository = Path(__file__).resolve().parents[2]
     config = tmp_path / "config/backends/synchronization_config.toml"
     config.parent.mkdir(parents=True)
-    text = (repository / "config/backends/synchronization_config.toml").read_text()
+    text = _unmapped_host_configuration(repository)
     text = text.replace(
         "[monitor]",
         """[pulse_inventory.behavioral_camera]
@@ -1192,7 +1333,7 @@ def test_host_monitor_budgets_reject_nonfinite_values(
     repository = Path(__file__).resolve().parents[2]
     config = tmp_path / "config/backends/synchronization_config.toml"
     config.parent.mkdir(parents=True)
-    text = (repository / "config/backends/synchronization_config.toml").read_text()
+    text = _unmapped_host_configuration(repository)
     config.write_text(
         text.replace("no_progress_timeout_s = 10", f"no_progress_timeout_s = {value}")
     )
@@ -1261,7 +1402,7 @@ async def test_inventory_controller_binds_lease_revision_and_file_digest(
     repository = Path(__file__).resolve().parents[2]
     config = tmp_path / "config/backends/synchronization_config.toml"
     config.parent.mkdir(parents=True)
-    shutil.copyfile(repository / "config/backends/synchronization_config.toml", config)
+    config.write_text(_unmapped_host_configuration(repository))
     mapping = tmp_path / "contracts/spikeglx_mapping_reference.json"
     mapping.parent.mkdir(parents=True)
     shutil.copyfile(repository / "contracts/spikeglx_mapping_reference.json", mapping)
@@ -1520,7 +1661,7 @@ async def test_timed_out_sdk_call_keeps_ownership_until_native_return() -> None:
 
     first = asyncio.create_task(owner.run(blocked, 0.02))
     assert await asyncio.to_thread(entered.wait, 1)
-    with pytest.raises(TimeoutError):
+    with pytest.raises(TimeoutError, match="SDK operation exceeded 0.02s"):
         await first
     with pytest.raises(SpikeGLXIOBusy):
         await owner.run(lambda: "must not run", 1)

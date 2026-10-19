@@ -1,0 +1,742 @@
+[
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\__init__.py",
+    "Hash": "F4704DFBAD23AE21F77650B5856E446C7390B72DF292152960241002E0A83A1E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\action_cancellation.py",
+    "Hash": "2BFE2A5933E0EFFD4108763F057E957D8900B763C6A0265BED620EDCB79F83BF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\action_progress.py",
+    "Hash": "80446847DAF32F665915B490843304FBBB0F4E5166C6E55E9BB7C3F179921681"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\advanced_appearance.py",
+    "Hash": "11028D67977899D3303ACE1CBC26EA9A059660A69AC787CE3BE044B00516D722"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\appearance.py",
+    "Hash": "CFFE5B7C5F4A156EC8194952919E1FA91DCADDB4E59C547567E961BBCA989E93"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\arena_limits.py",
+    "Hash": "3198B023816434CEE202624D6FF801DB86984B2FC8205D024BE7068439A59DFB"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\arena_movement.py",
+    "Hash": "B9779CDD94AF62695B3B8021770333DCA9153A6325A032F55F5621E3B7423CA3"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\batch_create.py",
+    "Hash": "EAD3BA8C4DE5FD003F298FA1E78164DE546E0AD124E2D6486446FFEF33A107F9"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\batch_insertion.py",
+    "Hash": "B92CCE74ACEFB9128DBA1CBAB205D064DED5EEC76D8CAE4EC26F59A2EE554FC3"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\batch_random.py",
+    "Hash": "A1D7185CB019A4A6FB2EEC4E049F5E8287CA7ADC9EAA6FB3022306E50CB70B7F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\batch_values.py",
+    "Hash": "6480762A35E45FBF740F892E513C36B7555C040216CB1FD7209EA1F8E520120A"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\batch_variation.py",
+    "Hash": "E9F98A0B8C8833A6D89630EA516CE50D57D85BA6E1FC50B1A71C146103C0D86D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\calibration_arena.py",
+    "Hash": "3C72DA6A498AF27D57792E6177404125580F06C62AEF0DED2DE5F73772A4A81C"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\calibration_assets.py",
+    "Hash": "FF4AFDBFBA86A7843DB985D4FA4828F10FC8B0A5A153A092DF68C9FCBD701631"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\calibration_files.py",
+    "Hash": "AC52D1DA6F2EF8810DC0B3A79FA39BC903B4DA77F2E9F433DD1DBEFFC311AF39"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\calibration_guides.py",
+    "Hash": "0A55CC311419AEEAC7F03574FDDEA51350562C604799FA8DE565C7DA71F0C113"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\calibration_profile.py",
+    "Hash": "0DD5D85C4F9A1A4143C4D0F92030C1DC6C7CFF44C905DBF4E0428C3ECC37D08A"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\camera_action_submission.py",
+    "Hash": "98F1D02153B2EF917A2E2E9F1315EBF8827D73D6066484D6A70C6179FF2AAD76"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\camera_inventory.py",
+    "Hash": "8BB0132326C7514D110427B199F235C002FE52422D393831AE4240D0701C9E6E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\camera_snapshot_settings.py",
+    "Hash": "14396F604755E4B5DA51F21F748CB6B452722E7C7AFB6AB53BB04A85EAAC3B3D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\camera_snapshot.py",
+    "Hash": "EF108256BDCB6719D58AEBC9DF4B8336531BBAB0658400434FBA59866DDAB3BF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\camera_trigger_form.py",
+    "Hash": "887E1381DEECBC71A6E5CB84866603E0A1F8224C76BCD4827F3DCEA4D4B7854C"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\cameras.py",
+    "Hash": "EE3539FDDBBFC289A32ED84096BDA1FEAA2293179F50C1C05CAED262277839E8"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\cancel_cleanup.py",
+    "Hash": "2EFB197C8DD5F630358D8A094D71F32F73FBB0D767EA65DE3C1F8AD7926DD883"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\components.py",
+    "Hash": "D7705A73A2D9D75F9F84020F27D72DA35AFA07931DEA3270DEBD030E287D2F80"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\condition_values.py",
+    "Hash": "DECA8F4B55341ECDFF1D0167DB2645879FD40EDF708D12790B050FE5F3E24EAF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\configuration_files.py",
+    "Hash": "0EA46E5B0177C70EE214A4574890911EAFD9479B681054B346041C22AB7E7D94"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\consoles.py",
+    "Hash": "235025E712D7EBAF9CCD76A20F3E4347895A0AA291D62DD3F6C8CF7CFBE725D8"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\control_editor.py",
+    "Hash": "5994ADEDA3FC7C6712027D3004C755D13C1E1DA1C22573368AA7E2D00AEF5B8F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\controller_bridge.py",
+    "Hash": "AEAC6934B01471C21EF5CCEB4A4AA2D8DEF1C38CF3B601BB9FD984353B5D19B1"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\dashboard.py",
+    "Hash": "16431096023B1D236DB18FAFE564A26458CA389E5E996D99C03FC57465E53A39"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\device_panel.py",
+    "Hash": "7FFEA2009EF5DE1192D1939389FF39008C936CAAB82AFDA092D3FBDABB93864A"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\device_requests.py",
+    "Hash": "791E4CAD813AFB8F0D60E73B7D3BD60A88723F15825100855A3A320E0C43624D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\devices_rail.py",
+    "Hash": "2A804583EF5FA6AE596C4D848EFC4BD0815FCDF246AC2DA2BA83A5F6856851B4"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\devices.py",
+    "Hash": "792554C4521774EC0E0C5903C8518ED1889F5EB59940FBE62B8F243C7ED7466F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\dialogs.py",
+    "Hash": "DB2FF148B1F71ACB01C215A50B3B05C2EDF19D985ECB92903A89CC041149BE23"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\display_layout.py",
+    "Hash": "973129CD2D59747AC445DA47A2965807E81D77882E3C2D8E8B4F96094A126644"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\epoch_batch.py",
+    "Hash": "905EE0073BBAAAE51B3930CE698F0A29D41BE28CAFD4F494264BD05BF5BC0416"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\epoch_composer.py",
+    "Hash": "2923959924D40E3BC2B80C1C5F2BFF1FDD0900462BB859FEA0C5910831ABE462"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\epoch_motion.py",
+    "Hash": "DC54E6CD1EC4B3F2F608E4C6B3CF995927BEB96F68D623CF81CEE4F050EAFC28"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\epoch_selection.py",
+    "Hash": "48BAC7D38BAD7F6364795CD5CCA2C0DDA1DFE8DADD25BAB0E949CAF7D0471BDD"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\feedback_entry.py",
+    "Hash": "705B61140E4AAA25CF16EFF1EC6DE61925F40905AAFF7DBDE26E8F0165B88360"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\feedback_mappings.py",
+    "Hash": "0836809F7A1AD81D0B738EAB6E473B0E37C02C468B2D459BBDBE1F89402C5368"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\feedback_signals.py",
+    "Hash": "C3C5E9D373F972743D09BFF1B3B51AF46CFEBD23DC5B717A28AC43C893A9A92E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\file_dialogs.py",
+    "Hash": "0BE607EBC5628C9ED2C12016F317656D97B71D29FB44F566C9F059FDEC01FF2C"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\formatting.py",
+    "Hash": "48174B0B0272E0611612F63920B44027D16D903804E057D7633832A7D8ABED55"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\group_editor.py",
+    "Hash": "343FBE45D48B4FF157130A58197AF5C55519B86151AB811A26412DF96F8BCF32"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\gui_history.py",
+    "Hash": "5856851DF84D3481A295F1B2459D1A586964400F1DC5C596BE1EC693138CA6E3"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\gui_snapshot_values.py",
+    "Hash": "B65DDA2741F42B4AD42A5B0010A3804CF05AA0C0604B1E856111EF114C4C8E5D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\gui_snapshot.py",
+    "Hash": "1EDBE48985C33247DF4334C6502D0542EA022F8126DE5096309B997652BFA608"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\icons.py",
+    "Hash": "BD589AD5A235B182F2F3AB02BD23E425E68A51B8B25966FE6F46BC570EAE4C13"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\image_parameters.py",
+    "Hash": "DB4D45C30C550127684F0734E055E56DC42839C62AC3B96B1A7C04B696B5CDBC"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\initial_pose.py",
+    "Hash": "2B24F8CCE2527DB7891991F73262FF655CE86874ECDBC872915B1E1C4422A982"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\layouts.py",
+    "Hash": "B4444A278B70B4E1B85A6124DF2A75BCB772802944DEFFEF237E90B96C8F40AD"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\live_calibration.py",
+    "Hash": "41E4EF609A77F7948C2EAC38360A52FF105AE176C18258D23293927103AF892D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\log_colors.py",
+    "Hash": "57DD6DAF4E453578CBD9A4B9102910E1E0A5ED7ACB687FE10EE56BFDCBE051D9"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\looming_size.py",
+    "Hash": "EFAB896B957344EFA84401574117328E22328447D4ADCEAD8CB1C02E7309B064"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\main.py",
+    "Hash": "430EB3516D6DC41C0AA4D5099A2632E3CDB2DA7AD72407226EFFC7F9100B468B"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_actions.py",
+    "Hash": "BDF530127B6C145DE41850BAFAD31509548087BAAFD78EB543E6C3C199AE7C34"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_cameras.py",
+    "Hash": "F12068367FAADFEF58B38E6606B6172C77E081ABEF68AA5954714600982EED5B"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_close.py",
+    "Hash": "2922619E9AD3830B22D493793C6D929CDEA781CD3DC7967C7AC97E1AEE81B38F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_config.py",
+    "Hash": "ADC889BC9443405FA4CE75A2A9C025FA2E710F122F0A74C77E1EF279ABEE4082"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_configuration_transport.py",
+    "Hash": "3BF18B17F2F712D44183450D5EAFD1E65EE65FCD4E241229DDA1AE1ACD2BE0DE"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_configuration.py",
+    "Hash": "967C28C3C8998B3561D2B58F27431DFEB788AF3A2986D7599C11AE34C2C60813"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_device_commands.py",
+    "Hash": "47DEAC158FEE1A2C335E45D38C0A6EA996BEE7F3013B21CD13A1C43A61875191"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_display_operations.py",
+    "Hash": "C0AE41224A316FC2E17D7BACB5A99C6A3E8DAC51FFCBD0AF853F44B788CD8F8B"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_display.py",
+    "Hash": "D1BB9C2E7FB89DD1363FEB2FFFF9C39BB69F0C42D185B24E66FDA161F3B6663C"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_mcu.py",
+    "Hash": "44E9E7299714C896685FAFAE756C53CA1B6082255D974DB8711FAB4750CAF9E1"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_preview_viewers.py",
+    "Hash": "95F263AE9535BDDDB6341C5084A37CB9CB9251DC8D41E231733ED55124658EB7"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_prompts.py",
+    "Hash": "9A4AA3E82175C13E23E58E041E4AB10D561B1D810DFB05E03A4E8F763373CA55"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_status.py",
+    "Hash": "0EA123DD83D35A0EF1FCF6C29D40771AF233B25110CF330F269226BB4E47BC8E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_stimulus_preview.py",
+    "Hash": "915D3808E7561321C97375FF4A3CE4B1B8063940C4AEB86F5E3289426A01E46F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_tracking_diagnostics.py",
+    "Hash": "9F7754AE5126B9FF06D149EB9B8783DDB3F9E509EA918959D222C71F2117681D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\managed_window.py",
+    "Hash": "5DD0BADF2D51B46E2EFDD9412DED0619212BFB07603EAEC1AB4C5FA9A8695D1B"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\mcu_action_submission.py",
+    "Hash": "1EA01EB7F203E837B349002C60774555D2C1DF31103C0FCD2F5019967509D11C"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\mcu_inputs.py",
+    "Hash": "86A17FFFC651A1CEB2D2D0CDFFFFA3BCA0F19162973A23085384595D4355902F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\mcu_outputs.py",
+    "Hash": "783471FBB31FA2B0E820BD786B3833C405774E793A8A408F8608A336585C07EA"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\mcu_snapshot.py",
+    "Hash": "95C3416DA7528435907DA63919E856149AF1B61B111FA2EC59AA2D56B4B8E7FA"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\mcu_wiring_editor.py",
+    "Hash": "1B386ABB6DCF57B3AD825753C06C5E99574C25E8BE6C68252D41D2CD96973133"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\microcontroller_signals.py",
+    "Hash": "793FF4E43C8AB639CD90ABEAE47AA6DC05696C4F90586265D443DCB28FBAC486"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\microcontroller_snapshot.py",
+    "Hash": "B898DD5003214359C50049FE29BA65EECDA9AFA1D552747D74BD730C794F21C8"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\microcontroller.py",
+    "Hash": "8CFD6BC0C68369F958268B39129D704100D98955EAD9DF6F6EFBDF7E794E9448"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\notices.py",
+    "Hash": "BD621AC1FF2ADCC100A5933B789735F7E62D84CFACA4FCBE01707176C9A5F6A3"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\paths.py",
+    "Hash": "E0FB8EA2019BC3DE5D138619AE45F61B8224C79EFB0407EFC5330D24F74F0AFE"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\pin_numbers.py",
+    "Hash": "22E92C05F17DDEF2C673CAB764B53E637B6B48AAFE4724463C92A30CB010E019"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\placement_calibration.py",
+    "Hash": "CD6484678EE7F23EB72028E6B0C02CEC447479350B1868386C484E27D1CB1808"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\planner_popups.py",
+    "Hash": "4E84B6F872667768FD7E2E2715345E75268A732855661F1FCB85080A1DDD3F82"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\prepared_file_picker.py",
+    "Hash": "0C2085C96B8574C36BC0F69FD6BCB4217F1D64F2DB8C7F835E5568A19E264A31"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\presets.py",
+    "Hash": "92507E17E50EEB463FE419F694D4EDEB1B70B71881FA10AE6A684E98CC162C7A"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\preview_follow.py",
+    "Hash": "580D273ABD5688545331B9C13C579E2BC2320894925E7A2046BE68D25424C51D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\preview_frame.py",
+    "Hash": "840A9383E20CA5D4C2F2F31A96C3CC726B17A6146D8C68C6C2D8631B45DE7FC0"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\preview_motion_plot.py",
+    "Hash": "39F1EF03E4CA4E47BFAE34B7217D650816C8F968796D48D3DCE731C8BD3B45AB"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\preview_placement.py",
+    "Hash": "18D42C6B35A1930A944C4F4905C8211CFBD923013A806EEF0EAEC4D45B06C2D9"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\preview_timeline.py",
+    "Hash": "A87A52A2A21C9A6B4FDE8D514509685CFD0C24851029068A2A9ED5A3F9EC1194"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\previews.py",
+    "Hash": "9219332E9580B16ED99673133F99DA41885B63B81092C7D43D9CBBE9DC1D479D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\program_editing.py",
+    "Hash": "C89E1E51B4B33BFF235F51E17B47CB10A589093B008FA347D0111EBEB135D816"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_assignments.py",
+    "Hash": "92CC5873029808BCEB165C7035BD174F18304611DFA2A4DE0E5F14147F4A5A77"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_blackouts.py",
+    "Hash": "17810B06A0AB14F99E33FB8B15A25C4FFE434C6D301688A3931C8DD49764C3D5"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_brightness.py",
+    "Hash": "F1DE63F381E431A29F2370102770A570EA77925B3C6A746BDCAFC413A0AFD47D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_calibration.py",
+    "Hash": "A2C2E47917D0390B4D166B58E2A5BF7C44CD87E71F0C421EAD5F6111A218104E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_codec.py",
+    "Hash": "0E518EC8488AC7FF4636D2880DB9513D23611EF559661A8CC930175C65ABC228"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_extent.py",
+    "Hash": "76B880260189F140C378980DDAD1319B7DE87C02AB0AC89861B26BF2410DEA80"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_files.py",
+    "Hash": "8DEB38E5E40599A5F838804247D64BC4B637D527EC69EB44418B96836FFA99C2"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_geometry.py",
+    "Hash": "E0B1A00729A492CCE0F158908B76F7CDE60B2F451BF39345FE0BE0851EB7F218"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_layers.py",
+    "Hash": "9CAE668824C63F957B7DC7FD7C9FCE54EB1EE10C50A8C045D31D5BD0349A5473"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_measured_profiles.py",
+    "Hash": "7406BFED17F461BE4E4B5B03A7A6F8852AD8B94BA40FC232763C78D729121D82"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_measurements.py",
+    "Hash": "14A602A32CEB0BCE3E7E9C829368D01992A0D74F3F03B48A0A9546A8954D55A0"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_optics.py",
+    "Hash": "4024C52C661787C4E8D7818E3309AE87B5C92758422974BF6B89237C866C7001"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_prerequisites.py",
+    "Hash": "76C403430C8D999416282818CA4759B7DF251D581E1A096EF27BA31C2AB326E0"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_profile.py",
+    "Hash": "05950777C510EC854C9A23FC5D4F6B73BFB7EA9D2D0843947FBA300746D32212"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_pulse_files.py",
+    "Hash": "08C76EB32E2AC4EFBD3081AD68125A039047F302D9459E33296E0B8F620BCF2A"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_pulses.py",
+    "Hash": "88342B28BA1A4320758B1B7244D8F223A9F6A8EB9C56F1FE33FC511B059EC33A"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_reference.py",
+    "Hash": "6959C79C256E0B1B431DF169BE34D224C0D99E4D3FD2D1FB6A934AA067C76946"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projector_timing.py",
+    "Hash": "415CF9BFB9B5B446AAD6639743A80BFEFADCC7FCFB82EC4F7E2781F2D460703D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\projectors.py",
+    "Hash": "7BF6F4CDAA1215E9651D07009DBD37C07D7D18A0D66AD9DA1E66C072ACE4105D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_batches.py",
+    "Hash": "4329A2D2B5A66F7C1FC9E12F7A035FAA50D77F39FBF753C6526BA5DEF479CE2E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_controls.py",
+    "Hash": "74A7373A58570A23231F6927ACD0B9A91A5A9D09492FB95544CE4EDE1293A12D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_document.py",
+    "Hash": "4D4F3BA33FDB0B16A12613E7ABFC0D7F8D65A914152B5B6CEDB86FCFE387FD7B"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_editor.py",
+    "Hash": "961BB2B90C3C7B2EE97655C6FB1E27D95C744C580726F90BEF06A7ED89D3EF58"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_groups.py",
+    "Hash": "8C032295BB2F714C9B9FE3B4D494D9FF9D949761690AC791E2F7EBC300D109A5"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_hierarchy.py",
+    "Hash": "BD9B62DA630CF0C7A5A045F2F7D868549C7F1AC9AEE2CFB2A9849CFDAFC9A6D1"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_history.py",
+    "Hash": "3058AE57FA74841D92FC63291C5BED5CE29A3B0A90355AB7F1287DB1010984CF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_nodes.py",
+    "Hash": "643C090F05C3D140084B95A59853978BFDEF31A9526C2A157121597D39DC7596"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_snapshot.py",
+    "Hash": "73214F9D479D728CEFBD6E65EC3FA7DEF464B1A67D5DEDB96394A27152F441BA"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol_timeline.py",
+    "Hash": "F2D4FD7888DD40E9DD77ABF0E008142F5CDE52E6A7DB3A7AA6701849EF596A45"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\protocol.py",
+    "Hash": "27C5EA93285AF6A9A608FF571220079132B1F871075E3CD17220EB035A8E0411"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\recent_values.py",
+    "Hash": "2CAA9B0FBA23BDA755E421501572B829235A327E08162D1E8A9FFE4F46CAD305"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\recordings.py",
+    "Hash": "489864D23603548F87E64F68697881B361E07A0CDA651C1C64E136BEA35657BC"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\reference_draft.py",
+    "Hash": "A32919515E7405004C2CCB23FDBEF4D180A98DA2FE5720508EEEEC79D908E249"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\reference_fields.py",
+    "Hash": "6778B929CB2AE405BDB751469B545382BEE006709503CA8938028FE10E41FB4D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\reference_layers.py",
+    "Hash": "1BC750B136A22BE08DE21EB112A1BB52D1C66B3340FD728B80128B6DE0B2F49F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\retained_review.py",
+    "Hash": "828FABEF7C1849C2F2BCA6971EE63E53B87D45E8FF7F0A2E955DD37879982133"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\retro_instruments.py",
+    "Hash": "0BFA84670B2A0AE30B05B57B72248928CB5FFD6A41E4FFC2C6AE60DCB96126BC"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\retro_overlay.py",
+    "Hash": "2D574D06403DAE3A46E191A71CF2BBA80609902E12EB224695A836C9F3E73188"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\review_draft.py",
+    "Hash": "3EE40147B95BD19D9DFCE1464BE011D5D5C5D8987018BBE8E96F29606AAE5792"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\review_placement.py",
+    "Hash": "A7212B43917359B6764183DCB4C5CDE25A49F0B2E06118017D1A72165A10D528"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\review_preview.py",
+    "Hash": "A2C1F17EEA5B91EBBE56586C23789AA6FE0A2F8F0E1EA6ECBDDC8509CAD6BB25"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\review.py",
+    "Hash": "E1083FD465A20D8F6CCB6E28804E88B6684F6F421CF39D5D240D61D46BA1E77E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\spikeglx_snapshot.py",
+    "Hash": "DACFDBB0BE254C1079F89597B0309AE4BF46BF2AB33705690A0D76688E163A02"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\spikeglx.py",
+    "Hash": "E335A1A89AF7FFD7BBC3B4B81ECDB069EE95BD6F666A9392882F6CE210C9BC7B"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\stimulus_assets.py",
+    "Hash": "066704E096D9648EEEBFCC6BF388879BC981842107C6F0A3E40CA4513AD6FBEB"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\stimulus_columns.py",
+    "Hash": "BCC8943026595F8A7608B1526496DE21CD5D8A269EC5E90C56318A4E4D0FDA08"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\stimulus_fades.py",
+    "Hash": "60CD8D5489AB6C510D1920D2BFA563973A4C6D2FF9D4231CAF8E4DF5AAFC78DF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\stimulus_files.py",
+    "Hash": "C49A658D097AEFD56BB68112C2BE127B611CD592C20E818721454CC0F8CDAC4D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\stimulus_form.py",
+    "Hash": "CF9F8E3465BB1FEC512BD67264AD88601B9F0F4AFB3B7E858D506729088F1FCD"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\stimulus_parameters.py",
+    "Hash": "B297D38208C6AF09BDC5F76D183A81CEDE8F9F25FAF3A66335F22DA28512D720"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\stimulus_presets.py",
+    "Hash": "C6612FB471B204F82578AFD2AAFEBE18A7FB9C55C03BB739BCB4862562CC3EFF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\stimulus_scope.py",
+    "Hash": "F0EFF90DC0D43435DD7923BE98627E3CE965FCE27296FC58A2604C8577C4778C"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\subgroup_editor.py",
+    "Hash": "E5B48FAD0098F9B71980C78D11BAA0DD1A2332BBF5C28F68D4714B455E14D7F6"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\subgroup_operations.py",
+    "Hash": "A1B3C5B3FA3169A1265D4DD5535FB2D12BE117709DFFE273CACD92B8F59B394D"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\subgroup_repetitions.py",
+    "Hash": "56E7F3F39FB64B8B1BDD0B607B2E766361A63AF5DD53C7332876C27A5823D546"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\subgroup_structure.py",
+    "Hash": "AB904970A1EA634A9B40E348F12B3B2A9DBE8D83CCD41CEB4F6D5BC8D4B1CB29"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\subject_history.py",
+    "Hash": "E6E41CF32068C7202170A0FC95EAA66D0D9CA7CBDBBBDD5F9B10B3F816831463"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\table_header.py",
+    "Hash": "5FB44C45571769904B8A466EE5B4377EA123EA17C1E3F1011C656FD1F85D0F36"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tables.py",
+    "Hash": "07C9ADACEE8CB81E632949733DE808877EC3C2352B86D8F47705BCCA20970F36"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tank_diagram.py",
+    "Hash": "DC5959C01A042821CD127D8F6876E13BF6479D86DF55489D2FEDCC27BDF7E624"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\theme.py",
+    "Hash": "36B59558B01D1057047361D3C8AAD2FB5C01FB2AEF2AA012475988A35339ED81"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\timeline_actions.py",
+    "Hash": "70B80DD7D06CF941A5AD555DFE87A62C0444B9AE5DAE7218E6308B8A22B1DF16"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\timeline_details.py",
+    "Hash": "1AC52A45E72384E455CF5C0CB8D94FFFE2648B224C83097606A9A34237D509E6"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\timeline_views.py",
+    "Hash": "3811E7A50EE3D800C5E4E356EBDF240012F6A98B6BE7EFAE44FC1905E5FACFC7"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_annotation.py",
+    "Hash": "4A2CC6CACDEB716DD7AAB37FAC978A381BE50A640C970CDD4A3DD90B6A5AA2DF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_codec.py",
+    "Hash": "19784A28DCD98F950220EB87E28F52CDDED0322D646106E90CE0A697441DB461"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_diagnostic_codec.py",
+    "Hash": "CC6041E083ED820887D5531B5E98C4FEE3E01595CEDB1BEEDAFD91C0541FE19F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_draft.py",
+    "Hash": "0615D34D949047ACC385ADF690646F69A036D5DAE235CF821D8F5D38ADA9C5BF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_forms.py",
+    "Hash": "150C1E6D9BF5284E348A97243F8ADA1A7C3F0F40AA52F57A3919F86552190128"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_frame_transport.py",
+    "Hash": "85DBCFFCED22DEF845CD6DA2C60107DA7DDC0AA42257C0962E8CCD130B33CAFF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_live.py",
+    "Hash": "DB8C95BC37EE01FA34F56E5081E3E2B03B91D28B686322D010D9D47DA36A7824"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_settings.py",
+    "Hash": "9845EE4D294368BD3F34916EA1F2CCB49F485D240F04351F00C9789B654B2472"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_spatial.py",
+    "Hash": "CBB0560520EA6857FD589B5A2F204D8AF5DC9A3E28134CDCFF4E30B9FC3A83A3"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking_stages.py",
+    "Hash": "AD6D6ADD99BE427A150C04919A3DA13731E277280390412246AD053BAD10411C"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\tracking.py",
+    "Hash": "AA2EE6249D63093CF4971C3408B92E049AC36FBC1878575679AE36607D5072F3"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_list.py",
+    "Hash": "AFA005F8E4F96849BE3F39BB02D3768E5A6D00663C142D6AE88DD4C5EC147422"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_preview_arena.py",
+    "Hash": "68EF5BFBAB8E647E1940CD9C5630E88B49AE4107230F311C1A22169408364A18"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_preview_canvas.py",
+    "Hash": "EC3CE4450E9CB961DB58C9205F0914584ADB0812BC3ECF73F292912BA68ABF83"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_preview_media.py",
+    "Hash": "688407A49B8B4B81B9D5AEDD8E4F475CE8EBBD562696622061912ACF2E30BB4E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_preview_plan.py",
+    "Hash": "63A71A10A314155DA855CC35937D1EEE55CC4C335C611FE26710D7979E20E5F2"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_preview_rig.py",
+    "Hash": "6A4A9FD0C5770C62A159F53E91140569E04B37F4B2A28EB4C2E34BCEB8B97083"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_preview_surfaces.py",
+    "Hash": "898D138E5E5A1232D0AD51D0000EFF2BBBE7BD5F3D4A544FE223A1670A69D3F0"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\trial_preview.py",
+    "Hash": "084464E53520CFAC5EAA817E92312075F1B20691D25B4A5F0B435FBBE83FA8AB"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\variation_table.py",
+    "Hash": "80384CF7DE4D8D89B664F10E919BE7640C94CA3893DF06DA7D5BB2A8C13D48C5"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\view.py",
+    "Hash": "EA3614BE2AD8866CE1538D1E979836823DD0B67AF07C9FAE53F2D84D9B387582"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\wheel_guard.py",
+    "Hash": "339CBF9FBD36257FD731EC3CD9AA9A817FBCDAAE98A1F99B942F7A1E050014E7"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\window.py",
+    "Hash": "367C842294982CDD966905625162BE5C44D300295EA3F437A283F2FF4F208BE4"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\gui\\test_dashboard.py",
+    "Hash": "D2AE22BF4766E72993255586F9EABA1E0C059B184FA2627DD96C29A33231F5AA"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\gui\\test_tracking_live.py",
+    "Hash": "66F49BC149F98E13E77BC3BAD139FECCCDBB2AC17F9256FB4EE21B71CA9BC86E"
+  }
+]

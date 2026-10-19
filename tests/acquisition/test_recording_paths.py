@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import tomllib
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,6 +16,7 @@ from cephvr.acquisition.recording_schema import get_writer_schemas
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.platform.windows.paths import extended_path
 
 
 def _identity(role: str = "behavioral") -> RecordingIdentity:
@@ -138,10 +140,12 @@ def test_recording_clock_accepts_schema_text_and_checks_explicit_conversion(
         identity.validate()
 
 
+@pytest.mark.parametrize("long_path", [False, True])
 def test_frame_log_header_matches_declared_and_planned_cadence_schema(
     tmp_path: Path,
+    long_path: bool,
 ) -> None:
-    path = tmp_path / "camera_frames.jsonl"
+    path = tmp_path / (("frame_" * 30 if long_path else "") + "camera_frames.jsonl")
     writer = FrameLogWriter(
         path,
         _identity(),
@@ -153,7 +157,11 @@ def test_frame_log_header_matches_declared_and_planned_cadence_schema(
     )
     writer.create()
     writer.close_failed()  # A header alone is deliberately not completed recording.
-    header = json.loads(path.read_text().splitlines()[0])
+    header = json.loads(
+        Path(extended_path(path) if sys.platform == "win32" else path)
+        .read_text()
+        .splitlines()[0]
+    )
     declaration = tomllib.loads(
         (
             Path(__file__).resolve().parents[2]

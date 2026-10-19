@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: cannot import name 'ReviewLayout' from 'cephvr.visual_stimulus.config.models.artifact_models' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\models\artifact_models.py)
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

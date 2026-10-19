@@ -1,0 +1,1 @@
+Baseline hashes match HEAD for all seven selected files. Retained security functions/classes are AST-identical, except _apis loses only SetNamedSecurityInfoW declarations.

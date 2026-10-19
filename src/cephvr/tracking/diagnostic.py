@@ -80,26 +80,38 @@ class TrackingDiagnostic:
             request.SerializeToString(deterministic=True)
         )
         self.command.deadline_monotonic_ns = deadline_ns
+        self.latest = wire.TrackingDiagnosticFrame()
+        self.stage_status = []
+        self.input_frames = self.evaluated_frames = self.lapped_frames = 0
+        self.last_duration_ns = self.maximum_duration_ns = 0
+        self.failure = ""
         self.close_confirmed = False
-        if (buffer.image.width, buffer.image.height) != (
-            request.settings.image_scale.image_width_px
-            if request.settings.HasField("image_scale")
-            else buffer.image.width,
-            request.settings.image_scale.image_height_px
-            if request.settings.HasField("image_scale")
-            else buffer.image.height,
-        ):
-            raise ValueError("image scale dimensions differ from the acquired source")
-        self.pipeline = DiagnosticPipeline(self.command, self.identity)
         loop = asyncio.get_running_loop()
-        prepare_future = loop.run_in_executor(self._executor, self.pipeline.prepare)
+        prepare_future: asyncio.Future[None] | None = None
         try:
+            if (buffer.image.width, buffer.image.height) != (
+                request.settings.image_scale.image_width_px
+                if request.settings.HasField("image_scale")
+                else buffer.image.width,
+                request.settings.image_scale.image_height_px
+                if request.settings.HasField("image_scale")
+                else buffer.image.height,
+            ):
+                raise ValueError(
+                    "image scale dimensions differ from the acquired source"
+                )
+            self.pipeline = DiagnosticPipeline(self.command, self.identity)
+            prepare_future = loop.run_in_executor(self._executor, self.pipeline.prepare)
             await asyncio.wait_for(
                 asyncio.shield(prepare_future), remaining_seconds(deadline_ns)
             )
-        except Exception:
-            released = False
-            if prepare_future.done() and host_time_ns() < deadline_ns:
+        except Exception as exc:
+            released = self.pipeline is None
+            if (
+                self.pipeline is not None
+                and (prepare_future is None or prepare_future.done())
+                and host_time_ns() < deadline_ns
+            ):
                 close_future = loop.run_in_executor(
                     self._executor, self.pipeline.close, deadline_ns
                 )
@@ -109,10 +121,9 @@ class TrackingDiagnostic:
                     )
                 except TimeoutError:
                     released = False
-            self.failure = "diagnostic preparation failed"
+            self.failure = f"{type(exc).__name__}: {exc}"[:512]
             if released:
                 self.pipeline = None
-                self.command = None
                 self.close_confirmed = True
             raise
         self.stage_status = self.pipeline.status
@@ -123,9 +134,6 @@ class TrackingDiagnostic:
             available=False,
             unavailable_reason="waiting for the first acquired frame",
         )
-        self.input_frames = self.evaluated_frames = self.lapped_frames = 0
-        self.last_duration_ns = self.maximum_duration_ns = 0
-        self.failure = ""
         self.active, self.close_confirmed = True, False
         self._stop.clear()
         self._task = asyncio.create_task(self._run(), name="tracking-diagnostic")

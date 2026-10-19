@@ -393,3 +393,60 @@ def test_sequential_header_versions_and_writer_schema_keep_recipe_v2() -> None:
     schemas = get_writer_schemas()
     assert schemas["visual_stimulus", "stimulus_frames", "jsonl"].schema_version == 6
     assert schemas["visual_stimulus", "stimulus_LOG", "json"].schema_version == 2
+
+
+def test_recipe_retains_calibration_values_and_preview_layout_without_source_files():
+    from tests.visual_stimulus.support import make_prepared_trial
+
+    from cephvr.visual_stimulus.config.models.artifact_models import (
+        GeometricProfile,
+        parse_prepared_json,
+    )
+    from cephvr.visual_stimulus.config.review_layout import review_layout
+    from cephvr.visual_stimulus.recording.recipe import prepare_recipe
+
+    plan = make_prepared_trial()
+    profiles = tuple(
+        GeometricProfile(
+            format_version=1,
+            calibration_id=m.mapping_id,
+            mapping_id=m.mapping_id,
+            surface_id=m.surface_id,
+            output_id=m.output_id,
+            output_width=100,
+            output_height=100,
+            viewport=m.viewport,
+            rows=2,
+            columns=2,
+            vertices=tuple(
+                {"uv": xy, "xy": xy} for xy in ((0, 0), (1, 0), (0, 1), (1, 1))
+            ),
+            orientation="preserving",
+            diagonal="bottom_left_to_top_right",
+            mask=None,
+            weight=None,
+            overlap_group=None,
+            valid_area=(0.1, 0.2, 0.9, 0.8),
+            intended_coverage=((0, 0), (1, 0), (1, 1), (0, 1)),
+            coverage_tolerance=0.01,
+            triangle_area_tolerance=0.0001,
+        )
+        for m in plan.display.active_mappings
+    )
+    layout = review_layout(plan.display, 2, {p.mapping_id: p for p in profiles})
+    plan = plan.model_copy(
+        update={"geometric_calibration": profiles, "preview_layout": layout}
+    )
+    recipe = prepare_recipe(plan, max_bytes=1_000_000)
+    retained = parse_prepared_json(recipe.data.decode(), max_bytes=1_000_000)
+    assert retained.geometric_calibration == profiles
+    assert retained.preview_layout == layout
+    assert retained.review_encoding is None
+    assert retained.geometric_calibration[0].valid_area == (0.1, 0.2, 0.9, 0.8)
+    # A later script can read actual mesh values, dimensions and crop rectangles,
+    # without resolving the original external calibration assets.
+    assert retained.geometric_calibration[0].vertices[3].xy == (1, 1)
+    payload = retained.model_dump()
+    payload["geometric_calibration"][0]["output_width"] = 101
+    with pytest.raises(ValueError, match="calibration snapshot differs"):
+        type(retained).model_validate(payload)

@@ -2,13 +2,9 @@
 
 from math import ceil
 
-from PyQt6.QtCore import QPoint, QRect, Qt, pyqtSignal
+from PyQt6.QtCore import QPoint, QRect, pyqtSignal
 from PyQt6.QtGui import (
-    QColor,
     QGuiApplication,
-    QPainter,
-    QPaintEvent,
-    QPen,
     QResizeEvent,
 )
 from PyQt6.QtWidgets import (
@@ -20,10 +16,9 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.control.v1 import services_pb2 as rpc
-from cephvr.gui.components import StatusColumn, button, label
+from cephvr.gui.components import StatusColumn
+from cephvr.gui.preview_frame import PreviewFrame
 from cephvr.gui.previews import PreviewDialog
-from cephvr.gui.retro_instruments import blink
-from cephvr.gui.theme import colors_for, retro_console
 from cephvr.gui.view import PreviewView
 from cephvr.platform.windows.preview_owner import gui_window_identity
 from cephvr.platform.windows.window_coordinates import (
@@ -31,135 +26,6 @@ from cephvr.platform.windows.window_coordinates import (
     operator_window_geometry,
     preview_frame_extra,
 )
-
-
-def bracket(painter: QPainter, rect: QRect, color: str, arm: int) -> None:
-    """Full-height `[ ]` edges with horizontal arms at the top and bottom."""
-    painter.setPen(QPen(QColor(color), 1))
-    for x, direction in ((rect.left(), 1), (rect.right(), -1)):
-        painter.drawLine(x, rect.top(), x, rect.bottom())
-        painter.drawLine(x, rect.top(), x + direction * arm, rect.top())
-        painter.drawLine(x, rect.bottom(), x + direction * arm, rect.bottom())
-
-
-class NoSignal(QWidget):
-    """Retro placeholder in the log's `-- NO ENTRIES --` idiom, above the Snap button.
-
-    A transparent child: the native-window target paints an opaque themed background.
-    """
-
-    def __init__(self, target: QWidget, snap: QWidget) -> None:
-        super().__init__(target)
-        self.snap = snap
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
-        blink().toggled.connect(self.refresh)
-
-    def refresh(self) -> None:
-        if self.isVisible():
-            self.update()
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        if not retro_console(self):
-            return
-        colors = colors_for(self)
-        painter = QPainter(self)
-        metrics = painter.fontMetrics()
-        text = "-- NO SIGNAL --"
-        block = metrics.horizontalAdvance(" ")
-        left = (self.width() - metrics.horizontalAdvance(text) - block) // 2
-        base = self.height() // 2 - self.snap.height()
-        painter.setPen(QColor(colors.muted))
-        painter.drawText(left, base, text)
-        if blink().on:
-            painter.fillRect(
-                left + metrics.horizontalAdvance(text),
-                base - metrics.ascent(),
-                block,
-                metrics.height(),
-                QColor(colors.accent),
-            )
-
-
-class PreviewFrame(QWidget):
-    """Bracketed native-window footprint, separate from the ordinary cards."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.setObjectName("PreviewWindowFrame")
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.setMinimumWidth(200)
-        self.setMinimumHeight(192)
-        self.caption = label("[ PREVIEW ]", "eyebrow")
-        self.caption.setParent(self)
-        self.caption.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.target = QWidget(self)
-        self.target.setObjectName("ExternalPreviewSlot")
-        self.target.setAccessibleName("Preview window placement")
-        self.snap_button = button("Snap")
-        self.snap_button.setParent(self.target)
-        self.snap_button.setToolTip("Restore this preview's grid position and size.")
-        self.placeholder = NoSignal(self.target, self.snap_button)
-        self.placeholder.hide()
-
-    @property
-    def empty(self) -> bool:
-        return self.placeholder.isVisibleTo(self)
-
-    @empty.setter
-    def empty(self, value: bool) -> None:
-        self.placeholder.setVisible(value)
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        super().paintEvent(event)
-        painter = QPainter(self)
-        colors = colors_for(self)
-        retro = retro_console(self)
-        rect = self.target.geometry().adjusted(-2, -2, 2, 2)
-        if retro:
-            # Doubled corner brackets echo the Retro card frame; the native window
-            # covers the interior, so the second line sits outside the footprint.
-            bracket(painter, rect.adjusted(-3, -3, 3, 3), colors.border, 22)
-        bracket(
-            painter, rect, colors.accent if retro else colors.focus, 16 if retro else 12
-        )
-
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
-        super().resizeEvent(event)
-        self.fit_target()
-
-    def fit_target(self) -> None:
-        scale = self.devicePixelRatioF()
-        extra_width, extra_height = preview_frame_extra(scale)
-        width_extra, height_extra = (
-            ceil(extra_width / scale),
-            ceil(extra_height / scale),
-        )
-        heading = self.caption.sizeHint().height() + 8
-        self.setMinimumHeight(heading + 8 + 128 + height_extra)
-        self.caption.setGeometry(0, 0, self.width(), heading - 8)
-        side = max(
-            0,
-            min(
-                int(2048 / scale),
-                self.width() - 16 - width_extra,
-                self.height() - heading - 8 - height_extra,
-            ),
-        )
-        width = side + width_extra
-        self.target.setGeometry(
-            (self.width() - width) // 2,
-            heading + max(0, (self.height() - heading - 8 - side - height_extra) // 2),
-            width,
-            side + height_extra,
-        )
-        self.placeholder.setGeometry(self.target.rect())
-        self.snap_button.adjustSize()
-        self.snap_button.move(
-            (self.target.width() - self.snap_button.width()) // 2,
-            (self.target.height() - self.snap_button.height()) // 2,
-        )
-        self.update()
 
 
 class PreviewSlot(QWidget):
@@ -175,6 +41,9 @@ class PreviewSlot(QWidget):
         self.grid.setSpacing(8)
         self.frames: dict[str, PreviewFrame] = {}
         self.sources: tuple[PreviewView, ...] = ()
+        self.arranged_sources: tuple[PreviewView, ...] = ()
+        self.reserve_active = False
+        self.columns = 0
         self.set_sources(())
 
     @property
@@ -185,37 +54,115 @@ class PreviewSlot(QWidget):
     def caption(self) -> QLabel:
         return next(iter(self.frames.values())).caption
 
-    def set_sources(self, sources: tuple[PreviewView, ...]) -> None:
+    def set_sources(
+        self, sources: tuple[PreviewView, ...], *, reserve_active: bool = False
+    ) -> None:
         self.sources = sources
-        self.arrange(tuple(item for item in sources if item.visible))
+        self.reserve_active = reserve_active
+        self.arrange(self.eligible_sources())
+
+    def eligible_sources(self) -> tuple[PreviewView, ...]:
+        return tuple(
+            item
+            for item in self.sources
+            if item.visible or item.pending or (self.reserve_active and item.active)
+        )
 
     def arrange(self, sources: tuple[PreviewView, ...]) -> None:
+        self.arranged_sources = sources
         requested = {item.key: item.name for item in sources}
         if not requested:
             requested = {"": "Preview"}
-        if tuple(requested) == tuple(self.frames):
-            return
-        for frame in self.frames.values():
-            self.grid.removeWidget(frame)
-            frame.setParent(None)
-            frame.deleteLater()
+        columns = self.grid_columns(len(requested))
+        reflow = tuple(requested) != tuple(self.frames) or columns != self.columns
+        self.columns = columns
+        previous = self.frames
+        for key, old_frame in previous.items():
+            if reflow:
+                self.grid.removeWidget(old_frame)
+            if key not in requested:
+                old_frame.setParent(None)
+                old_frame.deleteLater()
         self.frames = {}
-        columns = min(2, len(requested))
+        for col in range(3):
+            self.grid.setColumnStretch(col, 1 if col < columns else 0)
+        for row in range(self.grid.rowCount()):
+            self.grid.setRowStretch(row, 0)
+        by_key = {source.key: source for source in sources}
         for index, (key, name) in enumerate(requested.items()):
-            frame = PreviewFrame()
-            frame.target.setProperty("preview_source", key)
-            frame.snap_button.setEnabled(bool(key))
-            frame.snap_button.clicked.connect(
-                lambda _checked=False, source=key: self.snap_requested.emit(source)
-            )
+            frame = previous.get(key)
+            if frame is None:
+                frame = PreviewFrame()
+                frame.target.setProperty("preview_source", key)
+                frame.snap_button.setEnabled(bool(key))
+                frame.snap_button.clicked.connect(
+                    lambda _checked=False, source=key: self.snap_requested.emit(source)
+                )
             frame.empty = not key
+            source = by_key.get(key)
+            waiting = bool(
+                self.reserve_active and source is not None and not source.visible
+            )
+            frame.status.setVisible(waiting)
+            frame.status.setText(
+                "Opening preview…"
+                if source and source.pending
+                else source.reason
+                if source and source.reason
+                else "Ready · select Show"
+            )
+            frame.snap_button.setVisible(not waiting)
             if key:
                 frame.caption.setText(f"[ {name.upper()} ]")
             self.frames[key] = frame
-            self.grid.addWidget(
-                frame, index // columns, index % columns, 1, 2 if columns == 1 else 1
-            )
+            if reflow:
+                self.grid.addWidget(
+                    frame,
+                    index // columns,
+                    index % columns,
+                    1,
+                    2 if columns == 1 and not self.reserve_active else 1,
+                )
+            self.grid.setRowStretch(index // columns, 1)
         self.updateGeometry()
+
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        super().resizeEvent(event)
+        if self.reserve_active and self.grid_columns(len(self.frames)) != self.columns:
+            self.arrange(self.arranged_sources)
+
+    def grid_columns(self, count: int) -> int:
+        if not self.reserve_active:
+            return min(2, max(1, count))
+        maximum = min(3, max(1, count), max(1, (self.width() + 8) // 208))
+        return max(
+            range(1, maximum + 1),
+            key=lambda columns: (
+                min(
+                    self.width() / columns - 24,
+                    self.height() / ceil(max(1, count) / columns) - 54,
+                ),
+                -columns,
+            ),
+        )
+
+    def attach_controls(self, workspace: PreviewDialog, *, external: bool) -> None:
+        workspace.attach_controls(
+            {key: frame.header for key, frame in self.frames.items()}
+            if external
+            else {}
+        )
+        for key, frame in self.frames.items():
+            frame.caption.setVisible(
+                not external or key not in workspace.source_widgets
+            )
+            if (
+                external
+                and key in workspace.statuses
+                and workspace.statuses[key].text()
+            ):
+                frame.status.hide()
+            frame.fit_target()
 
     def target_for(self, key: str) -> QWidget:
         if not key:
@@ -279,17 +226,17 @@ def preview_window_placement(
     host_window = area.window() if area is not None else None
     if isinstance(host_window, PreviewDialog):
         host_window.fit_contents()
-    previous = (
-        tuple(item for item in area.sources if item.visible) if area is not None else ()
-    )
+    previous = area.eligible_sources() if area is not None else ()
     prospective = area is not None and any(
         item.key == key and not item.visible for item in area.sources
     )
     if prospective:
         assert area is not None
         area.arrange(
-            tuple(item for item in area.sources if item.visible or item.key == key)
+            tuple(item for item in area.sources if item in previous or item.key == key)
         )
+        if isinstance(host_window, PreviewDialog):
+            area.attach_controls(host_window, external=True)
     frame = area.frames.get(key) if area is not None else None
     slot = (
         frame.target
@@ -341,6 +288,8 @@ def preview_window_placement(
         if prospective:
             assert area is not None
             area.arrange(previous)
+            if isinstance(host_window, PreviewDialog):
+                area.attach_controls(host_window, external=True)
         if measuring:
             assert card is not None and owner is not None
             card.hide()

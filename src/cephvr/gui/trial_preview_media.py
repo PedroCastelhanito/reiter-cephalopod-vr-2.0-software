@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from PyQt6.QtCore import QObject, Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QImage, QImageReader
+from PyQt6.QtGui import QColorSpace, QImage, QImageReader
 
 from cephvr.visual_stimulus.config.models.program_model import Program
 
@@ -15,6 +15,7 @@ class PreviewMedia(QObject):
 
     def __init__(self, program: Program, root: str, parent: QObject) -> None:
         super().__init__(parent)
+        self.assets = {a.asset_id: a for a in program.assets}
         self.paths = {a.asset_id: a.logical_path for a in program.assets}
         self.root = Path(root).resolve()
         self.images: OrderedDict[str, QImage] = OrderedDict()
@@ -33,15 +34,18 @@ class PreviewMedia(QObject):
             self.images.move_to_end(asset)
             return self.images[asset]
         try:
-            reader = QImageReader(str(self.path(asset)))
-            size = reader.size()
-            if size.width() * size.height() > 64_000_000:
-                raise ValueError("Preview image exceeds 64 megapixels")
-            size.scale(1024, 1024, Qt.AspectRatioMode.KeepAspectRatio)
-            reader.setScaledSize(size)
-            image = reader.read()
-            if image.isNull():
-                raise ValueError(reader.errorString())
+            if self.assets[asset].profile == "cephvr1_texture_json_v1":
+                image = self.recipe_image(asset)
+            else:
+                reader = QImageReader(str(self.path(asset)))
+                size = reader.size()
+                if size.width() * size.height() > 64_000_000:
+                    raise ValueError("Preview image exceeds 64 megapixels")
+                size.scale(1024, 1024, Qt.AspectRatioMode.KeepAspectRatio)
+                reader.setScaledSize(size)
+                image = reader.read()
+                if image.isNull():
+                    raise ValueError(reader.errorString())
         except (KeyError, OSError, ValueError) as error:
             self.errors[asset] = str(error)
             image = QImage()
@@ -49,6 +53,42 @@ class PreviewMedia(QObject):
         if len(self.images) > 16:
             self.images.popitem(last=False)
         return image
+
+    def recipe_image(self, asset: str) -> QImage:
+        from cephvr.visual_stimulus.config.models.schema_common import (
+            DEFAULT_DOCUMENT_BYTES,
+        )
+        from cephvr.visual_stimulus.resources.texture_recipe import (
+            generate_texture_recipe,
+            parse_texture_recipe,
+        )
+
+        with self.path(asset).open("rb") as stream:
+            raw = stream.read(DEFAULT_DOCUMENT_BYTES + 1)
+        recipe = parse_texture_recipe(raw, max_texture_pixels=1024 * 1024)
+        pixels = generate_texture_recipe(recipe)
+        height, width, _ = pixels.shape
+        image = QImage(
+            pixels.tobytes(),
+            width,
+            height,
+            pixels.strides[0],
+            QImage.Format.Format_RGB888,
+        ).copy()
+        override = self.assets[asset].color_override
+        transfer = override.transfer if override else "linear"
+        if transfer not in ("linear", "srgb"):
+            raise ValueError(f"Recipe preview does not support {transfer} transfer")
+        image.setColorSpace(
+            QColorSpace(
+                QColorSpace.NamedColorSpace.SRgbLinear
+                if transfer == "linear"
+                else QColorSpace.NamedColorSpace.SRgb
+            )
+        )
+        return image.convertedToColorSpace(
+            QColorSpace(QColorSpace.NamedColorSpace.SRgb)
+        )
 
     def video(self, identity: str, asset: str, seconds: float, at_end: str) -> QImage:
         if identity not in self.videos:

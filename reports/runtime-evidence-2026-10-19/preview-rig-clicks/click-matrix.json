@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f17",
+  "source_worktree_changes": [
+    "src/cephvr/gui/appearance.py",
+    "src/cephvr/gui/window.py"
+  ],
+  "method": "Windows computer-use physical input; authenticated one-shot controller snapshots; bounded WatchState observer. No production code changed during this audit.",
+  "cases": [
+    [
+      "Configuration Behavior Connect",
+      "pass",
+      "Real camera/pulses and native preview opened; blank caption and bracket fit visually inspected."
+    ],
+    [
+      "Behavior Use off/on",
+      "pass with scope",
+      "Count 3 to 2 to 3; viewer hidden/restored; run identity changed, so no continuity claim."
+    ],
+    [
+      "Tracking Connect with Behavior active",
+      "fail",
+      "CONFIGURE unexpectedly resumed behavioral output; Tracking cleanup pending; GUI falsely says Connected."
+    ],
+    [
+      "Tracking Disconnect after failure",
+      "pass",
+      "Controller reports closed, stopped and cleanup_pending false."
+    ],
+    [
+      "Dashboard workspace Behavior Show",
+      "pass",
+      "Native camera viewer appeared within workspace bracket."
+    ],
+    [
+      "Native viewer X",
+      "unexecuted",
+      "Computer-use rejected cross-process target; no X action delivered."
+    ],
+    [
+      "Workspace X and reopen",
+      "fail",
+      "Camera result evidence incomplete, logical visibility false; subsequent Preview/navigation/Style clicks ineffective. Alt-F4 later closed GUI."
+    ],
+    [
+      "GUI close with preview",
+      "fail",
+      "Preview owner cleanup WinError 1400; capture stopped but release unconfirmed."
+    ],
+    [
+      "First generation Shutdown",
+      "pass",
+      "Normal Shutdown succeeded; process inventory empty afterward."
+    ],
+    [
+      "GUI Setup",
+      "fail",
+      "DisplayProfile photodiode_patch missing high_linear_rgb and low_linear_rgb."
+    ],
+    [
+      "Backend Setup with long evidence root",
+      "harness limitation",
+      "Initial missing directory corrected; Setup passed; Start then interrupted on required stimulus temporary file creation. Long path suspected, not proven sole cause."
+    ],
+    [
+      "Long-path trial recovery",
+      "pass with limits",
+      "Shutdown unconfirmed; launcher eventually contained processes. Supported startup recovery completed without certifying unknown outputs."
+    ],
+    [
+      "Short-path backend Setup and GUI Start",
+      "pass",
+      "Preserved accepted settings, all three cameras, optional videos off, textures only, 120 seconds."
+    ],
+    [
+      "Running Behavior and Tracking Show clicks",
+      "unavailable",
+      "All rows disabled; only manual preview_running feeds GUI availability; experiment viewers not wired."
+    ],
+    [
+      "Running Use and Connect clicks",
+      "pass",
+      "Controls remain locked; no observed participation/capture change."
+    ],
+    [
+      "Runtime empty workspace close and navigation",
+      "pass",
+      "Navigation to Cameras and back succeeds while trial continues."
+    ],
+    [
+      "120-second trial completion",
+      "pass",
+      "SESSION_OUTCOME_COMPLETED; cleanup_confirmed true; optional videos off."
+    ],
+    [
+      "New session after completion",
+      "pass",
+      "GUI returned to Configuration; controller confirmed NewSession."
+    ],
+    [
+      "Post-trial camera reconnect",
+      "inconclusive",
+      "Camera configuration changed; reload before retrying. Temporary backend candidate differed from GUI draft; no reconnect achieved."
+    ],
+    [
+      "Final Shutdown and restoration",
+      "pass",
+      "Normal Shutdown succeeded; all Python/CephVR processes absent; all 11 saved files restored SHA256-identical."
+    ]
+  ],
+  "unexecuted": [
+    "native X",
+    "manual move/resize",
+    "Snap",
+    "multi-preview grid after concurrent-connect failure",
+    "minimize/restore",
+    "all DPI settings",
+    "video-on load",
+    "independent runtime viewer close"
+  ]
+}

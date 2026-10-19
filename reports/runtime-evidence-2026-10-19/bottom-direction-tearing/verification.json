@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-19",
+  "task": "bottom-direction-tearing",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_state": "dirty shared worktree; hashes identify checked files, not an isolated committed patch",
+  "source_sha256": {
+    "src/cephvr/gui/calibration_profile.py": "0dd5d85c4f9a1a4143c4d0f92030c1dc6c7cff44c905dbf4e0428c3ecc37d08a",
+    "src/cephvr/gui/projector_extent.py": "76b880260189f140c378980ddad1319b7de87c02ab0ac89861b26bf2410dea80",
+    "src/cephvr/gui/trial_preview_surfaces.py": "91bd205e3d5d9267ea2678f8b731cb2dd151f9ae947e5d936ccdca62892e6cae",
+    "src/cephvr/gui/trial_preview_canvas.py": "ec3ce4450e9cb961db58c9205f0914584adb0812bc3ecf73f292912ba68abf83",
+    "src/cephvr/gui/trial_preview_rig.py": "6a4a9fd0c5770c62a159f53e91140569e04b37f4b2a28eb4c2e34bceb8b97083",
+    "src/cephvr/visual_stimulus/config/calibration_adjustments.py": "111a752e6339fff486e63f67a7c5f4daeaf0cbce70047a147b097bbb1ae6e2cf",
+    "src/cephvr/visual_stimulus/rendering/scene_resources.py": "f5d81da563f74c900853a7eb6c1df73f72f697ecd92cddb095339a182edb342f",
+    "src/cephvr/visual_stimulus/rendering/display_calibration.py": "7602720b7d0fd178ec7569b2a4eb3e6b0956b100c80cb18ddcc0381454d0a012",
+    "tests/gui/test_dashboard.py": "bc5c5c8b7927920fd2e0f30ae0abdc7ad2e9701dc8a514ce553d7e669e62361b",
+    "tests/visual_stimulus/test_display_calibration_rendering.py": "ca730882046eaac4224a75471b24767d52a920b45a5b5c005832fcc4a06927d2"
+  },
+  "owner_input": "Bottom portrait top edge toward head; projector below Right in same orientation",
+  "decisions": {
+    "G01": 242,
+    "V15": 21
+  },
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus -q -m \"not windows and not rig\" --tb=short --basetemp=<external writable directory> --junitxml=<visual-tests-final.xml>",
+      "result": "432 passed, 1 deselected; loopback permission supplied"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"(calibration or projector or preview_linked or planning_preview or front_attached or maps_usable_pixels or bottom_portrait) and not tab_config_buttons_roundtrip\" --tb=short --basetemp=<external writable directory> --junitxml=<gui-tests-final2.xml>",
+      "environment": "QT_QPA_PLATFORM=offscreen; local transport permission",
+      "result": "99 passed, 596 deselected"
+    },
+    {
+      "command": "python -m ruff check <10 affected source/test files>",
+      "result": "pass"
+    },
+    {
+      "command": "python -m ruff format --check <10 affected source/test files>",
+      "result": "10 already formatted"
+    },
+    {
+      "command": "python -m mypy --platform win32 <8 affected source files>",
+      "result": "pass"
+    },
+    {
+      "command": "python tools/check_backend_boundaries.py",
+      "result": "724 modules, zero violations; scene_resources GL allocation owner remains cohesive"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "new documentation target/anchor and decision-register check",
+      "result": "pass; broad historical report link scan finds pre-existing missing log-error-colors.png"
+    }
+  ],
+  "attempt_limits": [
+    "Initial broad sandbox test processes stalled at local transport; interrupted.",
+    "Native GUI file-dialog roundtrip raised Windows 0x8001010d; excluded that unrelated dialog test from offscreen scoped run.",
+    "First permitted Visual suite passed429 with3 demo-asset fixture errors because basetemp was in repository; external basetemp rerun passed432.",
+    "Old physical-axis expectations failed and were updated alongside four-direction/pitch, rotated raster, and translated UV regression coverage."
+  ],
+  "live_state": "No GUI restart/Setup or physical optical test; no operator configuration files edited; pulse-only VSync retained",
+  "rig_followup": "reports/rig-verification.md"
+}

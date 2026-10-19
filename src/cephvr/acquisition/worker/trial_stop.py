@@ -132,7 +132,14 @@ class TrialStopFinalizer:
             if self._stop_deadline_ns is None
             else min(self._stop_deadline_ns, deadline_ns)
         )
+        if self.trial.actual_stop_ns is not None:
+            self._complete_pending(None)
         self._advance_stop()
+
+    def _complete_pending(self, failure: BaseException | None) -> None:
+        pending, self._pending = self._pending, []
+        for item in pending:
+            item.complete(item.report, item.deadline_ns, failure)
 
     def _advance_stop(self) -> None:
         deadline = self._stop_deadline_ns
@@ -142,19 +149,14 @@ class TrialStopFinalizer:
         try:
             if not self.stop_trial(deadline, report_stopped=self._report_stopped):
                 return
-            if (
-                self._capture_finished is not None
-                and self.trial.stop_request is not None
-            ):
-                self._capture_finished(self.trial.stop_request, deadline)
         except BaseException as exc:
             failure = exc
-        pending, self._pending = self._pending, []
+        if failure is not None and not self._pending:
+            raise failure
         self._stop_deadline_ns = None
         self._capture_finished = None
         self._report_stopped = False
-        for item in pending:
-            item.complete(item.report, item.deadline_ns, failure)
+        self._complete_pending(failure)
 
     def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> bool:
         scheduled = self.trial.schedule or self.trial.stopped_schedule
@@ -196,12 +198,13 @@ class TrialStopFinalizer:
             else None
         )
         recording_end: int | None = None
-        actual_stop: int | None = None
-        stopped_reported = False
+        actual_stop = self.trial.actual_stop_ns
+        stopped_reported = self.trial.stopped_reported
 
         def activity_stopped(observed_ns: int) -> None:
             nonlocal actual_stop, stopped_reported
             actual_stop = observed_ns
+            self.trial.actual_stop_ns = observed_ns
             admission_stop = self.captures.admission_stop_ns
             if report_stopped and admission_stop is not None:
                 end = (
@@ -211,6 +214,8 @@ class TrialStopFinalizer:
                 )
                 self._publish_stopped(observed_ns, end, deadline_ns)
                 stopped_reported = True
+                self.trial.stopped_reported = True
+            self._complete_pending(None)
 
         purge = self.trial.purge_evidence
         if self.captures.active:
@@ -218,6 +223,15 @@ class TrialStopFinalizer:
                 not self.captures.requires_external_trigger
                 or self.terminal.off_terminal_confirmed()
             )
+            admission_stop = self.captures.admission_stop_ns
+            if self.trial.finish_deadline_ns is None and admission_stop is not None:
+                self.trial.finish_deadline_ns = self.terminal.finish_deadline(
+                    deadline_ns,
+                    min(scheduled_end, admission_stop)
+                    if scheduled_end is not None
+                    else None,
+                    scheduled_end,
+                )
             stopped = self.captures.stop(
                 deadline_ns,
                 drain_margin_ns=max(
@@ -226,7 +240,13 @@ class TrialStopFinalizer:
                 ),
                 terminal_off_confirmed=off_terminal,
                 activity_stopped=activity_stopped,
+                resumable=True,
+                finalization_deadline_ns=self.trial.finish_deadline_ns,
             )
+            if stopped is None:
+                self._stop_deadline_ns = deadline_ns
+                self.trial.stopped_schedule = scheduled
+                return False
             if not isinstance(stopped, PurgeEvidence):
                 raise TypeError("camera stop returned invalid purge evidence")
             purge = stopped
@@ -283,6 +303,7 @@ class TrialStopFinalizer:
                 marker.recording_end_monotonic_ns,
                 deadline_ns,
             )
+            self.trial.stopped_reported = True
         if marker is not None and self.trial.finish_deadline_ns is None:
             self.trial.finish_deadline_ns = self.terminal.finish_deadline(
                 deadline_ns, recording_end, scheduled_end
@@ -316,6 +337,12 @@ class TrialStopFinalizer:
         self.trial.released = False
         self.trial.prepared = False
         self._complete_warning_scope()
+        if self._capture_finished is not None and self.trial.stop_request is not None:
+            callback, self._capture_finished = self._capture_finished, None
+            callback(
+                self.trial.stop_request,
+                self.trial.finish_deadline_ns or deadline_ns,
+            )
         return True
 
     def _publish_stopped(self, actual_ns: int, end_ns: int, deadline_ns: int) -> None:

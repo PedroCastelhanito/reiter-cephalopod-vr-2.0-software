@@ -19,6 +19,7 @@ from cephvr.acquisition.camera.types import (
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.worker.capture import CameraCaptureLoop, CaptureWindow
+from cephvr.acquisition.worker.capture_drain import TerminalCaptureDrain
 from cephvr.acquisition.worker.frame_diagnostics import FrameDiagnosticTracker
 from cephvr.acquisition.worker.warnings import WarningOccurrence
 from cephvr.shared.clock import host_time_ns
@@ -59,7 +60,7 @@ class WorkerCaptureResources:
         self._scheduled_run_id: UUID | None = None
         self._admission_stop_ns: int | None = None
         self._stop_deadline_ns: int | None = None
-        self._drain_until_ns: int | None = None
+        self._terminal_drain: TerminalCaptureDrain | None = None
         self._capture_handoff: Callable[[], bool] = lambda: True
 
     @property
@@ -322,6 +323,7 @@ class WorkerCaptureResources:
         self._released = False
         self._cutoff_reached = False
         self._admission_stop_ns = None
+        self._terminal_drain = None
         self._stop_deadline_ns = None
 
     def release_schedule(self) -> None:
@@ -405,61 +407,44 @@ class WorkerCaptureResources:
         drain_margin_ns: int = 0,
         terminal_off_confirmed: bool = True,
         activity_stopped: Callable[[int], None] | None = None,
+        resumable: bool = False,
+        finalization_deadline_ns: int | None = None,
     ) -> object:
         if drain_margin_ns < 0:
             raise ValueError("post-cutoff drain margin cannot be negative")
         deadline_ns = self.seal_admission(deadline_ns)
         admission_stop_ns = self._admission_stop_ns
         assert admission_stop_ns is not None
-        timing = self._timing
-        generation_stopped = False
-        if self._active:
-            generation_stopped = self.adapter.begin_terminal_drain()
+        if self._terminal_drain is None:
+            self._terminal_drain = TerminalCaptureDrain(
+                self.adapter,
+                active=self._active,
+                admission_stop_ns=admission_stop_ns,
+                timing=self._timing,
+                margin_ns=drain_margin_ns,
+                terminal_off_confirmed=terminal_off_confirmed,
+                activity_stopped=activity_stopped,
+                clock=host_time_ns,
+            )
         if (
-            generation_stopped
-            and terminal_off_confirmed
-            and activity_stopped is not None
+            finalization_deadline_ns is not None
+            and self._terminal_drain.generation_stopped
+            and self._terminal_drain.terminal_off_confirmed
         ):
-            activity_stopped(host_time_ns())
-        margin_start = admission_stop_ns
-        if timing == "external_trigger":
-            if terminal_off_confirmed:
-                margin_start = host_time_ns()
-            else:
-                generation_stopped = False
-        margin_end = margin_start + drain_margin_ns
-        drain_complete = (
-            self._active
-            and generation_stopped
-            and terminal_off_confirmed
-            and margin_end <= deadline_ns
+            # Device activity is stopped; excluded retrieval uses the retained
+            # finalization bound rather than the activity-report allowance.
+            deadline_ns = finalization_deadline_ns
+            self._stop_deadline_ns = deadline_ns
+        evidence = self._terminal_drain.advance(
+            self.capture,
+            deadline_ns=deadline_ns,
+            handoff=self._capture_handoff,
+            resumable=resumable,
+            clock=host_time_ns,
         )
-        if drain_complete:
-            self._drain_until_ns = margin_end
-            interrupted = False
-
-            def handoff() -> bool:
-                nonlocal interrupted
-                permitted = self._capture_handoff()
-                interrupted = not permitted
-                return permitted
-
-            while host_time_ns() < margin_end:
-                if self.capture is None:
-                    drain_complete = False
-                    break
-                self.capture.capture_once(handoff)
-                if interrupted or host_time_ns() >= deadline_ns:
-                    drain_complete = False
-                    break
-            if drain_complete and host_time_ns() >= margin_end:
-                self.adapter.confirm_drain_margin()
-            else:
-                drain_complete = False
-        self._drain_until_ns = None
-        evidence = self.adapter.stop_capture(
-            deadline_ns, should_continue_drain=self._capture_handoff
-        )
+        if evidence is None:
+            return None
+        self._terminal_drain = None
         self._active = False
         self.set_window(None)
         self._scheduled_start_ns = None
@@ -514,6 +499,11 @@ class WorkerCaptureResources:
         released = tuple(self._released_attachments)
         self._attachments = ()
         return released
+
+    @property
+    def _drain_until_ns(self) -> int | None:
+        drain = self._terminal_drain
+        return drain.margin_end_ns if drain is not None else None
 
     def _wait_timeout(self) -> int:
         timeout = self._frame_timeout_ns

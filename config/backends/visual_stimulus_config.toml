@@ -2,7 +2,7 @@
 # Visual Stimulus is required in the accepted modes; this file offers no switch to disable it.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/visual_stimulus_policy.toml; versions must match.
-policy_version = 16
+policy_version = 18
 
 [rpc]
 # E08: fixed Visual Stimulus coordinator service port; loopback only; restart required after edits.
@@ -81,7 +81,7 @@ pacing_refresh_hz = 60.0
 # rig testing. No second default here.
 # Renderer dithering and implicit sRGB conversion are disabled on final code writes.
 # External driver/projector processing remains a rig-verification obligation.
-# The mixed mode requires a configured pacing output ID; no face/device is guessed.
+# V20 owns legacy pacing selection and explicit per-output pulse VSync; no face/device is guessed.
 # Validate startup Idle pacing; resolve again at Setup and keep fixed through the session.
 # Rig throughput is pending.
 

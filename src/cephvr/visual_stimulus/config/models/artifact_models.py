@@ -13,6 +13,7 @@ from pydantic import Field, field_validator, model_validator
 
 from .display_profile import DisplayProfile, Output, PixelRect
 from .evidence_model import Identity, UniformLayout
+from .photometric_profile import PhotometricProfile
 from .program_model import ArenaSettings, Program, Settings, TrialArenaBoundaries, refs
 from .schema_common import (
     MINIMUM_TRIAL_DURATION_NS,
@@ -152,15 +153,22 @@ class CompositeTile(Model):
     output_id: OutputId
     rect: PixelRect  # Bottom-left-origin rectangle inside the composite.
     source_code_bits: Literal[8, 10]
+    source_rect: PixelRect | None = None
+    cell: PixelRect | None = None
+    label: Annotated[str, Field(max_length=128)] = ""
+    rotation_clockwise_degrees: Literal[0, 90, 180, 270] = 0
 
 
-class ReviewEncoding(
-    Model
-):  # E13: one tiled composite, one encoder (recorded-outputs.md#tiled-composite).
+class ReviewLayout(Model):
+    layout_version: Literal[1, 2, 3] = 1
+    layout_kind: Literal["recording", "preview"] = "recording"
     composite_width: Pos
     composite_height: Pos
-    scale_denominator: Pos  # Tile = output size // k; Encoder-fit divisor times the configured review scale factor.
+    scale_denominator: Pos  # Encoder-fit divisor times the configured review reduction.
     tiles: Annotated[tuple[CompositeTile, ...], Field(min_length=1)]
+
+
+class ReviewEncoding(ReviewLayout):
     native_pixel_format: Literal[
         "rgba8_top_down",
         "r10g10b10a2_le_top_down",
@@ -214,6 +222,9 @@ class PreparedTrial(Model):
     renderer_compatibility: str
     compiler_compatibility: str
     review_encoding: ReviewEncoding | None  # None only with saving Off.
+    preview_layout: ReviewLayout | None = None
+    geometric_calibration: tuple[GeometricProfile, ...] = ()
+    photometric_calibration: tuple[PhotometricProfile, ...] = ()
 
     @property
     def resolved_duration_ns(self) -> int:
@@ -244,39 +255,68 @@ class PreparedTrial(Model):
             raise ValueError(
                 "terminal boundary must deactivate exactly the final active instances"
             )
+        if self.preview_layout is not None:
+            from cephvr.visual_stimulus.config.review_layout import validate_layout
+
+            if self.preview_layout.layout_kind != "preview":
+                raise ValueError("preview requires its display layout")
+            validate_layout(self.display, self.preview_layout)
+        if self.geometric_calibration:
+            from cephvr.visual_stimulus.config.review_layout import (
+                validate_calibration_snapshot,
+            )
+
+            validate_calibration_snapshot(self)
         self.display.require_trial_marker()  # Validate independent pacing and optional marker.
         if (r := self.review_encoding) is not None:
+            if r.layout_kind != "recording":
+                raise ValueError("recording requires its full-output grid")
             if any(
                 o.width_px // r.scale_denominator < 1
                 or o.height_px // r.scale_denominator < 1
                 for o in self.display.active_outputs
             ):
                 raise ValueError("composite scale leaves an empty tile")
-            expected_tiles = tile_layout(
-                self.display.active_outputs, r.scale_denominator, r.composite_height
-            )
-            actual = [
-                (t.output_id, t.rect.x, t.rect.y, t.rect.width, t.rect.height)
-                for t in r.tiles
-            ]
-            if actual != expected_tiles or any(
-                t.rect.x + t.rect.width > r.composite_width or t.rect.y < 0
-                for t in r.tiles
+            if r.layout_version == 1:
+                actual = [
+                    (t.output_id, t.rect.x, t.rect.y, t.rect.width, t.rect.height)
+                    for t in r.tiles
+                ]
+                if actual != tile_layout(
+                    self.display.active_outputs, r.scale_denominator, r.composite_height
+                ):
+                    raise ValueError(
+                        "review composite must tile every display output in the fixed layout"
+                    )
+            else:
+                from cephvr.visual_stimulus.config.review_layout import validate_layout
+
+                validate_layout(self.display, r)
+            outputs = {o.output_id: o for o in self.display.active_outputs}
+            if len(r.tiles) != len(outputs) or {t.output_id for t in r.tiles} != set(
+                outputs
             ):
                 raise ValueError(
-                    "review composite must tile every display output in the fixed layout"
+                    "review composite must include every active output exactly once"
                 )
+            for tile in r.tiles:
+                output = outputs[tile.output_id]
+                if (
+                    tile.rect.x + tile.rect.width > r.composite_width
+                    or tile.rect.y + tile.rect.height > r.composite_height
+                ):
+                    raise ValueError("review tile exceeds composite")
+                if tile.source_rect is not None:
+                    self.display._check_rect(tile.source_rect, output)
+                if tile.source_code_bits != output.rgb_bits_per_channel:
+                    raise ValueError("review tile depth differs from output")
             bits = [o.rgb_bits_per_channel for o in self.display.active_outputs]
-            if [
-                t.source_code_bits for t in r.tiles
-            ] != bits or r.native_pixel_format not in (
+            if r.native_pixel_format not in (
                 ("rgba8_top_down", "rgba8_bottom_up")
                 if max(bits) == 8
                 else ("r10g10b10a2_le_top_down", "r10g10b10a2_le_bottom_up")
             ):
-                raise ValueError(
-                    "composite depth must be the largest output depth, with tile source depths retained"
-                )
+                raise ValueError("composite depth must be the largest output depth")
             d = self.display
             if r.timing.pacing_output_id != d.selected_pacing_output_id:
                 raise ValueError(

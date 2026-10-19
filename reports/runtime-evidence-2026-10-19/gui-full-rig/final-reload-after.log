@@ -1,0 +1,33 @@
+{
+  "utc": "2026-10-19T09:24:27.090411+00:00",
+  "controller_generation": "11d140a8-e50a-48f7-82ab-ef3b9aa43701",
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "spikeglx": {
+    "connected": true,
+    "address": "169.254.240.108",
+    "port": 4142,
+    "version": "SpikeGLX v20251218 api v4.1.3",
+    "run_name": "GUIRIG-172845",
+    "data_directory": "C:/SGL_DATA"
+  },
+  "authoritative_configuration_equal": true,
+  "before_controller_generation": "4e2fb1ef-d1c3-4131-bdb8-be90a5f598ed",
+  "saved_configuration": {
+    "config/last_configuration.json": {
+      "byte_equal": true,
+      "shutdown_save_rewritten": false,
+      "sha256": "4910ccf21047988b03e6baf38e5df9c4aa3f7d6f30b0986afb854e7f2ef759e8"
+    },
+    "config/runtime_gui.json": {
+      "byte_equal": true,
+      "shutdown_save_rewritten": false,
+      "sha256": "d4779c3baa2f207e284fa29cbd91b88b1389429aca26e3da55fffe4b587c03cd"
+    }
+  },
+  "source_sha256": {
+    "src\\cephvr\\tracking\\diagnostic.py": "c813d08df8577e1018e90eb33bbe320021c0d67a8ec5e61e31cd34b428ee59a8"
+  },
+  "all_cameras_closed_preview_stopped_cleanup_clear": true
+}

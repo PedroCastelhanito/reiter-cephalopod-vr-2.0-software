@@ -1,0 +1,394 @@
+[
+  {
+    "text": "Undo",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Undo",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Redo",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Redo",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Duplicate",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Duplicate",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Delete",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Delete",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move earlier",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move earlier",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move later",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move later",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Duplicate group",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Duplicate group",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Remove group",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Remove group",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move earlier",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move earlier",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move later",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move later",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Add layer",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Add layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Remove layer",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Remove layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move layer",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move up",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move up",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move down",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move down",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Add layer",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Add layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Remove layer",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Remove layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move layer",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move up",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move up",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move down",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move down",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Add layer",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Add layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Remove layer",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Remove layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move layer",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move up",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move up",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move down",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move down",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Add layer",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Add layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Remove layer",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Remove layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move layer",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move layer",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move up",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move up",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Move down",
+    "enabled": false,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Move down",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Standard",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Standard",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Retro console",
+    "enabled": true,
+    "visible": true,
+    "checked": true,
+    "tooltip": "Retro console",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Style",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Style",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "CRT effects",
+    "enabled": true,
+    "visible": true,
+    "checked": true,
+    "tooltip": "CRT effects",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Refresh band",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Refresh band",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "View",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "View",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "Devices side navigation",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "Show devices and their sections as one list beside the Devices page.",
+    "native_coverage": "Unavailable"
+  },
+  {
+    "text": "",
+    "enabled": true,
+    "visible": true,
+    "checked": false,
+    "tooltip": "",
+    "native_coverage": "Unavailable"
+  }
+]

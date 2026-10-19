@@ -213,9 +213,12 @@ def linked_rates(
         )
     if angular:
         cosine = 0.0 if abs(cosine) < 1e-9 else math.copysign(1.0, cosine)
-    distance = _dot(
-        _sub(geometry.observer_mm, surfaces[tm.surface_id].bottom_left_mm), tn
-    )
+    reference = surfaces[sm.surface_id]
+    center: Vector = tuple(
+        (a + b) / 2
+        for a, b in zip(reference.bottom_left_mm, reference.top_right_mm, strict=True)
+    )  # type: ignore[assignment]
+    distance = _dot(_sub(center, surfaces[tm.surface_id].bottom_left_mm), tn)
     flow = (0.0, 0.0, 0.0) if angular and abs(cosine) == 1 else _cross(sn, tn)
     world = tuple(
         folded[i] + math.radians(angular) * distance * flow[i] for i in range(3)
@@ -235,24 +238,16 @@ def linked_rates(
 def validate_spin_pivot(
     source: TextureSettings, geometry: Geometry, position: tuple[float, float] | None
 ) -> None:
-    """Require the actual rendered reference pivot to coincide with the subject."""
+    """Require the retained reference pivot at its calibrated screen center."""
     if not rates(source)[2]:
         return
     assert source.space.kind == "physical_surface"
     mapping = source.space.mappings[0]
-    surface = next(s for s in geometry.surfaces if s.surface_id == mapping.surface_id)
-    right, up, _ = _basis(surface)
-    relative = _sub(geometry.observer_mm, surface.bottom_left_mm)
-    # Existing physical_corners uses centered face-local coordinates.
-    x = (
-        _dot(relative, right)
-        - math.dist(surface.bottom_left_mm, surface.bottom_right_mm) / 2
-    )
-    y = _dot(relative, up) - math.dist(surface.bottom_left_mm, surface.top_left_mm) / 2
+    # Surface-local (0, 0) is the calibrated screen center, independent of observer.
     a, b = mapping.matrix
-    pivot = (a[0] * x + a[1] * y + a[2], b[0] * x + b[1] * y + b[2])
+    pivot = (a[2], b[2])
     tolerance = geometry.positional_tolerance_mm * math.hypot(a[0], b[0])
     if position is None or math.dist(position, pivot) > tolerance:
         raise ValueError(
-            f"Linked rotation requires reference {source.instance_id!r} centered on the subject projection at ({pivot[0]:g}, {pivot[1]:g}) mm; set its initial center and reset state. Drift linking is unaffected."
+            f"Linked rotation requires reference {source.instance_id!r} centered on its calibrated screen at ({pivot[0]:g}, {pivot[1]:g}) mm; set its initial center and reset state. Drift linking is unaffected."
         )

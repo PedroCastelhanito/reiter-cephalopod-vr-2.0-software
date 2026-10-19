@@ -1,0 +1,12 @@
+{
+  "config/last_configuration.json": {
+    "byte_equal": true,
+    "current_sha256": "4910ccf21047988b03e6baf38e5df9c4aa3f7d6f30b0986afb854e7f2ef759e8"
+  },
+  "config/runtime_gui.json": {
+    "byte_equal": true,
+    "current_sha256": "d4779c3baa2f207e284fa29cbd91b88b1389429aca26e3da55fffe4b587c03cd"
+  },
+  "new_report_missing_targets": [],
+  "restoration_claim_scope": "Final controller snapshot and saved last_configuration bytes; GUI file equality independently checked here."
+}

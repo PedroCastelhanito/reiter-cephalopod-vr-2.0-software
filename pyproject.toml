@@ -84,7 +84,7 @@ namespaces = false
 [tool.setuptools.package-data]
 "*" = ["*.pyi"]
 "cephvr.tracking.native" = ["*.dll"]
-"cephvr.platform.windows" = ["*.dll"]
+"cephvr.platform.windows" = ["*.dll", "*.ps1"]
 "cephvr.acquisition.camera" = ["*.pyd"]
 "cephvr.gui" = ["assets/fonts/*.ttf", "assets/fonts/*.txt"]
 

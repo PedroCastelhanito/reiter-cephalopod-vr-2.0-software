@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_scope": "Working tree with concurrent pre-existing changes; revision names base HEAD, not a clean committed validation target.",
+  "backend_command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_manual_preview.py tests/acquisition/test_manual_devices.py tests/controller/test_camera_evidence.py tests/controller/test_device_admission.py tests/controller/test_microcontroller_owner.py tests/controller/test_setup.py -q -m 'not windows and not rig' --tb=short",
+  "backend_result": {"passed": 380, "skipped": 1, "deselected": 1},
+  "gui_command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k 'action_log or dispatched_action_log or managed_operation_log or successful_tracking_frame_poll or managed_mcu or managed_camera or managed_snapshot or log_entry_details or log_error_color or managed_bridge or managed_spikeglx or controller_bridge_setup or controller_bridge_submits_then_setup or projector_brightness' -m 'not windows and not rig' --tb=short",
+  "gui_result": {"passed": 62, "deselected": 645},
+  "static_checks": {
+    "ruff_check": "pass; 22 affected source/test files",
+    "ruff_format": "pass; 22 affected source/test files",
+    "mypy": "--platform win32; pass; 18 affected source files",
+    "boundaries": "728 modules; zero violations; existing size advisories reviewed in runtime report"
+  },
+  "broader_gui": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -x -m 'not windows and not rig' --tb=short",
+    "passed": 7,
+    "failed": 1,
+    "failure": "test_multiple_review_previews_have_independent_source_frames[standard-0]: QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame) is false",
+    "limit": "Earlier full run interrupted after preview geometry failures/stall. No full GUI pass or clean-baseline attribution."
+  },
+  "initial_attempts": "Updated async progress test doubles; corrected new trigger fixture to provide required connection/request APPLIED evidence; corrected optional command-key typing. Failures are not counted as passes.",
+  "validation_scope": "Local implementation and managed transport/Qt tests; no application restart, physical device operations or rig acceptance. Intermediate telemetry and snapshots may coalesce."
+}

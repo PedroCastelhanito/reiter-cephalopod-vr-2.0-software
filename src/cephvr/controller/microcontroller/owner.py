@@ -219,6 +219,11 @@ class SerialOwner:
                     f"requested {role} frequency is outside current CAPS range"
                 )
             fields[f"{role}_pin"] = pin
+        assert self._state is not None
+        expected_running = {
+            role: role in active and getattr(self._state, role).running
+            for role in ROLES
+        }
         exchange = self._exchange("CONFIGURE", fields, deadline_ns, routine=True)
         assert exchange.reply is not None
         state = _state_from_values(parse_state(exchange.reply, configured=True))
@@ -230,8 +235,10 @@ class SerialOwner:
             raise SerialOwnerError("successful CONFIGURE left MCU watchdog stopped")
         for role in ROLES:
             output = getattr(state, role)
-            if output.running:
-                raise SerialOwnerError(f"CONFIGURE unexpectedly resumed {role} output")
+            if output.running != expected_running[role]:
+                raise SerialOwnerError(
+                    f"CONFIGURE changed {role} running state unexpectedly"
+                )
             if output.enabled != (role in active):
                 raise SerialOwnerError(
                     f"CONFIGURE readback enablement differs for {role}"

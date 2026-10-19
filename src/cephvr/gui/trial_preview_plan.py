@@ -4,8 +4,10 @@ from bisect import bisect_right
 from dataclasses import dataclass
 
 from cephvr.visual_stimulus.compiler.expansion import expand_program
+from cephvr.visual_stimulus.compiler.texture_links import validate_link_geometry
 from cephvr.visual_stimulus.compiler.transitions import compile_boundaries
 from cephvr.visual_stimulus.config.models.artifact_models import CompiledEpoch
+from cephvr.visual_stimulus.config.models.display_profile import Geometry
 from cephvr.visual_stimulus.config.models.program_model import (
     Fixed,
     Program,
@@ -13,6 +15,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Time,
 )
 from cephvr.visual_stimulus.rendering.state import InstanceState
+from cephvr.visual_stimulus.rendering.texture_links import bind_texture_links
 
 
 @dataclass(frozen=True)
@@ -22,7 +25,7 @@ class PreviewLayer:
 
 
 class PreviewPlan:
-    def __init__(self, program: Program) -> None:
+    def __init__(self, program: Program, geometry: Geometry | None = None) -> None:
         self.program = program
         self.epochs = []
         elapsed = 0
@@ -54,6 +57,13 @@ class PreviewPlan:
         self.total_ns = elapsed
         self.starts = [e.start_ns for e in self.epochs]
         self.boundaries = compile_boundaries(self.epochs)
+        self.geometry = geometry
+        if any(getattr(s, "linked_to", None) for e in self.epochs for s in e.settings):
+            if geometry is None or len(geometry.surfaces) != 4:
+                raise ValueError(
+                    "Configure all four screen planes for linked preview motion"
+                )
+            validate_link_geometry(self.epochs, self.boundaries, geometry)
         self.states: dict[str, InstanceState] = {}
         self.cursor = 0
         self.time_ns = -1
@@ -110,6 +120,8 @@ class PreviewPlan:
                                 "Preview assignment contains an unresolved value"
                             )
                         state.values[assignment.target].value = value
+            if self.geometry is not None:
+                bind_texture_links(self.states, self.geometry, now_ns=boundary.time_ns)
             self.cursor += 1
         self.time_ns = now_ns
         self.index = bisect_right(self.starts, now_ns) - 1

@@ -13,8 +13,8 @@ from PyQt6.QtCore import QObject, QSettings
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
-from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.action_progress import ActionProgress
 from cephvr.gui.controller_bridge import ControllerBridge
 from cephvr.gui.gui_history import GuiHistory, history_path
 from cephvr.gui.layouts import show_maximized
@@ -31,6 +31,10 @@ from cephvr.gui.managed_status import (
     dashboard_view,
     has_retained_history,
     retained_ack_required_for,
+)
+from cephvr.gui.managed_stimulus_preview import (
+    ManagedStimulusPreview,
+    stimulus_preview_view,
 )
 from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
 from cephvr.gui.managed_window import ManagedDashboardWindow
@@ -68,6 +72,7 @@ class ManagedGui(QObject):
         self.close_pending = False
         self.history = GuiHistory(window.snapshots, gui_history_path or history_path())
         self.state: pb.Snapshot | None = None
+        self.action_progress = ActionProgress(self.log_action)
         self._inventory_identity: tuple[str, int] | None = None
         self.display_operations = ManagedDisplayOperations(
             window.devices.projectors,
@@ -139,6 +144,17 @@ class ManagedGui(QObject):
             ),
             lambda key: preview_window_placement(window, key).SerializeToString(),
         )
+        self.stimulus_preview = ManagedStimulusPreview(
+            window,
+            lambda: self.state,
+            bridge.request,
+            lambda: preview_window_placement(window, "stimulus").SerializeToString(),
+            lambda: self.control_ready and window.dashboard.view.has_control,
+        )
+        window.preview_slot.snap_requested.connect(
+            lambda key: self.stimulus_preview.request(key, True, snap=True)
+        )
+        bridge.command_finished.connect(self.stimulus_preview.finished)
         window.preview_slot.snap_requested.connect(self.preview_viewers.snap)
         self.cameras = ManagedCameras(
             cameras,
@@ -153,6 +169,9 @@ class ManagedGui(QObject):
         mcu.managed = True
         mcu.scan_ports()
         window.devices.projectors.discover_displays()
+        window.devices.projectors.brightness.requested.connect(
+            self.adjust_projector_brightness
+        )
         self.mcu = ManagedMcu(mcu, bridge, lambda: self.state)
         self.tracking_diagnostics = ManagedTrackingDiagnostics(
             window,
@@ -192,11 +211,12 @@ class ManagedGui(QObject):
         window.dashboard.preview_requested.connect(
             self.preview_viewers.preview_visibility
         )
+        window.dashboard.preview_requested.connect(self.stimulus_preview.request)
         window.dashboard.action_requested.connect(self.request_dashboard_action)
         bridge.snapshot_received.connect(self.install_snapshot)
         bridge.connection_changed.connect(self.connection_changed)
         bridge.command_finished.connect(self.command_finished)
-        bridge.command_admitted.connect(self.command_admitted)
+        bridge.action_progress.connect(self.action_progress.requested)
         bridge.operation_finished.connect(self.operation_finished)
         bridge.operation_finished.connect(self.display_operations.live.finished)
         bridge.command_finished.connect(self.display_operations.live.command_finished)
@@ -242,6 +262,7 @@ class ManagedGui(QObject):
         self.review_retained.setEnabled(False)
         self.review_prompt.setEnabled(False)
         self.preview_viewers.disconnected()
+        self.stimulus_preview.disconnected()
         self.window.apply_view(DashboardView())
         self.tracking_diagnostics.install_snapshot(None)
         if self.close_pending:
@@ -277,6 +298,7 @@ class ManagedGui(QObject):
             self._retained_ack_required = True
             self._retained_ack_identity = identity
         self.state = state
+        self.action_progress.install(epoch, state)
         held = state.control.holder_client_id == self.bridge.principal.generation
         permitted = not self._retained_ack_required
         self.review_retained.setEnabled(
@@ -301,7 +323,10 @@ class ManagedGui(QObject):
         view = dashboard_view(
             state,
             self.bridge.principal.generation,
-            tuple(preview_views),
+            (
+                *preview_views,
+                stimulus_preview_view(state, self.stimulus_preview.pending),
+            ),
             configuration_wired=configuration_wired,
         )
         if not permitted:
@@ -435,28 +460,30 @@ class ManagedGui(QObject):
             )
         )
 
-    def command_admitted(self, action: str, command_id: str) -> None:
-        self.window.dashboard.log_console.append_entry(
-            f"{action_label(action)} accepted; awaiting completion.",
-            f"Action: {action}\nCommand ID: {command_id}\nState: admitted; completion is pending.",
-            error=False,
-        )
+    def log_action(self, target: str, message: str) -> None:
+        self.window.dashboard.log_console.appendPlainText(message)
+        if target == "tracking":
+            self.window.tracking.status.console.appendPlainText(message)
+        elif target:
+            getattr(self.window.devices, target).console.appendPlainText(message)
 
     def operation_finished(
         self, action: str, command_id: str, status: str, message: str
     ) -> None:
         label = action_label(action)
         normalized = status.replace("_", " ").capitalize()
-        summary = (
-            f"{label} completed."
-            if status == "completed"
-            else f"{label}: {normalized.lower()}" + (f" — {message}" if message else "")
-        )
-        self.window.dashboard.log_console.append_entry(
-            summary,
-            f"Action: {action}\nCommand ID: {command_id}\nStatus: {status}\nMessage: {message}",
-            error=status in {"failed", "rejected", "unconfirmed"},
-        )
+        if status != "completed":
+            summary = (
+                f"{label} · Waiting for operator input…"
+                if status == "needs_input"
+                else f"{label}: {normalized.lower()}"
+                + (f" — {message}" if message else "")
+            )
+            self.window.dashboard.log_console.append_entry(
+                summary,
+                f"Action: {action}\nCommand ID: {command_id}\nStatus: {status}\nMessage: {message}",
+                error=status in {"failed", "rejected", "unconfirmed"},
+            )
         self.prompts.operation_finished(action)
         if action == "spikeglx_inventory_update" and status == "completed":
             self._inventory_identity = None
@@ -588,9 +615,6 @@ class ManagedGui(QObject):
             state, submitted_edit_serial=submitted_edit_serial
         )
         self.reload_configuration.setEnabled(self.configuration.stale)
-        self.window.dashboard.log_console.appendPlainText(
-            f"Controller accepted configuration revision {revision}."
-        )
         self.install_snapshot(
             self._connection_epoch,
             state.controller_generation,
@@ -692,25 +716,34 @@ class ManagedGui(QObject):
                 self.state.SerializeToString(),
             )
 
+    def adjust_projector_brightness(self, current_ma: int) -> None:
+        if not self.bridge.request("projector_brightness", current_ma=current_ma):
+            panel = self.window.devices.projectors
+            panel.brightness.finish()
+            panel.console.appendPlainText(
+                "Brightness adjustment was not sent: controller unavailable."
+            )
+
     def command_finished(self, action: str, success: bool, message: str) -> None:
-        quiet_mcu_poll = (
-            action == "mcu"
-            and success
-            and self.mcu.pending_kind == rpc.MICROCONTROLLER_COMMAND_KIND_STATUS
-        )
+        if action == "projector_brightness":
+            projector_panel = self.window.devices.projectors
+            projector_panel.brightness.finish()
+            if not success:
+                projector_panel.console.appendPlainText(
+                    f"Brightness adjustment failed: {message}"
+                )
         if action == "set_spikeglx_enabled":
             self.display_operations.pairing_finished()
             self.window.devices.spikeglx.apply_view(self.window.dashboard.view)
-            self.window.devices.spikeglx.console.appendPlainText(message)
+            if not success:
+                self.window.devices.spikeglx.console.appendPlainText(message)
         label = action_label(action)
         rendered = (
             f"{label}: {message}"
             if success or message.startswith("Cancelled")
             else f"{label} failed: {message}"
         )
-        if not quiet_mcu_poll and (
-            action != "tracking_diagnostic_frame" or not success
-        ):
+        if not success:
             self.window.dashboard.log_console.append_entry(
                 rendered,
                 f"Action: {action}\nSuccess: {success}\nMessage: {message}",
@@ -733,8 +766,6 @@ class ManagedGui(QObject):
                     self.state.control.holder_client_id
                     == self.bridge.principal.generation,
                 )
-            if success and not quiet_mcu_poll:
-                self.window.devices.microcontroller.console.appendPlainText(rendered)
         self.cameras.finished(action, success, message)
         if action in {
             "camera",
@@ -750,7 +781,10 @@ class ManagedGui(QObject):
             panel = self.window.devices.spikeglx
             panel.pending_action.finish()
             panel.apply_view(self.window.dashboard.view)
-            panel.console.appendPlainText(rendered)
+            if success:
+                self.log_action("spikeglx", "SpikeGLX · Ready")
+            else:
+                panel.console.appendPlainText(rendered)
             panel.status_column.set_rows(
                 (
                     (

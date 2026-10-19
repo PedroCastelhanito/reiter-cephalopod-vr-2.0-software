@@ -15,7 +15,6 @@ from cephvr.platform.windows.paths import extended_path
 SE_FILE_OBJECT = 1
 OWNER_SECURITY_INFORMATION = 0x1
 DACL_SECURITY_INFORMATION = 0x4
-PROTECTED_DACL_SECURITY_INFORMATION = 0x80000000
 SE_DACL_PROTECTED = 0x1000
 TOKEN_QUERY = 0x0008
 TOKEN_USER = 1
@@ -175,16 +174,6 @@ def _apis() -> tuple[Any, Any]:
         ctypes.c_void_p,
     ]
     advapi.AddAccessAllowedAceEx.restype = wintypes.BOOL
-    advapi.SetNamedSecurityInfoW.argtypes = [
-        wintypes.LPWSTR,
-        ctypes.c_int,
-        wintypes.DWORD,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-    ]
-    advapi.SetNamedSecurityInfoW.restype = wintypes.DWORD
     advapi.GetNamedSecurityInfoW.argtypes = [
         wintypes.LPWSTR,
         ctypes.c_int,
@@ -398,37 +387,6 @@ def create_owner_only(path: Path, payload: bytes) -> None:
         raise
     else:
         kernel.CloseHandle(handle)
-    verify_owner_only(path)
-
-
-def ensure_owner_only(path: Path) -> None:
-    """Set a protected one-ACE DACL for the current token user, then verify it."""
-    kernel, advapi = _apis()
-    name = _checked_path(path, kernel)
-    sid, token_buffer, sid_length = _user_sid(kernel, advapi)
-    _ = token_buffer  # Keep token memory alive through the ACL call.
-    acl_size = ctypes.sizeof(_ACL) + 8 + sid_length
-    acl_buffer = ctypes.create_string_buffer(acl_size)
-    acl = ctypes.cast(acl_buffer, ctypes.c_void_p)
-    if not advapi.InitializeAcl(acl, acl_size, ACL_REVISION):
-        raise WindowsSecurityError(f"InitializeAcl failed: {ctypes.get_last_error()}")
-    if not advapi.AddAccessAllowedAceEx(acl, ACL_REVISION, 0, FILE_ALL_ACCESS, sid):
-        raise WindowsSecurityError(
-            f"AddAccessAllowedAceEx failed: {ctypes.get_last_error()}"
-        )
-    result = advapi.SetNamedSecurityInfoW(
-        name,
-        SE_FILE_OBJECT,
-        OWNER_SECURITY_INFORMATION
-        | DACL_SECURITY_INFORMATION
-        | PROTECTED_DACL_SECURITY_INFORMATION,
-        sid,
-        None,
-        acl,
-        None,
-    )
-    if result:
-        raise WindowsSecurityError(f"SetNamedSecurityInfoW failed: {result}")
     verify_owner_only(path)
 
 

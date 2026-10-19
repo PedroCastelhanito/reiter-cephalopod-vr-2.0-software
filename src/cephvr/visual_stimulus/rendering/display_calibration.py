@@ -169,10 +169,17 @@ class DisplayCalibrationRenderer:
             profile = self.prepared.display_calibration.content[key]
             assert isinstance(profile, GeometricProfile)
             a, b, c = profile.vertices[:3]
-            sx = (b.xy[0] - a.xy[0]) / (b.uv[0] - a.uv[0])
-            sy = (c.xy[1] - a.xy[1]) / (c.uv[1] - a.uv[1])
+            quarter_turn = b.uv[0] == a.uv[0]
+            du = -(b.uv[1] - a.uv[1]) if quarter_turn else b.uv[0] - a.uv[0]
+            dv = c.uv[0] - a.uv[0] if quarter_turn else c.uv[1] - a.uv[1]
+            sx = (b.xy[0] - a.xy[0]) / du
+            sy = (c.xy[1] - a.xy[1]) / dv
             vertices = affine_vertices(
-                sx, sy, (bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2
+                sx,
+                sy,
+                (bounds[0] + bounds[2]) / 2,
+                (bounds[1] + bounds[3]) / 2,
+                quarter_turn=quarter_turn,
             )
             frame = self.frames[mappings[key].output_id]
             data = struct.pack(
@@ -185,8 +192,8 @@ class DisplayCalibrationRenderer:
             )
             encoded = struct.unpack("16f", data)
             if (
-                encoded[0] == encoded[4]
-                or encoded[1] == encoded[9]
+                encoded[0:2] == encoded[4:6]
+                or encoded[0:2] == encoded[8:10]
                 or encoded[2] == encoded[6]
                 or encoded[3] == encoded[11]
             ):
@@ -253,8 +260,7 @@ class DisplayCalibrationRenderer:
                 context.viewport = (
                     0,
                     0,
-                    mapping.viewport.width,
-                    mapping.viewport.height,
+                    *frame.surface_textures[mapping.mapping_id].size,
                 )
                 context.scissor = None
                 context.enable(self.moderngl.DEPTH_TEST)

@@ -25,10 +25,12 @@ from cephvr.controller.device.microcontroller import MicrocontrollerCommands
 from cephvr.controller.device.owner_cleanup import ManualControlCleanup
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.preview import PreviewHandling
+from cephvr.controller.device.projector_brightness import ProjectorBrightness
 from cephvr.controller.device.readback import CameraReadback
 from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
 from cephvr.controller.device.spikeglx_monitor import SpikeGLXProgressMonitor
 from cephvr.controller.device.status_retention import CameraStatusRetention
+from cephvr.controller.device.stimulus_preview import StimulusPreviewController
 from cephvr.controller.device.tracking_diagnostic import TrackingDiagnosticController
 from cephvr.controller.device.views import DeviceViews
 from cephvr.controller.incident.coordination import IncidentCoordinator
@@ -116,9 +118,11 @@ class ControllerComponents:
     leases: ControlLeases
     metadata: MetadataCoordinator
     display: DisplayInitialization
+    stimulus_preview: StimulusPreviewController
     display_calibration: DisplayCalibrationController
     camera: CameraCommands
     microcontroller: MicrocontrollerCommands
+    projector_brightness: ProjectorBrightness
     camera_readback: CameraReadback
     device_views: DeviceViews
     camera_status_retention: CameraStatusRetention
@@ -188,6 +192,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         spawn=i.spawn,
     )
     device_hooks = DeviceHooks(
+        update_progress=control_operations.update_progress,
         admission=control_operations.admission,
         authorized=control_operations.authorized,
         operation=control_operations.operation,
@@ -196,6 +201,16 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         publish=publisher.publish,
         spawn=i.spawn,
     )
+    stimulus_preview = StimulusPreviewController(
+        i.lifecycle,
+        i.configuration_state,
+        i.backends,
+        i.generation,
+        i.limit_state,
+        i.clock,
+        device_hooks,
+    )
+    publisher.stimulus_preview_view = lambda: stimulus_preview.view
     display = DisplayInitialization(
         lifecycle=i.lifecycle,
         configuration=i.configuration_state,
@@ -251,6 +266,15 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         clock=i.clock,
         hooks=device_hooks,
         device_views=lambda: acquisition_views.devices,
+    )
+
+    projector_brightness = ProjectorBrightness(
+        lifecycle=i.lifecycle,
+        configuration=i.configuration_state,
+        device=i.device_state,
+        limits=i.limit_state,
+        clock=i.clock,
+        hooks=device_hooks,
     )
 
     owner_cleanup = ManualControlCleanup(
@@ -610,6 +634,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         publish=publisher.publish,
         clock=i.clock,
         maximum_frame_bytes=i.max_preparation_bytes,
+        hooks=device_hooks,
     )
     return ControllerComponents(
         control_operations=control_operations,
@@ -618,9 +643,11 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         leases=leases,
         metadata=metadata,
         display=display,
+        stimulus_preview=stimulus_preview,
         display_calibration=display_calibration,
         camera=camera,
         microcontroller=microcontroller,
+        projector_brightness=projector_brightness,
         camera_readback=camera_readback,
         device_views=device_views,
         camera_status_retention=camera_status_retention,

@@ -115,8 +115,6 @@ class NativePreparation:
         self._display_calibration: PreparedCalibration | None = None
         self._display_budget: BoundedBudget | None = None
         self._display_asset_root: Path | None = None
-        self._display_asset_limit = 0
-        self._display_document_limit = 0
         self._display_profile: DisplayProfile | None = None
         self.video_playback: VideoPlayback | None = None
         self.video_session: VideoSession | None = None
@@ -173,8 +171,6 @@ class NativePreparation:
             clock_ns=self.clock_ns,
         )
         self._display_asset_root = Path(request.asset_root).resolve(strict=True)
-        self._display_asset_limit = request.limits.max_asset_cpu_bytes
-        self._display_document_limit = request.limits.max_document_bytes
         calibration = prepare_calibration(
             display,
             Path(request.asset_root),
@@ -473,6 +469,57 @@ class NativePreparation:
                     max_expanded_epochs=limits.max_expanded_epochs,
                     max_prepared_plan_bytes=limits.max_prepared_plan_bytes,
                     preparation_budget=self._budget,
+                )
+                from cephvr.visual_stimulus.config.review_layout import review_layout
+
+                layout = review_layout(
+                    display,
+                    request.policies.review_scale_factor or 1,
+                    bundle.prepared_content,
+                )
+                from cephvr.visual_stimulus.compiler.compile import (
+                    serialize_prepared_trial,
+                )
+                from cephvr.visual_stimulus.config.models.artifact_models import (
+                    GeometricProfile,
+                )
+                from cephvr.visual_stimulus.config.models.photometric_profile import (
+                    PhotometricProfile,
+                )
+
+                artifact = artifact.model_copy(
+                    update={
+                        "preview_layout": layout,
+                        "geometric_calibration": tuple(
+                            value
+                            for value in bundle.prepared_content.values()
+                            if isinstance(value, GeometricProfile)
+                        ),
+                        "photometric_calibration": tuple(
+                            value
+                            for value in bundle.prepared_content.values()
+                            if isinstance(value, PhotometricProfile)
+                        ),
+                    }
+                )
+                if (
+                    len(serialize_prepared_trial(artifact))
+                    > limits.max_prepared_plan_bytes
+                ):
+                    raise ValueError(
+                        "prepared artifact with review metadata exceeds its byte limit"
+                    )
+                assert self._budget is not None
+                # Label-free compositor and bounded native double-buffered viewer.
+                compositor_bytes = (
+                    layout.composite_width
+                    * layout.composite_height
+                    * (8 if max(t.source_code_bits for t in layout.tiles) == 8 else 32)
+                )
+                self._budget.reserve(
+                    owner="visual_stimulus:preview",
+                    cpu_bytes=0,
+                    gpu_bytes=compositor_bytes + 2048 * 2048 * 8,
                 )
                 self._reserve_scene_gpu(artifact)
                 assert self.video_session is not None

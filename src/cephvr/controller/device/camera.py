@@ -259,10 +259,23 @@ class CameraCommands:
         operator_id = request.command.operator.command_id
         error = self.hooks.authorized(
             request.command,
-            targets_work=request.kind == svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+            targets_work=request.kind
+            in {
+                svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+                svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+                svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
+            },
         )
         backend = self.backends.get("acquisition")
-        attached_session = (
+        session_window = (
+            request.kind
+            in {
+                svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+                svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
+            }
+            and self.lifecycle.session.phase == pb.SESSION_PHASE_RUNNING
+        )
+        attached_session = session_window or (
             request.kind == svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
             and self.lifecycle.session.phase == pb.SESSION_PHASE_RUNNING
         )
@@ -368,6 +381,7 @@ class CameraCommands:
         if (
             request.kind in REQUIRES_RUN
             and not stale_stop_refresh
+            and not session_window
             and (
                 current_view is None
                 or current_view.preview_run_id != request.preview_run_id
@@ -383,6 +397,15 @@ class CameraCommands:
             and current_view.preview_running
         ):
             return self.hooks.admission(operator_id, error="preview already running")
+        if session_window and (
+            request.preview_run_id != self.lifecycle.session.context.session_id
+            or not camera.enabled
+            or not settings.HasField("session_preview_max_hz")
+            or settings.session_preview_max_hz <= 0
+        ):
+            return self.hooks.admission(
+                operator_id, error="session preview unavailable or identity changed"
+            )
         revision = self.configuration.revision
         work = deepcopy(self.projections.work)
         selected = deepcopy(camera)
@@ -409,7 +432,12 @@ class CameraCommands:
         bit_depth = selection.bit_depth
         error = self.hooks.authorized(
             request.command,
-            targets_work=request.kind == svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+            targets_work=request.kind
+            in {
+                svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+                svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+                svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
+            },
         )
         if (
             error
@@ -486,6 +514,10 @@ class CameraCommands:
             request.path if request.HasField("path") else "",
             request.preview_run_id if request.HasField("preview_run_id") else "",
         )
+        operation.preview_update_only = bool(
+            request.HasField("preview_placement")
+            and request.preview_placement.update_existing_only
+        )
         self.status_retention.prune()
         try:
             self.status_retention.reserve(operation)
@@ -496,7 +528,8 @@ class CameraCommands:
         operation.manual_effects_before = self.device.manual_effects_admitted
         self.device.camera_operation = operation
         self.device.camera_operation_changed.clear()
-        self.device.manual_effects_admitted = True
+        if work.WhichOneof("work") is None:
+            self.device.manual_effects_admitted = True
         self.hooks.operation(
             operator_id,
             "ExecuteCameraCommand",

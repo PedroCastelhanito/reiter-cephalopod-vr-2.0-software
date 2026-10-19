@@ -90,7 +90,10 @@ mapping adjustments. It is a strict UTF-8 JSON object bounded to 65,536 bytes an
 64 nesting levels, with duplicate keys/nonfinite values rejected. The canonical
 `CalibrationPlacement` model declares a complete `outputs` array (one to four
 unique active IDs, each with up to 256 `blackout_zones` pixel rectangles), optional
-`photodiode_output_id` and matching `photodiode_patch` (existing Frame/Pulse model).
+`photodiode_output_id` and matching `photodiode_patch` (legacy Frame/Pulse model), or
+an explicit `photodiode_patches` map of at most four output IDs to Frame/Pulse patches.
+Reject both forms together. Validate every target and rectangle before replacing
+placement; all configured patches use the diagnostic group's current sequence index.
 The active view constrains pulse presence; the GL owner validates exact output
 coverage and every rectangle against the retained native dimensions before
 replacing any placement state. Empty zone arrays remove all zones on that output.
@@ -129,6 +132,25 @@ mode against that request. The configured rational refresh remains the review in
 timebase; neither the integer mode observation nor a swap return measures optical
 refresh. RGB10 requests use the matching RGB10A2 framebuffer hint and still require
 observed ten-bit RGB channels before Idle or Ready.
+
+## Native review preview control
+
+`ExperimentControllerService.SetStimulusPreview` authenticates the current GUI lease,
+session and configuration. The controller sends `StimulusPreviewRequest` through
+`VisualStimulusConfigurationService.SetStimulusPreview`; the coordinator binds the
+exact renderer and original deadline for `VisualStimulusWorkerService.SetStimulusPreview`.
+The worker's GL owner applies visibility/placement. Retained executor completion,
+not admission alone, completes the operator command. Preview command failure does
+not interrupt an experiment.
+
+`ReportStimulusPreview` carries only renderer/backend/session/configuration identity,
+monotonic status revision, availability, visibility and bounded failure text, through
+the coordinator to the controller snapshot. Older observations cannot replace newer
+ones. No pixel payload enters the controller or GUI. The renderer owns the GLFW
+window and shared-context resources, prepares it at Setup, clears trial imagery at
+Idle, and retains failed release obligations for cleanup retry. Native X hides the
+window; owner binding, placement and Snap reuse the common native viewer rules.
+[E13's two layouts](recorded-outputs.md#tiled-composite) govern its content.
 
 ## Capture and required-evidence paths
 
@@ -221,7 +243,8 @@ never writer-open time. Under protocol-data, use:
 | `_stimulus.mp4` | One tiled review video | Save Visual Stimulus data On |
 
 No separate recipe file or duplicate full plan in central logs. Retain tile→output
-identity in PreparedTrial.ReviewEncoding when saving. No trial UUID/number appended to
+identity/rotation in PreparedTrial.review_encoding when saving; retain preview_layout
+and geometric_calibration/photometric_calibration values in both save modes. No trial UUID/number appended to
 filenames; internal Visual Stimulus service/schema names are unchanged. SESSION_CONFIG/trial LOG
 retain the prepared identity, compact planned summary and verified log reference.
 

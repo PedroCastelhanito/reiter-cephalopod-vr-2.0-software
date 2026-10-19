@@ -107,6 +107,9 @@ class ModernGLPort:
         self._calibration_owner: Any | None = None
         self._idle_activities: list[OutputActivity] = []
         self._released: list[str] = []
+        self.preview: Any | None = None
+        self.preview_changed: Callable[[bool, bool, str], None] = lambda *_: None
+        self._review_layout: Any | None = None
 
     @staticmethod
     def _verify_render_gpu(renderer: str, vendor: str) -> str:
@@ -368,6 +371,28 @@ class ModernGLPort:
         if prepare is None:
             raise NativeRenderingError("scene pipeline lacks prepare_trial")
         prepare(artifact, resources, self._outputs, self._resources)
+        from cephvr.visual_stimulus.config.review_layout import review_layout
+        from cephvr.visual_stimulus.rendering.preview import StimulusPreview
+
+        self._review_layout = artifact.preview_layout or review_layout(
+            artifact.display, 1, resources.prepared_content
+        )
+        if self.preview is None:
+            self.announce("visual_stimulus:preview", None)
+            self.preview = StimulusPreview(
+                self._glfw, self._moderngl, self.preview_changed
+            )
+            first = next(iter(self._outputs.values()))
+            try:
+                self.preview.prepare(first.window)
+            except Exception as exc:
+                try:
+                    self.preview.release()
+                except Exception:
+                    pass  # Keep failed resource ownership for session cleanup retry.
+                self.preview.disable(exc)
+            finally:
+                first.activate()
 
     def install_image_residency(self, residency: Any, deadline_ns: int) -> None:
         """Install prepared source scheduling on this existing GL owner."""
@@ -465,6 +490,11 @@ class ModernGLPort:
         if self._glfw is None:
             return False
         self._glfw.poll_events()
+        if self.preview is not None:
+            try:
+                self.preview.service()
+            except Exception as exc:
+                self.preview.disable(exc)
         closing = [
             item.window
             for item in self._outputs.values()
@@ -507,6 +537,36 @@ class ModernGLPort:
             activities.append(
                 OutputActivity(output_id, entry, returned, context.swap_interval, error)
             )
+        if (
+            self.preview is not None
+            and self.preview.visible
+            and self._review_layout is not None
+            and self.scene_renderer is not None
+        ):
+            first = next(iter(self._outputs.values()))
+            try:
+                from cephvr.visual_stimulus.rendering.capture_sync import (
+                    order_shared_outputs,
+                )
+
+                order_shared_outputs(
+                    {**self._outputs, "preview": self.preview}, self._capture_fences
+                )
+                texture = self.scene_renderer.compose_review(
+                    tuple(outputs), self._review_layout
+                )
+                order_shared_outputs(
+                    {"preview": self.preview, "source": first}, self._capture_fences
+                )
+                self.preview.draw(
+                    texture,
+                    self._review_layout.composite_width,
+                    self._review_layout.composite_height,
+                )
+            except Exception as exc:
+                self.preview.disable(exc)
+            finally:
+                first.activate()
         return tuple(activities)
 
     def show_idle(self, display: object) -> tuple[OutputActivity, ...]:
@@ -542,6 +602,11 @@ class ModernGLPort:
             activities.append(
                 OutputActivity(output.output_id, entry, returned, context.swap_interval)
             )
+        if self.preview is not None:
+            try:
+                self.preview.clear()
+            except Exception as exc:
+                self.preview.disable(exc)
         return tuple(activities)
 
     def present_display_calibration(
@@ -616,6 +681,25 @@ class ModernGLPort:
                 self._released.append("visual_stimulus:gpu:display-calibration:arena")
         return activities, not failures
 
+    def set_stimulus_preview(self, visible: bool, placement: bytes) -> None:
+        from cephvr.control.v1 import services_pb2 as rpc
+
+        self._assert_owner()
+        if self.preview is None or len(placement) > 256:
+            raise ValueError(
+                "Visual Stimulus preview is unavailable or placement exceeds its bound"
+            )
+        try:
+            self.preview.set_visible(
+                visible, rpc.PreviewWindowPlacement.FromString(placement)
+            )
+        except Exception as exc:
+            self.preview.disable(exc)
+            raise
+        finally:
+            if self._outputs:
+                next(iter(self._outputs.values())).activate()
+
     def capture_review_composite(
         self, slot: object, outputs: tuple[RenderedOutput, ...], encoding: object
     ) -> object:
@@ -626,7 +710,10 @@ class ModernGLPort:
             )
         from cephvr.visual_stimulus.rendering.capture_sync import order_shared_outputs
 
-        order_shared_outputs(self._outputs, self._capture_fences)
+        sources = dict(self._outputs)
+        if self.preview is not None and self.preview.context is not None:
+            sources["preview"] = self.preview
+        order_shared_outputs(sources, self._capture_fences)
         return self.scene_renderer.capture_review_composite(slot, outputs, encoding)
 
     def poll_review_capture(self, pending: object) -> bytes | bytearray | None:
@@ -694,6 +781,14 @@ class ModernGLPort:
     def release(self) -> ResourceReleaseReport:
         self._assert_owner()
         outstanding = []
+        if self.preview is not None:
+            try:
+                self.preview.release()
+                self.preview = None
+                self._review_layout = None
+                self._released.append("visual_stimulus:preview")
+            except Exception as exc:
+                outstanding.append(f"preview:{exc}")
         if self._capture_fences:
             from cephvr.visual_stimulus.rendering.capture_sync import release_fences
 

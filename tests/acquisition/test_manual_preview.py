@@ -51,6 +51,7 @@ from cephvr.acquisition.state import (
 )
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.v1 import runtime_pb2 as runtime
 from cephvr.acquisition.worker.function_scopes import validate_camera_function_scopes
 from cephvr.control.v1 import services_pb2 as wire
@@ -99,6 +100,72 @@ def test_square_viewport_pointer_zoom_fractional_wheel_bounds_and_reset() -> Non
     viewport.reset()
     assert viewport.zoom == 1 and viewport.dirty
     assert (viewport.tx, viewport.ty) == (0, 0)
+
+
+@pytest.mark.parametrize("width,height", [(80, 80), (80, 40), (40, 80)])
+def test_square_viewport_zoom_pan_clamps_and_preserves_source(width, height):
+    import cv2
+    import numpy as np
+
+    from cephvr.acquisition.preview.viewport import SquareViewport
+
+    source = np.arange(width * height, dtype=np.uint8).reshape(height, width)
+    original = source.copy()
+    viewport = SquareViewport(width, height, 80)
+    fitted = viewport.tx, viewport.ty
+    viewport.start_pan(40, 40)
+    viewport.pan(20, 20)
+    assert (viewport.tx, viewport.ty) == fitted and not viewport.dirty
+    viewport.wheel(40, 40, 600 << 16)
+    viewport.render(source, cv2, np)
+    viewport.start_pan(40, 40)
+    viewport.pan(-1000, -1000)
+    assert viewport.tx == pytest.approx(80 - width * viewport.fit * viewport.zoom)
+    assert viewport.ty == pytest.approx(80 - height * viewport.fit * viewport.zoom)
+    assert viewport.dirty
+    viewport.render(source, cv2, np)
+    # Reversing immediately moves the image, even after dragging against its edge.
+    edge = viewport.tx, viewport.ty
+    viewport.pan(-999, -999)
+    assert viewport.tx == pytest.approx(edge[0] + 1)
+    assert viewport.ty == pytest.approx(edge[1] + 1)
+    viewport.pan(1000, 1000)
+    assert (viewport.tx, viewport.ty) == (0, 0)
+    viewport.end_pan()
+    viewport.render(source, cv2, np)
+    viewport.pan(20, 20)
+    assert (viewport.tx, viewport.ty) == (0, 0) and not viewport.dirty
+    assert np.array_equal(source, original)
+
+
+@pytest.mark.parametrize("change", ["reset", "wheel", "resize"])
+def test_square_viewport_transform_change_cancels_pan(change):
+    from cephvr.acquisition.preview.viewport import SquareViewport
+
+    viewport = SquareViewport(80, 80, 80)
+    viewport.wheel(40, 40, 120 << 16)
+    viewport.start_pan(40, 40)
+    if change == "reset":
+        viewport.reset()
+    elif change == "wheel":
+        viewport.wheel(40, 40, 120 << 16)
+    else:
+        viewport.resize(160)
+    position = viewport.tx, viewport.ty
+    viewport.pan(20, 20)
+    assert (viewport.tx, viewport.ty) == position
+
+
+@pytest.mark.parametrize("width,height", [(80, 40), (40, 80)])
+def test_square_viewport_pan_keeps_smaller_axis_centered(width, height):
+    from cephvr.acquisition.preview.viewport import SquareViewport
+
+    viewport = SquareViewport(width, height, 80)
+    viewport.wheel(40, 40, 120 << 16)
+    viewport.start_pan(40, 40)
+    viewport.pan(-100, -100)
+    assert viewport.tx == pytest.approx(-16 if width == 80 else 16)
+    assert viewport.ty == pytest.approx(-16 if height == 80 else 16)
 
 
 @pytest.mark.parametrize(
@@ -176,9 +243,9 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
     from cephvr.shared.pixels.types import PixelLayout
 
     pytest.importorskip("pypylon")
-    images: dict[str, bytes] = {}
+    images: list[tuple[int, bytes]] = []
     changed = threading.Event()
-    zoomed, reset = threading.Event(), threading.Event()
+    zoomed, panned, reset = threading.Event(), threading.Event(), threading.Event()
     original = highgui.display_array
     render = highgui.SquareViewport.render
 
@@ -189,6 +256,8 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         assert result.shape == (256, 256)
         if viewport.zoom > 1:
             zoomed.set()
+            if viewport.tx < -30 and viewport.ty < -30:
+                panned.set()
         elif zoomed.is_set():
             reset.set()
         return result
@@ -197,16 +266,42 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
 
     def display(image: object, numpy: object) -> object:
         result = original(image, numpy)
-        images[threading.current_thread().name] = bytes(result)
+        images.append((threading.get_ident(), bytes(result)))
         changed.set()
         return result
 
     monkeypatch.setattr(highgui, "display_array", display)
+    reveal = highgui.StagedPreviewWindow.show
+    reveals = []
+
+    def reveal_arranged(staged, visible=True):
+        from cephvr.platform.windows.window_coordinates import _visible_frame
+
+        user = ctypes.WinDLL("user32")
+        user.IsWindowVisible.argtypes = [ctypes.c_void_p]
+        user.GetWindow.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+        user.GetWindow.restype = ctypes.c_void_p
+        user.GetClientRect.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.wintypes.RECT),
+        ]
+        assert not user.IsWindowVisible(staged.hwnd)
+        rectangle = ctypes.wintypes.RECT()
+        assert user.GetClientRect(
+            user.GetWindow(staged.hwnd, 5), ctypes.byref(rectangle)
+        )
+        assert (rectangle.right, rectangle.bottom) == (256, 256)
+        frame = _visible_frame(staged.hwnd)
+        assert (frame.left, frame.top) == (400 + len(reveals) * 300, 100)
+        reveals.append(staged.hwnd)
+        reveal(staged, visible)
+
+    monkeypatch.setattr(highgui.StagedPreviewWindow, "show", reveal_arranged)
     owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
     layout = PixelLayout(2, 2, pylon_pixel_format("Mono8"), 2, 4)
     resources: list[tuple[object, object, object]] = []
     try:
-        for role in (1, 2):
+        for role in (1, 2, 3):
             allocation, run_id = uuid4(), uuid4()
             producer = control.ProcessIdentity(
                 role="camera_worker", generation=str(uuid4())
@@ -263,13 +358,14 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
             resources.append((ring, producer_ring, reader))
             reader.start()
             reader.ready.result(timeout=5)
-            # Both windows display their newest ring value on their own threads.
+            # Frame waits are independent; both displays share one HighGUI owner.
             deadline = time.monotonic() + 3
-            while reader.title not in images and time.monotonic() < deadline:
+            while len(images) < role and time.monotonic() < deadline:
                 changed.wait(0.02)
                 changed.clear()
-            assert images.get(reader.title) == b"\xff\x80\x40\x00", reader.failure
+            assert images[role - 1][1] == b"\xff\x80\x40\x00", reader.failure
             assert not reader.done.done()
+        assert len({thread for thread, _ in images}) == 1
         # Send native X close to one window; the other remains alive.
         native = ctypes.WinDLL("user32", use_last_error=True)
         native.FindWindowW.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p]
@@ -336,11 +432,46 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         position_preview_frame(handle, 410, 110)
         assert native.GetForegroundWindow() == foreground
         assert operator_window_geometry(handle)[0][:2] == (410, 110)
+        native.SendMessageTimeoutW.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_uint,
+            ctypes.c_size_t,
+            ctypes.c_ssize_t,
+            ctypes.c_uint,
+            ctypes.c_uint,
+            ctypes.POINTER(ctypes.c_size_t),
+        ]
+        native.SendMessageTimeoutW.restype = ctypes.c_ssize_t
+        native.GetWindowThreadProcessId.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.wintypes.DWORD),
+        ]
+        owner_threads = set()
+        for _ in range(5):
+            for _, _, reader in resources:
+                hwnd = reader.native_handle
+                owner_threads.add(native.GetWindowThreadProcessId(hwnd, None))
+                result = ctypes.c_size_t()
+                for target, message, wparam, lparam in (
+                    (hwnd, 0x0006, 2, 0),  # WM_ACTIVATE / WA_CLICKACTIVE
+                    (native.GetWindow(hwnd, 5), 0x0201, 1, (32 << 16) | 32),
+                    (native.GetWindow(hwnd, 5), 0x0202, 0, (32 << 16) | 32),
+                    (hwnd, 0x0000, 0, 0),  # WM_NULL responsiveness barrier
+                ):
+                    assert native.SendMessageTimeoutW(
+                        target, message, wparam, lparam, 3, 1000, ctypes.byref(result)
+                    ), "Native preview stopped responding to activation/click messages"
+                assert not reader.done.done()
+        assert len(owner_threads) == 1 and len(reveals) == 3
         point = ((rect.top + 128) & 0xFFFF) << 16 | ((rect.left + 128) & 0xFFFF)
         assert native.PostMessageW(child, 0x020A, 120 << 16, point)
         assert zoomed.wait(3), (
             "Native mouse wheel did not reach the owning viewer thread"
         )
+        assert native.PostMessageW(child, 0x0201, 1, (128 << 16) | 128)
+        assert native.PostMessageW(child, 0x0200, 1, (112 << 16) | 112)
+        assert native.PostMessageW(child, 0x0202, 0, (112 << 16) | 112)
+        assert panned.wait(3), "Native drag did not repaint the cached zoomed image"
         assert native.PostMessageW(child, 0x0203, 0, (128 << 16) | 128)
         assert reset.wait(3), "Native double-click did not restore the fitted view"
         assert resources[0][1].published_count == 2
@@ -365,8 +496,10 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         ("", False, ""),
         ("display", False, ""),
         ("release", False, ""),
+        ("wait", False, ""),
         ("", True, ""),
         ("", False, "auto"),
+        ("", False, "dpi"),
         ("", False, "move"),
         ("", False, "resize"),
         ("", False, "snap"),
@@ -378,6 +511,7 @@ def test_highgui_private_latest_frame_thread_and_x_close(
     monkeypatch: pytest.MonkeyPatch, failure: str, minimized: bool, layout: str
 ) -> None:
     import threading
+    from contextlib import nullcontext
 
     import numpy as np
 
@@ -405,9 +539,12 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             assert layout == "host" and handle == 94
             owner_state["retargeted"] = True
 
+        def placement_revision(self):
+            return 0 if layout == "dpi" else None
+
         def geometry(self):
             return (
-                30 if layout in ("move", "snap") and self.calls > 1 else 0,
+                30 if layout in ("move", "snap", "dpi") and self.calls > 1 else 0,
                 0,
                 600 if layout == "resize" and self.calls > 1 else 640,
                 680,
@@ -462,8 +599,10 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             self.published_count = 6
             return SimpleNamespace(status="frame")
 
-        def wait(self, _timeout: int) -> None:
-            pass
+        def wait(self, _timeout: int) -> bool:
+            if failure == "wait":
+                raise RuntimeError("frame event wait failed")
+            return True
 
         def close(self) -> None:
             if failure == "release":
@@ -500,7 +639,14 @@ def test_highgui_private_latest_frame_thread_and_x_close(
         )
     )
     monkeypatch.setattr(highgui, "WindowsPreviewOwner", Owner)
+    monkeypatch.setattr(
+        highgui,
+        "StagedPreviewWindow",
+        lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+    )
     monkeypatch.setattr(highgui, "position_preview_frame", lambda *_, **kw: None)
+    monkeypatch.setattr(highgui, "preview_window_handle", lambda *_: 99)
+    monkeypatch.setattr(highgui, "blank_preview_caption", lambda *_: None)
     placement = (
         wire.PreviewWindowPlacement(
             x=0,
@@ -536,7 +682,7 @@ def test_highgui_private_latest_frame_thread_and_x_close(
         reader.ready.result(timeout=3)
     assert reader.done.result(timeout=3) == (failure != "release")
     assert closed.wait(3)
-    assert sequences == ([2] if failure == "display" else [2, 5])
+    assert sequences == ([2] if failure in {"display", "wait"} else [2, 5])
     assert ring.released == (failure != "release")
     assert owner_state["closed"] is bool(minimized or layout)
     assert owner_state.get("retargeted", False) == (layout == "host")
@@ -547,8 +693,8 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             cv.images[-1],
             np.full(
                 (
-                    320 if layout in ("auto", "snap", "host") else 640,
-                    320 if layout in ("auto", "snap", "host") else 640,
+                    320 if layout in ("auto", "snap", "host", "dpi") else 640,
+                    320 if layout in ("auto", "snap", "host", "dpi") else 640,
                     3,
                 ),
                 [0x33, 0x22, 0x11],
@@ -955,8 +1101,160 @@ async def test_preview_resolution_preserves_sdk_failure_and_requires_evidence(
 
 
 class _Status:
+    async def progress(self, *args: object, **kwargs: object) -> None:
+        pass
+
     def resolve_camera(self, *args: object, **kwargs: object) -> None:
         _ = args, kwargs
+
+
+async def test_camera_progress_is_bounded_and_does_not_wait_for_controller():
+    entered, release = asyncio.Event(), asyncio.Event()
+    reports = []
+
+    async def report_lifecycle(report, *, deadline_ns):
+        assert deadline_ns == 1000
+        reports.append(report)
+        entered.set()
+        await release.wait()
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    reporter = ManualDeviceStatusReporter(
+        identity=cast(
+            CoordinatorIdentity,
+            SimpleNamespace(
+                backend=control.BackendContext(
+                    backend_name="acquisition", backend_generation=str(uuid4())
+                )
+            ),
+        ),
+        controller=cast(
+            ControllerPort, SimpleNamespace(report_lifecycle=report_lifecycle)
+        ),
+        commands=cast(CommandLedger, object()),
+        pulse=PulseRecord(),
+        clock=lambda: 1,
+    )
+    command = wire.BackendCommand(command_id=str(uuid4()))
+    await asyncio.wait_for(
+        reporter.progress(command, 1, "Stopping external triggers…", deadline_ns=1000),
+        1,
+    )
+    await asyncio.wait_for(entered.wait(), 1)
+    sender = reporter._progress_task
+    await reporter.progress(command, 1, "Stopping capture…", deadline_ns=1000)
+    await reporter.progress(command, 1, "Releasing camera…", deadline_ns=1000)
+    assert reporter._progress_task is sender and len(reports) == 1
+    release.set()
+    assert sender is not None
+    await asyncio.wait_for(sender, 1)
+    assert [item.operation.operation.progress for item in reports] == [
+        "Behavior camera · Stopping external triggers…",
+        "Behavior camera · Releasing camera…",
+    ]
+    for report in reports:
+        operation = report.operation.operation
+        assert operation.context.command_id == command.command_id
+        assert not operation.complete
+        assert not operation.HasField("succeeded") and not operation.HasField("failure")
+
+
+@pytest.mark.parametrize("external", [False, True])
+@pytest.mark.parametrize("failed", [False, True])
+async def test_preview_start_actions_follow_execution_and_first_frame(
+    monkeypatch, external, failed
+):
+    actions = []
+    preview = WorkerPreview(
+        run_id=str(uuid4()),
+        configuration_revision=1,
+        allocation_id=str(uuid4()),
+        resolved_camera=camera.CameraResolvedState(),
+    )
+    command = wire.BackendCommand(command_id=str(uuid4()))
+    request = wire.AcquisitionCameraCommand(command=command, camera=1)
+    child = ChildOperation(
+        command_id=str(uuid4()),
+        camera=1,
+        work=control.WorkContext(),
+        parent_operation=control.OperationContext(command_id=command.command_id),
+        kind="start_preview",
+    )
+
+    async def progress(_command, role, action, *, deadline_ns):
+        assert _command == command and role == 1 and deadline_ns == 1000
+        actions.append(action)
+
+    async def start(*args, **kwargs):
+        assert actions[-1] == (
+            "Arming capture…" if external else "Starting free-running capture…"
+        )
+        return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    async def completed(*args):
+        if not external:
+            preview.started = True
+            preview.started_event.set()
+        return control.OperationState(complete=True, succeeded=not failed)
+
+    async def on(*args, **kwargs):
+        assert actions[-1] == "Starting external triggers…"
+        preview.started = True
+        preview.started_event.set()
+        return mcu.PulseCommandEvidence(
+            connection_id="link",
+            request_id="on",
+            applied=True,
+            outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+            dispatched_monotonic_ns=1,
+            acknowledged_monotonic_ns=2,
+            resulting_state=mcu.MicrocontrollerState(),
+        )
+
+    flow = object.__new__(ManualPreviewStart)
+    flow.device_status = SimpleNamespace(
+        progress=progress, resolve_camera=lambda *args, **kwargs: None
+    )
+    flow.serial = SimpleNamespace(on=on)
+    flow.pulse = PulseRecord(
+        observation=mcu.MicrocontrollerObservation(connection_id="link")
+    )
+    flow.lock, flow.clock = asyncio.Lock(), lambda: 1
+    monkeypatch.setattr(
+        start_module,
+        "retain_worker_command",
+        lambda *args, **kwargs: (
+            acq.WorkerCommand(),
+            child,
+            SimpleNamespace(start_preview=start),
+        ),
+    )
+    monkeypatch.setattr(start_module, "wait_child_operation", completed)
+    if failed:
+        with pytest.raises(RuntimeError, match="manual preview start failed"):
+            await flow._start_prepared_preview(
+                request,
+                cast(WorkerRecord, object()),
+                preview,
+                (1,) if external else (),
+                1000,
+            )
+        assert actions == [
+            "Arming capture…" if external else "Starting free-running capture…"
+        ]
+    else:
+        await flow._start_prepared_preview(
+            request,
+            cast(WorkerRecord, object()),
+            preview,
+            (1,) if external else (),
+            1000,
+        )
+        assert actions == [
+            "Arming capture…" if external else "Starting free-running capture…",
+            *(["Starting external triggers…"] if external else []),
+            "Waiting for frames…",
+        ]
 
 
 @pytest.mark.parametrize(
@@ -1164,29 +1462,29 @@ class _Port:
         return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
 
 
-class _PulseLifecycle:
+class _StartFlow(ManualPreviewStart):
     def __init__(self, events: list[object]) -> None:
         self.events = events
-
-    async def pause_for_pulse_change(
-        self, roles: tuple[int, ...], *, deadline_ns: int
-    ) -> tuple[PausedPreview, ...]:
-        _ = deadline_ns
-        self.events.append(("pause_existing", roles))
-        return (PausedPreview(roles[0], camera.CameraResolvedState(), 8),)
-
-    async def resume_after_pulse_change(
-        self, token: tuple[PausedPreview, ...], *, deadline_ns: int
-    ) -> None:
-        _ = token, deadline_ns
-        self.events.append("resume_existing")
-
-
-class _StartFlow(ManualPreviewStart):
-    def __init__(self, events: list[object], lifecycle: _PulseLifecycle) -> None:
-        self.events = events
-        self.pulse_lifecycle = lifecycle
         self.device_status = cast(ManualDeviceStatusReporter, _Status())
+        self.clock = lambda: 10
+        self.pulse = PulseRecord(
+            observation=mcu.MicrocontrollerObservation(connection_id="link")
+        )
+
+        class Serial:
+            async def off(self, roles, **kwargs):
+                events.append(("off_existing", roles))
+                return mcu.PulseCommandEvidence(
+                    connection_id="link",
+                    request_id="off",
+                    applied=True,
+                    outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+                    dispatched_monotonic_ns=10,
+                    acknowledged_monotonic_ns=11,
+                    resulting_state=mcu.MicrocontrollerState(),
+                )
+
+        self.serial = cast(SerialOwnerPort, Serial())
 
     async def _resolve_camera_and_pulses(
         self,
@@ -1199,6 +1497,7 @@ class _StartFlow(ManualPreviewStart):
     ) -> tuple[camera.CameraResolvedState, int]:
         _ = request, worker, setting, policy, external_roles, deadline_ns
         self.events.append("configure_and_confirm")
+        assert (request.camera in external_roles) or not external_roles
         return camera.CameraResolvedState(), 4
 
     async def _prepare_preview_run(
@@ -1238,15 +1537,46 @@ class _StartFlow(ManualPreviewStart):
 
 
 @pytest.mark.asyncio
-async def test_second_external_preview_pauses_existing_role_before_configuration() -> (
-    None
-):
+@pytest.mark.parametrize(
+    ("existing_roles", "new_role"),
+    [
+        ((camera.CAMERA_ROLE_BEHAVIORAL,), camera.CAMERA_ROLE_TRACKING),
+        (
+            (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING),
+            camera.CAMERA_ROLE_EYE_TRACKING,
+        ),
+    ],
+)
+async def test_additional_external_preview_preserves_existing_roles_during_configuration(
+    existing_roles: tuple[int, ...], new_role: int
+) -> None:
     events: list[object] = []
-    flow = _StartFlow(events, _PulseLifecycle(events))
-    request = wire.AcquisitionCameraCommand(camera=camera.CAMERA_ROLE_TRACKING)
+    flow = _StartFlow(events)
+    request = wire.AcquisitionCameraCommand(camera=new_role)
 
     await flow.start(
         request,
+        cast(WorkerRecord, object()),
+        camera.CameraSessionSettings(),
+        runtime.CameraFilePolicy(),
+        (*existing_roles, new_role),
+        str(uuid4()),
+        100,
+    )
+
+    assert events == [
+        "configure_and_confirm",
+        "prepare_new_role",
+        ("start_new_role", (new_role,)),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_internal_preview_does_not_restart_existing_external_previews():
+    events = []
+    flow = _StartFlow(events)
+    await flow.start(
+        wire.AcquisitionCameraCommand(camera=camera.CAMERA_ROLE_EYE_TRACKING),
         cast(WorkerRecord, object()),
         camera.CameraSessionSettings(),
         runtime.CameraFilePolicy(),
@@ -1254,14 +1584,42 @@ async def test_second_external_preview_pauses_existing_role_before_configuration
         str(uuid4()),
         100,
     )
-
     assert events == [
-        ("pause_existing", (camera.CAMERA_ROLE_BEHAVIORAL,)),
         "configure_and_confirm",
-        "resume_existing",
         "prepare_new_role",
-        ("start_new_role", (camera.CAMERA_ROLE_TRACKING,)),
+        ("start_new_role", ()),
     ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "stage", ["_resolve_camera_and_pulses", "_prepare_preview_run"]
+)
+async def test_failed_new_camera_connect_does_not_stop_or_restart_existing_previews(
+    stage: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events: list[object] = []
+    flow = _StartFlow(events)
+    monkeypatch.setattr(
+        flow, stage, AsyncMock(side_effect=RuntimeError("new camera failed"))
+    )
+    with pytest.raises(RuntimeError, match="new camera failed"):
+        await flow.start(
+            wire.AcquisitionCameraCommand(camera=camera.CAMERA_ROLE_EYE_TRACKING),
+            cast(WorkerRecord, object()),
+            camera.CameraSessionSettings(),
+            runtime.CameraFilePolicy(),
+            (
+                camera.CAMERA_ROLE_BEHAVIORAL,
+                camera.CAMERA_ROLE_TRACKING,
+                camera.CAMERA_ROLE_EYE_TRACKING,
+            ),
+            str(uuid4()),
+            100,
+        )
+    assert events == (
+        ["configure_and_confirm"] if stage == "_prepare_preview_run" else []
+    )
 
 
 @pytest.mark.asyncio
@@ -1904,7 +2262,7 @@ async def test_preview_disconnect_releases_only_last_external_camera_claim(
         lock=asyncio.Lock(),
         resolution=SimpleNamespace(retire_failed_if_quiescent=AsyncMock()),
         windows=SimpleNamespace(close=AsyncMock()),
-        device_status=SimpleNamespace(resolve_camera=MagicMock()),
+        device_status=SimpleNamespace(resolve_camera=MagicMock(), progress=AsyncMock()),
         transfers=SimpleNamespace(
             retire_and_release=AsyncMock(),
             retire=MagicMock(),
@@ -2073,6 +2431,7 @@ async def test_uncertain_preview_stop_switches_external_output_off_before_cleanu
             close_retired_resource=lambda _preview: events.append("ring-release"),
         ),
         device_status=SimpleNamespace(
+            progress=AsyncMock(),
             resolve_camera=lambda *_args, **_kwargs: events.append("status"),
             update_camera_state=lambda *_args, **_kwargs: events.append(
                 "closed-camera-cleanup-pending"
@@ -2255,6 +2614,7 @@ async def test_normal_stop_reports_camera_closed_when_claim_close_fails(
             ),
         ),
         device_status=SimpleNamespace(
+            progress=AsyncMock(),
             resolve_camera=lambda *_a, **_k: events.append("resolved-closed"),
             update_camera_state=update_camera_state,
         ),
@@ -2311,6 +2671,9 @@ async def test_failed_pulse_restart_retains_exact_cleanup_run_for_stop(
     events: list[object] = []
 
     class Status:
+        async def progress(self, *args: object, **kwargs: object) -> None:
+            pass
+
         def resolve_camera(self, target_role: int, _resolved, **values: object) -> None:
             status[target_role] = values
             events.append(("status", values.copy()))
@@ -2789,3 +3152,83 @@ async def test_tracking_camera_preview_allocates_consumer_ring_only_for_launched
         else [acq.FRAME_BUFFER_KIND_PREVIEW]
     )
     assert (worker.preview.tracking_attachment is not None) == tracking_present
+
+
+@pytest.mark.asyncio
+async def test_session_viewer_binds_existing_slot_and_rejects_old_session(monkeypatch):
+    from unittest.mock import AsyncMock, Mock
+
+    from cephvr.acquisition.coordinator import session_preview as module
+    from cephvr.acquisition.state import SessionRecord, SessionSlot
+
+    context = control.SessionContext(
+        controller_generation=str(uuid4()), session_id=str(uuid4())
+    )
+    work = control.WorkContext(session=context)
+    identity = CoordinatorIdentity(
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=str(uuid4())
+        ),
+        process=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
+        controller=control.ProcessIdentity(
+            role="controller", generation=context.controller_generation
+        ),
+        supervisor=control.ProcessIdentity(),
+        tracking=control.ProcessIdentity(),
+    )
+    session = SessionRecord(
+        work=work,
+        operation=control.OperationContext(),
+        configuration_revision=4,
+        required_cameras={1},
+        confirmed_revision=4,
+        confirmed_settings=control.AcquisitionSettings(preview_output_bit_depth=8),
+    )
+    session.camera_resolutions[1] = camera.CameraResolvedState()
+    attachment = acq.FrameBufferAttachment(
+        buffer=acq.FrameBufferDescriptor(
+            allocation_id=str(uuid4()),
+            session=context,
+            camera=1,
+            kind=acq.FRAME_BUFFER_KIND_PREVIEW,
+        )
+    )
+    resource = SimpleNamespace(attachment=attachment, ring=object())
+    status = Mock()
+    execute = AsyncMock(
+        return_value=control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+    )
+    monkeypatch.setattr(module, "execute_preview_window", execute)
+    owner = module.SessionPreview(
+        identity=identity,
+        sessions=SessionSlot(current=session),
+        resources={attachment.buffer.allocation_id: resource},
+        windows=Mock(),
+        status=status,
+        results=Mock(),
+        clock=lambda: 1,
+    )
+    request = wire.AcquisitionCameraCommand(
+        command=wire.BackendCommand(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            work=work,
+            parent_operation=control.OperationContext(command_id=str(uuid4())),
+        ),
+        camera=1,
+        configuration_revision=4,
+        preview_run_id=context.session_id,
+        kind=wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+    )
+    assert (
+        await owner.execute(request, deadline_ns=100)
+    ).result == control.COMMAND_RESULT_ACCEPTED
+    preview = execute.call_args.args[1]
+    assert preview.allocation_id == attachment.buffer.allocation_id
+    assert preview.run_id == context.session_id
+    request.preview_run_id = str(uuid4())
+    assert (
+        await owner.execute(request, deadline_ns=100)
+    ).result == control.COMMAND_RESULT_REJECTED
+    assert execute.await_count == 1

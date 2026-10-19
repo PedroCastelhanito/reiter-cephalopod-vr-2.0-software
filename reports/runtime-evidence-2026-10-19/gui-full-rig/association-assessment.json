@@ -1,0 +1,258 @@
+{
+  "exact_reserved_keys_tags_extensions": true,
+  "all_nine_outputs_closed": true,
+  "exact_protocol_directory_file_set": [
+    "GUIRIG_172854_LOG.json",
+    "GUIRIG_172854_behavioral_cam.mp4",
+    "GUIRIG_172854_behavioral_cam_frames.jsonl",
+    "GUIRIG_172854_eye_tracking_cam.mp4",
+    "GUIRIG_172854_eye_tracking_cam_frames.jsonl",
+    "GUIRIG_172854_stimulus.mp4",
+    "GUIRIG_172854_stimulus_LOG.json",
+    "GUIRIG_172854_stimulus_frames.jsonl",
+    "GUIRIG_172854_tracking_cam.mp4",
+    "GUIRIG_172854_tracking_cam_frames.jsonl",
+    "SCHEMA.json",
+    "SESSION_CONFIG.json",
+    "SESSION_LOG.jsonl"
+  ],
+  "cameras": {
+    "behavioral": {
+      "source_frames": 17986,
+      "video_mappings": 17986,
+      "native_counter_steps_checked": 17985,
+      "nonunit_native_steps": 0,
+      "mapping_source_id_time_disposition_and_index_equal": true,
+      "first_receipt_offset_s": 0.0586371,
+      "last_receipt_offset_s": 599.994444,
+      "observed_host_receipt_fps": 29.978207323434223
+    },
+    "eye_tracking": {
+      "source_frames": 35973,
+      "video_mappings": 35973,
+      "native_counter_steps_checked": 35972,
+      "nonunit_native_steps": 0,
+      "mapping_source_id_time_disposition_and_index_equal": true,
+      "first_receipt_offset_s": 0.0274821,
+      "last_receipt_offset_s": 599.9967959,
+      "observed_host_receipt_fps": 59.95639972345532
+    },
+    "tracking": {
+      "source_frames": 35973,
+      "video_mappings": 35973,
+      "native_counter_steps_checked": 35972,
+      "nonunit_native_steps": 0,
+      "mapping_source_id_time_disposition_and_index_equal": true,
+      "first_receipt_offset_s": 0.0271316,
+      "last_receipt_offset_s": 599.9964531,
+      "observed_host_receipt_fps": 59.956398953975516
+    }
+  },
+  "source_program_exact_and_hash_equal": true,
+  "manifest_resources_digest_size_and_containment_equal": [
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_1",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_2",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_3",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_4",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "Asset_1",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "Asset_2",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "Asset_3",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "Asset_4",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 570,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_05_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_5",
+      "sha256": "ad9e949a00f1f25a56ecd8e83345ce9d40a551386422c09374b16ccdd72cd972",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_6",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_7",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_8",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_9",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_10",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_11",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_12",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_13",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_14",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_15",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_16",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_17",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_18",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_19",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_20",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 584,
+      "logical_path": "textures/gaussian-noise/GaussianNoise_scale_15_primary_color_0.7_secondary_color_0.00.texture.json",
+      "resource_id": "asset_21",
+      "sha256": "eb110c6d2c5521670572d97aa32c9f8a1bb6e00444d612f75e26c0f5c8336bcf",
+      "subresource": null
+    },
+    {
+      "bytes": 885,
+      "logical_path": "calibration/reference_front_a2e084fb458523608b3e2951ce2cea6b75eaaca00857e5c9ea9f5896b145a289.json",
+      "resource_id": "diagnostic_front",
+      "sha256": "a2e084fb458523608b3e2951ce2cea6b75eaaca00857e5c9ea9f5896b145a289",
+      "subresource": null
+    },
+    {
+      "bytes": 876,
+      "logical_path": "calibration/reference_left_f132919bc6fa57a5f290492768d2967bfc9c3e93f5f987f950bc9147f64c4feb.json",
+      "resource_id": "diagnostic_left",
+      "sha256": "f132919bc6fa57a5f290492768d2967bfc9c3e93f5f987f950bc9147f64c4feb",
+      "subresource": null
+    },
+    {
+      "bytes": 957,
+      "logical_path": "calibration/reference_right_0aa9e7c1334c218ba8e166652b5b8856381ed07428d491e483bdf9f1f17f29e4.json",
+      "resource_id": "diagnostic_right",
+      "sha256": "0aa9e7c1334c218ba8e166652b5b8856381ed07428d491e483bdf9f1f17f29e4",
+      "subresource": null
+    },
+    {
+      "bytes": 925,
+      "logical_path": "calibration/reference_bottom_b7b611d084d5435c38a9f6f1684ac3dcc9530aa42709767784c0db50e7cfe073.json",
+      "resource_id": "diagnostic_bottom",
+      "sha256": "b7b611d084d5435c38a9f6f1684ac3dcc9530aa42709767784c0db50e7cfe073",
+      "subresource": null
+    }
+  ],
+  "limits": "Native counters/host receipt prove logged stream continuity; not exposure accuracy, pulse/optical alignment, animal scene representativeness or reconstructability of external SpikeGLX contents."
+}

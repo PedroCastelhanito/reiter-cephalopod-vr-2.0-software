@@ -20,6 +20,17 @@ class CalibrationPlacement(Model):
     outputs: Annotated[tuple[PlacementOutput, ...], Field(min_length=1, max_length=4)]
     photodiode_output_id: OutputId | None = None
     photodiode_patch: PhotodiodePatch | None = None
+    photodiode_patches: Annotated[
+        dict[OutputId, PhotodiodePatch] | None, Field(max_length=4)
+    ] = None
+
+    @property
+    def marker_patches(self) -> dict[str, PhotodiodePatch]:
+        if self.photodiode_patches is not None:
+            return self.photodiode_patches
+        if self.photodiode_output_id is not None and self.photodiode_patch is not None:
+            return {self.photodiode_output_id: self.photodiode_patch}
+        return {}
 
     @model_validator(mode="after")
     def identities(self) -> Self:
@@ -32,6 +43,13 @@ class CalibrationPlacement(Model):
             self.photodiode_output_id is not None
             and self.photodiode_output_id not in ids
         ):
+            raise ValueError("Unknown placement pulse output")
+        if (
+            self.photodiode_patches is not None
+            and self.photodiode_output_id is not None
+        ):
+            raise ValueError("Use either per-output pulses or a legacy single pulse")
+        if not self.marker_patches.keys() <= set(ids):
             raise ValueError("Unknown placement pulse output")
         return self
 
@@ -50,27 +68,24 @@ class CalibrationPlacement(Model):
             for output in self.outputs:
                 for rect in output.blackout_zones:
                     display._check_rect(rect, outputs[output.output_id])
-            if self.photodiode_patch is not None:
-                assert self.photodiode_output_id is not None
-                pulse_output = outputs[self.photodiode_output_id]
-                display._check_rect(self.photodiode_patch.rect, pulse_output)
-                if self.photodiode_patch.background_rect is not None:
-                    display._check_rect(
-                        self.photodiode_patch.background_rect, pulse_output
-                    )
+            for output_id, patch in self.marker_patches.items():
+                pulse_output = outputs[output_id]
+                display._check_rect(patch.rect, pulse_output)
+                if patch.background_rect is not None:
+                    display._check_rect(patch.background_rect, pulse_output)
         except ValueError as exc:
             raise CalibrationAdjustmentRejected(str(exc)) from exc
 
     def validate_view(self, view: str, *, allow_empty_pulse: bool = False) -> None:
         if (
             view == "photodiode_placement"
-            and self.photodiode_patch is None
+            and not self.marker_patches
             and not allow_empty_pulse
         ):
             raise CalibrationAdjustmentRejected(
                 "Photodiode placement requires a pulse rectangle"
             )
-        if view == "blackout_placement" and self.photodiode_patch is not None:
+        if view == "blackout_placement" and self.marker_patches:
             raise CalibrationAdjustmentRejected(
                 "Blackout placement cannot change the photodiode"
             )
@@ -86,6 +101,9 @@ class CalibrationPlacement(Model):
             if display.photodiode_enabled
             else None,
             photodiode_patch=display.photodiode_patch
+            if display.photodiode_enabled
+            else None,
+            photodiode_patches=display.photodiode_patches
             if display.photodiode_enabled
             else None,
         )

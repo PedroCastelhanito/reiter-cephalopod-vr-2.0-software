@@ -1,0 +1,42 @@
+[
+  {
+    "command": "RespondToPrompt",
+    "command_id": "c23bac1d-4393-4b0b-9e2d-6a608649dd30",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "42ac3780-b54d-492a-a868-368fe9c076ca",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "Setup",
+    "command_id": "cffc9043-d891-4923-8380-42de17320d10",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "StartSession",
+    "command_id": "08090aa7-9375-4016-a015-5b2119d57b12",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "AbortNow",
+    "command_id": "2c8d561b-8bad-4779-bc0a-124d138ccbda",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: cleanup could not be confirmed"
+  }
+]

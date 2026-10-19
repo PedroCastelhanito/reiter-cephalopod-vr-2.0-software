@@ -228,7 +228,7 @@ class SerialChannel:
                         and bytes(line).strip() == b"ERR Unknown command: CAPS"
                     ):
                         raise ChannelIncompatibleFirmware(
-                            "MCU firmware does not support CAPS; required protocol 4 "
+                            "MCU firmware does not support CAPS; required protocol 5 "
                             "firmware must be installed before capture"
                         )
                     try:

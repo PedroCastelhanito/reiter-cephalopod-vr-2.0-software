@@ -28,7 +28,6 @@ from cephvr.tracking.config.models.methods import (
 )
 from cephvr.tracking.config.validation import validate_settings
 from cephvr.tracking.feedback.delivery import FeedbackDelivery
-from cephvr.tracking.methods.association import Association
 from cephvr.tracking.methods.contour import ContourPose
 from cephvr.tracking.methods.geometry import EllipseGeometry
 from cephvr.tracking.methods.landmarks import qualified
@@ -80,7 +79,6 @@ class NativeSession:
         self.history = PoseHistory(max(1, spec.settings.pose_history_capacity))
         self.methods: PreparedMethods | None = None
         self.diagnostic_resolution: DiagnosticResolution | None = None
-        self.diagnostic_association: Association | None = None
         self.pose_method: ContourPose | ModelPose | None = None
         self.pose_geometry: EllipseGeometry | None = None
         self.closed = False

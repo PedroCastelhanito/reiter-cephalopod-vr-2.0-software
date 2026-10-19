@@ -1,0 +1,18 @@
+[
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "7defa3d0-c80d-45d9-a573-5a0801bcbaeb",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "ExecuteCameraCommand",
+    "command_id": "a4948468-cc63-49c6-b0ea-7ba49a71b3f9",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+]

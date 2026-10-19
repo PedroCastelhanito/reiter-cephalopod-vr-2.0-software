@@ -9,6 +9,7 @@ from cephvr.acquisition.ports import WorkerPort
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.commands import CommandLedger
 
@@ -48,6 +49,8 @@ class PausedPreview:
     role: int
     resolved: camera_pb2.CameraResolvedState
     output_bits: int
+    placement: wire.PreviewWindowPlacement | None = None
+    visible: bool = False
 
 
 @dataclass

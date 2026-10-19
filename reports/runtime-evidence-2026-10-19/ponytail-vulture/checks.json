@@ -1,0 +1,75 @@
+{
+  "ruff": {
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "tools",
+      "scripts"
+    ],
+    "exit_code": 0,
+    "output": "ruff.txt"
+  },
+  "format": {
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "src/cephvr/tracking/processing/movement.py",
+      "src/cephvr/tracking/processing/pose.py",
+      "src/cephvr/tracking/processing/session.py",
+      "src/cephvr/visual_stimulus/resources/session.py",
+      "src/cephvr/platform/windows/byte_stream_native.py",
+      "src/cephvr/platform/windows/events.py",
+      "src/cephvr/platform/windows/jobs.py",
+      "src/cephvr/platform/windows/mappings.py",
+      "src/cephvr/platform/windows/nvenc_capabilities.py"
+    ],
+    "exit_code": 0,
+    "output": "format.txt"
+  },
+  "mypy": {
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "--platform",
+      "win32",
+      "src/cephvr"
+    ],
+    "exit_code": 0,
+    "output": "mypy.txt"
+  },
+  "boundaries": {
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "tools/check_backend_boundaries.py"
+    ],
+    "exit_code": 0,
+    "output": "boundaries.txt"
+  },
+  "vulture-high": {
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "vulture"
+    ],
+    "exit_code": 3,
+    "output": "vulture-high.txt"
+  },
+  "pip-check": {
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "output": "pip-check.txt"
+  }
+}

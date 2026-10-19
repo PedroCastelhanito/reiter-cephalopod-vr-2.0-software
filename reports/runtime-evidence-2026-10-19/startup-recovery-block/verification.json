@@ -1,0 +1,60 @@
+{
+  "observed_at": "2026-10-19T14:44:46.044295+09:00",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_scope": "dirty working tree; hashes bind checked implementation; concurrent unrelated changes retained",
+  "governing_decision": "E04 revision 90; owner chose verified reboot for missing receipt",
+  "checks": [
+    {
+      "command": "python -m pytest tests/controller tests/shared tests/client -q -m \"not windows and not rig\" --basetemp <temporary directory> --tb=short",
+      "outcome": "786 passed, 5 skipped, 7 deselected; before final deletion ownership case"
+    },
+    {
+      "command": "python -m pytest tests/controller/test_startup_recovery.py tests/controller/test_setup.py tests/shared/test_recovery.py tests/client/test_controller_rpc.py -q --basetemp <temporary directory> --tb=short",
+      "outcome": "74 passed, 1 skipped; final implementation"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen python -m pytest tests/gui/test_dashboard.py -q -k \"startup_recovery_buttons or retained_review or long_retained_review\" --basetemp <temporary directory> --tb=short",
+      "outcome": "5 passed, 692 deselected"
+    },
+    {
+      "command": "python -m pytest tests/platform/test_windows_native_on_rig.py -q -k boot_identifier --basetemp <temporary directory> --tb=short",
+      "outcome": "1 passed, 18 deselected"
+    },
+    {
+      "command": "python -m pytest tests/controller/test_startup_recovery.py -q -k \"delete_rejects_junction or native_long_quarantine\" --basetemp <temporary directory> --tb=short",
+      "outcome": "4 passed, 30 deselected; also included in final 74"
+    },
+    {
+      "command": "python -m mypy --platform win32 src/cephvr/controller src/cephvr/shared/recovery.py src/cephvr/platform/windows/boot.py src/cephvr/gui/managed_prompts.py",
+      "outcome": "113 source files pass"
+    },
+    {
+      "command": "python tools/check_backend_boundaries.py",
+      "outcome": "725 backend modules, 0 violations; cohesive reservation/runtime ownership reviewed"
+    },
+    {
+      "command": "python -m ruff check <16 changed files>; python -m ruff format --check <16 changed files>; git diff --check",
+      "outcome": "pass; initial format extension found CRLF-only changes in runtime/state, formatted and rechecked"
+    }
+  ],
+  "source_sha256": {
+    "src/cephvr/controller/recovery.py": "04a7ed963383af00fa61ad716a1e7180f5ba522b3dc7f907d4196f631ae2bd6d",
+    "src/cephvr/controller/control/prompts.py": "d115bcf4ec9a013a2c1c8d6e9bb188280989a564853ced91dd5260d4692454e6",
+    "src/cephvr/controller/metadata/reservation.py": "bc2a203172bc5d343cafef304dd288db3c5190165241af56fbd6fcecb315d08f",
+    "src/cephvr/controller/metadata/recovery_deletion.py": "ddd8d25e7fcb3f92d922e2555b0ce3e8f7e02e514ed394fcc91664d0b24f3268",
+    "src/cephvr/controller/startup/recovery.py": "44525d3b71e3b053599423556bead45d2adb7f1ae3464dc1475892e2142f0d7c",
+    "src/cephvr/controller/runtime.py": "a7f410036ad381a6416b78a60a8b1452c1e591502b1f60c02d8b7241d21ad738",
+    "src/cephvr/controller/state.py": "8912d00af5dfe414900e1f120aae03821877036adef16c175d38af67793e29c2",
+    "src/cephvr/shared/recovery.py": "02ce3c3e568960ddb7b988220921a8ec4c387fc561e89d0483ac6139da717395",
+    "src/cephvr/platform/windows/boot.py": "405d34126eb0ac05d8953a22fc31c58b2374c1a4eafaf03390f64998a2435c6b",
+    "src/cephvr/gui/managed_prompts.py": "9a4aa3e82175c13e23e58e041e4ab10d561b1d810dfb05e03a4e8f763373ca55"
+  },
+  "native_probe": {
+    "boot_identifier": "c544a104-2ea7-11f0-accb-b3a68972873b",
+    "current_session_witness_recorded": true,
+    "same_boot_verification": false,
+    "retained_controller_generation": "ecd7f297-dba2-4905-bb6c-3c51c05d46b5"
+  },
+  "limits": "No reboot transition, recovery/deletion of retained session, native GUI reopening or subsequent Setup pass. Scientific files, reservation and pointer unchanged. New private boot witness is the only live runtime record written. Initial sandbox asyncio run stalled and was interrupted; successful runs permitted local loopback.",
+  "native_api_reference": "https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation"
+}

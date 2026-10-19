@@ -55,6 +55,48 @@ def _start(runtime: Any, parent: str, child: str, kind: int, readback: bool) -> 
 
 
 @pytest.mark.parametrize(
+    "invalid", ["", "source", "work", "terminal", "expired", "command"]
+)
+async def test_camera_action_progress_is_scoped_and_cannot_complete_operation(
+    tmp_path, invalid
+):
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    parent, child = _id(), _id()
+    _start(runtime, parent, child, svc.CAMERA_COMMAND_KIND_START_PREVIEW, True)
+    operation = runtime.control.operations[parent]
+    report = pb.LifecycleReport(
+        operation=pb.BackendOperationReport(
+            source=backend,
+            operation=pb.OperationState(
+                context=pb.OperationContext(command_id=child),
+                command="CameraAction",
+                progress="Behavior camera · Waiting for frames…",
+            ),
+        )
+    )
+    if invalid == "source":
+        report.operation.source.backend_generation = _id()
+    elif invalid == "work":
+        report.operation.operation.work.session.session_id = _id()
+    elif invalid == "terminal":
+        report.operation.operation.succeeded = True
+    elif invalid == "command":
+        report.operation.operation.command = "Unknown"
+    receipt = await runtime.report_lifecycle(
+        report, 1000 if invalid == "expired" else 100
+    )
+    assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) == (not invalid)
+    assert not operation.complete and not operation.HasField("succeeded")
+    assert runtime.device_state.camera_operation is not None
+    assert not runtime.device_state.camera_operation.confirmed
+    if not invalid:
+        assert operation.progress == "Behavior camera · Waiting for frames…"
+    else:
+        assert operation.progress == "accepted"
+
+
+@pytest.mark.parametrize(
     "mutation", ["none", "source", "work", "command", "success", "complete", "late"]
 )
 async def test_manual_completion_ack_matches_retained_device_result(
@@ -249,7 +291,7 @@ def test_late_setup_warning_is_limited_to_the_just_retired_session_scope(
         runtime.projections.accept_warnings(report)
 
 
-@pytest.mark.parametrize("version", [3, 4])
+@pytest.mark.parametrize("version", [3, 4, 5])
 async def test_microcontroller_status_completes_exact_operator_operation(
     tmp_path: Path,
     version: int,
@@ -290,7 +332,7 @@ async def test_microcontroller_status_completes_exact_operator_operation(
     receipt = await runtime.report_projection("devices", status, ingress_ns=900)
 
     assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
-    assert runtime.control.operations[parent].succeeded == (version == 4)
+    assert runtime.control.operations[parent].succeeded == (version == 5)
     assert runtime.device_state.camera_operation is None
     assert runtime.projections.devices.pulses.capabilities.protocol_version == version
 
@@ -1017,7 +1059,7 @@ async def test_preview_routes_attachment_only_to_acquisition(
         def __init__(self, name):
             self.name = name
 
-        async def report_preview_consumer_state(self, report):
+        async def report_preview_consumer_state(self, report, *, deadline_ns):
             seen.append(
                 (
                     self.name,
@@ -1052,3 +1094,60 @@ async def test_preview_routes_attachment_only_to_acquisition(
         assert seen == [("acquisition", report)] + (
             [("supervisor", report)] if terminal else []
         )
+
+
+async def test_owner_cleanup_waits_for_projector_sdk_process_exit(
+    tmp_path: Path,
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    operation = CameraOperation(
+        _id(), _id(), 1, 0, 0, pb.WorkContext(), 9999, False, is_projector=True
+    )
+    runtime.device_state.camera_operation = operation
+    cleanup = ManualControlCleanup.__new__(ManualControlCleanup)
+    cleanup.lifecycle = runtime.lifecycle
+    cleanup.device = runtime.device_state
+    cleanup.clock = runtime.clock
+    waiting = asyncio.create_task(cleanup._finish_existing_operation(10**12))
+    await asyncio.sleep(0)
+    runtime.device_state.camera_operation_changed.set()
+    await asyncio.sleep(0)
+    assert not waiting.done()
+    runtime.device_state.camera_operation = None
+    runtime.device_state.camera_operation_changed.set()
+    assert await asyncio.wait_for(waiting, 1)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("recipient", ["acquisition", "supervisor"])
+async def test_preview_release_transport_preserves_one_authenticated_deadline(
+    recipient,
+):
+    from types import SimpleNamespace
+
+    from cephvr.controller.backend import GrpcBackendPort, GrpcSupervisorPort
+    from cephvr.shared.auth import Principal
+    from cephvr.shared.clock import host_time_ns
+    from cephvr.shared.transport_deadlines import parse_deadline_metadata
+
+    deadline = host_time_ns() + 1_000_000_000
+    calls = []
+
+    async def receive(request, *, metadata, timeout):
+        assert parse_deadline_metadata(metadata) == deadline
+        assert 0 < timeout <= 1
+        calls.append(request)
+        return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    port_type = GrpcBackendPort if recipient == "acquisition" else GrpcSupervisorPort
+    port = port_type.__new__(port_type)
+    port.principal = Principal("controller", _id(), "test-token")
+    setattr(
+        port,
+        "acquisition" if recipient == "acquisition" else "stub",
+        SimpleNamespace(ReportPreviewConsumerState=receive),
+    )
+    report = svc.PreviewConsumerReport()
+    result = await port.report_preview_consumer_state(report, deadline_ns=deadline)
+    assert result.result == pb.COMMAND_RESULT_ACCEPTED and calls == [report]

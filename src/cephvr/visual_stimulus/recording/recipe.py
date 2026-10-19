@@ -70,7 +70,12 @@ def publish_recipe(
         or len(recipe.data) != recipe.byte_length
     ):
         raise ValueError("prepared recipe bytes do not match Setup identity")
-    path = Path(path)
+    if sys.platform == "win32":
+        from cephvr.platform.windows.paths import extended_path
+
+        path = Path(extended_path(path))
+    else:
+        path = Path(path)
     if not path.parent.is_dir():
         raise FileNotFoundError(
             f"reserved output directory is not prepared: {path.parent}"

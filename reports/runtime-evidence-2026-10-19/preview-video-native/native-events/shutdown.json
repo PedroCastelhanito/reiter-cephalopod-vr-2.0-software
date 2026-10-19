@@ -1,0 +1,10 @@
+{
+  "controller_generation": "d05983ec-01ce-4b81-9250-be4c7e1fa75f",
+  "shutdown": {
+    "command_id": "5c41d04b-43d7-41aa-a9bd-3ea31fe52ff0",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+}

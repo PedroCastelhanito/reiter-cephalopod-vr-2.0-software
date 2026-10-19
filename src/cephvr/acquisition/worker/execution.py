@@ -298,8 +298,6 @@ class WorkerOperationExecutor:
             retained_result=report,
         )
         self._report(report, deadline_ns)
-        if error is None and (self.recording is None or not self.recording.enabled):
-            self.state.finalize_scope(report.source.work, host_time_ns())
 
     def failed(self, name: str, exc: BaseException) -> None:
         """Retain an owner-loop failure without claiming an operation succeeded."""
@@ -363,6 +361,10 @@ class WorkerOperationExecutor:
         if evidence.HasField("finished"):
             self.health.flush(deadline_ns)
         self.report_dispatcher.lifecycle(evidence, deadline_ns)
+        if evidence.HasField("finished") and (
+            self.recording is None or not self.recording.enabled
+        ):
+            self.state.finalize_scope(evidence.source.work, host_time_ns())
 
     def advance_due_stages(self) -> None:
         if self._coordinator_loss.is_set() and not self._coordinator_loss_handled:

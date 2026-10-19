@@ -103,6 +103,8 @@ class CameraOperation:
     status_work_key: str = ""
     internal_retention: bool = False
     is_microcontroller: bool = False
+    is_projector: bool = False
+    preview_update_only: bool = False
 
 
 @dataclass
@@ -177,7 +179,7 @@ class LifecycleState:
     shutdown_intent_ns: int = 0
     startup_blocker: str = ""
     startup_prompt: pb.Prompt | None = None
-    startup_recovery_handler: Callable[[], Awaitable[None]] | None = None
+    startup_recovery_handler: Callable[[str], Awaitable[None]] | None = None
     startup_recovery_running: bool = False
     startup_warning_id: str = ""
     startup_completion_warning: str | None = None

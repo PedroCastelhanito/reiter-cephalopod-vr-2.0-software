@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 /.pytest-*/
+/.pytest_tmp_*/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -62,6 +63,13 @@ __pycache__/
 /reports/**/*.bin
 /reports/**/*.pid
 /reports/**/*.lock
+
+# Reproducible Arduino compiler intermediates; retain source, results and firmware.
+/reports/**/avr-build/**/*.o
+/reports/**/avr-build/**/*.a
+/reports/**/avr-build/**/*.d
+/reports/**/avr-build/**/*.cache
+/reports/**/avr-build/**/*.merged
 
 # Historical one-shot edits; current source and assessed results are authoritative.
 /reports/device-connection-evidence-2026-10-06/patch_legacy_camera_start.py

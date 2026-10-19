@@ -253,7 +253,8 @@ class TrialTermination:
                 mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
             )
             failures.append(f"MCU OFF failed: {exc}")
-        if trial is not None:
+        retain_trial_off = trial is not None and trial.pulse_off is None
+        if trial is not None and retain_trial_off:
             trial.pulse_off = evidence
         if evidence.outcome == mcu.PULSE_COMMAND_OUTCOME_APPLIED:
             try:
@@ -268,7 +269,8 @@ class TrialTermination:
             failures.append(
                 "MCU OFF outcome was " + mcu.PulseCommandOutcome.Name(evidence.outcome)
             )
-        if trial is not None:
+        # A later safety OFF cannot replace the trial's immutable terminal outcome.
+        if trial is not None and retain_trial_off:
             try:
                 await self.pulse_boundaries.send_evidence(trial, evidence, deadline_ns)
             except Exception as exc:

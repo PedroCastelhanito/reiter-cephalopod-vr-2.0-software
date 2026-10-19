@@ -12,11 +12,11 @@ from cephvr.gui.projector_geometry import FACES
 from cephvr.visual_stimulus.rendering.photodiode import photodiode_level
 
 if TYPE_CHECKING:
-    from cephvr.gui.review_timing import ReviewProjectorTiming
+    from cephvr.gui.projector_pulses import ProjectorPulses
 
 
 class ReviewPlacement(QDialog):
-    def __init__(self, timing: ReviewProjectorTiming) -> None:
+    def __init__(self, timing: ProjectorPulses) -> None:
         super().__init__(timing.window())
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("Photodiode placement · local review")

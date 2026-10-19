@@ -841,7 +841,7 @@ async def test_controller_authorizes_firmware_only_in_idle_configuration(blocked
         def ensure_idle(self):
             pass
 
-        async def execute(self, request, pulses, deadline_ns):
+        async def execute(self, request, pulses, deadline_ns, *, progress):
             commands.append((request, pulses))
             assert deadline_ns == env.device.camera_operation.deadline_ns
 
@@ -1143,3 +1143,83 @@ async def test_camera_policy_load_rechecks_lifecycle_before_dispatch(
     finally:
         release.set()
         await asyncio.gather(task, return_exceptions=True)
+
+
+@pytest.mark.parametrize("wrong_completion", [False, True])
+async def test_stimulus_preview_scope_completion_and_out_of_order_status(
+    wrong_completion,
+):
+    from cephvr.controller.device.stimulus_preview import StimulusPreviewController
+
+    env = _Env()
+    env.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
+    env.lifecycle.session.context.session_id = _id()
+
+    class Backend:
+        context = pb.BackendContext(
+            backend_name="visual_stimulus", backend_generation=_id()
+        )
+
+        async def set_stimulus_preview(self, request, *, deadline_ns):
+            self.request = request
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+        async def get_retained_result(self, query, *, deadline_ns):
+            from types import SimpleNamespace
+
+            return SimpleNamespace(
+                found=True,
+                backend=self.context,
+                operation=pb.OperationState(
+                    context=pb.OperationContext(
+                        command_id=_id() if wrong_completion else query.command_id
+                    ),
+                    command="SetStimulusPreview",
+                    work=query.query.work,
+                    complete=True,
+                    succeeded=True,
+                ),
+            )
+
+    backend = Backend()
+    preview = StimulusPreviewController(
+        env.lifecycle,
+        env.configuration,
+        {"visual_stimulus": backend},
+        _id(),
+        _limits(),
+        lambda: env.now,
+        env.hooks,
+    )
+    report = pb.StimulusPreviewState(
+        source=pb.ProcessIdentity(role="visual_stimulus_renderer", generation=_id()),
+        backend=backend.context,
+        session=env.lifecycle.session.context,
+        configuration_revision=env.configuration.revision,
+        revision=2,
+        available=True,
+        visible=True,
+    )
+    assert (await preview.report(report)).result == pb.COMMAND_RESULT_ACCEPTED
+    older = pb.StimulusPreviewState.FromString(report.SerializeToString())
+    older.revision = 1
+    older.visible = False
+    assert (await preview.report(older)).result == pb.COMMAND_RESULT_ACCEPTED
+    assert preview.view.visible
+    older.session.session_id = _id()
+    assert (await preview.report(older)).result == pb.COMMAND_RESULT_REJECTED
+    request = svc.SetStimulusPreviewRequest(
+        expected_configuration_revision=env.configuration.revision, visible=False
+    )
+    request.command.operator.command_id = _id()
+    assert (await preview.execute(request)).result == pb.COMMAND_RESULT_ACCEPTED
+    assert preview.pending
+    await env.spawned.pop()
+    operation = env.control.operations[request.command.operator.command_id]
+    assert operation.complete and operation.succeeded == (not wrong_completion)
+    assert (
+        not preview.pending and env.lifecycle.session.phase == pb.SESSION_PHASE_RUNNING
+    )
+    request.command.operator.command_id = _id()
+    request.expected_configuration_revision += 1
+    assert (await preview.execute(request)).result == pb.COMMAND_RESULT_REJECTED

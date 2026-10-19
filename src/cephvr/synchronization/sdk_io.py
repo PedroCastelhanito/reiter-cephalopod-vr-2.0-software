@@ -75,10 +75,13 @@ class SpikeGLXIOOwner:
 
         try:
             return await asyncio.wait_for(asyncio.shield(wrapped), timeout_s)
-        except TimeoutError:
+        except TimeoutError as exc:
             # Keep _pending until the native invocation actually returns.
             observe_late()
-            raise
+            raise TimeoutError(
+                f"SpikeGLX SDK operation exceeded {timeout_s:g}s; "
+                "native-call ownership is retained until it returns"
+            ) from exc
         except asyncio.CancelledError:
             # Caller cancellation also abandons the shielded result, not native work.
             observe_late()

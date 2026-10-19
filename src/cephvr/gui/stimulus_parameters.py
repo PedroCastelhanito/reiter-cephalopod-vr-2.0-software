@@ -283,7 +283,7 @@ class StimulusParameters(QWidget):
         if values["kind"] == "arena":
             self.arena_limits = ArenaLimits()
             self.extra_body.addWidget(self.arena_limits)
-        if values["kind"] in ("texture", "arena", "video") or looming:
+        if values["kind"] in ("arena", "video") or looming:
             center, center_field = initial_pose_fields(values, schema, definitions)
             center.changed.connect(self.mark_changed)
             self.forms.append(center)

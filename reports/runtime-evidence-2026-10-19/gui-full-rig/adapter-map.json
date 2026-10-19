@@ -1,0 +1,26 @@
+﻿[
+    {
+        "Description":  "Microsoft Basic Render Driver",
+        "AdapterLuid":  83755,
+        "VendorId":  5140,
+        "DeviceId":  140
+    },
+    {
+        "Description":  "NVIDIA GeForce RTX 2080 Ti",
+        "AdapterLuid":  79612,
+        "VendorId":  4318,
+        "DeviceId":  7687
+    },
+    {
+        "Description":  "AMD Radeon(TM) Graphics",
+        "AdapterLuid":  83806,
+        "VendorId":  4098,
+        "DeviceId":  5056
+    },
+    {
+        "Description":  "NVIDIA GeForce RTX 5060 Ti",
+        "AdapterLuid":  74649,
+        "VendorId":  4318,
+        "DeviceId":  11524
+    }
+]

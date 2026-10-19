@@ -1732,6 +1732,9 @@ async def test_controller_recovers_expired_owned_edit_status_before_camera_stop(
         def reserve(self, _command):
             return None
 
+        async def progress(self, *_args, **_kwargs):
+            return None
+
         def resolve_camera(self, *_args, **_kwargs):
             return None
 

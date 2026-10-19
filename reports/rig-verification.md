@@ -1,5 +1,113 @@
 # Rig verification — outstanding checks
 
+- [ ] Finish actual GUI control/menu/dialog and native DPI/layout acceptance once
+  desktop capture works. Oct19 state capture failed twice after prescribed recovery;
+  no native inputs were issued.48 offscreen states/7932 repeated control rows and751
+  owning GUI tests pass, distinct from physical control coverage. Safe inventory-order,
+  preview geometry and sessionless diagnostic fixes pass native diagnostic reuse and
+ 805 backend tests.600s Gaussian run/output audit is complete; do not repeat solely
+  to fill the initial40s telemetry gap. Retain other physical/control checks below.
+  — [Current verification](runtime-evidence-2026-10-19/gui-full-rig/verification.json)
+
+- [ ] Establish usable Eye/Tracking scene content with the operator before detailed-image
+  throughput/scientific acceptance. Early/mid/late videos and ten direct native frames
+  are nearly black before conversion/NVENC. Exact saved exposure/gain/trigger settings
+  were preserved; physical cause is unproven. Verify scene, illumination and optics,
+  then repeat a representative workload only when appropriate; do not silently change
+  scientific settings.600s all-three-camera/4-projector paired output closure passed;
+  simultaneous scientific Tracking and physical alignment remain separate.
+  — [Acquisition](acquisition.md), [raw statistics](runtime-evidence-2026-10-19/gui-full-rig/native-image-assessment.json)
+
+- [ ] Complete remaining E12 pulse/native-content and fault acceptance after the
+  Oct19 bounded paired pass:60s normal plus12s Abort, exact session-folder native
+  filenames, saving/increasing counts, remote stop, cleanup and reuse now pass.
+  All18 local outputs close and8 videos decode; three-camera/4-projector workload,
+  Tracking processing disabled. Verify physical pulses/photodiode sample alignment,
+  transfer/inspect original native files under E09, then remaining stalled-stream,
+  link-loss/recovery, counter-reset, controller-loss, collision and endurance cases.
+  Owner changed the initially-OFF manual recording override; Setup now rejects it.
+  Retain full existing session-control matrix below; do not upgrade control
+  timestamps or saved-channel validation into electrical/optical timing evidence.
+  — [Runtime](runtime.md), [dated verification](runtime-evidence-2026-10-19/spikeglx-pairing/verification.json)
+
+
+- [ ] After restart and fresh Setup, verify Dashboard Visual stimulus Show/Hide,
+  native X/reopen, manual placement/Snap, GUI minimize/reconnect and cleanup across
+  multiple trials. Preview must crop calibrated areas into Left–Front–Right with
+  Bottom beneath Front; recording must keep full outputs in 2x2 with Bottom rotated
+  90 degrees clockwise and no clipping/stretching. Verify both views have no labels
+  or header strips, and matching post-rotation recordings meet with no gutters.
+  Check both Save On/Off, stored
+  calibration/layout metadata, required evidence and concurrent full-workload pacing/
+  throughput. Optional viewer failure must not stop trials; failed cleanup remains
+  owned. No projector/camera or managed runtime execution was done for this increment.
+  — [Visual Stimulus](visual_stimulus.md), [local evidence](runtime-evidence-2026-10-19/stimulus-composite-preview/verification.json)
+
+- [ ] After restart, verify G02 action-only logs through existing camera/MCU,
+  Setup/stimulus/tracking, SpikeGLX, recording, stop/Abort, recovery and shutdown
+  checks as those operations are authorized. Success advances directly to the next
+  action; failures and uncertainty retain details. Verify first-frame Live and
+  confirmed-cleanup Idle, quiet polls and prompt safety OFF during a stalled
+  progress connection. Do not lift existing scientific/device deferrals for logging.
+  — [Runtime](runtime.md), [Local verification](runtime-evidence-2026-10-19/action-progress-logging/verification.json)
+
+- [ ] Restart the managed application and verify Devices/Projectors brightness:
+  enter an appropriate LED current, click Adjust, compare all USB interface readbacks
+  and physical outputs; verify SDK contention/missing interface and clamped-current
+  reporting. Local tests mock SDK calls; no hardware current was changed.
+  — [Contract](../contracts/projector-brightness.md), [Runtime](runtime.md)
+
+- [ ] Reopen CephVR and exercise the E04 startup
+  prompt on the retained unfinished session: Start recovery preserves scientific
+  files and reports unknown closure; Cancel and delete files removes only the
+  explicitly displayed local session. Close must preserve the blocker. The real
+  session has not been recovered/deleted by source tests. With no prior launcher
+  receipt, verify explicit locked actions work without reboot and retain unconfirmed
+  process absence; a live lock must block. Verify post-choice Setup
+  admission, remote-stop warning retention where applicable and failure/timeout
+  behavior; use owned disposable sessions for destructive/fault cases. — [Runtime](runtime.md)
+
+- [ ] Complete remaining repeated Stop/Interrupt, forced Cleanup/control arrival
+  during drain and Abort-during-finalization acceptance under A10rev69, preserving
+  first cutoff/OFF and original deadlines. Bounded native two-Abort/reuse and60s
+  normal all-three-camera recording now pass: complete post-cutoff accounting,
+  Closed outputs, cleanup/NewSession and0.36s Abort-to-end. Following normal trial
+  exceeds retired end times; no forced race or idle300s/full-workload pass claimed.
+  Preserve historical failed outputs without closure upgrades.
+  [Current verification](runtime-evidence-2026-10-19/camera-timing-verification/verification.json).
+
+- [ ] Load the corrected retained-state protocol and perform fresh Setup; confirm
+  texture positions hold at drift-to-static boundaries and resume smoothly on all
+  four outputs over repeated cycles. Local200-epoch state evaluation passes.
+  [Correction/evidence](runtime-evidence-2026-10-19/texture-retain-static/verification.json).
+
+- [ ] After completed cleanup and application restart/fresh Setup, verify corrected
+  Bottom portrait mapping: head-to-tail, reverse and both lateral directions, retained
+  10mm grid/pixel pitch, crop offsets, masks and pulse location. Confirm side/front
+  linked movement and physical preview agreement. Compare pulse-only and all-output
+  VSync for Left/Front tearing and record actual cadence/optical behavior; do not infer
+  simultaneous scanout from requested intervals. — [Assessment](visual_stimulus.md)
+
+- [ ] Verify the promoted shared Inputs/Outputs and per-screen Synchronization
+  editors at native narrow/tall/DPI sizes, including save/reopen and observer/session
+  gates. Under [V20/V22](../docs/architecture/visual_stimulus.md#v20), exercise multiple
+  active pulse outputs, blank/disabled screens, live placement edits without sequence
+  reset, requested/actual swaps, saved per-output marker evidence and optical traces.
+  Local [shared-control checks](runtime-evidence-2026-10-19/shared-controls/context.json)
+  do not establish native timing or close the A11 physical-input deferral.
+
+Oct19 repairs pass native Configuration concurrent Connect, workspace close/reopen,
+independent Show/Hide and Disconnect. Runtime all 3 viewers, workspace close/reopen
+and independent Behavior Hide/Show pass in a 120-second trial with confirmed cleanup.
+NewSession, subsequent Setup/CancelSetup, Shutdown/process absence and 11-file restoration
+pass. Subsequent240-second all-video trial completes with cleanup confirmed at saved
+quality/15 slots. Fixed DPI false manual-placement detection: workspace movement100%
+and alignment125% pass during recording;150% visually aligns at the terminal boundary.
+Eye Snap125% passes in an intermediate run. Native X/individual drag remain blocked by
+computer-use targeting, and actual multi-camera minimize/restore, sustained150% and
+reverse-DPI runtime acceptance remain open. Tracking processing, multi-trial transitions,
+failure injection, full long-root and optical/full-workload acceptance remain open. See [assessment and evidence](runtime.md).
+
 Current Oct17 sync repair passes bounded frame-retention acceptance at unchanged
 saved camera CQ23/stimulus CQ18: 120 s Behavior 3598/3598, Tracking 7188/7188,
 stimulus 7200/7200, no native counter gaps, capacity omissions, duplicate mappings
@@ -51,11 +159,13 @@ normal managed application with fresh Setup and retain exact source/settings,
 commands, reports and output metadata; preserve original stop/recovery bounds.
 [Software changes and local evidence](acquisition.md).
 
-- [ ] `interrupt-trial-log-closure`: Abort an active all-camera/stimulus recording;
+- [x] `interrupt-trial-log-closure`: Abort an active all-camera/stimulus recording;
   verify prompt cutoff separately from command-return latency, exact cleanup and
   synchronized Interrupted trial/session logs with truthful output statuses.
   Confirm no unnecessary Finished recovery wait when cleanup is already verified;
   missing/failed evidence must remain visible. Verify NewSession after safe cleanup.
+  Oct19 A10rev69 native two-Abort/reuse cycles pass at0.36s with exact Closed
+  statuses and complete camera accounting; see current verification above.
 - [ ] `rapid-abort-setup-heartbeat`: immediately perform NewSession, fresh Setup and
   Start in the same application generation; record beyond the retired trial's
   original end. Retain heartbeats/pulse identities and confirm no old worker,
@@ -477,7 +587,40 @@ button response remains unverified. No E12 Setup or recording command was issued
 <a id="managed-device-gui"></a>
 ### Managed MCU and camera GUI verification
 
-- Install continuous-test firmware `cephvr2_uno_4` through explicit manual Upload. Verify tests stay active beyond two seconds, explicit Stop leaves outputs LOW/retains counts, and loss of matched diagnostic status renewal stops within the two-second lease without restart. Retest control/phase/closure cleanup. [Local evidence and limits](runtime.md) do not establish electrical/camera acceptance.
+- [ ] `camera-connect-selected-all`: after GUI reopen, verify Connect selected /
+  Disconnect selected and enabled-only Connect all / Disconnect all with actual
+  cameras. Confirm partial connection joins retain prior captures, selected-row
+  changes never retarget the pending call, disabled cameras remain untouched and
+  controller readback drives labels. Exercise cancellation/failure and remaining
+  disconnect attempts with truthful cleanup; local offscreen queue/layout cases
+  pass but do not establish camera/MCU workload acceptance. [Assessment](runtime.md).
+
+- [ ] `preview-click-and-first-show`: after a full application restart, verify the
+  current A10/G01 viewer code with all three real cameras. Repeatedly click/focus
+  each image and title bar, drag/resize the window, wheel zoom and drag the zoomed
+  image to each edge, reset, X/Show and minimize/restore;
+  confirm first visibility already has the measured footprint geometry, continued
+  capture/run identities and truthful independent close state. Repeat on alternate
+  DPI/monitors with manual placement opt-out and Snap. Oct19 three isolated native
+  generated-image windows pass hidden creation, activation/click responsiveness,
+  zoom/pan/reset/X/mapping-release checks; this does not close physical interaction or
+  camera workload acceptance. [Evidence/limits](runtime.md).
+
+- [ ] `camera-connect-continuity`: owner explicitly defers flashing. Only after new
+  authorization, install matching protocol5 `cephvr2_uno_5` through the existing
+  explicit Upload workflow; source/AVR build/native adapter passes do not install it.
+  Measure existing pulse edges during repeated second/third-camera Connect, including
+  joins during HIGH/LOW and invalid new pin/rate rejection. Verify no missing/extra
+  edges or phase reset, quantify jitter, and retain unchanged capture run/ring/viewer
+  identities plus camera frame/counter continuity. Exercise failed new-camera
+  preparation and normal existing-output OFF/watchdog/fault handling. No board action
+  or electrical continuity acceptance was performed by the source implementation.
+  [Current local evidence/limits](acquisition.md).
+- After that authorized installation, verify continuous tests stay active beyond
+  two seconds, explicit Stop leaves outputs LOW/retains counts, and loss of matched
+  diagnostic status renewal stops within the two-second lease without restart.
+  Retest control/phase/closure cleanup. [Local evidence and limits](runtime.md) do not
+  establish electrical/camera acceptance.
 
 
 - [ ] Under [G01](../docs/architecture/gui.md#g01), exercise each tab's native

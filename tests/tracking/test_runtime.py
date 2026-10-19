@@ -244,6 +244,65 @@ def command(runtime, work, parent=""):
     )
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "method", ["BeginDiagnostic", "CloseDiagnostic", "PrepareTrial"]
+)
+async def test_diagnostic_completion_uses_retained_state_not_sessionless_lifecycle(
+    rig_boundary, monkeypatch, method
+):
+    runtime, clock, _, _, _, peer = rig_boundary
+    work = pb.WorkContext()
+    if method == "PrepareTrial":
+        work.session.controller_generation = runtime.identity.controller.generation
+        work.session.session_id = str(uuid4())
+    request = command(runtime, work)
+    runtime.ledger.admit(
+        request.command_id, b"request", clock(), work_key=request.command_id
+    )
+    original = peer.receipt
+
+    async def reject_sessionless_lifecycle(name, report, *, deadline_ns):
+        if (
+            name == "ReportLifecycle"
+            and report.operation.operation.work.WhichOneof("work") is None
+        ):
+            raise ValueError("no matching live work")
+        return await original(name, report, deadline_ns=deadline_ns)
+
+    monkeypatch.setattr(peer, "receipt", reject_sessionless_lifecycle)
+    await runtime.reports.operation(method, request, clock() + 1_000_000_000)
+    retained = runtime.ledger.get(request.command_id)
+    assert retained is not None and retained.executor_result is not None
+    outcome = pb.OperationState.FromString(retained.executor_result)
+    assert outcome.complete and outcome.succeeded and outcome.command == method
+    assert len(peer.reports) == (1 if method == "PrepareTrial" else 0)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("released", [False, True])
+async def test_failed_sessionless_diagnostic_only_contains_confirmed_released_failure(
+    rig_boundary, released
+):
+    runtime, clock, _, _, _, peer = rig_boundary
+    runtime.diagnostic.active = False
+    runtime.diagnostic.close_confirmed = released
+    request = command(runtime, pb.WorkContext())
+    outcome = pb.OperationState(
+        complete=True,
+        succeeded=False,
+        failure=pb.Failure(code="COMMAND_UNCONFIRMED", message="invalid draft"),
+    )
+    await runtime.failed_command(
+        "BeginDiagnostic", request, outcome, clock() + 1_000_000_000
+    )
+    assert runtime.state.interrupted is (not released)
+    assert (runtime.state.error is None) is released
+    assert [name for name, _ in peer.reports] == (
+        [] if released else ["ReportError", "ReportLifecycle"]
+    )
+
+
 def test_diagnostic_dependency_status_marks_disabled_pose_prerequisites_unavailable():
     request = tracking.TrackingDiagnosticCommand(
         selected_stages=[
@@ -529,7 +588,12 @@ async def test_diagnostic_source_failure_uses_fresh_recovery_after_begin_deadlin
 
 
 @pytest.mark.asyncio
-async def test_backend_begin_accepts_empty_diagnostic_stage_mask(monkeypatch):
+@pytest.mark.parametrize(
+    "prepare_failure", [None, "prepare", "source_size", "constructor"]
+)
+async def test_backend_begin_accepts_empty_diagnostic_stage_mask(
+    monkeypatch, prepare_failure
+):
     process = pb.ProcessIdentity(role="tracking", generation=str(uuid4()))
     controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
     run_id = str(uuid4())
@@ -539,10 +603,13 @@ async def test_backend_begin_accepts_empty_diagnostic_stage_mask(monkeypatch):
         status = []
 
         def __init__(self, request, _identity):
+            if prepare_failure == "constructor":
+                raise ValueError("invalid diagnostic file limits")
             prepared_deadlines.append(request.deadline_monotonic_ns)
 
         def prepare(self):
-            pass
+            if prepare_failure == "prepare":
+                raise ValueError("invalid diagnostic draft")
 
         def next_frame(self):
             return None, 0, 0, 0
@@ -577,8 +644,38 @@ async def test_backend_begin_accepts_empty_diagnostic_stage_mask(monkeypatch):
     )
     diagnostic = TrackingDiagnostic(process, recovery_ns=1_000_000_000)
     try:
+        if prepare_failure:
+            expected_failure = {
+                "prepare": "invalid diagnostic draft",
+                "source_size": "image scale dimensions differ",
+                "constructor": "invalid diagnostic file limits",
+            }[prepare_failure]
+            if prepare_failure == "source_size":
+                request.settings.image_scale.image_width_px = 100
+                request.settings.image_scale.image_height_px = 100
+            with pytest.raises(ValueError, match=expected_failure):
+                await diagnostic.begin(request, deadline_ns=request_deadline)
+            state = diagnostic.state()
+            assert state.diagnostic_id == request.diagnostic_id
+            assert state.preview_run_id == run_id
+            assert state.configuration_revision == 4
+            assert state.close_confirmed and not state.active
+            assert expected_failure in state.failure_message
+            assert diagnostic.pipeline is None
+            with pytest.raises(ValueError, match="another diagnostic"):
+                await diagnostic.close(
+                    str(uuid4()), run_id, deadline_ns=request_deadline
+                )
+            assert await diagnostic.close(
+                request.diagnostic_id, run_id, deadline_ns=request_deadline
+            )
+            prepare_failure = None
+            request.settings.ClearField("image_scale")
+            request.diagnostic_id = str(uuid4())
+            prepared_deadlines.clear()
         await diagnostic.begin(request, deadline_ns=request_deadline)
         assert diagnostic.active
+        assert not diagnostic.state().HasField("failure_message")
         assert prepared_deadlines == [request_deadline]
         assert diagnostic.state().stages == []
         assert await diagnostic.close(

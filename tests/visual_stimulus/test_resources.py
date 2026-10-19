@@ -1901,3 +1901,20 @@ def test_review_gpu_budget_includes_both_targets_and_bounded_pool(
         review_capture_gpu_bytes(1280, 1000, 0, pixel_format)
     with pytest.raises(ValueError):
         review_capture_gpu_bytes(1280, 1000, 3, "unknown")
+
+
+def test_untagged_png_diagnostic_identifies_asset_and_override():
+    from PIL import Image
+
+    encoded = io.BytesIO()
+    Image.new("RGB", (2, 2)).save(encoded, format="PNG")
+    asset = Asset(
+        asset_id="noise",
+        logical_path="textures/noise.png",
+        profile="png_uint_v1",
+        color_override=None,
+    )
+    with pytest.raises(MediaPreparationError) as error:
+        decode_image(asset, encoded.getvalue())
+    assert "noise" in str(error.value) and "textures/noise.png" in str(error.value)
+    assert "color_override" in str(error.value) and "do not guess" in str(error.value)

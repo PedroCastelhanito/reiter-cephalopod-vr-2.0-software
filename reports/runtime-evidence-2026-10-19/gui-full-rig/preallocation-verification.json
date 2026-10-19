@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-19",
+  "scope": "Confirmed pre-resource diagnostic preparation-boundary repair under T08/E08/E06; no native resource behavior change",
+  "source_sha256": {
+    "src/cephvr/tracking/diagnostic.py": "c813d08df8577e1018e90eb33bbe320021c0d67a8ec5e61e31cd34b428ee59a8",
+    "tests/tracking/test_runtime.py": "800de7338c50364c12895fe705fe76e64fbab05482e3bba9bfffba40ce2d67d8"
+  },
+  "before": {
+    "command": "python -m pytest tests/tracking/test_runtime.py -q -k backend_begin_accepts_empty_diagnostic_stage_mask",
+    "result": "2 failed,2 passed,21 deselected in0.49s",
+    "log": "preallocation-before.log"
+  },
+  "after": {
+    "command": "same focused command",
+    "result": "4 passed,21 deselected",
+    "log": "preallocation-after.log"
+  },
+  "owner": {
+    "command": "python -m pytest tests/tracking -q -m \"not windows and not rig\"",
+    "result": "116 passed,1 deselected in1.98s",
+    "log": "preallocation-owner-tests.log"
+  },
+  "static": [
+    "preallocation-ruff.log",
+    "preallocation-format.log",
+    "preallocation-mypy.log",
+    "preallocation-boundaries.log",
+    "preallocation-diff-check.log"
+  ],
+  "review": "Independent Astra source review approved: constructor is resource-free; future-pending/expired/unconfirmed cleanup cannot become confirmed closed. Exact identity/error retained, wrong-ID close rejected, idempotent close and valid reuse tested using unchanged original deadline.",
+  "limits": "No additional native/600s/GUI run: increment covers failure before resource acquisition. Earlier run/source manifests remain historical; these hashes identify the later narrow repair."
+}

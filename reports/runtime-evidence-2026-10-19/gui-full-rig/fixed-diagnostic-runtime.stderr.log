@@ -1,0 +1,16 @@
+ExecuteCameraCommand 669d2a04-6c7b-426c-8589-4f08e88bae29 failed: PREVIEW_STOP_FAILED: 
+ExecuteCameraCommand 3e0a1dc6-a747-457a-b513-b19744bd615a failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 6747cdb2-298d-4ccd-b814-5c71d3b9df09 failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand c603487f-d90b-44a6-9dc7-9830d145319c failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 65c7c1ec-2cfc-480f-9f50-df46f21fdeb8 failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand cc21b83d-1e04-4644-8667-b62d071532e1 failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 957b0481-8f68-404c-97c3-fe39af180eec failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 4838d13b-c5f1-4362-b3df-ad4972c1980f failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand f5372a57-03de-4f42-8df2-d1c754bcf493 failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 518c90ea-c6f6-471e-8b2f-2868754a7f66 failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 54d4581d-1954-4ce5-ba22-4ff46e69f6c5 failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 0804e9bc-9921-4e29-b639-08163879cdfd failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 9d6835fe-2f3b-4b82-89b4-9afcdccc5dfe failed: PREVIEW_STOP_FAILED: Camera trigger client has no active device claim
+ExecuteCameraCommand 718e06ee-09ef-4783-8a02-b0eb8ae0aff0 failed: PREVIEW_STOP_FAILED: Microcontroller operation is unavailable or pending
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -1,5 +1,5 @@
 # Fixed controller-owned Microcontroller declarations. A11/E14.
-policy_version = 3
+policy_version = 4
 
 [microcontroller]
 firmware_target_scope = "rig_board_first"
@@ -37,7 +37,7 @@ stop_behavior = "immediate_inactive"
 pulse_polarity = "active_high"
 inactive_level = "low"
 protocol_compatibility = "exact_version"
-protocol_version = 4
+protocol_version = 5
 capability_source = "firmware"
 capability_query = "CAPS"
 capability_reply = "single_bounded_reply"
@@ -56,7 +56,7 @@ frequency_adjustment = "warn_without_confirmation"
 frequency_readback_precision = "preserve_reported_frequency"
 configuration_update = "complete"
 disabled_output_fields = "enabled_only"
-configuration_while_running = "stop_apply_restore_running"
+configuration_while_running = "preserve_unchanged_stop_apply_restore_changed"
 keepalive_reply = "compact_status"
 status_reply = "state_and_applied_configuration"
 pulse_counters = false

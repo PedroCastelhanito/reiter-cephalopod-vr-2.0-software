@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QInputDialog, QMenu
-
 from cephvr.gui.components import button
 
 if TYPE_CHECKING:
@@ -30,7 +28,6 @@ class MicrocontrollerSignals:
             **{key: (panel.output_table, row) for key, row in panel.role_rows.items()},
         }
         self.add_buttons = []
-        self.add_actions = {}
         for key, name in (("trial-state", "Trial state"),):
             remove = button("×", "compact", hint=f"Remove {name}")
             remove.setAccessibleName(f"Remove {name}")
@@ -48,16 +45,6 @@ class MicrocontrollerSignals:
             ),
         ):
             control = button(title, "secondary")
-            menu = QMenu(control)
-            for key in keys:
-                name = str(panel.test_buttons[key].property("signal_name"))
-                action = menu.addAction(name)
-                assert action is not None
-                action.triggered.connect(
-                    lambda _checked=False, signal=key: self.add(signal)
-                )
-                self.add_actions[key] = action
-            control.setMenu(menu)
             card.body.addWidget(control)
             self.add_buttons.append((control, keys))
 
@@ -89,37 +76,12 @@ class MicrocontrollerSignals:
             # Keep an editor visible while the operator replaces its pin number.
             table.setRowHidden(row, not present and not editor.hasFocus())
             self.panel.output_remove[key].setEnabled(editable)
-            self.add_actions[key].setVisible(not present)
         for control, keys in self.add_buttons:
             control.setEnabled(
                 editable and any(not self.editors[key].text().strip() for key in keys)
             )
         self.panel.input_table.fit_rows(hide_empty_header=True)
         self.panel.output_table.fit_rows(hide_empty_header=True)
-
-    def add(self, key: str) -> None:
-        if (
-            key not in self.editors
-            or not self.editable()
-            or self.editors[key].text().strip()
-        ):
-            return
-        name = str(self.panel.test_buttons[key].property("signal_name"))
-        pin, accepted = QInputDialog.getInt(
-            self.panel,
-            f"Add {name}",
-            "MCU pin",
-            2,
-            2,
-            13,
-        )
-        if not accepted or not self.editable() or self.editors[key].text().strip():
-            return
-        self.editors[key].setText(str(pin))
-        if key in self.panel.enable_controls:
-            self.panel.enable_controls[key].setChecked(True)
-        self.panel.save_pins()
-        self.panel.refresh_tests()
 
     def remove(self, key: str) -> None:
         if key not in self.editors or not self.editable():

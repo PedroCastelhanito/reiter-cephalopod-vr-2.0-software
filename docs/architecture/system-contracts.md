@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 174
+**Status:** Accepted · **Revision:** 175
 
 **Processes and startup**
 
@@ -497,8 +497,10 @@ design; runtime monitoring remains unimplemented.
 - The launcher writes an owner-private generation-bound application-exit receipt only
   after its outer Job membership is verified empty, before releasing the application
   guard. A new supervisor exposes that exact prior-generation receipt on the existing
-  recovery query; missing/invalid proof blocks E04 startup repair. A free reservation
-  lock or current guard alone never proves old process absence.
+  recovery query. Invalid proof blocks E04 startup repair; missing proof permits
+  only E04's explicit operator-chosen recovery/discard under exclusive reservation,
+  retaining prior process absence as unconfirmed. A free reservation lock or current
+  guard alone never proves old process absence.
 - Unary heartbeats are pushed controller → supervisor, supervisor → controller, and
   each top-level coordinator → supervisor. Workers send heartbeats/progress to their
   coordinator, which aggregates them (HeartbeatReport.workers) and reports a
@@ -567,11 +569,14 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 212
+**Status:** Accepted · **Revision:** 214
 
-- Visual Stimulus policy version16 combines the accepted file-owned projection limits
+- Visual Stimulus policy version18 combines the accepted file-owned projection limits
   (V15/G01) with required scientific evidence and optional reduced review video
-  using sequential timestamp-mapped frames (E13/V12/V28). Keep the matching loader
+  using sequential timestamp-mapped frames and uncropped equal-cell recording with
+  Bottom review rotation, no labels and no gutters for matching post-rotation sizes;
+  cropped display-layout preview omits labels and retains its own geometry
+  and calibration metadata (E13/V12/V28). Keep the matching loader
   digest and both file versions aligned.
 
 - **Operator files contain only settings.** Human-readable `<backend>_config.toml`

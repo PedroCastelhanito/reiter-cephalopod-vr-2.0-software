@@ -1,0 +1,350 @@
+{
+  "method": "ffprobe full-frame decode/count and JSONL accounting",
+  "trial": ".tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_LOG.json",
+  "complete": true,
+  "outcome": "completed",
+  "videos": [
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_behavioral_cam.mp4",
+      "command": [
+        "ffprobe",
+        "-v",
+        "error",
+        "-threads",
+        "2",
+        "-select_streams",
+        "v:0",
+        "-count_frames",
+        "-show_entries",
+        "stream=codec_name,width,height,nb_read_frames,duration",
+        "-of",
+        "json",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_behavioral_cam.mp4"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1760,
+            "height": 1716,
+            "duration": "239.766667",
+            "nb_read_frames": "7193"
+          }
+        ]
+      },
+      "receipt": {
+        "output_key": "521577d1-abc8-4766-8a74-c57886221025:acquisition:behavioral_cam",
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_behavioral_cam.mp4",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "camera_video_content": "CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED",
+        "counts": {
+          "frames": 7193
+        },
+        "backend": {
+          "backend_name": "acquisition",
+          "backend_generation": "749e0454-bb17-46b2-9c1f-7329ca09a550"
+        },
+        "output_tag": "behavioral_cam",
+        "extension": "mp4",
+        "format": "mp4",
+        "schema_version": 1
+      },
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 399529733012700,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 7193,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 7193,
+          "selected_source_frame_count": 7193,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 399289754504000,
+          "on_acknowledged_monotonic_ns": 399289781703000,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 399529758744100,
+          "off_acknowledged_monotonic_ns": 399529782985600
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 2,
+          "last_native_counter": 7194
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      },
+      "decoded_matches_receipt": true,
+      "native_counter_gaps": 0,
+      "dropped_source_frames": 0,
+      "recorded_matches_received": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_tracking_cam.mp4",
+      "command": [
+        "ffprobe",
+        "-v",
+        "error",
+        "-threads",
+        "2",
+        "-select_streams",
+        "v:0",
+        "-count_frames",
+        "-show_entries",
+        "stream=codec_name,width,height,nb_read_frames,duration",
+        "-of",
+        "json",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_tracking_cam.mp4"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1588,
+            "height": 1344,
+            "duration": "239.783333",
+            "nb_read_frames": "14387"
+          }
+        ]
+      },
+      "receipt": {
+        "output_key": "521577d1-abc8-4766-8a74-c57886221025:acquisition:tracking_cam",
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_tracking_cam.mp4",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "camera_video_content": "CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED",
+        "counts": {
+          "frames": 14387
+        },
+        "backend": {
+          "backend_name": "acquisition",
+          "backend_generation": "749e0454-bb17-46b2-9c1f-7329ca09a550"
+        },
+        "output_tag": "tracking_cam",
+        "extension": "mp4",
+        "format": "mp4",
+        "schema_version": 1
+      },
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 399529733012700,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 14387,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 14387,
+          "selected_source_frame_count": 14387,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 399289754504000,
+          "on_acknowledged_monotonic_ns": 399289781703000,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 399529758744100,
+          "off_acknowledged_monotonic_ns": 399529782985600
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 3,
+          "last_native_counter": 14389
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      },
+      "decoded_matches_receipt": true,
+      "native_counter_gaps": 0,
+      "dropped_source_frames": 0,
+      "recorded_matches_received": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_eye_tracking_cam.mp4",
+      "command": [
+        "ffprobe",
+        "-v",
+        "error",
+        "-threads",
+        "2",
+        "-select_streams",
+        "v:0",
+        "-count_frames",
+        "-show_entries",
+        "stream=codec_name,width,height,nb_read_frames,duration",
+        "-of",
+        "json",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_eye_tracking_cam.mp4"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1920,
+            "height": 1200,
+            "duration": "239.933333",
+            "nb_read_frames": "14396"
+          }
+        ]
+      },
+      "receipt": {
+        "output_key": "521577d1-abc8-4766-8a74-c57886221025:acquisition:eye_tracking_cam",
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_eye_tracking_cam.mp4",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "camera_video_content": "CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED",
+        "counts": {
+          "frames": 14396
+        },
+        "backend": {
+          "backend_name": "acquisition",
+          "backend_generation": "749e0454-bb17-46b2-9c1f-7329ca09a550"
+        },
+        "output_tag": "eye_tracking_cam",
+        "extension": "mp4",
+        "format": "mp4",
+        "schema_version": 1
+      },
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 399529733012700,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 14396,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 14396,
+          "selected_source_frame_count": 14396,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": null,
+          "on_dispatched_monotonic_ns": null,
+          "on_acknowledged_monotonic_ns": null,
+          "off_outcome": null,
+          "off_dispatched_monotonic_ns": null,
+          "off_acknowledged_monotonic_ns": null
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 4,
+          "last_native_counter": 14399
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      },
+      "decoded_matches_receipt": true,
+      "native_counter_gaps": 0,
+      "dropped_source_frames": 0,
+      "recorded_matches_received": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_stimulus.mp4",
+      "command": [
+        "ffprobe",
+        "-v",
+        "error",
+        "-threads",
+        "2",
+        "-select_streams",
+        "v:0",
+        "-count_frames",
+        "-show_entries",
+        "stream=codec_name,width,height,nb_read_frames,duration",
+        "-of",
+        "json",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_stimulus.mp4"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 1000,
+            "duration": "237.183333",
+            "nb_read_frames": "14231"
+          }
+        ]
+      },
+      "receipt": {
+        "output_key": "521577d1-abc8-4766-8a74-c57886221025:visual_stimulus:stimulus",
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\previewvideo\\20261019_previewvideo\\PREVIEW-112658\\protocol-data\\PREVIEW_112733_stimulus.mp4",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "visual_stimulus_review_video_content": "VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED",
+        "counts": {
+          "input_frames": 14231,
+          "frames": 14231,
+          "duplicate_frames": 0
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "2b35029c-6405-40f3-8da9-069fa1672292"
+        },
+        "output_tag": "stimulus",
+        "extension": "mp4",
+        "format": "mp4",
+        "schema_version": 3
+      },
+      "completion": {
+        "kind": "completion",
+        "cutoff_host_ns": 399529733012700,
+        "last_group_id": 14230,
+        "state_count": 14231,
+        "submission_attempt_count": 56924,
+        "capture_admission_count": 14231,
+        "capture_drop_count": 0,
+        "same_slot_omission_count": 0,
+        "unresolved_attempt_count": 0,
+        "outcome": "completed"
+      },
+      "decoded_matches_receipt": true
+    }
+  ]
+}

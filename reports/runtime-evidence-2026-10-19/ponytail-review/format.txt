@@ -1,0 +1,1736 @@
+unformatted: File would be reformatted
+   --> src\cephvr\gui\main.py:1:77
+    |
+    - """Managed Windows GUI entry point and controller-backed camera controls."""
+    -
+    - from __future__ import annotations
+    -
+    - import argparse
+    - import secrets
+    - import sys
+    - import tomllib
+    - from dataclasses import replace
+    - from pathlib import Path
+    -
+    - from PyQt6.QtCore import QObject, QSettings
+    - from PyQt6.QtGui import QAction
+    - from PyQt6.QtWidgets import QApplication, QMessageBox
+    -
+    - from cephvr.control.v1 import services_pb2 as rpc
+    - from cephvr.control.v1 import types_pb2 as pb
+    - from cephvr.gui.controller_bridge import ControllerBridge
+    - from cephvr.gui.gui_history import GuiHistory, history_path
+    - from cephvr.gui.layouts import show_maximized
+    - from cephvr.gui.managed_cameras import ManagedCameras
+    - from cephvr.gui.managed_close import save_failure_choice
+    - from cephvr.gui.managed_configuration import ConfigurationPages, ManagedConfiguration
+    - from cephvr.gui.managed_configuration_transport import configuration_update_plan
+    - from cephvr.gui.managed_display import ManagedDisplayOperations
+    - from cephvr.gui.managed_mcu import ManagedMcu
+    - from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
+    - from cephvr.gui.managed_prompts import ManagedPrompts
+    - from cephvr.gui.managed_status import (
+    -     action_label,
+    -     dashboard_view,
+    -     has_retained_history,
+    -     retained_ack_required_for,
+    - )
+    - from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
+    - from cephvr.gui.managed_window import ManagedDashboardWindow
+    - from cephvr.gui.preview_placement import preview_window_placement
+    - from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
+    - from cephvr.gui.theme import apply_theme
+    - from cephvr.gui.view import DashboardView
+    - from cephvr.platform.windows.bootstrap import read_bootstrap
+    - from cephvr.platform.windows.guard import SingleInstanceGuard
+    - from cephvr.shared.credentials import CredentialStore, default_runtime_root
+    -
+    -
+    - class ManagedGui(QObject):
+    -     """Project authoritative state and forward explicit user intents."""
+    -
+    -     def __init__(
+    -         self,
+    -         window: ManagedDashboardWindow,
+    -         bridge: ControllerBridge,
+    -         *,
+    -         gui_history_path: Path | None = None,
+    -     ) -> None:
+    -         super().__init__(window)
+    -         self.window = window
+    -         self.bridge = bridge
+    -         self.connected_once = False
+    -         self._retained_ack_required = False
+    -         self._connection_epoch = 0
+    -         self._connection_identity: tuple[int, str] | None = None
+    -         self._retained_ack_identity: tuple[int, str] | None = None
+    -         self._acknowledged_identity: tuple[int, str] | None = None
+    -         self._awaiting_reconnect_review = False
+    -         self.control_ready = False
+    -         self.auto_control_attempted = False
+    -         self.close_pending = False
+    -         self.history = GuiHistory(window.snapshots, gui_history_path or history_path())
+    -         self.state: pb.Snapshot | None = None
+    -         self._inventory_identity: tuple[str, int] | None = None
+    -         self.display_operations = ManagedDisplayOperations(
+    -             window.devices.projectors,
+    -             window.devices.spikeglx,
+    -             snapshot=lambda: self.state,
+    -             connection_identity=lambda: self._connection_identity,
+    -             send=bridge.request,
+    -         )
+    -         menu_bar = window.menuBar()
+    -         assert menu_bar is not None
+    -         menu = menu_bar.addMenu("Control")
+    -         assert menu is not None
+    -         self.take = QAction("Take control", self)
+    -         self.takeover = QAction("Take over control…", self)
+    -         self.release = QAction("Release control", self)
+    -         self.review_retained = QAction("Review controller history…", self)
+    -         self.review_prompt = QAction("Review pending prompt…", self)
+    -         self.reload_configuration = QAction("Reload controller configuration…", self)
+    -         menu.addActions(
+    -             (
+    -                 self.take,
+    -                 self.takeover,
+    -                 self.release,
+    -                 self.review_retained,
+    -                 self.review_prompt,
+    -                 self.reload_configuration,
+    -             )
+    -         )
+    -         self.take.triggered.connect(lambda: bridge.request("take_control"))
+    -         self.takeover.triggered.connect(self.confirm_takeover)
+    -         self.release.triggered.connect(lambda: bridge.request("release_control"))
+    -         self.take.setEnabled(False)
+    -         self.takeover.setEnabled(False)
+    -         self.release.setEnabled(False)
+    -         self.review_retained.setEnabled(False)
+    -         self.review_retained.triggered.connect(self.review_retained_state)
+    -         self.review_prompt.setEnabled(False)
+    -         self.review_prompt.triggered.connect(self.review_pending_prompts)
+    -         self.reload_configuration.setEnabled(False)
+    -         self.reload_configuration.triggered.connect(
+    -             self.reload_controller_configuration
+    -         )
+    -         self.prompts = ManagedPrompts(
+    -             window,
+    -             queue_response=self.queue_prompt_response,
+    -             acknowledged=self.retained_state_acknowledged,
+    -             log=window.dashboard.log_console.appendPlainText,
+    -         )
+    -         self.configuration = ManagedConfiguration(
+    -             ConfigurationPages(
+    -                 window.dashboard,
+    -                 window.protocol,
+    -                 window.recordings,
+    -                 window.devices.cameras,
+    -                 window.devices.projectors,
+    -                 window.tracking,
+    -                 window.devices.microcontroller,
+    -             )
+    -         )
+    -         cameras = window.devices.cameras
+    -         cameras.managed = True
+    -         cameras.real_devices = True
+    -         cameras.refresh_inventory()
+    -         self.preview_viewers = ManagedPreviewViewers(
+    -             lambda: self.state,
+    -             cameras,
+    -             lambda role, kind, **options: self.cameras.queue(
+    -                 "camera", role=role, kind=kind, **options
+    -             ),
+    -             lambda key: preview_window_placement(window, key).SerializeToString(),
+    -         )
+    -         window.preview_slot.snap_requested.connect(self.preview_viewers.snap)
+    -         self.cameras = ManagedCameras(
+    -             cameras,
+    -             bridge,
+    -             self.preview_viewers.viewer_state,
+    -             lambda key: preview_window_placement(window, key).SerializeToString(),
+    -             self.camera_submission_options,
+    -         )
+    -         cameras.inventory_refreshed.connect(self.refresh_camera_state)
+    -         cameras.preview_requested.connect(self.preview_viewers.preview_visibility)
+    -         mcu = window.devices.microcontroller
+    -         mcu.managed = True
+    -         mcu.scan_ports()
+    -         window.devices.projectors.discover_displays()
+    -         self.mcu = ManagedMcu(mcu, bridge, lambda: self.state)
+    -         self.tracking_diagnostics = ManagedTrackingDiagnostics(
+    -             window,
+    -             bridge,
+    -             window.tracking,
+    -             lambda: self.state,
+    -             lambda: (
+    -                 self.state.configuration_values.current.asset_root
+    -                 if self.state is not None
+    -                 and self.state.HasField("configuration_values")
+    -                 and self.state.configuration_values.current.HasField("asset_root")
+    -                 else ""
+    -             ),
+    -             lambda: (
+    -                 self.control_ready
+    -                 and not self._retained_ack_required
+    -                 and self.state is not None
+    -                 and self.state.control.holder_client_id
+    -                 == self.bridge.principal.generation
+    -             ),
+    -         )
+    -         window.devices.spikeglx.connection_requested.connect(
+    -             lambda: window.devices.spikeglx.start_connection_check(bridge.request)
+    -         )
+    -         window.devices.spikeglx.pairing_requested.connect(
+    -             self.display_operations.submit_pairing
+    -         )
+    -         window.devices.spikeglx.inventory_update_requested.connect(
+    -             self.display_operations.submit_inventory
+    -         )
+    -         window.devices.projectors.calibration_launch_requested.connect(
+    -             self.display_operations.open_calibration
+    -         )
+    -         window.devices.projectors.calibration_close_requested.connect(
+    -             self.display_operations.close_calibration
+    -         )
+    -         window.dashboard.preview_requested.connect(
+    -             self.preview_viewers.preview_visibility
+    -         )
+    -         window.dashboard.action_requested.connect(self.request_dashboard_action)
+    -         bridge.snapshot_received.connect(self.install_snapshot)
+    -         bridge.connection_changed.connect(self.connection_changed)
+    -         bridge.command_finished.connect(self.command_finished)
+    -         bridge.command_admitted.connect(self.command_admitted)
+    -         bridge.operation_finished.connect(self.operation_finished)
+    -         bridge.operation_finished.connect(self.display_operations.live.finished)
+    -         bridge.command_finished.connect(self.display_operations.live.command_finished)
+    -         bridge.connection_changed.connect(self.display_operations.live.disconnected)
+    -         bridge.configuration_accepted.connect(self.configuration_accepted)
+    -         bridge.device_configuration_accepted.connect(self.device_configuration_accepted)
+    -         bridge.spikeglx_inventory_received.connect(
+    -             self.display_operations.install_inventory
+    -         )
+    -         window.close_requested.connect(self.request_close)
+    -         bridge.start()
+    -
+    -     def connection_changed(
+    -         self, connected: bool, reason: str, epoch: int, generation: str
+    -     ) -> None:
+    -         self._connection_epoch = epoch
+    -         if connected:
+    -             self.connected_once = True
+    -             self.control_ready = True
+    -             self._connection_identity = (epoch, generation)
+    -             self.window.dashboard.log_console.appendPlainText("Controller connected.")
+    -             self.claim_unheld_control()
+    -             return
+    -         if self.connected_once:
+    -             self._retained_ack_required = True
+    -             self._retained_ack_identity = self._connection_identity
+    -             self._awaiting_reconnect_review = True
+    -         self._connection_identity = None
+    -         self.control_ready = False
+    -         self.auto_control_attempted = False
+    -         self.state = None
+    -         self.window.devices.spikeglx.pending_action.finish()
+    -         self.window.devices.spikeglx.pairing_pending = False
+    -         self.tracking_diagnostics.install_snapshot(None)
+    -         self._inventory_identity = None
+    -         self.prompts.hide_prompt()
+    -         self.prompts.invalidate_retained_summary()
+    -         self.mcu.disconnected()
+    -         self.cameras.disconnected()
+    -         self.take.setEnabled(False)
+    -         self.takeover.setEnabled(False)
+    -         self.release.setEnabled(False)
+    -         self.review_retained.setEnabled(False)
+    -         self.review_prompt.setEnabled(False)
+    -         self.preview_viewers.disconnected()
+    -         self.window.apply_view(DashboardView())
+    -         self.tracking_diagnostics.install_snapshot(None)
+    -         if self.close_pending:
+    -             self.close_pending = False
+    -             self.window.dashboard.log_console.appendPlainText(
+    -                 "GUI configuration saved; controller disconnected during history save."
+    -             )
+    -             self.window.finish_close()
+    -             return
+    -         if self.connected_once:
+    -             QMessageBox.warning(
+    -                 self.window,
+    -                 "Controller connection lost",
+    -                 "The controller connection was lost. Commands are disabled; reconnecting.\n"
+    -                 + reason,
+    -             )
+    -
+    -     def install_snapshot(self, epoch: int, generation: str, raw: bytes) -> None:
+    -         state = pb.Snapshot.FromString(raw)
+    -         if generation != state.controller_generation:
+    -             return
+    -         identity = (epoch, generation)
+    -         self._connection_epoch = epoch
+    -         self._connection_identity = identity
+    -         fresh_identity = self._awaiting_reconnect_review or (
+    -             self._retained_ack_required and self._retained_ack_identity != identity
+    -         )
+    -         if fresh_identity:
+    -             self._retained_ack_required = False
+    -             self._retained_ack_identity = None
+    -             self._awaiting_reconnect_review = False
+    -         if retained_ack_required_for(state, identity, self._acknowledged_identity):
+    -             self._retained_ack_required = True
+    -             self._retained_ack_identity = identity
+    -         self.state = state
+    -         held = state.control.holder_client_id == self.bridge.principal.generation
+    -         permitted = not self._retained_ack_required
+    -         self.review_retained.setEnabled(
+    -             self._retained_ack_required or has_retained_history(state)
+    -         )
+    -         self.take.setEnabled(
+    -             permitted and not held and not state.control.holder_client_id
+    -         )
+    -         self.takeover.setEnabled(
+    -             permitted and not held and bool(state.control.holder_client_id)
+    -         )
+    -         self.release.setEnabled(held)
+    -         with self.configuration.installing_projection():
+    -             preview_views = self.cameras.install(state)
+    -             self.window.devices.sync_cameras()
+    -         try:
+    -             configuration_wired = self.configuration.install(state)
+    -         except (ValueError, TypeError, AttributeError) as error:
+    -             configuration_wired = False
+    -             self.configuration.last_error = str(error)
+    -         self.reload_configuration.setEnabled(permitted and self.configuration.stale)
+    -         view = dashboard_view(
+    -             state,
+    -             self.bridge.principal.generation,
+    -             tuple(preview_views),
+    -             configuration_wired=configuration_wired,
+    -         )
+    -         if not permitted:
+    -             view = replace(view, has_control=False)
+    -         self.window.apply_view(view)
+    -         self.display_operations.install_pairing()
+    -         self.tracking_diagnostics.install_snapshot(state)
+    -         self.mcu.install(state, held and permitted)
+    -         if configuration_wired and not self.history.restore_attempted:
+    -             if state.session.phase in (
+    -                 pb.SESSION_PHASE_CONFIGURATION,
+    -                 pb.SESSION_PHASE_READY,
+    -             ):
+    -                 try:
+    -                     restored = self.history.restore()
+    -                 except (
+    -                     OSError,
+    -                     ValueError,
+    -                     TypeError,
+    -                     KeyError,
+    -                     IndexError,
+    -                     AttributeError,
+    -                 ) as error:
+    -                     QMessageBox.warning(
+    -                         self.window,
+    -                         "GUI configuration not restored",
+    -                         f"Previous GUI configuration was preserved at {self.history.path}: {error}",
+    -                     )
+    -                 else:
+    -                     if restored:
+    -                         self.configuration.dirty = True
+    -                         self.configuration.tracking_dirty = True
+    -                         self.configuration.edit_serial += 1
+    -                         self.window.dashboard.log_console.appendPlainText(
+    -                             "Previous GUI configuration restored as a local draft."
+    -                         )
+    -             else:
+    -                 self.history.restore_attempted = True
+    -                 self.history.restore_failed = self.history.path.exists()
+    -                 self.window.dashboard.log_console.appendPlainText(
+    -                     "Controller session is active; previous GUI draft is preserved on disk."
+    -                 )
+    -         self.display_operations.install_calibration_state(
+    -             state, launch_eligible=self._calibration_launch_eligible(state)
+    -         )
+    -         if (
+    -             held
+    -             and permitted
+    -             and state.configuration.revision
+    -             and state.session.phase
+    -             in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_READY)
+    -             and self._inventory_identity
+    -             != (state.controller_generation, state.configuration.revision)
+    -         ):
+    -             if self.bridge.request(
+    -                 "get_spikeglx_inventory",
+    -                 expected_revision=state.configuration.revision,
+    -             ):
+    -                 self._inventory_identity = (
+    -                     state.controller_generation,
+    -                     state.configuration.revision,
+    -                 )
+    -         self.prompts.update(
+    -             state,
+    -             require_acknowledgement=self._retained_ack_required,
+    -             can_respond=held and permitted,
+    -             connection_epoch=epoch,
+    -         )
+    -         self.review_prompt.setEnabled(bool(state.prompts))
+    -         self.claim_unheld_control()
+    -
+    -     def claim_unheld_control(self) -> None:
+    -         """Try once per synchronized connection; never replace another holder."""
+    -         if (
+    -             not self.control_ready
+    -             or self.state is None
+    -             or self._retained_ack_required
+    -             or self.auto_control_attempted
+    -         ):
+    -             return
+    -         self.auto_control_attempted = True
+    -         if not self.state.control.holder_client_id:
+    -             self.bridge.request("take_control")
+    -
+    -     def review_retained_state(self) -> None:
+    -         if self.state is not None and (
+    -             self._retained_ack_required or has_retained_history(self.state)
+    -         ):
+    -             self.prompts.review_retained_summary()
+    -
+    -     def retained_state_acknowledged(self, epoch: int, generation: str) -> None:
+    -         identity = (epoch, generation)
+    -         if (
+    -             not self._retained_ack_required
+    -             or self.state is None
+    -             or identity != self._connection_identity
+    -             or identity != self._retained_ack_identity
+    -             or self.state.controller_generation != generation
+    -         ):
+    -             return
+    -         self._retained_ack_required = False
+    -         self._retained_ack_identity = None
+    -         self._acknowledged_identity = identity
+    -         self.review_retained.setEnabled(False)
+    -         self.window.dashboard.log_console.appendPlainText(
+    -             "Retained controller summary acknowledged."
+    -         )
+    -         if self.state is not None:
+    -             self.install_snapshot(epoch, generation, self.state.SerializeToString())
+    -         self.claim_unheld_control()
+    -
+    -     def queue_prompt_response(self, encoded_prompt: bytes, choice: str) -> bool:
+    -         if (
+    -             self._retained_ack_required
+    -             or self.state is None
+    -             or not self.control_ready
+    -             or self.state.control.holder_client_id != self.bridge.principal.generation
+    -         ):
+    -             return False
+    -         return self.bridge.request(
+    -             "respond_prompt", prompt=encoded_prompt, choice=choice
+    -         )
+    -
+    -     def review_pending_prompts(self) -> None:
+    -         state = self.state
+    -         self.prompts.review_prompt(
+    -             can_respond=bool(
+    -                 state is not None
+    -                 and not self._retained_ack_required
+    -                 and state.control.holder_client_id == self.bridge.principal.generation
+    -             )
+    -         )
+    -
+    -     def command_admitted(self, action: str, command_id: str) -> None:
+    -         self.window.dashboard.log_console.append_entry(
+    -             f"{action_label(action)} accepted; awaiting completion.",
+    -             f"Action: {action}\nCommand ID: {command_id}\nState: admitted; completion is pending.",
+    -             error=False,
+    -         )
+    -
+    -     def operation_finished(
+    -         self, action: str, command_id: str, status: str, message: str
+    -     ) -> None:
+    -         label = action_label(action)
+    -         normalized = status.replace("_", " ").capitalize()
+    -         summary = (
+    -             f"{label} completed."
+    -             if status == "completed"
+    -             else f"{label}: {normalized.lower()}" + (f" — {message}" if message else "")
+    -         )
+    -         self.window.dashboard.log_console.append_entry(
+    -             summary,
+    -             f"Action: {action}\nCommand ID: {command_id}\nStatus: {status}\nMessage: {message}",
+    -             error=status in {"failed", "rejected", "unconfirmed"},
+    -         )
+    -         self.prompts.operation_finished(action)
+    -         if action == "spikeglx_inventory_update" and status == "completed":
+    -             self._inventory_identity = None
+    -             if self.state is not None:
+    -                 self.install_snapshot(
+    -                     self._connection_epoch,
+    -                     self.state.controller_generation,
+    -                     self.state.SerializeToString(),
+    -                 )
+    -
+    -     def _calibration_launch_eligible(self, state: pb.Snapshot) -> bool:
+    -         """Allow first-use calibration from accepted Configuration without renderer state."""
+    -         if (
+    -             not state.HasField("configuration_values")
+    -             or state.configuration_values.revision != state.configuration.revision
+    -             or not state.configuration.revision
+    -             or state.session.phase != pb.SESSION_PHASE_CONFIGURATION
+    -             or not self.control_ready
+    -             or self.close_pending
+    -             or self._retained_ack_required
+    -             or state.control.holder_client_id != self.bridge.principal.generation
+    -         ):
+    -             return False
+    -         return any(
+    -             backend.backend_name == "visual_stimulus" and backend.enabled
+    -             for backend in state.configuration_values.current.backends
+    -         )
+    -
+    -     def request_dashboard_action(self, action: str) -> None:
+    -         if action == "Setup":
+    -             projectors = self.window.devices.projectors
+    -             projectors.discover_displays()
+    -             if not projectors.keys:
+    -                 self.window.dashboard.log_console.appendPlainText(
+    -                     "Setup not submitted. " + NO_PROJECTORS_MESSAGE
+    -                 )
+    -                 return
+    -         if action not in {"Setup", "New session"}:
+    -             self.bridge.request(action)
+    -             return
+    -         if self.state is None:
+    -             QMessageBox.warning(
+    -                 self.window,
+    -                 "Configuration needs review",
+    -                 "Wait for a synchronized controller configuration before continuing.",
+    -             )
+    -             return
+    -         if (
+    -             action == "New session"
+    -             and self.state.session.phase == pb.SESSION_PHASE_ENDED
+    -         ):
+    -             if self.configuration.dirty or self.configuration.stale:
+    -                 self.window.dashboard.log_console.appendPlainText(
+    -                     "New session will use the last accepted configuration. Your local draft remains in the editor for review."
+    -                 )
+    -             self.bridge.request("New session")
+    -             return
+    -         if self.configuration.stale:
+    -             QMessageBox.warning(
+    -                 self.window,
+    -                 "Configuration needs review",
+    -                 self.configuration.last_error
+    -                 or "Wait for a synchronized controller configuration before Setup.",
+    -             )
+    -             return
+    -         try:
+    -             proposal = self.configuration.collect(
+    -                 self.state.configuration_values.current
+    -             )
+    -         except (ValueError, TypeError, AttributeError) as error:
+    -             QMessageBox.warning(self.window, "Configuration is incomplete", str(error))
+    -             return
+    -         if self.configuration.revision != self.state.configuration.revision:
+    -             self.configuration.stale = True
+    -             self.configuration.last_error = "The controller configuration changed. Reload it before submitting this draft."
+    -             self.install_snapshot(
+    -                 self._connection_epoch,
+    -                 self.state.controller_generation,
+    -                 self.state.SerializeToString(),
+    -             )
+    -             return
+    -         current = self.state.configuration_values.current
+    -         plan = configuration_update_plan(
+    -             proposal, current, self.state.session.phase, action
+    -         )
+    -         if plan == "direct":
+    -             if action == "Setup":
+    -                 self.bridge.request(
+    -                     "Setup",
+    -                     expected_revision=self.state.configuration.revision,
+    -                     expected_configuration=current.SerializeToString(
+    -                         deterministic=True
+    -                     ),
+    -                 )
+    -             else:
+    -                 self.bridge.request(action)
+    -             return
+    -         if plan == "direct_preserve":
+    -             self.window.dashboard.log_console.appendPlainText(
+    -                 "Local edits remain unsent because the ended session must be reopened before configuration can change."
+    -             )
+    -             self.bridge.request(action)
+    -             return
+    -         if plan == "preserve":
+    -             QMessageBox.warning(
+    -                 self.window,
+    -                 "Configuration is locked",
+    -                 "The controller only accepts configuration changes before Setup. Your local draft is preserved.",
+    -             )
+    -             return
+    -         if not self.bridge.request(
+    -             "submit_configuration",
+    -             base_revision=self.configuration.revision,
+    -             proposal=proposal.SerializeToString(deterministic=True),
+    -             edit_serial=self.configuration.edit_serial,
+    -             after_action=action,
+    -         ):
+    -             QMessageBox.warning(
+    -                 self.window,
+    -                 "Command queue full",
+    -                 "The configuration proposal was not sent. Retry when the controller is ready.",
+    -             )
+    -
+    -     def configuration_accepted(self, revision: int, submitted_edit_serial: int) -> None:
+    -         state = self.state
+    -         if state is None or state.configuration.revision != revision:
+    -             return
+    -         self.configuration.note_installed_revision(
+    -             state, submitted_edit_serial=submitted_edit_serial
+    -         )
+    -         self.reload_configuration.setEnabled(self.configuration.stale)
+    -         self.window.dashboard.log_console.appendPlainText(
+    -             f"Controller accepted configuration revision {revision}."
+    -         )
+    -         self.install_snapshot(
+    -             self._connection_epoch,
+    -             state.controller_generation,
+    -             state.SerializeToString(),
+    -         )
+    -
+    -     def camera_submission_options(self, key: str) -> dict[str, object]:
+    -         state = self.state
+    -         if (
+    -             state is None
+    -             or self.configuration.stale
+    -             or self.configuration.revision != state.configuration.revision
+    -         ):
+    -             raise ValueError("Camera configuration changed; reload before retrying.")
+    -         panel = self.window.devices.microcontroller
+    -         camera = next(
+    -             (draft for draft in self.window.devices.cameras.drafts if draft.key == key),
+    -             None,
+    -         )
+    -         role = {
+    -             "Behavior cam": "behavioral",
+    -             "Tracking cam": "tracking",
+    -             "Eye tracking": "eye_tracking",
+    -         }.get(camera.role if camera is not None else "")
+    -         return {
+    -             "generation": state.controller_generation,
+    -             "base_revision": state.configuration.revision,
+    -             "base_configuration": state.configuration_values.current.SerializeToString(
+    -                 deterministic=True
+    -             ),
+    -             "pin": panel.pin_editors[role].text().strip()
+    -             if role in panel.pin_editors
+    -             else "",
+    -             "port": str(panel.port.currentData() or ""),
+    -         }
+    -
+    -     def device_configuration_accepted(self, base_revision: int, payload: bytes) -> None:
+    -         state = pb.Snapshot.FromString(payload)
+    -         if self.state is None or (
+    -             self.state.controller_generation != state.controller_generation
+    -             or self.state.configuration.revision > state.configuration.revision
+    -         ):
+    -             return
+    -         if not self.configuration.note_device_revision(state, base_revision):
+    -             return
+    -         if (
+    -             self.state.configuration.revision == state.configuration.revision
+    -             and self.state.state_revision >= state.state_revision
+    -         ):
+    -             state = self.state
+    -             payload = state.SerializeToString()
+    -         self.install_snapshot(
+    -             self._connection_epoch, state.controller_generation, payload
+    -         )
+    -
+    -     def reload_controller_configuration(self) -> None:
+    -         if self.state is None or not self.configuration.stale:
+    -             return
+    -         self.cameras.discard_snapshot_draft(self.state)
+    -         self.mcu.discard_snapshot_draft(
+    -             self.state,
+    -             self.state.control.holder_client_id == self.bridge.principal.generation,
+    -         )
+    -         if not self.configuration.reload(self.state):
+    -             QMessageBox.warning(
+    -                 self.window,
+    -                 "Configuration not loaded",
+    -                 self.configuration.last_error
+    -                 or "The authoritative configuration could not be installed.",
+    -             )
+    -             return
+    -         self.reload_configuration.setEnabled(False)
+    -         self.window.devices.spikeglx.snapshots.draft_loaded = False
+    -         self._inventory_identity = None
+    -         self.install_snapshot(
+    -             self._connection_epoch,
+    -             self.state.controller_generation,
+    -             self.state.SerializeToString(),
+    -         )
+    -
+    -     def confirm_takeover(self) -> None:
+    -         if (
+    -             QMessageBox.question(
+    -                 self.window,
+    -                 "Take over control",
+    -                 "Another operator holds control. Take it over?",
+    -             )
+    -             == QMessageBox.StandardButton.Yes
+    -         ):
+    -             self.bridge.request("take_control", takeover=True)
+    -
+    -     def refresh_camera_state(self) -> None:
+    -         if self.state is not None:
+    -             self.cameras._camera_revision = -1
+    -             self.mcu.revision = -1
+    -             self.install_snapshot(
+    -                 self._connection_epoch,
+    -                 self.state.controller_generation,
+    -                 self.state.SerializeToString(),
+    -             )
+    -
+    -     def command_finished(self, action: str, success: bool, message: str) -> None:
+    -         quiet_mcu_poll = (
+    -             action == "mcu"
+    -             and success
+    -             and self.mcu.pending_kind == rpc.MICROCONTROLLER_COMMAND_KIND_STATUS
+    -         )
+    -         if action == "set_spikeglx_enabled":
+    -             self.display_operations.pairing_finished()
+    -             self.window.devices.spikeglx.apply_view(self.window.dashboard.view)
+    -             self.window.devices.spikeglx.console.appendPlainText(message)
+    -         label = action_label(action)
+    -         rendered = (
+    -             f"{label}: {message}"
+    -             if success or message.startswith("Cancelled")
+    -             else f"{label} failed: {message}"
+    -         )
+    -         if not quiet_mcu_poll and (
+    -             action != "tracking_diagnostic_frame" or not success
+    -         ):
+    -             self.window.dashboard.log_console.append_entry(
+    -                 rendered,
+    -                 f"Action: {action}\nSuccess: {success}\nMessage: {message}",
+    -                 error=not success and not message.startswith("Cancelled"),
+    -             )
+    -         mcu_actions = {
+    -             "mcu",
+    -             "prepare_mcu_test",
+    -             "prepare_mcu_connection",
+    -             "mcu_upload",
+    -             "save_mcu_pins",
+    -             "add_mcu_output",
+    -         }
+    -         if action in mcu_actions:
+    -             self.mcu.finished(action, success, message)
+    -             if action == "save_mcu_pins" and self.state is not None:
+    -                 self.mcu.revision = -1
+    -                 self.mcu.install(
+    -                     self.state,
+    -                     self.state.control.holder_client_id
+    -                     == self.bridge.principal.generation,
+    -                 )
+    -             if success and not quiet_mcu_poll:
+    -                 self.window.devices.microcontroller.console.appendPlainText(rendered)
+    -         self.cameras.finished(action, success, message)
+    -         if action in {
+    -             "camera",
+    -             "test_cameras",
+    -             "save_camera_settings",
+    -             "set_camera_enabled",
+    -             "assign_camera_role",
+    -             "prepare_camera",
+    -             "add_mcu_output",
+    -         }:
+    -             self.refresh_camera_state()
+    -         if action == "spikeglx_connection":
+    -             panel = self.window.devices.spikeglx
+    -             panel.pending_action.finish()
+    -             panel.apply_view(self.window.dashboard.view)
+    -             panel.console.appendPlainText(rendered)
+    -             panel.status_column.set_rows(
+    -                 (
+    -                     (
+    -                         "CONNECTION",
+    -                         "Verified"
+    -                         if success
+    -                         else "Cancelled"
+    -                         if message.startswith("Cancelled")
+    -                         else "Unavailable",
+    -                     ),
+    -                     None,
+    -                     ("", message.replace(" · ", "\n") if success else message),
+    -                 )
+    -             )
+    -         if action == "get_spikeglx_inventory" and not success:
+    -             self._inventory_identity = None
+    -         if action == "save_configuration_history" and self.close_pending:
+    -             self.close_pending = False
+    -             if success:
+    -                 self.window.finish_close()
+    -             else:
+    -                 self.window.dashboard.log_console.appendPlainText(
+    -                     f"GUI configuration saved; controller history save failed: {message}"
+    -                 )
+    -                 self.window.finish_close()
+    -
+    -     def request_close(self) -> None:
+    -         if self.close_pending:
+    -             return
+    -         while True:
+    -             try:
+    -                 self.history.save()
+    -                 break
+    -             except (
+    -                 OSError,
+    -                 ValueError,
+    -                 TypeError,
+    -                 KeyError,
+    -                 IndexError,
+    -                 AttributeError,
+    -             ) as error:
+    -                 choice = save_failure_choice(self.window, str(error))
+    -                 if choice == "retry":
+    -                     continue
+    -                 if choice == "discard":
+    -                     self.window.finish_close()
+    -                 return
+    -         if self.state is not None and self.bridge.request("save_configuration_history"):
+    -             self.close_pending = True
+    -         else:
+    -             self.window.finish_close()
+    -
+    -     def shutdown(self) -> None:
+    -         self.bridge.stop()
+    -         self.bridge.wait(3000)
+    -
+    -
+    - def main(argv: list[str] | None = None) -> int:
+    -     parser = argparse.ArgumentParser(description="CephVR managed GUI")
+    -     parser.add_argument("--bootstrap-handle", type=int, required=True)
+    -     args = parser.parse_args(argv)
+    -     if sys.platform != "win32":
+    -         parser.error("managed GUI requires Windows")
+    -     with SingleInstanceGuard("gui"):
+    -         bootstrap = read_bootstrap(args.bootstrap_handle)
+    -         if bootstrap.get("role") != "gui":
+    -             raise ValueError("managed GUI bootstrap has the wrong role")
+    -         store = CredentialStore(
+    -             default_runtime_root(), str(bootstrap["controller_generation"])
+    -         )
+    -         principal = store.provision_client(
+    -             "gui",
+    -             generation=str(bootstrap["generation"]),
+    -             token=secrets.token_urlsafe(32),
+    -         )
+    -         try:
+    -             root = Path(str(bootstrap["software_root"]))
+    -             with (root / "config/backends/gui_config.toml").open("rb") as stream:
+    -                 gui_settings = tomllib.load(stream)
+    -             with (root / "contracts/policy/gui_policy.toml").open("rb") as stream:
+    -                 gui_policy = tomllib.load(stream)
+    -             if type(gui_settings.get("policy_version")) is not int or gui_settings[
+    -                 "policy_version"
+    -             ] != gui_policy.get("policy_version"):
+    -                 raise ValueError("GUI config/policy version mismatch")
+    -             delays = gui_settings["controller_reconnect"]["retry_delays_s"]
+    -             if (
+    -                 not isinstance(delays, list)
+    -                 or not delays
+    -                 or any(type(delay) is not int or delay < 0 for delay in delays)
+    -             ):
+    -                 raise ValueError("GUI reconnect delays must be nonnegative integers")
+    -             app = QApplication(sys.argv[:1])
+    -             app.setApplicationName("CephVR2.0 Dashboard")
+    -             apply_theme(app)
+    -             window = ManagedDashboardWindow(settings=QSettings("CephVR", "Frontend"))
+    -             bridge = ControllerBridge(
+    -                 principal,
+    -                 int(bootstrap["controller_port"]),
+    -                 int(bootstrap["max_message_bytes"]),
+    -                 tuple(delays),
+    -             )
+    -             manager = ManagedGui(window, bridge)
+    -             app.aboutToQuit.connect(manager.shutdown)
+    -             show_maximized(window)
+    -             return app.exec()
+    -         finally:
+    -             store.remove_client(principal)
+    -
+    -
+    - if __name__ == "__main__":
+    -     raise SystemExit(main())
+1   + """Managed Windows GUI entry point and controller-backed camera controls."""
+2   +
+3   + from __future__ import annotations
+4   +
+5   + import argparse
+6   + import secrets
+7   + import sys
+8   + import tomllib
+9   + from dataclasses import replace
+10  + from pathlib import Path
+11  +
+12  + from PyQt6.QtCore import QObject, QSettings
+13  + from PyQt6.QtGui import QAction
+14  + from PyQt6.QtWidgets import QApplication, QMessageBox
+15  +
+16  + from cephvr.control.v1 import services_pb2 as rpc
+17  + from cephvr.control.v1 import types_pb2 as pb
+18  + from cephvr.gui.controller_bridge import ControllerBridge
+19  + from cephvr.gui.gui_history import GuiHistory, history_path
+20  + from cephvr.gui.layouts import show_maximized
+21  + from cephvr.gui.managed_cameras import ManagedCameras
+22  + from cephvr.gui.managed_close import save_failure_choice
+23  + from cephvr.gui.managed_configuration import ConfigurationPages, ManagedConfiguration
+24  + from cephvr.gui.managed_configuration_transport import configuration_update_plan
+25  + from cephvr.gui.managed_display import ManagedDisplayOperations
+26  + from cephvr.gui.managed_mcu import ManagedMcu
+27  + from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
+28  + from cephvr.gui.managed_prompts import ManagedPrompts
+29  + from cephvr.gui.managed_status import (
+30  +     action_label,
+31  +     dashboard_view,
+32  +     has_retained_history,
+33  +     retained_ack_required_for,
+34  + )
+35  + from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
+36  + from cephvr.gui.managed_window import ManagedDashboardWindow
+37  + from cephvr.gui.preview_placement import preview_window_placement
+38  + from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
+39  + from cephvr.gui.theme import apply_theme
+40  + from cephvr.gui.view import DashboardView
+41  + from cephvr.platform.windows.bootstrap import read_bootstrap
+42  + from cephvr.platform.windows.guard import SingleInstanceGuard
+43  + from cephvr.shared.credentials import CredentialStore, default_runtime_root
+44  +
+45  +
+46  + class ManagedGui(QObject):
+47  +     """Project authoritative state and forward explicit user intents."""
+48  +
+49  +     def __init__(
+50  +         self,
+51  +         window: ManagedDashboardWindow,
+52  +         bridge: ControllerBridge,
+53  +         *,
+54  +         gui_history_path: Path | None = None,
+55  +     ) -> None:
+56  +         super().__init__(window)
+57  +         self.window = window
+58  +         self.bridge = bridge
+59  +         self.connected_once = False
+60  +         self._retained_ack_required = False
+61  +         self._connection_epoch = 0
+62  +         self._connection_identity: tuple[int, str] | None = None
+63  +         self._retained_ack_identity: tuple[int, str] | None = None
+64  +         self._acknowledged_identity: tuple[int, str] | None = None
+65  +         self._awaiting_reconnect_review = False
+66  +         self.control_ready = False
+67  +         self.auto_control_attempted = False
+68  +         self.close_pending = False
+69  +         self.history = GuiHistory(window.snapshots, gui_history_path or history_path())
+70  +         self.state: pb.Snapshot | None = None
+71  +         self._inventory_identity: tuple[str, int] | None = None
+72  +         self.display_operations = ManagedDisplayOperations(
+73  +             window.devices.projectors,
+74  +             window.devices.spikeglx,
+75  +             snapshot=lambda: self.state,
+76  +             connection_identity=lambda: self._connection_identity,
+77  +             send=bridge.request,
+78  +         )
+79  +         menu_bar = window.menuBar()
+80  +         assert menu_bar is not None
+81  +         menu = menu_bar.addMenu("Control")
+82  +         assert menu is not None
+83  +         self.take = QAction("Take control", self)
+84  +         self.takeover = QAction("Take over control…", self)
+85  +         self.release = QAction("Release control", self)
+86  +         self.review_retained = QAction("Review controller history…", self)
+87  +         self.review_prompt = QAction("Review pending prompt…", self)
+88  +         self.reload_configuration = QAction("Reload controller configuration…", self)
+89  +         menu.addActions(
+90  +             (
+91  +                 self.take,
+92  +                 self.takeover,
+93  +                 self.release,
+94  +                 self.review_retained,
+95  +                 self.review_prompt,
+96  +                 self.reload_configuration,
+97  +             )
+98  +         )
+99  +         self.take.triggered.connect(lambda: bridge.request("take_control"))
+100 +         self.takeover.triggered.connect(self.confirm_takeover)
+101 +         self.release.triggered.connect(lambda: bridge.request("release_control"))
+102 +         self.take.setEnabled(False)
+103 +         self.takeover.setEnabled(False)
+104 +         self.release.setEnabled(False)
+105 +         self.review_retained.setEnabled(False)
+106 +         self.review_retained.triggered.connect(self.review_retained_state)
+107 +         self.review_prompt.setEnabled(False)
+108 +         self.review_prompt.triggered.connect(self.review_pending_prompts)
+109 +         self.reload_configuration.setEnabled(False)
+110 +         self.reload_configuration.triggered.connect(
+111 +             self.reload_controller_configuration
+112 +         )
+113 +         self.prompts = ManagedPrompts(
+114 +             window,
+115 +             queue_response=self.queue_prompt_response,
+116 +             acknowledged=self.retained_state_acknowledged,
+117 +             log=window.dashboard.log_console.appendPlainText,
+118 +         )
+119 +         self.configuration = ManagedConfiguration(
+120 +             ConfigurationPages(
+121 +                 window.dashboard,
+122 +                 window.protocol,
+123 +                 window.recordings,
+124 +                 window.devices.cameras,
+125 +                 window.devices.projectors,
+126 +                 window.tracking,
+127 +                 window.devices.microcontroller,
+128 +             )
+129 +         )
+130 +         cameras = window.devices.cameras
+131 +         cameras.managed = True
+132 +         cameras.real_devices = True
+133 +         cameras.refresh_inventory()
+134 +         self.preview_viewers = ManagedPreviewViewers(
+135 +             lambda: self.state,
+136 +             cameras,
+137 +             lambda role, kind, **options: self.cameras.queue(
+138 +                 "camera", role=role, kind=kind, **options
+139 +             ),
+140 +             lambda key: preview_window_placement(window, key).SerializeToString(),
+141 +         )
+142 +         window.preview_slot.snap_requested.connect(self.preview_viewers.snap)
+143 +         self.cameras = ManagedCameras(
+144 +             cameras,
+145 +             bridge,
+146 +             self.preview_viewers.viewer_state,
+147 +             lambda key: preview_window_placement(window, key).SerializeToString(),
+148 +             self.camera_submission_options,
+149 +         )
+150 +         cameras.inventory_refreshed.connect(self.refresh_camera_state)
+151 +         cameras.preview_requested.connect(self.preview_viewers.preview_visibility)
+152 +         mcu = window.devices.microcontroller
+153 +         mcu.managed = True
+154 +         mcu.scan_ports()
+155 +         window.devices.projectors.discover_displays()
+156 +         self.mcu = ManagedMcu(mcu, bridge, lambda: self.state)
+157 +         self.tracking_diagnostics = ManagedTrackingDiagnostics(
+158 +             window,
+159 +             bridge,
+160 +             window.tracking,
+161 +             lambda: self.state,
+162 +             lambda: (
+163 +                 self.state.configuration_values.current.asset_root
+164 +                 if self.state is not None
+165 +                 and self.state.HasField("configuration_values")
+166 +                 and self.state.configuration_values.current.HasField("asset_root")
+167 +                 else ""
+168 +             ),
+169 +             lambda: (
+170 +                 self.control_ready
+171 +                 and not self._retained_ack_required
+172 +                 and self.state is not None
+173 +                 and self.state.control.holder_client_id
+174 +                 == self.bridge.principal.generation
+175 +             ),
+176 +         )
+177 +         window.devices.spikeglx.connection_requested.connect(
+178 +             lambda: window.devices.spikeglx.start_connection_check(bridge.request)
+179 +         )
+180 +         window.devices.spikeglx.pairing_requested.connect(
+181 +             self.display_operations.submit_pairing
+182 +         )
+183 +         window.devices.spikeglx.inventory_update_requested.connect(
+184 +             self.display_operations.submit_inventory
+185 +         )
+186 +         window.devices.projectors.calibration_launch_requested.connect(
+187 +             self.display_operations.open_calibration
+188 +         )
+189 +         window.devices.projectors.calibration_close_requested.connect(
+190 +             self.display_operations.close_calibration
+191 +         )
+192 +         window.dashboard.preview_requested.connect(
+193 +             self.preview_viewers.preview_visibility
+194 +         )
+195 +         window.dashboard.action_requested.connect(self.request_dashboard_action)
+196 +         bridge.snapshot_received.connect(self.install_snapshot)
+197 +         bridge.connection_changed.connect(self.connection_changed)
+198 +         bridge.command_finished.connect(self.command_finished)
+199 +         bridge.command_admitted.connect(self.command_admitted)
+200 +         bridge.operation_finished.connect(self.operation_finished)
+201 +         bridge.operation_finished.connect(self.display_operations.live.finished)
+202 +         bridge.command_finished.connect(self.display_operations.live.command_finished)
+203 +         bridge.connection_changed.connect(self.display_operations.live.disconnected)
+204 +         bridge.configuration_accepted.connect(self.configuration_accepted)
+205 +         bridge.device_configuration_accepted.connect(self.device_configuration_accepted)
+206 +         bridge.spikeglx_inventory_received.connect(
+207 +             self.display_operations.install_inventory
+208 +         )
+209 +         window.close_requested.connect(self.request_close)
+210 +         bridge.start()
+211 +
+212 +     def connection_changed(
+213 +         self, connected: bool, reason: str, epoch: int, generation: str
+214 +     ) -> None:
+215 +         self._connection_epoch = epoch
+216 +         if connected:
+217 +             self.connected_once = True
+218 +             self.control_ready = True
+219 +             self._connection_identity = (epoch, generation)
+220 +             self.window.dashboard.log_console.appendPlainText("Controller connected.")
+221 +             self.claim_unheld_control()
+222 +             return
+223 +         if self.connected_once:
+224 +             self._retained_ack_required = True
+225 +             self._retained_ack_identity = self._connection_identity
+226 +             self._awaiting_reconnect_review = True
+227 +         self._connection_identity = None
+228 +         self.control_ready = False
+229 +         self.auto_control_attempted = False
+230 +         self.state = None
+231 +         self.window.devices.spikeglx.pending_action.finish()
+232 +         self.window.devices.spikeglx.pairing_pending = False
+233 +         self.tracking_diagnostics.install_snapshot(None)
+234 +         self._inventory_identity = None
+235 +         self.prompts.hide_prompt()
+236 +         self.prompts.invalidate_retained_summary()
+237 +         self.mcu.disconnected()
+238 +         self.cameras.disconnected()
+239 +         self.take.setEnabled(False)
+240 +         self.takeover.setEnabled(False)
+241 +         self.release.setEnabled(False)
+242 +         self.review_retained.setEnabled(False)
+243 +         self.review_prompt.setEnabled(False)
+244 +         self.preview_viewers.disconnected()
+245 +         self.window.apply_view(DashboardView())
+246 +         self.tracking_diagnostics.install_snapshot(None)
+247 +         if self.close_pending:
+248 +             self.close_pending = False
+249 +             self.window.dashboard.log_console.appendPlainText(
+250 +                 "GUI configuration saved; controller disconnected during history save."
+251 +             )
+252 +             self.window.finish_close()
+253 +             return
+254 +         if self.connected_once:
+255 +             QMessageBox.warning(
+256 +                 self.window,
+257 +                 "Controller connection lost",
+258 +                 "The controller connection was lost. Commands are disabled; reconnecting.\n"
+259 +                 + reason,
+260 +             )
+261 +
+262 +     def install_snapshot(self, epoch: int, generation: str, raw: bytes) -> None:
+263 +         state = pb.Snapshot.FromString(raw)
+264 +         if generation != state.controller_generation:
+265 +             return
+266 +         identity = (epoch, generation)
+267 +         self._connection_epoch = epoch
+268 +         self._connection_identity = identity
+269 +         fresh_identity = self._awaiting_reconnect_review or (
+270 +             self._retained_ack_required and self._retained_ack_identity != identity
+271 +         )
+272 +         if fresh_identity:
+273 +             self._retained_ack_required = False
+274 +             self._retained_ack_identity = None
+275 +             self._awaiting_reconnect_review = False
+276 +         if retained_ack_required_for(state, identity, self._acknowledged_identity):
+277 +             self._retained_ack_required = True
+278 +             self._retained_ack_identity = identity
+279 +         self.state = state
+280 +         held = state.control.holder_client_id == self.bridge.principal.generation
+281 +         permitted = not self._retained_ack_required
+282 +         self.review_retained.setEnabled(
+283 +             self._retained_ack_required or has_retained_history(state)
+284 +         )
+285 +         self.take.setEnabled(
+286 +             permitted and not held and not state.control.holder_client_id
+287 +         )
+288 +         self.takeover.setEnabled(
+289 +             permitted and not held and bool(state.control.holder_client_id)
+290 +         )
+291 +         self.release.setEnabled(held)
+292 +         with self.configuration.installing_projection():
+293 +             preview_views = self.cameras.install(state)
+294 +             self.window.devices.sync_cameras()
+295 +         try:
+296 +             configuration_wired = self.configuration.install(state)
+297 +         except (ValueError, TypeError, AttributeError) as error:
+298 +             configuration_wired = False
+299 +             self.configuration.last_error = str(error)
+300 +         self.reload_configuration.setEnabled(permitted and self.configuration.stale)
+301 +         view = dashboard_view(
+302 +             state,
+303 +             self.bridge.principal.generation,
+304 +             tuple(preview_views),
+305 +             configuration_wired=configuration_wired,
+306 +         )
+307 +         if not permitted:
+308 +             view = replace(view, has_control=False)
+309 +         self.window.apply_view(view)
+310 +         self.display_operations.install_pairing()
+311 +         self.tracking_diagnostics.install_snapshot(state)
+312 +         self.mcu.install(state, held and permitted)
+313 +         if configuration_wired and not self.history.restore_attempted:
+314 +             if state.session.phase in (
+315 +                 pb.SESSION_PHASE_CONFIGURATION,
+316 +                 pb.SESSION_PHASE_READY,
+317 +             ):
+318 +                 try:
+319 +                     restored = self.history.restore()
+320 +                 except (
+321 +                     OSError,
+322 +                     ValueError,
+323 +                     TypeError,
+324 +                     KeyError,
+325 +                     IndexError,
+326 +                     AttributeError,
+327 +                 ) as error:
+328 +                     QMessageBox.warning(
+329 +                         self.window,
+330 +                         "GUI configuration not restored",
+331 +                         f"Previous GUI configuration was preserved at {self.history.path}: {error}",
+332 +                     )
+333 +                 else:
+334 +                     if restored:
+335 +                         self.configuration.dirty = True
+336 +                         self.configuration.tracking_dirty = True
+337 +                         self.configuration.edit_serial += 1
+338 +                         self.window.dashboard.log_console.appendPlainText(
+339 +                             "Previous GUI configuration restored as a local draft."
+340 +                         )
+341 +             else:
+342 +                 self.history.restore_attempted = True
+343 +                 self.history.restore_failed = self.history.path.exists()
+344 +                 self.window.dashboard.log_console.appendPlainText(
+345 +                     "Controller session is active; previous GUI draft is preserved on disk."
+346 +                 )
+347 +         self.display_operations.install_calibration_state(
+348 +             state, launch_eligible=self._calibration_launch_eligible(state)
+349 +         )
+350 +         if (
+351 +             held
+352 +             and permitted
+353 +             and state.configuration.revision
+354 +             and state.session.phase
+355 +             in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_READY)
+356 +             and self._inventory_identity
+357 +             != (state.controller_generation, state.configuration.revision)
+358 +         ):
+359 +             if self.bridge.request(
+360 +                 "get_spikeglx_inventory",
+361 +                 expected_revision=state.configuration.revision,
+362 +             ):
+363 +                 self._inventory_identity = (
+364 +                     state.controller_generation,
+365 +                     state.configuration.revision,
+366 +                 )
+367 +         self.prompts.update(
+368 +             state,
+369 +             require_acknowledgement=self._retained_ack_required,
+370 +             can_respond=held and permitted,
+371 +             connection_epoch=epoch,
+372 +         )
+373 +         self.review_prompt.setEnabled(bool(state.prompts))
+374 +         self.claim_unheld_control()
+375 +
+376 +     def claim_unheld_control(self) -> None:
+377 +         """Try once per synchronized connection; never replace another holder."""
+378 +         if (
+379 +             not self.control_ready
+380 +             or self.state is None
+381 +             or self._retained_ack_required
+382 +             or self.auto_control_attempted
+383 +         ):
+384 +             return
+385 +         self.auto_control_attempted = True
+386 +         if not self.state.control.holder_client_id:
+387 +             self.bridge.request("take_control")
+388 +
+389 +     def review_retained_state(self) -> None:
+390 +         if self.state is not None and (
+391 +             self._retained_ack_required or has_retained_history(self.state)
+392 +         ):
+393 +             self.prompts.review_retained_summary()
+394 +
+395 +     def retained_state_acknowledged(self, epoch: int, generation: str) -> None:
+396 +         identity = (epoch, generation)
+397 +         if (
+398 +             not self._retained_ack_required
+399 +             or self.state is None
+400 +             or identity != self._connection_identity
+401 +             or identity != self._retained_ack_identity
+402 +             or self.state.controller_generation != generation
+403 +         ):
+404 +             return
+405 +         self._retained_ack_required = False
+406 +         self._retained_ack_identity = None
+407 +         self._acknowledged_identity = identity
+408 +         self.review_retained.setEnabled(False)
+409 +         self.window.dashboard.log_console.appendPlainText(
+410 +             "Retained controller summary acknowledged."
+411 +         )
+412 +         if self.state is not None:
+413 +             self.install_snapshot(epoch, generation, self.state.SerializeToString())
+414 +         self.claim_unheld_control()
+415 +
+416 +     def queue_prompt_response(self, encoded_prompt: bytes, choice: str) -> bool:
+417 +         if (
+418 +             self._retained_ack_required
+419 +             or self.state is None
+420 +             or not self.control_ready
+421 +             or self.state.control.holder_client_id != self.bridge.principal.generation
+422 +         ):
+423 +             return False
+424 +         return self.bridge.request(
+425 +             "respond_prompt", prompt=encoded_prompt, choice=choice
+426 +         )
+427 +
+428 +     def review_pending_prompts(self) -> None:
+429 +         state = self.state
+430 +         self.prompts.review_prompt(
+431 +             can_respond=bool(
+432 +                 state is not None
+433 +                 and not self._retained_ack_required
+434 +                 and state.control.holder_client_id == self.bridge.principal.generation
+435 +             )
+436 +         )
+437 +
+438 +     def command_admitted(self, action: str, command_id: str) -> None:
+439 +         self.window.dashboard.log_console.append_entry(
+440 +             f"{action_label(action)} accepted; awaiting completion.",
+441 +             f"Action: {action}\nCommand ID: {command_id}\nState: admitted; completion is pending.",
+442 +             error=False,
+443 +         )
+444 +
+445 +     def operation_finished(
+446 +         self, action: str, command_id: str, status: str, message: str
+447 +     ) -> None:
+448 +         label = action_label(action)
+449 +         normalized = status.replace("_", " ").capitalize()
+450 +         summary = (
+451 +             f"{label} completed."
+452 +             if status == "completed"
+453 +             else f"{label}: {normalized.lower()}" + (f" — {message}" if message else "")
+454 +         )
+455 +         self.window.dashboard.log_console.append_entry(
+456 +             summary,
+457 +             f"Action: {action}\nCommand ID: {command_id}\nStatus: {status}\nMessage: {message}",
+458 +             error=status in {"failed", "rejected", "unconfirmed"},
+459 +         )
+460 +         self.prompts.operation_finished(action)
+461 +         if action == "spikeglx_inventory_update" and status == "completed":
+462 +             self._inventory_identity = None
+463 +             if self.state is not None:
+464 +                 self.install_snapshot(
+465 +                     self._connection_epoch,
+466 +                     self.state.controller_generation,
+467 +                     self.state.SerializeToString(),
+468 +                 )
+469 +
+470 +     def _calibration_launch_eligible(self, state: pb.Snapshot) -> bool:
+471 +         """Allow first-use calibration from accepted Configuration without renderer state."""
+472 +         if (
+473 +             not state.HasField("configuration_values")
+474 +             or state.configuration_values.revision != state.configuration.revision
+475 +             or not state.configuration.revision
+476 +             or state.session.phase != pb.SESSION_PHASE_CONFIGURATION
+477 +             or not self.control_ready
+478 +             or self.close_pending
+479 +             or self._retained_ack_required
+480 +             or state.control.holder_client_id != self.bridge.principal.generation
+481 +         ):
+482 +             return False
+483 +         return any(
+484 +             backend.backend_name == "visual_stimulus" and backend.enabled
+485 +             for backend in state.configuration_values.current.backends
+486 +         )
+487 +
+488 +     def request_dashboard_action(self, action: str) -> None:
+489 +         if action == "Setup":
+490 +             projectors = self.window.devices.projectors
+491 +             projectors.discover_displays()
+492 +             if not projectors.keys:
+493 +                 self.window.dashboard.log_console.appendPlainText(
+494 +                     "Setup not submitted. " + NO_PROJECTORS_MESSAGE
+495 +                 )
+496 +                 return
+497 +         if action not in {"Setup", "New session"}:
+498 +             self.bridge.request(action)
+499 +             return
+500 +         if self.state is None:
+501 +             QMessageBox.warning(
+502 +                 self.window,
+503 +                 "Configuration needs review",
+504 +                 "Wait for a synchronized controller configuration before continuing.",
+505 +             )
+506 +             return
+507 +         if (
+508 +             action == "New session"
+509 +             and self.state.session.phase == pb.SESSION_PHASE_ENDED
+510 +         ):
+511 +             if self.configuration.dirty or self.configuration.stale:
+512 +                 self.window.dashboard.log_console.appendPlainText(
+513 +                     "New session will use the last accepted configuration. Your local draft remains in the editor for review."
+514 +                 )
+515 +             self.bridge.request("New session")
+516 +             return
+517 +         if self.configuration.stale:
+518 +             QMessageBox.warning(
+519 +                 self.window,
+520 +                 "Configuration needs review",
+521 +                 self.configuration.last_error
+522 +                 or "Wait for a synchronized controller configuration before Setup.",
+523 +             )
+524 +             return
+525 +         try:
+526 +             proposal = self.configuration.collect(
+527 +                 self.state.configuration_values.current
+528 +             )
+529 +         except (ValueError, TypeError, AttributeError) as error:
+530 +             QMessageBox.warning(self.window, "Configuration is incomplete", str(error))
+531 +             return
+532 +         if self.configuration.revision != self.state.configuration.revision:
+533 +             self.configuration.stale = True
+534 +             self.configuration.last_error = "The controller configuration changed. Reload it before submitting this draft."
+535 +             self.install_snapshot(
+536 +                 self._connection_epoch,
+537 +                 self.state.controller_generation,
+538 +                 self.state.SerializeToString(),
+539 +             )
+540 +             return
+541 +         current = self.state.configuration_values.current
+542 +         plan = configuration_update_plan(
+543 +             proposal, current, self.state.session.phase, action
+544 +         )
+545 +         if plan == "direct":
+546 +             if action == "Setup":
+547 +                 self.bridge.request(
+548 +                     "Setup",
+549 +                     expected_revision=self.state.configuration.revision,
+550 +                     expected_configuration=current.SerializeToString(
+551 +                         deterministic=True
+552 +                     ),
+553 +                 )
+554 +             else:
+555 +                 self.bridge.request(action)
+556 +             return
+557 +         if plan == "direct_preserve":
+558 +             self.window.dashboard.log_console.appendPlainText(
+559 +                 "Local edits remain unsent because the ended session must be reopened before configuration can change."
+560 +             )
+561 +             self.bridge.request(action)
+562 +             return
+563 +         if plan == "preserve":
+564 +             QMessageBox.warning(
+565 +                 self.window,
+566 +                 "Configuration is locked",
+567 +                 "The controller only accepts configuration changes before Setup. Your local draft is preserved.",
+568 +             )
+569 +             return
+570 +         if not self.bridge.request(
+571 +             "submit_configuration",
+572 +             base_revision=self.configuration.revision,
+573 +             proposal=proposal.SerializeToString(deterministic=True),
+574 +             edit_serial=self.configuration.edit_serial,
+575 +             after_action=action,
+576 +         ):
+577 +             QMessageBox.warning(
+578 +                 self.window,
+579 +                 "Command queue full",
+580 +                 "The configuration proposal was not sent. Retry when the controller is ready.",
+581 +             )
+582 +
+583 +     def configuration_accepted(self, revision: int, submitted_edit_serial: int) -> None:
+584 +         state = self.state
+585 +         if state is None or state.configuration.revision != revision:
+586 +             return
+587 +         self.configuration.note_installed_revision(
+588 +             state, submitted_edit_serial=submitted_edit_serial
+589 +         )
+590 +         self.reload_configuration.setEnabled(self.configuration.stale)
+591 +         self.window.dashboard.log_console.appendPlainText(
+592 +             f"Controller accepted configuration revision {revision}."
+593 +         )
+594 +         self.install_snapshot(
+595 +             self._connection_epoch,
+596 +             state.controller_generation,
+597 +             state.SerializeToString(),
+598 +         )
+599 +
+600 +     def camera_submission_options(self, key: str) -> dict[str, object]:
+601 +         state = self.state
+602 +         if (
+603 +             state is None
+604 +             or self.configuration.stale
+605 +             or self.configuration.revision != state.configuration.revision
+606 +         ):
+607 +             raise ValueError("Camera configuration changed; reload before retrying.")
+608 +         panel = self.window.devices.microcontroller
+609 +         camera = next(
+610 +             (draft for draft in self.window.devices.cameras.drafts if draft.key == key),
+611 +             None,
+612 +         )
+613 +         role = {
+614 +             "Behavior cam": "behavioral",
+615 +             "Tracking cam": "tracking",
+616 +             "Eye tracking": "eye_tracking",
+617 +         }.get(camera.role if camera is not None else "")
+618 +         return {
+619 +             "generation": state.controller_generation,
+620 +             "base_revision": state.configuration.revision,
+621 +             "base_configuration": state.configuration_values.current.SerializeToString(
+622 +                 deterministic=True
+623 +             ),
+624 +             "pin": panel.pin_editors[role].text().strip()
+625 +             if role in panel.pin_editors
+626 +             else "",
+627 +             "port": str(panel.port.currentData() or ""),
+628 +         }
+629 +
+630 +     def device_configuration_accepted(self, base_revision: int, payload: bytes) -> None:
+631 +         state = pb.Snapshot.FromString(payload)
+632 +         if self.state is None or (
+633 +             self.state.controller_generation != state.controller_generation
+634 +             or self.state.configuration.revision > state.configuration.revision
+635 +         ):
+636 +             return
+637 +         if not self.configuration.note_device_revision(state, base_revision):
+638 +             return
+639 +         if (
+640 +             self.state.configuration.revision == state.configuration.revision
+641 +             and self.state.state_revision >= state.state_revision
+642 +         ):
+643 +             state = self.state
+644 +             payload = state.SerializeToString()
+645 +         self.install_snapshot(
+646 +             self._connection_epoch, state.controller_generation, payload
+647 +         )
+648 +
+649 +     def reload_controller_configuration(self) -> None:
+650 +         if self.state is None or not self.configuration.stale:
+651 +             return
+652 +         self.cameras.discard_snapshot_draft(self.state)
+653 +         self.mcu.discard_snapshot_draft(
+654 +             self.state,
+655 +             self.state.control.holder_client_id == self.bridge.principal.generation,
+656 +         )
+657 +         if not self.configuration.reload(self.state):
+658 +             QMessageBox.warning(
+659 +                 self.window,
+660 +                 "Configuration not loaded",
+661 +                 self.configuration.last_error
+662 +                 or "The authoritative configuration could not be installed.",
+663 +             )
+664 +             return
+665 +         self.reload_configuration.setEnabled(False)
+666 +         self.window.devices.spikeglx.snapshots.draft_loaded = False
+667 +         self._inventory_identity = None
+668 +         self.install_snapshot(
+669 +             self._connection_epoch,
+670 +             self.state.controller_generation,
+671 +             self.state.SerializeToString(),
+672 +         )
+673 +
+674 +     def confirm_takeover(self) -> None:
+675 +         if (
+676 +             QMessageBox.question(
+677 +                 self.window,
+678 +                 "Take over control",
+679 +                 "Another operator holds control. Take it over?",
+680 +             )
+681 +             == QMessageBox.StandardButton.Yes
+682 +         ):
+683 +             self.bridge.request("take_control", takeover=True)
+684 +
+685 +     def refresh_camera_state(self) -> None:
+686 +         if self.state is not None:
+687 +             self.cameras._camera_revision = -1
+688 +             self.mcu.revision = -1
+689 +             self.install_snapshot(
+690 +                 self._connection_epoch,
+691 +                 self.state.controller_generation,
+692 +                 self.state.SerializeToString(),
+693 +             )
+694 +
+695 +     def command_finished(self, action: str, success: bool, message: str) -> None:
+696 +         quiet_mcu_poll = (
+697 +             action == "mcu"
+698 +             and success
+699 +             and self.mcu.pending_kind == rpc.MICROCONTROLLER_COMMAND_KIND_STATUS
+700 +         )
+701 +         if action == "set_spikeglx_enabled":
+702 +             self.display_operations.pairing_finished()
+703 +             self.window.devices.spikeglx.apply_view(self.window.dashboard.view)
+704 +             self.window.devices.spikeglx.console.appendPlainText(message)
+705 +         label = action_label(action)
+706 +         rendered = (
+707 +             f"{label}: {message}"
+708 +             if success or message.startswith("Cancelled")
+709 +             else f"{label} failed: {message}"
+710 +         )
+711 +         if not quiet_mcu_poll and (
+712 +             action != "tracking_diagnostic_frame" or not success
+713 +         ):
+714 +             self.window.dashboard.log_console.append_entry(
+715 +                 rendered,
+716 +                 f"Action: {action}\nSuccess: {success}\nMessage: {message}",
+717 +                 error=not success and not message.startswith("Cancelled"),
+718 +             )
+719 +         mcu_actions = {
+720 +             "mcu",
+721 +             "prepare_mcu_test",
+722 +             "prepare_mcu_connection",
+723 +             "mcu_upload",
+724 +             "save_mcu_pins",
+725 +             "add_mcu_output",
+726 +         }
+727 +         if action in mcu_actions:
+728 +             self.mcu.finished(action, success, message)
+729 +             if action == "save_mcu_pins" and self.state is not None:
+730 +                 self.mcu.revision = -1
+731 +                 self.mcu.install(
+732 +                     self.state,
+733 +                     self.state.control.holder_client_id
+734 +                     == self.bridge.principal.generation,
+735 +                 )
+736 +             if success and not quiet_mcu_poll:
+737 +                 self.window.devices.microcontroller.console.appendPlainText(rendered)
+738 +         self.cameras.finished(action, success, message)
+739 +         if action in {
+740 +             "camera",
+741 +             "test_cameras",
+742 +             "save_camera_settings",
+743 +             "set_camera_enabled",
+744 +             "assign_camera_role",
+745 +             "prepare_camera",
+746 +             "add_mcu_output",
+747 +         }:
+748 +             self.refresh_camera_state()
+749 +         if action == "spikeglx_connection":
+750 +             panel = self.window.devices.spikeglx
+751 +             panel.pending_action.finish()
+752 +             panel.apply_view(self.window.dashboard.view)
+753 +             panel.console.appendPlainText(rendered)
+754 +             panel.status_column.set_rows(
+755 +                 (
+756 +                     (
+757 +                         "CONNECTION",
+758 +                         "Verified"
+759 +                         if success
+760 +                         else "Cancelled"
+761 +                         if message.startswith("Cancelled")
+762 +                         else "Unavailable",
+763 +                     ),
+764 +                     None,
+765 +                     ("", message.replace(" · ", "\n") if success else message),
+766 +                 )
+767 +             )
+768 +         if action == "get_spikeglx_inventory" and not success:
+769 +             self._inventory_identity = None
+770 +         if action == "save_configuration_history" and self.close_pending:
+771 +             self.close_pending = False
+772 +             if success:
+773 +                 self.window.finish_close()
+774 +             else:
+775 +                 self.window.dashboard.log_console.appendPlainText(
+776 +                     f"GUI configuration saved; controller history save failed: {message}"
+777 +                 )
+778 +                 self.window.finish_close()
+779 +
+780 +     def request_close(self) -> None:
+781 +         if self.close_pending:
+782 +             return
+783 +         while True:
+784 +             try:
+785 +                 self.history.save()
+786 +                 break
+787 +             except (
+788 +                 OSError,
+789 +                 ValueError,
+790 +                 TypeError,
+791 +                 KeyError,
+792 +                 IndexError,
+793 +                 AttributeError,
+794 +             ) as error:
+795 +                 choice = save_failure_choice(self.window, str(error))
+796 +                 if choice == "retry":
+797 +                     continue
+798 +                 if choice == "discard":
+799 +                     self.window.finish_close()
+800 +                 return
+801 +         if self.state is not None and self.bridge.request("save_configuration_history"):
+802 +             self.close_pending = True
+803 +         else:
+804 +             self.window.finish_close()
+805 +
+806 +     def shutdown(self) -> None:
+807 +         self.bridge.stop()
+808 +         self.bridge.wait(3000)
+809 +
+810 +
+811 + def main(argv: list[str] | None = None) -> int:
+812 +     parser = argparse.ArgumentParser(description="CephVR managed GUI")
+813 +     parser.add_argument("--bootstrap-handle", type=int, required=True)
+814 +     args = parser.parse_args(argv)
+815 +     if sys.platform != "win32":
+816 +         parser.error("managed GUI requires Windows")
+817 +     with SingleInstanceGuard("gui"):
+818 +         bootstrap = read_bootstrap(args.bootstrap_handle)
+819 +         if bootstrap.get("role") != "gui":
+820 +             raise ValueError("managed GUI bootstrap has the wrong role")
+821 +         store = CredentialStore(
+822 +             default_runtime_root(), str(bootstrap["controller_generation"])
+823 +         )
+824 +         principal = store.provision_client(
+825 +             "gui",
+826 +             generation=str(bootstrap["generation"]),
+827 +             token=secrets.token_urlsafe(32),
+828 +         )
+829 +         try:
+830 +             root = Path(str(bootstrap["software_root"]))
+831 +             with (root / "config/backends/gui_config.toml").open("rb") as stream:
+832 +                 gui_settings = tomllib.load(stream)
+833 +             with (root / "contracts/policy/gui_policy.toml").open("rb") as stream:
+834 +                 gui_policy = tomllib.load(stream)
+835 +             if type(gui_settings.get("policy_version")) is not int or gui_settings[
+836 +                 "policy_version"
+837 +             ] != gui_policy.get("policy_version"):
+838 +                 raise ValueError("GUI config/policy version mismatch")
+839 +             delays = gui_settings["controller_reconnect"]["retry_delays_s"]
+840 +             if (
+841 +                 not isinstance(delays, list)
+842 +                 or not delays
+843 +                 or any(type(delay) is not int or delay < 0 for delay in delays)
+844 +             ):
+845 +                 raise ValueError("GUI reconnect delays must be nonnegative integers")
+846 +             app = QApplication(sys.argv[:1])
+847 +             app.setApplicationName("CephVR2.0 Dashboard")
+848 +             apply_theme(app)
+849 +             window = ManagedDashboardWindow(settings=QSettings("CephVR", "Frontend"))
+850 +             bridge = ControllerBridge(
+851 +                 principal,
+852 +                 int(bootstrap["controller_port"]),
+853 +                 int(bootstrap["max_message_bytes"]),
+854 +                 tuple(delays),
+855 +             )
+856 +             manager = ManagedGui(window, bridge)
+857 +             app.aboutToQuit.connect(manager.shutdown)
+858 +             show_maximized(window)
+859 +             return app.exec()
+860 +         finally:
+861 +             store.remove_client(principal)
+862 +
+863 +
+864 + if __name__ == "__main__":
+865 +     raise SystemExit(main())
+    |
+
+1 file would be reformatted, 948 files already formatted

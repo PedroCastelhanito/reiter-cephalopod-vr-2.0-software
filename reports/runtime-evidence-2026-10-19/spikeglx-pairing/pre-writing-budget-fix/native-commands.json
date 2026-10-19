@@ -1,0 +1,26 @@
+[
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "f65eb3e0-9c71-4a2c-a087-014cfb6aee06",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "Setup",
+    "command_id": "e2f9e050-435c-419c-91cc-d5ce4af0d2e5",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "StartSession",
+    "command_id": "9d6dab34-5041-4e68-bb44-91829e916f52",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: SpikeGLX writing gate failed"
+  }
+]

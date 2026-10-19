@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,6 +14,7 @@ from cephvr.acquisition.recording.identity import (
     RecordingIdentity,
     header_clocks,
 )
+from cephvr.platform.windows.paths import extended_path
 from cephvr.shared.ffmpeg_encoding_rules import _format_rate
 
 FRAME_LOG_SCHEMA_VERSION = 5
@@ -191,7 +193,10 @@ class FrameLogWriter:
         if self.file is not None or self._closed:
             raise RuntimeError("frame log has already been created or closed")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.file = self.path.open("xb", buffering=64 * 1024)
+        io_path = (
+            Path(extended_path(self.path)) if sys.platform == "win32" else self.path
+        )
+        self.file = io_path.open("xb", buffering=64 * 1024)
         self._append(
             {
                 "type": "header",

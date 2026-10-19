@@ -1,0 +1,118 @@
+{
+  "configuration_sha256": "e9d11e0f795e26f8f646ef2733cf51cf449e5b5257a749fd0be2b124939ea5ad",
+  "configuration_unchanged": true,
+  "coverage": "All four screens: nine interior points at six seeks; white tile through full composition",
+  "states": {
+    "0": {
+      "stimulus_2": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "stimulus_3": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "stimulus_4": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "stimulus_5": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      }
+    },
+    "20": {
+      "Instance_1": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "Instance_2": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "Instance_3": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "Instance_4": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      }
+    },
+    "25": {
+      "Instance_1": {
+        "phase_x": 0.0,
+        "phase_y": 2.4038461538461537,
+        "rotation": 0.0
+      },
+      "Instance_2": {
+        "phase_x": -2.4038461538461537,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "Instance_3": {
+        "phase_x": 2.4038461538461537,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "Instance_4": {
+        "phase_x": -2.4038461538461537,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      }
+    },
+    "29": {
+      "Instance_1": {
+        "phase_x": 0.0,
+        "phase_y": 4.326923076923077,
+        "rotation": 0.0
+      },
+      "Instance_2": {
+        "phase_x": -4.326923076923077,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "Instance_3": {
+        "phase_x": 4.326923076923077,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "Instance_4": {
+        "phase_x": -4.326923076923077,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      }
+    },
+    "5": {
+      "stimulus_2": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "stimulus_3": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "stimulus_4": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      },
+      "stimulus_5": {
+        "phase_x": 0.0,
+        "phase_y": 0.0,
+        "rotation": 0.0
+      }
+    }
+  },
+  "native": "unavailable: foreground window did not report a process id"
+}

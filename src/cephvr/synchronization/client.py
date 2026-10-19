@@ -85,6 +85,11 @@ class SpikeGLXControllerClient:
             raise RuntimeError(
                 f"SpikeGLX gate/trigger must both be immediate, got {readback.gate_mode}/{readback.trigger_mode}"
             )
+        if not readback.recording_starts_enabled:
+            raise RuntimeError(
+                "SpikeGLX manual recording override starts OFF; enable recording "
+                "at startup or disable the override in SpikeGLX before Setup"
+            )
         resolved_inventory = _validate_inventory(
             settings.inventory,
             readback.streams,

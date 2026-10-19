@@ -1,0 +1,17 @@
+{
+  "files": {
+    "config/runtime_gui.json": {
+      "recipe_references": 8,
+      "sha256": "57c1c18cd01008076a644b748f3ea65f558322727c51df872243b31a54a00755"
+    },
+    "config/last_configuration.json": {
+      "recipe_references": 8,
+      "sha256": "64c392a9499a3cd7f0d2d582d97a995216c1fe804193e435d8660e2482ce3a57"
+    }
+  },
+  "candidate_diff": "only8 asset paths/profiles",
+  "setup": "succeeded Ready",
+  "trial_started": false,
+  "GUI": "corrected protocol loaded through native Load dialog; visible texture.json references",
+  "staged_features": "unchanged"
+}

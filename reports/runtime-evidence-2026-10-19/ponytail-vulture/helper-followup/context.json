@@ -1,0 +1,150 @@
+{
+  "date": "2026-10-19",
+  "baseline": "source-baseline.json",
+  "scope": "Ponytail continuation: reviewed remaining unused-method findings against callers, Qt/file-button bindings and published contracts. Four helper removals; no generated bindings or contract changes.",
+  "decisions": [
+    "ARCH-002",
+    "A01",
+    "T01",
+    "G01",
+    "E08",
+    "E15"
+  ],
+  "caller_evidence": "callers-before.txt",
+  "source_check": "source-check.txt",
+  "patch": "changes.patch",
+  "removed": [
+    {
+      "name": "PixelPreparer.prepare_source_depth",
+      "reason": "No source/test/docs/contract callers. Tracking calls prepare_source_depth_into with caller-owned native_scratch; preview/recording use their own live preparation APIs."
+    },
+    {
+      "name": "PixelPreparer._reusable_output",
+      "reason": "Eager full-image bytearray allocated only for the uncalled convenience wrapper. It is not the retained SDK source owner, preview cache, conversion result or caller storage."
+    },
+    {
+      "name": "ManagedMcu.add_output",
+      "reason": "No source calls or Qt signal binding. Live MCU tests/saved pin handlers and add_mcu_output bridge route remain; role mapping remains used elsewhere."
+    },
+    {
+      "name": "SpikeGLXPanel.request_inventory_update",
+      "reason": "No calls or Qt signal binding. G01 file Load/Save persists local drafts; current transport/signal declarations and inventory_for_submit validation remain."
+    },
+    {
+      "name": "TrackingPanel.load_settings",
+      "reason": "No callers. ConfigurationFiles connects the existing Load button directly to choose(save=False); availability/validation remain in that owner."
+    }
+  ],
+  "retained": [
+    {
+      "name": "ResourceLedger.unresolved",
+      "reason": "Published in contracts/native_transport.pyi even without a direct current source caller; retain interface and cleanup evidence."
+    },
+    {
+      "name": "Native source, prepared-resource and handle owners",
+      "reason": "References pin SDK buffers/resources and cannot be removed because no Python reads are reported."
+    },
+    {
+      "name": "Qt/gRPC/Pydantic callbacks and schema/protocol fields",
+      "reason": "Virtual/framework dispatch and serialization contracts are not direct name calls; no automatic deletion."
+    }
+  ],
+  "advisory_counts": {
+    "before": 287,
+    "after": 283,
+    "source_before": 263,
+    "source_after": 259,
+    "high_confidence_after": 6
+  },
+  "changes_summary": "Four source files: 38 deleted lines, one docstring line inserted, net37 lines removed. Removed one eager full-image output allocation, without a measured throughput/memory claim.",
+  "checks": {
+    "ruff": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "tools",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "output": "ruff.txt"
+    },
+    "format": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src/cephvr/shared/pixels/preparer.py",
+        "src/cephvr/gui/managed_mcu.py",
+        "src/cephvr/gui/spikeglx.py",
+        "src/cephvr/gui/tracking.py"
+      ],
+      "exit_code": 0,
+      "output": "format.txt"
+    },
+    "mypy": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "--platform",
+        "win32",
+        "src/cephvr"
+      ],
+      "exit_code": 0,
+      "output": "mypy.txt"
+    },
+    "boundaries": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "tools/check_backend_boundaries.py"
+      ],
+      "exit_code": 0,
+      "output": "boundaries.txt"
+    },
+    "vulture-after": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "vulture",
+        "--min-confidence",
+        "60"
+      ],
+      "exit_code": 3,
+      "output": "vulture-after.txt"
+    },
+    "vulture-high": {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "vulture"
+      ],
+      "exit_code": 3,
+      "output": "vulture-high.txt"
+    }
+  },
+  "owner_tests": {
+    "command": "owners-command.json",
+    "output": "owners-tests.txt",
+    "result": "424 passed, 1 skipped, 3 deselected in 3.33s"
+  },
+  "gui_tests": {
+    "command": "gui-command.json",
+    "output": "gui-tests.txt",
+    "result": "103 passed, 541 deselected in 39.13s; QT_QPA_PLATFORM=offscreen"
+  },
+  "source_sha256": {
+    "src/cephvr/shared/pixels/preparer.py": "6307bea10b95ac1895a64bc11ca750abcea8776eeb4f748cf99db3b029571706",
+    "src/cephvr/gui/managed_mcu.py": "c51ae55ce65dd0028cadc2dfa6cdf74f56bb1e305dfcfa820904a490c44fa84a",
+    "src/cephvr/gui/spikeglx.py": "e335a1a89af7ffd7bbc3b4b81ecdb069ee95bd6f666a9392882f6ce210c9bc7b",
+    "src/cephvr/gui/tracking.py": "aa2ee6249d63093cf4971c3408b92e049ac36fbc1878575679ae36607d5072f3"
+  },
+  "limits": "No native SDK/rig, optical/scientific, live GUI or performance certification. Relevant owner and focused GUI suites run; no unrelated whole-repository rerun. Conversion/cleanup/validation method bodies remain AST-identical. Vulture remains advisory (exit3); no whitelist or CI gate. Concurrent camera-continuity and GUI edits preserved.",
+  "documentation": "Current report links/anchors and final whitespace pass; LOG records the increment and TODO preserves other owners while returning remaining advisory triage to Next.",
+  "final_source_check": "All four final source hashes match the validated snapshot."
+}

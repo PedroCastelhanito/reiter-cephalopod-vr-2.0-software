@@ -1,0 +1,1260 @@
+.............................................................FFF........ [  8%]
+........................................................................ [ 17%]
+............................................s........................... [ 26%]
+........................................................................ [ 35%]
+...................................................................s.... [ 44%]
+.......................s................................................ [ 53%]
+........................................................................ [ 62%]
+........................................................................ [ 71%]
+...................................................................s.... [ 80%]
+........................................................................ [ 88%]
+........................................................................ [ 97%]
+.................                                                        [100%]
+================================== FAILURES ===================================
+_ test_controller_recovers_expired_owned_edit_status_before_camera_stop[None-False] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-332/test_controller_recovers_expir0')
+query_fault = None, request_matches_reported_run = False
+
+    @pytest.mark.parametrize(
+        ("query_fault", "request_matches_reported_run"),
+        [
+            (None, False),
+            (None, True),
+            ("newer_known_status", True),
+            ("wrong_source", False),
+            ("wrong_operation", False),
+            ("wrong_status_operation", False),
+            ("stale_generation", False),
+        ],
+    )
+    async def test_controller_recovers_expired_owned_edit_status_before_camera_stop(
+        tmp_path: Path, query_fault: str | None, request_matches_reported_run: bool
+    ) -> None:
+        from cephvr.acquisition.coordinator.manual_preview import ManualPreview
+        from cephvr.acquisition.coordinator.state import (
+            LaunchRecord,
+            WorkerPreview,
+            WorkerRecord,
+        )
+        from cephvr.acquisition.v1 import messages_pb2 as acq
+        from cephvr.control.v1 import types_pb2 as control
+        from cephvr.shared.commands import CommandLedger
+    
+        runtime = _runtime_with_validators(tmp_path)
+        run_id = _id()
+        stale_run_id = _id()
+        _open_preview(runtime)
+        runtime.projections.devices.tracking.preview_run_id = (
+            run_id if request_matches_reported_run else stale_run_id
+        )
+        runtime.configuration_state.revision = 2
+        entry = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        entry.acquisition.tracking.enabled = True
+        entry.acquisition.tracking.device.device_id = "CAM-TRACK"
+        backend_context = pb.BackendContext(
+            backend_name="acquisition", backend_generation=_id()
+        )
+        runtime.projections.peers["acquisition"] = backend_context
+        backend_identity = pb.ProcessIdentity(
+            role="acquisition", generation=backend_context.backend_generation
+        )
+        controller_identity = pb.ProcessIdentity(
+            role="controller", generation=runtime.generation
+        )
+        settings = pb.AcquisitionSettings()
+        settings.CopyFrom(entry.acquisition)
+        policies = acquisition_pb.AcquisitionFilePolicies()
+        policies.cameras.add(
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING
+        ).transport.SetInParent()
+        configuration = ConfigurationRecord(settings, policies, revision=1)
+        worker_identity = pb.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=_id()
+        )
+        worker_owner = backend_identity
+        work = pb.WorkContext()
+        worker_context = acq.WorkerContext(
+            worker=worker_identity,
+            owner=worker_owner,
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+        )
+        preview = WorkerPreview(
+            run_id=run_id,
+            configuration_revision=1,
+            resolved_camera=acquisition_camera_pb.CameraResolvedState(),
+            started=True,
+        )
+        ledger = CommandLedger(
+            backend_context.backend_generation,
+            10_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        )
+    
+        class _WorkerPort:
+            record: WorkerRecord
+    
+            async def stop_preview(self, request, *, deadline_ns):
+                child = self.record.child_operations[request.command.command_id]
+                child.report = control.OperationState(
+                    context=control.OperationContext(command_id=child.command_id),
+                    complete=True,
+                    succeeded=True,
+                )
+                child.report_ingress_ns = runtime.clock()
+                child.report_revision = 1
+                child.updated.set()
+                preview.started = False
+                preview.stopped_event.set()
+                preview.cleanup_event.set()
+                assert request.preview_run_id == run_id
+                assert deadline_ns == child.deadline_ns
+                return control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED,
+                    command_id=request.command.command_id,
+                )
+    
+        port = _WorkerPort()
+        worker = WorkerRecord(
+            context=worker_context,
+            port=port,  # type: ignore[arg-type]
+            launch=LaunchRecord(
+                command_id=_id(),
+                worker=worker_identity,
+                owner=worker_owner,
+                work=work,
+                camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+                parent_operation=control.OperationContext(command_id=_id()),
+                planned_ns=host_time_ns(),
+            ),
+            commands=ledger,
+            preview=preview,
+        )
+        port.record = worker
+        identity = CoordinatorIdentity(
+            backend=backend_context,
+            process=backend_identity,
+            controller=controller_identity,
+            supervisor=pb.ProcessIdentity(role="supervisor", generation=_id()),
+            tracking=pb.ProcessIdentity(role="tracking", generation=_id()),
+        )
+        resolution = ConfigurationResolution(
+            identity=identity,
+            configuration=configuration,
+            controller=cast(Any, object()),
+            lock=asyncio.Lock(),
+            clock=host_time_ns,
+        )
+        edit_id = _id()
+        original_deadline_ns = runtime.clock() - 1
+        edit = svc.BackendCommand(
+            command_id=edit_id,
+            issuer=controller_identity,
+            target=backend_context,
+            parent_operation=control.OperationContext(command_id=edit_id),
+        )
+        resolution_operation = await resolution.begin(
+            edit,
+            expected_cameras={acquisition_camera_pb.CAMERA_ROLE_TRACKING},
+            request_revision=1,
+            deadline_ns=host_time_ns() + 5_000_000_000,
+            device_work_quiescent=lambda: worker.preview is None,
+        )
+        await resolution.cancel(resolution_operation)
+        runtime.device_state.configuration_edit_terminals[edit_id] = (
+            ConfigurationEditTerminal(
+                operation_id=edit_id,
+                source=pb.BackendContext.FromString(
+                    backend_context.SerializeToString(deterministic=True)
+                ),
+                deadline_ns=original_deadline_ns,
+            )
+        )
+    
+        apply_ledger = CommandLedger(
+            backend_context.backend_generation,
+            10_000_000_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=16_384,
+        )
+        apply_command = svc.BackendCommand(
+            command_id=edit_id,
+            target=backend_context,
+        )
+        apply_ledger.admit(
+            edit_id,
+            b"ApplyCameraSettings\0" + apply_command.SerializeToString(deterministic=True),
+            original_deadline_ns - 1,
+            work_key=edit_id,
+            deadline_ns=original_deadline_ns,
+        )
+        apply_ledger.complete(
+            edit_id,
+            control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED,
+                command_id=edit_id,
+            ).SerializeToString(deterministic=True),
+            original_deadline_ns,
+        )
+        retained_operation = control.OperationState(
+            context=control.OperationContext(command_id=edit_id),
+            command="ApplyCameraSettings",
+            complete=True,
+            succeeded=False,
+        )
+        apply_ledger.complete_executor(
+            edit_id,
+            retained_operation.SerializeToString(deterministic=True),
+            original_deadline_ns,
+        )
+    
+        class _ExpiredController:
+            async def report_acquisition_device_status(self, *_args, **_kwargs):
+                return pb.ReportReceipt(result=pb.COMMAND_RESULT_REJECTED)
+    
+        reporter = ManualDeviceStatusReporter(
+            identity=identity,
+            controller=cast(Any, _ExpiredController()),
+            commands=apply_ledger,
+            pulse=PulseRecord(),
+            clock=runtime.clock,
+        )
+        resolved = acquisition_camera_pb.CameraResolvedState()
+        resolved.device.configured_id = "CAM-TRACK"
+        resolved.device.physical_id = "physical-track"
+        resolved.applied.settings.SetInParent()
+        resolved.capabilities.SetInParent()
+        reporter.resolve_camera(
+            acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+            resolved,
+            device_open=True,
+            preview_prepared=True,
+            preview_running=True,
+            preview_run_id=run_id,
+            cleanup_pending=True,
+        )
+        expired_receipt = await reporter.report(
+            apply_command,
+            command_name="ApplyCameraSettings",
+            succeeded=False,
+            deadline_ns=original_deadline_ns,
+            failure="preview restart status delivery expired",
+        )
+        assert expired_receipt.result == pb.COMMAND_RESULT_REJECTED
+        retained_status = reporter.get_report(edit_id)
+        assert retained_status is not None
+        assert retained_status.views.observed_monotonic_ns > original_deadline_ns
+        queries = CoordinatorQueries(
+            identity=identity,
+            session_slot=SessionSlot(),
+            workers={},
+            commands=apply_ledger,
+            device_status=reporter,
+            current_error=lambda: None,
+            clock=runtime.clock,
+        )
+    
+        class _DeviceStatus:
+            def reserve(self, _command):
+                return None
+    
+            def resolve_camera(self, *_args, **_kwargs):
+                return None
+    
+        class _ControllerBackend:
+            context = backend_context
+    
+            def __init__(self) -> None:
+                self.retained_queries: list[tuple[svc.RetainedResultQuery, int]] = []
+                self.camera_deadlines: list[int] = []
+    
+            async def get_retained_result(self, request, *, deadline_ns):
+                self.retained_queries.append((request, deadline_ns))
+                result = await queries.get_retained_result(request, deadline_ns=deadline_ns)
+                if query_fault == "wrong_source":
+                    result.backend.backend_generation = _id()
+                elif query_fault == "wrong_operation":
+                    result.operation.context.command_id = _id()
+                elif query_fault == "wrong_status_operation":
+                    result.acquisition_device_result.operation.command_id = _id()
+                elif query_fault == "stale_generation":
+                    result.acquisition_device_result.views.source.backend_generation = _id()
+                return result
+    
+            async def execute_camera_command(self, request, *, deadline_ns):
+                self.camera_deadlines.append(deadline_ns)
+                return await manual.execute(request, deadline_ns=deadline_ns)
+    
+        async def complete(*_args, **_kwargs):
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+    
+        manual = ManualPreview.__new__(ManualPreview)
+        manual.identity = identity
+        manual.configuration = configuration
+        manual.session_slot = SessionSlot()
+        manual.pulse = PulseRecord()
+        manual.workers = cast(
+            Any,
+            SimpleNamespace(workers={acquisition_camera_pb.CAMERA_ROLE_TRACKING: worker}),
+        )
+        manual.resolution = resolution
+        manual.device_status = _DeviceStatus()
+        manual.lock = asyncio.Lock()
+        manual.clock = runtime.clock
+        manual.windows = SimpleNamespace(close=complete)
+    
+        async def retire_and_release(_preview, *, deadline_ns):
+            _ = deadline_ns
+    
+        manual.transfers = SimpleNamespace(
+            retire=lambda _preview: None,
+            retire_and_release=retire_and_release,
+            close_retired_resource=lambda _preview: None,
+        )
+        manual.resources = {}
+        manual.results = SimpleNamespace(complete=complete)
+        controller_backend = _ControllerBackend()
+        runtime.camera.backends["acquisition"] = cast(Any, controller_backend)
+        runtime.camera.file_policy_loader = lambda _names: {"acquisition": policies}
+        bind_ledger(runtime)
+        client_id, watch_id, control_generation = _id(), _id(), _id()
+        runtime.control.watches[(client_id, watch_id)] = Watch(
+            client_id, watch_id, asyncio.Queue(maxsize=1), runtime.control.revision
+        )
+        runtime.control.owner = (client_id, watch_id, control_generation)
+        tracking_view = runtime.projections.devices.tracking
+        tracking_view.preview_running = False
+        tracking_view.cleanup_pending = True
+    
+        request = svc.CameraCommandRequest(
+            kind=svc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+            expected_configuration_revision=2,
+            preview_run_id=(run_id if request_matches_reported_run else stale_run_id),
+        )
+        request.command.operator.command_id = _id()
+        request.command.controller_generation = runtime.generation
+        request.command.operator.client_id = client_id
+        request.command.operator.control_generation = control_generation
+        request.kind = svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+        request.preview_run_id = tracking_view.preview_run_id
+        request.command.operator.command_id = _id()
+        show_admission = await runtime.execute_camera_command(request)
+        assert show_admission.result == pb.COMMAND_RESULT_REJECTED
+        assert show_admission.failure.message == "current preview run does not match"
+    
+        request.kind = svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
+        request.command.operator.command_id = _id()
+        request.preview_consumer.role = "gui"
+        request.preview_consumer.generation = client_id
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
+        attach_admission = await runtime.execute_camera_command(request)
+        assert attach_admission.result == pb.COMMAND_RESULT_REJECTED
+        assert attach_admission.failure.message == "current preview run does not match"
+    
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        request.kind = svc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+        request.ClearField("preview_consumer")
+        request.command.operator.command_id = _id()
+        async with runtime.lifecycle.lock:
+            exact_cleanup_selection = runtime.camera._select_locked(request)
+        assert not isinstance(exact_cleanup_selection, pb.CommandAdmission)
+        if query_fault == "newer_known_status":
+            newer_operation_id = _id()
+            newer_status = svc.AcquisitionDeviceStatusReport.FromString(
+                retained_status.SerializeToString(deterministic=True)
+            )
+            newer_status.operation.command_id = newer_operation_id
+            newer_status.result.context.command_id = newer_operation_id
+            newer_status.result.succeeded = True
+            newer_status.result.ClearField("failure")
+            newer_status.views.state_revision = 3
+            newer_status.views.observed_monotonic_ns = runtime.clock()
+            runtime.device_state.configuration_edit_terminals[newer_operation_id] = (
+                ConfigurationEditTerminal(
+                    operation_id=newer_operation_id,
+                    source=backend_context,
+                    deadline_ns=original_deadline_ns,
+                )
+            )
+            assert (
+                await runtime.report_projection("devices", newer_status, runtime.clock())
+            ).result == pb.COMMAND_RESULT_ACCEPTED
+            tracking_view = runtime.projections.devices.tracking
+        tracking_view.preview_running = True
+        tracking_view.cleanup_pending = False
+        admission = await runtime.execute_camera_command(request)
+    
+        if query_fault == "newer_known_status":
+            assert controller_backend.retained_queries == []
+            assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+            assert len(controller_backend.camera_deadlines) == 1
+        elif query_fault is not None:
+            assert len(controller_backend.retained_queries) == 1
+            query, query_deadline_ns = controller_backend.retained_queries[0]
+            assert query.command_id == edit_id
+            assert query.query.target == backend_context
+            assert query.query.work == pb.WorkContext()
+            assert query_deadline_ns > runtime.clock()
+            assert admission.result == pb.COMMAND_RESULT_REJECTED
+            assert admission.failure.message == (
+                "owned camera cleanup status could not be reconciled"
+            )
+            assert (
+                runtime.device_state.configuration_edit_terminals[edit_id].device_status
+                is None
+            )
+            assert (
+                runtime.projections.devices.tracking.preview_run_id
+                == tracking_view.preview_run_id
+            )
+            assert worker.preview is not None
+        else:
+            assert len(controller_backend.retained_queries) == 1
+            query, query_deadline_ns = controller_backend.retained_queries[0]
+            assert query.command_id == edit_id
+            assert query.query.target == backend_context
+            assert query.query.work == pb.WorkContext()
+            assert query_deadline_ns > runtime.clock()
+        if query_fault is None and request_matches_reported_run:
+            assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+            assert len(controller_backend.camera_deadlines) == 1
+            assert controller_backend.camera_deadlines[0] == query_deadline_ns
+        elif query_fault is None:
+            assert admission.result == pb.COMMAND_RESULT_REJECTED
+            assert admission.failure.message == "current preview run does not match"
+            assert runtime.projections.devices.tracking.preview_run_id == run_id
+            terminal = runtime.device_state.configuration_edit_terminals[edit_id]
+            assert terminal.device_status == retained_status
+            assert terminal.device_status_late
+    
+            request.preview_run_id = _id()
+            request.command.operator.command_id = _id()
+            wrong_run_admission = await runtime.execute_camera_command(request)
+            assert wrong_run_admission.result == pb.COMMAND_RESULT_REJECTED
+            request.preview_run_id = run_id
+            request.command.operator.command_id = _id()
+            admission = await runtime.execute_camera_command(request)
+>           assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+E           AssertionError: '_DeviceStatus' object has no attribute 'progress'
+E           assert 2 == 1
+E            +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "REJECTED"\n  message: "\'_DeviceStatus\' object has no attribute \'progress\'"\n}\ncommand_id: "b44aadfc-60b3-48f6-8d40-0fbb0260a079"\n.result
+E            +  and   1 = pb.COMMAND_RESULT_ACCEPTED
+
+tests\controller\test_camera_configuration.py:1912: AssertionError
+_ test_controller_recovers_expired_owned_edit_status_before_camera_stop[None-True] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-332/test_controller_recovers_expir1')
+query_fault = None, request_matches_reported_run = True
+
+    @pytest.mark.parametrize(
+        ("query_fault", "request_matches_reported_run"),
+        [
+            (None, False),
+            (None, True),
+            ("newer_known_status", True),
+            ("wrong_source", False),
+            ("wrong_operation", False),
+            ("wrong_status_operation", False),
+            ("stale_generation", False),
+        ],
+    )
+    async def test_controller_recovers_expired_owned_edit_status_before_camera_stop(
+        tmp_path: Path, query_fault: str | None, request_matches_reported_run: bool
+    ) -> None:
+        from cephvr.acquisition.coordinator.manual_preview import ManualPreview
+        from cephvr.acquisition.coordinator.state import (
+            LaunchRecord,
+            WorkerPreview,
+            WorkerRecord,
+        )
+        from cephvr.acquisition.v1 import messages_pb2 as acq
+        from cephvr.control.v1 import types_pb2 as control
+        from cephvr.shared.commands import CommandLedger
+    
+        runtime = _runtime_with_validators(tmp_path)
+        run_id = _id()
+        stale_run_id = _id()
+        _open_preview(runtime)
+        runtime.projections.devices.tracking.preview_run_id = (
+            run_id if request_matches_reported_run else stale_run_id
+        )
+        runtime.configuration_state.revision = 2
+        entry = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        entry.acquisition.tracking.enabled = True
+        entry.acquisition.tracking.device.device_id = "CAM-TRACK"
+        backend_context = pb.BackendContext(
+            backend_name="acquisition", backend_generation=_id()
+        )
+        runtime.projections.peers["acquisition"] = backend_context
+        backend_identity = pb.ProcessIdentity(
+            role="acquisition", generation=backend_context.backend_generation
+        )
+        controller_identity = pb.ProcessIdentity(
+            role="controller", generation=runtime.generation
+        )
+        settings = pb.AcquisitionSettings()
+        settings.CopyFrom(entry.acquisition)
+        policies = acquisition_pb.AcquisitionFilePolicies()
+        policies.cameras.add(
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING
+        ).transport.SetInParent()
+        configuration = ConfigurationRecord(settings, policies, revision=1)
+        worker_identity = pb.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=_id()
+        )
+        worker_owner = backend_identity
+        work = pb.WorkContext()
+        worker_context = acq.WorkerContext(
+            worker=worker_identity,
+            owner=worker_owner,
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+        )
+        preview = WorkerPreview(
+            run_id=run_id,
+            configuration_revision=1,
+            resolved_camera=acquisition_camera_pb.CameraResolvedState(),
+            started=True,
+        )
+        ledger = CommandLedger(
+            backend_context.backend_generation,
+            10_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        )
+    
+        class _WorkerPort:
+            record: WorkerRecord
+    
+            async def stop_preview(self, request, *, deadline_ns):
+                child = self.record.child_operations[request.command.command_id]
+                child.report = control.OperationState(
+                    context=control.OperationContext(command_id=child.command_id),
+                    complete=True,
+                    succeeded=True,
+                )
+                child.report_ingress_ns = runtime.clock()
+                child.report_revision = 1
+                child.updated.set()
+                preview.started = False
+                preview.stopped_event.set()
+                preview.cleanup_event.set()
+                assert request.preview_run_id == run_id
+                assert deadline_ns == child.deadline_ns
+                return control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED,
+                    command_id=request.command.command_id,
+                )
+    
+        port = _WorkerPort()
+        worker = WorkerRecord(
+            context=worker_context,
+            port=port,  # type: ignore[arg-type]
+            launch=LaunchRecord(
+                command_id=_id(),
+                worker=worker_identity,
+                owner=worker_owner,
+                work=work,
+                camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+                parent_operation=control.OperationContext(command_id=_id()),
+                planned_ns=host_time_ns(),
+            ),
+            commands=ledger,
+            preview=preview,
+        )
+        port.record = worker
+        identity = CoordinatorIdentity(
+            backend=backend_context,
+            process=backend_identity,
+            controller=controller_identity,
+            supervisor=pb.ProcessIdentity(role="supervisor", generation=_id()),
+            tracking=pb.ProcessIdentity(role="tracking", generation=_id()),
+        )
+        resolution = ConfigurationResolution(
+            identity=identity,
+            configuration=configuration,
+            controller=cast(Any, object()),
+            lock=asyncio.Lock(),
+            clock=host_time_ns,
+        )
+        edit_id = _id()
+        original_deadline_ns = runtime.clock() - 1
+        edit = svc.BackendCommand(
+            command_id=edit_id,
+            issuer=controller_identity,
+            target=backend_context,
+            parent_operation=control.OperationContext(command_id=edit_id),
+        )
+        resolution_operation = await resolution.begin(
+            edit,
+            expected_cameras={acquisition_camera_pb.CAMERA_ROLE_TRACKING},
+            request_revision=1,
+            deadline_ns=host_time_ns() + 5_000_000_000,
+            device_work_quiescent=lambda: worker.preview is None,
+        )
+        await resolution.cancel(resolution_operation)
+        runtime.device_state.configuration_edit_terminals[edit_id] = (
+            ConfigurationEditTerminal(
+                operation_id=edit_id,
+                source=pb.BackendContext.FromString(
+                    backend_context.SerializeToString(deterministic=True)
+                ),
+                deadline_ns=original_deadline_ns,
+            )
+        )
+    
+        apply_ledger = CommandLedger(
+            backend_context.backend_generation,
+            10_000_000_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=16_384,
+        )
+        apply_command = svc.BackendCommand(
+            command_id=edit_id,
+            target=backend_context,
+        )
+        apply_ledger.admit(
+            edit_id,
+            b"ApplyCameraSettings\0" + apply_command.SerializeToString(deterministic=True),
+            original_deadline_ns - 1,
+            work_key=edit_id,
+            deadline_ns=original_deadline_ns,
+        )
+        apply_ledger.complete(
+            edit_id,
+            control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED,
+                command_id=edit_id,
+            ).SerializeToString(deterministic=True),
+            original_deadline_ns,
+        )
+        retained_operation = control.OperationState(
+            context=control.OperationContext(command_id=edit_id),
+            command="ApplyCameraSettings",
+            complete=True,
+            succeeded=False,
+        )
+        apply_ledger.complete_executor(
+            edit_id,
+            retained_operation.SerializeToString(deterministic=True),
+            original_deadline_ns,
+        )
+    
+        class _ExpiredController:
+            async def report_acquisition_device_status(self, *_args, **_kwargs):
+                return pb.ReportReceipt(result=pb.COMMAND_RESULT_REJECTED)
+    
+        reporter = ManualDeviceStatusReporter(
+            identity=identity,
+            controller=cast(Any, _ExpiredController()),
+            commands=apply_ledger,
+            pulse=PulseRecord(),
+            clock=runtime.clock,
+        )
+        resolved = acquisition_camera_pb.CameraResolvedState()
+        resolved.device.configured_id = "CAM-TRACK"
+        resolved.device.physical_id = "physical-track"
+        resolved.applied.settings.SetInParent()
+        resolved.capabilities.SetInParent()
+        reporter.resolve_camera(
+            acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+            resolved,
+            device_open=True,
+            preview_prepared=True,
+            preview_running=True,
+            preview_run_id=run_id,
+            cleanup_pending=True,
+        )
+        expired_receipt = await reporter.report(
+            apply_command,
+            command_name="ApplyCameraSettings",
+            succeeded=False,
+            deadline_ns=original_deadline_ns,
+            failure="preview restart status delivery expired",
+        )
+        assert expired_receipt.result == pb.COMMAND_RESULT_REJECTED
+        retained_status = reporter.get_report(edit_id)
+        assert retained_status is not None
+        assert retained_status.views.observed_monotonic_ns > original_deadline_ns
+        queries = CoordinatorQueries(
+            identity=identity,
+            session_slot=SessionSlot(),
+            workers={},
+            commands=apply_ledger,
+            device_status=reporter,
+            current_error=lambda: None,
+            clock=runtime.clock,
+        )
+    
+        class _DeviceStatus:
+            def reserve(self, _command):
+                return None
+    
+            def resolve_camera(self, *_args, **_kwargs):
+                return None
+    
+        class _ControllerBackend:
+            context = backend_context
+    
+            def __init__(self) -> None:
+                self.retained_queries: list[tuple[svc.RetainedResultQuery, int]] = []
+                self.camera_deadlines: list[int] = []
+    
+            async def get_retained_result(self, request, *, deadline_ns):
+                self.retained_queries.append((request, deadline_ns))
+                result = await queries.get_retained_result(request, deadline_ns=deadline_ns)
+                if query_fault == "wrong_source":
+                    result.backend.backend_generation = _id()
+                elif query_fault == "wrong_operation":
+                    result.operation.context.command_id = _id()
+                elif query_fault == "wrong_status_operation":
+                    result.acquisition_device_result.operation.command_id = _id()
+                elif query_fault == "stale_generation":
+                    result.acquisition_device_result.views.source.backend_generation = _id()
+                return result
+    
+            async def execute_camera_command(self, request, *, deadline_ns):
+                self.camera_deadlines.append(deadline_ns)
+                return await manual.execute(request, deadline_ns=deadline_ns)
+    
+        async def complete(*_args, **_kwargs):
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+    
+        manual = ManualPreview.__new__(ManualPreview)
+        manual.identity = identity
+        manual.configuration = configuration
+        manual.session_slot = SessionSlot()
+        manual.pulse = PulseRecord()
+        manual.workers = cast(
+            Any,
+            SimpleNamespace(workers={acquisition_camera_pb.CAMERA_ROLE_TRACKING: worker}),
+        )
+        manual.resolution = resolution
+        manual.device_status = _DeviceStatus()
+        manual.lock = asyncio.Lock()
+        manual.clock = runtime.clock
+        manual.windows = SimpleNamespace(close=complete)
+    
+        async def retire_and_release(_preview, *, deadline_ns):
+            _ = deadline_ns
+    
+        manual.transfers = SimpleNamespace(
+            retire=lambda _preview: None,
+            retire_and_release=retire_and_release,
+            close_retired_resource=lambda _preview: None,
+        )
+        manual.resources = {}
+        manual.results = SimpleNamespace(complete=complete)
+        controller_backend = _ControllerBackend()
+        runtime.camera.backends["acquisition"] = cast(Any, controller_backend)
+        runtime.camera.file_policy_loader = lambda _names: {"acquisition": policies}
+        bind_ledger(runtime)
+        client_id, watch_id, control_generation = _id(), _id(), _id()
+        runtime.control.watches[(client_id, watch_id)] = Watch(
+            client_id, watch_id, asyncio.Queue(maxsize=1), runtime.control.revision
+        )
+        runtime.control.owner = (client_id, watch_id, control_generation)
+        tracking_view = runtime.projections.devices.tracking
+        tracking_view.preview_running = False
+        tracking_view.cleanup_pending = True
+    
+        request = svc.CameraCommandRequest(
+            kind=svc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+            expected_configuration_revision=2,
+            preview_run_id=(run_id if request_matches_reported_run else stale_run_id),
+        )
+        request.command.operator.command_id = _id()
+        request.command.controller_generation = runtime.generation
+        request.command.operator.client_id = client_id
+        request.command.operator.control_generation = control_generation
+        request.kind = svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+        request.preview_run_id = tracking_view.preview_run_id
+        request.command.operator.command_id = _id()
+        show_admission = await runtime.execute_camera_command(request)
+        assert show_admission.result == pb.COMMAND_RESULT_REJECTED
+        assert show_admission.failure.message == "current preview run does not match"
+    
+        request.kind = svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
+        request.command.operator.command_id = _id()
+        request.preview_consumer.role = "gui"
+        request.preview_consumer.generation = client_id
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
+        attach_admission = await runtime.execute_camera_command(request)
+        assert attach_admission.result == pb.COMMAND_RESULT_REJECTED
+        assert attach_admission.failure.message == "current preview run does not match"
+    
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        request.kind = svc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+        request.ClearField("preview_consumer")
+        request.command.operator.command_id = _id()
+        async with runtime.lifecycle.lock:
+            exact_cleanup_selection = runtime.camera._select_locked(request)
+        assert not isinstance(exact_cleanup_selection, pb.CommandAdmission)
+        if query_fault == "newer_known_status":
+            newer_operation_id = _id()
+            newer_status = svc.AcquisitionDeviceStatusReport.FromString(
+                retained_status.SerializeToString(deterministic=True)
+            )
+            newer_status.operation.command_id = newer_operation_id
+            newer_status.result.context.command_id = newer_operation_id
+            newer_status.result.succeeded = True
+            newer_status.result.ClearField("failure")
+            newer_status.views.state_revision = 3
+            newer_status.views.observed_monotonic_ns = runtime.clock()
+            runtime.device_state.configuration_edit_terminals[newer_operation_id] = (
+                ConfigurationEditTerminal(
+                    operation_id=newer_operation_id,
+                    source=backend_context,
+                    deadline_ns=original_deadline_ns,
+                )
+            )
+            assert (
+                await runtime.report_projection("devices", newer_status, runtime.clock())
+            ).result == pb.COMMAND_RESULT_ACCEPTED
+            tracking_view = runtime.projections.devices.tracking
+        tracking_view.preview_running = True
+        tracking_view.cleanup_pending = False
+        admission = await runtime.execute_camera_command(request)
+    
+        if query_fault == "newer_known_status":
+            assert controller_backend.retained_queries == []
+            assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+            assert len(controller_backend.camera_deadlines) == 1
+        elif query_fault is not None:
+            assert len(controller_backend.retained_queries) == 1
+            query, query_deadline_ns = controller_backend.retained_queries[0]
+            assert query.command_id == edit_id
+            assert query.query.target == backend_context
+            assert query.query.work == pb.WorkContext()
+            assert query_deadline_ns > runtime.clock()
+            assert admission.result == pb.COMMAND_RESULT_REJECTED
+            assert admission.failure.message == (
+                "owned camera cleanup status could not be reconciled"
+            )
+            assert (
+                runtime.device_state.configuration_edit_terminals[edit_id].device_status
+                is None
+            )
+            assert (
+                runtime.projections.devices.tracking.preview_run_id
+                == tracking_view.preview_run_id
+            )
+            assert worker.preview is not None
+        else:
+            assert len(controller_backend.retained_queries) == 1
+            query, query_deadline_ns = controller_backend.retained_queries[0]
+            assert query.command_id == edit_id
+            assert query.query.target == backend_context
+            assert query.query.work == pb.WorkContext()
+            assert query_deadline_ns > runtime.clock()
+        if query_fault is None and request_matches_reported_run:
+>           assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+E           AssertionError: '_DeviceStatus' object has no attribute 'progress'
+E           assert 2 == 1
+E            +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "REJECTED"\n  message: "\'_DeviceStatus\' object has no attribute \'progress\'"\n}\ncommand_id: "1b51215e-dab3-4f6b-a00e-5eb40bd40837"\n.result
+E            +  and   1 = pb.COMMAND_RESULT_ACCEPTED
+
+tests\controller\test_camera_configuration.py:1894: AssertionError
+_ test_controller_recovers_expired_owned_edit_status_before_camera_stop[newer_known_status-True] _
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-332/test_controller_recovers_expir2')
+query_fault = 'newer_known_status', request_matches_reported_run = True
+
+    @pytest.mark.parametrize(
+        ("query_fault", "request_matches_reported_run"),
+        [
+            (None, False),
+            (None, True),
+            ("newer_known_status", True),
+            ("wrong_source", False),
+            ("wrong_operation", False),
+            ("wrong_status_operation", False),
+            ("stale_generation", False),
+        ],
+    )
+    async def test_controller_recovers_expired_owned_edit_status_before_camera_stop(
+        tmp_path: Path, query_fault: str | None, request_matches_reported_run: bool
+    ) -> None:
+        from cephvr.acquisition.coordinator.manual_preview import ManualPreview
+        from cephvr.acquisition.coordinator.state import (
+            LaunchRecord,
+            WorkerPreview,
+            WorkerRecord,
+        )
+        from cephvr.acquisition.v1 import messages_pb2 as acq
+        from cephvr.control.v1 import types_pb2 as control
+        from cephvr.shared.commands import CommandLedger
+    
+        runtime = _runtime_with_validators(tmp_path)
+        run_id = _id()
+        stale_run_id = _id()
+        _open_preview(runtime)
+        runtime.projections.devices.tracking.preview_run_id = (
+            run_id if request_matches_reported_run else stale_run_id
+        )
+        runtime.configuration_state.revision = 2
+        entry = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        entry.acquisition.tracking.enabled = True
+        entry.acquisition.tracking.device.device_id = "CAM-TRACK"
+        backend_context = pb.BackendContext(
+            backend_name="acquisition", backend_generation=_id()
+        )
+        runtime.projections.peers["acquisition"] = backend_context
+        backend_identity = pb.ProcessIdentity(
+            role="acquisition", generation=backend_context.backend_generation
+        )
+        controller_identity = pb.ProcessIdentity(
+            role="controller", generation=runtime.generation
+        )
+        settings = pb.AcquisitionSettings()
+        settings.CopyFrom(entry.acquisition)
+        policies = acquisition_pb.AcquisitionFilePolicies()
+        policies.cameras.add(
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING
+        ).transport.SetInParent()
+        configuration = ConfigurationRecord(settings, policies, revision=1)
+        worker_identity = pb.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=_id()
+        )
+        worker_owner = backend_identity
+        work = pb.WorkContext()
+        worker_context = acq.WorkerContext(
+            worker=worker_identity,
+            owner=worker_owner,
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+        )
+        preview = WorkerPreview(
+            run_id=run_id,
+            configuration_revision=1,
+            resolved_camera=acquisition_camera_pb.CameraResolvedState(),
+            started=True,
+        )
+        ledger = CommandLedger(
+            backend_context.backend_generation,
+            10_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        )
+    
+        class _WorkerPort:
+            record: WorkerRecord
+    
+            async def stop_preview(self, request, *, deadline_ns):
+                child = self.record.child_operations[request.command.command_id]
+                child.report = control.OperationState(
+                    context=control.OperationContext(command_id=child.command_id),
+                    complete=True,
+                    succeeded=True,
+                )
+                child.report_ingress_ns = runtime.clock()
+                child.report_revision = 1
+                child.updated.set()
+                preview.started = False
+                preview.stopped_event.set()
+                preview.cleanup_event.set()
+                assert request.preview_run_id == run_id
+                assert deadline_ns == child.deadline_ns
+                return control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED,
+                    command_id=request.command.command_id,
+                )
+    
+        port = _WorkerPort()
+        worker = WorkerRecord(
+            context=worker_context,
+            port=port,  # type: ignore[arg-type]
+            launch=LaunchRecord(
+                command_id=_id(),
+                worker=worker_identity,
+                owner=worker_owner,
+                work=work,
+                camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+                parent_operation=control.OperationContext(command_id=_id()),
+                planned_ns=host_time_ns(),
+            ),
+            commands=ledger,
+            preview=preview,
+        )
+        port.record = worker
+        identity = CoordinatorIdentity(
+            backend=backend_context,
+            process=backend_identity,
+            controller=controller_identity,
+            supervisor=pb.ProcessIdentity(role="supervisor", generation=_id()),
+            tracking=pb.ProcessIdentity(role="tracking", generation=_id()),
+        )
+        resolution = ConfigurationResolution(
+            identity=identity,
+            configuration=configuration,
+            controller=cast(Any, object()),
+            lock=asyncio.Lock(),
+            clock=host_time_ns,
+        )
+        edit_id = _id()
+        original_deadline_ns = runtime.clock() - 1
+        edit = svc.BackendCommand(
+            command_id=edit_id,
+            issuer=controller_identity,
+            target=backend_context,
+            parent_operation=control.OperationContext(command_id=edit_id),
+        )
+        resolution_operation = await resolution.begin(
+            edit,
+            expected_cameras={acquisition_camera_pb.CAMERA_ROLE_TRACKING},
+            request_revision=1,
+            deadline_ns=host_time_ns() + 5_000_000_000,
+            device_work_quiescent=lambda: worker.preview is None,
+        )
+        await resolution.cancel(resolution_operation)
+        runtime.device_state.configuration_edit_terminals[edit_id] = (
+            ConfigurationEditTerminal(
+                operation_id=edit_id,
+                source=pb.BackendContext.FromString(
+                    backend_context.SerializeToString(deterministic=True)
+                ),
+                deadline_ns=original_deadline_ns,
+            )
+        )
+    
+        apply_ledger = CommandLedger(
+            backend_context.backend_generation,
+            10_000_000_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=16_384,
+        )
+        apply_command = svc.BackendCommand(
+            command_id=edit_id,
+            target=backend_context,
+        )
+        apply_ledger.admit(
+            edit_id,
+            b"ApplyCameraSettings\0" + apply_command.SerializeToString(deterministic=True),
+            original_deadline_ns - 1,
+            work_key=edit_id,
+            deadline_ns=original_deadline_ns,
+        )
+        apply_ledger.complete(
+            edit_id,
+            control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED,
+                command_id=edit_id,
+            ).SerializeToString(deterministic=True),
+            original_deadline_ns,
+        )
+        retained_operation = control.OperationState(
+            context=control.OperationContext(command_id=edit_id),
+            command="ApplyCameraSettings",
+            complete=True,
+            succeeded=False,
+        )
+        apply_ledger.complete_executor(
+            edit_id,
+            retained_operation.SerializeToString(deterministic=True),
+            original_deadline_ns,
+        )
+    
+        class _ExpiredController:
+            async def report_acquisition_device_status(self, *_args, **_kwargs):
+                return pb.ReportReceipt(result=pb.COMMAND_RESULT_REJECTED)
+    
+        reporter = ManualDeviceStatusReporter(
+            identity=identity,
+            controller=cast(Any, _ExpiredController()),
+            commands=apply_ledger,
+            pulse=PulseRecord(),
+            clock=runtime.clock,
+        )
+        resolved = acquisition_camera_pb.CameraResolvedState()
+        resolved.device.configured_id = "CAM-TRACK"
+        resolved.device.physical_id = "physical-track"
+        resolved.applied.settings.SetInParent()
+        resolved.capabilities.SetInParent()
+        reporter.resolve_camera(
+            acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+            resolved,
+            device_open=True,
+            preview_prepared=True,
+            preview_running=True,
+            preview_run_id=run_id,
+            cleanup_pending=True,
+        )
+        expired_receipt = await reporter.report(
+            apply_command,
+            command_name="ApplyCameraSettings",
+            succeeded=False,
+            deadline_ns=original_deadline_ns,
+            failure="preview restart status delivery expired",
+        )
+        assert expired_receipt.result == pb.COMMAND_RESULT_REJECTED
+        retained_status = reporter.get_report(edit_id)
+        assert retained_status is not None
+        assert retained_status.views.observed_monotonic_ns > original_deadline_ns
+        queries = CoordinatorQueries(
+            identity=identity,
+            session_slot=SessionSlot(),
+            workers={},
+            commands=apply_ledger,
+            device_status=reporter,
+            current_error=lambda: None,
+            clock=runtime.clock,
+        )
+    
+        class _DeviceStatus:
+            def reserve(self, _command):
+                return None
+    
+            def resolve_camera(self, *_args, **_kwargs):
+                return None
+    
+        class _ControllerBackend:
+            context = backend_context
+    
+            def __init__(self) -> None:
+                self.retained_queries: list[tuple[svc.RetainedResultQuery, int]] = []
+                self.camera_deadlines: list[int] = []
+    
+            async def get_retained_result(self, request, *, deadline_ns):
+                self.retained_queries.append((request, deadline_ns))
+                result = await queries.get_retained_result(request, deadline_ns=deadline_ns)
+                if query_fault == "wrong_source":
+                    result.backend.backend_generation = _id()
+                elif query_fault == "wrong_operation":
+                    result.operation.context.command_id = _id()
+                elif query_fault == "wrong_status_operation":
+                    result.acquisition_device_result.operation.command_id = _id()
+                elif query_fault == "stale_generation":
+                    result.acquisition_device_result.views.source.backend_generation = _id()
+                return result
+    
+            async def execute_camera_command(self, request, *, deadline_ns):
+                self.camera_deadlines.append(deadline_ns)
+                return await manual.execute(request, deadline_ns=deadline_ns)
+    
+        async def complete(*_args, **_kwargs):
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+    
+        manual = ManualPreview.__new__(ManualPreview)
+        manual.identity = identity
+        manual.configuration = configuration
+        manual.session_slot = SessionSlot()
+        manual.pulse = PulseRecord()
+        manual.workers = cast(
+            Any,
+            SimpleNamespace(workers={acquisition_camera_pb.CAMERA_ROLE_TRACKING: worker}),
+        )
+        manual.resolution = resolution
+        manual.device_status = _DeviceStatus()
+        manual.lock = asyncio.Lock()
+        manual.clock = runtime.clock
+        manual.windows = SimpleNamespace(close=complete)
+    
+        async def retire_and_release(_preview, *, deadline_ns):
+            _ = deadline_ns
+    
+        manual.transfers = SimpleNamespace(
+            retire=lambda _preview: None,
+            retire_and_release=retire_and_release,
+            close_retired_resource=lambda _preview: None,
+        )
+        manual.resources = {}
+        manual.results = SimpleNamespace(complete=complete)
+        controller_backend = _ControllerBackend()
+        runtime.camera.backends["acquisition"] = cast(Any, controller_backend)
+        runtime.camera.file_policy_loader = lambda _names: {"acquisition": policies}
+        bind_ledger(runtime)
+        client_id, watch_id, control_generation = _id(), _id(), _id()
+        runtime.control.watches[(client_id, watch_id)] = Watch(
+            client_id, watch_id, asyncio.Queue(maxsize=1), runtime.control.revision
+        )
+        runtime.control.owner = (client_id, watch_id, control_generation)
+        tracking_view = runtime.projections.devices.tracking
+        tracking_view.preview_running = False
+        tracking_view.cleanup_pending = True
+    
+        request = svc.CameraCommandRequest(
+            kind=svc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
+            camera=acquisition_camera_pb.CAMERA_ROLE_TRACKING,
+            expected_configuration_revision=2,
+            preview_run_id=(run_id if request_matches_reported_run else stale_run_id),
+        )
+        request.command.operator.command_id = _id()
+        request.command.controller_generation = runtime.generation
+        request.command.operator.client_id = client_id
+        request.command.operator.control_generation = control_generation
+        request.kind = svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+        request.preview_run_id = tracking_view.preview_run_id
+        request.command.operator.command_id = _id()
+        show_admission = await runtime.execute_camera_command(request)
+        assert show_admission.result == pb.COMMAND_RESULT_REJECTED
+        assert show_admission.failure.message == "current preview run does not match"
+    
+        request.kind = svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
+        request.command.operator.command_id = _id()
+        request.preview_consumer.role = "gui"
+        request.preview_consumer.generation = client_id
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
+        attach_admission = await runtime.execute_camera_command(request)
+        assert attach_admission.result == pb.COMMAND_RESULT_REJECTED
+        assert attach_admission.failure.message == "current preview run does not match"
+    
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        request.kind = svc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+        request.ClearField("preview_consumer")
+        request.command.operator.command_id = _id()
+        async with runtime.lifecycle.lock:
+            exact_cleanup_selection = runtime.camera._select_locked(request)
+        assert not isinstance(exact_cleanup_selection, pb.CommandAdmission)
+        if query_fault == "newer_known_status":
+            newer_operation_id = _id()
+            newer_status = svc.AcquisitionDeviceStatusReport.FromString(
+                retained_status.SerializeToString(deterministic=True)
+            )
+            newer_status.operation.command_id = newer_operation_id
+            newer_status.result.context.command_id = newer_operation_id
+            newer_status.result.succeeded = True
+            newer_status.result.ClearField("failure")
+            newer_status.views.state_revision = 3
+            newer_status.views.observed_monotonic_ns = runtime.clock()
+            runtime.device_state.configuration_edit_terminals[newer_operation_id] = (
+                ConfigurationEditTerminal(
+                    operation_id=newer_operation_id,
+                    source=backend_context,
+                    deadline_ns=original_deadline_ns,
+                )
+            )
+            assert (
+                await runtime.report_projection("devices", newer_status, runtime.clock())
+            ).result == pb.COMMAND_RESULT_ACCEPTED
+            tracking_view = runtime.projections.devices.tracking
+        tracking_view.preview_running = True
+        tracking_view.cleanup_pending = False
+        admission = await runtime.execute_camera_command(request)
+    
+        if query_fault == "newer_known_status":
+            assert controller_backend.retained_queries == []
+>           assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+E           AssertionError: '_DeviceStatus' object has no attribute 'progress'
+E           assert 2 == 1
+E            +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "REJECTED"\n  message: "\'_DeviceStatus\' object has no attribute \'progress\'"\n}\ncommand_id: "66f58055-fb8e-4805-a5d2-5d2df8bd9957"\n.result
+E            +  and   1 = pb.COMMAND_RESULT_ACCEPTED
+
+tests\controller\test_camera_configuration.py:1864: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_camera_configuration.py::test_controller_recovers_expired_owned_edit_status_before_camera_stop[None-False]
+FAILED tests/controller/test_camera_configuration.py::test_controller_recovers_expired_owned_edit_status_before_camera_stop[None-True]
+FAILED tests/controller/test_camera_configuration.py::test_controller_recovers_expired_owned_edit_status_before_camera_stop[newer_known_status-True]
+3 failed, 802 passed, 4 skipped, 7 deselected in 12.14s

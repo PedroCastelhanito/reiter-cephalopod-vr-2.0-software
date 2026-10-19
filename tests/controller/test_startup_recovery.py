@@ -354,6 +354,257 @@ async def test_wrong_prior_generation_proof_blocks_before_opening_files(
     assert recovery.reservation is None
 
 
+@pytest.mark.parametrize("choice", ["recover", "delete"])
+async def test_missing_receipt_allows_explicit_locked_action_without_reboot(
+    tmp_path: Path, choice: str
+) -> None:
+    store, pointer, path = _fixture(tmp_path, _event("session_started"))
+    original = path.read_bytes()
+    recovery = StartupRecovery(
+        store,
+        current_generation=_id(),
+        timeout_ns=2_000_000_000,
+        max_operations=8,
+        max_bytes=65_536,
+    )
+
+    async def query(_: str) -> svc.RecoverySnapshot:
+        return svc.RecoverySnapshot()
+
+    prompt = await recovery.prepare(query)
+    assert prompt is not None
+    assert set(prompt.permitted_choices) == {"recover", "delete"}
+    assert "prior process absence remains unconfirmed" in prompt.explanation
+    assert "without a Windows reboot" in prompt.explanation
+    assert recovery.reservation is not None and recovery.reservation.held
+    assert path.read_bytes() == original
+    assert store.read_pointer() == pointer
+    await recovery.resolve(choice)
+    assert store.read_pointer() is None
+    if choice == "delete":
+        assert not Path(pointer.session_directory).exists()
+    else:
+        assert path.read_bytes().startswith(original)
+        report = json.loads(next(path.parent.glob("RECOVERY-*.json")).read_text())
+        assert report["old_process_absence"] == "unconfirmed_exclusive_session_lock"
+    recovery.close()
+
+
+async def test_missing_receipt_does_not_bypass_live_session_lock(
+    tmp_path: Path,
+) -> None:
+    store, pointer, path = _fixture(tmp_path, _event("session_started"))
+    live = OutputReservation.open_existing(
+        Path(pointer.session_directory),
+        pointer.session_id,
+        pointer.controller_generation,
+    )
+    recovery = StartupRecovery(
+        store,
+        current_generation=_id(),
+        timeout_ns=2_000_000_000,
+        max_operations=8,
+        max_bytes=65_536,
+    )
+
+    async def query(_: str) -> svc.RecoverySnapshot:
+        return svc.RecoverySnapshot()
+
+    try:
+        with pytest.raises(StorageError, match="locked"):
+            await recovery.prepare(query)
+        with pytest.raises(StorageError, match="held reservation"):
+            await recovery.resolve("delete")
+        assert path.exists() and store.read_pointer() == pointer
+    finally:
+        live.release()
+
+
+@pytest.mark.parametrize(
+    "mutation", ["marker", "pointer", "unexpected_file", "delete_failure"]
+)
+async def test_delete_recovery_rejects_changed_or_failed_inputs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mutation: str
+) -> None:
+    store, pointer, path = _fixture(tmp_path, _event("session_started"))
+    original = path.read_bytes()
+    recovery = StartupRecovery(
+        store,
+        current_generation=_id(),
+        timeout_ns=2_000_000_000,
+        max_operations=8,
+        max_bytes=65_536,
+    )
+
+    async def query(_: str) -> svc.RecoverySnapshot:
+        return _snapshot(pointer)
+
+    assert await recovery.prepare(query) is not None
+    if mutation == "marker":
+        marker = Path(pointer.session_directory) / ".cephvr-reservation.json"
+        marker.write_bytes(marker.read_bytes() + b" ")
+    elif mutation == "pointer":
+        store.clear_pointer(pointer)
+        from dataclasses import replace
+
+        store.write_pointer(replace(pointer, session_id=_id()))
+    elif mutation == "unexpected_file":
+        (Path(pointer.session_directory) / "owner-file.txt").write_text("preserve")
+    else:
+
+        def fail(_path: Path, *args: object, **kwargs: object) -> None:
+            raise PermissionError("injected deletion failure")
+
+        monkeypatch.setattr(Path, "unlink", fail)
+    with pytest.raises((StorageError, PermissionError)):
+        await recovery.resolve("delete")
+    assert store.read_pointer() is not None
+    assert path.read_bytes() == original
+    recovery.close()
+
+
+async def test_delete_removes_only_chosen_session_including_nested_files(
+    tmp_path: Path,
+) -> None:
+    store, pointer, path = _fixture(tmp_path, _event("session_started"))
+    session = Path(pointer.session_directory)
+    imported = session / "spikeglx-data" / "run" / "probe"
+    imported.mkdir(parents=True)
+    (imported / "recording.bin").write_bytes(b"explicitly discarded")
+    unrelated = session.parent / "other-session"
+    unrelated.mkdir()
+    (unrelated / "preserve.bin").write_bytes(b"keep")
+    recovery = StartupRecovery(
+        store,
+        current_generation=_id(),
+        timeout_ns=2_000_000_000,
+        max_operations=8,
+        max_bytes=65_536,
+    )
+
+    async def query(_: str) -> svc.RecoverySnapshot:
+        return _snapshot(pointer)
+
+    prompt = await recovery.prepare(query)
+    assert prompt is not None and str(session) in prompt.explanation
+    assert "permanently deletes" in prompt.explanation
+    await recovery.resolve("delete")
+    assert not session.exists()
+    assert (unrelated / "preserve.bin").read_bytes() == b"keep"
+    assert store.read_pointer() is None
+    recovery.close()
+
+
+async def test_delete_deadline_preserves_files_and_pointer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, pointer, path = _fixture(tmp_path, _event("session_started"))
+    original = path.read_bytes()
+    recovery = StartupRecovery(
+        store,
+        current_generation=_id(),
+        timeout_ns=2_000_000_000,
+        max_operations=8,
+        max_bytes=65_536,
+    )
+
+    async def query(_: str) -> svc.RecoverySnapshot:
+        return _snapshot(pointer)
+
+    await recovery.prepare(query)
+    monkeypatch.setattr(
+        "cephvr.controller.metadata.recovery_deletion.host_time_ns", lambda: 2**63 - 1
+    )
+    with pytest.raises(TimeoutError, match="deletion deadline"):
+        await recovery.resolve("delete")
+    assert path.read_bytes() == original
+    assert store.read_pointer() == pointer
+    recovery.close()
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(os.name != "nt", reason="requires native Windows junctions")
+async def test_delete_rejects_junction_before_removing_any_file(tmp_path: Path) -> None:
+    import subprocess
+
+    store, pointer, path = _fixture(tmp_path, _event("session_started"))
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "preserve.bin").write_bytes(b"keep")
+    junction = path.parent / "linked-output"
+    subprocess.run(
+        ["cmd", "/c", "mklink", "/J", str(junction), str(outside)],
+        check=True,
+        capture_output=True,
+    )
+    recovery = StartupRecovery(
+        store,
+        current_generation=_id(),
+        timeout_ns=2_000_000_000,
+        max_operations=8,
+        max_bytes=65_536,
+    )
+
+    async def query(_: str) -> svc.RecoverySnapshot:
+        return _snapshot(pointer)
+
+    try:
+        await recovery.prepare(query)
+        with pytest.raises(StorageError, match="unsafe path"):
+            await recovery.resolve("delete")
+        assert path.exists()
+        assert (outside / "preserve.bin").read_bytes() == b"keep"
+        assert store.read_pointer() == pointer
+    finally:
+        recovery.close()
+        junction.rmdir()
+
+
+async def test_timed_out_deletion_retains_ownership_until_worker_stops(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import asyncio
+    import threading
+
+    store, pointer, path = _fixture(tmp_path, _event("session_started"))
+    recovery = StartupRecovery(
+        store,
+        current_generation=_id(),
+        timeout_ns=2_000_000_000,
+        max_operations=8,
+        max_bytes=65_536,
+    )
+
+    async def query(_: str) -> svc.RecoverySnapshot:
+        return _snapshot(pointer)
+
+    await recovery.prepare(query)
+    stopped = threading.Event()
+    entered = threading.Event()
+    reservation = recovery.reservation
+    assert reservation is not None
+
+    def discard(_digest: str, _deadline: int) -> None:
+        entered.set()
+        assert stopped.wait(5)
+
+    monkeypatch.setattr(reservation, "discard_recovery", discard)
+    recovery.timeout_ns = 50_000_000
+    try:
+        with pytest.raises(TimeoutError):
+            await recovery.resolve("delete")
+        assert entered.is_set()
+        recovery.close()
+        assert reservation.held
+        assert store.read_pointer() == pointer
+        assert path.exists()
+    finally:
+        stopped.set()
+        assert recovery.deletion is not None
+        await asyncio.wrap_future(recovery.deletion)
+    assert not reservation.held
+
+
 async def test_intact_log_appends_only_observation_labeled_terminal_events(
     tmp_path: Path,
 ) -> None:

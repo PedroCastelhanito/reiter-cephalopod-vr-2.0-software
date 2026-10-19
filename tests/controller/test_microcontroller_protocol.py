@@ -76,9 +76,9 @@ def test_eye_boundary_cannot_be_replaced_with_tracking_mask() -> None:
     )
 
 
-def test_v4_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
+def test_v5_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
     reply = parse_reply(
-        b"OK   id=run-1   protocol=4 firmware=board pins=D2,D3 input_pins=D2,D3 min_hz=0.1 "
+        b"OK   id=run-1   protocol=5 firmware=board pins=D2,D3 input_pins=D2,D3 min_hz=0.1 "
         b"max_hz=60.0 watchdog_min_ms=100 watchdog_max_ms=10000\n"
     )
 
@@ -92,7 +92,7 @@ def test_v4_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
         watchdog_min,
         watchdog_max,
     ) = parse_capabilities(reply)
-    assert (version, firmware, pins) == (4, "board", ("D2", "D3"))
+    assert (version, firmware, pins) == (5, "board", ("D2", "D3"))
     assert input_pins == ("D2", "D3")
     assert minimum == 0.1
     assert maximum == 60.0
@@ -101,7 +101,7 @@ def test_v4_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
 
 def test_caps_rejects_input_pin_outside_advertised_pins() -> None:
     reply = parse_reply(
-        b"OK id=run-1 protocol=4 firmware=board pins=D2,D3 input_pins=D4 "
+        b"OK id=run-1 protocol=5 firmware=board pins=D2,D3 input_pins=D4 "
         b"min_hz=0.1 max_hz=60.0 watchdog_min_ms=100 watchdog_max_ms=10000\n"
     )
     with pytest.raises(ProtocolError, match="input_pins"):

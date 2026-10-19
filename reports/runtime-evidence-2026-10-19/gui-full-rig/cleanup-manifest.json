@@ -1,0 +1,500 @@
+[
+  {
+    "path": ".pytest_cache",
+    "files": 5,
+    "bytes": 393640.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_dashboard_final",
+    "files": 1,
+    "bytes": 197.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_dashboard_focused",
+    "files": 1,
+    "bytes": 197.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_linked_texture_20261019",
+    "files": 7,
+    "bytes": 7932.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_preview_controls_all",
+    "files": 5,
+    "bytes": 489.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_preview_controls_final",
+    "files": 5,
+    "bytes": 489.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_preview_motion_final",
+    "files": 5,
+    "bytes": 489.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_preview_motion_readability",
+    "files": 5,
+    "bytes": 489.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_projector_brightness",
+    "files": 0,
+    "bytes": null,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_projector_final",
+    "files": 39,
+    "bytes": 75937.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_projector_gui",
+    "files": 0,
+    "bytes": null,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_projector_gui_focused",
+    "files": 11,
+    "bytes": 901.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_projector_gui_permitted",
+    "files": 0,
+    "bytes": null,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_projector_permitted",
+    "files": 41,
+    "bytes": 76313.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_projector_permitted2",
+    "files": 39,
+    "bytes": 75952.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest_tmp_startup_recovery",
+    "files": 25,
+    "bytes": 6167.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-bottom-gui-01",
+    "files": 0,
+    "bytes": null,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-bottom-gui-02",
+    "files": 16,
+    "bytes": 25226.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-bottom-orientation-01",
+    "files": 60,
+    "bytes": 410382.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-bottom-orientation-03",
+    "files": 144,
+    "bytes": 1241736.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-bottom-vis-01",
+    "files": 2,
+    "bytes": 13060.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-bottom-vis-02",
+    "files": 63,
+    "bytes": 83965.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-ponytail-integration-01",
+    "files": 5905,
+    "bytes": 56312662.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-ponytail-owner-01",
+    "files": 18,
+    "bytes": 159280.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-ponytail-owner-02",
+    "files": 18,
+    "bytes": 159280.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": ".pytest-ponytail-owner-permitted-01",
+    "files": 115,
+    "bytes": 712766.0,
+    "reason": "Disposable pytest cache/fixtures; no tracked files or reparse points"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\includes.cache",
+    "files": 1,
+    "bytes": 2182,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\libraries.cache",
+    "files": 1,
+    "bytes": 221,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\abi.cpp.d",
+    "files": 1,
+    "bytes": 266,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\abi.cpp.o",
+    "files": 1,
+    "bytes": 4176,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\CDC.cpp.d",
+    "files": 1,
+    "bytes": 1362,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\CDC.cpp.o",
+    "files": 1,
+    "bytes": 1840,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\core.a",
+    "files": 1,
+    "bytes": 350040,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial.cpp.d",
+    "files": 1,
+    "bytes": 1622,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial.cpp.o",
+    "files": 1,
+    "bytes": 20440,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial0.cpp.d",
+    "files": 1,
+    "bytes": 1624,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial0.cpp.o",
+    "files": 1,
+    "bytes": 13276,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial1.cpp.d",
+    "files": 1,
+    "bytes": 1624,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial1.cpp.o",
+    "files": 1,
+    "bytes": 1852,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial2.cpp.d",
+    "files": 1,
+    "bytes": 1624,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial2.cpp.o",
+    "files": 1,
+    "bytes": 1852,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial3.cpp.d",
+    "files": 1,
+    "bytes": 1624,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\HardwareSerial3.cpp.o",
+    "files": 1,
+    "bytes": 1852,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\hooks.c.d",
+    "files": 1,
+    "bytes": 266,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\hooks.c.o",
+    "files": 1,
+    "bytes": 3012,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\IPAddress.cpp.d",
+    "files": 1,
+    "bytes": 1592,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\IPAddress.cpp.o",
+    "files": 1,
+    "bytes": 17904,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\main.cpp.d",
+    "files": 1,
+    "bytes": 1472,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\main.cpp.o",
+    "files": 1,
+    "bytes": 4812,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\new.cpp.d",
+    "files": 1,
+    "bytes": 472,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\new.cpp.o",
+    "files": 1,
+    "bytes": 11292,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\PluggableUSB.cpp.d",
+    "files": 1,
+    "bytes": 1493,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\PluggableUSB.cpp.o",
+    "files": 1,
+    "bytes": 1848,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\Print.cpp.d",
+    "files": 1,
+    "bytes": 1366,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\Print.cpp.o",
+    "files": 1,
+    "bytes": 37892,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\Stream.cpp.d",
+    "files": 1,
+    "bytes": 1368,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\Stream.cpp.o",
+    "files": 1,
+    "bytes": 27428,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\Tone.cpp.d",
+    "files": 1,
+    "bytes": 1364,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\Tone.cpp.o",
+    "files": 1,
+    "bytes": 17012,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\USBCore.cpp.d",
+    "files": 1,
+    "bytes": 1483,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\USBCore.cpp.o",
+    "files": 1,
+    "bytes": 1844,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\WInterrupts.c.d",
+    "files": 1,
+    "bytes": 725,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\WInterrupts.c.o",
+    "files": 1,
+    "bytes": 8892,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_analog.c.d",
+    "files": 1,
+    "bytes": 729,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_analog.c.o",
+    "files": 1,
+    "bytes": 8216,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_digital.c.d",
+    "files": 1,
+    "bytes": 731,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_digital.c.o",
+    "files": 1,
+    "bytes": 14156,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_pulse.c.d",
+    "files": 1,
+    "bytes": 727,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_pulse.c.o",
+    "files": 1,
+    "bytes": 7980,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_pulse.S.d",
+    "files": 1,
+    "bytes": 280,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_pulse.S.o",
+    "files": 1,
+    "bytes": 2936,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_shift.c.d",
+    "files": 1,
+    "bytes": 727,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring_shift.c.o",
+    "files": 1,
+    "bytes": 5380,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring.c.d",
+    "files": 1,
+    "bytes": 715,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\wiring.c.o",
+    "files": 1,
+    "bytes": 10100,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\WMath.cpp.d",
+    "files": 1,
+    "bytes": 270,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\WMath.cpp.o",
+    "files": 1,
+    "bytes": 7600,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\WString.cpp.d",
+    "files": 1,
+    "bytes": 382,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\core\\WString.cpp.o",
+    "files": 1,
+    "bytes": 108484,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\sketch\\cephvr2_mcu.ino.cpp.d",
+    "files": 1,
+    "bytes": 1552,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\sketch\\cephvr2_mcu.ino.cpp.merged",
+    "files": 1,
+    "bytes": 18766,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\sketch\\cephvr2_mcu.ino.cpp.merged.libsdetect.d",
+    "files": 1,
+    "bytes": 1409,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-19\\camera-connect-continuity\\avr-build\\sketch\\cephvr2_mcu.ino.cpp.o",
+    "files": 1,
+    "bytes": 77280,
+    "reason": "Reproducible compiler intermediate; source, firmware and assessed results preserved"
+  }
+]

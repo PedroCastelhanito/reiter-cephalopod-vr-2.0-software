@@ -29,6 +29,7 @@ from cephvr.acquisition.coordinator.manual_pulses import ManualPulses
 from cephvr.acquisition.coordinator.operations import CoordinatorOperations
 from cephvr.acquisition.coordinator.queries import CoordinatorQueries
 from cephvr.acquisition.coordinator.session import SessionSetup
+from cephvr.acquisition.coordinator.session_preview import SessionPreview
 from cephvr.acquisition.coordinator.shutdown import CoordinatorShutdown
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
 from cephvr.acquisition.coordinator.trials import TrialCoordinator
@@ -141,6 +142,15 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             lock=self.lock,
             clock=clock,
         )
+        self.session_preview = SessionPreview(
+            identity=identity,
+            sessions=self.state.session_slot,
+            resources=self.state.resources,
+            windows=self.manual_preview.windows,
+            status=self.device_status,
+            results=self.manual_preview.results,
+            clock=clock,
+        )
         self.manual_preview_pulse = ManualPreviewPulseLifecycle(
             windows=self.manual_preview.windows,
             identity=identity,
@@ -156,7 +166,6 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             lock=self.lock,
             clock=clock,
         )
-        self.manual_preview.start_flow.bind_pulse_lifecycle(self.manual_preview_pulse)
         self.manual_devices = ManualDevices(
             identity=identity,
             configuration=configuration,
@@ -203,6 +212,7 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
         )
         self.cleanup_owner = CoordinatorCleanup(
             close_preview_windows=self.manual_preview.windows.close_all,
+            retire_preview_status=self.device_status.retire_session_preview,
             identity=identity,
             session_slot=self.state.session_slot,
             workers=self.state.workers,
@@ -466,6 +476,11 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
     async def execute_camera_command(
         self, request: wire.AcquisitionCameraCommand, *, deadline_ns: int
     ) -> control.CommandAdmission:
+        if request.command.work.WhichOneof("work") is not None and request.kind in {
+            wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+            wire.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
+        }:
+            return await self.session_preview.execute(request, deadline_ns=deadline_ns)
         rejected = self.manual_configuration.install(request, deadline_ns)
         if rejected is not None:
             return rejected

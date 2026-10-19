@@ -17,6 +17,8 @@ import "cephvr/synchronization/v1/spikeglx.proto";
 // Authentication credentials belong in protected gRPC metadata, never
 // these payloads. Server admission must enforce role, generation and lease rules.
 service ExperimentControllerService {
+  rpc SetStimulusPreview(SetStimulusPreviewRequest) returns (CommandAdmission);
+  rpc ReportStimulusPreview(StimulusPreviewState) returns (ReportReceipt);
   rpc ReportDataPreparation(DataPreparationReport) returns (ReportReceipt);
   rpc ReportVisualStimulusDisplay(VisualStimulusDisplayView) returns (ReportReceipt);
   rpc OpenDisplayCalibration(OpenDisplayCalibrationRequest) returns (CommandAdmission);
@@ -30,6 +32,7 @@ service ExperimentControllerService {
   rpc BeginTrackingDiagnostic(BeginTrackingDiagnosticRequest) returns (CommandAdmission);
   rpc CloseTrackingDiagnostic(CloseTrackingDiagnosticRequest) returns (CommandAdmission);
   rpc GetTrackingDiagnosticState(TrackingDiagnosticQuery) returns (TrackingDiagnosticState);
+  rpc AdjustProjectorBrightness(ProjectorBrightnessRequest) returns (CommandAdmission);
   rpc ExecuteCameraCommand(CameraCommandRequest) returns (CommandAdmission);
   rpc ExecuteMicrocontrollerCommand(MicrocontrollerCommandRequest) returns (CommandAdmission);
   // Acquisition camera-trigger client; exact authenticated generation, original deadline.
@@ -82,6 +85,7 @@ service SupervisorService {
 }
 // V19: controller-only initial display preparation, not an operator retry API.
 service VisualStimulusConfigurationService {
+  rpc SetStimulusPreview(StimulusPreviewRequest) returns (CommandAdmission);
   rpc InitializeDisplay(VisualStimulusDisplayInitializationRequest) returns (CommandAdmission);
   rpc OpenDisplayCalibration(VisualStimulusDisplayCalibrationOpenRequest) returns (CommandAdmission);
   rpc UpdateDisplayCalibration(VisualStimulusDisplayCalibrationUpdateRequest) returns (CommandAdmission);
@@ -841,4 +845,25 @@ message MicrocontrollerIoResult {
     cephvr.acquisition.v1.PulseCommandEvidence evidence = 5;
     bool cancelled = 6;
   }
+}
+
+// Explicit all-USB-projector hardware adjustment; no display-index mapping.
+message ProjectorBrightnessRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+  uint32 current_ma = 3;
+}
+
+// Display-only viewer intent. Exact session, revision and original command deadline apply.
+message SetStimulusPreviewRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+  bool visible = 3;
+  PreviewWindowPlacement placement = 4;
+}
+message StimulusPreviewRequest {
+  BackendCommand command = 1;
+  uint64 configuration_revision = 2;
+  bool visible = 3;
+  PreviewWindowPlacement placement = 4;
 }

@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-19",
+  "task": "dashboard-preview-controls",
+  "revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "provenance": "Shared dirty checkout; source hashes identify this increment.",
+  "sha256": {
+    "src/cephvr/gui/preview_frame.py": "840a9383e20ca5d4c2f2f31a96c3cc726b17a6146d8c68c6c2d8631b45de7fc0",
+    "src/cephvr/gui/preview_placement.py": "18d42c6b35a1930a944c4f4905c8211cfbd923013a806eef0eaec4d45b06c2d9",
+    "src/cephvr/gui/previews.py": "2a3423f7e031e7d7335bc8cb7238291fe2d3b4052aca2ed4a7a22d328b44e22d",
+    "src/cephvr/gui/window.py": "4b2c1520ca35294d37b41deea505ab1af7de34880fca03160efb2d611e8b5e10",
+    "tests/gui/test_dashboard.py": "52a6cff6bb1a41ec50e9eee93e1fce87fa8559a5b2979560a00875600bada884"
+  },
+  "pytest": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"preview_slot or preview_workspace or preview_grid or preview_log or preview_selector or preview_geometry_survives or preview_button_restores or preview_timeline_speed or review_blank_preview or multiple_review_previews or preview_placement_failure or preview_cards_name or preview_waits_for_report or unavailable_preview or preview_participation or managed_preview_relayout or managed_stimulus_preview or preview_inline_controls or review_appearance_switch\" --basetemp=.pytest_tmp_preview_controls_final",
+    "QT_QPA_PLATFORM": "offscreen",
+    "passed": 49,
+    "deselected": 690,
+    "elapsed_s": 57.45
+  },
+  "static": {
+    "ruff_check": "5 files pass",
+    "ruff_format_check": "5 files pass",
+    "mypy_win32": "4 source files pass",
+    "boundaries": "736 modules; zero violations; unrelated existing cohesion warnings",
+    "scoped_whitespace": "Pass; existing CRLF conversion warning"
+  },
+  "screenshots": {
+    "files": [
+      "inline-standard.png",
+      "inline-retro_console.png"
+    ],
+    "method": "Offscreen themed DashboardWindow with three active camera fixtures, only Behavior video selected, and unavailable Visual stimulus fixture. Dialog grab at 1440x960. Both native viewer slots remain blank; no backend/device attachment."
+  },
+  "limits": [
+    "No running GUI restarted by this chat.",
+    "No live camera, recording, native DPI or rig acceptance.",
+    "Recording filter applies to Dashboard camera previews; Devices diagnostics remain independent.",
+    "Already-open unrecorded viewer can still be hidden."
+  ]
+}

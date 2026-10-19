@@ -76,9 +76,14 @@ def validated_adjustments(
 
 
 def affine_vertices(
-    sx: float, sy: float, center_x: float, center_y: float
+    sx: float,
+    sy: float,
+    center_x: float,
+    center_y: float,
+    *,
+    quarter_turn: bool = False,
 ) -> tuple[dict[str, tuple[float, float]], ...]:
-    """Clip a translated affine image to output bounds, preserving its pixel pitch."""
+    """Clip at fixed pitch; optional +90-degree surface rotation precedes output flips."""
     if (
         not all(math.isfinite(v) for v in (sx, sy, center_x, center_y))
         or sx == 0
@@ -100,7 +105,10 @@ def affine_vertices(
 
     x, y = axis(sx, center_x), axis(sy, center_y)
     return tuple(
-        dict(uv=(x[i][0], y[j][0]), xy=(x[i][1], y[j][1]))
+        dict(
+            uv=(y[j][0], 1 - x[i][0]) if quarter_turn else (x[i][0], y[j][0]),
+            xy=(x[i][1], y[j][1]),
+        )
         for j in (0, 1)
         for i in (0, 1)
     )

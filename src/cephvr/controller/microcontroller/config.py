@@ -12,7 +12,7 @@ from cephvr.shared.config import (
     policy_digest,
 )
 
-_POLICY_SHA256 = "af10cdeb2e6f2134e74676b8c4c370af6e923a8bf3e5508b7cc36a5875fbeee0"
+_POLICY_SHA256 = "9cc7a32549c505170eee117344f1efb2ba9275306c88afe387a812956e8ff425"
 
 _CONFIG_KEYS = frozenset(
     [
@@ -64,7 +64,7 @@ _EXPECTED: dict[str, object] = {
     "microcontroller.pulse_polarity": "active_high",
     "microcontroller.inactive_level": "low",
     "microcontroller.protocol_compatibility": "exact_version",
-    "microcontroller.protocol_version": 4,
+    "microcontroller.protocol_version": 5,
     "microcontroller.capability_source": "firmware",
     "microcontroller.capability_query": "CAPS",
     "microcontroller.capability_reply": "single_bounded_reply",
@@ -83,7 +83,7 @@ _EXPECTED: dict[str, object] = {
     "microcontroller.frequency_readback_precision": "preserve_reported_frequency",
     "microcontroller.configuration_update": "complete",
     "microcontroller.disabled_output_fields": "enabled_only",
-    "microcontroller.configuration_while_running": "stop_apply_restore_running",
+    "microcontroller.configuration_while_running": "preserve_unchanged_stop_apply_restore_changed",
     "microcontroller.keepalive_reply": "compact_status",
     "microcontroller.status_reply": "state_and_applied_configuration",
     "microcontroller.pulse_counters": False,
@@ -107,11 +107,11 @@ def load_microcontroller_pair(root: Path) -> LoadedPair:
         allowed_policy_keys=frozenset(_EXPECTED),
         expected_policy=_EXPECTED,
     )
-    if pair.policy_version != 3:
-        raise ConfigurationError("Microcontroller policy_version must be 3")
+    if pair.policy_version != 4:
+        raise ConfigurationError("Microcontroller policy_version must be 4")
     if policy_digest(pair.policy) != _POLICY_SHA256:
         raise ConfigurationError(
-            "Microcontroller fixed-policy declarations differ from version 3"
+            "Microcontroller fixed-policy declarations differ from version 4"
         )
     if pair.config["microcontroller"].get("projector_flip_enabled", False):
         raise ConfigurationError(

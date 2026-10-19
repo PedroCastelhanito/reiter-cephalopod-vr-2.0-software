@@ -246,6 +246,7 @@ class Reports:
                 and not unavailable
                 and not setup_rejection
                 and not rejected_update
+                and link.method != "SetStimulusPreview"
             ):
                 self.state.interrupted = True
                 deliveries.append(

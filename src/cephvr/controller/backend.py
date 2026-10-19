@@ -187,14 +187,14 @@ class GrpcBackendPort:
         )
 
     async def report_preview_consumer_state(
-        self, request: svc.PreviewConsumerReport
+        self, request: svc.PreviewConsumerReport, *, deadline_ns: int
     ) -> pb.ReportReceipt:
         if self.acquisition is None:
             raise RuntimeError("acquisition preview endpoint unavailable")
         return cast(
             pb.ReportReceipt,
-            await self.acquisition.ReportPreviewConsumerState(
-                request, metadata=self.principal.metadata()
+            await self._call(
+                self.acquisition.ReportPreviewConsumerState, request, deadline_ns
             ),
         )
 
@@ -257,6 +257,15 @@ class GrpcBackendPort:
             raise RuntimeError("acquisition configuration endpoint unavailable")
         return await self._admission(
             self.acquisition.ApplyPulseConfiguration, request, deadline_ns
+        )
+
+    async def set_stimulus_preview(
+        self, request: svc.StimulusPreviewRequest, *, deadline_ns: int
+    ) -> pb.CommandAdmission:
+        if self.visual_stimulus is None:
+            raise RuntimeError("Visual Stimulus endpoint unavailable")
+        return await self._admission(
+            self.visual_stimulus.SetStimulusPreview, request, deadline_ns
         )
 
     async def initialize_display(
@@ -342,11 +351,13 @@ class GrpcSupervisorPort:
         )
 
     async def report_preview_consumer_state(
-        self, request: svc.PreviewConsumerReport
+        self, request: svc.PreviewConsumerReport, *, deadline_ns: int
     ) -> pb.ReportReceipt:
         return cast(
             pb.ReportReceipt,
             await self.stub.ReportPreviewConsumerState(
-                request, metadata=self.principal.metadata()
+                request,
+                metadata=(*self.principal.metadata(), deadline_metadata(deadline_ns)),
+                timeout=remaining_seconds(deadline_ns),
             ),
         )

@@ -3,7 +3,7 @@
 import re
 from collections.abc import Callable
 
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QObject, QTimer
 
 from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera
@@ -36,14 +36,16 @@ class ManagedCameras(QObject):
         self.submission_options = submission_options
         self._camera_revision = -1
         self.pending = ""
+        self._bulk_keys: list[tuple[str, str, str]] = []
+        self._bulk_start = False
         self.configured_tests: list[tuple[int, str]] = []
         panel.connection_requested.connect(self.camera_connection)
+        panel.all_connections_requested.connect(self.all_connections)
         panel.enable_requested.connect(self.set_camera_enabled)
         panel.settings_requested.connect(self.save_camera_settings)
         panel.preset_import_requested.connect(self.import_preset)
         panel.role_requested.connect(self.assign_role)
         panel.test_requested.connect(self.test_enabled)
-        panel.selected_test_requested.connect(self.test_selected)
 
     def role(self, key: str) -> int | None:
         return next(
@@ -59,14 +61,14 @@ class ManagedCameras(QObject):
         if self.pending:
             return False
         kind = options.get("kind")
-        if action in {"camera", "prepare_camera"} and kind in {
-            rpc.CAMERA_COMMAND_KIND_START_PREVIEW,
-            rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
-        }:
+        if (
+            action in {"camera", "prepare_camera"}
+            and kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+        ):
             button = (
-                self.panel.connect_button
-                if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
-                else self.panel.selected_test_button
+                self.panel.connect_all_button
+                if self.panel.bulk_pending
+                else self.panel.connect_button
             )
             options["cancellation"] = self.panel.pending_action.begin(button)
         if not self.bridge.request(action, **options):
@@ -80,11 +82,14 @@ class ManagedCameras(QObject):
     def finished(self, action: str, success: bool, message: str) -> None:
         if action != self.pending:
             return
+        token = self.panel.pending_action.token
+        cancelled = token is not None and token.requested.is_set()
         self.pending = ""
         self.panel.pending_action.finish()
         self.panel.operation_pending = False
         self.panel.pending_enable.clear()
-        self.panel.console.appendPlainText(f"{action}: {message}")
+        if not success:
+            self.panel.console.appendPlainText(f"{action}: {message}")
         if action == "save_camera_settings" and not success:
             match = re.search(
                 r"backends\.acquisition\.(behavioral|tracking|eye_tracking)\.([^:]+):",
@@ -107,9 +112,15 @@ class ManagedCameras(QObject):
                     else ""
                 )
                 self.panel.focus_validation_error(role, field_name)
+        if self.panel.bulk_pending:
+            if cancelled or (not success and self._bulk_start):
+                self._finish_bulk()
+            else:
+                QTimer.singleShot(0, self._next_bulk)
         self.panel.refresh_controls()
 
     def disconnected(self) -> None:
+        self._finish_bulk()
         self._camera_revision = -1
         self.pending = ""
         self.panel.pending_action.finish()
@@ -123,20 +134,55 @@ class ManagedCameras(QObject):
         if self.configured_tests:
             self.queue("test_cameras", cameras=list(self.configured_tests))
 
-    def test_selected(self, key: str) -> None:
-        if self.submission_options is not None:
-            self.prepare_action(key, rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION)
+    def all_connections(self, start: bool) -> None:
+        if self.pending or self.panel.bulk_pending or not self.panel.can_operate:
             return
-        if self.panel.snapshot_draft:
-            self.panel.console.appendPlainText(
-                "Submit the camera assignment before testing its identity."
-            )
+        self._bulk_keys = [
+            (draft.key, draft.serial, draft.role)
+            for draft in self.panel.drafts
+            if draft.enabled
+        ]
+        self._bulk_start = start
+        self.panel.bulk_pending = True
+        self._next_bulk()
+
+    def _finish_bulk(self) -> None:
+        self._bulk_keys.clear()
+        self.panel.bulk_pending = False
+        self.panel.refresh_controls()
+
+    def _next_bulk(self) -> None:
+        if not self.panel.bulk_pending or self.pending:
             return
-        role = self.role(key)
-        if role is not None:
-            self.queue(
-                "camera", role=role, kind=rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+        if not self.panel.can_control_devices:
+            self._finish_bulk()
+            return
+        while self._bulk_keys:
+            key, serial, role = self._bulk_keys.pop(0)
+            draft = next(
+                (draft for draft in self.panel.drafts if draft.key == key), None
             )
+            if (
+                draft is None
+                or not draft.enabled
+                or draft.role not in _CAMERAS
+                or (draft.serial, draft.role) != (serial, role)
+            ):
+                self.panel.console.appendPlainText(
+                    "Camera selection changed; bulk connection stopped."
+                )
+                self._finish_bulk()
+                return
+            if self._bulk_start == bool(draft.connected or draft.cleanup_pending):
+                continue
+            self.camera_connection(key, self._bulk_start)
+            if not self.pending:
+                self.panel.console.appendPlainText(
+                    "Bulk camera command was not sent; remaining cameras were left unchanged."
+                )
+                self._finish_bulk()
+            return
+        self._finish_bulk()
 
     def assign_role(self, serial: str, role: str) -> None:
         if not self.queue("assign_camera_role", serial=serial, role=role):
@@ -290,27 +336,49 @@ class ManagedCameras(QObject):
                     ),
                     None,
                 )
-                draft.connected = bool(
-                    reported and (reported.device_open or reported.cleanup_pending)
-                )
+                draft.connected = bool(reported and reported.device_open)
+                draft.cleanup_pending = bool(reported and reported.cleanup_pending)
                 draft.capture_running = bool(reported and reported.preview_running)
             else:
-                draft.connected = bool(
-                    assigned and (device.device_open or device.cleanup_pending)
-                )
+                draft.connected = bool(assigned and device.device_open)
+                draft.cleanup_pending = bool(assigned and device.cleanup_pending)
                 draft.capture_running = bool(assigned and device.preview_running)
+            session_preview = bool(
+                state.session.phase == pb.SESSION_PHASE_RUNNING
+                and state.session.context.session_id
+                and assigned
+                and configured
+                and configured.enabled
+                and camera_settings
+                and camera_settings.session_preview_max_hz > 0
+            )
             visible = self.viewer_state(
                 role, device.preview_running, device.preview_run_id
+            )
+            previous = next(
+                (item for item in cameras.view.previews if item.key == draft.key), None
+            )
+            reconnecting = bool(
+                self.pending
+                and assigned
+                and draft.connected
+                and not visible
+                and previous is not None
+                and (previous.visible or previous.pending)
             )
             preview_views.append(
                 PreviewView(
                     draft.key,
                     draft.role,
                     visible=visible,
-                    available=assigned and bool(device.preview_running),
+                    pending=reconnecting,
+                    available=assigned
+                    and bool(device.preview_running or session_preview),
                     active=assigned,
                     reason="Assign this camera in controller configuration"
                     if not assigned
+                    else "Reconnecting preview…"
+                    if reconnecting
                     else "",
                 )
             )
@@ -396,12 +464,7 @@ class ManagedCameras(QObject):
         except (ValueError, RuntimeError) as error:
             self.panel.console.appendPlainText(str(error))
             return
-        if self.queue("prepare_camera", **options):
-            self.panel.console.appendPlainText(
-                f"Submitting {draft.role} parameters before Connect."
-                if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
-                else f"Checking {draft.role} camera identity."
-            )
+        self.queue("prepare_camera", **options)
 
     def set_camera_enabled(self, serial: str, enabled: bool) -> None:
         if not self.queue("set_camera_enabled", serial=serial, enabled=enabled):

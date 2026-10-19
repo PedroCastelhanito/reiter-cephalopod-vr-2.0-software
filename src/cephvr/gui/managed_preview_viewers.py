@@ -33,6 +33,14 @@ class ManagedPreviewViewers:
         self.layout_timer.timeout.connect(self.relayout)
         self.layout_timer.start()
 
+    @property
+    def can_operate(self) -> bool:
+        return bool(
+            not self.cameras.operation_pending
+            and self.cameras.view.connected
+            and self.cameras.view.has_control
+        )
+
     def preview_visibility(self, key: str, visible: bool) -> None:
         role = next(
             (
@@ -66,7 +74,7 @@ class ManagedPreviewViewers:
             )
 
     def snap(self, key: str) -> None:
-        if self.placement is None or not self.cameras.can_operate:
+        if self.placement is None or not self.can_operate:
             return
         role = next(
             (
@@ -96,7 +104,7 @@ class ManagedPreviewViewers:
     def relayout(self) -> None:
         """Submit changed display hints serially through ordinary command authority."""
         state = self.snapshot()
-        if state is None or self.placement is None or not self.cameras.can_operate:
+        if state is None or self.placement is None or not self.can_operate:
             return
         visible = {
             source.key for source in self.cameras.view.previews if source.visible

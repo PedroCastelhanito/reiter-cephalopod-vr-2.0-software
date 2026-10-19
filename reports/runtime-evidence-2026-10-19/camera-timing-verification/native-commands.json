@@ -1,0 +1,26 @@
+[
+  {
+    "command": "AbortNow",
+    "command_id": "1415e3e2-d657-426c-85e8-965284578045",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "NewSession",
+    "command_id": "5c9f42a9-5de8-4fcf-ab7c-afafd61c88b0",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "ShutdownApplication",
+    "command_id": "b73ea271-6f19-48f2-b67d-2300f3ab4ca5",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+]

@@ -332,7 +332,8 @@ class CameraAdapter(Protocol):
         deadline_monotonic_ns: int,
         *,
         should_continue_drain: Callable[[], bool],
-    ) -> PurgeEvidence: ...
+        resumable: bool = False,
+    ) -> PurgeEvidence | None: ...
     def close(self) -> None: ...
 
 

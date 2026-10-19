@@ -316,19 +316,7 @@ class CommandLedger:
             for key in matching:
                 old = self._records[key]
                 if old.finalized_ns is None and old.completed_ns is not None:
-                    self._records[key] = CommandRecord(
-                        old.command_id,
-                        old.work_key,
-                        old.canonical_request,
-                        old.accepted_ns,
-                        old.result,
-                        old.completed_ns,
-                        now_ns,
-                        old.result_reservation_bytes,
-                        old.deadline_ns,
-                        old.priority,
-                        old.executor_result,
-                    )
+                    self._records[key] = replace(old, finalized_ns=now_ns)
 
     def finalize_command(self, command_id: str, now_ns: int) -> None:
         """Start retention for one completed record without retiring its work scope."""

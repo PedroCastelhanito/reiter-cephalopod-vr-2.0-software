@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from math import isqrt
 from pathlib import Path
 
 from cephvr.shared.ffmpeg_arguments import parse_option_tokens
@@ -15,15 +14,13 @@ from cephvr.shared.ffmpeg_types import (
 )
 from cephvr.shared.ffmpeg_validation import validate_arguments
 from cephvr.visual_stimulus.config.models.artifact_models import (
-    CompositeTile,
     ReviewEncoding,
     ReviewTiming,
-    tile_layout,
 )
 from cephvr.visual_stimulus.config.models.display_profile import (
     DisplayProfile,
-    PixelRect,
 )
+from cephvr.visual_stimulus.config.review_layout import fit_review_layout
 
 VISUAL_STIMULUS_FRAGMENT_FLAGS = frozenset(
     {"frag_keyframe", "empty_moov", "default_base_moof"}
@@ -97,8 +94,11 @@ def prepare_review_encoding(
     )
     if maximum is None or min(maximum) <= 0:
         raise EncodingOptionsError("resolved encoder maximum dimensions are required")
-    geometry = _composite_geometry(display, maximum, review_scale_factor)
-    composite_width, composite_height, scale, tiles = geometry
+    try:
+        layout = fit_review_layout(display, maximum, review_scale_factor)
+    except ValueError as exc:
+        raise EncodingOptionsError(str(exc)) from exc
+    composite_width, composite_height = layout.composite_width, layout.composite_height
     effective = validate_arguments(
         ffmpeg_args,
         capabilities=capabilities,
@@ -117,26 +117,7 @@ def prepare_review_encoding(
             "Visual Stimulus review conversion must preserve prepared composite dimensions"
         )
     review = ReviewEncoding(
-        composite_width=composite_width,
-        composite_height=composite_height,
-        scale_denominator=scale,
-        tiles=tuple(
-            CompositeTile(
-                output_id=output_id,
-                rect=PixelRect(
-                    x=next(tile[1] for tile in tiles if tile[0] == output_id),
-                    y=next(tile[2] for tile in tiles if tile[0] == output_id),
-                    width=next(tile[3] for tile in tiles if tile[0] == output_id),
-                    height=next(tile[4] for tile in tiles if tile[0] == output_id),
-                ),
-                source_code_bits=next(
-                    item.rgb_bits_per_channel
-                    for item in display.active_outputs
-                    if item.output_id == output_id
-                ),
-            )
-            for output_id, *_ in tiles
-        ),
+        **layout.model_dump(),
         native_pixel_format="rgba8_top_down"
         if source_bits == 8
         else "r10g10b10a2_le_top_down",
@@ -228,42 +209,3 @@ def build_review_argv(
         args.extend(("-forced-idr", "1"))
     args.extend(("-n", "-f", "mp4", str(output)))
     return args
-
-
-def _composite_geometry(
-    display: DisplayProfile, maximum: tuple[int, int], review_scale_factor: int = 1
-) -> tuple[int, int, int, tuple[tuple[str, int, int, int, int], ...]]:
-    if type(review_scale_factor) is not int or review_scale_factor < 1:
-        raise EncodingOptionsError("review scale factor must be a positive integer")
-    for scale in range(
-        1, max(max(o.width_px, o.height_px) for o in display.active_outputs) + 1
-    ):
-        width, height, _ = _layout_at_scale(display, scale)
-        if width <= maximum[0] and height <= maximum[1]:
-            scale *= review_scale_factor
-            width, height, layout = _layout_at_scale(display, scale)
-            return width, height, scale, layout
-    raise EncodingOptionsError(
-        "no integer tile scale fits the selected encoder maximum"
-    )
-
-
-def _layout_at_scale(
-    display: DisplayProfile, scale: int
-) -> tuple[int, int, tuple[tuple[str, int, int, int, int], ...]]:
-    sizes = [
-        (o.width_px // scale, o.height_px // scale) for o in display.active_outputs
-    ]
-    if any(min(size) <= 0 for size in sizes):
-        raise EncodingOptionsError("review scale factor produces an empty tile")
-    count = len(sizes)
-    columns = isqrt(count - 1) + 1
-    width = sum(
-        max(sizes[i][0] for i in range(col, count, columns))
-        for col in range(min(columns, count))
-    )
-    height = sum(
-        max(sizes[i][1] for i in range(row, min(count, row + columns)))
-        for row in range(0, count, columns)
-    )
-    return width, height, tuple(tile_layout(display.active_outputs, scale, height))

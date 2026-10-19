@@ -41,7 +41,10 @@ def valid_pixels(
         defaults = [
             min(limit, max(1, round(_number(values, prefix + key) / mm)))
             for key, mm, limit in zip(
-                ("width", "height"), pitch, (width, height), strict=True
+                ("height", "width") if face == "Bottom" else ("width", "height"),
+                pitch,
+                (width, height),
+                strict=True,
             )
         ]
     result = []
@@ -118,6 +121,8 @@ def usable_corners(
     """Keep the measured plane center while cropping/extending its physical view."""
     pixels = valid_pixels(values, face, width, height)
     pitch = measured_pitch(values, face, width, height)
+    if face == "Bottom":
+        pixels, pitch = pixels[::-1], pitch[::-1]
     center = tuple(sum(point[i] for point in corners) / 4 for i in range(3))
     axes = [tuple(corners[j][i] - corners[0][i] for i in range(3)) for j in (1, 3)]
     lengths = [math.sqrt(sum(v * v for v in axis)) for axis in axes]

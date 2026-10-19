@@ -1,0 +1,159 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__ test_review_and_runtime_share_page_elements_and_card_layouts[False-1280] ___
+
+app = <PyQt6.QtWidgets.QApplication object at 0x0000019608D43D90>
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.tmp/gui-layout-diagnosis/test_review_and_runtime_share_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001961599C990>
+width = 1280, runtime_authority = False
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    @pytest.mark.parametrize("runtime_authority", [False, True])
+    def test_review_and_runtime_share_page_elements_and_card_layouts(
+        app: QApplication,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        width: int,
+        runtime_authority: bool,
+    ) -> None:
+        from PyQt6.QtCore import QCoreApplication, QEvent
+        from PyQt6.QtWidgets import QAbstractButton, QComboBox, QLineEdit
+    
+        from cephvr.gui.cameras import CamerasPanel
+        from cephvr.gui.components import Card
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.gui.main import ManagedGui
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+        from cephvr.gui.microcontroller import MicrocontrollerPanel
+        from cephvr.gui.projectors import ProjectorsPanel
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.shared.auth import Principal
+    
+        # Exercise both real composition paths, without SDK discovery or controller work.
+        monkeypatch.setattr(CamerasPanel, "refresh_inventory", lambda self: None)
+        monkeypatch.setattr(MicrocontrollerPanel, "scan_ports", lambda self: None)
+        discover_displays = ProjectorsPanel.discover_displays
+        monkeypatch.setattr(
+            ProjectorsPanel,
+            "discover_displays",
+            lambda self: (
+                discover_displays(self) if self.review_displays is not None else None
+            ),
+        )
+        monkeypatch.setattr(ControllerBridge, "start", lambda self: None)
+        review = ReviewDashboardWindow(
+            sample=True,
+            device_review=False,
+            settings=QSettings(str(tmp_path / "review.ini"), QSettings.Format.IniFormat),
+        )
+        runtime = ManagedDashboardWindow(
+            sample=False,
+            settings=QSettings(str(tmp_path / "runtime.ini"), QSettings.Format.IniFormat),
+        )
+        controls = ReviewControls(review, simulate_projectors=True)
+        bridge = ControllerBridge(
+            Principal("gui", str(uuid4()), "test-token"), 50051, 1024, (0,)
+        )
+        manager = ManagedGui(
+            runtime, bridge, gui_history_path=tmp_path / "runtime_gui.json"
+        )
+        runtime.devices.cameras.drafts = [
+            replace(camera, values=dict(camera.values))
+            for camera in review.devices.cameras.drafts
+        ]
+        runtime.devices.cameras.drafts_changed.emit()
+        runtime.apply_view(replace(review.dashboard.view, sample=False, connected=True))
+        projectors = runtime.devices.projectors
+        projectors.review_displays = review.devices.projectors.review_displays
+        projectors.assignments.update(review.devices.projectors.assignments)
+        projectors.request("Refresh displays")
+        for panel in (review.devices.projectors, projectors):
+            for key in panel.keys:
+                panel.set_participation(key, True)
+    
+        def signature(page: QWidget) -> tuple:
+            return (
+                tuple(card.caption.text() for card in page.findChildren(Card)),
+                tuple(control.text() for control in page.findChildren(QAbstractButton)),
+                tuple(editor.placeholderText() for editor in page.findChildren(QLineEdit)),
+                tuple(
+                    (type(editor.parentWidget()).__name__, editor.accessibleName(), tuple(editor.itemText(i) for i in range(editor.count())))
+                    for editor in page.findChildren(QComboBox)
+                ),
+            )
+    
+        def editor_geometry(parent: QWidget) -> list:
+            return sorted(
+                (
+                    (
+                        type(control).__name__,
+                        control.accessibleName(),
+                        control.text()
+                        if isinstance(control, (QLabel, QLineEdit, QAbstractButton))
+                        else control.currentText(),
+                        control.mapTo(parent, QPoint()),
+                        control.size(),
+                    )
+                    for control in parent.findChildren(QWidget)
+                    if isinstance(control, (QLabel, QLineEdit, QComboBox, QAbstractButton))
+                    and control.isVisible()
+                ),
+                key=repr,
+            )
+    
+        def control_gates(parent: QWidget) -> list:
+            return sorted(
+                (
+                    type(control).__name__,
+                    control.accessibleName(),
+                    control.text()
+                    if isinstance(control, (QAbstractButton, QLineEdit))
+                    else control.currentText(),
+                    control.isEnabled(),
+                )
+                for control in parent.findChildren((QAbstractButton, QLineEdit, QComboBox))
+            )
+    
+        try:
+            runtime.devices.cameras.populate_inventory()
+            runtime.devices.cameras.load_selected()
+            runtime.devices.sync_cameras()
+            runtime.snapshots.restore(
+                runtime.snapshots.validate(review.snapshots.capture())
+            )
+            runtime.devices.cameras.table.selectRow(
+                review.devices.cameras.table.currentRow()
+            )
+            runtime.devices.cameras.load_selected()
+            runtime.apply_view(
+                replace(review.dashboard.view, sample=False, connected=True)
+                if runtime_authority
+                else review.dashboard.view
+            )
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            for window in (review, runtime):
+                window.resize(width, 940)
+                window.show()
+            assert [b.text() for b in review.page_buttons] == [
+                b.text() for b in runtime.page_buttons
+            ]
+            for review_items, runtime_items in zip(
+                signature(review.centralWidget()),
+                signature(runtime.centralWidget()),
+                strict=True,
+            ):
+                assert len(review_items) == len(runtime_items)
+>               assert [
+                    (left, right)
+                    for left, right in zip(review_items, runtime_items, strict=True)
+                    if left != right
+                ] == []
+E               AssertionError: assert [(('StimulusT... � deg/s',)))] == []
+E                 
+E                 Left contains one more item: (('StimulusTimeline', 'Motion source projector', ()), ('StimulusTimeline', 'Motion source projector', ('Left + Right � deg/s',)))
+E                 Use -v to get more diff
+
+tests\gui\test_dashboard.py:14383: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[False-1280]
+1 failed in 4.33s

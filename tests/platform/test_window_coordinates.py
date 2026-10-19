@@ -92,6 +92,11 @@ def native(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
         lambda *_: OSError("native error"),
         raising=False,
     )
+    monkeypatch.setattr(
+        preview_owner,
+        "PlacementEvents",
+        lambda _: SimpleNamespace(revision=0, close=lambda alive: None),
+    )
     return state
 
 
@@ -228,6 +233,16 @@ def test_preview_owner_native_minimize_restore_and_move() -> None:
             title, *preview_owner.gui_window_identity(gui)
         )
         assert user.GetWindow(child, 4) == gui
+        user.SendMessageW.argtypes = [
+            wintypes.HWND,
+            wintypes.UINT,
+            ctypes.c_size_t,
+            ctypes.c_ssize_t,
+        ]
+        user.SendMessageW.restype = ctypes.c_ssize_t
+        assert link.placement_revision() == 0
+        user.SendMessageW(child, 0x0232, 0, 0)
+        assert link.placement_revision() == 1
         assert not link.sync()
         before = link._rect(child)
         gui_before = link._rect(gui)
@@ -293,9 +308,11 @@ def test_blank_preview_caption_keeps_handle_placement(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import ctypes
+    from contextlib import nullcontext
 
     from cephvr.platform.windows import window_coordinates as coordinates
 
+    monkeypatch.setattr(coordinates, "physical_coordinates", nullcontext)
     titles = {"preview": 77}
     calls: list[tuple[object, ...]] = []
 
@@ -337,3 +354,46 @@ def test_blank_preview_caption_keeps_handle_placement(
     assert calls == [("text", 77, ""), ("pos", 77, 400, 110)]
     with pytest.raises(OSError):
         coordinates.preview_window_handle("preview")
+
+
+def test_preview_owner_restores_hidden_live_child_after_host_switch(native):
+    owner = preview_owner.WindowsPreviewOwner("preview", 101, native.pid, 99)
+    try:
+        owner.user.IsWindowVisible = lambda hwnd: hwnd != 102
+        owner.retarget(103)
+        assert not owner.sync()
+        assert native.shows[-1] == (102, 4)
+        native.shows.clear()
+        owner.user.IsWindow = lambda hwnd: hwnd in (101, 103)
+        assert not owner.sync()
+        assert native.shows == []  # A destroyed viewer must never be recreated.
+    finally:
+        owner.close()
+
+
+@pytest.mark.parametrize("manual", [False, True])
+def test_preview_geometry_automatic_dpi_changes_preserve_manual_opt_out(manual):
+    from cephvr.shared.preview_geometry import PreviewGeometryGuard
+
+    guard = PreviewGeometryGuard()
+    guard.arranged((100, 200, 300, 330), 0)
+    revision = int(manual)
+    if manual:
+        assert not guard.observe((120, 200, 300, 330), revision)
+    for geometry in [(125, 250, 375, 410), (130, 260, 380, 415)]:
+        assert guard.observe(geometry, revision) is (not manual)
+    guard.arranged((125, 250, 375, 410), revision)
+    assert not guard.observe((150, 250, 375, 410), revision + 1)
+
+
+def test_placement_events_count_operator_completion_not_dpi_or_position():
+    from cephvr.platform.windows.placement_events import PlacementEvents
+
+    events = PlacementEvents.__new__(PlacementEvents)
+    events.revision = 0
+    events.api = SimpleNamespace(DefSubclassProc=lambda *_: 7)
+    for message in (0x02E0, 0x0047, 0x0231):
+        assert events._dispatch(1, message, 0, 0, 0, 0) == 7
+        assert events.revision == 0
+    assert events._dispatch(1, 0x0232, 0, 0, 0, 0) == 7
+    assert events.revision == 1

@@ -1,0 +1,122 @@
+[
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "bae44ceb-27ec-42a2-8dfe-3d76f3e76079",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "Setup",
+    "command_id": "77ae771e-6d5e-4ee2-96f6-ea111451e30f",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "StartSession",
+    "command_id": "52cfcc33-8d2d-446b-8fc5-b5e0b821b782",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "AbortNow",
+    "command_id": "a84af820-5d12-4248-a034-5785951e5bf7",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "NewSession",
+    "command_id": "20aa1c51-95c5-44a8-b176-51fb2c938d41",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "f7313fa4-ff93-4587-8dff-2a5d946aba91",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "Setup",
+    "command_id": "82485edf-b82f-4c1b-ad51-d79c4c6acfcc",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "StartSession",
+    "command_id": "752b34ad-9ecc-44cb-a165-ff084b572502",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "AbortNow",
+    "command_id": "109ebb37-1433-4376-9c3d-5237837a7351",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "NewSession",
+    "command_id": "14d4e1ad-d9ea-4d73-bc88-6baa899cc7c2",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "7a1f775b-2b92-4935-aea6-86a29d103c67",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "Setup",
+    "command_id": "8afb97ed-001a-4202-b393-7cb2ac9b2461",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "StartSession",
+    "command_id": "7144da08-c485-4686-8392-55c9291e1eee",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "NewSession",
+    "command_id": "4dbeade3-26b7-4ab0-add0-0683cb3b9fc6",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "3354a042-4432-47cf-97a9-1a71f268b145",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+]

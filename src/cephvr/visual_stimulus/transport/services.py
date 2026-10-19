@@ -91,6 +91,11 @@ class ConfigurationService(rpc.VisualStimulusConfigurationServiceServicer):
     def __init__(self, boundary: Boundary) -> None:
         self.boundary = boundary
 
+    async def SetStimulusPreview(
+        self, request: wire.StimulusPreviewRequest, context: grpc.aio.ServicerContext
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("SetStimulusPreview", request, context)
+
     async def InitializeDisplay(
         self,
         request: wire.VisualStimulusDisplayInitializationRequest,
@@ -130,6 +135,13 @@ class WorkerService(visual_stimulus_rpc.VisualStimulusWorkerServiceServicer):
 
     def __init__(self, boundary: Boundary) -> None:
         self.boundary = boundary
+
+    async def SetStimulusPreview(
+        self,
+        request: visual_stimulus.StimulusPreviewCommand,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("SetStimulusPreview", request, context)
 
     async def InitializeDisplay(
         self,
@@ -231,6 +243,11 @@ class CoordinatorService(visual_stimulus_rpc.VisualStimulusCoordinatorServiceSer
         context: grpc.aio.ServicerContext,
     ) -> pb.ReportReceipt:
         return await self.boundary.report("ReportWorkerLifecycle", request, context)
+
+    async def ReportStimulusPreview(
+        self, request: pb.StimulusPreviewState, context: grpc.aio.ServicerContext
+    ) -> pb.ReportReceipt:
+        return await self.boundary.report("ReportStimulusPreview", request, context)
 
     async def ReportDisplay(
         self, request: pb.VisualStimulusDisplayView, context: grpc.aio.ServicerContext

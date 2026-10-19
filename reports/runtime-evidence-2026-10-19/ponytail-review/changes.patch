@@ -1,0 +1,260 @@
+diff --git a/src/cephvr/platform/windows/byte_stream.py b/src/cephvr/platform/windows/byte_stream.py
+index 67f5f40..c9b9550 100644
+--- a/src/cephvr/platform/windows/byte_stream.py
++++ b/src/cephvr/platform/windows/byte_stream.py
+@@ -76,10 +76,6 @@ class OverlappedPipe:
+             maximum_read_bytes=maximum_read_bytes,
+         )
+ 
+-    @property
+-    def has_pending_io(self) -> bool:
+-        return self._pending is not None
+-
+     def write(self, data: bytes | memoryview, *, deadline_ns: int) -> None:
+         if not self.writable or self._closed:
+             raise WindowsLaunchError("byte-stream endpoint is not writable")
+diff --git a/src/cephvr/platform/windows/byte_stream_factory.py b/src/cephvr/platform/windows/byte_stream_factory.py
+index d97aa35..da02025 100644
+--- a/src/cephvr/platform/windows/byte_stream_factory.py
++++ b/src/cephvr/platform/windows/byte_stream_factory.py
+@@ -44,10 +44,6 @@ class InheritedEndpoint:
+     parent: OverlappedPipe
+     child_handle: int
+ 
+-    @property
+-    def inherited_handle(self) -> int:
+-        return self.child_handle
+-
+     def close_child_copy(self) -> None:
+         if self.child_handle:
+             if not native_api().CloseHandle(self.child_handle):
+diff --git a/src/cephvr/platform/windows/security.py b/src/cephvr/platform/windows/security.py
+index 4eaec65..93b6fd1 100644
+--- a/src/cephvr/platform/windows/security.py
++++ b/src/cephvr/platform/windows/security.py
+@@ -15,7 +15,6 @@ from cephvr.platform.windows.paths import extended_path
+ SE_FILE_OBJECT = 1
+ OWNER_SECURITY_INFORMATION = 0x1
+ DACL_SECURITY_INFORMATION = 0x4
+-PROTECTED_DACL_SECURITY_INFORMATION = 0x80000000
+ SE_DACL_PROTECTED = 0x1000
+ TOKEN_QUERY = 0x0008
+ TOKEN_USER = 1
+@@ -175,16 +174,6 @@ def _apis() -> tuple[Any, Any]:
+         ctypes.c_void_p,
+     ]
+     advapi.AddAccessAllowedAceEx.restype = wintypes.BOOL
+-    advapi.SetNamedSecurityInfoW.argtypes = [
+-        wintypes.LPWSTR,
+-        ctypes.c_int,
+-        wintypes.DWORD,
+-        ctypes.c_void_p,
+-        ctypes.c_void_p,
+-        ctypes.c_void_p,
+-        ctypes.c_void_p,
+-    ]
+-    advapi.SetNamedSecurityInfoW.restype = wintypes.DWORD
+     advapi.GetNamedSecurityInfoW.argtypes = [
+         wintypes.LPWSTR,
+         ctypes.c_int,
+@@ -401,37 +390,6 @@ def create_owner_only(path: Path, payload: bytes) -> None:
+     verify_owner_only(path)
+ 
+ 
+-def ensure_owner_only(path: Path) -> None:
+-    """Set a protected one-ACE DACL for the current token user, then verify it."""
+-    kernel, advapi = _apis()
+-    name = _checked_path(path, kernel)
+-    sid, token_buffer, sid_length = _user_sid(kernel, advapi)
+-    _ = token_buffer  # Keep token memory alive through the ACL call.
+-    acl_size = ctypes.sizeof(_ACL) + 8 + sid_length
+-    acl_buffer = ctypes.create_string_buffer(acl_size)
+-    acl = ctypes.cast(acl_buffer, ctypes.c_void_p)
+-    if not advapi.InitializeAcl(acl, acl_size, ACL_REVISION):
+-        raise WindowsSecurityError(f"InitializeAcl failed: {ctypes.get_last_error()}")
+-    if not advapi.AddAccessAllowedAceEx(acl, ACL_REVISION, 0, FILE_ALL_ACCESS, sid):
+-        raise WindowsSecurityError(
+-            f"AddAccessAllowedAceEx failed: {ctypes.get_last_error()}"
+-        )
+-    result = advapi.SetNamedSecurityInfoW(
+-        name,
+-        SE_FILE_OBJECT,
+-        OWNER_SECURITY_INFORMATION
+-        | DACL_SECURITY_INFORMATION
+-        | PROTECTED_DACL_SECURITY_INFORMATION,
+-        sid,
+-        None,
+-        acl,
+-        None,
+-    )
+-    if result:
+-        raise WindowsSecurityError(f"SetNamedSecurityInfoW failed: {result}")
+-    verify_owner_only(path)
+-
+-
+ def verify_owner_only(path: Path) -> None:
+     """Reject reparse points, another owner, inherited/extra ACEs or broad access."""
+     kernel, advapi = _apis()
+diff --git a/src/cephvr/shared/commands.py b/src/cephvr/shared/commands.py
+index 37e5773..47609d4 100644
+--- a/src/cephvr/shared/commands.py
++++ b/src/cephvr/shared/commands.py
+@@ -316,19 +316,7 @@ class CommandLedger:
+             for key in matching:
+                 old = self._records[key]
+                 if old.finalized_ns is None and old.completed_ns is not None:
+-                    self._records[key] = CommandRecord(
+-                        old.command_id,
+-                        old.work_key,
+-                        old.canonical_request,
+-                        old.accepted_ns,
+-                        old.result,
+-                        old.completed_ns,
+-                        now_ns,
+-                        old.result_reservation_bytes,
+-                        old.deadline_ns,
+-                        old.priority,
+-                        old.executor_result,
+-                    )
++                    self._records[key] = replace(old, finalized_ns=now_ns)
+ 
+     def finalize_command(self, command_id: str, now_ns: int) -> None:
+         """Start retention for one completed record without retiring its work scope."""
+diff --git a/src/cephvr/shared/ffmpeg_filters.py b/src/cephvr/shared/ffmpeg_filters.py
+index da704ab..1130143 100644
+--- a/src/cephvr/shared/ffmpeg_filters.py
++++ b/src/cephvr/shared/ffmpeg_filters.py
+@@ -2,7 +2,7 @@
+ 
+ from __future__ import annotations
+ 
+-from dataclasses import dataclass
++from dataclasses import dataclass, replace
+ 
+ from cephvr.shared.ffmpeg_filter_syntax import (
+     _ALLOWED,
+@@ -164,15 +164,12 @@ def validate_filter_chain(
+                 raise FilterError(
+                     "matrix conversion needs explicit applicable input and output matrices"
+                 )
+-            current = ImageFormat(
+-                current.pixel_format,
+-                current.depth,
+-                width,
+-                height,
+-                current.chroma_x,
+-                current.chroma_y,
+-                out_range,
+-                out_matrix_stage,
++            current = replace(
++                current,
++                width=width,
++                height=height,
++                color_range=out_range,
++                matrix=out_matrix_stage,
+             )
+         elif name == "crop":
+             width, height = _resolve_box(values, current.width, current.height)
+@@ -210,16 +207,7 @@ def validate_filter_chain(
+                 "keep_aspect", "0"
+             ) not in {"0", "1"}:
+                 raise FilterError("crop exact/keep_aspect parameters require 0 or 1")
+-            current = ImageFormat(
+-                current.pixel_format,
+-                current.depth,
+-                width,
+-                height,
+-                current.chroma_x,
+-                current.chroma_y,
+-                current.color_range,
+-                current.matrix,
+-            )
++            current = replace(current, width=width, height=height)
+         elif name == "pad":
+             width, height = _resolve_box(values, current.width, current.height)
+             x = _offset(
+@@ -246,16 +234,7 @@ def validate_filter_chain(
+                 raise FilterError("pad geometry violates chroma alignment")
+             if "color" in values and not _valid_color(values["color"]):
+                 raise FilterError("pad color is not a valid FFmpeg color literal")
+-            current = ImageFormat(
+-                current.pixel_format,
+-                current.depth,
+-                width,
+-                height,
+-                current.chroma_x,
+-                current.chroma_y,
+-                current.color_range,
+-                current.matrix,
+-            )
++            current = replace(current, width=width, height=height)
+         if current.depth < target_depth:
+             raise FilterError("filter intermediate drops below recording_bit_depth")
+         names.append(name)
+diff --git a/src/cephvr/shared/supervised_encoder.py b/src/cephvr/shared/supervised_encoder.py
+index 339a9d6..fd28c0b 100644
+--- a/src/cephvr/shared/supervised_encoder.py
++++ b/src/cephvr/shared/supervised_encoder.py
+@@ -476,7 +476,3 @@ class SupervisedEncoderLauncher:
+         except Exception:
+             # Preserve the supervisor's planned job as a cleanup obligation.
+             return False
+-
+-    def retry_storage_cleanup(self) -> None:
+-        """Reconcile retained native storage handles for this worker."""
+-        self.file_sync_owner.retry_cleanup()
+diff --git a/tests/acquisition/test_recording_filter_expressions.py b/tests/acquisition/test_recording_filter_expressions.py
+index e3f0d68..fbf85be 100644
+--- a/tests/acquisition/test_recording_filter_expressions.py
++++ b/tests/acquisition/test_recording_filter_expressions.py
+@@ -6,7 +6,11 @@ from cephvr.acquisition.recording.filter_expressions import (
+     ExpressionError,
+     resolve_dimensions,
+ )
+-from cephvr.acquisition.recording.filters import source_format, validate_filter_chain
++from cephvr.acquisition.recording.filters import (
++    ImageFormat,
++    source_format,
++    validate_filter_chain,
++)
+ 
+ 
+ def test_dimensions_resolve_oh_dependency_without_substituting_input_height() -> None:
+@@ -78,3 +82,37 @@ def test_packed_review_rgb10_requires_explicit_matrix_without_precision_loss():
+     )
+     assert result.image.depth == 10
+     assert (result.image.width, result.image.height) == (640, 480)
++
++
++@pytest.mark.parametrize(
++    ("expression", "width", "height", "color_range", "matrix"),
++    [
++        ("crop=w=320:h=240", 320, 240, "full", "bt709"),
++        ("pad=w=800:h=600", 800, 600, "full", "bt709"),
++        (
++            "scale=w=320:h=240:in_range=full:out_range=limited:"
++            "in_color_matrix=bt709:out_color_matrix=bt2020",
++            320,
++            240,
++            "limited",
++            "bt2020",
++        ),
++    ],
++)
++def test_geometry_filters_preserve_pixel_layout_and_resolve_color_metadata(
++    expression: str, width: int, height: int, color_range: str, matrix: str
++) -> None:
++    source = ImageFormat("yuv420p10le", 10, 640, 480, 2, 2, "full", "bt709")
++    result = validate_filter_chain(
++        f"{expression},format=pix_fmts=yuv420p10le",
++        source=source,
++        target_depth=10,
++        accepted_pixel_formats=frozenset({"yuv420p10le"}),
++        terminal_pixel_format="yuv420p10le",
++        output_range=color_range,
++        output_matrix=matrix,
++    )
++    expected = ImageFormat("yuv420p10le", 10, width, height, 2, 2, color_range, matrix)
++    assert result.stages == (source, expected, expected)
++    assert result.image == expected
++    assert source == ImageFormat("yuv420p10le", 10, 640, 480, 2, 2, "full", "bt709")

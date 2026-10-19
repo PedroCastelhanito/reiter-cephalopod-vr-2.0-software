@@ -178,10 +178,12 @@ class ControllerRuntime:
         self.publisher = components.publisher
         self.leases = components.leases
         self.metadata = components.metadata
+        self.stimulus_preview = components.stimulus_preview
         self.display = components.display
         self.display_calibration = components.display_calibration
         self.camera = components.camera
         self.microcontroller = components.microcontroller
+        self.projector_brightness = components.projector_brightness
         self.camera_readback = components.camera_readback
         self.device_views = components.device_views
         self.camera_status_retention = components.camera_status_retention
@@ -356,7 +358,7 @@ class ControllerRuntime:
     async def install_startup_recovery(
         self,
         prompt: pb.Prompt | None,
-        handler: Callable[[], Awaitable[None]] | None,
+        handler: Callable[[str], Awaitable[None]] | None,
         blocker: str | None,
         completion_warning: str | None = None,
         notice: str | None = None,
@@ -464,12 +466,12 @@ class ControllerRuntime:
     async def begin_tracking_diagnostic(
         self, request: svc.BeginTrackingDiagnosticRequest
     ) -> pb.CommandAdmission:
-        return await self.tracking_diagnostic.begin(request)
+        return await self.tracking_diagnostic.execute_operator(request)
 
     async def close_tracking_diagnostic(
         self, request: svc.CloseTrackingDiagnosticRequest
     ) -> pb.CommandAdmission:
-        return await self.tracking_diagnostic.close(request)
+        return await self.tracking_diagnostic.execute_operator(request)
 
     async def get_tracking_diagnostic_state(
         self, request: svc.TrackingDiagnosticQuery

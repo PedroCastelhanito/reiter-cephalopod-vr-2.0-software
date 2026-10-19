@@ -68,7 +68,6 @@ class DashboardAppearance(QObject):
         assert isinstance(app, QApplication)
         app.focusChanged.connect(self.focus_editor)
         window.devices.tab_bar.currentChanged.connect(self.refresh_device_icons)
-        load_terminal_font()
         self.brand = next(
             item
             for item in window.findChildren(QLabel)
@@ -130,7 +129,10 @@ class DashboardAppearance(QObject):
         retro = self.name == "retro_console"
         self.actions[self.name].setChecked(True)
         self.window.setProperty("retroConsole", retro)
-        self.window.setStyleSheet(retro_chrome_stylesheet() if retro else "")
+        # Dialogs and tool windows inherit the complete palette from their owner.
+        self.window.setStyleSheet(
+            retro_stylesheet() + retro_chrome_stylesheet() if retro else ""
+        )
         for surface in self.surfaces:
             surface.setProperty("retroConsole", retro)
             surface.setStyleSheet(retro_stylesheet() if retro else "")
@@ -166,6 +168,13 @@ class DashboardAppearance(QObject):
             chrome_control.update()
         self.dashboard.log_console.setPlaceholderText(
             "-- NO ENTRIES --" if retro else ""
+        )
+        # Measure after fonts and chrome are applied, including on style changes.
+        header_controls = (self.window.page_title, self.dashboard.preview_button)
+        for header_control in header_controls:
+            header_control.ensurePolished()
+        self.window.page_header.setFixedHeight(
+            max(control.sizeHint().height() for control in header_controls)
         )
         self.apply_crt()
         # Settle layouts before the first repaint; otherwise one frame keeps old card

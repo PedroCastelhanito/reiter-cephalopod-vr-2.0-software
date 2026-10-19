@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from cephvr.shared.ffmpeg_filter_syntax import (
     _ALLOWED,
@@ -164,15 +164,12 @@ def validate_filter_chain(
                 raise FilterError(
                     "matrix conversion needs explicit applicable input and output matrices"
                 )
-            current = ImageFormat(
-                current.pixel_format,
-                current.depth,
-                width,
-                height,
-                current.chroma_x,
-                current.chroma_y,
-                out_range,
-                out_matrix_stage,
+            current = replace(
+                current,
+                width=width,
+                height=height,
+                color_range=out_range,
+                matrix=out_matrix_stage,
             )
         elif name == "crop":
             width, height = _resolve_box(values, current.width, current.height)
@@ -210,16 +207,7 @@ def validate_filter_chain(
                 "keep_aspect", "0"
             ) not in {"0", "1"}:
                 raise FilterError("crop exact/keep_aspect parameters require 0 or 1")
-            current = ImageFormat(
-                current.pixel_format,
-                current.depth,
-                width,
-                height,
-                current.chroma_x,
-                current.chroma_y,
-                current.color_range,
-                current.matrix,
-            )
+            current = replace(current, width=width, height=height)
         elif name == "pad":
             width, height = _resolve_box(values, current.width, current.height)
             x = _offset(
@@ -246,16 +234,7 @@ def validate_filter_chain(
                 raise FilterError("pad geometry violates chroma alignment")
             if "color" in values and not _valid_color(values["color"]):
                 raise FilterError("pad color is not a valid FFmpeg color literal")
-            current = ImageFormat(
-                current.pixel_format,
-                current.depth,
-                width,
-                height,
-                current.chroma_x,
-                current.chroma_y,
-                current.color_range,
-                current.matrix,
-            )
+            current = replace(current, width=width, height=height)
         if current.depth < target_depth:
             raise FilterError("filter intermediate drops below recording_bit_depth")
         names.append(name)

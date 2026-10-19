@@ -483,7 +483,7 @@ def test_flip_input_is_rejected_before_any_serial_command() -> None:
     assert port.verbs == ["CAPS", "STATUS"]
 
 
-@pytest.mark.parametrize("version", [2, 3])
+@pytest.mark.parametrize("version", [2, 3, 4])
 def test_old_firmware_is_rejected_before_output_diagnostics(version: int) -> None:
     clock = _Clock(10)
     port = _ScriptedPort(statuses=[_status()], protocol_version=version)
@@ -494,6 +494,62 @@ def test_old_firmware_is_rejected_before_output_diagnostics(version: int) -> Non
         owner.connect(deadline_ns=10_000)
     assert port.verbs == ["CAPS"]
     assert port.closed
+
+
+@pytest.mark.parametrize("bad_running", [None, "behavioral", "tracking"])
+def test_configure_adds_stopped_output_and_preserves_existing_running_readback(
+    bad_running: str | None,
+) -> None:
+    def state(*, tracking: bool, running: bool) -> bytes:
+        return (
+            "valid=1 watchdog_stopped=0 watchdog_ms=1000 "
+            "behavioral_enabled=1 "
+            f"behavioral_running={int(running)} "
+            "behavioral_pin=D2 behavioral_applied_hz=10.0 "
+            f"tracking_enabled={int(tracking)} tracking_running=0 "
+            + ("tracking_pin=D4 tracking_applied_hz=20.0 " if tracking else "")
+            + "eye_tracking_enabled=0 eye_tracking_running=0"
+        ).encode()
+
+    configured = state(tracking=True, running=True)
+    if bad_running == "behavioral":
+        configured = configured.replace(
+            b"behavioral_running=1", b"behavioral_running=0"
+        )
+    elif bad_running == "tracking":
+        configured = configured.replace(
+            b" tracking_running=0", b" tracking_running=1", 1
+        )
+    port = _ScriptedPort(
+        statuses=[
+            _status(),
+            state(tracking=False, running=False),
+            b"watchdog_stopped=0 behavioral_running=1 tracking_running=0 eye_tracking_running=0",
+            configured,
+        ]
+    )
+    owner = SerialOwner("COM7", _policies(), clock=_Clock(10), serial_port=port)
+    owner.connect(deadline_ns=10_000)
+    requested = camera.CameraPulseConfiguration(port="COM7")
+    requested.behavioral.pin = "D2"
+    requested.behavioral.requested_frequency_hz = 10.0
+    requested.tracking.pin = "D4"
+    requested.tracking.requested_frequency_hz = 20.0
+    owner.configure(requested, 10_000, active_roles=("behavioral",))
+    owner.on(("behavioral",), 10_000)
+
+    if bad_running is None:
+        result = owner.configure(
+            requested, 10_000, active_roles=("behavioral", "tracking")
+        )
+        assert result.state.behavioral.running
+        assert result.state.tracking.enabled and not result.state.tracking.running
+    else:
+        with pytest.raises(
+            SerialOwnerError, match=f"changed {bad_running} running state"
+        ):
+            owner.configure(requested, 10_000, active_roles=("behavioral", "tracking"))
+    assert port.verbs == ["CAPS", "STATUS", "CONFIGURE", "ON", "CONFIGURE"]
 
 
 def test_legacy_firmware_caps_rejection_stops_probe_and_closes_port() -> None:
@@ -508,7 +564,7 @@ def test_legacy_firmware_caps_rejection_stops_probe_and_closes_port() -> None:
     clock = _Clock(10)
     port = LegacyPort(statuses=[])
     owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
-    with pytest.raises(ChannelIncompatibleFirmware, match="required protocol 4"):
+    with pytest.raises(ChannelIncompatibleFirmware, match="required protocol 5"):
         owner.connect(deadline_ns=10_000)
     assert port.verbs == ["CAPS"]
     assert port.closed
@@ -598,7 +654,7 @@ class _Clock:
 
 
 class _ScriptedPort:
-    def __init__(self, *, statuses: list[bytes], protocol_version: int = 4) -> None:
+    def __init__(self, *, statuses: list[bytes], protocol_version: int = 5) -> None:
         self._statuses = deque(statuses)
         self._protocol_version = protocol_version
         self._incoming: deque[int] = deque()
@@ -621,7 +677,7 @@ class _ScriptedPort:
                 f"protocol={self._protocol_version} firmware=board pins=D2,D4 input_pins=D2 min_hz=0.1 max_hz=60.0 "
                 "watchdog_min_ms=100 watchdog_max_ms=10000"
             )
-        elif verb == "STATUS":
+        elif verb in {"STATUS", "CONFIGURE", "ON"}:
             body = self._statuses.popleft().decode("ascii")
         elif verb == "OFF":
             body = "watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0"
@@ -1616,6 +1672,81 @@ async def test_unconfirmed_firmware_helper_blocks_camera_trigger_access() -> Non
             )
         )
     serial.connect.assert_not_awaited()
+
+
+@pytest.mark.parametrize("cleanup_fails", [False, True])
+async def test_failed_camera_connect_releases_claim_before_firmware_upload(
+    cleanup_fails,
+):
+    from unittest.mock import AsyncMock
+
+    from cephvr.acquisition.microcontroller_client import (
+        ControllerMicrocontrollerClient,
+    )
+    from cephvr.shared.auth import Principal
+
+    serial = AsyncMock()
+    serial.connect.side_effect = RuntimeError("incompatible MCU protocol version 4")
+    if cleanup_fails:
+        serial.close.side_effect = RuntimeError("serial release unconfirmed")
+    settings = control.AcquisitionSettings()
+    settings.pulses.port = "COM8"
+    owner = MicrocontrollerDevice(
+        serial, settings, runtime_pb2.AcquisitionFilePolicies(), lambda: 1
+    )
+    owner.firmware.execute = AsyncMock()
+    calls = []
+
+    class Stub:
+        async def ExecuteMicrocontrollerIo(self, request, **kwargs):
+            calls.append(request)
+            try:
+                return await owner.io(request)
+            except RuntimeError as exc:
+                return wire.MicrocontrollerIoResult(
+                    command_id=request.command_id, failure=str(exc)
+                )
+
+    client = ControllerMicrocontrollerClient(
+        Stub(),
+        Principal("acquisition", str(uuid4()), "token"),
+        str(uuid4()),
+        lambda: settings.pulses,
+        clock=lambda: 1,
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="serial release unconfirmed" if cleanup_fails else "incompatible MCU",
+    ):
+        await client.connect(deadline_ns=1000)
+    assert [item.kind for item in calls] == [
+        wire.MICROCONTROLLER_IO_KIND_CONNECT,
+        wire.MICROCONTROLLER_IO_KIND_CLOSE,
+    ]
+    assert calls[0].claim_id == calls[1].claim_id
+    assert all(item.deadline_monotonic_ns == 1000 for item in calls)
+    serial.close.assert_awaited_once_with(deadline_ns=1000)
+    upload = wire.MicrocontrollerCommandRequest(
+        kind=wire.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+        firmware_path="new.hex",
+        firmware_sha256="digest",
+    )
+    if cleanup_fails:
+        assert client.claim_id == owner.claim_id == calls[0].claim_id
+        assert owner.acquisition_claimed and not owner.claim_released.is_set()
+        with pytest.raises(RuntimeError, match="Release camera triggering"):
+            await owner.execute(upload, settings.pulses, 1000)
+        owner.firmware.execute.assert_not_awaited()
+        serial.close.side_effect = None
+        await client.close(deadline_ns=1000)
+    assert not client.claim_id and not owner.acquisition_claimed
+    assert owner.claim_released.is_set() and not owner.port_owned
+    await owner.execute(upload, settings.pulses, 1000)
+    owner.firmware.execute.assert_awaited_once()
+    serial.connect.side_effect = None
+    serial.connect.return_value = mcu.MicrocontrollerObservation(port="COM8")
+    assert (await client.connect(deadline_ns=1000)).port == "COM8"
+    assert owner.acquisition_claimed and owner.claim_id == client.claim_id
 
 
 async def test_camera_claim_is_exact_and_cleanup_leaves_general_diagnostics_alone():

@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_state": "dirty working tree with concurrent edits; hashes identify scoped source",
+  "checks": {
+    "client_platform_controller_tests": {
+      "passed": 74,
+      "scope": [
+        "tests/client/test_controller_rpc.py",
+        "tests/platform/test_projector_brightness.py",
+        "tests/controller/test_camera_evidence.py"
+      ],
+      "markers": "not windows and not rig"
+    },
+    "gui_tests": {
+      "passed": 18,
+      "deselected": 680,
+      "platform": "Qt offscreen",
+      "selection": "projector_brightness or projector_refresh or projector_assignments or projector_geometry_and_pulse or projector_config_tabs or projectors_number_secondary or devices_draft_reflows or devices_side_rail"
+    },
+    "ruff": "16 files pass check/format",
+    "mypy": "12 changed source modules pass --platform win32",
+    "powershell": "Parser.ParseFile zero errors; no script execution",
+    "boundaries": "727 modules; zero violations",
+    "build": "python -m build --wheel --no-isolation passes; helper included",
+    "whitespace": "git diff --check passes"
+  },
+  "hardware_actions": false,
+  "limitations": [
+    "SDK/process tests use mocks; no USB or optical acceptance",
+    "Running app not restarted",
+    "Broader native-dialog GUI selection stopped after stall"
+  ],
+  "sha256": {
+    "src/cephvr/gui/projector_brightness.py": "3daaaf025ec3d96e40e448a6e500088e4c25c0f30afc5d1d8c4795b603684edc",
+    "src/cephvr/controller/device/projector_brightness.py": "5bfb218bf2838ec6e4d3ef66596bd81028e674e7e2230a859047e63bb2b82c04",
+    "src/cephvr/platform/windows/projector_brightness.py": "e93a3903744bda974e9651d01da32d04f32f4ebfad3ac9621a4615db6b6a6db9",
+    "src/cephvr/platform/windows/projector_brightness.ps1": "775d08074e863883a3629b130a635478920cbee06aec0c9836556b8c06f46235",
+    "contracts/cephvr/control/v1/services.proto": "f16ba3e4de16039c7e0663ea9669d5cabf2644b816f9590a35ee73d5afb212c8",
+    "tests/platform/test_projector_brightness.py": "820bb0d31a65e595e65426b15f250288a726329c3c5a1a32dc62344c8b935f5b"
+  },
+  "reference_sha256": "6b79bcd4cc43d1f5beafb0b3f838f6793f68d4c463fdaa7a36d4af608fd992cf"
+}

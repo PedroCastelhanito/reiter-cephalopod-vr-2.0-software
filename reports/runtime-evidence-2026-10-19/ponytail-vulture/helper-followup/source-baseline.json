@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-19",
+  "revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "working_tree": "Concurrent dirty work preserved; selected four sources initially match HEAD.",
+  "files": {
+    "src/cephvr/shared/pixels/preparer.py": "5a126ff5f4a2b8d8f6bc8d4032ccb2b8ded99f2073c17bc95dd32b7844e7d4fc",
+    "src/cephvr/gui/managed_mcu.py": "f4eb92befa076fb1c510de62371c51c56608ff3b5690c93c66a2cfe2898df144",
+    "src/cephvr/gui/spikeglx.py": "e1ed3c4f85fca455a99186bac45793158ce7473f59143367d05f5818dda7133b",
+    "src/cephvr/gui/tracking.py": "f01ef52ff36075b281ba22faa3b734b234d2472d7b3e38e742d29e3559a50bad"
+  }
+}

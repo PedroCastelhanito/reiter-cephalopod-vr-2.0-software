@@ -28,7 +28,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
 <a id="e04"></a>
 ### E04 — Recording layout, identity, and metadata
 
-**Status:** Accepted · **Revision:** 89
+**Status:** Accepted · **Revision:** 91
 
 **Identity and files**
 
@@ -98,11 +98,11 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
 - Complete collision checks before Ready. Existing files require a modal/listed-path
   Continue/Cancel choice from the control holder. Continue authorizes deletion only
   of listed files, followed by revalidation/reservation; Cancel preserves files and
-  cancels Setup. Apart from Setup-cancellation cleanup below, no directory/unlisted-
-  file deletion or overwrite prompt; Starting-phase stops keep E06's written
+  cancels Setup. Apart from explicit startup discard and Setup-cancellation cleanup
+  below, no directory/unlisted-file deletion or overwrite prompt; Starting-phase stops keep E06's written
   metadata. Unexpected later collisions fail as storage/invariant errors.
 - Live locks block reuse. An available lock with an unfinished/corrupt/inconsistent
-  marker requires recovery resolution while preserving files. Cancelled or failed
+  marker requires explicit startup recovery or discard. Cancelled or failed
   Setup (SettingUp/Ready) deletes everything that attempt created: its marker,
   `protocol-data/`, `spikeglx-data/`, the session directory and a parent experiment
   directory it created, then releases the lock. Record each created path at creation;
@@ -199,15 +199,23 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
   compact best-effort independent report under `<software-root>/reports/`, owned by
   the supervisor, or by the surviving controller if the supervisor is confirmed lost.
   Its **5 s** submission deadline cannot delay interruption.
-- Startup inspects known unfinished sessions only after the supervisor confirms old
-  application processes absent and the controller acquires available locks. The
+- Startup prompts for a known unfinished session with **Start recovery** or
+  **Cancel and delete files**, displaying its exact directory and permanent deletion
+  of all local session contents, including imported SpikeGLX files. Closing the
+  prompt preserves files and the Setup blocker. Both actions require controller-held
+  exclusive reservation. A missing launcher receipt permits an explicit operator
+  choice under that lock without a Windows reboot; retain prior process absence as
+  unconfirmed and explain this in the prompt/report. A free lock is not exit proof. The
   controller keeps one atomic owner-private unfinished-session pointer at reservation
-  acquisition and removes it only after verified completion or cancelled-Setup cleanup.
+  acquisition and removes it only after verified completion, explicit discard or
+  cancelled-Setup cleanup.
   A Start cancelled before activation keeps written metadata and completes the marker
   as `not_activated`. After verified old-process absence, a pointer whose namespace is
   gone (or only a marker-less cleanup quarantine remains) is cleared with a warning.
   The new supervisor returns the prior launcher receipt bound to the pointer's old
-  controller/supervisor generations; missing proof remains a blocker. The
+  controller/supervisor generations. A present mismatched/invalid receipt remains
+  a blocker. Without a receipt, never automatically repair files, settle a missing
+  namespace or clear the pointer; require the explicit locked action. The
   controller owns any repair writes through the same serialized writer under the
   bounded explicit recovery operation. Append evidence-based recovery, including
   missing terminal trial/session outcomes, to intact logs; preserve corrupt/incomplete
@@ -217,7 +225,13 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
   Retain any unconfirmed SpikeGLX stop prominently
   with its expected endpoint/run; never silently stop/adopt a running remote
   acquisition or infer stop from local exit (E12). Then complete the marker and
-  release the reservation. Never automatically resume a session.
+  release the reservation. Discard instead verifies the original marker and exact
+  session identity, rejects links/reparse points or unexpected session-root entries,
+  deletes only that session's two child namespaces under the existing bound, then
+  removes its marker/namespace and clears the pointer after confirmed deletion.
+  Preserve the pointer/blocker on failure or uncertain completion; never delete
+  sibling sessions, shared parent directories or remote SpikeGLX files. Never
+  automatically resume a session or perform either action without an explicit choice.
 - Query recording-destination free space during Setup only, with a **5 s** limit.
   Below **10,000,000,000 bytes**, or unknown after query failure, requires
   Continue/Cancel with value/reason. Continue cannot override confirmed storage

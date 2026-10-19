@@ -1,0 +1,14 @@
+[
+  "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "tests/gui/test_dashboard.py",
+  "tests/gui/test_tracking_live.py",
+  "-k",
+  "tracking or mcu or microcontroller or spikeglx",
+  "-q",
+  "-m",
+  "not windows and not rig",
+  "--basetemp",
+  "C:\\Users\\REITER~1\\AppData\\Local\\Temp\\cephvr-vulture-helpers-gui-3756c57a70a947c3868f876b06886ab1"
+]

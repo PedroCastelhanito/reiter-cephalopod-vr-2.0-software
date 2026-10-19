@@ -14,8 +14,10 @@ class SquareViewport:
         self.tx = (side - width * self.fit) / 2
         self.ty = (side - height * self.fit) / 2
         self.dirty = False
+        self._pan_anchor: tuple[int, int] | None = None
 
     def resize(self, side: int) -> None:
+        self.end_pan()
         ratio = side / self.side
         self.side = side
         self.fit = side / max(self.width, self.height)
@@ -25,6 +27,7 @@ class SquareViewport:
         self.dirty = True
 
     def wheel(self, x: int, y: int, flags: int) -> None:
+        self.end_pan()
         delta = (flags >> 16) & 0xFFFF
         if delta >= 0x8000:
             delta -= 0x10000
@@ -39,9 +42,26 @@ class SquareViewport:
         self.dirty = self.dirty or self.zoom != previous
 
     def reset(self) -> None:
+        self.end_pan()
         self.zoom = 1.0
         self._clamp()
         self.dirty = True
+
+    def start_pan(self, x: int, y: int) -> None:
+        self._pan_anchor = (x, y) if self.zoom > 1 else None
+
+    def pan(self, x: int, y: int) -> None:
+        if self._pan_anchor is None:
+            return
+        previous = self.tx, self.ty
+        self.tx += x - self._pan_anchor[0]
+        self.ty += y - self._pan_anchor[1]
+        self._pan_anchor = x, y
+        self._clamp()
+        self.dirty |= (self.tx, self.ty) != previous
+
+    def end_pan(self) -> None:
+        self._pan_anchor = None
 
     def _clamp(self) -> None:
         scale = self.fit * self.zoom

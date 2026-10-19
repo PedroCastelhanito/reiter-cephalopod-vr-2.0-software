@@ -9,8 +9,8 @@ Scientific alignment is external post hoc work under
 [SYS-004](../../architecture.md#sys-004). Camera-trigger microcontroller control
 belongs to [acquisition](acquisition.md#a10). The
 [SpikeGLX control contract](../../contracts/spikeglx-control.md) binds calls, records
-and failure handling; a read-only controller diagnostic is implemented, while the
-session lifecycle client and full rig verification remain open.
+and failure handling. The controller diagnostic and session lifecycle client are
+implemented; full paired rig verification remains separate.
 
 Configuration:
 [synchronization_config.toml](../../config/backends/synchronization_config.toml).
@@ -36,7 +36,7 @@ Configuration:
 <a id="e12"></a>
 ### E12 — Remote SpikeGLX control
 
-**Status:** Accepted · **Revision:** 21
+**Status:** Accepted · **Revision:** 23
 
 - **Owner and transport:** the controller owns the only SpikeGLX client (no
   supervisor fallback), using the official SDK Python wrapper against SpikeGLX's
@@ -52,8 +52,12 @@ Configuration:
   Recording spans all trials and gaps; never restart it per trial.
 - **Setup:** require an idle SpikeGLX (never stop, rename or adopt a running
   acquisition), read back version, streams, saved channels and gate/trigger modes,
-  require modes that save on startRun, check the pulse inventory, set and read back
-  the session run name, and read the data directory. Acquisition settings stay
+  require modes that save on startRun (including the manual override starting enabled
+  or being disabled), check the pulse inventory, set and read back
+  the exact reserved session-directory basename as the SpikeGLX run name
+  (`<subject>-<setup_HHMMSS>`), and read the data directory. Do not recompute a
+  separate experiment/date prefix; native gate/trigger/stream suffixes remain
+  SpikeGLX-owned. Acquisition settings stay
   operator-owned in SpikeGLX; a change before start fails the attempt. Record the
   readback and the exact configured command-server address/port used for the
   prepared connection in `SESSION_CONFIG.json`; missing endpoint evidence blocks

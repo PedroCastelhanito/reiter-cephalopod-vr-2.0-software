@@ -16,7 +16,14 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 234
+**Status:** Accepted · **Revision:** 250
+
+- Devices/Projectors provides an explicit RGB LED current and Adjust action for all
+  USB-detected TI projector interfaces. The controller owns SDK access under E02/E08,
+  requiring the current control lease, configuration revision and Configuration phase;
+  serialize it with existing manual device work and block Setup until process exit.
+  Review reports intent only. SDK readback/failure is authoritative; partial application
+  is reported without rollback or automatic retry. See the [brightness contract](../../contracts/projector-brightness.md).
 
 - Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
 
@@ -55,34 +62,29 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Add/remove and restore through the shared table rule. Planning preview shows final-space
   black regions and a white pulse as placement, never optical timing.
   V15/V19/V22 own final composition and trial/Idle behavior; both GUI modes share controls outside the staged review candidate below.
-- Review and runtime hide Camera MCU wiring and place Test selected/Connect side
-  by side; camera trigger pins and MCU connection remain editable in their owning
-  configuration controls. Owner-requested review staging: Microcontroller places Inputs
-  and Outputs below its connection card. Inputs uses the Outputs table/button styling
-  with Add input, editable names/pins, enable checkboxes and remove actions. With no
-  definitions, hide the table/header and retain Add input. Keep unfinished definitions
-  in local review drafts and marked review files, restore legacy files as empty, and
-  keep A11's physical input/diagnostic deferral. Review input editing follows the
-  existing phase/authority/device-operation gates.
-  Review Add output inserts an unassigned inline type/pin row without a pin dialog.
-  Choose only existing supported signal identities; keep fixed signal/pin and camera
-  participation ownership. Retain unfinished rows/empty selected pins in Review drafts
-  and marked files until explicitly removed, with the same editing/test gates.
-  Runtime output authoring remains unchanged pending owner review.
-  Review Synchronization retains independent Frame/Pulse drafts by screen; blank
-  screens add no pulse, and pulse-display VSync selects all enabled pulse screens.
-  Its modeless local placement fixture repeats V22's pattern and accepts screen/field
-  edits without resetting the index. Review drafts and explicitly marked review-only
-  projector files retain all screens. Runtime files reject that extension rather than
-  silently losing pulses. Runtime promotion and physical multi-output VSync/rendering
-  follow owner review; current V20/V22 runtime contracts stay unchanged. This is a
-  scoped exception to shared page parity while the layout/behavior is under review.
+- Review and runtime share the same Microcontroller and Projector Synchronization
+  editors and portable files. Microcontroller places Inputs and Outputs directly
+  below connection, before the column's expanding spacer. Inputs supports named,
+  enabled pin drafts and Add/remove; hide the empty table/header but retain Add input.
+  Keep unfinished inputs and inline output type/pin drafts across save/restore,
+  including legacy Review files. Outputs retain supported identities, fixed pin
+  ownership and camera participation ownership. Both modes follow existing phase,
+  authority and device-operation gates; input authoring does not enable A11's
+  deferred physical input capture or diagnostics.
+  Synchronization retains independent Frame/Pulse drafts by logical screen; blank
+  screens add no pulse. Pulse-display VSync requests all enabled pulse screens under
+  V20; V22 owns runtime multi-output drawing and evidence. Full and projector-only
+  files preserve every screen and load in either mode, migrating legacy single-screen
+  files without discarding settings. Local Review uses its modeless placement fixture;
+  runtime uses the authenticated V01 diagnostic Open/Update/Close path. Both repeat
+  V22's pattern and preserve its index during complete live edits. Camera connection
+  actions follow the inventory rule below; MCU wiring stays in the owning controls.
 - Omit explanatory body descriptions throughout GUI cards, editors and dialogs;
   useful guidance belongs in control tooltips. Retain field labels, units, live
   summaries/status, empty-state messages, errors and required operator choices.
 - Review and managed runtime use the same DashboardWindow page construction,
   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
-  supplies local fixtures or authoritative state and command availability; it adds no separate page layout outside the staged review candidate above. Dashboard cards have identical geometry in both modes:
+  supplies local fixtures or authoritative state and command availability; it adds no separate page layout. Dashboard cards have identical geometry in both modes:
   no Runtime-only control button or hint row. Take control, confirmed Take over and
   Release remain in Runtime's Control menu; command gates follow actual authority.
   Review-only inspection menus and runtime authority
@@ -166,9 +168,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   submission; update camera rows and supported outputs together. Selected-camera
   Connect submits that camera's current assignment, timing, PFS and pulse
   parameters, then continues only after controller acceptance and required SDK
-  import/cleanup; no Setup is required. Test selected submits only its
-  device identity when needed and performs A10's identity-only check without PFS
-  import, trigger configuration or capture. Serialize the chain with configuration edits,
+  import/cleanup; no Setup is required. Bulk Connect uses that same per-camera path.
+  Serialize the chain with configuration edits,
   reject changed bases, and preserve unrelated local drafts while adopting confirmed
   camera revisions. Failure or lost authority prevents the subsequent camera action.
   Microcontroller Test submits the selected diagnostic pin/rate and COM port when
@@ -248,9 +249,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   runtime launcher starts the controller-backed GUI and discovers attached Basler
   cameras, secondary Windows displays and COM ports without assigning surfaces or
   claiming Setup readiness. Camera
-  refresh preserves drafts by serial. Test selected checks the exact assigned camera
-  without enabling it or
-  starting capture/pulses, preserving prior ownership. Camera roles include Eye
+  refresh preserves drafts by serial. Camera connection actions follow the inventory
+  rule below and preserve explicit experiment participation. Camera roles include Eye
   tracking for third-camera preview/video only; its external trigger remains pending
   under A01/A11, while the unique Tracking role still owns locomotion input.
   Display refresh preserves local assignments/participation. Explicit
@@ -314,9 +314,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   dropdown per projector selects the visible asset/parameters; its ordinal follows
   stack order. Prepared asset paths can be copied and pasted between projector rows;
   pasted paths resolve within the Assets folder and use the same validation as file
-  selection. Successful file selection leaves no status line. Layer management and
-  advanced settings use the row menu: Add layer, Remove layer, Move layer with
-  Move up/Move down, and a checkable Advanced settings action. Disable unavailable
+  selection. Successful file selection leaves no status line. The Layer dropdown
+  includes Add layer, Remove layer, and Move layer with Move up/Move down.
+  The row's ellipsis button directly toggles Advanced settings. Disable unavailable
   moves at the local layer boundaries. Add layer creates an empty local slot
   without opening a stimulus picker; choose its family and prepared file afterward.
   Reserve the advanced linking/fade row’s minimum height after narrow reflow.
@@ -338,6 +338,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   row, with its left edge aligned to Layer. Retain state is first when relevant;
   Linked to and fade-in/out durations follow, then control entries. Video hides
   Retain state and Linked to; 3D arena hides Retain state; Looming hides Linked to.
+  Texture omits initial position/orientation controls and preserves imported pose values.
   Expose initial position/orientation for arena, Video and Looming in Advanced settings,
   Arena shows aligned Initial position XYZ (mm) and Orientation yaw/pitch/roll (degrees)
   sections. New arena X/Y default to zero at arena center, Z copies the configured subject
@@ -441,11 +442,17 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   independently of projector enablement. Reopen the snapshot after changing settings;
   provide Play/Pause, scrubbing, previous/next epoch and playback speed. Reuse V07
   boundary state/retention and canonical expansion with an explicit example seed;
+  bind linked textures through the runtime motion resolver using the snapshot geometry
+  at each boundary, with the same pivot validation and reproducible backward seeking;
   reject unresolved random durations. This preview sends no device commands, applies
   no live Tracking and does not establish optical/runtime equivalence. Label unset
   geometry with a Devices configuration prompt rather than inventing tank dimensions;
   arena rendering remains approximate. Missing
   or unsupported content remains visible as an error, not silently substituted.
+  Procedural texture recipes use the renderer's generator and declared/default seed,
+  not their preview-file thumbnail. Bound generation before allocation and display
+  linear recipe samples in sRGB for the operator monitor; unsupported dependencies
+  or transfers retain explicit errors.
   Load assets on demand with bounded caches and arena complexity, release inactive
   video decoders, stop playback work when paused, and release resources on close or
   loss of editing authority. Keep this separate from managed backend-owned viewers.
@@ -529,18 +536,28 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   the redundant selected-camera caption; identity remains in the inventory/HUD.
   The Devices footer has no draft-settings text; local fixtures remain identified
   in the review window title and activity messages.
-  Inventory actions are ordered Test selected, Connect/Disconnect. Test selected
-  checks only the selected assigned camera, including a disabled camera, without
-  changing experiment participation, capture or existing ownership. Managed
+  Inventory actions are ordered Connect selected, Connect all; omit Test selected.
+  The selected action becomes Disconnect selected while that camera is open or
+  cleanup is pending, including a session-disabled camera. Connect all connects
+  enabled cameras sequentially, skipping those already connected, without changing
+  participation. It becomes Disconnect all when all enabled cameras are connected
+  or any enabled camera has pending cleanup; bulk disconnect releases enabled open/
+  cleanup-pending cameras sequentially. A failed/cancelled Connect stops the remaining
+  batch and retains previously connected cameras; Disconnect all attempts remaining
+  releases after an individual failure. Cancellation uses the initiating bulk button
+  and existing per-camera cleanup. Lock camera edits while the batch is pending;
+  stop on authority/connection loss, and derive final labels from confirmed state.
+  Keep unrelated disabled cameras untouched. Managed
   role assignments commit through E07 without changing the role's participation
   flag; Use remains an explicit Cameras choice.
   Connect starts A10 manual capture and then Shows its acquisition-owned OpenCV
   window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
-  visibility evidence updates the GUI selector. Show snaps the visible preview frame
-  into the current Preview grid: Dashboard's modeless external workspace, or
+  visibility evidence updates the GUI selector. Show first reveals a Win32 preview
+  at its measured initial size and position in the current Preview grid, after
+  hidden creation/placement and without activation: Dashboard's modeless external workspace, or
   below the existing HUD/log column on Devices/Cameras and Tracking. Keep the HUD and log
   at their existing top/right alignment; do not add a third column that shifts or
-  narrows them. Show Preview only while at least one preview is reported open;
+  narrows them. On Cameras/Tracking show Preview only while at least one preview is reported open;
   share remaining height with the log then. When the last preview closes, hide
   Preview and let the log reclaim its height. To place the first opening, measure
   the expanded-frame layout temporarily and restore its prior visibility even on
@@ -554,11 +571,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   ordinary cards, each captioned with its source (`[ BEHAVIOR CAM ]`); the native window
   carries no title text and `[ PREVIEW ]` names only the empty footprint. Retro doubles
   each bracket and shows `-- NO SIGNAL --` with the block cursor in an empty footprint. Dashboard
-  uses named footprints for open camera/stream windows. Cameras includes only
+  reserves named footprints for active experiment streams, including waiting or
+  unavailable viewers. Camera footprints additionally require video recording selected;
+  an already-open viewer retains its frame and Hide control until closed. Recording
+  changes do not send viewer/capture commands. Reported visibility alone controls
+  Show state. Cameras includes only
   enabled camera identities from its current drafts/readback, excluding Tracking
   and Visual stimulus streams and disabled cameras even if connected or visible.
   Its Preview visibility/log compaction follows only those eligible cameras;
-  Dashboard retains all its source types. Arrange only open eligible windows: one
+  Dashboard retains all its source types. In-page grids arrange only open eligible windows: one
   centered full-area footprint, two side by side, three/four in two rows, then
   additional two-column rows. Fit the largest bounded square in each footprint.
   Reflow existing untouched native windows when the grid changes. Any operator
@@ -566,9 +587,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   or an explicit centered Snap button restores that source's grid position/size;
   GUI translation and minimize/restore preserve this choice. A layout refresh may
   update only an existing viewer and must never reopen one closed through X.
-  Both pages retain external OpenCV previews; no embedded image tiles or plots
-  are introduced. Dashboard's Previews action opens/raises a resizable modeless
-  workspace with source controls above the adaptive grid. Closing/minimizing it
+  Both pages retain external OpenCV previews. Dashboard's Previews action opens/raises a resizable modeless
+  workspace with source controls beside each frame heading and a resizable
+  planned stimulus timeline below. Its stream grid chooses up to three columns to
+  maximize the fitted square size, retaining frame identities through visibility
+  changes. Closing/minimizing it
   hides its native viewers without ending capture or clearing their Show state;
   reopening restores them. Cameras retains its in-page grid. Switching pages
   retargets the native display owner only within the same verified GUI process;
@@ -621,7 +644,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Changing the path clears stale hints. Omit Save camera settings: edits and PFS
   hints remain local drafts until an explicit selected-camera action or normal
   configuration submission. Connect submits the selected complete draft and performs
-  required A10 SDK import/readback before capture; Test selected checks identity only.
+  required A10 SDK import/readback before capture; A10 owns identity-only diagnostics.
   Retain an unchanged imported baseline without reimporting on later rate edits.
   A filename alone cannot establish the imported baseline required for capture.
   Import does not enable a camera for experiment. Snapshot loading is silent;
@@ -640,7 +663,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   settings with their existing V20/V22/A11 owners. VSync mode
   remains editable when the photodiode patch is disabled.
 - Managed MCU connection/pin tests use controller-confirmed COM/pin/rate values.
-  Pending commands lock edits and repeat tests. Camera Connect/Test selected, MCU
+  Pending commands lock edits and repeat tests. Camera Connect selected/all, MCU
   Test connection/pin Test and the read-only SpikeGLX connection check replace their
   initiating button with Cancel, then disabled Cancelling while the current bounded
   call settles. Cancellation skips remaining steps without aborting transport or
@@ -796,7 +819,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   capped at plus/minus floor((native size - valid size)/2). Expanding a size reclamps its offset.
   Blank offsets mean zero. Numeric8/full11/review6 retain these pixel offsets; older
   removed offsets remain discarded and fractional legacy sizes round on migration.
-  The usable physical view is valid Width/Height multiplied by measured X/Y mm/px,
+  The usable physical view is valid Width/Height multiplied by measured X/Y mm/px
+  and permuted into the physical surface axes (Bottom depth uses raw Y),
   centered on the physical screen plane placed from the 5 mm frame-gap references.
   Preview and newly prepared views share these extents and fixed-pitch mappings.
   Prepared GUI affine views render at their valid pixel resolution. V14 texture
@@ -848,6 +872,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   front edges start 5 mm behind the Front screen plane, extending toward the back
   using their own dimensions. Bottom image width/X runs front-to-back (+rig Y);
   height/Y runs across the tank (-rig X), so 126×94 mm retains a 94×126 mm footprint.
+  The Bottom projector is below Right with the same physical orientation and a
+  folded mirror path; its portrait raster top faces the subject's head. GUI-owned
+  mappings rotate surface coordinates 90° before the saved output-axis inversions:
+  (u, v) maps to (1-v, u). With the retained Bottom Y inversion, head-to-tail +surface X
+  moves down the raster. Raw pixel widths/heights, offsets, reference bars and masks
+  stay output-local; Bottom surface extents/pitches and render-target axes swap.
+  The rig preview places that raster through the folded orientation onto the plane;
+  it does not treat output pixels as surface-local coordinates. Imported warps retain
+  their declared mapping; regenerated GUI profiles adopt this correction at fresh Setup.
   Numeric version 6/full version 9 retain pixel valid-area dimensions and migrate
   older Scale bounds to crop sizes using retained native measurements; reject a
   non-neutral legacy Scale without enough dimensions to migrate truthfully.
@@ -973,22 +1006,38 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Recording selections are retained but disabled while their source is inactive.
 - A secondary **Previews…** button at the right of the Dashboard header opens or
   raises one reusable modeless preview workspace, with one checkbox per available
-  camera/tracking/stimulus viewer and no open-window count. The source controls sit
-  above the adaptive native-window grid. First opening without valid saved geometry
-  uses the shared monitor-constrained tool-window placement. Remember its position
+  camera/tracking/stimulus viewer and no open-window count. Each source's Show checkbox
+  sits beside its own frame heading, with status below; omit the separate source-selector
+  card. The larger workspace defaults to 1440×960,
+  constrained to the operator monitor through shared tool-window placement; the new
+  workspace geometry preference supersedes the older selector geometry. Remember its position
   and size across close/reopen and frontend restarts using local GUI preferences.
   Closing hides the workspace and its native viewers while retaining logical Show
-  state and capture; reopening restores the same viewers. Plots remain future work.
-  The selector uses a compact bordered Source/Show grid, with source labels left,
-  aligned visibility checkboxes right, blue column captions and shared hover/focus
-  styling. An empty workspace prompts source selection. It contains no duplicate window heading,
+  state and capture; reopening restores the same viewers. Below the streams, show
+  the current trial (or selected draft before a trial): a wide sampled planned-speed
+  timeline and a compact polar local-motion direction plot, surrounded by a signed
+  angular-speed ring with CW/CCW and °/s. Both share the reported elapsed-time cursor;
+  the speed plot and epoch strip show a30s window, initially0–30s and then the
+  trailing30s as elapsed time advances. Clip traces and epoch blocks to that range;
+  time ticks remain absolute trial seconds at5s intervals.
+  Clicking the timeline inspects a planned instant until the next snapshot. Stationary
+  translation has no direction arrow. Label source selection by projector and include
+  independent reference sources only for linked textures. Reuse canonical bounded
+  expansion/function evaluation; these plots are not measured output or timing evidence.
+  Unresolved duration/order, feedback, combined texture motion and trajectories show
+  their unsupported values as unavailable; no new telemetry or commands are introduced.
+  Frame headings use source labels, Show checkboxes and pending/error details with
+  shared hover/focus styling. An empty workspace explains
+  that no streams are enabled. It contains no duplicate window heading,
   footer buttons or redundant Open/Hidden labels. Pending/error/unavailable status
   remains visible; the local review label lives in the window title.
   Checkboxes reflect reported visibility, including external-window closure; pending
   requests and unavailable viewers disable their controls with explanatory status.
   Preview rows are ordered Behavior cam, Tracking cam, any further configured camera
-  roles, Tracking, Visual stimulus. Retain inactive sources as dimmed, disabled rows:
-  a camera must be enabled for the experiment; experiment Tracking requires an active
+  roles, Tracking, Visual stimulus. Omit inactive closed sources from the workspace:
+  a camera must be enabled for the experiment and selected for video recording;
+  check both before Show, allowing Hide for an already-open unrecorded camera.
+  Device diagnostics do not depend on recording selection. Experiment Tracking requires an active
   protocol pipeline; Visual stimulus requires protocol participation. Explicit T08
   Configuration diagnostics instead require the accepted enabled Tracking-camera
   preview and their selected diagnostic pipeline, independently of experiment Tracking
@@ -1001,8 +1050,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Managed Protocol integration remains unfinished.
   Controller/owning backends admit visibility requests and own external rendering;
   no image stream enters the Dashboard. Initial local review demonstrates labeled
-  sample state only; transport, runtime viewers and performance acceptance remain
-  unfinished under E03/E08/E15 and owning backend preview rules.
+  sample state only. Managed camera viewers use A03 session slots during Running;
+  Show/Hide never enables manual capture or editing during a session. Visual stimulus
+  is a managed Dashboard row: enabled participation plus current renderer-attested
+  availability after Setup admits Show/Hide in Ready/Starting/Running. Commands use
+  the current lease, session and configuration; visibility never changes recording.
+  Its renderer-owned native window uses E13's cropped Left–Front–Right / Bottom
+  display layout without labels or header spacing, the shared placement/owner binding, manual-position preservation
+  and Snap. Native X
+  hides it and updates the row. Tracking viewer integration and full-workload
+  performance acceptance remain pending under E03/E08/E15.
 - Output directory has an asynchronous existing-folder picker beside the editable
   path. Cancellation preserves the draft; selection rechecks editing availability.
   Camera Connect and the Dashboard selector target the same source identity and
@@ -1036,7 +1093,18 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 79
+**Status:** Accepted · **Revision:** 85
+
+- Runtime logs show the current action and observed ongoing states, moving directly
+  to the next action on success. Omit routine admission, successful completion and
+  success-result rows. Explicit startup recovery/deletion also emits one confirmed
+  terminal result, stating whether files were preserved or deleted; never leave only
+  its running message after success or replay old completions from retained snapshots.
+  Preserve errors, rejection, cancellation and unconfirmed
+  outcomes with details. Deduplicate unchanged snapshot/poll observations; never
+  fabricate progress or readiness. Camera Live requires A10 frame evidence and
+  session Idle requires confirmed cleanup. E04 audit records and retained technical
+  history keep their existing evidence; these are operator-log presentation rules.
 
 - Log consoles expose a vertical scrollbar only while retained/wrapped lines
   overflow the viewport, with a visible theme-matched handle in both appearances.
@@ -1110,6 +1178,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   rendered stimulus previews retain their content colors.
   The shared theme owns both palettes; the experiment configuration excludes this
   cosmetic preference. Unknown saved styles fall back to Standard.
+  Owned warning, confirmation and tool windows inherit the full selected theme,
+  including existing windows on a live style switch and newly opened dialogs.
+  Keep stimulus/image content unchanged. OS title bars and G01 native file pickers
+  retain their platform appearance.
   Retro uses bundled IBM Plex Mono Regular with its OFL license, inverse-video hover/selection,
   bracketed button labels (disabled labels lowercase), a selected-navigation prompt,
   and blinking block cursors in Runtime logs. Prefix each nonempty HUD/log entry
@@ -1142,7 +1214,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Retro console text sits close to its frame: the log's `>` prompt gutter is a left
   viewport margin, so top/bottom padding stays small.
   Standard has neither. Omit the extra review/phase/clock banner; phase remains in
-  the HUD. The Previews selector uses the shared compact card frame; its modeless
+  the HUD. Previews places Show beside each bracketed stream heading and keeps the
+  motion plots in the shared compact card frame. Place epoch labels in a separate
+  strip above the speed graph, aligned to time; keep the zero trace inside the plot.
+  Tick scales use rounded multiples of five or ten, coarsened for wider ranges.
+  Polar direction uses the translation accent; its surrounding rotation ring and
+  signed value use the projection accent. Display local 0°/+X down, 90°/+Y right,
+  180° up and 270° left; this display rotation does not change stimulus values. Its modeless
   visibility/authority/pending gates remain unchanged. Device diagram geometry and
   semantic palette roles remain unchanged; diagrams use the active appearance palette.
   These preferences never enter experiment configuration.

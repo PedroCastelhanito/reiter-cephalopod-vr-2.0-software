@@ -37,24 +37,49 @@ offline export; it does not decode the lossy review video to recover original pi
 
 ## Tiled composite
 
-Tiles follow DisplayProfile output order, left to right then top to bottom, in a grid
-of `ceil(sqrt(n))` columns for n outputs. A tile is its output's configured
-dimensions times one session-fixed scale `1/k`. First find the smallest positive
-integer divisor fitting the encoder maximum, then multiply by file-owned
-`recording_runtime.review_scale_factor` (absent means 1 for older configuration).
-Setup rejects empty tiles or encoder-incompatible final dimensions; tile dimensions
-round down to whole pixels. The shipped factor 2 halves each tile dimension before
-readback, leaving presented images and reconstruction inputs unchanged. Column width and
-row height are the largest tile in that column/row; a tile sits at its cell's
-top-left, and unused area plus any encoder-alignment padding is fixed black code 0.
-Sampling uses the policy's fixed resampling filter; k = 1 copies codes unchanged.
-The composite depth is the largest output code depth; a lower-depth tile is widened
-by `round(c·(2^d−1)/(2^s−1))`. This is review-only conversion: rendering, presented
-images and V13 inputs are unchanged.
+Layout version 3 records full output rasters in two equal columns (one column for
+one output). For the normal four-output rig, Left / Front are above Right / Bottom.
+Sort by that surface order, then output ID. An output covering multiple surfaces
+appears once with their combined label; only a Bottom-only output is rotated 90°
+clockwise for recording. All source pixels, including calibrated black margins,
+remain inside its tile. No recording crop or stretch is permitted.
 
-The prepared ReviewEncoding retains the layout: composite dimensions, k, and each
-output ID with its tile rectangle and source depth. Evidence references it through
-the recipe; review pixels are never the per-output record.
+Cell dimensions use the largest output dimensions after the declared review rotation,
+divided by the session-fixed integer scale. Matching post-rotation resolutions fill
+their cells exactly and stitch edge-to-edge: no labels, header strips, gutters or
+per-cell alignment padding. Unequal oriented sizes retain aspect-preserving centered
+fit with black padding. Find the smallest divisor fitting the encoder maximum, then
+multiply by `recording_runtime.review_scale_factor` (absent means 1). Reject empty
+cells or incompatible final dimensions. The scale controls review resolution,
+not physical presentation or reconstruction inputs.
+
+Preview uses a separate `layout_kind=preview` layout and target with the same
+compositor implementation. Crop by the protected calibration's valid-area rectangle;
+when absent use intended-coverage bounds within its viewport. For multiple mappings
+on one output, use their union bounds. Never infer cropping from pixel brightness.
+For four independently mapped screens, place Left–Front–Right across the top, align
+their image bottoms, and center Bottom underneath Front. Preserve each cropped
+aspect ratio and presented orientation, without labels or reserved header space. Other supported
+output topologies use the ordered equal-cell grid. The native viewer fits the whole
+composite within its window. With video Off, preview still uses the configured
+review factor and allocates no capture slots, readback or encoder.
+
+Sampling is bilinear with clamping at crop edges. Composite depth is the largest
+source depth; lower-depth codes are widened proportionally. Preview cropping and
+recording rotation never modify projector pixels. The prepared recipe retains both
+layouts, their version/kind, dimensions/scale, output IDs, source and destination
+image/cell rectangles, labels, source depth and clockwise rotation degrees. It also
+embeds validated geometric calibration profiles (mesh, orientation, masks/weights,
+valid area and coverage) and applicable photometric profiles alongside the display
+geometry and existing source fingerprints. These values are frozen at Setup and
+covered by the recipe digest/byte limit. No per-frame calibration copies are needed.
+
+A later script can undo the recorded tile rotation, map scaled tile coordinates
+back to output coordinates, then apply retained preview crops/placement without
+reopening external calibration files. Lossy encoding and downsampling prevent exact
+pixel recovery. That offline script is outside this implementation. Version-1 full-output and version-2 labelled layouts remain readable; fresh Setup
+produces version 3. Surface labels remain metadata only. Review pixels
+remain distinct from the per-output scientific record.
 
 ## Recording thread and bounded admission
 

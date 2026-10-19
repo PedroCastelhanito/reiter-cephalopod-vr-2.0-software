@@ -16,7 +16,7 @@ def portable_profile(document: dict[str, Any]) -> dict[str, Any]:
     json.dumps(document, allow_nan=False)
     profile = copy.deepcopy(document)
     outputs = profile.pop("outputs", None)
-    profile.pop("photodiode_output_id", None)
+    legacy_pulse_output = profile.pop("photodiode_output_id", None)
     mappings = profile.get("mappings")
     if not isinstance(mappings, list):
         raise ValueError("Screen profile requires a mapping array")
@@ -35,6 +35,20 @@ def portable_profile(document: dict[str, Any]) -> dict[str, Any]:
         }:
             raise ValueError("Screen profile requires known logical projector roles")
     if isinstance(outputs, list):
+        patches = profile.get("photodiode_patches")
+        if (
+            patches is None
+            and legacy_pulse_output is not None
+            and profile.get("photodiode_patch") is not None
+        ):
+            patches = {legacy_pulse_output: profile["photodiode_patch"]}
+            profile["photodiode_patch"] = None
+        if patches is not None:
+            if not isinstance(patches, dict) or not patches.keys() <= roles.keys():
+                raise ValueError("Photodiode patches require mapped output identities")
+            profile["photodiode_patches"] = {
+                roles[key]: patch for key, patch in patches.items()
+            }
         profile["output_settings"] = {
             roles[output["output_id"]]: {
                 key: value
@@ -89,6 +103,13 @@ def bind_profile(
         assignments.get(output["device_identity"], "").lower(): output["output_id"]
         for output in outputs
     }
+    patches = document.get("photodiode_patches")
+    if patches is not None:
+        if not isinstance(patches, dict) or not patches.keys() <= by_face.keys():
+            raise ValueError("Assign every configured pulse screen before submission")
+        document["photodiode_patches"] = {
+            by_face[face]: patch for face, patch in patches.items()
+        }
     for mapping in document["mappings"]:
         role = mapping.pop("projector_role", mapping["surface_id"])
         face = mapping["surface_id"] if mapping["surface_id"] in by_face else role

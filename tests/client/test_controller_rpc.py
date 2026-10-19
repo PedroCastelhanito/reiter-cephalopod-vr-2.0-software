@@ -368,6 +368,10 @@ async def test_pending_setup_cancel_and_prompt_response_are_independent_loopback
             bridge._controller_generation = runtime.generation
             admissions: list[tuple[str, str]] = []
             completions: list[tuple[str, str, str, str]] = []
+            progress: list[tuple[str, str]] = []
+            bridge.action_progress.connect(
+                lambda action, message: progress.append((action, message))
+            )
             admission_event, completion_event = asyncio.Event(), asyncio.Event()
 
             def on_admitted(action: str, command_id: str) -> None:
@@ -452,11 +456,12 @@ async def test_pending_setup_cancel_and_prompt_response_are_independent_loopback
                 ),
                 operation=pb.OperationContext(command_id=str(uuid4())),
                 explanation="A recovery choice is required.",
-                permitted_choices=["continue", "cancel"],
+                permitted_choices=["recover", "delete"],
             )
             recovery_gate = asyncio.Event()
 
-            async def wait_for_recovery_choice() -> None:
+            async def wait_for_recovery_choice(choice: str) -> None:
+                assert choice == "delete"
                 await recovery_gate.wait()
 
             await runtime.install_startup_recovery(
@@ -475,15 +480,21 @@ async def test_pending_setup_cancel_and_prompt_response_are_independent_loopback
             assert bridge.request(
                 "respond_prompt",
                 prompt=prompt.SerializeToString(),
-                choice="cancel",
+                choice="delete",
             )
+            recovery_gate.set()
             while not any(
                 action == "respond_prompt" and status == "completed"
                 for action, _, status, _ in completions
             ):
                 completion_event.clear()
                 await asyncio.wait_for(completion_event.wait(), 2)
-            recovery_gate.set()
+            assert (
+                progress.count(
+                    ("respond_prompt", "Recovery · Unfinished session files deleted.")
+                )
+                == 1
+            )
             assert bridge.request("quit")
             await asyncio.wait_for(command_task, 2)
     store.remove_client(principal)
@@ -828,4 +839,105 @@ async def test_controller_cleanup_waits_for_camera_off_and_claim_release(
             assert owner.cleanup_complete
             assert serial.off.await_count == 1
     await runtime.cancel_background_tasks()
+    store.remove_client(principal)
+
+
+@pytest.mark.parametrize("sdk_failure", [False, True])
+async def test_projector_brightness_auth_gates_readback_and_repeat_admission(
+    controller: tuple[int, CredentialStore, ControllerRuntime],
+    monkeypatch: pytest.MonkeyPatch,
+    sdk_failure: bool,
+) -> None:
+    import cephvr.controller.device.projector_brightness as brightness
+
+    port, store, runtime = controller
+    calls = []
+    started, release = asyncio.Event(), asyncio.Event()
+
+    async def adjust(current_ma: int, timeout_s: float) -> str:
+        calls.append((current_ma, timeout_s))
+        started.set()
+        await release.wait()
+        if sdk_failure:
+            raise RuntimeError("Only 3 of 4 projector interfaces confirmed current")
+        return "Interface 0: readback R=101 G=101 B=101"
+
+    monkeypatch.setattr(brightness, "adjust_brightness", adjust)
+    principal = store.provision_client("gui")
+    async with loopback_channel(port, 16_777_216) as channel:
+        stub = wire.ExperimentControllerServiceStub(channel)
+        request = rpc.ProjectorBrightnessRequest(
+            current_ma=101, expected_configuration_revision=1
+        )
+        with pytest.raises(grpc.aio.AioRpcError) as denied:
+            await stub.AdjustProjectorBrightness(request, timeout=5)
+        assert denied.value.code() == grpc.StatusCode.UNAUTHENTICATED
+        client = HeadlessClient(channel, principal)
+        async with client.observe():
+            request.command.CopyFrom(
+                rpc.OperatorCommand(
+                    controller_generation=runtime.generation,
+                    operator=pb.OperatorContext(
+                        client_id=principal.generation, command_id=str(uuid4())
+                    ),
+                )
+            )
+            rejected = await stub.AdjustProjectorBrightness(
+                request, metadata=principal.metadata(), timeout=5
+            )
+            assert rejected.result == pb.COMMAND_RESULT_REJECTED
+            await client.claim_control()
+            for current, revision, phase in (
+                (100, 1, pb.SESSION_PHASE_CONFIGURATION),
+                (2501, 1, pb.SESSION_PHASE_CONFIGURATION),
+                (101, 2, pb.SESSION_PHASE_CONFIGURATION),
+                (101, 1, pb.SESSION_PHASE_READY),
+            ):
+                runtime.lifecycle.session.phase = phase
+                request = rpc.ProjectorBrightnessRequest(
+                    command=client.operator_command(),
+                    current_ma=current,
+                    expected_configuration_revision=revision,
+                )
+                rejected = await stub.AdjustProjectorBrightness(
+                    request, metadata=principal.metadata(), timeout=5
+                )
+                assert rejected.result == pb.COMMAND_RESULT_REJECTED
+            runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+            request = rpc.ProjectorBrightnessRequest(
+                command=client.operator_command(),
+                current_ma=101,
+                expected_configuration_revision=1,
+            )
+            accepted = await stub.AdjustProjectorBrightness(
+                request, metadata=principal.metadata(), timeout=5
+            )
+            assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
+            await asyncio.wait_for(started.wait(), 2)
+            replay = await stub.AdjustProjectorBrightness(
+                request, metadata=principal.metadata(), timeout=5
+            )
+            assert replay == accepted
+            duplicate = rpc.ProjectorBrightnessRequest(
+                command=client.operator_command(),
+                current_ma=200,
+                expected_configuration_revision=1,
+            )
+            rejected = await stub.AdjustProjectorBrightness(
+                duplicate, metadata=principal.metadata(), timeout=5
+            )
+            assert rejected.result == pb.COMMAND_RESULT_REJECTED
+            assert len(calls) == 1 and calls[0][0] == 101 and calls[0][1] > 0
+            assert runtime.device_state.camera_operation is not None
+            release.set()
+            outcome = await client.wait_result(accepted.command_id)
+            assert outcome.succeeded is not sdk_failure
+            assert runtime.device_state.camera_operation is None
+            if sdk_failure:
+                assert "3 of 4" in outcome.failure
+            else:
+                assert (
+                    "readback R=101"
+                    in runtime.control.operations[accepted.command_id].progress
+                )
     store.remove_client(principal)

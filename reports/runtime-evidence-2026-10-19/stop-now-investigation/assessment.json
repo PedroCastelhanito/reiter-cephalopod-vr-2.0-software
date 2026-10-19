@@ -1,0 +1,174 @@
+{
+  "date": "2026-10-19",
+  "source_directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261019_gui_backend_dummy\\DUMMY-140646\\protocol-data",
+  "scope": "read-only saved trial evidence; rejected worker RPC payload unavailable",
+  "camera_completion": {
+    "DUMMY_140658_behavioral_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "interrupted",
+      "timing": {
+        "recording_end_monotonic_ns": 408887154986100,
+        "first_recorded_frame_id": 0,
+        "final_received_frame_count": 964,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 964,
+        "selected_source_frame_count": 964,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 408854950092500,
+        "on_acknowledged_monotonic_ns": 408854974045100,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 408887156612300,
+        "off_acknowledged_monotonic_ns": 408887183941000
+      },
+      "post_cutoff": {
+        "accounting_complete": false,
+        "excluded_frame_count": null,
+        "last_native_counter": null
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    },
+    "DUMMY_140658_eye_tracking_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "interrupted",
+      "timing": {
+        "recording_end_monotonic_ns": 408887155085500,
+        "first_recorded_frame_id": null,
+        "final_received_frame_count": 1930,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 0,
+        "selected_source_frame_count": 0,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 408854950092500,
+        "on_acknowledged_monotonic_ns": 408854974045100,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 408887156612300,
+        "off_acknowledged_monotonic_ns": 408887183941000
+      },
+      "post_cutoff": {
+        "accounting_complete": false,
+        "excluded_frame_count": null,
+        "last_native_counter": null
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    },
+    "DUMMY_140658_tracking_cam_frames.jsonl": {
+      "type": "completion",
+      "outcome": "interrupted",
+      "timing": {
+        "recording_end_monotonic_ns": 408887155101900,
+        "first_recorded_frame_id": null,
+        "final_received_frame_count": 1930,
+        "accounting_complete": true
+      },
+      "video": {
+        "recorded_frame_count": 0,
+        "selected_source_frame_count": 0,
+        "duplicate_frame_count": 0
+      },
+      "pulses": {
+        "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "on_dispatched_monotonic_ns": 408854950092500,
+        "on_acknowledged_monotonic_ns": 408854974045100,
+        "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+        "off_dispatched_monotonic_ns": 408887156612300,
+        "off_acknowledged_monotonic_ns": 408887183941000
+      },
+      "post_cutoff": {
+        "accounting_complete": false,
+        "excluded_frame_count": null,
+        "last_native_counter": null
+      },
+      "transport_summary": {
+        "buffer_underruns": null,
+        "failed_buffers": 0,
+        "missed_frames": 0,
+        "resend_requests": null,
+        "resend_packets": null,
+        "resynchronizations": 0
+      },
+      "diagnostics": []
+    }
+  },
+  "outputs": [
+    {
+      "output_tag": "behavioral_cam_frames",
+      "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+      "artifact_present": null,
+      "failure": {
+        "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+        "message": "no exact output closure by original completion deadline"
+      }
+    },
+    {
+      "output_tag": "behavioral_cam",
+      "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+      "artifact_present": null,
+      "failure": {
+        "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+        "message": "no exact output closure by original completion deadline"
+      }
+    },
+    {
+      "output_tag": "tracking_cam_frames",
+      "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+      "artifact_present": null,
+      "failure": {
+        "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+        "message": "no exact output closure by original completion deadline"
+      }
+    },
+    {
+      "output_tag": "eye_tracking_cam_frames",
+      "closure": "OUTPUT_CLOSURE_UNCONFIRMED",
+      "artifact_present": null,
+      "failure": {
+        "code": "OUTPUT_CLOSURE_UNCONFIRMED",
+        "message": "no exact output closure by original completion deadline"
+      }
+    },
+    {
+      "output_tag": "stimulus_LOG",
+      "closure": "OUTPUT_CLOSURE_CLOSED",
+      "artifact_present": true,
+      "failure": null
+    },
+    {
+      "output_tag": "stimulus_frames",
+      "closure": "OUTPUT_CLOSURE_CLOSED",
+      "artifact_present": true,
+      "failure": null
+    },
+    {
+      "output_tag": "stimulus",
+      "closure": "OUTPUT_CLOSURE_CLOSED",
+      "artifact_present": true,
+      "failure": null
+    }
+  ]
+}

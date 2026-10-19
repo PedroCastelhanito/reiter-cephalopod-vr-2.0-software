@@ -326,7 +326,17 @@ def _retain_stopped_schedule(trial_state: WorkerTrialState) -> None:
 
 @pytest.mark.parametrize("stop_kind", ["StopTrial", "InterruptSession"])
 @pytest.mark.parametrize(
-    "off_timing", ["before", "after", "missing", "failed", "free", "overlap"]
+    "off_timing",
+    [
+        "before",
+        "after",
+        "missing",
+        "failed",
+        "free",
+        "overlap",
+        "handoff",
+        "slow_drain",
+    ],
 )
 def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
     monkeypatch: pytest.MonkeyPatch, stop_kind: str, off_timing: str
@@ -350,6 +360,7 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
     delivered: list[acq.WorkerLifecycleEvidence] = []
     operations: list[acq.WorkerOperationReport] = []
     sdk: list[object] = []
+    finished_reported = Event()
 
     class Adapter:
         margin = False
@@ -363,6 +374,11 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
             sdk.append("margin")
 
         def stop_capture(self, deadline_ns, **kwargs):
+            if off_timing == "slow_drain":
+                assert stopped.is_set()
+                assert clock[0] < deadline
+                clock[0] = deadline + 10_000_000
+                assert clock[0] < deadline_ns
             sdk.append(("sdk-stop", deadline_ns))
             return PurgeEvidence(0 if self.margin else None, None, self.margin)
 
@@ -389,7 +405,9 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
     captures._scheduled_end_ns = base + 60_000_000_000
     bootstrap = SimpleNamespace(
         context=context,
-        file_policy=SimpleNamespace(post_cutoff_drain_margin_ns=0),
+        file_policy=SimpleNamespace(
+            post_cutoff_drain_margin_ns=30 if off_timing == "handoff" else 0
+        ),
         control_policies=control.ControlPolicies(
             trial_finished=control.WaitPolicy(initial_ns=1_000_000_000)
         ),
@@ -449,7 +467,10 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
             if report.operation.context.command_id == stop.command.command_id
             else None,
         ),
-        lifecycle=lambda report, deadline: delivered.append(report),
+        lifecycle=lambda report, deadline: (
+            delivered.append(report),
+            finished_reported.set() if report.HasField("finished") else None,
+        ),
     )
     stop = (
         acq.WorkerStop(issued_monotonic_ns=base)
@@ -460,7 +481,7 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
     stop.command.target.CopyFrom(context)
     if stop_kind == "StopTrial":
         stop.command.target.work.CopyFrom(work)
-    deadline = base + 2_000_000_000
+    deadline = base + (250_000_000 if off_timing == "slow_drain" else 2_000_000_000)
     off = acq.WorkerPulseEvidence(
         command=acq.WorkerCommand(
             command_id=str(uuid4()),
@@ -544,6 +565,21 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
         )
         owner.reserve(name, request, bound).commit()
 
+    captures.set_capture_handoff(owner.capture_handoff)
+    queued_cleanup = []
+
+    def drain_once(handoff):
+        if not queued_cleanup:
+            cleanup = acq.WorkerCommand(command_id=str(uuid4()), target=context)
+            queued_cleanup.append(cleanup)
+            send("Cleanup", cleanup)
+        permitted = handoff()
+        clock[0] += 10
+        return permitted
+
+    if off_timing == "handoff":
+        captures.capture.capture_once = drain_once
+
     owner.start()
     try:
         if off_timing == "before":
@@ -578,10 +614,12 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
             else:
                 send("RecordPulseEvidence", off)
         assert stopped.wait(1)
+        assert finished_reported.wait(1), errors
         assert not captures.active
         assert lifecycle.trial_state.end_marker is not None
         assert lifecycle.trial_state.end_marker.excluded_accounting_complete == (
-            off_timing in {"before", "after", "free", "overlap"}
+            off_timing
+            in {"before", "after", "free", "overlap", "handoff", "slow_drain"}
         )
         operation_results = {
             item.operation.context.command_id: item.operation for item in operations
@@ -590,11 +628,26 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
             off_timing != "missing"
         )
         assert lifecycle.stop_request is stop
-        assert sdk[-1] == ("sdk-stop", effective_deadline)
+        drain_deadline = (
+            base + 1_000_000_000
+            if off_timing not in {"missing", "failed"}
+            else effective_deadline
+        )
+        assert sdk[-1] == ("sdk-stop", drain_deadline)
         assert len([item for item in delivered if item.HasField("finished")]) == 1
         finished = next(item for item in delivered if item.HasField("finished"))
         assert finished.operation.command_id == stop.command.command_id
         assert finished.source.work == stop.command.target.work
+        if off_timing == "handoff":
+            assert sdk.count("generation-stop") == 1
+            assert clock[0] == base + 30
+            assert lifecycle.end_marker.actual_stop_monotonic_ns == base
+            assert captures.admission_stop_ns == base
+            assert released.wait(1)
+            assert state.operations[queued_cleanup[0].command_id].succeeded
+            assert len([item for item in delivered if item.HasField("stopped")]) == (
+                stop_kind == "StopTrial"
+            )
         if off_timing == "overlap":
             assert released.wait(1)
             operation_results = {
@@ -2121,3 +2174,94 @@ def test_worker_same_session_requires_exact_session_identity(
     assert same_session(work(left_kind, session), work(right_kind, other)) == (
         left_kind != "none" and right_kind != "none" and mutation == "same"
     )
+
+
+@pytest.mark.parametrize("entry", ["stage", "StopTrial", "InterruptSession"])
+@pytest.mark.parametrize("new_wake", [False, True])
+def test_terminal_stage_consumes_its_wake_before_capture_drain(
+    monkeypatch, new_wake, entry, caplog
+):
+    from cephvr.acquisition.worker import capture_runtime
+
+    entered = Event()
+    release = Event()
+    resumed = Event()
+    wake = Event()
+    observed = []
+    clock = [100]
+    begins = []
+    monkeypatch.setattr(capture_runtime, "host_time_ns", lambda: clock[0])
+
+    class Adapter:
+        margin = False
+
+        def begin_terminal_drain(self):
+            begins.append(clock[0])
+            return True
+
+        def confirm_drain_margin(self):
+            self.margin = True
+
+        def stop_capture(self, deadline_ns, *, should_continue_drain, resumable=False):
+            complete = self.margin and should_continue_drain()
+            return PurgeEvidence(0 if complete else None, None, complete)
+
+    def capture_once(handoff):
+        permitted = handoff()
+        clock[0] += 10
+        return permitted
+
+    captures = WorkerCaptureResources(Adapter(), _worker_context(), lambda _: None)
+    captures._active = True
+    captures._timing = "external_trigger"
+    captures.capture = SimpleNamespace(capture_once=capture_once)
+
+    def advance():
+        if observed and observed[-1] is not None:
+            return
+        if not observed and new_wake:
+            owner.external_wake()
+        evidence = captures.stop(1000, drain_margin_ns=30, resumable=True)
+        observed.append(None if evidence is None else evidence.accounting_complete)
+        entered.set()
+        release.wait(2)
+        if len(observed) == 2:
+            resumed.set()
+
+    owner = SerializedCameraOwner(
+        capacity=1,
+        safety_capacity=1,
+        execute=lambda *_: advance(),
+        capture_once=lambda _: False,
+        capture_active=lambda: False,
+        next_deadline_ns=lambda: None,
+        advance_due_stages=advance,
+        wait_control=lambda _: wake.wait(0.01),
+        wake_control=wake.set,
+        clear_control=wake.clear,
+        operation_failed=lambda *_: None,
+        owner_failed=lambda _: None,
+        idle_maintenance_interval_ns=1_000_000,
+    )
+    captures.set_capture_handoff(owner.capture_handoff)
+    with owner._condition:
+        owner.start()
+        if entry != "stage":
+            owner.reserve(entry, object(), 1000).commit()
+        owner.external_wake()
+    try:
+        assert entered.wait(2)
+        assert observed == ([None] if new_wake else [True])
+        assert captures.active == new_wake
+        release.set()
+        if new_wake:
+            assert resumed.wait(2)
+            assert observed == [None, True]
+        assert begins == [100]
+        assert clock[0] == 130
+        assert captures.admission_stop_ns == 100
+        assert captures._stop_deadline_ns == 1000
+        assert "Camera terminal drain incomplete" not in caplog.text
+    finally:
+        release.set()
+        assert owner.stop(2)

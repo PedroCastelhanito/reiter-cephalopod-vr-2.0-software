@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-19",
+  "timezone": "Asia/Tokyo",
+  "task": "preview-click-and-first-show",
+  "base_revision": "5945f1708240929406f40c4def98dbcf50ff7947",
+  "source_tree_dirty": true,
+  "provenance": "Summarized actual Codex exec outputs from this chat; no live application stack collected.",
+  "source_sha256": {
+    "src/cephvr/acquisition/preview/highgui.py": "77dfe1e79e3d0793016f64dc0257d0d96797d472325c48e6c7348ffdae66923d",
+    "src/cephvr/acquisition/preview/window_thread.py": "19b81b1c87e658df5f8fcc8f8aff42de0b5eca6cbce7c9d41a82bfde13e4bbff",
+    "src/cephvr/platform/windows/preview_creation.py": "051a6b21923d301214dcbc0c78c2ad5eab66fbe840456ed700449e481c9e6459",
+    "src/cephvr/gui/review_preview.py": "a2c1f17eea5b91ebbe56586c23789aa6fe0a2f8f0e1ea6ecbddc8509cad6bb25",
+    "tests/acquisition/test_manual_preview.py": "80954b83149801c268c60faa5a420837c04e2419592e1d598856bb0807295440",
+    "tests/gui/test_dashboard.py": "0d3dbbfdecba14b7be8d985287a215e41d3370fc9067605183d6c3f179439ff0"
+  },
+  "tests": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_manual_preview.py -q -k highgui",
+      "outcome": "13 passed,123 deselected; six pypylon SWIG deprecation warnings"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_manual_preview.py tests/acquisition/test_manual_devices.py tests/platform/test_window_coordinates.py -q -m \"not rig\"",
+      "outcome": "169 passed; six pypylon SWIG deprecation warnings"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"preview and (review or placement or snap or workspace or geometry)\"",
+      "outcome": "79 passed,587 deselected"
+    },
+    {
+      "command": "ruff check and format --check affected preview/native/UI sources and owning tests",
+      "outcome": "pass;8 files formatted"
+    },
+    {
+      "command": "mypy --platform win32 acquisition/preview, preview_creation.py, review_preview.py",
+      "outcome": "pass;6 source files"
+    },
+    {
+      "command": "tools/check_backend_boundaries.py",
+      "outcome": "zero violations; existing size warnings outside this focused increment"
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass; CRLF normalization warnings only"
+    }
+  ],
+  "native_scope": "Three isolated Win32 HighGUI viewers, actual shared rings with generated Mono8 images and no cameras. All viewers share one window thread; each is hidden until requested256x256 client area and physical frame origin400/700/1000,100 are set. Five rounds of activation/down/up/WM_NULL per viewer respond within1000ms. Mouse wheel, doubleclick reset, X close, other-viewer survival, stop and mapping release pass.",
+  "initial_failure": "First native rerun failed an old assertion indexing displays by the former per-viewer thread names. Updated assertion checks shared UI thread and each generated image; reruns pass.",
+  "mechanism": "Source inference: separate HighGUI owner threads combine global OpenCV window locks and synchronous Windows focus messages. Replaced with one process-local HighGUI window thread; ring waits remain independent. Hidden creation intercepts only exact title/class on the creating thread and suppresses initial show until arrangement/owner binding finish.",
+  "upstream_reference": "https://github.com/opencv/opencv/blob/4.13.0/modules/highgui/src/window_w32.cpp",
+  "limits": "No live application restart, physical clicks on real-camera windows, drag/DPI150 acceptance, electrical/optical timing or performance claim. No capture/pulse/scientific configuration changes.",
+  "final_audit": {
+    "concurrent_changes_after_validation": [
+      "tests/gui/test_dashboard.py"
+    ],
+    "note": "Original validation hashes retained; other chats are editing the shared Dashboard test module."
+  }
+}

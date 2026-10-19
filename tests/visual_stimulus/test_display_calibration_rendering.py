@@ -615,12 +615,14 @@ def _install_fake_gl_binding(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "OpenGL", opengl)
 
 
+@pytest.mark.parametrize("quarter_turn", [False, True])
 @pytest.mark.parametrize("configured_bars", [False, True])
 @pytest.mark.parametrize("calibration_view", ["reference_bars", "frame_grid"])
 def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
     monkeypatch: pytest.MonkeyPatch,
     configured_bars: bool,
     calibration_view: str,
+    quarter_turn: bool,
 ) -> None:
     _install_fake_gl_binding(monkeypatch)
     gl = _FakeGL()
@@ -653,6 +655,16 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
         with pytest.raises(ValueError, match="exceed"):
             parse_display_json(json.dumps(raw), max_bytes=1_000_000)
     display, prepared, outputs = _native_calibration_inputs(gl, display)
+    if quarter_turn:
+        for key, profile in prepared.display_calibration.content.items():
+            prepared.display_calibration.content[key] = profile.model_copy(
+                update={
+                    "vertices": tuple(
+                        v.model_copy(update={"uv": (v.uv[1], 1 - v.uv[0])})
+                        for v in profile.vertices
+                    )
+                }
+            )
     owner = DisplayCalibrationRenderer(
         outputs,
         moderngl,
@@ -734,10 +746,10 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
                 .last_write
             )
             words = struct.unpack("16f", data)
-            assert (words[6] - words[2]) / 2 / (words[4] - words[0]) == pytest.approx(1)
-            assert (words[11] - words[3]) / 2 / (words[9] - words[1]) == pytest.approx(
-                1
-            )
+            du = -(words[5] - words[1]) if quarter_turn else words[4] - words[0]
+            dv = words[8] - words[0] if quarter_turn else words[9] - words[1]
+            assert (words[6] - words[2]) / 2 / du == pytest.approx(1)
+            assert (words[11] - words[3]) / 2 / dv == pytest.approx(1)
             assert owner.frames[mapping.output_id].warp_program["valid_area"].value == (
                 0.1,
                 0.2,
@@ -905,6 +917,7 @@ def test_native_port_releases_owner_and_accepts_a_later_calibration(
     port._capture_fences = []
     port.scene_renderer = None
     port._scene_keys = set()
+    port.preview = None
     port._orphan_windows = {}
     port._window_obligations = set()
     port._released = []
@@ -1019,6 +1032,7 @@ def test_native_generic_release_clears_calibration_owner_before_reinitialize(
     port._capture_fences = []
     port.scene_renderer = None
     port._scene_keys = set()
+    port.preview = None
     port._orphan_windows = {}
     port._window_obligations = set()
     port._released = []
@@ -1097,7 +1111,10 @@ def test_cleanup_receipts_cover_all_announced_cpu_sources_only_after_close(
     )
 
 
-def test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported_targets():
+@pytest.mark.parametrize("quarter_turn", [False, True])
+def test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported_targets(
+    quarter_turn,
+):
     from cephvr.visual_stimulus.rendering.scene_resources import SceneOutputBuilder
 
     gl = _FakeGL()
@@ -1112,6 +1129,12 @@ def test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported
                 if index == 0
                 else "imported_optical",
                 "valid_area": (0.25, 0.25, 0.75, 0.75),
+                "vertices": tuple(
+                    v.model_copy(update={"uv": (v.uv[1], 1 - v.uv[0])})
+                    for v in profile.vertices
+                )
+                if quarter_turn
+                else profile.vertices,
             }
         )
     artifact = SimpleNamespace(
@@ -1134,6 +1157,8 @@ def test_prepared_affine_view_raster_matches_valid_pixels_and_preserves_imported
             if index == 0
             else (mapping.viewport.width, mapping.viewport.height)
         )
+        if index == 0 and quarter_turn:
+            expected = expected[::-1]
         assert target.size == expected
     for frame in frames.values():
         frame.activate()

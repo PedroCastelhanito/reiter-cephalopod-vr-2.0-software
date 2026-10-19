@@ -25,7 +25,11 @@ def apply_pacing_settings(
         values["pacing_output_id"] = output_id
     resolved = DisplayProfile.model_validate(values)
     selected_id = resolved.selected_pacing_output_id
-    if selected_id is None and resolved.presentation_mode == "photodiode_only_vsync":
+    if (
+        selected_id is None
+        and resolved.presentation_mode == "photodiode_only_vsync"
+        and resolved.photodiode_patches is None
+    ):
         raise ValueError("mixed pacing requires a configured pacing output")
     selected = tuple(
         output

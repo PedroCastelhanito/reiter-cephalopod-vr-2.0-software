@@ -4,6 +4,8 @@ import ctypes
 import os
 from ctypes import wintypes
 
+from cephvr.platform.windows.placement_events import PlacementEvents
+
 
 def _apis() -> tuple[ctypes.CDLL, ctypes.CDLL]:
     user = ctypes.WinDLL("user32", use_last_error=True)
@@ -83,6 +85,7 @@ class WindowsPreviewOwner:
         self.bound = False
         self.origin: tuple[int, int] | None = None
         self.minimized = False
+        self.placement_events: PlacementEvents | None = None
         try:
             if _pid(self.user, hwnd) != pid or self.user.GetAncestor(hwnd, 2) != hwnd:
                 raise RuntimeError("Preview owner PID mismatch")
@@ -101,6 +104,7 @@ class WindowsPreviewOwner:
             # Owned windows stay above their owner without floating above other apps.
             if not self.user.SetWindowPos(self.child, -2, 0, 0, 0, 0, 0x0013):
                 raise ctypes.WinError(ctypes.get_last_error())
+            self.placement_events = PlacementEvents(self.child)
             self.sync()
         except BaseException:
             self.close()
@@ -131,7 +135,10 @@ class WindowsPreviewOwner:
                 or self.user.IsIconic(root)
                 or not self.user.IsWindowVisible(self.hwnd)
             )
-        if minimized != self.minimized and self.user.IsWindow(self.child):
+        if self.user.IsWindow(self.child) and (
+            minimized != self.minimized
+            or (not minimized and not self.user.IsWindowVisible(self.child))
+        ):
             self.user.ShowWindow(self.child, 0 if minimized else 4)
         self.minimized = minimized
         if not minimized:
@@ -165,6 +172,10 @@ class WindowsPreviewOwner:
         self.hwnd = handle
         self.origin = None
 
+    def placement_revision(self) -> int:
+        assert self.placement_events is not None
+        return self.placement_events.revision
+
     def geometry(self) -> tuple[int, int, int, int]:
         """Outer frame relative to the GUI; group translation is not manual placement."""
         child, parent = self._rect(self.child), self._rect(self.hwnd)
@@ -177,13 +188,21 @@ class WindowsPreviewOwner:
 
     def close(self) -> None:
         try:
+            if self.placement_events is not None:
+                self.placement_events.close(bool(self.user.IsWindow(self.child)))
+                self.placement_events = None
             if (
                 self.bound
                 and self.child
                 and self.user.IsWindow(self.child)
                 and _pid(self.user, self.child) == os.getpid()
             ):
-                self._set_owner(0)
+                try:
+                    self._set_owner(0)
+                except OSError:
+                    # The GUI can destroy its owned HWND between the check and detach.
+                    if self.user.IsWindow(self.child):
+                        raise
                 self.bound = False
         finally:
             if self.process:

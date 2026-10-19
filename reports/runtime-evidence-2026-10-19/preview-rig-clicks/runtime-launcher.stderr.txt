@@ -1,0 +1,11 @@
+{"active_capture_slots": 0, "cancelled_captures": 0, "event": "recording_metrics", "evidence_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-19\\preview-rig-clicks\\recordings\\20261019_preview_clicks_backend_20261019\\PREVIEW_RIG_TEST-095951\\protocol-data\\PREVIEW_RIG_TEST_100023_stimulus_frames.jsonl", "peak_capture_slots": 0, "queued_captures": 0, "stages_ns": {"capture_ready": {"count": 0, "max": 0, "total": 0}, "frame_input": {"count": 0, "max": 0, "total": 0}, "normalization": {"count": 0, "max": 0, "total": 0}, "pipe_write": {"count": 0, "max": 0, "total": 0}, "queue_wait": {"count": 0, "max": 0, "total": 0}, "readback_poll_pending": {"count": 0, "max": 0, "total": 0}, "readback_poll_ready": {"count": 0, "max": 0, "total": 0}, "slot_hold": {"count": 0, "max": 0, "total": 0}}, "submitted_bytes": 0, "unfinished_frame_input": null, "worst_stage_samples": {}, "zero_progress_writes": 0}
+acquisition_tracking_worker RecordPulseEvidence 8fd1e94b-4c4f-4337-aac8-c52f8ec53a15 failed: ValueError: terminal pulse evidence changed after retention
+acquisition_behavioral_worker RecordPulseEvidence bc899d88-4b12-4c81-a2db-5813e8d835f1 failed: ValueError: terminal pulse evidence changed after retention
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 18476 exited; cleanup evidence remains required
+CephVR acquisition shutdown: WORKER_ERROR_FORWARD_FAILED: worker ErrorReport was not accepted: <AioRpcError of RPC that terminated with:
+	status = StatusCode.PERMISSION_DENIED
+	details = "credential role mismatch"
+	debug_error_string = "PERMISSION_DENIED:credential role mismatch"
+>
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

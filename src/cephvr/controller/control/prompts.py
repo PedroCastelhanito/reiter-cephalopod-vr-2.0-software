@@ -56,7 +56,7 @@ class OperatorPrompts:
     async def install_startup_recovery(
         self,
         prompt: pb.Prompt | None,
-        handler: Callable[[], Awaitable[None]] | None,
+        handler: Callable[[str], Awaitable[None]] | None,
         blocker: str | None,
         completion_warning: str | None = None,
         notice: str | None = None,
@@ -68,7 +68,7 @@ class OperatorPrompts:
         if prompt is not None:
             if (
                 not blocker
-                or set(prompt.permitted_choices) != {"continue", "cancel"}
+                or set(prompt.permitted_choices) != {"recover", "delete"}
                 or not prompt.HasField("setup")
                 or not prompt.HasField("operation")
             ):
@@ -129,22 +129,21 @@ class OperatorPrompts:
                 operation = self.control_operations.operation(
                     command_id,
                     "StartupRecovery",
-                    progress="reservation recovery accepted",
-                    complete=request.choice == "cancel",
-                    succeeded=True if request.choice == "cancel" else None,
+                    progress=(
+                        "Deleting unfinished session files…"
+                        if request.choice == "delete"
+                        else "Recovering unfinished session…"
+                    ),
                 )
                 operation.work.session.CopyFrom(startup_prompt.setup)
-                if request.choice == "cancel":
-                    operation.progress = (
-                        "recovery deferred; reservation and blocker preserved"
+                self.lifecycle.startup_recovery_running = True
+                self.spawn(
+                    self.run_startup_recovery(
+                        command_id,
+                        self.lifecycle.startup_recovery_handler,
+                        request.choice,
                     )
-                else:
-                    self.lifecycle.startup_recovery_running = True
-                    self.spawn(
-                        self.run_startup_recovery(
-                            command_id, self.lifecycle.startup_recovery_handler
-                        )
-                    )
+                )
                 self.publisher.publish()
                 return self.control_operations.admission(command_id)
             incident_item = self.incident_state.incident_prompts.get(request.prompt_id)
@@ -244,12 +243,12 @@ class OperatorPrompts:
             return self.control_operations.admission(command_id)
 
     async def run_startup_recovery(
-        self, command_id: str, handler: Callable[[], Awaitable[None]]
+        self, command_id: str, handler: Callable[[str], Awaitable[None]], choice: str
     ) -> None:
         error = ""
         try:
             await asyncio.wait_for(
-                handler(),
+                handler(choice),
                 (
                     self.limit_state.current.setup_cancel_ns
                     + self.limit_state.current.recovery_ns
@@ -280,7 +279,11 @@ class OperatorPrompts:
                 self.control_operations.complete_operation(
                     command_id,
                     success=True,
-                    progress="startup reservation recovery confirmed",
+                    progress=(
+                        "unfinished session files deleted"
+                        if choice == "delete"
+                        else "startup reservation recovery confirmed"
+                    ),
                 )
                 self.lifecycle.startup_blocker = ""
                 self.lifecycle.startup_prompt = None

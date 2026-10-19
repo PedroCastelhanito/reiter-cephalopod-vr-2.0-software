@@ -1,0 +1,17 @@
+{
+  "focused_tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_camera_adapter_contracts.py tests/acquisition/test_worker_foundations.py tests/acquisition/test_trial_lifecycle.py tests/acquisition/test_coordinator.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_lifecycle.py -q -m \"not windows and not rig\" --basetemp=.tmp/camera-timing-native-tests",
+    "passed": 455,
+    "deselected": 1,
+    "elapsed_s": 2.0,
+    "scope": "current-source local behavioral checks, native Windows IPC permitted"
+  },
+  "attempts_before_recording": [
+    "Initial test command referenced nonexistent test_worker_lifecycle.py; no tests collected.",
+    "Sandboxed snapshot and tests stalled at Windows boundaries; terminated those diagnostic processes and reran with native permissions.",
+    "30-second candidate rejected under E05 minimum60s before Setup; original configuration restored exactly.",
+    "60-second candidate admitted, Setup rejected because audit output root did not exist; original configuration restored exactly.",
+    "Setup succeeded after output-root creation; diagnostic script used Start instead of StartSession. CancelSetup and exact configuration restoration succeeded; no recording started."
+  ],
+  "owner_confirmation": "Owner states photometric calibration is working; do not classify historical uncalibrated recipe label alone as a current calibration defect."
+}

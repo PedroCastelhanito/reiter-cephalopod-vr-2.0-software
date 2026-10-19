@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import threading
 from collections import deque
 from collections.abc import Callable
@@ -12,6 +13,7 @@ from typing import BinaryIO, Protocol
 
 from pydantic import BaseModel
 
+from cephvr.platform.windows.paths import extended_path
 from cephvr.visual_stimulus.config.models.evidence_model import (
     ArtifactRef,
     EvidenceRecord,
@@ -61,7 +63,8 @@ class EvidenceWriter:
             )
         line = self._encode(EvidenceRecord(payload=header))
         # Open exclusively: the E04-reserved path must never be silently replaced.
-        self._stream = open(path, "xb")
+        io_path = extended_path(path) if sys.platform == "win32" else path
+        self._stream = open(io_path, "xb")
         self._opened = True
         self.enqueue_json(line)
 
