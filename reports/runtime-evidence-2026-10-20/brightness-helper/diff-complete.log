@@ -1,0 +1,17 @@
+warning: in the working copy of '.gitattributes', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'LOG.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'TODO.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'architecture.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'config/backends/synchronization_config.toml', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/central-metadata.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/cephvr/control/v1/services.proto', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/policy/synchronization_policy.toml', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/projector-brightness.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/spikeglx-control.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/spikeglx_client.pyi', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/windows-launch.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/architecture/synchronization.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'reports/rig-verification.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'reports/runtime.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/cephvr/platform/windows/projector_brightness.ps1', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'tests/client/test_controller_rpc.py', CRLF will be replaced by LF the next time Git touches it

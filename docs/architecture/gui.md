@@ -16,14 +16,18 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 250
+**Status:** Accepted · **Revision:** 251
 
 - Devices/Projectors provides an explicit RGB LED current and Adjust action for all
   USB-detected TI projector interfaces. The controller owns SDK access under E02/E08,
   requiring the current control lease, configuration revision and Configuration phase;
-  serialize it with existing manual device work and block Setup until process exit.
+  serialize it with existing manual device work and block Setup until E08 confirms
+  exact native cleanup. Use E08's registered brightness helper role and original
+  operation deadline.
   Review reports intent only. SDK readback/failure is authoritative; partial application
-  is reported without rollback or automatic retry. See the [brightness contract](../../contracts/projector-brightness.md).
+  is reported without rollback or automatic retry. E04 records the latest observed
+  attempt in experiment metadata; requested current is never measured luminance or
+  evidence of unchanged hardware at Start. See the [brightness contract](../../contracts/projector-brightness.md).
 
 - Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
 

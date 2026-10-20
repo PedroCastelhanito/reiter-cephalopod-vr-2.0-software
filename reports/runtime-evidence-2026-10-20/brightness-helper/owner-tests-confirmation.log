@@ -1,0 +1,250 @@
+........................................................................ [  8%]
+........................................................................ [ 16%]
+............................................s........................... [ 24%]
+........................................................................ [ 32%]
+...................................................................s.... [ 40%]
+.......................s................................................ [ 48%]
+........................................................................ [ 56%]
+........................................................................ [ 64%]
+.................F.....................................................s [ 72%]
+........................................................................ [ 80%]
+........................................................................ [ 88%]
+........................................................................ [ 96%]
+..................................                                       [100%]
+================================== FAILURES ===================================
+_______ test_inventory_controller_binds_lease_revision_and_file_digest ________
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-341/test_inventory_controller_bind0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021B60B79290>
+
+    @pytest.mark.asyncio
+    async def test_inventory_controller_binds_lease_revision_and_file_digest(
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        config = tmp_path / "config/backends/synchronization_config.toml"
+        config.parent.mkdir(parents=True)
+        config.write_text(_unmapped_host_configuration(repository))
+        mapping = tmp_path / "contracts/spikeglx_mapping_reference.json"
+        mapping.parent.mkdir(parents=True)
+        shutil.copyfile(repository / "contracts/spikeglx_mapping_reference.json", mapping)
+    
+        class Operations:
+            def __init__(self) -> None:
+                self.control = SimpleNamespace(operations={})
+    
+            def authorized(self, command: svc.OperatorCommand) -> str:
+                return "" if command.operator.client_id == "operator" else "lease mismatch"
+    
+            @staticmethod
+            def admission(command_id: str, *, error: str = "") -> pb.CommandAdmission:
+                return pb.CommandAdmission(
+                    command_id=command_id,
+                    result=(
+                        pb.COMMAND_RESULT_REJECTED if error else pb.COMMAND_RESULT_ACCEPTED
+                    ),
+                    **(
+                        {"failure": pb.Failure(code="REJECTED", message=error)}
+                        if error
+                        else {}
+                    ),
+                )
+    
+            def operation(
+                self, command_id: str, name: str, **kwargs: object
+            ) -> pb.OperationState:
+                state = pb.OperationState(
+                    context=pb.OperationContext(command_id=command_id),
+                    command=name,
+                    progress=str(kwargs.get("progress", "accepted")),
+                )
+                self.control.operations[command_id] = state
+                return state
+    
+            def complete_operation(self, command_id: str, **kwargs: object) -> None:
+                state = self.control.operations[command_id]
+                state.complete = True
+                state.succeeded = bool(kwargs["success"])
+                state.progress = str(kwargs["progress"])
+                if kwargs.get("error"):
+                    state.failure.CopyFrom(pb.Failure(message=str(kwargs["error"])))
+    
+        operations = Operations()
+    
+        configuration = ConfigurationState(
+            pb.ExperimentConfiguration(), pb.ControlPolicies()
+        )
+        configuration.current.backends.add(
+            backend_name="visual_stimulus", enabled=True
+        ).visual_stimulus.display.profile_json = '{"photodiode_enabled": true}'
+        configuration.current.backends.add(backend_name="synchronization", enabled=True)
+        lifecycle = LifecycleState()
+        inventory = SpikeGLXInventory(
+            software_root=tmp_path,
+            lifecycle=lifecycle,
+            configuration=configuration,
+            operations=operations,  # type: ignore[arg-type]
+            limits=SimpleNamespace(current=SimpleNamespace(validation_ns=1_000_000_000)),  # type: ignore[arg-type]
+            publish=lambda: None,
+        )
+        command = svc.OperatorCommand(
+            controller_generation="be848407-e044-45cc-98ed-8908777f9dc5",
+            operator=pb.OperatorContext(
+                client_id="operator",
+                control_generation="control-generation",
+                command_id="inventory-read",
+            ),
+        )
+        snapshot, error = await inventory.read(
+            svc.SpikeGLXInventoryRequest(
+                command=command, expected_configuration_revision=configuration.revision
+            )
+        )
+        assert not error and snapshot is not None
+        expected_host = load_host_settings(tmp_path)
+        assert snapshot.backend_enabled
+        assert snapshot.address == expected_host.address
+        assert snapshot.command_port == expected_host.port
+        update = svc.SpikeGLXInventoryUpdateRequest(
+            command=command,
+            expected_configuration_revision=configuration.revision,
+            expected_file_sha256=snapshot.file_sha256,
+            pulse_channels=(
+                wire.PulseChannel(
+                    role=wire.PULSE_ROLE_BEHAVIORAL_CAMERA,
+                    family=wire.STREAM_FAMILY_ONEBOX,
+                    stream_index=0,
+                    channel_index=3,
+                    bit=0,
+                ),
+                wire.PulseChannel(
+                    role=wire.PULSE_ROLE_PHOTODIODE,
+                    family=wire.STREAM_FAMILY_NI,
+                    stream_index=0,
+                    channel_index=4,
+                ),
+            ),
+        )
+        omitted_required = svc.SpikeGLXInventoryUpdateRequest.FromString(
+            update.SerializeToString()
+        )
+        del omitted_required.pulse_channels[-1]
+        rejected = await inventory.update(omitted_required)
+        assert rejected.result == pb.COMMAND_RESULT_REJECTED
+        assert "required active roles" in rejected.failure.message
+        accepted = await inventory.update(update)
+        assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
+        current, error = await inventory.read(
+            svc.SpikeGLXInventoryRequest(
+                command=command, expected_configuration_revision=configuration.revision
+            )
+        )
+        assert not error and current is not None
+        assert current.file_sha256 != snapshot.file_sha256
+        assert current.pulse_channels[0].channel_index == 3
+    
+        from cephvr.controller.device import spikeglx_inventory as inventory_owner_module
+        from cephvr.synchronization import inventory as inventory_module
+    
+        write_calls = 0
+        write_inventory = inventory_module.update_inventory
+    
+        def count_write(*args: object, **kwargs: object) -> str:
+            nonlocal write_calls
+            write_calls += 1
+            return write_inventory(*args, **kwargs)  # type: ignore[arg-type]
+    
+        monkeypatch.setattr(inventory_owner_module, "update_inventory", count_write)
+        mapping_entered, mapping_release = threading.Event(), threading.Event()
+        load_mapping = inventory_owner_module._mapping
+    
+        def delayed_mapping(root: Path):
+            mapping_entered.set()
+            if not mapping_release.wait(2):
+                raise TimeoutError("test mapping release was not signaled")
+            return load_mapping(root)
+    
+        monkeypatch.setattr(inventory_owner_module, "_mapping", delayed_mapping)
+        preflight_command = svc.OperatorCommand.FromString(command.SerializeToString())
+        preflight_command.operator.command_id = "inventory-preflight"
+        preflight_update = svc.SpikeGLXInventoryUpdateRequest(
+            command=preflight_command,
+            expected_configuration_revision=configuration.revision,
+            expected_file_sha256=current.file_sha256,
+            pulse_channels=tuple(current.pulse_channels),
+        )
+        preflight_result = asyncio.create_task(inventory.update(preflight_update))
+        assert await asyncio.to_thread(mapping_entered.wait, 1)
+        await asyncio.wait_for(lifecycle.lock.acquire(), 0.1)
+        configuration.revision += 1
+        lifecycle.lock.release()
+        mapping_release.set()
+        preflight_rejected = await preflight_result
+        assert preflight_rejected.result == pb.COMMAND_RESULT_REJECTED
+        assert "revision" in preflight_rejected.failure.message
+        assert write_calls == 0
+        monkeypatch.setattr(inventory_owner_module, "_mapping", load_mapping)
+        current, error = await inventory.read(
+            svc.SpikeGLXInventoryRequest(
+                command=command, expected_configuration_revision=configuration.revision
+            )
+        )
+        assert not error and current is not None
+        update.expected_configuration_revision = configuration.revision
+    
+        entered, release = threading.Event(), threading.Event()
+    
+        def delayed_write(*args: object, **kwargs: object) -> str:
+            nonlocal write_calls
+            write_calls += 1
+            entered.set()
+            if not release.wait(2):
+                raise TimeoutError("test write release was not signaled")
+            return write_inventory(*args, **kwargs)  # type: ignore[arg-type]
+    
+        monkeypatch.setattr(inventory_owner_module, "update_inventory", delayed_write)
+        inventory.limits.current.validation_ns = 20_000_000
+        inventory_clock = [inventory.clock()]
+        inventory.clock = lambda: inventory_clock[0]
+        late_command = svc.OperatorCommand.FromString(command.SerializeToString())
+        late_command.operator.command_id = "inventory-late"
+        late_update = svc.SpikeGLXInventoryUpdateRequest(
+            command=late_command,
+            expected_configuration_revision=configuration.revision,
+            expected_file_sha256=current.file_sha256,
+            pulse_channels=tuple(current.pulse_channels),
+        )
+        late_result = asyncio.create_task(inventory.update(late_update))
+        assert await asyncio.to_thread(entered.wait, 1)
+        acquired = await asyncio.wait_for(lifecycle.lock.acquire(), 0.1)
+        assert acquired
+        lifecycle.lock.release()
+        assert lifecycle.inventory_update_pending
+        timed_out = await late_result
+        assert timed_out.result == pb.COMMAND_RESULT_ACCEPTED
+        operation = operations.control.operations["inventory-late"]
+        assert not operation.complete
+        assert "unconfirmed" in operation.progress
+        inventory_clock[0] += inventory.limits.current.validation_ns
+        release.set()
+        stop = asyncio.get_running_loop().time() + 2
+        while (
+            lifecycle.inventory_update_pending and asyncio.get_running_loop().time() < stop
+        ):
+            await asyncio.sleep(0.005)
+        assert not lifecycle.inventory_update_pending
+        assert operation.complete and operation.succeeded
+        assert operation.progress == "inventory committed after deadline"
+    
+        stale = await inventory.update(update)
+        assert stale.result == pb.COMMAND_RESULT_REJECTED
+>       assert "changed since inventory was read" in stale.failure.message
+E       assert 'changed since inventory was read' in 'inventory validation unavailable: '
+E        +  where 'inventory validation unavailable: ' = code: "REJECTED"\nmessage: "inventory validation unavailable: "\n.message
+E        +    where code: "REJECTED"\nmessage: "inventory validation unavailable: "\n = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "REJECTED"\n  message: "inventory validation unavailable: "\n}\ncommand_id: "inventory-read"\n.failure
+
+tests\controller\test_spikeglx.py:1569: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_spikeglx.py::test_inventory_controller_binds_lease_revision_and_file_digest
+1 failed, 893 passed, 4 skipped, 6 deselected in 14.52s

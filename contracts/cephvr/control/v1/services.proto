@@ -749,7 +749,7 @@ message ConfirmLaunchRequest {
   optional bool creation_failed_without_child = 8;
   Failure failure = 9;
   HostClockDescriptor host_clock = 10; // Required on Python endpoint confirmation.
-  bool native_cleanup_complete = 11; // A11 uploader only: exact child/job exit plus owner pipe/image closure.
+  bool native_cleanup_complete = 11; // E08 controller firmware/brightness helpers only: exact child/job exit plus owner pipe/private-file closure.
   AcquisitionWorkerCleanupProof acquisition_worker_cleanup = 12; // Exact retained camera Cleanup evidence after owner verification.
   // OS evidence precedes resume; endpoint and matching clock precede operational work.
 }

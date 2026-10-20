@@ -7,8 +7,8 @@ import ntpath
 from cephvr.acquisition.identity import ACQUISITION_WORKER_ROLES
 from cephvr.acquisition.identity import FFMPEG_ROLES as ACQ_FFMPEG_ROLES
 from cephvr.control.v1 import services_pb2 as wire
-from cephvr.controller.microcontroller.identity import FIRMWARE_UPLOAD_ROLE
 from cephvr.shared.identity import require_uuid4
+from cephvr.shared.native_helper_identity import CONTROLLER_NATIVE_HELPER_ROLES
 from cephvr.visual_stimulus.identity import FFMPEG_ROLES as VISUAL_STIMULUS_FFMPEG_ROLES
 
 BACKEND_ROLES = frozenset({"acquisition", "visual_stimulus", "tracking"})
@@ -41,7 +41,7 @@ def validate_plan(request: wire.PlanLaunchRequest) -> None:
             "INVALID_EXECUTABLE", "launch executable must be an absolute path"
         )
     if request.stop_method not in {"grpc_shutdown", "owner_stdin_eof"} and not (
-        request.child.role == FIRMWARE_UPLOAD_ROLE
+        request.child.role in CONTROLLER_NATIVE_HELPER_ROLES
         and request.stop_method == "owner_job_terminate"
     ):
         raise LaunchError("INVALID_STOP_METHOD", "unsupported child stop method")
@@ -49,7 +49,7 @@ def validate_plan(request: wire.PlanLaunchRequest) -> None:
         raise LaunchError("INVALID_STOP_METHOD", "Python child requires gRPC shutdown")
     if request.child.role == "supervisor":
         raise LaunchError("INVALID_CHILD", "launcher alone creates supervisor")
-    if request.child.role == FIRMWARE_UPLOAD_ROLE and (
+    if request.child.role in CONTROLLER_NATIVE_HELPER_ROLES and (
         request.owner.role != "controller"
         or request.python_worker
         or request.stop_method != "owner_job_terminate"
@@ -58,9 +58,9 @@ def validate_plan(request: wire.PlanLaunchRequest) -> None:
     ):
         raise LaunchError(
             "INVALID_OWNER",
-            "firmware upload requires its controller Configuration owner and operation",
+            "native helper requires its controller Configuration owner and operation",
         )
-    if request.child.role == FIRMWARE_UPLOAD_ROLE:
+    if request.child.role in CONTROLLER_NATIVE_HELPER_ROLES:
         require_uuid4(request.parent_operation.command_id)
     if request.child.role in VISUAL_STIMULUS_FFMPEG_ROLES:
         if request.owner.role != "visual_stimulus_renderer" or not request.HasField(

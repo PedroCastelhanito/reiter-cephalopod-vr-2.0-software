@@ -62,6 +62,29 @@ Snapshot retained coverage uses the oldest retained error, recovery or incident 
 and reports omissions from bounded diagnostic/outcome retention. It is not a complete
 history guarantee or a scientific stream; no timestamp is invented for untimed warnings.
 
+## Projector brightness
+
+SESSION_CONFIG.json `projector_brightness` is a deep frozen version1 snapshot of the
+latest admitted controller-observed Adjust attempt at Start. Its absence of an
+observation is explicit `{schema_version:1,outcome:"unknown",reason:...}`; new runtime
+lifetimes never infer an old brightness or treat a GUI draft as applied. Rejected
+commands leave this record unchanged; later admitted failures replace stale success.
+The record is not ExperimentConfiguration and is not re-applied on Load/Setup.
+
+Observed records bind `controller_generation`, operator `command_id`,
+`configuration_revision`, `requested_ma`, `started_monotonic_ns`, `completed_monotonic_ns`,
+`started_utc`, `completed_utc`, `outcome` (succeeded/failed/unconfirmed),
+`native_cleanup_confirmed`, `sdk_result` (validated aggregate or null), `diagnostics`
+(at most6000 characters) and `error`. Monotonic values use the same host clock as
+session anchors; UTC fields are observation times, not physical LED-switch times.
+`completed` records operator outcome observation even if native cleanup is uncertain.
+SDK result fields/limits are owned by [brightness](projector-brightness.md#structured-result-and-experiment-evidence).
+Readback confirmation/clamp and USB release remain separate from exact native process
+cleanup, and neither proves photometry or external changes after the observation.
+SCHEMA.json `controller_metadata.SESSION_CONFIG.json.projector_brightness` describes
+fields, units, clocks, unknown/clamp/freshness semantics. This is an additive schema1
+field; per-trial LOG references SESSION_CONFIG.json without copying its evidence.
+
 ## Closure, reservations and authority loss
 
 Controller seals writer admissions only after required final session events are admitted,

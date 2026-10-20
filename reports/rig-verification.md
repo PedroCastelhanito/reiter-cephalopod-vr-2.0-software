@@ -54,7 +54,11 @@
 - [ ] Restart the managed application and verify Devices/Projectors brightness:
   enter an appropriate LED current, click Adjust, compare all USB interface readbacks
   and physical outputs; verify SDK contention/missing interface and clamped-current
-  reporting. Local tests mock SDK calls; no hardware current was changed.
+  reporting. Confirm no console appears, exact registered helper cleanup precedes
+  Setup reuse, and a subsequent session's SESSION_CONFIG/SCHEMA preserve the observed
+  per-interface results, timestamps and uncertainty. A fresh runtime with no Adjust
+  must record unknown, without applying a saved draft. Local SDK responses are
+  fixtures; benign native process tests do not establish hardware current.
   — [Contract](../contracts/projector-brightness.md), [Runtime](runtime.md)
 
 - [ ] Reopen CephVR and exercise the E04 startup

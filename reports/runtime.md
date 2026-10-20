@@ -34,17 +34,37 @@ The subsequent owner-requested Sol review also exposed a pre-resource diagnostic
 failure-bookkeeping gap; Astra confirmed the narrow repair and116 Tracking tests pass.
 Its [supplemental verification](runtime-evidence-2026-10-19/gui-full-rig/preallocation-verification.json)
 identifies the later source separately from the completed native workload.
-The follow-up Sol review and Astra assessment leave one confirmed source issue:
-`platform/windows/projector_brightness.py` directly launches its PowerShell helper,
-without E08 planned launch, suspended registration and exact child cleanup evidence.
-Its relative timeout starts after creation and post-kill reaping is unbounded. Parent
-and application Jobs still contain descendants; no process escape was demonstrated.
-Current E08 helper termination/release rules expressly restrict the reusable one-shot
-path to firmware upload. Extending that existing lifecycle specifically to brightness
-needs the owner's decision; impersonating firmware or declaring unsupported EOF
-shutdown would be false evidence. Brightness lifecycle acceptance remains blocked.
-No other actionable issue or justified performance refactor remained in the requested
-read-only review. Current implementation is preserved pending that decision.
+Oct20 `brightness-supervised-helper`: the owner approved repairing the direct native
+launch found by the follow-up Sol/Astra review and adding experiment evidence.
+[E08rev176](../docs/architecture/system-contracts.md#e08),
+[G01rev251](../docs/architecture/gui.md#g01) and [E04rev92](../docs/architecture/supervisor.md#e04)
+now govern the implemented dedicated brightness role, registered suspended creation,
+original deadline, exact native cleanup and truthful manual/authority cleanup gates.
+The helper preserves hidden-console behavior, existing SDK commands and explicit
+clamping; no physical current or calibration was changed. A small shared release
+function preserves firmware behavior without another service or dependency (ARCH-002).
+Latest admitted evidence is frozen in SESSION_CONFIG with a matching SCHEMA descriptor;
+unknown, failed, partial and clamped outcomes cannot masquerade as a current requested
+value. Rejected commands retain prior evidence; pre-entry cancellation clears stale
+readbacks. Human GUI progress omits the structured machine-result line.
+
+Three final production-adapter probes pass with actual Windows children/jobs/pipes,
+no console, exact exit/empty-job checks and bounded success/cancellation/timeout.
+Supervisor receipts and SDK results in those probes are simulated. Five actual
+Start/writer fixtures pass, with20 retained metadata files independently hash-checked
+and parsed; no session/device execution is implied. Initial sandbox pipe denials,
+probe DLL lookup and path/expectation failures remain explicitly contextualized in
+the [native/output verification](runtime-evidence-2026-10-20/brightness-helper/native-validation-context.md).
+Physical SDK/USB/readback and live adjustment acceptance remain in the single rig
+checklist. Astra accepts the final focused ownership/metadata changes. Final owning
+selection255 passed/1 skipped; strengthened authority regression4 passed. Ruff,
+format184 files, Win32 mypy142 source files, boundaries739/zero, PowerShell syntax,
+19 Protobuf compilations and whitespace pass. Two broader runs each passed893 but
+hit separate unrelated short-timing/concurrently edited fixtures; both pass in
+isolation, and no clean broad-suite pass is claimed. Four stale supervisor fixture
+calls were corrected to forward the existing original deadline; baseline-source
+comparison confirms the mismatch predates this work. Exact commands, source hashes,
+failures and validation limits are in [brightness verification](runtime-evidence-2026-10-20/brightness-helper/verification.json).
 [Evidence/commands/limits](runtime-evidence-2026-10-19/gui-full-rig/verification.json),
 [telemetry](runtime-evidence-2026-10-19/gui-full-rig/telemetry-summary.json),
 [GUI context](runtime-evidence-2026-10-19/gui-full-rig/gui-offscreen-context.md),

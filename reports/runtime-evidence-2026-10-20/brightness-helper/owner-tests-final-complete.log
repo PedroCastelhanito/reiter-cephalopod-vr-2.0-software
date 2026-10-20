@@ -1,0 +1,57 @@
+........................................................................ [  8%]
+........................................................................ [ 16%]
+............................................s........................... [ 24%]
+........................................................................ [ 32%]
+...................................................................s.... [ 40%]
+.......................s................................................ [ 48%]
+........................................................................ [ 56%]
+..............................................F......................... [ 64%]
+.......................................................................s [ 72%]
+........................................................................ [ 80%]
+........................................................................ [ 88%]
+........................................................................ [ 96%]
+..................................                                       [100%]
+================================== FAILURES ===================================
+_____ test_timed_out_reservation_acquire_retains_owner_until_late_cleanup _____
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-339/test_timed_out_reservation_acq0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A35DEAFFD0>
+
+    async def test_timed_out_reservation_acquire_retains_owner_until_late_cleanup(
+        tmp_path, monkeypatch
+    ):
+        import threading
+        import time
+    
+        runtime = _runtime(
+            tmp_path,
+            pb.BackendContext(backend_name="acquisition", backend_generation=_id()),
+        )
+        runtime.cleanup.clock = time.monotonic_ns
+        runtime.setup_execution.clock = time.monotonic_ns
+        attempt = _attempt(runtime, tmp_path, {})
+        runtime.lifecycle.attempt = attempt
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+        entered, release = threading.Event(), threading.Event()
+        acquire = attempt.reservation.acquire
+    
+        def delayed_acquire():
+            entered.set()
+            assert release.wait(2)
+            return acquire()
+    
+        monkeypatch.setattr(attempt.reservation, "acquire", delayed_acquire)
+        try:
+            with pytest.raises(TimeoutError):
+                await runtime.setup_execution._reserve_output(
+                    attempt, _id(), time.monotonic_ns() + 20_000_000
+                )
+>           assert entered.is_set()
+E           assert False
+E            +  where False = is_set()
+E            +    where is_set = <threading.Event at 0x1a35e2af210: unset>.is_set
+
+tests\controller\test_setup.py:589: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_setup.py::test_timed_out_reservation_acquire_retains_owner_until_late_cleanup
+1 failed, 893 passed, 4 skipped, 6 deselected in 16.25s

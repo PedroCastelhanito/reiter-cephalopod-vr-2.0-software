@@ -1,0 +1,2 @@
+{"monotonic_ns":1000,"wall_time":"2026-10-19T23:54:36.707367+00:00","event_type":"session_started","source":"controller"}
+{"monotonic_ns":0,"wall_time":"2026-10-19T23:54:36.707366+00:00","event_type":"trial_started","source":"controller","trial_number":1}

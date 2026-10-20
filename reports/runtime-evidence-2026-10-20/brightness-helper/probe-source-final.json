@@ -1,0 +1,54 @@
+[
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\platform\\windows\\projector_brightness.py",
+    "Hash": "847500DB2700D789A29D28A5C178F334ED800F1F6F003FE26D62996758523F2F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\shared\\supervised_encoder.py",
+    "Hash": "4279A43AA637B0737112FE31A5004EAAA635B399ACE3772188487068B941D9FF"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\shared\\native_helpers.py",
+    "Hash": "A188EE79B770AEAF1C66951E4356DD3C398DA7C0D919263B4B068B125018992E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\shared\\native_helper_identity.py",
+    "Hash": "F5A8C60F8C61CF015670AE865A32AE754002D6C55ECDC4137769D656DEA6E05B"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\platform\\windows\\jobs.py",
+    "Hash": "74227F8D5398EC0D57CE83ABECB86DCEAD5DC529EC6E800CE26504D2AC8707B6"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\device\\projector_brightness.py",
+    "Hash": "EFD9F316EDD8CCB9A603E029FF9F69EA28945CDFAE33208A45D1AC19A3906649"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\lifecycle\\start.py",
+    "Hash": "D57ABDE83A4274F213F6117E431E0455B874B2C87893AFE252D59186B87BE04F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\metadata\\documents.py",
+    "Hash": "BE574047B4F9616F3731B4377B89D44B155BF24317B0AC83C19DBEEC77C0EF95"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\metadata\\writer.py",
+    "Hash": "4691CA0ADEF3AFA5EF5BC84ECC71173A0CBCAF42FA1D85015F73AC05BA413D6F"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\metadata\\trial_logs.py",
+    "Hash": "49359A38296D45F5F134E8F5B4C2C0FAB2E6F1D80DB2B02BE7C5D30CE72F34B9"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\runtime.py",
+    "Hash": "E986565067E7F578D849D496A964CA048733342289E59AF9BD46D7CE37E4766E"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-20\\brightness-helper\\native_adapter_probe.py",
+    "Hash": "B67FD4E5D623F9203BC886195C421766CD81EC0B05F720528183AF96CE60E7DB"
+  },
+  {
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-20\\brightness-helper\\metadata_output_probe.py",
+    "Hash": "C32A82DA5DAD0AC9C3EBA2F8C70F3714F74F23232111A4DB6178A4F68C8BDA51"
+  }
+]

@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+{"case": "success", "observed_error": {"type": "WindowsLaunchError", "message": "CreateFileW(pipe client) failed: WinError 5"}}
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-20\brightness-helper\native_adapter_probe.py", line 170, in <module>
+    "cases": [run_case(case) for case in ("success", "cancel", "timeout")]}
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-20\brightness-helper\native_adapter_probe.py", line 170, in <listcomp>
+    "cases": [run_case(case) for case in ("success", "cancel", "timeout")]}
+              ^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-20\brightness-helper\native_adapter_probe.py", line 141, in run_case
+    assert supervisor.state is not None, error
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'type': 'WindowsLaunchError', 'message': 'CreateFileW(pipe client) failed: WinError 5'}

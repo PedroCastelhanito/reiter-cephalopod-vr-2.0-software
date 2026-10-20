@@ -1,0 +1,120 @@
+{
+  "date": "2026-10-20",
+  "source_revision": "226a506c6e3f7a2adb710009d9d47929cbd6b5c8",
+  "source_dirty": true,
+  "source_manifest": "implementation-source-manifest.json",
+  "owned_files": [
+    "contracts/central-metadata.md",
+    "contracts/projector-brightness.md",
+    "contracts/windows-launch.md",
+    "contracts/cephvr/control/v1/services.proto",
+    "src/cephvr/controller/assembly.py",
+    "src/cephvr/controller/device/projector_brightness.py",
+    "src/cephvr/controller/device/projector_brightness_bootstrap.py",
+    "src/cephvr/controller/lifecycle/start.py",
+    "src/cephvr/controller/metadata/documents.py",
+    "src/cephvr/controller/microcontroller/firmware_upload.py",
+    "src/cephvr/controller/microcontroller/identity.py",
+    "src/cephvr/controller/runtime.py",
+    "src/cephvr/controller/startup/application.py",
+    "src/cephvr/controller/state.py",
+    "src/cephvr/platform/windows/jobs.py",
+    "src/cephvr/platform/windows/projector_brightness.ps1",
+    "src/cephvr/platform/windows/projector_brightness.py",
+    "src/cephvr/shared/native_helper_identity.py",
+    "src/cephvr/shared/native_helpers.py",
+    "src/cephvr/shared/supervised_encoder.py",
+    "src/cephvr/supervisor/launch_validation.py",
+    "src/cephvr/supervisor/registry.py",
+    "tests/client/test_controller_rpc.py",
+    "tests/controller/test_safety_regressions.py",
+    "tests/platform/test_projector_brightness.py",
+    "tests/shared/test_supervised_encoder.py",
+    "tests/supervisor/test_registry.py",
+    "tests/supervisor/test_registration.py"
+  ],
+  "shared_hunk_limits": {
+    "src/cephvr/controller/lifecycle/start.py": "Own deepcopy import, brightness schema import/descriptor and projector_brightness field. Do not stage concurrent spikeglx_control_scope=saving_only hunk.",
+    "src/cephvr/controller/assembly.py": "Own BrightnessPort import, AssemblyInputs optional injection and ProjectorBrightness native/generation arguments.",
+    "src/cephvr/controller/runtime.py": "Own BrightnessPort import, constructor/AssemblyInputs injection and authority_status brightness-cleanup guard.",
+    "tests/client/test_controller_rpc.py": "Only brightness test parameterization/function near line845-end: injected sync native port, clean-base/pending/terminal authority proof, readback evidence, rejection/replay/later failure.",
+    "contracts/central-metadata.md": "Only ## Projector brightness section is ours; concurrent SpikeGLX paragraph at end is foreign. Preserve it in worktree but exclude from brightness staging if other chat remains active."
+  },
+  "behavior": "Brightness-specific registered suspended native role; exact parent and one deadline; no-console flag; shared exact release reused with firmware. Latest admitted bounded structured SDK evidence deep-frozen into SESSION_CONFIG; SCHEMA descriptor; trials reference session file. No scientific/calibration/settings autoapply.",
+  "commands": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/platform/test_projector_brightness.py tests/controller/test_microcontroller_owner.py tests/supervisor/test_registry.py tests/supervisor/test_registration.py tests/client/test_controller_rpc.py tests/shared/test_supervised_encoder.py tests/controller/test_safety_regressions.py tests/controller/test_metadata.py -q -m \"not windows and not rig\"",
+      "result": "255 passed,1 skipped in3.44s",
+      "log": "final-focused-owner-tests-complete.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/client/test_controller_rpc.py -q -k projector_brightness",
+      "result": "4 passed,15 deselected in0.57s; strengthened clean-base authority assertions",
+      "log": "authority-regression-final.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller tests/supervisor tests/shared/test_supervised_encoder.py tests/platform/test_projector_brightness.py tests/client/test_controller_rpc.py -q -m \"not windows and not rig\"",
+      "result": "Final broad893passed,1failed,4skipped,6deselected14.52s; concurrently edited SpikeGLX inventory fixture. Prior broad893passed,1failed,4skipped,6deselected16.25s;20ms scheduling assumption in unrelated Setup fixture. Both isolated pass; no further broad loops.",
+      "log": "owner-tests-confirmation.log",
+      "prior_log": "owner-tests-final-complete.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_setup.py::test_timed_out_reservation_acquire_retains_owner_until_late_cleanup tests/supervisor/test_registration.py tests/shared/test_supervised_encoder.py -q -m \"not windows and not rig\"",
+      "result": "38 passed in0.83s",
+      "log": "final-targeted-checks.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_spikeglx.py::test_inventory_controller_binds_lease_revision_and_file_digest -q",
+      "result": "1 passed in0.46s; no changes to that test",
+      "log": "concurrent-spikeglx-isolated.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/controller src/cephvr/supervisor src/cephvr/shared/native_helper_identity.py src/cephvr/shared/native_helpers.py src/cephvr/shared/supervised_encoder.py src/cephvr/platform/windows/projector_brightness.py src/cephvr/platform/windows/jobs.py",
+      "result": "142 source files pass",
+      "log": "mypy-complete.log"
+    },
+    {
+      "result": "Ruff pass;184 files formatted",
+      "logs": [
+        "ruff-complete.log",
+        "format-final-pass.log"
+      ],
+      "commands": [
+        ".venv/Scripts/python.exe -m ruff check src/cephvr/controller src/cephvr/supervisor src/cephvr/shared/native_helper_identity.py src/cephvr/shared/native_helpers.py src/cephvr/shared/supervised_encoder.py src/cephvr/platform/windows/projector_brightness.py src/cephvr/platform/windows/jobs.py tests/controller tests/supervisor tests/platform/test_projector_brightness.py tests/client/test_controller_rpc.py tests/shared/test_supervised_encoder.py",
+        ".venv/Scripts/python.exe -m ruff format --check src/cephvr/controller src/cephvr/supervisor src/cephvr/shared/native_helper_identity.py src/cephvr/shared/native_helpers.py src/cephvr/shared/supervised_encoder.py src/cephvr/platform/windows/projector_brightness.py src/cephvr/platform/windows/jobs.py tests/controller tests/supervisor tests/platform/test_projector_brightness.py tests/client/test_controller_rpc.py tests/shared/test_supervised_encoder.py"
+      ]
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "739 modules,0violations; existing cohesive-size advisories",
+      "log": "boundaries-complete.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/generate_contracts.py",
+      "result": "19 sources generated; comment-only proto change, no wire or generated-content change"
+    },
+    {
+      "command": "PowerShell Parser.ParseFile of SDK script, no execution",
+      "result": "syntax_errors=0",
+      "log": "powershell-parse.json"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass; existing CRLF normalization notices",
+      "log": "diff-complete.log"
+    }
+  ],
+  "native_and_serialized_metadata": "Final frozen rerun:3 benign real Windows child/job/pipe cases pass in0.068/0.362/1.026s with no_window and console_handle0;5 real Start/Coordinator/Writer metadata cases pass,20/20savedfilehashes. Native supervisor/SDK observations explicitly simulated. See native-validation-context.md, native-adapter-final-results.json,metadata-output-results.json,probe-source-final.json and *-strict-final.log; previous results retained separately.",
+  "review": "Independent Astra approved ownership/deadlines/cleanup, strict integer parser, no-console compatibility and authority truth; no remaining source issue requested.",
+  "failure_history": "Initial broad two stale supervisor test cases called required deadline port without deadline in4 assertions. HEAD-source mismatch proven in baseline-deadline-fixture.json; tests only corrected. Original failures/logs retained. Parser/cancellation stale-evidence, human JSON filtering, no-console and authority fixes covered in final focused checks.",
+  "limits": [
+    "No live application restart or device/USB/LED adjustment",
+    "Benign native tests do not validate live production supervisor transport or physical SDK readback/release",
+    "Metadata fixture observations are explicitly simulated; no real current/clamp/photometry claim",
+    "Bounded latest observation is not continuous hardware state, calibration, full history or external change monitoring",
+    "Broad suite had concurrent/short-timing fixture failures; focused authoritative scope passes, isolated failures pass without source weakening"
+  ],
+  "contract_links_missing": [],
+  "source_manifest_scope": "Current dirty worktree bytes at final freeze; shared Start and central-metadata files include the foreign hunks identified above. Parent owns scoped stage/commit provenance.",
+  "staged_snapshot_validation": "staged-validation.json: 255 passed, 1 skipped in 2.79s against exact staged product/test snapshot; generated ignored contracts first; permitted local-process retry."
+}

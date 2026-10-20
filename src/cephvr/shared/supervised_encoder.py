@@ -27,6 +27,7 @@ from cephvr.platform.windows.file_sync import WindowsFileSyncOwner
 from cephvr.platform.windows.jobs import SuspendedProcess, WindowsJobs
 from cephvr.shared.auth import Principal
 from cephvr.shared.encoder_errors import EncoderLaunchError
+from cephvr.shared.native_helper_identity import PROJECTOR_BRIGHTNESS_ROLE
 from cephvr.shared.transport_deadlines import deadline_metadata
 
 FFMPEG_ROLE = "acquisition_ffmpeg"
@@ -227,6 +228,7 @@ class SupervisedEncoderLauncher:
                 stdin_handle=input_pipe.child_handle,
                 stdout_handle=progress_pipe.child_handle,
                 stderr_handle=stderr_pipe.child_handle,
+                no_window=role == PROJECTOR_BRIGHTNESS_ROLE,
             )
         except BaseException as exc:
             attempt.no_child_confirmed = self._confirm_no_child(

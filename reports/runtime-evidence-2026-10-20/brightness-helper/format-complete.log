@@ -1,0 +1,2032 @@
+unformatted: File would be reformatted
+    --> tests\client\test_controller_rpc.py:1:77
+     |
+     - """Real loopback controller RPC checks; no simulated scientific backends."""
+     -
+     - from __future__ import annotations
+     -
+     - import asyncio
+     - import json
+     - import shutil
+     - import threading
+     - from collections.abc import AsyncIterator
+     - from pathlib import Path
+     - from typing import cast
+     - from uuid import uuid4
+     -
+     - import grpc
+     - import pytest
+     - import pytest_asyncio
+     -
+     - from cephvr.client.session import ClientError, HeadlessClient, loopback_channel
+     - from cephvr.control.v1 import services_pb2 as rpc
+     - from cephvr.control.v1 import services_pb2_grpc as wire
+     - from cephvr.control.v1 import types_pb2 as pb
+     - from cephvr.controller.configuration import (
+     -     _load_saved_configuration,
+     -     load_controller_configuration,
+     - )
+     - from cephvr.controller.runtime import ControllerRuntime
+     - from cephvr.controller.service import ExperimentControllerService
+     - from cephvr.controller.state import ControllerLimits
+     - from cephvr.shared.auth import (
+     -     AuthenticationError,
+     -     Principal,
+     -     require_authenticated_peer,
+     - )
+     - from cephvr.shared.credentials import CredentialStore
+     - from cephvr.synchronization.diagnostic import SpikeGLXDiagnostic
+     - from cephvr.synchronization.v1 import spikeglx_pb2 as sync_pb
+     -
+     -
+     - @pytest_asyncio.fixture
+     - async def controller(
+     -     tmp_path: Path,
+     - ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+     -     generation = str(uuid4())
+     -     store = CredentialStore(tmp_path / "credentials", generation)
+     -     settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+     -     repository = Path(__file__).resolve().parents[2]
+     -     (tmp_path / "config/backends").mkdir(parents=True)
+     -     (tmp_path / "contracts").mkdir()
+     -     shutil.copyfile(
+     -         repository / "config/backends/synchronization_config.toml",
+     -         tmp_path / "config/backends/synchronization_config.toml",
+     -     )
+     -     shutil.copyfile(
+     -         repository / "contracts/spikeglx_mapping_reference.json",
+     -         tmp_path / "contracts/spikeglx_mapping_reference.json",
+     -     )
+     -     runtime = ControllerRuntime(
+     -         generation=generation,
+     -         configuration=pb.ExperimentConfiguration(
+     -             subject="subject",
+     -             experiment="experiment",
+     -             recording_root=str(tmp_path),
+     -             mode=pb.SESSION_MODE_OPEN_LOOP,
+     -             trials=[pb.TrialDefinition(trial_number=1)],
+     -             backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+     -         ),
+     -         limits=ControllerLimits(**settings.limits_kwargs),
+     -         validators={},
+     -         backends={},
+     -         configuration_history_path=tmp_path / "last_configuration.json",
+     -         software_root=tmp_path,
+     -     )
+     -
+     -     async def authenticate(
+     -         client_id: str, controller_generation: str, peer: str, metadata: object
+     -     ) -> None:
+     -         if controller_generation != generation:
+     -             raise AuthenticationError("wrong controller generation")
+     -         principal = await asyncio.to_thread(store.lookup, client_id)
+     -         if principal is None:
+     -             raise AuthenticationError("client not provisioned")
+     -         require_authenticated_peer(
+     -             peer,
+     -             cast(list[tuple[str, str]], metadata),
+     -             expected_role=principal.role,
+     -             expected_generation=principal.generation,
+     -             expected_token=principal.token,
+     -         )
+     -
+     -     server = grpc.aio.server()
+     -
+     -     class Diagnostic:
+     -         async def check(self) -> rpc.SpikeGLXConnectionResult:
+     -             return rpc.SpikeGLXConnectionResult(
+     -                 connected=True,
+     -                 address="169.254.240.108",
+     -                 port=4142,
+     -                 version="SpikeGLX test",
+     -                 running=False,
+     -                 saving=False,
+     -             )
+     -
+     -     service = ExperimentControllerService(
+     -         runtime,
+     -         client_authentication=authenticate,
+     -         peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+     -         spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+     -     )
+     -     wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+     -     port = server.add_insecure_port("127.0.0.1:0")
+     -     assert port > 0
+     -     await server.start()
+     -     try:
+     -         yield port, store, runtime
+     -     finally:
+     -         await server.stop(0)
+     -         await service.aclose()
+     -
+     -
+     - async def test_forged_credentials_are_rejected(
+     -     controller: tuple[int, CredentialStore, ControllerRuntime],
+     - ) -> None:
+     -     port, store, _runtime = controller
+     -     principal = store.provision_client("cli")
+     -     forged = Principal("cli", principal.generation, "incorrect-token")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         client = HeadlessClient(channel, forged)
+     -         with pytest.raises(grpc.aio.AioRpcError) as caught:
+     -             await client.get_snapshot()
+     -         assert caught.value.code() == grpc.StatusCode.UNAUTHENTICATED
+     -     store.remove_client(principal)
+     -
+     -
+     - async def test_spikeglx_diagnostic_requires_authenticated_client(
+     -     controller: tuple[int, CredentialStore, ControllerRuntime],
+     - ) -> None:
+     -     port, store, _runtime = controller
+     -     principal = store.provision_client("gui")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         stub = wire.ExperimentControllerServiceStub(channel)
+     -         query = rpc.SpikeGLXConnectionQuery(client_id=principal.generation)
+     -         result = await stub.CheckSpikeGLXConnection(
+     -             query, metadata=principal.metadata(), timeout=5
+     -         )
+     -         assert result.connected
+     -         assert result.version == "SpikeGLX test"
+     -         with pytest.raises(grpc.aio.AioRpcError) as caught:
+     -             await stub.CheckSpikeGLXConnection(query, timeout=5)
+     -         assert caught.value.code() == grpc.StatusCode.UNAUTHENTICATED
+     -     store.remove_client(principal)
+     -
+     -
+     - async def test_spikeglx_inventory_rpc_auth_lease_revision_and_digest_guards(
+     -     controller: tuple[int, CredentialStore, ControllerRuntime],
+     - ) -> None:
+     -     port, store, _runtime = controller
+     -     principal = store.provision_client("gui")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         stub = wire.ExperimentControllerServiceStub(channel)
+     -         request = rpc.SpikeGLXInventoryRequest(expected_configuration_revision=1)
+     -         with pytest.raises(grpc.aio.AioRpcError) as unauthenticated:
+     -             await stub.GetSpikeGLXInventory(request, timeout=5)
+     -         assert unauthenticated.value.code() == grpc.StatusCode.UNAUTHENTICATED
+     -         client = HeadlessClient(channel, principal)
+     -         async with client.control():
+     -             request.command.CopyFrom(client.operator_command())
+     -             snapshot = await stub.GetSpikeGLXInventory(
+     -                 request, metadata=principal.metadata(), timeout=5
+     -             )
+     -             assert snapshot.configuration_revision == 1
+     -             assert len(snapshot.file_sha256) == 64
+     -             channel_mapping = sync_pb.PulseChannel(
+     -                 role=sync_pb.PULSE_ROLE_CUSTOM,
+     -                 family=sync_pb.STREAM_FAMILY_NI,
+     -                 stream_index=0,
+     -                 channel_index=0,
+     -                 source_id="loopback-input",
+     -             )
+     -             update = rpc.SpikeGLXInventoryUpdateRequest(
+     -                 command=client.operator_command(),
+     -                 expected_configuration_revision=1,
+     -                 expected_file_sha256=snapshot.file_sha256,
+     -                 pulse_channels=[channel_mapping],
+     -             )
+     -             accepted = await stub.UpdateSpikeGLXInventory(
+     -                 update, metadata=principal.metadata(), timeout=5
+     -             )
+     -             assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
+     -             current = await stub.GetSpikeGLXInventory(
+     -                 request, metadata=principal.metadata(), timeout=5
+     -             )
+     -             assert current.file_sha256 != snapshot.file_sha256
+     -             assert current.pulse_channels[0].source_id == "loopback-input"
+     -             update.command.CopyFrom(client.operator_command())
+     -             stale = await stub.UpdateSpikeGLXInventory(
+     -                 update, metadata=principal.metadata(), timeout=5
+     -             )
+     -             assert stale.result == pb.COMMAND_RESULT_REJECTED
+     -             assert "changed since inventory was read" in stale.failure.message
+     -             wrong_revision = rpc.SpikeGLXInventoryRequest(
+     -                 command=client.operator_command(), expected_configuration_revision=2
+     -             )
+     -             with pytest.raises(grpc.aio.AioRpcError) as stale_revision:
+     -                 await stub.GetSpikeGLXInventory(
+     -                     wrong_revision, metadata=principal.metadata(), timeout=5
+     -                 )
+     -             assert stale_revision.value.code() == grpc.StatusCode.FAILED_PRECONDITION
+     -     store.remove_client(principal)
+     -
+     -
+     - async def test_spikeglx_timeout_does_not_start_a_second_native_call(
+     -     monkeypatch: pytest.MonkeyPatch,
+     - ) -> None:
+     -     entered, release = threading.Event(), threading.Event()
+     -
+     -     def blocked(_root: Path) -> rpc.SpikeGLXConnectionResult:
+     -         entered.set()
+     -         release.wait(1)
+     -         return rpc.SpikeGLXConnectionResult(connected=True)
+     -
+     -     monkeypatch.setattr("cephvr.synchronization.diagnostic._read_once", blocked)
+     -     diagnostic = SpikeGLXDiagnostic(Path.cwd(), timeout_s=0.01)
+     -     try:
+     -         first = await diagnostic.check()
+     -         assert entered.is_set()
+     -         assert "timed out" in first.error
+     -         second = await diagnostic.check()
+     -         assert "previous" in second.error
+     -     finally:
+     -         release.set()
+     -
+     -
+     - async def test_gui_observes_before_explicit_control_claim(
+     -     controller: tuple[int, CredentialStore, ControllerRuntime],
+     - ) -> None:
+     -     port, store, _runtime = controller
+     -     principal = store.provision_client(
+     -         "gui", generation=str(uuid4()), token="gui-token"
+     -     )
+     -     received: list[int] = []
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         client = HeadlessClient(
+     -             channel,
+     -             principal,
+     -             on_snapshot=lambda view: received.append(view.state_revision),
+     -         )
+     -         async with client.observe():
+     -             assert received
+     -             assert client.snapshot.control.holder_client_id != principal.generation
+     -             await client.claim_control()
+     -             assert client.snapshot.control.holder_client_id == principal.generation
+     -         assert (
+     -             await client.get_snapshot()
+     -         ).control.holder_client_id != principal.generation
+     -     store.remove_client(principal)
+     -
+     -
+     - async def test_gui_can_save_current_configuration_history_on_close(
+     -     controller: tuple[int, CredentialStore, ControllerRuntime], tmp_path: Path
+     - ) -> None:
+     -     port, store, _runtime = controller
+     -     principal = store.provision_client("gui")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         client = HeadlessClient(channel, principal)
+     -         async with client.observe():
+     -             await client.claim_control()
+     -             outcome = await client.execute("SaveConfigurationHistory")
+     -             assert outcome.succeeded
+     -     document = json.loads((tmp_path / "last_configuration.json").read_text())
+     -     assert document["format_version"] == 1
+     -     assert document["configuration"]["subject"] == "subject"
+     -     assert document["configuration"]["experiment"] == "experiment"
+     -     restored = _load_saved_configuration(
+     -         tmp_path / "last_configuration.json", max_message_bytes=16_777_216
+     -     )
+     -     assert restored.subject == "subject"
+     -     assert restored.experiment == "experiment"
+     -     store.remove_client(principal)
+     -
+     -
+     - async def test_control_takeover_and_real_missing_backend_rejection(
+     -     controller: tuple[int, CredentialStore, ControllerRuntime],
+     - ) -> None:
+     -     port, store, _runtime = controller
+     -     first = store.provision_client("cli")
+     -     second = store.provision_client("cli")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         a, b = HeadlessClient(channel, first), HeadlessClient(channel, second)
+     -         async with a.control():
+     -             old = a.operator_command()
+     -             with pytest.raises(ClientError, match="held"):
+     -                 async with b.control():
+     -                     pytest.fail("control was acquired without explicit takeover")
+     -             async with b.control(takeover=True):
+     -                 stale = await a.stub.Setup(old, metadata=first.metadata(), timeout=2)
+     -                 assert stale.result == pb.COMMAND_RESULT_REJECTED
+     -                 with pytest.raises(
+     -                     ClientError, match="registered|unavailable|validator"
+     -                 ) as rejected:
+     -                     await b.execute("Setup")
+     -                 assert rejected.value.command_id
+     -                 assert not rejected.value.admission_uncertain
+     -                 snapshot = await b.get_snapshot()
+     -                 assert snapshot.session.phase == pb.SESSION_PHASE_CONFIGURATION
+     -                 assert not snapshot.session.activated
+     -                 assert snapshot.control.holder_client_id == second.generation
+     -                 # Closing the displaced holder's exact stream must not revoke
+     -                 # the replacement holder or disturb the controller's lifecycle.
+     -                 a._watch.cancel()
+     -                 assert a._reader is not None
+     -                 with pytest.raises(asyncio.CancelledError):
+     -                     await a._reader
+     -                 still_owned = await b.get_snapshot()
+     -                 assert still_owned.control.holder_client_id == second.generation
+     -         result = await b.get_snapshot()
+     -         assert not result.control.HasField("holder_client_id")
+     -     store.remove_client(first)
+     -     store.remove_client(second)
+     -
+     -
+     - async def test_pending_setup_cancel_and_prompt_response_are_independent_loopback_commands(
+     -     controller: tuple[int, CredentialStore, ControllerRuntime],
+     -     monkeypatch: pytest.MonkeyPatch,
+     - ) -> None:
+     -     from tests.controller.support_components import _RetainedPeer
+     -
+     -     from cephvr.controller.ports import BackendPort
+     -
+     -     port, store, runtime = controller
+     -     principal = store.provision_client("gui")
+     -     backend_context = pb.BackendContext(
+     -         backend_name="visual_stimulus", backend_generation=str(uuid4())
+     -     )
+     -     runtime.setup_admission.backends = {
+     -         "visual_stimulus": cast(
+     -             BackendPort, _RetainedPeer(backend_context, rpc.RetainedResult())
+     -         )
+     -     }
+     -     runtime.supervisor_state.processes["visual_stimulus"] = rpc.ProcessHealthStatus(
+     -         process=pb.ProcessIdentity(
+     -             role="visual_stimulus", generation=backend_context.backend_generation
+     -         ),
+     -         process_running=True,
+     -         connected=True,
+     -     )
+     -     runtime.setup_admission.validators = {
+     -         "structural": lambda _: pb.ValidationResult(completed=True, valid=True)
+     -     }
+     -     runtime.setup_admission.file_policy_loader = lambda _active: {}
+     -     entered, release = asyncio.Event(), asyncio.Event()
+     -
+     -     async def pending_setup(*_args: object) -> None:
+     -         entered.set()
+     -         await release.wait()
+     -
+     -     monkeypatch.setattr(runtime.setup_execution, "run_setup", pending_setup)
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         client = HeadlessClient(channel, principal, rpc_timeout_s=3)
+     -         async with client.observe():
+     -             await client.claim_control()
+     -             from cephvr.gui.controller_bridge import ControllerBridge
+     -
+     -             bridge = ControllerBridge(principal, port, 16_777_216, (0,))
+     -             bridge._loop = asyncio.get_running_loop()
+     -             bridge._queue = asyncio.PriorityQueue(maxsize=33)
+     -             bridge._connected = True
+     -             bridge._connection_epoch = 1
+     -             bridge._controller_generation = runtime.generation
+     -             admissions: list[tuple[str, str]] = []
+     -             completions: list[tuple[str, str, str, str]] = []
+     -             progress: list[tuple[str, str]] = []
+     -             bridge.action_progress.connect(
+     -                 lambda action, message: progress.append((action, message))
+     -             )
+     -             admission_event, completion_event = asyncio.Event(), asyncio.Event()
+     -
+     -             def on_admitted(action: str, command_id: str) -> None:
+     -                 admissions.append((action, command_id))
+     -                 admission_event.set()
+     -
+     -             def on_finished(
+     -                 action: str, command_id: str, status: str, message: str
+     -             ) -> None:
+     -                 completions.append((action, command_id, status, message))
+     -                 completion_event.set()
+     -
+     -             bridge.command_admitted.connect(on_admitted)
+     -             bridge.operation_finished.connect(on_finished)
+     -             command_task = asyncio.create_task(bridge._commands(client))
+     -             accepted_configuration = client.snapshot.configuration_values.current
+     -             assert bridge.request(
+     -                 "Setup",
+     -                 expected_revision=client.snapshot.configuration_values.revision,
+     -                 expected_configuration=accepted_configuration.SerializeToString(
+     -                     deterministic=True
+     -                 ),
+     -             )
+     -             await asyncio.wait_for(entered.wait(), 2)
+     -             while not any(action == "Setup" for action, _ in admissions):
+     -                 admission_event.clear()
+     -                 await asyncio.wait_for(admission_event.wait(), 2)
+     -             setup_id = next(
+     -                 command_id for action, command_id in admissions if action == "Setup"
+     -             )
+     -             current = next(
+     -                 item
+     -                 for item in client.snapshot.operations
+     -                 if item.context.command_id == setup_id
+     -             )
+     -             assert not current.complete
+     -
+     -             assert bridge.request("Cancel Setup")
+     -             while not any(action == "Cancel Setup" for action, _ in admissions):
+     -                 admission_event.clear()
+     -                 await asyncio.wait_for(admission_event.wait(), 2)
+     -             cancel_id = next(
+     -                 command_id
+     -                 for action, command_id in admissions
+     -                 if action == "Cancel Setup"
+     -             )
+     -             assert cancel_id != setup_id
+     -             # The Setup coroutine is still blocked behind this gate. Its
+     -             # operation may already be failed by the independently admitted
+     -             # cancellation cleanup, which is the expected safety response.
+     -             assert not release.is_set()
+     -             release.set()
+     -             while not {
+     -                 ("Cancel Setup", cancel_id),
+     -                 ("Setup", setup_id),
+     -             } <= {(action, command_id) for action, command_id, _, _ in completions}:
+     -                 completion_event.clear()
+     -                 await asyncio.wait_for(completion_event.wait(), 3)
+     -             assert (
+     -                 next(
+     -                     status
+     -                     for action, command_id, status, _ in completions
+     -                     if action == "Setup" and command_id == setup_id
+     -                 )
+     -                 == "failed"
+     -             )
+     -             # No backend work exists before supervisor registration, so the
+     -             # cancellation itself confirms cleanup.
+     -             assert (
+     -                 next(
+     -                     status
+     -                     for action, command_id, status, _ in completions
+     -                     if action == "Cancel Setup" and command_id == cancel_id
+     -                 )
+     -                 == "completed"
+     -             )
+     -
+     -             prompt = pb.Prompt(
+     -                 prompt_id=str(uuid4()),
+     -                 setup=pb.SessionContext(
+     -                     controller_generation=runtime.generation, session_id=str(uuid4())
+     -                 ),
+     -                 operation=pb.OperationContext(command_id=str(uuid4())),
+     -                 explanation="A recovery choice is required.",
+     -                 permitted_choices=["recover", "delete"],
+     -             )
+     -             recovery_gate = asyncio.Event()
+     -
+     -             async def wait_for_recovery_choice(choice: str) -> None:
+     -                 assert choice == "delete"
+     -                 await recovery_gate.wait()
+     -
+     -             await runtime.install_startup_recovery(
+     -                 prompt,
+     -                 wait_for_recovery_choice,
+     -                 "pending recovery choice",
+     -             )
+     -             await asyncio.wait_for(
+     -                 client._wait(
+     -                     lambda state: any(
+     -                         item.prompt_id == prompt.prompt_id for item in state.prompts
+     -                     )
+     -                 ),
+     -                 2,
+     -             )
+     -             assert bridge.request(
+     -                 "respond_prompt",
+     -                 prompt=prompt.SerializeToString(),
+     -                 choice="delete",
+     -             )
+     -             recovery_gate.set()
+     -             while not any(
+     -                 action == "respond_prompt" and status == "completed"
+     -                 for action, _, status, _ in completions
+     -             ):
+     -                 completion_event.clear()
+     -                 await asyncio.wait_for(completion_event.wait(), 2)
+     -             assert (
+     -                 progress.count(
+     -                     ("respond_prompt", "Recovery · Unfinished session files deleted.")
+     -                 )
+     -                 == 1
+     -             )
+     -             assert bridge.request("quit")
+     -             await asyncio.wait_for(command_task, 2)
+     -     store.remove_client(principal)
+     -
+     -
+     - def _install_microcontroller(runtime: ControllerRuntime, *, uploader=None):
+     -     from unittest.mock import AsyncMock
+     -
+     -     from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+     -     from cephvr.acquisition.v1 import runtime_pb2 as acquisition
+     -     from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+     -     from cephvr.controller.microcontroller.lifecycle import MicrocontrollerLifecycle
+     -
+     -     settings = pb.AcquisitionSettings()
+     -     settings.pulses.port = "COM8"
+     -     settings.pulses.trial_state_enabled = True
+     -     settings.pulses.trial_state_pin = "D9"
+     -     runtime.configuration_state.current.backends.add(
+     -         backend_name="acquisition", enabled=False, acquisition=settings
+     -     )
+     -     serial = AsyncMock()
+     -     observation = mcu.MicrocontrollerObservation(
+     -         port="COM8", connection_id="connection"
+     -     )
+     -     observation.state.behavioral.running = False
+     -     observation.state.tracking.running = False
+     -     observation.state.eye_tracking.running = False
+     -     serial.connect.return_value = observation
+     -     serial.configure.return_value = observation
+     -     serial.status.return_value = observation
+     -     serial.diagnostic_start.return_value = (True, "trial_state", "D9", 1)
+     -     serial.diagnostic_stop.return_value = (False, "trial_state", "D9", 1)
+     -     serial.off.return_value = mcu.PulseCommandEvidence(
+     -         outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=observation.state
+     -     )
+     -     owner = MicrocontrollerDevice(
+     -         serial, settings, acquisition.AcquisitionFilePolicies(), runtime.clock, uploader
+     -     )
+     -     runtime.microcontroller_device = owner
+     -     runtime.microcontroller.owner = owner
+     -     runtime.publisher.microcontroller_view = owner.snapshot_view
+     -     owner.changed = runtime.publisher.publish
+     -     runtime.microcontroller_lifecycle = MicrocontrollerLifecycle(
+     -         owner,
+     -         generation=runtime.generation,
+     -         lifecycle=runtime.lifecycle,
+     -         configuration=runtime.configuration_state,
+     -         device=runtime.device_state,
+     -         limits=runtime.limit_state,
+     -         clock=runtime.clock,
+     -         publish=runtime.publisher.publish,
+     -         warning=runtime.record_warning,
+     -         spawn=runtime._spawn,
+     -         interrupt=lambda attempt, reason, issued: runtime.interruption.interrupt(
+     -             attempt, reason, issued_ns=issued
+     -         ),
+     -     )
+     -     return owner, serial
+     -
+     -
+     - async def test_camera_trigger_rpc_authenticates_exact_peer_and_original_deadline(
+     -     controller,
+     - ):
+     -     from cephvr.acquisition.microcontroller_client import (
+     -         ControllerMicrocontrollerClient,
+     -     )
+     -     from cephvr.shared.transport_deadlines import deadline_metadata
+     -
+     -     port, _store, runtime = controller
+     -     owner, serial = _install_microcontroller(runtime)
+     -     principal = Principal("acquisition", runtime.generation, "camera-trigger-token")
+     -     deadline = runtime.clock() + 5_000_000_000
+     -     request = rpc.MicrocontrollerIoRequest(
+     -         command_id=str(uuid4()),
+     -         requester=pb.ProcessIdentity(role="acquisition", generation=runtime.generation),
+     -         controller_generation=runtime.generation,
+     -         deadline_monotonic_ns=deadline,
+     -         kind=rpc.MICROCONTROLLER_IO_KIND_CONNECT,
+     -         requested=owner.settings.pulses,
+     -     )
+     -     request.claim_id = request.command_id
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         stub = wire.ExperimentControllerServiceStub(channel)
+     -         for credential in [
+     -             Principal("acquisition", runtime.generation, "forged"),
+     -             Principal("acquisition", str(uuid4()), principal.token),
+     -         ]:
+     -             with pytest.raises(grpc.aio.AioRpcError) as caught:
+     -                 await stub.ExecuteMicrocontrollerIo(
+     -                     request,
+     -                     metadata=(*credential.metadata(), deadline_metadata(deadline)),
+     -                     timeout=2,
+     -                 )
+     -             assert caught.value.code() == grpc.StatusCode.UNAUTHENTICATED
+     -         with pytest.raises(grpc.aio.AioRpcError) as mismatch:
+     -             await stub.ExecuteMicrocontrollerIo(
+     -                 request,
+     -                 metadata=(*principal.metadata(), deadline_metadata(deadline - 1)),
+     -                 timeout=2,
+     -             )
+     -         assert mismatch.value.code() == grpc.StatusCode.INVALID_ARGUMENT
+     -         assert serial.connect.await_count == 0
+     -         result = await stub.ExecuteMicrocontrollerIo(
+     -             request,
+     -             metadata=(*principal.metadata(), deadline_metadata(deadline)),
+     -             timeout=2,
+     -         )
+     -         assert result.succeeded and result.observation.port == "COM8"
+     -         replay = await stub.ExecuteMicrocontrollerIo(
+     -             request,
+     -             metadata=(*principal.metadata(), deadline_metadata(deadline)),
+     -             timeout=2,
+     -         )
+     -         assert replay == result and serial.connect.await_count == 1
+     -         client = ControllerMicrocontrollerClient(
+     -             stub, principal, runtime.generation, lambda: owner.settings.pulses
+     -         )
+     -         client.claim_id = request.claim_id
+     -         boundary, issued = runtime.clock() + 1_000_000, runtime.clock()
+     -         await client.off(
+     -             ("behavioral",),
+     -             scheduled_boundary_ns=boundary,
+     -             stop_issued_ns=issued,
+     -             deadline_ns=deadline,
+     -         )
+     -         call = serial.off.await_args
+     -         assert call.args == ((1,),)
+     -         assert call.kwargs == {
+     -             "scheduled_boundary_ns": boundary,
+     -             "stop_issued_ns": issued,
+     -             "deadline_ns": deadline,
+     -         }
+     -         bad = rpc.MicrocontrollerIoRequest.FromString(request.SerializeToString())
+     -         bad.command_id = str(uuid4())
+     -         bad.kind = rpc.MICROCONTROLLER_IO_KIND_STATUS
+     -         bad.claim_id = str(uuid4())
+     -         rejected = await stub.ExecuteMicrocontrollerIo(
+     -             bad,
+     -             metadata=(*principal.metadata(), deadline_metadata(deadline)),
+     -             timeout=2,
+     -         )
+     -         assert not rejected.succeeded and "claim" in rejected.failure
+     -         await client.close(deadline_ns=deadline)
+     -         assert not owner.acquisition_claimed and owner.cleanup_complete
+     -
+     -
+     - @pytest.mark.parametrize("source_kind", ["hex", "ino"])
+     - async def test_general_microcontroller_commands_and_upload_work_without_acquisition_backend(
+     -     controller, tmp_path, source_kind
+     - ):
+     -     from cephvr.controller.microcontroller.firmware import read_uno_image
+     -     from cephvr.controller.microcontroller.firmware_source import read_firmware
+     -
+     -     port, store, runtime = controller
+     -     events = []
+     -     image_path = tmp_path / "compiled.hex"
+     -     image_path.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+     -     image = read_uno_image(str(image_path))
+     -     path = tmp_path / f"source.{source_kind}"
+     -     path.write_bytes(
+     -         b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+     -     )
+     -
+     -     class Uploader:
+     -         cleanup_complete = True
+     -
+     -         def reset_cancel(self):
+     -             pass
+     -
+     -         def compile(self, selected, operation, *, deadline_ns):
+     -             events.append(("compile", operation.command_id, deadline_ns))
+     -             return image
+     -
+     -         def prepare(self, selected):
+     -             assert selected.payload == image.payload
+     -
+     -         def upload(self, port, operation, *, deadline_ns):
+     -             assert port == "COM8"
+     -             events.append(("upload", operation.command_id, deadline_ns))
+     -
+     -         def close(self, *, deadline_ns):
+     -             self.cleanup_complete = True
+     -
+     -         def cancel(self):
+     -             pass
+     -
+     -     owner, serial = _install_microcontroller(runtime, uploader=Uploader())
+     -     assert runtime.microcontroller.device_views() is None
+     -     assert not runtime.configuration_state.current.backends[-1].enabled
+     -     principal = store.provision_client("gui")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         client = HeadlessClient(channel, principal)
+     -         stub = wire.ExperimentControllerServiceStub(channel)
+     -         async with client.observe():
+     -             await client.claim_control()
+     -             for kind in [
+     -                 rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+     -                 rpc.MICROCONTROLLER_COMMAND_KIND_START,
+     -                 rpc.MICROCONTROLLER_COMMAND_KIND_STOP,
+     -                 rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+     -             ]:
+     -                 request = rpc.MicrocontrollerCommandRequest(
+     -                     command=client.operator_command(),
+     -                     expected_configuration_revision=runtime.configuration_state.revision,
+     -                     kind=kind,
+     -                 )
+     -                 if kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
+     -                     request.signal = pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE
+     -                 if kind == rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE:
+     -                     request.firmware_path = str(path)
+     -                     request.firmware_sha256 = read_firmware(str(path)).digest
+     -                 admission = await stub.ExecuteMicrocontrollerCommand(
+     -                     request, metadata=principal.metadata(), timeout=2
+     -                 )
+     -                 assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+     -                 for _ in range(200):
+     -                     operation = runtime.control.operations[
+     -                         request.command.operator.command_id
+     -                     ]
+     -                     if operation.complete:
+     -                         break
+     -                     await asyncio.sleep(0.005)
+     -                 assert operation.complete and operation.succeeded, operation.failure
+     -                 snapshot = await client.get_snapshot()
+     -                 assert snapshot.microcontroller.observation.port == "COM8"
+     -                 assert snapshot.microcontroller.diagnostic.active == (
+     -                     kind == rpc.MICROCONTROLLER_COMMAND_KIND_START
+     -                 )
+     -             assert [phase for phase, _, _ in events] == (
+     -                 ["compile", "upload"] if source_kind == "ino" else ["upload"]
+     -             )
+     -             assert (
+     -                 len({(operation, deadline) for _, operation, deadline in events}) == 1
+     -             )
+     -             assert serial.close.await_count == 1
+     -             assert not runtime.authority_status().cleanup_confirmed
+     -             deadline = runtime.clock() + 1_000_000_000
+     -             await owner.close(deadline_ns=deadline, permanent=False)
+     -             assert (
+     -                 owner.cleanup_complete
+     -                 and not (await client.get_snapshot()).microcontroller.cleanup_pending
+     -             )
+     -     store.remove_client(principal)
+     -
+     -
+     - async def test_normal_shutdown_releases_controller_owned_microcontroller(controller):
+     -     port, store, runtime = controller
+     -     owner, serial = _install_microcontroller(runtime)
+     -     owner.port_owned = True
+     -     owner.view.observation.CopyFrom(serial.connect.return_value)
+     -     runtime.lifecycle.session.cleanup_confirmed = True
+     -     principal = store.provision_client("gui")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         client = HeadlessClient(channel, principal)
+     -         async with client.observe():
+     -             await client.claim_control()
+     -             request = client.operator_command()
+     -             admission = await runtime.shutdown_application(request)
+     -             assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+     -             for _ in range(100):
+     -                 if owner.cleanup_complete:
+     -                     break
+     -                 await asyncio.sleep(0.005)
+     -             assert owner.cleanup_complete
+     -             assert runtime.authority_status().cleanup_confirmed
+     -             assert (
+     -                 owner.shutdown_deadline_ns
+     -                 == runtime.lifecycle.shutdown_intent_ns
+     -                 + runtime.limits.setup_cancel_ns
+     -                 + runtime.limits.recovery_ns
+     -             )
+     -             assert (
+     -                 serial.close.await_args.kwargs["deadline_ns"]
+     -                 == owner.shutdown_deadline_ns
+     -             )
+     -     await runtime.cancel_background_tasks()
+     -     store.remove_client(principal)
+     -
+     -
+     - async def test_old_camera_projection_cannot_replace_controller_microcontroller_state(
+     -     controller,
+     - ):
+     -     _port, _store, runtime = controller
+     -     owner, serial = _install_microcontroller(runtime)
+     -     owner.view.observation.CopyFrom(serial.connect.return_value)
+     -     owner.view.diagnostic.active = True
+     -     stale = pb.AcquisitionDeviceViews()
+     -     stale.pulses.port = "COM9"
+     -     stale.diagnostic.active = False
+     -     runtime.projections.devices = stale
+     -     snapshot = runtime.publisher.build_snapshot()
+     -     assert snapshot.microcontroller.observation.port == "COM8"
+     -     assert snapshot.microcontroller.diagnostic.active
+     -     assert snapshot.acquisition_devices.pulses.port == "COM9"
+     -
+     -
+     - @pytest.mark.parametrize("cause", ["control_loss", "shutdown"])
+     - async def test_controller_cleanup_waits_for_camera_off_and_claim_release(
+     -     controller, cause
+     - ):
+     -     from cephvr.acquisition.microcontroller_client import (
+     -         ControllerMicrocontrollerClient,
+     -     )
+     -
+     -     port, store, runtime = controller
+     -     owner, serial = _install_microcontroller(runtime)
+     -     principal = store.provision_client("gui")
+     -     peer = Principal("acquisition", runtime.generation, "camera-trigger-token")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         client = HeadlessClient(channel, principal)
+     -         camera = ControllerMicrocontrollerClient(
+     -             wire.ExperimentControllerServiceStub(channel),
+     -             peer,
+     -             runtime.generation,
+     -             lambda: owner.settings.pulses,
+     -         )
+     -         async with client.observe():
+     -             await client.claim_control()
+     -             deadline = runtime.clock() + 5_000_000_000
+     -             await camera.connect(deadline_ns=deadline)
+     -             if cause == "control_loss":
+     -                 await runtime.microcontroller_lifecycle.owner_lost()
+     -                 assert owner.snapshot_view().cleanup_pending
+     -             else:
+     -                 admission = await runtime.shutdown_application(
+     -                     client.operator_command()
+     -                 )
+     -                 assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+     -             await asyncio.sleep(0)
+     -             serial.close.assert_not_awaited()
+     -             await camera.off(
+     -                 ("behavioral",),
+     -                 scheduled_boundary_ns=None,
+     -                 stop_issued_ns=runtime.clock(),
+     -                 deadline_ns=deadline,
+     -             )
+     -             await camera.close(deadline_ns=deadline)
+     -             for _ in range(100):
+     -                 if owner.cleanup_complete:
+     -                     break
+     -                 await asyncio.sleep(0.005)
+     -             assert owner.cleanup_complete
+     -             assert serial.off.await_count == 1
+     -     await runtime.cancel_background_tasks()
+     -     store.remove_client(principal)
+     -
+     -
+     - @pytest.mark.parametrize("cleanup_confirmed", [False, True])
+     - @pytest.mark.parametrize("sdk_failure", [False, True])
+     - async def test_projector_brightness_auth_gates_readback_and_repeat_admission(
+     -     controller: tuple[int, CredentialStore, ControllerRuntime],
+     -     monkeypatch: pytest.MonkeyPatch,
+     -     sdk_failure: bool,
+     -     cleanup_confirmed: bool,
+     - ) -> None:
+     -
+     -     port, store, runtime = controller
+     -     runtime.lifecycle.session.cleanup_confirmed = True
+     -     calls = []
+     -     started, release = asyncio.Event(), asyncio.Event()
+     -
+     -     loop = asyncio.get_running_loop()
+     -     release = threading.Event()
+     -
+     -     class Native:
+     -         cleanup_complete = True
+     -         result = None
+     -         diagnostics = "Interface 0: readback R=101 G=101 B=101"
+     -
+     -         def reset_cancel(self):
+     -             self.result = None
+     -
+     -         def cancel(self):
+     -             release.set()
+     -
+     -         def adjust(self, current_ma, operation, *, deadline_ns):
+     -             calls.append((current_ma, deadline_ns, operation.command_id))
+     -             loop.call_soon_threadsafe(started.set)
+     -             assert release.wait(5)
+     -             self.cleanup_complete = cleanup_confirmed
+     -             self.result = {"success": not sdk_failure, "requested_ma": current_ma}
+     -             if sdk_failure:
+     -                 raise RuntimeError("Only 3 of 4 projector interfaces confirmed current")
+     -
+     -     native = Native()
+     -     runtime.projector_brightness.native = native
+     -     principal = store.provision_client("gui")
+     -     async with loopback_channel(port, 16_777_216) as channel:
+     -         stub = wire.ExperimentControllerServiceStub(channel)
+     -         request = rpc.ProjectorBrightnessRequest(
+     -             current_ma=101, expected_configuration_revision=1
+     -         )
+     -         with pytest.raises(grpc.aio.AioRpcError) as denied:
+     -             await stub.AdjustProjectorBrightness(request, timeout=5)
+     -         assert denied.value.code() == grpc.StatusCode.UNAUTHENTICATED
+     -         client = HeadlessClient(channel, principal)
+     -         async with client.observe():
+     -             request.command.CopyFrom(
+     -                 rpc.OperatorCommand(
+     -                     controller_generation=runtime.generation,
+     -                     operator=pb.OperatorContext(
+     -                         client_id=principal.generation, command_id=str(uuid4())
+     -                     ),
+     -                 )
+     -             )
+     -             rejected = await stub.AdjustProjectorBrightness(
+     -                 request, metadata=principal.metadata(), timeout=5
+     -             )
+     -             assert rejected.result == pb.COMMAND_RESULT_REJECTED
+     -             await client.claim_control()
+     -             for current, revision, phase in (
+     -                 (100, 1, pb.SESSION_PHASE_CONFIGURATION),
+     -                 (2501, 1, pb.SESSION_PHASE_CONFIGURATION),
+     -                 (101, 2, pb.SESSION_PHASE_CONFIGURATION),
+     -                 (101, 1, pb.SESSION_PHASE_READY),
+     -             ):
+     -                 runtime.lifecycle.session.phase = phase
+     -                 request = rpc.ProjectorBrightnessRequest(
+     -                     command=client.operator_command(),
+     -                     current_ma=current,
+     -                     expected_configuration_revision=revision,
+     -                 )
+     -                 rejected = await stub.AdjustProjectorBrightness(
+     -                     request, metadata=principal.metadata(), timeout=5
+     -                 )
+     -                 assert rejected.result == pb.COMMAND_RESULT_REJECTED
+     -                 assert runtime.device_state.projector_brightness is None
+     -             runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+     -             request = rpc.ProjectorBrightnessRequest(
+     -                 command=client.operator_command(),
+     -                 current_ma=101,
+     -                 expected_configuration_revision=1,
+     -             )
+     -             accepted = await stub.AdjustProjectorBrightness(
+     -                 request, metadata=principal.metadata(), timeout=5
+     -             )
+     -             assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
+     -             await asyncio.wait_for(started.wait(), 2)
+     -             assert not runtime.authority_status().cleanup_confirmed
+     -             replay = await stub.AdjustProjectorBrightness(
+     -                 request, metadata=principal.metadata(), timeout=5
+     -             )
+     -             assert replay == accepted
+     -             duplicate = rpc.ProjectorBrightnessRequest(
+     -                 command=client.operator_command(),
+     -                 current_ma=200,
+     -                 expected_configuration_revision=1,
+     -             )
+     -             rejected = await stub.AdjustProjectorBrightness(
+     -                 duplicate, metadata=principal.metadata(), timeout=5
+     -             )
+     -             assert rejected.result == pb.COMMAND_RESULT_REJECTED
+     -             assert len(calls) == 1 and calls[0][0] == 101
+     -             assert calls[0][1] > runtime.clock()
+     -             assert calls[0][2] == request.command.operator.command_id
+     -             assert runtime.device_state.camera_operation is not None
+     -             release.set()
+     -             outcome = await client.wait_result(accepted.command_id)
+     -             assert outcome.succeeded is (cleanup_confirmed and not sdk_failure)
+     -             assert (runtime.device_state.camera_operation is None) is cleanup_confirmed
+     -             evidence = runtime.device_state.projector_brightness
+     -             assert evidence is not None
+     -             assert evidence["requested_ma"] == 101
+     -             assert evidence["controller_generation"] == runtime.generation
+     -             assert evidence["outcome"] == (
+     -                 "unconfirmed"
+     -                 if not cleanup_confirmed
+     -                 else ("failed" if sdk_failure else "succeeded")
+     -             )
+     -             assert evidence["native_cleanup_confirmed"] is cleanup_confirmed
+     -             assert runtime.projector_brightness.cleanup_complete is cleanup_confirmed
+     -             assert runtime.authority_status().cleanup_confirmed is cleanup_confirmed
+     -             assert (
+     -                 evidence["started_monotonic_ns"] <= evidence["completed_monotonic_ns"]
+     -             )
+     -             if sdk_failure:
+     -                 assert "3 of 4" in outcome.failure
+     -             elif cleanup_confirmed:
+     -                 assert (
+     -                     "readback R=101"
+     -                     in runtime.control.operations[accepted.command_id].progress
+     -                 )
+     -             prior = runtime.device_state.projector_brightness
+     -             runtime.lifecycle.session.phase = pb.SESSION_PHASE_READY
+     -             rejected = await stub.AdjustProjectorBrightness(
+     -                 rpc.ProjectorBrightnessRequest(
+     -                     command=client.operator_command(),
+     -                     current_ma=200,
+     -                     expected_configuration_revision=1,
+     -                 ),
+     -                 metadata=principal.metadata(),
+     -                 timeout=5,
+     -             )
+     -             assert rejected.result == pb.COMMAND_RESULT_REJECTED
+     -             assert runtime.device_state.projector_brightness is prior
+     -             runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+     -             if cleanup_confirmed:
+     -                 sdk_failure = True
+     -                 later = rpc.ProjectorBrightnessRequest(
+     -                     command=client.operator_command(),
+     -                     current_ma=200,
+     -                     expected_configuration_revision=1,
+     -                 )
+     -                 accepted_later = await stub.AdjustProjectorBrightness(
+     -                     later, metadata=principal.metadata(), timeout=5
+     -                 )
+     -                 later_outcome = await client.wait_result(accepted_later.command_id)
+     -                 assert not later_outcome.succeeded
+     -                 assert runtime.device_state.projector_brightness is not prior
+     -                 assert runtime.device_state.projector_brightness["requested_ma"] == 200
+     -                 assert runtime.device_state.projector_brightness["outcome"] == "failed"
+     -             else:
+     -                 # Test-only unknown native receipt keeps the production admission barrier.
+     -                 runtime.device_state.camera_operation = None
+     -                 runtime.device_state.camera_operation_changed.set()
+     -     store.remove_client(principal)
+1    + """Real loopback controller RPC checks; no simulated scientific backends."""
+2    +
+3    + from __future__ import annotations
+4    +
+5    + import asyncio
+6    + import json
+7    + import shutil
+8    + import threading
+9    + from collections.abc import AsyncIterator
+10   + from pathlib import Path
+11   + from typing import cast
+12   + from uuid import uuid4
+13   +
+14   + import grpc
+15   + import pytest
+16   + import pytest_asyncio
+17   +
+18   + from cephvr.client.session import ClientError, HeadlessClient, loopback_channel
+19   + from cephvr.control.v1 import services_pb2 as rpc
+20   + from cephvr.control.v1 import services_pb2_grpc as wire
+21   + from cephvr.control.v1 import types_pb2 as pb
+22   + from cephvr.controller.configuration import (
+23   +     _load_saved_configuration,
+24   +     load_controller_configuration,
+25   + )
+26   + from cephvr.controller.runtime import ControllerRuntime
+27   + from cephvr.controller.service import ExperimentControllerService
+28   + from cephvr.controller.state import ControllerLimits
+29   + from cephvr.shared.auth import (
+30   +     AuthenticationError,
+31   +     Principal,
+32   +     require_authenticated_peer,
+33   + )
+34   + from cephvr.shared.credentials import CredentialStore
+35   + from cephvr.synchronization.diagnostic import SpikeGLXDiagnostic
+36   + from cephvr.synchronization.v1 import spikeglx_pb2 as sync_pb
+37   +
+38   +
+39   + @pytest_asyncio.fixture
+40   + async def controller(
+41   +     tmp_path: Path,
+42   + ) -> AsyncIterator[tuple[int, CredentialStore, ControllerRuntime]]:
+43   +     generation = str(uuid4())
+44   +     store = CredentialStore(tmp_path / "credentials", generation)
+45   +     settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+46   +     repository = Path(__file__).resolve().parents[2]
+47   +     (tmp_path / "config/backends").mkdir(parents=True)
+48   +     (tmp_path / "contracts").mkdir()
+49   +     shutil.copyfile(
+50   +         repository / "config/backends/synchronization_config.toml",
+51   +         tmp_path / "config/backends/synchronization_config.toml",
+52   +     )
+53   +     shutil.copyfile(
+54   +         repository / "contracts/spikeglx_mapping_reference.json",
+55   +         tmp_path / "contracts/spikeglx_mapping_reference.json",
+56   +     )
+57   +     runtime = ControllerRuntime(
+58   +         generation=generation,
+59   +         configuration=pb.ExperimentConfiguration(
+60   +             subject="subject",
+61   +             experiment="experiment",
+62   +             recording_root=str(tmp_path),
+63   +             mode=pb.SESSION_MODE_OPEN_LOOP,
+64   +             trials=[pb.TrialDefinition(trial_number=1)],
+65   +             backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
+66   +         ),
+67   +         limits=ControllerLimits(**settings.limits_kwargs),
+68   +         validators={},
+69   +         backends={},
+70   +         configuration_history_path=tmp_path / "last_configuration.json",
+71   +         software_root=tmp_path,
+72   +     )
+73   +
+74   +     async def authenticate(
+75   +         client_id: str, controller_generation: str, peer: str, metadata: object
+76   +     ) -> None:
+77   +         if controller_generation != generation:
+78   +             raise AuthenticationError("wrong controller generation")
+79   +         principal = await asyncio.to_thread(store.lookup, client_id)
+80   +         if principal is None:
+81   +             raise AuthenticationError("client not provisioned")
+82   +         require_authenticated_peer(
+83   +             peer,
+84   +             cast(list[tuple[str, str]], metadata),
+85   +             expected_role=principal.role,
+86   +             expected_generation=principal.generation,
+87   +             expected_token=principal.token,
+88   +         )
+89   +
+90   +     server = grpc.aio.server()
+91   +
+92   +     class Diagnostic:
+93   +         async def check(self) -> rpc.SpikeGLXConnectionResult:
+94   +             return rpc.SpikeGLXConnectionResult(
+95   +                 connected=True,
+96   +                 address="169.254.240.108",
+97   +                 port=4142,
+98   +                 version="SpikeGLX test",
+99   +                 running=False,
+100  +                 saving=False,
+101  +             )
+102  +
+103  +     service = ExperimentControllerService(
+104  +         runtime,
+105  +         client_authentication=authenticate,
+106  +         peer_tokens={"acquisition": (generation, "camera-trigger-token")},
+107  +         spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
+108  +     )
+109  +     wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+110  +     port = server.add_insecure_port("127.0.0.1:0")
+111  +     assert port > 0
+112  +     await server.start()
+113  +     try:
+114  +         yield port, store, runtime
+115  +     finally:
+116  +         await server.stop(0)
+117  +         await service.aclose()
+118  +
+119  +
+120  + async def test_forged_credentials_are_rejected(
+121  +     controller: tuple[int, CredentialStore, ControllerRuntime],
+122  + ) -> None:
+123  +     port, store, _runtime = controller
+124  +     principal = store.provision_client("cli")
+125  +     forged = Principal("cli", principal.generation, "incorrect-token")
+126  +     async with loopback_channel(port, 16_777_216) as channel:
+127  +         client = HeadlessClient(channel, forged)
+128  +         with pytest.raises(grpc.aio.AioRpcError) as caught:
+129  +             await client.get_snapshot()
+130  +         assert caught.value.code() == grpc.StatusCode.UNAUTHENTICATED
+131  +     store.remove_client(principal)
+132  +
+133  +
+134  + async def test_spikeglx_diagnostic_requires_authenticated_client(
+135  +     controller: tuple[int, CredentialStore, ControllerRuntime],
+136  + ) -> None:
+137  +     port, store, _runtime = controller
+138  +     principal = store.provision_client("gui")
+139  +     async with loopback_channel(port, 16_777_216) as channel:
+140  +         stub = wire.ExperimentControllerServiceStub(channel)
+141  +         query = rpc.SpikeGLXConnectionQuery(client_id=principal.generation)
+142  +         result = await stub.CheckSpikeGLXConnection(
+143  +             query, metadata=principal.metadata(), timeout=5
+144  +         )
+145  +         assert result.connected
+146  +         assert result.version == "SpikeGLX test"
+147  +         with pytest.raises(grpc.aio.AioRpcError) as caught:
+148  +             await stub.CheckSpikeGLXConnection(query, timeout=5)
+149  +         assert caught.value.code() == grpc.StatusCode.UNAUTHENTICATED
+150  +     store.remove_client(principal)
+151  +
+152  +
+153  + async def test_spikeglx_inventory_rpc_auth_lease_revision_and_digest_guards(
+154  +     controller: tuple[int, CredentialStore, ControllerRuntime],
+155  + ) -> None:
+156  +     port, store, _runtime = controller
+157  +     principal = store.provision_client("gui")
+158  +     async with loopback_channel(port, 16_777_216) as channel:
+159  +         stub = wire.ExperimentControllerServiceStub(channel)
+160  +         request = rpc.SpikeGLXInventoryRequest(expected_configuration_revision=1)
+161  +         with pytest.raises(grpc.aio.AioRpcError) as unauthenticated:
+162  +             await stub.GetSpikeGLXInventory(request, timeout=5)
+163  +         assert unauthenticated.value.code() == grpc.StatusCode.UNAUTHENTICATED
+164  +         client = HeadlessClient(channel, principal)
+165  +         async with client.control():
+166  +             request.command.CopyFrom(client.operator_command())
+167  +             snapshot = await stub.GetSpikeGLXInventory(
+168  +                 request, metadata=principal.metadata(), timeout=5
+169  +             )
+170  +             assert snapshot.configuration_revision == 1
+171  +             assert len(snapshot.file_sha256) == 64
+172  +             channel_mapping = sync_pb.PulseChannel(
+173  +                 role=sync_pb.PULSE_ROLE_CUSTOM,
+174  +                 family=sync_pb.STREAM_FAMILY_NI,
+175  +                 stream_index=0,
+176  +                 channel_index=0,
+177  +                 source_id="loopback-input",
+178  +             )
+179  +             update = rpc.SpikeGLXInventoryUpdateRequest(
+180  +                 command=client.operator_command(),
+181  +                 expected_configuration_revision=1,
+182  +                 expected_file_sha256=snapshot.file_sha256,
+183  +                 pulse_channels=[channel_mapping],
+184  +             )
+185  +             accepted = await stub.UpdateSpikeGLXInventory(
+186  +                 update, metadata=principal.metadata(), timeout=5
+187  +             )
+188  +             assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
+189  +             current = await stub.GetSpikeGLXInventory(
+190  +                 request, metadata=principal.metadata(), timeout=5
+191  +             )
+192  +             assert current.file_sha256 != snapshot.file_sha256
+193  +             assert current.pulse_channels[0].source_id == "loopback-input"
+194  +             update.command.CopyFrom(client.operator_command())
+195  +             stale = await stub.UpdateSpikeGLXInventory(
+196  +                 update, metadata=principal.metadata(), timeout=5
+197  +             )
+198  +             assert stale.result == pb.COMMAND_RESULT_REJECTED
+199  +             assert "changed since inventory was read" in stale.failure.message
+200  +             wrong_revision = rpc.SpikeGLXInventoryRequest(
+201  +                 command=client.operator_command(), expected_configuration_revision=2
+202  +             )
+203  +             with pytest.raises(grpc.aio.AioRpcError) as stale_revision:
+204  +                 await stub.GetSpikeGLXInventory(
+205  +                     wrong_revision, metadata=principal.metadata(), timeout=5
+206  +                 )
+207  +             assert stale_revision.value.code() == grpc.StatusCode.FAILED_PRECONDITION
+208  +     store.remove_client(principal)
+209  +
+210  +
+211  + async def test_spikeglx_timeout_does_not_start_a_second_native_call(
+212  +     monkeypatch: pytest.MonkeyPatch,
+213  + ) -> None:
+214  +     entered, release = threading.Event(), threading.Event()
+215  +
+216  +     def blocked(_root: Path) -> rpc.SpikeGLXConnectionResult:
+217  +         entered.set()
+218  +         release.wait(1)
+219  +         return rpc.SpikeGLXConnectionResult(connected=True)
+220  +
+221  +     monkeypatch.setattr("cephvr.synchronization.diagnostic._read_once", blocked)
+222  +     diagnostic = SpikeGLXDiagnostic(Path.cwd(), timeout_s=0.01)
+223  +     try:
+224  +         first = await diagnostic.check()
+225  +         assert entered.is_set()
+226  +         assert "timed out" in first.error
+227  +         second = await diagnostic.check()
+228  +         assert "previous" in second.error
+229  +     finally:
+230  +         release.set()
+231  +
+232  +
+233  + async def test_gui_observes_before_explicit_control_claim(
+234  +     controller: tuple[int, CredentialStore, ControllerRuntime],
+235  + ) -> None:
+236  +     port, store, _runtime = controller
+237  +     principal = store.provision_client(
+238  +         "gui", generation=str(uuid4()), token="gui-token"
+239  +     )
+240  +     received: list[int] = []
+241  +     async with loopback_channel(port, 16_777_216) as channel:
+242  +         client = HeadlessClient(
+243  +             channel,
+244  +             principal,
+245  +             on_snapshot=lambda view: received.append(view.state_revision),
+246  +         )
+247  +         async with client.observe():
+248  +             assert received
+249  +             assert client.snapshot.control.holder_client_id != principal.generation
+250  +             await client.claim_control()
+251  +             assert client.snapshot.control.holder_client_id == principal.generation
+252  +         assert (
+253  +             await client.get_snapshot()
+254  +         ).control.holder_client_id != principal.generation
+255  +     store.remove_client(principal)
+256  +
+257  +
+258  + async def test_gui_can_save_current_configuration_history_on_close(
+259  +     controller: tuple[int, CredentialStore, ControllerRuntime], tmp_path: Path
+260  + ) -> None:
+261  +     port, store, _runtime = controller
+262  +     principal = store.provision_client("gui")
+263  +     async with loopback_channel(port, 16_777_216) as channel:
+264  +         client = HeadlessClient(channel, principal)
+265  +         async with client.observe():
+266  +             await client.claim_control()
+267  +             outcome = await client.execute("SaveConfigurationHistory")
+268  +             assert outcome.succeeded
+269  +     document = json.loads((tmp_path / "last_configuration.json").read_text())
+270  +     assert document["format_version"] == 1
+271  +     assert document["configuration"]["subject"] == "subject"
+272  +     assert document["configuration"]["experiment"] == "experiment"
+273  +     restored = _load_saved_configuration(
+274  +         tmp_path / "last_configuration.json", max_message_bytes=16_777_216
+275  +     )
+276  +     assert restored.subject == "subject"
+277  +     assert restored.experiment == "experiment"
+278  +     store.remove_client(principal)
+279  +
+280  +
+281  + async def test_control_takeover_and_real_missing_backend_rejection(
+282  +     controller: tuple[int, CredentialStore, ControllerRuntime],
+283  + ) -> None:
+284  +     port, store, _runtime = controller
+285  +     first = store.provision_client("cli")
+286  +     second = store.provision_client("cli")
+287  +     async with loopback_channel(port, 16_777_216) as channel:
+288  +         a, b = HeadlessClient(channel, first), HeadlessClient(channel, second)
+289  +         async with a.control():
+290  +             old = a.operator_command()
+291  +             with pytest.raises(ClientError, match="held"):
+292  +                 async with b.control():
+293  +                     pytest.fail("control was acquired without explicit takeover")
+294  +             async with b.control(takeover=True):
+295  +                 stale = await a.stub.Setup(old, metadata=first.metadata(), timeout=2)
+296  +                 assert stale.result == pb.COMMAND_RESULT_REJECTED
+297  +                 with pytest.raises(
+298  +                     ClientError, match="registered|unavailable|validator"
+299  +                 ) as rejected:
+300  +                     await b.execute("Setup")
+301  +                 assert rejected.value.command_id
+302  +                 assert not rejected.value.admission_uncertain
+303  +                 snapshot = await b.get_snapshot()
+304  +                 assert snapshot.session.phase == pb.SESSION_PHASE_CONFIGURATION
+305  +                 assert not snapshot.session.activated
+306  +                 assert snapshot.control.holder_client_id == second.generation
+307  +                 # Closing the displaced holder's exact stream must not revoke
+308  +                 # the replacement holder or disturb the controller's lifecycle.
+309  +                 a._watch.cancel()
+310  +                 assert a._reader is not None
+311  +                 with pytest.raises(asyncio.CancelledError):
+312  +                     await a._reader
+313  +                 still_owned = await b.get_snapshot()
+314  +                 assert still_owned.control.holder_client_id == second.generation
+315  +         result = await b.get_snapshot()
+316  +         assert not result.control.HasField("holder_client_id")
+317  +     store.remove_client(first)
+318  +     store.remove_client(second)
+319  +
+320  +
+321  + async def test_pending_setup_cancel_and_prompt_response_are_independent_loopback_commands(
+322  +     controller: tuple[int, CredentialStore, ControllerRuntime],
+323  +     monkeypatch: pytest.MonkeyPatch,
+324  + ) -> None:
+325  +     from tests.controller.support_components import _RetainedPeer
+326  +
+327  +     from cephvr.controller.ports import BackendPort
+328  +
+329  +     port, store, runtime = controller
+330  +     principal = store.provision_client("gui")
+331  +     backend_context = pb.BackendContext(
+332  +         backend_name="visual_stimulus", backend_generation=str(uuid4())
+333  +     )
+334  +     runtime.setup_admission.backends = {
+335  +         "visual_stimulus": cast(
+336  +             BackendPort, _RetainedPeer(backend_context, rpc.RetainedResult())
+337  +         )
+338  +     }
+339  +     runtime.supervisor_state.processes["visual_stimulus"] = rpc.ProcessHealthStatus(
+340  +         process=pb.ProcessIdentity(
+341  +             role="visual_stimulus", generation=backend_context.backend_generation
+342  +         ),
+343  +         process_running=True,
+344  +         connected=True,
+345  +     )
+346  +     runtime.setup_admission.validators = {
+347  +         "structural": lambda _: pb.ValidationResult(completed=True, valid=True)
+348  +     }
+349  +     runtime.setup_admission.file_policy_loader = lambda _active: {}
+350  +     entered, release = asyncio.Event(), asyncio.Event()
+351  +
+352  +     async def pending_setup(*_args: object) -> None:
+353  +         entered.set()
+354  +         await release.wait()
+355  +
+356  +     monkeypatch.setattr(runtime.setup_execution, "run_setup", pending_setup)
+357  +     async with loopback_channel(port, 16_777_216) as channel:
+358  +         client = HeadlessClient(channel, principal, rpc_timeout_s=3)
+359  +         async with client.observe():
+360  +             await client.claim_control()
+361  +             from cephvr.gui.controller_bridge import ControllerBridge
+362  +
+363  +             bridge = ControllerBridge(principal, port, 16_777_216, (0,))
+364  +             bridge._loop = asyncio.get_running_loop()
+365  +             bridge._queue = asyncio.PriorityQueue(maxsize=33)
+366  +             bridge._connected = True
+367  +             bridge._connection_epoch = 1
+368  +             bridge._controller_generation = runtime.generation
+369  +             admissions: list[tuple[str, str]] = []
+370  +             completions: list[tuple[str, str, str, str]] = []
+371  +             progress: list[tuple[str, str]] = []
+372  +             bridge.action_progress.connect(
+373  +                 lambda action, message: progress.append((action, message))
+374  +             )
+375  +             admission_event, completion_event = asyncio.Event(), asyncio.Event()
+376  +
+377  +             def on_admitted(action: str, command_id: str) -> None:
+378  +                 admissions.append((action, command_id))
+379  +                 admission_event.set()
+380  +
+381  +             def on_finished(
+382  +                 action: str, command_id: str, status: str, message: str
+383  +             ) -> None:
+384  +                 completions.append((action, command_id, status, message))
+385  +                 completion_event.set()
+386  +
+387  +             bridge.command_admitted.connect(on_admitted)
+388  +             bridge.operation_finished.connect(on_finished)
+389  +             command_task = asyncio.create_task(bridge._commands(client))
+390  +             accepted_configuration = client.snapshot.configuration_values.current
+391  +             assert bridge.request(
+392  +                 "Setup",
+393  +                 expected_revision=client.snapshot.configuration_values.revision,
+394  +                 expected_configuration=accepted_configuration.SerializeToString(
+395  +                     deterministic=True
+396  +                 ),
+397  +             )
+398  +             await asyncio.wait_for(entered.wait(), 2)
+399  +             while not any(action == "Setup" for action, _ in admissions):
+400  +                 admission_event.clear()
+401  +                 await asyncio.wait_for(admission_event.wait(), 2)
+402  +             setup_id = next(
+403  +                 command_id for action, command_id in admissions if action == "Setup"
+404  +             )
+405  +             current = next(
+406  +                 item
+407  +                 for item in client.snapshot.operations
+408  +                 if item.context.command_id == setup_id
+409  +             )
+410  +             assert not current.complete
+411  +
+412  +             assert bridge.request("Cancel Setup")
+413  +             while not any(action == "Cancel Setup" for action, _ in admissions):
+414  +                 admission_event.clear()
+415  +                 await asyncio.wait_for(admission_event.wait(), 2)
+416  +             cancel_id = next(
+417  +                 command_id
+418  +                 for action, command_id in admissions
+419  +                 if action == "Cancel Setup"
+420  +             )
+421  +             assert cancel_id != setup_id
+422  +             # The Setup coroutine is still blocked behind this gate. Its
+423  +             # operation may already be failed by the independently admitted
+424  +             # cancellation cleanup, which is the expected safety response.
+425  +             assert not release.is_set()
+426  +             release.set()
+427  +             while not {
+428  +                 ("Cancel Setup", cancel_id),
+429  +                 ("Setup", setup_id),
+430  +             } <= {(action, command_id) for action, command_id, _, _ in completions}:
+431  +                 completion_event.clear()
+432  +                 await asyncio.wait_for(completion_event.wait(), 3)
+433  +             assert (
+434  +                 next(
+435  +                     status
+436  +                     for action, command_id, status, _ in completions
+437  +                     if action == "Setup" and command_id == setup_id
+438  +                 )
+439  +                 == "failed"
+440  +             )
+441  +             # No backend work exists before supervisor registration, so the
+442  +             # cancellation itself confirms cleanup.
+443  +             assert (
+444  +                 next(
+445  +                     status
+446  +                     for action, command_id, status, _ in completions
+447  +                     if action == "Cancel Setup" and command_id == cancel_id
+448  +                 )
+449  +                 == "completed"
+450  +             )
+451  +
+452  +             prompt = pb.Prompt(
+453  +                 prompt_id=str(uuid4()),
+454  +                 setup=pb.SessionContext(
+455  +                     controller_generation=runtime.generation, session_id=str(uuid4())
+456  +                 ),
+457  +                 operation=pb.OperationContext(command_id=str(uuid4())),
+458  +                 explanation="A recovery choice is required.",
+459  +                 permitted_choices=["recover", "delete"],
+460  +             )
+461  +             recovery_gate = asyncio.Event()
+462  +
+463  +             async def wait_for_recovery_choice(choice: str) -> None:
+464  +                 assert choice == "delete"
+465  +                 await recovery_gate.wait()
+466  +
+467  +             await runtime.install_startup_recovery(
+468  +                 prompt,
+469  +                 wait_for_recovery_choice,
+470  +                 "pending recovery choice",
+471  +             )
+472  +             await asyncio.wait_for(
+473  +                 client._wait(
+474  +                     lambda state: any(
+475  +                         item.prompt_id == prompt.prompt_id for item in state.prompts
+476  +                     )
+477  +                 ),
+478  +                 2,
+479  +             )
+480  +             assert bridge.request(
+481  +                 "respond_prompt",
+482  +                 prompt=prompt.SerializeToString(),
+483  +                 choice="delete",
+484  +             )
+485  +             recovery_gate.set()
+486  +             while not any(
+487  +                 action == "respond_prompt" and status == "completed"
+488  +                 for action, _, status, _ in completions
+489  +             ):
+490  +                 completion_event.clear()
+491  +                 await asyncio.wait_for(completion_event.wait(), 2)
+492  +             assert (
+493  +                 progress.count(
+494  +                     ("respond_prompt", "Recovery · Unfinished session files deleted.")
+495  +                 )
+496  +                 == 1
+497  +             )
+498  +             assert bridge.request("quit")
+499  +             await asyncio.wait_for(command_task, 2)
+500  +     store.remove_client(principal)
+501  +
+502  +
+503  + def _install_microcontroller(runtime: ControllerRuntime, *, uploader=None):
+504  +     from unittest.mock import AsyncMock
+505  +
+506  +     from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+507  +     from cephvr.acquisition.v1 import runtime_pb2 as acquisition
+508  +     from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+509  +     from cephvr.controller.microcontroller.lifecycle import MicrocontrollerLifecycle
+510  +
+511  +     settings = pb.AcquisitionSettings()
+512  +     settings.pulses.port = "COM8"
+513  +     settings.pulses.trial_state_enabled = True
+514  +     settings.pulses.trial_state_pin = "D9"
+515  +     runtime.configuration_state.current.backends.add(
+516  +         backend_name="acquisition", enabled=False, acquisition=settings
+517  +     )
+518  +     serial = AsyncMock()
+519  +     observation = mcu.MicrocontrollerObservation(
+520  +         port="COM8", connection_id="connection"
+521  +     )
+522  +     observation.state.behavioral.running = False
+523  +     observation.state.tracking.running = False
+524  +     observation.state.eye_tracking.running = False
+525  +     serial.connect.return_value = observation
+526  +     serial.configure.return_value = observation
+527  +     serial.status.return_value = observation
+528  +     serial.diagnostic_start.return_value = (True, "trial_state", "D9", 1)
+529  +     serial.diagnostic_stop.return_value = (False, "trial_state", "D9", 1)
+530  +     serial.off.return_value = mcu.PulseCommandEvidence(
+531  +         outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=observation.state
+532  +     )
+533  +     owner = MicrocontrollerDevice(
+534  +         serial, settings, acquisition.AcquisitionFilePolicies(), runtime.clock, uploader
+535  +     )
+536  +     runtime.microcontroller_device = owner
+537  +     runtime.microcontroller.owner = owner
+538  +     runtime.publisher.microcontroller_view = owner.snapshot_view
+539  +     owner.changed = runtime.publisher.publish
+540  +     runtime.microcontroller_lifecycle = MicrocontrollerLifecycle(
+541  +         owner,
+542  +         generation=runtime.generation,
+543  +         lifecycle=runtime.lifecycle,
+544  +         configuration=runtime.configuration_state,
+545  +         device=runtime.device_state,
+546  +         limits=runtime.limit_state,
+547  +         clock=runtime.clock,
+548  +         publish=runtime.publisher.publish,
+549  +         warning=runtime.record_warning,
+550  +         spawn=runtime._spawn,
+551  +         interrupt=lambda attempt, reason, issued: runtime.interruption.interrupt(
+552  +             attempt, reason, issued_ns=issued
+553  +         ),
+554  +     )
+555  +     return owner, serial
+556  +
+557  +
+558  + async def test_camera_trigger_rpc_authenticates_exact_peer_and_original_deadline(
+559  +     controller,
+560  + ):
+561  +     from cephvr.acquisition.microcontroller_client import (
+562  +         ControllerMicrocontrollerClient,
+563  +     )
+564  +     from cephvr.shared.transport_deadlines import deadline_metadata
+565  +
+566  +     port, _store, runtime = controller
+567  +     owner, serial = _install_microcontroller(runtime)
+568  +     principal = Principal("acquisition", runtime.generation, "camera-trigger-token")
+569  +     deadline = runtime.clock() + 5_000_000_000
+570  +     request = rpc.MicrocontrollerIoRequest(
+571  +         command_id=str(uuid4()),
+572  +         requester=pb.ProcessIdentity(role="acquisition", generation=runtime.generation),
+573  +         controller_generation=runtime.generation,
+574  +         deadline_monotonic_ns=deadline,
+575  +         kind=rpc.MICROCONTROLLER_IO_KIND_CONNECT,
+576  +         requested=owner.settings.pulses,
+577  +     )
+578  +     request.claim_id = request.command_id
+579  +     async with loopback_channel(port, 16_777_216) as channel:
+580  +         stub = wire.ExperimentControllerServiceStub(channel)
+581  +         for credential in [
+582  +             Principal("acquisition", runtime.generation, "forged"),
+583  +             Principal("acquisition", str(uuid4()), principal.token),
+584  +         ]:
+585  +             with pytest.raises(grpc.aio.AioRpcError) as caught:
+586  +                 await stub.ExecuteMicrocontrollerIo(
+587  +                     request,
+588  +                     metadata=(*credential.metadata(), deadline_metadata(deadline)),
+589  +                     timeout=2,
+590  +                 )
+591  +             assert caught.value.code() == grpc.StatusCode.UNAUTHENTICATED
+592  +         with pytest.raises(grpc.aio.AioRpcError) as mismatch:
+593  +             await stub.ExecuteMicrocontrollerIo(
+594  +                 request,
+595  +                 metadata=(*principal.metadata(), deadline_metadata(deadline - 1)),
+596  +                 timeout=2,
+597  +             )
+598  +         assert mismatch.value.code() == grpc.StatusCode.INVALID_ARGUMENT
+599  +         assert serial.connect.await_count == 0
+600  +         result = await stub.ExecuteMicrocontrollerIo(
+601  +             request,
+602  +             metadata=(*principal.metadata(), deadline_metadata(deadline)),
+603  +             timeout=2,
+604  +         )
+605  +         assert result.succeeded and result.observation.port == "COM8"
+606  +         replay = await stub.ExecuteMicrocontrollerIo(
+607  +             request,
+608  +             metadata=(*principal.metadata(), deadline_metadata(deadline)),
+609  +             timeout=2,
+610  +         )
+611  +         assert replay == result and serial.connect.await_count == 1
+612  +         client = ControllerMicrocontrollerClient(
+613  +             stub, principal, runtime.generation, lambda: owner.settings.pulses
+614  +         )
+615  +         client.claim_id = request.claim_id
+616  +         boundary, issued = runtime.clock() + 1_000_000, runtime.clock()
+617  +         await client.off(
+618  +             ("behavioral",),
+619  +             scheduled_boundary_ns=boundary,
+620  +             stop_issued_ns=issued,
+621  +             deadline_ns=deadline,
+622  +         )
+623  +         call = serial.off.await_args
+624  +         assert call.args == ((1,),)
+625  +         assert call.kwargs == {
+626  +             "scheduled_boundary_ns": boundary,
+627  +             "stop_issued_ns": issued,
+628  +             "deadline_ns": deadline,
+629  +         }
+630  +         bad = rpc.MicrocontrollerIoRequest.FromString(request.SerializeToString())
+631  +         bad.command_id = str(uuid4())
+632  +         bad.kind = rpc.MICROCONTROLLER_IO_KIND_STATUS
+633  +         bad.claim_id = str(uuid4())
+634  +         rejected = await stub.ExecuteMicrocontrollerIo(
+635  +             bad,
+636  +             metadata=(*principal.metadata(), deadline_metadata(deadline)),
+637  +             timeout=2,
+638  +         )
+639  +         assert not rejected.succeeded and "claim" in rejected.failure
+640  +         await client.close(deadline_ns=deadline)
+641  +         assert not owner.acquisition_claimed and owner.cleanup_complete
+642  +
+643  +
+644  + @pytest.mark.parametrize("source_kind", ["hex", "ino"])
+645  + async def test_general_microcontroller_commands_and_upload_work_without_acquisition_backend(
+646  +     controller, tmp_path, source_kind
+647  + ):
+648  +     from cephvr.controller.microcontroller.firmware import read_uno_image
+649  +     from cephvr.controller.microcontroller.firmware_source import read_firmware
+650  +
+651  +     port, store, runtime = controller
+652  +     events = []
+653  +     image_path = tmp_path / "compiled.hex"
+654  +     image_path.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+655  +     image = read_uno_image(str(image_path))
+656  +     path = tmp_path / f"source.{source_kind}"
+657  +     path.write_bytes(
+658  +         b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+659  +     )
+660  +
+661  +     class Uploader:
+662  +         cleanup_complete = True
+663  +
+664  +         def reset_cancel(self):
+665  +             pass
+666  +
+667  +         def compile(self, selected, operation, *, deadline_ns):
+668  +             events.append(("compile", operation.command_id, deadline_ns))
+669  +             return image
+670  +
+671  +         def prepare(self, selected):
+672  +             assert selected.payload == image.payload
+673  +
+674  +         def upload(self, port, operation, *, deadline_ns):
+675  +             assert port == "COM8"
+676  +             events.append(("upload", operation.command_id, deadline_ns))
+677  +
+678  +         def close(self, *, deadline_ns):
+679  +             self.cleanup_complete = True
+680  +
+681  +         def cancel(self):
+682  +             pass
+683  +
+684  +     owner, serial = _install_microcontroller(runtime, uploader=Uploader())
+685  +     assert runtime.microcontroller.device_views() is None
+686  +     assert not runtime.configuration_state.current.backends[-1].enabled
+687  +     principal = store.provision_client("gui")
+688  +     async with loopback_channel(port, 16_777_216) as channel:
+689  +         client = HeadlessClient(channel, principal)
+690  +         stub = wire.ExperimentControllerServiceStub(channel)
+691  +         async with client.observe():
+692  +             await client.claim_control()
+693  +             for kind in [
+694  +                 rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+695  +                 rpc.MICROCONTROLLER_COMMAND_KIND_START,
+696  +                 rpc.MICROCONTROLLER_COMMAND_KIND_STOP,
+697  +                 rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+698  +             ]:
+699  +                 request = rpc.MicrocontrollerCommandRequest(
+700  +                     command=client.operator_command(),
+701  +                     expected_configuration_revision=runtime.configuration_state.revision,
+702  +                     kind=kind,
+703  +                 )
+704  +                 if kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
+705  +                     request.signal = pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE
+706  +                 if kind == rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE:
+707  +                     request.firmware_path = str(path)
+708  +                     request.firmware_sha256 = read_firmware(str(path)).digest
+709  +                 admission = await stub.ExecuteMicrocontrollerCommand(
+710  +                     request, metadata=principal.metadata(), timeout=2
+711  +                 )
+712  +                 assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+713  +                 for _ in range(200):
+714  +                     operation = runtime.control.operations[
+715  +                         request.command.operator.command_id
+716  +                     ]
+717  +                     if operation.complete:
+718  +                         break
+719  +                     await asyncio.sleep(0.005)
+720  +                 assert operation.complete and operation.succeeded, operation.failure
+721  +                 snapshot = await client.get_snapshot()
+722  +                 assert snapshot.microcontroller.observation.port == "COM8"
+723  +                 assert snapshot.microcontroller.diagnostic.active == (
+724  +                     kind == rpc.MICROCONTROLLER_COMMAND_KIND_START
+725  +                 )
+726  +             assert [phase for phase, _, _ in events] == (
+727  +                 ["compile", "upload"] if source_kind == "ino" else ["upload"]
+728  +             )
+729  +             assert (
+730  +                 len({(operation, deadline) for _, operation, deadline in events}) == 1
+731  +             )
+732  +             assert serial.close.await_count == 1
+733  +             assert not runtime.authority_status().cleanup_confirmed
+734  +             deadline = runtime.clock() + 1_000_000_000
+735  +             await owner.close(deadline_ns=deadline, permanent=False)
+736  +             assert (
+737  +                 owner.cleanup_complete
+738  +                 and not (await client.get_snapshot()).microcontroller.cleanup_pending
+739  +             )
+740  +     store.remove_client(principal)
+741  +
+742  +
+743  + async def test_normal_shutdown_releases_controller_owned_microcontroller(controller):
+744  +     port, store, runtime = controller
+745  +     owner, serial = _install_microcontroller(runtime)
+746  +     owner.port_owned = True
+747  +     owner.view.observation.CopyFrom(serial.connect.return_value)
+748  +     runtime.lifecycle.session.cleanup_confirmed = True
+749  +     principal = store.provision_client("gui")
+750  +     async with loopback_channel(port, 16_777_216) as channel:
+751  +         client = HeadlessClient(channel, principal)
+752  +         async with client.observe():
+753  +             await client.claim_control()
+754  +             request = client.operator_command()
+755  +             admission = await runtime.shutdown_application(request)
+756  +             assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+757  +             for _ in range(100):
+758  +                 if owner.cleanup_complete:
+759  +                     break
+760  +                 await asyncio.sleep(0.005)
+761  +             assert owner.cleanup_complete
+762  +             assert runtime.authority_status().cleanup_confirmed
+763  +             assert (
+764  +                 owner.shutdown_deadline_ns
+765  +                 == runtime.lifecycle.shutdown_intent_ns
+766  +                 + runtime.limits.setup_cancel_ns
+767  +                 + runtime.limits.recovery_ns
+768  +             )
+769  +             assert (
+770  +                 serial.close.await_args.kwargs["deadline_ns"]
+771  +                 == owner.shutdown_deadline_ns
+772  +             )
+773  +     await runtime.cancel_background_tasks()
+774  +     store.remove_client(principal)
+775  +
+776  +
+777  + async def test_old_camera_projection_cannot_replace_controller_microcontroller_state(
+778  +     controller,
+779  + ):
+780  +     _port, _store, runtime = controller
+781  +     owner, serial = _install_microcontroller(runtime)
+782  +     owner.view.observation.CopyFrom(serial.connect.return_value)
+783  +     owner.view.diagnostic.active = True
+784  +     stale = pb.AcquisitionDeviceViews()
+785  +     stale.pulses.port = "COM9"
+786  +     stale.diagnostic.active = False
+787  +     runtime.projections.devices = stale
+788  +     snapshot = runtime.publisher.build_snapshot()
+789  +     assert snapshot.microcontroller.observation.port == "COM8"
+790  +     assert snapshot.microcontroller.diagnostic.active
+791  +     assert snapshot.acquisition_devices.pulses.port == "COM9"
+792  +
+793  +
+794  + @pytest.mark.parametrize("cause", ["control_loss", "shutdown"])
+795  + async def test_controller_cleanup_waits_for_camera_off_and_claim_release(
+796  +     controller, cause
+797  + ):
+798  +     from cephvr.acquisition.microcontroller_client import (
+799  +         ControllerMicrocontrollerClient,
+800  +     )
+801  +
+802  +     port, store, runtime = controller
+803  +     owner, serial = _install_microcontroller(runtime)
+804  +     principal = store.provision_client("gui")
+805  +     peer = Principal("acquisition", runtime.generation, "camera-trigger-token")
+806  +     async with loopback_channel(port, 16_777_216) as channel:
+807  +         client = HeadlessClient(channel, principal)
+808  +         camera = ControllerMicrocontrollerClient(
+809  +             wire.ExperimentControllerServiceStub(channel),
+810  +             peer,
+811  +             runtime.generation,
+812  +             lambda: owner.settings.pulses,
+813  +         )
+814  +         async with client.observe():
+815  +             await client.claim_control()
+816  +             deadline = runtime.clock() + 5_000_000_000
+817  +             await camera.connect(deadline_ns=deadline)
+818  +             if cause == "control_loss":
+819  +                 await runtime.microcontroller_lifecycle.owner_lost()
+820  +                 assert owner.snapshot_view().cleanup_pending
+821  +             else:
+822  +                 admission = await runtime.shutdown_application(
+823  +                     client.operator_command()
+824  +                 )
+825  +                 assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+826  +             await asyncio.sleep(0)
+827  +             serial.close.assert_not_awaited()
+828  +             await camera.off(
+829  +                 ("behavioral",),
+830  +                 scheduled_boundary_ns=None,
+831  +                 stop_issued_ns=runtime.clock(),
+832  +                 deadline_ns=deadline,
+833  +             )
+834  +             await camera.close(deadline_ns=deadline)
+835  +             for _ in range(100):
+836  +                 if owner.cleanup_complete:
+837  +                     break
+838  +                 await asyncio.sleep(0.005)
+839  +             assert owner.cleanup_complete
+840  +             assert serial.off.await_count == 1
+841  +     await runtime.cancel_background_tasks()
+842  +     store.remove_client(principal)
+843  +
+844  +
+845  + @pytest.mark.parametrize("cleanup_confirmed", [False, True])
+846  + @pytest.mark.parametrize("sdk_failure", [False, True])
+847  + async def test_projector_brightness_auth_gates_readback_and_repeat_admission(
+848  +     controller: tuple[int, CredentialStore, ControllerRuntime],
+849  +     monkeypatch: pytest.MonkeyPatch,
+850  +     sdk_failure: bool,
+851  +     cleanup_confirmed: bool,
+852  + ) -> None:
+853  +
+854  +     port, store, runtime = controller
+855  +     runtime.lifecycle.session.cleanup_confirmed = True
+856  +     calls = []
+857  +     started, release = asyncio.Event(), asyncio.Event()
+858  +
+859  +     loop = asyncio.get_running_loop()
+860  +     release = threading.Event()
+861  +
+862  +     class Native:
+863  +         cleanup_complete = True
+864  +         result = None
+865  +         diagnostics = "Interface 0: readback R=101 G=101 B=101"
+866  +
+867  +         def reset_cancel(self):
+868  +             self.result = None
+869  +
+870  +         def cancel(self):
+871  +             release.set()
+872  +
+873  +         def adjust(self, current_ma, operation, *, deadline_ns):
+874  +             calls.append((current_ma, deadline_ns, operation.command_id))
+875  +             loop.call_soon_threadsafe(started.set)
+876  +             assert release.wait(5)
+877  +             self.cleanup_complete = cleanup_confirmed
+878  +             self.result = {"success": not sdk_failure, "requested_ma": current_ma}
+879  +             if sdk_failure:
+880  +                 raise RuntimeError("Only 3 of 4 projector interfaces confirmed current")
+881  +
+882  +     native = Native()
+883  +     runtime.projector_brightness.native = native
+884  +     principal = store.provision_client("gui")
+885  +     async with loopback_channel(port, 16_777_216) as channel:
+886  +         stub = wire.ExperimentControllerServiceStub(channel)
+887  +         request = rpc.ProjectorBrightnessRequest(
+888  +             current_ma=101, expected_configuration_revision=1
+889  +         )
+890  +         with pytest.raises(grpc.aio.AioRpcError) as denied:
+891  +             await stub.AdjustProjectorBrightness(request, timeout=5)
+892  +         assert denied.value.code() == grpc.StatusCode.UNAUTHENTICATED
+893  +         client = HeadlessClient(channel, principal)
+894  +         async with client.observe():
+895  +             request.command.CopyFrom(
+896  +                 rpc.OperatorCommand(
+897  +                     controller_generation=runtime.generation,
+898  +                     operator=pb.OperatorContext(
+899  +                         client_id=principal.generation, command_id=str(uuid4())
+900  +                     ),
+901  +                 )
+902  +             )
+903  +             rejected = await stub.AdjustProjectorBrightness(
+904  +                 request, metadata=principal.metadata(), timeout=5
+905  +             )
+906  +             assert rejected.result == pb.COMMAND_RESULT_REJECTED
+907  +             await client.claim_control()
+908  +             for current, revision, phase in (
+909  +                 (100, 1, pb.SESSION_PHASE_CONFIGURATION),
+910  +                 (2501, 1, pb.SESSION_PHASE_CONFIGURATION),
+911  +                 (101, 2, pb.SESSION_PHASE_CONFIGURATION),
+912  +                 (101, 1, pb.SESSION_PHASE_READY),
+913  +             ):
+914  +                 runtime.lifecycle.session.phase = phase
+915  +                 request = rpc.ProjectorBrightnessRequest(
+916  +                     command=client.operator_command(),
+917  +                     current_ma=current,
+918  +                     expected_configuration_revision=revision,
+919  +                 )
+920  +                 rejected = await stub.AdjustProjectorBrightness(
+921  +                     request, metadata=principal.metadata(), timeout=5
+922  +                 )
+923  +                 assert rejected.result == pb.COMMAND_RESULT_REJECTED
+924  +                 assert runtime.device_state.projector_brightness is None
+925  +             runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+926  +             request = rpc.ProjectorBrightnessRequest(
+927  +                 command=client.operator_command(),
+928  +                 current_ma=101,
+929  +                 expected_configuration_revision=1,
+930  +             )
+931  +             accepted = await stub.AdjustProjectorBrightness(
+932  +                 request, metadata=principal.metadata(), timeout=5
+933  +             )
+934  +             assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
+935  +             await asyncio.wait_for(started.wait(), 2)
+936  +             assert not runtime.authority_status().cleanup_confirmed
+937  +             replay = await stub.AdjustProjectorBrightness(
+938  +                 request, metadata=principal.metadata(), timeout=5
+939  +             )
+940  +             assert replay == accepted
+941  +             duplicate = rpc.ProjectorBrightnessRequest(
+942  +                 command=client.operator_command(),
+943  +                 current_ma=200,
+944  +                 expected_configuration_revision=1,
+945  +             )
+946  +             rejected = await stub.AdjustProjectorBrightness(
+947  +                 duplicate, metadata=principal.metadata(), timeout=5
+948  +             )
+949  +             assert rejected.result == pb.COMMAND_RESULT_REJECTED
+950  +             assert len(calls) == 1 and calls[0][0] == 101
+951  +             assert calls[0][1] > runtime.clock()
+952  +             assert calls[0][2] == request.command.operator.command_id
+953  +             assert runtime.device_state.camera_operation is not None
+954  +             release.set()
+955  +             outcome = await client.wait_result(accepted.command_id)
+956  +             assert outcome.succeeded is (cleanup_confirmed and not sdk_failure)
+957  +             assert (runtime.device_state.camera_operation is None) is cleanup_confirmed
+958  +             evidence = runtime.device_state.projector_brightness
+959  +             assert evidence is not None
+960  +             assert evidence["requested_ma"] == 101
+961  +             assert evidence["controller_generation"] == runtime.generation
+962  +             assert evidence["outcome"] == (
+963  +                 "unconfirmed"
+964  +                 if not cleanup_confirmed
+965  +                 else ("failed" if sdk_failure else "succeeded")
+966  +             )
+967  +             assert evidence["native_cleanup_confirmed"] is cleanup_confirmed
+968  +             assert runtime.projector_brightness.cleanup_complete is cleanup_confirmed
+969  +             assert runtime.authority_status().cleanup_confirmed is cleanup_confirmed
+970  +             assert (
+971  +                 evidence["started_monotonic_ns"] <= evidence["completed_monotonic_ns"]
+972  +             )
+973  +             if sdk_failure:
+974  +                 assert "3 of 4" in outcome.failure
+975  +             elif cleanup_confirmed:
+976  +                 assert (
+977  +                     "readback R=101"
+978  +                     in runtime.control.operations[accepted.command_id].progress
+979  +                 )
+980  +             prior = runtime.device_state.projector_brightness
+981  +             runtime.lifecycle.session.phase = pb.SESSION_PHASE_READY
+982  +             rejected = await stub.AdjustProjectorBrightness(
+983  +                 rpc.ProjectorBrightnessRequest(
+984  +                     command=client.operator_command(),
+985  +                     current_ma=200,
+986  +                     expected_configuration_revision=1,
+987  +                 ),
+988  +                 metadata=principal.metadata(),
+989  +                 timeout=5,
+990  +             )
+991  +             assert rejected.result == pb.COMMAND_RESULT_REJECTED
+992  +             assert runtime.device_state.projector_brightness is prior
+993  +             runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+994  +             if cleanup_confirmed:
+995  +                 sdk_failure = True
+996  +                 later = rpc.ProjectorBrightnessRequest(
+997  +                     command=client.operator_command(),
+998  +                     current_ma=200,
+999  +                     expected_configuration_revision=1,
+1000 +                 )
+1001 +                 accepted_later = await stub.AdjustProjectorBrightness(
+1002 +                     later, metadata=principal.metadata(), timeout=5
+1003 +                 )
+1004 +                 later_outcome = await client.wait_result(accepted_later.command_id)
+1005 +                 assert not later_outcome.succeeded
+1006 +                 assert runtime.device_state.projector_brightness is not prior
+1007 +                 assert runtime.device_state.projector_brightness["requested_ma"] == 200
+1008 +                 assert runtime.device_state.projector_brightness["outcome"] == "failed"
+1009 +             else:
+1010 +                 # Test-only unknown native receipt keeps the production admission barrier.
+1011 +                 runtime.device_state.camera_operation = None
+1012 +                 runtime.device_state.camera_operation_changed.set()
+1013 +     store.remove_client(principal)
+     |
+
+1 file would be reformatted, 183 files already formatted

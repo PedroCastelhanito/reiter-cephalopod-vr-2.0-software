@@ -28,7 +28,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
 <a id="e04"></a>
 ### E04 — Recording layout, identity, and metadata
 
-**Status:** Accepted · **Revision:** 91
+**Status:** Accepted · **Revision:** 92
 
 **Identity and files**
 
@@ -131,6 +131,16 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
   without automatic asset copying. Central trial metadata retains its verified
   reference, seed and compact occurrence summary under E07; the full plan is not
   duplicated.
+- SESSION_CONFIG freezes one bounded controller-owned snapshot of G01's latest
+  admitted projector brightness attempt: exact command/controller identity,
+  requested current, observation times, per-interface RGB readback/clamping,
+  failure/uncertainty and E08 native cleanup evidence. Without a current-runtime
+  attempt, brightness is explicitly unknown; a later failed or partial attempt
+  supersedes prior success.
+  This is historical SDK evidence, not measured luminance or confirmation that
+  hardware remained unchanged at Start. It is neither an automatically applied
+  configuration setting nor an additional file/event history; trial logs reference
+  the same session configuration.
 - Each JSONL event is one complete newline-terminated object. Key order:
   `monotonic_ns`, `wall_time`, `event_type`, `source`, then applicable
   `trial_number`, `outcome`, `details`. Session-config owns log schema/session

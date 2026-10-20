@@ -1,0 +1,121 @@
+{"case": "cancel", "observed_error": {"type": "RuntimeError", "message": "Projector adjustment cancelled; hardware state unconfirmed"}}
+{"case": "timeout", "observed_error": {"type": "TimeoutError", "message": "Projector adjustment exceeded its original operation budget"}}
+{
+  "scope": "real Windows child/jobs/pipes and production brightness adapter; simulated supervisor receipts and SDK JSON; no hardware",
+  "cases": [
+    {
+      "case": "success",
+      "passed": true,
+      "elapsed_s": 0.10333769995486364,
+      "original_budget_s": 10,
+      "cleanup_complete": true,
+      "result": {
+        "schema_version": 1,
+        "requested_ma": 200,
+        "discovered_interfaces": 1,
+        "interfaces": [
+          {
+            "index": 0,
+            "name": "SIMULATED SDK INTERFACE",
+            "id": "fixture-only",
+            "readback_ma": {
+              "red": 200,
+              "green": 200,
+              "blue": 200
+            },
+            "clamped": false,
+            "confirmed": true,
+            "release_confirmed": true,
+            "error": ""
+          }
+        ],
+        "success": true
+      },
+      "diagnostics": "benign helper: no SDK or USB access\r\nCEPHVR_BRIGHTNESS_RESULT={\"schema_version\": 1, \"requested_ma\": 200, \"discovered_interfaces\": 1, \"interfaces\": [{\"index\": 0, \"name\": \"SIMULATED SDK INTERFACE\", \"id\": \"fixture-only\", \"readback_ma\": {\"red\": 200, \"green\": 200, \"blue\": 200}, \"clamped\": false, \"confirmed\": true, \"release_confirmed\": true, \"error\": \"\"}], \"success\": true}\r\n\n",
+      "expected_error": null,
+      "events": [
+        {
+          "phase": "planned",
+          "job": "cephvr-brightness-probe-ecca04f4-cf51-4b4b-a081-68cdf64c8054"
+        },
+        {
+          "phase": "os_confirmed",
+          "pid": 43208,
+          "creation_time_100ns": 134369275461966695
+        },
+        {
+          "phase": "operational"
+        },
+        {
+          "phase": "released",
+          "process_absent": true,
+          "job_empty": true
+        }
+      ]
+    },
+    {
+      "case": "cancel",
+      "passed": true,
+      "elapsed_s": 0.3629890999873169,
+      "original_budget_s": 10,
+      "cleanup_complete": true,
+      "result": null,
+      "diagnostics": "benign helper: no SDK or USB access\r\n\n",
+      "expected_error": {
+        "type": "RuntimeError",
+        "message": "Projector adjustment cancelled; hardware state unconfirmed"
+      },
+      "events": [
+        {
+          "phase": "planned",
+          "job": "cephvr-brightness-probe-d7e439b0-30fb-4e01-8510-a27b82617f9a"
+        },
+        {
+          "phase": "os_confirmed",
+          "pid": 51084,
+          "creation_time_100ns": 134369275463203644
+        },
+        {
+          "phase": "operational"
+        },
+        {
+          "phase": "released",
+          "process_absent": true,
+          "job_empty": true
+        }
+      ]
+    },
+    {
+      "case": "timeout",
+      "passed": true,
+      "elapsed_s": 1.0088848000159487,
+      "original_budget_s": 3,
+      "cleanup_complete": true,
+      "result": null,
+      "diagnostics": "benign helper: no SDK or USB access\r\n\n",
+      "expected_error": {
+        "type": "TimeoutError",
+        "message": "Projector adjustment exceeded its original operation budget"
+      },
+      "events": [
+        {
+          "phase": "planned",
+          "job": "cephvr-brightness-probe-e502ad70-19db-4706-b992-03a20f494bcb"
+        },
+        {
+          "phase": "os_confirmed",
+          "pid": 50600,
+          "creation_time_100ns": 134369275467053835
+        },
+        {
+          "phase": "operational"
+        },
+        {
+          "phase": "released",
+          "process_absent": true,
+          "job_empty": true
+        }
+      ]
+    }
+  ]
+}

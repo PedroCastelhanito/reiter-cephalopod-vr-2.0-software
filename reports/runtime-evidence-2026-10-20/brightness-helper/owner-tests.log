@@ -1,0 +1,120 @@
+........................................................................ [  8%]
+........................................................................ [ 16%]
+............................................s........................... [ 24%]
+........................................................................ [ 32%]
+...................................................................s.... [ 40%]
+.......................s................................................ [ 48%]
+........................................................................ [ 56%]
+........................................................................ [ 64%]
+.......................................................................s [ 72%]
+........................................................................ [ 80%]
+.......................FF............................................... [ 88%]
+........................................................................ [ 96%]
+.................................                                        [100%]
+================================== FAILURES ===================================
+____ test_preview_terminal_handoff_authenticates_controller_or_consumer[3] ____
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-337/test_preview_terminal_handoff_0')
+result = 3
+
+    @pytest.mark.parametrize(
+        "result",
+        [wire.PREVIEW_CONSUMER_RESULT_FAILED, wire.PREVIEW_CONSUMER_RESULT_RELEASED],
+    )
+    async def test_preview_terminal_handoff_authenticates_controller_or_consumer(
+        tmp_path, result
+    ):
+        import grpc
+    
+        from cephvr.control.v1 import services_pb2_grpc as rpc
+        from cephvr.controller.backend import GrpcSupervisorPort
+        from cephvr.shared.auth import Principal
+    
+        runtime, _, _, _ = make_runtime(tmp_path)
+        consumer = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+        runtime.credentials[(consumer.role, consumer.generation)] = "consumer-secret"
+        runtime.registration.source_registered = lambda source, **kw: source == consumer
+        report = wire.PreviewConsumerReport(
+            client_id=consumer.generation,
+            consumer=consumer,
+            controller_generation=runtime.controller.generation,
+            preview_run_id=str(uuid4()),
+            allocation_id=str(uuid4()),
+            transfer_id=str(uuid4()),
+            result=result,
+        )
+        server = grpc.aio.server()
+        rpc.add_SupervisorServiceServicer_to_server(runtime.service, server)
+        port = server.add_insecure_port("127.0.0.1:0")
+        assert port
+        await server.start()
+        try:
+            async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
+                stub = rpc.SupervisorServiceStub(channel)
+                controller = Principal(
+                    "controller", runtime.controller.generation, "controller-secret"
+                )
+                direct = Principal(consumer.role, consumer.generation, "consumer-secret")
+                relay = GrpcSupervisorPort(stub, controller)
+                assert (
+>                   await relay.report_preview_consumer_state(report)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ).result == types.COMMAND_RESULT_ACCEPTED
+E               TypeError: GrpcSupervisorPort.report_preview_consumer_state() missing 1 required keyword-only argument: 'deadline_ns'
+
+tests\supervisor\test_registration.py:1008: TypeError
+____ test_preview_terminal_handoff_authenticates_controller_or_consumer[2] ____
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-337/test_preview_terminal_handoff_1')
+result = 2
+
+    @pytest.mark.parametrize(
+        "result",
+        [wire.PREVIEW_CONSUMER_RESULT_FAILED, wire.PREVIEW_CONSUMER_RESULT_RELEASED],
+    )
+    async def test_preview_terminal_handoff_authenticates_controller_or_consumer(
+        tmp_path, result
+    ):
+        import grpc
+    
+        from cephvr.control.v1 import services_pb2_grpc as rpc
+        from cephvr.controller.backend import GrpcSupervisorPort
+        from cephvr.shared.auth import Principal
+    
+        runtime, _, _, _ = make_runtime(tmp_path)
+        consumer = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+        runtime.credentials[(consumer.role, consumer.generation)] = "consumer-secret"
+        runtime.registration.source_registered = lambda source, **kw: source == consumer
+        report = wire.PreviewConsumerReport(
+            client_id=consumer.generation,
+            consumer=consumer,
+            controller_generation=runtime.controller.generation,
+            preview_run_id=str(uuid4()),
+            allocation_id=str(uuid4()),
+            transfer_id=str(uuid4()),
+            result=result,
+        )
+        server = grpc.aio.server()
+        rpc.add_SupervisorServiceServicer_to_server(runtime.service, server)
+        port = server.add_insecure_port("127.0.0.1:0")
+        assert port
+        await server.start()
+        try:
+            async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
+                stub = rpc.SupervisorServiceStub(channel)
+                controller = Principal(
+                    "controller", runtime.controller.generation, "controller-secret"
+                )
+                direct = Principal(consumer.role, consumer.generation, "consumer-secret")
+                relay = GrpcSupervisorPort(stub, controller)
+                assert (
+>                   await relay.report_preview_consumer_state(report)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ).result == types.COMMAND_RESULT_ACCEPTED
+E               TypeError: GrpcSupervisorPort.report_preview_consumer_state() missing 1 required keyword-only argument: 'deadline_ns'
+
+tests\supervisor\test_registration.py:1008: TypeError
+=========================== short test summary info ===========================
+FAILED tests/supervisor/test_registration.py::test_preview_terminal_handoff_authenticates_controller_or_consumer[3]
+FAILED tests/supervisor/test_registration.py::test_preview_terminal_handoff_authenticates_controller_or_consumer[2]
+2 failed, 891 passed, 4 skipped, 6 deselected in 15.95s

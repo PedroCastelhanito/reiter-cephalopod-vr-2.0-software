@@ -1,0 +1,75 @@
+
+=================================== ERRORS ====================================
+________ ERROR collecting tests/platform/test_projector_brightness.py _________
+ImportError while importing test module 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\tests\platform\test_projector_brightness.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\platform\test_projector_brightness.py:9: in <module>
+    from cephvr.control.v1 import services_pb2 as wire
+E   ImportError: cannot import name 'services_pb2' from 'cephvr.control.v1' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\src\cephvr\control\v1\__init__.py)
+_______ ERROR collecting tests/controller/test_microcontroller_owner.py _______
+ImportError while importing test module 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\tests\controller\test_microcontroller_owner.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\controller\test_microcontroller_owner.py:15: in <module>
+    from cephvr.acquisition.v1 import camera_pb2 as camera
+E   ImportError: cannot import name 'camera_pb2' from 'cephvr.acquisition.v1' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\src\cephvr\acquisition\v1\__init__.py)
+_____________ ERROR collecting tests/supervisor/test_registry.py ______________
+ImportError while importing test module 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\tests\supervisor\test_registry.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\supervisor\test_registry.py:9: in <module>
+    from cephvr.acquisition.identity import FFMPEG_ROLE
+src\cephvr\acquisition\identity.py:5: in <module>
+    from cephvr.acquisition.v1 import camera_pb2
+E   ImportError: cannot import name 'camera_pb2' from 'cephvr.acquisition.v1' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\src\cephvr\acquisition\v1\__init__.py)
+___________ ERROR collecting tests/supervisor/test_registration.py ____________
+ImportError while importing test module 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\tests\supervisor\test_registration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\supervisor\test_registration.py:12: in <module>
+    from cephvr.acquisition.identity import FFMPEG_ROLE
+src\cephvr\acquisition\identity.py:5: in <module>
+    from cephvr.acquisition.v1 import camera_pb2
+E   ImportError: cannot import name 'camera_pb2' from 'cephvr.acquisition.v1' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\src\cephvr\acquisition\v1\__init__.py)
+____________ ERROR collecting tests/client/test_controller_rpc.py _____________
+ImportError while importing test module 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\tests\client\test_controller_rpc.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\client\test_controller_rpc.py:18: in <module>
+    from cephvr.client.session import ClientError, HeadlessClient, loopback_channel
+src\cephvr\client\session.py:14: in <module>
+    from cephvr.control.v1 import services_pb2 as rpc
+E   ImportError: cannot import name 'services_pb2' from 'cephvr.control.v1' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\src\cephvr\control\v1\__init__.py)
+__________ ERROR collecting tests/shared/test_supervised_encoder.py ___________
+ImportError while importing test module 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\tests\shared\test_supervised_encoder.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\shared\test_supervised_encoder.py:16: in <module>
+    from cephvr.control.v1 import services_pb2 as wire
+E   ImportError: cannot import name 'services_pb2' from 'cephvr.control.v1' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\src\cephvr\control\v1\__init__.py)
+________ ERROR collecting tests/controller/test_safety_regressions.py _________
+ImportError while importing test module 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\tests\controller\test_safety_regressions.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\controller\test_safety_regressions.py:13: in <module>
+    from cephvr.control.v1 import services_pb2 as svc
+E   ImportError: cannot import name 'services_pb2' from 'cephvr.control.v1' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\src\cephvr\control\v1\__init__.py)
+_____________ ERROR collecting tests/controller/test_metadata.py ______________
+ImportError while importing test module 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\tests\controller\test_metadata.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\controller\test_metadata.py:17: in <module>
+    from cephvr.control.v1 import services_pb2 as svc
+E   ImportError: cannot import name 'services_pb2' from 'cephvr.control.v1' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp\brightness-index-3c31165c\src\cephvr\control\v1\__init__.py)
+=========================== short test summary info ===========================
+ERROR tests/platform/test_projector_brightness.py
+ERROR tests/controller/test_microcontroller_owner.py
+ERROR tests/supervisor/test_registry.py
+ERROR tests/supervisor/test_registration.py
+ERROR tests/client/test_controller_rpc.py
+ERROR tests/shared/test_supervised_encoder.py
+ERROR tests/controller/test_safety_regressions.py
+ERROR tests/controller/test_metadata.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection !!!!!!!!!!!!!!!!!!!
+8 errors in 0.61s

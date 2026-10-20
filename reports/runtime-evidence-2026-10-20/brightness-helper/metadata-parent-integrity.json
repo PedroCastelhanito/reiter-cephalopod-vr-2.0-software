@@ -1,0 +1,9 @@
+{
+  "method": "independent parent SHA256 and JSON/JSONL framing parse of final native writer fixture bytes",
+  "input_results_sha256": "65dae0263cf176fae617b5ccfc44d1bffb4eb20769fa1218a15c906068b8824f",
+  "cases": 5,
+  "files": 20,
+  "all_hashes_match": true,
+  "json_and_jsonl_valid": true,
+  "scope": "fixture outputs, not experiment or SDK hardware acceptance"
+}

@@ -27,6 +27,9 @@ from cephvr.controller.configuration import (
     controller_validators,
     load_controller_configuration,
 )
+from cephvr.controller.device.projector_brightness_bootstrap import (
+    create_projector_brightness,
+)
 from cephvr.controller.microcontroller.bootstrap import create_microcontroller
 from cephvr.controller.planning import (
     plan_outputs,
@@ -190,6 +193,9 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
     runtime = ControllerRuntime(
         generation=controller_generation,
         microcontroller_device=microcontroller,
+        projector_brightness_native=create_projector_brightness(
+            principal, native, firmware_channel
+        ),
         configuration=settings.configuration,
         policies=settings.policies,
         configuration_history_path=software_root / "config/last_configuration.json",

@@ -842,27 +842,45 @@ async def test_controller_cleanup_waits_for_camera_off_and_claim_release(
     store.remove_client(principal)
 
 
+@pytest.mark.parametrize("cleanup_confirmed", [False, True])
 @pytest.mark.parametrize("sdk_failure", [False, True])
 async def test_projector_brightness_auth_gates_readback_and_repeat_admission(
     controller: tuple[int, CredentialStore, ControllerRuntime],
     monkeypatch: pytest.MonkeyPatch,
     sdk_failure: bool,
+    cleanup_confirmed: bool,
 ) -> None:
-    import cephvr.controller.device.projector_brightness as brightness
 
     port, store, runtime = controller
+    runtime.lifecycle.session.cleanup_confirmed = True
     calls = []
     started, release = asyncio.Event(), asyncio.Event()
 
-    async def adjust(current_ma: int, timeout_s: float) -> str:
-        calls.append((current_ma, timeout_s))
-        started.set()
-        await release.wait()
-        if sdk_failure:
-            raise RuntimeError("Only 3 of 4 projector interfaces confirmed current")
-        return "Interface 0: readback R=101 G=101 B=101"
+    loop = asyncio.get_running_loop()
+    release = threading.Event()
 
-    monkeypatch.setattr(brightness, "adjust_brightness", adjust)
+    class Native:
+        cleanup_complete = True
+        result = None
+        diagnostics = "Interface 0: readback R=101 G=101 B=101"
+
+        def reset_cancel(self):
+            self.result = None
+
+        def cancel(self):
+            release.set()
+
+        def adjust(self, current_ma, operation, *, deadline_ns):
+            calls.append((current_ma, deadline_ns, operation.command_id))
+            loop.call_soon_threadsafe(started.set)
+            assert release.wait(5)
+            self.cleanup_complete = cleanup_confirmed
+            self.result = {"success": not sdk_failure, "requested_ma": current_ma}
+            if sdk_failure:
+                raise RuntimeError("Only 3 of 4 projector interfaces confirmed current")
+
+    native = Native()
+    runtime.projector_brightness.native = native
     principal = store.provision_client("gui")
     async with loopback_channel(port, 16_777_216) as channel:
         stub = wire.ExperimentControllerServiceStub(channel)
@@ -903,6 +921,7 @@ async def test_projector_brightness_auth_gates_readback_and_repeat_admission(
                     request, metadata=principal.metadata(), timeout=5
                 )
                 assert rejected.result == pb.COMMAND_RESULT_REJECTED
+                assert runtime.device_state.projector_brightness is None
             runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
             request = rpc.ProjectorBrightnessRequest(
                 command=client.operator_command(),
@@ -914,6 +933,7 @@ async def test_projector_brightness_auth_gates_readback_and_repeat_admission(
             )
             assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
             await asyncio.wait_for(started.wait(), 2)
+            assert not runtime.authority_status().cleanup_confirmed
             replay = await stub.AdjustProjectorBrightness(
                 request, metadata=principal.metadata(), timeout=5
             )
@@ -927,17 +947,67 @@ async def test_projector_brightness_auth_gates_readback_and_repeat_admission(
                 duplicate, metadata=principal.metadata(), timeout=5
             )
             assert rejected.result == pb.COMMAND_RESULT_REJECTED
-            assert len(calls) == 1 and calls[0][0] == 101 and calls[0][1] > 0
+            assert len(calls) == 1 and calls[0][0] == 101
+            assert calls[0][1] > runtime.clock()
+            assert calls[0][2] == request.command.operator.command_id
             assert runtime.device_state.camera_operation is not None
             release.set()
             outcome = await client.wait_result(accepted.command_id)
-            assert outcome.succeeded is not sdk_failure
-            assert runtime.device_state.camera_operation is None
+            assert outcome.succeeded is (cleanup_confirmed and not sdk_failure)
+            assert (runtime.device_state.camera_operation is None) is cleanup_confirmed
+            evidence = runtime.device_state.projector_brightness
+            assert evidence is not None
+            assert evidence["requested_ma"] == 101
+            assert evidence["controller_generation"] == runtime.generation
+            assert evidence["outcome"] == (
+                "unconfirmed"
+                if not cleanup_confirmed
+                else ("failed" if sdk_failure else "succeeded")
+            )
+            assert evidence["native_cleanup_confirmed"] is cleanup_confirmed
+            assert runtime.projector_brightness.cleanup_complete is cleanup_confirmed
+            assert runtime.authority_status().cleanup_confirmed is cleanup_confirmed
+            assert (
+                evidence["started_monotonic_ns"] <= evidence["completed_monotonic_ns"]
+            )
             if sdk_failure:
                 assert "3 of 4" in outcome.failure
-            else:
+            elif cleanup_confirmed:
                 assert (
                     "readback R=101"
                     in runtime.control.operations[accepted.command_id].progress
                 )
+            prior = runtime.device_state.projector_brightness
+            runtime.lifecycle.session.phase = pb.SESSION_PHASE_READY
+            rejected = await stub.AdjustProjectorBrightness(
+                rpc.ProjectorBrightnessRequest(
+                    command=client.operator_command(),
+                    current_ma=200,
+                    expected_configuration_revision=1,
+                ),
+                metadata=principal.metadata(),
+                timeout=5,
+            )
+            assert rejected.result == pb.COMMAND_RESULT_REJECTED
+            assert runtime.device_state.projector_brightness is prior
+            runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+            if cleanup_confirmed:
+                sdk_failure = True
+                later = rpc.ProjectorBrightnessRequest(
+                    command=client.operator_command(),
+                    current_ma=200,
+                    expected_configuration_revision=1,
+                )
+                accepted_later = await stub.AdjustProjectorBrightness(
+                    later, metadata=principal.metadata(), timeout=5
+                )
+                later_outcome = await client.wait_result(accepted_later.command_id)
+                assert not later_outcome.succeeded
+                assert runtime.device_state.projector_brightness is not prior
+                assert runtime.device_state.projector_brightness["requested_ma"] == 200
+                assert runtime.device_state.projector_brightness["outcome"] == "failed"
+            else:
+                # Test-only unknown native receipt keeps the production admission barrier.
+                runtime.device_state.camera_operation = None
+                runtime.device_state.camera_operation_changed.set()
     store.remove_client(principal)

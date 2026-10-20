@@ -20,6 +20,7 @@ class ProcessGoneError(WindowsLaunchError):
 
 
 CREATE_SUSPENDED = 0x00000004
+CREATE_NO_WINDOW = 0x08000000
 EXTENDED_STARTUPINFO_PRESENT = 0x00080000
 STARTF_USESTDHANDLES = 0x00000100
 PROC_THREAD_ATTRIBUTE_HANDLE_LIST = 0x00020002
@@ -284,6 +285,7 @@ class WindowsJobs:
         stdin_handle: int | None = None,
         stdout_handle: int | None = None,
         stderr_handle: int | None = None,
+        no_window: bool = False,
     ) -> SuspendedProcess:
         if not Path(executable).is_absolute() or not Path(executable).is_file():
             raise WindowsLaunchError("explicit installed executable path is required")
@@ -360,7 +362,9 @@ class WindowsJobs:
                     None,
                     None,
                     bool(inherited_handles),
-                    CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT,
+                    CREATE_SUSPENDED
+                    | EXTENDED_STARTUPINFO_PRESENT
+                    | (CREATE_NO_WINDOW if no_window else 0),
                     None,
                     None,
                     ctypes.byref(startup),

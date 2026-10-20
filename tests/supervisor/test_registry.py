@@ -707,15 +707,18 @@ def test_registered_child_remains_valid_with_nested_descendant() -> None:
         registry.release(request.command_id, obligations_met=True)
 
 
+@pytest.mark.parametrize(
+    "role", ["controller_firmware_upload", "controller_projector_brightness"]
+)
 @pytest.mark.parametrize("confirmed", [False, True])
 def test_firmware_cleanup_is_exact_owner_scoped_and_requires_empty_job(
     confirmed,
+    role,
 ) -> None:
-    from cephvr.controller.microcontroller.identity import FIRMWARE_UPLOAD_ROLE
 
     native = Native()
     registry = LaunchRegistry(native, 15_000_000_000)
-    owner, child = _identity("controller"), _identity(FIRMWARE_UPLOAD_ROLE)
+    owner, child = _identity("controller"), _identity(role)
     plan = wire.PlanLaunchRequest(
         command_id=str(uuid4()),
         owner=owner,

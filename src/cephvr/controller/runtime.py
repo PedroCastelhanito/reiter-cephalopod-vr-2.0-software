@@ -42,6 +42,7 @@ from cephvr.controller.state import (
     SupervisorState,
     Watch,
 )
+from cephvr.platform.windows.projector_brightness import BrightnessPort
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 
@@ -90,6 +91,7 @@ class ControllerRuntime:
         health_silence_ns: int = 15_000_000_000,
         clock: Callable[[], int] = host_time_ns,
         microcontroller_device: MicrocontrollerDevice | None = None,
+        projector_brightness_native: BrightnessPort | None = None,
     ) -> None:
         self.microcontroller_device = microcontroller_device
         self.generation = generation
@@ -140,6 +142,7 @@ class ControllerRuntime:
             AssemblyInputs(
                 generation=self.generation,
                 microcontroller_device=microcontroller_device,
+                projector_brightness_native=projector_brightness_native,
                 supervisor_generation=self.supervisor_generation,
                 configuration_state=self.configuration_state,
                 lifecycle=self.lifecycle,
@@ -291,7 +294,7 @@ class ControllerRuntime:
         if (
             self.microcontroller_device is not None
             and not self.microcontroller_device.cleanup_complete
-        ):
+        ) or not self.projector_brightness.cleanup_complete:
             status = replace(status, cleanup_confirmed=False)
         return status
 

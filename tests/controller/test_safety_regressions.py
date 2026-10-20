@@ -260,11 +260,13 @@ async def test_ready_edit_cancels_preparation_without_committing_unvalidated_res
     await runtime.close_watch(watch)
 
 
+@pytest.mark.parametrize("brightness_observed", [False, True])
 @pytest.mark.parametrize("interrupt_on_start", [False, True])
 async def test_start_terminal_operation_time_and_interruption_order(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     interrupt_on_start: bool,
+    brightness_observed: bool,
 ) -> None:
     runtime = _runtime(tmp_path)
     attempt, _ = _attempt(runtime, tmp_path)
@@ -284,7 +286,18 @@ async def test_start_terminal_operation_time_and_interruption_order(
 
     runtime.start.supervisor = cast(Any, Supervisor())
 
-    async def persisted(*_args: object, **_kwargs: object) -> object:
+    evidence = {
+        "schema_version": 1,
+        "outcome": "failed",
+        "requested_ma": 1500,
+        "sdk_result": {"interfaces": [{"id": "usb0", "readback_ma": {"red": 1023}}]},
+    }
+    if brightness_observed:
+        runtime.device_state.projector_brightness = evidence
+    documents = {}
+
+    async def persisted(_attempt, name, action, document):
+        documents[name] = document
         return object()
 
     started_log_seen = False
@@ -315,6 +328,14 @@ async def test_start_terminal_operation_time_and_interruption_order(
     )
     try:
         await runtime.start.run_start(attempt, command_id)
+        captured = documents["SESSION_CONFIG.json"]["projector_brightness"]
+        if brightness_observed:
+            assert captured == evidence
+            evidence["sdk_result"]["interfaces"][0]["readback_ma"]["red"] = 999
+            assert captured["sdk_result"]["interfaces"][0]["readback_ma"]["red"] == 1023
+        else:
+            assert captured["outcome"] == "unknown"
+            assert "requested_ma" not in captured
         assert started_log_seen
         operation = runtime.control.operations[command_id]
         if interrupt_on_start:

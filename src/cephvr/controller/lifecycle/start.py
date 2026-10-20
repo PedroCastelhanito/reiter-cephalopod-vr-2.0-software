@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Coroutine, Mapping
+from copy import deepcopy
 from typing import Any
 
 from cephvr.control.v1 import services_pb2 as svc
@@ -19,6 +20,7 @@ from cephvr.controller.metadata.documents import (
     active_configuration_document,
     message_dict,
     output_formats,
+    projector_brightness_schema,
     software_provenance,
 )
 from cephvr.controller.metadata.writer import MetadataWriter
@@ -141,6 +143,9 @@ class StartActivation:
             )
             if not isinstance(schema, dict) or schema.get("schema_version") != 1:
                 raise RuntimeError("versioned writer schema unavailable")
+            schema["controller_metadata"] = {
+                "SESSION_CONFIG.json.projector_brightness": projector_brightness_schema()
+            }
             attempt.output_formats = output_formats(
                 schema, {output.output_key for output in attempt.prepared.outputs}
             )
@@ -161,6 +166,13 @@ class StartActivation:
                 "local_timezone": attempt.prepared.local_timezone,
                 "configuration_revision": attempt.prepared.configuration_revision,
                 "provenance": software_provenance(attempt, self.supervisor_state),
+                "projector_brightness": deepcopy(self.device.projector_brightness)
+                if self.device.projector_brightness is not None
+                else {
+                    "schema_version": 1,
+                    "outcome": "unknown",
+                    "reason": "no adjustment observed in this controller lifetime",
+                },
                 "configuration": active_configuration_document(
                     attempt.prepared.configuration
                 ),

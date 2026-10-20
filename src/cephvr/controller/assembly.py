@@ -64,6 +64,7 @@ from cephvr.controller.state import (
     SupervisorState,
 )
 from cephvr.controller.supervision import SupervisorObservations
+from cephvr.platform.windows.projector_brightness import BrightnessPort
 
 
 @dataclass(frozen=True)
@@ -108,6 +109,7 @@ class AssemblyInputs:
     display_pacing_resolver: Callable[[str, Message], str] | None = None
     software_root: Path | None = None
     microcontroller_device: MicrocontrollerDevice | None = None
+    projector_brightness_native: BrightnessPort | None = None
 
 
 @dataclass(frozen=True)
@@ -275,6 +277,8 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         limits=i.limit_state,
         clock=i.clock,
         hooks=device_hooks,
+        native=i.projector_brightness_native,
+        generation=i.generation,
     )
 
     owner_cleanup = ManualControlCleanup(

@@ -6105,3 +6105,66 @@ the October19 evidence directory to preserve original capture bytes and hashes.
 ### 2026-10-19 - post-rig-code-review completed and synced
 
 [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Committed reviewed shared changes and dated evidence as 6b03c40507323b2217c676ab33a0ed4df0529fa7 and pushed main to origin successfully. Local HEAD and origin/main match; working tree was clean before this task-status reconciliation. All744 dated evidence files match staged raw Git blob hashes; independent changed-file byte comparison677/677 also passes. A read-only CIM process probe during the longer byte check was denied by the sandbox; the comparison itself completed normally. Sol issue hunt/Astra review, verified fixes, cleanup and sync are complete, so post-rig-code-review leaves TODO. Physical GUI acceptance, native-camera darkness and the E08 brightness-helper decision remain explicitly blocked in their existing tasks; no new acceptance or behavior choice is implied. This final TODO/LOG-only reconciliation needs whitespace validation and sync, not repeated runtime tests.
+
+### 2026-10-20 - brightness-supervised-helper approved implementation
+
+[gui] [controller] [supervisor] Owner approved the recommended brightness-specific
+one-shot helper extension, implementation/testing, architecture amendment and
+commit/sync, and requested brightness evidence in output files. Clean starting
+tree at226a506c; other repository chats are idle/unloaded. E08rev176 records the
+accepted extension. Sol6.1 Medium implements focused shared-mechanism reuse and
+owning regressions; Astra High reviews ownership/deadlines/cleanup and metadata
+semantics. Parent owns architecture/reports/tracking/sync. No physical brightness
+or runtime change has yet occurred; native acceptance remains distinct.
+
+### 2026-10-20 - brightness helper architecture and native baseline
+
+[gui] [controller] [supervisor] E08rev176, G01rev251 and E04rev92 now record
+registered exact helper cleanup and the latest controller-observed brightness
+attempt in SESSION_CONFIG; trials reuse that reference. Astra reviewed the records,
+including preserved firmware cleanup-before-next-phase ordering. ARCH-002 review
+selects the existing suspended launch/pipe ownership machinery and one shared exact
+release function, with only the two authorized helper roles; no dependency or new
+service. Three benign Windows native containment/identity/bootstrap tests pass in
+3.10s (native-baseline-sandbox.log). They do not invoke the TI SDK, modify projector
+current or establish physical brightness. Origin and local main match226a506c.
+
+### 2026-10-20 - brightness helper implementation and final validation
+
+[gui] [controller] [supervisor] Implemented the approved E08/G01/E04 extension:
+registered brightness-specific suspended launch, original deadline, hidden console,
+exact native release and manual/authority cleanup gates. Shared release extraction
+preserves firmware behavior. Structured bounded SDK readback/clamp/partial failure
+records feed the latest-admitted-attempt SESSION_CONFIG snapshot and SCHEMA;
+unknown state, rejection retention and Start deep-copy semantics are explicit.
+Astra accepted the final source, including strict integer parsing, cancellation
+stale-evidence repair, human-only GUI diagnostics and truthful cleanup handoff.
+
+Final owning255 passed/1 skipped, authority4 passed; Ruff/format184 and Win32
+mypy142 pass, boundaries739/zero with existing cohesion advisories, PowerShell
+syntax0 errors and19 Protobuf compilation pass. Broader runs each893 passed with
+one different unrelated timing/concurrent-fixture failure; isolated cases pass.
+Four stale supervisor fixture assertions now forward the pre-existing required
+original deadline; HEAD comparison records their prior mismatch. No product
+assertion weakened and no clean broad-suite pass claimed.
+
+Final real Windows adapter3 cases pass success/cancel/timeout with child-reported
+no-console and exact process/job absence; supervisor/SDK observations are simulated.
+Five actual Start/writer fixture cases pass; parent independently validates all20
+final metadata hashes and JSON/JSONL framing. Failed sandbox/probe attempts and
+source provenance remain in reports/runtime-evidence-2026-10-20/brightness-helper/.
+No actual TI/USB/LED operation, scientific claim or runtime restart by this chat.
+Native physical follow-up stays open. Concurrent SpikeGLX/GUI work is preserved;
+parent will stage only brightness-owned changes and shared hunks for commit/sync.
+
+### 2026-10-20 - brightness helper staged validation
+
+[gui] [controller] [supervisor] Exported the brightness-only staged tree
+fe438c83837eb61aec587f959bef82aee24c4506 and independently passed255 focused
+tests/1 skipped in2.79s. Generated19 ignored Protobuf modules after initial archive
+collection failed. A sandbox retry stalled without output and was interrupted;
+permitted local-process retry passed, stall cause unproven. No product changes.
+Per-command core.longpaths=true staged the retained historical fixture path after
+the default Git path limit failed; no persistent Git setting changed. Evidence:
+reports/runtime-evidence-2026-10-20/brightness-helper/staged-validation.json.
+Concurrent SpikeGLX/preview work remains outside the brightness commit.

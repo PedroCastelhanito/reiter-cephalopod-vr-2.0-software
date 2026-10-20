@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 175
+**Status:** Accepted · **Revision:** 176
 
 **Processes and startup**
 
@@ -258,16 +258,19 @@ design; runtime monitoring remains unimplemented.
   its handle; launcher failure also triggers kill-on-close. The
   [Windows launch contract](../../contracts/windows-launch.md) binds creation-time
   containment, job mechanics, partial-child identification and typed registration.
-- A11's controller-owned Arduino CLI uses sequential one-shot native Configuration
-  helpers for compilation and upload under the same original operation/deadline,
-  planned with an exact parent operation and no session/trial work. Reuse registered
-  suspended creation and containment before resume; no Ready/heartbeat is required.
-  Normal exit remains retained until controller confirms native process/job/pipe
-  and private source/build/image cleanup before starting the next phase. Only this helper role
-  accepts the native-helper cleanup flag; supervisor independently requires its exact
-  job empty before release. Partial launches remain blockers until reconciled. Cancellation/deadline
-  terminates the exact job, including compiler/uploader descendants, without extending the
-  original operation budget.
+- Controller-owned one-shot native Configuration helpers cover A11's sequential
+  Arduino CLI compilation/upload and G01's explicit projector brightness adjustment.
+  Each is planned with its exact parent operation, original deadline and no
+  session/trial work. Reuse registered suspended creation and containment before
+  resume; no Ready/heartbeat is required. Normal exit remains retained until the
+  controller confirms native process/job/pipe closure and any private source/build/image
+  cleanup before a subsequent helper phase or releasing the manual-device gate.
+  Only these two helper roles accept the native-helper cleanup flag;
+  supervisor independently requires the exact job empty before release. Partial
+  launches and uncertain cleanup remain blockers. Cancellation/deadline terminates
+  the exact job and descendants without extending the original operation budget.
+  Brightness readback and physical-state uncertainty remain owned by G01; process
+  cleanup alone never establishes hardware success.
 - Acquisition retires a camera worker through explicit exact-owner launch confirmation
   carrying its verified retained successful Cleanup operation and matching resource/output
   evidence before requesting worker shutdown. Supervisor acknowledgement fences only

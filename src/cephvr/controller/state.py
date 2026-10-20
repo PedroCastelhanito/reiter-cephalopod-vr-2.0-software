@@ -304,6 +304,7 @@ class DeviceState:
         default_factory=dict
     )
     manual_effects_admitted: bool = False
+    projector_brightness: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)

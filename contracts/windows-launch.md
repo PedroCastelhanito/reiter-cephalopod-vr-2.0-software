@@ -133,10 +133,13 @@ paths before creation; other application/global GPU settings are untouched.
 Native encoders/helpers use the same launch/containment helper without Python
 bootstrap or CephVR heartbeat requirements; their owners monitor actual progress.
 
-A11's `controller_firmware_upload` is planned by controller with an exact parent
-operation and no work scope for each sequential compile/upload phase. Compiler closure
-must be confirmed before upload is planned. Its fixed stop method is `owner_job_terminate`; Arduino
-CLI/compiler/avrdude do not promise stdin-EOF shutdown. The owner kills only this exact job
+A11's `controller_firmware_upload` and the brightness-specific
+`controller_projector_brightness` are planned by controller with an exact parent
+operation and no work scope: firmware owns sequential compile/upload phases, while
+brightness owns one explicit adjustment. Compiler closure must be confirmed before
+upload is planned. Both use fixed `owner_job_terminate`; neither Arduino tools nor
+the PowerShell SDK helper promises stdin-EOF shutdown. Brightness creation explicitly
+sets CREATE_NO_WINDOW alongside suspended creation and exact handle/job inheritance. The owner kills only this exact job
 on cancellation/deadline and confirms process/pipe/private source/build/image closure with
 `ConfirmLaunch.native_cleanup_complete`. Supervisor matches the retained owner,
 child generation and any confirmed PID/creation time, then independently requires

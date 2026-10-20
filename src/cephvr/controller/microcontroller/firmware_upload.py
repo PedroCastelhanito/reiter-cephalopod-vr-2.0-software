@@ -18,9 +18,8 @@ from cephvr.platform.windows.security import (
     create_owner_only,
     create_owner_only_directory,
 )
-from cephvr.shared.deadlines import remaining_seconds
+from cephvr.shared.native_helpers import release_native_helper
 from cephvr.shared.supervised_encoder import SupervisedEncoderLauncher
-from cephvr.shared.transport_deadlines import deadline_metadata
 
 
 def arduino_cli() -> Path:
@@ -236,52 +235,12 @@ class WindowsFirmwareUpload:
         deadline_ns: int,
         expected: wire.PlanLaunchRequest | None = None,
     ) -> None:
-        metadata = (*self.launcher.owner.metadata(), deadline_metadata(deadline_ns))
-        timeout = remaining_seconds(deadline_ns, clock=self.launcher.clock_ns)
-        if timeout <= 0:
-            raise TimeoutError("Firmware native cleanup missed its original deadline.")
-        state = self.launcher.supervisor.GetLaunchState(
-            wire.LaunchQuery(
-                requester=self.launcher.owner_identity, launch_command_id=launch_id
-            ),
-            metadata=metadata,
-            timeout=timeout,
+        if expected is None:
+            raise RuntimeError("Firmware cleanup lacks its exact retained plan.")
+        release_native_helper(
+            self.launcher,
+            expected,
+            self._process,
+            self._release_commands,
+            deadline_ns=deadline_ns,
         )
-        if expected is not None and state.plan != expected:
-            raise RuntimeError("Firmware cleanup resolves to a different launch.")
-        process = self._process
-        if (
-            process is not None
-            and launch_id == process.launch_id
-            and (
-                state.pid != process.child.pid
-                or state.creation_time_100ns != process.child.creation_time_100ns
-            )
-        ):
-            raise RuntimeError(
-                "Firmware cleanup resolves to a different native process."
-            )
-        if state.phase == wire.LAUNCH_PHASE_RELEASED:
-            return
-        request = wire.ConfirmLaunchRequest(
-            command_id=self._release_commands.setdefault(launch_id, str(uuid4())),
-            launch_command_id=launch_id,
-            owner=self.launcher.owner_identity,
-            child=state.plan.child,
-            native_cleanup_complete=True,
-        )
-        if state.HasField("pid"):
-            request.pid = state.pid
-            request.creation_time_100ns = state.creation_time_100ns
-        receipt = self.launcher.supervisor.ConfirmLaunch(
-            request,
-            metadata=metadata,
-            timeout=remaining_seconds(deadline_ns, clock=self.launcher.clock_ns),
-        )
-        if (
-            receipt.admission.result != control.COMMAND_RESULT_ACCEPTED
-            or receipt.state.phase != wire.LAUNCH_PHASE_RELEASED
-        ):
-            raise RuntimeError(
-                "Firmware native cleanup was not confirmed by the supervisor."
-            )

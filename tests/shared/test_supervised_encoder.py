@@ -21,6 +21,7 @@ from cephvr.shared import supervised_encoder
 from cephvr.shared.auth import Principal
 from cephvr.shared.encoder_errors import EncoderLaunchError
 from cephvr.shared.encoder_io import WindowsEncoderInputAdapter
+from cephvr.shared.native_helper_identity import PROJECTOR_BRIGHTNESS_ROLE
 from cephvr.shared.supervised_encoder import (
     FFMPEG_PROBE_ROLE,
     SupervisedEncoderLauncher,
@@ -127,6 +128,7 @@ class FakeJobs:
         self.journal.append(f"open_job:{name}")
 
     def launch_suspended(self, *args: Any, **kwargs: Any) -> SuspendedProcess:
+        self.journal.append(f"no_window:{kwargs.get('no_window', False)}")
         if self.create_error is not None:
             raise self.create_error
         self.journal.append("launch_suspended")
@@ -256,15 +258,25 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Harness:
     return Harness(tmp_path, monkeypatch)
 
 
+@pytest.mark.parametrize("brightness", [False, True])
 def test_successful_launch_resumes_only_after_both_confirmations(
     harness: Harness,
+    brightness: bool,
 ) -> None:
     harness.supervisor.confirm_phases = [
         wire.LAUNCH_PHASE_OS_CONFIRMED,
         wire.LAUNCH_PHASE_OPERATIONAL,
     ]
-    harness.launch()
+    if brightness:
+        harness.launcher.allowed_roles = frozenset((PROJECTOR_BRIGHTNESS_ROLE,))
+        harness.launcher.probe_roles = frozenset((PROJECTOR_BRIGHTNESS_ROLE,))
+        harness.launcher.launch(
+            [harness.executable], deadline_ns=DEADLINE, role=PROJECTOR_BRIGHTNESS_ROLE
+        )
+    else:
+        harness.launch()
     journal = harness.journal
+    assert f"no_window:{brightness}" in journal
     assert journal.index("launch_suspended") < journal.index("resume")
     assert journal.index("resume") < journal.index("start_readers")
     assert not harness.launcher.pending_plans

@@ -1,0 +1,12 @@
+{
+  "staged_tree": "fe438c83837eb61aec587f959bef82aee24c4506",
+  "export_root": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\brightness-index-3c31165c",
+  "method": "Git archive of exact staged source/tests/config/contracts/assets/tools; existing Python environment with isolated PYTHONPATH",
+  "date": "2026-10-20",
+  "result": "255 passed, 1 skipped in 2.79s",
+  "log": "staged-owner-tests-permitted.log",
+  "setup": "Generated 19 ignored Protobuf sources using the exported tools/generate_contracts.py before testing.",
+  "command": "python -u -m pytest tests/platform/test_projector_brightness.py tests/controller/test_microcontroller_owner.py tests/supervisor/test_registry.py tests/supervisor/test_registration.py tests/client/test_controller_rpc.py tests/shared/test_supervised_encoder.py tests/controller/test_safety_regressions.py tests/controller/test_metadata.py -q -m \"not windows and not rig\" -o faulthandler_timeout=30",
+  "attempt_history": "Initial collection failed because the Git archive omits ignored generated Protobuf modules. After generation the sandbox run produced no output and was interrupted. The permitted retry passed; the exact cause of the sandbox stall was not established. Per-command core.longpaths=true was required to stage a retained historical fixture path; no persistent Git setting changed.",
+  "scope": "Exact staged product/test snapshot excluding concurrent SpikeGLX and GUI preview edits. Later changes to this snapshot are evidence and task tracking only. No hardware adjustment or live runtime restart."
+}

@@ -1004,8 +1004,11 @@ async def test_preview_terminal_handoff_authenticates_controller_or_consumer(
             )
             direct = Principal(consumer.role, consumer.generation, "consumer-secret")
             relay = GrpcSupervisorPort(stub, controller)
+            deadline_ns = host_time_ns() + 5_000_000_000
             assert (
-                await relay.report_preview_consumer_state(report)
+                await relay.report_preview_consumer_state(
+                    report, deadline_ns=deadline_ns
+                )
             ).result == types.COMMAND_RESULT_ACCEPTED
             assert (
                 await stub.ReportPreviewConsumerState(
@@ -1032,7 +1035,9 @@ async def test_preview_terminal_handoff_authenticates_controller_or_consumer(
             changed = wire.PreviewConsumerReport.FromString(report.SerializeToString())
             changed.failure.message = "changed terminal payload"
             assert (
-                await relay.report_preview_consumer_state(changed)
+                await relay.report_preview_consumer_state(
+                    changed, deadline_ns=deadline_ns
+                )
             ).result == types.COMMAND_RESULT_REJECTED
             for principal in (controller, direct):
                 attached = wire.PreviewConsumerReport.FromString(
@@ -1048,13 +1053,17 @@ async def test_preview_terminal_handoff_authenticates_controller_or_consumer(
                 changed.CopyFrom(report)
                 setattr(changed, field, str(uuid4()))
                 assert (
-                    await relay.report_preview_consumer_state(changed)
+                    await relay.report_preview_consumer_state(
+                        changed, deadline_ns=deadline_ns
+                    )
                 ).result == types.COMMAND_RESULT_REJECTED
             changed.CopyFrom(report)
             changed.consumer.generation = str(uuid4())
             changed.client_id = changed.consumer.generation
             assert (
-                await relay.report_preview_consumer_state(changed)
+                await relay.report_preview_consumer_state(
+                    changed, deadline_ns=deadline_ns
+                )
             ).result == types.COMMAND_RESULT_REJECTED
             assert list(runtime.registration_state.preview_consumers.values()) == [
                 (report,)

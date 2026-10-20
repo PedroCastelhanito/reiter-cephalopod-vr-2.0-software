@@ -11,7 +11,6 @@ from uuid import uuid4
 from cephvr.acquisition.identity import ACQUISITION_WORKER_ROLES
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
-from cephvr.controller.microcontroller.identity import FIRMWARE_UPLOAD_ROLE
 from cephvr.shared.clock import (
     HostClockDescriptor,
     descriptor_from_wire,
@@ -20,6 +19,7 @@ from cephvr.shared.clock import (
 )
 from cephvr.shared.commands import DEFAULT_COMMAND_RETENTION_NS
 from cephvr.shared.identity import require_uuid4
+from cephvr.shared.native_helper_identity import CONTROLLER_NATIVE_HELPER_ROLES
 from cephvr.supervisor.camera_release import camera_release_request_matches
 from cephvr.supervisor.launch_validation import (
     BACKEND_ROLES as BACKEND_ROLES,
@@ -206,7 +206,7 @@ class LaunchRegistry:
                             and entry.plan.child.role in VISUAL_STIMULUS_FFMPEG_ROLES
                         )
                     )
-                    or entry.plan.child.role == FIRMWARE_UPLOAD_ROLE
+                    or entry.plan.child.role in CONTROLLER_NATIVE_HELPER_ROLES
                 ):
                     # Normal helper exit still requires its owning backend
                     # to confirm exact native/resource closure before release.
@@ -277,7 +277,7 @@ class LaunchRegistry:
             )
         if request.native_cleanup_complete:
             if (
-                entry.plan.child.role != FIRMWARE_UPLOAD_ROLE
+                entry.plan.child.role not in CONTROLLER_NATIVE_HELPER_ROLES
                 or request.HasField("pid") != entry.state.HasField("pid")
                 or request.HasField("creation_time_100ns")
                 != entry.state.HasField("creation_time_100ns")
@@ -289,7 +289,7 @@ class LaunchRegistry:
             ):
                 raise LaunchError(
                     "INVALID_NATIVE_RELEASE",
-                    "firmware cleanup must match the retained exact child",
+                    "native helper cleanup must match the retained exact child",
                 )
             released = self.release(request.launch_command_id, obligations_met=True)
             entry.confirmations[request.command_id] = canonical

@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-20\brightness-helper\native_adapter_probe.py", line 168, in <module>
+    "cases": [run_case(case) for case in ("success", "cancel", "timeout")]}
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-20\brightness-helper\native_adapter_probe.py", line 168, in <listcomp>
+    "cases": [run_case(case) for case in ("success", "cancel", "timeout")]}
+              ^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-20\brightness-helper\native_adapter_probe.py", line 140, in run_case
+    assert supervisor.state.phase == wire.LAUNCH_PHASE_RELEASED
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'phase'

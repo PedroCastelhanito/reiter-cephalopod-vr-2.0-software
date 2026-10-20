@@ -1,0 +1,8 @@
+{
+  "revision": "226a506c6e3f7a2adb710009d9d47929cbd6b5c8",
+  "basis": "read-only HEAD source comparison; not a baseline runtime pass",
+  "test": "tests/supervisor/test_registration.py",
+  "baseline_calls_omit_deadline": 4,
+  "baseline_signature": "    async def report_preview_consumer_state(\n        self, request: svc.PreviewConsumerReport, *, deadline_ns: int\n    ) -> pb.ReportReceipt:\n        if self.acquisition is None:\n            raise RuntimeError(\"acquisition pr",
+  "repair": "test-only one deadline forwarded across existing relay assertions; production unchanged"
+}

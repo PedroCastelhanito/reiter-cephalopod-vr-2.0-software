@@ -1,0 +1,144 @@
+{
+  "scope": "actual brightness admission/Start/run_start/MetadataCoordinator/MetadataWriter and Windows durable file publication; fake authority, supervisor, SDK, backend identities and no trial execution",
+  "cases": [
+    {
+      "case": "unknown",
+      "passed": true,
+      "fake_controller_generation": "9b395abf-e0c7-4bb3-9b6d-05cf32dc90f2",
+      "fake_session_id": "faf8ef79-e03e-42de-aa4a-cbf4b42c0b7a",
+      "admitted_commands": [],
+      "snapshot_independent_of_live_state": true,
+      "files": [
+        {
+          "path": "m-6c2befc1\\unknown\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_CONFIG.json",
+          "sha256": "8677569d9b60f226f08b1428e0e6937a3a6a349c2ab3c498a8c4dad756c885bb"
+        },
+        {
+          "path": "m-6c2befc1\\unknown\\20261019_experiment\\subject-235815\\protocol-data\\SCHEMA.json",
+          "sha256": "085b4a843a7dde190a4cd46e71d30da8c3a09185913880f6f12735092c5d24b9"
+        },
+        {
+          "path": "m-6c2befc1\\unknown\\20261019_experiment\\subject-235815\\protocol-data\\FAKE_SUBJECT_120000_LOG.json",
+          "sha256": "11f4317a8a503ac2b04e34233220426b6edfa6f3ced2e2306be5cc80aca8dcd9"
+        },
+        {
+          "path": "m-6c2befc1\\unknown\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_LOG.jsonl",
+          "sha256": "6ef88383e54aed1dcd4b94fc1da40c0972a5f40381d615f834a0eca15fc62fdf"
+        }
+      ]
+    },
+    {
+      "case": "succeeded",
+      "passed": true,
+      "fake_controller_generation": "c25e132d-df21-4d05-a72f-b9c6b6e2d228",
+      "fake_session_id": "d05e740d-5859-470f-9d9b-59666f5d0a8a",
+      "admitted_commands": [
+        "e1fa3ed0-f301-4bd9-a95b-b233a30ade64"
+      ],
+      "snapshot_independent_of_live_state": true,
+      "files": [
+        {
+          "path": "m-6c2befc1\\succeeded\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_CONFIG.json",
+          "sha256": "1d9d86d1c759ec097bc038ef5062db3c4be1e6340da11ce903e76938b7704819"
+        },
+        {
+          "path": "m-6c2befc1\\succeeded\\20261019_experiment\\subject-235815\\protocol-data\\SCHEMA.json",
+          "sha256": "c94645b1fd18f4551a66bd184d0ed0a1beb95b3569cf8ac8a913cb7fc1d3cc02"
+        },
+        {
+          "path": "m-6c2befc1\\succeeded\\20261019_experiment\\subject-235815\\protocol-data\\FAKE_SUBJECT_120000_LOG.json",
+          "sha256": "4f6aad8ee346c38a58035c42f987a557923836b40311846d7726e6ab42961dd4"
+        },
+        {
+          "path": "m-6c2befc1\\succeeded\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_LOG.jsonl",
+          "sha256": "cd2c7f895d738b93b9adcca61a2dd48668d7aadbc465decf8f84d0160c354235"
+        }
+      ]
+    },
+    {
+      "case": "latest-failed",
+      "passed": true,
+      "fake_controller_generation": "ee779b69-1cbb-49a2-b43f-ec9bd5d275eb",
+      "fake_session_id": "b24c1cec-6bba-4d89-a139-270172bbee95",
+      "admitted_commands": [
+        "b1e202c8-ddeb-43ca-9317-8100821b7aef",
+        "b18cc930-c6b6-4333-9976-4f8975766c57"
+      ],
+      "snapshot_independent_of_live_state": true,
+      "files": [
+        {
+          "path": "m-6c2befc1\\latest-failed\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_CONFIG.json",
+          "sha256": "d30a8502781b3c2bdb8db06695692e2f37288618cd80cee2e274842b1e2d2e64"
+        },
+        {
+          "path": "m-6c2befc1\\latest-failed\\20261019_experiment\\subject-235815\\protocol-data\\SCHEMA.json",
+          "sha256": "a04d072573e004f04dd5ea53746cd30382780c5b0c4221231d1304a026a21f98"
+        },
+        {
+          "path": "m-6c2befc1\\latest-failed\\20261019_experiment\\subject-235815\\protocol-data\\FAKE_SUBJECT_120000_LOG.json",
+          "sha256": "ed828d3ca56eafb2b1983743706c21bb9a9618c1784f9b52947693e198109d6c"
+        },
+        {
+          "path": "m-6c2befc1\\latest-failed\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_LOG.jsonl",
+          "sha256": "2f49d999bf3c8f718556e7c3e37c7ca28d834f7cf88c455dc1a23a62431c4cb3"
+        }
+      ]
+    },
+    {
+      "case": "clamped",
+      "passed": true,
+      "fake_controller_generation": "f97965d7-1ea2-4890-8842-25cc08d6e62c",
+      "fake_session_id": "e9e78801-ed01-45ab-b178-eeb6fd697fed",
+      "admitted_commands": [
+        "281e693c-27bd-493b-b5d9-cbee1d7f4c86"
+      ],
+      "snapshot_independent_of_live_state": true,
+      "files": [
+        {
+          "path": "m-6c2befc1\\clamped\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_CONFIG.json",
+          "sha256": "54c1ce25b21744189b099bb0d562f96bb9ea0fdde12699109424dfe45e6d8c7c"
+        },
+        {
+          "path": "m-6c2befc1\\clamped\\20261019_experiment\\subject-235815\\protocol-data\\SCHEMA.json",
+          "sha256": "2b214aa0994bc3ec54e4048730d82f7ca718528275a31461100d0be07777afde"
+        },
+        {
+          "path": "m-6c2befc1\\clamped\\20261019_experiment\\subject-235815\\protocol-data\\FAKE_SUBJECT_120000_LOG.json",
+          "sha256": "53adec47b06a40704628119b6316da30a5e47e29e524013e4dc3039da436b27f"
+        },
+        {
+          "path": "m-6c2befc1\\clamped\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_LOG.jsonl",
+          "sha256": "4abc5e8048c719dcd40dad84c20cc1cf1e3ed7fe55e6ef72d44774a52835b565"
+        }
+      ]
+    },
+    {
+      "case": "partial",
+      "passed": true,
+      "fake_controller_generation": "1348461f-2921-4f1b-bece-23fbd33562d7",
+      "fake_session_id": "285ae473-cf2d-45e4-8397-c59f169baf70",
+      "admitted_commands": [
+        "f1d872e4-6785-4f80-9b88-755c968c74e2"
+      ],
+      "snapshot_independent_of_live_state": true,
+      "files": [
+        {
+          "path": "m-6c2befc1\\partial\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_CONFIG.json",
+          "sha256": "cc4e417ee949ec4b656320fbaa1842aba41e1102b60a1d380621d724cb833880"
+        },
+        {
+          "path": "m-6c2befc1\\partial\\20261019_experiment\\subject-235815\\protocol-data\\SCHEMA.json",
+          "sha256": "cb93dcc4710de6cf4b98fef840c3b58f78f979066053824e5b05a5e1dd257fcc"
+        },
+        {
+          "path": "m-6c2befc1\\partial\\20261019_experiment\\subject-235815\\protocol-data\\FAKE_SUBJECT_120000_LOG.json",
+          "sha256": "0ca243a53cb0f84244bae16d540c103d9fa3f5ef1f55101280544cd1290ddcca"
+        },
+        {
+          "path": "m-6c2befc1\\partial\\20261019_experiment\\subject-235815\\protocol-data\\SESSION_LOG.jsonl",
+          "sha256": "0c0708011a3d04a8ffc442bf5bbc0ec5b73bd48d29ea9be87160d1db98c87d19"
+        }
+      ]
+    }
+  ]
+}

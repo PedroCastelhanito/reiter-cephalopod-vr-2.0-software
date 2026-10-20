@@ -15,6 +15,33 @@ def message_dict(message: Message) -> dict[str, object]:
     return MessageToDict(message, preserving_proto_field_name=True)
 
 
+def projector_brightness_schema() -> dict[str, object]:
+    """Describe observed SDK evidence separately from calibration or live measurement."""
+    return {
+        "schema_version": 1,
+        "scope": "latest admitted adjustment in this controller lifetime; all discovered USB interfaces, not display assignments",
+        "unknown": "no observed adjustment; requested current and readbacks absent",
+        "fields": {
+            "controller_generation": "exact observer process generation",
+            "command_id": "exact accepted operator/parent operation UUID",
+            "configuration_revision": "revision at adjustment admission",
+            "requested_ma": "requested equal RGB LED current in mA; not measured luminance",
+            "started_monotonic_ns": "host monotonic ns at admission",
+            "completed_monotonic_ns": "host monotonic ns at operator outcome observation",
+            "started_utc": "UTC observation time at admission",
+            "completed_utc": "UTC observation time at operator outcome",
+            "outcome": "unknown | succeeded | failed | unconfirmed",
+            "native_cleanup_confirmed": "exact process/job/pipe and supervisor release; not USB state or RGB current proof",
+            "sdk_result": "null if no complete validated helper result; otherwise requested_ma, discovered_interfaces, success and interfaces",
+            "sdk_result.interfaces": "ordered index/name/id, readback_ma RGB or null, clamped bool or null, confirmed, release_confirmed, error; every discovered interface accounted",
+            "diagnostics": "human SDK diagnostics tail, at most6000 characters",
+            "error": "overall failure/uncertainty detail; empty on success",
+        },
+        "clamp": "request above1023 with all RGB readbacks1023 is explicitly clamped, not requested=applied",
+        "freshness": "historical observation; external TI tools or power changes are not monitored",
+    }
+
+
 def software_provenance(
     attempt: Attempt, supervisor: SupervisorState
 ) -> dict[str, object]:
