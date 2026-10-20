@@ -6168,3 +6168,13 @@ Per-command core.longpaths=true staged the retained historical fixture path afte
 the default Git path limit failed; no persistent Git setting changed. Evidence:
 reports/runtime-evidence-2026-10-20/brightness-helper/staged-validation.json.
 Concurrent SpikeGLX/preview work remains outside the brightness commit.
+
+### 2026-10-20 - brightness helper committed and synchronized
+
+[gui] [controller] [supervisor] Completed brightness-supervised-helper in
+f3496e28ec23eb8ac7c74a6ccc6bc254d4b1c3bf and pushed main to origin; local and
+remote-tracking revisions match. E08/G01/E04, supervised lifecycle, SESSION_CONFIG
+brightness evidence and SCHEMA descriptions are included. Exact staged tests:
+255 passed/1 skipped; reviewed native and writer evidence retains its stated limits.
+Removed completed implementation task; projector-brightness-native remains open
+for actual SDK/USB/LED acceptance. Concurrent chat edits remain unstaged and intact.

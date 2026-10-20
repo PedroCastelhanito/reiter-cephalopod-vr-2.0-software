@@ -10,8 +10,6 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `brightness-supervised-helper` [gui] [controller] [supervisor] Implement owner-approved E08 brightness helper lifecycle and persist brightness evidence in experiment output metadata. Owner: rig validation chat, Sol implementation/Astra review. Done when architecture/contracts, focused tests, evidence and commit/sync agree. — [Assessment](reports/runtime.md)
-
 - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).
 
 Completed open-loop endurance, bounded camera-codec lossless checks,
