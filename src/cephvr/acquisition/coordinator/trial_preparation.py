@@ -156,6 +156,36 @@ class TrialPreparation:
                 session.trial = trial
                 self._bind_session_rings(session, trial, deadline_ns, prior_complete)
             await self._prepare_workers(session, trial, request, deadline_ns)
+            if not session.required_cameras:
+                report = control.ReadyReport(
+                    context=control.ReportContext(
+                        backend=self.identity.backend,
+                        work=trial.work,
+                        operation=trial.preparation,
+                    ),
+                    configuration_revision=trial.configuration_revision,
+                    required_checks_passed=True,
+                    resolved_settings=control.BackendSettings(
+                        backend_name="acquisition",
+                        enabled=True,
+                        acquisition=session.confirmed_settings,
+                    ),
+                )
+                receipt = await self.controller.report_lifecycle(
+                    control.LifecycleReport(ready=report), deadline_ns=deadline_ns
+                )
+                if (
+                    receipt.result != control.COMMAND_RESULT_ACCEPTED
+                    or self.session_slot.current is not session
+                    or session.trial is not trial
+                    or session.interrupted
+                    or session.setup_cancelled
+                    or self.clock() > deadline_ns
+                ):
+                    raise RuntimeError("camera-free trial Ready was rejected or fenced")
+                trial.ready_report = report
+                trial.ready_reported = True
+                trial.ready_confirmed.set()
             remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
                 raise TimeoutError("trial readiness missed its original deadline")

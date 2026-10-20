@@ -31,6 +31,7 @@ class BoundaryReservation:
     behavioral_selected: bool
     tracking_selected: bool
     eye_tracking_selected: bool
+    trial_state_selected: bool
 
 
 class PulseExecutor:
@@ -71,6 +72,7 @@ class PulseExecutor:
                 existing.behavioral_selected != ("behavioral" in roles)
                 or (existing.tracking_selected != ("tracking" in roles))
                 or (existing.eye_tracking_selected != ("eye_tracking" in roles))
+                or (existing.trial_state_selected != ("trial_state" in roles))
             ):
                 raise ValueError("current-trial ON and OFF masks must match")
         if boundary_ns in self._reservations:
@@ -125,6 +127,7 @@ class PulseExecutor:
             "behavioral" in roles,
             "tracking" in roles,
             "eye_tracking" in roles,
+            "trial_state" in roles,
         )
         self._reservations[boundary_ns] = reservation
         return reservation
@@ -168,6 +171,7 @@ class PulseExecutor:
             behavioral_selected="behavioral" in roles,
             tracking_selected="tracking" in roles,
             eye_tracking_selected="eye_tracking" in roles,
+            trial_state_selected="trial_state" in roles,
             outcome=microcontroller_pb2.PULSE_COMMAND_OUTCOME_NOT_DISPATCHED,
         )
         if boundary_ns is not None:
@@ -194,6 +198,7 @@ class PulseExecutor:
             "behavioral_selected": "1" if "behavioral" in roles else "0",
             "tracking_selected": "1" if "tracking" in roles else "0",
             "eye_tracking_selected": "1" if "eye_tracking" in roles else "0",
+            "trial_state_selected": "1" if "trial_state" in roles else "0",
         }
         before_exchange = self._channel.last_exchange
         next_state = current_state
@@ -330,6 +335,7 @@ def _matches_reservation(
         and item.behavioral_selected == ("behavioral" in roles)
         and item.tracking_selected == ("tracking" in roles)
         and item.eye_tracking_selected == ("eye_tracking" in roles)
+        and item.trial_state_selected == ("trial_state" in roles)
     )
 
 

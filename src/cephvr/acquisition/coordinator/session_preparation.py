@@ -37,6 +37,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.software import software_version
 
 
 class SessionPreparation:
@@ -89,7 +90,7 @@ class SessionPreparation:
             and item.device.HasField("frame_timing")
             and item.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
         )
-        if not active_roles:
+        if not active_roles and not settings.pulses.trial_state_enabled:
             return
         if not settings.pulses.HasField("port") or not settings.pulses.port:
             raise ValueError("external-trigger cameras require a configured MCU port")
@@ -266,6 +267,23 @@ class SessionPreparation:
             raise RuntimeError(
                 "one or more acquisition camera resolutions were rejected"
             )
+        if not records:
+            report = wire.AcquisitionResolutionReport(
+                source=self.identity.backend,
+                work=session.work,
+                operation=session.operation,
+                requested_configuration_revision=session.requested_configuration_revision,
+            )
+            if session.pulse_resolution is not None:
+                report.pulses.CopyFrom(session.pulse_resolution)
+            session.resolved_report = report
+            receipt = await self.controller.report_acquisition_resolution(
+                report, deadline_ns=deadline_ns
+            )
+            self._require_live(session, deadline_ns)
+            if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                raise RuntimeError("controller rejected camera-free Setup resolution")
+            session.resolution_reported = True
 
     async def prepare_workers(
         self,
@@ -297,6 +315,34 @@ class SessionPreparation:
                 session, owner, resource, deadline_ns=deadline_ns
             ),
         )
+        if not records:
+            self._require_live(session, deadline_ns)
+            if session.confirmed_settings is None or session.confirmed_revision is None:
+                raise RuntimeError("camera-free Ready requires confirmed Setup")
+            report = control.ReadyReport(
+                software_version=software_version(),
+                context=control.ReportContext(
+                    backend=self.identity.backend,
+                    work=session.work,
+                    operation=session.operation,
+                ),
+                configuration_revision=session.confirmed_revision,
+                required_checks_passed=True,
+                resolved_settings=control.BackendSettings(
+                    backend_name="acquisition",
+                    enabled=True,
+                    acquisition=session.confirmed_settings,
+                ),
+                cleanup_resources=session.cleanup_resources,
+            )
+            receipt = await self.controller.report_lifecycle(
+                control.LifecycleReport(ready=report), deadline_ns=deadline_ns
+            )
+            self._require_live(session, deadline_ns)
+            if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                raise RuntimeError("controller rejected camera-free Ready")
+            session.ready_report = report
+            session.ready_confirmed.set()
 
     def _require_live(self, session: SessionRecord, deadline_ns: int) -> None:
         if (

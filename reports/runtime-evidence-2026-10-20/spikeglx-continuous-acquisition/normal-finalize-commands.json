@@ -1,0 +1,18 @@
+[
+  {
+    "command": "NewSession",
+    "command_id": "f0eec2cc-c4b8-43cc-81c9-8c75e515ed35",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  {
+    "command": "UpdateConfiguration",
+    "command_id": "e50b5acb-d510-4eb7-b641-89e933ad1437",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+]

@@ -46,12 +46,12 @@ _APPLY_ORDER = {
     "EnableResend": 6,
 }
 _COUNTERS = {
-    "buffer_underruns": "Statistic_Buffer_Underrun_Count",
-    "failed_buffers": "Statistic_Failed_Buffer_Count",
-    "missed_frames": "Statistic_Missed_Frame_Count",
-    "resend_requests": "Statistic_Resend_Request_Count",
-    "resend_packets": "Statistic_Resend_Packet_Count",
-    "resynchronizations": "Statistic_Resynchronization_Count",
+    "buffer_underruns": ("Statistic_Buffer_Underrun_Count", {"gige"}),
+    "failed_buffers": ("Statistic_Failed_Buffer_Count", {"usb3", "gige"}),
+    "missed_frames": ("Statistic_Missed_Frame_Count", {"usb3"}),
+    "resend_requests": ("Statistic_Resend_Request_Count", {"gige"}),
+    "resend_packets": ("Statistic_Resend_Packet_Count", {"gige"}),
+    "resynchronizations": ("Statistic_Resynchronization_Count", {"usb3"}),
 }
 
 
@@ -120,10 +120,20 @@ def apply_transport_settings(
     return TransportSettings(tuple(resolved.values()))
 
 
-def read_transport_counters(camera: Any) -> TransportCounters:
+def read_transport_counters(
+    camera: Any, interface: TransportInterface
+) -> TransportCounters:
     node_map = camera.GetStreamGrabberNodeMap()
     values: dict[str, int | None] = {}
-    for field, node_name in _COUNTERS.items():
+    unsupported = frozenset(
+        field
+        for field, (_, interfaces) in _COUNTERS.items()
+        if interface not in interfaces
+    )
+    for field, (node_name, _) in _COUNTERS.items():
+        if field in unsupported:
+            values[field] = None
+            continue
         value = read_value(node_map, node_name)
         values[field] = (
             value
@@ -132,7 +142,7 @@ def read_transport_counters(camera: Any) -> TransportCounters:
             and 0 <= value < (1 << 64)
             else None
         )
-    return TransportCounters(**values)
+    return TransportCounters(**values, unsupported_fields=unsupported)
 
 
 def _validate_value(

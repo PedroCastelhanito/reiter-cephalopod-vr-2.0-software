@@ -27,6 +27,7 @@ def started_satisfied(
     allowance_ns: int,
     camera_roles: Set[int] = frozenset(),
     external_camera_roles: Set[int] = frozenset(),
+    trial_state_required: bool = False,
     allowed_producers: Set[ProcessKey] = frozenset(),
     visual_stimulus_outputs: Set[str] = frozenset(),
     source_producers: Mapping[str, ProcessKey] | None = None,
@@ -118,10 +119,11 @@ def started_satisfied(
     expected: Set[int | str]
     if role == "acquisition":
         expected = camera_roles
-        if external_camera_roles:
+        if external_camera_roles or trial_state_required:
             pulse = report.acquisition_pulse_on
             if (
-                pulse.command != pulses.PULSE_BOUNDARY_COMMAND_ON
+                not _trial_level_satisfied(pulse, trial_state_required, running=True)
+                or pulse.command != pulses.PULSE_BOUNDARY_COMMAND_ON
                 or pulse.outcome != pulses.PULSE_COMMAND_OUTCOME_APPLIED
                 or not pulse.applied
                 or not pulse.HasField("scheduled_boundary_monotonic_ns")
@@ -144,6 +146,13 @@ def started_satisfied(
         expected = visual_stimulus_outputs
     else:
         expected = {"tracking"}
+    if role == "acquisition" and not expected and trial_state_required:
+        return (
+            not observed
+            and report.actual_start_monotonic_ns
+            == report.acquisition_pulse_on.acknowledged_monotonic_ns
+            and not report.acquisition_pulse_on.eye_tracking_selected
+        )
     return bool(expected) and observed == expected
 
 
@@ -158,6 +167,7 @@ def stopped_satisfied(
     expected_sources: Set[str],
     allowed_producers: Set[ProcessKey],
     external_camera_roles: Set[int] = frozenset(),
+    trial_state_required: bool = False,
     source_producers: Mapping[str, ProcessKey] | None = None,
 ) -> bool:
     """All actual local admission cutoffs; interruption is not a fabricated cutoff."""
@@ -197,12 +207,20 @@ def stopped_satisfied(
         ):
             return False
         sources.add(evidence.source_id)
-    if not expected_sources or sources != expected_sources:
+    trial_state_only = (
+        report.context.backend.backend_name == "acquisition"
+        and trial_state_required
+        and not expected_sources
+    )
+    if (not expected_sources and not trial_state_only) or sources != expected_sources:
         return False
-    if external_camera_roles:
+    if external_camera_roles or trial_state_required:
         pulse = report.acquisition_pulse_off
+        if trial_state_only and pulse.eye_tracking_selected:
+            return False
         if (
             report.context.backend.backend_name != "acquisition"
+            or not _trial_level_satisfied(pulse, trial_state_required, running=False)
             or pulse.command != pulses.PULSE_BOUNDARY_COMMAND_OFF
             or pulse.outcome != pulses.PULSE_COMMAND_OUTCOME_APPLIED
             or not pulse.applied
@@ -343,3 +361,18 @@ def outputs_satisfied(
         ):
             return False
     return True
+
+
+def _trial_level_satisfied(
+    evidence: pulses.PulseCommandEvidence, required: bool, *, running: bool
+) -> bool:
+    if not required:
+        return not evidence.trial_state_selected
+    output = evidence.resulting_state.trial_state
+    return bool(
+        evidence.trial_state_selected
+        and output.HasField("enabled")
+        and output.enabled
+        and output.HasField("running")
+        and output.running == running
+    )

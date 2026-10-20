@@ -12,7 +12,7 @@ from cephvr.shared.config import (
     policy_digest,
 )
 
-_POLICY_SHA256 = "9cc7a32549c505170eee117344f1efb2ba9275306c88afe387a812956e8ff425"
+_POLICY_SHA256 = "0378c7c3addc5fcd174b4807c2288992b07b9d5f36cf62ef6bd5f434b34a3226"
 
 _CONFIG_KEYS = frozenset(
     [
@@ -43,7 +43,7 @@ _EXPECTED: dict[str, object] = {
     "microcontroller.command_format": "newline_ascii",
     "microcontroller.acknowledgement": "after_application_with_state",
     "microcontroller.argument_style": "named_fields",
-    "microcontroller.output_field_names": "camera_roles",
+    "microcontroller.output_field_names": "camera_roles_and_trial_state",
     "microcontroller.text_field_limits": "message_bound_only",
     "microcontroller.field_values": "tokens_and_numbers",
     "microcontroller.request_ids": "connection_id_counter",
@@ -64,7 +64,7 @@ _EXPECTED: dict[str, object] = {
     "microcontroller.pulse_polarity": "active_high",
     "microcontroller.inactive_level": "low",
     "microcontroller.protocol_compatibility": "exact_version",
-    "microcontroller.protocol_version": 5,
+    "microcontroller.protocol_version": 6,
     "microcontroller.capability_source": "firmware",
     "microcontroller.capability_query": "CAPS",
     "microcontroller.capability_reply": "single_bounded_reply",
@@ -95,7 +95,8 @@ _EXPECTED: dict[str, object] = {
     "microcontroller.clock_source": "local",
     "microcontroller.duty_cycle": Decimal("0.5"),
     "microcontroller.communication_loss_action": "stop_pulses",
-    "microcontroller.output_mapping": "per_camera",
+    "microcontroller.output_mapping": "per_camera_and_trial_state",
+    "microcontroller.trial_state_behavior": "high_during_released_trial_low_on_stop",
 }
 
 
@@ -107,11 +108,11 @@ def load_microcontroller_pair(root: Path) -> LoadedPair:
         allowed_policy_keys=frozenset(_EXPECTED),
         expected_policy=_EXPECTED,
     )
-    if pair.policy_version != 4:
-        raise ConfigurationError("Microcontroller policy_version must be 4")
+    if pair.policy_version != 5:
+        raise ConfigurationError("Microcontroller policy_version must be 5")
     if policy_digest(pair.policy) != _POLICY_SHA256:
         raise ConfigurationError(
-            "Microcontroller fixed-policy declarations differ from version 4"
+            "Microcontroller fixed-policy declarations differ from version 5"
         )
     if pair.config["microcontroller"].get("projector_flip_enabled", False):
         raise ConfigurationError(

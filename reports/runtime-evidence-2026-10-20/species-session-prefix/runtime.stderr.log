@@ -1,0 +1,2 @@
+GUI relaunch did not reach PlanLaunch; a later explicit request may create a new attempt: the exact prior GUI process is not released
+Operator confirmed runtime replacement; terminating application job.

@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-20",
+  "file": "protocols\\gaussian_scale15_bottom_linked_3_trials.json",
+  "validation": "GUI protocol validator, canonical parser and full epoch expansion pass",
+  "epoch_counts": [
+    1,
+    200,
+    200
+  ],
+  "duration_seconds": [
+    900.0,
+    3000.0,
+    3000.0
+  ],
+  "total_seconds": 6900.0,
+  "random_direction_counts": [
+    {
+      "trial": 2,
+      "negative": 54,
+      "positive": 46,
+      "seed": 20261021
+    },
+    {
+      "trial": 3,
+      "negative": 59,
+      "positive": 41,
+      "seed": 20261022
+    }
+  ],
+  "asset_exists": true,
+  "texture_scale_mm": 15,
+  "continuity": "Same instance and asset IDs, reset=false, holds in every static epoch",
+  "limits": "No native GUI load, Setup, physical speed/rotation or rig run performed.",
+  "source_revision": "fffcd7df0bfc9e371549184a013d1ae127e5d883 (working tree includes pre-existing changes)"
+}

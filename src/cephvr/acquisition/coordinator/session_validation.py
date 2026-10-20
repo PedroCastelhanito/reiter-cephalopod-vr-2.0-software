@@ -48,8 +48,10 @@ def validate_setup_request(
     ):
         raise ValueError("acquisition file policy version differs from loaded policy")
     active = enabled_cameras_from_settings(settings)
-    if not active:
-        raise ValueError("acquisition Setup requires at least one enabled camera")
+    if not active and not settings.pulses.trial_state_enabled:
+        raise ValueError(
+            "acquisition Setup requires a camera or the Trial state output"
+        )
     tracking_required = tracking_backend_enabled(request.plan)
     if tracking_required and (
         identity.tracking.role != "tracking" or not identity.tracking.generation

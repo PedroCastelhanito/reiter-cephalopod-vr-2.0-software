@@ -27,12 +27,21 @@ is not runtime or rig validation (E15).
 <a id="a01"></a>
 ### A01 — Camera acquisition and recording ownership
 
-**Status:** Accepted · **Revision:** 19
+**Status:** Accepted · **Revision:** 20
 
 - The acquisition backend owns camera capture, video encoding and camera video files,
   including trial-bound recording and verified file closure under E05/E11. The
   experiment controller keeps session/trial timing authority; camera output closure
   and failures follow the shared lifecycle and supervisor rules.
+- Setup derives active camera roles from the saved Use selection and actual demand:
+  video saving or an enabled backend consuming that camera (currently Tracking).
+  An unsaved camera with no backend consumer starts no worker/capture or trigger
+  pulses and reserves no camera files. Manual connection/preview does not create
+  session demand. Preserve operator Use/device/save settings across Setup readback;
+  the prepared session records the effective roles. A07 metadata remains mandatory
+  for cameras active for backend processing with video Off. When no cameras are
+  needed, acquisition participates only if the independent A11 Trial state output
+  is enabled; E05 governs its acknowledgement-based lifecycle.
 - Capture and recording run as separate threads in one camera worker process per
   camera; FFmpeg encodes in its own subprocess. A02 defines the process layout, A03
   frame transfer.
@@ -311,13 +320,14 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 64
+**Status:** Accepted · **Revision:** 65
 
 **Files**
 
 - Every active experiment camera always saves trial-scoped acquisition metadata to
   `<prefix>_<role>_cam_frames.jsonl` (`behavioral_cam`, `tracking_cam`,
-  `eye_tracking_cam`), independently of video saving. `save_video` controls only
+  `eye_tracking_cam`), independently of video saving. A01 determines camera participation. For an active
+  camera, `save_video` controls only
   `<prefix>_<role>_cam.mp4` and its encoding/capture resources. Metadata remains
   required when video is disabled, with no fabricated encoded-frame mappings or
   recording-drop claims for intentionally disabled video. Eye trigger admission
@@ -378,7 +388,10 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   under E06. The [diagnostic contract](../../contracts/acquisition/diagnostics.md)
   owns catalogue and delivery; no per-frame alert or logging service. Backend status
   exposes each camera's latest transport summary after trial closure, without further
-  SDK polling.
+  SDK polling. Interface-inapplicable counters remain null without warning only
+  when both boundary reads establish that applicability. SDK read failures, missing
+  applicable counters and noncomparable/reset observations still warn and name the
+  affected fields; never substitute zero for unavailable evidence.
 
 **In-process accounting**
 
@@ -940,7 +953,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 50
+**Status:** Accepted · **Revision:** 51
 
 **Board and firmware**
 
@@ -965,10 +978,11 @@ hardware information and later implementation; no new deferral is implied.
   or pulses. Failed/uncertain upload reports failure; unresolved helper cleanup blocks
   Setup and manual device access until exact cleanup succeeds. Setup still rejects
   incompatible firmware. Native flashing and electrical acceptance remain E15 rig work.
-- Serial protocol version is integer **5**, separate from firmware release, and must
+- Serial protocol version is integer **6**, separate from firmware release, and must
   match exactly at Setup; future wire changes increment published versions. Firmware,
   not host monitoring alone, implements A10's watchdog.
-- Version 5 controls independent Behavioral, Tracking and Eye tracking outputs.
+- Version 6 controls independent Behavioral, Tracking and Eye tracking outputs plus
+  the configured Trial state level.
   Externally triggered Eye requires an explicit unique pin, camera FrameStart line and rate; never map
   it onto another camera output or choose these values by discovery. Host masks,
   readback, diagnostic identity, boundary evidence and cleanup include Eye.
@@ -1105,7 +1119,7 @@ hardware information and later implementation; no new deferral is implied.
   never silently reconfiguring or adopting a new rate. Nominal rate is not measured
   oscillator accuracy; preserve timing precision without inventing a rounding
   tolerance.
-- Protocol 5 CONFIGURE validates the complete update before application and preserves
+- Protocol 6 CONFIGURE validates the complete update before application and preserves
   unchanged outputs' phase, HIGH/LOW state and running state without rewriting their
   pins or timer state. Only changed outputs stop/apply/restart when previously running
   and still enabled; release all changed old pins LOW before assigning new ones.
@@ -1124,8 +1138,15 @@ hardware information and later implementation; no new deferral is implied.
   work. Legacy wire/snapshot pin fields may remain
   inert for compatibility; they cannot enable the input. V20 presentation modes do
   not require an MCU input. Firmware implements output diagnostics only.
-- Trial state is an active-high output; camera trigger enablement/rates retain A10's
-  owner. Disabled outputs retain draft assignments and cannot run diagnostics.
+- Trial state is active-high. During an enabled acquisition session, its enabled
+  output joins the existing released-trial ON/OFF mask: HIGH on application at T,
+  held HIGH until normal end or Abort/interruption, then LOW. It remains independent
+  of camera trigger modes, stays LOW during previews/gaps, and uses the same
+  watchdog, exact boundary cancellation and truthful stop evidence. Setup and each
+  trial preparation verify the configured pin/enablement; unconfirmed transitions
+  fail the existing lifecycle gates under E06. This adds no camera-free acquisition
+  mode or physical-edge timing guarantee. Camera rates retain A10's owner.
+  Disabled outputs retain draft assignments and cannot run diagnostics.
   Per-output tests target one assigned pin for external observation in SpikeGLX;
   camera tests use the rate configured in Cameras. Controller owns one diagnostic
   on its serial connection in

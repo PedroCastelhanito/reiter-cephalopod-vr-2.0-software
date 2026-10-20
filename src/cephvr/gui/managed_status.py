@@ -142,6 +142,7 @@ def dashboard_view(
         connected=True,
         has_control=state.control.holder_client_id == client_id,
         configuration_wired=configuration_wired,
+        cleanup_confirmed=state.session.cleanup_confirmed,
         trial_index=trial_index,
         trial_count=trial_count,
         elapsed_s=elapsed,

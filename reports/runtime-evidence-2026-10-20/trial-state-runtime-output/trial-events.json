@@ -1,0 +1,274 @@
+[
+  {
+    "host_monotonic_ns": 478701128461300,
+    "kind": "UpdateConfiguration",
+    "value": {
+      "command_id": "055dbd51-7f39-471d-8c5e-9044dbee1980",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478705773342700,
+    "kind": "Setup",
+    "value": {
+      "command_id": "7ee3c5ba-90ad-4be3-9e61-d7a44dd5f312",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478705776319300,
+    "kind": "normal_ready",
+    "value": {
+      "observation": {
+        "port": "COM8",
+        "connection_id": "35f7d76d-dd1d-445d-a78e-39c40e8bba2d",
+        "request_id": "35f7d76d-dd1d-445d-a78e-39c40e8bba2d-8",
+        "observed_monotonic_ns": "478704993721900",
+        "state": {
+          "configuration_valid": true,
+          "watchdog_stopped": false,
+          "watchdog_ms": 3000,
+          "behavioral": {
+            "enabled": true,
+            "running": false,
+            "pin": "D11",
+            "applied_frequency_hz": 30.0
+          },
+          "tracking": {
+            "enabled": false,
+            "running": false
+          },
+          "eye_tracking": {
+            "enabled": false,
+            "running": false
+          },
+          "trial_state": {
+            "enabled": true,
+            "running": false,
+            "pin": "D12"
+          }
+        },
+        "capabilities": {
+          "protocol_version": 6,
+          "firmware": "cephvr2_uno_6",
+          "pins": [
+            "D2",
+            "D3",
+            "D4",
+            "D5",
+            "D6",
+            "D7",
+            "D8",
+            "D9",
+            "D10",
+            "D11",
+            "D12",
+            "D13"
+          ],
+          "minimum_requested_hz": 0.1,
+          "maximum_requested_hz": 100.0,
+          "minimum_watchdog_ms": 500,
+          "maximum_watchdog_ms": 10000,
+          "rising_edge_input_pins": [
+            "D2",
+            "D3"
+          ]
+        },
+        "capabilities_observed_monotonic_ns": "478701823416100",
+        "unmatched_replies": "0",
+        "malformed_replies": "0"
+      }
+    }
+  },
+  {
+    "host_monotonic_ns": 478707854236500,
+    "kind": "StartSession",
+    "value": {
+      "command_id": "445145fe-3794-4978-ac06-190873e1681e",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478707857516300,
+    "kind": "normal_running",
+    "value": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  {
+    "host_monotonic_ns": 478768943208700,
+    "kind": "normal_ended",
+    "value": {}
+  },
+  {
+    "host_monotonic_ns": 478770968365800,
+    "kind": "NewSession",
+    "value": {
+      "command_id": "7771b1cb-cff7-4792-82d0-1c3634c5305a",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478770983058700,
+    "kind": "UpdateConfiguration",
+    "value": {
+      "command_id": "d702ce9b-74e6-45b6-b43b-efd4a948296a",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478775597823500,
+    "kind": "Setup",
+    "value": {
+      "command_id": "c7e7a6bd-df6f-4eab-a357-205159eb5bed",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478775600490400,
+    "kind": "abort_ready",
+    "value": {
+      "observation": {
+        "port": "COM8",
+        "connection_id": "9b539a50-c2c3-4f8d-a8f5-f5051e86a29a",
+        "request_id": "9b539a50-c2c3-4f8d-a8f5-f5051e86a29a-8",
+        "observed_monotonic_ns": "478774880585600",
+        "state": {
+          "configuration_valid": true,
+          "watchdog_stopped": false,
+          "watchdog_ms": 3000,
+          "behavioral": {
+            "enabled": true,
+            "running": false,
+            "pin": "D11",
+            "applied_frequency_hz": 30.0
+          },
+          "tracking": {
+            "enabled": false,
+            "running": false
+          },
+          "eye_tracking": {
+            "enabled": false,
+            "running": false
+          },
+          "trial_state": {
+            "enabled": true,
+            "running": false,
+            "pin": "D12"
+          }
+        },
+        "capabilities": {
+          "protocol_version": 6,
+          "firmware": "cephvr2_uno_6",
+          "pins": [
+            "D2",
+            "D3",
+            "D4",
+            "D5",
+            "D6",
+            "D7",
+            "D8",
+            "D9",
+            "D10",
+            "D11",
+            "D12",
+            "D13"
+          ],
+          "minimum_requested_hz": 0.1,
+          "maximum_requested_hz": 100.0,
+          "minimum_watchdog_ms": 500,
+          "maximum_watchdog_ms": 10000,
+          "rising_edge_input_pins": [
+            "D2",
+            "D3"
+          ]
+        },
+        "capabilities_observed_monotonic_ns": "478771709292400",
+        "unmatched_replies": "0",
+        "malformed_replies": "0"
+      }
+    }
+  },
+  {
+    "host_monotonic_ns": 478777655606700,
+    "kind": "StartSession",
+    "value": {
+      "command_id": "6c96d3e4-ab0e-4a2c-85d7-ec450c602419",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478777659028100,
+    "kind": "abort_running",
+    "value": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  {
+    "host_monotonic_ns": 478782014775100,
+    "kind": "AbortNow",
+    "value": {
+      "command_id": "df181090-006a-4a57-b933-4ab8d087e06d",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478782018302900,
+    "kind": "abort_ended",
+    "value": {}
+  },
+  {
+    "host_monotonic_ns": 478784030811200,
+    "kind": "NewSession",
+    "value": {
+      "command_id": "ed08baf3-ce02-4eb0-828b-ac64fd43e14c",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478784122886500,
+    "kind": "UpdateConfiguration",
+    "value": {
+      "command_id": "7199c2f8-5791-41e4-8896-58e207e19d1e",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478784130196700,
+    "kind": "restoration",
+    "value": {
+      "runtime_equal": true,
+      "saved_bytes_equal": true
+    }
+  }
+]

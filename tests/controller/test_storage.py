@@ -10,11 +10,37 @@ from typing import Literal
 import pytest
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.metadata.files import session_subject_label
 from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.metadata.types import MetadataWrite as _MetadataWrite
 from cephvr.controller.metadata.types import StorageError
 from cephvr.controller.metadata.writer import MetadataWriter
 from tests.controller.support_components import _reservation
+
+
+@pytest.mark.parametrize(
+    ("subject", "species", "expected"),
+    [
+        ("0001", "Sepia Pharaonis", "SP0001"),
+        ("0001", "  sepia   pharaonis  ", "SP0001"),
+        ("0002", "Sepia Latimanus", "SL0002"),
+        ("0003", "Sepioteuthis lessoniana", "SL0003"),
+        ("SP0001", "Sepia Pharaonis", "SP0001"),
+        ("0001", "", "0001"),
+        ("legacy", "unknown", "legacy"),
+        ("0001", "? unknown", "0001"),
+    ],
+)
+def test_session_subject_species_initials(
+    subject: str, species: str, expected: str
+) -> None:
+    assert session_subject_label(subject, species) == expected
+
+
+@pytest.mark.parametrize("subject", ["", "  ", "../"])
+def test_species_prefix_does_not_make_an_invalid_subject_valid(subject: str) -> None:
+    with pytest.raises(StorageError, match="safe nonempty"):
+        session_subject_label(subject, "Sepia Pharaonis")
 
 
 def _write(

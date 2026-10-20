@@ -37,21 +37,32 @@ def collect_transport_summary(
     except BaseException:
         current = None
     result: dict[str, int | None] = {}
+    unsupported = (
+        start.unsupported_fields & current.unsupported_fields
+        if start is not None and current is not None
+        else frozenset()
+    )
     for field in TRANSPORT_COUNTER_FIELDS:
         first = getattr(start, field) if start is not None else None
         last = getattr(current, field) if current is not None else None
         result[field] = (
             last - first
-            if isinstance(first, int) and isinstance(last, int) and last >= first
+            if type(first) is int and type(last) is int and last >= first
             else None
         )
     observed_ns = clock_ns()
-    if any(value is None for value in result.values()):
+    unavailable = [
+        field
+        for field, value in result.items()
+        if value is None and field not in unsupported
+    ]
+    if unavailable:
         warning_occurrence(
             WarningOccurrence(
                 "TRANSPORT_COUNTERS_UNAVAILABLE",
                 observed_ns,
-                details="one or more SDK transport counters are unavailable or noncomparable",
+                details="SDK transport counters unavailable or noncomparable: "
+                + ", ".join(unavailable),
             )
         )
     return TransportSummary(observed_ns, result)

@@ -111,6 +111,16 @@ def activity_backends(attempt: Attempt) -> frozenset[str]:
         name
         for name in attempt.trial_participants
         if activity_requirements(attempt, name)[3]
+        or trial_state_required(attempt, name)
+    )
+
+
+def trial_state_required(attempt: Attempt, name: str) -> bool:
+    return name == "acquisition" and any(
+        item.backend_name == "acquisition"
+        and item.enabled
+        and item.acquisition.pulses.trial_state_enabled
+        for item in attempt.prepared.configuration.backends
     )
 
 

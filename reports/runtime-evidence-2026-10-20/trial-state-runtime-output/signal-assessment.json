@@ -1,0 +1,82 @@
+{
+  "method": "Official SDK fetchLatest OneBox0 channel0, int16-to-volts factor from same stream. Overlapping chunks merged by native sample index, no interpolation. HIGH threshold 2.5 V. Host snapshots identify trial phase; host time is not electrical timing authority.",
+  "sample_rate_Hz": 30303.0,
+  "unique_samples": 2514552,
+  "capture_seconds": 82.98029898029898,
+  "missing_sample_intervals": [],
+  "segments": [
+    {
+      "high": false,
+      "first_sample": 69240660,
+      "samples": 224004,
+      "duration_s": 7.392139392139392,
+      "min_V": 0.001220744,
+      "max_V": 1.836456755,
+      "median_V": 0.0036622319999999996
+    },
+    {
+      "high": true,
+      "first_sample": 69464664,
+      "samples": 1818250,
+      "duration_s": 60.002310002310004,
+      "min_V": 4.6096819369999995,
+      "max_V": 4.896861963,
+      "median_V": 4.881755256
+    },
+    {
+      "high": false,
+      "first_sample": 71282914,
+      "samples": 296708,
+      "duration_s": 9.791373791373791,
+      "min_V": 0.001678523,
+      "max_V": 1.9560896669999999,
+      "median_V": 0.0039674179999999995
+    },
+    {
+      "high": true,
+      "first_sample": 71579622,
+      "samples": 102399,
+      "duration_s": 3.3791703791703793,
+      "min_V": 4.4416770439999995,
+      "max_V": 4.894573068,
+      "median_V": 4.881907849
+    },
+    {
+      "high": false,
+      "first_sample": 71682021,
+      "samples": 73191,
+      "duration_s": 2.4153054153054154,
+      "min_V": 0.0027466739999999997,
+      "max_V": 1.444903117,
+      "median_V": 0.004882976
+    }
+  ],
+  "limits": "One normal trial and one early Abort; does not establish full-load, intertrial-gap, preview or watchdog acceptance.",
+  "settled_windows": {
+    "normal_start": {
+      "window": "100ms to1s after recorded edge",
+      "min_V": 4.868632258,
+      "max_V": 4.8944204749999995,
+      "median_V": 4.881755256
+    },
+    "normal_stop": {
+      "window": "100ms to1s after recorded edge",
+      "min_V": 0.0019837089999999997,
+      "max_V": 0.006866685,
+      "median_V": 0.00457779
+    },
+    "abort_start": {
+      "window": "100ms to1s after recorded edge",
+      "min_V": 4.8719893039999995,
+      "max_V": 4.893199731,
+      "median_V": 4.881602663
+    },
+    "abort_stop": {
+      "window": "100ms to1s after recorded edge",
+      "min_V": 0.003204453,
+      "max_V": 0.0070192779999999995,
+      "median_V": 0.004882976
+    }
+  },
+  "checks_passed": true
+}

@@ -11,7 +11,10 @@ from typing import Any
 from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.controller.configuration_access import acquisition_backends
+from cephvr.controller.configuration_access import (
+    acquisition_backends,
+    preserve_camera_selections,
+)
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.device.readback import CameraReadback
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
@@ -381,10 +384,6 @@ class AcquisitionResolution:
                 )
                 if camera_settings.HasField("enabled") and camera_settings.enabled
             )
-            if not expected_cameras:
-                raise RuntimeError(
-                    "acquisition Setup requires an explicit enabled camera"
-                )
             requested_revision = attempt.prepared.configuration_revision
             candidate = resolved_configuration(
                 attempt.prepared.configuration,
@@ -394,7 +393,8 @@ class AcquisitionResolution:
                 operation_id=attempt.setup_operations["acquisition"],
                 revision=requested_revision,
                 expected_cameras=expected_cameras,
-                expect_pulses=any(
+                expect_pulses=setting.pulses.trial_state_enabled
+                or any(
                     selected.enabled
                     and selected.device.frame_timing
                     == camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
@@ -429,8 +429,11 @@ class AcquisitionResolution:
                         "acquisition readback arrived after Setup or revision changed"
                     )
                 # C12: the candidate stays aside until acquisition accepts it.
+                accepted = preserve_camera_selections(
+                    candidate, self.configuration_state.current
+                )
                 new_revision = self.configuration_state.revision + (
-                    candidate != self.configuration_state.current
+                    accepted != self.configuration_state.current
                 )
                 confirmed = next(
                     item.acquisition
@@ -469,7 +472,7 @@ class AcquisitionResolution:
                         "acquisition readback arrived after Setup or revision changed"
                     )
                 if new_revision != self.configuration_state.revision:
-                    self.configuration_state.current.CopyFrom(candidate)
+                    self.configuration_state.current.CopyFrom(accepted)
                     self.configuration_state.revision = new_revision
                     self.projections.set_scope(
                         pb.WorkContext(session=attempt.context), new_revision

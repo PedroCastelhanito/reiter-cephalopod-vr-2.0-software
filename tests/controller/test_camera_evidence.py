@@ -291,7 +291,7 @@ def test_late_setup_warning_is_limited_to_the_just_retired_session_scope(
         runtime.projections.accept_warnings(report)
 
 
-@pytest.mark.parametrize("version", [3, 4, 5])
+@pytest.mark.parametrize("version", [3, 4, 5, 6])
 async def test_microcontroller_status_completes_exact_operator_operation(
     tmp_path: Path,
     version: int,
@@ -324,6 +324,7 @@ async def test_microcontroller_status_completes_exact_operator_operation(
     status.views.pulses.state.behavioral.running = False
     status.views.pulses.state.tracking.running = False
     status.views.pulses.state.eye_tracking.running = False
+    status.views.pulses.state.trial_state.running = False
     status.operation.command_id = child
     status.result.context.command_id = child
     status.result.complete = True
@@ -332,7 +333,7 @@ async def test_microcontroller_status_completes_exact_operator_operation(
     receipt = await runtime.report_projection("devices", status, ingress_ns=900)
 
     assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
-    assert runtime.control.operations[parent].succeeded == (version == 5)
+    assert runtime.control.operations[parent].succeeded == (version == 6)
     assert runtime.device_state.camera_operation is None
     assert runtime.projections.devices.pulses.capabilities.protocol_version == version
 

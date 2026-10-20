@@ -83,6 +83,7 @@ class TransportCounters:
 
     Camera worker supplies host observation time/run context. Adapter-specific counter
     continuity/reset rules must establish comparability before any delta is reported.
+    unsupported_fields identifies interface-inapplicable counters, not failed reads.
     """
 
     buffer_underruns: int | None
@@ -91,6 +92,7 @@ class TransportCounters:
     resend_requests: int | None
     resend_packets: int | None
     resynchronizations: int | None
+    unsupported_fields: frozenset[str] = frozenset()
 
 
 FeatureAccess = Literal["unavailable", "read_only", "read_write"]

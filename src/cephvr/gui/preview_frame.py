@@ -75,7 +75,9 @@ class PreviewFrame(QWidget):
         self.header = QWidget(self)
         self.header_layout = QVBoxLayout(self.header)
         self.header_layout.setContentsMargins(0, 0, 0, 0)
+        self.header_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.header_layout.addWidget(self.caption)
+        self.minimum_heading = 0
         self.target = QWidget(self)
         self.target.setObjectName("ExternalPreviewSlot")
         self.target.setAccessibleName("Preview window placement")
@@ -115,6 +117,17 @@ class PreviewFrame(QWidget):
         super().resizeEvent(event)
         self.fit_target()
 
+    def required_heading(self) -> int:
+        return (
+            max(
+                self.header.sizeHint().height(),
+                self.header_layout.totalHeightForWidth(
+                    max(128, min(self.width() - 16, max(260, self.height() - 64)))
+                ),
+            )
+            + 8
+        )
+
     def fit_target(self) -> None:
         scale = self.devicePixelRatioF()
         extra_width, extra_height = preview_frame_extra(scale)
@@ -122,15 +135,7 @@ class PreviewFrame(QWidget):
             ceil(extra_width / scale),
             ceil(extra_height / scale),
         )
-        heading = (
-            max(
-                self.header.sizeHint().height(),
-                self.header_layout.totalHeightForWidth(
-                    max(128, min(self.width() - 16, self.height() - 64))
-                ),
-            )
-            + 8
-        )
+        heading = max(self.minimum_heading, self.required_heading())
         self.setMinimumHeight(heading + 8 + 128 + height_extra)
         side = max(
             0,
@@ -147,14 +152,17 @@ class PreviewFrame(QWidget):
             width,
             side + height_extra,
         )
-        self.header.setGeometry(self.target.x(), 0, width, heading - 8)
+        header_width = max(width, min(self.width() - 16, 260))
+        self.header.setGeometry(
+            (self.width() - header_width) // 2, 0, header_width, heading - 8
+        )
         self.header_layout.activate()
         self.placeholder.setGeometry(self.target.rect())
         self.status.setGeometry(
             8,
             8,
             max(0, self.target.width() - 16),
-            max(0, self.target.height() // 2 - 16),
+            max(0, self.target.height() - 16),
         )
         self.snap_button.adjustSize()
         self.snap_button.move(

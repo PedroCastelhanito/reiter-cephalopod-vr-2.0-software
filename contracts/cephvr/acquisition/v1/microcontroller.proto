@@ -31,6 +31,7 @@ message PulseCommandEvidence {
   optional int64 stop_issued_monotonic_ns = 12; // Original interruption issuance for OFF.
   PulseCommandOutcome outcome = 13; // Required terminal outcome; UNSPECIFIED never satisfies closure.
   optional bool eye_tracking_selected = 14;
+  optional bool trial_state_selected = 15;
   // NOT_DISPATCHED has no dispatch/ACK/application evidence; request_id may be empty.
   // A failed outcome never implies outputs off. Missing ACK/application stays unknown.
   // No physical pulse or camera cutoff claim.
@@ -63,6 +64,7 @@ message MicrocontrollerState {
   PulseOutputState behavioral = 4;
   PulseOutputState tracking = 5;
   PulseOutputState eye_tracking = 6;
+  PulseOutputState trial_state = 7; // Held level; no applied_frequency_hz.
 }
 message MicrocontrollerObservation {
   string port = 1;

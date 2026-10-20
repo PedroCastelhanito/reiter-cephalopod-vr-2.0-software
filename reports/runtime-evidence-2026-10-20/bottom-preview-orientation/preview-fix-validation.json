@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-20",
+  "owner_observation": "Dummy trial moves correctly on physical rig with current calibration",
+  "change": "PreviewRig Bottom corners (2,1,0,3) to (1,2,3,0), removing surface-X reflection",
+  "regression_before": {
+    "failed": 2,
+    "passed": 14
+  },
+  "focused_after": {
+    "passed": 25,
+    "deselected": 752
+  },
+  "ruff": "pass source and owning test",
+  "mypy": "pass win32 changed source",
+  "boundaries": "740 modules, zero violations, existing size advisories",
+  "limits": "Native updated GUI preview not launched; instrumented physical validation not performed."
+}

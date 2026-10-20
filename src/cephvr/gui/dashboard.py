@@ -2,7 +2,8 @@
 
 from datetime import date
 
-from PyQt6.QtCore import QSettings, pyqtSignal
+from PyQt6.QtCore import QRegularExpression, QSettings, pyqtSignal
+from PyQt6.QtGui import QRegularExpressionValidator, QStandardItemModel
 from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
@@ -27,6 +28,8 @@ from cephvr.gui.recent_values import RecentValues, suggest_values
 from cephvr.gui.subject_history import SubjectSessions, find_subject_sessions
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView, Phase
+
+SPECIES = ("Sepia Pharaonis", "Sepia Latimanus", "Sepioteuthis lessoniana")
 
 ACTION_PHASES = {
     "Setup": {Phase.CONFIGURATION},
@@ -104,10 +107,14 @@ class Dashboard(ResponsiveColumns):
         grid = QGridLayout()
         grid.setHorizontalSpacing(SIZES.field_x_gap)
         grid.setVerticalSpacing(SIZES.field_y_gap)
-        self.subject_id = QLineEdit("CEPH-007" if sample else "")
-        self.subject_id.setPlaceholderText("Subject ID")
-        self.species = QLineEdit("Sepia officinalis" if sample else "")
-        self.species.setPlaceholderText("Species")
+        self.subject_id = QLineEdit("0007" if sample else "")
+        self.subject_id.setValidator(
+            QRegularExpressionValidator(QRegularExpression("[0-9]{4}"), self.subject_id)
+        )
+        self.subject_id.setPlaceholderText("4 digits (e.g. 0001)")
+        self.species = combo(SPECIES)
+        self.species.setPlaceholderText("Select species")
+        self.species.setCurrentIndex(0 if sample else -1)
         self.sex = combo(("Not specified", "Female", "Male"))
         self.age = QLineEdit()
         self.age.setPlaceholderText("Age (dph)")
@@ -153,9 +160,7 @@ class Dashboard(ResponsiveColumns):
 
     def install_subject_helpers(self, settings: QSettings | None) -> None:
         """Recent-value suggestions and the earlier-sessions hint; local aids only."""
-        self.recent_species = RecentValues(settings, "dashboard/recent_species")
         self.recent_conditions = RecentValues(settings, "dashboard/recent_conditions")
-        suggest_values(self.species, self.recent_species)
         suggest_values(self.condition, self.recent_conditions)
         self.reuse_dialog: SubjectReuseDialog | None = None
         self.announced_subject: tuple[str, str, int] | None = None
@@ -226,14 +231,48 @@ class Dashboard(ResponsiveColumns):
 
     def request_action(self, action: str) -> None:
         if self.can_request(action):
+            if action == "Setup" and not self.valid_subject():
+                return
             if action == "Setup":
-                self.recent_species.remember(self.species.text())
                 self.recent_conditions.remember(self.condition.text())
             self.action_requested.emit(action)
+
+    def set_species(self, value: str) -> None:
+        """Retain unlisted historical metadata until the operator chooses a species."""
+        while self.species.count() > len(SPECIES):
+            self.species.removeItem(self.species.count() - 1)
+        selected = next(
+            (name for name in SPECIES if name.casefold() == value.casefold()), value
+        )
+        if selected and selected not in SPECIES:
+            self.species.addItem(selected)
+            model = self.species.model()
+            assert isinstance(model, QStandardItemModel)
+            item = model.item(self.species.count() - 1)
+            assert item is not None
+            item.setEnabled(False)
+        self.species.setCurrentIndex(self.species.findText(selected))
+
+    def valid_subject(self) -> bool:
+        if not self.subject_id.hasAcceptableInput():
+            self.log_console.appendPlainText(
+                "Subject ID must contain exactly 4 digits (e.g. 0001)."
+            )
+            self.subject_id.setFocus()
+            return False
+        if self.species.currentText() and self.species.currentText() not in SPECIES:
+            self.log_console.appendPlainText(
+                "Select a species from the dropdown before Setup."
+            )
+            self.species.setFocus()
+            return False
+        return True
 
     def setup(self) -> None:
         if self.view.phase == Phase.ENDED:
             self.request_action("New session")
+            return
+        if self.can_request("Setup") and not self.valid_subject():
             return
         history = self.subject_history() if self.can_request("Setup") else None
         if history is not None and history.same_experiment_today:
@@ -296,7 +335,7 @@ class Dashboard(ResponsiveColumns):
         if self.stop_dialog is not None:
             self.stop_dialog.update_actions(self.stop_choices())
         for editor in self.subject_editors:
-            editor.setEnabled(view.can_edit)
+            editor.setEnabled(view.can_edit_session)
         self.render_hud()
         for name, status in (
             ("Cameras", view.camera_status),

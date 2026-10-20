@@ -181,6 +181,7 @@ class StartActivation:
             }
             if attempt.paired:
                 session_document["spikeglx"] = message_dict(attempt.prepared.spikeglx)
+                session_document["spikeglx_control_scope"] = "saving_only"
             # From the first write on, an unactivated cancel keeps the files (E06).
             attempt.closure.metadata_written = True
             await self.metadata.persist(

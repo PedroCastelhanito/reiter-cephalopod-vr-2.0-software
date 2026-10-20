@@ -28,7 +28,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
 <a id="e04"></a>
 ### E04 — Recording layout, identity, and metadata
 
-**Status:** Accepted · **Revision:** 92
+**Status:** Accepted · **Revision:** 93
 
 **Identity and files**
 
@@ -48,7 +48,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
   from the ephys computer under E09/E12.
 
 ```text
-cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
+cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<session_subject>-<setup_HHMMSS>/
   protocol-data/
     SESSION_CONFIG.json
     SESSION_LOG.jsonl
@@ -59,6 +59,13 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
     <native SpikeGLX run folder(s), transferred after acquisition>
 ```
 
+- Build `session_subject` from the uppercase first letters of the genus and species
+  followed by the subject ID, e.g. Sepia pharaonis + `0001` becomes `SP0001`.
+  Ignore species whitespace/case; absent/incomplete species or non-ASCII initials
+  retains the subject-only label, and an already matching prefix is not duplicated.
+  This derives the new session folder name only; retain raw subject/species metadata,
+  trial filenames and existing directories. Existing path sanitation and collision
+  checks remain authoritative. E12 uses the exact resulting folder basename.
 - `session_directory` in shared preparation/reservation/recovery contracts is the
   session root. Derive `protocol-data` once in the shared path resolver; all local
   output plans resolve there. Keep the reservation lock/marker at the session root.

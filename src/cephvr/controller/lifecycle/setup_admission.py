@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import uuid
 from collections.abc import Callable, Coroutine, Mapping
-from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -17,10 +16,12 @@ from google.protobuf.message import Message
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.configuration import ControllerConfiguration
+from cephvr.controller.configuration_access import session_camera_configuration
 from cephvr.controller.control.configuration import manual_camera_owned
 from cephvr.controller.control.operations import ControlOperations
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.lifecycle.setup_execution import SetupExecution
+from cephvr.controller.metadata.files import session_subject_label
 from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.ports import BackendPort, SpikeGLXPort
 from cephvr.controller.preparation import PreparationHandoff
@@ -111,10 +112,17 @@ class SetupAdmission:
         self.setup_execution = setup_execution
         self.spawn = spawn
 
-    def required_backends(self) -> dict[str, BackendPort]:
+    def required_backends(
+        self, configuration: pb.ExperimentConfiguration | None = None
+    ) -> dict[str, BackendPort]:
+        configuration = (
+            configuration
+            if configuration is not None
+            else self.configuration_state.current
+        )
         configured = {
             setting.backend_name
-            for setting in self.configuration_state.current.backends
+            for setting in configuration.backends
             if setting.enabled
         }
         if "visual_stimulus" not in configured:
@@ -168,7 +176,7 @@ class SetupAdmission:
                 return self.control_operations.admission(
                     command_id, error=_CAMERA_OPEN_MESSAGE
                 )
-            proposal = deepcopy(self.configuration_state.current)
+            proposal = session_camera_configuration(self.configuration_state.current)
             expected_revision = self.configuration_state.revision
         candidate = await self._load_candidate(command_id, proposal)
         if isinstance(candidate, pb.CommandAdmission):
@@ -317,7 +325,10 @@ class SetupAdmission:
                     command_id, error="explicit mode and trial protocol required"
                 )
             try:
-                required = self.required_backends()
+                effective = session_camera_configuration(
+                    self.configuration_state.current
+                )
+                required = self.required_backends(effective)
             except ValueError as exc:
                 return self.control_operations.admission(command_id, error=str(exc))
             recording_root = _recording_root(
@@ -343,7 +354,7 @@ class SetupAdmission:
             prepared = pb.PreparedSession(
                 context=context,
                 configuration_revision=self.configuration_state.revision,
-                configuration=self.configuration_state.current,
+                configuration=effective,
                 policies=loaded_settings.policies
                 if loaded_settings is not None
                 else self.configuration_state.policies,
@@ -365,7 +376,10 @@ class SetupAdmission:
             reservation = OutputReservation(
                 recording_root,
                 self.configuration_state.current.experiment,
-                self.configuration_state.current.subject,
+                session_subject_label(
+                    self.configuration_state.current.subject,
+                    self.configuration_state.current.subject_metadata.species,
+                ),
                 context.session_id,
                 self.generation,
                 anchor,

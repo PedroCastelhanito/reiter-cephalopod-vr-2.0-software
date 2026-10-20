@@ -1,0 +1,7 @@
+{
+  "label": "Save spikeglx",
+  "accessible_name": "Save spikeglx",
+  "same_existing_pairing_widget": true,
+  "parent_card": "Recordings",
+  "native_rig_operations": false
+}

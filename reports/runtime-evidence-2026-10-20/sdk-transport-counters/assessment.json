@@ -1,0 +1,278 @@
+{
+  "checked_at": "2026-10-20T09:16:50.733407+09:00",
+  "source_revision": "fffcd7df0bfc9e371549184a013d1ae127e5d883",
+  "working_tree": "Concurrent unrelated edits present; source hashes identify reviewed files.",
+  "method": "Read first and last JSONL records; SHA256 original bytes; inspect SDK mapping, summary emission and per-trial warning scope; compare Basler primary documentation.",
+  "records": [
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261020_ephys-pilot\\0001-090932\\protocol-data\\0001_090944_behavioral_cam_frames.jsonl",
+      "sha256": "e08bbd324dd7c0324fa179379422ffdfbf41177e175e45da338cb21b484e21f0",
+      "header": {
+        "type": "header",
+        "schema_version": 5,
+        "identity": {
+          "session_id": "e42df235-2150-4699-9229-7ffebea1d947",
+          "trial_id": "190c492f-dd08-4547-8495-a15768a45c1a",
+          "trial_number": 1,
+          "camera_role": "behavioral",
+          "device_id": "40065509",
+          "session_config_reference": "C:\\Users\\ReiterU_PC\\Desktop\\20261020_ephys-pilot\\0001-090932",
+          "recording_identity_version": 1
+        },
+        "clocks": {
+          "host_clock": "cephvr.host.perf_counter_ns.v1",
+          "timestamp_unit": "ns",
+          "trial_start_monotonic_ns": 477420882351900,
+          "camera_clock": "cephvr.camera.native.v1",
+          "camera_clock_source": "ChunkTimestamp",
+          "camera_clock_conversion_available": true,
+          "camera_clock_tick_ns_numerator": 1,
+          "camera_clock_tick_ns_denominator": 1,
+          "camera_clock_timestamp_semantics": "exposure_start",
+          "camera_clock_reset_semantics": "unknown",
+          "camera_clock_wrap_semantics": "unknown",
+          "camera_clock_unavailable_reason": "",
+          "camera_counter_source": "CGrabResultData.GetBlockID",
+          "camera_counter_semantics": "frames",
+          "camera_counter_width_bits": 64,
+          "camera_counter_wrap_semantics": "unknown",
+          "camera_counter_unavailable_reason": ""
+        },
+        "video": {
+          "enabled": true,
+          "nominal_frame_rate_hz": 30.0,
+          "nominal_rate_source": "applied_mcu_rate"
+        }
+      },
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 477605489796800,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 5533,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 5533,
+          "selected_source_frame_count": 5533,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 477420889624200,
+          "on_acknowledged_monotonic_ns": 477420914950700,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 477605491247100,
+          "off_acknowledged_monotonic_ns": 477605516621900
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 1,
+          "last_native_counter": 5533
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261020_ephys-pilot\\0001-090932\\protocol-data\\0001_090944_eye_tracking_cam_frames.jsonl",
+      "sha256": "015a9845f0a728f6e450be169fe11accef4b284d978081c08a03ad8331b49bf8",
+      "header": {
+        "type": "header",
+        "schema_version": 5,
+        "identity": {
+          "session_id": "e42df235-2150-4699-9229-7ffebea1d947",
+          "trial_id": "190c492f-dd08-4547-8495-a15768a45c1a",
+          "trial_number": 1,
+          "camera_role": "eye_tracking",
+          "device_id": "40278236",
+          "session_config_reference": "C:\\Users\\ReiterU_PC\\Desktop\\20261020_ephys-pilot\\0001-090932",
+          "recording_identity_version": 1
+        },
+        "clocks": {
+          "host_clock": "cephvr.host.perf_counter_ns.v1",
+          "timestamp_unit": "ns",
+          "trial_start_monotonic_ns": 477420882351900,
+          "camera_clock": "cephvr.camera.native.v1",
+          "camera_clock_source": "ChunkTimestamp",
+          "camera_clock_conversion_available": true,
+          "camera_clock_tick_ns_numerator": 1,
+          "camera_clock_tick_ns_denominator": 1,
+          "camera_clock_timestamp_semantics": "exposure_start",
+          "camera_clock_reset_semantics": "unknown",
+          "camera_clock_wrap_semantics": "unknown",
+          "camera_clock_unavailable_reason": "",
+          "camera_counter_source": "CGrabResultData.GetBlockID",
+          "camera_counter_semantics": "frames",
+          "camera_counter_width_bits": 64,
+          "camera_counter_wrap_semantics": "unknown",
+          "camera_counter_unavailable_reason": ""
+        },
+        "video": {
+          "enabled": false,
+          "nominal_frame_rate_hz": 60.0,
+          "nominal_rate_source": "applied_mcu_rate"
+        }
+      },
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 477605490076000,
+          "first_recorded_frame_id": null,
+          "final_received_frame_count": 11067,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 0,
+          "selected_source_frame_count": 0,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 477420889624200,
+          "on_acknowledged_monotonic_ns": 477420914950700,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 477605491247100,
+          "off_acknowledged_monotonic_ns": 477605516621900
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 1,
+          "last_native_counter": 11067
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261020_ephys-pilot\\0001-090932\\protocol-data\\0001_090944_tracking_cam_frames.jsonl",
+      "sha256": "84e6625d12ad980a7214e0ef350630b1c3127475942b2188c321642183bd7df8",
+      "header": {
+        "type": "header",
+        "schema_version": 5,
+        "identity": {
+          "session_id": "e42df235-2150-4699-9229-7ffebea1d947",
+          "trial_id": "190c492f-dd08-4547-8495-a15768a45c1a",
+          "trial_number": 1,
+          "camera_role": "tracking",
+          "device_id": "40747103",
+          "session_config_reference": "C:\\Users\\ReiterU_PC\\Desktop\\20261020_ephys-pilot\\0001-090932",
+          "recording_identity_version": 1
+        },
+        "clocks": {
+          "host_clock": "cephvr.host.perf_counter_ns.v1",
+          "timestamp_unit": "ns",
+          "trial_start_monotonic_ns": 477420882351900,
+          "camera_clock": "cephvr.camera.native.v1",
+          "camera_clock_source": "ChunkTimestamp",
+          "camera_clock_conversion_available": true,
+          "camera_clock_tick_ns_numerator": 1,
+          "camera_clock_tick_ns_denominator": 1,
+          "camera_clock_timestamp_semantics": "exposure_start",
+          "camera_clock_reset_semantics": "unknown",
+          "camera_clock_wrap_semantics": "unknown",
+          "camera_clock_unavailable_reason": "",
+          "camera_counter_source": "CGrabResultData.GetBlockID",
+          "camera_counter_semantics": "frames",
+          "camera_counter_width_bits": 64,
+          "camera_counter_wrap_semantics": "unknown",
+          "camera_counter_unavailable_reason": ""
+        },
+        "video": {
+          "enabled": false,
+          "nominal_frame_rate_hz": 60.0,
+          "nominal_rate_source": "applied_mcu_rate"
+        }
+      },
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 477605489965500,
+          "first_recorded_frame_id": null,
+          "final_received_frame_count": 11067,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 0,
+          "selected_source_frame_count": 0,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 477420889624200,
+          "on_acknowledged_monotonic_ns": 477420914950700,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 477605491247100,
+          "off_acknowledged_monotonic_ns": 477605516621900
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 1,
+          "last_native_counter": 11067
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    }
+  ],
+  "historical_inventory": {
+    "path": "reports\\runtime-evidence-2026-10-15\\projector-free-rig\\inventory.json",
+    "sha256": "4b59c014555da21d7c19739940fac67cc1f7b85575a7d4c7ed8260f93f843a1f",
+    "devices": [
+      {
+        "serial": "40065509",
+        "model": "acA4112-30uc",
+        "device_class": "BaslerUsb"
+      },
+      {
+        "serial": "40278236",
+        "model": "a2A1920-160ucPRO",
+        "device_class": "BaslerUsb"
+      },
+      {
+        "serial": "40747103",
+        "model": "a2A2464-77umPRO",
+        "device_class": "BaslerUsb"
+      }
+    ]
+  },
+  "source_sha256": {
+    "src/cephvr/acquisition/camera/transport.py": "c51e27a0241bcbf40933795aad8e8ded0b512ccfc77b21a4b15c15f42ae82500",
+    "src/cephvr/acquisition/worker/transport_summary.py": "420d55d2d0d843f9c5d84f37f1e20c044e3d700c3871c5b9a4703e9e78fb69f7",
+    "src/cephvr/acquisition/worker/trial_stop.py": "ed7fad917bb6ccef4dc5332a63c0d82566772e6a34b298a061b9c5e23d28cec5",
+    "src/cephvr/acquisition/worker/warnings.py": "21ef9fddcbcc65624e9302c78de8d368bdebbc75f7bfd110196446778ccf1031"
+  },
+  "documentation": "https://docs.baslerweb.com/pylonapi/cpp/class_basler___universal_stream_params_1_1_c_universal_stream_params___params",
+  "finding": "All three cameras: buffer_underruns/resend_requests/resend_packets null; failed_buffers/missed_frames/resynchronizations zero. Missing fields are documented GigE/blaze-only, while exact serials were inventoried as BaslerUsb. Unconditional any-null warning is emitted per camera on each trial closure.",
+  "limits": [
+    "Pasted warning UUIDs were not matched to retained files. These are the latest discovered pilot-session completion records, not a claimed UUID match.",
+    "No baseline/final raw SDK node observations were stored; interface applicability explains these null fields without asserting direct node-read evidence.",
+    "Read-only authenticated snapshot attempt did not produce an artifact; its final output was not recovered. No successful live snapshot is claimed.",
+    "Current sandbox pylon enumeration returned an empty list. Historical exact-serial inventory supplies interface evidence; no camera was opened or configured.",
+    "No recording/video integrity audit, runtime test, or code change."
+  ]
+}

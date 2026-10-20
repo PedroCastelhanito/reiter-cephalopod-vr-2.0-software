@@ -26,7 +26,7 @@ from cephvr.gui.theme import SIZES
 from cephvr.gui.tracking import TrackingPage
 from cephvr.gui.trial_preview import TrialPreview
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
-from cephvr.gui.view import DashboardView
+from cephvr.gui.view import DashboardView, Phase
 
 PAGES = ("Dashboard", "Protocol", "Devices", "Tracking")
 
@@ -93,7 +93,9 @@ class DashboardWindow(QMainWindow):
         self.devices = DevicesPage(
             sample=sample, settings=settings, review=device_review
         )
-        self.recordings = RecordingsCard(self.devices.cameras)
+        self.recordings = RecordingsCard(
+            self.devices.cameras, self.devices.spikeglx.pairing
+        )
         dashboard_controls = self.dashboard.columns[0].layout()
         assert isinstance(dashboard_controls, QVBoxLayout)
         dashboard_controls.insertWidget(2, self.recordings)
@@ -269,7 +271,11 @@ class DashboardWindow(QMainWindow):
         timeline.set_program(
             draft.exported_program, draft.stimulus_seed_decimal, draft.name
         )
-        timeline.set_elapsed(view.elapsed_s if view.connected or view.sample else None)
+        timeline.set_playback(
+            view.elapsed_s if view.connected or view.sample else None,
+            running=(view.connected or view.sample)
+            and view.phase in {Phase.RUNNING, Phase.STOPPING},
+        )
 
     def apply_view(self, view: DashboardView) -> None:
         self.dashboard.apply_view(view)

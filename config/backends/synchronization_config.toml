@@ -2,7 +2,7 @@
 # Operator settings; full scientific pulse verification remains pending.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/synchronization_policy.toml; versions must match.
-policy_version = 5
+policy_version = 6
 
 [backend]
 # E10/E12: SpikeGLX pairing default for a new configuration. Edit to change the
@@ -44,7 +44,7 @@ no_progress_timeout_s = 10
 # success alone never resets it. It must exceed observation_interval_s.
 # Shared health/setup/cleanup bounds keep their existing owners.
 # E12: extra recording time after the last trial's local Stopped deadline before
-# stopRun, so SpikeGLX captures the final projector/photodiode transition. Applies only
+# disabling saving, so SpikeGLX captures the final projector/photodiode transition. Applies only
 # at session end. Nonnegative seconds, exact ns; engineering default, tune on the rig.
 # Setup checks stop allowance + margin + 3 native-call budgets fit within finalization.
 stop_margin_s = 1

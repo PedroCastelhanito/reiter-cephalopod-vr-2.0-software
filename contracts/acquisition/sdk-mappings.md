@@ -116,7 +116,15 @@ Map summary fields respectively to stream-grabber `Statistic_Buffer_Underrun_Cou
 `Statistic_Failed_Buffer_Count`, `Statistic_Missed_Frame_Count`,
 `Statistic_Resend_Request_Count`, `Statistic_Resend_Packet_Count`, and
 `Statistic_Resynchronization_Count`. Only read supported nodes with matching semantics;
-USB/GigE/model differences may leave fields unavailable. Take baseline after grab
+USB/GigE/model differences may leave fields unavailable. The supported Basler USB
+binding reads failed buffers, missed frames and resynchronizations; the GigE
+binding reads buffer underruns, failed buffers and both resend counters. The
+[SDK reference](https://docs.baslerweb.com/pylonapi/cpp/class_basler___universal_stream_params_1_1_c_universal_stream_params___params)
+defines that interface applicability. Adapter snapshots identify inapplicable fields
+in `unsupported_fields`; their counter values remain null. Suppress their absence
+warning only when both snapshots mark the field unsupported. A failed entire read,
+an unreadable applicable node, invalid numeric value or reset still warns; exceptions
+must not be converted into unsupported fields. Take baseline after grab
 initialization (which may reset counters), final before deinitialization, serialized
 with SDK access. If reset continuity cannot be established, report unavailable.
 The summary binding below owns aggregation and delivery; these counters never replace

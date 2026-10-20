@@ -55,10 +55,10 @@ class CoordinatorQueries:
         session = self._session_for_work(request.work)
         participant = control.ParticipantState(
             process=self.identity.process,
-            enabled=bool(session and session.required_cameras),
+            enabled=session is not None,
             required=True,
             process_running=True,
-            connected=bool(self.workers),
+            connected=True,
             health="interrupted" if session and session.interrupted else "healthy",
         )
         if session is None or session.cleanup_complete:

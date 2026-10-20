@@ -1,10 +1,10 @@
 # Controller-owned device settings; configure before Setup. A11/E14.
 format_version = 1
-policy_version = 4
+policy_version = 5
 
 [microcontroller]
 # COM8 Uno answered a matched protocol-v2 CAPS/STATUS probe on 2026-10-05.
-# Protocol 5 requires an explicitly authorized firmware upload; source changes alone do not update the board.
+# Protocol 6 requires an explicitly authorized firmware upload; source changes alone do not update the board.
 # Configurable before Setup; baud must match the firmware connection.
 baud_rate = 115200
 # Earlier applicable trial deadlines always win; this cannot extend reporting cutoffs.

@@ -31,9 +31,9 @@ bound. It reports version, running/saving state, run name when validated and dat
 directory. A timed-out native call remains in flight and blocks another diagnostic
 until it finishes. This check neither mutates SpikeGLX nor establishes Setup readiness.
 
-Every mutating call (setRunName, startRun, stopRun) has one absolute deadline from
+Every mutating call (setRunName, setRecordingEnable) has one absolute deadline from
 `native_call_timeout_s`. A timeout means unknown execution: query isRunning/getRunName
-before any further mutation and never repeat startRun blindly. Read-only calls may be
+before any further mutation and never repeat saving enable blindly. Read-only calls may be
 retried within their original deadline. Never kill or restart SpikeGLX.
 
 ## Participation
@@ -48,33 +48,38 @@ SpikeGLX calls.
 ## Setup
 
 1. Connect; read getVersion; reject a version without a matching mapping reference.
-2. Require isRunning = false. An already running acquisition blocks Ready; it is
-   never stopped, renamed or adopted.
+2. Require isRunning = true and isSaving = false. Idle or already-saving acquisition
+   blocks Ready without mutation. The operator starts acquisition; CephVR never
+   calls startRun/stopRun.
 3. Read getParams (plus the applicable imec/OneBox groups), enumerate streams per
    family and read each stream's sample rate, acquired channels and saved channels
-   (getStreamSaveChans). Require gate and trigger modes that start saving on startRun
-   (reference codes: `immediate`), and a disabled manual override or recording
-   initially enabled. Unknown override values or an initially-OFF override block
-   Ready with the setting named; CephVR does not change acquisition settings.
+   (getStreamSaveChans). Require immediate gate and trigger modes, so enabling
+   recording starts file writing. The manual override may start OFF; actual saving
+   must be OFF at Setup. Acquisition configuration remains operator-owned.
 4. Check `[pulse_inventory]` against the saved channels (E12). Enabled externally
    triggered Behavioral, Tracking and Eye cameras require their respective
    `behavioral_camera`, `tracking_camera` and `eye_tracking_camera` OneBox mappings.
    Missing mappings or unsaved required channels block Ready; disabled/free-running
    cameras do not require mappings. Channel/bit assignments remain operator inputs
    pending rig verification; this check does not verify wiring. Read getDataDir.
-5. Set the run name to the exact basename of the reserved CephVR session directory,
-   `<subject>-<setup_HHMMSS>`
-   (E04 Setup anchor; characters restricted to `[A-Za-z0-9_-]`) and read it back.
-6. Return `SpikeGLXPreparation` for SESSION_CONFIG.json: version, run name, data
-   directory, streams/rates/saved channels, gate/trigger modes and resolved pulse
-   channels. No opaque parameter dump. Setup creates no recording.
+5. Reserve the exact CephVR session-directory basename `<session_subject>-<setup_HHMMSS>`
+   (species-prefixed subject label under E04, e.g. `SP0001-092640`)
+   as the intended recording name. Retain the observed acquisition name and parameter
+   digest. Setup is read-only: do not rename or change saving.
+6. Return `SpikeGLXPreparation` for SESSION_CONFIG.json: version, intended recording
+   name, data directory, streams/rates/saved channels, gate/trigger modes and pulse
+   channels. `spikeglx_control_scope = "saving_only"` distinguishes this lifecycle
+   from historical acquisition-start/stop sessions. Setup creates no recording.
 
-Before startRun, reread the same settings; any change other than the managed run name
-fails the attempt. Acquisition settings stay operator-owned in SpikeGLX.
+Before saving, reread settings, streams and the Setup acquisition name; require it
+still running with saving OFF. Any drift fails the attempt without taking over
+existing saving. File naming changes only at Start.
 
 ## Start and writing gate
 
-After `session_started` is synchronized (E05), issue startRun. The first trial may be
+After `session_started` is synchronized (E05), setRunName to the reserved session
+basename, read back matching name/settings with acquisition running and saving OFF,
+then call setRecordingEnable(true). The first trial may be
 released only after, within `writing_start_timeout_s`, isSaving is true, getRunName
 matches, and every stream with saved channels shows an increasing getStreamSampleCount
 between two observations. Failure or timeout interrupts the activated session without
@@ -96,12 +101,12 @@ An unreachable server or failed query is simply no confirmed advance; there is n
 separate unknown state. Reconnect on the next observation. A late reply cannot undo an
 incident or interruption. The incident clears when every saved stream has advanced
 again. Continue accepts the reported loss/uncertainty; it never proves recording.
-Recording continues across trials and gaps; never restart or adopt the remote run.
+Recording continues across trials and gaps; never restart acquisition or take over another recording.
 Keep concise current incident status, not a session-log entry per retry.
 
 ## Stop and cleanup
 
-On normal completion, Stop after trial, Abort or failure, stop the paired run during
+On normal completion, Stop after trial, Abort or failure, disable saving for the paired recording during
 session finalization independently of local output closure:
 
 - For an active/ending trial, `stop_due_ns = local_stopped_deadline_ns + stop_margin_ns`.
@@ -112,12 +117,15 @@ session finalization independently of local output closure:
   immediately once any uncertain start has been reconciled.
 - If trial activity is uncertain, interrupt all possibly active local producers and use
   that interruption's Stopped deadline plus margin.
-- Before stopRun, query a fresh run identity: the running run must match the session's
-  run name and data directory. A different run is never stopped or adopted. If idle and
-  no start is unresolved, stopping is already confirmed.
-- A later isRunning = false confirms acquisition stopped; native file finalization
-  remains SpikeGLX-owned and is never reported as CephVR CLOSED. Stop confirmation does
-  not require saving or sample progress.
+- Before disabling saving, read a fresh identity. If saving is already OFF, it is
+  confirmed stopped without mutation. Otherwise the name/data directory must match
+  and this client must have requested saving; another recording is never stopped.
+- Call setRecordingEnable(false), then require a later isSaving = false. Never call
+  stopRun; acquisition and spike viewing continue. Native file finalization remains
+  SpikeGLX-owned and is never reported as CephVR CLOSED. A stopped acquisition can
+  establish saving OFF but is not proof CephVR preserved acquisition.
+- Timed-out SDK work retains ownership until completion; readback reconciliation
+  must precede further mutation. Do not repeat a timed-out enable or disable blindly.
 
 `[monitor] stop_margin_s` (default 1 s, nonnegative, exact-nanosecond; tune on
 the rig) and native_call_timeout_s must satisfy: stop_evidence_allowance_ns + margin +
@@ -126,9 +134,9 @@ ControlPolicies.recovery_ns. This reserves identity check, stop and confirmation
 without extending E05; uncertain-start reconciliation uses the same budget.
 
 Failure or timeout leaves an E06 cleanup blocker. If the controller is lost (E08 full
-shutdown), no CephVR process can stop the run: the emergency report and next-startup
+shutdown), no CephVR process can disable saving: the emergency report and next-startup
 warning name the expected address and run and state that SpikeGLX may still be
-recording and must be stopped in SpikeGLX. Leaving it running loses no data. Next
+recording and saving must be disabled manually in SpikeGLX. Leaving it running loses no data. Next
 startup never silently adopts or stops a running SpikeGLX acquisition. Neither network
 failure nor local exit establishes that remote acquisition ended.
 
@@ -139,7 +147,7 @@ required failures under the rules above.
 ## Records and clocks
 
 SESSION_CONFIG.json records `SpikeGLXPreparation`. The session log records a confirmed
-start (`spikeglx_started`, after the writing gate) and confirmed stop (`spikeglx_stopped`)
+saving start (`spikeglx_started`, after the writing gate) and confirmed saving stop (`spikeglx_stopped`)
 with the run name; failures use `error`/`recovery` events.
 Command/response times are rig host-clock control evidence (SYS-004); they do not
 align clocks or prove a pulse was recorded. The operator transfers the native run
@@ -148,8 +156,8 @@ tree into E04's `spikeglx-data/` folder afterwards (E09).
 ## Rig verification
 
 Installed SDK/SpikeGLX versions, command-server port, interface binding and firewall
-rule, run-name collision behavior, startRun-to-saving latency, sample-count behavior per
-stream, stopRun completion, unknown-run rejection, stop margin against the last
+rule, run-name collision behavior, saving-enable latency, sample-count behavior per
+stream, saving-OFF confirmation with acquisition continuing, unknown-run rejection, stop margin against the last
 photodiode edge, and link loss (recovery before/after the no-progress timeout, one
 stalled stream while others advance, counter resets, late replies after interruption).
 See [rig verification](../reports/rig-verification.md).

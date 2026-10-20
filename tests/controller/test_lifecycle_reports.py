@@ -513,6 +513,78 @@ async def test_cleanup_joins_frozen_setup_output_to_scheduled_path(tmp_path, out
     )
 
 
+async def test_trial_state_only_is_required_activity_and_admits_exact_pulse_reports(
+    tmp_path,
+):
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+    from cephvr.controller.lifecycle.activity import activity_backends
+
+    fixture = _fixture(tmp_path)
+    attempt = fixture.attempt
+    backend = pb.BackendContext(
+        backend_name="acquisition", backend_generation=str(uuid4())
+    )
+    attempt.required = {"acquisition": cast(BackendPort, _Backend(backend))}
+    attempt.trial_participants = dict(attempt.required)
+    settings = attempt.prepared.configuration.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    settings.pulses.trial_state_enabled = True
+    attempt.ready["acquisition"] = pb.ReadyReport(required_checks_passed=True)
+    assert activity_backends(attempt) == {"acquisition"}
+    attempt.target_ns, attempt.end_ns = 100, 200
+    fixture.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
+    fixture.lifecycle.trial.phase = pb.TRIAL_PHASE_RUNNING
+    context = pb.ReportContext(
+        backend=backend,
+        work=pb.WorkContext(trial=attempt.prepared.trials[0].context),
+        operation=pb.OperationContext(command_id=attempt.trial_operation),
+    )
+    pulse = mcu.PulseCommandEvidence(
+        command=mcu.PULSE_BOUNDARY_COMMAND_ON,
+        outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+        applied=True,
+        behavioral_selected=False,
+        tracking_selected=False,
+        eye_tracking_selected=False,
+        trial_state_selected=True,
+        scheduled_boundary_monotonic_ns=100,
+        dispatched_monotonic_ns=101,
+        acknowledged_monotonic_ns=105,
+        resulting_state=mcu.MicrocontrollerState(
+            trial_state=mcu.PulseOutputState(enabled=True, running=True)
+        ),
+    )
+    started = pb.LifecycleReport(
+        started=pb.StartedReport(
+            context=context, actual_start_monotonic_ns=105, acquisition_pulse_on=pulse
+        )
+    )
+    assert (
+        await fixture.reports.receive(started, 110)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    assert "acquisition" in attempt.started
+    pulse.command = mcu.PULSE_BOUNDARY_COMMAND_OFF
+    pulse.scheduled_boundary_monotonic_ns = 200
+    pulse.dispatched_monotonic_ns = 201
+    pulse.acknowledged_monotonic_ns = 205
+    pulse.resulting_state.trial_state.running = False
+    fixture.lifecycle.trial.phase = pb.TRIAL_PHASE_FINALIZING
+    stopped = pb.LifecycleReport(
+        stopped=pb.StoppedReport(
+            context=context,
+            actual_stop_monotonic_ns=210,
+            trial_activity_stopped=True,
+            recording_interval_sealed=True,
+            acquisition_pulse_off=pulse,
+        )
+    )
+    assert (
+        await fixture.reports.receive(stopped, 210)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    assert "acquisition" in attempt.stopped
+
+
 async def test_trial_ready_requires_exact_trial_and_active_participant(
     tmp_path: Path,
 ) -> None:

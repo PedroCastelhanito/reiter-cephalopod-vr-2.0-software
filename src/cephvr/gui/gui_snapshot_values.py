@@ -34,7 +34,12 @@ class ExperimentSnapshot:
     def capture(self) -> JSON:
         return {
             "dashboard": {
-                name: getattr(self.dashboard, name).text() for name in DASHBOARD_FIELDS
+                name: (
+                    self.dashboard.species.currentText()
+                    if name == "species"
+                    else getattr(self.dashboard, name).text()
+                )
+                for name in DASHBOARD_FIELDS
             }
             | {"sex": self.dashboard.sex.currentText()},
             "cameras": capture_cameras(self.cameras),
@@ -76,7 +81,10 @@ class ExperimentSnapshot:
 
     def restore(self, data: JSON) -> None:
         for name in DASHBOARD_FIELDS:
-            getattr(self.dashboard, name).setText(data["dashboard"][name])
+            if name == "species":
+                self.dashboard.set_species(data["dashboard"][name])
+            else:
+                getattr(self.dashboard, name).setText(data["dashboard"][name])
         self.dashboard.sex.setCurrentText(data["dashboard"]["sex"])
         by_serial = {camera.serial: camera for camera in self.cameras.drafts}
         restore_cameras(self.cameras, data["cameras"])

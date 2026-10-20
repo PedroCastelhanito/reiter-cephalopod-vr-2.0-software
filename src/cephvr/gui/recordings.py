@@ -11,7 +11,7 @@ from cephvr.gui.view import DashboardView
 class RecordingsCard(Card):
     changed = pyqtSignal()
 
-    def __init__(self, cameras: CamerasPanel) -> None:
+    def __init__(self, cameras: CamerasPanel, spikeglx: QCheckBox) -> None:
         super().__init__("Recordings")
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.cameras = cameras
@@ -27,6 +27,10 @@ class RecordingsCard(Card):
         self.velocities = QCheckBox()
         self.velocities.setAccessibleName("Tracking velocities")
         self.velocity_label = label("Tracking velocities", wrap=True)
+        self.spikeglx = spikeglx
+        self.spikeglx.setText("")
+        self.spikeglx.setAccessibleName("Save spikeglx")
+        self.spikeglx_label = label("Save spikeglx", wrap=True)
         self.velocities.setChecked(False)
         self.velocities.toggled.connect(lambda _checked: self._touch("velocities"))
         cameras.drafts_changed.connect(self.sync_cameras)
@@ -74,6 +78,7 @@ class RecordingsCard(Card):
             (self.source_labels[key], control) for key, control in self.record.items()
         ]
         items.append((self.velocity_label, self.velocities))
+        items.append((self.spikeglx_label, self.spikeglx))
         for index, (caption, control) in enumerate(items):
             column = (index % 2) * 2
             self.source_grid.addWidget(control, index // 2, column)

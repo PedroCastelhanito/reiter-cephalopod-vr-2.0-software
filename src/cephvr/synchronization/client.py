@@ -51,9 +51,10 @@ class SpikeGLXControllerClient:
         self._prepared: wire.SpikeGLXPreparation | None = None
         self._prepared_settings: HostSettings | None = None
         self._params_digest = ""
+        self._acquisition_run_name = ""
         self._start_uncertain = False
-        self._mutation_uncertain = False
         self._stopped = False
+        self._recording_requested = False
         self._monitor_baseline: tuple[wire.StreamProgress, ...] = ()
         self._progress_io: SpikeGLXProgressIO | None = None
 
@@ -69,7 +70,7 @@ class SpikeGLXControllerClient:
         del session
         settings = load_host_settings(self.software_root)
         self._monitor_baseline = ()
-        if self._start_uncertain or self._mutation_uncertain:
+        if self._start_uncertain:
             raise SpikeGLXIOBusy(
                 "SpikeGLX mutation outcome must be reconciled before Setup"
             )
@@ -77,18 +78,14 @@ class SpikeGLXControllerClient:
             lambda: read_sdk(self.software_root, settings),
             settings.native_call_timeout_s,
         )
-        if readback.running:
+        if not readback.running or readback.saving:
             raise RuntimeError(
-                "SpikeGLX already has a running acquisition; refusing adoption"
+                "SpikeGLX must be acquiring with saving OFF before Setup; "
+                "CephVR never starts/stops acquisition or takes over existing saving"
             )
         if readback.gate_mode != "immediate" or readback.trigger_mode != "immediate":
             raise RuntimeError(
                 f"SpikeGLX gate/trigger must both be immediate, got {readback.gate_mode}/{readback.trigger_mode}"
-            )
-        if not readback.recording_starts_enabled:
-            raise RuntimeError(
-                "SpikeGLX manual recording override starts OFF; enable recording "
-                "at startup or disable the override in SpikeGLX before Setup"
             )
         resolved_inventory = _validate_inventory(
             settings.inventory,
@@ -100,50 +97,28 @@ class SpikeGLXControllerClient:
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,160}", run_name):
             raise ValueError("managed SpikeGLX run name has invalid characters")
 
-        def set_name(sdk: Any, handle: int) -> None:
-            _required(
-                sdk.c_sglx_setRunName(handle, run_name.encode("utf-8")),
-                sdk,
-                handle,
-                "setRunName",
-            )
-
-        try:
-            await self._run(
-                lambda: with_sdk(self.software_root, settings, set_name),
-                settings.native_call_timeout_s,
-            )
-        except (TimeoutError, SpikeGLXIOBusy):
-            self._mutation_uncertain = True
-            raise
-        renamed = await self._run(
-            lambda: read_sdk(self.software_root, settings),
-            settings.native_call_timeout_s,
-        )
-        if (
-            renamed.run_name != run_name
-            or renamed.data_directory != readback.data_directory
-        ):
-            raise RuntimeError("SpikeGLX run name or data directory readback differs")
+        # Setup only reads the live acquisition; name and saving change at Start.
+        self._acquisition_run_name = readback.run_name
         result = wire.SpikeGLXPreparation(
-            spikeglx_version=renamed.version,
+            spikeglx_version=readback.version,
             # getVersion reports the remote SpikeGLX server. The installed SDK
             # wrapper/DLL exposes no build identity, so don't copy the mapping's
             # expected API version into a field that claims an observed SDK build.
             sdk_version="unknown",
             mapping_id=str(settings.mapping["mapping_id"]),
             run_name=run_name,
-            data_directory=renamed.data_directory,
-            gate_mode=renamed.gate_mode,
-            trigger_mode=renamed.trigger_mode,
+            data_directory=readback.data_directory,
+            gate_mode=readback.gate_mode,
+            trigger_mode=readback.trigger_mode,
             address=settings.address,
             port=settings.port,
             pulse_channels=resolved_inventory,
         )
-        result.streams.extend(renamed.streams)
+        result.streams.extend(readback.streams)
         self._prepared = wire.SpikeGLXPreparation.FromString(result.SerializeToString())
         self._prepared_settings = settings
         self._params_digest = expected_digest
+        self._recording_requested = False
         self._stopped = False
         self._progress_io = SpikeGLXProgressIO(
             software_root=self.software_root,
@@ -181,8 +156,9 @@ class SpikeGLXControllerClient:
         if self.clock() >= deadline_ns:
             return False
         return (
-            not readback.running
-            and readback.run_name == expected.run_name
+            readback.running
+            and not readback.saving
+            and readback.run_name == self._acquisition_run_name
             and readback.data_directory == expected.data_directory
             and readback.params_digest == self._params_digest
             and readback.gate_mode == "immediate"
@@ -207,13 +183,30 @@ class SpikeGLXControllerClient:
 
         def start(sdk: Any, handle: int) -> None:
             _required(
-                sdk.c_sglx_startRun(handle, expected.run_name.encode("utf-8")),
+                sdk.c_sglx_setRecordingEnable(handle, True),
                 sdk,
                 handle,
-                "startRun",
+                "setRecordingEnable(true)",
+            )
+
+        def set_name(sdk: Any, handle: int) -> None:
+            _required(
+                sdk.c_sglx_setRunName(handle, expected.run_name.encode("utf-8")),
+                sdk,
+                handle,
+                "setRunName",
             )
 
         try:
+            await self._run(
+                lambda: with_sdk(self.software_root, settings, set_name),
+                self._remaining_timeout(settings, deadline),
+            )
+            self._acquisition_run_name = expected.run_name
+            if not await self._verify_before_start(settings, expected, deadline):
+                return False
+            # Retain ownership even if enabling saving times out or fails late.
+            self._recording_requested = True
             await self._run(
                 lambda: with_sdk(self.software_root, settings, start),
                 self._remaining_timeout(settings, deadline),
@@ -306,10 +299,13 @@ class SpikeGLXControllerClient:
                 return False
         except Exception:
             return False
-        if not readback.running:
+        if not readback.saving:
             self._start_uncertain = False
+            self._recording_requested = False
             self._stopped = True
-            return not self._start_uncertain
+            return True
+        if not self._recording_requested:
+            return False
         if (
             readback.run_name != expected.run_name
             or readback.data_directory != expected.data_directory
@@ -320,7 +316,12 @@ class SpikeGLXControllerClient:
         self._stopped = True
 
         def stop(sdk: Any, handle: int) -> None:
-            _required(sdk.c_sglx_stopRun(handle), sdk, handle, "stopRun")
+            _required(
+                sdk.c_sglx_setRecordingEnable(handle, False),
+                sdk,
+                handle,
+                "setRecordingEnable(false)",
+            )
 
         try:
             await self._run(
@@ -336,8 +337,9 @@ class SpikeGLXControllerClient:
                 )
                 if self.clock() >= deadline:
                     return False
-                if not after.running:
+                if not after.saving:
                     self._start_uncertain = False
+                    self._recording_requested = False
                     return True
                 if (
                     after.run_name != expected.run_name

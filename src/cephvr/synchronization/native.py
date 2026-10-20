@@ -37,20 +37,6 @@ class Readback:
     gate_mode: str
     trigger_mode: str
     counts: tuple[tuple[int, int, int], ...]
-    recording_starts_enabled: bool = True
-
-
-def _recording_starts_enabled(parameters: dict[str, str], keys: dict[str, Any]) -> bool:
-    values = []
-    for role, fallback in (
-        ("recording_button_shown", "manOvShowBut"),
-        ("recording_initially_off", "manOvInitOff"),
-    ):
-        value = parameters.get(f"0:{keys.get(role, fallback)}", "").lower()
-        if value not in {"true", "false", "1", "0"}:
-            raise ValueError(f"SpikeGLX recording override parameter {role} is unknown")
-        values.append(value in {"true", "1"})
-    return not all(values)
 
 
 def _read_strings(sdk: Any, handle: int, function: str, *args: int) -> tuple[str, ...]:
@@ -226,7 +212,6 @@ def read_sdk(
             gate_mode,
             trigger_mode,
             tuple(counts),
-            _recording_starts_enabled(parameters, keys),
         )
     finally:
         try:

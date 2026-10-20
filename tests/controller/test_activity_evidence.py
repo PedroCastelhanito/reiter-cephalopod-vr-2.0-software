@@ -159,3 +159,77 @@ def test_normal_stop_requires_scheduled_cutoff_and_visual_stimulus_idle() -> Non
     report.producer_ends[0].end_monotonic_ns = 2_000
     report.ClearField("visual_stimulus_idle")
     assert not stopped_satisfied(report, **kwargs)
+
+
+def test_free_running_camera_trial_requires_confirmed_high_and_low_marker() -> None:
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+
+    producer = pb.ProcessIdentity(role="camera-worker", generation=str(uuid.uuid4()))
+    started = pb.StartedReport(actual_start_monotonic_ns=1000)
+    started.context.backend.backend_name = "acquisition"
+    started.first_required_activity.add(
+        kind="camera_callback",
+        observed_monotonic_ns=1001,
+        device_evidence=pb.DeviceProgressEvidence(
+            camera=camera.CAMERA_ROLE_BEHAVIORAL, producer=producer
+        ),
+    )
+    start_args = dict(
+        target_ns=1000,
+        ingress_ns=1010,
+        allowance_ns=250,
+        camera_roles={camera.CAMERA_ROLE_BEHAVIORAL},
+        allowed_producers={(producer.role, producer.generation)},
+        trial_state_required=True,
+    )
+    assert not started_satisfied(started, **start_args)
+    pulse = started.acquisition_pulse_on
+    pulse.CopyFrom(
+        mcu.PulseCommandEvidence(
+            command=mcu.PULSE_BOUNDARY_COMMAND_ON,
+            outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+            applied=True,
+            trial_state_selected=True,
+            behavioral_selected=False,
+            tracking_selected=False,
+            eye_tracking_selected=False,
+            scheduled_boundary_monotonic_ns=1000,
+            dispatched_monotonic_ns=1000,
+            acknowledged_monotonic_ns=1005,
+        )
+    )
+    pulse.resulting_state.trial_state.enabled = True
+    pulse.resulting_state.trial_state.running = True
+    assert started_satisfied(started, **start_args)
+    pulse.resulting_state.trial_state.running = False
+    assert not started_satisfied(started, **start_args)
+
+    stopped = pb.StoppedReport(
+        actual_stop_monotonic_ns=2010,
+        trial_activity_stopped=True,
+        recording_interval_sealed=True,
+    )
+    stopped.context.backend.backend_name = "acquisition"
+    stopped.producer_ends.add(
+        producer=producer, source_id="behavioral", end_monotonic_ns=2000
+    )
+    pulse = stopped.acquisition_pulse_off
+    pulse.CopyFrom(started.acquisition_pulse_on)
+    pulse.command = mcu.PULSE_BOUNDARY_COMMAND_OFF
+    pulse.scheduled_boundary_monotonic_ns = 2000
+    pulse.dispatched_monotonic_ns = 2000
+    pulse.acknowledged_monotonic_ns = 2005
+    stop_args = dict(
+        target_ns=1000,
+        end_ns=2000,
+        ingress_ns=2020,
+        allowance_ns=250,
+        expected_sources={"behavioral"},
+        allowed_producers={(producer.role, producer.generation)},
+        trial_state_required=True,
+    )
+    assert stopped_satisfied(stopped, **stop_args)
+    pulse.resulting_state.trial_state.running = True
+    assert not stopped_satisfied(stopped, **stop_args)
+    pulse.resulting_state.trial_state.ClearField("running")
+    assert not stopped_satisfied(stopped, **stop_args)

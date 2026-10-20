@@ -13,7 +13,11 @@ def subject_metadata_from_fields(dashboard: Any) -> pb.SubjectMetadata:
     """Build typed subject metadata while retaining meaningful numeric zero."""
     metadata = pb.SubjectMetadata()
     for field_name in ("species", "condition"):
-        value = getattr(dashboard, field_name).text()
+        value = (
+            dashboard.species.currentText()
+            if field_name == "species"
+            else getattr(dashboard, field_name).text()
+        )
         if value:
             setattr(metadata, field_name, value)
     sex = dashboard.sex.currentText()
@@ -23,7 +27,11 @@ def subject_metadata_from_fields(dashboard: Any) -> pb.SubjectMetadata:
         ("age", "age_dph", False),
         ("subject_size", "size_mm", True),
     ):
-        value = getattr(dashboard, field_name).text().strip()
+        value = (
+            dashboard.species.currentText()
+            if field_name == "species"
+            else getattr(dashboard, field_name).text().strip()
+        )
         if not value:
             continue
         try:
@@ -48,7 +56,7 @@ def install_subject_metadata(
     dashboard.experiment.setText(configuration.experiment)
     dashboard.output_root.setText(configuration.recording_root)
     metadata = configuration.subject_metadata
-    dashboard.species.setText(metadata.species if metadata.HasField("species") else "")
+    dashboard.set_species(metadata.species if metadata.HasField("species") else "")
     sex = metadata.sex if metadata.HasField("sex") else "Not specified"
     if dashboard.sex.findText(sex) < 0:
         dashboard.sex.addItem(sex)

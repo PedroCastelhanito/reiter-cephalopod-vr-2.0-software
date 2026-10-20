@@ -1,0 +1,203 @@
+{
+  "date": "2026-10-20",
+  "timezone": "Asia/Tokyo",
+  "task": "trial-state-runtime-output",
+  "base_revision": "fffcd7df0bfc9e371549184a013d1ae127e5d883",
+  "dirty_tree": true,
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "source_hashes_scope": "Post-validation snapshot of listed files, not test-time hashes. Other chats concurrently modify transport/camera-demand and GUI code; full-suite results apply to executed snapshot only.",
+  "source_hashes": {
+    "src/cephvr/controller/microcontroller/admission.py": "8f57abe29973faf5dd93f6fea79a3d8960b8b6bbc9b616f4d1b66ba1b742e3c1",
+    "src/cephvr/controller/microcontroller/bootstrap.py": "add07b1a80ee8252d4d433fe04334a01168348cb6cc6842ae30141122dfa1837",
+    "src/cephvr/controller/microcontroller/bridge.py": "38d5f51b3e527e55db76894bf43c9ece6642deb0936c5223dc574140e4d7936a",
+    "src/cephvr/controller/microcontroller/channel.py": "854c47b415f2dc399bf9962bef075abadea58c71063bd1001d8eddf25ee13397",
+    "src/cephvr/controller/microcontroller/config.py": "23964858f4f797f4b823af306405a77d2873b9189c2e463a4d8e0158d08ac25c",
+    "src/cephvr/controller/microcontroller/device.py": "a2a8f782910796ee1a49e94933b9923ba9ea27e77958c282c179bef1839380a7",
+    "src/cephvr/controller/microcontroller/firmware.py": "adb9404092c14f4cb7d4b4327441c1a43f0af8736714d1e0be57307827a07689",
+    "src/cephvr/controller/microcontroller/firmware_operation.py": "0db3bcc288f9fc97a37c89bc0370c6b46b4aa5a8968d27eec01bdc4940aa25e0",
+    "src/cephvr/controller/microcontroller/firmware_source.py": "c778e8c3fbacd30adcab5ca1f49b92f0a603eaec628516d47384935cb6f13e6d",
+    "src/cephvr/controller/microcontroller/firmware_upload.py": "db4db6b217c738f99caa24092a7fa4c5ae6a2ee54f4a00882d36c3c2f4716974",
+    "src/cephvr/controller/microcontroller/health.py": "091521a1d3ee51fb1061177f0101849b2c5a81bf8f04a4b035e0ffa289354a25",
+    "src/cephvr/controller/microcontroller/identity.py": "6dc354e0eb12dadd75620b7697448bd3658d6ead24dce0c885411026ab107586",
+    "src/cephvr/controller/microcontroller/lazy_owner.py": "d43bd4228d8ded25c2af9d549f81cceb8c707935a3e301fe214266885742d3d6",
+    "src/cephvr/controller/microcontroller/lifecycle.py": "d48b7f1a384d129e9b91a5db59b413b1a823f7750fe9d8c443b5190b4c72ac4d",
+    "src/cephvr/controller/microcontroller/owner.py": "b62843c9b50323245e9c3cce07d3246424b351c1ece7b09a8f5f0606d2c0f0e8",
+    "src/cephvr/controller/microcontroller/protocol.py": "139fd9d6cada64592201e3095c285620068b78ef2f3645105c237468776f7ee1",
+    "src/cephvr/controller/microcontroller/pulses.py": "3e7efa988a037b49e6d8e4e29b4fc814fdec4c4620c5bdca6528c8fc1c0aacdc",
+    "src/cephvr/controller/microcontroller/serial_port.py": "8ea16a00efb3b4f499cefe9f42a8690ebf8517c0ea072bb976b6b51fc215ad93",
+    "src/cephvr/controller/microcontroller/__init__.py": "21891b79d3baaf5fee812237dfc11183a8d186cf1bbe2f470d1e5b26b2fbfa13",
+    "contracts/cephvr/acquisition/v1/microcontroller.proto": "8ac8674570b0ff71c960ac12b6fd30312144a1acdfb55282d80ee6a3ebd132ba",
+    "contracts/cephvr/control/v1/services.proto": "3f1b884fc44f2c4510c94f3489847df9687edeec42572a2dea478f1f60e3dae4",
+    "firmware/uno/cephvr2_mcu/cephvr2_mcu.ino": "09ed747fd24ad43024e8b10d9b518c9cee7843ff747ea4c2758f605316f8c22e",
+    "src/cephvr/acquisition/microcontroller_client.py": "b83bb8c170195af2e890008545abfb9d4790c69fbd1dae3553aa6eeb93559308",
+    "src/cephvr/acquisition/coordinator/trial_helpers.py": "220469475b5dc0b95b570e47dec16e4bebd3b605ce0bc9021a678d575dbf9e26",
+    "src/cephvr/acquisition/coordinator/trial_pulses.py": "7b3bfe492426b18f0e1514a0563f656ede6149e792cc2308fb18ac4b84101bd2",
+    "src/cephvr/acquisition/coordinator/trial_schedule_release.py": "10bafed41f8db7f6511223af75f105b6b33faea59b12fbc24901d26ea593971b",
+    "src/cephvr/acquisition/coordinator/trial_termination.py": "2ac9be30097d2b6df945e5bb61e4ff3f7ea032ca9f0cf6467eee4d41d577cb1b",
+    "src/cephvr/controller/evidence.py": "4035004c7406d28cc31c97f48645b474dc44e854b7c71d42112a41025f98b3f5",
+    "tests/controller/firmware_harness/continuity.cpp": "90d55ee724dae000fc362fcadc00b86348cd892e9d80ad15b0f2888039b29b2a"
+  },
+  "firmware": {
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-20\\trial-state-runtime-output\\firmware\\cephvr2_mcu.ino.hex",
+    "sha256": "abf43ffb37d6129c78b7be5d2daba2f133700f0f71b9d2126d15253d10defa36",
+    "flash_bytes": 14080,
+    "global_sram_bytes": 1285,
+    "validation": "read_uno_image passes",
+    "uploaded": true
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller tests/acquisition -q -m \"not windows and not rig\" --tb=short",
+      "outcome": "1473 passed,4 skipped,8 deselected in16.53s",
+      "raw": "pytest.log"
+    },
+    {
+      "command": "cmd /c reports/runtime-evidence-2026-10-19/camera-connect-continuity/native-test.cmd",
+      "outcome": "1 passed in2.84s",
+      "scope": "Actual sketch compiled with MSVC/native Arduino adapter; no electrical/AVR latency model"
+    },
+    {
+      "command": "arduino-cli compile --fqbn arduino:avr:uno --clean --build-path reports/runtime-evidence-2026-10-20/trial-state-runtime-output/avr-build --output-dir reports/runtime-evidence-2026-10-20/trial-state-runtime-output/firmware firmware/uno/cephvr2_mcu",
+      "outcome": "Pass;14080 flash bytes,1285 globals; compile only"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/controller src/cephvr/acquisition",
+      "outcome": "303 source files passed before subsequent concurrent camera-demand edits"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "outcome": "739 modules,0 violations; existing cohesion advisories"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/generate_contracts.py",
+      "outcome": "19 Protobuf sources generated from owning contracts"
+    },
+    {
+      "command": "load_microcontroller_pair; read_uno_image",
+      "outcome": "policy5/protocol6 digest and application HEX validation passed"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\admission.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\bootstrap.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\bridge.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\channel.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\config.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\device.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\firmware.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\firmware_operation.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\firmware_source.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\firmware_upload.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\health.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\identity.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\lazy_owner.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\lifecycle.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\owner.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\protocol.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\pulses.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\serial_port.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\__init__.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\microcontroller_client.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\trial_helpers.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\trial_pulses.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\trial_schedule_release.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\trial_termination.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\evidence.py"
+      ],
+      "exit_code": 0,
+      "output": "All checks passed!\n"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\admission.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\bootstrap.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\bridge.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\channel.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\config.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\device.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\firmware.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\firmware_operation.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\firmware_source.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\firmware_upload.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\health.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\identity.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\lazy_owner.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\lifecycle.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\owner.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\protocol.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\pulses.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\serial_port.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\__init__.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\microcontroller_client.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\trial_helpers.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\trial_pulses.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\trial_schedule_release.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\trial_termination.py",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\evidence.py"
+      ],
+      "exit_code": 0,
+      "output": "25 files already formatted\n"
+    }
+  ],
+  "failed_attempts": [
+    "Initial sandboxed async run stalled after31 tests; interrupted and rerun outside sandbox.",
+    "Old wire/stopped-output fixtures lacked trial state; updated explicit evidence, preserving assertions. Initial type/import/format issues corrected.",
+    "Native test wrapper forward-slash cmd path failed; corrected. Sandbox temporary-directory/native fixture and Arduino cache lookup failed; installed toolchain succeeded outside sandbox without installation.",
+    "Broader suite found pre-existing preview-transfer test doubles missing deadline_ns in AcquisitionPeer and SupervisorPeer. Fixed fixture signatures only; production tracking source unchanged.",
+    "Initial log append failed on Windows cp1252; explicit UTF-8 and encoding-only repair retained unrelated work. Extra-test anchor failure occurred before writing that file; corrected,51 owning cases passed.",
+    "Final broad format check saw concurrent camera transport edits; left those untouched. Evidence-capture lint saw concurrent acquisition_resolution import editing and stopped before writing evidence. Stable owned paths pass final scoped lint/format; full-suite/static results do not validate subsequent concurrent edits."
+  ],
+  "limitations": [
+    "No serial/device operation, upload or runtime restart.",
+    "Protocol6 host rejects protocol5 firmware; explicit deployment remains pending.",
+    "No physical voltage, edge timing or SpikeGLX pulse capture verified; tiny spikes cause is unproven.",
+    "No camera-free acquisition mode added by this increment; separate concurrent task owns camera-demand changes."
+  ],
+  "deployment": {
+    "date": "2026-10-20",
+    "authorization": "User explicitly authorized protocol6 COM8 upload after cleanup and trial signal verification.",
+    "controller_generation": "128c64c4-47ea-4fbb-9a42-919c225145e4",
+    "method": "Fresh exclusive managed runtime; explicit data-preserving startup recovery; existing controller GUI-command-path upload of digest-pinned application HEX; native uploader verification and fresh CAPS6/stopped readback.",
+    "upload_evidence": "deployment.json",
+    "physical_evidence": "signal-assessment.json",
+    "raw_samples": "onebox0-channel0.npz",
+    "trial_commands": "trial-events.json",
+    "restoration": "Runtime configuration equal and saved configuration byte-exact; native session cleanup confirmed; final Configuration.",
+    "failures": [
+      "Old endpoint was stale: RPC connection refused and exact event OpenEventW failed2. No kill or direct serial bypass; fresh launcher acquired application guard.",
+      "12-second diagnostic candidate rejected by E05 minimum60s; no trial ran, original configuration restored; retry used60s.",
+      "Matplotlib unavailable; numeric and raw waveform evidence retained without installing dependencies."
+    ],
+    "limitations": [
+      "Normal60s trial and early Abort physically tested; preview, multiple trials with configured gaps, watchdog and full-load/latency acceptance remain open.",
+      "Initial/unconfigured input was around1.73V; low-labelled intervals include reset/edge transients up to1.96V. Settled stop windows100ms-1s measured below0.008V.",
+      "Concurrent camera-demand edits were not audited for native acceptance; evidence identifies actual managed generation and test configuration."
+    ],
+    "evidence_sha256": {
+      "deploy.py": "bfb00022dc1252b3eee6ce1e73febe10c1b736f74f2c36d106aad909529338c8",
+      "deployment.json": "40dcefd6735f86044282f2dbd212deb5e6a85302a035e689b3be1f5dad24554b",
+      "verify_trial.py": "858ddf9bedb59c2b991ba278855563cf713c7e544790b4988d17538efdef1208",
+      "analyze_signal.py": "a9c3b2c5b8619707e3e04a164e7955147835e906e1263496133330ac9a073cf0",
+      "onebox0-channel0.npz": "8404897882d35c2b6910f553726cffb348020bf81e192c56fc7e113b5e4a8ec0",
+      "signal-assessment.json": "f7e69aa4927ee6b2c4d7a4fee08afeee725cacd0807cc2b0f619c836aa324447",
+      "trial-events.json": "6367336aa37b1a20cd164e52601175173313748c8900e52f67bab4c8ccd02fdc",
+      "final-restored-snapshot.json": "a04c650072bc4b4a894932fc0b53203cdee913506c3df8be66f97c2f2489e460",
+      "final-spikeglx.json": "01b289d240f257195c375893e30c99fb31f9fa9e73e5ae07037153188a987ec6"
+    },
+    "final_confirmation": {
+      "snapshot": "final-restored-snapshot.json",
+      "spikeglx": "final-spikeglx.json",
+      "session": "Configuration, cleanup confirmed, no control holder",
+      "spikeglx_state": "running=true,saving=false; original run unchanged"
+    }
+  }
+}

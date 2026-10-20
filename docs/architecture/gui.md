@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 251
+**Status:** Accepted · **Revision:** 257
 
 - Devices/Projectors provides an explicit RGB LED current and Adjust action for all
   USB-detected TI projector interfaces. The controller owns SDK access under E02/E08,
@@ -140,6 +140,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   active diagnostic settings require confirmed Close and fresh Begin. Ordinary
   experiment submission remains strict under E07; annotations stay local until
   accepted. Preserve T01/T20 acquired-image lineage and coordinates.
+- GUI Subject ID entry requires exactly four ASCII digits before Setup, preserving
+  leading zeros as text. Species is a non-editable choice of Sepia Pharaonis,
+  Sepia Latimanus or Sepioteuthis lessoniana; absence remains optional. Loaded legacy
+  IDs/species remain visible and round-trip without truncation; an unlisted species
+  is a disabled legacy item requiring replacement before Setup. No historical
+  outputs or headless/backend identifiers are rewritten.
 - Managed session submission retains optional species, sex, age in dph, size in mm
   and condition beside subject/experiment identifiers. Absent values remain absent;
   numeric age is finite and nonnegative and size is finite and positive. E07 owns
@@ -148,8 +154,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - Main navigation orders **Dashboard, Protocol, Devices, Tracking**. Protocol owns
   session mode and V02/V03 stimulus programming. Protocol type with Load/Save as sits
   left of one Assets folder (E07 root); narrow windows stack the pair. Dashboard owns
-  camera/stimulus video recording and Tracking velocities in a Recordings card below
-  Session config, using two columns with each checkbox beside its label. Assets are prepared externally. Tracking participation follows
+  camera/stimulus video recording, Tracking velocities and **Save spikeglx** in a
+  Recordings card below Session config, using two columns with each checkbox beside
+  its label. Save spikeglx is the existing E12 per-session pairing flag; keep one
+  checkbox/state and its existing persistence, confirmation and phase/authority gates. Assets are prepared externally. Tracking participation follows
   E10 without a Protocol status indicator; required acquisition/rendering is independent
   of optional video recording. Device controls stay in Devices.
 - Cameras, Protocol, Microcontroller, Projectors, SpikeGLX and Tracking own reusable JSON
@@ -877,13 +885,14 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   using their own dimensions. Bottom image width/X runs front-to-back (+rig Y);
   height/Y runs across the tank (-rig X), so 126×94 mm retains a 94×126 mm footprint.
   The Bottom projector is below Right with the same physical orientation and a
-  folded mirror path; its portrait raster top faces the subject's head. GUI-owned
+  folded mirror path. GUI-owned
   mappings rotate surface coordinates 90° before the saved output-axis inversions:
-  (u, v) maps to (1-v, u). With the retained Bottom Y inversion, head-to-tail +surface X
-  moves down the raster. Raw pixel widths/heights, offsets, reference bars and masks
+  (u, v) maps to (1-v, u). Output-axis inversions follow the operator's physically
+  verified calibration; preview placement must not require an additional Y inversion.
+  Raw pixel widths/heights, offsets, reference bars and masks
   stay output-local; Bottom surface extents/pitches and render-target axes swap.
-  The rig preview places that raster through the folded orientation onto the plane;
-  it does not treat output pixels as surface-local coordinates. Imported warps retain
+  The rig preview undoes the Bottom portrait quarter-turn when placing its raster
+  onto the physical plane, preserving authored output flips without adding a reflection. Imported warps retain
   their declared mapping; regenerated GUI profiles adopt this correction at fresh Setup.
   Numeric version 6/full version 9 retain pixel valid-area dimensions and migrate
   older Scale bounds to crop sizes using retained native measurements; reject a
@@ -956,7 +965,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   assignments and reports missing/duplicate identities without silently remapping.
   V15 surface/viewport/calibration ownership stays separate; no one-projector-per-
   surface constraint or output-mode changes are introduced.
-- SpikeGLX connection omits explanatory prose. Pairing is the E12 per-session
+- SpikeGLX connection omits explanatory prose. Dashboard Recordings owns the
+  Save spikeglx checkbox; Devices retains connection/mapping controls. Pairing is the E12 per-session
   synchronization enabled flag, editable with Configuration/control authority through
   revision-checked controller configuration updates. Pending edits disable repeats;
   display confirmed values and retain them on rejection/disconnection. The tooltip
@@ -995,6 +1005,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   only, without a System controls badge. Setup requests
   preparation in Configuration and E05 New session in Ended; the latter returns to
   Configuration after cleanup and still requires fresh Setup/Start.
+  In Ended, Session config fields unlock as next-session drafts only after confirmed
+  cleanup, synchronized configuration and current operator authority. Retain those
+  drafts through New session; completed-session metadata remains immutable.
   Stop requests Cancel Setup in SettingUp/Ready. During a session it opens a chooser:
   Stop now maps to E06 Abort now, Stop after trial retains E06's trial-completion meaning,
   and Cancel/window dismissal sends no command. The chooser keeps current phase/control
@@ -1020,13 +1033,23 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   state and capture; reopening restores the same viewers. Below the streams, show
   the current trial (or selected draft before a trial): a wide sampled planned-speed
   timeline and a compact polar local-motion direction plot, surrounded by a signed
-  angular-speed ring with CW/CCW and °/s. Both share the reported elapsed-time cursor;
-  the speed plot and epoch strip show a30s window, initially0–30s and then the
-  trailing30s as elapsed time advances. Clip traces and epoch blocks to that range;
-  time ticks remain absolute trial seconds at5s intervals.
-  Clicking the timeline inspects a planned instant until the next snapshot. Stationary
-  translation has no direction arrow. Label source selection by projector and include
-  independent reference sources only for linked textures. Reuse canonical bounded
+  angular-speed ring with CW/CCW and °/s. Refresh both plots at5Hz. While running,
+  advance planned time locally between reported elapsed-time updates; stop advancing
+  on disconnection or a non-running phase, and clamp to the planned trial end.
+  The speed plot and epoch strip share a30s window centered on current time, including
+  at startup. Draw speed history only through the current evaluated velocity, with
+  each available line ending at the center; omit the vertical current-time bar.
+  Clip traces and epoch blocks to that range; leave pre-trial history blank and keep
+  nonnegative absolute trial-time ticks at5s intervals.
+  Clicking the timeline inspects a planned instant until the next refresh. Stationary
+  translation has no direction arrow. Overlay available sources in the same speed
+  and polar plots with projector-named colored legend toggles; a toggle hides that
+  source's trace, direction and rotation together. Fully linked projectors expose only
+  their reference; include independently driven projectors alongside it. Group the same
+  projector/layer across epochs, omitting linked followers and their stationary unlinked
+  baseline entries. An independently moving epoch still exposes that projector. Keep
+  mixed mm/s and deg/s on separately labeled scales in the shared speed plot; unsupported
+  sources explain their limits without hiding valid sources. Reuse canonical bounded
   expansion/function evaluation; these plots are not measured output or timing evidence.
   Unresolved duration/order, feedback, combined texture motion and trajectories show
   their unsupported values as unavailable; no new telemetry or commands are introduced.
@@ -1097,7 +1120,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 85
+**Status:** Accepted · **Revision:** 88
 
 - Runtime logs show the current action and observed ongoing states, moving directly
   to the next action on success. Omit routine admission, successful completion and
@@ -1220,10 +1243,14 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Standard has neither. Omit the extra review/phase/clock banner; phase remains in
   the HUD. Previews places Show beside each bracketed stream heading and keeps the
   motion plots in the shared compact card frame. Place epoch labels in a separate
-  strip above the speed graph, aligned to time; keep the zero trace inside the plot.
+  strip and the left-aligned source legend directly above the speed graph. Keep
+  the motion card vertically expanding, initially about42% of the workspace with
+  an adjustable splitter; align stream headings and native frame tops across each row.
+  The polar panel has a larger dial above aligned source/direction/rotation readouts.
+  Align the epoch strip to time; keep the zero trace inside the plot.
   Tick scales use rounded multiples of five or ten, coarsened for wider ranges.
-  Polar direction uses the translation accent; its surrounding rotation ring and
-  signed value use the projection accent. Display local 0°/+X down, 90°/+Y right,
+  Each source uses one distinct theme color across its legend toggle, speed trace,
+  polar direction, surrounding rotation ring and value. Display local 0°/+X down, 90°/+Y right,
   180° up and 270° left; this display rotation does not change stimulus values. Its modeless
   visibility/authority/pending gates remain unchanged. Device diagram geometry and
   semantic palette roles remain unchanged; diagrams use the active appearance palette.
@@ -1255,7 +1282,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   refresh button) instead of showing a blank body. A disabled Load/Save as button's
   tooltip states why: editing is locked (controller not connected, another window holds
   control, or a session is in progress), or the live diagnostic must be closed first.
-- Species and Condition suggest the last 10 distinct values (case-insensitive,
+- Condition suggests the last 10 distinct values (case-insensitive,
   most recent first) from the local GUI settings, recorded only when Setup is accepted
   for request, and never part of the experiment configuration. After Subject ID or
   Output directory editing finishes, an ID with earlier sessions in that directory gets a

@@ -38,6 +38,7 @@ class Readback:
     run_name: str
     data_directory: str
     running: bool
+    saving: bool
     streams: tuple[StreamInfo, ...]
     gate_mode: str
     trigger_mode: str
@@ -67,6 +68,6 @@ class SpikeGLXClient:
         inventory: tuple[PulseChannel, ...],
     ) -> tuple[PulseChannel, ...]: ...  # Raises on unmapped/wrong-stream/unsaved roles.
     def set_run_name(self, name: str, deadline_ns: int) -> None: ...  # May raise Unknown.
-    def start_run(self, deadline_ns: int) -> None: ...  # May raise Unknown.
+    def enable_saving(self, deadline_ns: int) -> None: ...  # May raise Unknown.
     def progress(self, deadline_ns: int) -> Progress: ...
-    def stop_run(self, deadline_ns: int) -> None: ...  # May raise Unknown.
+    def disable_saving(self, deadline_ns: int) -> None: ...  # May raise Unknown.

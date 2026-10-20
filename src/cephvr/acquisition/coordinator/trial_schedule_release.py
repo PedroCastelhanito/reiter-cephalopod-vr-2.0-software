@@ -14,9 +14,9 @@ from cephvr.acquisition.coordinator.manual_pulse_observation import (
 )
 from cephvr.acquisition.coordinator.trial_helpers import (
     _camera_output_keys,
-    _external_roles,
     _outputs_match,
     _rejected,
+    _trial_output_roles,
 )
 from cephvr.acquisition.coordinator.trial_termination import (
     NormalEndRunner,
@@ -124,7 +124,7 @@ class TrialScheduleRelease:
                 "WORKER_MISSING",
                 "registered camera worker or trial preparation is unavailable",
             )
-        selected = _external_roles(session)
+        selected = _trial_output_roles(session)
         dispatch = []
         for role, candidate in worker_pairs:
             assert candidate is not None and candidate.port is not None
@@ -324,7 +324,7 @@ class TrialScheduleRelease:
         for worker in self.workers.values():
             if worker.trial is not None:
                 worker.trial.released = True
-        selected_roles = _external_roles(session)
+        selected_roles = _trial_output_roles(session)
         if selected_roles:
             if trial.start_monotonic_ns is None or trial.end_monotonic_ns is None:
                 return _rejected(

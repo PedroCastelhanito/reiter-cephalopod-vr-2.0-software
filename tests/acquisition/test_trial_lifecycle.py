@@ -50,6 +50,7 @@ class _Serial:
     def __init__(self) -> None:
         self.cancel_called = False
         self.off_called = False
+        self.selected: tuple[int | str, ...] = ()
 
     async def cancel_on_reservations(self, *, deadline_ns: int) -> None:
         self.cancel_called = True
@@ -65,6 +66,7 @@ class _Serial:
     ) -> mcu.PulseCommandEvidence:
         _ = selected_roles, scheduled_boundary_ns, stop_issued_ns, deadline_ns
         self.off_called = True
+        self.selected = selected_roles
         raise RuntimeError("OFF transport failed")
 
 
@@ -95,8 +97,10 @@ class _Worker:
 
 
 @pytest.mark.parametrize("interrupt", [False, True])
+@pytest.mark.parametrize("trial_level", [False, True])
 def test_safety_fanout_survives_off_failure_and_missing_worker(
     interrupt: bool,
+    trial_level: bool,
 ) -> None:
     session_id = str(uuid4())
     session_work = control.WorkContext(
@@ -113,6 +117,7 @@ def test_safety_fanout_survives_off_failure_and_missing_worker(
         backend, coordinator, controller, supervisor, tracking
     )
     settings = control.AcquisitionSettings()
+    settings.pulses.trial_state_enabled = trial_level
     settings.behavioral.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
     session = SessionRecord(
         work=session_work,
@@ -222,6 +227,7 @@ def test_safety_fanout_survives_off_failure_and_missing_worker(
 
     assert admission.result == control.COMMAND_RESULT_REJECTED
     assert serial.cancel_called and serial.off_called
+    assert ("trial_state" in serial.selected) == trial_level
     assert worker_port.interrupt_calls == int(interrupt)
     assert worker_port.stop_calls == int(not interrupt)
 

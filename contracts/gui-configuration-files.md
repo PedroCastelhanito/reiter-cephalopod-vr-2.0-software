@@ -124,6 +124,9 @@ the portable projector format.
 
 - `dashboard`: text `subject_id`, `species`, `age`, `subject_size`, `experiment`,
   `condition`, `output_root`, and a known `sex` choice.
+  Subject IDs remain strings (leading zeros preserved); GUI Setup requires four
+  ASCII digits. Species stores the dropdown text, preserving absent or historical
+  metadata on load under [G01](../docs/architecture/gui.md#g01).
 - `cameras`: ordered objects with nonempty unique text `serial`, known unique
   assigned `role` (or Unassigned), boolean `enabled` and text-valued `values`.
   The serial set must match the current inventory. Connection/capture state is excluded.

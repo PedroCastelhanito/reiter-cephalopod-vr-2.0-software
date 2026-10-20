@@ -19,6 +19,91 @@ from cephvr.acquisition.camera.native_formats import (
 from cephvr.acquisition.camera.wait import PylonWaitGate
 
 
+@pytest.mark.parametrize(
+    "interface,expected",
+    [
+        ("usb3", {"failed_buffers", "missed_frames", "resynchronizations"}),
+        (
+            "gige",
+            {"buffer_underruns", "failed_buffers", "resend_requests", "resend_packets"},
+        ),
+    ],
+)
+def test_transport_counter_reads_only_interface_supported_nodes(
+    monkeypatch, interface, expected
+):
+    from cephvr.acquisition.camera import transport
+    from cephvr.acquisition.worker.transport_summary import collect_transport_summary
+
+    reads = []
+
+    def read(_nodes, name):
+        reads.append(name)
+        return 3
+
+    monkeypatch.setattr(transport, "read_value", read)
+    camera = SimpleNamespace(GetStreamGrabberNodeMap=lambda: object())
+    start = transport.read_transport_counters(camera, interface)
+    adapter = SimpleNamespace(
+        read_transport_counters=lambda: transport.read_transport_counters(
+            camera, interface
+        )
+    )
+    warnings = []
+    result = collect_transport_summary(
+        adapter, start, warnings.append, clock_ns=lambda: 1
+    )
+    assert not warnings
+    assert {
+        key for key, value in result.counters.items() if value is not None
+    } == expected
+    assert all(value in (None, 0) for value in result.counters.values())
+    assert len(reads) == 2 * len(expected)
+
+
+@pytest.mark.parametrize("failure", ["baseline", "final", "missing", "reset", "bool"])
+def test_transport_counter_failures_still_warn(monkeypatch, failure):
+    from dataclasses import replace
+
+    from cephvr.acquisition.camera import transport
+    from cephvr.acquisition.worker.transport_summary import collect_transport_summary
+
+    monkeypatch.setattr(transport, "read_value", lambda *_: 5)
+    camera = SimpleNamespace(GetStreamGrabberNodeMap=lambda: object())
+    start = transport.read_transport_counters(camera, "usb3")
+
+    def read():
+        if failure == "final":
+            raise RuntimeError("SDK read failed")
+        values = {"missing": None, "reset": 4, "bool": True}
+        return replace(start, failed_buffers=values.get(failure, 5))
+
+    warnings = []
+    result = collect_transport_summary(
+        SimpleNamespace(read_transport_counters=read),
+        None if failure == "baseline" else start,
+        warnings.append,
+        clock_ns=lambda: 1,
+    )
+    assert result.counters["failed_buffers"] is None
+    assert len(warnings) == 1
+    assert warnings[0].code == "TRANSPORT_COUNTERS_UNAVAILABLE"
+    assert "failed_buffers" in warnings[0].details
+
+
+def test_transport_counter_sdk_exception_propagates_from_adapter(monkeypatch):
+    from cephvr.acquisition.camera import transport
+
+    def failed(*_):
+        raise RuntimeError("SDK read failed")
+
+    monkeypatch.setattr(transport, "read_value", failed)
+    with pytest.raises(RuntimeError, match="SDK read failed"):
+        transport.read_transport_counters(
+            SimpleNamespace(GetStreamGrabberNodeMap=lambda: object()), "usb3"
+        )
+
+
 @pytest.fixture(autouse=True)
 def native_control_event(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("cephvr.acquisition.camera.wait.ManualResetEvent.create", Event)

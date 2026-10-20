@@ -1,0 +1,90 @@
+{
+  "date": "2026-10-20",
+  "calibration_sha256": "0e6ebeda03c61a398e25b33d016a65ec9a63287706fab3704d2a1e3edb1b8ed4",
+  "screen_pixels": {
+    "Left": [
+      1030,
+      680
+    ],
+    "Front": [
+      760,
+      690
+    ],
+    "Right": [
+      1025,
+      695
+    ],
+    "Bottom": [
+      685,
+      940
+    ]
+  },
+  "crop_policy": "Centered contiguous Left-Front-Right cross, Bottom centered below Front. Native pixels; no resize, warp, flip, contrast change or synthesis.",
+  "grey": {
+    "srgb_code": 127,
+    "linear_rgb": 0.21223075741405523
+  },
+  "collections": {
+    "primate": {
+      "originals": 240,
+      "crops": 960,
+      "epochs": 4000,
+      "duration_seconds": 1200,
+      "repetition_counts": {
+        "9": 80,
+        "8": 160
+      },
+      "seed": 202610201,
+      "pixel_equality": "All saved crops match source boxes exactly",
+      "trial_blocks": 2,
+      "seconds_per_block": 600
+    },
+    "cuttlebase": {
+      "originals": 240,
+      "crops": 960,
+      "epochs": 4000,
+      "duration_seconds": 1200,
+      "repetition_counts": {
+        "8": 160,
+        "9": 80
+      },
+      "seed": 202610202,
+      "pixel_equality": "All saved crops match source boxes exactly",
+      "trial_blocks": 2,
+      "seconds_per_block": 600
+    }
+  },
+  "protocol": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\primate_cuttlebase_40min.json",
+  "protocol_bytes": 4744333,
+  "total_seconds": 2400,
+  "separate_session": true,
+  "validation": "GUI validator, canonical parsing, full expansion, durations, grouping, frequencies and pixel equality passed",
+  "limits": "No GUI load, full Setup/resource preparation or physical playback performed.",
+  "trial_checks": [
+    {
+      "trial": "Primate - Part 1 - 10 minutes",
+      "seconds": 600,
+      "epochs": 2000,
+      "source_epochs_boundaries_bytes": 4635893
+    },
+    {
+      "trial": "Primate - Part 2 - 10 minutes",
+      "seconds": 600,
+      "epochs": 2000,
+      "source_epochs_boundaries_bytes": 4636189
+    },
+    {
+      "trial": "Cuttlebase - Part 1 - 10 minutes",
+      "seconds": 600,
+      "epochs": 2000,
+      "source_epochs_boundaries_bytes": 4644516
+    },
+    {
+      "trial": "Cuttlebase - Part 2 - 10 minutes",
+      "seconds": 600,
+      "epochs": 2000,
+      "source_epochs_boundaries_bytes": 4644960
+    }
+  ],
+  "plan_limit_check": "Original20-minute trial source/epochs/boundaries alone exceeded8MiB; split each collection into two10-minute blocks. Final full resource manifests/Setup remain untested."
+}

@@ -42,10 +42,10 @@ def _outputs_match(
     return len(requested) == len(expected)
 
 
-def _external_roles(session: SessionRecord) -> tuple[int, ...]:
-    """Select required cameras whose confirmed timing needs MCU pulse evidence."""
+def _trial_output_roles(session: SessionRecord) -> tuple[int | str, ...]:
+    """Select external cameras and the enabled trial-level output."""
     settings = session.confirmed_settings
-    roles = []
+    roles: list[int | str] = []
     for role, name in (
         (camera.CAMERA_ROLE_BEHAVIORAL, "behavioral"),
         (camera.CAMERA_ROLE_TRACKING, "tracking"),
@@ -59,6 +59,8 @@ def _external_roles(session: SessionRecord) -> tuple[int, ...]:
             and device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
         ):
             roles.append(role)
+    if settings is not None and settings.pulses.trial_state_enabled:
+        roles.append("trial_state")
     return tuple(roles)
 
 

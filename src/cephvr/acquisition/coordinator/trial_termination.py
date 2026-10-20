@@ -13,8 +13,8 @@ from cephvr.acquisition.coordinator.manual_pulse_observation import (
     retain_applied_pulse_state,
 )
 from cephvr.acquisition.coordinator.trial_helpers import (
-    _external_roles,
     _rejected,
+    _trial_output_roles,
 )
 from cephvr.acquisition.coordinator.trial_pulses import (
     TrialPulseBoundaries,
@@ -43,7 +43,7 @@ class PulseBoundaryRunner(Protocol):
         self,
         session: SessionRecord,
         trial: TrialRecord,
-        selected_roles: tuple[int, ...],
+        selected_roles: tuple[int | str, ...],
         *,
         command: mcu.PulseBoundaryCommand,
         boundary_ns: int,
@@ -137,7 +137,7 @@ class TrialTermination:
             )
             if aborted:
                 trial.interrupted = True
-        selected = _external_roles(session)
+        selected = _trial_output_roles(session)
         scheduled_off = (
             internal
             and not aborted
@@ -207,6 +207,8 @@ class TrialTermination:
                 "WORKER_STOP_UNCONFIRMED",
                 "; ".join(failures),
             )
+        if not session.required_cameras:
+            await self.pulse_boundaries.lifecycle.pulse_evidence_changed(trial)
         return control.CommandAdmission(
             result=control.COMMAND_RESULT_ACCEPTED,
             command_id=request.command.command_id,
@@ -215,7 +217,7 @@ class TrialTermination:
     async def _force_outputs_off(
         self,
         trial: TrialRecord | None,
-        selected: tuple[int, ...],
+        selected: tuple[int | str, ...],
         issued_ns: int,
         deadline_ns: int,
         *,
@@ -309,7 +311,7 @@ class TrialTermination:
                 ):
                     if task is not None and task is not asyncio.current_task():
                         task.cancel()
-        selected = _external_roles(session)
+        selected = _trial_output_roles(session)
         serial_task = asyncio.create_task(
             self._force_outputs_off(
                 session.trial,
@@ -372,7 +374,7 @@ class TrialTermination:
         self,
         session: SessionRecord,
         trial: TrialRecord,
-        selected_roles: tuple[int, ...],
+        selected_roles: tuple[int | str, ...],
         *,
         command: mcu.PulseBoundaryCommand,
         boundary_ns: int,

@@ -2,7 +2,7 @@
 # Source rules: SpikeGLX session control and alignment scope: SYS-004, E04, E09, E12, E14.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/synchronization_config.toml. The loader rejects a version mismatch.
-policy_version = 5
+policy_version = 6
 
 [alignment]
 execution = "external_posthoc"
@@ -10,8 +10,8 @@ authority = "spikeglx_recorded_hardware_pulses"
 
 [spikeglx]
 control_owner = "controller_sdk_client"
-control_scope = "run_name_start_stop"
-controller_loss = "no_remote_stop_emergency_report_names_run_for_manual_stop"
+control_scope = "run_name_and_saving_only_preserve_acquisition"
+controller_loss = "no_remote_saving_stop_emergency_report_names_recording_for_manual_disable"
 stop_timing = "local_stopped_deadline_plus_stop_margin_or_immediate_without_trial"
 paired_recording_policy = "required_before_first_trial"
 writing_evidence = "saving_and_stream_sample_count_progress"

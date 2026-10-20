@@ -1,5 +1,97 @@
 # Acquisition status
 
+Oct20 `sdk-transport-warning-applicability` / `camera-session-demand`: implemented
+owner-requested [A01rev20](../docs/architecture/acquisition.md#a01),
+[A07rev65](../docs/architecture/acquisition.md#a07) and
+[E05rev96](../docs/architecture/experiment.md#e05). Basler snapshots mark only
+interface-inapplicable counters unsupported; both boundary reads must agree before
+suppressing a warning. Null evidence is unchanged. Applicable missing/invalid/reset
+counters and failed entire SDK reads still emit field-named warnings. The
+[SDK binding](../contracts/acquisition/sdk-mappings.md#transport-summary-binding)
+retains the exact USB/GigE mapping and adapter contract.
+
+Controller Setup derives camera demand on a copy: saved video or enabled Tracking
+processing keeps a selected camera active. Unsaved/no-consumer cameras reserve no
+workers, pulses or files; manual preview does not create demand. Configuration
+readback preserves saved Use/device choices while the prepared session records the
+effective roles. Active processing cameras retain mandatory metadata with video
+Off. Acquisition is omitted if neither cameras nor Trial state are required;
+Trial-state-only sessions use the existing pulse scheduler, exact ON/OFF evidence
+and original deadlines, without fabricated camera callbacks, producer ends or files.
+
+ARCH-002 review keeps applicability in the existing adapter/counter record and
+session selection in the focused controller configuration helper. A small
+`trial_no_cameras.py` separates pulse-only evidence from camera aggregation; no new
+process, dependency or wire field. Basler's667-line adapter remains its cohesive SDK
+interface; trial_lifecycle.py's506 lines retain exact camera evidence joins while
+the new responsibility is separate. Owning behavior test modules were extended.
+
+Final acquisition/controller suite:1499 passed,4 skipped,8 deselected; scoped
+Ruff/format23 files, Windows-target mypy304 source files, boundary740 modules/zero
+violations, contract-stub syntax, governing anchors and whitespace pass. Tests cover
+USB/GigE applicability, SDK failures/reset, camera-demand/save/backend matrices,
+output/pulse sets, saved selections, no-camera Setup/Ready and pulse-only normal/
+Abort lifecycle admission with failed OFF rejection. Sandbox async runs stalled and
+were interrupted; one sandbox temp fixture failed, then permitted fixture-only
+runs passed. Initial new-test phase enum typo was corrected. No device operations,
+firmware upload, managed restart or physical acceptance by this chat.
+[Validation/raw logs/source hashes](runtime-evidence-2026-10-20/sdk-transport-counters/verification.json).
+
+The preceding investigation inspected pilot `0001-090932`: all three cameras had
+null buffer-underrun/resend fields and zero failed-buffer/missed-frame/resync deltas,
+consistent with exact-serial historical USB inventory. Pasted warning UUIDs were not
+matched and live SDK reads were not established; this is not recording-integrity
+validation. [Preserved raw records/provenance](runtime-evidence-2026-10-20/sdk-transport-counters/assessment.json).
+Native acceptance remains in the [single rig checklist](rig-verification.md).
+
+Oct20 `trial-state-runtime-output`: owner observes a near-zero trial channel with
+small spikes in SpikeGLX and selects HIGH for the entire trial, LOW on stop/abort.
+Source confirmed the old D12 assignment supported diagnostics only. Under
+[A11rev51](../docs/architecture/acquisition.md#a11), protocol6 now carries the
+independent held-level output in the existing controller serial owner and acquisition
+trial-boundary masks. Setup configures/readbacks it, each trial checks the locked
+pin, and valid release schedules ON at T and OFF at end; Abort cancels unsent ON
+and includes the level in original-deadline cleanup. Free-running cameras can still
+use the marker within an enabled acquisition session; camera-free Trial state
+support is now covered by the demand change above. Preview masks omit it. Startup, watchdog, stop/claim release and upload
+verification require explicit LOW evidence; controller Started/Stopped checks the
+selected HIGH/LOW result. No physical timestamp is inferred from an ACK.
+
+Host/wire/lifecycle tests and actual-sketch native adapter cover held HIGH, normal
+stop, interruption failure fanout, stale-start rejection, preview separation,
+watchdog LOW, unchanged-camera continuity, pin conflicts and bounded full replies.
+The AVR build passes (14080 flash bytes,1285 global SRAM bytes). Final exact commands,
+results, source hashes and failed attempts are in
+[verification](runtime-evidence-2026-10-20/trial-state-runtime-output/verification.json).
+The existing preview-transfer test doubles lacked the production deadline keyword;
+corrected those fixtures while retaining their release assertions. No production
+tracking behavior changed. ARCH-002 review retains cohesive single-serial ownership
+in owner.py/device.py and cleanup.py's existing stop-proof join; the added mask/state
+uses their current interfaces, with no new module, dependency or process. Size
+advisories remain, with zero dependency-boundary violations.
+
+Owner-authorized managed deployment on2026-10-20 now passes: fresh exclusive runtime,
+data-preserving startup recovery, verified application upload on COM8 and fresh
+CAPS6 / `cephvr2_uno_6` with stopped outputs. The prior controller endpoint was
+stale and its exit receipt absent; recovery explicitly retains that uncertainty,
+without deleting prior scientific files or fabricating exit proof. SpikeGLX was
+confirmed acquiring/not saving before testing.
+
+Two bounded native sessions physically verify D12 on SpikeGLX OneBox0/channel0:
+normal HIGH lasts60.00231s (median4.88176V), then LOW; early Abort ends HIGH after
+3.37917s, then LOW.2,514,552 unique samples at30303Hz cover82.9803s with no missing
+sample intervals or HIGH dropouts. Settled100ms-to1s stop windows measure
+0.00198–0.00702V. Initial unconfigured/reset intervals and edge transients are
+retained (up to1.96V outside HIGH), not labelled steady LOW. Both sessions confirm
+cleanup; original runtime configuration and saved bytes are restored. Tests used
+existing Behavior saving/stimulus settings with SpikeGLX pairing temporarily off;
+SDK streaming supplied independent electrical evidence without changing remote saving.
+[Physical assessment](runtime-evidence-2026-10-20/trial-state-runtime-output/signal-assessment.json),
+[upload/commands/limits](runtime-evidence-2026-10-20/trial-state-runtime-output/verification.json).
+Preview, configured intertrial gaps, watchdog and full-load/timing acceptance remain
+in [rig verification](rig-verification.md#managed-device-gui). The earlier tiny spikes'
+physical cause was not independently reproduced.
+
 Oct19 `gui-full-rig-test`:600s paired Gaussian run under A07/A08/A09 saves
 17986 Behavior,35973 Tracking and35973 Eye frames. All camera accounting is complete,
 including post-cutoff disposition; zero received-frame drops/invalids and contiguous

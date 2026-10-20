@@ -147,6 +147,7 @@ class SerialOwner:
                     "behavioral_selected": "1" if "behavioral" in running else "0",
                     "tracking_selected": "1" if "tracking" in running else "0",
                     "eye_tracking_selected": "1" if "eye_tracking" in running else "0",
+                    "trial_state_selected": "1" if "trial_state" in running else "0",
                 }
                 self._channel.request("OFF", fields, deadline_ns)
                 status_exchange = self._channel.probe("STATUS", deadline_ns)
@@ -185,6 +186,10 @@ class SerialOwner:
         """Apply all output roles from complete settings plus an explicit active mask."""
         self._require_connected()
         active = normalize_roles(active_roles)
+        if requested.trial_state_enabled:
+            active.add("trial_state")
+        else:
+            active.discard("trial_state")
         if requested.HasField("port") and requested.port != self.port_name:
             raise ValueError(
                 "pulse configuration port differs from the serialized owner port"
@@ -195,6 +200,14 @@ class SerialOwner:
             enabled = role in active
             fields[f"{role}_enabled"] = "1" if enabled else "0"
             if not enabled:
+                continue
+            if role == "trial_state":
+                pin = _safe_token(requested.trial_state_pin, "trial state pin")
+                if pin not in caps.pins:
+                    raise ValueError(
+                        "trial state pin is absent from firmware capabilities"
+                    )
+                fields["trial_state_pin"] = pin
                 continue
             if not requested.HasField(role):
                 raise ValueError(f"active {role} role has no requested pulse settings")
@@ -243,7 +256,11 @@ class SerialOwner:
                 raise SerialOwnerError(
                     f"CONFIGURE readback enablement differs for {role}"
                 )
-            if role in active and output.pin != getattr(requested, role).pin:
+            if role in active and output.pin != (
+                requested.trial_state_pin
+                if role == "trial_state"
+                else getattr(requested, role).pin
+            ):
                 raise SerialOwnerError(f"CONFIGURE readback pin differs for {role}")
         self._state = state
         return self._observation(
@@ -297,7 +314,7 @@ class SerialOwner:
         self._require_connected()
         if self._diagnostic is not None:
             raise SerialOwnerError("another pin diagnostic is active")
-        if kind not in {"trial_state", *ROLES}:
+        if kind not in ROLES:
             raise ValueError("unknown pin diagnostic kind")
         if pin not in self._require_capabilities().pins:
             raise ValueError("pin is absent from current firmware capabilities")
@@ -305,7 +322,7 @@ class SerialOwner:
         if any(getattr(self._state, role).running for role in ROLES):
             raise SerialOwnerError("pin diagnostics require stopped camera outputs")
         fields = {"kind": kind, "pin": pin, "duration_ms": "0"}
-        if kind in ROLES:
+        if kind != "trial_state":
             if frequency_hz is None:
                 raise ValueError("camera pin diagnostic requires its requested rate")
             fields["hz"] = frequency_text(frequency_hz)
@@ -580,5 +597,6 @@ def _state_from_values(
         output.running = cast(bool, item["running"])
         if enabled:
             output.pin = cast(str, item["pin"])
-            output.applied_frequency_hz = cast(float, item["frequency"])
+            if role != "trial_state":
+                output.applied_frequency_hz = cast(float, item["frequency"])
     return state

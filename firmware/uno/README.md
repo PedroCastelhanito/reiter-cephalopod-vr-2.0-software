@@ -1,20 +1,24 @@
 # CephVR2 Arduino Uno firmware
 
-`cephvr2_mcu/cephvr2_mcu.ino` implements the controller-owned A11 serial protocol v5
-for the Arduino Uno. On 2026-10-19 the owner's GUI upload reported verification
-failure, but independent flash readback matches all13874 current application bytes
-and live CAPS confirms protocol5 / `cephvr2_uno_5` on COM8. All camera outputs are
-stopped/disabled; electrical acceptance remains pending. See the
+`cephvr2_mcu/cephvr2_mcu.ino` implements controller-owned A11 serial protocol6
+for the Arduino Uno, including the held-HIGH trial output. Owner-authorized
+managed upload to COM8 passed on2026-10-20; fresh CAPS reports `cephvr2_uno_6`.
+SpikeGLX OneBox0/channel0 confirms held HIGH through a60s trial and LOW at
+normal end/Abort. [Deployment and physical evidence](../../reports/runtime-evidence-2026-10-20/trial-state-runtime-output/verification.json).
+Installation remains explicit.
+Historical 2026-10-19 flash readback matched all13874 protocol5 application bytes,
+and CAPS identified `cephvr2_uno_5` on COM8; that observation does not describe
+current electrical state. See the
 [readback evidence](../../reports/runtime-evidence-2026-10-19/mcu-upload-recovery/board-check.json).
 Owner-authorized manual uploads to COM8 ran on 2026-10-05
-and 2026-10-07. The current protocol-3 image, pre-upload flash backup, verified
+and 2026-10-07. The historical protocol-3 image, pre-upload flash backup, verified
 upload and matching board CAPS are recorded in
 [installation evidence](../../reports/rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md).
 The [earlier protocol-2 evidence](../../reports/mcu-evidence-2026-10-05/README.md)
 retains its original image and flash readback.
 
 Keep each independent sketch in its own directory. Select
-`cephvr2_mcu/cephvr2_mcu.ino` for this GUI's protocol-5 backend.
+`cephvr2_mcu/cephvr2_mcu.ino` for this GUI's protocol-6 backend.
 `cephvr1_mcu/cephvr1_mcu.ino` is the legacy program; its required
 `projector_clock.h` is beside it. It compiles for Uno but lacks the CAPS protocol
 required by CephVR2. Both sketches must not share one sketch directory: Arduino
@@ -29,12 +33,14 @@ Build with the installed Arduino AVR core:
 ```
 
 The host must use 115200 baud. Camera and trial-state outputs can use D2–D13;
-the projector-flip rising-edge input must use D2 or D3, the Uno external
-interrupt pins. One diagnostic can run for at most two seconds. The firmware
+projector-flip input remains deferred. Continuous diagnostics stop when their
+two-second communication lease expires or the operator requests Stop. The firmware
 counts actual generated output rising transitions, including the initial HIGH;
-Trial state's held-HIGH test counts one. Camera counters increment at the timer's
+Trial state's held-HIGH test counts one. Protocol6 also holds the configured trial
+output HIGH during released trials and LOW at stop/abort/watchdog; camera previews
+never select that output. Camera counters increment at the timer's
 HIGH writes, not from requested rate or elapsed time. Counts persist after Stop
-until a new test, with atomic readback and uint32 saturation. Protocol 5 requires a
+until a new test, with atomic readback and uint32 saturation. Protocol 6 requires a
 matching firmware image before the updated host can connect; older firmware is
 rejected before CONFIGURE. Unchanged outputs retain phase and HIGH/LOW/running
 state; only changed outputs are updated and newly enabled outputs await ON.

@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-20",
+  "revision": "fffcd7df0bfc9e371549184a013d1ae127e5d883",
+  "scope": "Dirty shared checkout; offscreen planning fixture only, no runtime restart or devices.",
+  "source_sha256": {
+    "src/cephvr/gui/preview_timeline.py": "6316f9e961a901e7c88fb4722d13d10e8dd4e61faf56895e6aefe1f5b25a5615",
+    "src/cephvr/gui/preview_motion_plot.py": "67e57761e1e9ec44834425d45daaf0bcf7e216127982c705b57fc114c6efd6c6",
+    "src/cephvr/gui/window.py": "3c663d418059813faca4b82a288603313d1815067df0bc4767b5f8f96278682d",
+    "tests/gui/test_preview_timeline.py": "7bb45464f0245c27af160365b14a099f7c1a5d32c78a6173fe74183eae07afd6"
+  },
+  "timer": {
+    "configured_ms": 200,
+    "ticks_in_1250ms": 6,
+    "intervals_s": [
+      0.20400000002700835,
+      0.2029999999795109,
+      0.18700000003445894,
+      0.2029999999795109,
+      0.2029999999795109
+    ]
+  },
+  "tests": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_preview_timeline.py -q -m 'not windows and not rig' --basetemp=.pytest_tmp_centered_speed: 16 passed",
+  "static": "Ruff check/format: 4 files pass; mypy --platform win32: 3 sources pass; boundaries: 739 modules, zero violations; git diff --check passes (existing CRLF notices).",
+  "initial_failure": "Fractional endpoint rounding produced12.129999999999999; fixed by retaining exact right endpoint. Final16 checks pass.",
+  "limits": "Existing tests/gui/test_dashboard.py was already zero bytes and preserved. New standalone timeline fixture avoids concurrent Dashboard tests. No full GUI or rig acceptance."
+}

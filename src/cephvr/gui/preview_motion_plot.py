@@ -1,6 +1,5 @@
 """Read-only speed timeline and synchronized polar motion instrument."""
 
-from dataclasses import dataclass
 from math import ceil, cos, floor, log10, radians, sin
 
 from PyQt6.QtCore import QPointF, QRectF, Qt, pyqtSignal
@@ -15,16 +14,8 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QWidget
 
+from cephvr.gui.preview_motion_data import MotionEpoch, MotionTrace, PolarSample
 from cephvr.gui.theme import colors_for
-from cephvr.visual_stimulus.config.models.program_model import Settings
-
-
-@dataclass(frozen=True)
-class MotionEpoch:
-    start: float
-    end: float
-    name: str
-    settings: tuple[Settings, ...]
 
 
 def plot_ticks(maximum: float, intervals: int = 5) -> tuple[float, ...]:
@@ -38,7 +29,7 @@ def plot_ticks(maximum: float, intervals: int = 5) -> tuple[float, ...]:
 
 
 def time_window(elapsed: float | None) -> tuple[float, float]:
-    start = max(0.0, (elapsed or 0.0) - 30.0)
+    start = (elapsed or 0.0) - 15.0
     return start, start + 30.0
 
 
@@ -58,7 +49,7 @@ class EpochStrip(QWidget):
         if not self.epochs:
             return
         start, end = time_window(self.elapsed)
-        width = max(1, self.width() - 82)
+        width = max(1, self.width() - 128)
         for index, epoch in enumerate(self.epochs):
             visible_start, visible_end = max(start, epoch.start), min(end, epoch.end)
             if visible_end <= visible_start:
@@ -86,14 +77,14 @@ class MotionPlot(QWidget):
         super().__init__()
         self.setMinimumSize(200, 140)
         self.epochs: tuple[MotionEpoch, ...] = ()
-        self.traces: list[tuple[tuple[float, float], ...]] = []
+        self.traces: list[MotionTrace] = []
+        self.errors: list[str] = []
         self.elapsed: float | None = None
         self.message = "Select a trial with stimulus motion."
-        self.unit = "mm/s"
         self.setAccessibleName("Planned stimulus speed against trial time")
 
     def plot_bounds(self) -> QRectF:
-        return QRectF(64, 25, max(1, self.width() - 82), max(1, self.height() - 59))
+        return QRectF(64, 25, max(1, self.width() - 128), max(1, self.height() - 59))
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if (
@@ -105,10 +96,16 @@ class MotionPlot(QWidget):
             if bounds.contains(event.position()):
                 start, end = time_window(self.elapsed)
                 self.time_selected.emit(
-                    start
-                    + (event.position().x() - bounds.left())
-                    / bounds.width()
-                    * (end - start)
+                    max(
+                        0.0,
+                        min(
+                            self.epochs[-1].end,
+                            start
+                            + (event.position().x() - bounds.left())
+                            / bounds.width()
+                            * (end - start),
+                        ),
+                    )
                 )
         super().mousePressEvent(event)
 
@@ -118,7 +115,12 @@ class MotionPlot(QWidget):
         colors = colors_for(self)
         painter.fillRect(self.rect(), QColor(colors.console))
         painter.setPen(QColor(colors.label))
-        painter.drawText(8, 16, f"Speed ({self.unit})")
+        painter.drawText(
+            70,
+            16,
+            "Speed"
+            + (" · some sources unavailable (see legend)" if self.errors else ""),
+        )
         if self.message:
             painter.setPen(QColor(colors.muted))
             painter.drawText(
@@ -129,27 +131,55 @@ class MotionPlot(QWidget):
             return
         bounds = self.plot_bounds()
         start, end = time_window(self.elapsed)
-        ticks = plot_ticks(
-            max((v for trace in self.traces for _, v in trace), default=0)
-        )
-        padding = ticks[1] * 0.12
+        units = list(dict.fromkeys(trace.unit for trace in self.traces)) or ["mm/s"]
+        scales = {
+            unit: plot_ticks(
+                max(
+                    (
+                        v
+                        for trace in self.traces
+                        if trace.unit == unit
+                        for segment in trace.segments
+                        for _, v in segment
+                    ),
+                    default=0,
+                )
+            )
+            for unit in units
+        }
 
-        def point(t: float, value: float) -> QPointF:
+        def point(t: float, value: float, unit: str = units[0]) -> QPointF:
+            ticks = scales[unit]
+            padding = ticks[1] * 0.12
             return QPointF(
                 bounds.left() + (t - start) / (end - start) * bounds.width(),
                 bounds.bottom()
                 - (value + padding) / (ticks[-1] + padding) * bounds.height(),
             )
 
-        for value in ticks:
-            y = point(0, value).y()
-            painter.setPen(QPen(QColor(colors.border), 1, Qt.PenStyle.DotLine))
-            painter.drawLine(QPointF(bounds.left(), y), QPointF(bounds.right(), y))
+        for axis, unit in enumerate(units):
             painter.setPen(QColor(colors.muted))
             painter.drawText(
-                QRectF(0, y - 9, 54, 18), Qt.AlignmentFlag.AlignRight, f"{value:g}"
+                QRectF(0 if axis == 0 else bounds.right() + 5, 4, 60, 20),
+                Qt.AlignmentFlag.AlignCenter,
+                unit,
             )
-        for tick_time in range(ceil(start / 5) * 5, floor(end / 5) * 5 + 1, 5):
+            for value in scales[unit]:
+                y = point(start, value, unit).y()
+                if axis == 0:
+                    painter.setPen(QPen(QColor(colors.border), 1, Qt.PenStyle.DotLine))
+                    painter.drawLine(
+                        QPointF(bounds.left(), y), QPointF(bounds.right(), y)
+                    )
+                painter.setPen(QColor(colors.muted))
+                painter.drawText(
+                    QRectF(0 if axis == 0 else bounds.right() + 5, y - 9, 54, 18),
+                    Qt.AlignmentFlag.AlignRight
+                    if axis == 0
+                    else Qt.AlignmentFlag.AlignLeft,
+                    f"{value:g}",
+                )
+        for tick_time in range(max(0, ceil(start / 5) * 5), floor(end / 5) * 5 + 1, 5):
             x = point(tick_time, 0).x()
             painter.setPen(QColor(colors.muted))
             painter.drawText(
@@ -160,20 +190,29 @@ class MotionPlot(QWidget):
         painter.drawText(self.width() - 70, self.height() - 2, "Time (s)")
         painter.save()
         painter.setClipRect(bounds.adjusted(0, -2, 0, 2))
-        painter.setPen(QPen(QColor(colors.accent), 2))
         for trace in self.traces:
-            path = QPainterPath()
-            for index, (t, value) in enumerate(trace):
-                if index:
-                    path.lineTo(point(t, value))
-                else:
-                    path.moveTo(point(t, value))
-            painter.drawPath(path)
+            painter.setPen(QPen(QColor(getattr(colors, trace.color)), 2))
+            previous: tuple[float, float] | None = None
+            for segment in trace.segments:
+                path = QPainterPath()
+                for index, (t, value) in enumerate(segment):
+                    if index:
+                        path.lineTo(point(t, value, trace.unit))
+                    elif previous is not None and previous[0] == t:
+                        path.moveTo(point(*previous, trace.unit))
+                        path.lineTo(point(t, value, trace.unit))
+                    else:
+                        path.moveTo(point(t, value, trace.unit))
+                painter.drawPath(path)
+                previous = segment[-1] if segment else None
+                if segment and segment[-1][0] == (self.elapsed or 0.0):
+                    painter.setBrush(QColor(getattr(colors, trace.color)))
+                    painter.drawEllipse(point(*segment[-1], trace.unit), 2.5, 2.5)
+                    painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.restore()
         if self.elapsed is not None and start <= self.elapsed <= end:
             x = point(self.elapsed, 0).x()
             painter.setPen(QPen(QColor(colors.coral), 2))
-            painter.drawLine(QPointF(x, bounds.top()), QPointF(x, bounds.bottom()))
             painter.drawText(
                 QRectF(min(max(x - 32, bounds.left()), bounds.right() - 64), 3, 64, 18),
                 Qt.AlignmentFlag.AlignCenter,
@@ -185,11 +224,8 @@ class PolarMotionPlot(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setMinimumSize(240, 190)
-        self.setMaximumWidth(340)
-        self.direction: float | None = None
-        self.angular_speed: float | None = None
-        self.message = "Select a stimulus"
-        self.rotation_message = ""
+        self.setMaximumWidth(380)
+        self.samples: list[PolarSample] = []
         self.setAccessibleName("Local motion direction and angular speed")
         self.setToolTip(
             "Direction uses the programmed local axes: 0° (+X) points down; 90° (+Y) points right. The outer ring shows signed angular speed, not texture angle."
@@ -210,9 +246,12 @@ class PolarMotionPlot(QWidget):
         painter.drawText(
             QRectF(0, 3, self.width(), 20),
             Qt.AlignmentFlag.AlignCenter,
-            "Motion direction",
+            "Direction & rotation",
         )
-        radius = max(30.0, min(self.width() / 2 - 25, (self.height() - 83) / 2))
+        footer = max(1, len(self.samples)) * 22 + 28
+        radius = max(
+            30.0, min(self.width() / 2 - 25, (self.height() - 32 - footer) / 2)
+        )
         center = QPointF(self.width() / 2, 27 + radius)
         inner = radius - 24
 
@@ -233,47 +272,76 @@ class PolarMotionPlot(QWidget):
                 Qt.AlignmentFlag.AlignCenter,
                 str(angle),
             )
-        if self.direction is not None:
-            rad = radians(self.direction - 90)
-            tip = point(rad, inner * 0.85)
-            painter.setPen(QPen(QColor(colors.accent), 2))
-            painter.setBrush(QColor(colors.accent))
-            painter.drawLine(center, tip)
-            self.arrow(painter, tip, rad)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        if self.angular_speed:
-            sign = 1 if self.angular_speed > 0 else -1
-            angles = [radians(35 + sign * i * 3) for i in range(41)]
-            path = QPainterPath(point(angles[0], radius))
-            for arc_angle in angles[1:]:
-                path.lineTo(point(arc_angle, radius))
-            painter.setPen(QPen(QColor(colors.projection), 3))
-            painter.drawPath(path)
-            painter.setBrush(QColor(colors.projection))
-            self.arrow(
-                painter, point(angles[-1], radius), angles[-1] + sign * radians(90)
+        table_top = self.height() - footer
+        painter.setPen(QColor(colors.border))
+        painter.drawLine(12, table_top, self.width() - 12, table_top)
+        painter.setPen(QColor(colors.muted))
+        for left, width, title in (
+            (12, self.width() * 0.4 - 12, "Source"),
+            (
+                self.width() * 0.4,
+                self.width() * 0.23,
+                "Direction" if self.width() >= 300 else "Dir.",
+            ),
+            (self.width() * 0.63, self.width() * 0.37 - 12, "Rotation"),
+        ):
+            painter.drawText(
+                QRectF(left, table_top + 4, width, 18),
+                Qt.AlignmentFlag.AlignLeft,
+                title,
             )
-        painter.setPen(QColor(colors.accent))
-        text = self.message or (
-            f"{self.direction % 360:.3g}°"
-            if self.direction is not None
-            else "No translation"
-        )
-        painter.drawText(
-            QRectF(4, self.height() - 49, self.width() - 8, 21),
-            Qt.AlignmentFlag.AlignCenter,
-            text,
-        )
-        painter.setPen(QColor(colors.projection))
-        rotation = self.rotation_message or (
-            f"Rotation {self.angular_speed:+.3g} °/s · {'CCW' if self.angular_speed > 0 else 'CW'}"
-            if self.angular_speed
-            else "Rotation 0 °/s"
-            if self.angular_speed == 0
-            else "Rotation unavailable"
-        )
-        painter.drawText(
-            QRectF(4, self.height() - 27, self.width() - 8, 24),
-            Qt.AlignmentFlag.AlignCenter,
-            rotation,
-        )
+        for index, sample in enumerate(self.samples):
+            color = QColor(getattr(colors, sample.color))
+            painter.setPen(QPen(color, 2))
+            painter.setBrush(color)
+            if sample.direction is not None:
+                rad = radians(sample.direction - 90)
+                tip = point(rad, inner * (0.9 - index * 0.08))
+                painter.drawLine(center, tip)
+                self.arrow(painter, tip, rad)
+            if sample.angular_speed:
+                sign = 1 if sample.angular_speed > 0 else -1
+                ring = radius - index * 4
+                angles = [radians(35 + sign * i * 3) for i in range(41)]
+                path = QPainterPath(point(angles[0], ring))
+                for arc_angle in angles[1:]:
+                    path.lineTo(point(arc_angle, ring))
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawPath(path)
+                painter.setBrush(color)
+                self.arrow(
+                    painter, point(angles[-1], ring), angles[-1] + sign * radians(90)
+                )
+            direction = (
+                f"{sample.direction:.3g}°"
+                if sample.direction is not None
+                else "Still"
+                if sample.message == "No translation"
+                else "—"
+            )
+            rotation = (
+                f"{abs(sample.angular_speed):.3g}°/s {'CCW' if sample.angular_speed > 0 else 'CW'}"
+                if sample.angular_speed
+                else "0°/s"
+                if sample.angular_speed == 0
+                else "—"
+            )
+            for left, width, text in (
+                (12, self.width() * 0.4 - 16, sample.name.split(" · ")[0]),
+                (self.width() * 0.4, self.width() * 0.23, direction),
+                (self.width() * 0.63, self.width() * 0.37 - 12, rotation),
+            ):
+                painter.drawText(
+                    QRectF(left, table_top + 25 + index * 22, width, 20),
+                    Qt.AlignmentFlag.AlignLeft,
+                    painter.fontMetrics().elidedText(
+                        text, Qt.TextElideMode.ElideRight, int(width)
+                    ),
+                )
+        if not self.samples:
+            painter.setPen(QColor(colors.muted))
+            painter.drawText(
+                QRectF(4, table_top + 25, self.width() - 8, 18),
+                Qt.AlignmentFlag.AlignCenter,
+                "No sources selected",
+            )

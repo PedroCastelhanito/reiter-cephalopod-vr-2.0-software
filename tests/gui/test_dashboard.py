@@ -3563,7 +3563,7 @@ def test_unavailable_preview_retains_reported_state_without_commands(
         (Phase.RUNNING, {"Stop"}, False),
         (Phase.STOPPING, {"Stop"}, False),
         (Phase.FINALIZING, {"Stop"}, False),
-        (Phase.ENDED, {"Setup"}, False),
+        (Phase.ENDED, {"Setup"}, True),
     ],
 )
 def test_review_phase_locks_and_actions(
@@ -3758,6 +3758,80 @@ def test_setup_serves_as_new_session_after_completion(window: DashboardWindow) -
     assert requests == ["Setup", "New session"]
     assert dashboard.view.phase == Phase.ENDED
     assert "New session selected" in dashboard.log_console.toPlainText()
+
+
+@pytest.mark.parametrize(
+    ("phase", "cleanup", "control", "wired", "editable"),
+    [
+        (Phase.ENDED, True, True, True, True),
+        (Phase.ENDED, False, True, True, False),
+        (Phase.ENDED, True, False, True, False),
+        (Phase.ENDED, True, True, False, False),
+        (Phase.RUNNING, True, True, True, False),
+        (Phase.FINALIZING, True, True, True, False),
+    ],
+)
+def test_post_stop_session_draft_editing_requires_cleanup_and_authority(
+    window: DashboardWindow,
+    phase: Phase,
+    cleanup: bool,
+    control: bool,
+    wired: bool,
+    editable: bool,
+) -> None:
+    view = DashboardView(
+        phase=phase,
+        connected=True,
+        has_control=control,
+        configuration_wired=wired,
+        cleanup_confirmed=cleanup,
+    )
+    window.apply_view(view)
+    assert all(
+        editor.isEnabled() is editable for editor in window.dashboard.subject_editors
+    )
+    assert not view.can_edit
+    window.apply_view(replace(view, connected=False))
+    assert not window.dashboard.subject_id.isEnabled()
+
+
+def test_post_stop_subject_draft_survives_new_session_snapshot(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.configuration.revision = state.configuration_values.revision = 1
+    state.configuration_values.current.subject = "0001"
+    state.session.phase = pb.SESSION_PHASE_ENDED
+    state.session.cleanup_confirmed = True
+    state.control.holder_client_id = "operator"
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            window.devices.cameras,
+            window.devices.projectors,
+            window.tracking,
+        )
+    )
+    assert manager.install(state)
+    window.apply_view(dashboard_view(state, "operator", (), configuration_wired=True))
+    assert window.dashboard.subject_id.isEnabled()
+    window.dashboard.subject_id.setText("0002")
+    window.dashboard.subject_id.textEdited.emit("0002")
+    assert manager.dirty
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    assert manager.install(state)
+    window.apply_view(dashboard_view(state, "operator", (), configuration_wired=True))
+    assert window.dashboard.subject_id.text() == "0002"
+    assert manager.dirty and not manager.stale
+    assert state.configuration_values.current.subject == "0001"
 
 
 @pytest.mark.parametrize("phase", [Phase.SETTING_UP, Phase.READY])
@@ -5896,6 +5970,12 @@ def test_managed_spikeglx_pairing_waits_for_confirmation(
         return queued
 
     panel = window.devices.spikeglx
+    save_spikeglx = window.recordings.spikeglx
+    assert save_spikeglx is panel.pairing
+    assert window.recordings.isAncestorOf(save_spikeglx)
+    assert not panel.isAncestorOf(save_spikeglx)
+    assert window.recordings.spikeglx_label.text() == "Save spikeglx"
+    assert save_spikeglx.accessibleName() == "Save spikeglx"
     ops = ManagedDisplayOperations(
         window.devices.projectors,
         panel,
@@ -5907,7 +5987,7 @@ def test_managed_spikeglx_pairing_waits_for_confirmation(
     view = DashboardView(connected=True, has_control=True)
     panel.apply_view(view)
     ops.install_pairing()
-    panel.pairing.click()
+    save_spikeglx.click()
     assert sent == [("set_spikeglx_enabled", {"enabled": True, "expected_revision": 7})]
     assert not panel.pairing.isChecked()
     assert panel.pairing_pending == queued
@@ -5920,6 +6000,16 @@ def test_managed_spikeglx_pairing_waits_for_confirmation(
     assert len(sent) == 1
     ops.pairing_finished()
     assert panel.pairing.isEnabled()
+    save_spikeglx.click()
+    assert sent[-1] == (
+        "set_spikeglx_enabled",
+        {"enabled": False, "expected_revision": 7},
+    )
+    assert save_spikeglx.isChecked()
+    backend.enabled = False
+    ops.install_pairing()
+    ops.pairing_finished()
+    assert not save_spikeglx.isChecked()
     for locked in (
         DashboardView(),
         DashboardView(connected=True),
@@ -8022,6 +8112,10 @@ def test_review_draft_restores_local_configuration(
     first = DashboardWindow(sample=True)
     ReviewControls(first)
     first.dashboard.subject_id.setText("LAST-SUBJECT")
+    first.recordings.spikeglx.setChecked(legacy_crop)
+    first.dashboard.set_species(
+        "Sepia Latimanus" if legacy_crop else "Sepioteuthis lessoniana"
+    )
     first.devices.cameras.drafts[0].values["trigger_frequency_hz"] = "30"
     first.devices.microcontroller.set_saved_pins("COM8", "D9", True, "D2", True)
     first.devices.microcontroller.pin_editors["behavioral"].setText("D10")
@@ -8049,6 +8143,10 @@ def test_review_draft_restores_local_configuration(
     assert path.read_bytes() == preserved
     assert second.tracking.snapshot() == first.tracking.snapshot()
     assert second.dashboard.subject_id.text() == "LAST-SUBJECT"
+    assert second.recordings.spikeglx.isChecked() == legacy_crop
+    assert (
+        second.dashboard.species.currentText() == first.dashboard.species.currentText()
+    )
     assert second.devices.cameras.drafts[0].values["trigger_frequency_hz"] == "30"
     assert second.devices.microcontroller.trial_pin.text() == "9"
     assert second.devices.microcontroller.flip_pin.text() == "2"
@@ -19427,19 +19525,18 @@ def test_recent_values_are_deduplicated_ordered_bounded_and_persisted(
     dashboard.action_requested.connect(emitted.append)
     try:
         dashboard.apply_view(review_view(Phase.CONFIGURATION))
-        dashboard.species.setText("Euprymna berryi")
+        dashboard.species.setCurrentText("Sepia Latimanus")
         dashboard.condition.setText("Dark control")
         dashboard.setup()
         assert emitted == ["Setup"]
-        assert dashboard.recent_species.values()[0] == "Euprymna berryi"
         assert dashboard.recent_conditions.values() == ["Dark control"]
         # A blocked request (observer) must not record anything.
         dashboard.apply_view(review_view(Phase.CONFIGURATION, observer=True))
-        dashboard.species.setText("Never requested")
+        dashboard.condition.setText("Never requested")
         dashboard.setup()
         assert emitted == ["Setup"]
-        assert "Never requested" not in dashboard.recent_species.values()
-        completer = dashboard.species.completer()
+        assert "Never requested" not in dashboard.recent_conditions.values()
+        completer = dashboard.condition.completer()
         assert completer is not None and completer.model().rowCount() > 0
     finally:
         dashboard.deleteLater()
@@ -19517,7 +19614,7 @@ def test_dashboard_warns_quietly_and_confirms_same_day_reuse(
 
     root = tmp_path / "data"
     today = f"{date.today():%Y%m%d}"
-    (root / "20200101_Water_flow" / "CEPH-007-080000").mkdir(parents=True)
+    (root / "20200101_Water_flow" / "0007-080000").mkdir(parents=True)
     dashboard = Dashboard(sample=True)
     emitted: list[str] = []
     dashboard.action_requested.connect(emitted.append)
@@ -19525,7 +19622,7 @@ def test_dashboard_warns_quietly_and_confirms_same_day_reuse(
         dashboard.show()
         dashboard.apply_view(review_view(Phase.CONFIGURATION))
         dashboard.output_root.setText(str(root))
-        dashboard.subject_id.setText("CEPH-007")
+        dashboard.subject_id.setText("0007")
         dashboard.experiment.setText("Optic flow")
         dashboard.refresh_subject_history()
         assert "already has 1 earlier session" in dashboard.subject_id.toolTip()
@@ -19537,7 +19634,7 @@ def test_dashboard_warns_quietly_and_confirms_same_day_reuse(
         dashboard.setup()
         assert emitted == ["Setup"] and dashboard.reuse_dialog is None
         emitted.clear()
-        (root / f"{today}_Optic_flow" / "CEPH-007-090000").mkdir(parents=True)
+        (root / f"{today}_Optic_flow" / "0007-090000").mkdir(parents=True)
         dashboard.setup()
         dialog = dashboard.reuse_dialog
         assert dialog is not None and not emitted
@@ -19713,6 +19810,8 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
     dialog.resize(1440, 960)
     app.processEvents()
     assert tuple(window.preview_slot.frames) == ("0", "1", "2", "3", "4")
+    assert dialog.timeline.height() >= dialog.height() * 0.30
+    assert len({window.preview_slot.frames[str(i)].target.y() for i in range(3)}) == 1
     targets = {key: frame.target for key, frame in window.preview_slot.frames.items()}
     assert window.preview_slot.columns == 3
     assert all(
@@ -19817,7 +19916,8 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
 
 
 def test_preview_timeline_speed_units_epochs_and_unresolved_order(app):
-    from cephvr.gui.preview_timeline import StimulusTimeline, planned_speed
+    from cephvr.gui.preview_motion_data import planned_speed
+    from cephvr.gui.preview_timeline import StimulusTimeline
     from cephvr.gui.protocol_batches import grouped_program
     from cephvr.gui.protocol_document import review_program
     from cephvr.visual_stimulus.config.models.program_model import (
@@ -19853,10 +19953,10 @@ def test_preview_timeline_speed_units_epochs_and_unresolved_order(app):
         (5, 25),
         (25, 60),
     ]
-    assert {value for _, value in timeline.plot.traces[0]} == {0}
-    assert {value for _, value in timeline.plot.traces[1]} == {30}
-    assert {value for _, value in timeline.plot.traces[2]} == {0}
-    assert timeline.plot.unit == "deg/s"
+    assert {value for _, value in timeline.plot.traces[0].segments[0]} == {0}
+    assert {value for _, value in timeline.plot.traces[0].segments[1]} == {30}
+    assert {value for _, value in timeline.plot.traces[0].segments[2]} == {0}
+    assert timeline.plot.traces[0].unit == "deg/s"
     grouped = grouped_program(program)
     group = grouped.sequence[0].model_copy(update={"order": "shuffle_each_repetition"})
     shuffled = grouped.model_copy(update={"sequence": (group,)})
@@ -19871,7 +19971,8 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
     from PyQt6.QtCore import QPoint, Qt
     from PyQt6.QtTest import QTest
 
-    from cephvr.gui.preview_timeline import StimulusTimeline, planned_rotation
+    from cephvr.gui.preview_motion_data import planned_rotation
+    from cephvr.gui.preview_timeline import StimulusTimeline
     from cephvr.gui.protocol_document import review_program
     from cephvr.visual_stimulus.config.models.program_model import Constant, Hold, Rate
 
@@ -19891,7 +19992,11 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
         }
     )
     follower = source.model_copy(
-        update={"instance_id": "follower", "linked_to": source.instance_id}
+        update={
+            "instance_id": "follower",
+            "linked_to": source.instance_id,
+            "space": source.space.model_copy(update={"surfaces": ("left",)}),
+        }
     )
     epoch = epoch.model_copy(update={"settings": (follower, source)})
     program = program.model_copy(
@@ -19902,8 +20007,8 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
     timeline.set_program(program, "", "Trial")
     timeline.show()
     app.processEvents()
-    assert timeline.trace_selector.count() == 1
-    assert timeline.trace_selector.currentText() == "Bottom · reference · deg/s"
+    assert len(timeline.toggles) == 1
+    assert next(iter(timeline.toggles.values())).text() == "Bottom · reference · deg/s"
     assert timeline.epoch_strip.epochs == timeline.plot.epochs
     assert (
         timeline.epoch_strip.mapTo(
@@ -19912,9 +20017,9 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
         <= timeline.plot.mapTo(timeline, QPoint(0, 0)).y()
     )
     timeline.set_elapsed(12)
-    assert timeline.polar.direction == pytest.approx(180)
-    assert timeline.polar.angular_speed == -15
-    assert not timeline.polar.message
+    assert timeline.polar.samples[0].direction == pytest.approx(180)
+    assert timeline.polar.samples[0].angular_speed == -15
+    assert not timeline.polar.samples[0].message
     assert (
         planned_rotation(
             source.model_copy(
@@ -19944,9 +20049,9 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
         ),
     )
     assert timeline.plot.elapsed == pytest.approx(30, abs=0.1)
-    assert timeline.polar.direction is None
-    assert timeline.polar.angular_speed == 0
-    assert timeline.polar.message == "No stimulus"
+    assert timeline.polar.samples[0].direction is None
+    assert timeline.polar.samples[0].angular_speed == 0
+    assert timeline.polar.samples[0].message == "No stimulus"
     stopped = source.model_copy(
         update={"phase_x": Hold(kind="hold"), "phase_y": Hold(kind="hold")}
     )
@@ -19955,10 +20060,13 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
     )
     timeline.set_program(program, "", "Rotate only")
     timeline.set_elapsed(0)
-    assert timeline.polar.direction is None and not timeline.polar.message
-    assert timeline.polar.angular_speed == -15
+    assert (
+        timeline.polar.samples[0].direction is None
+        and timeline.polar.samples[0].message == "No translation"
+    )
+    assert timeline.polar.samples[0].angular_speed == -15
     timeline.clear("Unavailable")
-    assert timeline.polar.direction is timeline.polar.angular_speed is None
+    assert not timeline.polar.samples
     assert not timeline.plot.traces and not timeline.epoch_strip.epochs
     timeline.close()
 
@@ -19993,6 +20101,133 @@ def test_preview_motion_sliding_window(elapsed, expected):
     from cephvr.gui.preview_motion_plot import time_window
 
     assert time_window(elapsed) == expected
+
+
+@pytest.mark.parametrize(
+    "independent,mixed_units", [(False, False), (True, False), (True, True)]
+)
+def test_preview_motion_overlay_linked_baseline_and_independent(
+    app, independent, mixed_units
+):
+    from cephvr.gui.preview_timeline import StimulusTimeline
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.visual_stimulus.config.models.program_model import (
+        Constant,
+        Hold,
+        PhysicalSpace,
+        Rate,
+        SurfaceMap,
+    )
+
+    program = review_program()
+    epoch = program.sequence[1]
+    texture = epoch.settings[0]
+    settings = []
+    baseline = []
+    for index, face in enumerate(("bottom", "left", "right", "front")):
+        item = texture.model_copy(
+            update={
+                "instance_id": face,
+                "space": texture.space.model_copy(update={"surfaces": (face,)}),
+                "linked_to": None
+                if index == 0 or (independent and face == "front")
+                else "bottom",
+                "phase_x": Rate(
+                    kind="rate", function=Constant(kind="constant", value=index + 1)
+                ),
+            }
+        )
+        if mixed_units and face == "front":
+            item = item.model_copy(
+                update={
+                    "space": PhysicalSpace(
+                        kind="physical_surface",
+                        frame_id="surface",
+                        mappings=(
+                            SurfaceMap(
+                                surface_id="front", matrix=((1, 0, 0), (0, 1, 0))
+                            ),
+                        ),
+                    )
+                }
+            )
+        settings.append(item)
+        baseline.append(
+            item.model_copy(
+                update={
+                    "instance_id": face + "_baseline",
+                    "linked_to": None,
+                    "phase_x": Hold(kind="hold"),
+                    "phase_y": Hold(kind="hold"),
+                }
+            )
+        )
+    program = program.model_copy(
+        update={
+            "sequence": (
+                program.sequence[0].model_copy(update={"settings": tuple(baseline)}),
+                epoch.model_copy(update={"settings": tuple(settings)}),
+                program.sequence[2],
+            )
+        }
+    )
+    timeline = StimulusTimeline()
+    timeline.resize(1100, 350)
+    timeline.set_program(program, "", "Overlay")
+    timeline.set_elapsed(12)
+    assert [s.name for s in timeline.sources] == (
+        ["Bottom · reference", "Front"] if independent else ["Bottom · reference"]
+    )
+    assert len(timeline.plot.traces) == len(timeline.sources)
+    assert {trace.unit for trace in timeline.plot.traces} == (
+        {"mm/s", "deg/s"} if mixed_units else {"deg/s"}
+    )
+    assert len(timeline.polar.samples) == len(timeline.sources)
+    assert len({trace.color for trace in timeline.plot.traces}) == len(timeline.sources)
+    assert {v for _, v in timeline.plot.traces[0].segments[0]} == {0}
+    assert {v for _, v in timeline.plot.traces[0].segments[1]} == {20}
+    reference = timeline.sources[0]
+    timeline.toggles[reference.key].setChecked(False)
+    assert all(trace.name != reference.name for trace in timeline.plot.traces)
+    assert all(sample.name != reference.name for sample in timeline.polar.samples)
+    timeline.set_program(program, "", "Overlay")
+    assert not timeline.toggles[reference.key].isChecked()
+    timeline.toggles[reference.key].setChecked(True)
+    assert timeline.plot.traces[0].name == reference.name
+    timeline.show()
+    app.processEvents()
+    assert not timeline.grab().isNull()
+    if independent:
+        bad = settings[-1].model_copy(
+            update={
+                "motion": settings[-1].motion.model_copy(
+                    update={
+                        "x": Rate(
+                            kind="rate", function=Constant(kind="constant", value=1)
+                        )
+                    }
+                )
+            }
+        )
+        changed_epoch = program.sequence[1].model_copy(
+            update={"settings": (*settings[:-1], bad)}
+        )
+        timeline.set_program(
+            program.model_copy(
+                update={
+                    "sequence": (
+                        program.sequence[0],
+                        changed_epoch,
+                        program.sequence[2],
+                    )
+                }
+            ),
+            "",
+            "Unsupported Front",
+        )
+        assert [trace.name for trace in timeline.plot.traces] == ["Bottom · reference"]
+        assert "Front" in timeline.plot.errors[0]
+    timeline.close()
 
 
 def test_preview_grid_retains_pending_footprints_and_existing_targets(app):
@@ -20136,7 +20371,10 @@ def test_trial_preview_generates_recipe_pixels_and_caches_errors(
 
 @pytest.mark.parametrize("face", ["Front", "Left", "Right", "Bottom"])
 @pytest.mark.parametrize("flip", [False, True])
-def test_trial_preview_maps_usable_pixels_to_screen_without_margins(app, face, flip):
+@pytest.mark.parametrize("axis", ["x", "y"])
+def test_trial_preview_maps_usable_pixels_to_screen_without_margins(
+    app, face, flip, axis
+):
     from PyQt6.QtCore import QPointF
     from PyQt6.QtGui import QColor, QImage, QPainter, QPolygonF
 
@@ -20181,7 +20419,13 @@ def test_trial_preview_maps_usable_pixels_to_screen_without_margins(app, face, f
     source = QImage(width, height, QImage.Format.Format_RGB32)
     source.fill(QColor("red"))
     painter = QPainter(source)
-    painter.fillRect(0, 0, width, height // 2, QColor("blue"))
+    painter.fillRect(
+        0,
+        0,
+        width // 2 if axis == "x" else width,
+        height // 2 if axis == "y" else height,
+        QColor("blue"),
+    )
     painter.end()
     view = PreviewRig(geometry, {face: canvas})
     view.frames[face] = canvas.correct_frame(source)
@@ -20201,9 +20445,11 @@ def test_trial_preview_maps_usable_pixels_to_screen_without_margins(app, face, f
         ),
     )
     painter.end()
-    for x in (15, 50, 105):
-        assert target.pixelColor(x, 20) == QColor("red" if flip else "blue")
-        assert target.pixelColor(x, 100) == QColor("blue" if flip else "red")
+    for position in (15, 50, 105):
+        first = (20, position) if axis == "x" else (position, 20)
+        second = (100, position) if axis == "x" else (position, 100)
+        assert target.pixelColor(*first) == QColor("red" if flip else "blue")
+        assert target.pixelColor(*second) == QColor("blue" if flip else "red")
     # Unused output pixels must not spill outside the physical screen.
     assert target.pixelColor(5, 60) == QColor("green")
     assert target.pixelColor(115, 60) == QColor("green")
@@ -20706,3 +20952,52 @@ def test_texture_drift_preserves_mm_speed_across_projector_pitches(linked, veloc
         assert math.hypot(dx * pitch_x, dy * pitch_y) == pytest.approx(50)
         pixel_speeds.append(math.hypot(dx, dy))
     assert len({round(speed, 6) for speed in pixel_speeds}) == 4
+
+
+@pytest.mark.parametrize(
+    "subject", ["0000", "0001", "1234", "", "123", "12345", "ABCD", "12a4", "１２３４"]
+)
+def test_four_digit_subject_and_species_setup(window, subject):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.dashboard import SPECIES
+    from cephvr.gui.managed_config import (
+        install_subject_metadata,
+        subject_metadata_from_fields,
+    )
+
+    dashboard = window.dashboard
+    dashboard.apply_view(review_view(Phase.CONFIGURATION))
+    assert not dashboard.species.isEditable()
+    assert [
+        dashboard.species.itemText(i) for i in range(dashboard.species.count())
+    ] == list(SPECIES)
+    for species in SPECIES:
+        config = pb.ExperimentConfiguration(subject="0001")
+        config.subject_metadata.species = species
+        install_subject_metadata(dashboard, config)
+        assert dashboard.subject_id.text() == "0001"
+        assert subject_metadata_from_fields(dashboard).species == species
+    dashboard.subject_id.setText(subject)
+    requested = []
+    dashboard.action_requested.connect(requested.append)
+    dashboard.setup()
+    valid = len(subject) == 4 and subject.isascii() and subject.isdigit()
+    assert requested == (["Setup"] if valid else [])
+    assert dashboard.subject_id.text() == subject
+    dashboard.subject_id.setText("0001")
+    dashboard.set_species("Historical species")
+    assert dashboard.species.currentText() == "Historical species"
+    assert (
+        not dashboard.species.model().item(dashboard.species.currentIndex()).isEnabled()
+    )
+    assert subject_metadata_from_fields(dashboard).species == "Historical species"
+    requested.clear()
+    dashboard.setup()
+    assert not requested
+    dashboard.set_species("sepia pharaonis")
+    assert dashboard.species.currentText() == "Sepia Pharaonis"
+    assert dashboard.species.count() == 3
+    dashboard.set_species("")
+    requested.clear()
+    dashboard.setup()
+    assert requested == ["Setup"]  # Optional metadata remains absent when unset.

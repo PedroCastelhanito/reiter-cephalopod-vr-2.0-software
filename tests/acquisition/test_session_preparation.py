@@ -107,6 +107,90 @@ def _setup_request(
     return request, configuration, identity
 
 
+async def test_trial_state_only_setup_and_trial_ready_without_camera_workers():
+    request, configuration, identity = _setup_request()
+    request.settings.acquisition.behavioral.enabled = False
+    request.settings.acquisition.pulses.trial_state_enabled = True
+    session = validate_setup_request(
+        request, 1000, identity=identity, configuration=configuration, clock=lambda: 1
+    )
+    slot = SessionSlot(current=session)
+    reports = []
+
+    async def resolve(report, *, deadline_ns):
+        assert not report.cameras
+        assert deadline_ns == 1000
+        session.confirmed_settings = request.settings.acquisition
+        session.confirmed_revision = 0
+        session.resolution_confirmed.set()
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    async def report(value, *, deadline_ns):
+        reports.append(value)
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    async def declare(*args, **kwargs):
+        raise AssertionError("no camera resources should be declared")
+
+    controller = SimpleNamespace(
+        report_acquisition_resolution=resolve, report_lifecycle=report
+    )
+    preparation = SessionPreparation(
+        identity=identity,
+        configuration=configuration,
+        session_slot=slot,
+        pulse=PulseRecord(),
+        workers=SimpleNamespace(),
+        serial=SimpleNamespace(),
+        resources={},
+        resource_ledger=SimpleNamespace(),
+        resource_port=SimpleNamespace(),
+        controller=controller,
+        catalogue=SimpleNamespace(declare_resource=declare),
+        session_config_reference=lambda _: "session",
+        clock=lambda: 1,
+    )
+    assert await preparation.launch_workers(session, request, 1000) == ()
+    await preparation.resolve_cameras(session, request, (), 1000)
+    assert session.resolution_confirmed.is_set()
+    await preparation.prepare_workers(session, request, (), 1000)
+    assert session.ready_confirmed.is_set()
+    assert reports[0].ready.required_checks_passed
+    assert not reports[0].ready.prepared_functions
+
+    async def off(*args):
+        pass
+
+    trial_preparation = TrialPreparation(
+        identity=identity,
+        session_slot=slot,
+        workers={},
+        resources={},
+        controller=controller,
+        prior_completion_confirmed=lambda _: True,
+        pulse_boundaries=SimpleNamespace(ensure_outputs_off=off),
+        lock=asyncio.Lock(),
+        clock=lambda: 1,
+    )
+    context = control.TrialContext(
+        session=session.work.session, trial_id=str(uuid4()), trial_number=1
+    )
+    trial_request = wire.PrepareTrialRequest(
+        command=wire.BackendCommand(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            work=control.WorkContext(trial=context),
+        ),
+        configuration_revision=0,
+        plan=control.TrialPlan(context=context, resolved_duration_ns=60_000_000_000),
+    )
+    result = await trial_preparation.prepare(trial_request, deadline_ns=1000)
+    assert result.result == control.COMMAND_RESULT_ACCEPTED, result.failure.message
+    assert session.trial.ready_confirmed.is_set()
+    assert not session.trial.outputs
+
+
 def test_setup_accepts_zero_revision_when_tracking_is_inactive() -> None:
     request, configuration, identity = _setup_request()
     result = validate_setup_request(

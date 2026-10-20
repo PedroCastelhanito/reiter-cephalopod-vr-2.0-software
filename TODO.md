@@ -10,6 +10,22 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).
 
 Completed open-loop endurance, bounded camera-codec lossless checks,
@@ -17,6 +33,13 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 [Acquisition](reports/acquisition.md); remaining acceptance work is listed below.
 
 ## Next
+
+- [ ] `post-stop-session-editing` [gui] Reopen GUI and verify Session config editing after confirmed Stop cleanup, then retain edits through New session/Setup. Implementation passes18 focused checks; existing GUI must close before supervised relaunch, and desktop app approval timed out. Native check pending. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
+
+- [ ] `camera-demand-native-verification` [controller] [acquisition] Verify unused-camera pulses stay off, Tracking-required metadata persists, and USB stops omit unsupported-counter warnings while SDK failures still warn; include all-camera-Off Trial state normal/Abort behavior after compatible firmware deployment. Local1499 tests pass; native acceptance pending. - [Rig checklist](reports/rig-verification.md), [Acquisition](reports/acquisition.md)
+
+
+- [ ] `gui-dashboard-test-restoration` [gui] Reconcile the already-empty test_dashboard.py with its concurrent owner, restore the intended tests and update old trailing-window expectations to G01's centered history before rerunning the full GUI suite. Status: observed zero bytes throughout centered-speed work; file preserved,16 standalone timeline checks pass. — [Runtime](reports/runtime.md)
 
 - [ ] `action-progress-live-check` [gui] [controller] [acquisition] [visual_stimulus] [tracking] [spikeglx] Verify action-only logs after restart during already-authorized device/lifecycle checks, including quiet polls, truthful Live/Idle, preserved failure details and prompt OFF with stalled progress delivery. Status: source implementation,380 backend/62 focused GUI tests and static checks pass; physical execution remains untested. Broader GUI preview geometry failure is recorded without baseline attribution. Do not lift existing device/scientific deferrals. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 
@@ -26,7 +49,7 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 - [ ] `texture-retain-static` [gui] [visual_stimulus] Verify corrected saved protocol holds texture position at drift/static boundaries on all outputs after fresh Setup. Status: separate identities corrected; all200 epochs pass local state checks. GUI closed; physical acceptance pending. - [Report](reports/visual_stimulus.md), [Rig checklist](reports/rig-verification.md)
 
-- [ ] `bottom-direction-tearing` [gui] [visual_stimulus] After cleanup/restart and fresh Setup, verify corrected Bottom head-to-tail/lateral motion and pitch; compare all-output VSync for Left/Front tearing. Status: G01rev242/V15rev21 correction passes432 Visual Stimulus and99 GUI tests; physical acceptance pending. — [Assessment](reports/visual_stimulus.md), [Rig checklist](reports/rig-verification.md)
+- [ ] `bottom-direction-tearing` [gui] [visual_stimulus] Confirm corrected Bottom preview after GUI restart; retain pitch/offset/mask/pulse and Left/Front tearing checks. Status: owner confirms dummy-trial physical motion with Y inversion off; G01rev257 preview-only reflection fix passes25 tests and static checks. Native corrected preview remains pending. — [Assessment](reports/visual_stimulus.md), [Rig checklist](reports/rig-verification.md)
 
 - [ ] `setup-scale15-recipe-live` [gui] [visual_stimulus] Retry Setup with the corrected scale-15 recipe protocol. Status: loaded through native GUI Protocol Load; runtime log confirms corrected-protocol.json, timeline shows 200 epochs/50 minutes. Fresh Setup not run. — [Assessment/evidence](reports/visual_stimulus.md)
 
@@ -50,7 +73,7 @@ remains open, including confirmation of the running revision and camera timing m
 
 - [ ] `pixel-exact-current-source-validation` [acquisition] [shared] Measure final sync-owner/hot-path source with prepared-pixel-exact encoding as a secondary objective, preserving full source retention, deadlines and durability. Done when: a bounded concurrent native run retains every received usable frame exactly once and independently verifies its prepared-pixel recipe and closure. Status: primary saved-quality 120 s criterion passes; prior pixel-exact omissions predate the final hot-path guard, so current-source capacity remains unvalidated. No quality/default change adopted. — [Current assessment](reports/acquisition.md), [evidence](reports/runtime-evidence-2026-10-17/file-sync-fix/README.md)
 
-- [ ] `failed-setup-retired-report` [acquisition] [visual_stimulus] [controller] [supervisor] Reconcile late worker evidence after failed Setup while retaining exact retired-attempt fences. Done when: bounded native resource-budget rejection settles without a later STALE report causing application shutdown. Status: observed after an audit fixture omitted unused-arena pruning; the budget rejection was correct, late-report shutdown is a separate lifecycle finding. No stale guard relaxation. — [Assessment](reports/runtime.md), [raw Setup attempt](reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/)
+- [ ] `failed-setup-retired-report` [acquisition] [visual_stimulus] [controller] [supervisor] Reconcile late worker evidence after failed Setup while retaining exact retired-attempt fences. Done when: bounded native resource-budget rejection settles without a later STALE report causing application shutdown. Status: observed after an audit fixture omitted unused-arena pruning; the budget rejection was correct, late-report shutdown is a separate lifecycle finding. No stale guard relaxation. — [Assessment](reports/runtime.md), [raw Setup attempt](reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/) Oct20 owner reports scene-surface GPU-budget rejection followed by INCOMPLETE_CLEANUP/COMMAND_ADMISSION/IDENTITY; GPU ceiling raised to requested1GiB, recovery and fresh Setup remain unverified. See current Visual Stimulus report.
 
 - [ ] `camera-timestamp-yellow-preview` [acquisition] [shared] Confirm expected optical scene/focus and select suitable exposure, with the repaired runtime now restarted; optical confirmation remains. Status: exact-model 1ns fallback passes165 local checks and real-camera metadata probe; seven native frames match SDK conversion exactly.25ms saturates99.885% of red pixels;5ms removes clipping but leaves a near-uniform scene. Original PFS restored byte-exact/camera closed; awaiting owner scene confirmation, no scientific settings adopted. — [Assessment/evidence](reports/acquisition.md)
 
@@ -89,6 +112,8 @@ Remaining entries require native/physical execution or missing reproduction evid
 - [ ] `stimulus-review-encoding-cost` [visual_stimulus] [acquisition] Complete realistic-scene visual-quality/encoding-cost comparison to assess the selected recording baseline. Status: synthetic CQ16/CQ23 matrix passes; actual CQ18 camera baseline completes 900 seconds, and separate camera-lossless 60-second/byte-exact prepared-YUV fixtures pass. Current lossless scene extrapolates to 191.29 GiB/hour cameras plus 4.23 GiB/hour stimulus; dark imagery/different durations are not a controlled quality comparison or sustained lossless guarantee. Done when: actual formats, detail, size, throughput and source/recording loss under representative imagery justify an owner-selected setting. Schema5 cameras and Header6 sequential stimulus recording need native decoded-count/source-timestamp mapping and combined-throughput verification at unchanged rates/layout. Owner-authorized PBO reuse and GPU row orientation are implemented and locally checked; measure actual byte equivalence, memory stability and performance on the rig. Historical test settings were restored; owner now selects camera CQ23/p4 (Behavioral YUV444, Tracking/Eye grayscale YUV420) in defaults and saved arguments. PFS updates precede representative-scene testing; stimulus settings remain unchanged and lossy under E13. — [Assessment](reports/acquisition.md), [Measured cost](reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/final-accounting.json), [E13](docs/architecture/visual_stimulus.md#e13)
 
 ## Blocked
+
+
 
 - [ ] `gui-full-rig-test` [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Finish physical per-control/menu/dialog and DPI acceptance. Status:600s Gaussian/output audit, native diagnostic repair/reuse,751 GUI and805 owner tests complete; blocked because native desktop capture hangs after required recovery. Offscreen evidence is separate. New read-only issue-hunt chat01a1536e-d045-7630-af42-ffcdf3d83e98 follows under parent ownership. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 

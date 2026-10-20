@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-20",
+  "task": "species-session-prefix",
+  "base_revision": "fffcd7df0bfc9e371549184a013d1ae127e5d883",
+  "dirty_tree": true,
+  "source_hashes": {
+    "src/cephvr/controller/metadata/files.py": "faf961604cfc68829f60e01f711d9387853f323d2e149d198d452b3cf8e5bccf",
+    "src/cephvr/controller/lifecycle/setup_admission.py": "8386f443053fc4d6ec56cbffad5a1d3a4a21b8a018653f2661b003356c79bd87",
+    "tests/controller/test_storage.py": "5367cbcef4be59161e46988cf49ee46c0d08e59e23fa39fbfc1e2a7b90303a19",
+    "tests/controller/test_setup.py": "fd65110caefec31c74048f30b247f6446a38747f7bc7c62d04a5d29c5eed2718"
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_storage.py tests/controller/test_setup.py tests/controller/test_spikeglx.py -q -m \"not windows and not rig\"",
+      "result": "104 passed,1 skipped,2 deselected in2.26s"
+    },
+    {
+      "command": "ruff check / format --check affected files",
+      "result": "pass,4 files; final2 changed files rechecked"
+    },
+    {
+      "command": "mypy --platform win32 metadata/files.py lifecycle/setup_admission.py",
+      "result": "2 source files pass; prior to final string sanitation line"
+    },
+    {
+      "command": "tools/check_backend_boundaries.py",
+      "result": "740 modules,0 boundary violations; existing size advisories, edited source modules below500 lines"
+    }
+  ],
+  "reload": "reload.json",
+  "final_runtime": "reloaded.json",
+  "limits": [
+    "No new session/SpikeGLX file was created for naming verification. Next paired Start sets species-prefixed name; prior remote run remains unchanged.",
+    "Species absent/incomplete retains subject-only label; stored subject ID remains0001; existing directories/files and trial file names unchanged."
+  ]
+}

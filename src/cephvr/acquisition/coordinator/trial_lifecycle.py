@@ -21,7 +21,8 @@ from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 
 from .trial_delivery import TrialReportDelivery
-from .trial_helpers import _external_roles
+from .trial_helpers import _trial_output_roles
+from .trial_no_cameras import report_trial_state_only
 from .trial_validation import (
     TrialLifecycleValidation,
     empty_video_exception,
@@ -88,6 +89,16 @@ class TrialLifecycleReports:
         """Retry aggregates whose final prerequisite is the retained pulse result."""
         session = self.session_slot.current
         if session is None or session.trial is not trial:
+            return
+        if not session.required_cameras:
+            await report_trial_state_only(
+                session,
+                trial,
+                self.identity.backend,
+                self.policies,
+                self.delivery,
+                self.clock(),
+            )
             return
         for worker in self.workers.values():
             evidence = _matching(worker, trial, "started")
@@ -176,7 +187,7 @@ class TrialLifecycleReports:
         session = self.session_slot.current
         if session is None:
             return _rejected("STALE_TRIAL", "trial session ended")
-        if _external_roles(session) and not valid_pulse(
+        if _trial_output_roles(session) and not valid_pulse(
             trial.pulse_on,
             command=mcu.PULSE_BOUNDARY_COMMAND_ON,
             boundary_ns=trial.start_monotonic_ns,
@@ -282,7 +293,9 @@ class TrialLifecycleReports:
             if trial.stopped_report is not None:
                 return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
             if trial.pending_stopped_report is None:
-                if _external_roles(session) and not pulse_off_satisfies_trial(trial):
+                if _trial_output_roles(session) and not pulse_off_satisfies_trial(
+                    trial
+                ):
                     return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
                 ended: list[tuple[WorkerRecord, acq.WorkerStoppedEvidence]] = []
                 for role in sorted(session.required_cameras):

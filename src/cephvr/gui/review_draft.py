@@ -46,7 +46,14 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
     spike = window.devices.spikeglx
     data: dict[str, Any] = {
         "format_version": 6,
-        "dashboard": {key: getattr(dashboard, key).text() for key in _DASHBOARD}
+        "dashboard": {
+            key: (
+                dashboard.species.currentText()
+                if key == "species"
+                else getattr(dashboard, key).text()
+            )
+            for key in _DASHBOARD
+        }
         | {"sex": dashboard.sex.currentText()},
         "cameras": [
             {
@@ -283,7 +290,10 @@ def _restore(
 ) -> None:
     dashboard = window.dashboard
     for key in _DASHBOARD:
-        getattr(dashboard, key).setText(data["dashboard"][key])
+        if key == "species":
+            dashboard.set_species(data["dashboard"][key])
+        else:
+            getattr(dashboard, key).setText(data["dashboard"][key])
     dashboard.sex.setCurrentText(data["dashboard"]["sex"])
 
     cameras = window.devices.cameras

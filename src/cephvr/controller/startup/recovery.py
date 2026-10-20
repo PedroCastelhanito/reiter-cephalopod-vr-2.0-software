@@ -70,7 +70,7 @@ async def prepare_recovery(
             completion_warning = (
                 "Recovery preserved an unconfirmed SpikeGLX stop: "
                 f"{endpoint}, run {inspection.spikeglx_run or 'unknown'}. "
-                "Inspect the remote run before another paired session; local "
+                "Inspect the remote recording and disable saving before another paired session; local "
                 "recovery does not establish remote stopping or scientific file closure."
             )
         await install(

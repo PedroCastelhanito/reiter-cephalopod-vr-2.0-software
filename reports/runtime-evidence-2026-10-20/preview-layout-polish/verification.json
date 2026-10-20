@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-20",
+  "task": "preview-layout-polish",
+  "revision": "226a506c6e3f7a2adb710009d9d47929cbd6b5c8",
+  "provenance": "Dirty shared checkout, concurrent work preserved; hashes identify final checked files.",
+  "source_sha256": {
+    "src/cephvr/gui/previews.py": "c2b9e826ff3842a285f16e6d5b9d662629fab2cf1b60f1a67896d4e551f15e42",
+    "src/cephvr/gui/preview_timeline.py": "c26fda0aa392a631b39fcaaac66b3775fd2d3b1b8e2f00cdd364a9046fb37c19",
+    "src/cephvr/gui/preview_motion_plot.py": "ba05d8a77bf1f21d654101fa09fccc4c2c35a42c8d58cf1810732705e48855ba",
+    "src/cephvr/gui/preview_frame.py": "a45f1156890a0440b77b0118a280d5001524b3116d330a164ab5c9db3e3752fd",
+    "src/cephvr/gui/preview_placement.py": "a50404a6f4c9fdc1779327fe1e3e89922470fd43b6adf6d1200812dd44421a25",
+    "tests/gui/test_dashboard.py": "121143a09807527dd4ce39f0cdb2812403ad8db2731ac36cdceba5bc2023355f"
+  },
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"preview_motion or preview_slot or preview_workspace or preview_grid or preview_log or preview_selector or preview_geometry_survives or preview_button_restores or preview_timeline_speed or review_blank_preview or multiple_review_previews or preview_placement_failure or preview_cards_name or preview_waits_for_report or unavailable_preview or preview_participation or managed_preview_relayout or managed_stimulus_preview or preview_inline_controls or review_appearance_switch\" --basetemp=.pytest_tmp_preview_polish_verified",
+    "environment": "QT_QPA_PLATFORM=offscreen",
+    "passed": 63,
+    "deselected": 690,
+    "seconds": 34.6
+  },
+  "static": {
+    "ruff": "check and format --check: six files pass",
+    "mypy": "--platform win32: five source files pass",
+    "boundaries": "739 modules, zero violations; unrelated size warnings unchanged"
+  },
+  "screenshots": {
+    "files": [
+      "standard.png",
+      "retro_console.png",
+      "narrow.png"
+    ],
+    "method": "Offscreen DashboardWindow with review_program fixtures. Full1440x960 two stream placeholders and Bottom reference/Front independent; 800x800 five placeholders. No devices connected.",
+    "full_size_split_pixels": [
+      534,
+      390
+    ]
+  },
+  "findings": [
+    "Card Maximum size policy prevented timeline expansion; reused Card grow=True.",
+    "Compact native targets squeezed headings; allow wider headers and synchronize required heights after grid resize.",
+    "Initial final-suite run caught stale header geometry; corrected and rerun passed."
+  ],
+  "limits": [
+    "No live application restart, full GUI suite, native viewer/DPI or hardware acceptance."
+  ]
+}

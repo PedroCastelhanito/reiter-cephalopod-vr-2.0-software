@@ -537,7 +537,7 @@ class ManagedGui(QObject):
         ):
             if self.configuration.dirty or self.configuration.stale:
                 self.window.dashboard.log_console.appendPlainText(
-                    "New session will use the last accepted configuration. Your local draft remains in the editor for review."
+                    "Returning to Configuration. Your edits are retained for the next Setup."
                 )
             self.bridge.request("New session")
             return

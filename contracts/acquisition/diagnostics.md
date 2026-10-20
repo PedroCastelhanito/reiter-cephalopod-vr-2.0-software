@@ -44,6 +44,11 @@ display strings derive from those same values and are never parsed or counted ag
 The worker owns occurrence identity/counting; configuration adoption and warning
 forwarding cannot manufacture a second occurrence from one adapter observation.
 
+Interface-inapplicable transport counters retain null values without
+`TRANSPORT_COUNTERS_UNAVAILABLE` only when both snapshots establish that status.
+Actual read failures or unavailable/noncomparable applicable counters emit the
+warning with affected field names; see the [SDK binding](sdk-mappings.md#transport-summary-binding).
+
 ## Bounded aggregation
 
 Use the existing camera worker and control reporting path. Each producer

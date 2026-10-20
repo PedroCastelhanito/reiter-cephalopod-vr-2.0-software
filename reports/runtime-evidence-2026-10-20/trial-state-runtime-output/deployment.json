@@ -1,0 +1,127 @@
+{
+  "authorization": "Owner explicitly authorized protocol6 upload to COM8 after cleanup and trial verification, 2026-10-20.",
+  "controller_generation": "128c64c4-47ea-4fbb-9a42-919c225145e4",
+  "recovery_prompt": {
+    "prompt_id": "53d74347-1655-4456-83cf-30183aa3df31",
+    "setup": {
+      "controller_generation": "3fdf6ced-0c03-44f7-b02a-08f634f18b49",
+      "session_id": "76dd4889-9c7c-4d01-9b29-8ed1765c2671"
+    },
+    "operation": {
+      "command_id": "3e6cc4f6-a783-4cbd-b33f-a18c368e0582"
+    },
+    "explanation": "Unfinished session: C:\\Users\\ReiterU_PC\\Desktop\\20261020_ephys-pilot\\0001-092640. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\ReiterU_PC\\\\Desktop\\\\20261020_ephys-pilot\\\\0001-092640\\\\protocol-data\\\\SESSION_CONFIG.json' The prior launcher receipt is missing; prior process absence remains unconfirmed. Your choice explicitly authorizes this action using the exclusive session lock, without a Windows reboot. Start recovery preserves scientific files and writes a recovery report; it does not certify unknown outputs or resume the experiment. Cancel and delete files permanently deletes this entire session, including protocol-data and any imported spikeglx-data. Both actions require the exclusive session lock. Close leaves files and the Setup blocker unchanged. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect that exact recording and disable saving manually before another paired session.",
+    "permitted_choices": [
+      "recover",
+      "delete"
+    ]
+  },
+  "recovery": {
+    "command_id": "bb5e84c1-d192-4a3d-9739-4afb27c22d36",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "upload": [
+    true,
+    "Completed"
+  ],
+  "microcontroller": {
+    "observation": {
+      "port": "COM8",
+      "connection_id": "9b7ef0db-40dd-48d6-9f1f-2fe52f3eec33",
+      "request_id": "9b7ef0db-40dd-48d6-9f1f-2fe52f3eec33-8",
+      "observed_monotonic_ns": "478633738888800",
+      "state": {
+        "configuration_valid": false,
+        "watchdog_stopped": false,
+        "watchdog_ms": 0,
+        "behavioral": {
+          "enabled": false,
+          "running": false
+        },
+        "tracking": {
+          "enabled": false,
+          "running": false
+        },
+        "eye_tracking": {
+          "enabled": false,
+          "running": false
+        },
+        "trial_state": {
+          "enabled": false,
+          "running": false
+        }
+      },
+      "capabilities": {
+        "protocol_version": 6,
+        "firmware": "cephvr2_uno_6",
+        "pins": [
+          "D2",
+          "D3",
+          "D4",
+          "D5",
+          "D6",
+          "D7",
+          "D8",
+          "D9",
+          "D10",
+          "D11",
+          "D12",
+          "D13"
+        ],
+        "minimum_requested_hz": 0.1,
+        "maximum_requested_hz": 100.0,
+        "minimum_watchdog_ms": 500,
+        "maximum_watchdog_ms": 10000,
+        "rising_edge_input_pins": [
+          "D2",
+          "D3"
+        ]
+      },
+      "capabilities_observed_monotonic_ns": "478633673741700",
+      "unmatched_replies": "0",
+      "malformed_replies": "0"
+    }
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "ce1a8acf-f05c-4ffd-9fa5-e0b5d3fdf0bf"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "bb5e84c1-d192-4a3d-9739-4afb27c22d36"
+      },
+      "command": "StartupRecovery",
+      "work": {
+        "session": {
+          "controller_generation": "3fdf6ced-0c03-44f7-b02a-08f634f18b49",
+          "session_id": "76dd4889-9c7c-4d01-9b29-8ed1765c2671"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "startup reservation recovery confirmed"
+    },
+    {
+      "context": {
+        "command_id": "503076d3-d7f1-4570-9fcc-a0c5e05249bc"
+      },
+      "command": "ExecuteMicrocontrollerCommand",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Microcontroller command completed"
+    }
+  ],
+  "spikeglx_connection": [
+    true,
+    "169.254.240.108:4142 \u00b7 SpikeGLX v20251218 api v4.1.3 \u00b7 running=True \u00b7 saving=False \u00b7 run=SAVEVERIFY-085641 \u00b7 data=C:/SGL_DATA"
+  ]
+}

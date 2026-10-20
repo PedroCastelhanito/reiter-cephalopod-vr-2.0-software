@@ -3,7 +3,7 @@
 Derived from [A10/A11](../../docs/architecture/acquisition.md) and
 [E06/E08](../../docs/architecture/system-contracts.md). Typed host evidence is in
 [microcontroller.proto](../cephvr/acquisition/v1/microcontroller.proto).
-This specifies protocol version 5 with independent Behavioral, Tracking and Eye
+This specifies protocol version 6 with independent Behavioral, Tracking and Eye
 camera outputs. The matching Uno source is under `firmware/uno`; compile and local
 host verification do not establish upload, electrical or camera acceptance. See
 [rig verification](../../reports/rig-verification.md) for remaining checks.
@@ -14,7 +14,7 @@ cannot restart an expired test. The GUI polls every 500 ms while Configuration/c
 is held. Expiry stops outputs LOW (or detaches the input observer) and retains counts.
 Existing camera watchdog and controller cleanup remain independent. Older firmware
 rejects `duration_ms=0`; report that failure without falling back to bounded tests.
-Protocol 5 requires `cephvr2_uno_5`; older firmware is incompatible. Source/build
+Protocol 6 requires `cephvr2_uno_6`; older firmware is incompatible. Source/build
 verification does not install it; upload requires explicit authorization.
 
 ## Line grammar
@@ -48,12 +48,12 @@ There are no per-token length limits beyond the complete-line bound.
 | CAPS | None. |
 | STATUS | None. |
 | PING | None. |
-| CONFIGURE | `watchdog_ms`; all three `<role>_enabled`; for each enabled role: `<role>_pin`, `<role>_hz`. Disabled roles omit pin/Hz. |
-| ON / OFF | `behavioral_selected`, `tracking_selected` and `eye_tracking_selected`; at least one is 1. |
+| CONFIGURE | `watchdog_ms`; all three `<role>_enabled`; for each enabled role: `<role>_pin`, `<role>_hz`. Disabled roles omit pin/Hz. Also `trial_state_enabled` and, when enabled, `trial_state_pin`; no trial-state frequency. |
+| ON / OFF | `behavioral_selected`, `tracking_selected` and `eye_tracking_selected`, plus `trial_state_selected`; at least one is 1. |
 | DIAG_START | `kind=trial_state|behavioral|tracking|eye_tracking`, `pin=<CAPS pin>`, `duration_ms=0` for continuous manual tests (`2000` retains legacy bounded tests); camera kinds also require `hz=<0.1-Hz-grid rate>`. |
 | DIAG_STATUS / DIAG_STOP | No additional fields. Operate on the one active diagnostic. |
 
-`role` is exactly `behavioral`, `tracking` or `eye_tracking`. CONFIGURE is one complete application,
+Camera `role` is exactly `behavioral`, `tracking` or `eye_tracking`. Trial state is a separate held level. CONFIGURE is one complete application,
 not a proposal followed by approval. Group masks select active external session
 outputs at trial boundaries or requested previews in Configuration. Never infer masks
 from disabled roles' retained host settings. Firmware validates every field, pin,
@@ -67,8 +67,8 @@ Replies begin `OK id=...` or `ERR id=... code=...`. Successful payloads are:
 | Request | Required OK payload |
 | --- | --- |
 | CAPS | `protocol`, `firmware`, `pins`, `input_pins`, `min_hz`, `max_hz`, `watchdog_min_ms`, `watchdog_max_ms`. `input_pins` is a unique subset of `pins` capable of interrupt-driven rising-edge capture. |
-| STATUS / CONFIGURE | `valid`, `watchdog_stopped`, `watchdog_ms`, all three `<role>_enabled` and `<role>_running`; for each configured enabled output: `<role>_pin`, `<role>_applied_hz`. |
-| PING / ON / OFF | All three `<role>_running` and `watchdog_stopped`. |
+| STATUS / CONFIGURE | `valid`, `watchdog_stopped`, `watchdog_ms`, all three `<role>_enabled` and `<role>_running`; for each configured enabled output: `<role>_pin`, `<role>_applied_hz`. Also `trial_state_enabled`, `trial_state_running`, and enabled `trial_state_pin` without frequency. |
+| PING / ON / OFF | All three `<role>_running`, `trial_state_running` and `watchdog_stopped`. |
 | DIAG_START / DIAG_STATUS / DIAG_STOP | `active=0|1`, `kind`, `pin`, `edges=<uint32>`. Input `edges` counts observed rising edges; output `edges` counts generated LOW-to-HIGH transitions. `DIAG_STOP`, communication-lease expiry and legacy elapsed duration return `active=0` with retained final count. |
 
 Only one diagnostic may run, and only when normal outputs are stopped. Firmware
@@ -95,7 +95,7 @@ controller's existing `rising_edges` field carries this count, distinguished by 
 GUI output labels explicitly say generated transitions. Protocol 2 output-zero replies
 are incompatible and rejected at connection rather than treated as measured zero.
 
-`protocol` is uint32 and must equal 5; watchdog values are uint32. Applied Hz is
+`protocol` is uint32 and must equal 6; watchdog values are uint32. Applied Hz is
 positive and finite decimal text (ordinary or exponent notation), parsed into the
 host's binary64 `applied_frequency_hz`. It is not restricted to the 0.1-Hz request grid.
 Firmware emits sufficient significant digits to preserve its computed rate on a
@@ -108,7 +108,7 @@ Boot state is invalid, stopped, with all three outputs disabled; `watchdog_ms=0`
 applied watchdog only in that invalid state. After watchdog stop, last settings may
 remain visible but cannot pass Ready. ON requires successful fresh CONFIGURE first.
 
-Firmware calculates and reports the applied nominal frequency. Timer registers,
+Firmware calculates and reports the applied nominal camera frequency. Timer registers,
 clock sources, dividers and counts remain private firmware details; CephVR does not
 reconstruct a frequency or select board timer profiles. The host compares retained
 reported frequency, pin, enablement and watchdog configuration on preparation;
@@ -292,12 +292,14 @@ scheduled trial and active external-camera mask, reserves the channel under the
 preceding rules and dispatches grouped ON/OFF when the corresponding boundary arrives.
 No command may start an output early to compensate for serial latency. ON requires
 valid release and an unfenced trial; cancellation/interruption cancels unsent ON.
-If no external camera is active, send no empty-mask boundary command and create no
-pulse obligation; free-running cameras retain their own local schedule.
+The enabled Trial state output joins this mask independently of camera timing,
+holds HIGH from ON application until OFF, and stays LOW in previews and gaps.
+If neither an external camera nor Trial state is enabled, send no empty-mask
+boundary command and create no pulse obligation. Free-running cameras retain
+their own local schedule.
 
 Do not put future timestamps on the wire, synchronize a firmware clock, add a lead
-compensation setting or shift T/end after dispatch. The current ASCII ON/OFF grammar
-is unchanged. Start pulses on firmware application under A11, with actual physical
+compensation setting or shift T/end after dispatch. The protocol6 ASCII ON/OFF mask includes `trial_state_selected`. Start pulses on firmware application under A11, with actual physical
 latency still unknown until rig verification. Camera workers independently admit
 receipts at T and seal at the E11 cutoff; late pulse/frame delivery cannot extend
 that interval. OFF completion and camera admission-stop are separate evidence.
@@ -334,7 +336,10 @@ own request ID and preserves the original failed/uncertain ON evidence.
 ### Typed host evidence
 
 PulseCommandEvidence in microcontroller.proto holds the existing connection/request
-IDs, ON/OFF verb and exact selected role mask. Normal commands carry scheduled boundary
+IDs, ON/OFF verb and exact selected camera/Trial state mask.
+`MicrocontrollerState.trial_state` carries enablement, running/HIGH and pin without
+a frequency. Acquisition retains it in the existing trial pulse evidence; controller
+Started/Stopped gates require the selected HIGH/LOW readback when enabled. Normal commands carry scheduled boundary
 T/end; interruption OFF instead carries original stop_issued_monotonic_ns and omits
 a scheduled boundary. Capture dispatched_monotonic_ns immediately before attempting
 the serial write, not when queueing it; this is a host write-attempt timestamp, not

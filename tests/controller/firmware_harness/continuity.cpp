@@ -13,7 +13,7 @@ std::string send(const std::string &request) {
 
 std::string configure(const std::string &tracking, const std::string &eye = "eye_tracking_enabled=0",
                       const std::string &behavior = "behavioral_enabled=1 behavioral_pin=D10 behavioral_hz=30.0") {
-  return send("CONFIGURE id=cfg watchdog_ms=3000 " + behavior + " " + tracking + " " + eye);
+  return send("CONFIGURE id=cfg watchdog_ms=3000 " + behavior + " " + tracking + " " + eye + " trial_state_enabled=1 trial_state_pin=D12");
 }
 
 void unchanged(const Output &before, uint8_t role) {
@@ -27,9 +27,9 @@ void unchanged(const Output &before, uint8_t role) {
 
 int main() {
   setup();
-  assert(send("CAPS id=caps").find("protocol=5") != std::string::npos);
+  assert(send("CAPS id=caps").find("protocol=6") != std::string::npos);
   assert(configure("tracking_enabled=0").find("OK") == 0);
-  assert(send("ON id=on behavioral_selected=1 tracking_selected=0 eye_tracking_selected=0").find("OK") == 0);
+  assert(send("ON id=on behavioral_selected=1 tracking_selected=0 eye_tracking_selected=0 trial_state_selected=0").find("OK") == 0);
   // Cover joining during both halves of the existing pulse.
   for (bool high : {true, false}) {
     while (outputs[0].high != high) TIMER1_COMPA_vect();
@@ -45,7 +45,7 @@ int main() {
   }
   const Output beforeOn = outputs[0];
   writes.clear();
-  assert(send("ON id=on2 behavioral_selected=0 tracking_selected=1 eye_tracking_selected=0").find("OK") == 0);
+  assert(send("ON id=on2 behavioral_selected=0 tracking_selected=1 eye_tracking_selected=0 trial_state_selected=0").find("OK") == 0);
   unchanged(beforeOn, 0);
   for (int tick = 0; tick < 41; ++tick) TIMER1_COMPA_vect();
   const Output behavior = outputs[0], tracking = outputs[1];
@@ -64,11 +64,11 @@ int main() {
   unchanged(behavior, 0); unchanged(tracking, 1);
   assert(writes.empty());
   // Oversized reply rejection also precedes any application.
-  const std::string longId(280, 'x');
+  const std::string longId(250, 'x');
   const auto boundedRequest = "CONFIGURE id=" + longId +
     " watchdog_ms=3000 behavioral_enabled=1 behavioral_pin=D10 behavioral_hz=30.0"
     " tracking_enabled=1 tracking_pin=D11 tracking_hz=60.0"
-    " eye_tracking_enabled=1 eye_tracking_pin=D8 eye_tracking_hz=45.0";
+    " eye_tracking_enabled=1 eye_tracking_pin=D8 eye_tracking_hz=45.0 trial_state_enabled=1 trial_state_pin=D12";
   assert(boundedRequest.size() + 1 <= kLineLimit);
   assert(send(boundedRequest).find("REPLY_TOO_LONG") != std::string::npos);
   unchanged(behavior, 0); unchanged(tracking, 1);
@@ -85,6 +85,26 @@ int main() {
   assert(writes.size() >= 4 && writes[0] == std::make_pair(uint8_t(10), LOW));
   assert(writes[1] == std::make_pair(uint8_t(11), LOW));
 
+  // Camera previews leave the gate LOW; trial boundaries hold it HIGH across ticks.
+  assert(!outputs[kTrialOutput].running);
+  const std::string startTrial = "ON id=trial behavioral_selected=0 tracking_selected=0 eye_tracking_selected=0 trial_state_selected=1";
+  const std::string stopTrial = "OFF id=stop behavioral_selected=0 tracking_selected=0 eye_tracking_selected=0 trial_state_selected=1";
+  assert(send(startTrial).find("trial_state_running=1") != std::string::npos);
+  writes.clear();
+  for (int tick = 0; tick < 30000; ++tick) TIMER1_COMPA_vect();
+  assert(outputs[kTrialOutput].running && outputs[kTrialOutput].high);
+  for (const auto &write : writes) assert(write.first != 12);
+  const Output gate = outputs[kTrialOutput];
+  writes.clear();
+  assert(configure("tracking_enabled=1 tracking_pin=D10 tracking_hz=50.0", "eye_tracking_enabled=0",
+    "behavioral_enabled=1 behavioral_pin=D11 behavioral_hz=30.0").find("OK") == 0);
+  unchanged(gate, kTrialOutput);
+  assert(configure("tracking_enabled=1 tracking_pin=D12 tracking_hz=50.0").find("TIMER_CONFLICT") != std::string::npos);
+  unchanged(gate, kTrialOutput);
+  assert(send(startTrial).find("OK") == 0);
+  assert(send(stopTrial).find("trial_state_running=0") != std::string::npos);
+  assert(!outputs[kTrialOutput].high);
+  assert(send(startTrial).find("OK") == 0);
   testMillis = lastRequestMs + watchdogMs;
   loop();
   assert(watchdogStopped);
@@ -92,4 +112,12 @@ int main() {
   writes.clear();
   for (int tick = 0; tick < 1000; ++tick) TIMER1_COMPA_vect();
   assert(writes.empty());
+  assert(send(startTrial).find("NOT_CONFIGURED") != std::string::npos);
+  // Full host UUID/counter IDs and all enabled outputs fit the same bounded wire.
+  const auto full = send("CONFIGURE id=12345678-1234-4321-8321-123456789012-18446744073709551615 watchdog_ms=3000 "
+    "behavioral_enabled=1 behavioral_pin=D10 behavioral_hz=30.0 "
+    "tracking_enabled=1 tracking_pin=D11 tracking_hz=60.0 "
+    "eye_tracking_enabled=1 eye_tracking_pin=D8 eye_tracking_hz=60.0 "
+    "trial_state_enabled=1 trial_state_pin=D12");
+  assert(full.find("OK") == 0 && full.size() <= kLineLimit);
 }

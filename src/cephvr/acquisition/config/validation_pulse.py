@@ -88,7 +88,7 @@ def validate_pulse_port(
             "INVALID_PORT",
             "configured serial port cannot be empty",
         )
-    if external_roles and not port:
+    if (external_roles or settings.pulses.trial_state_enabled) and not port:
         issue(
             result,
             "backends.acquisition.pulses.port",

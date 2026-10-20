@@ -1,5 +1,35 @@
 # Rig verification — outstanding checks
 
+- [ ] Reopen the GUI with G01rev256, finish a session through Stop and verify
+  Subject ID/species/other Session config fields unlock only after confirmed cleanup.
+  Edit the next subject, use Setup's New session action and verify the draft survives
+  into Configuration/fresh Setup while completed-session metadata remains unchanged.
+  Offscreen gates/retention pass18 focused cases. Launcher relaunch requires closing
+  the existing GUI first; desktop inspection approval timed out, so native acceptance
+  remains pending. — [Runtime assessment](runtime.md)
+
+- [ ] Verify A01/A07 camera demand and transport warnings on the native rig after
+  loading the updated source and the separately managed compatible MCU firmware:
+  repeated USB trial stops should omit unsupported-counter warnings; applicable
+  SDK read failures must still warn. Save Cam Off with no backend consumer must
+  leave that camera's pulses off and create no camera files; active Tracking with
+  camera video Off must retain pulses and metadata. Check saved Use choices after
+  NewSession, and all-camera-Off Trial state HIGH/normal-stop/Abort LOW. Local
+  fixture tests pass; no physical run from the stop-warning chat.
+  — [Acquisition assessment](acquisition.md),
+  [validation evidence](runtime-evidence-2026-10-20/sdk-transport-counters/verification.json)
+
+- [ ] Complete remaining saving-only E12 fault/scientific acceptance. Oct20 native
+  normal60s, Abort12s and Setup cancellation pass: acquisition stays running, saving
+  toggles only at Start/end/Abort, Setup does not rename, counts do not reset, and
+  actual session-named native files exist. All18 local outputs close/8 videos decode.
+  Verify electrical/optical pulse alignment and transfer/inspect native contents;
+  exercise name/enable/disable timeouts, externally changed acquisition/recording,
+  link loss, per-stream stalls, controller loss and long workload acceptance.
+  Historical acquisition-start/stop passes do not substitute for these checks.
+  — [Current runtime](runtime.md), [Oct20 evidence](runtime-evidence-2026-10-20/spikeglx-continuous-acquisition/verification.json)
+
+
 - [ ] Finish actual GUI control/menu/dialog and native DPI/layout acceptance once
   desktop capture works. Oct19 state capture failed twice after prescribed recovery;
   no native inputs were issued.48 offscreen states/7932 repeated control rows and751
@@ -88,7 +118,9 @@
 - [ ] After completed cleanup and application restart/fresh Setup, verify corrected
   Bottom portrait mapping: head-to-tail, reverse and both lateral directions, retained
   10mm grid/pixel pitch, crop offsets, masks and pulse location. Confirm side/front
-  linked movement and physical preview agreement. Compare pulse-only and all-output
+  linked movement and physical preview agreement. Oct20 owner confirms dummy-trial
+  physical motion with Bottom Y inversion off; confirm the corrected preview after
+  GUI restart. Pitch, offsets, masks and tearing remain unverified. Compare pulse-only and all-output
   VSync for Left/Front tearing and record actual cadence/optical behavior; do not infer
   simultaneous scanout from requested intervals. — [Assessment](visual_stimulus.md)
 
@@ -591,6 +623,17 @@ button response remains unverified. No E12 Setup or recording command was issued
 <a id="managed-device-gui"></a>
 ### Managed MCU and camera GUI verification
 
+- [ ] `trial-state-runtime-output`: remaining acceptance is preview LOW, configured
+  intertrial gaps/consecutive trials, bounded watchdog loss and full-load edge timing.
+  Oct20 owner-authorized managed upload verifies COM8 protocol6/stopped outputs;
+  native normal60s and early-Abort sessions confirm physical HIGH/LOW on SpikeGLX
+  OneBox0/channel0 (median HIGH4.882V; settled LOW below0.008V), no missing samples
+  or HIGH dropouts. Initial/unconfigured/reset and edge transients remain in raw
+  evidence; this does not certify electrical behavior across board reset.
+  Original configuration/saved bytes restored and both native cleanup joins pass.
+  [Assessment](acquisition.md),
+  [raw/commands/limits](runtime-evidence-2026-10-20/trial-state-runtime-output/verification.json).
+
 - [ ] `camera-connect-selected-all`: after GUI reopen, verify Connect selected /
   Disconnect selected and enabled-only Connect all / Disconnect all with actual
   cameras. Confirm partial connection joins retain prior captures, selected-row
@@ -610,9 +653,9 @@ button response remains unverified. No E12 Setup or recording command was issued
   zoom/pan/reset/X/mapping-release checks; this does not close physical interaction or
   camera workload acceptance. [Evidence/limits](runtime.md).
 
-- [ ] `camera-connect-continuity`: owner explicitly defers flashing. Only after new
-  authorization, install matching protocol5 `cephvr2_uno_5` through the existing
-  explicit Upload workflow; source/AVR build/native adapter passes do not install it.
+- [ ] `camera-connect-continuity`: owner-authorized managed upload installed matching
+  protocol6 `cephvr2_uno_6` onOct20. Camera continuity acceptance remains outstanding;
+  the trial-state physical checks do not close the checks below.
   Measure existing pulse edges during repeated second/third-camera Connect, including
   joins during HIGH/LOW and invalid new pin/rate rejection. Verify no missing/extra
   edges or phase reset, quantify jitter, and retain unchanged capture run/ring/viewer
@@ -620,7 +663,7 @@ button response remains unverified. No E12 Setup or recording command was issued
   preparation and normal existing-output OFF/watchdog/fault handling. No board action
   or electrical continuity acceptance was performed by the source implementation.
   [Current local evidence/limits](acquisition.md).
-- After that authorized installation, verify continuous tests stay active beyond
+- With the installed firmware, verify continuous tests stay active beyond
   two seconds, explicit Stop leaves outputs LOW/retains counts, and loss of matched
   diagnostic status renewal stops within the two-second lease without restart.
   Retest control/phase/closure cleanup. [Local evidence and limits](runtime.md) do not
@@ -749,7 +792,7 @@ Existing operating-point/throughput deferrals below remain separate.
 | Visual Stimulus protected assets | Under V04/V13, verify protected streaming sources on the actual storage/decoder combination, independent instance cursors, dependency coverage, external write/replacement attempts and release after cancellation/owner loss. Prepared-memory reuse and relocated replay must use the identified content; no periodic trial-time hashing or archive is introduced. |
 | Visual Stimulus linear color and measured tables | Under V04/V21/V23, verify source transfer/range/channels and 8/16-bit preservation, float32 composition/premultiplied alpha/filtering, named clipping flags, curve interpolation and one-time correction. Measure each output's response and actual code precision; check manual/driver/projector conditions, no double gamma, Idle/marker consistency and distinct marker light levels. Independent channel tables alone do not prove cross-projector color matching or spatial uniformity. |
 | Visual Stimulus output precision and custom encoding | Under V20/E13, verify requested versus actual RGB8/RGB10 buffers, final code preservation, calibration matching and the real driver/cable/projector path. Exercise the single composite lossy argument validation, actual encoder compatibility at the composite resolution, explicit review conversion and encoder load/failure while preserving live rendering and required state evidence. Under SYS-002, confirm the now-operational RTX 2080 Ti sustains three concurrent NVENC sessions (two cameras plus one Visual Stimulus composite) at planned rates while the RTX 5060 Ti renders/tracks and AMD integrated graphics serves the operator display/GUI. Verify actual adapter identities, explicit FFmpeg device selection and host-transfer costs; the earlier RTX 5060 Ti encoder probes do not validate this placement. Normal runtime still performs no file-content validation. |
-| SpikeGLX session control | Under E12 and the [control contract](../contracts/spikeglx-control.md): installed SDK/SpikeGLX versions; command server bound to the dedicated link and firewall admitting only the rig; readback, gate/trigger-mode rejection and run-name collision behavior; startRun-to-saving latency and per-stream sample-count progress (including one stalled stream) to set the writing/no-progress bounds; stopRun completion; timed-out mutation reconciliation; Abort/link-loss behavior including transient recovery, per-stream deadline expiry, late replies and counter reset detection; command-server port (default 4142); stop margin against the final photodiode edge, including Stop/Cancel across trials, interrupted uncertain starts and immediate stop between trials; repeated fault/recovery episodes; controller-loss emergency warning naming the run for manual stopping. Acknowledgements are not pulse timing. |
+| SpikeGLX session control | Under E12 and the [control contract](../contracts/spikeglx-control.md): installed SDK/SpikeGLX versions; command server bound to the dedicated link and firewall admitting only the rig; readback, gate/trigger-mode rejection and run-name collision behavior; saving-enable-to-saving latency and per-stream sample-count progress (including one stalled stream) to set the writing/no-progress bounds; saving-OFF confirmation with acquisition continuing; timed-out mutation reconciliation; Abort/link-loss behavior including transient recovery, per-stream deadline expiry, late replies and counter reset detection; command-server port (default 4142); stop margin against the final photodiode edge, including normal/Abort/Cancel across trials with acquisition preserved, interrupted uncertain starts and immediate stop between trials; repeated fault/recovery episodes; controller-loss emergency warning naming the run for manually disabling saving. Acknowledgements are not pulse timing. |
 
 | Arena-file movement limits | Under V16/G01, load a legacy rectangular GLB and a declared convex GLB; verify transformed world bounds, 30 mm/default and edited clearance, starting pose, sliding at walls/corners and four-view agreement. Reject missing/unsupported/invalid geometry, empty inset and outside starts; retain resolved regions/fingerprints and source specifications through Setup/reset/restart. Preserve loaded explicit regions and unrestricted mode. Inspect nonempty effective_poses for the active arena: declared frame, mm position and unit quaternion must agree with the frozen rendered transform before its authored asset mapping; retain exact model matrices and constrained-motion evidence. Oct16 local structured-evidence checks do not close this native/scientific acceptance. Local offscreen/compiler/resource tests do not establish native file protection or rig equivalence. |
 | Visual Stimulus scene composition and geometric correction | Under V02/V15, exercise one arena plus ordered alpha overlays, overlay independence from arena depth, covered-instance continuity and invalid composition rejection. Verify imported mesh coverage/orientation/fold rejection, masks and weighted overlaps, immutable session mappings, photodiode stage order and final-output recording/replay. Establish calibration accuracy through the actual optical path and resource cost on all outputs; no automatic calibration or optical-model guarantee is selected. |

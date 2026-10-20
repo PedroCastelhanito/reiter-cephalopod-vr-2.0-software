@@ -21,7 +21,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 - Architecture and implementation-contract review is complete for every backend.
   [ARCH-001](#arch-001) selects GUI as the current implementation stage, following
   Tracking implementation/review. The owner has authorized bounded SpikeGLX
-  controller connection and GUI diagnostics within the GUI stage. Firmware is deferred;
+  controller connection, GUI diagnostics and paired saving-only session control
+  within the GUI stage. Firmware is deferred;
   analysis software is much later. The [acquisition review](reports/acquisition.md)
   records source review and pending rig verification; the [controller/supervisor review](reports/runtime.md)
   retains dated local results and pending E15 rig acceptance. Current Visual Stimulus and tracking
@@ -63,34 +64,34 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
 | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 25 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 251 |
-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 85 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 257 |
+| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 88 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
 | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 35 |
 | <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 92 |
-| <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
+| <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 96 |
 | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 77 |
 | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 63 |
 | <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 176 |
-| <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
+| <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 5 |
 | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 22 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 17 |
-| <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 23 |
+| <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 24 |
 | <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 30 |
 | <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 214 |
 | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
-| <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 19 |
+| <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 20 |
 | <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 34 |
 | <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 33 |
 | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
 | <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-Visual Stimulus delay measurement | Accepted | 6 |
 | <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to Visual Stimulus | Accepted | 14 |
-| <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 64 |
+| <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 65 |
 | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 51 |
 | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 16 |
 | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 69 |
-| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 50 |
+| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 51 |
 | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 27 |
 | <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 14 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 12 |

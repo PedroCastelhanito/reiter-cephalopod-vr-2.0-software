@@ -1,0 +1,26 @@
+[
+  {
+    "host_monotonic_ns": 478683336112200,
+    "kind": "UpdateConfiguration",
+    "value": {
+      "command_id": "d337ba01-fbfa-4aa7-8ea9-5cd70fdcbe70",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  {
+    "host_monotonic_ns": 478683343567000,
+    "kind": "restoration",
+    "value": {
+      "runtime_equal": true,
+      "saved_bytes_equal": true
+    }
+  },
+  {
+    "host_monotonic_ns": 478683347845900,
+    "kind": "error",
+    "value": "ClientError(\"REJECTED: configuration validation failed: trials[0].stimulus.program.program_json: 1 validation error for Program\\n  Value error, explicit trial duration is below the E05 minimum trial duration [type=value_error, input_value={'format_version': 2, 'as...ition_settings': []}]}]}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error\")"
+  }
+]

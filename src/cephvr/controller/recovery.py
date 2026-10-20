@@ -241,8 +241,8 @@ class StartupRecovery:
             remote = (
                 " SpikeGLX stopping remains unconfirmed for endpoint "
                 + (f"{endpoint[0]}:{endpoint[1]}" if endpoint else "unknown")
-                + f", run {inspection.spikeglx_run or 'unknown'}; inspect/stop"
-                " that exact remote run manually before another paired session."
+                + f", run {inspection.spikeglx_run or 'unknown'}; inspect"
+                " that exact recording and disable saving manually before another paired session."
             )
         return pb.Prompt(
             prompt_id=str(uuid.uuid4()),

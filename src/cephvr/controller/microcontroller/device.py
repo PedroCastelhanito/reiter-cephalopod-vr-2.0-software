@@ -306,7 +306,9 @@ class MicrocontrollerDevice:
         result = wire.MicrocontrollerIoResult(
             command_id=request.command_id, succeeded=True
         )
-        roles = tuple(request.roles)
+        roles: tuple[int | str, ...] = tuple(request.roles)
+        if request.trial_state_selected:
+            roles += ("trial_state",)
         if kind == wire.MICROCONTROLLER_IO_KIND_CONNECT:
             if self.acquisition_claimed:
                 raise RuntimeError("A camera-trigger claim is already active")
@@ -358,6 +360,12 @@ class MicrocontrollerDevice:
                 if request.HasField("boundary_monotonic_ns")
                 else None
             )
+            if (
+                kind == wire.MICROCONTROLLER_IO_KIND_ON
+                and request.trial_state_selected
+                and boundary is None
+            ):
+                raise ValueError("Trial state ON requires a reserved trial boundary")
             if kind == wire.MICROCONTROLLER_IO_KIND_ON:
                 evidence = await self.serial.on(
                     roles, scheduled_boundary_ns=boundary, deadline_ns=deadline_ns
@@ -449,6 +457,7 @@ class MicrocontrollerDevice:
                                 camera.CAMERA_ROLE_BEHAVIORAL,
                                 camera.CAMERA_ROLE_TRACKING,
                                 camera.CAMERA_ROLE_EYE_TRACKING,
+                                "trial_state",
                             ),
                             scheduled_boundary_ns=None,
                             stop_issued_ns=self.clock(),
@@ -463,7 +472,12 @@ class MicrocontrollerDevice:
                                     "running"
                                 )
                                 and not getattr(evidence.resulting_state, role).running
-                                for role in ("behavioral", "tracking", "eye_tracking")
+                                for role in (
+                                    "behavioral",
+                                    "tracking",
+                                    "eye_tracking",
+                                    "trial_state",
+                                )
                             )
                         ):
                             raise RuntimeError(

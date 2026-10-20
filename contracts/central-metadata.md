@@ -136,3 +136,9 @@ ownership through bounded removal and quarantine; clear the pointer only on
 confirmed success. Missing reservation ownership, changed evidence or failure retains the pointer
 and blocker, including after partial deletion. Remote files are never deleted.
 Supervisor owns emergency reports.
+
+Paired SESSION_CONFIG.json records `spikeglx_control_scope = "saving_only"` under
+[E12](../docs/architecture/synchronization.md#e12): the prepared run name is the intended
+recording name, assigned at Start; `spikeglx_started`/`spikeglx_stopped` log events
+confirm saving start/stop, while acquisition remains operator-owned and running.
+Historical sessions without this scope retain their original acquisition-control semantics.

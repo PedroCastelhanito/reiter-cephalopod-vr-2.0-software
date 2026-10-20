@@ -85,8 +85,8 @@ class PreviewRig(TankDiagram):
                 ]
             )
             if face == "Bottom":
-                # Folded portrait raster: top faces the head, right faces subject-left.
-                source = QPolygonF([source[i] for i in (2, 1, 0, 3)])
+                # Undo the portrait quarter-turn; preserve the calibrated output flips.
+                source = QPolygonF([source[i] for i in (1, 2, 3, 0)])
             transform = QTransform()
             if QTransform.quadToQuad(source, polygon, transform):
                 painter.save()

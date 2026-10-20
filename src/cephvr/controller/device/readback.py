@@ -251,7 +251,12 @@ class CameraReadback:
                     and all(
                         getattr(status.views.pulses.state, role).HasField("running")
                         and not getattr(status.views.pulses.state, role).running
-                        for role in ("behavioral", "tracking", "eye_tracking")
+                        for role in (
+                            "behavioral",
+                            "tracking",
+                            "eye_tracking",
+                            "trial_state",
+                        )
                     )
                 )
             else:

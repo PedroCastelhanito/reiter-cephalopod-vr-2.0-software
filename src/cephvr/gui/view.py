@@ -35,6 +35,7 @@ class DashboardView:
     has_control: bool = False
     sample: bool = False
     configuration_wired: bool = True
+    cleanup_confirmed: bool = False
     trial_index: int = 0
     trial_count: int = 0
     elapsed_s: float | None = None
@@ -64,6 +65,17 @@ class DashboardView:
             }
         )
 
+    @property
+    def can_edit_session(self) -> bool:
+        """Completed-session edits are drafts for the next session."""
+        return self.can_edit or (
+            self.phase == Phase.ENDED
+            and self.cleanup_confirmed
+            and (self.sample or self.connected)
+            and self.configuration_wired
+            and self.has_control
+        )
+
 
 def review_view(phase: Phase, *, observer: bool = False) -> DashboardView:
     running = phase in {Phase.RUNNING, Phase.STOPPING, Phase.FINALIZING, Phase.ENDED}
@@ -72,6 +84,7 @@ def review_view(phase: Phase, *, observer: bool = False) -> DashboardView:
         phase=phase,
         sample=True,
         has_control=not observer,
+        cleanup_confirmed=phase == Phase.ENDED,
         previews=tuple(
             PreviewView(key, name, available=True, active=True, reason="")
             for key, name in (

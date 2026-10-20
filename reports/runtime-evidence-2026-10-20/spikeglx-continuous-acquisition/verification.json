@@ -1,0 +1,206 @@
+{
+  "date": "2026-10-20",
+  "source_revision": "226a506c6e3f7a2adb710009d9d47929cbd6b5c8",
+  "provenance_scope": "Shared dirty checkout with concurrent brightness work; final reviewed file hashes, not an immutable whole-tree launch snapshot.",
+  "sha256": {
+    "src/cephvr/synchronization/client.py": "69ade8541e47a8695a53e97ca851c2dbbcf8c10443896be3ab3fabe1e7f96421",
+    "src/cephvr/synchronization/native.py": "67d852ce46e1d27486ff7b6767b169ee6ffb08c1124215b512aa0c193b4b5b71",
+    "src/cephvr/controller/lifecycle/start.py": "d57abde83a4274f213f6117e431e0455b874b2c87893afe252d59186b87be04f",
+    "src/cephvr/controller/lifecycle/interruption.py": "10d365875271c65bf41baca53d457002f8d9784a8474b4d20354667531e5ed45",
+    "src/cephvr/controller/recovery.py": "229dd4f4f9ae342f96334e6f8ca03e66e9d2309a686631949322dc55eed40c5f",
+    "src/cephvr/controller/startup/recovery.py": "53b062dd2dba7a51737afc42dfed14b11e124f3b41e19a182513841aa5c4bb9e",
+    "contracts/policy/synchronization_policy.toml": "32bd6c5783cdb65a214d48dbf2cdfe5dedaf0c0b2decf4c52828d362e6719754",
+    "config/backends/synchronization_config.toml": "e9ed2538635d5d746ade6c174d09b20374f184d5a1d03f26f2276883eded136e"
+  },
+  "decisions": [
+    "E12rev24",
+    "E09",
+    "E04",
+    "E14 policy6",
+    "E15",
+    "ARCH-002"
+  ],
+  "method": "Owner started acquisition with saving OFF; authenticated controller normal60s completion, Abort after12s, Setup cancellation, cleanup/reuse. Official SDK readbacks and sample counts before/after each operation; actual remote names via enumDataDir. Full local frame-log/accounting and video probe/decode audit.",
+  "native_states": {
+    "normal-before": {
+      "running": true,
+      "saving": false,
+      "run_name": "test",
+      "sample_counts": {
+        "(1, 0)": 4267515
+      }
+    },
+    "normal-ready": {
+      "running": true,
+      "saving": false,
+      "run_name": "test",
+      "sample_counts": {
+        "(1, 0)": 4466253
+      }
+    },
+    "normal-after": {
+      "running": true,
+      "saving": false,
+      "run_name": "SAVEVERIFY-085520",
+      "sample_counts": {
+        "(1, 0)": 6389960
+      }
+    },
+    "abort-before": {
+      "running": true,
+      "saving": false,
+      "run_name": "SAVEVERIFY-085520",
+      "sample_counts": {
+        "(1, 0)": 6715320
+      }
+    },
+    "abort-ready": {
+      "running": true,
+      "saving": false,
+      "run_name": "SAVEVERIFY-085520",
+      "sample_counts": {
+        "(1, 0)": 6896448
+      }
+    },
+    "abort-after": {
+      "running": true,
+      "saving": false,
+      "run_name": "SAVEVERIFY-085641",
+      "sample_counts": {
+        "(1, 0)": 7372500
+      }
+    },
+    "cancel-before": {
+      "running": true,
+      "saving": false,
+      "run_name": "SAVEVERIFY-085641",
+      "sample_counts": {
+        "(1, 0)": 7373642
+      }
+    },
+    "cancel-ready": {
+      "running": true,
+      "saving": false,
+      "run_name": "SAVEVERIFY-085641",
+      "sample_counts": {
+        "(1, 0)": 7541451
+      }
+    },
+    "cancel-after": {
+      "running": true,
+      "saving": false,
+      "run_name": "SAVEVERIFY-085641",
+      "sample_counts": {
+        "(1, 0)": 7545750
+      }
+    }
+  },
+  "runs": [
+    {
+      "session": "SAVEVERIFY-085520",
+      "outcome": "completed",
+      "closed_outputs": 9,
+      "decoded_videos": 4,
+      "cameras": {
+        "behavioral": {
+          "frames": 1797,
+          "video_frames": 1797,
+          "dropped": 0,
+          "invalid": 0,
+          "accounting_complete": true
+        },
+        "eye_tracking": {
+          "frames": 3596,
+          "video_frames": 3596,
+          "dropped": 0,
+          "invalid": 0,
+          "accounting_complete": true
+        },
+        "tracking": {
+          "frames": 3596,
+          "video_frames": 3596,
+          "dropped": 0,
+          "invalid": 0,
+          "accounting_complete": true
+        }
+      },
+      "renderer_groups": 3599,
+      "render_max_gap_ms": 57.9431,
+      "capture_drops": 0,
+      "gaps_over_100ms": 0
+    },
+    {
+      "session": "SAVEVERIFY-085641",
+      "outcome": "interrupted",
+      "closed_outputs": 9,
+      "decoded_videos": 4,
+      "cameras": {
+        "behavioral": {
+          "frames": 365,
+          "video_frames": 365,
+          "dropped": 0,
+          "invalid": 0,
+          "accounting_complete": true
+        },
+        "eye_tracking": {
+          "frames": 731,
+          "video_frames": 731,
+          "dropped": 0,
+          "invalid": 0,
+          "accounting_complete": true
+        },
+        "tracking": {
+          "frames": 731,
+          "video_frames": 731,
+          "dropped": 0,
+          "invalid": 0,
+          "accounting_complete": true
+        }
+      },
+      "renderer_groups": 735,
+      "render_max_gap_ms": 22.7355,
+      "capture_drops": 0,
+      "gaps_over_100ms": 0
+    }
+  ],
+  "remote_files": {
+    "method": "read-only official SDK enumDataDir(0), no file contents transferred",
+    "entries": [
+      "C:/SGL_DATA/SAVEVERIFY-085520_g1/SAVEVERIFY-085520_g1_t0.obx0.obx.bin",
+      "C:/SGL_DATA/SAVEVERIFY-085520_g1/SAVEVERIFY-085520_g1_t0.obx0.obx.meta",
+      "C:/SGL_DATA/SAVEVERIFY-085641_g2/SAVEVERIFY-085641_g2_t0.obx0.obx.bin",
+      "C:/SGL_DATA/SAVEVERIFY-085641_g2/SAVEVERIFY-085641_g2_t0.obx0.obx.meta"
+    ]
+  },
+  "final_remote": {
+    "connected": true,
+    "address": "169.254.240.108",
+    "port": 4142,
+    "version": "SpikeGLX v20251218 api v4.1.3",
+    "running": true,
+    "run_name": "SAVEVERIFY-085641",
+    "data_directory": "C:/SGL_DATA"
+  },
+  "restoration": {
+    "runtime_configuration_equal": true,
+    "saved_file_byte_equal": true
+  },
+  "checks": {
+    "pytest": "155 passed,4 deselected: test_spikeglx/setup/lifecycle_commands/startup_recovery and client RPC",
+    "ruff": "pass;17 formatted source/test files",
+    "mypy_win32": "16 source files pass",
+    "boundaries": "739 modules,0 violations; existing cohesion warnings",
+    "whitespace": "pass; existing CRLF notices"
+  },
+  "harness_notes": [
+    "First restart met existing-runtime guard during shutdown; normal interactive launch succeeded, no unrelated process termination.",
+    "Initial post-Start assertion raced the monitoring snapshot; protocol itself started correctly and completed normally, observed/resumed by finish_normal.py. Script waits for confirmed monitor view in subsequent Abort test."
+  ],
+  "limits": [
+    "Native .bin/.meta paths verified; ephys contents not transferred/validated.",
+    "No electrical/optical pulse or scientific alignment acceptance.",
+    "No native link-loss/stalled-stream/controller-loss/endurance fault acceptance.",
+    "Tracking processing disabled; all3 camera videos and4 projectors active.",
+    "Acquisition running and nonresetting count verified at operation boundaries; source has no acquisition start/stop calls."
+  ]
+}

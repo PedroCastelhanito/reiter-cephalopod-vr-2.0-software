@@ -168,6 +168,7 @@ class _StatusSerial:
             camera.CAMERA_ROLE_BEHAVIORAL,
             camera.CAMERA_ROLE_TRACKING,
             camera.CAMERA_ROLE_EYE_TRACKING,
+            "trial_state",
         )
         assert scheduled_boundary_ns is None
         assert stop_issued_ns is not None
@@ -180,6 +181,7 @@ class _StatusSerial:
         result.behavioral.running = False
         result.tracking.running = False
         result.eye_tracking.running = False
+        result.trial_state.running = False
         return mcu.PulseCommandEvidence(
             connection_id=self.observation.connection_id,
             request_id="off-1",
@@ -610,3 +612,176 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
         camera.CAMERA_ROLE_TRACKING,
     }
     assert len(observed) == 2 and not trial.interrupted
+
+
+@pytest.mark.parametrize("external", [False, True])
+@pytest.mark.parametrize("trial_enabled", [False, True])
+def test_trial_mask_selects_level_independently_of_camera_timing(
+    external: bool, trial_enabled: bool
+) -> None:
+    from cephvr.acquisition.coordinator.trial_helpers import _trial_output_roles
+
+    settings = control.AcquisitionSettings()
+    settings.pulses.trial_state_enabled = trial_enabled
+    settings.behavioral.device.frame_timing = (
+        camera.FRAME_TIMING_EXTERNAL_TRIGGER
+        if external
+        else camera.FRAME_TIMING_FREE_RUNNING
+    )
+    session = SessionRecord(
+        work=control.WorkContext(),
+        operation=control.OperationContext(),
+        configuration_revision=1,
+        required_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
+        confirmed_settings=settings,
+    )
+    expected = ((camera.CAMERA_ROLE_BEHAVIORAL,) if external else ()) + (
+        ("trial_state",) if trial_enabled else ()
+    )
+    assert _trial_output_roles(session) == expected
+
+
+@pytest.mark.parametrize("aborted", [False, True])
+@pytest.mark.parametrize("off_applied", [False, True])
+async def test_trial_state_only_lifecycle_requires_real_on_off_evidence(
+    aborted, off_applied
+):
+    from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
+    from cephvr.acquisition.state import CoordinatorIdentity, SessionSlot
+    from cephvr.controller.evidence import (
+        outputs_satisfied,
+        started_satisfied,
+        stopped_satisfied,
+    )
+
+    work = _trial_work()
+    settings = control.AcquisitionSettings()
+    settings.pulses.trial_state_enabled = True
+    trial = TrialRecord(
+        work=work,
+        plan=control.TrialPlan(context=work.trial),
+        preparation=control.OperationContext(command_id=str(uuid4())),
+        configuration_revision=1,
+    )
+    trial.start_monotonic_ns, trial.end_monotonic_ns = 100, 200
+    session = SessionRecord(
+        work=control.WorkContext(session=work.trial.session),
+        operation=control.OperationContext(command_id=str(uuid4())),
+        configuration_revision=1,
+        required_cameras=set(),
+        confirmed_settings=settings,
+        trial=trial,
+    )
+    identity = CoordinatorIdentity(
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=str(uuid4())
+        ),
+        process=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
+        controller=control.ProcessIdentity(role="controller", generation=str(uuid4())),
+        supervisor=control.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        tracking=control.ProcessIdentity(),
+    )
+    now = [110]
+    reports = []
+
+    async def report(value, *, deadline_ns):
+        kind = value.WhichOneof("report")
+        if value.HasField("started"):
+            assert started_satisfied(
+                value.started,
+                target_ns=100,
+                ingress_ns=now[0],
+                allowance_ns=50,
+                trial_state_required=True,
+            )
+            assert not value.started.first_required_activity
+            assert not started_satisfied(
+                value.started, target_ns=100, ingress_ns=now[0], allowance_ns=50
+            )
+        elif value.HasField("stopped"):
+            assert stopped_satisfied(
+                value.stopped,
+                target_ns=100,
+                end_ns=200,
+                ingress_ns=now[0],
+                allowance_ns=50,
+                interruption_issued_ns=150 if aborted else 0,
+                expected_sources=set(),
+                allowed_producers=set(),
+                trial_state_required=True,
+            )
+            assert not value.stopped.producer_ends
+        elif value.HasField("finished"):
+            assert value.finished.trial_activity_stopped
+            assert outputs_satisfied([], value.finished.outputs)
+        reports.append(kind)
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    policies = control.ControlPolicies(start_evidence_allowance_ns=50)
+    policies.trial_finished.initial_ns = 50
+    lifecycle = TrialLifecycleReports(
+        identity=identity,
+        session_slot=SessionSlot(current=session),
+        workers={},
+        controller=SimpleNamespace(report_lifecycle=report),
+        policies=policies,
+        commands=CommandLedger(
+            identity.process.generation,
+            1000,
+            max_records=8,
+            max_bytes=1024 * 1024,
+            result_reservation_bytes=1024,
+        ),
+        lock=asyncio.Lock(),
+        clock=lambda: now[0],
+    )
+    await lifecycle.pulse_evidence_changed(trial)
+    assert not reports
+    trial.pulse_on = mcu.PulseCommandEvidence(
+        command=mcu.PULSE_BOUNDARY_COMMAND_ON,
+        outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+        applied=True,
+        behavioral_selected=False,
+        tracking_selected=False,
+        eye_tracking_selected=False,
+        trial_state_selected=True,
+        scheduled_boundary_monotonic_ns=100,
+        dispatched_monotonic_ns=101,
+        acknowledged_monotonic_ns=105,
+        resulting_state=mcu.MicrocontrollerState(
+            trial_state=mcu.PulseOutputState(enabled=True, running=True)
+        ),
+    )
+    await lifecycle.pulse_evidence_changed(trial)
+    assert trial.started_report is not None
+    trial.stop = control.OperationContext(command_id=str(uuid4()))
+    trial.stop_issued_ns = 150 if aborted else 200
+    trial.stop_deadline_ns = trial.stop_issued_ns + 50
+    trial.interrupted = aborted
+    now[0] = trial.stop_issued_ns + 10
+    trial.pulse_off = mcu.PulseCommandEvidence(
+        command=mcu.PULSE_BOUNDARY_COMMAND_OFF,
+        outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED
+        if off_applied
+        else mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
+        applied=off_applied,
+        behavioral_selected=False,
+        tracking_selected=False,
+        eye_tracking_selected=False,
+        trial_state_selected=True,
+        dispatched_monotonic_ns=trial.stop_issued_ns + 1,
+        acknowledged_monotonic_ns=trial.stop_issued_ns + 5,
+        resulting_state=mcu.MicrocontrollerState(
+            trial_state=mcu.PulseOutputState(enabled=True, running=False)
+        ),
+    )
+    if aborted:
+        trial.pulse_off.stop_issued_monotonic_ns = trial.stop_issued_ns
+    else:
+        trial.pulse_off.scheduled_boundary_monotonic_ns = 200
+    await lifecycle.pulse_evidence_changed(trial)
+    assert (trial.stopped_report is not None) == off_applied
+    assert (trial.finished_report is not None) == off_applied
+    count = len(reports)
+    await lifecycle.pulse_evidence_changed(trial)
+    assert len(reports) == count

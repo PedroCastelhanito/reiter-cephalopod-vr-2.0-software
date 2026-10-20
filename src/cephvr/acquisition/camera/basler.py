@@ -212,7 +212,7 @@ class BaslerCameraAdapter:
     def read_transport_counters(self) -> TransportCounters:
         camera, _ = self._require_open()
         try:
-            return read_transport_counters(camera)
+            return read_transport_counters(camera, self._interface or "usb3")
         except Exception as exc:
             raise _sdk_error("read_transport_counters", exc) from exc
 

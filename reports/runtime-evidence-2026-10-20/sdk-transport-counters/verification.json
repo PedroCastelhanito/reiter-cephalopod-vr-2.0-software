@@ -1,0 +1,114 @@
+{
+  "checked_at": "2026-10-20T09:30:30.605521+09:00",
+  "source_revision": "fffcd7df0bfc9e371549184a013d1ae127e5d883",
+  "scope": "SDK transport warning applicability and demand-based session cameras, including Trial-state-only lifecycle",
+  "governing_decisions": [
+    "A01rev20",
+    "A07rev65",
+    "E05rev96",
+    "A11rev51",
+    "ARCH-002"
+  ],
+  "checks": {
+    "pytest": {
+      "command": ".venv/Scripts/python.exe -m pytest tests/acquisition tests/controller -q -m \"not windows and not rig\" --basetemp .tmp/camera-demand-owner-final",
+      "result": "1499 passed, 4 skipped, 8 deselected in 16.10s",
+      "raw": "owner-final.log"
+    },
+    "mypy": {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/acquisition src/cephvr/controller",
+      "result": "Success: no issues found in 304 source files",
+      "raw": "mypy.log"
+    },
+    "ruff": {
+      "command": ".venv/Scripts/python.exe -m ruff check <source_files and test_files below>",
+      "result": "All checks passed",
+      "raw": "ruff.log"
+    },
+    "format": {
+      "command": ".venv/Scripts/python.exe -m ruff format --check <source_files and test_files below>",
+      "result": "23 files already formatted",
+      "raw": "format.log"
+    },
+    "boundaries": {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "740 backend modules; 0 boundary violations; cohesion advisories reviewed",
+      "raw": "boundaries.log"
+    },
+    "contracts": {
+      "method": "Python ast.parse on camera_adapter.pyi; verify owning A01/A07/E05 explicit anchors",
+      "result": "passed"
+    },
+    "whitespace": {
+      "command": "git diff --check",
+      "result": "passed; CRLF normalization notices only",
+      "raw": "diff-check.log"
+    }
+  },
+  "source_sha256": {
+    "src/cephvr/acquisition/camera/types.py": "3c9e5eb16f0916402e53c428a3ad8992d02a0d568a33df695b1c03a68041df16",
+    "src/cephvr/acquisition/camera/transport.py": "d8093f5c7ed247842d2f3452eb635b5306f5cc81718abe6dd02a10f0228af941",
+    "src/cephvr/acquisition/camera/basler.py": "37491d2987b8e8e16a457ef4528bc25db5ef5714115aa9d504f7a4a4c8bee192",
+    "src/cephvr/acquisition/worker/transport_summary.py": "f71c728aaf409452fd8d236496fcd92641add157e75e34bb405b8533d347676e",
+    "src/cephvr/controller/configuration_access.py": "deb71e8ebc609c22f13ea2e0a5734f444f1273f850d0ca58cc7dca27f5028a70",
+    "src/cephvr/controller/lifecycle/setup_admission.py": "f69ee0b693e1057f0b8cc293af28f80be25eb335aa5b783601b0352b2a647707",
+    "src/cephvr/controller/lifecycle/acquisition_resolution.py": "e23d4b28a5e6394ec45b00123409be2dfa87542567316f1a96c65c12265ead80",
+    "src/cephvr/controller/evidence.py": "7bff3680e0febe3c504573b0bac2c1630f01f7b2a6bd331854252a24c0d28b1b",
+    "src/cephvr/controller/lifecycle/activity.py": "5eb8a72b94096a4b49eb78d68e563acb9f5592cf91268b9a087369b14c85c5bd",
+    "src/cephvr/controller/lifecycle_reports.py": "17723b2665ebd421e609f79c5c049e071213eb2463fa1daf4855ee1f5e23c47c",
+    "src/cephvr/acquisition/coordinator/session_preparation.py": "5d3d4be0cab0bbaa3d1761fe04eb3dc893c3e2f01f747290e0b4ba404c30c038",
+    "src/cephvr/acquisition/coordinator/session_validation.py": "b1419f690d136704a8b6ade9b8330a4db525baf94c57d23b15528752da1ece92",
+    "src/cephvr/acquisition/coordinator/trial_preparation.py": "7d94531e5a612cabf53fc1ed861c75b08c28e748698e2179fab50578f4861f52",
+    "src/cephvr/acquisition/coordinator/trial_no_cameras.py": "69c9746285ad8001bf5bcca66d7d6efe9d7d4eaef3651eb1005b26f2b7e606f4",
+    "src/cephvr/acquisition/coordinator/trial_lifecycle.py": "e284e363686ddd7bf154912ed2e394574154b140fb10a7e6c23354dbc55bd64f",
+    "src/cephvr/acquisition/coordinator/trial_termination.py": "45efb8f52288bc05e8d7b53d5f1b9f81319ca77114a9025ff5c6a699a319c2f4",
+    "src/cephvr/acquisition/coordinator/queries.py": "121eb03a2e0b68e1044d1a10e202299d5648a8d5dcdd76c6a52c945f153e1fcd",
+    "tests/acquisition/test_camera_adapter_contracts.py": "39bc3e57bc9a89815487f4181eb1c74fb5db24226331bd292be52fe9dda779e0",
+    "tests/acquisition/test_session_preparation.py": "5b73ad6d00a2e5a25231f70430df5806e58bffa5acc89222f2415f3cfc1a84f9",
+    "tests/acquisition/test_pulse_evidence.py": "e4abde1e0fbfed5e78b9d93a45492c8c1ef79ad47978526739228efeeb892fbf",
+    "tests/controller/test_camera_configuration.py": "629ac00940f6a0a73c83ee5bdeebf1f5f0c880d7a7fc70911c19097f5d4742a0",
+    "tests/controller/test_setup.py": "9a741046e1e458e481cc1d6cc7710e2cd4958c52a5fb870c2e440f3c48e2d1e0",
+    "tests/controller/test_lifecycle_reports.py": "41ce09ed0363e827c673485dfba8ee0deed710cc5aaf18c66cf827b4b537fefd",
+    "contracts/acquisition/camera_adapter.pyi": "fb4e7cb693b4378bf86cbf9d2f0b8f78f26b01464739b5806dcd18e2f5b81669"
+  },
+  "source_files": [
+    "src/cephvr/acquisition/camera/types.py",
+    "src/cephvr/acquisition/camera/transport.py",
+    "src/cephvr/acquisition/camera/basler.py",
+    "src/cephvr/acquisition/worker/transport_summary.py",
+    "src/cephvr/controller/configuration_access.py",
+    "src/cephvr/controller/lifecycle/setup_admission.py",
+    "src/cephvr/controller/lifecycle/acquisition_resolution.py",
+    "src/cephvr/controller/evidence.py",
+    "src/cephvr/controller/lifecycle/activity.py",
+    "src/cephvr/controller/lifecycle_reports.py",
+    "src/cephvr/acquisition/coordinator/session_preparation.py",
+    "src/cephvr/acquisition/coordinator/session_validation.py",
+    "src/cephvr/acquisition/coordinator/trial_preparation.py",
+    "src/cephvr/acquisition/coordinator/trial_no_cameras.py",
+    "src/cephvr/acquisition/coordinator/trial_lifecycle.py",
+    "src/cephvr/acquisition/coordinator/trial_termination.py",
+    "src/cephvr/acquisition/coordinator/queries.py"
+  ],
+  "test_files": [
+    "tests/acquisition/test_camera_adapter_contracts.py",
+    "tests/acquisition/test_session_preparation.py",
+    "tests/acquisition/test_pulse_evidence.py",
+    "tests/controller/test_camera_configuration.py",
+    "tests/controller/test_setup.py",
+    "tests/controller/test_lifecycle_reports.py"
+  ],
+  "limits": [
+    "Concurrent unrelated edits, including owner-authorized Trial state protocol6 integration, are present in the shared worktree. These results validate the combined source with recorded hashes, not an isolated commit.",
+    "After the final runtime suite only a counter-record docstring and documentation changed; static format/syntax checks were repeated.",
+    "No hardware operations, firmware deployment, live SDK reads, runtime restart, optical/electrical measurements or recording-integrity verification by this chat.",
+    "Native acceptance remains in reports/rig-verification.md; do not infer device behavior from fixture tests."
+  ],
+  "attempts": [
+    "Initial focused transport tests: 8 passed.",
+    "Sandbox async owner run stalled after camera adapter tests and was interrupted. Subsequent temp fixture failure and sandbox async retry also prevented completion; permitted fixture runs passed.",
+    "Camera-demand/Setup focused suite: 13 passed. Pulse-only lifecycle normal/Abort and failed OFF suite: 4 passed.",
+    "First new controller lifecycle test used a nonexistent STOPPING enum; corrected to existing FINALIZING.",
+    "First broad owner suite: 1497 passed, 4 skipped, 8 deselected; final after added adoption/lifecycle coverage: 1499 passed, 4 skipped, 8 deselected."
+  ]
+}

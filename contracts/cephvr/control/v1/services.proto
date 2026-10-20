@@ -835,6 +835,7 @@ message MicrocontrollerIoRequest {
   // Scoped candidate pulse write from one live Configuration edit only.
   cephvr.control.v1.OperationContext resolution_operation = 12;
   optional uint64 requested_configuration_revision = 13;
+  bool trial_state_selected = 14; // Independent of camera enum; runtime boundary/cleanup only.
 }
 message MicrocontrollerIoResult {
   string command_id = 1;

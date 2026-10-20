@@ -47,8 +47,9 @@ def _settings(limits: ControllerLimits) -> ControllerConfiguration:
     )
 
 
+@pytest.mark.parametrize("unsaved_cameras", [False, True])
 async def test_setup_reloads_mutable_limits_and_freezes_them_in_prepared_attempt(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, unsaved_cameras: bool
 ) -> None:
     visual_stimulus = pb.BackendContext(
         backend_name="visual_stimulus", backend_generation=_id()
@@ -69,11 +70,20 @@ async def test_setup_reloads_mutable_limits_and_freezes_them_in_prepared_attempt
     runtime.configuration_state.current.mode = pb.SESSION_MODE_OPEN_LOOP
     runtime.configuration_state.current.recording_root = str(tmp_path)
     runtime.configuration_state.current.experiment = "experiment"
-    runtime.configuration_state.current.subject = "subject"
+    runtime.configuration_state.current.subject = "0001"
+    runtime.configuration_state.current.subject_metadata.species = "Sepia Pharaonis"
     runtime.configuration_state.current.backends.add(
         backend_name="visual_stimulus", enabled=True
     )
     runtime.configuration_state.current.trials.add(trial_number=1)
+    if unsaved_cameras:
+        acquisition = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        for role in ("behavioral", "tracking", "eye_tracking"):
+            camera = getattr(acquisition, role)
+            camera.enabled = True
+            camera.save_video = False
     runtime.setup_admission.validators = {
         "structural": lambda _: pb.ValidationResult(completed=True, valid=True)
     }
@@ -103,6 +113,18 @@ async def test_setup_reloads_mutable_limits_and_freezes_them_in_prepared_attempt
     admission = await runtime.setup(command)
     assert admission.result == pb.COMMAND_RESULT_ACCEPTED
     assert runtime.lifecycle.attempt is not None
+    prepared = runtime.lifecycle.attempt.prepared
+    assert Path(prepared.session_directory).name == (
+        "SP0001-" + prepared.anchor_wall_time[11:19].replace(":", "")
+    )
+    assert prepared.configuration.subject == "0001"
+    assert prepared.configuration.subject_metadata.species == "Sepia Pharaonis"
+    if unsaved_cameras:
+        assert set(runtime.lifecycle.attempt.required) == {"visual_stimulus"}
+        assert not runtime.lifecycle.attempt.prepared.configuration.backends[1].enabled
+        assert runtime.configuration_state.current.backends[
+            1
+        ].acquisition.tracking.enabled
     assert runtime.limits.setup_ns == 20_000
     assert runtime.lifecycle.attempt.prepared.policies == adopted.policies
     assert (

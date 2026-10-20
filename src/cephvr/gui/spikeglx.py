@@ -42,7 +42,9 @@ class SpikeGLXPanel(DevicePanel):
         self.pairing = QCheckBox("SpikeGLX pairing enabled")
         self.pairing.setChecked(False)
         self.pairing.setToolTip(
-            "Enable SpikeGLX recording for this session. New-session default: config/backends/synchronization_config.toml"
+            "Pair this session with SpikeGLX: Start names and enables saving; end/Abort "
+            "disables saving while acquisition continues. New-session default: "
+            "config/backends/synchronization_config.toml"
         )
         self.pending_action = PendingAction()
         self.pairing_pending = False

@@ -172,6 +172,7 @@ class ControllerMicrocontrollerClient(SerialOwnerPort):
                 wire.MICROCONTROLLER_IO_KIND_ON,
                 deadline_ns,
                 roles=_roles(selected_roles),
+                trial_state_selected="trial_state" in selected_roles,
                 **fields,
             )
         ).evidence
@@ -194,6 +195,7 @@ class ControllerMicrocontrollerClient(SerialOwnerPort):
                 wire.MICROCONTROLLER_IO_KIND_OFF,
                 deadline_ns,
                 roles=_roles(selected_roles),
+                trial_state_selected="trial_state" in selected_roles,
                 **fields,
             )
         ).evidence
@@ -210,6 +212,7 @@ class ControllerMicrocontrollerClient(SerialOwnerPort):
             wire.MICROCONTROLLER_IO_KIND_RESERVE,
             deadline_ns,
             roles=_roles(selected_roles),
+            trial_state_selected="trial_state" in selected_roles,
             boundary_monotonic_ns=boundary_ns,
             boundary_command=command,
         )
@@ -241,9 +244,14 @@ class ControllerMicrocontrollerClient(SerialOwnerPort):
 
 
 def _roles(selected: tuple[int | str, ...], *, allow_empty: bool = False) -> list[int]:
-    result = [_ROLES[role] if isinstance(role, str) else role for role in selected]
+    result = [
+        _ROLES[role] if isinstance(role, str) else role
+        for role in selected
+        if role != "trial_state"
+    ]
     if (
-        (not result and not allow_empty)
+        (not result and "trial_state" not in selected and not allow_empty)
+        or len(set(selected)) != len(selected)
         or len(set(result)) != len(result)
         or any(role not in _ROLES.values() for role in result)
     ):

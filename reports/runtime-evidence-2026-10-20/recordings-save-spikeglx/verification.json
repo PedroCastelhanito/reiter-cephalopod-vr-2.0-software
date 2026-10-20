@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-20",
+  "source_revision": "fffcd7df0bfc9e371549184a013d1ae127e5d883",
+  "source_scope": "shared dirty checkout with concurrent preview and saving-only lifecycle work; focused widget change",
+  "sha256": {
+    "src/cephvr/gui/recordings.py": "f510db4d48b324a0c6d22fc8bb56537c33dbe27803d0861f96fa033dbea84f1a",
+    "src/cephvr/gui/window.py": "31206dbc5e32301684210902fbcab3bce90d8e3a37cf18be9b58dbc2fa43157e",
+    "src/cephvr/gui/spikeglx.py": "38e1841daf3b7d7b635302651730f9a1084adbacf2254315fab6e766fe55ff9f",
+    "tests/gui/test_dashboard.py": "86c8de17e2c455cd43de2e23b4e829e537c5bcd341166a20c00c7d91b01e9ab0"
+  },
+  "decision": "G01rev253, existing E12rev24 unchanged",
+  "implementation": "Reparent the existing pairing checkbox into Recordings; no duplicate setting or controller command. Label/accessible name Save spikeglx; existing confirmed config, pending, phase/authority locks and draft persistence remain.",
+  "tests": "QT_QPA_PLATFORM=offscreen pytest tests/gui/test_dashboard.py -q -k managed_spikeglx_pairing/managed_spikeglx_inventory_installs/recording_choices/recordings/review_draft_restores_local_configuration:9 pass,744 deselected",
+  "static": {
+    "ruff": "3 sources plus owning tests pass",
+    "format": "4 files pass",
+    "mypy_win32": "3 source files pass",
+    "boundaries": "739 modules,0 violations; existing size warnings"
+  },
+  "render": "render.py standard.png and retro_console.png visually inspected; label/checkbox visible and in card bounds",
+  "limits": [
+    "Initial broader default-Windows GUI selection stalled after one test; interrupted and reran affected cases offscreen, no runtime defect inferred.",
+    "No managed GUI restart or device operation for this UI increment; appears after GUI reload.",
+    "No scientific/physical SpikeGLX alignment acceptance from this UI change."
+  ]
+}

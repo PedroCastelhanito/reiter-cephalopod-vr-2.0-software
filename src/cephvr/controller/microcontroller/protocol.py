@@ -1,4 +1,4 @@
-"""Strict bounded ASCII protocol-v5 parsing for the pulse microcontroller (A11)."""
+"""Strict bounded ASCII protocol-v6 parsing for the pulse microcontroller (A11)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
 MAX_LINE_BYTES = 512
-PROTOCOL_VERSION = 5
+PROTOCOL_VERSION = 6
 FREQUENCY_STEP = Decimal("0.1")
 _TOKEN = re.compile(r"^[!-~]+$")
 _UINT = re.compile(r"^[0-9]+$")
@@ -16,11 +16,12 @@ _FREQUENCY = re.compile(r"^[0-9]+\.[0-9]$")
 _APPLIED_FREQUENCY = re.compile(
     r"^(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$"
 )
-ROLES = ("behavioral", "tracking", "eye_tracking")
+CAMERA_ROLES = ("behavioral", "tracking", "eye_tracking")
+ROLES = (*CAMERA_ROLES, "trial_state")
 
 
 class ProtocolError(ValueError):
-    """The complete serial line is malformed or incompatible with protocol v5."""
+    """The complete serial line is malformed or incompatible with protocol v6."""
 
 
 @dataclass(frozen=True)
@@ -159,12 +160,18 @@ def parse_state(reply: Reply, *, configured: bool) -> dict[str, object]:
         running = _bool(reply.fields[f"{role}_running"], f"{role}_running")
         pin_key, rate_key = f"{role}_pin", f"{role}_applied_hz"
         if enabled:
-            if pin_key not in reply.fields or rate_key not in reply.fields:
+            if pin_key not in reply.fields or (
+                role != "trial_state" and rate_key not in reply.fields
+            ):
                 raise ProtocolError(
                     f"enabled {role} output requires pin and applied frequency"
                 )
             pin = _required_token(reply.fields[pin_key], pin_key)
-            applied = _applied_frequency(reply.fields[rate_key], rate_key)
+            applied = (
+                _applied_frequency(reply.fields[rate_key], rate_key)
+                if role != "trial_state"
+                else None
+            )
             outputs[role] = {
                 "enabled": True,
                 "running": running,
@@ -196,7 +203,7 @@ def parse_diagnostic(reply: Reply) -> tuple[bool, str, str, int]:
     _require_ok(reply, {"active", "kind", "pin", "edges"})
     active = _bool(reply.fields["active"], "active")
     kind = reply.fields["kind"]
-    if kind not in {"trial_state", *ROLES}:
+    if kind not in ROLES:
         raise ProtocolError("diagnostic kind is unsupported")
     pin = _required_token(reply.fields["pin"], "pin")
     edges = _uint(reply.fields["edges"], 32, "edges")
@@ -226,13 +233,16 @@ def _require_ok(
     allowed = set(required)
     if allow_optional_role_fields:
         allowed.update(
-            f"{role}_{suffix}" for role in ROLES for suffix in ("pin", "applied_hz")
+            f"{role}_{suffix}"
+            for role in CAMERA_ROLES
+            for suffix in ("pin", "applied_hz")
         )
+        allowed.add("trial_state_pin")
     unknown = reply.fields.keys() - allowed
     missing = required - reply.fields.keys()
     if unknown or missing:
         raise ProtocolError(
-            f"reply fields differ from protocol v5; missing={sorted(missing)}, unknown={sorted(unknown)}"
+            f"reply fields differ from protocol v6; missing={sorted(missing)}, unknown={sorted(unknown)}"
         )
 
 

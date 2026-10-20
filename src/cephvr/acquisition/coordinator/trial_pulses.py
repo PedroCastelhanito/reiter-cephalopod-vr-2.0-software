@@ -11,7 +11,7 @@ from cephvr.acquisition.coordinator.manual_pulse_observation import (
     retain_applied_pulse_state,
     retain_observation,
 )
-from cephvr.acquisition.coordinator.trial_helpers import _external_roles
+from cephvr.acquisition.coordinator.trial_helpers import _trial_output_roles
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
 from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.ports import SerialOwnerPort
@@ -62,7 +62,7 @@ class TrialPulseBoundaries:
     async def ensure_outputs_off(
         self, session: SessionRecord, deadline_ns: int
     ) -> None:
-        if not _external_roles(session):
+        if not _trial_output_roles(session):
             return
         observation = await self.serial.status(deadline_ns=deadline_ns)
         if (
@@ -71,6 +71,16 @@ class TrialPulseBoundaries:
             or not observation.state.configuration_valid
         ):
             raise RuntimeError("MCU state is not valid before trial preparation")
+        settings = session.confirmed_settings
+        if settings is not None and settings.pulses.trial_state_enabled:
+            output = observation.state.trial_state
+            if (
+                not output.HasField("enabled")
+                or not output.enabled
+                or output.pin != settings.pulses.trial_state_pin
+                or observation.state.watchdog_stopped
+            ):
+                raise RuntimeError("Trial state output differs from locked settings")
         retain_observation(
             self.pulse,
             mcu.MicrocontrollerObservation.FromString(
@@ -85,6 +95,7 @@ class TrialPulseBoundaries:
                 camera.CAMERA_ROLE_BEHAVIORAL,
                 camera.CAMERA_ROLE_TRACKING,
                 camera.CAMERA_ROLE_EYE_TRACKING,
+                "trial_state",
             ),
             scheduled_boundary_ns=None,
             stop_issued_ns=now,
@@ -104,7 +115,7 @@ class TrialPulseBoundaries:
         self,
         session: SessionRecord,
         trial: TrialRecord,
-        selected_roles: tuple[int, ...],
+        selected_roles: tuple[int | str, ...],
         *,
         command: mcu.PulseBoundaryCommand,
         boundary_ns: int,
@@ -231,7 +242,7 @@ def _retain_boundary_result(
 
 
 def _failure_evidence(
-    selected_roles: tuple[int, ...],
+    selected_roles: tuple[int | str, ...],
     command: mcu.PulseBoundaryCommand,
     boundary_ns: int,
     outcome: mcu.PulseCommandOutcome,
@@ -241,6 +252,7 @@ def _failure_evidence(
         behavioral_selected=(camera.CAMERA_ROLE_BEHAVIORAL in selected_roles),
         tracking_selected=(camera.CAMERA_ROLE_TRACKING in selected_roles),
         eye_tracking_selected=(camera.CAMERA_ROLE_EYE_TRACKING in selected_roles),
+        trial_state_selected="trial_state" in selected_roles,
         scheduled_boundary_monotonic_ns=boundary_ns,
         outcome=outcome,
     )
@@ -251,5 +263,5 @@ def _outputs_proven_off(state: mcu.MicrocontrollerState) -> bool:
         state.HasField(role)
         and getattr(state, role).HasField("running")
         and not getattr(state, role).running
-        for role in ("behavioral", "tracking", "eye_tracking")
+        for role in ("behavioral", "tracking", "eye_tracking", "trial_state")
     )

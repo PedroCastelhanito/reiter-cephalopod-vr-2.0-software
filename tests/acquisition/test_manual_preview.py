@@ -2146,11 +2146,13 @@ async def test_tracking_attach_reserves_release_receipt_before_reporting_transfe
     assert key in owner._receipt_reservations
 
     class AcquisitionPeer:
-        async def report_preview_consumer_state(self, report):
+        async def report_preview_consumer_state(self, report, *, deadline_ns):
+            assert deadline_ns > 0
             return owner.report_consumer(report)
 
     class SupervisorPeer:
-        async def report_preview_consumer_state(self, report):
+        async def report_preview_consumer_state(self, report, *, deadline_ns):
+            assert deadline_ns > 0
             assert report.result == wire.PREVIEW_CONSUMER_RESULT_RELEASED
             return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
 
@@ -2208,10 +2210,12 @@ async def test_preview_disconnect_releases_only_last_external_camera_claim(
     pulse.observation.state.behavioral.running = True
     pulse.observation.state.tracking.running = remaining_external
     pulse.observation.state.eye_tracking.running = False
+    pulse.observation.state.trial_state.running = False
     result_state = mcu.MicrocontrollerState()
     result_state.behavioral.running = False
     result_state.tracking.running = False
     result_state.eye_tracking.running = False
+    result_state.trial_state.running = False
     evidence = mcu.PulseCommandEvidence(
         connection_id="connection",
         request_id="connection-1",
@@ -2329,6 +2333,7 @@ async def test_uncertain_preview_stop_switches_external_output_off_before_cleanu
         state.behavioral.running = False
         state.tracking.running = False
         state.eye_tracking.running = False
+        state.trial_state.running = False
         return mcu.PulseCommandEvidence(
             connection_id="connection",
             request_id="off",
@@ -2521,6 +2526,7 @@ async def test_failed_idle_claim_release_retains_camera_cleanup_evidence():
     pulse.observation.state.behavioral.running = False
     pulse.observation.state.tracking.running = False
     pulse.observation.state.eye_tracking.running = False
+    pulse.observation.state.trial_state.running = False
     with pytest.raises(RuntimeError, match="unconfirmed"):
         await release_idle_claim(pulse, serial, deadline_ns=1000)
     assert (
@@ -2587,6 +2593,7 @@ async def test_normal_stop_reports_camera_closed_when_claim_close_fails(
     pulse.observation.state.behavioral.running = False
     pulse.observation.state.tracking.running = False
     pulse.observation.state.eye_tracking.running = False
+    pulse.observation.state.trial_state.running = False
     worker_registry = SimpleNamespace(workers={role: worker})
     states: list[dict[str, object]] = []
 

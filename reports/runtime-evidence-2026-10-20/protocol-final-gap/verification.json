@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-20",
+  "checks": [
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\protocols\\dummy_bottom_direction_95s.json",
+      "before_sha256": "140b928178ccb5ec334363b4f38067fc3e4e2f2ca2455b4b42a956781428b793",
+      "after_sha256": "b331e463a0f3ea1e5abf5d46065e91c7e013abaa27a74c102c8c885efadc06b7",
+      "trials": 1,
+      "schedule_submission": "pass",
+      "only_change": "final gap_after_seconds is empty"
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\protocols\\gaussian_scale15_bottom_linked_3_trials.json",
+      "before_sha256": "7b9a64bc0de357573d029ccbbf66f062c299f4d09b233878ffa0f6e4d8726211",
+      "after_sha256": "2bd64c8a123d91576bc5faa331ddda9007a5f0978c9f5929c49c016efb74f595",
+      "trials": 3,
+      "schedule_submission": "pass",
+      "only_change": "final gap_after_seconds is empty"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\dummy_bottom_direction_95s.json",
+      "before_sha256": "140b928178ccb5ec334363b4f38067fc3e4e2f2ca2455b4b42a956781428b793",
+      "after_sha256": "b331e463a0f3ea1e5abf5d46065e91c7e013abaa27a74c102c8c885efadc06b7",
+      "trials": 1,
+      "schedule_submission": "pass",
+      "only_change": "final gap_after_seconds is empty"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\gaussian_scale15_bottom_linked_3_trials.json",
+      "before_sha256": "7b9a64bc0de357573d029ccbbf66f062c299f4d09b233878ffa0f6e4d8726211",
+      "after_sha256": "2bd64c8a123d91576bc5faa331ddda9007a5f0978c9f5929c49c016efb74f595",
+      "trials": 3,
+      "schedule_submission": "pass",
+      "only_change": "final gap_after_seconds is empty"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\primate_cuttlebase_40min.json",
+      "before_sha256": "01e30525c78559e0b8894d9c8952c88cffb56236ff5869559734f5332ee7edd1",
+      "after_sha256": "7f71bd5881e19d0915ba69e7c0ba407bd05515d03ff22a98c42d59e29b21b269",
+      "trials": 4,
+      "schedule_submission": "pass",
+      "only_change": "final gap_after_seconds is empty"
+    }
+  ],
+  "limits": "Actual ProtocolPage.apply_schedule executed with real draft/program/Protobuf models and lightweight UI-value stand-ins; no live GUI load or rig Setup."
+}

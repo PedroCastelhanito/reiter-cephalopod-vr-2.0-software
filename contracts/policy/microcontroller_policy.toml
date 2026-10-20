@@ -1,5 +1,5 @@
 # Fixed controller-owned Microcontroller declarations. A11/E14.
-policy_version = 4
+policy_version = 5
 
 [microcontroller]
 firmware_target_scope = "rig_board_first"
@@ -16,7 +16,7 @@ boot_behavior = "outputs_off_require_configuration"
 command_format = "newline_ascii"
 acknowledgement = "after_application_with_state"
 argument_style = "named_fields"
-output_field_names = "camera_roles"
+output_field_names = "camera_roles_and_trial_state"
 text_field_limits = "message_bound_only"
 field_values = "tokens_and_numbers"
 request_ids = "connection_id_counter"
@@ -37,7 +37,7 @@ stop_behavior = "immediate_inactive"
 pulse_polarity = "active_high"
 inactive_level = "low"
 protocol_compatibility = "exact_version"
-protocol_version = 5
+protocol_version = 6
 capability_source = "firmware"
 capability_query = "CAPS"
 capability_reply = "single_bounded_reply"
@@ -68,5 +68,6 @@ pulse_scheduler = "hardware_timer"
 clock_source = "local"
 duty_cycle = 0.5
 communication_loss_action = "stop_pulses"
-output_mapping = "per_camera"
+output_mapping = "per_camera_and_trial_state"
 
+trial_state_behavior = "high_during_released_trial_low_on_stop"

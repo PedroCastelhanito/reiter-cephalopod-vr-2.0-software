@@ -27,7 +27,7 @@ from cephvr.synchronization.client import (
 from cephvr.synchronization.configuration import validate_configuration
 from cephvr.synchronization.inventory import read_inventory, update_inventory
 from cephvr.synchronization.monitor import SpikeGLXProgressIO
-from cephvr.synchronization.native import Readback, _recording_starts_enabled
+from cephvr.synchronization.native import Readback
 from cephvr.synchronization.sdk_io import SpikeGLXIOBusy, SpikeGLXIOOwner
 from cephvr.synchronization.settings import HostSettings, load_host_settings
 from cephvr.synchronization.v1 import spikeglx_pb2 as wire
@@ -44,26 +44,6 @@ def _unmapped_host_configuration(repository: Path) -> str:
         if line.startswith("[") or not line.strip() or line.lstrip().startswith("#")
     )
     return text[:start] + section + text[end:]
-
-
-@pytest.mark.parametrize(
-    ("shown", "off", "expected"),
-    [
-        ("true", "true", False),
-        ("true", "false", True),
-        ("false", "true", True),
-        ("false", "false", True),
-        ("1", "1", False),
-        ("unknown", "true", None),
-    ],
-)
-def test_recording_override_readback(shown, off, expected) -> None:
-    parameters = {"0:manOvShowBut": shown, "0:manOvInitOff": off}
-    if expected is None:
-        with pytest.raises(ValueError, match="recording override parameter"):
-            _recording_starts_enabled(parameters, {})
-    else:
-        assert _recording_starts_enabled(parameters, {}) is expected
 
 
 @pytest.mark.asyncio
@@ -844,91 +824,55 @@ async def test_finalization_deadline_cancels_pending_stop_before_new_sdk_calls(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("recording_starts_enabled", [False, True])
-async def test_preparation_does_not_claim_mapping_api_as_installed_sdk_build(
+@pytest.mark.parametrize(
+    ("running", "saving"), [(True, False), (False, False), (True, True)]
+)
+async def test_preparation_is_read_only_and_requires_unsaved_acquisition(
     monkeypatch: pytest.MonkeyPatch,
-    recording_starts_enabled: bool,
+    running: bool,
+    saving: bool,
 ) -> None:
     settings = HostSettings(
-        "10.0.0.1",
-        4142,
-        1.0,
-        1.0,
-        0.1,
-        0.5,
-        1.0,
-        {},
-        {
-            "mapping_id": "source-reviewed-map",
-            "reported_version": "SpikeGLX v20260901 api v4.1.3",
-        },
+        "10.0.0.1", 4142, 1, 1, 0.1, 0.5, 1, (), {"mapping_id": "source-reviewed-map"}
     )
     before = Readback(
-        "SpikeGLX v20260901",
+        "observed-version",
         "D:/data",
-        False,
-        False,
-        "old",
-        (),
-        "params",
-        "immediate",
-        "immediate",
-        (),
-        recording_starts_enabled,
-    )
-    after = Readback(
-        "SpikeGLX v20260901",
-        "D:/data",
-        False,
-        False,
-        "managed_run",
+        running,
+        saving,
+        "insertion",
         (),
         "params",
         "immediate",
         "immediate",
         (),
     )
-    readbacks = iter((before, after))
     client = SpikeGLXControllerClient(Path("."), controller_generation="test")
-
     monkeypatch.setattr(client_module, "load_host_settings", lambda _root: settings)
-    monkeypatch.setattr(
-        client_module, "read_sdk", lambda _root, _settings: next(readbacks)
-    )
+    monkeypatch.setattr(client_module, "read_sdk", lambda *_args: before)
     monkeypatch.setattr(
         client_module, "_validate_inventory", lambda *_args, **_kwargs: ()
     )
 
-    class FakeSDK:
-        @staticmethod
-        def c_sglx_setRunName(handle: int, name: bytes) -> bool:
-            del handle, name
-            return True
+    def forbid_mutation(*args):
+        raise AssertionError("Setup must not mutate acquisition, name or saving")
 
-    monkeypatch.setattr(
-        client_module,
-        "with_sdk",
-        lambda _root, _settings, operation: operation(FakeSDK(), 1),
-    )
-
-    async def immediate(operation: object, timeout_s: float) -> object:
-        del timeout_s
-        return operation()  # type: ignore[operator]
-
-    monkeypatch.setattr(client, "_run", immediate)
-    if not recording_starts_enabled:
-        with pytest.raises(RuntimeError, match="manual recording override starts OFF"):
+    monkeypatch.setattr(client_module, "with_sdk", forbid_mutation)
+    if not running or saving:
+        with pytest.raises(RuntimeError, match="acquiring with saving OFF"):
             await client.prepare(
                 pb.ExperimentConfiguration(), pb.SessionContext(), "managed_run"
             )
-        assert next(readbacks) is after
-        return
-    preparation = await client.prepare(
-        pb.ExperimentConfiguration(), pb.SessionContext(), "managed_run"
-    )
-    assert preparation.spikeglx_version == "SpikeGLX v20260901"
-    assert preparation.sdk_version == "unknown"
-    assert preparation.mapping_id == "source-reviewed-map"
+    else:
+        prepared = await client.prepare(
+            pb.ExperimentConfiguration(), pb.SessionContext(), "managed_run"
+        )
+        assert prepared.run_name == "managed_run"
+        assert prepared.spikeglx_version == "observed-version"
+        assert prepared.sdk_version == "unknown"
+        assert client._acquisition_run_name == "insertion"
+        assert await client.verify_before_start()
+    client.io_owner.close(wait=True)
 
 
 @pytest.mark.asyncio
@@ -1008,7 +952,11 @@ async def test_writing_gate_rejects_changed_data_directory(
     def with_start(_root: Path, _settings: HostSettings, operation: object) -> object:
         class SDK:
             @staticmethod
-            def c_sglx_startRun(_handle: int, _name: bytes) -> bool:
+            def c_sglx_setRunName(_handle: int, _name: bytes) -> bool:
+                return True
+
+            @staticmethod
+            def c_sglx_setRecordingEnable(_handle: int, _enable: bool) -> bool:
                 return True
 
         return operation(SDK(), 1)  # type: ignore[operator]
@@ -1041,6 +989,7 @@ async def test_stop_uses_setup_endpoint_after_host_file_changes(
         run_name="managed_run", data_directory="D:/data"
     )
     calls: list[HostSettings] = []
+    client._recording_requested = True
     readbacks = iter((True, False))
 
     def read_sdk(root: Path, settings: HostSettings) -> Readback:
@@ -1049,8 +998,8 @@ async def test_stop_uses_setup_endpoint_after_host_file_changes(
         return Readback(
             "v",
             "D:/data",
+            True,
             next(readbacks),
-            False,
             "managed_run",
             (),
             "digest",
@@ -1061,7 +1010,8 @@ async def test_stop_uses_setup_endpoint_after_host_file_changes(
 
     class FakeSDK:
         @staticmethod
-        def c_sglx_stopRun(handle: int) -> bool:
+        def c_sglx_setRecordingEnable(handle: int, enable: bool) -> bool:
+            assert not enable
             del handle
             return True
 
@@ -1798,7 +1748,7 @@ async def test_eye_mapping_setup_and_saved_preparation(
         return Readback(
             "v",
             "D:/data",
-            False,
+            True,
             False,
             run_name,
             (stream,),
@@ -1847,3 +1797,134 @@ async def test_eye_mapping_setup_and_saved_preparation(
                 message_dict(prepared)["pulse_channels"][0]["role"]
                 == "PULSE_ROLE_EYE_TRACKING_CAMERA"
             )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "none",
+        "already_saving",
+        "stopped",
+        "foreign_name",
+        "foreign_directory",
+        "enable_timeout",
+        "name_timeout",
+        "saving_after_rename",
+        "changed_before_stop",
+    ],
+)
+async def test_saving_only_lifecycle_preserves_acquisition_and_foreign_recordings(
+    monkeypatch, fault
+):
+    settings = HostSettings(
+        "10.0.0.1", 4142, 1, 1, 0.01, 0.5, 0, (), {"mapping_id": "source-reviewed"}
+    )
+    state = SimpleNamespace(
+        running=True, saving=False, name="insertion", directory="D:/data", count=1000
+    )
+    stream = wire.NativeStream(
+        family=wire.STREAM_FAMILY_ONEBOX, index=0, saved_channel_indices=(0, 1)
+    )
+    calls = []
+
+    def read(*args):
+        return Readback(
+            "observed",
+            state.directory,
+            state.running,
+            state.saving,
+            state.name,
+            (stream,),
+            "params",
+            "immediate",
+            "immediate",
+            (),
+        )
+
+    class SDK:
+        @staticmethod
+        def c_sglx_setRunName(handle, name):
+            assert state.running and not state.saving
+            calls.append(("name", name.decode()))
+            state.name = name.decode()
+            if fault == "name_timeout":
+                raise TimeoutError("rename outcome unknown")
+            if fault == "saving_after_rename":
+                state.saving = True
+            return True
+
+        @staticmethod
+        def c_sglx_setRecordingEnable(handle, enable):
+            assert state.running
+            calls.append(("saving", enable))
+            state.saving = enable
+            if fault == "enable_timeout" and enable:
+                raise TimeoutError("enable saving outcome unknown")
+            return True
+
+    monkeypatch.setattr(client_module, "load_host_settings", lambda root: settings)
+    monkeypatch.setattr(client_module, "read_sdk", read)
+    monkeypatch.setattr(
+        client_module, "with_sdk", lambda root, settings, operation: operation(SDK(), 1)
+    )
+
+    async def sample(self, deadline):
+        state.count += 10
+        return read(), ((1, 0, state.count),)
+
+    monkeypatch.setattr(SpikeGLXProgressIO, "sample_counts", sample)
+    client = SpikeGLXControllerClient(Path("."), controller_generation="test")
+    try:
+        await client.prepare(
+            pb.ExperimentConfiguration(), pb.SessionContext(), "session1"
+        )
+        assert not calls and state.name == "insertion" and state.running
+        if fault == "already_saving":
+            state.saving = True
+        if fault == "stopped":
+            state.running = False
+        if fault == "foreign_name":
+            state.name = "other"
+        if fault == "foreign_directory":
+            state.directory = "D:/other"
+        started = await client.start_and_verify_writing()
+        if fault in {"already_saving", "stopped", "foreign_name", "foreign_directory"}:
+            assert not started and not calls
+            if state.saving:
+                assert not await client.stop_expected_run()
+            else:
+                assert await client.stop_expected_run()
+            assert not calls
+            return
+        if fault in {"name_timeout", "saving_after_rename"}:
+            assert not started and calls == [("name", "session1")]
+            assert await client.stop_expected_run() is (fault == "name_timeout")
+            assert calls == [("name", "session1")]
+            assert state.running
+            return
+        assert started is (fault != "enable_timeout")
+        assert calls == [("name", "session1"), ("saving", True)]
+        if fault == "changed_before_stop":
+            state.name = "other"
+            assert not await client.stop_expected_run()
+            assert state.saving and state.running and len(calls) == 2
+            return
+        assert await client.stop_expected_run()
+        assert not state.saving and state.running
+        assert calls[-1] == ("saving", False)
+        if fault == "none":
+            baseline = state.count
+            await client.prepare(
+                pb.ExperimentConfiguration(), pb.SessionContext(), "session2"
+            )
+            assert state.name == "session1" and state.running and not state.saving
+            assert await client.start_and_verify_writing()
+            assert (
+                state.count > baseline
+                and client.monitor_baseline()[0].sample_count > baseline
+            )
+            assert await client.stop_expected_run()
+            assert state.running and not state.saving
+    finally:
+        client.io_owner.close(wait=True)

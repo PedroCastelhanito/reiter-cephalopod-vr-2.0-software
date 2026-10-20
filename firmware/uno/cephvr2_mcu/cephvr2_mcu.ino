@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// A11 protocol v5 for the COM8 Arduino Uno. Installation is manual.
+// A11 protocol v6 for the COM8 Arduino Uno. Installation is manual.
 // Timer1 owns camera edges; serial parsing and diagnostics stay in loop().
 namespace {
 
@@ -23,8 +23,10 @@ struct Output {
   float appliedHz;
 };
 
-constexpr uint8_t kOutputCount = 3;
-const char *const kRoles[kOutputCount] = {"behavioral", "tracking", "eye_tracking"};
+constexpr uint8_t kCameraCount = 3;
+constexpr uint8_t kOutputCount = 4;
+constexpr uint8_t kTrialOutput = 3;
+const char *const kRoles[kOutputCount] = {"behavioral", "tracking", "eye_tracking", "trial_state"};
 Output outputs[kOutputCount] = {};
 char line[kLineLimit];
 size_t lineLength = 0;
@@ -47,7 +49,7 @@ void countDiagnosticRise() {
 }
 
 ISR(TIMER1_COMPA_vect) {
-  for (uint8_t i = 0; i < kOutputCount; ++i) {
+  for (uint8_t i = 0; i < kCameraCount; ++i) {
     Output &out = outputs[i];
     if (!out.running) continue;
     out.phase += out.step;
@@ -99,6 +101,7 @@ void stopAll() {
   stopOutput(0);
   stopOutput(1);
   stopOutput(2);
+  stopOutput(kTrialOutput);
   stopDiagnostic();
 }
 
@@ -175,6 +178,7 @@ void compact(const char *id, Print &sink = Serial) {
   sink.print(F(" behavioral_running=")); sink.print(outputs[0].running ? 1 : 0);
   sink.print(F(" tracking_running=")); sink.print(outputs[1].running ? 1 : 0);
   sink.print(F(" eye_tracking_running=")); sink.print(outputs[2].running ? 1 : 0);
+  sink.print(F(" trial_state_running=")); sink.print(outputs[kTrialOutput].running ? 1 : 0);
   sink.print(F(" watchdog_stopped=")); sink.println(watchdogStopped ? 1 : 0);
 }
 
@@ -192,8 +196,10 @@ void status(const char *id, Print &sink = Serial, const Output *state = outputs,
     if (state[i].enabled) {
       sink.print(' '); sink.print(kRoles[i]); sink.print(F("_pin=D"));
       sink.print(state[i].pin);
-      sink.print(' '); sink.print(kRoles[i]); sink.print(F("_applied_hz="));
-      sink.print(state[i].appliedHz, 9);
+      if (i < kCameraCount) {
+        sink.print(' '); sink.print(kRoles[i]); sink.print(F("_applied_hz="));
+        sink.print(state[i].appliedHz, 9);
+      }
     }
   }
   sink.println();
@@ -246,10 +252,10 @@ void command(char *buffer) {
   if (strcmp(verb, "CAPS") == 0) {
     const char *allowed[] = {"id"};
     if (!knownFields(keys, count, allowed, 1)) { error(id, F("UNKNOWN_FIELD")); return; }
-    ReplySize size; prefix(id, size); size.println(F(" protocol=5 firmware=cephvr2_uno_5 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    ReplySize size; prefix(id, size); size.println(F(" protocol=6 firmware=cephvr2_uno_6 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
     if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
     lastRequestMs = millis(); prefix(id);
-    Serial.println(F(" protocol=5 firmware=cephvr2_uno_5 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    Serial.println(F(" protocol=6 firmware=cephvr2_uno_6 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
     return;
   }
   if (strcmp(verb, "STATUS") == 0 || strcmp(verb, "PING") == 0) {
@@ -265,8 +271,9 @@ void command(char *buffer) {
   if (strcmp(verb, "CONFIGURE") == 0) {
     const char *allowed[] = {"id", "watchdog_ms", "behavioral_enabled",
       "behavioral_pin", "behavioral_hz", "tracking_enabled", "tracking_pin",
-      "tracking_hz", "eye_tracking_enabled", "eye_tracking_pin", "eye_tracking_hz"};
-    if (!knownFields(keys, count, allowed, 11) || diagnosticActive) {
+      "tracking_hz", "eye_tracking_enabled", "eye_tracking_pin", "eye_tracking_hz",
+      "trial_state_enabled", "trial_state_pin"};
+    if (!knownFields(keys, count, allowed, 13) || diagnosticActive) {
       error(id, F("UNKNOWN_FIELD")); return;
     }
     const char *watchdog = field(keys, values, count, "watchdog_ms");
@@ -292,7 +299,7 @@ void command(char *buffer) {
       requested[i].enabled = strcmp(enabled, "1") == 0;
       if (requested[i].enabled) {
         if (!parsePin(pinText, requested[i].pin) ||
-            !parseRate(rateText, requested[i].requestedHz, requested[i].step)) {
+            (i < kCameraCount && !parseRate(rateText, requested[i].requestedHz, requested[i].step))) {
           error(id, F("INVALID_PIN")); return;
         }
       } else if (pinText || rateText) { error(id, F("BAD_VALUE")); return; }
@@ -362,7 +369,7 @@ void command(char *buffer) {
     const char *hz = field(keys, values, count, "hz");
     uint8_t pin = 0;
     if (!kind || !parsePin(pinText, pin) || !duration || (strcmp(duration, "0") && strcmp(duration, "2000")) ||
-        diagnosticActive || outputs[0].running || outputs[1].running || outputs[2].running) {
+        diagnosticActive || outputs[0].running || outputs[1].running || outputs[2].running || outputs[kTrialOutput].running) {
       error(id, F("BAD_VALUE")); return;
     }
     const int role = strcmp(kind, "behavioral") == 0 ? 0 :
@@ -381,7 +388,8 @@ void command(char *buffer) {
       error(id, F("BAD_VALUE")); return;
     }
     for (uint8_t i = 0; i < kOutputCount; ++i)
-      if (outputs[i].enabled && outputs[i].pin == pin && role != i) {
+      if (outputs[i].enabled && outputs[i].pin == pin && role != i &&
+          !(i == kTrialOutput && strcmp(kind, "trial_state") == 0)) {
         error(id, F("INVALID_PIN")); return;
       }
     ReplySize size; diagnosticFields(id, size, true, kind, pin, UINT32_MAX);
@@ -410,8 +418,8 @@ void command(char *buffer) {
     const bool start = strcmp(verb, "ON") == 0;
     ReplySize size; compact(id, size);
     if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
-    const char *allowed[] = {"id", "behavioral_selected", "tracking_selected", "eye_tracking_selected"};
-    if (!knownFields(keys, count, allowed, 4)) { error(id, F("UNKNOWN_FIELD")); return; }
+    const char *allowed[] = {"id", "behavioral_selected", "tracking_selected", "eye_tracking_selected", "trial_state_selected"};
+    if (!knownFields(keys, count, allowed, 5)) { error(id, F("UNKNOWN_FIELD")); return; }
     bool selected[kOutputCount] = {};
     bool any = false;
     for (uint8_t i = 0; i < kOutputCount; ++i) {

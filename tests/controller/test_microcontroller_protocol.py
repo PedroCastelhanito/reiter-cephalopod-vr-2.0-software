@@ -29,7 +29,8 @@ def test_eye_state_requires_its_own_pin_rate_and_stopped_evidence() -> None:
         "behavioral_enabled=0 behavioral_running=0 "
         "tracking_enabled=0 tracking_running=0 "
         "eye_tracking_enabled=1 eye_tracking_running=0 "
-        "eye_tracking_pin=D8 eye_tracking_applied_hz=45.0"
+        "eye_tracking_pin=D8 eye_tracking_applied_hz=45.0 "
+        "trial_state_enabled=0 trial_state_running=0"
     )
     state = parse_state(parse_reply(f"OK id=eye {fields}\n".encode()), configured=True)
     assert state["outputs"]["eye_tracking"] == {
@@ -155,10 +156,10 @@ def test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies() -> No
         request_id = payload.decode("ascii").split("id=", 1)[1].split()[0]
         port.feed(b"x" * 520 + b"\n")
         port.feed(
-            b"OK id=stale watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0\n"
+            b"OK id=stale watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0 trial_state_running=0\n"
         )
         port.feed(
-            f"OK id={request_id} watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0\n".encode()
+            f"OK id={request_id} watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0 trial_state_running=0\n".encode()
         )
         return len(payload)
 
@@ -251,7 +252,7 @@ def test_watchdog_stopped_off_retains_stop_state_and_matched_ack(
     roles: tuple[str, ...],
 ) -> None:
     evidence, resulting = _pulse_evidence(
-        b"OK id={request_id} watchdog_stopped=1 behavioral_running=0 tracking_running=0 eye_tracking_running=0\n",
+        b"OK id={request_id} watchdog_stopped=1 behavioral_running=0 tracking_running=0 eye_tracking_running=0 trial_state_running=0\n",
         verb="OFF",
         command=microcontroller_pb2.PULSE_BOUNDARY_COMMAND_OFF,
         roles=roles,

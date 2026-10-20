@@ -60,6 +60,90 @@ from tests.controller.support_components import (
 )
 
 
+@pytest.mark.parametrize("tracking", [False, True])
+@pytest.mark.parametrize(
+    "saved",
+    [
+        (),
+        ("behavioral",),
+        ("tracking",),
+        ("eye_tracking",),
+        ("behavioral", "tracking", "eye_tracking"),
+    ],
+)
+def test_session_camera_demand_preserves_operator_choices_and_output_plan(
+    tracking, saved
+):
+    from cephvr.acquisition.coordinator.trial_helpers import _trial_output_roles
+    from cephvr.acquisition.state import SessionRecord
+    from cephvr.controller.configuration_access import (
+        preserve_camera_selections,
+        session_camera_configuration,
+    )
+    from cephvr.controller.planning import requested_output_identities
+
+    requested = pb.ExperimentConfiguration()
+    acquisition = requested.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    acquisition.pulses.trial_state_enabled = True
+    for role in ("behavioral", "tracking", "eye_tracking"):
+        camera = getattr(acquisition, role)
+        camera.enabled = True
+        camera.save_video = role in saved
+        camera.device.frame_timing = acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+    requested.backends.add(backend_name="tracking", enabled=tracking)
+    effective = session_camera_configuration(requested)
+    resolved = effective.backends[0].acquisition
+    expected = set(saved) | ({"tracking"} if tracking else set())
+    assert {
+        role
+        for role in ("behavioral", "tracking", "eye_tracking")
+        if getattr(resolved, role).enabled
+    } == expected
+    assert all(
+        getattr(acquisition, role).enabled
+        for role in ("behavioral", "tracking", "eye_tracking")
+    )
+    assert preserve_camera_selections(effective, requested) == requested
+    session = pb.SessionContext(session_id=_id(), controller_generation=_id())
+    prepared = pb.PreparedSession(context=session, configuration=effective)
+    prepared.trials.add(
+        context=pb.TrialContext(session=session, trial_id=_id(), trial_number=1)
+    )
+    # Only camera outputs are inspected here; Tracking's own saving is independent.
+    effective.backends[1].enabled = False
+    visual = effective.backends.add(backend_name="visual_stimulus", enabled=True)
+    visual.visual_stimulus.save_visual_stimulus_data = False
+    prepared.configuration.CopyFrom(effective)
+    plans = requested_output_identities(
+        prepared,
+        {
+            name: pb.BackendContext(backend_name=name, backend_generation=_id())
+            for name in ("acquisition", "visual_stimulus")
+        },
+    )
+    assert {p.output_tag for p in plans if p.backend.backend_name == "acquisition"} == {
+        f"{r}_cam_frames" for r in expected
+    } | {f"{r}_cam" for r in saved}
+    record = SessionRecord(
+        work=pb.WorkContext(session=session),
+        operation=pb.OperationContext(command_id=_id()),
+        configuration_revision=1,
+        required_cameras={
+            getattr(acquisition_camera_pb, f"CAMERA_ROLE_{r.upper()}") for r in expected
+        },
+    )
+    record.confirmed_settings = resolved
+    assert set(_trial_output_roles(record)) == record.required_cameras | {"trial_state"}
+    acquisition.behavioral.enabled = False
+    assert (
+        not session_camera_configuration(requested)
+        .backends[0]
+        .acquisition.behavioral.enabled
+    )
+
+
 class _Projection:
     def __init__(self) -> None:
         self.device_accepts = 0
@@ -531,6 +615,7 @@ async def test_connection_edits_only_reject_active_pin_conflicts(
     settings.behavioral.device.frame_timing = (
         acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
     )
+    settings.pulses.port = "COM8"
     settings.pulses.behavioral.pin = "D11"
     request = _update(runtime)
     request.proposed.backends[0].acquisition.pulses.trial_state_pin = "D11"
@@ -1993,7 +2078,11 @@ class _Acquisition:
 
 
 async def _adopt(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, result: int
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    result: int,
+    *,
+    dormant_camera: bool = False,
 ) -> tuple[ControllerRuntime, _Acquisition, list[str], pb.ExperimentConfiguration]:
     runtime = _runtime_with_validators(tmp_path)
     backend = _Acquisition(result)
@@ -2004,6 +2093,15 @@ async def _adopt(
         backend_name="acquisition", enabled=True
     )
     setting.acquisition.behavioral.enabled = True
+    if dormant_camera:
+        requested = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        requested.CopyFrom(setting)
+        requested.acquisition.tracking.enabled = True
+        requested.acquisition.tracking.save_video = False
+        setting.acquisition.tracking.CopyFrom(requested.acquisition.tracking)
+        setting.acquisition.tracking.enabled = False
     candidate = pb.ExperimentConfiguration()
     candidate.CopyFrom(attempt.prepared.configuration)
     candidate.experiment = "resolved"
@@ -2123,3 +2221,23 @@ async def test_accepted_readback_confirmation_commits_and_bumps_revision(
     attempt = runtime.lifecycle.attempt
     assert attempt is not None and attempt.resolution_confirmed
     assert attempt.prepared.configuration_revision == 2
+
+
+async def test_setup_readback_preserves_dormant_camera_selection(tmp_path, monkeypatch):
+    runtime, backend, failures, candidate = await _adopt(
+        tmp_path, monkeypatch, pb.COMMAND_RESULT_ACCEPTED, dormant_camera=True
+    )
+    assert not failures
+    requested = next(
+        b.acquisition
+        for b in runtime.configuration_state.current.backends
+        if b.backend_name == "acquisition"
+    )
+    effective = next(
+        b.acquisition
+        for b in runtime.lifecycle.attempt.prepared.configuration.backends
+        if b.backend_name == "acquisition"
+    )
+    assert requested.tracking.enabled
+    assert not effective.tracking.enabled
+    assert not backend.confirmations[0].confirmed.tracking.enabled

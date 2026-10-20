@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-20",
+  "task": "preview-source-overlay",
+  "revision": "226a506c6e3f7a2adb710009d9d47929cbd6b5c8",
+  "provenance": "Dirty shared checkout with concurrent work; hashes identify checked source files.",
+  "source_sha256": {
+    "src/cephvr/gui/preview_timeline.py": "91f68ba1060269e26d47f276c2bb72d7ec3681b3ff1dd61d6f9068ba0839fed5",
+    "src/cephvr/gui/preview_motion_plot.py": "ae8379361cf43c86a6a31538b7ca533c7de9a5d3946f23d6c19dfa6cdd208c60",
+    "src/cephvr/gui/preview_motion_data.py": "936655e8fce1df7d0512470aebbd46b460b6f53c3773d8bfea0508e5f950fcc3",
+    "tests/gui/test_dashboard.py": "f804e9a4c938c18bc51e09aa2e0be97a65a11fc871c1a12ce044f1dee4e69ffd"
+  },
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"preview_motion or preview_slot or preview_workspace or preview_grid or preview_log or preview_selector or preview_geometry_survives or preview_button_restores or preview_timeline_speed or review_blank_preview or multiple_review_previews or preview_placement_failure or preview_cards_name or preview_waits_for_report or unavailable_preview or preview_participation or managed_preview_relayout or managed_stimulus_preview or preview_inline_controls or review_appearance_switch\" --basetemp=.pytest_tmp_preview_overlay_final",
+    "environment": "QT_QPA_PLATFORM=offscreen",
+    "passed": 63,
+    "deselected": 690,
+    "seconds": 51.49
+  },
+  "checks": {
+    "ruff": "check and format --check pass, four files",
+    "mypy": "--platform win32 passes, three source files",
+    "boundaries": "739 modules, zero violations; unrelated cohesion warnings remain"
+  },
+  "screenshots": {
+    "files": [
+      "standard.png",
+      "retro_console.png"
+    ],
+    "method": "Offscreen DashboardWindow with review_program-derived stationary baseline, Bottom reference, linked Left/Right, independently moving Front. Elapsed12s, two native-viewer placeholders, no devices connected."
+  },
+  "limits": [
+    "No live GUI restart or hardware tests.",
+    "Fixture reproduces unlinked-baseline follower selection; original screenshot program was not provided.",
+    "Planned motion only; unsupported motion remains unavailable per source."
+  ],
+  "initial_checks": "Updated obsolete dropdown assertion; corrected temporary Windows default-text-decoding mojibake before final checks. Existing small-window/preview tests pass."
+}

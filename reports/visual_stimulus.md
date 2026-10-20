@@ -1,5 +1,108 @@
 # Visual Stimulus status
 
+Oct20 `visual-stimulus-gpu-budget`: owner requested raising the GPU resource ceiling
+after Setup reported551476536/536870912 bytes at scene-surfaces. Changed only
+resources.max_asset_gpu_bytes in visual_stimulus_config.toml to1073741824 (1GiB),
+an operator capacity under [E14](../docs/architecture/system-contracts.md#e14).
+TOML parsing and the owning load_file_policies loader confirm the new value and
+valid policy binding. Fresh Setup adopts it; no active allocation or prepared session
+was modified. Capacity/performance and successful Setup remain unverified.
+The supplied INCOMPLETE_CLEANUP, COMMAND_ADMISSION and IDENTITY warnings are retained
+failure evidence, not resolved by a larger budget. Matching emergency report:
+[emergency evidence](emergency-489843786873500-fd741bf6-3bde-4e72-940a-8a32f9e8e3be.json).
+Recovery/cleanup must finish before retrying; no recovery action was executed here.
+
+Oct20 `protocol-final-gap`: owner's Setup screenshot exposed an artifact defect:
+generated protocols set final gap_after_seconds to the nonempty string "0".
+G01's GUI apply_schedule rejects any final gap, including zero; structural file
+validation did not cover this submission rule. Corrected only the final field to
+empty in the dummy, Gaussian and Primate/Cuttlebase Desktop/Pedro files and the
+two repository protocol copies; natural-texture reproduction now clears it too.
+Original failure reproduced and actual ProtocolPage.apply_schedule passes with
+real draft/program/Protobuf models for all three schedules (1,3,4 trials).
+Lightweight UI-value stand-ins were used; this is local submission validation,
+not live GUI load or rig Setup. Existing loaded drafts must be reloaded.
+[Verification](runtime-evidence-2026-10-20/protocol-final-gap/verification.json).
+This correction supersedes earlier artifact hashes and structural-only validation;
+stimulus timing, motion, assets and calibration are unchanged.
+
+Oct20 `bottom-preview-orientation`: owner confirms the dummy trial moves correctly
+on the physical rig with the existing calibration (Bottom Y inversion off).
+The preview's Bottom raster placement added a reflection along surface X.
+[G01](../docs/architecture/gui.md#g01) rev257 removes that extra reflection by
+undoing only the portrait quarter-turn, preserving calibrated output flips.
+Only PreviewRig's corner order changes; renderer, projector profiles and protocol
+motion are unchanged. ARCH-002 review finds the existing small placement method
+cohesive; no new helper/state/dependency is needed. Existing oversized-module
+boundary advisories are unrelated and no source module was enlarged.
+
+Extended the existing owning pixel-placement test to both axes: before the fix,
+only the two Bottom-X cases fail; after it,25 preview/motion tests pass. Ruff check/
+format, Windows-target mypy and backend boundaries740/zero pass. Initial wider
+pytest attempt had3 temp-directory fixture errors; rerun with a dedicated workspace
+basetemp passes. The running GUI has not been restarted; native preview confirmation
+after restart remains pending. Owner's physical confirmation is not an instrumented
+optical measurement and does not close pitch/mask/tearing checks.
+[Evidence](runtime-evidence-2026-10-20/bottom-preview-orientation/preview-fix-validation.json).
+
+Owner-requested [dummy direction trial](../protocols/dummy_bottom_direction_95s.json)
+is also saved as Desktop/Pedro/dummy_bottom_direction_95s.json under
+[G01](../docs/architecture/gui.md#g01) and [V02](../docs/architecture/visual_stimulus.md#v02).
+It uses scale15 Gaussian textures with Bottom-linked followers:5s initial static,
+then each signed Bottom X/Y translation at30mm/s and signed rotation at10deg/s
+for10s, each followed by5s static (13 epochs,95s). Epoch names state source signs,
+not unverified physical directions. GUI validation, parsing, expansion, asset existence,
+rate checks and byte-identical Desktop copy pass. Calibration files and other
+protocols were not changed by the preview fix. Owner confirms rig motion; compare the
+restarted preview under the same current calibration. [Validation/timeline](runtime-evidence-2026-10-20/bottom-preview-orientation/dummy-protocol-validation.json).
+Existing [rig direction acceptance](rig-verification.md) and separate speed finding remain open.
+
+Oct20 `natural-texture-screen-crops`: completed owner-requested separate session
+under [G01](../docs/architecture/gui.md#g01) and [V02/V03](../docs/architecture/visual_stimulus.md#v02).
+Desktop/Pedro/media/{primate,cuttlebase} each contains960 PNGs: all240 originals
+cropped to Front760x690, Left1030x680, Right1025x695 and Bottom685x940.
+Saved Pedro calibration matches runtime_gui; crop boxes form a centered contiguous
+Left/Front/Right cross with Bottom centered below Front. Exact native grayscale
+samples are retained without resampling; projector offsets stay in calibration.
+The source/output hashes, boxes and reproducible ordering are in each manifest.
+
+Desktop/Pedro/primate_cuttlebase_40min.json is a separate Open-loop session:
+20min Primate then20min Cuttlebase, each2000 pairs of300ms image/300ms grey.
+All four image assets in a pair come from one original. Each collection uses160
+images eight times and80 images nine times, globally shuffled with saved seeds.
+Untagged PNG samples explicitly use sRGB; grey is127/255 sRGB, encoded as the
+corresponding linear background. Physical image extents follow measured pitches;
+Bottom uses the calibrated90-degree surface-to-portrait coordinate mapping.
+
+Each collection is split into two10min trials with zero authored gaps: the original
+20min source/epoch/boundary serialization alone exceeded the existing8MiB prepared
+artifact cap. Each final block's corresponding partial size is4.64MB; full resource
+manifests and native Setup remain untested. No resource limit/runtime change was made.
+Gaussian protocol bytes remain unchanged. All1920 saved crops pass source-pixel equality;
+GUI validation, canonical parsing, full expansion (8000 epochs/2400s), per-image
+frequencies and same-source four-screen grouping pass. Eight representative crops
+also pass the actual backend image decoder. Initial preparation used two20min trials;
+size inspection identified the limit and the final file uses four10min blocks.
+No GUI load, full resource preparation or physical presentation pass is claimed;
+existing [rig acceptance](rig-verification.md) remains separate.
+[Verification](runtime-evidence-2026-10-20/natural-texture-screen-crops/verification.json),
+[reproduction script](runtime-evidence-2026-10-20/natural-texture-screen-crops/prepare.py),
+[initial inventory](runtime-evidence-2026-10-20/natural-texture-screen-crops/inventory.json).
+
+Oct20 `gaussian-three-trial-protocol`: created the requested [loadable protocol](../protocols/gaussian_scale15_bottom_linked_3_trials.json) under
+[G01](../docs/architecture/gui.md#g01) and [V02/V07](../docs/architecture/visual_stimulus.md#v02).
+All four scale-15 Gaussian textures link motion to Bottom; baseline is900s,
+then100 repetitions each of10s movement followed by20s static for translation
+(30mm/s along Bottom X, both signs) and rotation (10deg/s, both signs).
+Independent saved direction draws use seeds20261021/20261022; counts are54/46
+and59/41, without enforced balance. Same instance/asset identities and reset=false
+retain state at static boundaries. Total6900s, zero authored inter-trial gaps.
+GUI file validation, canonical parsing and expansion verify1/200/200 epochs and
+requested timing/motion; the external scale-15 recipe exists. No runtime code or
+dependencies changed. Native load/Setup and physical motion remain untested;
+existing [rig checks](rig-verification.md) and speed finding remain open.
+[Validation evidence](runtime-evidence-2026-10-20/gaussian-three-trial-protocol/verification.json).
+
 Oct19 `gui-full-rig-test`:600s Gaussian derivative uses20 repetitions of the
 existing20s static/10s drift group, retaining accepted calibrated geometry/settings.
 Four-output rendering and review encoding produce36001 groups/144004 submissions;

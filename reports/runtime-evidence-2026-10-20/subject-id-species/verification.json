@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-20",
+  "source_revision": "fffcd7df0bfc9e371549184a013d1ae127e5d883",
+  "source_scope": "shared dirty checkout, final scoped file hashes; concurrent source work preserved",
+  "sha256": {
+    "src/cephvr/gui/dashboard.py": "c942f2cb5217f3f744b2824cd4a1c53c690477f54497e87bf4584c6fe0c4fe3c",
+    "src/cephvr/gui/managed_config.py": "531d70f4fc06b72cf5cb6f5b2c7401db94d3f9508f3b8ae2e769ca216caf0390",
+    "src/cephvr/gui/gui_snapshot_values.py": "cb72a82f36c4ded55aca22c1d613d5ebaf777932cf27da1d33720edc24724bef",
+    "src/cephvr/gui/review_draft.py": "bc3c773dc442336eb72614ccfdc6c27a1f4ff1a32e2ee45bd6b0fbd88c7c12c3",
+    "tests/gui/test_dashboard.py": "a062f547e123060bebdbe42040bd930834ac7f6babb87394d6f5c32f24de4fff"
+  },
+  "decisions": {
+    "G01": 255,
+    "G02": 88
+  },
+  "behavior": "GUI four ASCII digits, string identity/leading zeros; native noneditable species combo with3 named selectable choices. Optional absence retained. Legacy text remains visible/readable without rewriting historical files; invalid IDs/unlisted legacy species block GUI Setup. Native codec paths preserve string schema.",
+  "checks": {
+    "pytest": "24 pass,738 deselected; subject/recent/review/full-GUI roundtrip and retained pairing behavior",
+    "ruff": "4 source files and owning tests pass",
+    "format": "5 files pass",
+    "mypy_win32": "4 source files pass",
+    "boundaries": "739 modules,0 violations,existing size warnings",
+    "visual": "render.py Standard/Retro subject cards and species dropdown rendered; Retro and dropdown inspected"
+  },
+  "recovery": {
+    "cause": "Windows default cp1252 rejected a Unicode test literal after opening the test module for write, truncating it.",
+    "resolution": "Replayed only recorded test-module transforms against tracked base in an isolated temporary file; restored exact previous tested bytes before applying new UTF-8 edits.",
+    "verified_prior_sha256": "86c8de17e2c455cd43de2e23b4e829e537c5bcd341166a20c00c7d91b01e9ab0",
+    "matched_previous_recordings_verification": true
+  },
+  "limits": [
+    "No managed GUI restart or native/device commands for this GUI increment.",
+    "GUI constraint only; legacy/headless subject identifiers and scientific outputs are unchanged."
+  ]
+}

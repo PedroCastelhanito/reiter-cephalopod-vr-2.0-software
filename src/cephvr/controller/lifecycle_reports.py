@@ -13,6 +13,7 @@ import grpc
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.evidence import started_satisfied, stopped_satisfied
+from cephvr.controller.lifecycle.activity import trial_state_required
 from cephvr.controller.lifecycle_completion import (
     DetailedCompletion,
     retain_or_conflict,
@@ -356,6 +357,7 @@ class LifecycleReports:
         )
         if (
             not sources
+            and not trial_state_required(attempt, name)
             or self.lifecycle.trial.phase
             not in (pb.TRIAL_PHASE_STARTING, pb.TRIAL_PHASE_RUNNING)
             or not started_satisfied(
@@ -365,6 +367,7 @@ class LifecycleReports:
                 allowance_ns=self.limits.current.start_evidence_ns,
                 camera_roles=camera_roles,
                 external_camera_roles=external_roles,
+                trial_state_required=trial_state_required(attempt, name),
                 allowed_producers=producers,
                 source_producers=self.hooks.source_producers(attempt, name),
                 visual_stimulus_outputs=visual_stimulus_outputs,
@@ -383,6 +386,7 @@ class LifecycleReports:
         )
         if (
             not sources
+            and not trial_state_required(attempt, name)
             or self.lifecycle.trial.phase
             not in (
                 pb.TRIAL_PHASE_STARTING,
@@ -400,6 +404,7 @@ class LifecycleReports:
                 allowed_producers=producers,
                 source_producers=self.hooks.source_producers(attempt, name),
                 external_camera_roles=external_roles,
+                trial_state_required=trial_state_required(attempt, name),
             )
         ):
             return rejected_receipt("EVIDENCE", "Stopped conditions missing")

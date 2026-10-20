@@ -54,9 +54,10 @@ class PreviewDialog(QDialog):
         self.splitter.addWidget(self.preview_host)
         self.timeline = StimulusTimeline()
         self.splitter.addWidget(self.timeline)
-        self.splitter.setStretchFactor(0, 2)
+        self.splitter.setHandleWidth(12)
+        self.splitter.setStretchFactor(0, 1)
         self.splitter.setStretchFactor(1, 1)
-        self.splitter.setSizes([560, 340])
+        self.splitter.setSizes([520, 380])
         body.addWidget(self.splitter, 1)
         self.views: dict[str, PreviewView] = {}
         self.controls: dict[str, QCheckBox] = {}

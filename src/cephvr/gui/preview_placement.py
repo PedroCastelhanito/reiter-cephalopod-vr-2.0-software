@@ -130,6 +130,8 @@ class PreviewSlot(QWidget):
         super().resizeEvent(event)
         if self.reserve_active and self.grid_columns(len(self.frames)) != self.columns:
             self.arrange(self.arranged_sources)
+        self.grid.setGeometry(self.rect())
+        self.align_headers(self.reserve_active)
 
     def grid_columns(self, count: int) -> int:
         if not self.reserve_active:
@@ -162,6 +164,14 @@ class PreviewSlot(QWidget):
                 and workspace.statuses[key].text()
             ):
                 frame.status.hide()
+        self.align_headers(external)
+
+    def align_headers(self, external: bool) -> None:
+        heading = max(
+            (frame.required_heading() for frame in self.frames.values()), default=0
+        )
+        for frame in self.frames.values():
+            frame.minimum_heading = heading if external else 0
             frame.fit_target()
 
     def target_for(self, key: str) -> QWidget:

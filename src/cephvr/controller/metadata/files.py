@@ -55,3 +55,15 @@ def safe_component(value: str) -> str:
     if not normalized or normalized in {".", ".."}:
         raise StorageError("experiment and subject require safe nonempty names")
     return normalized
+
+
+def session_subject_label(subject: str, species: str) -> str:
+    """Prefix the session label with genus/species initials when available."""
+    subject = safe_component(subject)
+    words = species.split()
+    if len(words) < 2:
+        return subject
+    initials = (words[0][0] + words[1][0]).upper()
+    if not re.fullmatch(r"[A-Z]{2}", initials):
+        return subject
+    return subject if subject.upper().startswith(initials) else initials + subject

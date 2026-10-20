@@ -421,6 +421,7 @@ def test_reconnect_explicitly_stops_running_outputs_and_reads_back_status() -> N
         "behavioral_selected": "1",
         "tracking_selected": "0",
         "eye_tracking_selected": "0",
+        "trial_state_selected": "0",
     }
     assert observation.state.behavioral.running is False
     assert observation.state.tracking.running is False
@@ -483,7 +484,7 @@ def test_flip_input_is_rejected_before_any_serial_command() -> None:
     assert port.verbs == ["CAPS", "STATUS"]
 
 
-@pytest.mark.parametrize("version", [2, 3, 4])
+@pytest.mark.parametrize("version", [2, 3, 4, 5])
 def test_old_firmware_is_rejected_before_output_diagnostics(version: int) -> None:
     clock = _Clock(10)
     port = _ScriptedPort(statuses=[_status()], protocol_version=version)
@@ -508,7 +509,7 @@ def test_configure_adds_stopped_output_and_preserves_existing_running_readback(
             "behavioral_pin=D2 behavioral_applied_hz=10.0 "
             f"tracking_enabled={int(tracking)} tracking_running=0 "
             + ("tracking_pin=D4 tracking_applied_hz=20.0 " if tracking else "")
-            + "eye_tracking_enabled=0 eye_tracking_running=0"
+            + "eye_tracking_enabled=0 eye_tracking_running=0 trial_state_enabled=0 trial_state_running=0"
         ).encode()
 
     configured = state(tracking=True, running=True)
@@ -524,7 +525,7 @@ def test_configure_adds_stopped_output_and_preserves_existing_running_readback(
         statuses=[
             _status(),
             state(tracking=False, running=False),
-            b"watchdog_stopped=0 behavioral_running=1 tracking_running=0 eye_tracking_running=0",
+            b"watchdog_stopped=0 behavioral_running=1 tracking_running=0 eye_tracking_running=0 trial_state_running=0",
             configured,
         ]
     )
@@ -564,7 +565,7 @@ def test_legacy_firmware_caps_rejection_stops_probe_and_closes_port() -> None:
     clock = _Clock(10)
     port = LegacyPort(statuses=[])
     owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
-    with pytest.raises(ChannelIncompatibleFirmware, match="required protocol 5"):
+    with pytest.raises(ChannelIncompatibleFirmware, match="required protocol 6"):
         owner.connect(deadline_ns=10_000)
     assert port.verbs == ["CAPS"]
     assert port.closed
@@ -638,7 +639,7 @@ def _status(*, behavioral_running: bool = False) -> bytes:
             if behavioral_running
             else ""
         )
-        + " tracking_enabled=0 tracking_running=0 eye_tracking_enabled=0 eye_tracking_running=0"
+        + " tracking_enabled=0 tracking_running=0 eye_tracking_enabled=0 eye_tracking_running=0 trial_state_enabled=0 trial_state_running=0"
     )
     return ("valid=0 watchdog_stopped=0 watchdog_ms=1000 " + role_fields).encode(
         "ascii"
@@ -654,7 +655,7 @@ class _Clock:
 
 
 class _ScriptedPort:
-    def __init__(self, *, statuses: list[bytes], protocol_version: int = 5) -> None:
+    def __init__(self, *, statuses: list[bytes], protocol_version: int = 6) -> None:
         self._statuses = deque(statuses)
         self._protocol_version = protocol_version
         self._incoming: deque[int] = deque()
@@ -680,7 +681,7 @@ class _ScriptedPort:
         elif verb in {"STATUS", "CONFIGURE", "ON"}:
             body = self._statuses.popleft().decode("ascii")
         elif verb == "OFF":
-            body = "watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0"
+            body = "watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0 trial_state_running=0"
         elif verb.startswith("DIAG_"):
             body = (
                 "active=0" if verb == "DIAG_STOP" else "active=1"
@@ -1142,6 +1143,7 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
             result.state.behavioral.running = False
             result.state.tracking.running = False
             result.state.eye_tracking.running = False
+            result.state.trial_state.running = False
             return result
 
     settings = control.AcquisitionSettings()
@@ -1457,7 +1459,7 @@ async def test_manual_mcu_connect_then_start_uses_controller_selected_pin(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("running", [False, True, None])
-@pytest.mark.parametrize("role", ["behavioral", "eye_tracking"])
+@pytest.mark.parametrize("role", ["behavioral", "eye_tracking", "trial_state"])
 async def test_connection_only_keepalive_requires_proven_stopped_outputs(
     monkeypatch: pytest.MonkeyPatch, running: bool | None, role: str
 ) -> None:
@@ -1471,6 +1473,7 @@ async def test_connection_only_keepalive_requires_proven_stopped_outputs(
         observation.state.behavioral.running = False
         observation.state.tracking.running = False
         observation.state.eye_tracking.running = False
+        observation.state.trial_state.running = False
         getattr(observation.state, role).running = running
     failures = []
     waits = []
@@ -1858,6 +1861,7 @@ async def test_failed_controller_close_stays_fenced_until_exact_release(
     stopped.behavioral.running = False
     stopped.tracking.running = False
     stopped.eye_tracking.running = False
+    stopped.trial_state.running = False
     serial.off.return_value = mcu.PulseCommandEvidence(
         outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=stopped
     )
@@ -1874,6 +1878,7 @@ async def test_failed_controller_close_stays_fenced_until_exact_release(
         camera.CAMERA_ROLE_BEHAVIORAL,
         camera.CAMERA_ROLE_TRACKING,
         camera.CAMERA_ROLE_EYE_TRACKING,
+        "trial_state",
     )
     assert serial.diagnostic_stop.await_count == int(diagnostic_active)
     assert owner.cleanup_complete and not owner.snapshot_view().cleanup_pending
@@ -1921,6 +1926,7 @@ async def test_unanswered_diagnostic_start_is_cleaned_by_stop_attempt_and_verifi
     stopped.behavioral.running = False
     stopped.tracking.running = False
     stopped.eye_tracking.running = False
+    stopped.trial_state.running = False
     serial.off.return_value = mcu.PulseCommandEvidence(
         outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=stopped
     )
@@ -2377,7 +2383,7 @@ async def test_manual_disconnect_requires_exact_connection_and_retains_deadline(
     owner.port_owned = True
     owner.view.observation.connection_id = "current"
     stopped = mcu.MicrocontrollerState()
-    for role in ("behavioral", "tracking", "eye_tracking"):
+    for role in ("behavioral", "tracking", "eye_tracking", "trial_state"):
         getattr(stopped, role).running = False
     serial.off.return_value = mcu.PulseCommandEvidence(
         outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=stopped
@@ -2399,3 +2405,110 @@ async def test_manual_disconnect_requires_exact_connection_and_retains_deadline(
         assert not owner.view.HasField("observation") and not owner.closed
         assert owner.cleanup_complete
         owner.ensure_idle()
+
+
+@pytest.mark.parametrize("abort", [False, True])
+def test_trial_level_uses_reserved_boundaries_and_confirmed_stop(abort: bool) -> None:
+    clock = _Clock(10)
+    configured = (
+        b"valid=1 watchdog_stopped=0 watchdog_ms=1000 "
+        b"behavioral_enabled=0 behavioral_running=0 tracking_enabled=0 tracking_running=0 "
+        b"eye_tracking_enabled=0 eye_tracking_running=0 "
+        b"trial_state_enabled=1 trial_state_running=0 trial_state_pin=D2"
+    )
+    running = (
+        b"watchdog_stopped=0 behavioral_running=0 tracking_running=0 "
+        b"eye_tracking_running=0 trial_state_running=1"
+    )
+    port = _ScriptedPort(statuses=[_status(), configured, running])
+    owner = SerialOwner("COM7", _policies(ack_ns=20), clock=clock, serial_port=port)
+    owner.connect(10_000)
+    requested = camera.CameraPulseConfiguration(
+        port="COM7", trial_state_enabled=True, trial_state_pin="D2"
+    )
+    observation = owner.configure(requested, 10_000, active_roles=())
+    assert observation.state.trial_state.enabled
+    assert not observation.state.trial_state.running
+    assert not observation.state.trial_state.HasField("applied_frequency_hz")
+    for boundary, command in (
+        (100, mcu.PULSE_BOUNDARY_COMMAND_ON),
+        (300, mcu.PULSE_BOUNDARY_COMMAND_OFF),
+    ):
+        owner.reserve_boundary(boundary, command, selected_roles=("trial_state",))
+    early = owner.on(("trial_state",), 120, scheduled_boundary_ns=100)
+    assert early.error_code == "BOUNDARY_NOT_DUE"
+    assert "ON" not in port.verbs
+    clock.value = 100
+    on = owner.on(("trial_state",), 120, scheduled_boundary_ns=100)
+    assert (
+        on.applied
+        and on.trial_state_selected
+        and on.resulting_state.trial_state.running
+    )
+    assert (
+        not on.behavioral_selected
+        and not on.tracking_selected
+        and not on.eye_tracking_selected
+    )
+    if abort:
+        clock.value = 150
+        owner.cancel_on_reservations()
+        off = owner.off(("trial_state",), 170, stop_issued_ns=150)
+        assert off.stop_issued_monotonic_ns == 150
+        assert not off.HasField("scheduled_boundary_monotonic_ns")
+    else:
+        clock.value = 300
+        off = owner.off(("trial_state",), 320, scheduled_boundary_ns=300)
+    assert off.applied and off.trial_state_selected
+    assert off.resulting_state.trial_state.HasField("running")
+    assert not off.resulting_state.trial_state.running
+    clock.value = 350
+    stale = owner.on(("trial_state",), 370, scheduled_boundary_ns=100)
+    assert stale.error_code == "BOUNDARY_NOT_RESERVED"
+    assert port.verbs.count("ON") == 1
+
+
+@pytest.mark.asyncio
+async def test_trial_level_client_mask_round_trips_without_camera_alias() -> None:
+    from unittest.mock import AsyncMock
+
+    from cephvr.acquisition.microcontroller_client import (
+        ControllerMicrocontrollerClient,
+    )
+    from cephvr.shared.auth import Principal
+
+    serial = AsyncMock()
+    serial.on.return_value = mcu.PulseCommandEvidence(trial_state_selected=True)
+    owner = MicrocontrollerDevice(
+        serial, control.AcquisitionSettings(), _policies(), lambda: 10
+    )
+    owner.acquisition_claimed = True
+    owner.claim_id = "claim"
+
+    class Stub:
+        async def ExecuteMicrocontrollerIo(self, request, **_kwargs):
+            assert list(request.roles) == [] and request.trial_state_selected
+            return await owner.io(request)
+
+    client = ControllerMicrocontrollerClient(
+        Stub(),
+        Principal("acquisition", str(uuid4()), "token"),
+        "controller",
+        lambda: camera.CameraPulseConfiguration(),
+        clock=lambda: 10,
+    )
+    client.claim_id = "claim"
+    await client.reserve_boundary(
+        100,
+        mcu.PULSE_BOUNDARY_COMMAND_ON,
+        selected_roles=("trial_state",),
+        deadline_ns=200,
+    )
+    result = await client.on(
+        ("trial_state",), scheduled_boundary_ns=100, deadline_ns=200
+    )
+    assert result.trial_state_selected
+    assert serial.on.await_args.args == (("trial_state",),)
+    assert serial.reserve_boundary.await_args.kwargs["selected_roles"] == (
+        "trial_state",
+    )

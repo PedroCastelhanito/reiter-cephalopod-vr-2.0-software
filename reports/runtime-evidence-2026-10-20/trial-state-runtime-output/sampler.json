@@ -1,0 +1,7 @@
+{
+  "sample_rate": 30303.0,
+  "volts_per_int16": 0.000152593,
+  "stream": "onebox",
+  "stream_index": 0,
+  "channel": 0
+}

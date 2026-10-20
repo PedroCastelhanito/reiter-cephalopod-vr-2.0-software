@@ -1,5 +1,130 @@
 # Controller and supervisor status
 
+Oct20 `post-stop-session-editing`: [G01rev256](../docs/architecture/gui.md#g01)
+unlocks Session config drafts in Ended after authoritative cleanup confirmation,
+synchronized configuration and operator control. Existing E05 NewSession preserves
+the draft into Configuration; subsequent Setup applies it. Completed metadata and
+general device/protocol editing gates are unchanged.18 focused offscreen Dashboard
+cases pass, including cleanup/authority loss and subject draft retention. Ruff/check
+and format5, Win32 mypy4 and boundaries740/zero pass. ARCH-002 keeps the predicate
+in the existing presentation record; oversized main.py changes only its existing
+NewSession feedback string, adding no responsibility or dependency. GUI relaunch
+was requested but the launcher declined because the exact old GUI was not released;
+desktop inspection then timed out waiting for app approval. Current window has not
+loaded the fix. Native reopen/post-stop acceptance remains in
+[rig verification](rig-verification.md); no experiment was run for this change.
+
+Oct20 `species-session-prefix`: [E04rev93](../docs/architecture/supervisor.md#e04)
+and [E12rev25](../docs/architecture/synchronization.md#e12) derive the session folder
+label from species initials plus subject: Sepia pharaonis/0001 -> `SP0001-HHMMSS`.
+Existing exact-basename preparation/Start readback supplies the same SpikeGLX prefix.
+Raw subject/species, trial-file names and historical folders remain unchanged;
+absent/incomplete species retains the old label, existing matching prefixes are not
+duplicated, and safe-component validation precedes prefixing. Existing metadata
+path helper owns the derivation; no new schema/state/dependency or oversized module.
+104 owning storage/Setup/SpikeGLX cases pass, Ruff/format and Win32 mypy pass,
+boundary740/zero. Confirmed ended/clean runtime reloads through normal Shutdown and
+exact launcher-exit receipt. Fresh Configuration retains operator settings and saved
+bytes exactly; subject label resolves toSP0001, remote acquisition remains running
+with saving OFF. No new paired recording or historical rename during this check.
+[Commands, hashes and reload evidence](runtime-evidence-2026-10-20/species-session-prefix/verification.json).
+
+Oct20 `camera-session-demand`: [A01rev20](../docs/architecture/acquisition.md#a01)
+filters unused cameras from the prepared session while preserving operator selections
+on readback. [E05rev96](../docs/architecture/experiment.md#e05) retains independent
+Trial state participation with exact pulse-only lifecycle evidence.1499 acquisition/
+controller tests pass (4 skipped,8 deselected), Win32 mypy304 and boundaries740/zero
+pass. No managed restart or hardware operation by this change; native acceptance
+remains in [rig verification](rig-verification.md). Detailed source review, failure
+attempts and commands live in [Acquisition](acquisition.md) and its
+[dated evidence](runtime-evidence-2026-10-20/sdk-transport-counters/verification.json).
+
+Oct20 `trial-state-runtime-output`: [A11rev51](../docs/architecture/acquisition.md#a11)
+adds the selected held-HIGH trial marker to the existing MCU serial owner, typed
+boundary evidence and controller Started/Stopped checks. Setup retains requested
+pin/enablement, previews omit the marker, and stop/abort/watchdog/claim release
+include LOW proof. [Acquisition assessment and verification](acquisition.md)
+own the complete evidence. Owner-authorized Oct20 managed upload now verifies
+COM8 protocol6 after data-preserving recovery. Independent SpikeGLX samples verify
+continuous HIGH for60.00231s and LOW after normal end and early Abort; original
+configuration/saved bytes restored. Broader rig acceptance remains open.
+
+Oct20 `subject-id-species-controls`: G01rev255/G02rev88 restrict new GUI Subject ID
+entry/Setup to exactly4 ASCII digits, retaining leading zeros as text. Species is a
+native noneditable dropdown of Sepia Pharaonis, Sepia Latimanus and Sepioteuthis
+lessoniana. Unset optional species remains absent. Loaded legacy IDs/species are
+retained without truncation or historical-output changes; an unlisted species is
+visible as a disabled legacy item and requires replacement before Setup. Updated
+managed metadata, full-GUI and review-draft codecs keep the existing text schema.
+Condition recent suggestions remain; species free-text suggestions are removed.
+24 owning offscreen tests pass/738 deselected, Ruff/format5, Win32 mypy4 and
+boundaries739/zero pass. Existing size warnings remain; affected modules are focused
+and below500 lines, with no new module/dependency/runtime reference. Subject card
+renders in both themes; dropdown and Retro layout visually verified.
+A test-edit encoding failure temporarily truncated the owning test module. Recovery
+from tracked base plus recorded test edits matched the exact prior tested SHA256
+before UTF-8 new edits; concurrent preview/pairing changes are preserved. No managed
+GUI restart or device action; reopen GUI to see controls.
+[Current verification and render evidence](runtime-evidence-2026-10-20/subject-id-species/verification.json).
+
+
+Oct20 `recordings-save-spikeglx`: [G01rev253](../docs/architecture/gui.md#g01)
+moves the existing E12 pairing checkbox into Dashboard Recordings as **Save spikeglx**.
+One widget/state preserves current confirmed configuration, revision-checked On/Off
+updates, pending/phase/control locks and existing saved On/Off choices. Devices
+retains connection and channel mapping. No new backend flag, command, dependency
+or native action; checkbox changes configuration only, and E12 still controls saving
+at protocol Start/end/Abort. GUI reload is required for the open application.
+9 focused offscreen GUI cases pass/744 deselected, including both saved values and
+On/Off confirmation/queue rejection/authority locks. Ruff/format4, Win32 mypy3 and
+boundaries739/zero pass. Existing size warnings remain; Window's cohesive assembly
+only passes the existing checkbox, with no new runtime back-reference. Initial
+broader native GUI selection stalled and was interrupted; targeted offscreen retry
+passes. No live GUI restart/device operation or scientific acceptance claimed.
+[Verification and both-theme renders](runtime-evidence-2026-10-20/recordings-save-spikeglx/verification.json).
+
+
+Oct20 `spikeglx-continuous-acquisition`: owner-approved [E12rev24/E09rev5](../docs/architecture/synchronization.md)
+replaces acquisition start/stop with saving-only control (policy6). Setup requires an
+already-running, non-saving acquisition and performs no mutation. Start verifies the
+captured identity/settings, assigns the exact session-folder basename and enables
+saving, then retains the existing per-stream writing gate. End/Abort disables only
+saving against the original Stopped deadline/margin and fresh expected identity;
+no startRun/stopRun calls remain. A changed/already-saving recording is not adopted.
+Saving intent survives unknown enable outcomes; a naming timeout alone cannot
+justify disabling someone else's saving. Unchanged shared SDK ownership retains
+in-flight calls and absolute bounds. SESSION_CONFIG's `spikeglx_control_scope` marks
+saving-only semantics; historical acquisition-control evidence stays historical.
+Recovery warnings direct the operator to inspect/disable saving without acquisition
+stop. No new dependency/process/optional lifecycle mode introduced (ARCH-002).
+
+Native tests pass on the same operator-started acquisition:60s normal completion
+`SAVEVERIFY-085520`,12s Abort `SAVEVERIFY-085641`, and Setup cancellation. Saving is
+OFF and acquisition running before/after each operation. Setup retains the previous
+name; Start changes it. OneBox sample counts advance continuously from4,267,515 to
+7,545,750 across operations, with no observed reset. Remote directory listing proves
+native `.bin`/`.meta` pairs with exact session basenames and native_g1_t0/_g2_t0
+suffixes. Both local trials have all9 outputs Closed;6 camera accounting logs are
+complete with zero dropped/invalid frames;8 videos fully decode and match frame
+counts/identities. Software renderer max gaps57.94/22.74ms; no gap>100ms or capture
+drop in these runs. Control timestamps/counters do not establish pulse alignment.
+
+155 focused controller/recovery/authenticated RPC tests pass,4 deselected; Ruff and
+format17 files pass, Win32 mypy16 pass, boundaries739/zero. Existing size warnings
+remain; interruption's583-line cohesive failure/cleanup module changes only its
+docstring, other affected lifecycle/SDK responsibilities remain focused. No unrelated
+refactor or dependency added. Test harness corrected a post-Start monitor-snapshot
+race and resumed the successfully running normal protocol; no runtime failure was
+hidden. Initial restart hit the existing-runtime guard, then normal interactive
+launch succeeded without terminating unrelated processes.
+
+Original runtime configuration and saved file bytes restored exactly; CephVR is
+Configuration/cleanup-confirmed, SpikeGLX remains acquiring with saving OFF as
+requested. Ephys contents were not transferred/validated; pulse alignment, native
+fault/recovery and endurance acceptance remain in the [single rig worklist](rig-verification.md).
+[Dated raw session copies, commands, hashes and native checks](runtime-evidence-2026-10-20/spikeglx-continuous-acquisition/verification.json).
+
+
 Oct19 `gui-full-rig-test`: authenticated controller execution completed one600s
 Gaussian trial with all3 camera recordings, four projector outputs, stimulus review
 and paired SpikeGLX; scientific Tracking remained disabled. All9 planned outputs
@@ -122,9 +247,9 @@ cadence, startup review omission and remaining E15 limits.
 
 
 Oct19 `dashboard-preview-workspace` / `dashboard-preview-controls` /
-`dashboard-preview-motion-plots`:
-[G01](../docs/architecture/gui.md#g01) rev250 and [G02](../docs/architecture/gui.md#g02)
-rev85 provide a 1440×960 default external workspace with Show beside each stream's
+`dashboard-preview-motion-plots`, updated Oct20 by `preview-centered-speed`:
+[G01](../docs/architecture/gui.md#g01) rev254 and [G02](../docs/architecture/gui.md#g02)
+rev87 provide a 1440×960 default external workspace with Show beside each stream's
 frame heading, status below and no separate selector card. Dashboard camera slots
 require both experiment participation and video recording selected; Eye/Tracking
 camera recording Off cannot open a viewer. Recording changes send no device commands;
@@ -133,37 +258,73 @@ their independent eligibility. The grid chooses up to three columns for the larg
 fitted squares; native ownership and reported visibility remain authoritative.
 A vertical splitter separates streams from a wide planned-speed timeline and a
 compact polar local-direction plot, surrounded by a signed angular-speed CW/CCW ring.
-The speed plot and epoch strip share a30s sliding range:0–30s initially, then the
-trailing30s, with absolute5s ticks and clipped traces/epoch blocks. Click mapping
-uses that visible range. `preview-sliding-window` passes15 focused tests/735 deselected,
-including startup, fractional elapsed time, shared range and cursor selection.
+The motion card now expands vertically rather than inheriting Card's Maximum policy:
+the initial split is about58% streams/42% plots and remains user-adjustable. Stream
+headings/frame tops align on resize; compact headers can be wider than their native
+square to keep names/Show legible. The legend sits above the speed graph, and a larger
+polar dial has aligned source/direction/rotation columns with compact-width labels.
+Standard, Retro and800×800 five-stream fixtures were visually inspected. The first
+layout check caught stale header alignment after resize; recomputing common heading
+height against the updated grid fixes it without new scheduling or state ownership.
+The speed plot and epoch strip share a30s sliding range centered on current time,
+including startup. History stops at the exact evaluated velocity at the center;
+future speed is blank, contiguous epoch steps connect, and the vertical time bar is
+removed. Absolute nonnegative5s ticks and epoch blocks use the same range. A200ms
+Qt timer advances planned time between reports only in Running/Stopping, clamps to
+the trial end and stops advancing on disconnection/non-running reports. Hidden plots
+skip refresh work. Click inspection is clamped to trial bounds until the next refresh.
 The polar display places 0° down, 90° right, 180° up and 270° left. The
 `preview-polar-zero-down` follow-up passed six focused motion tests, offscreen pixel
 checks of all four arrows, Ruff/format, Win32 mypy and boundaries737/zero; existing
 unrelated cohesion warnings remain. [Zero-down render](runtime-evidence-2026-10-19/dashboard-preview/polar-zero-down.png)
 supersedes the polar axis convention in earlier workspace screenshots. No live GUI restart.
 Epoch labels occupy a separate strip; rounded five/ten-multiple ticks and zero padding
-keep stationary intervals visible. Shared selection names projectors and omits linked
-followers. The reported-time cursor synchronizes both plots; a click inspects a planned
-instant until the next snapshot. Rotation remains visible without translation; absent
+keep stationary intervals visible. Colored projector legend toggles replace the dropdown:
+sources overlay the same speed/polar plots, with matching direction/rotation colors.
+Fully linked projectors expose only their reference; independent projectors remain
+alongside it. Source grouping spans projector/layer occurrences across epochs rather
+than instance IDs; static unlinked baselines no longer expose otherwise linked followers.
+The baseline cause is reproduced in a fixture, not verified against the screenshot's
+unprovided program. Independently moving epochs still expose their projector, with gaps
+while linked. Mixed units have separately labeled axes; unsupported sources report limits
+without hiding valid traces. The shared planned instant synchronizes both plots.
+Rotation remains visible without translation; absent
 translation has no direction arrow. Canonical bounded expansion/function evaluation
 supplies values; unresolved timing/order, feedback and unsupported motion remain
 explicitly unavailable. No new RPC, dependency, device operation or recording.
 ARCH-002 separates footprint/header painting into `preview_frame.py` before extending
-placement; plot painting now lives in `preview_motion_plot.py`, separate from canonical
-program evaluation/source selection. No new dependency or whole-runtime reference;
-unchanged oversized modules retain their existing cohesion warnings.54 focused offscreen GUI
+placement; plot painting lives in `preview_motion_plot.py`, with canonical program
+evaluation/source grouping extracted to `preview_motion_data.py` before extending the
+timeline controls. No new dependency or whole-runtime reference;
+unchanged oversized modules retain their existing cohesion warnings.63 focused offscreen GUI
 tests pass, including both themes, 800×800 containment, initial placement hints,
 stable frames, inline controls, recording changes, Eye and Tracking exclusion,
 pending/observer gates, close/reopen, page retargeting, reference filtering, polar
-direction, signed rotation, stationary translation, shared click cursor and tick ranges.
-Ruff/format5, Win32 mypy4, boundaries737/zero and scoped whitespace pass. Follow-up
+direction, signed rotation, stationary translation, shared click cursor, tick ranges,
+all-linked baselines, independent overlays, mixed units, toggles and isolated unsupported
+sources, expanding plot space and aligned stream tops. Ruff/format6, Win32 mypy5,
+boundaries739/zero and scoped whitespace pass. Follow-up
 layout tests exposed five-stream small-window overflow from the polar minimum size;
 corrected and rechecked. The earlier broad preview run was interrupted; no full GUI-suite pass.
 Offscreen screenshots are fixtures, with no connected devices; actual Windows
 viewer/DPI/full-workload acceptance remains in the [rig checklist](rig-verification.md).
 No running application was restarted by this chat.
-[Current motion-plot verification](runtime-evidence-2026-10-19/dashboard-preview/motion-verification.json);
+[Centered-speed evidence and render](runtime-evidence-2026-10-20/preview-centered-speed/verification.json):
+16 standalone offscreen timeline tests pass (initial fractional-endpoint precision
+failure fixed), Ruff/format4 and Win32 mypy3 pass, boundaries739/zero and whitespace
+pass. An actual Qt event-loop probe delivered6 callbacks in1250ms at approximately
+200ms intervals; this is local scheduling evidence, not a loaded-rig guarantee.
+The final offscreen render confirms centered history and no time bar. ARCH-002
+review retains the focused data/painter/timeline split and changes only Window's
+existing playback call. No affected source exceeds500lines; unrelated cohesion
+advisories remain. The standalone test module owns clock/painter behavior with a
+small QApplication fixture instead of the large Dashboard/device fixture. Existing
+`tests/gui/test_dashboard.py` was already zero bytes during this work and remains
+untouched; restoring its concurrent changes and reconciling old trailing-window
+assertions is still required before claiming a full GUI-suite pass.
+[Current layout verification](runtime-evidence-2026-10-20/preview-layout-polish/verification.json);
+[overlay verification](runtime-evidence-2026-10-20/preview-source-overlay/verification.json);
+[earlier motion-plot verification](runtime-evidence-2026-10-19/dashboard-preview/motion-verification.json);
 [inline-control verification](runtime-evidence-2026-10-19/dashboard-preview/inline-verification.json);
 [initial workspace evidence](runtime-evidence-2026-10-19/dashboard-preview/verification.json).
 

@@ -1,0 +1,11 @@
+{
+  "endpoint": {
+    "controller_generation": "3fdf6ced-0c03-44f7-b02a-08f634f18b49",
+    "supervisor_generation": "f20e8a8d-b9f4-4fa7-b043-c5fa8a51e2cf",
+    "event_id": "60c2c217-7bda-4146-8c87-d5e826ae31e1",
+    "replacement_timeout_ns": 92000000000,
+    "gui_relaunch_event_id": "23db4dba-427e-43f1-b6d1-185df7f7f011"
+  },
+  "method": "signal exact launcher replacement event; wait original replacement budget for exit receipt",
+  "error": "NativeEventError('OpenEventW failed: 2')"
+}

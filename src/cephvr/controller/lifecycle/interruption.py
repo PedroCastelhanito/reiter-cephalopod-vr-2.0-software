@@ -459,7 +459,7 @@ class InterruptionWorkflow:
             return False
 
     async def _stop_spikeglx(self, attempt: Attempt, cleanup_deadline: int) -> bool:
-        """Stop the paired run, preserving remote evidence if central logging fails."""
+        """Stop paired saving, preserving acquisition and evidence if logging fails."""
         if attempt.spikeglx_stopped:
             return True
         attempt.spikeglx_monitor_stop.set()

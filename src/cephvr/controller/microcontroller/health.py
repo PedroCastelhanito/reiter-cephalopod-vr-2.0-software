@@ -88,7 +88,12 @@ class MicrocontrollerHealth:
                         observation.state.HasField(role)
                         and getattr(observation.state, role).HasField("running")
                         and not getattr(observation.state, role).running
-                        for role in ("behavioral", "tracking", "eye_tracking")
+                        for role in (
+                            "behavioral",
+                            "tracking",
+                            "eye_tracking",
+                            "trial_state",
+                        )
                     )
                 )
             ):
