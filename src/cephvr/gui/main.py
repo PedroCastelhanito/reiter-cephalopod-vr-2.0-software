@@ -154,7 +154,8 @@ class ManagedGui(QObject):
         window.preview_slot.snap_requested.connect(
             lambda key: self.stimulus_preview.request(key, True, snap=True)
         )
-        bridge.command_finished.connect(self.stimulus_preview.finished)
+        bridge.command_finished.connect(self.stimulus_preview_finished)
+        bridge.operation_finished.connect(self.stimulus_preview_finished)
         window.preview_slot.snap_requested.connect(self.preview_viewers.snap)
         self.cameras = ManagedCameras(
             cameras,
@@ -466,6 +467,17 @@ class ManagedGui(QObject):
             self.window.tracking.status.console.appendPlainText(message)
         elif target:
             getattr(self.window.devices, target).console.appendPlainText(message)
+
+    def stimulus_preview_finished(self, action: str, *_: object) -> None:
+        if action != "set_stimulus_preview":
+            return
+        self.stimulus_preview.finished(action)
+        if self.state is not None:
+            self.install_snapshot(
+                self._connection_epoch,
+                self.state.controller_generation,
+                self.state.SerializeToString(),
+            )
 
     def operation_finished(
         self, action: str, command_id: str, status: str, message: str

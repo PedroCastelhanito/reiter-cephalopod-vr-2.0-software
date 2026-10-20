@@ -65,9 +65,16 @@ def _substitute(value: Any, scope: dict[str, dict[str, object]]) -> Any:
             key: _substitute(getattr(value, key), scope)
             for key in type(value).model_fields
         }
+        if type(value).model_config.get("frozen") and all(
+            payload[key] is getattr(value, key) for key in payload
+        ):
+            return value
         return type(value).model_validate(payload, strict=True)
     if isinstance(value, tuple):
-        return tuple(_substitute(item, scope) for item in value)
+        items = tuple(_substitute(item, scope) for item in value)
+        return (
+            value if all(a is b for a, b in zip(items, value, strict=True)) else items
+        )
     if isinstance(value, list):
         return [_substitute(item, scope) for item in value]
     if isinstance(value, dict):

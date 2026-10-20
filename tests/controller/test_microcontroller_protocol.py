@@ -185,10 +185,13 @@ def test_dispatched_request_without_ack_is_timed_out_with_dispatch_evidence() ->
     channel = SerialChannel("fake", 115200, 30, clock=clock, serial_port=port)
     channel.open(1000)
 
-    with pytest.raises(ChannelTimeout):
+    with pytest.raises(ChannelTimeout) as failure:
         channel.request(
             "ON", {"behavioral_selected": "1", "tracking_selected": "0"}, 1000
         )
+
+    assert "bytes=0, late_bytes=0, partial_bytes=0" in str(failure.value)
+    assert "unmatched=0, malformed=0" in str(failure.value)
 
     assert channel.last_exchange is not None
     assert channel.last_exchange.dispatched_ns > 0

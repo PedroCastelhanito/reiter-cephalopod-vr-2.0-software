@@ -3,7 +3,7 @@
 import heapq
 from bisect import bisect_left
 from collections.abc import Iterator, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.config.models.program_model import Settings
@@ -71,6 +71,7 @@ class ImageSchedule:
         epochs: dict[str, tuple[tuple[tuple[str, str], ...], ...]] = {}
         first: dict[tuple[str, str], str] = {}
         indices: dict[tuple[str, str], int] = {}
+        used_outputs: dict[str, set[str]] = {}
         for artifact in artifacts:
             trial = artifact.identity.trial_id
             generations[trial] = artifact.identity.resource_generation
@@ -91,8 +92,27 @@ class ImageSchedule:
                     ):
                         row.append((setting.instance_id, selected_asset))
                         first.setdefault((trial, setting.instance_id), selected_asset)
+                        assert setting.kind in ("image", "texture")
+                        surfaces = (
+                            {item.surface_id for item in setting.space.mappings}
+                            if setting.space.kind == "physical_surface"
+                            else set(setting.space.surfaces)
+                        )
+                        key = aliases[(trial, selected_asset)]
+                        used_outputs.setdefault(key, set()).update(
+                            mapping.output_id
+                            for mapping in artifact.display.active_mappings
+                            if mapping.surface_id in surfaces
+                        )
                 rows.append(tuple(row))
             epochs[trial] = tuple(rows)
+        for key, outputs in used_outputs.items():
+            source = sources[key]
+            sources[key] = replace(
+                source,
+                output_ids=tuple(sorted(outputs)),
+                gpu_bytes=source.width * source.height * 16 * len(outputs),
+            )
         return cls(sources, aliases, generations, epochs, first, indices)
 
     @property

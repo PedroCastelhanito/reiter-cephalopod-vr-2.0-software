@@ -2083,6 +2083,7 @@ async def _adopt(
     result: int,
     *,
     dormant_camera: bool = False,
+    cancelled: bool = False,
 ) -> tuple[ControllerRuntime, _Acquisition, list[str], pb.ExperimentConfiguration]:
     runtime = _runtime_with_validators(tmp_path)
     backend = _Acquisition(result)
@@ -2122,8 +2123,24 @@ async def _adopt(
 
     monkeypatch.setattr(resolver.setup_execution, "fail_setup", fail)
     report = svc.AcquisitionResolutionReport()
+    if cancelled:
+        attempt.cancel_requested = True
+        attempt.closure.reason = "serial watchdog keepalive failed: PING timeout"
     await resolver.adopt_acquisition_resolution(attempt, report)
     return runtime, backend, failures, candidate
+
+
+async def test_cancelled_readback_preserves_original_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime, backend, failures, _candidate = await _adopt(
+        tmp_path, monkeypatch, pb.COMMAND_RESULT_ACCEPTED, cancelled=True
+    )
+    assert failures == [
+        "acquisition readback: serial watchdog keepalive failed: PING timeout"
+    ]
+    assert not backend.confirmations
+    assert runtime.configuration_state.revision == 1
 
 
 async def test_rejected_readback_confirmation_keeps_prior_configuration(

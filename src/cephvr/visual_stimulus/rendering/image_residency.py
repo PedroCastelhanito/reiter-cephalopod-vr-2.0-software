@@ -47,6 +47,8 @@ class ImageResidency:
         *,
         announce: Callable[[str, str | None], None],
         clock_ns: Callable[[], int] = time.perf_counter_ns,
+        announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None]
+        | None = None,
     ) -> None:
         self.schedule, self.budget, self.clock_ns = schedule, budget, clock_ns
         self.entries = {key: ResidentImage() for key in schedule.sources}
@@ -72,7 +74,7 @@ class ImageResidency:
         self._validate_capacity()
         announce("visual_stimulus:image-loader", None)
         self.worker = ImageWorker(budget, clock_ns=clock_ns)
-        self._announce: Callable[[str, str | None], None] | None = None
+        self._announce_batch = announce_batch
         self._announced: set[str] = set()
         self.released_keys: set[str] = set()
 
@@ -107,7 +109,9 @@ class ImageResidency:
             )
             if usage.gpu_bytes + required > self.budget.gpu_limit:
                 raise MemoryError(
-                    f"image residency initial/held/next working sets exceed GPU budget for trial {trial}"
+                    "image residency initial/held/next working sets exceed GPU budget "
+                    f"for trial {trial}: fixed={usage.gpu_bytes}, images={required}, "
+                    f"total={usage.gpu_bytes + required}, limit={self.budget.gpu_limit} bytes"
                 )
         peak = max((source.cpu_bytes for source in sources.values()), default=0)
         if usage.cpu_bytes + peak > self.budget.cpu_limit:
@@ -121,7 +125,16 @@ class ImageResidency:
         resources: dict[str, Any],
         announce: Callable[[str, str | None], None],
     ) -> None:
-        self._gpu, self._resources, self._announce = gpu, resources, announce
+        self._gpu, self._resources = gpu, resources
+        # Ready seals obligations, but loading/evicting their allocations stays lazy.
+        planned = tuple((self._owner(key), None) for key in self.entries)
+        if self._announce_batch is not None:
+            self._announced.update(key for key, _ in planned)
+            self._announce_batch(planned)
+        else:
+            for key, path in planned:
+                self._announced.add(key)
+                announce(key, path)
         for (trial, asset), key in self.schedule.aliases.items():
             resources[f"{self.schedule.generations[trial]}:{asset}"] = self.entries[
                 key
@@ -216,10 +229,6 @@ class ImageResidency:
             self._allocated.add(key)
             entry.state = "loading"
             self._pending.popleft()
-            if self._owner(key) not in self._announced:
-                assert self._announce is not None
-                self._announce(self._owner(key), None)
-                self._announced.add(self._owner(key))
             return
 
     def _replan(self) -> None:

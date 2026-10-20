@@ -276,24 +276,38 @@ class LifecycleDriver:
         key: str,
         path: str | None,
     ) -> None:
+        self.announce_batch_for(command, deadline_ns, ((key, path),))
+
+    def announce_batch_for(
+        self,
+        command: visual_stimulus.WorkerCommand | None,
+        deadline_ns: int,
+        resources: tuple[tuple[str, str | None], ...],
+    ) -> None:
         with self.catalogue_lock:
             if self.state.ready:
                 raise RuntimeError("cannot add resources after Ready")
-            obligation = pb.ResourceObligation(owner=self.worker, resource=key)
-            if path is not None:
-                obligation.path = path
+            additions: dict[str, pb.ResourceObligation] = {}
+            target = (
+                self.state.pending_resources
+                if self.state.setup is None
+                else self.state.resources
+            )
+            for key, path in resources:
+                obligation = pb.ResourceObligation(owner=self.worker, resource=key)
+                if path is not None:
+                    obligation.path = path
+                previous = additions.get(key, target.get(key))
+                if previous is not None:
+                    if previous != obligation:
+                        raise ValueError("native resource identity changed")
+                    continue
+                additions[key] = obligation
+            if not additions:
+                return
+            target.update(additions)
             if self.state.setup is None:
-                previous = self.state.pending_resources.get(key)
-                if previous is not None and previous != obligation:
-                    raise ValueError("native resource identity changed")
-                self.state.pending_resources[key] = obligation
                 return
-            previous = self.state.resources.get(key)
-            if previous is not None:
-                if previous != obligation:
-                    raise ValueError("native resource identity changed")
-                return
-            self.state.resources[key] = obligation
             self.state.catalogue_revision += 1
             work = command.target.work if command else pb.WorkContext()
             heartbeat = pb.HeartbeatReport(
@@ -379,6 +393,7 @@ class LifecycleDriver:
             lambda key, path: self.announce_for(command, deadline, key, path),
             deadline,
             self.clock,
+            lambda resources: self.announce_batch_for(command, deadline, resources),
         )
         return self.preparation_job.completion
 

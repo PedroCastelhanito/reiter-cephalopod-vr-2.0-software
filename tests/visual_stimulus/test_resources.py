@@ -47,6 +47,26 @@ from cephvr.visual_stimulus.resources.video_selection import PlaybackCursor
 from cephvr.visual_stimulus.resources.video_session import VideoSession
 
 
+@pytest.mark.parametrize("path", [None, "textures/image.png"])
+def test_native_preparation_retains_intent_when_registration_receipt_is_lost(path):
+    from cephvr.visual_stimulus.resources.session import NativePreparation
+
+    preparation = NativePreparation(object(), renderer_generation="renderer")
+    registered = []
+
+    def lost_receipt(key, announced_path):
+        registered.append((key, announced_path))
+        raise TimeoutError("registration receipt lost")
+
+    with pytest.raises(TimeoutError, match="receipt lost"):
+        preparation._registered_announce(lost_receipt, "trial")("asset", path)
+    assert registered == [("trial:asset", path)]
+    assert not preparation._protected_sources
+    released = preparation.cleanup()
+    assert released.released == ("trial:asset",)
+    assert not released.outstanding
+
+
 def test_native_preparation_retains_release_proof_until_catalogue_retirement():
     from cephvr.visual_stimulus.resources.session import NativePreparation
 

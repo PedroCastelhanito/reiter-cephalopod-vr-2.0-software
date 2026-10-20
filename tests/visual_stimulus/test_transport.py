@@ -1254,7 +1254,10 @@ async def test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial()
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("supervisor_owned", [False, True])
-async def test_completed_worker_outcome_survives_report_receipt_loss(supervisor_owned):
+@pytest.mark.parametrize("expired_delivery", [False, True])
+async def test_completed_worker_outcome_survives_report_receipt_loss(
+    supervisor_owned, expired_delivery
+):
     identity = Identity(
         *(
             pb.ProcessIdentity(role=role, generation=str(uuid4()))
@@ -1297,6 +1300,8 @@ async def test_completed_worker_outcome_survives_report_receipt_loss(supervisor_
         work_key=request.command_id,
         deadline_ns=deadline,
     )
+    if expired_delivery:
+        runtime.clock = lambda: deadline + 1
     try:
         result = await runtime.execute("Shutdown", request, deadline_ns=deadline)
         outcome = pb.OperationState.FromString(
@@ -1317,6 +1322,8 @@ async def test_completed_worker_outcome_survives_report_receipt_loss(supervisor_
             )
             await runtime.retain_and_report(retained, deadline)
             assert runtime.retained[("cleanup", request.command_id)] == retained
+            assert not failures
+        elif expired_delivery:
             assert not failures
         else:
             assert len(failures) == 1 and isinstance(failures[0], ConnectionError)

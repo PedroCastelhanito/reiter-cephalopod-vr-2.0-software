@@ -15,13 +15,24 @@ class ImageGpu:
         # Limit each render-owner turn to one transfer chunk; driver allocation
         # latency still needs rig measurement and is not a real-time guarantee.
         output_index, row = self._progress.get(id(textures), (0, 0))
-        output = tuple(self.outputs.values())[output_index]
+        outputs = tuple(self.outputs.items())
+        while output_index < len(outputs) and (
+            source.output_ids is not None
+            and outputs[output_index][0] not in source.output_ids
+        ):
+            output_index += 1
+        if output_index == len(outputs):
+            self._progress.pop(id(textures), None)
+            return True
+        output = outputs[output_index][1]
         output.activate()
-        if len(textures) <= output_index:
+        while len(textures) <= output_index:
+            textures.append(None)
+        if textures[output_index] is None:
             texture = output.context.texture(
                 (source.width, source.height), 4, dtype="f4"
             )
-            textures.append(texture)
+            textures[output_index] = texture
             texture.filter = (0x2601, 0x2601)
             texture.repeat_x = texture.repeat_y = False
         row_bytes = source.width * 16
@@ -74,6 +85,7 @@ class ImageGpu:
             fences.remove((output, fence))
         # Retain each failed resource in place for a truthful cleanup retry.
         for index in range(len(textures) - 1, -1, -1):
-            tuple(self.outputs.values())[index].activate()
-            textures[index].release()
+            if textures[index] is not None:
+                tuple(self.outputs.values())[index].activate()
+                textures[index].release()
             del textures[index]

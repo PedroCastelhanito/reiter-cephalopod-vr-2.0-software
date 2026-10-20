@@ -1,12 +1,23 @@
 # Rig verification — outstanding checks
 
-- [ ] Reopen the GUI with G01rev256, finish a session through Stop and verify
-  Subject ID/species/other Session config fields unlock only after confirmed cleanup.
+- [ ] After GUI restart, toggle Stimulus timeline in Previews with native viewers
+  open. Verify automatic followers resize/reposition into the expanded grid and
+  restore with the plot, retaining Show/capture state and existing manual opt-out.
+  Offscreen reflow, frame identity, preference and plot checks pass22 cases; native
+  viewer follow was not exercised. — [Runtime assessment](runtime.md)
+
+- [ ] Reopen the GUI with G01rev261/G02rev89, finish a session through Stop and verify
+  all configuration draft editors unlock only after confirmed cleanup.
   Edit the next subject, use Setup's New session action and verify the draft survives
   into Configuration/fresh Setup while completed-session metadata remains unchanged.
   Offscreen gates/retention pass18 focused cases. Launcher relaunch requires closing
   the existing GUI first; desktop inspection approval timed out, so native acceptance
   remains pending. — [Runtime assessment](runtime.md)
+  Also verify failed/cancelled Setup restores editing after returning to Configuration,
+  repeated stimulus Show/Hide clears pending immediately on completion/failure,
+  and preview HUD/time formatting/centered speed units match the Dashboard.
+  Check total planned progress across a gap and interrupted session; it excludes
+  preparation/finalization overhead. Latest offscreen checks do not close native acceptance.
 
 - [ ] Verify A01/A07 camera demand and transport warnings on the native rig after
   loading the updated source and the separately managed compatible MCU firmware:

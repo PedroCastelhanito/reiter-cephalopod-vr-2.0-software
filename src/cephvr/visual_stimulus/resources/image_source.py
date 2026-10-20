@@ -30,6 +30,7 @@ class ImageSource:
     cpu_bytes: int
     gpu_bytes: int
     load: LoadPixels
+    output_ids: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)

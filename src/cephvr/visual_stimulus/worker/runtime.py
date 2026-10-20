@@ -193,8 +193,11 @@ class VisualStimulusWorkerRuntime:
         self.ledger.complete_executor(
             command.command_id, outcome.SerializeToString(), self.clock()
         )
-        if command.command_id in self.supervisor_command_ids:
-            # Direct safety commands belong to Supervisor's retained query path.
+        if (
+            command.command_id in self.supervisor_command_ids
+            or self.clock() >= deadline_ns
+        ):
+            # Expired delivery and direct safety results use retained recovery queries.
             return pb.CommandAdmission(
                 result=pb.COMMAND_RESULT_ACCEPTED, command_id=command.command_id
             )

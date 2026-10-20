@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-20",
+  "change": "Selected row fallback for visible delete action, preserving hovered-row targeting",
+  "before": "Owning regression fails: no visible remove button outside row",
+  "after": "4 passed,773 deselected",
+  "ruff": "check and format pass",
+  "mypy": "win32 source pass",
+  "boundaries": "740 modules,zero violations; existing size advisories",
+  "limits": "Live GUI not restarted or verified; no actual trial deleted"
+}

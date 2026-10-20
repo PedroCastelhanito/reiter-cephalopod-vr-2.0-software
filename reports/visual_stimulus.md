@@ -1,5 +1,134 @@
 # Visual Stimulus status
 
+Oct20 playback follow-up: owner retained log since497633616783900 confirms Setup
+8d62c7cb-805e-4ec2-a02d-276960852ba8 Ready and StartSession
+63918951-4b22-407f-98e4-baf6adf44f6f activated, followed by cannot-add-resources-after-Ready,
+Stopped-conditions-missing and unregistered-cleanup errors. Source identifies lazy
+ImageResidency.service registering each GPU obligation on first allocation, including
+future images first loaded during playback. V04rev18/E08 now predeclare all planned
+GPU identities at attach during Setup (one batch through the existing preparation
+callback). Lazy allocation/eviction and1GiB budget remain unchanged; GL owner retains
+release proof for never-allocated entries and does not claim fenced/live allocations
+released prematurely. CPU preparation does not own these GPU release facts.
+
+202 rendering/lifecycle/resource tests pass,1 native deselected: a sealed registration
+callback rejects any playback addition while the bounded-cache test loads future
+images; both single/batch registration paths covered. Cleanup test verifies never-
+allocated releases while failed fences retain allocated obligations. Initial lifecycle
+assertion expected old individual announcements, updated to verify the batch instead.
+Ruff/format, Win32 mypy2 pass; boundary checker740/zero. ARCH-002 reuses existing
+residency/attachment/preparation callback without new state machine/dependency;
+session.py remains the existing cohesive resource-lifetime owner above500 lines.
+Memory admission and Setup/Start now have owner-provided native evidence, but full
+playback, Stopped evidence and cleanup after reload remain unverified.
+
+Oct20 `setup-watchdog-cleanup`, output-specific GPU allocation: owner screenshot
+confirms minimum image residency budget rejection. Source review found each source
+uploaded to all four contexts regardless of consuming surfaces. V04rev17 now scopes
+ImageSchedule's immutable source records to the union of consuming outputs across
+trials/epochs, accounts only those copies, and ImageGpu preserves output-indexed
+bindings with empty unconsumed slots. Release skips empty slots, retaining existing
+fence and failed-resource retry semantics. No format/precision, timing, cache-budget
+or physical-screen behavior change. ARCH-002 uses existing schedule/upload owners;
+no dependencies or new configuration. No modified module crosses500 lines.
+
+[Calculation](runtime-evidence-2026-10-20/gpu-memory/calculation.json) and its
+[reproduction script](runtime-evidence-2026-10-20/gpu-memory/calculate.py) use the saved
+Pedro20min protocol and retained calibrated display snapshot. CPU preparation of1920
+source assets completed in63.55s without native GPU operations. Fixed scene/preview/
+calibration reservations426,138,936 bytes; two review capture allocations125,337,600;
+minimum images165,188,800 (82,594,400 anchors +41,297,200 held +41,297,200 next).
+Total minimum716,665,336 bytes =683.465MiB, versus1,212,231,736 =1156.074MiB before
+output scoping; existing1GiB limit therefore admits the calculated working set.
+Image texture copies fall75% for single-screen crops. Prefetch can grow toward the
+budget; this is minimum accounted memory, not measured peak VRAM or driver overhead.
+Review calculation includes both trials at1280x720, RGBA8,15 slots. Native Setup must
+confirm effective display/calibration unchanged and actual rendering/cleanup.
+
+201 rendering/resource/lifecycle tests pass,1 native test deselected; union sharing,
+physical/angular surfaces, sparse indices and release covered. Ruff/check/format,
+Win32 mypy4 and boundaries740/zero pass. First calculation reached completion but
+failed formatting unused-source output metadata; rerun corrected evidence and uses
+recording layout rather than preview layout for recording buffers. Source tests and
+calculation do not establish a physical rig pass. Numerical capacity errors now
+include fixed/image/total/limit bytes for future diagnostics.
+
+Oct20 latest log check: [emergency496983556709800](emergency-496983556709800-d4fe31b4-f81c-47f5-8500-2fe8b9c0eca5.json)
+(controller c401b963-bd3d-4422-a5bd-39047d86a851,14:35:46 JST) contains three
+ReportWorkerLifecycle INCOMPLETE_CLEANUP errors and unconfirmed SpikeGLX stop.
+No original Setup error or RPC timeout is present. Launcher recovery record for that
+generation reports all_owned_processes_absent=true at14:36:37 JST; process absence
+is not proof of resource/output cleanup. Config/runtime source edits predate launch,
+but this report does not show the effective Setup policy. No newer emergency report
+found in reports. Requested first GUI Setup-failed line to determine trigger; no
+new code change or native success claim from this evidence.
+
+Oct20 next attempt [emergency evidence](emergency-496811385853700-5cdaf1f0-6254-45e6-bcc7-ef40924a9cac.json)
+records ReportWorkerOperation with its original peer deadline already expired.
+This report does not reveal the retained executor failure; it establishes that
+post-execution delivery triggered renderer loss. Runtime now skips an already-expired
+result send after retaining the exact executor outcome, leaving the existing E06
+query path available. It neither renews execution deadlines nor claims cleanup; actual
+in-budget receipt loss still follows the existing failure path. Owner explicitly
+approved Setup180s (E06rev78), replacing60s in experiment_config.toml; trial timing and
+cleanup/recovery budgets unchanged.35 configuration/transport tests pass, including
+expired delivery and existing receipt-loss behavior; Ruff/format, Win32 mypy1 and
+boundaries740/zero pass. ARCH-002 keeps the existing ledger/query owner without new
+state/dependencies; runtime module remains below the cohesion warning threshold.
+Full texture Setup and native cleanup remain unverified after reload.
+
+Oct20 next renderer attempt: [emergency report](emergency-496554628674800-c3caaf3a-1259-4e3f-b68d-907a27778209.json)
+identifies ReportWorkerHeartbeat:389,959 bytes,6.934ms remaining deadline and11.613ms
+elapsed. This establishes exhausted remaining Setup time at resource registration;
+it does not measure the preceding preparation stages or prove memory exhaustion.
+The prior asset release error is absent, but supervisor cleanup is still unconfirmed.
+E08 permits multiple append-only obligations per revision: NativePreparation now
+predeclares authored asset intents per trial, waits for one batch receipt, then uses
+the unchanged protected-source opening/validation path. Transitive discovered assets
+still register before creation. Lifecycle's single and batch paths share exact identity,
+Ready sealing and original deadline checks. No timeout or memory-policy change.
+ARCH-002 adds the callback through existing preparation ports; session/lifecycle remain
+cohesive existing owners despite size warnings.172 resource/lifecycle/coordinator/
+communication tests pass, including1,920-resource single-receipt/repeated-key identity
+checks and native preparer batch wiring. Ruff/format, Win32 mypy4 and boundaries740/zero
+pass after fixing callback typing/formatting. Full-workload Setup duration and native
+cleanup still require rig evidence; this removes repeated catalogue transfer work,
+not every possible preparation bottleneck.
+
+Oct20 renderer-exit follow-up: [raw emergency report](emergency-496221647855400-f4487176-3678-4f2e-aa70-e21f515d48c0.json)
+for controller faed0faf-a80c-42b7-9e73-6996bcd06d7e records RPC DEADLINE_EXCEEDED
+and unconfirmed asset image_222_bottom. It does not identify the RPC or prove a
+native crash, GPU exhaustion, or the reason for the timeout. Source review finds
+NativePreparation recorded resource intent only after announcement returned; the
+worker records it before awaiting receipt. A lost receipt therefore left an obligation
+without local never-created release evidence. Resource owner now retains intent before
+announcement; creation still waits for accepted registration, and failed live-source
+closure remains unconfirmed (E08/V01). ReportBridge failures now identify RPC,
+elapsed/budget milliseconds and message bytes while retaining the original exception
+and deadline. ARCH-002 keeps ownership in existing modules; session.py's existing
+cohesive resource lifetime owner remains above the size warning threshold, with only
+statement ordering changed. Resource/lifecycle106 tests and coordinator/transport74
+tests pass. Initial3 fixture errors were corrected by generating demo assets outside
+the repository; Ruff/format and Win32 mypy pass. The originating timeout remains
+unresolved; full Setup and failure cleanup require rig verification after reload.
+
+Oct20 owner Setup log advances through camera preparation, then fails on the
+supervisor's cleanup catalogue capacity. The shared 256-history-entry bound and
+registration reply reservation are corrected in the existing supervisor owners;
+see [runtime evidence](runtime.md) and E08 rev177. No asset obligations are omitted,
+and the byte budget remains enforced. Local 2,049-resource registration/cleanup
+passes; full texture-session Setup on the rig remains unverified.
+
+Oct20 `setup-watchdog-cleanup`: profiling the actual two-trial texture protocol found
+condition substitution repeatedly rebuilding unchanged frozen settings. Existing
+expansion now reuses unchanged frozen models/tuples; changed paths still undergo strict
+validation, preserving condition ordering and source immutability under V08/ARCH-002.
+No cache, new dependency or process. Local four-batch controller validation improved
+1.940s to1.415s; maximum observer-thread pause58.84ms to41.63ms. This demonstrates
+avoidable load, not the cause or resolution of the serial timeout.80 affected compiler,
+configuration and acquisition recovery cases pass; static checks pass. Native Setup
+pending. [Probe evidence](runtime-evidence-2026-10-20/setup-watchdog/validation-load.json).
+
 Oct20 `visual-stimulus-gpu-budget`: owner requested raising the GPU resource ceiling
 after Setup reported551476536/536870912 bytes at scene-surfaces. Changed only
 resources.max_asset_gpu_bytes in visual_stimulus_config.toml to1073741824 (1GiB),

@@ -173,6 +173,7 @@ class PreviewSlot(QWidget):
         for frame in self.frames.values():
             frame.minimum_heading = heading if external else 0
             frame.fit_target()
+        self.setMinimumHeight(self.grid.minimumSize().height())
 
     def target_for(self, key: str) -> QWidget:
         if not key:

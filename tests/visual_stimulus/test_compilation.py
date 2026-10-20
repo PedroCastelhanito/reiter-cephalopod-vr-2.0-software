@@ -393,6 +393,9 @@ class ExpansionTests(unittest.TestCase):
             if item.source.epoch_id == "drift"
         ]
         self.assertEqual(first_epoch_widths, [80.0, 120.0])
+        changed = [item for item in expanded if item.source.epoch_id == "drift"]
+        self.assertIsNot(changed[0].settings[0], changed[0].source.settings[0])
+        self.assertEqual(changed[0].source.settings[0].width.value.group_id, "sizes")
         row_lineage = [
             item.lineage[0].unit_id
             for item in expanded

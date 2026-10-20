@@ -59,7 +59,16 @@ class ReportBridge:
             if isinstance(message, pb.HeartbeatReport):
                 self.catalogue.CopyFrom(message)
             peer = self.supervisor if method == "ReportError" else self.coordinator
-            await peer.receipt(method, message, deadline_ns=deadline_ns)
+            started_ns = host_time_ns()
+            try:
+                await peer.receipt(method, message, deadline_ns=deadline_ns)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"{method} receipt failed: "
+                    f"elapsed_ms={(host_time_ns() - started_ns) / 1e6:.3f}, "
+                    f"budget_ms={(deadline_ns - started_ns) / 1e6:.3f}, "
+                    f"bytes={message.ByteSize()}: {exc}"
+                ) from exc
 
     def _enqueue(self, method: str, message: Message, deadline_ns: int) -> Future[None]:
         data = message.SerializeToString(deterministic=True)

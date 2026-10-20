@@ -69,7 +69,7 @@ class TrialList(QListWidget):
         self.add.setFixedHeight(height)
         self.add.setGeometry(2, bottom + 6, max(36, viewport.width() - 4), height)
         self.add.setVisible(bottom + 6 < viewport.height() and bottom + height + 6 > 0)
-        rows = [self.hover_row] if self.hover_row >= 0 else []
+        rows = [self.hover_row if self.hover_row >= 0 else self.currentRow()]
         for slot, control in enumerate(self.removers):
             row = rows[slot] if slot < len(rows) else -1
             item = self.item(row)
@@ -81,7 +81,7 @@ class TrialList(QListWidget):
             control.setProperty("trial_row", row)
             control.setAccessibleName(f"Delete {item.text()}")
             control.move(
-                rect.right() - control.width() - 4,
+                min(rect.right(), viewport.rect().right()) - control.width() - 4,
                 rect.top() + (rect.height() - control.height()) // 2,
             )
             control.show()

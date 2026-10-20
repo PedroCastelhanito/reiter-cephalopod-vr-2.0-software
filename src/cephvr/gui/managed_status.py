@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from time import perf_counter_ns
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.preview_motion_data import motion_epochs
 from cephvr.gui.view import DashboardView, Phase, PreviewView
+from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
 _PHASES = {
     pb.SESSION_PHASE_CONFIGURATION: Phase.CONFIGURATION,
@@ -22,6 +26,64 @@ _BACKENDS = {
     "visual_stimulus": "Visual stimulus",
     "tracking": "Tracking",
 }
+
+
+@lru_cache(maxsize=64)
+def _planned_duration(program_json: str, seed: str) -> float | None:
+    try:
+        program = parse_program_json(program_json, max_bytes=DEFAULT_DOCUMENT_BYTES)
+        epochs = motion_epochs(program, seed)
+        return epochs[-1].end if epochs else None
+    except (ValueError, TypeError, OverflowError):
+        return None
+
+
+def session_timeline(
+    state: pb.Snapshot, elapsed: float | None, now: int
+) -> tuple[float | None, float | None]:
+    """Planned schedule position, excluding preparation/finalization overhead."""
+    if (
+        not state.HasField("configuration_values")
+        or state.configuration_values.revision != state.configuration.revision
+    ):
+        return None, None
+    trials = state.configuration_values.current.trials
+    durations = [
+        _planned_duration(
+            trial.stimulus.program.program_json, trial.stimulus.stimulus_seed_decimal
+        )
+        for trial in trials
+    ]
+    if not durations or any(value is None for value in durations):
+        return None, None
+    gaps = {
+        gap.after_trial_number: gap.minimum_duration_ns / 1e9
+        for gap in state.configuration_values.current.gaps
+    }
+    total = sum(value for value in durations if value is not None) + sum(gaps.values())
+    number = state.trial.context.trial_number
+    if not number:
+        return 0.0, total
+    if elapsed is None or not 1 <= number <= len(durations):
+        return None, total
+    position = sum(value for value in durations[: number - 1] if value is not None)
+    position += sum(value for after, value in gaps.items() if after < number)
+    current = durations[number - 1]
+    assert current is not None
+    position += min(elapsed, current)
+    if state.trial.HasField("gap_earliest_end_monotonic_ns"):
+        if state.trial.HasField("interruption_issued_monotonic_ns"):
+            now = state.trial.interruption_issued_monotonic_ns
+        elif state.session.phase in (
+            pb.SESSION_PHASE_FINALIZING,
+            pb.SESSION_PHASE_ENDED,
+        ):
+            return None, total
+        gap = gaps.get(number, 0.0)
+        position += min(
+            gap, max(0.0, gap - (state.trial.gap_earliest_end_monotonic_ns - now) / 1e9)
+        )
+    return position, total
 
 
 def dashboard_view(
@@ -112,18 +174,6 @@ def dashboard_view(
             if reservation.ready_for_outputs
             else "Preparing"
         )
-    metadata_states = {item.state for item in state.metadata}
-    metadata = (
-        "Failed"
-        if pb.METADATA_PERSISTENCE_FAILED in metadata_states
-        else "Unconfirmed"
-        if pb.METADATA_PERSISTENCE_UNCONFIRMED in metadata_states
-        else "Pending"
-        if pb.METADATA_PERSISTENCE_PENDING in metadata_states
-        else "Synced"
-        if pb.METADATA_PERSISTENCE_SYNCED in metadata_states
-        else "Not started"
-    )
     outcome = "—"
     if state.session.HasField("outcome"):
         outcome = (
@@ -137,6 +187,7 @@ def dashboard_view(
             .removeprefix("TRIAL_OUTCOME_")
             .title()
         )
+    total_elapsed, total_duration = session_timeline(state, elapsed, now)
     return DashboardView(
         phase=phase,
         connected=True,
@@ -148,13 +199,14 @@ def dashboard_view(
         elapsed_s=elapsed,
         remaining_s=remaining,
         trial_duration_s=trial_duration,
+        total_elapsed_s=total_elapsed,
+        total_duration_s=total_duration,
         outcome=outcome,
         camera_status=statuses["Cameras"],
         stimulus_status=statuses["Visual stimulus"],
         tracking_status=statuses["Tracking"],
         output_status=output,
         reservation_status=reservation_status,
-        metadata_status=metadata,
         previews=previews,
     )
 

@@ -104,8 +104,21 @@ class WorkerCleanupEvidence:
         cleanup: acq.WorkerCleanupEvidence,
     ) -> None:
         """Accept exact producer/device releases and retain output closure results."""
-        if worker.setup_ready is None or worker.commands is None:
+        if worker.commands is None:
             raise ValueError("session cleanup lacks retained Setup ownership")
+        if worker.setup_ready is None and (
+            worker.context.work != session.work
+            or worker.context.camera not in session.required_cameras
+            or worker.setup_operation is not None
+            or session.trial is not None
+            or session.expected_attachments.get(worker.context.camera)
+            or cleanup.outputs
+            or any(
+                resource.attachment.buffer.producer == worker.launch.worker
+                for resource in self.resources.values()
+            )
+        ):
+            raise ValueError("pre-Ready cleanup has unresolved Setup ownership")
         releases: dict[str, control.ResourceRelease] = {}
         for release in cleanup.resources:
             if not release.resource or release.resource in releases:
@@ -113,10 +126,14 @@ class WorkerCleanupEvidence:
             releases[release.resource] = release
         expected: dict[str, str] = {
             item.resource_id: item.transfer_id
-            for item in worker.setup_ready.attached_resources
+            for item in (
+                worker.setup_ready.attached_resources if worker.setup_ready else ()
+            )
         }
         device_key = f"camera-device:{worker.launch.worker.generation}"
         expected[device_key] = ""
+        if worker.setup_ready is None and set(releases) != {device_key}:
+            raise ValueError("pre-Ready cleanup requires only its exact camera release")
         for resource_id in expected:
             release_claim = releases.get(resource_id)
             if (

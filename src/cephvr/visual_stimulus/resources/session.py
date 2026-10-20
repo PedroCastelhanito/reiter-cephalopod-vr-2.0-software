@@ -37,6 +37,7 @@ from cephvr.visual_stimulus.rendering.types import (
 from cephvr.visual_stimulus.resources.assets import (
     PreparedResourceBundle,
     ProtectedSource,
+    _resolve_asset_path,
 )
 from cephvr.visual_stimulus.resources.budget import (
     BoundedBudget,
@@ -136,13 +137,14 @@ class NativePreparation:
     ) -> Callable[[str, str | None], None]:
         def register(key: str, path: str | None) -> None:
             qualified = f"{namespace}:{key}" if namespace else key
-            announce(qualified, path)
+            # A lost receipt may still leave a registered, never-created obligation.
             self._released_resource_keys.discard(qualified)
             self._resource_keys.append(qualified)
             if path is not None:
                 self._announced_paths[Path(path).resolve()] = qualified
             else:
                 self._pathless_resource_keys.append(qualified)
+            announce(qualified, path)
 
         return register
 
@@ -286,6 +288,9 @@ class NativePreparation:
         request: visual_stimulus_messages.WorkerSetup,
         announce: Callable[[str, str | None], None],
         deadline_ns: int,
+        *,
+        announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None]
+        | None = None,
     ) -> tuple[PreparedTrial, ...]:
         if self._bundles:
             raise RuntimeError(
@@ -371,6 +376,25 @@ class NativePreparation:
                     stimulus.arena_boundaries.boundaries_json,
                     max_bytes=limits.max_document_bytes,
                 )
+                if announce_batch is not None:
+                    planned: list[tuple[str, str | None]] = []
+
+                    def collect(
+                        key: str,
+                        path: str | None,
+                        target: list[tuple[str, str | None]] = planned,
+                    ) -> None:
+                        target.append((key, path))
+
+                    register = self._registered_announce(
+                        collect,
+                        f"visual_stimulus:{trial.context.trial_id}",
+                    )
+                    for asset in program.assets:
+                        self._check(deadline_ns)
+                        path = _resolve_asset_path(assets_root, asset.logical_path)
+                        register(f"asset:{asset.asset_id}", str(path))
+                    announce_batch(tuple(planned))
                 bundle = prepare_resources(
                     program,
                     assets_root,
@@ -541,6 +565,7 @@ class NativePreparation:
                     self._budget,
                     announce=self._registered_announce(announce, ""),
                     clock_ns=self.clock_ns,
+                    announce_batch=announce_batch,
                 )
             if self.video_playback is not None:
                 self.video_playback.start(

@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 257
+**Status:** Accepted · **Revision:** 261
 
 - Devices/Projectors provides an explicit RGB LED current and Adjust action for all
   USB-detected TI projector interfaces. The controller owns SDK access under E02/E08,
@@ -198,10 +198,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - Protocol uses a widened Trials column beside a persistent Trial timeline, with a
   full-width Sequence editor below. Trials and timeline use matching top borders,
   title heights and a taller shared minimum card height (320 logical pixels). Trials
-  provides a selectable scrolling list: show × only on hovered rows and a +
+  provides a selectable scrolling list: show × on the hovered row, or keep it visible
+  on the selected row when no row is hovered, and show a +
   immediately below the last row, reachable by scrolling. Remove the separate
   bottom Add/Delete toolbar. Deletion confirms the targeted trial, preserves saved
-  files and replaces the final deleted trial with a blank trial; retain edit authority
+  files and replaces the final deleted trial with a blank trial. Deleting the last
+  scheduled trial clears the newly final trial's gap; retain edit authority
   and pending-draft checks. Omit Seed/Gap controls and the Selected trial section;
   preserve loaded seeds and legacy gaps under E01/E07. Setup retains seed ownership.
   The overview shows direct source epochs and collapsed canonical groups in sequence
@@ -1005,9 +1007,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   only, without a System controls badge. Setup requests
   preparation in Configuration and E05 New session in Ended; the latter returns to
   Configuration after cleanup and still requires fresh Setup/Start.
-  In Ended, Session config fields unlock as next-session drafts only after confirmed
+  In Ended, configuration editors unlock as next-session drafts only after confirmed
   cleanup, synchronized configuration and current operator authority. Retain those
   drafts through New session; completed-session metadata remains immutable.
+  Configuration remains editable after failed/cancelled Setup returns there;
+  device operations and replacement Setup retain controller cleanup/admission gates.
   Stop requests Cancel Setup in SettingUp/Ready. During a session it opens a chooser:
   Stop now maps to E06 Abort now, Stop after trial retains E06's trial-completion meaning,
   and Cancel/window dismissal sends no command. The chooser keeps current phase/control
@@ -1029,6 +1033,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   constrained to the operator monitor through shared tool-window placement; the new
   workspace geometry preference supersedes the older selector geometry. Remember its position
   and size across close/reopen and frontend restarts using local GUI preferences.
+  Show a compact HUD using the Dashboard's same status, trial and time values.
+  Keep a Stimulus timeline checkbox above the streams, enabled independently of
+  operator authority. Default it on and remember its local visibility preference.
+  Hiding the entire plot panel releases its splitter space to the existing adaptive
+  preview grid; restoring it restores the split layout without changing viewer Show
+  state, capture or trial execution.
   Closing hides the workspace and its native viewers while retaining logical Show
   state and capture; reopening restores the same viewers. Below the streams, show
   the current trial (or selected draft before a trial): a wide sampled planned-speed
@@ -1040,7 +1050,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   at startup. Draw speed history only through the current evaluated velocity, with
   each available line ending at the center; omit the vertical current-time bar.
   Clip traces and epoch blocks to that range; leave pre-trial history blank and keep
-  nonnegative absolute trial-time ticks at5s intervals.
+  nonnegative absolute trial-time ticks at5s intervals, coarsened to multiples of5s
+  on narrow plots to keep clock labels readable.
+  Format preview time readouts and ticks as hh:mm:ss; center rotated unit labels
+  beside each speed axis, clear of tick values.
   Clicking the timeline inspects a planned instant until the next refresh. Stationary
   translation has no direction arrow. Overlay available sources in the same speed
   and polar plots with projector-named colored legend toggles; a toggle hides that
@@ -1120,7 +1133,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 88
+**Status:** Accepted · **Revision:** 89
 
 - Runtime logs show the current action and observed ongoing states, moving directly
   to the next action on success. Omit routine admission, successful completion and
@@ -1186,7 +1199,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   The HUD shows Status (reported outcome when available, otherwise current phase)
   with a blank-line gap before Trial and the Trial time/Total time elapsed / duration
   pairs. Omit Control and separate Phase and Outcome rows.
-  Live values use authoritative timing; unavailable totals remain unknown, while
+  Trial time uses authoritative timing. Total time shows planned schedule progress:
+  preceding configured trial durations/gaps plus current trial elapsed time and
+  reported gap progress, excluding preparation/finalization overhead. Derive durations
+  from the accepted configuration using bounded canonical expansion; unresolved
+  durations leave totals unknown. Explain this scope in both HUD tooltips, while
   Review supplies explicitly simulated values. Omit Outputs, Reservation and Metadata rows.
   Status captions use brackets. Omit the trial-position strip; the HUD trial
   row retains the current index/count. Ready lamps are green,

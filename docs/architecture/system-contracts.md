@@ -197,7 +197,7 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 
 | Setting | Default | Owner |
 | --- | ---: | --- |
-| Setup initial | 60 s | `experiment_config.toml` |
+| Setup initial | 180 s | `experiment_config.toml` |
 | Cancel Setup cleanup | 10 s | `experiment_config.toml` |
 | Per-trial Ready initial | 10 s | `experiment_config.toml` |
 | Finished and file closure initial | 30 s | `experiment_config.toml` |
@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 176
+**Status:** Accepted · **Revision:** 177
 
 **Processes and startup**
 
@@ -379,6 +379,10 @@ design; runtime monitoring remains unimplemented.
   are registered after preliminary exact session/participant/paired-run RegisterContext and
   during partial Setup by full, append-only, revisioned heartbeat
   catalogues. Revision zero explicitly declares empty; absent revision is unknown.
+  Catalogue capacity uses its existing transport byte budget, independently of
+  retained command/history counts. Registration reserves its complete reply before
+  committing context or sealing resources; insufficient ledger capacity rejects
+  admission without changing ownership.
   Each planned obligation needs the supervisor's accepted receipt before resource
   creation. Ready and final RegisterContext carry the identical last catalogue and
   seal it against later additions;

@@ -63,9 +63,10 @@ class PySerialPort:
         return int(self._serial.write(payload))
 
     def read(self, size: int = 1) -> bytes:
-        if size > 1:
-            return bytes(self._serial.read_until(b"\n", size))
-        return bytes(self._serial.read(size))
+        # The channel assembles lines; drain buffered bytes in one native read.
+        # Waiting for one byte when empty retains the bounded short read poll.
+        count = min(size, max(1, self._serial.in_waiting)) if size > 1 else size
+        return bytes(self._serial.read(count))
 
     def cancel_read(self) -> None:
         self._serial.cancel_read()

@@ -286,7 +286,10 @@ async def test_failed_controller_registration_cancels_role_launches(
     assert state == {"closed": 1, "stopped": 1}
 
 
-async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> None:
+@pytest.mark.parametrize("resource_count", [1, 2049])
+async def test_new_session_requires_verified_prior_cleanup(
+    tmp_path: Path, resource_count: int
+) -> None:
     runtime, native, outbound, controller_context = make_runtime(tmp_path)
     visual_stimulus = types.ProcessIdentity(
         role="visual_stimulus", generation=str(uuid4())
@@ -387,9 +390,20 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
         empty_catalogue.SerializeToString()
     )
     resource_catalogue.cleanup_resources_revision = 1
-    resource_catalogue.cleanup_resources.add(
-        owner=visual_stimulus, resource="visual_stimulus.control"
-    )
+    for index in range(resource_count - 1):
+        first.context.cleanup_resources.add(
+            owner=visual_stimulus, resource=f"texture-{index}"
+        )
+    resource_catalogue.cleanup_resources.extend(first.context.cleanup_resources)
+    catalogue = runtime.registration.state.catalogues[
+        (visual_stimulus.role, visual_stimulus.generation)
+    ]
+    oversized = types.HeartbeatReport.FromString(resource_catalogue.SerializeToString())
+    oversized.cleanup_resources[0].path = "x" * catalogue.max_bytes
+    rejected = await runtime.service.ReportHeartbeat(oversized, visual_stimulus_context)
+    assert rejected.result == types.COMMAND_RESULT_REJECTED
+    assert catalogue.revision == 0
+    assert not catalogue.obligations
     assert (
         await runtime.service.ReportHeartbeat(
             resource_catalogue, visual_stimulus_context
@@ -434,7 +448,8 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
             trial_activity_stopped=True,
             cleanup_resources_revision=1,
             resources=[
-                types.ResourceRelease(resource="visual_stimulus.control", released=True)
+                types.ResourceRelease(resource=item.resource, released=True)
+                for item in resource_catalogue.cleanup_resources
             ],
         )
     )
@@ -443,6 +458,15 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
     )
     # Cleanup reports carry their original absolute deadline (E08).
     cleanup_context.metadata += (deadline_metadata(host_time_ns() + 10**10),)
+    incomplete = types.LifecycleReport.FromString(cleanup.SerializeToString())
+    incomplete.cleanup.resources[0].released = False
+    rejection = await runtime.service.ReportLifecycle(incomplete, cleanup_context)
+    assert rejection.result == types.COMMAND_RESULT_REJECTED
+    assert rejection.failure.code == "INCOMPLETE_CLEANUP"
+    assert (
+        "cleanup release is unverified: visual_stimulus.control"
+        in rejection.failure.message
+    )
     receipt = await runtime.service.ReportLifecycle(cleanup, cleanup_context)
     assert receipt.result == types.COMMAND_RESULT_ACCEPTED
     assert (

@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-20",
+  "base_revision": "b3984bc24eacd1dfef9a3025a4fc1b11ee7f58b7",
+  "provenance": "Dirty shared working tree; concurrent trial-list edits preserved.",
+  "source_sha256": "6389251e543a59eeab3c29899bca46653c4992bdc17fac5454badb5b1b960e09",
+  "pytest": {
+    "command": "$env:QT_QPA_PLATFORM=offscreen; .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py tests/gui/test_preview_timeline.py -q -k \"preview_workspace or preview_timeline or preview_inline_controls\" --basetemp=reports/runtime-evidence-2026-10-20/preview-timeline-toggle/pytest-temp",
+    "outcome": "22 passed, 1 failed, 771 deselected in 4.02s",
+    "passing_scope": "6 workspace/toggle/preference cases; 16 standalone timeline cases",
+    "failure": "test_preview_timeline_speed_units_epochs_and_unresolved_order: IndexError at timeline.plot.traces[0].segments[1] while elapsed is 0. Unchanged test exercises StimulusTimeline directly, not the modified PreviewDialog.",
+    "initial_attempt": "5 passed; preference fixture failed before execution because basetemp parent absent. Created the parent and reran."
+  },
+  "static": {
+    "ruff_check_and_format": "pass: src/cephvr/gui/previews.py tests/gui/test_dashboard.py",
+    "mypy": "pass: --platform win32 src/cephvr/gui/previews.py",
+    "backend_boundaries": "740 modules, zero violations; existing size advisories"
+  },
+  "limits": "Offscreen Qt only. No GUI restart, native viewer follow, hardware commands or recording."
+}

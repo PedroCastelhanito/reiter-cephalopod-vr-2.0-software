@@ -259,12 +259,18 @@ def test_native_serial_write_uses_remaining_command_budget_without_read_reconfig
 ) -> None:
     writes: list[bytes] = []
     budgets: list[tuple[int, float]] = []
+    reads: list[int] = []
 
     class NativeSerial:
         def __init__(self, **kwargs: object) -> None:
             self._port_handle = 1234
             self.timeout = kwargs["timeout"]
             self.write_timeout = kwargs["write_timeout"]
+            self.in_waiting = 0
+
+        def read(self, size: int) -> bytes:
+            reads.append(size)
+            return b"x" * size
 
         def write(self, payload: bytes) -> int:
             writes.append(payload)
@@ -293,6 +299,13 @@ def test_native_serial_write_uses_remaining_command_budget_without_read_reconfig
     assert port.write(payload) == len(payload)
     assert writes == [payload]
     assert budgets == [(1234, pytest.approx(0.08))]
+    assert port.read(512) == b"x"
+    port._serial.in_waiting = 80
+    assert port.read(512) == b"x" * 80
+    port._serial.in_waiting = 600
+    assert port.read(512) == b"x" * 512
+    assert port.read(1) == b"x"
+    assert reads == [1, 80, 512, 1]
     port.set_timeouts(read_seconds=0.01, write_seconds=0.01)
     assert port._serial.write_timeout == 0.01
     now += 11_000_000

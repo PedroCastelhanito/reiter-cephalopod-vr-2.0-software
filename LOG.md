@@ -6729,3 +6729,340 @@ TOML parsing and load_file_policies validate the value and policy binding. No ot
 limits, runtime code, calibration or protocols changed. No fresh Setup, cleanup
 recovery or GPU/rig validation performed. Retained cleanup errors remain unresolved;
 existing failed-Setup follow-up references this new evidence.
+
+### 2026-10-20 - trial-delete-visible completed
+
+[gui] Owner clarified they cannot see/click ×. Existing hover-only action disappears
+outside the row; G01rev258 now falls back to selected row, keeping the same action
+visible without hover. One-line TrialList change preserves target confirmation,
+saved files and editing locks. ARCH-002 needs no extraction/dependency. Updated
+architecture/root register and current runtime report; no live trial deletion.
+
+Extended existing row-action test first: old code fails at missing visible action.
+Final offscreen tests/gui/test_dashboard.py -q -k 'trial_row_actions_scroll_target_and_align_cards
+or expanded_close_and_trial_deletion or protocol_cards_reflow or immutable_phase_actions'
+with dedicated workspace basetemp:4 passed/773 deselected. Intermediate run had3 passes
+and1 missing-basetemp-parent fixture error; final rerun after creating parent passes.
+Ruff check/format on source and owning test pass; Win32 mypy trial_list.py passes;
+backend boundaries740/zero, existing size advisories. Desktop read via computer-use
+located app but returned no accessible text; no current UI state or native fix
+verification claimed. User must restart GUI to load new source. Task implementation complete.
+
+
+### 2026-10-20 - preview-timeline-toggle started
+
+[gui] Owner requests optional Stimulus timeline in Previews with remaining viewers
+resizing. ARCH-002 review selects the existing QSplitter hide/show behavior and
+PreviewSlot resize/reflow, plus existing local QSettings for the preference.
+No new module, dependency, backend command or independent layout state. Extend
+the owning Dashboard workspace tests for visibility/reflow/retention.
+
+### 2026-10-20 - trial-delete-visible long-name correction
+
+[gui] Follow-up screenshot disproved the earlier fix's completeness. Reproduction
+found a462px row inside a176px viewport, placing the shown button at x424 with an
+empty visible region. Clamp its right edge to the viewport under existing G01rev258;
+ARCH-002 adds no state, dependency or responsibility. Extended the owning test with
+long names in both themes, geometry and actual visible-region assertions. Both
+variants failed before the correction; final focused deletion/layout/lock selection
+passes5 tests/774 deselected. Ruff check/format2, Win32 mypy1, boundary740/zero and
+git diff --check pass; existing unrelated cohesion advisories remain. Read-only CIM
+process inspection was denied; no native restart or live deletion performed. Local
+implementation complete; user must relaunch to load it. Concurrent preview work kept.
+
+
+### 2026-10-20 - preview-timeline-toggle implemented
+
+[gui] G01rev259 adds Stimulus timeline above the preview grid, defaults it on,
+remembers visibility in local GUI preferences, and uses existing QSplitter/
+PreviewSlot reflow to reclaim space. Same source frames survive both transitions;
+no Show commands, capture or session changes. ARCH-002: PreviewDialog stays below
+250 lines; no extraction, dependencies or duplicate layout state needed.
+
+Offscreen workspace/preference checks6 and standalone timeline checks16 pass.
+Broader selector yields22 passes/1 failure/771 deselected: unchanged Dashboard
+timeline test expects future segments at elapsed0, conflicting with centered
+history; existing restoration follow-up updated. Initial preference fixture failed
+before execution because its basetemp parent was absent, then passed after creating
+the parent. Ruff check/format2, Win32 mypy1 and boundaries740/zero pass; existing
+size advisories remain. No native restart or viewer-follow acceptance. Rig checklist
+retains native follow after reopening. Commands/provenance/results in
+reports/runtime-evidence-2026-10-20/preview-timeline-toggle/verification.json.
+
+### 2026-10-20 - trial-delete-final-gap completed
+
+[gui] Owner removed both texture part2 trials and encountered final-gap validation.
+Confirmed deletion retained the newly final trial's gap, including string zero.
+G01rev260 clears it only when deleting the last scheduled trial. ARCH-002 keeps
+the two-line mutation in its existing owner, preserving confirmation, saved files,
+intervening gaps and authority gates. Updated architecture/register/runtime report.
+Both zero/positive-gap regressions fail before repair; final4 owning deletion and
+row-action tests pass/776 deselected after adding the test's explicit session mode.
+Ruff/format2, Win32 mypy1, boundaries740/zero and diff whitespace checks pass;
+existing unrelated size advisories remain. Portable validation and GUI apply_schedule
+confirm the generated part1-only protocol has2 trials at600s each,1200s total and
+no final gap. Saved Desktop/Pedro/primate_cuttlebase_20min.json, SHA256
+FB0F9B552342221BC4704031C62B7F0EC7074D95A1F17D937B1230C63BD78AEE.
+Original40-minute file preserved. No native Setup, session run or restart performed.
+
+### 2026-10-20 - projector-missing-profile completed
+
+[gui] Owner's Setup traceback resolved to a missing reference asset after switching
+Protocol Assets to Pedro/media. Located the exact four mappings in the previous
+asset root recorded by last_configuration.json. Parsed GeometricProfile and verified
+all content-address hashes before copying only those4 files into Pedro/media/calibration;
+destination bytes match, no calibration edits or existing-file replacement. Source
+read errors now become actionable configuration ValueErrors under existing G01/E07.
+ARCH-002 adds no abstraction/state/dependency. Extended owning affine-profile test:
+6 cases pass with reports/tmp-profile basetemp; initial verbose-path attempt failed
+while writing generated assets due to Windows path length. Ruff/format2, Win32 mypy1,
+boundaries740/zero pass, existing size warnings retained. No native Setup/restart or
+rig acceptance claimed. Updated runtime report; task complete.
+
+### 2026-10-20 - setup-watchdog-cleanup investigation
+
+[controller] [acquisition] Owner supplied failed-Setup event dialog. Read retained
+emergency495128258860500: behavioral cleanup rejection caused coordinator health-loss
+report; SpikeGLX stop remains unconfirmed. Source inspection finds unconditional
+worker.setup_ready requirement in session cleanup, while Setup can fail before Ready.
+Stale acquisition readback is a combined guard (cancelled/replaced attempt, revision
+or deadline); screenshot does not establish chronology or serial timeout cause.
+Requested Copy details for command/timing evidence. Reviewed A03/E06/E08 and existing
+allocation/Ready/cleanup ownership; did not weaken proof checks or modify backend code.
+No relevant current log files found in user runtime root; AppData controller logs are
+historical. No recovery/restart/device action or runtime tests. Follow-up remains open
+in TODO and acquisition report rather than declaring Setup repaired.
+
+### 2026-10-20 - setup-watchdog-cleanup bounded pre-dispatch repair
+
+[controller] [acquisition] Owner says event dialog is closed. Retained evidence remains.
+A03rev34 permits exact device-only cleanup before worker Setup dispatch, without
+requiring nonexistent Ready evidence. Reject wrong session/role, dispatched Setup,
+trial/output claims, any retained producer allocation or expected attachment, and
+missing/failed/extra device releases. Existing post-Ready transfer proof unchanged;
+post-dispatch partial ownership remains unresolved. ARCH-002 uses the existing focused
+evidence owner; no new state/dependency/helper. Added13 owning cleanup cases, preserving
+no fabricated Ready.149 cleanup/coordinator tests pass unsandboxed; sandbox async run
+stalled after13 sync cases and was interrupted. Initial fixture missing ledger capacity
+arguments corrected. Ruff/check, format, Win32 mypy1 and boundaries740/zero pass.
+Updated architecture/register/report/TODO; serial PING cause and native verification
+remain open. No hardware recovery, restart, protocol change or rig acceptance.
+
+### 2026-10-20 - setup-watchdog-cleanup serial follow-up
+
+[controller] [acquisition] Owner reports repeated stale-readback failure. Authenticated
+read-only snapshot confirms revision2/Configuration after failed Setup, retained PING
+timeout and successful ReleaseManualCameraState. No control claim/device commands.
+Previous cleanup fix did not fix initiating watchdog failure. Examined serial adapter:
+read_until performs per-byte native calls; replaced with bounded buffered reads and
+single-byte wait when empty, retaining channel framing and100ms deadline (A11).
+ARCH-002 uses existing narrow transport owner without state/dependency/policy changes.
+Existing native-adapter test checks empty/partial/oversized buffers and single-byte
+requests.215 serial/protocol/camera-readback tests pass,1 skipped (unsandboxed async
+fixtures); Ruff/format2, Win32 mypy1 and boundaries740/zero pass. Local saved20-minute
+protocol validation takes0.448s, observed maximum other-thread pause47.8ms; this is
+not proof of serial timeout cause. Updated runtime report/TODO, native verification
+remains pending. No runtime restart, firmware/timeout change or Setup attempt made.
+
+### 2026-10-20 - setup-watchdog-cleanup diagnostic evidence
+
+[controller] [acquisition] Repeated screenshot prompted fresh authenticated read-only
+snapshot (saved reports/runtime-evidence-2026-10-20/setup-watchdog/snapshot.json).
+New controller generation435acc9b confirms restart; PING timeout persists with buffered
+reads. Configuration/manual release recovered. Do not claim serial fix succeeded.
+Readback now preserves attempt.closure.reason on cancellation instead of masking it
+with stale-revision text, and distinguishes revision/deadline guards. Serial timeout
+message includes bounded per-exchange timing and byte/framing counts, not raw payloads.
+ARCH-002 retains existing focused owners; no new persistent state/files or policies.
+216 serial/protocol/readback tests pass,1 skipped; Ruff/check/format4, Win32 mypy2 and
+boundary740/zero pass. Cause remains unproven; source instrumentation needs runtime
+reload and rig reproduction. No control claim, device/firmware commands, timeout change
+or fresh Setup performed; TODO remains open. Existing SpikeGLX recovery warning retained.
+
+### 2026-10-20 - setup-watchdog-cleanup validation load and reconnect
+
+[controller] [acquisition] [visual_stimulus] Owner supplied142.960ms elapsed/99.982ms
+budget with1 late byte,63.978ms longest read; no malformed/unmatched replies. Does not
+distinguish driver latency from descheduling. Local four-validator-batch responsiveness
+probe records58.84ms max observer pause versus1.62ms idle; cProfile finds extensive
+unchanged model reconstruction in substitution. ARCH-002 reuses unchanged frozen
+models/tuples, still strictly validating substituted paths. Probe improves1.940s to
+1.415s, max pause41.63ms; no guarantee of serial recovery. Evidence JSON retained.
+Owner also reports manual-camera configuration refusal. Corrected earlier inference:
+message can mean same-revision settings mismatch, not actual retained hardware.
+A01rev21 restores only Use flags after confirmed local cleanup and no owned camera;
+rejects other changes/active ownership. Five guard cases added. Initial test enum typo
+and absent-parent protobuf presence issue corrected.80 configuration/compiler/manual/
+cleanup tests pass, Ruff/check/format and Win32 mypy2 pass, boundaries740/zero. Architecture,
+reports and TODO updated. No hardware commands, timeout/firmware change, restart or
+native verification; both rig checks remain open.
+
+
+### 2026-10-20 - setup-watchdog-cleanup catalogue capacity
+
+[supervisor] [shared] [visual_stimulus] Owner log confirms manual camera Live and
+release, then Setup fails INVALID_CATALOGUE after camera preparation. Found resource
+catalogue wrongly coupled to256 retained history entries. Kept existing4MiB default
+catalogue byte budget and exact ownership/revision checks; count bound now derives
+from that budget, with count/byte diagnostics. Initial extended regression31 passed/
+1 failed exposed64KiB reply reservation at final registration. Reserve exact reply
+before committing context, preserving ledger bounds. E08rev177 clarifies existing
+bounded admission; ARCH-002 uses existing owners without new dependencies/options.
+166 supervisor/resource tests pass; Ruff/check/format pass after formatting test,
+Win32 mypy25 files pass, boundaries740/zero; unrelated size warnings remain.
+Reports/TODO updated. No runtime restart or native Setup performed; full texture
+session and earlier serial/partial-cleanup concerns remain pending.
+
+
+### 2026-10-20 - setup-watchdog-cleanup renderer exit
+
+[visual_stimulus] [supervisor] Read owner console and dated emergency496221647855400:
+renderer RPC DEADLINE_EXCEEDED, then missing release proof for image_222_bottom.
+No evidence establishes a native crash or which RPC timed out. Fixed resource intent
+retention before announcement so lost receipts preserve never-created cleanup proof
+without allowing creation before accepted registration (E08/V01). Added ReportBridge
+RPC/elapsed/budget/size diagnostics with original exception/deadline retained.
+ARCH-002 preserves existing resource owner; no new policy/dependency.106 resource/
+lifecycle and74 coordinator/transport tests pass. Initial3 fixture errors required
+outside-repo demo assets; formatting corrected. Ruff and Win32 mypy pass. Raw report
+retained, report/TODO updated. Originating timeout and native success remain open;
+no restart/device action performed.
+
+### 2026-10-20 - image buffer source review
+
+[visual_stimulus] Owner asks whether all images load together and proposes100-image rolling buffer. Reviewed NativePreparation, ImageResidency/ImageSchedule and ImageWorker: Setup validates all unique sources, releases validation pixels, then fills byte-bounded initial residency; runtime prefetches next uses and evicts unpinned images. No100-count cap currently.100 four-screen presentations means400 cropped assets and60 seconds at300ms image plus300ms grey. A count cap would limit initial uploads/residency but not existing all-source Setup validation/registration; no runtime changes or tests performed. Existing setup-watchdog-cleanup task retains unresolved RPC timeout.
+
+
+### 2026-10-20 - setup-watchdog-cleanup catalogue batching
+
+[visual_stimulus] [supervisor] Latest raw emergency496554628674800 identifies
+ReportWorkerHeartbeat,389959 bytes,6.934ms budget/11.613ms elapsed. Deadline nearly
+exhausted before RPC, not evidence of hung RPC or memory exhaustion. Previous
+asset-specific cleanup error absent; aggregate cleanup still unconfirmed. E08 batch
+append-only registration now predeclares authored asset intents per trial with one
+receipt before opening; single path reuses batch identity/sealing logic. Transitive
+assets retain individual protected registration. ARCH-002 uses existing preparation
+ports and owners; no timeout change/new dependency.172 affected tests pass including
+1920-resource batch and native preparation wiring. Initial lint closure-binding and
+mypy annotation issues fixed; Ruff/format and mypy4 pass, boundaries740/zero.
+Existing large cohesive session/lifecycle owners retained; docs/TODO updated.
+Rig timing/full Setup/cleanup remain unverified, no device operation or restart.
+
+
+### 2026-10-20 - setup-watchdog-cleanup approved allowance and expired delivery
+
+[controller] [visual_stimulus] [shared] Latest emergency496811385853700 records
+ReportWorkerOperation original deadline expired; no original executor failure in
+raw report. Owner explicitly approved Setup180s. Updated operator default and E06rev78
+register; runtime now retains terminal outcome for existing recovery query without
+calling report transport after its deadline. In-budget receipt loss still fails,
+execution deadline never renewed, cleanup never inferred. ARCH-002 existing ledger/
+query owner reused; no dependencies/state.35 configuration/transport tests pass,
+Ruff/format and Win32 mypy1 pass, boundaries740/zero. Reports/TODO reconciled.
+No restart/device operation; native full Setup and cleanup remain open.
+
+
+### 2026-10-20 - setup-watchdog-cleanup latest retained log check
+
+[visual_stimulus] [supervisor] [launcher] Read latest emergency496983556709800
+(14:35:46 JST): ReportWorkerLifecycle INCOMPLETE_CLEANUP three errors; SpikeGLX stop
+unconfirmed. No initial Setup reason or timeout recorded. Read matching launcher
+application-exit record: all owned processes absent at14:36:37 JST; does not prove
+resource closure. Config/runtime edits predate generation launch. Requested first
+GUI Setup-failed line; no newer emergency report found, no code/device changes or
+tests. Report/TODO updated; original trigger and native cleanup remain unresolved.
+
+
+### 2026-10-20 - setup-watchdog-cleanup GPU duplication
+
+[visual_stimulus] Screenshot confirms minimum residency budget rejection. Found
+four-context copies of each single-screen crop. V04rev17 scopes texture residency
+to union of consuming mapped outputs across all prepared epochs/trials; sparse
+output-index slots preserve bindings and cleanup ownership. ARCH-002 existing
+schedule/upload modules, no new dependencies/config.201 tests pass/1 native deselected;
+Ruff/check/format, Win32 mypy4, boundaries740/zero pass. Fixed type narrowing after
+initial mypy errors. CPU-only full protocol preparation63.55s; first evidence formatting
+attempt failed on unused-source metadata, corrected and reran. Recording-inclusive
+minimum716665336 bytes (683.465MiB), previously1212231736 (1156.074MiB);1GiB budget
+unchanged. Evidence script/JSON records basis and limitations; report/TODO updated.
+Prefetch can fill remaining budget; no driver VRAM measurement, physical rendering,
+restart or device command. Native Setup/cleanup and prior serial concerns remain open.
+
+
+### 2026-10-20 - setup-watchdog-cleanup playback resource catalogue
+
+[visual_stimulus] Owner log since497633616783900 confirms Ready/Start succeeded,
+then cannot-add-resources-after-Ready and cascading Stop/cleanup/child exit errors.
+Found lazy image GPU registration in service(). V04rev18/E08 predeclare all GPU
+identities at Setup attachment via existing batch callback; lazy allocations and
+budget unchanged, GL owner retains allocated/never-created release proof. ARCH-002
+existing owners/interfaces, no new dependency/state machine.202 tests pass/1 native
+deselected, including sealed-catalogue future loading and unallocated/failed-fence
+cleanup. Initial old individual-announcement assertion corrected to test batch path.
+Ruff/format and Win32 mypy2 pass; boundaries740/zero. Reports/TODO updated. No
+restart/device commands; owner evidence closes Setup admission only, not sustained
+playback, Stopped or cleanup. Prior serial/partial-cleanup questions remain open.
+
+
+### 2026-10-20 - setup-watchdog-cleanup intermittent PING evidence
+
+[controller] [supervisor] [shared] Owner log since498119757265100 shows139.316ms
+PING/99.978ms budget,2 reads/151 bytes/53 late/98 partial,47.048ms longestread;
+Setup retired then cleanup rejected. Emergency498120295051300 confirms generic
+cleanup failures, not missing facts. Added write/total-read durations and preserve
+supervisor catalogue/output/fence rejection detail. No validation relaxation,
+watchdog/deadline/retry/firmware change. ARCH-002 existing owners; diagnostics only.
+166 supervisor/resource and145 serial tests pass,1 skipped; Ruff/format/mypy3 pass,
+boundaries740/zero. Reports/TODO updated; repaired one legacy-encoded TODO separator
+encountered during UTF-8 read. MCU vs USB/driver vs host scheduling cause remains
+unproven; exact cleanup detail requires next run. No devices operated or restart;
+full playback/native cleanup still open.
+
+### 2026-10-20 - experiment-gui-recovery-hud
+
+[gui] Owner requests reusable GUI after ended/cancelled/failed work, preview HUD,
+working total time, preview hide recovery and clock/axis formatting. G01rev261/
+G02rev89 unlock all next-session draft editors after confirmed Ended cleanup and
+reuse the normal Configuration path after failed/cancelled Setup. Existing control,
+version and controller cleanup gates remain. Found SetStimulusPreview completion
+arrives through operation_finished while pending listened only to command_finished;
+both now clear pending and immediately reproject current state. Added compact
+shared-value preview HUD, planned schedule totals from accepted configuration,
+hh:mm:ss preview readouts/ticks, centered rotated speed units and grid minimum-height
+propagation. Total excludes preparation/finalization overhead and preserves unknown
+timing; interrupted gap progress freezes. ARCH-002 reuses focused owners/canonical
+expansion, no dependency or backend lifecycle change; main.py keeps composition
+wiring only. Extended owning tests, reconciled stale future-trace assertion with
+G01 history-only plots. Initial checks found HUD/grid height failures, repaired.
+Final focused GUI selection73 passed; subsequent clock-spacing selection21 passed.
+Ruff check/format GUI/tests pass187 files, Win32 mypy184 files passes, boundaries740/
+zero and diff whitespace pass. Offscreen screenshot visually inspected with synthetic
+values; evidence metadata identifies dirty source base. Full GUI suite and native
+experiment/recovery not run. Reviewed retained emergency reports through498120295051300;
+existing catalogue/GPU registration fixes need fresh-runtime acceptance, MCU latency
+and exact cleanup rejection remain open under setup-watchdog-cleanup. Updated current
+report/rig checklist and existing native follow-up; no device operation/restart.
+
+
+### 2026-10-20 - repo-cleanup-oct20
+
+[repo] [gui] Owner requested removal of unnecessary files/code. Reviewed dirty
+base b3984bc2, prior Vulture findings, callers and ARCH-002/G01 ownership. Removed
+17 lines: unused dashboard metadata summary/field and write-only page-layout alias;
+kept live widget ownership, controller metadata and failure/cleanup evidence.
+Removed 1,407 untracked generated files (46,907,949 bytes) in 25 explicitly inspected
+build/dist/cache/test-fixture directories. Resolved targets stayed within checkout;
+tracked-file guards passed. An additional reparse-point check emitted nonterminating
+PowerShell array/bitwise errors; it did not establish a complete nested-link check.
+Deletion completed; no claim of that supplemental check passing. Preserved dated
+and runtime emergency evidence, user changes, configuration, datasets and environment.
+Ignored reports/tmp-*/ and collapsed excess TODO blank lines.
+
+GUI/tests Ruff lint/format187, Win32 GUI mypy184, boundaries740/zero and whitespace
+checks pass. Offscreen focused GUI tests33 pass (748 deselected); isolated full-GUI
+draft-loading case1 passes. Initial full GUI attempt produced fixture errors and
+was interrupted; workspace-basetemp full attempt stopped producing progress and
+was interrupted. Latest fixture case passes alone; broad-run cause unproven and
+existing full-suite follow-up remains. No assertions weakened or unrelated runtime
+changes made. Vulture high-confidence scan retains six callback/test arguments.
+Current report records commands/scope; no rig/native or packaging rebuild claimed.

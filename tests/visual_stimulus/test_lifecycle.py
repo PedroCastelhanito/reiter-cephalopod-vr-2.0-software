@@ -127,6 +127,29 @@ def prepared_driver(
     return driver, clock, reports, recorder, graphics, command, release
 
 
+def test_asset_catalogue_batch_uses_one_receipt_and_exact_identities():
+    driver, clock, reports, _, _, command, _ = prepared_driver()
+    driver.state.ready = False
+    reports.records.clear()
+    revision = driver.state.catalogue_revision
+    resources = tuple(
+        (f"asset:{index}", f"images/{index}.png") for index in range(1920)
+    )
+    driver.announce_batch_for(command(), clock() + 10**9, resources)
+    assert driver.state.catalogue_revision == revision + 1
+    assert len(reports.records) == 1
+    assert reports.records[0][0] == "ReportWorkerHeartbeat"
+    for key, path in resources:
+        driver.announce_for(command(), clock() + 10**9, key, path)
+        assert driver.state.resources[key].path == path
+    assert len(reports.records) == 1
+    with pytest.raises(ValueError, match="identity changed"):
+        driver.announce_batch_for(
+            command(), clock() + 10**9, (("asset:0", "other.png"),)
+        )
+    assert driver.state.catalogue_revision == revision + 1
+
+
 def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_path):
     from concurrent.futures import ThreadPoolExecutor
 
@@ -651,7 +674,7 @@ def test_preparation_rejection_stays_setup_failure_and_allows_reuse():
         request.policies.limits.max_document_bytes = 1_000_000
         return request, trial
 
-    def reject_preparation(_request, _announce, _deadline_ns):
+    def reject_preparation(_request, _announce, _deadline_ns, *, announce_batch=None):
         raise ValueError("recording byte budget rejected Setup")
 
     driver.preparation.prepare_trials = reject_preparation
@@ -1981,8 +2004,16 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
     )
     deadline = time.monotonic_ns() + 5_000_000_000
     try:
+        batches = []
         artifacts = preparation.prepare_trials(
-            request, lambda key, path: announcements.append(key), deadline
+            request,
+            lambda key, path: announcements.append(key),
+            deadline,
+            announce_batch=batches.append,
+        )
+        assert len(batches) == 1
+        assert (
+            batches[0][0][0] == f"visual_stimulus:{trial.context.trial_id}:asset:recipe"
         )
         bundle = preparation.resources_for(trial.context.trial_id)
         assert "recipe" not in bundle.prepared_content
@@ -2003,7 +2034,9 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
         )
         assert port.prepared == [trial.context.trial_id]
         assert port.cache is preparation.image_residency
-        assert any("gpu:resident-image" in key for key in announcements)
+        assert len(batches) == 2
+        assert all("gpu:resident-image" in key for key, _ in batches[1])
+        assert not any("gpu:resident-image" in key for key in announcements)
     finally:
         graphics = preparation.engine.cleanup()
         assert not graphics.outstanding
@@ -2051,7 +2084,7 @@ def test_setup_publishes_only_final_graphics_provenance_under_original_deadline(
     recorded, reported, events = [], [], []
 
     class Prepare:
-        def prepare_trials(self, *_):
+        def prepare_trials(self, *_, **kwargs):
             assert threading.get_ident() != owner
             return (artifact,)
 

@@ -10,21 +10,7 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- [ ] `setup-watchdog-cleanup` [controller] [supervisor] [acquisition] [visual_stimulus] Diagnose intermittent MCU PING delay and exact failed-Setup cleanup rejection, then verify sustained playback/cleanup. Owner: this chat. Latest attempt failed139.316ms PING against99.978ms; diagnostics now split write/read timing and expose cleanup validation reasons.311 tests pass,1 skipped. Prior Setup/Start succeeded but full playback after GPU pre-registration remains unverified. See [Runtime](reports/runtime.md), [Acquisition](reports/acquisition.md), [Visual Stimulus](reports/visual_stimulus.md).
 
 - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).
 
@@ -34,12 +20,11 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 ## Next
 
-- [ ] `post-stop-session-editing` [gui] Reopen GUI and verify Session config editing after confirmed Stop cleanup, then retain edits through New session/Setup. Implementation passes18 focused checks; existing GUI must close before supervised relaunch, and desktop app approval timed out. Native check pending. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
+- [ ] `post-stop-session-editing` [gui] Verify all configuration drafts after confirmed terminal cleanup and failed/cancelled Setup, retention through New session/Setup, repeated stimulus Show/Hide and preview HUD/timeline. G01rev261/G02rev89 implementation passes73 focused checks plus21 final clock/layout checks; native check pending. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 
 - [ ] `camera-demand-native-verification` [controller] [acquisition] Verify unused-camera pulses stay off, Tracking-required metadata persists, and USB stops omit unsupported-counter warnings while SDK failures still warn; include all-camera-Off Trial state normal/Abort behavior after compatible firmware deployment. Local1499 tests pass; native acceptance pending. - [Rig checklist](reports/rig-verification.md), [Acquisition](reports/acquisition.md)
 
-
-- [ ] `gui-dashboard-test-restoration` [gui] Reconcile the already-empty test_dashboard.py with its concurrent owner, restore the intended tests and update old trailing-window expectations to G01's centered history before rerunning the full GUI suite. Status: observed zero bytes throughout centered-speed work; file preserved,16 standalone timeline checks pass. — [Runtime](reports/runtime.md)
+- [ ] `gui-dashboard-test-restoration` [gui] Run the full GUI suite after reconciliation of legacy timeline expectations with G01's centered history. Status: future-trace assertion corrected to inspect successive history instants;73 focused cases and21 final clock/layout cases pass. Oct20 full-suite attempts were interrupted after fixture errors/no further progress; 33 focused cleanup checks and the isolated draft-loading case pass. Full-suite completion remains pending. — [Runtime](reports/runtime.md)
 
 - [ ] `action-progress-live-check` [gui] [controller] [acquisition] [visual_stimulus] [tracking] [spikeglx] Verify action-only logs after restart during already-authorized device/lifecycle checks, including quiet polls, truthful Live/Idle, preserved failure details and prompt OFF with stalled progress delivery. Status: source implementation,380 backend/62 focused GUI tests and static checks pass; physical execution remains untested. Broader GUI preview geometry failure is recorded without baseline attribution. Do not lift existing device/scientific deferrals. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 
@@ -112,8 +97,6 @@ Remaining entries require native/physical execution or missing reproduction evid
 - [ ] `stimulus-review-encoding-cost` [visual_stimulus] [acquisition] Complete realistic-scene visual-quality/encoding-cost comparison to assess the selected recording baseline. Status: synthetic CQ16/CQ23 matrix passes; actual CQ18 camera baseline completes 900 seconds, and separate camera-lossless 60-second/byte-exact prepared-YUV fixtures pass. Current lossless scene extrapolates to 191.29 GiB/hour cameras plus 4.23 GiB/hour stimulus; dark imagery/different durations are not a controlled quality comparison or sustained lossless guarantee. Done when: actual formats, detail, size, throughput and source/recording loss under representative imagery justify an owner-selected setting. Schema5 cameras and Header6 sequential stimulus recording need native decoded-count/source-timestamp mapping and combined-throughput verification at unchanged rates/layout. Owner-authorized PBO reuse and GPU row orientation are implemented and locally checked; measure actual byte equivalence, memory stability and performance on the rig. Historical test settings were restored; owner now selects camera CQ23/p4 (Behavioral YUV444, Tracking/Eye grayscale YUV420) in defaults and saved arguments. PFS updates precede representative-scene testing; stimulus settings remain unchanged and lossy under E13. — [Assessment](reports/acquisition.md), [Measured cost](reports/runtime-evidence-2026-10-15/open-loop-soak/resume-1/final-accounting.json), [E13](docs/architecture/visual_stimulus.md#e13)
 
 ## Blocked
-
-
 
 - [ ] `gui-full-rig-test` [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Finish physical per-control/menu/dialog and DPI acceptance. Status:600s Gaussian/output audit, native diagnostic repair/reuse,751 GUI and805 owner tests complete; blocked because native desktop capture hangs after required recovery. Offscreen evidence is separate. New read-only issue-hunt chat01a1536e-d045-7630-af42-ffcdf3d83e98 follows under parent ownership. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 

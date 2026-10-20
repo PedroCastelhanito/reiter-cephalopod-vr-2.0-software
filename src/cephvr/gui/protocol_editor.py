@@ -454,6 +454,8 @@ class ProtocolEditor(PlannerControls):
             removed = next(i for i, item in enumerate(self.drafts) if item is draft)
             self.drafts.pop(removed)
             self.histories.pop(removed)
+            if self.drafts and removed == len(self.drafts):
+                self.drafts[-1].gap_after_seconds = ""
             if removed < self.index:
                 self.index -= 1
             if not self.drafts:

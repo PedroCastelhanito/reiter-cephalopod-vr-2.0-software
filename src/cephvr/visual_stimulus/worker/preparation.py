@@ -60,12 +60,15 @@ def begin(
     announce: Callable[[str, str | None], None],
     deadline_ns: int,
     clock: Callable[[], int],
+    announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None] | None = None,
 ) -> PreparationJob:
     job = PreparationJob(request, deadline_ns, Future(), Future())
 
     def run() -> None:
         try:
-            artifacts = preparation.prepare_trials(request, announce, deadline_ns)
+            artifacts = preparation.prepare_trials(
+                request, announce, deadline_ns, announce_batch=announce_batch
+            )
             if {item.identity.trial_id for item in artifacts} != {
                 item.context.trial_id for item in request.session.trials
             }:

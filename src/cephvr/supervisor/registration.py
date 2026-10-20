@@ -270,11 +270,16 @@ class RegistrationCoordinator:
         ],
     ) -> tuple[wire.RegistrationReceipt, bool]:
         """Commit the accepted context and replay receipt under the same lock."""
+        receipt = wire.RegistrationReceipt(
+            admission=accepted(request.command_id),
+            registered=request.context,
+        )
         admission = self.commands.admit(
             request.command_id,
             request.SerializeToString(deterministic=True),
             host_time_ns(),
             work_key=self.work_key(request.context.work),
+            result_reservation_bytes=receipt.ByteSize(),
         )
         if admission.replayed:
             if admission.record.result is None:
@@ -313,7 +318,8 @@ class RegistrationCoordinator:
                             )
                         }
                     ),
-                    max_resources=self.max_retained_entries,
+                    # Nonempty records are bounded by catalogue bytes, not history.
+                    max_resources=self.max_message_bytes // 4,
                     max_bytes=self.max_message_bytes // 4,
                 )
                 for participant in request.context.required_participants
@@ -330,10 +336,6 @@ class RegistrationCoordinator:
         for error_id in list(self.health.pending_error_deadlines):
             if self.verified_continuation(self.health.errors[error_id]):
                 del self.health.pending_error_deadlines[error_id]
-        receipt = wire.RegistrationReceipt(
-            admission=accepted(request.command_id),
-            registered=self.state.context,
-        )
         self.commands.complete(
             request.command_id,
             receipt.SerializeToString(deterministic=True),

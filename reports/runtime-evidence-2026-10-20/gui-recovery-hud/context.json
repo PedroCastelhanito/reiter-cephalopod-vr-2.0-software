@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-20",
+  "source_base_revision": "b3984bc24eacd1dfef9a3025a4fc1b11ee7f58b7",
+  "source_state": "Uncommitted working tree with pre-existing changes; see LOG experiment-gui-recovery-hud",
+  "method": "QT_QPA_PLATFORM=offscreen; QApplication/apply_theme; DashboardWindow(sample=True); review_view(RUNNING); two review_program drafts; PreviewDialog resized to 1000x850; processEvents then QWidget.grab",
+  "artifact": "preview.png",
+  "assessment": "Visually inspected compact HUD, hh:mm:ss ticks/current time and centered rotated speed-unit label. Synthetic values and placeholder streams only.",
+  "scope": "No native renderer, device commands, running experiment, recovery, throughput or optical acceptance."
+}

@@ -42,6 +42,111 @@ from cephvr.shared.commands import CommandLedger
 
 
 @pytest.mark.parametrize(
+    "case",
+    [
+        "before_setup",
+        "ready",
+        "missing_device",
+        "wrong_device",
+        "failed_release",
+        "setup_sent",
+        "expected_ring",
+        "allocated_ring",
+        "wrong_work",
+        "wrong_role",
+        "unexpected_output",
+        "unexpected_resource",
+        "missing_commands",
+    ],
+)
+def test_worker_cleanup_before_setup_requires_exact_device_only_proof(case):
+    from cephvr.acquisition.coordinator.evidence_cleanup import WorkerCleanupEvidence
+    from cephvr.acquisition.state import ResourceRecord
+    from cephvr.platform.windows.resource_ledger import ResourceKey
+
+    work = control.WorkContext(session=control.SessionContext(session_id=str(uuid4())))
+    role = camera_pb2.CAMERA_ROLE_BEHAVIORAL
+    identity = control.ProcessIdentity(generation=str(uuid4()), role="camera")
+    owner = control.ProcessIdentity(generation=str(uuid4()), role="acquisition")
+    commands = CommandLedger(
+        str(uuid4()),
+        1_000_000,
+        max_records=100,
+        max_bytes=1_000_000,
+        result_reservation_bytes=1024,
+    )
+    session = SessionRecord(
+        work=work,
+        operation=control.OperationContext(command_id=str(uuid4())),
+        configuration_revision=1,
+        required_cameras={role},
+    )
+    worker = WorkerRecord(
+        context=acq.WorkerContext(camera=role, worker=identity, work=work),
+        port=None,
+        launch=LaunchRecord(
+            command_id=str(uuid4()),
+            worker=identity,
+            owner=owner,
+            work=work,
+            camera=role,
+            parent_operation=session.operation,
+            planned_ns=1,
+        ),
+        commands=commands,
+    )
+    cleanup = acq.WorkerCleanupEvidence()
+    release = cleanup.resources.add(
+        resource=f"camera-device:{identity.generation}",
+        released=True,
+    )
+    resources = {}
+    if case == "ready":
+        worker.setup_ready = acq.WorkerReadyEvidence(required_checks_passed=True)
+    elif case == "missing_device":
+        cleanup.ClearField("resources")
+    elif case == "wrong_device":
+        release.resource = f"camera-device:{uuid4()}"
+    elif case == "failed_release":
+        release.released = False
+    elif case == "setup_sent":
+        worker.setup_operation = control.OperationContext(command_id=str(uuid4()))
+    elif case == "expected_ring":
+        session.expected_attachments[role] = {"ring"}
+    elif case == "allocated_ring":
+        attachment = acq.FrameBufferAttachment()
+        attachment.buffer.producer.CopyFrom(identity)
+        resources["ring"] = ResourceRecord(
+            attachment=attachment,
+            ring=None,
+            ledger_key=ResourceKey("ring", owner.generation),
+        )
+    elif case == "wrong_work":
+        worker.context.work.session.session_id = str(uuid4())
+    elif case == "wrong_role":
+        session.required_cameras.clear()
+    elif case == "unexpected_output":
+        cleanup.outputs.add(output_key="unexpected", artifact_present=False)
+    elif case == "unexpected_resource":
+        cleanup.resources.add(resource="unknown", released=True)
+    elif case == "missing_commands":
+        worker.commands = None
+    evidence = WorkerCleanupEvidence(
+        resources=resources,
+        resource_ledger=NativeResourceLedger(
+            max_resources=10, max_transfers_per_resource=4
+        ),
+        commands=commands,
+    )
+    if case in {"before_setup", "ready"}:
+        evidence.retain(session, worker, cleanup)
+        assert (worker.setup_ready is None) == (case == "before_setup")
+    else:
+        with pytest.raises(ValueError):
+            evidence.retain(session, worker, cleanup)
+
+
+@pytest.mark.parametrize(
     "case", ["closed", "delivery_pending", "resources_pending", "wrong_work"]
 )
 async def test_shutdown_preserves_delivered_session_cleanup_identity(case: str) -> None:

@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import label
+from cephvr.gui.components import FittedConsole, label
 from cephvr.gui.layouts import snap_tool_window
 from cephvr.gui.preview_timeline import StimulusTimeline
 from cephvr.gui.theme import SIZES
@@ -42,6 +42,23 @@ class PreviewDialog(QDialog):
         self.setWindowModality(Qt.WindowModality.NonModal)
         body = QVBoxLayout(self)
         body.setContentsMargins(*([SIZES.compact_card_padding] * 4))
+        self.hud = FittedConsole()
+        self.hud.setProperty("terminal", "telemetry")
+        self.hud.setAccessibleName("Experiment status")
+        body.addWidget(self.hud)
+        toolbar = QHBoxLayout()
+        toolbar.addStretch(1)
+        self.timeline_toggle = QCheckBox("Stimulus timeline")
+        self.timeline_toggle.setToolTip(
+            "Show the planned stimulus speed and direction plots"
+        )
+        self.timeline_toggle.setChecked(
+            settings.value("windows/preview-timeline-visible", True, type=bool)
+            if settings is not None
+            else True
+        )
+        toolbar.addWidget(self.timeline_toggle)
+        body.addLayout(toolbar)
         self.preview_host = QWidget(self)
         self.preview_layout = QVBoxLayout(self.preview_host)
         self.preview_layout.setContentsMargins(0, 0, 0, 0)
@@ -59,6 +76,8 @@ class PreviewDialog(QDialog):
         self.splitter.setStretchFactor(1, 1)
         self.splitter.setSizes([520, 380])
         body.addWidget(self.splitter, 1)
+        self.timeline.setVisible(self.timeline_toggle.isChecked())
+        self.timeline_toggle.toggled.connect(self.set_timeline_visible)
         self.views: dict[str, PreviewView] = {}
         self.controls: dict[str, QCheckBox] = {}
         self.statuses: dict[str, QLabel] = {}
@@ -66,6 +85,11 @@ class PreviewDialog(QDialog):
         self.source_widgets: dict[str, QWidget] = {}
         self.recording_enabled: dict[str, bool] = {}
         self.allowed = False
+
+    def set_timeline_visible(self, visible: bool) -> None:
+        self.timeline.setVisible(visible)
+        if self.settings is not None:
+            self.settings.setValue("windows/preview-timeline-visible", visible)
 
     def show_saved(self, main: QWidget) -> None:
         if not self.isVisible():

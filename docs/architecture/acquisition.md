@@ -27,7 +27,7 @@ is not runtime or rig validation (E15).
 <a id="a01"></a>
 ### A01 — Camera acquisition and recording ownership
 
-**Status:** Accepted · **Revision:** 20
+**Status:** Accepted · **Revision:** 21
 
 - The acquisition backend owns camera capture, video encoding and camera video files,
   including trial-bound recording and verified file closure under E05/E11. The
@@ -38,7 +38,10 @@ is not runtime or rig validation (E15).
   An unsaved camera with no backend consumer starts no worker/capture or trigger
   pulses and reserves no camera files. Manual connection/preview does not create
   session demand. Preserve operator Use/device/save settings across Setup readback;
-  the prepared session records the effective roles. A07 metadata remains mandatory
+  the prepared session records the effective roles. After local session cleanup and
+  hardware release, manual configuration may restore only those Use selections under
+  the same revision; other same-revision settings changes remain rejected.
+  A07 metadata remains mandatory
   for cameras active for backend processing with video Off. When no cameras are
   needed, acquisition participates only if the independent A11 Trial state output
   is enabled; E05 governs its acknowledgement-based lifecycle.
@@ -181,7 +184,7 @@ and verification remain in the
 <a id="a03"></a>
 ### A03 — Frame transfer between processes
 
-**Status:** Accepted · **Revision:** 33
+**Status:** Accepted · **Revision:** 34
 
 - Pixels reach other processes (tracking, preview viewers) through coordinator-owned
   host shared memory, never control gRPC. Inside a camera worker, capture hands frames
@@ -195,6 +198,11 @@ and verification remain in the
   reset; release on session cleanup or failed/cancelled Setup. Each allocation gets a
   fresh unique name; descriptors bind allocation, role, layout and
   session/configuration.
+- Failure before dispatching worker Setup can prove device-only cleanup without
+  Ready: require the exact session/role and camera release, no retained producer
+  allocation or expected attachment, and no trial or output claims. Once worker
+  Setup is dispatched, retain the existing exact ownership proof requirements;
+  absence of Ready never implies frame resources were released.
 - T08 Configuration diagnostics may additionally allocate an ordered TRACKING ring
   in exact manual-preview scope after confirmed camera layout, separate from the
   latest-frame GUI ring. Acquisition retains allocation and transfer ownership,

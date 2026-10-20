@@ -87,6 +87,7 @@ __pycache__/
 
 # Disposable rig-test fixtures and SDK/build investigations.
 /.tmp/
+/reports/tmp-*/
 /.local-calibration-pytest/
 /.local-camera-*/
 /.local-gui-*/

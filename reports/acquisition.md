@@ -1,5 +1,33 @@
 # Acquisition status
 
+Oct20 `setup-watchdog-cleanup` reconnect: manual configuration used the same ownership
+error for actual ownership and a same-revision settings mismatch. A01 demand filtering
+leaves effective Use flags different from preserved operator selections after cleanup.
+A01rev21 permits restoration of only enabled-field differences after local session
+cleanup with no owned camera; stale/other same-revision changes and active ownership
+remain rejected. Existing owner handles comparison; no parallel configuration state.
+Five cases cover clean/pending/owned/device-change/no-session; initial enum fixture typo
+and protobuf empty-parent presence issue were corrected. Final80 affected tests pass,
+Ruff/format and Win32 mypy pass; native reconnect remains unverified.
+
+Oct20 `setup-watchdog-cleanup` investigation: owner screenshot shows serial watchdog
+PING acknowledgement timeout, acquisition readback arriving after Setup/revision
+change, and rejected session cleanup. The retained
+[emergency report](emergency-495128258860500-e8eeda53-8313-4b04-8346-5d372b0c1296.json)
+confirms behavioral-worker INVALID_EVIDENCE escalated as COORDINATOR_HEALTH_LOST;
+it also retains spikeglx_stop_unconfirmed=true. A03rev34 now admits device-only cleanup
+before worker Setup dispatch, requiring exact session/role, camera release, no expected
+attachments/retained producer allocations and no trial/output claims. No fabricated
+Ready or release evidence. Post-dispatch partial-allocation recovery remains unchanged
+and unresolved. ARCH-002 keeps this bounded predicate in the focused evidence owner;
+no new state, helper or dependencies. Existing cleanup tests add13 acceptance/rejection
+cases;149 cleanup/coordinator tests pass outside sandbox (sandbox stalled after the
+13 synchronous cases and was interrupted). Initial fixture omitted native ledger
+capacity arguments, then corrected. Ruff, format, Win32 mypy and boundary740/zero pass.
+The dialog was closed, so detailed chronology is unavailable. Stale-readback guarding
+combines cancellation/deadline/revision; the initiating serial cause remains unproven.
+No hardware commands, recovery acknowledgement or runtime restart performed.
+
 Oct20 `sdk-transport-warning-applicability` / `camera-session-demand`: implemented
 owner-requested [A01rev20](../docs/architecture/acquisition.md#a01),
 [A07rev65](../docs/architecture/acquisition.md#a07) and

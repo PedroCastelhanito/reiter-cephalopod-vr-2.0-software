@@ -71,7 +71,7 @@ def test_loader_binds_exact_file_timing_and_budget(tmp_path: Path) -> None:
     assert loaded.supervisor_startup.port == 50052
     assert loaded.policies.start_lead_ns == 500_000_000
     assert loaded.policies.backend_release_offset_ns == 50_000_000
-    assert loaded.limits_kwargs["setup_ns"] == 60_000_000_000
+    assert loaded.limits_kwargs["setup_ns"] == 180_000_000_000
     assert loaded.max_pending_payload_bytes >= 4 * loaded.max_message_bytes
     assert loaded.default_intertrial_gap_ns == 0
     assert not loaded.configuration.HasField("mode")

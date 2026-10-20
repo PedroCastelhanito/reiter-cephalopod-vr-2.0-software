@@ -67,6 +67,11 @@ class Dashboard(ResponsiveColumns):
         self.hud_card = right.hud_card
         self.log_card = right.log_card
         self.runtime_console = right.hud
+        self.runtime_console.setToolTip(
+            "Total time is progress through the planned trials and gaps; "
+            "it excludes setup and finalization overhead. Unresolved timing shows —."
+        )
+        self.preview_dialog.hud.setToolTip(self.runtime_console.toolTip())
         self.log_console = right.console
         self.apply_view(self.view)
 
@@ -363,3 +368,9 @@ class Dashboard(ResponsiveColumns):
             ),
         )
         self.status_column.set_rows((rows[0], None, *rows[1:]))
+        self.preview_dialog.hud.setPlainText(
+            "\n".join(
+                "    ".join(f"{key}: {value}" for key, value in pair)
+                for pair in (rows[:2], rows[2:])
+            )
+        )

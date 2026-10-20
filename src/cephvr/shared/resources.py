@@ -204,11 +204,13 @@ class ResourceObligationRegistry:
             return None
         revision = report.cleanup_resources_revision
         candidate = _validate_items(report.cleanup_resources, self.allowed_owners)
-        if (
-            len(candidate) > self.max_resources
-            or sum(item.ByteSize() for item in candidate) > self.max_bytes
-        ):
-            raise ResourceCatalogueError("cleanup catalogue capacity exceeded")
+        candidate_bytes = sum(item.ByteSize() for item in candidate)
+        if len(candidate) > self.max_resources or candidate_bytes > self.max_bytes:
+            raise ResourceCatalogueError(
+                "cleanup catalogue capacity exceeded: "
+                f"resources={len(candidate)}/{self.max_resources}, "
+                f"bytes={candidate_bytes}/{self.max_bytes}"
+            )
         if self._revision is None:
             if revision != 0 or candidate:
                 raise ResourceCatalogueError(
@@ -273,7 +275,11 @@ class ResourceObligationRegistry:
             or not cleanup_command_fenced
         ):
             raise ResourceCatalogueError(
-                "cleanup revision, identity or fence is unverified"
+                "cleanup revision, identity or fence is unverified: "
+                f"expected_revision={self._revision}, "
+                f"reported_revision={report.cleanup_resources_revision if report.HasField('cleanup_resources_revision') else None}, "
+                f"fenced={cleanup_command_fenced}, "
+                f"identity_matches={report.source == self.source and _matches_work(self.work, report.work)}"
             )
         observed = {item.resource: item for item in report.resources}
         if len(observed) != len(report.resources) or set(observed) != {
@@ -290,4 +296,6 @@ class ResourceObligationRegistry:
                 or obligation.HasField("path")
                 and release.path != obligation.path
             ):
-                raise ResourceCatalogueError("cleanup release is unverified")
+                raise ResourceCatalogueError(
+                    f"cleanup release is unverified: {obligation.resource}"
+                )

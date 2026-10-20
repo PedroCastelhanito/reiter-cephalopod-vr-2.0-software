@@ -78,7 +78,6 @@ class DashboardWindow(QMainWindow):
         body = QVBoxLayout(page)
         body.setContentsMargins(*([SIZES.page_margin] * 4))
         body.setSpacing(SIZES.card_gap)
-        self.page_layout = body
         self.page_header = QWidget()
         header = QHBoxLayout(self.page_header)
         header.setContentsMargins(0, 0, 0, 0)

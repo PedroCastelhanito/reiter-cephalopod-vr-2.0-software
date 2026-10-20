@@ -49,7 +49,6 @@ class DashboardView:
     tracking_status: str = "Unavailable"
     output_status: str = "No controller evidence"
     reservation_status: str = "Not started"
-    metadata_status: str = "No controller evidence"
     previews: tuple[PreviewView, ...] = ()
 
     @property
@@ -58,23 +57,17 @@ class DashboardView:
             (self.sample or self.connected)
             and self.configuration_wired
             and self.has_control
-            and self.phase
-            in {
-                Phase.CONFIGURATION,
-                Phase.READY,
-            }
+            and (
+                self.phase in {Phase.CONFIGURATION, Phase.READY}
+                or self.phase == Phase.ENDED
+                and self.cleanup_confirmed
+            )
         )
 
     @property
     def can_edit_session(self) -> bool:
         """Completed-session edits are drafts for the next session."""
-        return self.can_edit or (
-            self.phase == Phase.ENDED
-            and self.cleanup_confirmed
-            and (self.sample or self.connected)
-            and self.configuration_wired
-            and self.has_control
-        )
+        return self.can_edit
 
 
 def review_view(phase: Phase, *, observer: bool = False) -> DashboardView:
@@ -110,5 +103,4 @@ def review_view(phase: Phase, *, observer: bool = False) -> DashboardView:
         else "Open"
         if running
         else "Not started",
-        metadata_status="Synced" if running else "Not started",
     )

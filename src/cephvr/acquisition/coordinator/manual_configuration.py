@@ -80,7 +80,10 @@ class ManualConfiguration:
         ):
             error = "MCU command differs from the accepted pulse configuration"
         elif request.settings != self.configuration.settings and (
-            request.configuration_revision == self.configuration.revision
+            (
+                request.configuration_revision == self.configuration.revision
+                and not self._restores_camera_selections(request.settings)
+            )
             or self.devices.owns_hardware()
         ):
             error = "Release camera/MCU ownership before changing manual configuration"
@@ -93,3 +96,21 @@ class ManualConfiguration:
         self.configuration.settings.CopyFrom(request.settings)
         self.configuration.revision = request.configuration_revision
         return None
+
+    def _restores_camera_selections(
+        self, requested: control.AcquisitionSettings
+    ) -> bool:
+        session = self.session_slot.current
+        if session is None or not session.cleanup_complete:
+            return False
+        restored = control.AcquisitionSettings()
+        restored.CopyFrom(self.configuration.settings)
+        for role in ("behavioral", "tracking", "eye_tracking"):
+            if not requested.HasField(role) and not restored.HasField(role):
+                continue
+            source, target = getattr(requested, role), getattr(restored, role)
+            if source.HasField("enabled"):
+                target.enabled = source.enabled
+            else:
+                target.ClearField("enabled")
+        return restored == requested

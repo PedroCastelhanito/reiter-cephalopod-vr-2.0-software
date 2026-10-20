@@ -284,12 +284,17 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   subsystem. Setup decodes every required unique image under E07 using bounded
   scratch memory, retains validation/identity facts and prepares initial content;
   it need not retain every decoded image. Share compatible immutable resources;
-  retain all unique images when budgets permit, otherwise prefetch from protected
+  allocate each still-image texture only in output contexts whose mapped surfaces
+  consume it, taking the union across prepared trials and matching GPU accounting.
+  Retain all unique images when budgets permit, otherwise prefetch from protected
   sources ahead of the resolved schedule and evict only resources no active consumer
   needs. Include source snapshots, decode/conversion/upload working memory and
   resident pixels in admission. Validation/protection/budget failure blocks Ready
   under existing Setup deadlines. One background loader prepares linear pixels;
   the GL owner submits bounded upload chunks and polls completion without waiting.
+  Register all planned image GPU obligations before Ready seals the E08 catalogue;
+  lazy allocation/eviction uses those same identities without new playback registration.
+  Cleanup accounts for both allocated and never-created obligations.
   Pin each prepared image instance's first-use texture before Ready, its last selected
   texture during execution, and all GPU work until completion. Prefetch in resolved
   next-use order; validate first/held/replacement capacity before Ready. A late image

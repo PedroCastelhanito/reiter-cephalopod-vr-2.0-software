@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-20",
+  "scope": "Local responsiveness probe; no serial hardware or Setup execution",
+  "input": "config/last_configuration.json, two texture trials",
+  "method": "Four installed controller validator batches, ThreadPoolExecutor max_workers=5; separate observer thread sleeps 1ms and records wakeup gaps",
+  "before": {"batch_total_seconds": 1.940, "max_observer_gap_ms": 58.84},
+  "after": {"batch_total_seconds": 1.415, "max_observer_gap_ms": 41.63},
+  "idle_max_observer_gap_ms": 1.62,
+  "user_serial_failure": {"elapsed_ms": 142.960, "budget_ms": 99.982, "reads": 1, "bytes": 1, "late_bytes": 1, "partial_bytes": 0, "longest_read_ms": 63.978, "unmatched": 0, "malformed": 0},
+  "limits": "Single before/after probe, not a performance guarantee or proof of serial timeout causality; no native acceptance. Profile showed repeated construction/validation of unchanged settings during substitution."
+}

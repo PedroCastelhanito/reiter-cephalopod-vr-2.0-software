@@ -90,6 +90,9 @@ class PreparationPort(Protocol):
         request: visual_stimulus.WorkerSetup,
         announce: Callable[[str, str | None], None],
         deadline_ns: int,
+        *,
+        announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None]
+        | None = None,
     ) -> tuple[PreparedTrial, ...]: ...
     def cleanup(self, deadline_ns: int) -> ResourceReleaseReport: ...
     def retire_released_resources(self) -> None: ...

@@ -1885,6 +1885,53 @@ def test_managed_status_uses_readiness_and_output_closure_evidence() -> None:
     assert timed.total_elapsed_s is None and timed.total_duration_s is None
 
 
+def test_managed_total_time_tracks_trials_gaps_and_stops(window) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_status import session_timeline
+    from cephvr.gui.protocol_document import blank_program
+
+    state = pb.Snapshot()
+    config = state.configuration_values.current
+    for number in (1, 2):
+        trial = config.trials.add(trial_number=number)
+        trial.stimulus.program.program_json = blank_program().model_dump_json()
+    config.gaps.add(after_trial_number=1, minimum_duration_ns=10_000_000_000)
+    _, total = session_timeline(state, None, 0)
+    assert total is not None
+    trial_duration = (total - 10) / 2
+    assert session_timeline(state, None, 0) == (0, total)
+    state.trial.context.trial_number = 1
+    assert session_timeline(state, 12, 0) == (12, total)
+    state.trial.gap_earliest_end_monotonic_ns = 110_000_000_000
+    assert session_timeline(state, trial_duration, 104_000_000_000) == (
+        trial_duration + 4,
+        total,
+    )
+    state.session.phase = pb.SESSION_PHASE_ENDED
+    assert session_timeline(state, trial_duration, 200_000_000_000) == (None, total)
+    state.trial.interruption_issued_monotonic_ns = 104_000_000_000
+    assert session_timeline(state, trial_duration, 200_000_000_000) == (
+        trial_duration + 4,
+        total,
+    )
+    state.trial.ClearField("interruption_issued_monotonic_ns")
+    state.trial.ClearField("gap_earliest_end_monotonic_ns")
+    state.trial.context.trial_number = 2
+    state.trial.start_monotonic_ns = 200_000_000_000
+    state.trial.actual_end_monotonic_ns = 212_000_000_000
+    state.session.phase = pb.SESSION_PHASE_ENDED
+    view = dashboard_view(state, "", ())
+    assert view.total_elapsed_s == trial_duration + 10 + 12
+    assert view.total_duration_s == total
+    window.apply_view(view)
+    preview_text = window.dashboard.preview_dialog.hud.toPlainText()
+    for row in window.dashboard.status_column.rows:
+        if row is not None:
+            assert f"{row[0]}: {row[1]}" in preview_text
+    config.trials[0].stimulus.program.program_json = "{}"
+    assert session_timeline(state, 12, 0) == (None, None)
+
+
 def test_retained_summary_keeps_incidents_ahead_of_completed_operation_history() -> (
     None
 ):
@@ -3790,7 +3837,9 @@ def test_post_stop_session_draft_editing_requires_cleanup_and_authority(
     assert all(
         editor.isEnabled() is editable for editor in window.dashboard.subject_editors
     )
-    assert not view.can_edit
+    assert view.can_edit is editable
+    assert window.protocol.editor.isEnabled() is editable
+    assert window.tracking.configuration.isEnabled() is editable
     window.apply_view(replace(view, connected=False))
     assert not window.dashboard.subject_id.isEnabled()
 
@@ -10065,8 +10114,9 @@ def test_stationary_texture_speed_variation_keeps_positive_x_direction(
     assert editor.sequence_summary.text() == "1 epoch · 1 block · 00:01:10"
 
 
+@pytest.mark.parametrize("gap", ["0", "1.25"])
 def test_expanded_close_and_trial_deletion(
-    window: DashboardWindow, app: QApplication, tmp_path: Path
+    window: DashboardWindow, app: QApplication, tmp_path: Path, gap: str
 ) -> None:
     from PyQt6.QtWidgets import QMessageBox
 
@@ -10081,12 +10131,21 @@ def test_expanded_close_and_trial_deletion(
     window.protocol.save_program(str(saved))
     original = editor.program
     editor.add_trial()
+    editor.drafts[0].gap_after_seconds = gap
     editor.trials.delete_requested.emit(editor.index)
     editor.delete_dialog.button(QMessageBox.StandardButton.Cancel).click()
     assert len(editor.drafts) == 2
+    assert editor.drafts[0].gap_after_seconds == gap
     editor.trials.delete_requested.emit(editor.index)
     editor.delete_dialog.button(QMessageBox.StandardButton.Yes).click()
     assert len(editor.drafts) == 1 and editor.program == original
+    assert editor.drafts[0].gap_after_seconds == ""
+    from cephvr.control.v1 import types_pb2 as control_pb
+
+    configuration = control_pb.ExperimentConfiguration()
+    window.protocol.session_mode.setCurrentText("Open-loop")
+    window.protocol.apply_schedule(configuration)
+    assert len(configuration.trials) == 1 and not configuration.gaps
     editor.trials.delete_requested.emit(editor.index)
     editor.delete_dialog.button(QMessageBox.StandardButton.Yes).click()
     assert len(editor.drafts) == 1 and editor.program != original
@@ -14392,6 +14451,22 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
     manager = ManagedGui(
         runtime, bridge, gui_history_path=tmp_path / "runtime_gui.json"
     )
+    for status in ("completed", "failed", "rejected", "unconfirmed"):
+        manager.stimulus_preview.pending = True
+        bridge.operation_finished.emit("set_stimulus_preview", "preview", status, "")
+        assert not manager.stimulus_preview.pending
+    from cephvr.control.v1 import types_pb2 as pb
+
+    refreshes = []
+    manager.state = pb.Snapshot(controller_generation="test-controller")
+    with monkeypatch.context() as patch:
+        patch.setattr(manager, "install_snapshot", lambda *args: refreshes.append(args))
+        manager.stimulus_preview.pending = True
+        bridge.operation_finished.emit(
+            "set_stimulus_preview", "preview", "completed", ""
+        )
+    assert not manager.stimulus_preview.pending and len(refreshes) == 1
+    manager.state = None
     runtime.devices.cameras.drafts = [
         replace(camera, values=dict(camera.values))
         for camera in review.devices.cameras.drafts
@@ -15587,6 +15662,10 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(
     generated.write_text(json.dumps(mesh), encoding="utf-8")
     with pytest.raises(ValueError, match="imported warp"):
         measured_profiles(document, calibration, str(tmp_path))
+    generated.unlink()
+    with pytest.raises(ValueError, match="Front: cannot read geometric calibration"):
+        measured_profiles(document, calibration, str(tmp_path))
+    assert not generated.exists()
 
 
 @pytest.mark.parametrize("suffix", ["hex", "ino"])
@@ -16778,13 +16857,17 @@ def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, 
     )  # Only visible blocks allocate controls.
 
 
-def test_trial_row_actions_scroll_target_and_align_cards(window, app):
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+def test_trial_row_actions_scroll_target_and_align_cards(window, app, style):
     from PyQt6.QtWidgets import QMessageBox
 
+    window.appearance.select(style)
     window.page_buttons[1].click()
     editor = window.protocol.editor
     open_protocol_group(editor)
     trials = editor.trials
+    editor.drafts[editor.index].name = "Primate - Part 1 of 2 (10 minutes)"
+    trials.item(editor.index).setText(editor.drafts[editor.index].name)
     window.resize(1280, 1100)
     app.processEvents()
     assert editor.trial_card.height() == editor.timeline_card.height()
@@ -16819,7 +16902,13 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app):
     assert abs(editor.group_editor.geometry().right() + 1 - last_right) <= 1
     QTest.mouseMove(editor.group_editor.name)
     app.processEvents()
-    assert not any(c.isVisible() for c in trials.removers)
+    remove = next(c for c in trials.removers if c.isVisible())
+    assert remove.property("trial_row") == editor.index
+    assert trials.viewport().rect().contains(remove.geometry())
+    assert not remove.visibleRegion().isEmpty()
+    QTest.mouseClick(remove, Qt.MouseButton.LeftButton)
+    assert editor.drafts[editor.index].name in editor.delete_dialog.text()
+    editor.delete_dialog.button(QMessageBox.StandardButton.Cancel).click()
     assert not hasattr(editor, "delete_trial_button")
     assert trials.add.height() == trials.visualItemRect(trials.item(0)).height()
     assert trials.add.y() > trials.visualItemRect(trials.item(0)).bottom()
@@ -19840,6 +19929,56 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
         assert window.preview_slot.rect().contains(frame.geometry())
         assert frame.target.width() >= 128
 
+    requests = []
+    dialog.visibility_requested.connect(lambda *args: requests.append(args))
+    height_with_timeline = dialog.preview_host.height()
+    side_with_timeline = window.preview_slot.frames["0"].target.width()
+    dialog.timeline_toggle.click()
+    app.processEvents()
+    assert dialog.timeline.isHidden()
+    assert dialog.splitter.sizes()[1] == 0
+    assert dialog.preview_host.height() > height_with_timeline
+    assert window.preview_slot.frames["0"].target.width() > side_with_timeline
+    assert all(
+        window.preview_slot.rect().contains(frame.geometry())
+        for frame in window.preview_slot.frames.values()
+    )
+    assert {
+        key: frame.target for key, frame in window.preview_slot.frames.items()
+    } == targets
+    window.apply_view(view)
+    assert dialog.timeline.isHidden()
+    dialog.timeline_toggle.click()
+    app.processEvents()
+    assert dialog.timeline.isVisible()
+    assert dialog.preview_host.height() == height_with_timeline
+    assert not requests
+
+
+def test_preview_timeline_visibility_preference(app, tmp_path):
+    from cephvr.gui.previews import PreviewDialog
+
+    settings = QSettings(str(tmp_path / "preview.ini"), QSettings.Format.IniFormat)
+    host = QWidget()
+    dialog = PreviewDialog(host, settings)
+    dialog.show()
+    app.processEvents()
+    assert dialog.timeline_toggle.isChecked()
+    dialog.timeline_toggle.click()
+    dialog.hide()
+    dialog.show()
+    app.processEvents()
+    assert dialog.timeline.isHidden()
+    restored = PreviewDialog(
+        host, QSettings(settings.fileName(), QSettings.Format.IniFormat)
+    )
+    assert not restored.timeline_toggle.isChecked()
+    assert restored.timeline.isHidden()
+    restored.timeline_toggle.click()
+    assert settings.value("windows/preview-timeline-visible", type=bool)
+    host.close()
+    host.deleteLater()
+
 
 @pytest.mark.parametrize("style", ["standard", "retro_console"])
 def test_preview_inline_controls_follow_camera_recording_choices(app, style):
@@ -19954,8 +20093,11 @@ def test_preview_timeline_speed_units_epochs_and_unresolved_order(app):
         (25, 60),
     ]
     assert {value for _, value in timeline.plot.traces[0].segments[0]} == {0}
+    assert len(timeline.plot.traces[0].segments) == 1
+    timeline.set_elapsed(10)
     assert {value for _, value in timeline.plot.traces[0].segments[1]} == {30}
-    assert {value for _, value in timeline.plot.traces[0].segments[2]} == {0}
+    timeline.set_elapsed(30)
+    assert {value for _, value in timeline.plot.traces[0].segments[-1]} == {0}
     assert timeline.plot.traces[0].unit == "deg/s"
     grouped = grouped_program(program)
     group = grouped.sequence[0].model_copy(update={"order": "shuffle_each_repetition"})

@@ -87,8 +87,15 @@ def measured_profiles(
         original = (root / mapping["geometric_profile"]["logical_path"]).resolve()
         if not original.is_relative_to(root):
             raise ValueError("Geometric profile escapes the accepted Assets folder")
-        with original.open("rb") as stream:
-            source = stream.read(1_048_577)
+        try:
+            with original.open("rb") as stream:
+                source = stream.read(1_048_577)
+        except OSError as error:
+            raise ValueError(
+                f"{face}: cannot read geometric calibration profile {original}. "
+                "Restore this calibration asset in the Protocol Assets folder "
+                "or select the folder containing it."
+            ) from error
         if len(source) > 1_048_576:
             raise ValueError("Geometric profile exceeds the 1 MiB GUI limit")
         profile = parse_json(

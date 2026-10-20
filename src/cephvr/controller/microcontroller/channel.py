@@ -196,14 +196,23 @@ class SerialChannel:
 
         line = bytearray()
         too_long = False
+        read_count = received_bytes = late_bytes = longest_read_ns = 0
+        total_read_ns = 0
+        unmatched_before = self.unmatched_replies
+        malformed_before = self.malformed_replies
         while self.clock() < command_deadline:
             remaining = remaining_seconds(command_deadline, clock=self.clock)
             self.port.set_timeouts(read_seconds=remaining, write_seconds=remaining)
+            read_started_ns = self.clock()
             try:
                 chunk = self.port.read(512)
             except Exception as exc:
                 raise ChannelTransportFailure(f"serial read failed: {exc}") from exc
             received_ns = self.clock()
+            read_count += 1
+            received_bytes += len(chunk)
+            longest_read_ns = max(longest_read_ns, received_ns - read_started_ns)
+            total_read_ns += received_ns - read_started_ns
             if self._cancel_requested.is_set():
                 raise ChannelCancelled(
                     "request cancellation completed after serial read returned"
@@ -213,6 +222,7 @@ class SerialChannel:
                     break
                 continue
             if received_ns >= command_deadline:
+                late_bytes += len(chunk)
                 break
             for byte in chunk:
                 if byte == 10:
@@ -257,7 +267,15 @@ class SerialChannel:
             self.last_exchange = exchange
             return exchange
         raise ChannelTimeout(
-            f"no matched complete acknowledgement for {verb} before deadline"
+            f"no matched complete acknowledgement for {verb} before deadline; "
+            f"elapsed_ms={(self.clock() - dispatched) / 1e6:.3f}, "
+            f"budget_ms={(command_deadline - dispatched) / 1e6:.3f}, "
+            f"write_ms={(write_completed - dispatched) / 1e6:.3f}, "
+            f"total_read_ms={total_read_ns / 1e6:.3f}, "
+            f"reads={read_count}, bytes={received_bytes}, late_bytes={late_bytes}, "
+            f"partial_bytes={len(line)}, longest_read_ms={longest_read_ns / 1e6:.3f}, "
+            f"unmatched={self.unmatched_replies - unmatched_before}, "
+            f"malformed={self.malformed_replies - malformed_before}"
         )
 
     def probe(self, verb: str, deadline_ns: int) -> Exchange:

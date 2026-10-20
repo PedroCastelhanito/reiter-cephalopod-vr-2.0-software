@@ -1,0 +1,55 @@
+{
+  "basis": "saved Pedro20min protocol and retained calibrated display snapshot; CPU preparation only; no native GPU allocation",
+  "seconds": 63.54988750000484,
+  "fixed_gpu_bytes": {
+    "visual_stimulus:99c6f4d8-3f17-4b20-80cf-d3c0b3ba8d6f:calibration:diagnostic_front": 88,
+    "visual_stimulus:99c6f4d8-3f17-4b20-80cf-d3c0b3ba8d6f:calibration:diagnostic_left": 88,
+    "visual_stimulus:99c6f4d8-3f17-4b20-80cf-d3c0b3ba8d6f:calibration:diagnostic_right": 88,
+    "visual_stimulus:99c6f4d8-3f17-4b20-80cf-d3c0b3ba8d6f:calibration:diagnostic_bottom": 88,
+    "visual_stimulus:preview": 42750584,
+    "visual_stimulus:99c6f4d8-3f17-4b20-80cf-d3c0b3ba8d6f:scene-surfaces": 191693824,
+    "visual_stimulus:a9c2dc51-7d08-473e-9d4e-fe1fce4c6391:calibration:diagnostic_front": 88,
+    "visual_stimulus:a9c2dc51-7d08-473e-9d4e-fe1fce4c6391:calibration:diagnostic_left": 88,
+    "visual_stimulus:a9c2dc51-7d08-473e-9d4e-fe1fce4c6391:calibration:diagnostic_right": 88,
+    "visual_stimulus:a9c2dc51-7d08-473e-9d4e-fe1fce4c6391:calibration:diagnostic_bottom": 88,
+    "visual_stimulus:a9c2dc51-7d08-473e-9d4e-fe1fce4c6391:scene-surfaces": 191693824
+  },
+  "fixed_total": 426138936,
+  "minimum_working_set": [
+    {
+      "initial": 82594400,
+      "held": 41297200,
+      "next": 41297200,
+      "minimum_images": 165188800
+    },
+    {
+      "initial": 82594400,
+      "held": 41297200,
+      "next": 41297200,
+      "minimum_images": 165188800
+    }
+  ],
+  "review_capture_gpu_bytes": 62668800,
+  "review_dimensions": [
+    1280,
+    720
+  ],
+  "minimum_with_review": 716665336,
+  "old_minimum_with_review": 1212231736,
+  "trial_count": 2,
+  "all_image_gpu_bytes": 19946547600,
+  "image_count": 1920,
+  "used_output_counts": [
+    1,
+    4
+  ],
+  "display_sha256": "8e0be6d3bd44f91993d0ac4792c67e9235f4b7ac457155b5d59995830b74e782",
+  "protocol_sha256": "fb0f9b552342221bc4704031c62b7f0ec7074d95a1f17d937b1230c63bd78aee",
+  "limitations": [
+    "Calculated CephVR reservations, not measured driver VRAM",
+    "Display profile from retained controller snapshot; native Setup must confirm unchanged calibration",
+    "Stimulus-video recording included for both trials at 1280x720 RGBA8 and 15 capture slots",
+    "CPU preparation used read-only file streams, not native protected handles or GPU allocations",
+    "Unused declared sources retain conservative four-output metadata; not included in minimum image working set"
+  ]
+}

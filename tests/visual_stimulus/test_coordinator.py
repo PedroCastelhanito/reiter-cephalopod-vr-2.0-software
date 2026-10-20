@@ -47,6 +47,28 @@ class Peer:
         return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
 
 
+async def test_renderer_report_failure_identifies_rpc_and_retains_deadline():
+    class FailingPeer(Peer):
+        async def receipt(self, method, request, *, deadline_ns):
+            assert deadline_ns == 123456789
+            raise TimeoutError("deadline exceeded")
+
+    bridge = ReportBridge(
+        asyncio.get_running_loop(),
+        FailingPeer(),
+        Peer(),
+        failed=lambda error: None,
+        maximum_bytes=1024,
+    )
+    with pytest.raises(
+        RuntimeError, match="ReportWorkerHeartbeat receipt failed"
+    ) as error:
+        await bridge._deliver("ReportWorkerHeartbeat", pb.HeartbeatReport(), 123456789)
+    assert isinstance(error.value.__cause__, TimeoutError)
+    assert "budget_ms=" in str(error.value)
+    assert "elapsed_ms=" in str(error.value)
+
+
 @pytest.mark.asyncio
 async def test_idle_renderer_heartbeat_carries_lifecycle_to_supervisor():
     clock = Clock()

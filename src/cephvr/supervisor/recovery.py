@@ -102,13 +102,13 @@ class RecoveryCoordinator:
             return report_rejected("INVALID_CLEANUP", str(exc))
         key = report.source.role, report.source.generation
         async with self.lock:
-            if not self.registration.same_work(
-                report.work
-            ) or not self.cleanup_verified(report):
-                return report_rejected(
-                    "INCOMPLETE_CLEANUP",
-                    "registered output/resource obligations or cleanup fence are unverified",
-                )
+            cleanup_failure = (
+                "cleanup work changed"
+                if not self.registration.same_work(report.work)
+                else self.cleanup_failure(report)
+            )
+            if cleanup_failure is not None:
+                return report_rejected("INCOMPLETE_CLEANUP", cleanup_failure)
             previous = self.state.cleanup.get(key)
             if (
                 previous
@@ -193,13 +193,18 @@ class RecoveryCoordinator:
         )
 
     def cleanup_verified(self, report: types.CleanupReport) -> bool:
-        if not self.registration.state.context or not report.trial_activity_stopped:
-            return False
+        return self.cleanup_failure(report) is None
+
+    def cleanup_failure(self, report: types.CleanupReport) -> str | None:
+        if not self.registration.state.context:
+            return "cleanup has no registered context"
+        if not report.trial_activity_stopped:
+            return "cleanup has no stopped-activity proof"
         catalogue = self.registration.state.catalogues.get(
             (report.source.role, report.source.generation)
         )
         if catalogue is None:
-            return False
+            return "cleanup has no registered resource catalogue"
         fenced = cleanup_command_fenced(
             report,
             self.registration.state.context,
@@ -209,8 +214,8 @@ class RecoveryCoordinator:
         )
         try:
             catalogue.verify_cleanup(report, cleanup_command_fenced=fenced)
-        except ResourceCatalogueError:
-            return False
+        except ResourceCatalogueError as exc:
+            return str(exc)
         expected = {
             output.output_key
             for output in self.registration.state.context.outputs
@@ -232,11 +237,20 @@ class RecoveryCoordinator:
                     for output in report.outputs
                 )
             ):
-                return False
+                return (
+                    "cleanup outputs differ from registered obligations; "
+                    f"expected={len(expected)}, observed={len(observed)}, "
+                    f"paired_spikeglx={context.paired_spikeglx}, "
+                    f"finalized={self.registration.state.topology is not None}, "
+                    f"absence_proven={all(cleanup_output_absence_proven(x) for x in report.outputs)}"
+                )
             # Preliminary registration has no output obligations yet; retain only
             # path-free facts that the worker proves were never created.
-            return True
-        return all(cleanup_output_discharged(observed[key]) for key in expected)
+            return None
+        for key in sorted(expected):
+            if not cleanup_output_discharged(observed[key]):
+                return f"cleanup output closure unverified: {key}"
+        return None
 
     async def get_recovery_state(
         self, request: wire.RecoveryQuery

@@ -1846,7 +1846,7 @@ def test_texture_recipe_numeric_boolean_values_match_boolean_flags() -> None:
         np.testing.assert_array_equal(numeric_pixels, boolean_pixels)
 
 
-def _resident_images(*, count=8):
+def _resident_images(*, count=8, batch=False):
     import threading
 
     from cephvr.visual_stimulus.rendering.image_residency import ImageResidency
@@ -1878,7 +1878,20 @@ def _resident_images(*, count=8):
         {("trial", key): index for index, key in enumerate(sources)},
     )
     budget = BoundedBudget(cpu_limit=192, gpu_limit=48)
-    cache = ImageResidency(schedule, budget, announce=lambda *args: None)
+    registrations = []
+    sealed = False
+
+    def register_many(items):
+        if sealed:
+            raise RuntimeError("cannot add resources after Ready")
+        registrations.append(items)
+
+    cache = ImageResidency(
+        schedule,
+        budget,
+        announce=lambda *args: None,
+        announce_batch=register_many if batch else None,
+    )
 
     class GPU:
         release_allowed = True
@@ -1907,7 +1920,11 @@ def _resident_images(*, count=8):
 
     gpu = GPU()
     aliases = {}
-    cache.attach(gpu, aliases, lambda *args: None)
+    cache.attach(gpu, aliases, lambda key, path: register_many(((key, path),)))
+    assert len(registrations) == (1 if batch else count)
+    assert sum(len(items) for items in registrations) == count
+    assert budget.usage.gpu_bytes == 0
+    sealed = True
     return cache, budget, gpu, gate, loads, aliases
 
 
@@ -1932,11 +1949,14 @@ def _resident_snapshot(asset, position=0):
     )
 
 
-def test_image_residency_holds_actual_texture_with_current_motion_and_bounded_reload():
+@pytest.mark.parametrize("batch", [False, True])
+def test_image_residency_holds_actual_texture_with_current_motion_and_bounded_reload(
+    batch,
+):
     import threading
     import time
 
-    cache, budget, gpu, gate, loads, aliases = _resident_images()
+    cache, budget, gpu, gate, loads, aliases = _resident_images(batch=batch)
     try:
         cache.prepare(time.perf_counter_ns() + 2_000_000_000)
         assert set(index for index, _ in loads) == {0, 1, 2}
@@ -1995,7 +2015,9 @@ def test_image_residency_cleanup_retains_gpu_reservation_until_fence_and_release
         gpu.release_allowed = False
         assert cache.release_gpu()
         assert budget.usage.gpu_bytes == 48
-        assert not cache.released_keys
+        assert cache.released_keys == {
+            f"visual_stimulus:gpu:resident-image:image-{index}" for index in range(3, 8)
+        }
         assert not aliases
         gpu.release_allowed = True
         gpu.fail_release = True
@@ -2004,13 +2026,95 @@ def test_image_residency_cleanup_retains_gpu_reservation_until_fence_and_release
         gpu.fail_release = False
         assert cache.release_gpu() == ()
         assert budget.usage.gpu_bytes == 0
-        assert len(cache.released_keys) == 3
+        assert len(cache.released_keys) == 8
     finally:
         gate.set()
         cache.close(time.perf_counter_ns() + 2_000_000_000)
         gpu.fail_release = False
         gpu.release_allowed = True
         cache.release_gpu()
+
+
+@pytest.mark.parametrize("physical", [False, True])
+def test_image_schedule_unions_only_consuming_outputs_across_trials(physical):
+    from cephvr.visual_stimulus.resources.image_schedule import ImageSchedule
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+
+    source = ImageSource("shared", 2, 3, 256, 2 * 3 * 16 * 4, lambda check: b"")
+    artifacts, bundles = [], {}
+    for trial, surface in (("first", "left"), ("second", "bottom")):
+        space = (
+            NS(kind="physical_surface", mappings=(NS(surface_id=surface),))
+            if physical
+            else NS(kind="visual_angle", surfaces=(surface,))
+        )
+        setting = NS(kind="image", asset_id="image", instance_id="layer", space=space)
+        artifacts.append(
+            NS(
+                identity=NS(trial_id=trial, resource_generation=trial),
+                display=NS(
+                    active_mappings=tuple(
+                        NS(surface_id=name, output_id=name)
+                        for name in ("front", "left", "right", "bottom")
+                    )
+                ),
+                epochs=(NS(settings=(setting,)),),
+            )
+        )
+        bundles[trial] = NS(image_sources={"image": source})
+    schedule = ImageSchedule.build(tuple(artifacts), bundles)
+    assert schedule.sources["shared"].output_ids == ("bottom", "left")
+    assert schedule.sources["shared"].gpu_bytes == 2 * 3 * 16 * 2
+    assert source.output_ids is None  # Preparation sources remain immutable.
+
+
+@pytest.mark.parametrize("selected", [("bottom",), ("left",), ("left", "bottom")])
+def test_image_upload_and_release_skip_unconsumed_output_contexts(selected):
+    from cephvr.visual_stimulus.rendering.image_gpu import ImageGpu
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+
+    allocated, writes, released = [], [], []
+
+    class Texture:
+        def __init__(self, name):
+            self.name = name
+
+        def write(self, data, **kwargs):
+            writes.append(self.name)
+
+        def release(self):
+            released.append(self.name)
+
+    class Context:
+        def __init__(self, name):
+            self.name = name
+
+        def texture(self, *args, **kwargs):
+            allocated.append(self.name)
+            return Texture(self.name)
+
+    names = ("front", "left", "right", "bottom")
+    gpu = ImageGpu(
+        {name: NS(context=Context(name), activate=lambda: None) for name in names}
+    )
+    source = ImageSource(
+        "image", 2, 3, 256, 96 * len(selected), lambda check: b"", selected
+    )
+    textures = []
+    for _ in range(5):
+        if gpu.upload(source, bytes(96), textures):
+            break
+    else:
+        pytest.fail("upload did not finish")
+    assert allocated == list(selected)
+    assert writes == list(selected)
+    for index, name in enumerate(names):
+        assert (index < len(textures) and textures[index] is not None) == (
+            name in selected
+        )
+    gpu.release(textures, [])
+    assert released == list(reversed(selected))
+    assert textures == []
 
 
 def test_image_upload_submits_bounded_chunks_without_repeating_color_conversion():

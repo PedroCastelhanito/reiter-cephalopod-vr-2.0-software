@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.components import button, combo, label
+from cephvr.gui.formatting import duration
 from cephvr.gui.trial_preview_canvas import PreviewCanvas
 from cephvr.gui.trial_preview_media import PreviewMedia
 from cephvr.gui.trial_preview_plan import PreviewPlan
@@ -155,7 +156,7 @@ class TrialPreview(QDialog):
             canvas.present(layers, local, scene.background_linear_rgb)
         self.rig_view.invalidate_frames()
         self.status.setText(
-            f"{self.plan.index + 1} / {len(self.plan.epochs)} · {epoch.source_epoch_id.replace('_', ' ')} · {self.time_ns / 1e9:.2f} / {self.plan.total_ns / 1e9:g} s"
+            f"{self.plan.index + 1} / {len(self.plan.epochs)} · {epoch.source_epoch_id.replace('_', ' ')} · {duration(self.time_ns / 1e9)} / {duration(self.plan.total_ns / 1e9)}"
         )
         self.slider.blockSignals(True)
         self.slider.setValue(self.time_ns * 10000 // self.plan.total_ns)

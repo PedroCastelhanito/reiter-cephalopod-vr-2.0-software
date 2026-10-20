@@ -795,6 +795,63 @@ def test_manual_command_installs_current_draft_but_rejects_stale_or_owned_change
     assert configuration.revision == 3
 
 
+@pytest.mark.parametrize(
+    "case", ["clean", "pending", "owned", "device_change", "no_session"]
+)
+def test_manual_configuration_restores_camera_selections_after_session_cleanup(case):
+    from cephvr.acquisition.coordinator.manual_configuration import ManualConfiguration
+
+    identity = CoordinatorIdentity(
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=_id()
+        ),
+        process=control.ProcessIdentity(),
+        controller=control.ProcessIdentity(role="controller", generation=_id()),
+        supervisor=control.ProcessIdentity(),
+        tracking=control.ProcessIdentity(),
+    )
+    settings = control.AcquisitionSettings()
+    settings.tracking.enabled = False
+    settings.tracking.device.device_id = "tracking-camera"
+    configuration = ConfigurationRecord(
+        settings, runtime_pb2.AcquisitionFilePolicies(), revision=2
+    )
+    session = SessionRecord(
+        work=control.WorkContext(session=control.SessionContext(session_id=_id())),
+        operation=control.OperationContext(command_id=_id()),
+        configuration_revision=2,
+        required_cameras=set(),
+        cleanup_complete=case != "pending",
+    )
+    owner = ManualConfiguration(
+        configuration,
+        identity,
+        SessionSlot(current=None if case == "no_session" else session),
+        SimpleNamespace(owns_hardware=lambda: case == "owned"),
+        lambda: 10,
+    )
+    request = wire.AcquisitionCameraCommand(
+        kind=wire.CAMERA_COMMAND_KIND_START_PREVIEW,
+        configuration_revision=2,
+    )
+    request.command.command_id = _id()
+    request.command.parent_operation.command_id = _id()
+    request.command.issuer.CopyFrom(identity.controller)
+    request.command.target.CopyFrom(identity.backend)
+    request.settings.CopyFrom(settings)
+    request.settings.tracking.enabled = True
+    if case == "device_change":
+        request.settings.tracking.device.device_id = "different-camera"
+    result = owner.install(request, 100)
+    if case == "clean":
+        assert result is None
+        assert configuration.settings.tracking.enabled
+        assert configuration.revision == 2
+    else:
+        assert result.result == control.COMMAND_RESULT_REJECTED
+        assert not configuration.settings.tracking.enabled
+
+
 @pytest.mark.parametrize("outcome", ["confirmed", "expired", "cancelled"])
 async def test_confirmation_wait_rechecks_early_timeout_against_original_deadline(
     monkeypatch: pytest.MonkeyPatch, outcome: str

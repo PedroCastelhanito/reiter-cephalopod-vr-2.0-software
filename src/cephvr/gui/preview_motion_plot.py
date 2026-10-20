@@ -14,6 +14,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QWidget
 
+from cephvr.gui.formatting import duration
 from cephvr.gui.preview_motion_data import MotionEpoch, MotionTrace, PolarSample
 from cephvr.gui.theme import colors_for
 
@@ -159,11 +160,17 @@ class MotionPlot(QWidget):
 
         for axis, unit in enumerate(units):
             painter.setPen(QColor(colors.muted))
+            painter.save()
+            painter.translate(
+                12 if axis == 0 else self.width() - 12, bounds.center().y()
+            )
+            painter.rotate(-90)
             painter.drawText(
-                QRectF(0 if axis == 0 else bounds.right() + 5, 4, 60, 20),
+                QRectF(-bounds.height() / 2, -10, bounds.height(), 20),
                 Qt.AlignmentFlag.AlignCenter,
                 unit,
             )
+            painter.restore()
             for value in scales[unit]:
                 y = point(start, value, unit).y()
                 if axis == 0:
@@ -179,15 +186,21 @@ class MotionPlot(QWidget):
                     else Qt.AlignmentFlag.AlignLeft,
                     f"{value:g}",
                 )
-        for tick_time in range(max(0, ceil(start / 5) * 5), floor(end / 5) * 5 + 1, 5):
+        label_width = painter.fontMetrics().horizontalAdvance(duration(max(0, end))) + 8
+        interval = max(5, ceil(label_width * (end - start) / bounds.width() / 5) * 5)
+        for tick_time in range(
+            max(0, ceil(start / interval) * interval),
+            floor(end / interval) * interval + 1,
+            interval,
+        ):
             x = point(tick_time, 0).x()
             painter.setPen(QColor(colors.muted))
             painter.drawText(
-                QRectF(x - 28, bounds.bottom() + 5, 56, 20),
+                QRectF(x - 40, bounds.bottom() + 5, 80, 20),
                 Qt.AlignmentFlag.AlignCenter,
-                f"{tick_time:g}",
+                duration(tick_time),
             )
-        painter.drawText(self.width() - 70, self.height() - 2, "Time (s)")
+        painter.drawText(self.width() - 125, self.height() - 2, "Time (hh:mm:ss)")
         painter.save()
         painter.setClipRect(bounds.adjusted(0, -2, 0, 2))
         for trace in self.traces:
@@ -214,9 +227,9 @@ class MotionPlot(QWidget):
             x = point(self.elapsed, 0).x()
             painter.setPen(QPen(QColor(colors.coral), 2))
             painter.drawText(
-                QRectF(min(max(x - 32, bounds.left()), bounds.right() - 64), 3, 64, 18),
+                QRectF(min(max(x - 40, bounds.left()), bounds.right() - 80), 3, 80, 18),
                 Qt.AlignmentFlag.AlignCenter,
-                f"{self.elapsed:g} s",
+                duration(self.elapsed),
             )
 
 

@@ -53,7 +53,7 @@ max_pending_payload_bytes = 67_108_864
 recovery_s = 10
 
 [timeouts.setup]
-initial_s = 60
+initial_s = 180
 
 [timeouts.setup_cancel]
 # One shared cleanup deadline for all participants in the cancelled Setup attempt.

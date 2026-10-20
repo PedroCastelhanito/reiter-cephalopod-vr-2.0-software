@@ -419,14 +419,18 @@ class AcquisitionResolution:
                     "acquisition readback failed pure configuration validation"
                 )
             async with self.lifecycle.lock:
-                if (
-                    self.lifecycle.attempt is not attempt
-                    or attempt.cancel_requested
-                    or self.configuration_state.revision != requested_revision
-                    or self.clock() > attempt.setup_deadline_ns
-                ):
+                if self.lifecycle.attempt is not attempt or attempt.cancel_requested:
                     raise RuntimeError(
-                        "acquisition readback arrived after Setup or revision changed"
+                        attempt.closure.reason
+                        or "Setup was cancelled before acquisition readback"
+                    )
+                if self.configuration_state.revision != requested_revision:
+                    raise RuntimeError(
+                        "configuration revision changed during acquisition readback"
+                    )
+                if self.clock() > attempt.setup_deadline_ns:
+                    raise RuntimeError(
+                        "Setup deadline expired during acquisition readback"
                     )
                 # C12: the candidate stays aside until acquisition accepts it.
                 accepted = preserve_camera_selections(

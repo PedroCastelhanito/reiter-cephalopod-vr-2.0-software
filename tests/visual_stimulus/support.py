@@ -254,7 +254,7 @@ class Preparation:
         self.artifact = artifact
         self.retired_resource_catalogues = 0
 
-    def prepare_trials(self, request, announce, deadline_ns):
+    def prepare_trials(self, request, announce, deadline_ns, *, announce_batch=None):
         return (self.artifact,)
 
     def cleanup(self, deadline_ns):
