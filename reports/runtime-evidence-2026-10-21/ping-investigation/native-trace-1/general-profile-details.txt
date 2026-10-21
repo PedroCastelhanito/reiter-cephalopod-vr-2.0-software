@@ -1,0 +1,82 @@
+
+Microsoft Windows Performance Recorder Version 10.0.26100 (CoreSystem)
+Copyright (c) 2024 Microsoft Corporation. All rights reserved.
+
+Profile			: GeneralProfile.Verbose.Memory
+
+
+Collector Name		: WPR_initiated_WprApp_WPR System Collector
+Buffer Size (KB)	: 1024
+Number of Buffers	: 3151
+Providers
+System Keywords
+	CpuConfig
+	CSwitch
+	DiskIO
+	DiskIOInit
+	DPC
+	HardFaults
+	IdealProcessor
+	Interrupt
+	Loader
+	MemoryInfo
+	MemoryInfoWS
+	ProcessCounter
+	Power
+	ProcessThread
+	ReadyThread
+	SampledProfile
+	ThreadPriority
+	WDFDPC
+	WDFInterrupt
+System Stacks
+	DiskReadInit
+	DiskWriteInit
+	DiskFlushInit
+	ProcessCreate
+	ThreadDCEnd
+	CSwitch
+	ReadyThread
+	SampledProfile
+
+Collector Name		: WPR_initiated_WprApp_WPR Event Collector
+Buffer Size (KB)	: 1024
+Number of Buffers	: 630
+Providers
+	43ac453b-97cd-4b51-4376-db7c9bb963ac: 0x800800000: 0x05     
+	b7a19fcd-15ba-41ba-a3d7-dc352d5f79ba: : 0xff     
+	e7ef96be-969f-414f-97d7-3ddb7b558ccc: 0x2000: 0xff     
+	Microsoft-Antimalware-AMFilter: : 0xff     
+	Microsoft-Antimalware-Engine: : 0x05     
+	Microsoft-Antimalware-Protection: : 0xff     
+	Microsoft-Antimalware-RTP: : 0xff     
+	Microsoft-Antimalware-Service: : 0xff     
+	Microsoft-JScript: 0x1: 0xff     
+	Microsoft-Windows-BrokerInfrastructure: 0x1: 0xff     
+	Microsoft-Windows-COMRuntime: 0x3: 0xff     
+	Microsoft-Windows-DotNETRuntime: 0x20098: 0x05     
+	Microsoft-Windows-Immersive-Shell: 0x100000: 0x04     
+	Microsoft-Windows-Kernel-EventTracing: 0x40: 0x0f     
+	Microsoft-Windows-Kernel-Power: 0x4: 0xff     
+	Microsoft-Windows-Kernel-Processor-Power: 0x2c7: 0xff     
+	Microsoft-Windows-NCSI: : 0xff     
+	Microsoft-Windows-Performance-Recorder-Control: 0x10000: 0xff     
+	Microsoft-Windows-ProcessStateManager: : 0xff     
+	Microsoft-Windows-RPC: : 0x04 : Stack    
+	Microsoft-Windows-RPCSS: : 0x04 : Stack    
+	Microsoft-Windows-Search-Core: : 0xff     
+	Microsoft-Windows-Win32k: 0x26a000: 0xff : Stack    
+	Microsoft-Windows-WLAN-AutoConfig: 0x200: 0xff     
+	Microsoft-WindowsPhone-CoreUIComponents: 0x2000000: 0xff     
+CaptureState Providers on Save
+	43ac453b-97cd-4b51-4376-db7c9bb963ac: 0x800800000: 0x05
+	e7ef96be-969f-414f-97d7-3ddb7b558ccc: 0x80000: 0xff
+	Microsoft-JScript: 0x4: 0xff
+	Microsoft-Windows-DotNETRuntime: 0x20118: 0x05
+	Microsoft-Windows-DotNETRuntimeRundown: 0x20118: 0xff
+	Microsoft-Windows-Kernel-Power: 0x4: 0xff
+	Microsoft-Windows-Kernel-Processor-Power: 0xffffffffffffffff: 0xff
+	Microsoft-Windows-Kernel-StoreMgr: 0x10: 0xff
+	Microsoft-Windows-ReadyBoostDriver: 0x10: 0xff
+	Microsoft-Windows-UserModePowerService: 0xffffffffffffffff: 0xff
+	Microsoft-Windows-Win32k: 0x80000: 0xff

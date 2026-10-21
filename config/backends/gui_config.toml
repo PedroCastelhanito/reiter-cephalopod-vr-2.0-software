@@ -2,7 +2,7 @@
 # Durations ending in _s are seconds.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/gui_policy.toml; versions must match.
-policy_version = 6
+policy_version = 7
 
 [controller_reconnect]
 # Retry immediately, then after 1, 2, and 5 seconds. Continue at the last delay

@@ -1,0 +1,169 @@
+{
+  "captured_utc": "2026-10-21T06:09:53.699456+00:00",
+  "status": "Non-device diagnostic increment complete; historical PING and failed cleanup causes remain unproven. No production or live rig behavior was changed.",
+  "source_provenance": "source-comparison.json",
+  "historical_timeline": "historical-timeline.json",
+  "historical_findings": [
+    "The failing run already included the current focused COMMTIMEOUTS write update and buffered read implementation. Serial channel, health and worker source fingerprints match.",
+    "Observed state publication origin: first SettingUp. PING failure at+3317.104ms; CancelSetup Cleaning at+3334.631ms; supervisor visual_stimulus heartbeat loss at+12479.652ms; Configuration cleanup=false at+13168.442ms. These are publication/retained-error times, not exact driver/MCU ingress times.",
+    "Reported PING transaction114.451ms against99.979ms budget:65.560ms write plus48.864ms read,125bytes all late,zero partial/unmatched/malformed. Late data is rejected before parsing, so contents and firmware correctness are not established.",
+    "Heartbeat loss precedes CancelSetup completion by about689ms. Exact original worker deadline, request/context and failure.message were not retained; generic INVALID_REQUEST alone cannot identify which worker guard rejected the command.",
+    "Already-expired outbound deadlines are rejected before RPC as TimeoutError; expired transport ingress is DEADLINE_EXCEEDED. Therefore an expired cleanup deadline alone does not directly explain INVALID_REQUEST. Post-auth expiry is one possible mechanism, not established history.",
+    "Historical direct supervisor GetRecoveryState query was denied for CLI role. Controller-only credentials were not impersonated or bypassed; complete obligation state remains unavailable."
+  ],
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_microcontroller_protocol.py tests/controller/test_microcontroller_owner.py tests/acquisition/test_worker_admission.py tests/supervisor/test_shutdown.py -q",
+    "evidence": "focused-owners.txt",
+    "result": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "1",
+      "tests": "189",
+      "time": "1.930",
+      "timestamp": "2026-10-21T15:09:05.083091+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "new_scenarios": [
+      "Synthetic65.560ms write+48.864ms read rejects complete late matched and malformed lines without parsing or acknowledgement. This tests semantics, not latency cause.",
+      "Actual worker post-auth _admit boundary accepts a valid full-identity same-session supervisor command before deadline; controlled expiry during queue reservation yields INVALID_REQUEST/new command deadline has already expired, cancels its ticket and creates no ledger entry. Authentication is explicitly replaced by the existing test boundary, not a transport-authenticated integration test."
+    ],
+    "fixture_refinement": "Initial worker fixture omitted max_retained_views and was rejected as RESOURCE_EXHAUSTED before the intended guard. Adopted limit restored; final focused runs pass. The final188-test run includes valid session controller_generation.",
+    "sandbox_attempt": "Initial sandbox pytest stalled and was interrupted without a result. Elevated isolated fixture tests completed.",
+    "static": "Changed-test Ruff and format2 pass; scoped whitespace passes; backend boundaries742/zero with existing size advisories. No production typing changes."
+  },
+  "offline_profile": {
+    "evidence": "controller-gil-profile.json",
+    "command": ".venv/Scripts/python.exe reports/runtime-evidence-2026-10-21/ping-investigation/profile_controller.py",
+    "scope": "Offline same-process retained-config susceptibility probe, not historical causality or serial/rig timing acceptance.",
+    "watch_scope": "Historical actual watcher count was not retained. One HeadlessClient watch is established by the helper; a live GUI process does not prove an active GUI watch. Zero/one synthetic watchers tested.",
+    "key_results": [
+      {
+        "label": "dummy:build_snapshot",
+        "iterations": 1000,
+        "call_max_ms": 0.1981,
+        "call_median_ms": 0.0433,
+        "observer_gap_max_ms": 31.7236,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 5
+      },
+      {
+        "label": "dummy:serialize_snapshot",
+        "iterations": 1000,
+        "call_max_ms": 0.17,
+        "call_median_ms": 0.0189,
+        "observer_gap_max_ms": 32.2069,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 6
+      },
+      {
+        "label": "dummy:publish_zero_watchers",
+        "iterations": 1000,
+        "call_max_ms": 0.0069,
+        "call_median_ms": 0.0001,
+        "observer_gap_max_ms": 16.0957,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 4
+      },
+      {
+        "label": "dummy:publish_one_watcher",
+        "iterations": 1000,
+        "call_max_ms": 0.2441,
+        "call_median_ms": 0.0095,
+        "observer_gap_max_ms": 16.6275,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 5
+      },
+      {
+        "label": "dummy:validate_program_models",
+        "iterations": 5,
+        "call_max_ms": 2.3825,
+        "call_median_ms": 0.4532,
+        "observer_gap_max_ms": 16.0364,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 4
+      },
+      {
+        "label": "full:build_snapshot",
+        "iterations": 1000,
+        "call_max_ms": 1.0312,
+        "call_median_ms": 0.1769,
+        "observer_gap_max_ms": 31.9866,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 10
+      },
+      {
+        "label": "full:serialize_snapshot",
+        "iterations": 1000,
+        "call_max_ms": 2.4224,
+        "call_median_ms": 0.5286,
+        "observer_gap_max_ms": 32.1934,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 23
+      },
+      {
+        "label": "full:publish_zero_watchers",
+        "iterations": 1000,
+        "call_max_ms": 0.0064,
+        "call_median_ms": 0.0001,
+        "observer_gap_max_ms": 16.0566,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 4
+      },
+      {
+        "label": "full:publish_one_watcher",
+        "iterations": 1000,
+        "call_max_ms": 0.3447,
+        "call_median_ms": 0.1742,
+        "observer_gap_max_ms": 31.9885,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 10
+      },
+      {
+        "label": "full:validate_program_models",
+        "iterations": 5,
+        "call_max_ms": 57.0102,
+        "call_median_ms": 46.4224,
+        "observer_gap_max_ms": 34.9498,
+        "observer_gaps_over_100ms": 0,
+        "observer_samples": 11
+      }
+    ],
+    "assessment": "This bounded offline probe does not reproduce a100ms observer gap or the114ms PING failure. Full model validation is larger than dummy validation but does not establish historical GIL causality. Requested1ms observer waits commonly show Windows scheduling/timer granularity near16ms.",
+    "initial_attempt": "Evidence helper import path initially lacked repository tests; corrected helper only and retained first failure text."
+  },
+  "limits": [
+    "No device/COM command, restart, full-workload retry, firmware, serial deadline/retry change or production edit.",
+    "Historical worker actual context could differ from the valid synthetic same-session case. Wrong scope or another command-store guard is not excluded.",
+    "Preserving full rejection/deadline/context and serial subcall/thread CPU diagnostics plus a controlled managed retest requires the pending owner-authorized next phase."
+  ],
+  "current_test_hashes": {
+    "tests/controller/test_microcontroller_protocol.py": "c1e7673439189926781c1113ee188e588272e6b322d8ee3da7a31b11373d2b3c",
+    "tests/acquisition/test_worker_admission.py": "224900f8affe47518e1f0d52d8bd7f84ab273cc7b1f78796330d6c8b228bfccb"
+  },
+  "current_dirty_provenance": "current-dirty-provenance.json",
+  "concurrency_limit": "Concurrent preview/configuration changes and an externally replaced runtime were observed by the parent chat. This investigation did not issue live commands or attribute the other runtime emergency. A later retest must freshly bind exact source and runtime identities.",
+  "finished_utc": "2026-10-21T06:10:17.190710+00:00",
+  "static_commands": [
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check tests/controller/test_microcontroller_protocol.py tests/acquisition/test_worker_admission.py",
+      "outcome": "pass",
+      "evidence": "ruff-final.txt"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff format --check tests/controller/test_microcontroller_protocol.py tests/acquisition/test_worker_admission.py",
+      "outcome": "2 files already formatted",
+      "evidence": "format-final.txt"
+    },
+    {
+      "command": "git diff --check -- tests/controller/test_microcontroller_protocol.py tests/acquisition/test_worker_admission.py",
+      "outcome": "pass",
+      "evidence": "whitespace-final.txt"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "outcome": "742 modules,0 violations;existing cohesion warnings",
+      "evidence": "boundaries.txt"
+    }
+  ]
+}

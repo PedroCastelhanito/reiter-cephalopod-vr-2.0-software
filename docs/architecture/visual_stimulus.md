@@ -25,8 +25,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 30
+**Status:** Accepted · **Revision:** 31
 
+- Apply G01's 20 Hz preview cadence before optional composition and synchronization;
+  slower renderer batches show at their source rate. Hidden/minimized viewers skip
+  this work; reopen permits the first frame immediately.
 - Visible stimulus previews report E08 PreviewRates using completed renderer batches and
   successful preview swaps. The GL owner only queues optional reports through its
   existing bounded bridge; telemetry cannot introduce a required report or block
@@ -128,7 +131,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v02"></a>
 ### V02 — Structured trial stimulus programs
 
-**Status:** Accepted · **Revision:** 14
+**Status:** Accepted · **Revision:** 15
 
 - Author each trial as reusable scenes arranged in timed epochs, with groups for
   repetitions and condition-table parameter sweeps. A scene combines simultaneous
@@ -161,6 +164,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   Resolve linear direction through a common unfolded Bottom plane using calibrated
   surface axes, preserving physical speed around corners. Output corrections and
   enablement never change that geometry. Links do not promise seamless imagery.
+- G01 rig-direction authoring encodes constant whole-layer translation in the
+  existing mapped X/Y fields, independent of texture rotation; legacy phase drift
+  remains supported. Linked references accept either translation or phase drift,
+  never both. Followers retain their existing phase-rate binding.
 - Linked motion supports constant drift or constant rotation in separate epochs,
   single-screen instances, constant independent tile dimensions and uniform-scale,
   orientation-preserving surface maps. Reject chains/cycles, inactive references,
@@ -446,7 +453,14 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v08"></a>
 ### V08 — Group ordering and repetition
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 7
+
+- New GUI variation rules declare rig coordinates under G01. Missing/false
+  `rig_coordinates` preserves legacy local speed/direction sampling, including saved
+  draft reconstruction. Rig-angle version2 uses G01’s Right0°/Back−90° convention;
+  missing/version1 retains earlier Back0°/Right90° declarations. New GUI rules write
+  version2; saved drafts retain their declared version. Reject mixed coordinate conventions for one instance's
+  paired Speed/Direction rules; random draw identities and ordering stay unchanged.
 
 - Each group uses authored order (default) or a fresh shuffle without replacement per
   repetition. Every selected condition row or child block appears exactly once per

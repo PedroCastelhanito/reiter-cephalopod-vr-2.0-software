@@ -185,7 +185,7 @@ and verification remain in the
 <a id="a03"></a>
 ### A03 — Frame transfer between processes
 
-**Status:** Accepted · **Revision:** 34
+**Status:** Accepted · **Revision:** 35
 
 - Pixels reach other processes (tracking, preview viewers) through coordinator-owned
   host shared memory, never control gRPC. Inside a camera worker, capture hands frames
@@ -249,7 +249,7 @@ and verification remain in the
   preparation.
 - One seqlock latest-frame slot serves each camera preview: manual Configuration
   preview (A10) and, when enabled, session preview. Session preview is capped by
-  `[preview] session_preview_max_hz` (default **10**, configurable; 0 disables it):
+  `[preview] session_preview_max_hz` (default **20**, configurable; 0 disables it):
   the capture thread copies the newest valid in-trial frame at most at that rate.
   Viewer attachment never restarts capture or pulses; preview never gates recording,
   tracking, Ready or trial start and creates no recordings. Allocate after confirmed
@@ -674,7 +674,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 71
+**Status:** Accepted · **Revision:** 72
 
 - Visible native camera previews report E08 PreviewRates from existing latest-frame IDs
   and acquisition timestamps, without adding capture-worker messages. One queued
@@ -753,7 +753,7 @@ stamping/filtering and the mappings still need runtime implementation.
 
 - Manual Preview is explicit Configuration work; stop capture/pulses and confirm it
   before Setup. An optional low-rate session preview (A03, `session_preview_max_hz`,
-  default 10, configurable, 0 = off) shows in-trial frames only and never changes
+  default 20, configurable, 0 = off) shows in-trial frames only and never changes
   capture or pulses.
 - External preview attachment goes to acquisition through the controller. Terminal
   consumer proofs also follow [E08](system-contracts.md#e08)'s independent and
@@ -762,7 +762,8 @@ stamping/filtering and the mappings still need runtime implementation.
   through A03's distinct ordered ring without another camera/SDK owner. Exact
   diagnostic/preview identities and confirmed attachment/release bind the consumer;
   stop diagnostics and confirm release before Setup or source replacement.
-- Display newly arriving frames without a software FPS cap, always the newest
+- Display newly arriving frames at up to G01's 20 Hz, using the source rate when
+  slower, always the newest
   available, skipping superseded images if rendering falls behind. No display backlog
   or busy polling. Camera rate is unchanged and not every acquired frame is guaranteed
   to reach the screen.
@@ -978,7 +979,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 52
+**Status:** Accepted · **Revision:** 53
 
 **Board and firmware**
 
@@ -1072,7 +1073,7 @@ hardware information and later implementation; no new deferral is implied.
   keeping the original deadline; they are not fresh health evidence. ERR uses
   symbolic uppercase underscore codes plus structured context, explained by host
   clients.
-- Defaults: **115200 baud**, **100 ms acknowledgement timeout**, configurable before
+- Defaults: **115200 baud**, **200 ms acknowledgement timeout**, configurable before
   Setup. One outstanding request at a time, PING included. Earlier operation/trial
   deadlines win. OK follows application (including any authorized restart) and
   resulting state, not early acceptance. MCU state proves neither frame receipt nor
@@ -1101,7 +1102,8 @@ hardware information and later implementation; no new deferral is implied.
   deadlines, overlap requests or disable the watchdog to resolve a conflict.
 - Validate the entire Abort stop path at preparation: one outstanding request, OFF,
   camera stopping/drain and report delivery must fit the original shared allowance.
-  After two 100 ms command budgets, the default remaining **50 ms** is reserved for
+  Within the default 450 ms stop-report allowance, after two 200 ms command budgets,
+  the remaining **50 ms** is reserved for
   camera completion/reporting; an allocation, not a sleep or measured guarantee.
   Reject incompatible settings rather than extend the shared deadline. Rig timing
   evidence is pending; detailed checks/bindings belong to the MCU contract.

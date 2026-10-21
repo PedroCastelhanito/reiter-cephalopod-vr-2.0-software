@@ -1,5 +1,41 @@
 # Visual Stimulus status
 
+Oct21 `stimulus-rig-direction-authoring`: [G01](../docs/architecture/gui.md#g01)rev289 / G02rev106,
+[V02](../docs/architecture/visual_stimulus.md#v02)rev15 and
+[V08](../docs/architecture/visual_stimulus.md#v08)rev7 implemented for physical-screen
+controls, batches/conditions and new numeric variations. Right0°/Front90°/Left180°/
+Back−90° now govern authoring and moving dial labels/readouts; arrow alignment is
+unchanged. Saved rig-angle version1 rules/drafts retain Back0°, new rules write
+version2, and mixed versions are rejected. Existing mapped layer
+translation keeps rig direction independent of texture rotation; linked references
+accept that translation while followers retain calibrated phase binding. Untouched
+legacy rates/functions and saved local random rules retain their semantics; imported
+visual-angle controls remain explicitly angular. Shared incompatible screen frames
+use per-projector editing. Existing linked drift/spin and centered spin-pivot limits
+remain enforced.
+Validation:216 preview/configuration/compilation/rendering tests and44 selected GUI
+checks pass; current angle revision Ruff/format13, Win32 mypy214, schema-model equality and
+boundaries748/zero pass. Existing size advisories: the parameter form remains the
+assembly owner; new conversion logic is in focused helpers, with duplicate motion
+parsing removed from the widget. No dependencies or renderer state added. Scoped
+whitespace passes; full-tree check flags pre-existing launcher whitespace. Native
+cardinal-direction/retained-state acceptance remains in the existing
+[rig checklist](rig-verification.md); running GUI was not restarted.
+
+Oct21 GUI subject-coordinate polar previews reuse V02 calibrated unfolding without
+changing renderer motion. G01rev282/G02rev103 and validation/limitations are recorded
+in [Runtime](runtime.md):78 preview/compilation checks pass; native label readability
+and running-GUI acceptance remain pending.
+
+Oct21 `preview-20hz`: [V01](../docs/architecture/visual_stimulus.md#v01) revision31
+applies G01's20 Hz cadence before optional preview composition and GL synchronization.
+Slower batches display at their source rate; hidden/minimized previews skip this
+work. Projector swaps and scientific recording retain their existing path. Shared
+pacing and native-owner visibility tests are included in373 passing local checks;
+Ruff, Win32 mypy and boundary checks pass. Native live cadence remains unmeasured.
+ARCH-002 review keeps pacing in the shared helper and one gate in the large native
+GL owner; no separable responsibility or dependency is added there.
+
 Oct21 current rig validation: video On60s → Off Abort5s → On60s retains required
 stimulus scientific evidence in all modes, with no encoder in Off; all six combined
 videos decode/count exactly, zero requested/actual image mismatches and zero capture

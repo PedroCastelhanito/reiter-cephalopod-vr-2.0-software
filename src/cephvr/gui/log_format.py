@@ -19,10 +19,12 @@ _SUBJECTS = {
 
 
 def terminal_body(message: str) -> str:
-    """Split `Subject · step` into an aligned subject column and its step."""
-    subject, separator, step = message.partition(" · ")
-    if not separator:
+    """Format a subject column, using GUI for messages without a subject."""
+    if CATEGORY_PREFIX.match(message):
         return message
+    subject, separator, step = message.partition(" · ")
+    if not separator or not subject.strip():
+        subject, step = "GUI", message
     tag = f"[{_SUBJECTS.get(subject, subject.upper())}]"
     return f"{tag:<{SUBJECT_WIDTH + 2}} {step}"
 

@@ -1,0 +1,11 @@
+{
+  "stamp": {
+    "utc": "2026-10-21T06:59:30.021714+00:00",
+    "perf_counter_ns": 588408542373100,
+    "qpc": 5884085423490,
+    "qpc_frequency": 10000000
+  },
+  "admin": true,
+  "status": "\nMicrosoft Windows Performance Recorder Version 10.0.26100 (CoreSystem)\nCopyright (c) 2024 Microsoft Corporation. All rights reserved.\n\nWPR is not recording\n",
+  "scope": "fixed owned WPR CPU profile only"
+}

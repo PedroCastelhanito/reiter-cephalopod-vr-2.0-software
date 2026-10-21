@@ -27,7 +27,7 @@ from cephvr.shared.clock import host_time_ns
 from cephvr.shared.pixels.preparer import PixelPreparer, PreparedImage
 from cephvr.shared.pixels.types import PixelLayout
 from cephvr.shared.preview_geometry import PreviewGeometryGuard
-from cephvr.shared.preview_rates import PreviewRateMeter
+from cephvr.shared.preview_rates import PreviewPacer, PreviewRateMeter
 
 
 def display_array(image: PreparedImage, numpy: Any) -> Any:
@@ -46,7 +46,7 @@ class HighGuiPreview:
     """Share one HighGUI owner; wait for this viewer's frames independently.
 
     The bounded event wait pumps native messages even without frames. Arriving
-    frames wake it immediately; neither a software rate limiter nor a backlog is used.
+    frames wake it immediately; new images are paced at 20 Hz without a backlog.
     """
 
     def __init__(
@@ -216,6 +216,7 @@ class HighGuiPreview:
             self.visible = True
             last = -1
             meter = PreviewRateMeter()
+            pacer = PreviewPacer()
             frame_wakeup = True
             latest: Any = None
             while not self._stop.is_set() and not ring.retired:
@@ -302,8 +303,13 @@ class HighGuiPreview:
                     if current_run != run_id:
                         run_id, last = current_run, -1
                         meter = PreviewRateMeter()
+                        pacer = PreviewPacer()
                 count = ring.published_count if frame_wakeup and run_id.int else 0
                 if count > 0 and count - 1 != last:
+                    if not pacer.ready(now_ns):
+                        yield ring
+                        frame_wakeup = True
+                        continue
                     sequence = count - 1
                     read = ring.read_into(sequence, pixels, expected_run_id=run_id)
                     if read.status == "frame":

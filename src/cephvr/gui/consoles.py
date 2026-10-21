@@ -185,7 +185,14 @@ class LogConsole(Console):
         self._last_body = None
         self._category_width = SUBJECT_WIDTH + 2
         self._actions.clear()
-        super().setPlainText(text)
+        bodies = [terminal_body(line) for line in (text or "").splitlines() if line]
+        for body in bodies:
+            prefix = CATEGORY_PREFIX.match(body)
+            if prefix is not None:
+                self._category_width = max(self._category_width, len(prefix[1]))
+        super().setPlainText(
+            "\n".join(terminal_row(self._align_categories(body)) for body in bodies)
+        )
 
     def clear(self) -> None:
         self._last_body = None

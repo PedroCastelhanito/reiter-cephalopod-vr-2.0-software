@@ -1,0 +1,12 @@
+{
+  "pre_live_equals_fresh_live": true,
+  "fresh_live_equals_post_guard_live": true,
+  "poststartup_history_equals_live": true,
+  "poststartup_history_still_current": true,
+  "saved_history_sha256": "399db38384acc884c53c9802f4f277b07bb8d5bbf9c38636c3e53d5da302ec1a",
+  "after_startup_history_sha256": "c11faaf7a473573cd49bf2927041bd6eddd5a8961125d3d6a0b84cdebd5d65b8",
+  "setup_attempt_marker_exists": false,
+  "operations": [
+    "InitializeDisplay"
+  ]
+}

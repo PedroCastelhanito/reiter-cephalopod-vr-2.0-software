@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLineEdit,
-    QPushButton,
+    QWidget,
 )
 
 from cephvr.gui.components import (
@@ -26,6 +26,7 @@ from cephvr.gui.paths import DirectoryField
 from cephvr.gui.previews import PreviewDialog
 from cephvr.gui.recent_values import RecentValues, suggest_values
 from cephvr.gui.subject_history import SubjectSessions, find_subject_sessions
+from cephvr.gui.system_controls import SystemControls
 from cephvr.gui.theme import SIZES, retro_console
 from cephvr.gui.view import DashboardView, Phase
 
@@ -73,10 +74,16 @@ class Dashboard(ResponsiveColumns):
         )
         self.preview_dialog.hud.setToolTip(self.runtime_console.toolTip())
         self.log_console = right.console
+        log_document = self.log_console.document()
+        assert log_document is not None
+        self.log_console.textChanged.connect(
+            lambda: self.preview_dialog.log_tail.show_tail(log_document)
+        )
+        self.preview_dialog.log_tail.show_tail(log_document)
         self.apply_view(self.view)
 
-    def build_controls(self) -> Card:
-        card = Card("System controls")
+    def build_controls(self) -> SystemControls:
+        controls = SystemControls()
         status_row = QHBoxLayout()
         status_row.setSpacing(SIZES.field_x_gap)
         self.backend_indicators = {}
@@ -84,28 +91,25 @@ class Dashboard(ResponsiveColumns):
             indicator = StatusIndicator(name)
             self.backend_indicators[name] = indicator
             status_row.addWidget(indicator, 1)
-        card.body.addLayout(status_row)
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(SIZES.field_x_gap)
-        grid.setVerticalSpacing(SIZES.field_y_gap)
-        self.command_buttons: dict[str, QPushButton] = {}
-        handlers = {
-            "Setup": self.setup,
-            "Start": lambda: self.request_action("Start"),
-            "Stop": self.stop,
-        }
-        for index, (name, handler) in enumerate(handlers.items()):
-            control = button(name, "danger" if name == "Stop" else "primary")
-            control.clicked.connect(handler)
-            self.command_buttons[name] = control
-            if name == "Setup":
-                grid.addWidget(control, 0, 0, 1, 2)
-            else:
-                grid.addWidget(control, 1, index - 1)
-        grid.setColumnStretch(0, 1)
-        grid.setColumnStretch(1, 1)
-        card.body.addLayout(grid)
-        return card
+        controls.body.insertLayout(1, status_row)
+        self.command_buttons = controls.command_buttons
+        controls.action_requested.connect(self.control_action)
+        self.preview_dialog.session_controls.action_requested.connect(
+            lambda action: self.control_action(action, parent=self.preview_dialog)
+        )
+        return controls
+
+    def control_action(self, action: str, *, parent: QWidget | None = None) -> None:
+        if action == "Start" and self.view.phase in {
+            Phase.CONFIGURATION,
+            Phase.SETTING_UP,
+            Phase.ENDED,
+        }:
+            self.setup(parent=parent)
+        elif action == "Stop":
+            self.stop(parent=parent)
+        else:
+            self.request_action(action)
 
     def build_subject(self, sample: bool) -> Card:
         card = Card("Session config")
@@ -199,7 +203,9 @@ class Dashboard(ResponsiveColumns):
             self.announced_subject = key
             self.log_console.appendPlainText(note)
 
-    def confirm_subject_reuse(self, history: SubjectSessions) -> None:
+    def confirm_subject_reuse(
+        self, history: SubjectSessions, *, parent: QWidget | None = None
+    ) -> None:
         if self.reuse_dialog is not None:
             self.reuse_dialog.raise_()
             return
@@ -208,7 +214,7 @@ class Dashboard(ResponsiveColumns):
             self.experiment.text().strip(),
             history.count,
             history.latest,
-            self,
+            parent or self,
         )
         self.reuse_dialog = dialog
         dialog.confirmed.connect(lambda: self.request_action("Setup"))
@@ -274,7 +280,7 @@ class Dashboard(ResponsiveColumns):
             return False
         return True
 
-    def setup(self) -> None:
+    def setup(self, *, parent: QWidget | None = None) -> None:
         if self.view.phase == Phase.ENDED:
             self.request_action("New session")
             return
@@ -282,7 +288,7 @@ class Dashboard(ResponsiveColumns):
             return
         history = self.subject_history() if self.can_request("Setup") else None
         if history is not None and history.same_experiment_today:
-            self.confirm_subject_reuse(history)
+            self.confirm_subject_reuse(history, parent=parent)
         else:
             self.request_action("Setup")
 
@@ -293,7 +299,7 @@ class Dashboard(ResponsiveColumns):
             if self.can_request(action)
         )
 
-    def stop(self) -> None:
+    def stop(self, *, parent: QWidget | None = None) -> None:
         if self.can_request("Cancel Setup"):
             self.request_action("Cancel Setup")
             return
@@ -303,7 +309,7 @@ class Dashboard(ResponsiveColumns):
         if self.stop_dialog is not None:
             self.stop_dialog.raise_()
             return
-        dialog = StopDialog(choices, self)
+        dialog = StopDialog(choices, parent or self)
         self.stop_dialog = dialog
         dialog.action_selected.connect(self.request_action)
         dialog.finished.connect(self.stop_dialog_finished)
@@ -322,22 +328,31 @@ class Dashboard(ResponsiveColumns):
             allowed=view.has_control and (view.connected or view.sample),
             sample=view.sample,
         )
-        setup_action = "New session" if view.phase == Phase.ENDED else "Setup"
-        self.command_buttons["Setup"].setEnabled(self.can_request(setup_action))
-        self.command_buttons["Start"].setEnabled(self.can_request("Start"))
-        self.command_buttons["Stop"].setEnabled(
-            self.can_request("Cancel Setup") or bool(self.stop_choices())
+        setup_mode = view.phase in {Phase.CONFIGURATION, Phase.SETTING_UP, Phase.ENDED}
+        primary_action = (
+            ("New session" if view.phase == Phase.ENDED else "Setup")
+            if setup_mode
+            else "Start"
         )
-        self.command_buttons["Setup"].setToolTip(
-            "Return to Configuration for a new session."
-            if view.phase == Phase.ENDED
-            else "Prepare a session."
-        )
-        self.command_buttons["Stop"].setToolTip(
-            "Cancel setup and return to Configuration."
-            if self.can_request("Cancel Setup")
-            else "Choose Stop now or Stop after trial."
-        )
+        for controls in (self.session_controls, self.preview_dialog.session_controls):
+            primary = controls.command_buttons["Start"]
+            primary.setText("Setup" if setup_mode else "Start")
+            primary.setEnabled(self.can_request(primary_action))
+            primary.setToolTip(
+                "Return to Configuration for a new session."
+                if view.phase == Phase.ENDED
+                else "Prepare a session."
+                if setup_mode
+                else "Start the prepared session."
+            )
+            controls.command_buttons["Stop"].setEnabled(
+                self.can_request("Cancel Setup") or bool(self.stop_choices())
+            )
+            controls.command_buttons["Stop"].setToolTip(
+                "Cancel setup and return to Configuration."
+                if self.can_request("Cancel Setup")
+                else "Choose Stop now or Stop after trial."
+            )
         if self.stop_dialog is not None:
             self.stop_dialog.update_actions(self.stop_choices())
         for editor in self.subject_editors:
@@ -372,4 +387,6 @@ class Dashboard(ResponsiveColumns):
         self.status_column.set_rows((rows[0], None, *rows[1:]))
         self.preview_dialog.set_output_status(view.output_status)
         hud = self.preview_dialog.hud
-        hud.setPlainText(hud_grid((rows[:2], rows[2:4]), retro=retro_console(hud)))
+        hud.setPlainText(
+            hud_grid(tuple((row,) for row in rows[:4]), retro=retro_console(hud))
+        )

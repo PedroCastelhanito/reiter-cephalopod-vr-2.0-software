@@ -214,6 +214,45 @@ def test_partial_write_fails_after_dispatch_without_acknowledgement() -> None:
     assert channel.last_exchange.completed_ns is None
 
 
+@pytest.mark.parametrize("malformed", [False, True])
+def test_late_complete_read_is_not_parsed_or_accepted(malformed: bool) -> None:
+    clock = _StepClock()
+
+    class DelayedPort(_FakePort):
+        def write(self, payload: bytes) -> int:
+            clock.value += 65_560_000
+            request_id = payload.decode("ascii").split("id=", 1)[1].split()[0]
+            self.feed(
+                b"malformed complete line\n"
+                if malformed
+                else f"OK id={request_id}\n".encode("ascii")
+            )
+            return len(payload)
+
+        def read(self, size: int = 1) -> bytes:
+            clock.value += 48_864_000
+            return super().read(size)
+
+    port = DelayedPort()
+    channel = SerialChannel("fake", 115200, 100_000_000, clock=clock, serial_port=port)
+    channel.open(1_000_000_000)
+    with pytest.raises(ChannelTimeout) as failure:
+        channel.request("PING", {}, 1_000_000_000)
+    details = str(failure.value)
+    assert "write_ms=65.560, total_read_ms=48.864" in details
+    assert "reads=1" in details and "partial_bytes=0" in details
+    assert channel.unmatched_replies == channel.malformed_replies == 0
+    assert channel.last_exchange is not None
+    assert channel.last_exchange.reply is None
+    assert channel.last_exchange.completed_ns is None
+    expected_late = len(
+        b"malformed complete line\n"
+        if malformed
+        else f"OK id={channel.last_exchange.request_id}\n".encode("ascii")
+    )
+    assert f"bytes={expected_late}, late_bytes={expected_late}" in details
+
+
 def test_cancellation_waits_for_blocked_call_return_and_is_not_off_evidence() -> None:
     clock = _StepClock()
     port = _FakePort()
@@ -332,6 +371,55 @@ class _StepClock:
     def __call__(self) -> int:
         self.value += 1
         return self.value
+
+
+@pytest.mark.parametrize("mode", ["bounded", "broken", "success", "write", "read"])
+def test_optional_transport_diagnostics_cannot_replace_timeout(mode: str) -> None:
+    clock = _StepClock()
+
+    class DiagnosticPort(_FakePort):
+        calls = 0
+
+        def timeout_diagnostics(self) -> str:
+            self.calls += 1
+            if mode == "broken":
+                raise RuntimeError("diagnostic failure")
+            return "z" * 2000
+
+    port = DiagnosticPort()
+    channel = SerialChannel("fake", 115200, 100, clock=clock, serial_port=port)
+    channel.open(10000)
+    if mode == "success":
+
+        def reply(payload: bytes) -> int:
+            request_id = payload.decode().split("id=", 1)[1].split()[0]
+            port.feed(f"OK id={request_id}\n".encode())
+            return len(payload)
+
+        port.on_write = reply
+        assert channel.request("PING", {}, 10000).reply is not None
+        assert port.calls == 0
+        return
+    if mode in ("write", "read"):
+
+        def failed(*_args: object) -> bytes:
+            raise OSError("native transport error")
+
+        if mode == "write":
+            port.on_write = failed  # type: ignore[assignment]
+        else:
+            port.read = failed  # type: ignore[method-assign]
+    expected = ChannelTransportFailure if mode in ("write", "read") else ChannelTimeout
+    with pytest.raises(expected) as error:
+        channel.request("PING", {}, 10000)
+    assert port.calls == 1
+    text = str(error.value)
+    if mode != "broken":
+        assert text.endswith("; serial_calls: " + "z" * 768)
+        if mode in ("write", "read"):
+            assert f"serial {mode} failed: native transport error" in text
+    else:
+        assert "diagnostic failure" not in text and "serial_calls" not in text
 
 
 class _FakePort:

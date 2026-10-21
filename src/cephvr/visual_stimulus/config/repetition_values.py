@@ -33,10 +33,27 @@ def resolve_repetition(
         patches.setdefault(rule.instance_id, {})[rule.parameter] = sample_at(
             rule, repetition
         )
+    frames: dict[str, tuple[bool, int]] = {}
+    for rule in rules:
+        if rule.parameter in ("Speed", "Direction"):
+            frame = (
+                rule.rig_coordinates,
+                rule.rig_angle_version if rule.rig_coordinates else 1,
+            )
+            previous = frames.setdefault(rule.instance_id, frame)
+            if previous != frame:
+                raise ValueError(
+                    "Speed and direction rules must use the same coordinates"
+                )
     data = [setting.model_dump(mode="json") for setting in settings]
     for setting in data:
         if setting["instance_id"] in patches:
-            patch_setting(setting, patches.pop(setting["instance_id"]))
+            patch_setting(
+                setting,
+                patches.pop(setting["instance_id"]),
+                rig_coordinates=frames.get(setting["instance_id"], (False, 1))[0],
+                rig_angle_version=frames.get(setting["instance_id"], (False, 1))[1],
+            )
     if patches:
         raise ValueError("Random rule references an inactive instance")
     return _SETTINGS.validate_json(json.dumps(data, allow_nan=False))

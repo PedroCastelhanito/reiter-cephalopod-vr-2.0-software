@@ -10,7 +10,24 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `setup-watchdog-cleanup` [controller] [supervisor] [acquisition] [visual_stimulus] Diagnose the reproduced MCU PING failure and unconfirmed failed-Setup cleanup, then complete full-texture acceptance. Oct21 bounded dummy/Abort/reuse and326s idle reuse pass; full-texture Setup fails PING114.451ms/99.979ms, CancelSetup cleanup fails, supervisor subsequently shuts down owned processes; preserving recovery restores original runtime/history exactly. Cause remains unproven; runtime behavior changes require owner approval. Owner: rig-validation chat. — [Current evidence](reports/runtime.md#current-rig-validation--2026-10-21)
+- [ ] `repo-cleanup-sync-oct21` [repo] Remove disposable caches, retain oversized trace evidence locally, repair unpublished commit and sync main. Owner: this chat. Done when remote main matches HEAD and working tree is clean.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- [ ] `setup-watchdog-cleanup` [controller] [supervisor] [acquisition] [visual_stimulus] Verify the approved 200 ms MCU ACK / 450 ms stop-report settings on the rig. Done when: a fresh connection loads both values; full-workload Setup reaches Ready without PING timeout; CancelSetup confirms cleanup without worker rejection or heartbeat loss; a subsequent bounded trial meets the unchanged 250 ms Started deadline and the 450 ms Stopped deadline; settings are preserved and evidence recorded. Status: 211 local tests pass/one skip; live verification pending, original delay and historical cleanup causes unresolved. Coordinate exclusive rig use to avoid application replacement during testing. Owner: rig-validation chat. See [current evidence](reports/runtime.md#current-rig-validation--2026-10-21) and [rig checklist](reports/rig-verification.md).
 
 - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).
 
@@ -26,11 +43,11 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 - [ ] `pilot-shared-sync-verification` [spikeglx] [acquisition] [visual_stimulus] Verify shared OneBox/probe sync and optical timing on a future saved rig test before timing-sensitive experiments. Observed SP0003-123824 has no SY transitions in either stream; camera-to-OneBox matching is supported but neural alignment remains unvalidated. No settings or runtime changes authorized by inspection. Done when the [rig checklist](reports/rig-verification.md#pilot-synchronization-verification) passes. — [Assessment](reports/runtime.md#pilot-spikeglx-alignment-inspection--2026-10-21)
 
-- [ ] `preview-workspace-polish` [gui] Confirm the G01rev271 Previews layout (HUD first, full-width timeline, equal-height settings container, optional resizable plots, adaptive stream columns, close frame headings and live source/preview FPS footers) with native viewers before Setup and in a recorded trial. Status: implementation and focused offscreen tests pass (see LOG 2026-10-21 preview-side-by-side-layout); not seen with native viewers. Done when the rig checklist item passes. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
+- [ ] `preview-workspace-polish` [gui] Confirm the G01rev280 Previews layout (HUD first, full-width timeline, equal-height settings container, optional resizable plots, adaptive stream columns, close frame headings and live source/preview FPS footers) with native viewers before Setup and in a recorded trial. Status: implementation and focused offscreen tests pass (see LOG 2026-10-21 preview-side-by-side-layout); G01rev281 Retro bracketed controls, heading glow and projector card frames added (LOG 2026-10-21 preview-crt-styling); not seen with native viewers. Done when the rig checklist item passes. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 
-- [ ] `preview-advanced-motion-dials` [gui] [tracking] [visual_stimulus] Check the G01rev265/G02rev95 preview workspace in the restarted GUI: aligned HUD, idle lamp hidden, full-width timeline below HUD, epoch progress, Advanced settings persistence, dials, arena map and looming lane in both themes. Status: source implemented; 136 preview-selected tests and static checks pass; offscreen renders only. Live Tracking drive values and renderer arena pose do not reach the GUI, so live-only dials always show Waiting for tracking (follow-up feed not designed). Done when: native appearance and behavior are confirmed. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01)
+- [ ] `preview-advanced-motion-dials` [gui] [tracking] [visual_stimulus] Check the G01rev265/G02rev95 preview workspace in the restarted GUI: aligned HUD, idle lamp hidden, full-width timeline below HUD, epoch progress, Advanced settings persistence, dials, arena map and looming lane in both themes. Status: source implemented; 136 preview-selected tests and static checks pass; offscreen renders only. Live Tracking drive values and renderer arena pose do not reach the GUI, so live-only dials always show Waiting for tracking (follow-up feed not designed). Done when: native appearance and behavior are confirmed. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01) Also verify newly edited physical-screen rig directions (−90 back/0 right/90 front/180 left), rotating textures and linked followers after restart;260 focused source checks pass (LOG stimulus-rig-direction-authoring).
 
-- [ ] `runtime-log-terminal-format` [gui] [controller] Check timestamped log rows, in-place progress/results, alignment after longer categories and HUD Output in the running GUI during Setup/Start/Stop. Status: G02rev98 category alignment passes24 focused offscreen checks plus3 rendered-position checks in both themes; GUI mypy187 and changed-file lint/format pass. Earlier startup/progress/log/HUD evidence retained in LOG. Native verification remains pending after restart. — [Runtime](reports/runtime.md)
+- [ ] `runtime-log-terminal-format` [gui] [controller] Check timestamped log rows, in-place progress/results, alignment after longer categories and HUD Output in the running GUI during Setup/Start/Stop. Status: G02rev102 category-completeness fix complete locally:85 checks pass, one existing native-mouse delivery failure; G02rev98 category alignment passes24 focused offscreen checks plus3 rendered-position checks in both themes; GUI mypy187 and changed-file lint/format pass. Earlier startup/progress/log/HUD evidence retained in LOG. Native verification remains pending after restart. — [Runtime](reports/runtime.md)
 
 - [ ] `preview-resize-feedback` [gui] Confirm stable preview sizing after the next application restart. Source fix and 8 focused tests pass; running dummy trial left untouched. Done when idle placement polling no longer resizes the native preview. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 

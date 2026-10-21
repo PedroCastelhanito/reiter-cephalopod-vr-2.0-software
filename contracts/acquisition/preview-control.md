@@ -193,14 +193,16 @@ notification alone is not a frame. On attachment, inspect the current slot
 before waiting so an already-published image is not missed. Publication and stop/detach
 wake the reader; waits always recheck new-frame and cancellation predicates.
 
-There is no viewer-side FPS cap or periodic frame polling. Read the newest available
+G01 caps new viewer images at 20 Hz, or the source rate when slower. Pending new
+frames may wait through the existing bounded event-service interval until due;
+keep native close/placement handling responsive. Read the newest available
 frame with A03's copy-then-recheck rule before conversion/rendering; a torn read is
 skipped. Coalesce GUI dispatch to at most one pending update indication, carrying no image
 backlog. While rendering is busy, newer frames replace the waiting slot; after that
 work completes, select the newest frame rather than displaying queued older images.
 Check for a newer frame before sleeping again. Never queue one GUI callback per camera
 frame or spin on an unchanged slot. Rendering and monitor refresh can still
-limit what is actually displayed; uncapped delivery is not lossless screen presentation.
+limit what is actually displayed; preview delivery is not lossless screen presentation.
 
 Closing the image view stops
 local reads, finishes its private copy, closes its mapping/event and reports

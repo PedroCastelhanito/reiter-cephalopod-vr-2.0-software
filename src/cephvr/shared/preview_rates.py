@@ -1,6 +1,23 @@
-"""Bounded display-rate measurements; no capture scheduling or health authority."""
+"""Optional preview pacing and display-rate measurements; no health authority."""
 
 from math import isfinite
+
+
+class PreviewPacer:
+    """Select newest frames on a fixed cadence without accumulating missed work."""
+
+    def __init__(self, period_ns: int = 50_000_000) -> None:
+        self.period_ns = period_ns
+        self.next_ns: int | None = None
+
+    def ready(self, now_ns: int) -> bool:
+        if self.next_ns is None:
+            self.next_ns = now_ns + self.period_ns
+            return True
+        if now_ns < self.next_ns:
+            return False
+        self.next_ns += ((now_ns - self.next_ns) // self.period_ns + 1) * self.period_ns
+        return True
 
 
 class PreviewRateMeter:

@@ -1,0 +1,37 @@
+
+  wpr -stop ...		Stops WPR recording and merges all the recording into the given file.
+	Usage:	wpr -stop <recording filename> <Problem description>
+			[-skipPdbGen]
+			[-force]
+			[-compress]
+			[-container [ID] ... [up to 64 IDs] [-host]]
+	-skipPdbGen	Disables dynamic generation of ngen and embedded pdbs.
+	-force		Disables the warning when the target file extension is not .etl.
+	-compress	Compresses output trace file.
+
+  wpr -cancel ...	Cancels the recording initiated through WPR.
+	Usage:	wpr -cancel [-container [ID] ... [up to 64 IDs] [-host]]
+
+  wpr -merge ...		Merges etl files into the given file.
+	Usage:	wpr -merge <trace files ...> <merged file>
+			[-skipPdbGen]
+			[-compress]
+			[-supresspii]
+			[-mergeonly]
+			[-injectonly]
+	Ex>	wpr -merge trace1.etl trace2.etl merged.etl -compress -skipPdbGen
+	-skipPdbGen	Disables dynamic generation of ngen and embedded pdbs.
+	-compress	Compresses output trace file.
+
+	-supresspii	Suppresses personally identifiable(PII) information.
+
+	-mergeonly	Merges the traces without adding machine-specific information or
+			image ID events. Cannot be used with -injectonly
+
+	-injectonly	Generates only machine-specific and/or image id events without copying
+			original events.
+
+	Common parameters:
+	-container	Specifies container IDs to stop/cancel trace.
+			See wpr -help advanced for more info.
+	-instancename	Specifies unique session name. See wpr -help advanced for more info.

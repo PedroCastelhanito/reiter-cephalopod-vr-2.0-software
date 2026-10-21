@@ -1,0 +1,34 @@
+{
+  "captured_utc": "2026-10-21T07:14:17.190165+00:00",
+  "scope": "Approved defaults200msACK/450msstop, existing owning tests only; no live/hardware actions.",
+  "values": {
+    "ack_timeout_ms": 200,
+    "stop_completion_margin_ms": 50,
+    "stop_report_timeout_ms": 450
+  },
+  "declared_inequality_satisfied": true,
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_configuration.py tests/controller/test_configuration.py tests/controller/test_microcontroller_protocol.py tests/controller/test_microcontroller_owner.py -q",
+    "result": "211 passed, 1 skipped in 5.86s",
+    "evidence": "ack200-tests.txt",
+    "junit": "ack200-tests.xml"
+  },
+  "static": {
+    "ruff_check": "3 changed files passed",
+    "test_format": "2 test files passed",
+    "test_whitespace": "passed",
+    "serial_port_format": "Initial sourcecommentedit left line endings unformatted; root notified and owns normalization."
+  },
+  "changes": "Existing acquisitionfilepolicy assertion200M+50Mmargin; existing controllerloadedtiming assertion450M and2*ACK+margin<=stop from same copied fixture.",
+  "source_sha256": {
+    "tests/acquisition/test_configuration.py": "20563fec21e89f0cb5400dce5f0d1414ebe4cface37c8cc0fbb61919c234976d",
+    "tests/controller/test_configuration.py": "55d81fccfd9309de3800928bf52e4fd601bc5311e6983ad6a8cc3d4184d6be10",
+    "config/backends/microcontroller_config.toml": "f2a831fcc46376dab9d45f7cb69b726e9027b4cda5d9c6336352c0c5bcbe6c62",
+    "config/backends/experiment_config.toml": "2b12d05977ae3ce3dca5a3855077d8c2304627b134fbf50a3350b3146c1bfc63"
+  },
+  "limits": [
+    "Default inequality assertion is not a new runtime guard.",
+    "Local tests do not prove camera drain/report completion or full-workload serial reliability.",
+    "150ms camera drain versus50ms reserve is pre-existing and not changed/test-certified by this increment."
+  ]
+}

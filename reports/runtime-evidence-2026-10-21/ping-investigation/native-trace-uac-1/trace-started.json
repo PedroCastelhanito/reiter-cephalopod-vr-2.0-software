@@ -1,0 +1,10 @@
+{
+  "instance": "CephVRNativeTraceUAC20261021_1",
+  "stamp": {
+    "utc": "2026-10-21T06:59:37.660091+00:00",
+    "perf_counter_ns": 588416185265400,
+    "qpc": 5884161852487,
+    "qpc_frequency": 10000000
+  },
+  "max_seconds": 180
+}

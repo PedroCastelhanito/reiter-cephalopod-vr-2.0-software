@@ -136,8 +136,8 @@ exact-context validation.
 | Trial boundary | T | No preroll or shifting T to report arrival |
 | Actual start, first required activity, Started receipt | T + 250 ms | Interrupt; never allow activity outside the interval |
 | Normal stop | T + protocol duration | Local stop already scheduled; no end-message dependency |
-| Stopped receipt, normal end | Normal end + 250 ms | Interrupt while cleanup continues |
-| Stopped receipt, early interruption | Issuance of interruption + 250 ms | Flag stop Unconfirmed; continue bounded cleanup |
+| Stopped receipt, normal end | Normal end + 450 ms | Interrupt while cleanup continues |
+| Stopped receipt, early interruption | Issuance of interruption + 450 ms | Flag stop Unconfirmed; continue bounded cleanup |
 | Finished/closure initial + shared recovery | 30 s + 10 s from normal end/interruption issuance | No next trial; report unresolved results |
 | Setup initial + shared recovery | 60 s + 10 s | Required failure blocks execution |
 | Cancel Setup cleanup + shared recovery | 10 s + 10 s | Block fresh Setup/Start until cleanup verified |

@@ -13,12 +13,12 @@ from cephvr.gui.program_editing import (
     unique_id,
     validate,
 )
-from cephvr.visual_stimulus.config.models.program_model import Program
-from cephvr.visual_stimulus.config.parameter_edits import assign_ref as assign_ref
-from cephvr.visual_stimulus.config.parameter_edits import (
+from cephvr.gui.rig_parameter_edits import (
     motion_numbers as motion_numbers,
 )
-from cephvr.visual_stimulus.config.parameter_edits import varied_fields as varied_fields
+from cephvr.gui.rig_parameter_edits import varied_fields as varied_fields
+from cephvr.visual_stimulus.config.models.program_model import Program
+from cephvr.visual_stimulus.config.parameter_edits import assign_ref as assign_ref
 
 
 @dataclass(frozen=True)

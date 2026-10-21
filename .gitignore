@@ -114,3 +114,7 @@ __pycache__/
 
 # Reproducible synthetic encoding buffers: preserve locally with the audit hash manifest.
 /reports/runtime-evidence-2026-10-16/encoding-overload-audit/**/*.raw
+
+# Oversized native trace evidence stays local; retain summaries and provenance in Git.
+/reports/runtime-evidence-2026-10-21/ping-investigation/native-trace-uac-1/decoded.xml
+/reports/runtime-evidence-2026-10-21/ping-investigation/native-trace-uac-1/owned.etl

@@ -1,0 +1,77 @@
+{
+  "scope": "Client monotonic observations/operation completions, not exact device ingress",
+  "first_setting_up_host_ns": 586404757285100,
+  "events": [
+    {
+      "host_ns": 586404153992500,
+      "after_first_setting_up_ms": -603.2926,
+      "kind": "UpdateConfiguration",
+      "value": {
+        "command_id": "c018b51a-9d5e-4ca1-839d-bd0c49da58cf",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": "",
+        "elapsed_ms": 408.4642
+      }
+    },
+    {
+      "host_ns": 586407806076800,
+      "after_first_setting_up_ms": 3048.7917,
+      "kind": "Setup",
+      "value": {
+        "command_id": "ee32afb8-0a50-446d-9324-f86da89efd16",
+        "complete": true,
+        "succeeded": false,
+        "needs_input": false,
+        "failure": "SETUP_FAILED: acquisition readback: serial watchdog keepalive failed: serial write returned after its acknowledgement deadline; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=36.824,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=81.300,native_write_thread_cpu_ms=0.000",
+        "elapsed_ms": 3642.7658
+      }
+    },
+    {
+      "host_ns": 586407817163000,
+      "after_first_setting_up_ms": 3059.8779,
+      "kind": "setup_outcome",
+      "value": {
+        "succeeded": false,
+        "no_start_issued": true
+      }
+    },
+    {
+      "host_ns": 586407901130600,
+      "after_first_setting_up_ms": 3143.8455,
+      "kind": "CancelSetup",
+      "value": {
+        "command_id": "5b8fbb2e-04fa-44a8-b00e-1d74f3f672ed",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": "",
+        "elapsed_ms": 75.5936
+      }
+    },
+    {
+      "host_ns": 586408062318600,
+      "after_first_setting_up_ms": 3305.0335,
+      "kind": "UpdateConfiguration",
+      "value": {
+        "command_id": "dafc222e-0487-41ee-ba2c-e25458149915",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": "",
+        "elapsed_ms": 142.5597
+      }
+    },
+    {
+      "host_ns": 586408065814800,
+      "after_first_setting_up_ms": 3308.5297,
+      "kind": "restoration",
+      "value": {
+        "runtime_equal": true,
+        "saved_bytes_equal": true,
+        "saved_sha256": "533ff90ab34552a703df576a3fc9f600b3bf366adaffe0b92a1040f47897e6f3"
+      }
+    }
+  ]
+}

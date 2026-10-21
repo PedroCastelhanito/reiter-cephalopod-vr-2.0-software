@@ -1,0 +1,14 @@
+{
+  "perf_counter": {
+    "implementation": "QueryPerformanceCounter()",
+    "monotonic": true,
+    "adjustable": false,
+    "resolution": 1e-07
+  },
+  "thread_time": {
+    "implementation": "GetThreadTimes()",
+    "monotonic": true,
+    "adjustable": false,
+    "resolution": 1e-07
+  }
+}

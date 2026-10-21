@@ -153,7 +153,14 @@ class VisualStimulusWorkerControl:
         admission = await self.outbound.interrupt_visual_stimulus_worker(
             launch, request, deadline_ns=deadline_ns
         )
-        require_accepted(admission, "Visual Stimulus worker interruption")
+        require_accepted(
+            admission,
+            "Visual Stimulus worker interruption",
+            worker=worker.worker,
+            work=worker.work,
+            command_id=command_id,
+            deadline_ns=deadline_ns,
+        )
 
     async def cleanup_worker(
         self,

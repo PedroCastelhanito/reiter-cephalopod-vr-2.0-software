@@ -3037,3 +3037,24 @@ def test_setup_texture_progress_waits_for_gpu_completion(stop):
         gpu.release_allowed = True
         assert cache.close(time.perf_counter_ns() + 2_000_000_000)
         assert cache.release_gpu() == ()
+
+
+def test_stimulus_preview_pacing_skips_hidden_and_minimized(monkeypatch):
+    from cephvr.visual_stimulus.rendering import preview as module
+
+    now = [0]
+    monkeypatch.setattr(module, "host_time_ns", lambda: now[0])
+    viewer = module.StimulusPreview(NS(), NS(), lambda *args: None)
+    assert not viewer.frame_due()
+    viewer.visible = True
+    assert viewer.frame_due()
+    now[0] = 49_999_999
+    assert not viewer.frame_due()
+    now[0] = 50_000_000
+    assert viewer.frame_due()
+    viewer.owner = NS(minimized=True)
+    now[0] = 100_000_000
+    assert not viewer.frame_due()
+    viewer.owner.minimized = False
+    assert viewer.frame_due()
+    assert not viewer.frame_due()

@@ -1,0 +1,337 @@
+{
+  "scope": "Exactoldcontroller56972, perThreadStart/DCStart/End bound and processEnd; interruptedSetup,noMCUtimeoutobserved.",
+  "process_end_rendered_time": "2026-10-21T15:59:50.703380200+08:59",
+  "thread_bounds_local_day_ns": {
+    "42476": [
+      0,
+      57590701850800
+    ],
+    "11140": [
+      0,
+      57590701839000
+    ],
+    "9764": [
+      0,
+      57590701837000
+    ],
+    "57140": [
+      0,
+      57590701849000
+    ],
+    "57144": [
+      0,
+      57590701871700
+    ],
+    "57512": [
+      0,
+      57590701871600
+    ],
+    "1012": [
+      0,
+      57590701861100
+    ],
+    "20608": [
+      0,
+      57590701864300
+    ],
+    "29600": [
+      0,
+      57590701876800
+    ],
+    "44424": [
+      0,
+      57590701869900
+    ],
+    "5336": [
+      0,
+      57590701878000
+    ],
+    "21576": [
+      0,
+      57590701885800
+    ],
+    "13748": [
+      0,
+      57590701881500
+    ],
+    "36844": [
+      0,
+      57590701880600
+    ],
+    "45008": [
+      0,
+      57590701892400
+    ],
+    "26028": [
+      0,
+      57590701905300
+    ],
+    "43264": [
+      0,
+      57590701898100
+    ],
+    "1004": [
+      0,
+      57590701907900
+    ],
+    "50304": [
+      0,
+      57590701904200
+    ],
+    "33772": [
+      0,
+      57590701917600
+    ],
+    "16040": [
+      0,
+      57590701916100
+    ],
+    "34744": [
+      0,
+      57590701917600
+    ],
+    "20252": [
+      0,
+      57590701927400
+    ],
+    "25964": [
+      0,
+      57590701928500
+    ],
+    "21052": [
+      0,
+      57590701936500
+    ],
+    "38036": [
+      57577624087500,
+      57590701939000
+    ],
+    "39812": [
+      57578204331900,
+      57578216235100
+    ],
+    "53776": [
+      57578277571500,
+      57590701939000
+    ]
+  },
+  "ambiguous_tids_excluded": [],
+  "reported_event_loss": "0",
+  "reported_buffer_loss": "0",
+  "decoder_source": "https://github.com/microsoft/perfview/blob/main/src/TraceEvent/Parsers/KernelTraceEventParser.cs",
+  "counts": {
+    "lifetime_ready_events": 5250,
+    "lifetime_switch_ins": 5389,
+    "lifetime_switch_outs": 5361,
+    "excluded_ready_outside_lifetime": 23
+  },
+  "old_controller_thread_count": 28,
+  "old_controller_SetName_count": 0,
+  "serial_owner_tid_identified": false,
+  "threads": {
+    "42476": {
+      "matched_off_cpu_intervals": 605,
+      "max_off_cpu_ms": 117.2175,
+      "matched_ready_intervals": 513,
+      "max_ready_to_switch_ms": 0.073,
+      "raw_stack_events_for_tid": 4143
+    },
+    "38036": {
+      "matched_off_cpu_intervals": 3,
+      "max_off_cpu_ms": 13077.4711,
+      "matched_ready_intervals": 3,
+      "max_ready_to_switch_ms": 0.0184,
+      "raw_stack_events_for_tid": 59
+    },
+    "44424": {
+      "matched_off_cpu_intervals": 220,
+      "max_off_cpu_ms": 416.4924,
+      "matched_ready_intervals": 220,
+      "max_ready_to_switch_ms": 0.0629,
+      "raw_stack_events_for_tid": 572
+    },
+    "50304": {
+      "matched_off_cpu_intervals": 181,
+      "max_off_cpu_ms": 576.7705,
+      "matched_ready_intervals": 180,
+      "max_ready_to_switch_ms": 0.0593,
+      "raw_stack_events_for_tid": 501
+    },
+    "43264": {
+      "matched_off_cpu_intervals": 208,
+      "max_off_cpu_ms": 465.0468,
+      "matched_ready_intervals": 208,
+      "max_ready_to_switch_ms": 0.108,
+      "raw_stack_events_for_tid": 555
+    },
+    "57140": {
+      "matched_off_cpu_intervals": 169,
+      "max_off_cpu_ms": 449.2281,
+      "matched_ready_intervals": 168,
+      "max_ready_to_switch_ms": 0.0781,
+      "raw_stack_events_for_tid": 476
+    },
+    "1012": {
+      "matched_off_cpu_intervals": 196,
+      "max_off_cpu_ms": 934.0793,
+      "matched_ready_intervals": 196,
+      "max_ready_to_switch_ms": 0.0598,
+      "raw_stack_events_for_tid": 718
+    },
+    "36844": {
+      "matched_off_cpu_intervals": 193,
+      "max_off_cpu_ms": 584.9961,
+      "matched_ready_intervals": 193,
+      "max_ready_to_switch_ms": 0.0917,
+      "raw_stack_events_for_tid": 533
+    },
+    "1004": {
+      "matched_off_cpu_intervals": 222,
+      "max_off_cpu_ms": 326.5934,
+      "matched_ready_intervals": 220,
+      "max_ready_to_switch_ms": 0.0641,
+      "raw_stack_events_for_tid": 602
+    },
+    "45008": {
+      "matched_off_cpu_intervals": 214,
+      "max_off_cpu_ms": 416.9495,
+      "matched_ready_intervals": 213,
+      "max_ready_to_switch_ms": 0.0738,
+      "raw_stack_events_for_tid": 573
+    },
+    "9764": {
+      "matched_off_cpu_intervals": 937,
+      "max_off_cpu_ms": 984.2182,
+      "matched_ready_intervals": 824,
+      "max_ready_to_switch_ms": 0.1022,
+      "raw_stack_events_for_tid": 2645
+    },
+    "20608": {
+      "matched_off_cpu_intervals": 220,
+      "max_off_cpu_ms": 421.0132,
+      "matched_ready_intervals": 220,
+      "max_ready_to_switch_ms": 0.0707,
+      "raw_stack_events_for_tid": 591
+    },
+    "57144": {
+      "matched_off_cpu_intervals": 208,
+      "max_off_cpu_ms": 542.5562,
+      "matched_ready_intervals": 206,
+      "max_ready_to_switch_ms": 0.0664,
+      "raw_stack_events_for_tid": 646
+    },
+    "13748": {
+      "matched_off_cpu_intervals": 217,
+      "max_off_cpu_ms": 420.903,
+      "matched_ready_intervals": 214,
+      "max_ready_to_switch_ms": 0.124,
+      "raw_stack_events_for_tid": 538
+    },
+    "5336": {
+      "matched_off_cpu_intervals": 208,
+      "max_off_cpu_ms": 384.6061,
+      "matched_ready_intervals": 208,
+      "max_ready_to_switch_ms": 0.0864,
+      "raw_stack_events_for_tid": 551
+    },
+    "21576": {
+      "matched_off_cpu_intervals": 219,
+      "max_off_cpu_ms": 422.9844,
+      "matched_ready_intervals": 217,
+      "max_ready_to_switch_ms": 0.0779,
+      "raw_stack_events_for_tid": 578
+    },
+    "25964": {
+      "matched_off_cpu_intervals": 48,
+      "max_off_cpu_ms": 9714.329,
+      "matched_ready_intervals": 45,
+      "max_ready_to_switch_ms": 0.0644,
+      "raw_stack_events_for_tid": 198
+    },
+    "16040": {
+      "matched_off_cpu_intervals": 134,
+      "max_off_cpu_ms": 9272.6697,
+      "matched_ready_intervals": 97,
+      "max_ready_to_switch_ms": 0.0603,
+      "raw_stack_events_for_tid": 772
+    },
+    "34744": {
+      "matched_off_cpu_intervals": 13,
+      "max_off_cpu_ms": 9714.4329,
+      "matched_ready_intervals": 12,
+      "max_ready_to_switch_ms": 0.048,
+      "raw_stack_events_for_tid": 65
+    },
+    "20252": {
+      "matched_off_cpu_intervals": 113,
+      "max_off_cpu_ms": 9714.3979,
+      "matched_ready_intervals": 69,
+      "max_ready_to_switch_ms": 0.0267,
+      "raw_stack_events_for_tid": 658
+    },
+    "21052": {
+      "matched_off_cpu_intervals": 11,
+      "max_off_cpu_ms": 9714.2784,
+      "matched_ready_intervals": 8,
+      "max_ready_to_switch_ms": 0.0271,
+      "raw_stack_events_for_tid": 77
+    },
+    "29600": {
+      "matched_off_cpu_intervals": 216,
+      "max_off_cpu_ms": 412.867,
+      "matched_ready_intervals": 216,
+      "max_ready_to_switch_ms": 0.0793,
+      "raw_stack_events_for_tid": 571
+    },
+    "57512": {
+      "matched_off_cpu_intervals": 149,
+      "max_off_cpu_ms": 599.0226,
+      "matched_ready_intervals": 149,
+      "max_ready_to_switch_ms": 0.0611,
+      "raw_stack_events_for_tid": 431
+    },
+    "26028": {
+      "matched_off_cpu_intervals": 213,
+      "max_off_cpu_ms": 441.6369,
+      "matched_ready_intervals": 211,
+      "max_ready_to_switch_ms": 0.1401,
+      "raw_stack_events_for_tid": 576
+    },
+    "39812": {
+      "matched_off_cpu_intervals": 13,
+      "max_off_cpu_ms": 1.9756,
+      "matched_ready_intervals": 12,
+      "max_ready_to_switch_ms": 0.015,
+      "raw_stack_events_for_tid": 62
+    },
+    "53776": {
+      "matched_off_cpu_intervals": 204,
+      "max_off_cpu_ms": 1056.0934,
+      "matched_ready_intervals": 197,
+      "max_ready_to_switch_ms": 0.0335,
+      "raw_stack_events_for_tid": 554
+    },
+    "11140": {
+      "matched_off_cpu_intervals": 13,
+      "max_off_cpu_ms": 1014.642,
+      "matched_ready_intervals": 13,
+      "max_ready_to_switch_ms": 0.059,
+      "raw_stack_events_for_tid": 29
+    },
+    "33772": {
+      "matched_off_cpu_intervals": 14,
+      "max_off_cpu_ms": 1014.3547,
+      "matched_ready_intervals": 14,
+      "max_ready_to_switch_ms": 0.0537,
+      "raw_stack_events_for_tid": 32
+    }
+  },
+  "limits": [
+    "No independentlyboundserialownerTID; unnamed3.11threads cannotbeassignedfromroles alone.",
+    "No serialtimeout observed in thisinterruptedrun, nohistoricalcausality orrigacceptance.",
+    "ReadinessmatchedtofollowingSwitchInwithpriorSwitchOut; preemptedReady state usesSwitchOutasreadyorigin; ambiguous/leftcensoredmatches excluded.",
+    "OffCPUincludesblockedtime; cannotattributeGILvsnativeI/O withoutboundthreadandresolvedwaitstack.",
+    "Renderedtimezone+08:59 suspicious; onlysamerenderedclock relativeintervalsused; no UTC/QPCspanclaim.",
+    "Rawstacks retainedforlaterinspection, no symbolresolverbuilt."
+  ]
+}

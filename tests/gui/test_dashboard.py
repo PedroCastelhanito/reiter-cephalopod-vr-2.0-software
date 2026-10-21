@@ -1742,7 +1742,7 @@ def test_dashboard_control_status_matches_connection_and_authority(
         dashboard.apply_view(view)
         assert "Configuration" in dashboard.runtime_console.toPlainText()
         assert "CONTROL" not in dashboard.runtime_console.toPlainText()
-        assert dashboard.command_buttons["Setup"].isEnabled() == expected
+        assert dashboard.command_buttons["Start"].isEnabled() == expected
         assert dashboard.subject_id.isEnabled() == expected
     dashboard.window().close()
     dashboard.window().deleteLater()
@@ -3125,8 +3125,8 @@ def test_action_results_do_not_reuse_evicted_blocks(window):
     console.appendPlainText("Newest")
     console.action_entry(("old",), "", "Done")
     assert [row[STAMP_WIDTH:] for row in console.toPlainText().splitlines()] == [
-        "Newer",
-        "Newest",
+        "[GUI]       Newer",
+        "[GUI]       Newest",
     ]
     console.action_entry(("old",), "Setup · Preparing…", "Failed", "failure evidence")
     assert console.document().lastBlock().userData().details == "failure evidence"
@@ -3162,8 +3162,8 @@ def test_action_results_follow_operation_and_participant_evidence(window):
     log.install(1, state)
     assert log.finished("Setup", "completed", "Setup confirmed")
     rows = console.toPlainText().splitlines()
-    assert sum(row.endswith("[Done]") for row in rows) == 3
-    assert "Reserving output folder" not in console.toPlainText()
+    assert sum(row.endswith("[Done]") for row in rows) == 4
+    assert "Reserving output folder" in console.toPlainText()
     log.install(1, state)
     assert console.toPlainText().splitlines() == rows
     console.clear()
@@ -3258,7 +3258,7 @@ def test_log_keeps_reading_position_during_append_and_retention(
     assert scroll.value() == scroll.maximum()
     console.clear()
     console.appendPlainText("Latest")
-    assert log_rows(console) == ["Latest"]
+    assert log_rows(console) == ["[GUI]       Latest"]
 
 
 @pytest.mark.parametrize(
@@ -3303,7 +3303,10 @@ def test_log_error_color_preserves_text_details_and_style_switch(
                 block.layout().formats()[0].format.foreground().color().name()
                 == COLORS.error
             )
-        assert log_rows(console) == [text, "Next normal entry"]
+        assert log_rows(console) == [
+            f"[GUI]       {text}",
+            "[GUI]       Next normal entry",
+        ]
         assert block.userData().details == "exact command details"
     finally:
         console.deleteLater()
@@ -3322,16 +3325,16 @@ def test_log_entry_details_follow_their_own_bounded_document_block(
     document = console.document()
     assert document is not None
     first, second = document.begin(), document.begin().next()
-    assert first.text()[STAMP_WIDTH:] == "First accepted"
+    assert first.text()[STAMP_WIDTH:] == "[GUI]       First accepted"
     assert isinstance(first.userData(), _LogDetails)
     assert first.userData().details == "command_id=first"
-    assert second.text()[STAMP_WIDTH:] == "Second · failed"
+    assert second.text()[STAMP_WIDTH:] == "[GUI]       Second · failed"
     assert isinstance(second.userData(), _LogDetails)
     assert second.userData().details == "command_id=second\n<unknown>"
     console.appendPlainText("Third")
     app.processEvents()
     assert document.blockCount() == 2
-    assert document.begin().text()[STAMP_WIDTH:] == "Second · failed"
+    assert document.begin().text()[STAMP_WIDTH:] == "[GUI]       Second · failed"
     assert document.begin().userData().details == "command_id=second\n<unknown>"
     console.deleteLater()
 
@@ -3557,8 +3560,8 @@ def test_action_log_covers_session_backends_recording_recovery_and_shutdown():
     for name in ("visual_stimulus", "tracking"):
         state.participants.add().process.role = name
     log.install(1, state)
-    assert ("projectors", "Visual stimulus · Preparing…") in rows
-    assert ("tracking", "Tracking · Preparing…") in rows
+    assert ("projectors", "Visual stimulus · Preparing session resources…") in rows
+    assert ("tracking", "Tracking · Preparing session resources…") in rows
     state.participants[0].preparation_progress = "Decoding textures: 120/500"
     log.install(1, state)
     assert rows[-1] == ("projectors", "Visual stimulus · Decoding textures: 120/500")
@@ -3567,7 +3570,7 @@ def test_action_log_covers_session_backends_recording_recovery_and_shutdown():
     assert len(rows) == count
     state.session.phase = pb.SESSION_PHASE_READY
     log.install(1, state)
-    assert rows[-1] == ("", "Session · Ready")
+    assert rows[-1] == ("", "Session · Setup complete; waiting for Start")
     state.session.phase = pb.SESSION_PHASE_RUNNING
     state.trial.context.trial_id = "trial"
     state.trial.context.trial_number = 2
@@ -3621,7 +3624,9 @@ def test_successful_tracking_frame_poll_does_not_add_routine_log_row(
     ManagedGui.command_finished(
         manager, "tracking_diagnostic_frame", False, "Frame failed"
     )
-    assert log_rows(console) == ["Tracking diagnostic frame failed: Frame failed"]
+    assert log_rows(console) == [
+        "[GUI]       Tracking diagnostic frame failed: Frame failed"
+    ]
     console.deleteLater()
 
 
@@ -3683,7 +3688,7 @@ def test_preview_button_restores_minimized_workspace(window, app, maximized, pha
 
 def test_review_intent_does_not_advance_session(window: DashboardWindow) -> None:
     dashboard = window.dashboard
-    QTest.mouseClick(dashboard.command_buttons["Setup"], Qt.MouseButton.LeftButton)
+    QTest.mouseClick(dashboard.command_buttons["Start"], Qt.MouseButton.LeftButton)
     assert "Setup selected; no command sent" in dashboard.log_console.toPlainText()
     assert dashboard.view.phase == Phase.CONFIGURATION
 
@@ -3805,14 +3810,14 @@ def test_unavailable_preview_retains_reported_state_without_commands(
 @pytest.mark.parametrize(
     ("phase", "actions", "editable"),
     [
-        (Phase.CONFIGURATION, {"Setup"}, True),
+        (Phase.CONFIGURATION, {"Start"}, True),
         (Phase.SETTING_UP, {"Stop"}, False),
         (Phase.READY, {"Start", "Stop"}, True),
         (Phase.STARTING, {"Stop"}, False),
         (Phase.RUNNING, {"Stop"}, False),
         (Phase.STOPPING, {"Stop"}, False),
         (Phase.FINALIZING, {"Stop"}, False),
-        (Phase.ENDED, {"Setup"}, True),
+        (Phase.ENDED, {"Start"}, True),
     ],
 )
 def test_review_phase_locks_and_actions(
@@ -3883,7 +3888,7 @@ def test_review_selector_renders_completion_and_observer_lock(
     assert "D:/CephVR/SP0001-120000" in window.dashboard.runtime_console.toPlainText()
     assert "OUTPUT" not in window.dashboard.preview_dialog.hud.toPlainText()
     controls.observer.setChecked(True)
-    assert not window.dashboard.command_buttons["Setup"].isEnabled()
+    assert not window.dashboard.command_buttons["Start"].isEnabled()
 
 
 @pytest.mark.parametrize("dimensions", [(1440, 940), (1175, 883)])
@@ -3915,7 +3920,7 @@ def test_dashboard_has_only_requested_cards(window: DashboardWindow) -> None:
     assert titles == {
         "System controls",
         "Session config",
-        "Recordings",
+        "Saving options",
         "Runtime HUD",
         "Runtime log",
     }
@@ -3981,31 +3986,19 @@ def test_hud_fits_content_and_log_fills_available_height(
     dashboard.runtime_console.setPlainText(original)
     app.processEvents()
     assert dashboard.runtime_console.height() == panel_heights[0]
-    setup, start, stop = (
-        dashboard.command_buttons[name] for name in ("Setup", "Start", "Stop")
-    )
-    assert setup.geometry().bottom() < start.y() == stop.y()
-    assert setup.x() == start.x()
-    assert setup.geometry().right() == stop.geometry().right()
+    start, stop = (dashboard.command_buttons[name] for name in ("Start", "Stop"))
+    assert start.y() == stop.y()
     assert abs(start.width() - stop.width()) <= 1
-    indicators = list(dashboard.backend_indicators.values())
-    assert len({indicator.y() for indicator in indicators}) == 1
-    assert all(
-        indicator.parentWidget() is dashboard.session_controls
-        for indicator in indicators
-    )
-    assert max(indicator.geometry().bottom() for indicator in indicators) < setup.y()
-    assert indicators[-1].geometry().right() < dashboard.session_controls.width()
 
 
 def test_setup_serves_as_new_session_after_completion(window: DashboardWindow) -> None:
     dashboard = window.dashboard
     requests: list[str] = []
     dashboard.action_requested.connect(requests.append)
-    assert list(dashboard.command_buttons) == ["Setup", "Start", "Stop"]
-    dashboard.command_buttons["Setup"].click()
+    assert list(dashboard.command_buttons) == ["Start", "Stop"]
+    dashboard.command_buttons["Start"].click()
     window.apply_view(review_view(Phase.ENDED))
-    dashboard.command_buttons["Setup"].click()
+    dashboard.command_buttons["Start"].click()
     assert requests == ["Setup", "New session"]
     assert dashboard.view.phase == Phase.ENDED
     assert "New session selected" in dashboard.log_console.toPlainText()
@@ -4063,7 +4056,7 @@ def test_finalization_locks_setup_and_protocol_controls(
         review_view(phase), cleanup_confirmed=cleanup, cleanup_pending=pending
     )
     window.apply_view(view)
-    assert not window.dashboard.command_buttons["Setup"].isEnabled()
+    assert not window.dashboard.command_buttons["Start"].isEnabled()
     assert not window.dashboard.command_buttons["Start"].isEnabled()
     assert not window.protocol.editor.isEnabled()
     assert not window.dashboard.subject_id.isEnabled()
@@ -4077,7 +4070,7 @@ def test_finalization_locks_setup_and_protocol_controls(
             cleanup_pending=False,
         )
     )
-    assert window.dashboard.command_buttons["Setup"].isEnabled()
+    assert window.dashboard.command_buttons["Start"].isEnabled()
     assert window.protocol.editor.isEnabled()
 
 
@@ -4092,13 +4085,13 @@ def test_configuration_cleanup_blockers_lock_protocol_projection(window):
     view = dashboard_view(state, "gui", (), configuration_wired=True)
     window.apply_view(view)
     assert view.cleanup_pending
-    assert not window.dashboard.command_buttons["Setup"].isEnabled()
+    assert not window.dashboard.command_buttons["Start"].isEnabled()
     assert not window.protocol.editor.isEnabled()
     state.session.ClearField("cleanup_blockers")
     state.session.cleanup_confirmed = True
     view = dashboard_view(state, "gui", (), configuration_wired=True)
     window.apply_view(view)
-    assert window.dashboard.command_buttons["Setup"].isEnabled()
+    assert window.dashboard.command_buttons["Start"].isEnabled()
     assert window.protocol.editor.isEnabled()
 
 
@@ -4219,22 +4212,49 @@ def test_stop_dialog_updates_choices_and_closes_on_control_loss(
     assert requests == []
 
 
-def test_runtime_indicators_are_independent_and_read_only(
-    window: DashboardWindow,
-) -> None:
-    indicators = window.dashboard.backend_indicators
-    assert not any(indicator.isChecked() for indicator in indicators.values())
-    window.apply_view(review_view(Phase.READY))
-    assert all(indicator.isChecked() for indicator in indicators.values())
-    camera = indicators["Cameras"]
-    QTest.mouseClick(camera, Qt.MouseButton.LeftButton)
-    QTest.keyClick(camera, Qt.Key.Key_Space)
-    assert camera.isChecked()
-    assert "Cameras · Ready" == camera.accessibleName()
-    window.apply_view(review_view(Phase.CONFIGURATION))
-    camera.click()
-    assert not camera.isChecked()
-    assert "Not prepared" in camera.toolTip()
+def test_system_controls_show_backend_status_only_on_dashboard(window):
+    from PyQt6.QtWidgets import QRadioButton
+
+    dashboard = window.dashboard
+    assert dashboard.session_controls.findChildren(QRadioButton) == list(
+        dashboard.backend_indicators.values()
+    )
+    assert list(dashboard.backend_indicators) == [
+        "Cameras",
+        "Visual stimulus",
+        "Tracking",
+    ]
+    assert not dashboard.preview_dialog.session_controls.findChildren(QRadioButton)
+    assert (
+        dashboard.session_controls.body.itemAt(0).layout()
+        is dashboard.session_controls.header
+    )
+    window.protocol.session_mode.setCurrentText("Open-loop")
+    window.recordings.velocities.setChecked(False)
+    assert dashboard.backend_indicators["Tracking"].isHidden()
+    window.recordings.velocities.setChecked(True)
+    assert not dashboard.backend_indicators["Tracking"].isHidden()
+    window.recordings.velocities.setChecked(False)
+    window.protocol.session_mode.setCurrentText("Closed-loop")
+    assert not dashboard.backend_indicators["Tracking"].isHidden()
+    for enabled in (False, True):
+        for camera in window.devices.cameras.drafts:
+            camera.enabled = enabled
+        window.devices.cameras.drafts_changed.emit()
+        assert dashboard.backend_indicators["Cameras"].isHidden() != enabled
+    assert not dashboard.backend_indicators["Visual stimulus"].isHidden()
+    for phase in (Phase.READY, Phase.CONFIGURATION):
+        window.apply_view(review_view(phase))
+        for indicator in dashboard.backend_indicators.values():
+            assert indicator.isChecked() == (phase == Phase.READY)
+            indicator.click()
+            assert indicator.isChecked() == (phase == Phase.READY)
+            assert indicator.status in indicator.toolTip()
+    for controls in (
+        window.dashboard.session_controls,
+        window.dashboard.preview_dialog.session_controls,
+    ):
+        assert list(controls.command_buttons) == ["Start", "Stop"]
 
 
 def test_preview_participation_gates_and_camera_draft_selection(
@@ -8316,7 +8336,7 @@ def test_setup_without_projectors_logs_and_submits_nothing(
         lambda action: ManagedGui.request_dashboard_action(gui, action)
     )
     window.dashboard.apply_view(DashboardView(connected=True, has_control=True))
-    setup = window.dashboard.command_buttons["Setup"]
+    setup = window.dashboard.command_buttons["Start"]
     assert setup.isEnabled()
     setup.click()
     assert requests == []
@@ -9739,7 +9759,7 @@ def test_protocol_controls_and_enabled_screen_lanes(window: DashboardWindow) -> 
 
     panel = window.protocol
     assert window.recordings.velocities.text() == ""
-    assert window.recordings.velocity_label.text() == "Tracking velocities"
+    assert window.recordings.velocity_label.text() == "Save tracking velocities"
     assert not panel.program_card.findChildren(QLineEdit)
     assert not hasattr(panel, "validate_button")
     assert panel.message.isHidden()
@@ -9924,6 +9944,7 @@ def test_prepared_texture_bundle_and_epoch_motion(
     parameters.more.setChecked(True)
     assert not parameters.advanced.isHidden()
     parameters.more.setChecked(False)
+    parameters.bind(editor.program, (0,), 0, "Left")
     motion = parameters.forms[0]
     assert isinstance(motion, EpochMotion)
     motion.speed.setText("52")
@@ -9931,9 +9952,10 @@ def test_prepared_texture_bundle_and_epoch_motion(
     motion.angular.setText("5")
     motion.changed.emit()
     assert parameters.apply()
-    setting = editor.program.sequence[0].settings[0]
-    assert setting.phase_x.function.value == pytest.approx(0, abs=1e-12)
-    assert setting.phase_y.function.value == pytest.approx(-0.5)
+    setting = editor.program.sequence[0].settings[parameters.layer_index]
+    assert setting.phase_x.kind == setting.phase_y.kind == "hold"
+    assert setting.motion.y.function.value == pytest.approx(0, abs=1e-12)
+    assert setting.motion.x.function.value == pytest.approx(-52)
     assert setting.motion.rotation.function.value == 5
     before = editor.program
     design.write_text(
@@ -10118,7 +10140,7 @@ def test_repeat_variation_uses_canonical_expansion_and_preserves_choreography(
 
     editor = window.protocol.editor
     editor.set_program(blank_program())
-    editor.timeline.set_screens(("Left", "Right"))
+    editor.timeline.set_screens(("Left",))
     editor.add_stimulus("Texture")
     from cephvr.gui.protocol_nodes import edit_epoch as edit_source_epoch
 
@@ -10143,13 +10165,13 @@ def test_repeat_variation_uses_canonical_expansion_and_preserves_choreography(
         assert expanded[offset].lineage == expanded[offset + 1].lineage
     rates = {
         (
-            round(e.settings[0].phase_x.function.value, 6),
-            round(e.settings[0].phase_y.function.value, 6),
+            round(e.settings[0].motion.x.function.value, 6),
+            round(e.settings[0].motion.y.function.value, 6),
         )
         for e in expanded
         if e.settings
     }
-    assert rates == {(-0.5, 0.0), (0.0, -1.0)}
+    assert rates == {(0.0, -10.0), (-20.0, 0.0)}
     combined, _ = make_group(original, (), 0, 1, 1, False, rules, combinations=True)
     assert len(combined.sequence[0].conditions.rows) == 4
     assert len(expand_program(combined, seed_decimal="0", max_expanded_epochs=100)) == 8
@@ -10258,7 +10280,9 @@ def test_motion_auto_commit_and_invalid_edit_undo(
     editor.subgroup.composer.duration.setFocus()
     app.processEvents()
     assert editor.program != original
-    assert editor.program.sequence[0].body[0].settings[0].phase_x.function.value == -1.5
+    assert editor.program.sequence[0].body[0].settings[
+        0
+    ].motion.x.function.value == pytest.approx(-30)
     editor.undo()
     assert editor.program == original
     editor.subgroup.composer.duration.setText("invalid")
@@ -10303,7 +10327,7 @@ def test_saved_variations_reopen_as_speed_direction_lists(
     values.changed.emit()
     updated = update_group(loaded, 0, 1, False, values.read())
     expanded = expand_program(updated, seed_decimal="0", max_expanded_epochs=20)
-    assert expanded[0].settings[0].phase_x.function.value == -1.5
+    assert expanded[0].settings[0].motion.x.function.value == pytest.approx(-30)
     assert (
         updated.sequence[0].conditions.rows[1] == loaded.sequence[0].conditions.rows[1]
     )
@@ -10342,7 +10366,7 @@ def test_variation_bounds_and_preview_limit(window: DashboardWindow) -> None:
     preview.close()
 
 
-def test_stationary_texture_speed_variation_keeps_positive_x_direction(
+def test_stationary_texture_speed_variation_defaults_toward_rig_right(
     window: DashboardWindow,
 ) -> None:
     from cephvr.gui.protocol_document import blank_program
@@ -10359,7 +10383,7 @@ def test_stationary_texture_speed_variation_keeps_positive_x_direction(
         editor.program, (), 0, 0, 1, False, (Variation((0,), 0, "Speed", (10.0,)),)
     )
     expanded = expand_program(grouped, seed_decimal="0", max_expanded_epochs=10)
-    assert expanded[0].settings[0].phase_x.function.value < 0
+    assert expanded[0].settings[0].motion.x.function.value < 0
     assert motion_numbers(expanded[0].settings[0].model_dump(mode="json"))[:2] == (
         10.0,
         0.0,
@@ -10425,15 +10449,17 @@ def test_recording_checks_stay_next_to_labels(
     panel.sync_cameras()
     panel.sync_cameras()
     grid = panel.source_grid
-    assert panel.camera_heading.text() == "Cameras"
-    assert panel.data_heading.text() == "Recorded data"
-    camera_row = grid.getItemPosition(grid.indexOf(panel.camera_heading))[0]
+    assert panel.video_heading.text() == "Videos"
+    assert panel.data_heading.text() == "Data"
+    video_row = grid.getItemPosition(grid.indexOf(panel.video_heading))[0]
     data_row = grid.getItemPosition(grid.indexOf(panel.data_heading))[0]
+    assert data_row == 0
     for camera in window.devices.cameras.drafts:
         row = grid.getItemPosition(grid.indexOf(panel.record[camera.key]))[0]
-        assert camera_row < row < data_row
-    for control in (panel.record["stimulus"], panel.velocities, panel.spikeglx):
-        assert grid.getItemPosition(grid.indexOf(control))[0] > data_row
+        assert row > video_row
+    assert grid.getItemPosition(grid.indexOf(panel.record["stimulus"]))[0] > video_row
+    for control in (panel.velocities, panel.spikeglx):
+        assert data_row < grid.getItemPosition(grid.indexOf(control))[0] < video_row
     assert grid.count() == 2 + 2 * (len(panel.record) + 2)
     dashboard = window.dashboard
     assert dashboard.isAncestorOf(panel)
@@ -13700,6 +13726,7 @@ def test_image_fit_and_motion_are_saved_without_texture_phase(window, app):
     editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Image")
+    editor.parameters.bind(editor.program, (0,), 0, "Left")
     parameters = editor.parameters
     image = next(form for form in parameters.forms if isinstance(form, ImageParameters))
     assert image.fit.currentText() == "Contain"
@@ -13710,7 +13737,7 @@ def test_image_fit_and_motion_are_saved_without_texture_phase(window, app):
     image.initial_x.setText("4")
     assert parameters.apply()
     restored = parse_program_json(editor.program.model_dump_json(), max_bytes=1_048_576)
-    setting = restored.sequence[0].settings[0]
+    setting = restored.sequence[0].settings[parameters.layer_index]
     assert setting.kind == "image" and setting.fit == "cover"
     assert setting.initial.x == 4
     assert setting.motion.y.function.value == pytest.approx(12)
@@ -15096,11 +15123,12 @@ def test_managed_camera_inventory_restores_selected_configuration(
     window.apply_view(DashboardView(connected=True, has_control=True))
     for draft in panel.drafts:
         assert (
-            window.recordings.source_labels[draft.key].text() == f"{draft.role} video"
+            window.recordings.source_labels[draft.key].text()
+            == f"Save {draft.role} video"
         )
         assert (
             window.recordings.record[draft.key].accessibleName()
-            == f"Record {draft.role} video"
+            == f"Save {draft.role} video"
         )
     assert {
         key: control.isChecked() for key, control in window.recordings.record.items()
@@ -17693,7 +17721,9 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                     assert " : " not in rendered
             assert review.snapshots.capture() == before
             assert review.dashboard.subject_editors == editors
-            assert review.dashboard.log_console.toPlainText() == "Existing log entry"
+            assert log_rows(review.dashboard.log_console) == [
+                "[GUI]       Existing log entry"
+            ]
             margin = review.dashboard.log_console.document().documentMargin()
             assert margin == log_margin
             gutter = review.dashboard.log_console.gutter
@@ -17705,9 +17735,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                 control.isEnabled() == enabled
                 for control, enabled in device_gates.items()
             )
-            assert selector.timeline.caption.text() == (
-                "STIMULUS TIMELINE" if name == "retro_console" else "Stimulus timeline"
-            )
+            assert selector.timeline.property("role") != "card"
             assert review.devices.config_cards[0].caption.text() == (
                 "CONFIGURATION FILE"
                 if name == "retro_console"
@@ -17753,7 +17781,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                 assert review.appearance.brand.text() == "CEPHVR"
                 start = review.dashboard.command_buttons["Start"]
                 assert isinstance(start, Button)
-                assert start.retro_label() == "[ start ]"
+                assert start.retro_label() == "[ SETUP ]"
                 assert review.page_buttons[0].retro_label() == "> Dashboard"
                 overlay = review.appearance.crt.overlay
                 assert overlay.host is review
@@ -17769,7 +17797,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                 assert title_glow is not None and card_glow is not None
                 assert title_glow.blurRadius() == card_glow.blurRadius()
                 assert title_glow.color() == card_glow.color()
-                setup = review.dashboard.command_buttons["Setup"]
+                setup = review.dashboard.command_buttons["Start"]
                 assert setup.height() >= setup.sizeHint().height()
                 assert not overlay.band_timer.isActive()
                 review.appearance.band_action.setChecked(True)
@@ -17787,16 +17815,6 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                 assert overlay.isVisible()
                 assert review.appearance.preview_crt.overlay.isVisible()
                 assert review.page_title.graphicsEffect() is not None
-        for status in ("Ready", "Waiting", "Failed", "Unavailable"):
-            review.dashboard.apply_view(replace(current_view, camera_status=status))
-            indicator = review.dashboard.backend_indicators["Cameras"]
-            indicator.click()
-            assert indicator.status == status
-            assert indicator.isChecked() == (status == "Ready")
-            assert indicator.accessibleName() == f"Cameras · {status}"
-            assert indicator.toolTip() == f"Cameras · {status}"
-            assert not indicator.grab().isNull()
-
         review.appearance.select("standard")
         assert brackets.isHidden()
         assert review.page_title.graphicsEffect() is None
@@ -20233,7 +20251,7 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
     assert dialog.hud.geometry().bottom() < dialog.timeline.y()
     assert dialog.timeline.geometry().bottom() < dialog.splitter.y()
     assert dialog.timeline.width() == dialog.splitter.width()
-    assert dialog.toggle_bar.height() == dialog.hud.height()
+    assert dialog.timeline.isAncestorOf(dialog.toggle_bar)
     targets = {key: frame.target for key, frame in window.preview_slot.frames.items()}
     assert all(
         frame.status.isVisible() for frame in window.preview_slot.frames.values()
@@ -20259,7 +20277,7 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
     assert dialog.details.isVisible()
     assert dialog.preview_host.geometry().right() < dialog.details.x()
     assert dialog.details.width() / sum(dialog.splitter.sizes()) == pytest.approx(
-        0.25, abs=0.03
+        1 / 3, abs=0.03
     )
     assert dialog.timeline.width() == dialog.splitter.width()
     assert dialog.details.isAncestorOf(dialog.timeline.motion_section)
@@ -20323,7 +20341,7 @@ def test_preview_timeline_visibility_and_advanced_preference(app, tmp_path):
     dialog.show()
     app.processEvents()
     assert dialog.timeline.isVisible()
-    assert dialog.advanced_toggle.text() == "Advanced settings"
+    assert dialog.advanced_toggle.text() == "Advanced previews"
     assert not hasattr(dialog, "timeline_toggle")
     dialog.hide()
     restored = PreviewDialog(
@@ -20343,7 +20361,7 @@ def test_preview_timeline_visibility_and_advanced_preference(app, tmp_path):
     again.show()
     app.processEvents()
     assert again.details.width() / sum(again.splitter.sizes()) == pytest.approx(
-        0.25, abs=0.03
+        1 / 3, abs=0.03
     )
     host.close()
     host.deleteLater()
@@ -20372,13 +20390,13 @@ def test_preview_hud_row_holds_recording_lamp_and_view_toggles(
     # Idle has no lamp; only REC, closing and output faults are shown.
     assert lamp.isVisible() == (state != "idle")
     assert dialog.toggle_bar.isAncestorOf(dialog.advanced_toggle)
-    top = dialog.hud.geometry()
-    for widget in (lamp, dialog.toggle_bar)[0 if state != "idle" else 1 :]:
-        assert widget.geometry().left() >= top.right()
-        assert widget.geometry().intersects(
-            top.adjusted(-2000, 0, 2000, 0)
-        )  # Same row as the HUD.
-    assert dialog.splitter.y() > top.bottom()
+    assert dialog.hud_card.isAncestorOf(lamp)
+    assert dialog.timeline.isAncestorOf(dialog.toggle_bar)
+    cards = (dialog.session_controls, dialog.hud_card, dialog.log_card)
+    assert cards[0].geometry().right() < cards[1].x()
+    assert cards[1].geometry().right() < cards[2].x()
+    assert len({card.y() for card in cards}) == 1
+    assert dialog.timeline.y() > max(card.geometry().bottom() for card in cards)
 
 
 @pytest.mark.parametrize("style", ["standard", "retro_console"])
@@ -20556,16 +20574,18 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
     timeline.set_program(program, "", "Trial")
     timeline.show()
     app.processEvents()
-    assert len(timeline.toggles) == 1 and len(timeline.dials) == 1
-    assert next(iter(timeline.toggles.values())).text() == "Bottom · reference"
+    from PyQt6.QtWidgets import QCheckBox
+
+    assert len(timeline.dials) == 2
+    assert timeline.sources[0].name == "Bottom · reference"
+    cards = timeline.instrument_host.findChildren(QWidget, "ProjectorCard")
+    assert len(cards) == 2
+    assert all(card.grid is not None for card in cards)
+    assert not timeline.instrument_host.findChildren(QCheckBox)
     assert timeline.size_lane.epochs == timeline.epochs
-    assert (
-        timeline.epoch_timeline.mapTo(timeline, QPoint(0, 0)).y()
-        >= next(iter(timeline.toggles.values())).mapTo(timeline, QPoint(0, 0)).y()
-    )
     timeline.set_elapsed(12)
     sample = timeline.dial_samples[0]
-    assert vector_text(sample).endswith("· 180°")
+    assert vector_text(sample).endswith("· 90°")
     assert sample.angular_speed == -15 and rotation_text(sample) == "-15°/s"
     assert not sample.message
     assert (
@@ -20706,11 +20726,11 @@ def test_preview_motion_overlay_linked_baseline_and_independent(
     timeline.set_advanced(True)
     timeline.set_program(program, "", "Overlay")
     timeline.set_elapsed(2)
-    # Stationary baselines keep the linked projectors grouped under the reference.
+    # Stationary baselines and linked epochs retain every projector.
     assert timeline.dial_samples[0].vector is None
     timeline.set_elapsed(12)
     assert [s.name for s in timeline.sources] == (
-        ["Bottom · reference", "Front"] if independent else ["Bottom · reference"]
+        ["Bottom · reference", "Front", "Left", "Right"]
     )
     samples = timeline.dial_samples
     assert len(samples) == len(timeline.sources)
@@ -20720,13 +20740,9 @@ def test_preview_motion_overlay_linked_baseline_and_independent(
     )
     assert len({sample.color for sample in samples}) == len(timeline.sources)
     assert hypot(*samples[0].vector) == pytest.approx(20)
-    reference = timeline.sources[0]
-    timeline.toggles[reference.key].setChecked(False)
-    assert len(timeline.dial_samples) == len(timeline.sources) - 1
-    assert timeline.dials[0].isHidden()
     timeline.set_program(program, "", "Overlay")
-    assert not timeline.toggles[reference.key].isChecked()
-    timeline.toggles[reference.key].setChecked(True)
+    assert len(timeline.dial_samples) == len(timeline.sources)
+    assert all(not dial.isHidden() for dial in timeline.dials)
     assert timeline.dial_samples[0].name == "Bottom · texture"
     timeline.show()
     app.processEvents()
@@ -20760,7 +20776,7 @@ def test_preview_motion_overlay_linked_baseline_and_independent(
             "Unsupported Front",
         )
         timeline.set_elapsed(12)
-        valid, unsupported = timeline.dial_samples
+        valid, unsupported = timeline.dial_samples[:2]
         assert valid.vector is not None and not valid.message
         assert unsupported.name.startswith("Front")
         assert "Combined texture translation" in unsupported.message
@@ -21541,7 +21557,7 @@ def test_four_digit_subject_and_species_setup(window, subject):
 
 
 @pytest.mark.parametrize("style", ["standard", "retro_console"])
-def test_texture_setup_progress_replaces_one_row_through_ready(window, app, style):
+def test_texture_setup_checklist_retains_stages_through_ready(window, app, style):
     from cephvr.control.v1 import types_pb2 as pb
     from cephvr.gui.action_progress import ActionProgress
 
@@ -21573,15 +21589,18 @@ def test_texture_setup_progress_replaces_one_row_through_ready(window, app, styl
     log.install(1, state)
     for console, stamp in zip(consoles, originals, strict=True):
         rows = console.toPlainText().splitlines()
-        assert len(rows) == 2
-        assert rows[0] == stamp + "[STIMULUS]  Uploading initial textures: 8/40"
+        assert len(rows) == 3
+        assert rows[0] == stamp + "[STIMULUS]  Decoding textures: 500/500"
+        assert rows[2].endswith("Uploading initial textures: 8/40")
         assert rows[1].endswith("Unrelated camera observation")
         assert "[Done]" not in console.toPlainText()
     participant.ready.required_checks_passed = True
     log.install(1, state)
     for console in consoles:
         rows = console.toPlainText().splitlines()
-        assert len(rows) == 2 and rows[0].endswith("8/40 [Done]")
+        assert len(rows) == 3
+        assert rows[0].endswith("500/500 [Done]")
+        assert rows[2].endswith("8/40 [Done]")
     app.processEvents()
 
 
@@ -21698,3 +21717,218 @@ def test_category_expansion_preserves_reading_position_and_resets_on_clear(windo
     console.clear()
     console.appendPlainText("Setup · reset")
     assert console.toPlainText()[STAMP_WIDTH:] == "[SETUP]     reset"
+
+
+@pytest.mark.parametrize(
+    "message", ["Plain message", " · Missing subject", "[MCU] Already tagged"]
+)
+def test_log_entry_paths_always_include_category(window, message):
+    from cephvr.gui.log_format import CATEGORY_PREFIX
+
+    console = window.dashboard.log_console
+    console.clear()
+    console.setPlainText(message)
+    console.appendPlainText(message + " appended")
+    console.append_entry(message, "diagnostic details")
+    console.action_entry(("progress",), message)
+    console.action_entry(("progress",), message + " updated")
+    console.action_entry(("progress",), "", "Done")
+    rows = console.toPlainText().splitlines()
+    assert len(rows) == 4
+    assert all(CATEGORY_PREFIX.match(row[STAMP_WIDTH:]) for row in rows)
+    assert (
+        all(row.count("[MCU]") == 1 for row in rows)
+        if message.startswith("[MCU]")
+        else all("[GUI]" in row for row in rows)
+    )
+    assert rows[-1].endswith("updated [Done]")
+
+
+def test_preview_window_supplies_current_profile_or_edited_geometry(
+    window, monkeypatch
+):
+    import json
+
+    from cephvr.visual_stimulus.config.models.display_profile import Geometry
+
+    projectors = window.devices.projectors
+    for key, value in zip(
+        projectors.rig_editor.fields, (200, 300, 150, 100, 100, 75), strict=True
+    ):
+        projectors.rig_editor.fields[key].setText(str(value))
+    drafts = {
+        face: {"width": "200", "height": "150", "subject_distance": "200"}
+        for face in ("Front", "Left", "Right", "Bottom")
+    }
+    geometry = Geometry.model_validate_json(
+        json.dumps(projectors.rig_editor.geometry_payload(drafts))
+    )
+    projectors.calibration_files.profile = {
+        "geometry": geometry.model_dump(mode="json")
+    }
+    projectors._geometry_dirty = False
+    window.update_preview_timeline()
+    preview = window.dashboard.preview_dialog.timeline
+    assert preview.plan.geometry == geometry
+    changed = geometry.model_copy(update={"observer_mm": (101.0, 100.0, 75.0)})
+    monkeypatch.setattr(
+        projectors.rig_editor,
+        "geometry_payload",
+        lambda drafts: changed.model_dump(mode="json"),
+    )
+    projectors._geometry_dirty = True
+    window.update_preview_timeline()
+    assert preview.plan.geometry == changed
+    monkeypatch.setattr(projectors.rig_editor, "geometry_payload", lambda drafts: {})
+    window.update_preview_timeline()
+    assert preview.plan.geometry is None
+
+
+@pytest.mark.parametrize("ready", [True, False])
+def test_setup_checklist_camera_scope_completion_and_reconnect(window, ready):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_progress import ActionProgress
+
+    console = window.dashboard.log_console
+    console.clear()
+    log = ActionProgress(
+        lambda *_: None, lambda _target, *args: console.action_entry(*args)
+    )
+    state = pb.Snapshot(controller_generation="controller")
+    state.session.context.session_id = "session"
+    state.session.phase = pb.SESSION_PHASE_SETTING_UP
+    state.configuration.revision = 4
+    state.configuration_values.revision = 4
+    backend = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    backend.acquisition.behavioral.enabled = True
+    backend.acquisition.eye_tracking.enabled = True
+    participant = state.participants.add()
+    participant.process.role = "acquisition"
+    participant.process.generation = "camera-owner"
+    state.microcontroller.observation.connection_id = "connection"
+    state.microcontroller.observation.observed_monotonic_ns = 1
+    log.install(1, state)
+    initial = console.toPlainText()
+    assert "[BEH CAM]" in initial and "[EYE CAM]" in initial
+    assert "[TRK CAM]" not in initial
+    assert "Reading connection and configuration… [Done]" in initial
+    assert "Ready" not in initial
+    state.ClearField("configuration_values")
+    log.install(1, state)
+    assert console.toPlainText() == initial
+    participant.ready.required_checks_passed = ready
+    state.session.phase = (
+        pb.SESSION_PHASE_READY if ready else pb.SESSION_PHASE_CONFIGURATION
+    )
+    log.install(1, state)
+    rows = console.toPlainText().splitlines()
+    camera_rows = [row for row in rows if "Preparing camera for session" in row]
+    assert len(camera_rows) == 2
+    assert all(
+        row.endswith("[Done]" if ready else "[Unconfirmed]") for row in camera_rows
+    )
+    log.install(1, state)
+    assert console.toPlainText().splitlines() == rows
+    console.clear()
+    log.install(2, state)
+    assert "[Done]" not in console.toPlainText()
+    assert "Preparing camera for session" not in console.toPlainText()
+
+
+@pytest.mark.parametrize("phase", list(Phase))
+@pytest.mark.parametrize("observer", [False, True])
+def test_preview_system_controls_share_dashboard_gates(window, phase, observer):
+    dashboard = window.dashboard
+    dashboard.apply_view(review_view(phase, observer=observer))
+    preview = dashboard.preview_dialog.session_controls
+    for name, control in dashboard.command_buttons.items():
+        assert preview.command_buttons[name].isEnabled() == control.isEnabled()
+        assert preview.command_buttons[name].toolTip() == control.toolTip()
+        assert not preview.command_buttons[name].autoDefault()
+    primary = dashboard.command_buttons["Start"]
+    assert primary.text() == (
+        "Setup"
+        if phase in {Phase.CONFIGURATION, Phase.SETTING_UP, Phase.ENDED}
+        else "Start"
+    )
+    assert preview.command_buttons["Start"].text() == primary.text()
+
+
+def test_preview_commands_use_shared_validation_and_stop_choices(app):
+    from cephvr.gui.dashboard import Dashboard
+
+    dashboard = Dashboard(sample=True)
+    preview = dashboard.preview_dialog
+    buttons = preview.session_controls.command_buttons
+    actions = []
+    dashboard.action_requested.connect(actions.append)
+    dashboard.apply_view(review_view(Phase.CONFIGURATION))
+    dashboard.subject_id.setText("")
+    buttons["Start"].click()
+    assert not actions
+    assert "Subject ID" in preview.log_tail.toPlainText()
+    dashboard.subject_id.setText("0001")
+    buttons["Start"].click()
+    assert actions == ["Setup"]
+    dashboard.apply_view(review_view(Phase.READY))
+    buttons["Start"].click()
+    buttons["Stop"].click()
+    assert actions[-2:] == ["Start", "Cancel Setup"]
+    dashboard.apply_view(review_view(Phase.RUNNING))
+    buttons["Stop"].click()
+    assert dashboard.stop_dialog.parent() is preview
+    dashboard.stop_dialog.choice_buttons["Stop after trial"].click()
+    assert actions[-1] == "Stop after trial"
+    buttons["Stop"].click()
+    dashboard.apply_view(review_view(Phase.RUNNING, observer=True))
+    assert dashboard.stop_dialog is None
+    before = list(actions)
+    preview.session_controls.action_requested.emit("Start")
+    assert actions == before
+    dashboard.deleteLater()
+    app.processEvents()
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+def test_preview_log_tail_tracks_four_rows_and_in_place_results(window, app, style):
+    window.appearance.select(style, persist=False)
+    dashboard = window.dashboard
+    source = dashboard.log_console
+    tail = dashboard.preview_dialog.log_tail
+    source.clear()
+    for index in range(6):
+        source.appendPlainText(f"Setup · Step {index}")
+    source.action_entry(("setup-test",), "Setup · Preparing…")
+    source.action_entry(("setup-test",), "Setup · Registering outputs…")
+    source.action_entry(("setup-test",), "", "Done", "Confirmed")
+    app.processEvents()
+    assert tail.toPlainText().splitlines() == source.toPlainText().splitlines()[-4:]
+    assert "Registering outputs… [Done]" in tail.toPlainText()
+    assert tail.isReadOnly()
+    assert tail.document().blockCount() == 4
+    dialog = dashboard.preview_dialog
+    dialog.show()
+    app.processEvents()
+    assert tail.height() == dialog.hud.height()
+    assert dialog.timeline.property("role") != "card"
+    controls = dialog.session_controls
+    start, stop = controls.command_buttons.values()
+    assert start.geometry().center().y() == stop.geometry().center().y()
+    assert abs(start.width() - stop.width()) <= 1
+    row_host = start.parentWidget()
+    assert row_host is not None
+    assert abs(start.geometry().center().y() - row_host.rect().center().y()) <= 1
+    assert row_host.y() > controls.caption.geometry().bottom()
+    from PyQt6.QtGui import QColor, QPalette
+
+    from cephvr.gui.theme import colors_for
+
+    for card in (controls, dialog.hud_card, dialog.log_card):
+        assert card.caption.palette().color(QPalette.ColorRole.WindowText) == QColor(
+            colors_for(card).coral
+        )
+    source.clear()
+    assert tail.toPlainText() == "\n\n\n"
+    assert source.toPlainText() == ""

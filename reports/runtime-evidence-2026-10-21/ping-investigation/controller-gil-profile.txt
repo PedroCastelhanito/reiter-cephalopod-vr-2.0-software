@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\profile_controller.py", line 21, in <module>
+    from tests.controller.support_components import default_limits
+ModuleNotFoundError: No module named 'tests'

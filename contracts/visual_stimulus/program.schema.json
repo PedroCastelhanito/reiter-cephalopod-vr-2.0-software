@@ -2063,6 +2063,20 @@
           "title": "Kind",
           "type": "string"
         },
+        "rig_coordinates": {
+          "default": false,
+          "title": "Rig Coordinates",
+          "type": "boolean"
+        },
+        "rig_angle_version": {
+          "default": 1,
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Rig Angle Version",
+          "type": "integer"
+        },
         "instance_id": {
           "maxLength": 128,
           "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
@@ -2814,6 +2828,20 @@
     "VariationDraft": {
       "additionalProperties": false,
       "properties": {
+        "rig_coordinates": {
+          "default": false,
+          "title": "Rig Coordinates",
+          "type": "boolean"
+        },
+        "rig_angle_version": {
+          "default": 1,
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Rig Angle Version",
+          "type": "integer"
+        },
         "projector": {
           "maxLength": 4096,
           "title": "Projector",

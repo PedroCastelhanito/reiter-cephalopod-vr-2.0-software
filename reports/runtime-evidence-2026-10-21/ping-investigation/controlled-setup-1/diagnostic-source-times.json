@@ -1,0 +1,22 @@
+[
+  {
+    "FullName": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\serial_port.py",
+    "LastWriteTimeUtc": "2026-10-21T06:13:15.8917458Z"
+  },
+  {
+    "FullName": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\microcontroller\\channel.py",
+    "LastWriteTimeUtc": "2026-10-21T06:12:59.9208526Z"
+  },
+  {
+    "FullName": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\supervisor\\receipts.py",
+    "LastWriteTimeUtc": "2026-10-21T06:13:59.1252698Z"
+  },
+  {
+    "FullName": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\supervisor\\acquisition_worker.py",
+    "LastWriteTimeUtc": "2026-10-21T06:13:15.0777298Z"
+  },
+  {
+    "FullName": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\supervisor\\visual_stimulus_worker.py",
+    "LastWriteTimeUtc": "2026-10-21T06:13:15.2732582Z"
+  }
+]

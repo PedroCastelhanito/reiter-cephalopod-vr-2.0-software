@@ -1,0 +1,195 @@
+{
+  "scope": "Observed historical state publication times;not physical MCU/USB timing or exact callback ingress",
+  "source": "reports\\runtime-evidence-2026-10-21\\rig-validation\\full-texture\\events.jsonl",
+  "session_id": "3679c1f4-ab58-45b4-b752-66de400435c0",
+  "origin_host_ns": 573500670835900,
+  "events": [
+    {
+      "host_ns": 573500670835900,
+      "relative_ms": 0.0,
+      "kind": "state",
+      "value": {
+        "phase": "SESSION_PHASE_SETTING_UP",
+        "cleanup_confirmed": false,
+        "operations": [
+          [
+            "Setup",
+            "Reserving output folder\u2026",
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "host_ns": 573500679186300,
+      "relative_ms": 8.3504,
+      "kind": "state",
+      "value": {
+        "phase": "SESSION_PHASE_SETTING_UP",
+        "cleanup_confirmed": false,
+        "operations": [
+          [
+            "Setup",
+            "Checking output folder\u2026",
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "host_ns": 573500689345900,
+      "relative_ms": 18.51,
+      "kind": "state",
+      "value": {
+        "phase": "SESSION_PHASE_SETTING_UP",
+        "cleanup_confirmed": false,
+        "operations": [
+          [
+            "Setup",
+            "Registering backends\u2026",
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "host_ns": 573500706548700,
+      "relative_ms": 35.7128,
+      "kind": "state",
+      "value": {
+        "phase": "SESSION_PHASE_SETTING_UP",
+        "cleanup_confirmed": false,
+        "operations": [
+          [
+            "Setup",
+            "Preparing cameras\u2026",
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "host_ns": 573503987939800,
+      "relative_ms": 3317.1039,
+      "kind": "state",
+      "value": {
+        "phase": "SESSION_PHASE_SETTING_UP",
+        "cleanup_confirmed": false,
+        "operations": [
+          [
+            "Setup",
+            "Preparing cameras\u2026",
+            true,
+            {
+              "code": "SETUP_FAILED",
+              "message": "acquisition readback: serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=114.451, budget_ms=99.979, write_ms=65.560, total_read_ms=48.864, reads=1, bytes=125, late_bytes=125, partial_bytes=0, longest_read_ms=48.864, unmatched=0, malformed=0"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "host_ns": 573503988755100,
+      "relative_ms": 3317.9192,
+      "kind": "Setup",
+      "value": {
+        "command_id": "eb6cee75-abbc-482d-b369-d8a252bc0de8",
+        "complete": true,
+        "succeeded": false,
+        "needs_input": false,
+        "failure": "SETUP_FAILED: acquisition readback: serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=114.451, budget_ms=99.979, write_ms=65.560, total_read_ms=48.864, reads=1, bytes=125, late_bytes=125, partial_bytes=0, longest_read_ms=48.864, unmatched=0, malformed=0",
+        "elapsed_ms": 3714.8762
+      }
+    },
+    {
+      "host_ns": 573504005467300,
+      "relative_ms": 3334.6314,
+      "kind": "state",
+      "value": {
+        "phase": "SESSION_PHASE_SETTING_UP",
+        "cleanup_confirmed": false,
+        "operations": [
+          [
+            "Setup",
+            "Preparing cameras\u2026",
+            true,
+            {
+              "code": "SETUP_FAILED",
+              "message": "acquisition readback: serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=114.451, budget_ms=99.979, write_ms=65.560, total_read_ms=48.864, reads=1, bytes=125, late_bytes=125, partial_bytes=0, longest_read_ms=48.864, unmatched=0, malformed=0"
+            }
+          ],
+          [
+            "CancelSetup",
+            "Cleaning up\u2026",
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "host_ns": 573513150488200,
+      "relative_ms": 12479.6523,
+      "kind": "retained_evidence",
+      "value": "Supervisor BACKEND_HEARTBEAT_LOST visual_stimulus heartbeat silence"
+    },
+    {
+      "host_ns": 573513168476900,
+      "relative_ms": 12497.641,
+      "kind": "retained_evidence",
+      "value": "Emergency report timestamp"
+    },
+    {
+      "host_ns": 573513839278100,
+      "relative_ms": 13168.4422,
+      "kind": "state",
+      "value": {
+        "phase": "SESSION_PHASE_CONFIGURATION",
+        "cleanup_confirmed": false,
+        "operations": [
+          [
+            "Setup",
+            "Preparing cameras\u2026",
+            true,
+            {
+              "code": "SETUP_FAILED",
+              "message": "acquisition readback: serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=114.451, budget_ms=99.979, write_ms=65.560, total_read_ms=48.864, reads=1, bytes=125, late_bytes=125, partial_bytes=0, longest_read_ms=48.864, unmatched=0, malformed=0"
+            }
+          ],
+          [
+            "CancelSetup",
+            "cleanup evidence blocked",
+            true,
+            {
+              "code": "OPERATION_FAILED",
+              "message": "cleanup could not be confirmed"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "host_ns": 573513839951700,
+      "relative_ms": 13169.1158,
+      "kind": "CancelSetup",
+      "value": {
+        "command_id": "a3ebf8cc-23f5-4111-994f-eb9e1ef78442",
+        "complete": true,
+        "succeeded": false,
+        "needs_input": false,
+        "failure": "OPERATION_FAILED: cleanup could not be confirmed",
+        "elapsed_ms": 9840.8458
+      }
+    },
+    {
+      "host_ns": 573513855388600,
+      "relative_ms": 13184.5527,
+      "kind": "error",
+      "value": "AssertionError(CommandOutcome(command_id='a3ebf8cc-23f5-4111-994f-eb9e1ef78442', complete=True, succeeded=False, needs_input=False, failure='OPERATION_FAILED: cleanup could not be confirmed'))"
+    }
+  ]
+}

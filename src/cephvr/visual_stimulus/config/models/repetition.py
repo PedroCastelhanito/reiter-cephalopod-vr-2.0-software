@@ -11,6 +11,8 @@ from .schema_common import Model, ProgramId
 
 class RepetitionRule(Model):
     kind: Literal["uniform_grid_v1"] = "uniform_grid_v1"
+    rig_coordinates: bool = False
+    rig_angle_version: Literal[1, 2] = 1
     instance_id: ProgramId
     parameter: Literal[
         "Speed",

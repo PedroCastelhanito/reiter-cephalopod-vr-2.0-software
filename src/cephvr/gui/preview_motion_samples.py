@@ -16,6 +16,8 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Settings,
     TextureSettings,
 )
+from cephvr.visual_stimulus.config.rig_coordinates import direction_frame
+from cephvr.visual_stimulus.config.texture_links import unfolded_direction
 
 DRIVE_UNIT = "mm/s"
 # Per-epoch samples used only to fix each dial's ring scale for the trial.
@@ -122,6 +124,10 @@ class InstrumentPlan(PlannedStates):
         scale = 0.0 if driving else panel.scale
         turns = 0.0 if driving else panel.rotation_scale
 
+        display_rotation = {"Front": 90.0, "Right": 180.0}.get(source.key[0], 0.0)
+
+        display_sign = 1.0
+
         def sample(
             vector: tuple[float, float] | None = None,
             angular: float | None = None,
@@ -139,6 +145,8 @@ class InstrumentPlan(PlannedStates):
                 turns,
                 message,
                 orientation,
+                display_rotation if form == "texture" else 0.0,
+                display_sign,
             )
 
         setting = source.settings[index] if index is not None else None
@@ -146,14 +154,14 @@ class InstrumentPlan(PlannedStates):
             return sample(
                 angular=0.0 if index is not None else None, message="No stimulus"
             )
-        if follower(setting):
-            return sample(message="Follows its reference")
         if driving:
             return sample(message=WAITING if setting.feedback else "No feedback")
         if setting.feedback:
             return sample(message=WAITING)
         local_ns = self.epochs[index].local_ns(time)
         try:
+            if isinstance(setting, TextureSettings) and setting.linked_to:
+                setting = self.resolved_texture(index, setting)
             if form == "tracking":
                 forward, left, turn = self.body_velocity(index, setting, local_ns)
                 orientation = None
@@ -167,13 +175,44 @@ class InstrumentPlan(PlannedStates):
                     turn,
                     orientation=orientation,
                 )
+            if (
+                isinstance(setting, TextureSettings)
+                and setting.space.kind == "physical_surface"
+                and self.geometry is not None
+            ):
+                display_sign = -1.0
+                display_rotation = unfolded_direction(
+                    setting,
+                    self.geometry,
+                    source.key[0].lower(),
+                    self.values(index, setting.instance_id, local_ns)["rotation"]
+                    if any(m.kind != "hold" for m in (setting.phase_x, setting.phase_y))
+                    else 0.0,
+                )
+            elif (
+                isinstance(setting, TextureSettings)
+                and setting.space.kind == "physical_surface"
+            ):
+                data = setting.model_dump(mode="json")
+                data["initial"]["rotation_deg"] = self.values(
+                    index, setting.instance_id, local_ns
+                )["rotation"]
+                if setting.space.kind == "physical_surface":
+                    data["space"]["mappings"] = [
+                        m
+                        for m in data["space"]["mappings"]
+                        if m["surface_id"] == source.key[0].lower()
+                    ]
+                else:
+                    data["space"]["surfaces"] = [source.key[0].lower()]
+                display_rotation, display_sign = direction_frame(data)
             x, y = planned_velocity(setting, local_ns)
             orientation = None
             if not (x or y):
                 orientation = self.values(index, setting.instance_id, local_ns)[
                     "rotation"
                 ]
-        except (ValueError, TypeError, OverflowError) as error:
+        except (ValueError, TypeError, OverflowError, KeyError) as error:
             return sample(message=str(error))
         try:
             angular: float | None = planned_rotation(setting, local_ns)

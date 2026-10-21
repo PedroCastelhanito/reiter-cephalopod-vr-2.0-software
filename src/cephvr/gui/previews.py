@@ -11,15 +11,19 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QSizePolicy,
     QSplitter,
     QVBoxLayout,
     QWidget,
 )
 
-from cephvr.gui.components import FittedConsole, label
+from cephvr.gui.components import Card, FittedConsole, label
 from cephvr.gui.layouts import snap_tool_window
+from cephvr.gui.preview_log import PreviewLog
 from cephvr.gui.preview_timeline import StimulusTimeline
-from cephvr.gui.theme import SIZES
+from cephvr.gui.retro_overlay import set_glow
+from cephvr.gui.system_controls import SystemControls
+from cephvr.gui.theme import SIZES, retro_console
 from cephvr.gui.view import PreviewView
 
 
@@ -57,12 +61,16 @@ class PreviewDialog(QDialog):
         self.setWindowModality(Qt.WindowModality.NonModal)
         self.content = QVBoxLayout(self)
         self.content.setContentsMargins(*([SIZES.compact_card_padding] * 4))
-        self.content.setSpacing(SIZES.field_x_gap)
+        self.content.setSpacing(16)
         self.details = QWidget(self)
         self.details_layout = QVBoxLayout(self.details)
         self.details_layout.setContentsMargins(0, 0, 0, 0)
         self.details_layout.setSpacing(SIZES.field_y_gap)
-        self.top = QGridLayout()
+        self.top_host = QWidget(self)
+        self.top_host.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
+        self.top = QGridLayout(self.top_host)
         self.top.setContentsMargins(0, 0, 0, 0)
         self.top.setHorizontalSpacing(SIZES.field_x_gap)
         self.top.setVerticalSpacing(SIZES.field_y_gap)
@@ -71,13 +79,13 @@ class PreviewDialog(QDialog):
         self.hud.setAccessibleName("Experiment status")
         self.recording_lamp = label("", "rec-lamp")
         self.recording_lamp.setAccessibleName("Recording status")
-        # Workspace-wide view toggles share this one strip beside the HUD.
+        # Workspace-wide view options stay with the timeline.
         self.toggle_bar = QFrame()
         self.toggle_bar.setObjectName("PreviewToggles")
         toolbar = QHBoxLayout(self.toggle_bar)
         toolbar.setContentsMargins(10, 4, 10, 4)
         toolbar.setSpacing(SIZES.field_x_gap)
-        self.advanced_toggle = QCheckBox("Advanced settings")
+        self.advanced_toggle = QCheckBox("Advanced previews")
         self.advanced_toggle.setToolTip("Show motion dials, arena map and size lanes")
         self.advanced_toggle.setChecked(
             settings.value("windows/preview-advanced-visible", False, type=bool)
@@ -89,8 +97,7 @@ class PreviewDialog(QDialog):
         # Keep status above the resizable stream/plot sections.
         self.timeline = StimulusTimeline()
         self.timeline.plots.removeWidget(self.timeline.motion_section)
-        self.details_layout.addWidget(self.timeline.motion_section)
-        self.details_layout.addStretch(1)
+        self.details_layout.addWidget(self.timeline.motion_section, 1)
         self.preview_host = QWidget(self)
         self.preview_layout = QVBoxLayout(self.preview_host)
         self.preview_layout.setContentsMargins(0, 0, 0, 0)
@@ -98,19 +105,37 @@ class PreviewDialog(QDialog):
         self.empty_hint.setObjectName("PreviewWorkspaceEmpty")
         self.empty_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_layout.addWidget(self.empty_hint)
-        self.top.addWidget(self.hud, 0, 0)
-        self.top.addWidget(self.recording_lamp, 0, 1)
-        self.top.addWidget(self.toggle_bar, 0, 2)
-        self.top.setColumnStretch(0, 1)
-        self.content.addLayout(self.top)
+        self.session_controls = SystemControls(compact=True)
+        self.session_controls.header.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.hud_card = Card("HUD", compact=True)
+        self.hud_card.header.addWidget(self.recording_lamp)
+        self.hud_card.body.addWidget(self.hud)
+        self.log_card = Card("Console", compact=True)
+        self.log_tail = PreviewLog()
+        self.log_card.body.addWidget(self.log_tail)
+        for column, card in enumerate(
+            (self.session_controls, self.hud_card, self.log_card)
+        ):
+            card.setSizePolicy(
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+            )
+            if card is not self.session_controls:
+                card.body.setAlignment(Qt.AlignmentFlag.AlignTop)
+            self.top.addWidget(card, 0, column)
+        for column, stretch in enumerate((2, 3, 5)):
+            self.top.setColumnStretch(column, stretch)
+        self.timeline.body.insertWidget(
+            0, self.toggle_bar, 0, Qt.AlignmentFlag.AlignRight
+        )
+        self.content.addWidget(self.top_host)
         self.content.addWidget(self.timeline)
         self.splitter = QSplitter(Qt.Orientation.Horizontal, self)
         self.splitter.setChildrenCollapsible(False)
-        self.splitter.setHandleWidth(8)
+        self.splitter.setHandleWidth(16)
         self.splitter.setOpaqueResize(True)
         self.splitter.addWidget(self.preview_host)
         self.splitter.addWidget(self.details)
-        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 1)
         handle = self.splitter.handle(1)
         assert handle is not None
@@ -127,6 +152,17 @@ class PreviewDialog(QDialog):
         self.source_widgets: dict[str, QWidget] = {}
         self.recording_enabled: dict[str, bool] = {}
         self.allowed = False
+        self.glow = False
+
+    def restyle(self, glow: bool | None = None) -> None:
+        """Apply the CRT heading glow to stream and projector headings."""
+        if glow is not None:
+            self.glow = glow
+        for name in self.names.values():
+            set_glow(name, self.glow)
+        self.timeline.restyle(self.glow)
+        self.log_tail.set_entry_prompts(retro_console(self))
+        self.log_tail.fit_height()
 
     def showEvent(self, event: QShowEvent | None) -> None:
         super().showEvent(event)
@@ -154,7 +190,7 @@ class PreviewDialog(QDialog):
         self.details.setVisible(visible)
         if visible:
             width = max(1, self.splitter.width() - self.splitter.handleWidth())
-            self.splitter.setSizes([width * 3 // 4, width // 4])
+            self.splitter.setSizes([width * 2 // 3, width // 3])
         if self.settings is not None:
             self.settings.setValue("windows/preview-advanced-visible", visible)
 
@@ -231,6 +267,7 @@ class PreviewDialog(QDialog):
                 self.controls[view.key] = control
                 self.hints[view.key] = hint
                 self.statuses[view.key] = ""
+                set_glow(name, self.glow)
 
         self.views = {view.key: view for view in views}
         self.refresh()

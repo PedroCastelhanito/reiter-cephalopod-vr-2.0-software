@@ -1,0 +1,33 @@
+{
+  "who": "parent-finally",
+  "before": {
+    "utc": "2026-10-21T06:59:51.764977+00:00",
+    "perf_counter_ns": 588430282341700,
+    "qpc": 5884302823259,
+    "qpc_frequency": 10000000
+  },
+  "after": {
+    "utc": "2026-10-21T07:00:20.545492+00:00",
+    "perf_counter_ns": 588459063317800,
+    "qpc": 5884590633002,
+    "qpc_frequency": 10000000
+  },
+  "command": [
+    "C:/Windows/System32/wpr.exe",
+    "-stop",
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-21\\ping-investigation\\native-trace-uac-1\\owned.etl",
+    "CephVR single full-protocol Setup noStart cancel",
+    "-skipPdbGen",
+    "-instancename",
+    "CephVRNativeTraceUAC20261021_1"
+  ],
+  "returncode": 0,
+  "stdout": "Press Ctrl+C to cancel the stop operation.\nThe trace was successfully saved.\n",
+  "stderr": "",
+  "status": {
+    "returncode": 0,
+    "stdout": "\nMicrosoft Windows Performance Recorder Version 10.0.26100 (CoreSystem)\nCopyright (c) 2024 Microsoft Corporation. All rights reserved.\n\nWPR is not recording\n",
+    "stderr": ""
+  },
+  "confirmed": true
+}

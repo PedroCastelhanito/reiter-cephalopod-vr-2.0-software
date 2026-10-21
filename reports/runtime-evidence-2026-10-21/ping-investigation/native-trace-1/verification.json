@@ -1,0 +1,35 @@
+{
+  "captured_utc": "2026-10-21T06:35:53.064279+00:00",
+  "status": "WPR privilege preflight failed before Setup dispatch; latest baseline restored. Await separate transient UAC trace-helper approval.",
+  "additional_setup_rpc_count": 0,
+  "no_start": true,
+  "trace_start": "trace-start-result.json",
+  "wpr_error": "0xc5585011 Failed to enable the policy to profile system performance",
+  "stop": "trace-stop-result.json",
+  "stop_confirmed_no_recording": true,
+  "etl_created": false,
+  "restoration": {
+    "snapshot": "preflight-restored-snapshot.json",
+    "runtime_equals_latest_baseline": true,
+    "history_bytes_equal_latest_baseline": true,
+    "history_sha256": "533ff90ab34552a703df576a3fc9f600b3bf366adaffe0b92a1040f47897e6f3",
+    "recording_root": "C:/Users/ReiterU_PC/Desktop/tmp",
+    "no_session_context": true,
+    "no_setup_operation": true
+  },
+  "privilege_scope": {
+    "exec_sandbox_permissions": "require_escalated",
+    "native_token_elevated": false,
+    "SeSystemProfilePrivilege": "Absent from current token",
+    "evidence": [
+      "token-elevation.json",
+      "privileges.txt"
+    ],
+    "no_privilege_or_policy_change": true
+  },
+  "limits": [
+    "setup-attempted.json is pre-trace intent only; actual Setup RPC count0 verified by complete operations.",
+    "No native scheduler trace exists for analysis.",
+    "Prior failed Setup/cleanup claims remain in controlled-setup-1, not this preflight."
+  ]
+}

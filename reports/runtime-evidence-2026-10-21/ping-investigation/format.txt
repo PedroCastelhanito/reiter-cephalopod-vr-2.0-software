@@ -1,0 +1,12 @@
+unformatted: File would be reformatted
+   --> tests\controller\test_microcontroller_protocol.py:237:29
+    |
+236 |     port = DelayedPort()
+    -     channel = SerialChannel(
+    -         "fake", 115200, 100_000_000, clock=clock, serial_port=port
+    -     )
+237 +     channel = SerialChannel("fake", 115200, 100_000_000, clock=clock, serial_port=port)
+238 |     channel.open(1_000_000_000)
+    |
+
+1 file would be reformatted, 1 file already formatted

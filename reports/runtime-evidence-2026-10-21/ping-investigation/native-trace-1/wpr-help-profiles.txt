@@ -1,0 +1,16 @@
+
+  wpr -profiles ...	Enumerates the profile names and descriptions from a profile.
+			If no path is given, WPR built-in profiles are enumerated.
+	Usage:	wpr -profiles [<path to the profile definition file>]
+
+  wpr -profiledetails ...	Displays details about a set of profiles
+	Usage:	wpr -profiledetails profile1+profile2..+profilen [-filemode]
+	The naming convention of the profiles is exactly the same as used in wpr -start,
+	a profile is specified as <profile name>[.{light|verbose}].
+
+  wpr -exportprofile ...	Export the built-in profile(s) to the given file.
+	Usage:	wpr -exportprofile profile1+profile2..+profilen <filename.wprp> [-filemode]
+	Ex>	wpr -exportprofile Cpu.Light CpuLight.wprp -filemode
+	The naming convention of the profiles is exactly the same as used in wpr -start,
+	a profile is specified as  <profile name>[.{light|verbose}].
+	Use wpr -Profiles command to enumerate available built-in profiles.

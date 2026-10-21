@@ -1,5 +1,7 @@
 """Frontend shell with shared status columns and local configuration pages."""
 
+import json
+
 from PyQt6.QtCore import QEvent, QSettings
 from PyQt6.QtGui import QAction, QCloseEvent
 from PyQt6.QtWidgets import (
@@ -27,6 +29,7 @@ from cephvr.gui.tracking import TrackingPage
 from cephvr.gui.trial_preview import TrialPreview
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
 from cephvr.gui.view import DashboardView, Phase
+from cephvr.visual_stimulus.config.models.display_profile import Geometry
 
 PAGES = ("Dashboard", "Protocol", "Devices", "Tracking")
 
@@ -140,6 +143,8 @@ class DashboardWindow(QMainWindow):
         header.addWidget(self.dashboard.preview_button)
         self.preview_slot = PreviewSlot()
         self.recordings.changed.connect(self.update_preview_slot)
+        self.protocol.participation_changed.connect(self.update_backend_indicators)
+        self.devices.cameras.drafts_changed.connect(self.update_backend_indicators)
         self.dashboard.preview_dialog.opened.connect(self.update_preview_timeline)
         self.protocol.editor.changed.connect(self.update_preview_timeline)
         body.addWidget(self.stack, 1)
@@ -194,6 +199,13 @@ class DashboardWindow(QMainWindow):
         self.page_title.setText(PAGES[index].upper())
         self.dashboard.preview_button.setVisible(index == 0)
         self.update_preview_slot()
+
+    def update_backend_indicators(self) -> None:
+        indicators = self.dashboard.backend_indicators
+        indicators["Cameras"].setVisible(
+            any(camera.enabled for camera in self.devices.cameras.drafts)
+        )
+        indicators["Tracking"].setVisible(self.protocol.tracking_active)
 
     def update_preview_slot(self) -> None:
         page = self.stack.currentIndex()
@@ -267,8 +279,19 @@ class DashboardWindow(QMainWindow):
             timeline.clear("Current trial program unavailable.")
             return
         draft = editor.drafts[index]
+        projectors = self.devices.projectors
+        try:
+            profile = projectors.calibration_files.profile
+            payload = (
+                projectors.rig_editor.geometry_payload(projectors.screen_editor.drafts)
+                if projectors._geometry_dirty or profile is None
+                else profile.get("geometry")
+            )
+            geometry = Geometry.model_validate_json(json.dumps(payload))
+        except (ValueError, TypeError):
+            geometry = None
         timeline.set_program(
-            draft.exported_program, draft.stimulus_seed_decimal, draft.name
+            draft.exported_program, draft.stimulus_seed_decimal, draft.name, geometry
         )
         timeline.set_playback(
             view.elapsed_s if view.connected or view.sample else None,
@@ -282,6 +305,7 @@ class DashboardWindow(QMainWindow):
         self.recordings.apply_view(view)
         self.protocol.apply_view(view)
         self.tracking.apply_view(view)
+        self.update_backend_indicators()
         self.update_preview_slot()
         if self.dashboard.preview_dialog.isVisible():
             self.update_preview_timeline()

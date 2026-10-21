@@ -1,0 +1,96 @@
+{
+  "captured_utc": "2026-10-21T07:09:09.703555+00:00",
+  "status": "Authorized one Setup was interrupted by operator runtime replacement, with no controlled terminal Setup/Cancel receipt. Own WPR CPU trace saved/stopped. Offline bounded decode complete; serial owner TID unidentified and cause remains unproven. No repeat.",
+  "actual_additional_setup_rpc_count": 1,
+  "trace_started": true,
+  "profile": "CPU.Verbose.File",
+  "instance": "CephVRNativeTraceUAC20261021_1",
+  "elevated_scope": "Fixed absoluteSystem32 WPR start/stop/status and independent180s guardian only. No runtime credentials, device commands, policy changes or app elevation.",
+  "ordinary_scope": "Existing authenticated oneSetup/noStart/Cancel harness with latestbaseline/concurrent guards and normal runtime.",
+  "etlexport_plan": "After ownedstopconfirmed, tracerpt XML+summary; inspect decoded scheduler/thread/loss fields before interpretation; preserve ETL evenif fields/symbols inadequate.",
+  "files_sha256": {
+    "analyze_trace.py": "cf86c748c622786957651481bcefd867906830084415d3f2860cefd35d9d8a95",
+    "controlled_setup.py": "2d95b4d9c1dacfe8e4483b582e29b1c6958eedc02027cdc3b622631b542272e8",
+    "final_read_only_snapshot.py": "1973af88f17c83fcbeaef00c021a3a47b4eedf49b3cd56519f77933800ff11f8",
+    "post_interruption_snapshot.py": "84f75db10ee50ab2e91269bfe43678a51eada9974bd48910532e5aeab5bfa731",
+    "pre_execution_snapshot.py": "b8f5c894e1337330046b80d1c0be62b63e7b4b97da956959b3d07c50f892c772",
+    "trace_broker.py": "1a2582496bdfb3f7dde5e02e73fd3204596ca85e7ba4dd7cc4bcf21fac2f1038",
+    "trace_scope.py": "927ce5347bd3e5b4fd7401f1fd9d43d0c8313637a3d957f5fc5332c2e19bf749",
+    "wpr_owner.py": "ea46bf9bd434468445c4cdd814e784c9c60c8194c64e7e36a40735007ac722a8"
+  },
+  "prior_preflight": "../native-trace-1/verification.json",
+  "baseline_requirement": "Capture new current live/history immediately before execution;20Hz/currentDesktop path must remain coherent; no oldbackup restoration.",
+  "trace_stopped_confirmed": true,
+  "etl": {
+    "path": "owned.etl",
+    "bytes": 587202560
+  },
+  "old_controller_generation": "950972cb-2fc6-42b8-943d-0d6813773e0c",
+  "old_controller_pid": 56972,
+  "replacement_controller_generation": "ab7df142-aa59-443e-a368-c308e8eb9481",
+  "replacement_controller_pid": 54988,
+  "setup_command_id": "4ef7107d-a1e9-4b5f-9b0f-7daaad922956",
+  "session_id": "cfe49316-fb50-49fa-81e2-387bed01b854",
+  "client_error": "UNAUTHENTICATED/operator credential missing",
+  "replacement_evidence": "replaced-runtime-stderr.txt",
+  "post_interruption_observation": {
+    "snapshot": "post-interruption-snapshot.json",
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true,
+    "runtime_equals_latest_baseline": true,
+    "history_bytes_equal_latest_baseline": true,
+    "baseline_sha256": "533ff90ab34552a703df576a3fc9f600b3bf366adaffe0b92a1040f47897e6f3",
+    "no_restoration_write_needed": true,
+    "warnings": [
+      {
+        "warning_id": "7f8fcad5-d0b8-4520-99cc-47e2173fde35",
+        "component": "startup_recovery",
+        "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote recording and disable saving before another paired session; local recovery does not establish remote stopping or scientific file closure."
+      }
+    ]
+  },
+  "offline_analysis": {
+    "command": "tracerpt owned.etl -o decoded.xml -of XML -lr -summary decoded-summary.txt -y",
+    "returncode": 0,
+    "xml_bytes": 6970805643,
+    "header_event_loss": "0",
+    "header_buffer_loss": "0",
+    "header_capture_duration_seconds": 34.9723977,
+    "bounded_controller_summary": "controller-lifetime-summary.json",
+    "controller_threads": 28,
+    "controller_thread_names": 0,
+    "serial_owner_tid_identified": false,
+    "lifetime_counts": {
+      "lifetime_ready_events": 5250,
+      "lifetime_switch_ins": 5389,
+      "lifetime_switch_outs": 5361,
+      "excluded_ready_outside_lifetime": 23
+    },
+    "ambiguous_thread_reuse": [],
+    "verified_decoder_prefix": "Microsoft TraceEvent compatible24byte CSwitch prefix; provider/opcode/version/length gated, unknown trailing bytes ignored. All candidate oldstates in0..9.",
+    "decoded_samples": "decoded-event-samples.json",
+    "raw_exploratory_summary": "scheduler-summary.json: superseded exploratory union-of-TID metrics, not used for latency conclusions",
+    "compact_source": "controller-scheduler.jsonl",
+    "timing_limit": "tracerpt renders suspicious+08:59; no blindUTC conversion, only same-clock relative records; brokerrawQPC/UTC stamps retained.",
+    "conclusion": "Usable scheduler event evidence retained, but no independentlybound serial thread and no observed MCU timeout in this interrupted attempt; no scheduler/GIL/USB/firmware cause established.",
+    "abandoned_pass": "Initial all-element ElementTree inspection was interrupted as inefficient without conclusions; replaced by bounded8MBblock streaming. No live rig/test interruption."
+  },
+  "latest_operator_observation": {
+    "snapshot": "final-read-only-snapshot.json",
+    "controller_generation": "a688e215-abe0-4203-b057-71d4da7016ad",
+    "phase": "SESSION_PHASE_READY",
+    "session_id": "66a4aafb-fbbf-41c5-998a-350dda322e04",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261021_ephys-pilot\\SP0003-160659",
+    "ownership": "Newer operator-owned Ready session, separate from our interrupted test; left untouched; no subsequent lifecycle/config commands."
+  },
+  "final_owned_trace_status": "trace-stop-result.json confirms WPR is not recording; independent explicit own-instance query after stop also reported not recording.",
+  "limitations": [
+    "No terminal Setup outcome or CancelSetup receipt; operator replacement revoked old credential after Waitingforbackends.",
+    "No MCUtimeout observed in this interrupted run; it does not reproduce or resolve prior serialdeadline issue.",
+    "Immediatepostreplacement ab7runtime/history exact20Hz/Desktopbaseline533ff90; no restorationwrite needed. Newer operatorREADY a688session distinct and untouched.",
+    "StartupRecovery warning remoteSpikeGLXstopunknown/unconfirmed retained; local recovery not scientificclosure.",
+    "Reportedloss0 is ETLproviderheader evidence; not proof every stack schema decoded or symbolized.",
+    "No serial nativeTID/name/stack causallybound; no latency numbers used in conclusions.",
+    "RawETL and6.97GBXML retained; no automatic evidence deletion."
+  ]
+}

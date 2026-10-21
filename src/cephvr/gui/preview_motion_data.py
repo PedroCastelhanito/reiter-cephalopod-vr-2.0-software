@@ -78,6 +78,18 @@ def planned_velocity(setting: Settings, local_ns: int) -> tuple[float, float]:
             raise ValueError(
                 f"Linked motion follows {setting.linked_to}; select its reference."
             )
+        if all(isinstance(item, Hold) for item in (setting.phase_x, setting.phase_y)):
+            rates = []
+            for motion in motions:
+                if isinstance(motion, Hold):
+                    rates.append(0.0)
+                elif isinstance(motion, Rate):
+                    rates.append(evaluate_function(motion.function, local_ns))
+                else:
+                    raise ValueError(
+                        "Position trajectories have no speed trace in this preview."
+                    )
+            return rates[0], rates[1]
         if not all(isinstance(item, Hold) for item in motions):
             raise ValueError(
                 "Combined texture translation and phase motion is not plotted."
@@ -156,32 +168,10 @@ class MotionSource:
     settings: tuple[Settings | None, ...]
 
 
-def has_motion(setting: Settings) -> bool:
-    motions = [
-        setting.motion.x,
-        setting.motion.y,
-        setting.motion.yaw if setting.kind == "arena" else setting.motion.rotation,
-    ]
-    if isinstance(setting, TextureSettings):
-        motions.extend((setting.phase_x, setting.phase_y))
-    return bool(setting.feedback) or any(
-        not isinstance(motion, Hold)
-        and not (
-            isinstance(motion, Rate)
-            and isinstance(motion.function, Constant)
-            and motion.function.value == 0
-        )
-        for motion in motions
-    )
-
-
 def motion_sources(epochs: tuple[MotionEpoch, ...]) -> tuple[MotionSource, ...]:
-    """Group projector layers across epochs; static baselines do not un-link followers."""
+    """Keep every projector layer across epochs, including linked followers."""
     grouped: dict[tuple[str, str, int], list[Settings | None]] = {}
     references = set()
-    followers = set()
-    moving = set()
-    independent = set()
     for index, epoch in enumerate(epochs):
         reference_ids = {
             s.linked_to
@@ -190,29 +180,20 @@ def motion_sources(epochs: tuple[MotionEpoch, ...]) -> tuple[MotionSource, ...]:
         }
         counts: Counter[tuple[str, str]] = Counter()
         for setting in epoch.settings:
-            name = projector_name(setting)
-            unit = (
-                "mm/s"
-                if setting.kind == "arena" or setting.space.kind == "physical_surface"
-                else "deg/s"
-            )
-            counts[(name, unit)] += 1
-            key = (name, unit, counts[(name, unit)])
-            grouped.setdefault(key, [None] * len(epochs))[index] = setting
-            if isinstance(setting, TextureSettings) and setting.linked_to:
-                followers.add(key)
-            else:
-                independent.add(key)
-                if has_motion(setting):
-                    moving.add(key)
-            if setting.instance_id in reference_ids:
-                references.add(key)
+            for name in projector_name(setting).split(" + "):
+                unit = (
+                    "mm/s"
+                    if setting.kind == "arena"
+                    or setting.space.kind == "physical_surface"
+                    else "deg/s"
+                )
+                counts[(name, unit)] += 1
+                key = (name, unit, counts[(name, unit)])
+                grouped.setdefault(key, [None] * len(epochs))[index] = setting
+                if setting.instance_id in reference_ids:
+                    references.add(key)
     sources = []
     for key, settings in grouped.items():
-        if key not in independent or (
-            key in followers and key not in moving and key not in references
-        ):
-            continue
         name, unit, layer = key
         if layer > 1:
             name += f" · layer {layer}"
@@ -248,6 +229,8 @@ class DialSample:
     rotation_scale: float
     message: str = ""
     orientation_deg: float | None = None
+    display_rotation_deg: float = 0.0
+    display_direction_sign: float = 1.0
 
 
 def planned_size(setting: Settings, local_ns: int) -> tuple[float, float]:

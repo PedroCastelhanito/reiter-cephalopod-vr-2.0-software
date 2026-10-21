@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cephvr.control.v1 import types_pb2 as types
+from cephvr.shared.clock import host_time_ns
 
 
 def failure(error: Exception) -> types.Failure:
@@ -25,10 +26,31 @@ def accepted(command_id: str) -> types.CommandAdmission:
     )
 
 
-def require_accepted(admission: types.CommandAdmission, what: str) -> None:
+def require_accepted(
+    admission: types.CommandAdmission,
+    what: str,
+    *,
+    worker: types.ProcessIdentity | None = None,
+    work: types.WorkContext | None = None,
+    command_id: str = "",
+    deadline_ns: int | None = None,
+) -> None:
     """Raise unless a worker command admission was accepted."""
     if admission.result != types.COMMAND_RESULT_ACCEPTED:
-        raise RuntimeError(f"{what} not accepted: {admission.failure.code}")
+        context = ""
+        if worker is not None and work is not None:
+            session = work.trial.session if work.HasField("trial") else work.session
+            context = (
+                f"; worker={worker.role[:128]}/{worker.generation[:64]}, "
+                f"command_id={command_id[:64]}, "
+                f"controller={session.controller_generation[:64]}, "
+                f"session={session.session_id[:64]}, trial={work.trial.trial_id[:64]}, "
+                f"deadline_ns={deadline_ns}, observed_ns={host_time_ns()}"
+            )
+        raise RuntimeError(
+            f"{what} not accepted: {admission.failure.code}{context}; "
+            f"reason={repr(admission.failure.message[:512])[:512]}"
+        )
 
 
 def report_rejected(code: str, message: str) -> types.ReportReceipt:

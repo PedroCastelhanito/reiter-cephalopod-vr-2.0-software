@@ -69,6 +69,9 @@ def semantic_targets(group: Group) -> list[MotionTarget]:
                 translation = (
                     [("phase_x", "function", "value"), ("phase_y", "function", "value")]
                     if setting["kind"] == "texture"
+                    and any(
+                        setting[k]["kind"] != "hold" for k in ("phase_x", "phase_y")
+                    )
                     else [
                         ("motion", "x", "function", "value"),
                         ("motion", "y", "function", "value"),
@@ -257,7 +260,24 @@ class ConditionValues(QWidget):
                         )
                         if i == index
                     }
-                    for path, (value, _) in varied_fields(source, values).items():
+                    legacy_phase = any(
+                        path[0].startswith("phase_") for path in target.columns
+                    )
+                    if legacy_phase:
+                        from cephvr.visual_stimulus.config.parameter_edits import (
+                            varied_fields as local_fields,
+                        )
+                        from cephvr.visual_stimulus.config.rig_coordinates import (
+                            local_direction,
+                        )
+
+                        values["Direction"] = local_direction(
+                            source, values["Direction"]
+                        )
+                        fields = local_fields(source, values)
+                    else:
+                        fields = varied_fields(source, values)
+                    for path, (value, _) in fields.items():
                         if path in target.columns:
                             cells[target.columns[path]] = value
             else:

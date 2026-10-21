@@ -1070,3 +1070,100 @@ def test_linked_rotation_depends_on_reference_screen_center_not_observer():
     validate_spin_pivot(mapped, geometry, (7.0, -3.0))
     with pytest.raises(ValueError, match="calibrated screen"):
         validate_spin_pivot(mapped, geometry, (0.0, 0.0))
+
+
+def test_rig_random_directions_keep_legacy_local_rules_unchanged():
+    import pytest
+
+    from cephvr.visual_stimulus.config.models.repetition import RepetitionRule
+    from cephvr.visual_stimulus.config.parameter_edits import motion_numbers
+    from cephvr.visual_stimulus.config.repetition_values import resolve_repetition
+
+    _, settings = _linked_texture_fixture()
+    left = next(s for s in settings if s.instance_id == "left").model_copy(
+        update={"linked_to": None}
+    )
+    rules = tuple(
+        RepetitionRule(
+            instance_id="left",
+            parameter=parameter,
+            minimum=value,
+            maximum=value,
+            precision="1",
+            seed="0" * 32,
+        )
+        for parameter, value in (("Speed", "30"), ("Direction", "90"))
+    )
+    legacy = resolve_repetition((left,), rules, 0)[0]
+    assert legacy.motion.x.kind == legacy.motion.y.kind == "hold"
+    assert motion_numbers(legacy.model_dump(mode="json"))[:2] == pytest.approx((30, 90))
+    rig = resolve_repetition(
+        (left,), tuple(r.model_copy(update={"rig_coordinates": True}) for r in rules), 0
+    )[0]
+    assert rig.phase_x.kind == rig.phase_y.kind == "hold"
+    assert rig.motion.y.function.value == pytest.approx(-30)
+    assert motion_numbers(rig.model_dump(mode="json"), rig_coordinates=True)[
+        :2
+    ] == pytest.approx((30, 0))
+    # Saving/loading declarations retains both modes; omitting the flag remains local.
+    assert not RepetitionRule.model_validate_json(
+        rules[0].model_dump_json(exclude={"rig_coordinates"})
+    ).rig_coordinates
+
+    with pytest.raises(ValueError, match="same coordinates"):
+        resolve_repetition(
+            (left,),
+            (rules[0], rules[1].model_copy(update={"rig_coordinates": True})),
+            0,
+        )
+
+    # Versioned saved declarations retain physical movement across the angle change.
+    for version, angle in ((1, "0"), (2, "-90"), (2, "270")):
+        converted = tuple(
+            r.model_copy(
+                update={
+                    "rig_coordinates": True,
+                    "rig_angle_version": version,
+                    **(
+                        {"minimum": angle, "maximum": angle}
+                        if r.parameter == "Direction"
+                        else {}
+                    ),
+                }
+            )
+            for r in rules
+        )
+        back = resolve_repetition((left,), converted, 0)[0]
+        assert back.motion.x.function.value == pytest.approx(30)
+        assert back.motion.y.function.value == pytest.approx(0, abs=1e-8)
+        assert motion_numbers(back.model_dump(mode="json"), rig_coordinates=True)[
+            :2
+        ] == pytest.approx((30, -90))
+    with pytest.raises(ValueError, match="same coordinates"):
+        resolve_repetition(
+            (left,),
+            tuple(
+                r.model_copy(
+                    update={"rig_coordinates": True, "rig_angle_version": i + 1}
+                )
+                for i, r in enumerate(rules)
+            ),
+            0,
+        )
+
+    stationary = left.model_dump(mode="json")
+    import json
+
+    from cephvr.visual_stimulus.config.models.program_model import TextureSettings
+
+    stationary["phase_x"] = stationary["phase_y"] = {"kind": "hold"}
+    stationary["motion"]["x"] = stationary["motion"]["y"] = {"kind": "hold"}
+    stopped = TextureSettings.model_validate_json(json.dumps(stationary))
+    for version, expected in ((1, -90), (2, 0)):
+        speed_only = rules[0].model_copy(
+            update={"rig_coordinates": True, "rig_angle_version": version}
+        )
+        moving = resolve_repetition((stopped,), (speed_only,), 0)[0]
+        assert motion_numbers(moving.model_dump(mode="json"), rig_coordinates=True)[
+            :2
+        ] == pytest.approx((30, expected))

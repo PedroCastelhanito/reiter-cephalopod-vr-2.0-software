@@ -64,13 +64,13 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 29 |
 | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 25 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 271 |
-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 101 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 292 |
+| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 108 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
 | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 35 |
 | <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 92 |
-| <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 98 |
+| <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 99 |
 | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 79 |
 | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 63 |
 | <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 180 |
@@ -83,23 +83,23 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
 | <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 21 |
 | <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 35 |
-| <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 34 |
+| <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 35 |
 | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
 | <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-Visual Stimulus delay measurement | Accepted | 6 |
 | <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to Visual Stimulus | Accepted | 14 |
 | <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 66 |
 | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 51 |
 | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 17 |
-| <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 71 |
-| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 52 |
-| <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 30 |
-| <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 14 |
+| <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 72 |
+| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 53 |
+| <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 31 |
+| <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 15 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 12 |
 | <a id="v04"></a>[V04](docs/architecture/visual_stimulus.md#v04) | Rendering stack and required stimulus scope | Accepted | 20 |
 | <a id="v05"></a>[V05](docs/architecture/visual_stimulus.md#v05) | Declarative parameter animation | Accepted | 6 |
 | <a id="v06"></a>[V06](docs/architecture/visual_stimulus.md#v06) | Epoch durations and trial duration | Accepted | 5 |
 | <a id="v07"></a>[V07](docs/architecture/visual_stimulus.md#v07) | Stimulus state continuity and trial initialization | Accepted | 5 |
-| <a id="v08"></a>[V08](docs/architecture/visual_stimulus.md#v08) | Group ordering and repetition | Accepted | 5 |
+| <a id="v08"></a>[V08](docs/architecture/visual_stimulus.md#v08) | Group ordering and repetition | Accepted | 7 |
 | <a id="v09"></a>[V09](docs/architecture/visual_stimulus.md#v09) | Video clip completion | Accepted | 4 |
 | <a id="v10"></a>[V10](docs/architecture/visual_stimulus.md#v10) | Clock-preserving playback and nonfatal timing misses | Accepted | 4 |
 | <a id="v11"></a>[V11](docs/architecture/visual_stimulus.md#v11) | Bounded video decode-ahead preparation | Accepted | 5 |

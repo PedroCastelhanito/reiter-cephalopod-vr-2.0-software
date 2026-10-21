@@ -106,6 +106,20 @@ class CrtOverlay(QWidget):
             painter.fillRect(self.band_rect(), band)
 
 
+def set_glow(label: QLabel, enabled: bool) -> None:
+    """Phosphor glow behind one heading; removed when CRT effects are off."""
+    if not enabled:
+        label.setGraphicsEffect(None)
+        return
+    glow = QGraphicsDropShadowEffect(label)
+    glow.setOffset(0, 0)
+    glow.setBlurRadius(12)
+    color = QColor(RETRO_COLORS.accent)
+    color.setAlpha(GLOW_ALPHA)
+    glow.setColor(color)
+    label.setGraphicsEffect(glow)
+
+
 class CrtEffects:
     """Owns the CRT film and label glow so Standard mode never carries either."""
 
@@ -116,13 +130,4 @@ class CrtEffects:
     def apply(self, enabled: bool, *, band: bool = False) -> None:
         self.overlay.set_active(enabled, band=band)
         for label in self.glow_labels:
-            if not enabled:
-                label.setGraphicsEffect(None)
-                continue
-            glow = QGraphicsDropShadowEffect(label)
-            glow.setOffset(0, 0)
-            glow.setBlurRadius(12)
-            color = QColor(RETRO_COLORS.accent)
-            color.setAlpha(GLOW_ALPHA)
-            glow.setColor(color)
-            label.setGraphicsEffect(glow)
+            set_glow(label, enabled)

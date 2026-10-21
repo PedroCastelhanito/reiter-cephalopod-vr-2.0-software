@@ -16,6 +16,7 @@ from cephvr.controller.configuration import (
     load_controller_configuration,
     validate_experiment_candidate,
 )
+from cephvr.controller.microcontroller.config import load_serial_policies
 from cephvr.controller.runtime import ControllerRuntime
 from cephvr.controller.state import ControllerLimits
 from cephvr.shared.config import ConfigurationError
@@ -71,6 +72,12 @@ def test_loader_binds_exact_file_timing_and_budget(tmp_path: Path) -> None:
     assert loaded.supervisor_startup.port == 50052
     assert loaded.policies.start_lead_ns == 500_000_000
     assert loaded.policies.backend_release_offset_ns == 50_000_000
+    assert loaded.policies.stop_evidence_allowance_ns == 450_000_000
+    serial = load_serial_policies(tmp_path)
+    assert (
+        2 * serial.serial_ack_timeout_ns + serial.serial_stop_completion_margin_ns
+        <= loaded.policies.stop_evidence_allowance_ns
+    )
     assert loaded.limits_kwargs["setup_ns"] == 180_000_000_000
     assert loaded.max_pending_payload_bytes >= 4 * loaded.max_message_bytes
     assert loaded.default_intertrial_gap_ns == 0

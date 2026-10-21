@@ -32,7 +32,7 @@ from cephvr.gui.consoles import FittedConsole as FittedConsole
 from cephvr.gui.consoles import LogConsole as LogConsole
 from cephvr.gui.formatting import HudRows, hud_text
 from cephvr.gui.retro_instruments import (
-    card_marks,
+    double_frame,
     paint_status_lamp,
 )
 from cephvr.gui.table_header import TableHeader
@@ -60,7 +60,7 @@ class Button(QPushButton):
             return None
         if role == "navigation":
             return ("> " if self.isChecked() else "  ") + self.text()
-        text = self.text().upper() if self.isEnabled() else self.text().lower()
+        text = self.text().upper()
         return f"[ {text} ]"
 
     def sizeHint(self) -> QSize:
@@ -85,6 +85,14 @@ def button(text: str, role: str = "secondary", *, hint: str = "") -> QPushButton
     result.setProperty("role", role)
     result.setCursor(Qt.CursorShape.PointingHandCursor)
     result.setToolTip(hint)
+    return result
+
+
+def toggle_button(text: str, role: str = "secondary", *, hint: str = "") -> QPushButton:
+    """Checkable button that shows its on state with a filled background."""
+    result = button(text, role, hint=hint)
+    result.setCheckable(True)
+    result.setProperty("toggle", "on")
     return result
 
 
@@ -205,15 +213,7 @@ class Card(QFrame):
         painter.setPen(QPen(QColor(colors.border), 1))
         painter.drawRoundedRect(frame, radius, radius)
         if retro_console(self):
-            painter.drawRect(frame.adjusted(3, 3, -3, -3))
-            card_marks(painter, frame)
-            painter.setPen(QPen(QColor(colors.accent), 1))
-            for corner, direction in (
-                (frame.bottomLeft(), 1),
-                (frame.bottomRight(), -1),
-            ):
-                painter.drawLine(corner, corner + QPointF(9 * direction, 0))
-                painter.drawLine(corner, corner + QPointF(0, -9))
+            double_frame(painter, frame)
 
 
 class StatusIndicator(QRadioButton):

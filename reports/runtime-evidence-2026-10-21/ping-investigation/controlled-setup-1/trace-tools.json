@@ -1,0 +1,10 @@
+[
+  {
+    "Name": "wpr.exe",
+    "Source": "C:\\WINDOWS\\system32\\wpr.exe"
+  },
+  {
+    "Name": "logman.exe",
+    "Source": "C:\\WINDOWS\\system32\\logman.exe"
+  }
+]

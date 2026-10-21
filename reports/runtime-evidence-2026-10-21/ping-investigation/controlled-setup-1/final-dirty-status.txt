@@ -1,0 +1,43 @@
+ M LOG.md
+ M TODO.md
+ M architecture.md
+ M config/backends/acquisition_config.toml
+ M config/backends/gui_config.toml
+ M contracts/acquisition/preview-control.md
+ M contracts/policy/gui_policy.toml
+ M docs/architecture/acquisition.md
+ M docs/architecture/gui.md
+ M docs/architecture/visual_stimulus.md
+ M reports/acquisition.md
+ M reports/runtime-evidence-2026-10-21/long-path-fix/durable-runtime-stderr.txt
+ M reports/runtime-evidence-2026-10-21/rig-validation/recovery-runtime-stderr.txt
+ M reports/runtime.md
+ M reports/visual_stimulus.md
+ M src/cephvr/acquisition/preview/highgui.py
+ M src/cephvr/acquisition/worker/capture.py
+ M src/cephvr/controller/microcontroller/channel.py
+ M src/cephvr/controller/microcontroller/serial_port.py
+ M src/cephvr/gui/preview_motion_data.py
+ M src/cephvr/gui/preview_motion_plot.py
+ M src/cephvr/gui/preview_timeline.py
+ M src/cephvr/gui/previews.py
+ M src/cephvr/gui/recordings.py
+ M src/cephvr/gui/theme.py
+ M src/cephvr/shared/preview_rates.py
+ M src/cephvr/supervisor/acquisition_worker.py
+ M src/cephvr/supervisor/receipts.py
+ M src/cephvr/supervisor/visual_stimulus_worker.py
+ M src/cephvr/visual_stimulus/rendering/native.py
+ M src/cephvr/visual_stimulus/rendering/preview.py
+ M tests/acquisition/test_manual_preview.py
+ M tests/acquisition/test_worker_admission.py
+ M tests/controller/test_microcontroller_owner.py
+ M tests/controller/test_microcontroller_protocol.py
+ M tests/gui/test_dashboard.py
+ M tests/gui/test_preview_timeline.py
+ M tests/shared/test_invariants.py
+ M tests/supervisor/test_worker_outbound_contracts.py
+ M tests/visual_stimulus/test_rendering.py
+?? reports/emergency-585056608634000-8bc09278-7a9c-4103-bf41-1f0c4feb1439.json
+?? reports/runtime-evidence-2026-10-21/ping-investigation/
+?? src/cephvr/gui/preview_projector_cards.py

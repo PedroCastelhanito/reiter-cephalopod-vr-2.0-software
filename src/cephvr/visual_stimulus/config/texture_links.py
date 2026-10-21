@@ -40,9 +40,11 @@ def validate_links(settings: Sequence[Settings], *, resolved: bool = False) -> N
                 raise ValueError(
                     "Linked movement requires one physical screen per image-tile texture"
                 )
-            if item.motion.x.kind != "hold" or item.motion.y.kind != "hold":
+            if any(m.kind != "hold" for m in (item.motion.x, item.motion.y)) and any(
+                m.kind != "hold" for m in (item.phase_x, item.phase_y)
+            ):
                 raise ValueError(
-                    "Linked texture movement uses phase drift, not simultaneous layer translation"
+                    "Linked movement cannot combine phase drift and layer translation"
                 )
             if any(
                 binding.target in _MOTION_TARGETS for binding in item.feedback
@@ -52,7 +54,13 @@ def validate_links(settings: Sequence[Settings], *, resolved: bool = False) -> N
                 raise ValueError(
                     "Linked movement owns motion and tile periods; motion feedback/assignments conflict"
                 )
-            for motion in (item.phase_x, item.phase_y, item.motion.rotation):
+            for motion in (
+                item.phase_x,
+                item.phase_y,
+                item.motion.x,
+                item.motion.y,
+                item.motion.rotation,
+            ):
                 if motion.kind != "hold" and (
                     motion.kind != "rate" or motion.function.kind != "constant"
                 ):
@@ -76,7 +84,13 @@ def validate_links(settings: Sequence[Settings], *, resolved: bool = False) -> N
             raise ValueError("Choose a reference on another screen")
         if any(
             m.kind != "hold"
-            for m in (target.phase_x, target.phase_y, target.motion.rotation)
+            for m in (
+                target.phase_x,
+                target.phase_y,
+                target.motion.x,
+                target.motion.y,
+                target.motion.rotation,
+            )
         ):
             raise ValueError(
                 "A linked texture cannot also own drift or rotation; edit its reference"
@@ -94,7 +108,11 @@ def rates(item: TextureSettings) -> tuple[float, float, float]:
 
     assert isinstance(item.pattern, ImageTile)
     values = []
-    for motion in (item.phase_x, item.phase_y, item.motion.rotation):
+    translating = any(m.kind != "hold" for m in (item.motion.x, item.motion.y))
+    motions = (
+        (item.motion.x, item.motion.y) if translating else (item.phase_x, item.phase_y)
+    )
+    for motion in (*motions, item.motion.rotation):
         if motion.kind == "hold":
             values.append(0.0)
         elif (
@@ -114,6 +132,8 @@ def rates(item: TextureSettings) -> tuple[float, float, float]:
         ):
             raise ValueError("Linked movement needs resolved positive tile dimensions")
         periods.append(float(period.value))
+    if translating:
+        return values[0], values[1], values[2]
     return -values[0] * periods[0], -values[1] * periods[1], values[2]
 
 
@@ -160,6 +180,28 @@ def _rotate(x: float, y: float, degrees: float) -> tuple[float, float]:
     return x * math.cos(a) - y * math.sin(a), x * math.sin(a) + y * math.cos(a)
 
 
+def unfolded_direction(
+    setting: TextureSettings, geometry: Geometry, surface_id: str, rotation: float
+) -> float:
+    """Angle of local +X in the unfolded rig plane: back=0, right=90."""
+    assert setting.space.kind == "physical_surface"
+    mapping = next(m for m in setting.space.mappings if m.surface_id == surface_id)
+    surfaces = {str(s.surface_id): s for s in geometry.surfaces}
+    right, up, normal = _basis(surfaces[surface_id])
+    bottom_normal = _basis(surfaces["bottom"])[2]
+    x, y = _rotate(1, 0, rotation)
+    a, b = mapping.matrix
+    determinant = a[0] * b[1] - a[1] * b[0]
+    if determinant <= 0:
+        raise ValueError(
+            "Subject direction needs an orientation-preserving surface map"
+        )
+    x, y = (b[1] * x - a[1] * y) / determinant, (-b[0] * x + a[0] * y) / determinant
+    world: Vector = tuple(x * right[i] + y * up[i] for i in range(3))  # type: ignore[assignment]
+    unfolded = _fold(world, normal, bottom_normal)
+    return math.degrees(math.atan2(unfolded[0], unfolded[1]))
+
+
 def linked_rates(
     source: TextureSettings,
     target: TextureSettings,
@@ -198,6 +240,8 @@ def linked_rates(
                 "Linked movement needs an orientation-preserving uniform-scale surface map"
             )
     vx, vy, angular = rates(source)
+    if any(m.kind != "hold" for m in (source.motion.x, source.motion.y)):
+        source_rotation = 0.0
     x, y = _rotate(vx, vy, source_rotation)
     a, b = sm.matrix
     determinant = a[0] * b[1] - a[1] * b[0]

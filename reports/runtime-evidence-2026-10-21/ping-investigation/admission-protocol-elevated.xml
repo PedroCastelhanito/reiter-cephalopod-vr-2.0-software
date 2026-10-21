@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="52" time="0.334" timestamp="2026-10-21T15:06:59.605492+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.controller.test_microcontroller_protocol" name="test_eye_state_requires_its_own_pin_rate_and_stopped_evidence" time="0.001" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_eye_boundary_cannot_be_replaced_with_tracking_mask" time="0.001" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_v5_reply_accepts_multiple_spaces_and_caps_pin_list" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_caps_rejects_input_pin_outside_advertised_pins" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_diagnostic_reply_requires_exact_kind_pin_and_edge_shape" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[1-1-behavioral]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[1-1-tracking]" time="0.001" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[1-1-eye_tracking]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[1-17-behavioral]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[1-17-tracking]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[1-17-eye_tracking]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[0-59-behavioral]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[0-59-tracking]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[0-59-eye_tracking]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[0-4294967295-behavioral]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[0-4294967295-tracking]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_preserves_generated_count[0-4294967295-eye_tracking]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_rejects_invalid_generated_counts[0]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_rejects_invalid_generated_counts[-1]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_rejects_invalid_generated_counts[4294967296]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_camera_diagnostic_rejects_invalid_generated_counts[1.5]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_dispatched_request_without_ack_is_timed_out_with_dispatch_evidence" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_partial_write_fails_after_dispatch_without_acknowledgement" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_late_complete_read_is_not_parsed_or_accepted[False]" time="0.001" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_late_complete_read_is_not_parsed_or_accepted[True]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_cancellation_waits_for_blocked_call_return_and_is_not_off_evidence" time="0.001" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_malformed_matched_ack_has_no_ack_timestamp_or_fabricated_state" time="0.001" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_watchdog_stopped_off_retains_stop_state_and_matched_ack[roles0]" time="0.001" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_watchdog_stopped_off_retains_stop_state_and_matched_ack[roles1]" time="0.001" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_watchdog_stopped_off_retains_stop_state_and_matched_ack[roles2]" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_startup_probe_stops_after_hard_transport_failure" time="0.000" /><testcase classname="tests.controller.test_microcontroller_protocol" name="test_matched_firmware_rejection_preserves_context" time="0.000" /><testcase classname="tests.acquisition.test_worker_admission" name="test_canceled_schedule_keeps_trial_health_until_session_cleanup" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_warning_flush_binds_each_view_to_its_exact_work[False]" time="0.002" /><testcase classname="tests.acquisition.test_worker_admission" name="test_warning_flush_binds_each_view_to_its_exact_work[True]" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_finished_waits_for_warning_delivery_without_blocking_stopped[False]" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_finished_waits_for_warning_delivery_without_blocking_stopped[True]" time="0.029" /><testcase classname="tests.acquisition.test_worker_admission" name="test_ready_publishes_owner_health_before_lifecycle_dispatch" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_setup_catalogue_retains_exact_worker_output_fault_closure" time="0.000" /><testcase classname="tests.acquisition.test_worker_admission" name="test_setup_catalogue_rejects_an_incomplete_transitive_recording_closure" time="0.000" /><testcase classname="tests.acquisition.test_worker_admission" name="test_stop_pulse_and_cleanup_evidence_fit_safety_reserve_after_normal_saturation" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_ordinary_coordinator_evidence_cannot_consume_reserved_cleanup_capacity" time="0.000" /><testcase classname="tests.acquisition.test_worker_admission" name="test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work[False]" time="0.002" /><testcase classname="tests.acquisition.test_worker_admission" name="test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work[True]" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_repeated_connection_checks_leave_capacity_for_pfs_and_release" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_completed_configuration_readbacks_release_large_reservations" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_interrupt_deadline_crossing_after_auth_retains_exact_rejection[False]" time="0.002"><failure message="assert 2 == 1&#10; +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: &quot;RESOURCE_EXHAUSTED&quot;\n  message: &quot;retained worker operation capacity is full&quot;\n}\ncommand_id: &quot;88d33956-b613-4dcf-ac73-37a98cd3a9bf&quot;\n.result&#10; +  and   1 = control.COMMAND_RESULT_ACCEPTED">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000248632C0D10&gt;
+expire_after_auth = False
+
+    @pytest.mark.parametrize("expire_after_auth", [False, True])
+    async def test_interrupt_deadline_crossing_after_auth_retains_exact_rejection(
+        monkeypatch: pytest.MonkeyPatch, expire_after_auth: bool
+    ) -&gt; None:
+        from cephvr.acquisition.worker import service as worker_service
+    
+        now = [50]
+        deadline = 100
+        supervisor = control.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+        context = acq.WorkerContext(
+            worker=control.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=str(uuid4())
+            ),
+            owner=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+            work=control.WorkContext(session=control.SessionContext(session_id=str(uuid4()))),
+        )
+        limits = AcquisitionControlLimits.from_message_limit(16 * 1024 * 1024)
+        state = WorkerState(
+            context,
+            supervisor,
+            CommandLedger(
+                context.worker.generation,
+                60_000_000_000,
+                max_records=limits.max_records,
+                max_bytes=limits.max_bytes,
+                result_reservation_bytes=limits.normal_result_reservation_bytes,
+            ),
+            limits=limits,
+            registered=True,
+        )
+    
+        class Owner(_QueueOwner):
+            def reserve(self, operation, request, deadline_ns):
+                assert deadline_ns == deadline
+                ticket = super().reserve(operation, request, deadline_ns)
+                if expire_after_auth:
+                    now[0] = deadline
+                return ticket
+    
+        class Service(_AdmissionService):
+            async def _authenticate(self, context, issuer):
+                assert now[0] &lt; deadline and issuer == supervisor
+                return deadline
+    
+        monkeypatch.setattr(worker_service, "host_time_ns", lambda: now[0])
+        owner = Owner()
+        service = Service(state, owner, {})
+        command = _command(context, supervisor)
+        request = acq.WorkerInterrupt(command=command, issued_monotonic_ns=50)
+        admission = await service._admit(
+            "InterruptSession", request, command, cast(grpc.aio.ServicerContext, object())
+        )
+        if expire_after_auth:
+            assert admission.result == control.COMMAND_RESULT_REJECTED
+            assert admission.failure.code == "INVALID_REQUEST"
+            assert admission.failure.message == "new command deadline has already expired"
+            assert owner.tickets[-1].cancelled
+            assert not owner.tickets[-1].committed
+            assert state.commands.get(command.command_id) is None
+        else:
+&gt;           assert admission.result == control.COMMAND_RESULT_ACCEPTED
+E           assert 2 == 1
+E            +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "RESOURCE_EXHAUSTED"\n  message: "retained worker operation capacity is full"\n}\ncommand_id: "88d33956-b613-4dcf-ac73-37a98cd3a9bf"\n.result
+E            +  and   1 = control.COMMAND_RESULT_ACCEPTED
+
+tests\acquisition\test_worker_admission.py:802: AssertionError</failure></testcase><testcase classname="tests.acquisition.test_worker_admission" name="test_interrupt_deadline_crossing_after_auth_retains_exact_rejection[True]" time="0.002"><failure message="AssertionError: assert 'RESOURCE_EXHAUSTED' == 'INVALID_REQUEST'&#10;  &#10;  - INVALID_REQUEST&#10;  + RESOURCE_EXHAUSTED">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000248632B1E50&gt;
+expire_after_auth = True
+
+    @pytest.mark.parametrize("expire_after_auth", [False, True])
+    async def test_interrupt_deadline_crossing_after_auth_retains_exact_rejection(
+        monkeypatch: pytest.MonkeyPatch, expire_after_auth: bool
+    ) -&gt; None:
+        from cephvr.acquisition.worker import service as worker_service
+    
+        now = [50]
+        deadline = 100
+        supervisor = control.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+        context = acq.WorkerContext(
+            worker=control.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=str(uuid4())
+            ),
+            owner=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+            work=control.WorkContext(session=control.SessionContext(session_id=str(uuid4()))),
+        )
+        limits = AcquisitionControlLimits.from_message_limit(16 * 1024 * 1024)
+        state = WorkerState(
+            context,
+            supervisor,
+            CommandLedger(
+                context.worker.generation,
+                60_000_000_000,
+                max_records=limits.max_records,
+                max_bytes=limits.max_bytes,
+                result_reservation_bytes=limits.normal_result_reservation_bytes,
+            ),
+            limits=limits,
+            registered=True,
+        )
+    
+        class Owner(_QueueOwner):
+            def reserve(self, operation, request, deadline_ns):
+                assert deadline_ns == deadline
+                ticket = super().reserve(operation, request, deadline_ns)
+                if expire_after_auth:
+                    now[0] = deadline
+                return ticket
+    
+        class Service(_AdmissionService):
+            async def _authenticate(self, context, issuer):
+                assert now[0] &lt; deadline and issuer == supervisor
+                return deadline
+    
+        monkeypatch.setattr(worker_service, "host_time_ns", lambda: now[0])
+        owner = Owner()
+        service = Service(state, owner, {})
+        command = _command(context, supervisor)
+        request = acq.WorkerInterrupt(command=command, issued_monotonic_ns=50)
+        admission = await service._admit(
+            "InterruptSession", request, command, cast(grpc.aio.ServicerContext, object())
+        )
+        if expire_after_auth:
+            assert admission.result == control.COMMAND_RESULT_REJECTED
+&gt;           assert admission.failure.code == "INVALID_REQUEST"
+E           AssertionError: assert 'RESOURCE_EXHAUSTED' == 'INVALID_REQUEST'
+E             
+E             - INVALID_REQUEST
+E             + RESOURCE_EXHAUSTED
+
+tests\acquisition\test_worker_admission.py:796: AssertionError</failure></testcase><testcase classname="tests.acquisition.test_worker_admission" name="test_worker_report_failure_preserves_reason_and_drains[accepted]" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_worker_report_failure_preserves_reason_and_drains[rejected]" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_worker_report_failure_preserves_reason_and_drains[exception]" time="0.001" /></testsuite></testsuites>

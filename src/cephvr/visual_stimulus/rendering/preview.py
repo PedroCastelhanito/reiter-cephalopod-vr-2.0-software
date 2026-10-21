@@ -9,7 +9,7 @@ from typing import Any
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.preview_geometry import PreviewGeometryGuard
-from cephvr.shared.preview_rates import PreviewRateMeter
+from cephvr.shared.preview_rates import PreviewPacer, PreviewRateMeter
 from cephvr.visual_stimulus.rendering.capture import struct_quad
 from cephvr.visual_stimulus.rendering.native_display import attach_window_context
 
@@ -38,6 +38,7 @@ class StimulusPreview:
         self.title = "CephVR Visual stimulus"
         self.on_rates: Callable[[float | None, float, int], None] = lambda *_: None
         self.rates = PreviewRateMeter()
+        self.pacer = PreviewPacer()
         self.source_count = 0
 
     def prepare(self, shared_window: Any) -> None:
@@ -72,6 +73,7 @@ class StimulusPreview:
         if visible:
             if not self.visible:
                 self.rates = PreviewRateMeter()
+                self.pacer = PreviewPacer()
             if placement.side and not 128 <= placement.side <= 2048:
                 raise ValueError("preview side must be 128..2048 pixels")
             if not self.visible or placement.snap_to_grid:
@@ -144,6 +146,13 @@ class StimulusPreview:
 
     def activate(self) -> None:
         self.glfw.make_context_current(self.window)
+
+    def frame_due(self) -> bool:
+        return (
+            self.visible
+            and not (self.owner is not None and self.owner.minimized)
+            and self.pacer.ready(host_time_ns())
+        )
 
     def disable(self, error: Exception) -> None:
         self.visible = False

@@ -366,3 +366,24 @@ def test_preview_rates_count_source_deltas_and_presentations_without_guessing():
     assert not valid_rates(float("nan"), 20, 1)
     assert not valid_rates(30, -1, 1)
     assert valid_rates(None, 0, 1)
+
+
+@pytest.mark.parametrize("source_hz", [5, 10, 20, 30, 60, 100])
+def test_preview_pacing_uses_source_below_20hz_and_skips_without_drift(source_hz):
+    from cephvr.shared.preview_rates import PreviewPacer
+
+    pacer = PreviewPacer()
+    shown = [i for i in range(source_hz) if pacer.ready(round(i * 1e9 / source_hz))]
+    assert len(shown) == min(source_hz, 20)
+    assert pacer.ready(10_000_000_000)
+    assert not pacer.ready(10_000_000_001)
+
+
+def test_preview_pacing_matches_declared_policy():
+    import tomllib
+
+    from cephvr.shared.preview_rates import PreviewPacer
+
+    root = Path(__file__).resolve().parents[2]
+    policy = tomllib.loads((root / "contracts/policy/gui_policy.toml").read_text())
+    assert PreviewPacer().period_ns * policy["preview"]["max_display_hz"] == 1e9

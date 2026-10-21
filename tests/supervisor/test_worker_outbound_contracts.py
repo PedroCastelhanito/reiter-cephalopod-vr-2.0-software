@@ -28,7 +28,13 @@ from .support import WORK, WORKER_ROLE, _identity, _worker_and_helper
 
 class _Rejecting(Outbound):
     async def interrupt_worker(self, launch, request, *, deadline_ns):  # type: ignore[no-untyped-def]
-        return types.CommandAdmission(result=types.COMMAND_RESULT_REJECTED)
+        self.interrupted = (request, deadline_ns)
+        return types.CommandAdmission(
+            result=types.COMMAND_RESULT_REJECTED,
+            failure=types.Failure(
+                code="INVALID_REQUEST", message="expired\n" + "x" * 1000
+            ),
+        )
 
     async def shutdown_worker(self, launch, request, *, deadline_ns):  # type: ignore[no-untyped-def]
         return types.CommandAdmission(result=types.COMMAND_RESULT_REJECTED)
@@ -50,8 +56,20 @@ async def test_rejected_worker_commands_raise(tmp_path: Path) -> None:
     shutdown.outbound = _Rejecting()
     deadline = host_time_ns() + 5_000_000_000
     report = wire.InterruptionReport(issued_monotonic_ns=1)
-    with pytest.raises(RuntimeError, match="interrupt"):
+    with pytest.raises(RuntimeError, match="interrupt") as error:
         await shutdown.interrupt_worker(worker, target, report, deadline)
+    message = str(error.value)
+    request, sent_deadline = shutdown.outbound.interrupted
+    assert sent_deadline == deadline
+    assert f"deadline_ns={deadline}, observed_ns=" in message
+    assert f"worker={target.worker.role}/{target.worker.generation}" in message
+    assert f"command_id={request.command.command_id}" in message
+    assert f"controller={WORK.session.controller_generation}" in message
+    assert f"session={WORK.session.session_id}" in message
+    assert "INVALID_REQUEST; worker=" in message
+    reason = message.split("; reason=", 1)[1]
+    assert reason == repr(("expired\n" + "x" * 1000)[:512])[:512]
+    assert len(reason) == 512 and "\n" not in reason
     with pytest.raises(RuntimeError, match="shutdown"):
         await shutdown.shutdown_worker(worker, target, deadline)
     cleanup = AcquisitionWorkerControl(

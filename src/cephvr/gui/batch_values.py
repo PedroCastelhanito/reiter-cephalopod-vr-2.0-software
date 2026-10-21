@@ -16,6 +16,8 @@ class ValueRule:
     layer: int
     parameter: str
     values: tuple[str, ...]
+    rig_coordinates: bool = True
+    rig_angle_version: int = 2
 
 
 def materialize_values(
@@ -50,7 +52,22 @@ def materialize_values(
                 numeric = {k: v for k, v in patch.items() if k != "At end"}
                 if any(not isfinite(float(v)) for v in numeric.values()):
                     raise ValueError("Provide finite values for every variation")
-                patch_setting(setting, numeric)
+                frames = {
+                    (r.rig_coordinates, r.rig_angle_version if r.rig_coordinates else 1)
+                    for r in rules
+                    if r.layer == index and r.parameter in ("Speed", "Direction")
+                }
+                if len(frames) > 1:
+                    raise ValueError(
+                        "Speed and direction variations must use the same coordinates"
+                    )
+                rig_coordinates, angle_version = next(iter(frames), (True, 2))
+                patch_setting(
+                    setting,
+                    numeric,
+                    rig_coordinates=rig_coordinates,
+                    rig_angle_version=angle_version,
+                )
                 if "At end" in patch:
                     setting["end_behavior"] = END_BEHAVIORS[patch["At end"].lower()]
         data["sequence"].append(epoch)

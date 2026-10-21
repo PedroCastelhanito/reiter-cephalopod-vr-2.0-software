@@ -363,9 +363,6 @@ class ManagedGui(QObject):
                         self.configuration.dirty = True
                         self.configuration.tracking_dirty = True
                         self.configuration.edit_serial += 1
-                        self.window.dashboard.log_console.appendPlainText(
-                            "Configuration · Previous GUI configuration restored as a local draft."
-                        )
             else:
                 self.history.restore_attempted = True
                 self.history.restore_failed = self.history.path.exists()
@@ -435,7 +432,7 @@ class ManagedGui(QObject):
         self._acknowledged_identity = identity
         self.review_retained.setEnabled(False)
         self.window.dashboard.log_console.appendPlainText(
-            "Retained controller summary acknowledged."
+            "Controller · Retained controller summary acknowledged."
         )
         if self.state is not None:
             self.install_snapshot(epoch, generation, self.state.SerializeToString())

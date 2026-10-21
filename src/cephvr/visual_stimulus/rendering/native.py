@@ -546,6 +546,7 @@ class ModernGLPort:
             and self.preview.visible
             and self._review_layout is not None
             and self.scene_renderer is not None
+            and self.preview.frame_due()
         ):
             first = next(iter(self._outputs.values()))
             try:

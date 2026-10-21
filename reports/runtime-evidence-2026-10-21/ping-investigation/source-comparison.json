@@ -1,0 +1,56 @@
+{
+  "captured_utc": "2026-10-21T06:04:27.654918+00:00",
+  "historical_base": "c740c5c2881e11b4cf7f3d835ffa7708de6fdbfb",
+  "historical_dirty_provenance": "../rig-validation/source-provenance.json",
+  "current_revision": "cfaf4334b5ef4fc2f19346d1928ee927a6b0c8b2",
+  "files": [
+    {
+      "path": "src/cephvr/controller/microcontroller/serial_port.py",
+      "historical_sha256": "01b0c48b44630c19fc0bdb59f79b7c5d33782f8016eb1352ee6f93d6156a0a43",
+      "current_sha256": "01b0c48b44630c19fc0bdb59f79b7c5d33782f8016eb1352ee6f93d6156a0a43",
+      "same": true
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/channel.py",
+      "historical_sha256": "bc4165fd601954bb2da21138b5eb1504d33e13ce34b36f02ff09e1c3f5f0d7a5",
+      "current_sha256": "bc4165fd601954bb2da21138b5eb1504d33e13ce34b36f02ff09e1c3f5f0d7a5",
+      "same": true
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/health.py",
+      "historical_sha256": "091521a1d3ee51fb1061177f0101849b2c5a81bf8f04a4b035e0ffa289354a25",
+      "current_sha256": "091521a1d3ee51fb1061177f0101849b2c5a81bf8f04a4b035e0ffa289354a25",
+      "same": true
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/worker/runtime.py",
+      "historical_sha256": "63cde4ec25aa981eb7dcf8f1fd18fa095622b281c764b163ba79a15f0a6b605c",
+      "current_sha256": "63cde4ec25aa981eb7dcf8f1fd18fa095622b281c764b163ba79a15f0a6b605c",
+      "same": true
+    },
+    {
+      "path": "src/cephvr/supervisor/acquisition_worker.py",
+      "historical_sha256": "c0344462e3125393be517511de6ae481c1b4f55afc4ce7f3609da9bc5050899b",
+      "current_sha256": "c0344462e3125393be517511de6ae481c1b4f55afc4ce7f3609da9bc5050899b",
+      "same": true
+    },
+    {
+      "path": "src/cephvr/acquisition/worker/service.py",
+      "historical_sha256": "e3a3849b3b59981a42bfc6491d5169f8c50b53e9ef3a26035f8c9be3afba809d",
+      "current_sha256": "e3a3849b3b59981a42bfc6491d5169f8c50b53e9ef3a26035f8c9be3afba809d",
+      "same": true
+    },
+    {
+      "path": "src/cephvr/controller/control/snapshots.py",
+      "historical_sha256": "54b94a97d45627085056be317a3cf5adc6bd7c782aa5d4c540f02d5dac879e6a",
+      "current_sha256": "54b94a97d45627085056be317a3cf5adc6bd7c782aa5d4c540f02d5dac879e6a",
+      "same": true
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/config/models/program_model.py",
+      "historical_sha256": "5166e0240917e5efe9fdc91e85df483131c1e5b1c2c1a550bc0dd4df9d4a136d",
+      "current_sha256": "5166e0240917e5efe9fdc91e85df483131c1e5b1c2c1a550bc0dd4df9d4a136d",
+      "same": true
+    }
+  ]
+}

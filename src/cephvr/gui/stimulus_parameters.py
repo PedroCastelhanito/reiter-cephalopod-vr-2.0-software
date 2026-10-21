@@ -1,6 +1,7 @@
 """Family-specific parameters with atomic canonical-model commits."""
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +37,7 @@ from cephvr.gui.stimulus_files import (
     select_epoch_asset,
 )
 from cephvr.gui.stimulus_form import ValueEditor
+from cephvr.gui.stimulus_scope import set_surfaces
 from cephvr.visual_stimulus.config.models.parameter_catalogue import parameter_units
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
@@ -208,6 +210,9 @@ class StimulusParameters(QWidget):
         definitions = schema.get("$defs", {})
         values = setting.model_dump(mode="json")
         self.show_units(setting)
+        motion_values = deepcopy(values)
+        if self.projector and values["kind"] != "arena":
+            set_surfaces(motion_values, [self.projector.lower()])
         looming = values["kind"] == "image" and any(
             values[k]["kind"] == "keyframes" for k in ("width", "height")
         )
@@ -225,7 +230,7 @@ class StimulusParameters(QWidget):
                 continue
             form: ValueEditor | EpochMotion | ArenaMovement
             if name == "Motion":
-                form = EpochMotion(values, schema, definitions)
+                form = EpochMotion(motion_values, schema, definitions)
             else:
                 form = ValueEditor(
                     {
@@ -289,7 +294,7 @@ class StimulusParameters(QWidget):
             self.forms.append(center)
             self.extra_body.addWidget(center_field)
         if values["kind"] == "image" and not looming:
-            image = ImageParameters(values, schema, definitions)
+            image = ImageParameters(motion_values, schema, definitions)
             image.changed.connect(self.mark_changed)
             self.forms.append(image)
             self.extra_body.addWidget(image)

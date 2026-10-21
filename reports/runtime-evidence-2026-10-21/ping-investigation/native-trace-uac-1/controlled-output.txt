@@ -1,0 +1,65 @@
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "c4efb281-1783-40da-af10-9b229c93c7a3"}, "command": "SaveConfigurationHistory", "complete": true, "succeeded": true, "progress": "reusable configuration history saved"}, {"context": {"command_id": "b58323c0-51eb-43aa-8585-f8783b601bc4"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}]}
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "c4efb281-1783-40da-af10-9b229c93c7a3"}, "command": "SaveConfigurationHistory", "complete": true, "succeeded": true, "progress": "reusable configuration history saved"}, {"context": {"command_id": "b58323c0-51eb-43aa-8585-f8783b601bc4"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}, {"context": {"command_id": "9ecf2809-cc28-4c38-9597-ff637303b944"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}]}
+UpdateConfiguration {"command_id": "9ecf2809-cc28-4c38-9597-ff637303b944", "complete": true, "succeeded": true, "needs_input": false, "failure": "", "elapsed_ms": 425.5679}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "c4efb281-1783-40da-af10-9b229c93c7a3"}, "command": "SaveConfigurationHistory", "complete": true, "succeeded": true, "progress": "reusable configuration history saved"}, {"context": {"command_id": "b58323c0-51eb-43aa-8585-f8783b601bc4"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}, {"context": {"command_id": "9ecf2809-cc28-4c38-9597-ff637303b944"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "4ef7107d-a1e9-4b5f-9b0f-7daaad922956"}, "command": "Setup", "work": {"session": {"controller_generation": "950972cb-2fc6-42b8-943d-0d6813773e0c", "session_id": "cfe49316-fb50-49fa-81e2-387bed01b854"}}, "progress": "Reserving output folder\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "c4efb281-1783-40da-af10-9b229c93c7a3"}, "command": "SaveConfigurationHistory", "complete": true, "succeeded": true, "progress": "reusable configuration history saved"}, {"context": {"command_id": "b58323c0-51eb-43aa-8585-f8783b601bc4"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}, {"context": {"command_id": "9ecf2809-cc28-4c38-9597-ff637303b944"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "4ef7107d-a1e9-4b5f-9b0f-7daaad922956"}, "command": "Setup", "work": {"session": {"controller_generation": "950972cb-2fc6-42b8-943d-0d6813773e0c", "session_id": "cfe49316-fb50-49fa-81e2-387bed01b854"}}, "progress": "Checking output folder\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "c4efb281-1783-40da-af10-9b229c93c7a3"}, "command": "SaveConfigurationHistory", "complete": true, "succeeded": true, "progress": "reusable configuration history saved"}, {"context": {"command_id": "b58323c0-51eb-43aa-8585-f8783b601bc4"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}, {"context": {"command_id": "9ecf2809-cc28-4c38-9597-ff637303b944"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "4ef7107d-a1e9-4b5f-9b0f-7daaad922956"}, "command": "Setup", "work": {"session": {"controller_generation": "950972cb-2fc6-42b8-943d-0d6813773e0c", "session_id": "cfe49316-fb50-49fa-81e2-387bed01b854"}}, "progress": "Registering backends\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "c4efb281-1783-40da-af10-9b229c93c7a3"}, "command": "SaveConfigurationHistory", "complete": true, "succeeded": true, "progress": "reusable configuration history saved"}, {"context": {"command_id": "b58323c0-51eb-43aa-8585-f8783b601bc4"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}, {"context": {"command_id": "9ecf2809-cc28-4c38-9597-ff637303b944"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "4ef7107d-a1e9-4b5f-9b0f-7daaad922956"}, "command": "Setup", "work": {"session": {"controller_generation": "950972cb-2fc6-42b8-943d-0d6813773e0c", "session_id": "cfe49316-fb50-49fa-81e2-387bed01b854"}}, "progress": "Preparing cameras\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "c4efb281-1783-40da-af10-9b229c93c7a3"}, "command": "SaveConfigurationHistory", "complete": true, "succeeded": true, "progress": "reusable configuration history saved"}, {"context": {"command_id": "b58323c0-51eb-43aa-8585-f8783b601bc4"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}, {"context": {"command_id": "9ecf2809-cc28-4c38-9597-ff637303b944"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "4ef7107d-a1e9-4b5f-9b0f-7daaad922956"}, "command": "Setup", "work": {"session": {"controller_generation": "950972cb-2fc6-42b8-943d-0d6813773e0c", "session_id": "cfe49316-fb50-49fa-81e2-387bed01b854"}}, "progress": "Preparing backends\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "c4efb281-1783-40da-af10-9b229c93c7a3"}, "command": "SaveConfigurationHistory", "complete": true, "succeeded": true, "progress": "reusable configuration history saved"}, {"context": {"command_id": "b58323c0-51eb-43aa-8585-f8783b601bc4"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}, {"context": {"command_id": "9ecf2809-cc28-4c38-9597-ff637303b944"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "4ef7107d-a1e9-4b5f-9b0f-7daaad922956"}, "command": "Setup", "work": {"session": {"controller_generation": "950972cb-2fc6-42b8-943d-0d6813773e0c", "session_id": "cfe49316-fb50-49fa-81e2-387bed01b854"}}, "progress": "Waiting for backends\u2026"}]}
+error "<AioRpcError of RPC that terminated with:\n\tstatus = StatusCode.UNAUTHENTICATED\n\tdetails = \"operator credential missing\"\n\tdebug_error_string = \"UNAUTHENTICATED:operator credential missing\"\n>"
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\native-trace-uac-1\controlled_setup.py", line 138, in main
+    outcome = await command("Setup", expect_success=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\native-trace-uac-1\controlled_setup.py", line 83, in command
+    result = await asyncio.wait_for(client.execute(name, request), 120)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 279, in execute
+    return await self.wait_result(admission.command_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 282, in wait_result
+    state = await self._wait(
+            ^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 142, in _wait
+    raise ClientError(f"State synchronization failed: {self._failure}")
+cephvr.client.session.ClientError: State synchronization failed: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+	debug_error_string = "UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\native-trace-uac-1\controlled_setup.py", line 182, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\native-trace-uac-1\controlled_setup.py", line 144, in main
+    client.views.install(await client.get_snapshot())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 105, in get_snapshot
+    result = await self.stub.GetSnapshot(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_call.py", line 333, in __await__
+    raise _create_rpc_error(
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAUTHENTICATED
+	details = "operator credential missing"
+	debug_error_string = "UNAUTHENTICATED:operator credential missing"
+>

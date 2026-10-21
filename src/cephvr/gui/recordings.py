@@ -12,23 +12,24 @@ class RecordingsCard(Card):
     changed = pyqtSignal()
 
     def __init__(self, cameras: CamerasPanel, spikeglx: QCheckBox) -> None:
-        super().__init__("Recordings")
+        super().__init__("Saving options")
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.cameras = cameras
         self.can_edit = False
         self.source_grid = QGridLayout()
         self.source_grid.setHorizontalSpacing(8)
-        self.source_grid.setVerticalSpacing(12)
+        self.source_grid.setVerticalSpacing(10)
+        self.source_grid.setColumnMinimumWidth(2, 24)
         self.body.addLayout(self.source_grid)
-        self.camera_heading = label("Cameras", "label")
-        self.data_heading = label("Recorded data", "label")
+        self.video_heading = label("Videos", "label")
+        self.data_heading = label("Data", "label")
         self.record: dict[str, QCheckBox] = {}
         self.source_labels: dict[str, QLabel] = {}
         self.touched: set[str] = set()
         self.add_recording("stimulus", "Visual stimulus video")
         self.velocities = QCheckBox()
-        self.velocities.setAccessibleName("Tracking velocities")
-        self.velocity_label = label("Tracking velocities", wrap=True)
+        self.velocities.setAccessibleName("Save tracking velocities")
+        self.velocity_label = label("Save tracking velocities", wrap=True)
         self.spikeglx = spikeglx
         self.spikeglx.setText("")
         self.spikeglx.setAccessibleName("Save spikeglx")
@@ -39,12 +40,11 @@ class RecordingsCard(Card):
         self.sync_cameras()
 
     def add_recording(self, key: str, name: str) -> None:
+        name = f"Save {name}" if name.endswith(" video") else f"Save {name} video"
         caption = label(name, wrap=True)
         self.source_labels[key] = caption
         record = QCheckBox()
-        record.setAccessibleName(
-            f"Record {name}" if name.endswith(" video") else f"Record {name} video"
-        )
+        record.setAccessibleName(name)
         record.setChecked(True)
         record.toggled.connect(lambda _checked, field=key: self._touch(field))
         self.record[key] = record
@@ -76,25 +76,28 @@ class RecordingsCard(Card):
                 self.add_recording(camera.key, camera.role)
         while self.source_grid.count():
             self.source_grid.takeAt(0)
-        camera_items = [
+        video_items = [
             (self.source_labels[key], control)
             for key, control in self.record.items()
             if key != "stimulus"
         ]
+        video_items.append((self.source_labels["stimulus"], self.record["stimulus"]))
         data_items = [
-            (self.source_labels["stimulus"], self.record["stimulus"]),
             (self.velocity_label, self.velocities),
             (self.spikeglx_label, self.spikeglx),
         ]
         row = 0
         for heading, items in (
-            (self.camera_heading, camera_items),
             (self.data_heading, data_items),
+            (self.video_heading, video_items),
         ):
-            self.source_grid.addWidget(heading, row, 0, 1, 4)
+            if row:
+                self.source_grid.setRowMinimumHeight(row, 12)
+                row += 1
+            self.source_grid.addWidget(heading, row, 0, 1, 5)
             row += 1
             for index, (caption, control) in enumerate(items):
-                column = (index % 2) * 2
+                column = (index % 2) * 3
                 self.source_grid.addWidget(control, row + index // 2, column)
                 self.source_grid.addWidget(caption, row + index // 2, column + 1)
                 self.source_grid.setColumnStretch(column + 1, 1)
@@ -111,8 +114,8 @@ class RecordingsCard(Card):
         for camera in self.cameras.drafts:
             active[camera.key] = camera.enabled
             if camera.key in self.record:
-                self.source_labels[camera.key].setText(f"{camera.role} video")
-                self.record[camera.key].setAccessibleName(f"Record {camera.role} video")
+                self.source_labels[camera.key].setText(f"Save {camera.role} video")
+                self.record[camera.key].setAccessibleName(f"Save {camera.role} video")
         active["stimulus"] = True
         for key, control in self.record.items():
             control.setEnabled(self.can_edit and active.get(key, False))

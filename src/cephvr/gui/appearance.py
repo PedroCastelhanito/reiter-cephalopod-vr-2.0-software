@@ -222,9 +222,7 @@ class DashboardAppearance(QObject):
         band = self.band_action.isChecked()
         self.crt.apply(enabled, band=band)
         self.preview_crt.apply(enabled, band=band)
-        for indicator in self.dashboard.backend_indicators.values():
-            indicator.setProperty("crtGlow", enabled)
-            indicator.update()
+        self.dashboard.preview_dialog.restyle(enabled)
 
     def refresh_device_icons(self) -> None:
         bar = self.window.devices.tab_bar

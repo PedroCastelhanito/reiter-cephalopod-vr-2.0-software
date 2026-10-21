@@ -114,6 +114,18 @@ def card_marks(painter: QPainter, frame: QRectF) -> None:
         painter.drawLine(QPointF(frame.right() - length, y), QPointF(frame.right(), y))
 
 
+def double_frame(painter: QPainter, frame: QRectF) -> None:
+    """Retro card extras inside an already drawn outline: inner line, marks, corners."""
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+    painter.setPen(QPen(QColor(RETRO_COLORS.border), 1))
+    painter.drawRect(frame.adjusted(3, 3, -3, -3))
+    card_marks(painter, frame)
+    painter.setPen(QPen(QColor(RETRO_COLORS.accent), 1))
+    for corner, direction in ((frame.bottomLeft(), 1), (frame.bottomRight(), -1)):
+        painter.drawLine(corner, corner + QPointF(9 * direction, 0))
+        painter.drawLine(corner, corner + QPointF(0, -9))
+
+
 def terminal_marks(console: QPlainTextEdit, event: QPaintEvent) -> None:
     viewport = console.viewport()
     assert viewport is not None

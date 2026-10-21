@@ -1,0 +1,65 @@
+
+Microsoft Windows Performance Recorder Version 10.0.26100 (CoreSystem)
+Copyright (c) 2024 Microsoft Corporation. All rights reserved.
+
+Profile			: FileIO.Verbose.Memory
+
+
+Collector Name		: WPR_initiated_WprApp_WPR System Collector
+Buffer Size (KB)	: 1024
+Number of Buffers	: 3151
+Providers
+System Keywords
+	CpuConfig
+	DiskIO
+	FileIO
+	FileIOInit
+	HardFaults
+	IdealProcessor
+	Loader
+	ProcessCounter
+	ProcessThread
+	ThreadPriority
+System Stacks
+	FileCreate
+	FileCleanup
+	FileClose
+	FileRead
+	FileWrite
+	FileSetInformation
+	FileDelete
+	FileRename
+	FileDirEnum
+	FileFlush
+	FileQueryInformation
+	FileFSCTL
+	FileOpEnd
+	FileDirNotify
+	ThreadDCEnd
+
+Collector Name		: WPR_initiated_WprApp_WPR Event Collector
+Buffer Size (KB)	: 1024
+Number of Buffers	: 630
+Providers
+	b7a19fcd-15ba-41ba-a3d7-dc352d5f79ba: : 0xff     
+	e7ef96be-969f-414f-97d7-3ddb7b558ccc: 0x2000: 0xff     
+	Microsoft-Antimalware-AMFilter: : 0xff     
+	Microsoft-Antimalware-Engine: : 0x05     
+	Microsoft-Antimalware-Protection: : 0xff     
+	Microsoft-Antimalware-RTP: : 0xff     
+	Microsoft-Antimalware-Service: : 0xff     
+	Microsoft-JScript: 0x1: 0xff     
+	Microsoft-Windows-BrokerInfrastructure: 0x1: 0xff     
+	Microsoft-Windows-DotNETRuntime: 0x20098: 0x05     
+	Microsoft-Windows-Kernel-EventTracing: 0x40: 0x0f     
+	Microsoft-Windows-NCSI: : 0xff     
+	Microsoft-Windows-Performance-Recorder-Control: 0x10000: 0xff     
+	Microsoft-Windows-ProcessStateManager: : 0xff     
+	Microsoft-Windows-Win32k: 0x2000: 0xff     
+	Microsoft-Windows-WLAN-AutoConfig: 0x200: 0xff     
+CaptureState Providers on Save
+	Microsoft-JScript: 0x4: 0xff
+	Microsoft-Windows-DotNETRuntime: 0x20118: 0x05
+	Microsoft-Windows-DotNETRuntimeRundown: 0x20118: 0xff
+	Microsoft-Windows-Kernel-Processor-Power: 0xffffffffffffffff: 0xff
+	Microsoft-Windows-UserModePowerService: 0xffffffffffffffff: 0xff

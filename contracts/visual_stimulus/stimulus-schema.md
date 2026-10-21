@@ -74,7 +74,9 @@ both in source/prepared-source JSON; individual epoch edits retain batch members
 resolved epoch. The reference is independent and both endpoints are physical,
 single-surface image tiles. Each follower retains its own image, tile periods,
 appearance, initial/retained phase and reset choice. Its authored phase and layer
-motion are holds; the reference supplies constant phase drift or constant rotation.
+motion are holds; the reference supplies constant phase drift, constant mapped
+X/Y layer translation, or constant rotation. Phase drift and layer translation
+cannot compete. G01 rig-fixed translation uses the latter with phase motion held.
 Chains, cycles, self/same-screen links, animated tile periods, simultaneous drift and
 spin, motion/period assignments and motion/period feedback on either endpoint are
 invalid. Constant values may be condition-selected; validate each expanded occurrence.
@@ -85,6 +87,8 @@ Construct calibrated unit surface right/up/inward-normal bases. Let `F_i` be the
 shortest rotation from surface normal `n_i` to Bottom's inward normal. For linear
 motion convert source phase cycles/s to local texture mm/s using its own periods and
 retained orientation, invert its physical map, then transport `F_target^-1 F_source v`.
+For mapped X/Y layer translation, use its rates directly before the map inverse;
+do not rotate them by layer orientation.
 Convert into the target's map, retained orientation and periods to obtain its phase
 rates. Antiparallel-to-Bottom normals and nonuniform/sheared/reflected stimulus maps
 are unsupported; output warp/reflection is separate and remains supported.
@@ -271,6 +275,17 @@ asset, function, feedback and condition-reference validation as ordinary setting
 root epoch cannot carry a nonempty table. V08 expansion indexes this table by the
 immediate group's zero-based repetition index before substituting conditions; it
 does not select by shuffled visit position or use random draws at runtime.
+
+`VariationDraft.rig_coordinates` and `RepetitionRule.rig_coordinates` default to
+false for saved-source compatibility. Both carry `rig_angle_version` (1 or 2,
+default 1). New GUI rules write true and version 2: Direction is
+Right0/Front90/Left180/Back−90 in the rectangular rig's unfolded plane, and Speed
+uses the existing declared distance/time unit. Rig edits write mapped X/Y rates
+and hold texture phase rates. Legacy rules retain their local phase conversion.
+Version 1 retains Back0/Right90/Front180/Left270, including the Back default when
+adding speed to a stationary source. Version 2 displays angles in (−180, 180];
+wrapped inputs are equivalent. An instance's Speed and Direction repetition rules
+must agree on the flag and, for rig coordinates, angle version.
 
 Optional epoch `repetition_rules` defaults to an empty list and cannot coexist with a
 legacy table. Each `uniform_grid_v1` rule identifies an active instance and numeric

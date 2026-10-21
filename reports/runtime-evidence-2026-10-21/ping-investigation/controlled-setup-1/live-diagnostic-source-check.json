@@ -1,0 +1,22 @@
+{
+  "src/cephvr/controller/microcontroller/serial_port.py": {
+    "sha256": "e57890e3035ad4456e7179bbe6727a3e3b49c13dd3da012938eef69f7e0b5443",
+    "unchanged_since_review": true
+  },
+  "src/cephvr/controller/microcontroller/channel.py": {
+    "sha256": "b4b355ab20e2f31a121b5ca7066db598e343bfa3c81c2c598d6c227ba78207d5",
+    "unchanged_since_review": true
+  },
+  "src/cephvr/supervisor/receipts.py": {
+    "sha256": "b63b114c2b4a4fa397f8d9ec4b766f44a1100110492d717e8a5e88e1c90a24f5",
+    "unchanged_since_review": true
+  },
+  "src/cephvr/supervisor/acquisition_worker.py": {
+    "sha256": "04254a127ddc8b68727b5a07f1315d14a9ea894f379cd11a63b311bf3fdf6cce",
+    "unchanged_since_review": true
+  },
+  "src/cephvr/supervisor/visual_stimulus_worker.py": {
+    "sha256": "3ee8e7e125cead80a4eebe9e1800874cabeb3ad0b5fba2da14ae6815d3f60032",
+    "unchanged_since_review": true
+  }
+}

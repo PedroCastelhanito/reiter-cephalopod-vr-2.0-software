@@ -1,6 +1,6 @@
 """Non-executable subgroup editor metadata retained with canonical source epochs."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field
 
@@ -10,6 +10,8 @@ Text = Annotated[str, Field(max_length=4096)]
 
 
 class VariationDraft(Model):
+    rig_coordinates: bool = False
+    rig_angle_version: Literal[1, 2] = 1
     projector: Text
     projectors: tuple[Text, ...] = ()
     layer: Annotated[int, Field(ge=-1)]

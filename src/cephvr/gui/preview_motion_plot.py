@@ -152,6 +152,10 @@ class EpochTimeline(TimeAxis):
         bounds = super().plot_bounds()
         return QRectF(bounds.left(), self.STRIP_TOP, bounds.width(), self.STRIP_HEIGHT)
 
+    def tick_label(self, seconds: float) -> str:
+        text = duration(seconds)
+        return text if time_window(self.elapsed)[1] >= 3600 else text[3:]
+
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -205,7 +209,7 @@ class EpochTimeline(TimeAxis):
                 )
         painter.setPen(QColor(colors.label))
         label_width = (
-            painter.fontMetrics().horizontalAdvance(duration(max(0, end))) + 16
+            painter.fontMetrics().horizontalAdvance(self.tick_label(max(0, end))) + 16
         )
         interval = max(5, ceil(label_width * (end - start) / bounds.width() / 5) * 5)
         drawn_right = -float(label_width)
@@ -215,7 +219,7 @@ class EpochTimeline(TimeAxis):
             interval,
         ):
             x = self.x_at(tick_time)
-            text = duration(tick_time)
+            text = self.tick_label(tick_time)
             half = painter.fontMetrics().horizontalAdvance(text) / 2
             # Keep edge labels on-widget; skip one that would then touch its neighbour.
             center = min(x, self.width() - half - 2)

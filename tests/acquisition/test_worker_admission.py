@@ -738,6 +738,76 @@ class _AdmissionService(AcquisitionWorkerService):
         return host_time_ns() + 10_000_000_000
 
 
+@pytest.mark.parametrize("expire_after_auth", [False, True])
+async def test_interrupt_deadline_crossing_after_auth_retains_exact_rejection(
+    monkeypatch: pytest.MonkeyPatch, expire_after_auth: bool
+) -> None:
+    from cephvr.acquisition.worker import service as worker_service
+
+    now = [50]
+    deadline = 100
+    supervisor = control.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+    context = acq.WorkerContext(
+        worker=control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=str(uuid4())
+        ),
+        owner=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        work=control.WorkContext(
+            session=control.SessionContext(
+                controller_generation=str(uuid4()), session_id=str(uuid4())
+            )
+        ),
+    )
+    limits = AcquisitionControlLimits.from_message_limit(16 * 1024 * 1024)
+    state = WorkerState(
+        context,
+        supervisor,
+        CommandLedger(
+            context.worker.generation,
+            60_000_000_000,
+            max_records=limits.max_records,
+            max_bytes=limits.max_bytes,
+            result_reservation_bytes=limits.normal_result_reservation_bytes,
+        ),
+        max_retained_views=limits.max_records,
+        limits=limits,
+        registered=True,
+    )
+
+    class Owner(_QueueOwner):
+        def reserve(self, operation, request, deadline_ns):
+            assert deadline_ns == deadline
+            ticket = super().reserve(operation, request, deadline_ns)
+            if expire_after_auth:
+                now[0] = deadline
+            return ticket
+
+    class Service(_AdmissionService):
+        async def _authenticate(self, context, issuer):
+            assert now[0] < deadline and issuer == supervisor
+            return deadline
+
+    monkeypatch.setattr(worker_service, "host_time_ns", lambda: now[0])
+    owner = Owner()
+    service = Service(state, owner, {})
+    command = _command(context, supervisor)
+    request = acq.WorkerInterrupt(command=command, issued_monotonic_ns=50)
+    admission = await service._admit(
+        "InterruptSession", request, command, cast(grpc.aio.ServicerContext, object())
+    )
+    if expire_after_auth:
+        assert admission.result == control.COMMAND_RESULT_REJECTED
+        assert admission.failure.code == "INVALID_REQUEST"
+        assert admission.failure.message == "new command deadline has already expired"
+        assert owner.tickets[-1].cancelled
+        assert not owner.tickets[-1].committed
+        assert state.commands.get(command.command_id) is None
+    else:
+        assert admission.result == control.COMMAND_RESULT_ACCEPTED
+        assert owner.tickets[-1].committed
+
+
 @pytest.mark.parametrize("outcome", ("accepted", "rejected", "exception"))
 async def test_worker_report_failure_preserves_reason_and_drains(outcome):
     from cephvr.acquisition.worker.health import WorkerHealthReporter

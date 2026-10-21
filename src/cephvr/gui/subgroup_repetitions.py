@@ -65,6 +65,8 @@ def rebuild_repetitions(program: Program, scope: tuple[int, ...]) -> Program:
                             {
                                 "instance_id": setting["instance_id"],
                                 "parameter": rule.parameter,
+                                "rig_coordinates": rule.rig_coordinates,
+                                "rig_angle_version": rule.rig_angle_version,
                                 "minimum": rule.minimum,
                                 "maximum": rule.maximum,
                                 "precision": rule.precision,

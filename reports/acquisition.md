@@ -1,5 +1,16 @@
 # Acquisition status
 
+Oct21 `preview-20hz`: [A03](../docs/architecture/acquisition.md#a03) revision35
+and [A10](../docs/architecture/acquisition.md#a10) revision72 implement G01's display
+cadence and raise the session publication default to20 Hz. Pending newest frames
+wait through the existing native event loop; close/placement handling stays active.
+Publication advances fixed cadence slots so a30 Hz source can supply20 Hz rather
+than falling to15. Explicit lower caps/zero remain supported; the owner's saved10
+was updated to20. Capture/recording/Tracking delivery stays independent.
+The combined373 local checks pass (shared invariants, manual preview, worker
+foundations and stimulus rendering); static checks pass. Native live cadence was
+not measured. ARCH-002 retains focused owners and one shared pacer, no dependency.
+
 Oct21 current rig validation: two-camera normal60s → no-camera-demand/video-Off
 Abort5s → normal60s passes; all camera videos fully decode with exact logged counts.
 MCU PING recurs during full-texture Setup (114.451ms/99.979ms), followed by

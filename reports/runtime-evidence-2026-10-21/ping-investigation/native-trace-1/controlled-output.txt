@@ -1,0 +1,38 @@
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "1e2bc717-813d-4af6-9a7a-6adf3259b9c7"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}]}
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "1e2bc717-813d-4af6-9a7a-6adf3259b9c7"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}, {"context": {"command_id": "db0406f8-b2a5-4b33-a66f-862866166686"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}]}
+UpdateConfiguration {"command_id": "db0406f8-b2a5-4b33-a66f-862866166686", "complete": true, "succeeded": true, "needs_input": false, "failure": "", "elapsed_ms": 434.3682}
+restoration_blocked {"phase": 1, "cleanup": false}
+error "AssertionError('\\n\\tFailed to enable the policy to profile system performance.\\n\\n\\n\\tProfile Id: CPU.Verbose.File\\n\\t\\n\\tError code: 0xc5585011\\n\\t\\n\\tFailed to enable the policy to profile system performance.\\n\\n\\t\\n\\t\\n')"
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\native-trace-1\controlled_setup.py", line 175, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\native-trace-1\controlled_setup.py", line 137, in main
+    outcome = await command("Setup", expect_success=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\native-trace-1\controlled_setup.py", line 80, in command
+    TRACE.start()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\ping-investigation\native-trace-1\trace_scope.py", line 106, in start
+    assert result.returncode == 0, result.stdout + result.stderr
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 
+	Failed to enable the policy to profile system performance.
+
+
+	Profile Id: CPU.Verbose.File
+	
+	Error code: 0xc5585011
+	
+	Failed to enable the policy to profile system performance.
+
+	
+	
+

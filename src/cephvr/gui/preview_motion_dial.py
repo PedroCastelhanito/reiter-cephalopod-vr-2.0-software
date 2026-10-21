@@ -3,20 +3,21 @@
 from dataclasses import dataclass
 from math import atan2, cos, degrees, hypot, radians, sin
 
-from PyQt6.QtCore import QPointF, QRectF, Qt
+from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
 from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPaintEvent, QPen, QPolygonF
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QSizePolicy, QWidget
 
 from cephvr.gui.preview_motion_data import DialSample
 from cephvr.gui.theme import colors_for
+from cephvr.visual_stimulus.config.rig_coordinates import signed_degrees
 
 AXIS_LABELS = {
-    # Texture dials keep the local display: 0°/+X down and 90°/+Y right.
-    "texture": ("180°", "0°", "90°", "270°"),
+    # Subject directions use the same screen orientation on every projector.
+    "texture": ("Front\n90°", "Back\n−90°", "Right\n0°", "Left\n180°"),
     "tracking": ("fwd", "back", "right", "left"),
 }
 TOOLTIPS = {
-    "texture": "Planned local motion: 0° (+X) points down; 90° (+Y) points right. "
+    "texture": "Planned subject motion: Back −90° down; Right 0° right; Front 90° up; Left 180° left. "
     "Arrow length is speed against the rings; the outer ring is signed angular speed.",
     "tracking": "Forward points up and rightward lateral motion right. Arrow length "
     "is speed against the rings; the outer ring is signed angular speed. "
@@ -27,7 +28,11 @@ TOOLTIPS = {
 def screen_vector(sample: DialSample) -> tuple[float, float]:
     """Map a sample vector to screen x-right/y-down for its dial orientation."""
     a, b = sample.vector or (0.0, 0.0)
-    return (b, a) if sample.form == "texture" else (-b, -a)
+    if sample.form == "texture":
+        b *= sample.display_direction_sign
+        angle = radians(sample.display_rotation_deg)
+        return b * cos(angle) + a * sin(angle), a * cos(angle) - b * sin(angle)
+    return -b, -a
 
 
 def vector_text(sample: DialSample) -> str:
@@ -40,7 +45,8 @@ def vector_text(sample: DialSample) -> str:
         )
     a, b = sample.vector
     if sample.form == "texture":
-        direction = degrees(atan2(b, a)) % 360
+        dx, dy = screen_vector(sample)
+        direction = signed_degrees(degrees(atan2(-dy, dx)))
         return f"{hypot(a, b):.3g} {sample.unit} · {direction:.3g}°"
     return f"{a:.3g} · {b:.3g} {sample.unit}"
 
@@ -59,15 +65,33 @@ def dial_readout(sample: DialSample) -> str:
     return f"{vector_text(sample)} · {rotation_text(sample)}"
 
 
+def instrument_painter(widget: QWidget) -> QPainter:
+    """Fit the complete instrument, including labels, without stretching its axes."""
+    painter = QPainter(widget)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.fillRect(widget.rect(), QColor(colors_for(widget).console))
+    scale = min(widget.width() / MotionDial.SIZE, widget.height() / MotionDial.HEIGHT)
+    painter.translate(
+        (widget.width() - MotionDial.SIZE * scale) / 2,
+        (widget.height() - MotionDial.HEIGHT * scale) / 2,
+    )
+    painter.scale(scale, scale)
+    return painter
+
+
 class MotionDial(QWidget):
     SIZE = 204
     HEIGHT = 232
 
     def __init__(self) -> None:
         super().__init__()
-        self.setFixedSize(self.SIZE, self.HEIGHT)
+        self.resize(self.SIZE, self.HEIGHT)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         self.sample: DialSample | None = None
         self.setAccessibleName("Motion dial")
+
+    def sizeHint(self) -> QSize:
+        return QSize(MotionDial.SIZE, MotionDial.HEIGHT)
 
     def set_sample(self, sample: DialSample) -> None:
         self.sample = sample
@@ -76,24 +100,24 @@ class MotionDial(QWidget):
         self.update()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter = instrument_painter(self)
         colors = colors_for(self)
-        painter.fillRect(self.rect(), QColor(colors.console))
         sample = self.sample
         if sample is None:
             return
         color = QColor(getattr(colors, sample.color))
         painter.setPen(color)
-        painter.drawText(
-            QRectF(4, 2, self.width() - 8, 18),
-            Qt.AlignmentFlag.AlignCenter,
-            painter.fontMetrics().elidedText(
-                sample.name, Qt.TextElideMode.ElideRight, self.width() - 8
-            ),
+        center = QPointF(MotionDial.SIZE / 2, 104)
+        up, down, right, left = AXIS_LABELS[sample.form]
+        label_width = max(
+            painter.fontMetrics().horizontalAdvance(t)
+            for label in (right, left)
+            for t in label.splitlines()
         )
-        center = QPointF(self.width() / 2, 104)
-        radius = 54.0
+        # Reserve text width, a 6px gap, the 2px ring stroke and 4px edge padding.
+        ring = min(63.0, MotionDial.SIZE / 2 - label_width - 12)
+        radius = ring - 9
+        label_edge = ring + 8
         painter.setPen(QPen(QColor(colors.border), 1))
         painter.drawEllipse(center, radius, radius)
         painter.setPen(QPen(QColor(colors.border), 1, Qt.PenStyle.DotLine))
@@ -101,21 +125,28 @@ class MotionDial(QWidget):
         painter.drawLine(center - QPointF(radius, 0), center + QPointF(radius, 0))
         painter.drawLine(center - QPointF(0, radius), center + QPointF(0, radius))
         painter.setPen(QColor(colors.label))
-        up, down, right, left = AXIS_LABELS[sample.form]
         x, y = center.x(), center.y()
         for text, box, align in (
             (
                 up,
-                QRectF(x - 20, y - radius - 30, 40, 16),
+                QRectF(x - 24, y - label_edge - 32, 48, 32),
                 Qt.AlignmentFlag.AlignHCenter,
             ),
             (
                 down,
-                QRectF(x - 20, y + radius + 14, 40, 16),
+                QRectF(x - 24, y + label_edge, 48, 32),
                 Qt.AlignmentFlag.AlignHCenter,
             ),
-            (right, QRectF(x + radius + 4, y - 8, 40, 16), Qt.AlignmentFlag.AlignLeft),
-            (left, QRectF(x - radius - 44, y - 8, 40, 16), Qt.AlignmentFlag.AlignRight),
+            (
+                right,
+                QRectF(x + label_edge, y - 16, label_width, 32),
+                Qt.AlignmentFlag.AlignLeft,
+            ),
+            (
+                left,
+                QRectF(x - label_edge - label_width, y - 16, label_width, 32),
+                Qt.AlignmentFlag.AlignRight,
+            ),
         ):
             painter.drawText(box, align | Qt.AlignmentFlag.AlignVCenter, text)
         if sample.scale > 0:
@@ -124,7 +155,6 @@ class MotionDial(QWidget):
                 Qt.AlignmentFlag.AlignLeft,
                 f"{sample.scale:g}",
             )
-        ring = radius + 9
         painter.setPen(QPen(QColor(colors.border), 4))
         painter.drawEllipse(center, ring, ring)
         if sample.angular_speed and sample.rotation_scale > 0:
@@ -157,10 +187,10 @@ class MotionDial(QWidget):
         painter.setPen(QColor(colors.text if not sample.message else colors.label))
         text = dial_readout(sample)
         painter.drawText(
-            QRectF(4, 192, self.width() - 8, 18),
+            QRectF(4, 192, MotionDial.SIZE - 8, 18),
             Qt.AlignmentFlag.AlignCenter,
             painter.fontMetrics().elidedText(
-                text, Qt.TextElideMode.ElideRight, self.width() - 8
+                text, Qt.TextElideMode.ElideRight, MotionDial.SIZE - 8
             ),
         )
 
@@ -180,33 +210,28 @@ class WorldMap(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
-        self.setFixedSize(MotionDial.SIZE, MotionDial.HEIGHT)
+        self.resize(MotionDial.SIZE, MotionDial.HEIGHT)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         self.sample: MapSample | None = None
         self.setAccessibleName("Arena world map")
         self.setToolTip("Planned virtual-world position, x right and y up, in mm.")
+
+    def sizeHint(self) -> QSize:
+        return QSize(MotionDial.SIZE, MotionDial.HEIGHT)
 
     def set_sample(self, sample: MapSample) -> None:
         self.sample = sample
         self.update()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter = instrument_painter(self)
         colors = colors_for(self)
-        painter.fillRect(self.rect(), QColor(colors.console))
         sample = self.sample
         if sample is None:
             return
         color = QColor(getattr(colors, sample.color))
         painter.setPen(color)
-        painter.drawText(
-            QRectF(4, 2, self.width() - 8, 18),
-            Qt.AlignmentFlag.AlignCenter,
-            painter.fontMetrics().elidedText(
-                f"{sample.name} · world", Qt.TextElideMode.ElideRight, self.width() - 8
-            ),
-        )
-        frame = QRectF(12, 30, self.width() - 24, 150)
+        frame = QRectF(12, 30, MotionDial.SIZE - 24, 150)
         painter.setPen(QPen(QColor(colors.border), 1))
         painter.drawRect(frame)
         left, bottom, right, top = sample.extent
@@ -251,7 +276,7 @@ class WorldMap(QWidget):
             readout = f"x {x:.4g} · y {y:.4g} mm · yaw {yaw % 360:.3g}°"
         painter.setPen(QColor(colors.text if not sample.message else colors.label))
         painter.drawText(
-            QRectF(4, 192, self.width() - 8, 36),
+            QRectF(4, 192, MotionDial.SIZE - 8, 36),
             Qt.AlignmentFlag.AlignHCenter | Qt.TextFlag.TextWordWrap,
             readout,
         )

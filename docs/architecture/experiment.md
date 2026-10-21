@@ -65,7 +65,7 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
 <a id="e05"></a>
 ### E05 — Lifecycle and trial timing
 
-**Status:** Accepted · **Revision:** 98
+**Status:** Accepted · **Revision:** 99
 
 #### Lifecycle
 
@@ -258,10 +258,10 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   trial work and begins graceful output closure at that boundary. Slow reports or
   file closure cannot extend the recorded interval.
 - For normal trial end, the controller must receive valid Stopped evidence from
-  every required participant by `T + duration + 250 ms`. Missing evidence
+  every required participant by `T + duration + 450 ms`. Missing evidence
   interrupts the session while graceful cleanup continues. This allowance never
   extends trial activity; Finished retains its separate closure deadline.
-- For early interruption of an active trial, the same 250 ms Stopped allowance
+- For early interruption of an active trial, the same 450 ms Stopped allowance
   begins when the controller or supervisor issues the interruption, not when each
   backend receives it; delivery and reporting consume it. Missing evidence flags
   stopping as unconfirmed while graceful cleanup continues; this does not authorize

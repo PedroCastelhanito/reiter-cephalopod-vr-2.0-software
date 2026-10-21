@@ -5,6 +5,8 @@ from decimal import Decimal
 from math import atan2, cos, degrees, hypot, radians, sin
 from typing import Any
 
+from .rig_coordinates import local_direction, rig_direction
+
 END_BEHAVIORS = {
     "loop": "loop",
     "hold": "hold_final_frame",
@@ -25,7 +27,9 @@ def constant_rate(value: dict[str, Any]) -> float | None:
     return None
 
 
-def motion_numbers(setting: dict[str, Any]) -> tuple[float, float, float]:
+def motion_numbers(
+    setting: dict[str, Any], *, rig_coordinates: bool = False
+) -> tuple[float, float, float]:
     texture = setting["kind"] == "texture"
     if texture:
         pattern = setting["pattern"]
@@ -37,13 +41,17 @@ def motion_numbers(setting: dict[str, Any]) -> tuple[float, float, float]:
             raise ValueError(
                 "Speed/direction variations need an image tile with constant dimensions"
             )
-        if any(setting["motion"][k]["kind"] != "hold" for k in ("x", "y")):
+        translating = any(setting["motion"][k]["kind"] != "hold" for k in ("x", "y"))
+        phased = any(setting[k]["kind"] != "hold" for k in ("phase_x", "phase_y"))
+        if translating and phased:
             raise ValueError(
                 "Speed variations cannot replace simultaneous texture translation"
             )
         x, y = [constant_rate(setting[f"phase_{axis}"]) for axis in ("x", "y")]
         if x is not None and y is not None:
             x, y = -x * pattern["period_x"]["value"], -y * pattern["period_y"]["value"]
+        if translating:
+            x, y = [constant_rate(setting["motion"][axis]) for axis in ("x", "y")]
     else:
         x, y = [constant_rate(setting["motion"][axis]) for axis in ("x", "y")]
     angular = constant_rate(
@@ -51,12 +59,18 @@ def motion_numbers(setting: dict[str, Any]) -> tuple[float, float, float]:
     )
     if x is None or y is None or angular is None:
         raise ValueError("Choose constant motion before varying speed/direction")
-    return hypot(x, y), degrees(atan2(y, x)) if x or y else 0.0, angular
+    angle = degrees(atan2(y, x)) if x or y else 0.0
+    if rig_coordinates:
+        angle = rig_direction(setting, angle) if x or y else 0.0
+    return hypot(x, y), angle, angular
 
 
 def varied_fields(
-    setting: dict[str, Any], values: dict[str, float]
+    setting: dict[str, Any], values: dict[str, float], *, rig_coordinates: bool = False
 ) -> dict[tuple[str, ...], tuple[float, str]]:
+    rig_coordinates = rig_coordinates and (
+        setting["kind"] == "arena" or setting["space"]["kind"] == "physical_surface"
+    )
     result: dict[tuple[str, ...], tuple[float, str]] = {}
     length = (
         "mm"
@@ -64,7 +78,7 @@ def varied_fields(
         else "deg"
     )
     if any(key in values for key in ("Speed", "Direction", "Angular speed")):
-        speed, angle, angular = motion_numbers(setting)
+        speed, angle, angular = motion_numbers(setting, rig_coordinates=rig_coordinates)
         speed, angle, angular = (
             values.get("Speed", speed),
             values.get("Direction", angle),
@@ -73,9 +87,14 @@ def varied_fields(
         if speed < 0:
             raise ValueError("Speed must be nonnegative")
         if "Speed" in values or "Direction" in values:
+            if rig_coordinates:
+                frame = deepcopy(setting)
+                if frame["kind"] == "texture":
+                    frame["phase_x"] = frame["phase_y"] = {"kind": "hold"}
+                angle = local_direction(frame, angle)
             x, y = speed * cos(radians(angle)), speed * sin(radians(angle))
             for axis, value in (("x", x), ("y", y)):
-                if setting["kind"] == "texture":
+                if setting["kind"] == "texture" and not rig_coordinates:
                     result[(f"phase_{axis}", "function", "value")] = (
                         -value / setting["pattern"][f"period_{axis}"]["value"],
                         "cycle/s",
@@ -106,6 +125,8 @@ def assign_ref(
     setting: dict[str, Any], path: tuple[str, ...], ref: dict[str, str] | float
 ) -> None:
     if path[0] == "motion":
+        if setting["kind"] == "texture" and path[1] in ("x", "y"):
+            setting["phase_x"] = setting["phase_y"] = {"kind": "hold"}
         setting["motion"][path[1]] = {
             "kind": "rate",
             "function": {"kind": "constant", "value": ref},
@@ -119,7 +140,9 @@ def assign_ref(
         setting[path[0]] = {"kind": "constant", "value": ref}
 
 
-def parameter_value(setting: dict[str, Any], name: str) -> object:
+def parameter_value(
+    setting: dict[str, Any], name: str, *, rig_coordinates: bool = False
+) -> object:
     if name == "At end":
         return setting["end_behavior"]
     if name in ("Longitudinal", "Lateral", "Angular"):
@@ -152,7 +175,7 @@ def parameter_value(setting: dict[str, Any], name: str) -> object:
             raise ValueError("Custom angular motion")
         return value
     if name in ("Speed", "Direction"):
-        return motion_numbers(setting)[
+        return motion_numbers(setting, rig_coordinates=rig_coordinates)[
             ("Speed", "Direction", "Angular speed").index(name)
         ]
     if name in ("Start size", "End size", "Growth duration"):
@@ -179,7 +202,13 @@ def parameter_value(setting: dict[str, Any], name: str) -> object:
     return value["value"]
 
 
-def patch_setting(setting: dict[str, Any], changes: dict[str, str]) -> None:
+def patch_setting(
+    setting: dict[str, Any],
+    changes: dict[str, str],
+    *,
+    rig_coordinates: bool = False,
+    rig_angle_version: int = 2,
+) -> None:
     for name in ("Longitudinal", "Lateral", "Angular"):
         if name not in changes:
             continue
@@ -219,13 +248,26 @@ def patch_setting(setting: dict[str, Any], changes: dict[str, str]) -> None:
         for k, v in changes.items()
         if k in ("Speed", "Direction", "Angular speed", "Width", "Height", "Opacity")
     }
+    if (
+        rig_coordinates
+        and rig_angle_version == 1
+        and (
+            setting["kind"] == "arena" or setting["space"]["kind"] == "physical_surface"
+        )
+    ):
+        # Persisted v1 angles used Back=0; keep their physical movement unchanged.
+        if "Direction" in numeric:
+            numeric["Direction"] -= 90
+        elif "Speed" in numeric and motion_numbers(setting)[0] == 0:
+            numeric["Direction"] = -90
     angular = numeric.pop("Angular speed", None)
     if angular is not None:
         key = "yaw" if setting["kind"] == "arena" else "rotation"
         setting["motion"][key] = dict(
             kind="rate", function=dict(kind="constant", value=angular)
         )
-    for path, (value, _) in varied_fields(setting, numeric).items():
+    fields = varied_fields(setting, numeric, rig_coordinates=rig_coordinates)
+    for path, (value, _) in fields.items():
         assign_ref(setting, path, value)
     size = {
         k: v

@@ -6,6 +6,7 @@ from typing import Any
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.managed_status import action_label
+from cephvr.gui.setup_checklist import SetupChecklist
 
 
 def requested_action(action: str, options: dict[str, Any]) -> str:
@@ -76,6 +77,10 @@ class ActionProgress:
     ) -> None:
         self.emit = emit
         self.update = update
+        self.checklist = SetupChecklist(self._update)
+        self.setup_keys: set[tuple[str, ...]] = set()
+        self.setup_session: str | None = None
+        self.configuration = pb.ConfigurationValues()
         self.requests: dict[str, str] = {}
         self.identity: tuple[int, str] | None = None
         self.current: dict[tuple[str, ...], str] = {}
@@ -86,6 +91,22 @@ class ActionProgress:
             self.publish(_target(action), ("request", action), message)
 
     def publish(
+        self,
+        target: str,
+        key: tuple[str, ...],
+        message: str,
+        result: str = "",
+        details: str = "",
+    ) -> None:
+        if key in self.setup_keys:
+            if result:
+                self.checklist.complete(key, result, details)
+            elif message:
+                self.checklist.progress(target, key, message)
+            return
+        self._update(target, key, message, result, details)
+
+    def _update(
         self,
         target: str,
         key: tuple[str, ...],
@@ -111,8 +132,20 @@ class ActionProgress:
     def install(self, epoch: int, state: pb.Snapshot) -> None:
         identity = (epoch, state.controller_generation)
         if identity != self.identity:
+            self.checklist.unconfirmed()
+            self.checklist = SetupChecklist(self._update)
+            self.setup_keys.clear()
+            self.setup_session = None
+            self.configuration.Clear()
             self.current.clear()
             self.identity = identity
+        if state.HasField("configuration_values"):
+            self.configuration.CopyFrom(state.configuration_values)
+        if state.session.phase == pb.SESSION_PHASE_SETTING_UP:
+            session = state.session.context.session_id
+            if self.setup_session != session:
+                self.checklist.unconfirmed()
+            self.setup_session = session
         final = state.last_finalization
         if (
             final.session.phase == pb.SESSION_PHASE_ENDED
@@ -145,6 +178,8 @@ class ActionProgress:
         session_id = state.session.context.session_id
         for operation in state.operations:
             key: tuple[str, ...] = ("operation", operation.context.command_id)
+            if operation.command in {"Setup", "setup"}:
+                self.setup_keys.add(key)
             if operation.complete and key in self.current:
                 result = (
                     "Done"
@@ -189,7 +224,7 @@ class ActionProgress:
             )
         phase = state.session.phase
         session_action = {
-            pb.SESSION_PHASE_READY: "Ready",
+            pb.SESSION_PHASE_READY: "Setup complete; waiting for Start",
             pb.SESSION_PHASE_STARTING: "Preparing to start…",
             pb.SESSION_PHASE_FINALIZING: "Finalizing session…",
         }.get(phase, "")
@@ -241,15 +276,22 @@ class ActionProgress:
                 name, "tracking"
             )
             key = ("participant", session_id, name, participant.process.generation)
+            if phase == pb.SESSION_PHASE_SETTING_UP or self.setup_session == session_id:
+                self.setup_keys.add(key)
+                self._camera_setup_rows(state, participant, key)
+                if participant.ready.required_checks_passed and key not in self.current:
+                    self.checklist.progress(
+                        target, key, f"{label} · Preparing session resources…"
+                    )
             if participant.ready.required_checks_passed:
-                if key in self.current:
+                if key in self.current or key in self.checklist.rows:
                     self.publish(target, key, "", "Done")
                 continue
             if phase != pb.SESSION_PHASE_SETTING_UP:
                 continue
             entries[key] = (
                 target,
-                f"{label} · {participant.preparation_progress or 'Preparing…'}",
+                f"{label} · {participant.preparation_progress or 'Preparing session resources…'}",
             )
         for name, label in (
             ("behavioral", "Behavior camera"),
@@ -263,16 +305,29 @@ class ActionProgress:
                     f"{label} · Live",
                 )
         mcu = state.microcontroller
+        mcu_key = ("setup-mcu", session_id, mcu.observation.connection_id)
+        if phase == pb.SESSION_PHASE_SETTING_UP and mcu.observation.connection_id:
+            self.checklist.progress(
+                "microcontroller",
+                mcu_key,
+                "Microcontroller · Reading connection and configuration…",
+            )
+            if mcu.failure:
+                self.checklist.complete(mcu_key, "Failed", mcu.failure)
+            elif mcu.observation.observed_monotonic_ns and not mcu.cleanup_pending:
+                self.checklist.complete(mcu_key, "Done", str(mcu.observation))
         if (
             mcu.observation.connection_id
             and not mcu.cleanup_pending
             and not mcu.failure
+            and phase != pb.SESSION_PHASE_SETTING_UP
+            and (mcu.diagnostic.active or mcu_key not in self.checklist.finished)
         ):
             entries[("microcontroller", mcu.observation.connection_id)] = (
                 "microcontroller",
                 "Microcontroller · Testing pin…"
                 if mcu.diagnostic.active
-                else "Microcontroller · Ready",
+                else "Microcontroller · Connection and configuration observed",
             )
         diagnostic = state.tracking_diagnostic
         if diagnostic.active and not diagnostic.failure:
@@ -285,6 +340,34 @@ class ActionProgress:
         for key, (target, message) in entries.items():
             if self.current.get(key) != message:
                 self.publish(target, key, message)
+        if self.setup_session is not None and phase != pb.SESSION_PHASE_SETTING_UP:
+            self.checklist.unconfirmed()
+            self.setup_session = None
         self.current = {
             key: message for key, (_target_name, message) in entries.items()
         }
+
+    def _camera_setup_rows(
+        self, state: pb.Snapshot, participant: pb.ParticipantState, key: tuple[str, ...]
+    ) -> None:
+        if participant.process.role != "acquisition":
+            return
+        if self.configuration.revision != state.configuration.revision:
+            return
+        settings = next(
+            (
+                backend
+                for backend in self.configuration.current.backends
+                if backend.backend_name == "acquisition" and backend.enabled
+            ),
+            pb.BackendSettings(),
+        )
+        for role, label in (
+            ("behavioral", "Behavior camera"),
+            ("tracking", "Tracking camera"),
+            ("eye_tracking", "Eye camera"),
+        ):
+            if getattr(settings.acquisition, role).enabled:
+                self.checklist.progress(
+                    "cameras", key, f"{label} · Preparing camera for session…"
+                )

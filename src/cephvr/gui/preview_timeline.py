@@ -3,13 +3,11 @@
 from collections.abc import Callable
 from time import monotonic
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import (
     QBoxLayout,
-    QCheckBox,
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QScrollArea,
@@ -17,7 +15,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card
 from cephvr.gui.preview_motion_data import (
     DialSample,
     MotionEpoch,
@@ -42,7 +39,13 @@ from cephvr.gui.preview_motion_plot import (
     time_window,
 )
 from cephvr.gui.preview_motion_samples import InstrumentPlan, SourcePanel
-from cephvr.gui.theme import colors_for
+from cephvr.gui.preview_projector_cards import (
+    InstrumentGrid,
+    ProjectorCard,
+    ProjectorHeading,
+)
+from cephvr.gui.theme import colors_for, retro_console
+from cephvr.visual_stimulus.config.models.display_profile import Geometry
 from cephvr.visual_stimulus.config.models.program_model import (
     Program,
     Settings,
@@ -80,12 +83,12 @@ def size_at(setting: Settings, axis: int) -> Callable[[int], float]:
     return lambda local_ns: planned_size(setting, local_ns)[axis]
 
 
-class StimulusTimeline(Card):
+class StimulusTimeline(QWidget):
     def __init__(self) -> None:
-        super().__init__("Stimulus timeline", compact=True)
-        self.legend = QGridLayout()
-        self.legend.setHorizontalSpacing(24)
-        self.legend.setVerticalSpacing(4)
+        super().__init__()
+        self.body = QVBoxLayout(self)
+        self.body.setContentsMargins(0, 0, 0, 0)
+        self.body.setSpacing(10)
         self.setToolTip(NOT_MEASURED)
         self.epoch_timeline = EpochTimeline()
         self.epoch_timeline.setToolTip(
@@ -110,29 +113,30 @@ class StimulusTimeline(Card):
         console_layout.addWidget(self.epoch_timeline)
         console_layout.addWidget(self.size_lane)
         console_layout.addStretch(1)
-        self.instrument_host = QWidget()
-        self.instruments = QHBoxLayout(self.instrument_host)
-        self.instruments.setContentsMargins(0, 0, 0, 0)
-        self.instruments.setSpacing(12)
+        self.instrument_host = InstrumentGrid(
+            (), QSize(MotionDial.SIZE + 16, MotionDial.HEIGHT + 34)
+        )
+        self.cards = self.instrument_host.grid
         self.notice = QLabel("", self.instrument_host)
         self.notice.setWordWrap(True)
         self.dial_area = QScrollArea()
         self.dial_area.setFrameShape(QFrame.Shape.NoFrame)
         self.dial_area.setWidgetResizable(True)
+        self.dial_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         self.dial_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.dial_area.setWidget(self.instrument_host)
         # The instruments paint their own console surfaces over the card.
         self.dial_area.setStyleSheet(
             "QScrollArea, QScrollArea > QWidget > QWidget {background: transparent;}"
         )
-        self.instruments.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.dial_area.setMinimumHeight(MotionDial.HEIGHT + 18)
+        self.dial_area.setMinimumSize(160, 160)
         self.dial_area.setAccessibleName("Advanced motion previews")
         self.motion_section = QWidget()
         motion_layout = QVBoxLayout(self.motion_section)
         motion_layout.setContentsMargins(0, 0, 0, 0)
         motion_layout.setSpacing(4)
-        motion_layout.addLayout(self.legend)
         motion_layout.addWidget(self.dial_area)
         plots = QHBoxLayout()
         plots.setSpacing(20)
@@ -143,10 +147,11 @@ class StimulusTimeline(Card):
         self.program: Program | None = None
         self.seed = ""
         self.advanced = False
+        self.glow = False
+        self.headings: list[ProjectorHeading] = []
         self.sources: tuple[MotionSource, ...] = ()
         self.panels: list[SourcePanel] = []
         self.plan = InstrumentPlan(())
-        self.toggles: dict[tuple[str, str, int], QCheckBox] = {}
         self.dials: list[MotionDial] = []
         self.maps: list[WorldMap] = []
         self.dial_samples: list[DialSample] = []
@@ -221,7 +226,6 @@ class StimulusTimeline(Card):
         self.sources = ()
         self.panels = []
         self.plan = InstrumentPlan(())
-        self.reset_legend()
         self.epoch_timeline.epochs = self.size_lane.epochs = ()
         self.epoch_timeline.message = message
         self.reported_elapsed = None
@@ -229,80 +233,76 @@ class StimulusTimeline(Card):
         self.rebuild_instruments()
         self.set_elapsed(None)
 
-    def reset_legend(self) -> None:
-        for toggle in self.toggles.values():
-            self.legend.removeWidget(toggle)
-            toggle.hide()
-            toggle.deleteLater()
-        self.toggles.clear()
-
-    def set_program(self, program: Program, seed: str, title: str) -> None:
+    def set_program(
+        self, program: Program, seed: str, title: str, geometry: Geometry | None = None
+    ) -> None:
         self.setToolTip(f"{title} · {NOT_MEASURED}")
-        if program is self.program and seed == self.seed:
+        if (
+            program is self.program
+            and seed == self.seed
+            and geometry == self.plan.geometry
+        ):
             return
-        previous = {key: toggle.isChecked() for key, toggle in self.toggles.items()}
         self.clear("")
         self.program, self.seed = program, seed
         try:
             epochs = motion_epochs(program, seed)
             self.epoch_timeline.epochs = self.size_lane.epochs = epochs
             self.sources = motion_sources(epochs)
-            self.plan = InstrumentPlan(epochs)
+            self.plan = InstrumentPlan(epochs, geometry)
         except (ValueError, TypeError, OverflowError) as error:
             self.epoch_timeline.message = str(error)
         for index, source in enumerate(self.sources):
             color = COLORS[index % len(COLORS)]
             self.panels.append(self.plan.panel(source, color))
-            toggle = QCheckBox(source.name)
-            toggle.setChecked(previous.get(source.key, True))
-            toggle.setAccessibleName(f"Show {source.name} motion")
-            toggle.setToolTip(f"Show or hide {source.name} in every preview")
-            toggle.toggled.connect(self.refresh)
-            css = getattr(colors_for(self), color)
-            toggle.setStyleSheet(
-                f"QCheckBox {{color: {css};}}"
-                f"QCheckBox::indicator {{border: 1px solid {css};}}"
-                f"QCheckBox::indicator:checked {{background-color: {css};}}"
-                "QCheckBox::indicator:unchecked {background-color: transparent;}"
-            )
-            self.legend.addWidget(toggle, index // 2, index % 2)
-            self.toggles[source.key] = toggle
         self.rebuild_instruments()
         self.refresh()
 
     def rebuild_instruments(self) -> None:
-        while self.instruments.count():
-            item = self.instruments.takeAt(0)
+        while self.cards.count():
+            item = self.cards.takeAt(0)
             widget = item.widget() if item is not None else None
             if widget is not None and widget is not self.notice:
+                widget.hide()
                 widget.deleteLater()
         self.dials, self.maps = [], []
-        self.instruments.addWidget(self.notice)
+        self.headings = []
+        cards: list[tuple[str, ProjectorCard]] = []
         for panel in self.panels:
+            instruments: list[QWidget] = []
             if panel.arena:
                 world = WorldMap()
                 self.maps.append(world)
-                self.instruments.addWidget(world)
+                instruments.append(world)
             for _ in range(2 if panel.driving else 1):
                 dial = MotionDial()
                 self.dials.append(dial)
-                self.instruments.addWidget(dial)
-        self.instruments.addStretch(1)
-        # Fixed-size instruments never overlap: up to two fit, more scroll sideways.
-        count = len(self.dials) + len(self.maps)
-        natural = count * (MotionDial.SIZE + self.instruments.spacing())
-        self.instrument_host.setMinimumWidth(natural)
-        self.dial_area.setFixedWidth(
-            max(240, min(natural, 2 * (MotionDial.SIZE + self.instruments.spacing())))
-        )
+                instruments.append(dial)
+            heading = ProjectorHeading(panel.source.name.removesuffix(" · reference"))
+            heading.setStyleSheet(f"color: {getattr(colors_for(self), panel.color)};")
+            self.headings.append(heading)
+            cards.append((panel.source.key[0], ProjectorCard(heading, instruments)))
+        order = {"Left": 0, "Front": 1, "Right": 2, "Bottom": 3}
+        self.instrument_host.instruments = [
+            card for name, card in sorted(cards, key=lambda item: order.get(item[0], 4))
+        ]
+        if not self.instrument_host.instruments:
+            self.instrument_host.instruments.append(self.notice)
+        self.instrument_host.relayout()
+        self.restyle()
 
-    def visible_panels(self) -> list[SourcePanel]:
-        return [p for p in self.panels if self.toggles[p.source.key].isChecked()]
+    def restyle(self, glow: bool | None = None) -> None:
+        """Re-apply Retro heading case and glow after a style or card rebuild."""
+        if glow is not None:
+            self.glow = glow
+        retro = retro_console(self)
+        for heading in self.headings:
+            heading.restyle(retro, self.glow)
 
     def readout_lines(self, time: float) -> list[str]:
         index = current_epoch(self.epochs, time)
         lines = []
-        for panel in self.visible_panels():
+        for panel in self.panels:
             sample = self.plan.dial_sample(panel, index, time)
             lines.append(
                 f"{sample.name}: {vector_text(sample)} · {rotation_text(sample)}"
@@ -336,7 +336,7 @@ class StimulusTimeline(Card):
         lane.traces = []
         elapsed = self.elapsed or 0.0
         start, end = time_window(elapsed)
-        for panel in self.visible_panels():
+        for panel in self.panels:
             unit = "mm" if panel.source.unit == "mm/s" else "deg"
             for axis in (0, 1):
                 if not panel.size[axis]:
@@ -370,30 +370,25 @@ class StimulusTimeline(Card):
         self.dial_samples, self.map_samples = [], []
         dials, maps = iter(self.dials), iter(self.maps)
         for panel in self.panels:
-            shown = self.toggles[panel.source.key].isChecked()
             widgets: list[QWidget] = []
             if panel.arena:
                 world = next(maps)
                 map_sample = self.plan.map_sample(panel, index, time)
                 world.set_sample(map_sample)
                 widgets.append(world)
-                if shown:
-                    self.map_samples.append(map_sample)
+                self.map_samples.append(map_sample)
             for driving in (False, True)[: 2 if panel.driving else 1]:
                 dial = next(dials)
                 dial_sample = self.plan.dial_sample(panel, index, time, driving)
                 dial.set_sample(dial_sample)
                 widgets.append(dial)
-                if shown:
-                    self.dial_samples.append(dial_sample)
+                self.dial_samples.append(dial_sample)
             for widget in widgets:
-                widget.setVisible(shown)
+                widget.setVisible(True)
         if self.epoch_timeline.message:
             notice = ""
         elif not self.panels:
-            notice = "No independent stimulus source in this trial."
-        elif not self.dial_samples and not self.map_samples:
-            notice = "Select a source in the legend."
+            notice = "No stimulus source in this trial."
         else:
             notice = ""
         self.notice.setText(notice)

@@ -512,11 +512,15 @@ def test_highgui_private_latest_frame_thread_and_x_close(
 ) -> None:
     import threading
     from contextlib import nullcontext
+    from itertools import count
 
     import numpy as np
 
     from cephvr.acquisition.preview import highgui
     from cephvr.shared.pixels.preparer import PreparedImage
+
+    ticks = count(1_000_000_000, 50_000_000)
+    monkeypatch.setattr(highgui, "host_time_ns", lambda: next(ticks))
 
     calls: list[tuple[str, int]] = []
     sequences: list[int] = []

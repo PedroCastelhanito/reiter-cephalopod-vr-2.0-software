@@ -1,0 +1,2 @@
+Mapped controller threads 28
+{"threads": 28, "counts": {"all_v5_switches": 1000438, "all_ready": 563382, "controller_ready": 5273, "controller_switches": 10569}, "unknown_states": {}}

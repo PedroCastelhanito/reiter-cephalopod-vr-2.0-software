@@ -306,12 +306,47 @@ def test_native_serial_write_uses_remaining_command_budget_without_read_reconfig
     assert port.read(512) == b"x" * 512
     assert port.read(1) == b"x"
     assert reads == [1, 80, 512, 1]
+    assert set(port._timings) == {
+        "timeout_config",
+        "native_write",
+        "buffer_query",
+        "native_read",
+    }
+    assert port._timings["buffer_query"][0] == 3
+    assert port._timings["native_read"][0] == 4
+    assert "CONFIGURE" not in port.timeout_diagnostics()
+    assert len(port.timeout_diagnostics()) < 768
+    port.write(payload)
+    assert set(port._timings) == {"timeout_config", "native_write"}
+    assert all(count == 1 for count, _, _ in port._timings.values())
+
+    def failed_write(_payload: bytes) -> int:
+        raise OSError("native failure")
+
+    monkeypatch.setattr(port._serial, "write", failed_write)
+    wall = iter((100, 200, 300, 700))
+    cpu = iter((10, 20, 30, 50))
+    monkeypatch.setattr(
+        "cephvr.controller.microcontroller.serial_port.perf_counter_ns",
+        lambda: next(wall),
+    )
+    monkeypatch.setattr(
+        "cephvr.controller.microcontroller.serial_port.thread_time_ns",
+        lambda: next(cpu),
+    )
+    with pytest.raises(OSError, match="native failure"):
+        port.write(payload)
+    assert port._timings == {
+        "timeout_config": (1, 100, 10),
+        "native_write": (1, 400, 20),
+    }
     port.set_timeouts(read_seconds=0.01, write_seconds=0.01)
     assert port._serial.write_timeout == 0.01
     now += 11_000_000
     with pytest.raises(TimeoutError, match="before dispatch"):
         port.write(payload)
-    assert writes == [payload]
+    assert writes == [payload, payload]
+    assert port.timeout_diagnostics() == ""
 
 
 def test_expired_owner_call_keeps_serial_gate_until_blocked_call_returns() -> None:

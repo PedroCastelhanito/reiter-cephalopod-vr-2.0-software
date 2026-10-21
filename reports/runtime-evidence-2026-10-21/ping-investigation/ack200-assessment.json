@@ -1,0 +1,16 @@
+{
+  "scope": "Read-only declared-budget assessment; serial policy resolver is exercised, no runtime guard rejection claimed.",
+  "requested_ack_ms": 200,
+  "resolved_ack_ns": 200000000,
+  "resolver_accepted": true,
+  "current_stop_report_ms": 250,
+  "margin_ms": 50,
+  "declared_minimum_stop_report_ms": 450,
+  "satisfies_declared_inequality": false,
+  "live_actions": false,
+  "configuration_edits": false,
+  "owning_tests": [
+    "tests/acquisition/test_configuration.py::test_file_policies_resolve_exact_units_and_preserve_missing_margin",
+    "tests/acquisition/test_configuration.py::test_microcontroller_defaults_and_serial_policies_share_validation"
+  ]
+}

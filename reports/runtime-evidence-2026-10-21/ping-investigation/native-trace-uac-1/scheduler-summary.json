@@ -1,0 +1,600 @@
+{
+  "scope": "Interrupted Setup, old controller only; no MCU timeout observed. Relative scheduler evidence, not failure causality.",
+  "decoder": "Microsoft/perfview KernelTraceEventParser.CSwitchTraceData fixed24-byte prefix, version>2 accepts>=24; unknown trailing bytes ignored.",
+  "decoder_source": "https://github.com/microsoft/perfview/blob/main/src/TraceEvent/Parsers/KernelTraceEventParser.cs",
+  "time_limit": "tracerpt TimeCreated +08:59 is suspicious; only same-rendered-clock relative intervals used, no direct UTC/QPC span attribution.",
+  "header": {
+    "BufferSize": "1048576",
+    "Version": "83951626",
+    "ProviderVersion": "26300",
+    "NumberOfProcessors": "32",
+    "EndTime": "134370396125106202",
+    "TimerResolution": "156250",
+    "MaxFileSize": "0",
+    "LogFileMode": "0x10001",
+    "BuffersWritten": "560",
+    "StartBuffers": "1",
+    "PointerSize": "8",
+    "EventsLost": "0",
+    "CPUSpeed": "4300",
+    "LoggerName": "0x0",
+    "LogFileName": "0x0",
+    "BootTime": "134364511665000000",
+    "PerfFreq": "10000000",
+    "StartTime": "134370395775382225",
+    "ReservedFlags": "0x1",
+    "BuffersLost": "0",
+    "SessionNameString": "Relogger",
+    "LogFileNameString": "[multiple files]"
+  },
+  "old_controller_pid": 56972,
+  "process_events": [
+    {
+      "time": "2026-10-21T15:59:37.612142600+08:59",
+      "opcode": "3",
+      "data": {
+        "UniqueProcessKey": "0xFFFFCA88305E60C0",
+        "ProcessId": "0xDE8C",
+        "ParentId": "0xC09C",
+        "SessionId": "1",
+        "ExitStatus": "259",
+        "DirectoryTableBase": "0x121494000",
+        "Flags": "0",
+        "UserSID": "\\\\DESKTOP-MSOH8EL\\ReiterU_PC",
+        "ImageFileName": "cephvr-python.exe",
+        "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.controller.main --bootstrap-handle 752",
+        "PackageFullName": "",
+        "ApplicationId": ""
+      }
+    },
+    {
+      "time": "2026-10-21T15:59:50.701710500+08:59",
+      "opcode": "11",
+      "data": {
+        "ProcessId": "0xDE8C"
+      }
+    },
+    {
+      "time": "2026-10-21T15:59:50.703380200+08:59",
+      "opcode": "2",
+      "data": {
+        "UniqueProcessKey": "0xFFFFCA88305E60C0",
+        "ProcessId": "0xDE8C",
+        "ParentId": "0xC09C",
+        "SessionId": "1",
+        "ExitStatus": "1",
+        "DirectoryTableBase": "0x121494000",
+        "Flags": "0",
+        "UserSID": "\\\\DESKTOP-MSOH8EL\\ReiterU_PC",
+        "ImageFileName": "cephvr-python.exe",
+        "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.controller.main --bootstrap-handle 752",
+        "PackageFullName": "",
+        "ApplicationId": ""
+      }
+    }
+  ],
+  "thread_events": [
+    {
+      "time": "2026-10-21T15:59:37.612143100+08:59",
+      "opcode": "3",
+      "tid": 42476
+    },
+    {
+      "time": "2026-10-21T15:59:37.612143400+08:59",
+      "opcode": "3",
+      "tid": 11140
+    },
+    {
+      "time": "2026-10-21T15:59:37.612143600+08:59",
+      "opcode": "3",
+      "tid": 9764
+    },
+    {
+      "time": "2026-10-21T15:59:37.612144000+08:59",
+      "opcode": "3",
+      "tid": 57140
+    },
+    {
+      "time": "2026-10-21T15:59:37.612144400+08:59",
+      "opcode": "3",
+      "tid": 57144
+    },
+    {
+      "time": "2026-10-21T15:59:37.612144700+08:59",
+      "opcode": "3",
+      "tid": 57512
+    },
+    {
+      "time": "2026-10-21T15:59:37.612145100+08:59",
+      "opcode": "3",
+      "tid": 1012
+    },
+    {
+      "time": "2026-10-21T15:59:37.612145300+08:59",
+      "opcode": "3",
+      "tid": 20608
+    },
+    {
+      "time": "2026-10-21T15:59:37.612145600+08:59",
+      "opcode": "3",
+      "tid": 29600
+    },
+    {
+      "time": "2026-10-21T15:59:37.612146200+08:59",
+      "opcode": "3",
+      "tid": 44424
+    },
+    {
+      "time": "2026-10-21T15:59:37.612146500+08:59",
+      "opcode": "3",
+      "tid": 5336
+    },
+    {
+      "time": "2026-10-21T15:59:37.612147000+08:59",
+      "opcode": "3",
+      "tid": 21576
+    },
+    {
+      "time": "2026-10-21T15:59:37.612147400+08:59",
+      "opcode": "3",
+      "tid": 13748
+    },
+    {
+      "time": "2026-10-21T15:59:37.612147700+08:59",
+      "opcode": "3",
+      "tid": 36844
+    },
+    {
+      "time": "2026-10-21T15:59:37.612148000+08:59",
+      "opcode": "3",
+      "tid": 45008
+    },
+    {
+      "time": "2026-10-21T15:59:37.612148400+08:59",
+      "opcode": "3",
+      "tid": 26028
+    },
+    {
+      "time": "2026-10-21T15:59:37.612148700+08:59",
+      "opcode": "3",
+      "tid": 43264
+    },
+    {
+      "time": "2026-10-21T15:59:37.612149100+08:59",
+      "opcode": "3",
+      "tid": 1004
+    },
+    {
+      "time": "2026-10-21T15:59:37.612149500+08:59",
+      "opcode": "3",
+      "tid": 50304
+    },
+    {
+      "time": "2026-10-21T15:59:37.612150100+08:59",
+      "opcode": "3",
+      "tid": 33772
+    },
+    {
+      "time": "2026-10-21T15:59:37.612150400+08:59",
+      "opcode": "3",
+      "tid": 16040
+    },
+    {
+      "time": "2026-10-21T15:59:37.612150900+08:59",
+      "opcode": "3",
+      "tid": 34744
+    },
+    {
+      "time": "2026-10-21T15:59:37.612151200+08:59",
+      "opcode": "3",
+      "tid": 20252
+    },
+    {
+      "time": "2026-10-21T15:59:37.612151600+08:59",
+      "opcode": "3",
+      "tid": 25964
+    },
+    {
+      "time": "2026-10-21T15:59:37.612151900+08:59",
+      "opcode": "3",
+      "tid": 21052
+    },
+    {
+      "time": "2026-10-21T15:59:37.624087500+08:59",
+      "opcode": "1",
+      "tid": 38036
+    },
+    {
+      "time": "2026-10-21T15:59:38.204331900+08:59",
+      "opcode": "1",
+      "tid": 39812
+    },
+    {
+      "time": "2026-10-21T15:59:38.216235100+08:59",
+      "opcode": "2",
+      "tid": 39812
+    },
+    {
+      "time": "2026-10-21T15:59:38.277571500+08:59",
+      "opcode": "1",
+      "tid": 53776
+    },
+    {
+      "time": "2026-10-21T15:59:50.701837000+08:59",
+      "opcode": "2",
+      "tid": 9764
+    },
+    {
+      "time": "2026-10-21T15:59:50.701839000+08:59",
+      "opcode": "2",
+      "tid": 11140
+    },
+    {
+      "time": "2026-10-21T15:59:50.701849000+08:59",
+      "opcode": "2",
+      "tid": 57140
+    },
+    {
+      "time": "2026-10-21T15:59:50.701850800+08:59",
+      "opcode": "2",
+      "tid": 42476
+    },
+    {
+      "time": "2026-10-21T15:59:50.701861100+08:59",
+      "opcode": "2",
+      "tid": 1012
+    },
+    {
+      "time": "2026-10-21T15:59:50.701864300+08:59",
+      "opcode": "2",
+      "tid": 20608
+    },
+    {
+      "time": "2026-10-21T15:59:50.701869900+08:59",
+      "opcode": "2",
+      "tid": 44424
+    },
+    {
+      "time": "2026-10-21T15:59:50.701871600+08:59",
+      "opcode": "2",
+      "tid": 57512
+    },
+    {
+      "time": "2026-10-21T15:59:50.701871700+08:59",
+      "opcode": "2",
+      "tid": 57144
+    },
+    {
+      "time": "2026-10-21T15:59:50.701876800+08:59",
+      "opcode": "2",
+      "tid": 29600
+    },
+    {
+      "time": "2026-10-21T15:59:50.701878000+08:59",
+      "opcode": "2",
+      "tid": 5336
+    },
+    {
+      "time": "2026-10-21T15:59:50.701880600+08:59",
+      "opcode": "2",
+      "tid": 36844
+    },
+    {
+      "time": "2026-10-21T15:59:50.701881500+08:59",
+      "opcode": "2",
+      "tid": 13748
+    },
+    {
+      "time": "2026-10-21T15:59:50.701885800+08:59",
+      "opcode": "2",
+      "tid": 21576
+    },
+    {
+      "time": "2026-10-21T15:59:50.701892400+08:59",
+      "opcode": "2",
+      "tid": 45008
+    },
+    {
+      "time": "2026-10-21T15:59:50.701898100+08:59",
+      "opcode": "2",
+      "tid": 43264
+    },
+    {
+      "time": "2026-10-21T15:59:50.701904200+08:59",
+      "opcode": "2",
+      "tid": 50304
+    },
+    {
+      "time": "2026-10-21T15:59:50.701905300+08:59",
+      "opcode": "2",
+      "tid": 26028
+    },
+    {
+      "time": "2026-10-21T15:59:50.701907900+08:59",
+      "opcode": "2",
+      "tid": 1004
+    },
+    {
+      "time": "2026-10-21T15:59:50.701916100+08:59",
+      "opcode": "2",
+      "tid": 16040
+    },
+    {
+      "time": "2026-10-21T15:59:50.701917600+08:59",
+      "opcode": "2",
+      "tid": 33772
+    },
+    {
+      "time": "2026-10-21T15:59:50.701917600+08:59",
+      "opcode": "2",
+      "tid": 34744
+    },
+    {
+      "time": "2026-10-21T15:59:50.701927400+08:59",
+      "opcode": "2",
+      "tid": 20252
+    },
+    {
+      "time": "2026-10-21T15:59:50.701928500+08:59",
+      "opcode": "2",
+      "tid": 25964
+    },
+    {
+      "time": "2026-10-21T15:59:50.701936500+08:59",
+      "opcode": "2",
+      "tid": 21052
+    },
+    {
+      "time": "2026-10-21T15:59:50.701939000+08:59",
+      "opcode": "2",
+      "tid": 38036
+    },
+    {
+      "time": "2026-10-21T15:59:50.701939000+08:59",
+      "opcode": "2",
+      "tid": 53776
+    }
+  ],
+  "names": {},
+  "counts": {
+    "all_v5_switches": 1000438,
+    "all_ready": 563382,
+    "controller_ready": 5273,
+    "controller_switches": 10569
+  },
+  "unknown_old_states": {},
+  "threads": {
+    "1004": {
+      "name": null,
+      "switch_in_intervals": 223,
+      "max_off_cpu_ms": 326.5934,
+      "ready_to_switch_samples": 222,
+      "max_ready_to_switch_ms": 0.0641,
+      "stack_events": 602
+    },
+    "1012": {
+      "name": null,
+      "switch_in_intervals": 196,
+      "max_off_cpu_ms": 934.0793,
+      "ready_to_switch_samples": 197,
+      "max_ready_to_switch_ms": 0.0598,
+      "stack_events": 718
+    },
+    "5336": {
+      "name": null,
+      "switch_in_intervals": 208,
+      "max_off_cpu_ms": 384.6061,
+      "ready_to_switch_samples": 207,
+      "max_ready_to_switch_ms": 0.0864,
+      "stack_events": 551
+    },
+    "9764": {
+      "name": null,
+      "switch_in_intervals": 937,
+      "max_off_cpu_ms": 984.2182,
+      "ready_to_switch_samples": 938,
+      "max_ready_to_switch_ms": 0.1022,
+      "stack_events": 2645
+    },
+    "11140": {
+      "name": null,
+      "switch_in_intervals": 13,
+      "max_off_cpu_ms": 1014.642,
+      "ready_to_switch_samples": 14,
+      "max_ready_to_switch_ms": 0.059,
+      "stack_events": 29
+    },
+    "13748": {
+      "name": null,
+      "switch_in_intervals": 218,
+      "max_off_cpu_ms": 420.903,
+      "ready_to_switch_samples": 216,
+      "max_ready_to_switch_ms": 0.124,
+      "stack_events": 538
+    },
+    "16040": {
+      "name": null,
+      "switch_in_intervals": 135,
+      "max_off_cpu_ms": 9272.6697,
+      "ready_to_switch_samples": 108,
+      "max_ready_to_switch_ms": 0.0603,
+      "stack_events": 772
+    },
+    "20252": {
+      "name": null,
+      "switch_in_intervals": 114,
+      "max_off_cpu_ms": 9714.3979,
+      "ready_to_switch_samples": 74,
+      "max_ready_to_switch_ms": 0.0271,
+      "stack_events": 658
+    },
+    "20608": {
+      "name": null,
+      "switch_in_intervals": 220,
+      "max_off_cpu_ms": 421.0132,
+      "ready_to_switch_samples": 221,
+      "max_ready_to_switch_ms": 0.0707,
+      "stack_events": 591
+    },
+    "21052": {
+      "name": null,
+      "switch_in_intervals": 12,
+      "max_off_cpu_ms": 9714.2784,
+      "ready_to_switch_samples": 12,
+      "max_ready_to_switch_ms": 0.0271,
+      "stack_events": 77
+    },
+    "21576": {
+      "name": null,
+      "switch_in_intervals": 220,
+      "max_off_cpu_ms": 422.9844,
+      "ready_to_switch_samples": 218,
+      "max_ready_to_switch_ms": 0.0779,
+      "stack_events": 578
+    },
+    "25964": {
+      "name": null,
+      "switch_in_intervals": 49,
+      "max_off_cpu_ms": 9714.329,
+      "ready_to_switch_samples": 49,
+      "max_ready_to_switch_ms": 0.0644,
+      "stack_events": 198
+    },
+    "26028": {
+      "name": null,
+      "switch_in_intervals": 214,
+      "max_off_cpu_ms": 441.6369,
+      "ready_to_switch_samples": 214,
+      "max_ready_to_switch_ms": 0.1401,
+      "stack_events": 576
+    },
+    "29600": {
+      "name": null,
+      "switch_in_intervals": 216,
+      "max_off_cpu_ms": 412.867,
+      "ready_to_switch_samples": 214,
+      "max_ready_to_switch_ms": 0.0793,
+      "stack_events": 571
+    },
+    "33772": {
+      "name": null,
+      "switch_in_intervals": 15,
+      "max_off_cpu_ms": 1014.3547,
+      "ready_to_switch_samples": 16,
+      "max_ready_to_switch_ms": 0.0537,
+      "stack_events": 32
+    },
+    "34744": {
+      "name": null,
+      "switch_in_intervals": 14,
+      "max_off_cpu_ms": 9714.4329,
+      "ready_to_switch_samples": 14,
+      "max_ready_to_switch_ms": 0.048,
+      "stack_events": 65
+    },
+    "36844": {
+      "name": null,
+      "switch_in_intervals": 194,
+      "max_off_cpu_ms": 584.9961,
+      "ready_to_switch_samples": 193,
+      "max_ready_to_switch_ms": 0.0917,
+      "stack_events": 533
+    },
+    "38036": {
+      "name": null,
+      "switch_in_intervals": 10,
+      "max_off_cpu_ms": 13077.4711,
+      "ready_to_switch_samples": 11,
+      "max_ready_to_switch_ms": 0.0184,
+      "stack_events": 59
+    },
+    "39812": {
+      "name": null,
+      "switch_in_intervals": 13,
+      "max_off_cpu_ms": 1.9756,
+      "ready_to_switch_samples": 12,
+      "max_ready_to_switch_ms": 0.0149,
+      "stack_events": 62
+    },
+    "42476": {
+      "name": null,
+      "switch_in_intervals": 606,
+      "max_off_cpu_ms": 117.2175,
+      "ready_to_switch_samples": 566,
+      "max_ready_to_switch_ms": 0.073,
+      "stack_events": 4143
+    },
+    "43264": {
+      "name": null,
+      "switch_in_intervals": 209,
+      "max_off_cpu_ms": 465.0468,
+      "ready_to_switch_samples": 208,
+      "max_ready_to_switch_ms": 0.108,
+      "stack_events": 555
+    },
+    "44424": {
+      "name": null,
+      "switch_in_intervals": 220,
+      "max_off_cpu_ms": 416.4924,
+      "ready_to_switch_samples": 221,
+      "max_ready_to_switch_ms": 0.0629,
+      "stack_events": 572
+    },
+    "45008": {
+      "name": null,
+      "switch_in_intervals": 215,
+      "max_off_cpu_ms": 416.9495,
+      "ready_to_switch_samples": 214,
+      "max_ready_to_switch_ms": 0.0738,
+      "stack_events": 573
+    },
+    "50304": {
+      "name": null,
+      "switch_in_intervals": 182,
+      "max_off_cpu_ms": 576.7705,
+      "ready_to_switch_samples": 182,
+      "max_ready_to_switch_ms": 0.0593,
+      "stack_events": 501
+    },
+    "53776": {
+      "name": null,
+      "switch_in_intervals": 205,
+      "max_off_cpu_ms": 1056.0934,
+      "ready_to_switch_samples": 206,
+      "max_ready_to_switch_ms": 0.0335,
+      "stack_events": 554
+    },
+    "57140": {
+      "name": null,
+      "switch_in_intervals": 169,
+      "max_off_cpu_ms": 449.2281,
+      "ready_to_switch_samples": 169,
+      "max_ready_to_switch_ms": 0.0781,
+      "stack_events": 476
+    },
+    "57144": {
+      "name": null,
+      "switch_in_intervals": 208,
+      "max_off_cpu_ms": 542.5562,
+      "ready_to_switch_samples": 208,
+      "max_ready_to_switch_ms": 0.0664,
+      "stack_events": 646
+    },
+    "57512": {
+      "name": null,
+      "switch_in_intervals": 149,
+      "max_off_cpu_ms": 599.0226,
+      "ready_to_switch_samples": 149,
+      "max_ready_to_switch_ms": 0.0611,
+      "stack_events": 431
+    }
+  },
+  "serial_tid_identified": false,
+  "limits": [
+    "No serial owner native TID independently established.",
+    "No symbolized wait stacks or GIL/driver/firmware attribution.",
+    "Off-CPU spans include blocked time; ready-to-switch intervals characterize scheduling only.",
+    "Readiness/switch sample matching is illustrative; no latency acceptance conclusion."
+  ],
+  "assessment": "UNVALIDATED EXPLORATORY union-of-TID metrics can include records outside lifetimes. Superseded by controller-lifetime-summary.json; latency numbers not used in conclusions."
+}

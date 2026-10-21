@@ -1,0 +1,27 @@
+{
+  "before": {
+    "utc": "2026-10-21T06:59:37.484135+00:00",
+    "perf_counter_ns": 588416001903800,
+    "qpc": 5884160018859,
+    "qpc_frequency": 10000000
+  },
+  "after": {
+    "utc": "2026-10-21T06:59:37.660091+00:00",
+    "perf_counter_ns": 588416183895000,
+    "qpc": 5884161838729,
+    "qpc_frequency": 10000000
+  },
+  "command": [
+    "C:/Windows/System32/wpr.exe",
+    "-start",
+    "CPU.Verbose",
+    "-filemode",
+    "-recordtempto",
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-21\\ping-investigation\\native-trace-uac-1\\wpr-temp",
+    "-instancename",
+    "CephVRNativeTraceUAC20261021_1"
+  ],
+  "returncode": 0,
+  "stdout": "",
+  "stderr": ""
+}

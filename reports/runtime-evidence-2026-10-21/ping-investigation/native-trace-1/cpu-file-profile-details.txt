@@ -1,0 +1,48 @@
+
+Microsoft Windows Performance Recorder Version 10.0.26100 (CoreSystem)
+Copyright (c) 2024 Microsoft Corporation. All rights reserved.
+
+Profile			: CPU.Verbose.File
+
+
+Collector Name		: WPR_initiated_WprApp_WPR System Collector
+Buffer Size (KB)	: 1024
+Number of Buffers	: 20
+Providers
+System Keywords
+	CpuConfig
+	CSwitch
+	IdealProcessor
+	Loader
+	MemoryInfo
+	Power
+	ProcessThread
+	ReadyThread
+	SampledProfile
+	ThreadPriority
+System Stacks
+	CSwitch
+	ReadyThread
+	SampledProfile
+
+Collector Name		: WPR_initiated_WprApp_WPR Event Collector
+Buffer Size (KB)	: 1024
+Number of Buffers	: 20
+Providers
+	b7a19fcd-15ba-41ba-a3d7-dc352d5f79ba: : 0xff     
+	e7ef96be-969f-414f-97d7-3ddb7b558ccc: 0x2000: 0xff     
+	Microsoft-JScript: 0x1: 0xff     
+	Microsoft-Windows-BrokerInfrastructure: 0x1: 0xff     
+	Microsoft-Windows-DotNETRuntime: 0x20098: 0x05     
+	Microsoft-Windows-Kernel-EventTracing: 0x40: 0x0f     
+	Microsoft-Windows-Networking-Correlation: : 0xff     
+	Microsoft-Windows-Performance-Recorder-Control: 0x10000: 0xff     
+	Microsoft-Windows-ProcessStateManager: : 0xff     
+	Microsoft-Windows-RPC: : 0x04 : Stack    
+	Microsoft-Windows-RPCSS: : 0x04 : Stack    
+	Microsoft-Windows-Win32k: 0x402000: 0xff : Stack    
+CaptureState Providers on Save
+	Microsoft-JScript: 0x4: 0xff
+	Microsoft-Windows-DotNETRuntime: 0x20118: 0x05
+	Microsoft-Windows-DotNETRuntimeRundown: 0x20118: 0xff
+	Microsoft-Windows-Win32k: 0x80000: 0xff

@@ -1,0 +1,4 @@
+{
+  "TokenElevation": false,
+  "method": "Read-only GetTokenInformation(TokenElevation), no privilege adjustment"
+}

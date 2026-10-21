@@ -1,0 +1,151 @@
+{
+  "captured_utc": "2026-10-21T06:27:23.911375+00:00",
+  "status": "Single approved full-protocol Setup/noStart reproduced serial watchdog keepalive write deadline overrun. CancelSetup confirmed cleanup; latest owner-approved20Hz/Desktop baseline restored exactly. No further attempts.",
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_microcontroller_owner.py tests/controller/test_microcontroller_protocol.py tests/acquisition/test_worker_admission.py tests/supervisor/test_worker_outbound_contracts.py tests/supervisor/test_shutdown.py -q",
+    "result": "237 passed, 1 skipped in 1.89s",
+    "junit": "focused-tests.xml"
+  },
+  "static": "static-checks.json",
+  "source_provenance": "source-provenance.json",
+  "baseline_comparison": "preflight-baseline-comparison.json",
+  "initial_controller": "af33a7b0-c7b8-4d90-840b-2d25641fc44d",
+  "normal_restart": "Fresh idle and camera-closed guard; ShutdownApplication admitted; first4/9 old owned remained, next poll0/9; normal entrypoint started. Only InitializeDisplay succeeded in fresh generation.",
+  "setup_count": 1,
+  "no_start": true,
+  "planned_delta": "Full unchanged2x600s protocol/assets, Behavioral+Tracking save on, stimulus save on, Eye off, tracking processing/sync off; preserve latest live scientific settings.",
+  "limits": [
+    "No full20minute trial, recording throughput or texture-presentation acceptance; Setup failed before Ready.",
+    "One Setup attempt only, no retry or policy/deadline/firmware changes.",
+    "Historical worker cleanup rejection cause not reproduced by this attempt.",
+    "No trace started; scheduler/kernel/driver attribution requires separately authorized measurement."
+  ],
+  "supervisor_owner_tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/supervisor -q -m \"not windows and not rig\"",
+    "result": "160 passed in 2.02s",
+    "evidence": "supervisor-tests.txt",
+    "junit": "supervisor-tests.xml"
+  },
+  "final_controller": "f8b91144-9fea-4ce0-ac91-a3c8ba07483c",
+  "session_id": "a9ed51e6-408e-4fbe-b9b2-f9f47e35361e",
+  "setup": {
+    "command_id": "ee32afb8-0a50-446d-9324-f86da89efd16",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "SETUP_FAILED: acquisition readback: serial watchdog keepalive failed: serial write returned after its acknowledgement deadline; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=36.824,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=81.300,native_write_thread_cpu_ms=0.000",
+    "elapsed_ms": 3642.7658
+  },
+  "cancel": {
+    "command_id": "5b8fbb2e-04fa-44a8-b00e-1d74f3f672ed",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": "",
+    "elapsed_ms": 75.5936
+  },
+  "new_baseline": {
+    "snapshot": "latest-baseline-snapshot.json",
+    "history": "latest-baseline-history.json",
+    "sha256": "533ff90ab34552a703df576a3fc9f600b3bf366adaffe0b92a1040f47897e6f3",
+    "recording_root": "C:/Users/ReiterU_PC/Desktop/tmp",
+    "session_preview_max_hz": 20.0,
+    "approved_application": "apply-save-20hz-current.txt"
+  },
+  "restoration": {
+    "fresh_snapshot": "fresh-final-snapshot.json",
+    "runtime_configuration_equal_latest_baseline": true,
+    "persisted_history_bytes_equal_latest_baseline": true,
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true,
+    "created_session_namespace_absent": true
+  },
+  "diagnostics": {
+    "failure": "serial watchdog keepalive failed: serial write returned after its acknowledgement deadline; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=36.824,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=81.300,native_write_thread_cpu_ms=0.000",
+    "timeout_config_wall_ms": 36.824,
+    "native_write_wall_ms": 81.3,
+    "summed_wall_ms": 118.124,
+    "both_thread_cpu_ms": 0.0,
+    "observed_subcalls": [
+      "timeout_config",
+      "native_write"
+    ],
+    "no_reply_read_or_parse_in_this_failed_write": true,
+    "interpretation": "Measured native adapter boundaries include native waiting and return/resume/scheduling. CPU0.000 and clock declared resolution do not establish firmware, USB, driver or GIL mechanism. Historical114.451ms read/write failure remains separate."
+  },
+  "cleanup_scope": "This attempt cancelled in75.5936ms with cleanuptrue; historical INVALID_REQUEST/heartbeat-loss cleanup failure did not recur and remains unexplained.",
+  "timeline": "controlled-timeline.json",
+  "warnings": [
+    {
+      "warning_id": "401374c1-9dab-4f65-8e2d-7b3a6a312dde",
+      "component": "microcontroller",
+      "message": "serial watchdog keepalive failed: serial write returned after its acknowledgement deadline; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=36.824,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=81.300,native_write_thread_cpu_ms=0.000"
+    },
+    {
+      "warning_id": "9454f30d-af17-4910-9cbf-e127c06499fb",
+      "component": "controller",
+      "message": "acquisition readback: serial watchdog keepalive failed: serial write returned after its acknowledgement deadline; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=36.824,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=81.300,native_write_thread_cpu_ms=0.000"
+    }
+  ],
+  "protocol": {
+    "source": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\primate_cuttlebase_20min.json",
+    "sha256": "fb0f9b552342221bc4704031c62b7f0ec7074d95a1f17d937b1230c63bd78aee",
+    "trials": 2,
+    "program_objects_equal": [
+      true,
+      true
+    ],
+    "asset_references": 1920,
+    "missing_asset_references": [],
+    "asset_root": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media"
+  },
+  "temporary_test_deltas": "Full protocol/assets and evidence output namespace; Behavioral+Tracking savevideo on, stimulus save on, Eye disabled, Tracking processing/sync disabled. Current20Hz, exposures,rates,pins,ROI,formats and mapping preserved.",
+  "confounds": [
+    "Diagnostic instrumentation enabled versus historical run.",
+    "Current baseline scientific/settings source includes concurrent preview work; full final source hashes retained, no source equality to prior historical rig run claimed.",
+    "Current acquisition session preview20Hz versus historical10Hz; no trials started, so no in-trial preview throughput acceptance.",
+    "Current runtime was replaced by operator while awaiting approval; start times15:23:54/55 are later than diagnostic source edits15:13:59, and diagnostic source hashes unchanged.",
+    "Current operator-launched stderr destination unavailable. Earlier captured runtime-stderr.txt only records replacement of our previous generation and is not current-failure stderr. Authoritative snapshot warnings retain full diagnostic failure."
+  ],
+  "trace_availability": {
+    "tools": "trace-tools.json",
+    "status": "wpr-status.txt",
+    "wpr": "Installed, status says WPR is not recording",
+    "wpa": "Not found on PATH",
+    "logman": "Installed",
+    "trace_started": false
+  },
+  "source_final": "final-source-hashes.json",
+  "source_changes": "final-dirty-status.txt",
+  "preflight_fresh_controller": "04105ecb-7dbd-488b-b88d-a1edc57a7ef1",
+  "preflight_history_writer": "Normal ShutdownApplication _hand_off_shutdown invokes save_history_on_shutdown, writing current live configuration. Pre-live10Hz/Desktop/tmp distinct from saved399db20Hz/Data; source-supported writer attribution, no writer audit retained.",
+  "historical_rejected_preflight_action": "Continuing Setup and restoring distinct pre-restart history was rejected by automatic review because baseline restoration invariant needed clarification. Entire command rejected; no helper edit or Setup executed.",
+  "historical_owner_update_check": {
+    "captured_utc": "2026-10-21T06:23:51.571499+00:00",
+    "snapshot": "owner-updated-snapshot.json",
+    "history": "owner-updated-history.json",
+    "live_history_equal": true,
+    "recording_root": "C:/Users/ReiterU_PC/Desktop/tmp",
+    "live_and_history_session_preview_max_hz": 10.0,
+    "source_default_session_preview_max_hz": 20,
+    "gui_display_max_hz": 20,
+    "setup_count": 0
+  },
+  "final_warnings": [
+    {
+      "warning_id": "401374c1-9dab-4f65-8e2d-7b3a6a312dde",
+      "component": "microcontroller",
+      "message": "serial watchdog keepalive failed: serial write returned after its acknowledgement deadline; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=36.824,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=81.300,native_write_thread_cpu_ms=0.000"
+    },
+    {
+      "warning_id": "9454f30d-af17-4910-9cbf-e127c06499fb",
+      "component": "controller",
+      "message": "acquisition readback: serial watchdog keepalive failed: serial write returned after its acknowledgement deadline; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=36.824,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=81.300,native_write_thread_cpu_ms=0.000"
+    },
+    {
+      "warning_id": "fee4714a-7a42-46bf-a729-709fe39f18ff",
+      "component": "controller",
+      "message": "attempt retired"
+    }
+  ]
+}

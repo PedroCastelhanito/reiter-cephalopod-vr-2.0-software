@@ -6,6 +6,10 @@ from typing import Any
 from cephvr.gui.arena_movement import patch_arena
 from cephvr.gui.program_editing import data_node, node_at, unique_id, validate
 from cephvr.gui.projector_layers import detach_layer, layers_for
+from cephvr.gui.rig_parameter_edits import (
+    parameter_value as parameter_value,
+)
+from cephvr.gui.rig_parameter_edits import patch_setting as patch_setting
 from cephvr.gui.stimulus_fades import retime_fades
 from cephvr.gui.stimulus_files import (
     apply_texture_dimensions,
@@ -20,10 +24,6 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Time,
 )
 from cephvr.visual_stimulus.config.parameter_edits import END_BEHAVIORS as END_BEHAVIORS
-from cephvr.visual_stimulus.config.parameter_edits import (
-    parameter_value as parameter_value,
-)
-from cephvr.visual_stimulus.config.parameter_edits import patch_setting as patch_setting
 
 
 def epoch_paths(program: Program) -> tuple[tuple[int, ...], ...]:

@@ -241,7 +241,7 @@ video_sync_interval_s = 1
 output_bit_depth = 8
 # A03/A10: maximum session preview rate (in-trial frames only); 0 disables it.
 # Never affects capture, pulses, recording, tracking or Ready.
-session_preview_max_hz = 10
+session_preview_max_hz = 20
 
 # Explicit saved choices take precedence over these defaults. All cameras may be
 # disabled when no enabled consumer needs their input. Closed-loop tracking still

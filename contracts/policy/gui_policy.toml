@@ -2,13 +2,14 @@
 # Source rules: GUI client defaults. See architecture.md: E03, E08, E14, A03, A10.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/gui_config.toml. The loader rejects a version mismatch.
-policy_version = 6
+policy_version = 7
 
 [controller_reconnect]
 repeat_last_delay = true
 
 [preview]
-display_updates = "latest_on_frame_arrival"
+display_updates = "latest_on_frame_arrival_20hz_max"
+max_display_hz = 20
 
 [runtime_incidents]
 presentation = "one_updating_window"

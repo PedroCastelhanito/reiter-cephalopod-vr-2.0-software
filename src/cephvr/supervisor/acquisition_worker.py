@@ -163,7 +163,14 @@ class AcquisitionWorkerControl:
         admission = await self.outbound.interrupt_worker(
             launch, request, deadline_ns=deadline_ns
         )
-        require_accepted(admission, "worker interrupt")
+        require_accepted(
+            admission,
+            "worker interrupt",
+            worker=worker.worker,
+            work=worker.work,
+            command_id=command.command_id,
+            deadline_ns=deadline_ns,
+        )
 
     async def cleanup_worker(
         self,

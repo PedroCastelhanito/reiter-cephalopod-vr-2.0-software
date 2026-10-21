@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-21",
+  "source_commit": "6f1434fa",
+  "method": "SHA-256 of local file bytes; Git checkout newline conversion may change decoded.xml size relative to its former blob",
+  "scope": "Local retained native trace evidence; excluded from Git because oversized. Existing summaries and provenance remain versioned. No new runtime validation.",
+  "files": [
+    {
+      "path": "decoded.xml",
+      "bytes": 6970805643,
+      "sha256": "99e99c34e86f3c694f3fc62c6cf7be09da6b6d6b4835b70ec28dc8e01fc0fd58"
+    },
+    {
+      "path": "owned.etl",
+      "bytes": 587202560,
+      "sha256": "f1b9e156c0a02ecfe696d15deb027c083071b02abee100605e09ba533dd512dd"
+    }
+  ]
+}

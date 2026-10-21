@@ -1,0 +1,16 @@
+
+Microsoft Windows Performance Recorder Version 10.0.26100 (CoreSystem)
+Copyright (c) 2024 Microsoft Corporation. All rights reserved.
+
+	Usage: wpr options ...
+
+	-help start		 - for trace start command
+	-help stop		 - for trace stop commands
+	-help status		 - for trace status command
+	-help profiles		 - for profiles commands
+	-help providers		 - for providers command
+	-help tracing		 - for in trace commands
+	-help boottrace		 - for boot trace (autologger) commands
+	-help heap		 - for heap tracing commands
+	-help hardwarecounter	 - for hardware counter configuration commands
+	-help advanced		 - for advanced trace commands

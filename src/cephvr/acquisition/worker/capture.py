@@ -14,6 +14,7 @@ from cephvr.acquisition.camera.errors import CameraAdapterError
 from cephvr.acquisition.camera.types import CameraAdapter, GrabResult, PixelLayout
 from cephvr.acquisition.worker.warnings import WarningOccurrence
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.preview_rates import PreviewPacer
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,7 +107,11 @@ class CameraCaptureLoop:
         self._last_native_counter: int | None = None
         self._last_receipt_ns = 0
         self._last_usable_ns = 0
-        self._last_preview_ns = 0
+        self._preview_pacer = (
+            PreviewPacer(self.preview_period_ns)
+            if self.preview_period_ns is not None
+            else None
+        )
         self._trial_activity_reported = False
         self._first_usable_reported = False
 
@@ -270,15 +275,12 @@ class CameraCaptureLoop:
             return
         if self.session_preview != in_trial:
             return
-        if (
-            self.preview_period_ns is not None
-            and self._last_preview_ns > 0
-            and receipt_ns - self._last_preview_ns < self.preview_period_ns
+        if self._preview_pacer is not None and not self._preview_pacer.ready(
+            receipt_ns
         ):
             return
         # A03 preview slots preserve native pixels; each consumer converts its copy.
         ring.publish(record, pixels)
-        self._last_preview_ns = receipt_ns
 
     def _enqueue_recording(
         self, record: FrameRecord, pixels: memoryview, receipt_ns: int

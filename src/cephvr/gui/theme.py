@@ -197,6 +197,8 @@ def stylesheet(
                                      text-align: left; padding: 14px 12px; }}
     QPushButton[role='navigation']:checked {{ background: {c.selection};
                                              color: {c.coral}; border-color: {c.accent}; }}
+    QPushButton[toggle='on']:checked:enabled {{ background: {c.primary};
+                                               border-color: {c.focus}; }}
     QPushButton:disabled {{ background: {c.window}; color: {c.disabled};
                            border-color: {c.border}; }}
     QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
@@ -287,10 +289,12 @@ def stylesheet(
     QProgressBar::chunk {{ background: {c.primary}; border-radius: 5px; }}
     QToolTip {{ background: {c.card}; color: {c.text}; border: 1px solid {c.focus}; padding: 6px; }}
     QDialog#PreviewWorkspace QLabel[role='eyebrow'],
-    QDialog#PreviewWorkspace QFrame[role='card'] QLabel[role='title'] {{ color: {c.accent}; }}
+    QDialog#PreviewWorkspace QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; }}
     QDialog#PreviewWorkspace QLabel[role='eyebrow']:disabled {{ color: {c.disabled}; }}
     QDialog#PreviewWorkspace QLabel[role='muted'] {{ color: {c.label}; }}
     QDialog#PreviewWorkspace QFrame#PreviewToggles {{ border: 1px solid {c.border};
+        border-radius: {s.field_radius}px; }}
+    QDialog#PreviewWorkspace QFrame#ProjectorCard {{ border: 1px solid {c.border};
         border-radius: {s.field_radius}px; }}
     QLabel[role='rec-lamp'] {{ color: {c.muted}; font-weight: 700; letter-spacing: 1px;
         padding: 0 6px; }}
@@ -321,6 +325,8 @@ def retro_stylesheet() -> str:
         border: 1px solid {c.input_border}; border-radius: 0; }}
     QPlainTextEdit[terminal='telemetry'] {{ color: {c.mirror}; }}
     QPushButton:hover, QPushButton[role='primary']:hover {{
+        background: {c.accent}; color: {c.window}; border-color: {c.accent}; }}
+    QPushButton[toggle='on']:checked:enabled {{
         background: {c.accent}; color: {c.window}; border-color: {c.accent}; }}
     QPushButton[role='danger']:hover, QPushButton[role='compact-stop']:hover {{
         background: {c.danger_border}; color: {c.window}; border-color: {c.danger_border}; }}

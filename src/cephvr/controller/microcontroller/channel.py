@@ -179,7 +179,9 @@ class SerialChannel:
         try:
             sent = self.port.write(payload)
         except Exception as exc:
-            raise ChannelTransportFailure(f"serial write failed: {exc}") from exc
+            raise ChannelTransportFailure(
+                f"serial write failed: {exc}{self._timeout_diagnostics()}"
+            ) from exc
         write_completed = self.clock()
         if self._cancel_requested.is_set():
             raise ChannelCancelled(
@@ -192,6 +194,7 @@ class SerialChannel:
         if write_completed >= command_deadline:
             raise ChannelTimeout(
                 "serial write returned after its acknowledgement deadline"
+                + self._timeout_diagnostics()
             )
 
         line = bytearray()
@@ -207,7 +210,9 @@ class SerialChannel:
             try:
                 chunk = self.port.read(512)
             except Exception as exc:
-                raise ChannelTransportFailure(f"serial read failed: {exc}") from exc
+                raise ChannelTransportFailure(
+                    f"serial read failed: {exc}{self._timeout_diagnostics()}"
+                ) from exc
             received_ns = self.clock()
             read_count += 1
             received_bytes += len(chunk)
@@ -276,7 +281,17 @@ class SerialChannel:
             f"partial_bytes={len(line)}, longest_read_ms={longest_read_ns / 1e6:.3f}, "
             f"unmatched={self.unmatched_replies - unmatched_before}, "
             f"malformed={self.malformed_replies - malformed_before}"
+            + self._timeout_diagnostics()
         )
+
+    def _timeout_diagnostics(self) -> str:
+        try:
+            describe = getattr(self.port, "timeout_diagnostics", None)
+            details = describe() if callable(describe) else ""
+            return f"; serial_calls: {details[:768]}" if details else ""
+        except Exception:
+            # Optional diagnostics must never replace the original I/O failure.
+            return ""
 
     def probe(self, verb: str, deadline_ns: int) -> Exchange:
         """Retry a read-only startup probe with a fresh ID inside its original deadline."""

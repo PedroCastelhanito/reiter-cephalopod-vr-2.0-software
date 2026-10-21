@@ -124,7 +124,7 @@ start_lateness_tolerance_ms = 250
 # this allowance after the normal end or issuance of an early interruption.
 # Delivery time counts; missing evidence flags stopping as unconfirmed while cleanup
 # continues. This allowance never extends recording; closure has its own timeout.
-stop_report_timeout_ms = 250
+stop_report_timeout_ms = 450
 
 [metadata]
 # Accepted-but-not-yet-synchronized work, including the active write, is bounded

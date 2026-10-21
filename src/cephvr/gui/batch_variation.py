@@ -2,6 +2,7 @@
 
 from decimal import Decimal, InvalidOperation
 from random import Random
+from typing import Literal
 
 from PyQt6.QtCore import QEvent, pyqtSignal
 from PyQt6.QtGui import QEnterEvent, QShowEvent
@@ -50,6 +51,8 @@ class BatchVariationRow(QWidget):
         self.random = Random()
         self.random_seed = ""
         self.seed_key: tuple[str, ...] = ()
+        self.rig_coordinates = True
+        self.rig_angle_version: Literal[1, 2] = 2
         row.setContentsMargins(0, 0, 0, 0)
         self.target = combo(())
         if "Rig-wide" not in self.projectors:
@@ -331,6 +334,8 @@ class BatchVariationRow(QWidget):
                     draws[position * random_count : (position + 1) * random_count]
                     if independent
                     else draws,
+                    self.rig_coordinates,
+                    self.rig_angle_version,
                 )
                 for position, index in enumerate(indices)
             )
@@ -357,12 +362,16 @@ class BatchVariationRow(QWidget):
                 self.targets[i][2],
                 parameter,
                 values,
+                self.rig_coordinates,
+                self.rig_angle_version,
             )
             for i in self.target_indices()
         )
 
     def draft(self) -> VariationDraft:
         return VariationDraft(
+            rig_coordinates=self.rig_coordinates,
+            rig_angle_version=self.rig_angle_version,
             projector=self.target.currentData() or "",
             projectors=tuple(self.projectors),
             layer=self.layer.currentData()
@@ -385,6 +394,16 @@ class BatchVariationRow(QWidget):
         )
 
     def restore(self, draft: VariationDraft) -> None:
+        self.rig_coordinates = draft.rig_coordinates
+        self.rig_angle_version = draft.rig_angle_version
+        if self.rig_coordinates and self.rig_angle_version == 1:
+            self.setToolTip(
+                "Saved variation uses Back 0°; recreate it to use Right 0°."
+            )
+        if not self.rig_coordinates:
+            self.setToolTip(
+                "Saved variation uses legacy local coordinates; recreate it to use rig directions."
+            )
         self.target.setCurrentIndex(self.target.findData(draft.projector))
         self.layer.setCurrentIndex(self.layer.findData(draft.layer))
         self.parameter.setCurrentIndex(self.parameter.findData(draft.parameter))
@@ -395,3 +414,12 @@ class BatchVariationRow(QWidget):
         self.shared.setChecked(draft.shared)
         self.random_seed, self.seed_key = draft.seed, draft.sample_key
         self.random_cache = (draft.sample_key, draft.samples) if draft.samples else None
+        direction_index = self.parameter.findData("Direction")
+        if (
+            direction_index >= 0
+            and self.rig_coordinates
+            and self.rig_angle_version == 1
+        ):
+            self.parameter.setItemText(direction_index, "Direction (legacy rig)")
+        if direction_index >= 0 and not self.rig_coordinates:
+            self.parameter.setItemText(direction_index, "Direction (legacy local)")
