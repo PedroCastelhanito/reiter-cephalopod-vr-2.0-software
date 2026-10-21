@@ -20,7 +20,7 @@ from cephvr.gui.components import Card, FittedConsole, label
 from cephvr.gui.preview_log import PreviewLog
 from cephvr.gui.preview_timeline import StimulusTimeline
 from cephvr.gui.retro_overlay import set_glow
-from cephvr.gui.theme import SIZES, retro_console
+from cephvr.gui.theme import SIZES, minimal_frames, retro_console
 from cephvr.gui.view import PreviewView
 
 
@@ -39,9 +39,9 @@ class PreviewWorkspace(QWidget):
         self.content = QVBoxLayout(self)
         self.content.setContentsMargins(0, 0, 0, 0)
         self.content.setSpacing(16)
-        self.details = QWidget(self)
-        self.details_layout = QVBoxLayout(self.details)
-        self.details_layout.setContentsMargins(0, 0, 0, 0)
+        # Advanced instruments share one Projectors card; each projector is a section.
+        self.details = Card("Projectors", self, grow=True)
+        self.details_layout = self.details.body
         self.details_layout.setSpacing(SIZES.field_y_gap)
         self.top_host = QWidget(self)
         self.top_host.setSizePolicy(
@@ -79,8 +79,24 @@ class PreviewWorkspace(QWidget):
             else False
         )
         toolbar.addWidget(self.advanced_toggle)
+        # Per-item selectors under the timeline: one row per enabled master toggle.
+        self.video_row = QWidget()
+        self.video_choices = QHBoxLayout(self.video_row)
+        self.video_choices.setContentsMargins(0, 0, 0, 0)
+        self.video_choices.setSpacing(SIZES.field_x_gap * 2)
+        self.video_choices.addWidget(label("Video", "label"))
+        self.video_choices.addStretch(1)
+        self.advanced_row = QWidget()
+        self.advanced_choices = QHBoxLayout(self.advanced_row)
+        self.advanced_choices.setContentsMargins(0, 0, 0, 0)
+        self.advanced_choices.setSpacing(SIZES.field_x_gap * 2)
+        self.advanced_choices.addWidget(label("Advanced", "label"))
+        self.advanced_choices.addStretch(1)
+        self.projector_controls: dict[str, QCheckBox] = {}
+        self.controls: dict[str, QCheckBox] = {}
         # Keep status above the resizable stream/plot sections.
         self.timeline = StimulusTimeline()
+        self.timeline.cards_changed.connect(self.rebuild_projector_controls)
         self.timeline.plots.removeWidget(self.timeline.motion_section)
         self.details_layout.addWidget(self.timeline.motion_section, 1)
         self.preview_host = QWidget(self)
@@ -92,7 +108,7 @@ class PreviewWorkspace(QWidget):
         self.preview_layout.addWidget(self.empty_hint)
         self.hud_card = Card("HUD", compact=True)
         self.hud_card.body.addWidget(self.hud)
-        self.log_card = Card("Console", compact=True)
+        self.log_card = Card("Log", compact=True)
         self.log_tail = PreviewLog()
         self.log_card.body.addWidget(self.log_tail)
         # Column 0 hosts the Dashboard's own System controls while this body shows.
@@ -104,11 +120,13 @@ class PreviewWorkspace(QWidget):
             self.top.addWidget(card, 0, column)
         for column, stretch in enumerate((3, 3, 5)):
             self.top.setColumnStretch(column, stretch)
-        self.timeline.body.insertWidget(
-            0, self.toggle_bar, 0, Qt.AlignmentFlag.AlignRight
-        )
+        self.timeline_card = Card("Timeline", self)
+        self.timeline_card.header.addWidget(self.toggle_bar)
+        self.timeline_card.body.addWidget(self.timeline)
+        self.timeline_card.body.addWidget(self.video_row)
+        self.timeline_card.body.addWidget(self.advanced_row)
         self.content.addWidget(self.top_host)
-        self.content.addWidget(self.timeline)
+        self.content.addWidget(self.timeline_card)
         self.splitter = QSplitter(Qt.Orientation.Horizontal, self)
         self.splitter.setChildrenCollapsible(False)
         self.splitter.setHandleWidth(16)
@@ -126,7 +144,6 @@ class PreviewWorkspace(QWidget):
         self.video_toggle.toggled.connect(self.set_video_visible)
         self.advanced_toggle.toggled.connect(self.set_advanced_visible)
         self.views: dict[str, PreviewView] = {}
-        self.controls: dict[str, QCheckBox] = {}
         # Status text is shown inside each source's frame by the preview slot.
         self.statuses: dict[str, str] = {}
         self.hints: dict[str, QLabel] = {}
@@ -157,6 +174,7 @@ class PreviewWorkspace(QWidget):
     def set_advanced_visible(self, visible: bool, *, persist: bool = True) -> None:
         self.timeline.set_advanced(visible)
         self.details.setVisible(visible)
+        self.advanced_row.setVisible(visible and bool(self.projector_controls))
         if visible:
             self.split_sections()
         if persist and self.settings is not None:
@@ -165,6 +183,7 @@ class PreviewWorkspace(QWidget):
     def set_video_visible(self, visible: bool, *, close_viewers: bool = True) -> None:
         """Show or hide the stream section; hiding closes open viewers, not capture."""
         self.preview_host.setVisible(visible)
+        self.video_row.setVisible(visible and bool(self.controls))
         if visible:
             self.split_sections()
         elif close_viewers:
@@ -187,6 +206,9 @@ class PreviewWorkspace(QWidget):
             for widget in self.source_widgets.values():
                 widget.hide()
                 widget.deleteLater()
+            for control in self.controls.values():
+                control.hide()
+                control.deleteLater()
             self.controls.clear()
             self.statuses.clear()
             self.hints.clear()
@@ -199,7 +221,9 @@ class PreviewWorkspace(QWidget):
                 layout.setSpacing(2)
                 row = QHBoxLayout()
                 name = label(view.name, "eyebrow", wrap=True)
-                control = QCheckBox("Show")
+                # The stream's toggle lives in the timeline's Video row; checking it
+                # opens the native viewer and gives the stream a frame.
+                control = QCheckBox(view.name)
                 control.setProperty("role", "viewer-toggle")
                 control.setAccessibleName(view.name)
                 name.setBuddy(control)
@@ -209,8 +233,8 @@ class PreviewWorkspace(QWidget):
                 hint = label("", "muted")
                 row.addWidget(name, 1)
                 row.addWidget(hint)
-                row.addWidget(control)
                 layout.addLayout(row)
+                self.video_choices.insertWidget(self.video_choices.count() - 1, control)
                 panel.hide()
                 self.source_widgets[view.key] = panel
                 self.names[view.key] = name
@@ -220,6 +244,7 @@ class PreviewWorkspace(QWidget):
                 set_glow(name, self.glow)
 
         self.views = {view.key: view for view in views}
+        self.video_row.setVisible(self.video_toggle.isChecked() and bool(self.controls))
         self.refresh()
 
     def attach_controls(self, hosts: dict[str, QWidget]) -> None:
@@ -239,8 +264,7 @@ class PreviewWorkspace(QWidget):
         for key, view in self.views.items():
             control = self.controls[key]
             control.setMinimumWidth(control.sizeHint().width())
-            # Non-breaking spaces keep each bracket with its word when the heading wraps.
-            self.names[key].setText(f"[ {view.name.upper()} ]")
+            self.names[key].setText(stream_caption(self, view.name, wrap=True))
             control.setAccessibleName(view.name)
             control.setChecked(view.visible)
             control.setEnabled(
@@ -303,3 +327,33 @@ class PreviewWorkspace(QWidget):
         self.views[key] = replace(view, pending=True)
         self.refresh()
         self.visibility_requested.emit(key, visible)
+
+    def rebuild_projector_controls(self) -> None:
+        """One Advanced toggle per projector; hiding one frees its grid space."""
+        for control in self.projector_controls.values():
+            control.hide()
+            control.deleteLater()
+        self.projector_controls.clear()
+        for name in self.timeline.projector_names():
+            control = QCheckBox(name)
+            control.setProperty("role", "viewer-toggle")
+            control.setChecked(self.timeline.projector_visible(name))
+            control.toggled.connect(
+                lambda visible, key=name: self.timeline.set_projector_visible(
+                    key, visible
+                )
+            )
+            self.advanced_choices.insertWidget(
+                self.advanced_choices.count() - 1, control
+            )
+            self.projector_controls[name] = control
+        self.advanced_row.setVisible(
+            self.advanced_toggle.isChecked() and bool(self.projector_controls)
+        )
+
+
+def stream_caption(owner: QWidget, name: str, *, wrap: bool = False) -> str:
+    """Stream heading; with `wrap`, non-breaking spaces keep brackets with words."""
+    left, right = ("<", ">") if minimal_frames(owner) else ("[", "]")
+    space = "\xa0" if wrap else " "
+    return f"{left}{space}{name.upper()}{space}{right}"

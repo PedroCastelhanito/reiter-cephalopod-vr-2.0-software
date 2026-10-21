@@ -137,8 +137,8 @@ PHOSPHOR_COLORS = Palette(
     mirror="#ffc870",
     focus="#ffb85c",
     hover="#2a2116",
-    active="#4a2e14",
-    selection="#4a2e14",
+    active="#0d1113",
+    selection="#0d1113",
     primary="#121719",
     primary_hover="#2a2116",
     secondary="#121719",
@@ -153,8 +153,10 @@ PHOSPHOR_COLORS = Palette(
 )
 # Buttons rest as outlined boxes over a faint tint and fill only on hover:
 # (resting tint, hover fill, outline/text).
-PHOSPHOR_BUTTON = ("#2a1c10", "#c8741f", "#ff9f40")
-PHOSPHOR_STOP_BUTTON = ("#2c1210", "#c4402c", "#ff6a50")
+PHOSPHOR_BUTTON = ("transparent", "#c8741f", "#ff9f40")
+PHOSPHOR_STOP_BUTTON = ("transparent", "#c4402c", "#ff6a50")
+# Unselected tab text and icons stay dim so the bracketed current tab stands out.
+PHOSPHOR_TAB_DIM = "#7a5a3a"
 PHOSPHOR_TINTS = (
     PHOSPHOR_COLORS.accent,
     "#d98a5a",
@@ -528,18 +530,19 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
     QFrame#Sidebar QLabel[role='brand'] {{ color: {c.coral}; font-weight: 400;
         letter-spacing: 4px; }}
     QListWidget[role='trials']::item:selected,
-    QTreeWidget[role='rail']::item:selected {{ background: {c.active}; color: {c.coral};
+    QTreeWidget[role='rail']::item:selected {{ background: {c.active}; color: {c.text};
         border: 1px solid {c.accent}; }}
     QTabBar::tab, QTabBar::tab:selected, QTabBar::tab:hover {{ background: transparent;
         border: 1px solid transparent; }}
-    QTabBar::tab {{ color: {c.muted}; }}
-    QTabBar::tab:hover {{ color: {c.text}; }}
-    QTabBar::tab:selected {{ color: {c.coral}; }}
+    QTabBar::tab {{ color: {PHOSPHOR_TAB_DIM}; }}
+    QTabBar::tab:hover {{ color: {c.label}; }}
+    QTabBar::tab:selected {{ color: {c.text}; }}
     QHeaderView::section {{ background: transparent; color: {c.muted}; border: none;
         border-bottom: 1px dashed {c.border}; font-weight: 400; }}
     QTableCornerButton::section {{ background: transparent; border: none; }}
     QTableWidget {{ background: transparent; border: none; }}
     QFrame[nestedCard='true'] QLabel[role='title'] {{ color: {c.label}; }}
+    QWidget#PreviewWorkspace QFrame#ProjectorCard {{ border: none; }}
     """
 
 

@@ -3,7 +3,7 @@
 from collections.abc import Callable
 from time import monotonic
 
-from PyQt6.QtCore import QSize, Qt, QTimer
+from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import (
     QBoxLayout,
@@ -84,8 +84,13 @@ def size_at(setting: Settings, axis: int) -> Callable[[int], float]:
 
 
 class StimulusTimeline(QWidget):
+    cards_changed = pyqtSignal()
+
     def __init__(self) -> None:
         super().__init__()
+        # Operator-hidden projector sections; names survive card rebuilds.
+        self.hidden_projectors: set[str] = set()
+        self.projector_cards: dict[str, QWidget] = {}
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(0, 0, 0, 0)
         self.body.setSpacing(10)
@@ -265,6 +270,10 @@ class StimulusTimeline(QWidget):
             if widget is not None and widget is not self.notice:
                 widget.hide()
                 widget.deleteLater()
+        for card in self.projector_cards.values():  # hidden cards are not in the grid
+            card.hide()
+            card.deleteLater()
+        self.projector_cards = {}
         self.dials, self.maps = [], []
         self.headings = []
         cards: list[tuple[str, ProjectorCard]] = []
@@ -283,13 +292,38 @@ class StimulusTimeline(QWidget):
             self.headings.append(heading)
             cards.append((panel.source.key[0], ProjectorCard(heading, instruments)))
         order = {"Left": 0, "Front": 1, "Right": 2, "Bottom": 3}
-        self.instrument_host.instruments = [
-            card for name, card in sorted(cards, key=lambda item: order.get(item[0], 4))
-        ]
-        if not self.instrument_host.instruments:
-            self.instrument_host.instruments.append(self.notice)
-        self.instrument_host.relayout()
+        self.projector_cards = dict(
+            sorted(cards, key=lambda item: order.get(item[0], 4))
+        )
+        self.place_projectors()
         self.restyle()
+        self.cards_changed.emit()
+
+    def place_projectors(self) -> None:
+        """Grid only the shown projector sections so hidden ones free their space."""
+        shown = [
+            card
+            for name, card in self.projector_cards.items()
+            if name not in self.hidden_projectors
+        ]
+        for name, card in self.projector_cards.items():
+            card.setVisible(name not in self.hidden_projectors)
+        self.instrument_host.instruments = shown or [self.notice]
+        self.instrument_host.columns = 0
+        self.instrument_host.relayout()
+
+    def projector_names(self) -> tuple[str, ...]:
+        return tuple(self.projector_cards)
+
+    def projector_visible(self, name: str) -> bool:
+        return name not in self.hidden_projectors
+
+    def set_projector_visible(self, name: str, visible: bool) -> None:
+        if visible:
+            self.hidden_projectors.discard(name)
+        else:
+            self.hidden_projectors.add(name)
+        self.place_projectors()
 
     def restyle(self, glow: bool | None = None) -> None:
         """Re-apply Retro heading case and glow after a style or card rebuild."""

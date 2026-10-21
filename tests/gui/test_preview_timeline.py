@@ -1136,7 +1136,9 @@ def test_retro_preview_controls_are_checkboxes_and_headings_glow(app):
     host.setProperty("retroConsole", True)
     dialog.restyle(True)
     assert dialog.names["behavior"].graphicsEffect() is not None
-    assert show.text() == "Show" and toggle.text() == "Advanced previews"
+    # Stream toggles are named by their stream (no "Show" wording).
+    assert show.text() == dialog.views["behavior"].name
+    assert toggle.text() == "Advanced previews"
     toggle.setEnabled(False)
     toggle.setEnabled(True)
     dialog.apply_views((PreviewView("camera", "Camera", visible=False),), allowed=True)

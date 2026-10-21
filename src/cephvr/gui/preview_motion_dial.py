@@ -8,7 +8,7 @@ from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPaintEvent, QPen, QPoly
 from PyQt6.QtWidgets import QSizePolicy, QWidget
 
 from cephvr.gui.preview_motion_data import DialSample
-from cephvr.gui.theme import colors_for
+from cephvr.gui.theme import colors_for, minimal_frames
 from cephvr.visual_stimulus.config.rig_coordinates import signed_degrees
 
 AXIS_LABELS = {
@@ -71,10 +71,13 @@ def instrument_painter(widget: QWidget) -> QPainter:
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.fillRect(widget.rect(), QColor(colors_for(widget).console))
     scale = min(widget.width() / MotionDial.SIZE, widget.height() / MotionDial.HEIGHT)
-    painter.translate(
-        (widget.width() - MotionDial.SIZE * scale) / 2,
-        (widget.height() - MotionDial.HEIGHT * scale) / 2,
+    # Amber phosphor keeps instruments directly under their section heading.
+    top = (
+        0
+        if minimal_frames(widget)
+        else (widget.height() - MotionDial.HEIGHT * scale) / 2
     )
+    painter.translate((widget.width() - MotionDial.SIZE * scale) / 2, top)
     painter.scale(scale, scale)
     return painter
 

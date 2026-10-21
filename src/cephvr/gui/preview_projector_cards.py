@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.preview_motion_dial import MotionDial
 from cephvr.gui.retro_instruments import double_frame
 from cephvr.gui.retro_overlay import set_glow
-from cephvr.gui.theme import retro_console
+from cephvr.gui.theme import minimal_frames, retro_console
 
 SPACING = 16
 
@@ -89,7 +89,9 @@ class ProjectorHeading(QLabel):
         self.name_text = name
 
     def restyle(self, retro: bool, glow: bool) -> None:
-        self.setText(self.name_text.upper() if retro else self.name_text)
+        name = self.name_text.upper() if retro else self.name_text
+        # Amber phosphor shows projectors as subsections of the Projectors card.
+        self.setText(f"/// {name} \\\\\\" if minimal_frames(self) else name)
         set_glow(self, retro and glow)
 
 
@@ -121,7 +123,7 @@ class ProjectorCard(QFrame):
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         super().paintEvent(event)
-        if retro_console(self):
+        if retro_console(self) and not minimal_frames(self):
             # The QSS border is the outer line; add the Retro card's inner line/marks.
             painter = QPainter(self)
             double_frame(

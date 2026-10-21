@@ -8,7 +8,10 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLineEdit,
+    QSizePolicy,
     QStackedLayout,
+    QTabBar,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -52,6 +55,7 @@ class Dashboard(QWidget):
     action_requested = pyqtSignal(str)
     preview_requested = pyqtSignal(str, bool)
     runtime_layout_shown = pyqtSignal()
+    layout_switched = pyqtSignal()
 
     def __init__(
         self, *, sample: bool = False, settings: QSettings | None = None
@@ -68,9 +72,26 @@ class Dashboard(QWidget):
         self.view = DashboardView()
         self.stop_dialog: StopDialog | None = None
         self.runtime_layout = False
+        self.session_running = False
         self.preview_workspace = PreviewWorkspace(self, settings)
         self.preview_workspace.visibility_requested.connect(self.preview_requested.emit)
-        self.pages = QStackedLayout(self)
+        # Configure/Monitor follow session start/end; the operator may switch anytime.
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(SIZES.card_gap)
+        self.view_tabs = QTabBar()
+        self.view_tabs.setDrawBase(False)
+        self.view_tabs.setExpanding(False)
+        for title in ("Configure", "Monitor"):
+            self.view_tabs.addTab(title)
+        self.view_tabs.setAccessibleName("Dashboard view")
+        self.view_tabs.currentChanged.connect(
+            lambda index: self.set_runtime_layout(index == 1)
+        )
+        outer.addWidget(self.view_tabs, 0, Qt.AlignmentFlag.AlignLeft)
+        pages_host = QWidget()
+        outer.addWidget(pages_host, 1)
+        self.pages = QStackedLayout(pages_host)
         self.pages.setContentsMargins(0, 0, 0, 0)
         self.pages.addWidget(self.form)
         self.pages.addWidget(self.preview_workspace)
@@ -363,7 +384,11 @@ class Dashboard(QWidget):
             self.stop_dialog.update_actions(self.stop_choices())
         for editor in self.subject_editors:
             editor.setEnabled(view.can_edit_session)
-        self.set_runtime_layout(view.phase in RUNTIME_PHASES)
+        running = view.phase in RUNTIME_PHASES
+        if running != self.session_running:
+            # Only session start/end switch views; a manual choice otherwise stands.
+            self.session_running = running
+            self.set_runtime_layout(running)
         self.render_hud()
         for name, status in (
             ("Cameras", view.camera_status),
@@ -381,18 +406,29 @@ class Dashboard(QWidget):
         if active == self.runtime_layout:
             return
         self.runtime_layout = active
+        self.view_tabs.blockSignals(True)
+        self.view_tabs.setCurrentIndex(1 if active else 0)
+        self.view_tabs.blockSignals(False)
         controls = self.session_controls
         if active:
             self.left_layout.removeWidget(controls)
-            self.preview_workspace.top.addWidget(
-                controls, 0, 0, Qt.AlignmentFlag.AlignTop
+            # Match the HUD/Console row height; content stays at the top.
+            controls.setSizePolicy(
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
             )
+            controls.body.setAlignment(Qt.AlignmentFlag.AlignTop)
+            self.preview_workspace.top.addWidget(controls, 0, 0)
             self.pages.setCurrentWidget(self.preview_workspace)
             self.runtime_layout_shown.emit()
         else:
             self.preview_workspace.top.removeWidget(controls)
+            controls.setSizePolicy(
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+            )
+            controls.body.setAlignment(Qt.AlignmentFlag(0))
             self.left_layout.insertWidget(0, controls)
             self.pages.setCurrentWidget(self.form)
+        self.layout_switched.emit()
 
     def render_hud(self) -> None:
         """Refresh presentation from the current view without touching controls."""

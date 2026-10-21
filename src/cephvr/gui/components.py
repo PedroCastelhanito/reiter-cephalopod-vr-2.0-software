@@ -283,7 +283,7 @@ class StatusIndicator(QRadioButton):
 class StatusColumn(QWidget):
     """Shared fitted HUD above a log that consumes the remaining column height."""
 
-    def __init__(self, title: str = "Runtime HUD") -> None:
+    def __init__(self, title: str = "HUD") -> None:
         super().__init__()
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
@@ -294,7 +294,7 @@ class StatusColumn(QWidget):
         self.hud = FittedConsole()
         self.hud.setProperty("terminal", "telemetry")
         self.hud_card.body.addWidget(self.hud)
-        self.log_card = Card("Runtime log", grow=True)
+        self.log_card = Card("Log", grow=True)
         self.log_card.setProperty("openFrame", True)
         self.console = LogConsole()
         self.log_minimum_height = self.console.minimumHeight()

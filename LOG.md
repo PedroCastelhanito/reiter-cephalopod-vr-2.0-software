@@ -8869,3 +8869,46 @@ card top line breaks around header actions (Preview). Copper replaces the muddy
 cream epoch tint. Refresh icons follow the palette accent. Epoch tiles gained three
 phosphor identity-mark options (`PHOSPHOR_EPOCH_TILE`); the owner's choice is
 pending. 11 focused tests pass and Win32 mypy passes. The full suite was not run.
+
+### 2026-10-22 - Amber phosphor epoch tiles
+
+[gui] `amber-phosphor-style`: the owner chose the tint-bar epoch tile with the epoch
+name above it. Phosphor epoch tiles are neutral recessed boxes: epoch name (pale
+gold), one stimulus-tint bar, then `Epoch N · duration` (dim). The chip and
+tinted-label variants were removed. G02 now records the audit-fix rules (tabs,
+tables, nested cards, epoch tiles). Focused tests pass; an offscreen render was
+inspected; the full suite was not run.
+
+### 2026-10-22 - Amber phosphor quieter selection and tabs
+
+[gui] `amber-phosphor-style`: following the owner's native review (red trial title,
+too much orange in Protocol, a hidden selected device tab), applied the previewed
+fixes. Selection fills (`active`/`selection`) now use the recessed surface, so
+trials, group/epoch blocks, batch bands and the displays layout keep only outlines.
+The selected trial text is pale gold. Buttons rest as plain outlines (fill on
+hover). Unselected tab text and icons are dim (`PHOSPHOR_TAB_DIM`); the current tab
+is gold with brackets, and the device rail matches. 13 focused tests pass and Win32
+mypy passes. Offscreen renders inspected; the full suite was not run.
+
+### 2026-10-22 - Monitoring row height and subsection spacing
+
+[gui] `amber-phosphor-style` / `dashboard-embedded-previews`: in the monitoring
+layout, System controls now stretch to the HUD/Console row height (Preferred policy,
+top-aligned content) and revert on return to the form (all styles). Flattened
+Amber phosphor subsections keep a card-gap top margin (Variation rules spacing).
+Focused runtime-layout/system-controls tests pass; offscreen render inspected; the
+full suite was not run.
+
+### 2026-10-22 - Dashboard Monitor view and preview toggles
+
+[gui] `dashboard-embedded-previews` / `amber-phosphor-style`: implemented the
+owner-approved Monitor view (G01rev294/G02rev112). It adds Configure|Monitor tabs
+(auto-switch only on session start/end, manual switching anytime), a Timeline card
+with header toggles, Video/Advanced selector rows (stream checkboxes named by
+stream, no "Show"; projector checkboxes), frames only for shown streams, a
+Projectors card with phosphor `///` sections and top-aligned dials, unboxed
+projector sections, and HUD/Log titles. Updated eight preview tests whose
+reserve-all/Show-in-header expectations changed and added two tests. The preview
+suite (187) passes, as do focused title/switch tests; Win32 mypy, ruff and the
+boundary check pass (theme.py 579-line advisory recorded). The rig checklist entry
+was updated for native reflow/re-placement. The full suite was not run.

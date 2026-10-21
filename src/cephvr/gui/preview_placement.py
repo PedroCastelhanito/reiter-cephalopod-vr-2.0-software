@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.gui.components import StatusColumn
 from cephvr.gui.preview_frame import PreviewFrame
-from cephvr.gui.previews import PreviewWorkspace
+from cephvr.gui.previews import PreviewWorkspace, stream_caption
 from cephvr.gui.view import PreviewView
 from cephvr.platform.windows.preview_owner import gui_window_identity
 from cephvr.platform.windows.window_coordinates import (
@@ -66,11 +66,8 @@ class PreviewSlot(QWidget):
         self.arrange(self.eligible_sources())
 
     def eligible_sources(self) -> tuple[PreviewView, ...]:
-        return tuple(
-            item
-            for item in self.sources
-            if item.visible or item.pending or (self.reserve_active and item.active)
-        )
+        # Only shown or opening streams take a frame, so hidden ones free space.
+        return tuple(item for item in self.sources if item.visible or item.pending)
 
     def arrange(self, sources: tuple[PreviewView, ...]) -> None:
         self.arranged_sources = sources
@@ -118,7 +115,7 @@ class PreviewSlot(QWidget):
             )
             frame.snap_button.setVisible(not waiting)
             if key:
-                frame.caption.setText(f"[ {name.upper()} ]")
+                frame.caption.setText(stream_caption(frame, name))
             self.frames[key] = frame
             if reflow:
                 self.grid.addWidget(

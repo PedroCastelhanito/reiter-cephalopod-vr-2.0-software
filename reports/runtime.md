@@ -8023,6 +8023,25 @@ Limitations: native look was seen only in owner screenshots of earlier revisions
 Inset checkboxes rely on Qt `background-clip`; stripe visibility depends on the CRT
 toggle; wrap is phosphor-only.
 
+### Dashboard Monitor view (2026-10-22)
+
+Owner request under [G01](../docs/architecture/gui.md#g01) rev294 /
+[G02](../docs/architecture/gui.md#g02) rev112: `Dashboard.view_tabs` (Configure |
+Monitor) switches only on run-phase entry/exit and otherwise follows the operator;
+`layout_switched` refreshes the preview slot. `PreviewWorkspace` puts the timeline
+in a Timeline card (master toggles in its header) with Video and Advanced rows;
+stream checkboxes moved from frame headers into the Video row. `PreviewSlot` frames
+only shown or pending streams (the previous reserve-all-active rule is removed), so
+hiding a stream reflows the grid and re-places native viewers. That reflow is
+unverified on Windows and is in the rig checklist. `StimulusTimeline` hides projector
+sections by name (`hidden_projectors`), and the Projectors card replaces the bare
+details widget. HUD/Log titles are shared. Evidence: preview-selected suite 187
+passed; new view-switch and projector-toggle tests pass; Win32 mypy and ruff pass;
+offscreen Amber phosphor render inspected. The full suite was not run (owner
+instruction). Size advisory: `theme.py` is 579 lines (three styles' palettes and
+sheets). It is cohesive, but splitting the phosphor sheet would need the palette
+registry moved first; that is noted as a follow-up.
+
 ### Backend review fixes (2026-10-08)
 
 Source review plus ruff/AST scans produced candidate findings; those confirmed in the code are fixed and tested, with evidence in [review-evidence-2026-10-08](review-evidence-2026-10-08/README.md). Fixed: supervisor shutdown replay, tracking-release gRPC retry, tolerant `source_registered`, concurrent worker cleanup, warnings for rejected participant Shutdown and persistent helper errors, launcher parser/reader resilience, client timeout messages and E02 Ctrl+C scope, shared policy digest ([E14](../docs/architecture/system-contracts.md#e14) revision 207), loopback/`contract_version` checks. Still open: `shutdown-health-checks` (controller-loss and fencing gaps), the TODO "For review" refactors, and coverage measurement. Local results do not close E15 rig checks.

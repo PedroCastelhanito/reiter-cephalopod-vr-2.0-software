@@ -34,9 +34,6 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Program,
 )
 
-# Amber phosphor epoch identity mark: "bar", "chip" or "text".
-PHOSPHOR_EPOCH_TILE = "bar"
-
 
 class ProgramTimeline(QWidget):
     epochs_selected = pyqtSignal(object)
@@ -317,8 +314,8 @@ class ProgramTimeline(QWidget):
             inverse = retro and selected and not minimal
             group = isinstance(node, Group)
             tint = tile_tint(self.type_keys[i], self) if retro and not group else None
-            # Amber phosphor: neutral recessed epoch tiles; identity colour is a single
-            # mark (strip, chip or label) so labels do not repeat the block colour.
+            # Amber phosphor: neutral recessed epoch tiles; the identity colour is one
+            # strip under the epoch name so labels do not repeat the block colour.
             plain = minimal and tint is not None
             if plain:
                 assert tint is not None
@@ -331,11 +328,10 @@ class ProgramTimeline(QWidget):
                     )
                 )
                 painter.drawRect(rect)
-                if PHOSPHOR_EPOCH_TILE == "bar":
-                    painter.fillRect(
-                        QRectF(rect.left() + 1, rect.top() + 1, rect.width() - 2, 3),
-                        ident,
-                    )
+                painter.fillRect(
+                    QRectF(rect.left() + 8, rect.top() + 23, rect.width() - 16, 3),
+                    ident,
+                )
             painter.setBrush(
                 QColor(colors.active if minimal else colors.accent)
                 if retro and selected
@@ -364,7 +360,11 @@ class ProgramTimeline(QWidget):
             )
             value = self.durations[i]
             summary = clock_duration(value) if value is not None else "Timing at Setup"
-            lines: tuple[tuple[int, str], ...] = ((5, name), (29, summary))
+            lines: tuple[tuple[int, str], ...] = (
+                ((5, node_name(node).replace("_", " ")), (31, f"{name} · {summary}"))
+                if plain
+                else ((5, name), (29, summary))
+            )
             if isinstance(node, Group):
                 counts = (
                     f"{node.repetitions:,} repeat{'s' if node.repetitions != 1 else ''}"
@@ -393,19 +393,7 @@ class ProgramTimeline(QWidget):
                 summary = counts + " · " + summary
             for offset, text in lines:
                 if plain:
-                    label_ink = QColor(colors.text)
-                    if offset == 5 and PHOSPHOR_EPOCH_TILE == "chip":
-                        chip = QRectF(
-                            rect.left() + 5,
-                            rect.top() + 5,
-                            self.fontMetrics().horizontalAdvance(text) + 8,
-                            self.fontMetrics().height() + 2,
-                        )
-                        painter.fillRect(chip, ident)
-                        label_ink = QColor(colors.window)
-                    elif offset == 5 and PHOSPHOR_EPOCH_TILE == "text":
-                        label_ink = ident
-                    painter.setPen(label_ink if offset == 5 else QColor(colors.muted))
+                    painter.setPen(QColor(colors.text if offset == 5 else colors.muted))
                 painter.drawText(
                     rect.adjusted(8, offset, -44 if offset == 5 else -8, 0),
                     Qt.AlignmentFlag.AlignTop,

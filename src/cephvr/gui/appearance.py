@@ -32,7 +32,9 @@ from cephvr.gui.retro_overlay import (
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import (
     COLORS,
+    PHOSPHOR_TAB_DIM,
     RETRO_PALETTES,
+    SIZES,
     phosphor_stylesheet,
     retro_chrome_stylesheet,
     retro_console,
@@ -296,12 +298,12 @@ class DashboardAppearance(QObject):
         bar = self.window.devices.tab_bar
         for index, key in enumerate(("camera", "board", "projector", "signal")):
             colors = RETRO_PALETTES[self.name][0] if self.retro else COLORS
-            selected = colors.coral if self.name == "amber_phosphor" else colors.window
-            color = (
-                selected
-                if self.retro and index == bar.currentIndex()
-                else colors.accent
-            )
+            phosphor = self.name == "amber_phosphor"
+            current = index == bar.currentIndex()
+            if phosphor:
+                color = colors.text if current else PHOSPHOR_TAB_DIM
+            else:
+                color = colors.window if self.retro and current else colors.accent
             bar.setTabIcon(index, device_icon(key, color))
         self.window.devices.rail.refresh_icons()
         accent = (RETRO_PALETTES[self.name][0] if self.retro else COLORS).accent
@@ -314,7 +316,10 @@ class DashboardAppearance(QObject):
         """Phosphor nested cards drop their inset so content aligns with the parent."""
         margins = self.card_margins.setdefault(card, card.body.contentsMargins())
         flat = phosphor and card.property("nestedCard") is True
-        card.body.setContentsMargins(QMargins() if flat else margins)
+        # Flat subsections keep a card gap above them, like sibling cards.
+        card.body.setContentsMargins(
+            QMargins(0, SIZES.card_gap, 0, 0) if flat else margins
+        )
         card.caption.setContentsMargins(0 if flat else 6, 0, 0 if flat else 6, 0)
 
     def card_title(self, title: str, card: Card | None = None) -> str:

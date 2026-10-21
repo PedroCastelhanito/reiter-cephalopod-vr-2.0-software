@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 293
+**Status:** Accepted · **Revision:** 294
 
 - Camera and Visual Stimulus previews display the newest available frame at up to
   20 Hz, using the source rate when slower, without duplicate frames or catch-up
@@ -623,7 +623,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Both pages retain external OpenCV previews. Dashboard hosts them in its runtime
   preview layout (G02): the footprints share the Dashboard window, so native viewers
   follow that one host. Its stream grid chooses up to three columns to maximize the
-  fitted square size, retaining frame identities through visibility changes. Leaving
+  fitted square size over the shown streams; showing or hiding a stream reflows it. Leaving
   the Dashboard tab or the runtime layout hides the viewers without ending capture or
   clearing their Show state; returning restores them. Cameras retains its in-page grid.
   Switching pages retargets the native display owner only within the same verified GUI
@@ -1048,17 +1048,22 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Camera experiment enablement belongs to Devices. Dashboard shows a video-recording
   switch for each camera role and Visual Stimulus, plus Tracking velocities.
   Recording selections are retained but disabled while their source is inactive.
-- Pressing Start swaps the Dashboard body (below the page title) from the session form
-  to the runtime preview layout; it returns to the form after the session ends. The
-  swap follows reported phase: Starting, Running, Stopping and Finalizing show the
-  preview layout; every other phase, including Ready, shows the form. There is no
-  Previews button, separate window or geometry preference. The Dashboard's own System
-  controls card (with its backend indicators) moves unchanged into the top row's first
-  cell and returns to the form's left column afterwards; it is never duplicated. Each
-  source's Show checkbox sits beside its own frame heading; status/reason text sits
-  centered inside that frame, and a one-word disabled hint beside Show appears only for
-  observers or while an open viewer covers the frame. Recording selections and Session
-  config are not shown while the layout is active.
+- A Configure | Monitor tab bar heads the Dashboard body. Configure shows the session
+  form; Monitor shows the runtime preview layout. Entering a run phase (Starting,
+  Running, Stopping, Finalizing) switches to Monitor and leaving it switches to
+  Configure; only these transitions switch automatically, and the operator may switch
+  either way at any time (Monitor before Start shows no previews; editing stays gated
+  by the existing session locks). There is no separate window or geometry preference.
+  The Dashboard's own System controls card (with its backend indicators) moves
+  unchanged into Monitor's top row, stretching to that row's height, and returns to
+  the form afterwards; it is never duplicated. A Timeline card holds the epoch timeline
+  with the Video/Advanced previews toggles in its header, then a Video row with one
+  checkbox per stream (named by the stream; checking opens its viewer) and an
+  Advanced row with one checkbox per projector; each row shows only while its master
+  toggle is on. Only shown or opening streams take frames, so unchecked streams free
+  their space; reasons for an unshown stream appear in its checkbox tooltip. Hidden
+  projectors free their space in the Projectors card. Stream frames keep no
+  background. Recording selections and Session config are not shown in Monitor.
   Show a compact HUD using the Dashboard's same status, trial and time values, as
   label-aligned columns, with no recording lamp or symbol text. The HUD is the
   middle card of the top row, between System controls and Console. Advanced previews
@@ -1192,7 +1197,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 111
+**Status:** Accepted · **Revision:** 112
 
 - Runtime preview layout card titles and stream headings use the same coral-red hue as
   the main GUI; retain the existing borders, type and console palette.
@@ -1283,11 +1288,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   are recessed to the log surface with a dim outline and bright corner brackets;
   HUD/log cards keep only corners and centred edge segments, with unboxed text and
   dim log column titles aligned to the log columns. Fields are underlined, checkboxes
-  inset (hover brightens the box and label), subsection headings shown as `/// NAME \\\`, and the page heading omitted.
+  inset (hover brightens the box and label), tabs unboxed with dim text/icons and
+  corner brackets (gold current tab, dim hover), table headers plain over a dashed rule, nested cards
+  as flush subsections, epoch tiles neutral with the epoch name above one tint bar
+  and `Epoch N · duration` below, subsection headings shown as `/// NAME \\\`, and the page heading omitted.
   The sidebar wordmark and navigation are centred: `> Page <` with bright brackets when selected, dim
-  brackets on hover. Buttons rest as orange outlines over a faint tint and fill orange
+  brackets on hover. Buttons rest as plain orange outlines and fill orange
   on hover; Stop, Abort, Disconnect and Cancel actions do the same in red; disabled
-  buttons are dim outlines and toggles fill only when checked. Selection elsewhere uses a dim amber fill with a bright outline. HUD and
+  buttons are dim outlines and toggles fill only when checked. Selection elsewhere (trials, group/epoch blocks, batch bands) has no fill: pale-gold
+  text and a bright outline. HUD and
   log text share the value colour; wrapped log rows continue under the message
   column for display only (copied text is the stored row). Focus is bright amber,
   ready lamps are cream, waiting is orange and faults red; Amber phosphor has no cyan. Its CRT scanlines
@@ -1370,8 +1379,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Retro console text sits close to its frame: the log's `>` prompt gutter is a left
   viewport margin, so top/bottom padding stays small.
   Standard has neither. Omit the extra review/phase/clock banner; phase remains in
-  the HUD. Previews places Show beside each bracketed stream heading and keeps the
-  motion plots in the shared compact card frame. Place epoch labels in a separate
+  the HUD. Stream headings are bracketed names (`< NAME >` in Amber phosphor, which also
+  shows projectors as `/// NAME \\\` sections with dials directly under the heading);
+  the HUD and log cards are titled HUD and Log on every page. Place epoch labels in a separate
   strip, with only the right-aligned epoch readout directly above it. Source legend
   controls sit directly above the motion plots in their own section, independent of
   the timeline header; hiding a source never hides its control or the epoch timeline. The epoch readout is only `Epoch n / N` (unknown n is

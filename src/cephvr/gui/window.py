@@ -145,6 +145,7 @@ class DashboardWindow(QMainWindow):
         self.protocol.participation_changed.connect(self.update_backend_indicators)
         self.devices.cameras.drafts_changed.connect(self.update_backend_indicators)
         self.dashboard.runtime_layout_shown.connect(self.update_preview_timeline)
+        self.dashboard.layout_switched.connect(self.update_preview_slot)
         self.protocol.editor.changed.connect(self.update_preview_timeline)
         body.addWidget(self.stack, 1)
         self.devices.tabs.currentChanged.connect(self.update_preview_slot)

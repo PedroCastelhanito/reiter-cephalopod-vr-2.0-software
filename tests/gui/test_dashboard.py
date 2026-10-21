@@ -378,11 +378,8 @@ def test_multiple_review_previews_have_independent_source_frames(
         app.processEvents()
         assert set(viewers.windows) == set(keys[1:])
         viewers.poll_windows()
-        assert set(target.preview_slot.frames) == (
-            {source.key for source in target.dashboard.view.previews if source.active}
-            if page == 0
-            else set(keys[1:])
-        )
+        # Hiding a stream frees its frame on every page (G01 Monitor view).
+        assert set(target.preview_slot.frames) == set(keys[1:])
         # An external X closes just its own source, preserving the other stream.
         visible.remove(viewers.windows[keys[1]][0])
         viewers.poll_windows()
@@ -3914,8 +3911,8 @@ def test_dashboard_has_only_requested_cards(window: DashboardWindow) -> None:
         "System controls",
         "Session config",
         "Saving options",
-        "Runtime HUD",
-        "Runtime log",
+        "HUD",
+        "Log",
     }
     assert not any(
         item.property("role") == "pill" for item in window.findChildren(QLabel)
@@ -17633,8 +17630,8 @@ def test_retro_family_switch_repaints_with_owning_palette(
     app: QApplication, tmp_path: Path
 ) -> None:
     from cephvr.gui.components import Button, StatusColumn
-    from cephvr.gui.retro_instruments import TabBrackets
     from cephvr.gui.managed_window import ManagedDashboardWindow
+    from cephvr.gui.retro_instruments import TabBrackets
     from cephvr.gui.theme import (
         COLORS,
         PHOSPHOR_COLORS,
@@ -17924,9 +17921,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
             assert review.dashboard.session_controls.caption.text() == (
                 "SYSTEM CONTROLS" if name == "retro_console" else "System controls"
             )
-            assert review.dashboard.hud_card.caption.text() == (
-                "RUNTIME HUD" if name == "retro_console" else "Runtime HUD"
-            )
+            assert review.dashboard.hud_card.caption.text() == "HUD"
             assert (
                 runtime.dashboard.session_controls.caption.text() == "System controls"
             )
@@ -20320,15 +20315,14 @@ def test_preview_workspace_pending_visible_update_preserves_placement(app, advan
         project(replace(source, visible=False, pending=True))
         assert dialog.statuses[source.key] == "Waiting for viewer…"
         assert not dialog.hints[source.key].text()  # The frame shows the wait.
-        # Reasons sit inside the frame, so heading height and placement stay fixed.
+        # An unshown stream frees its frame; its reason stays on the stream status.
         unavailable = replace(
             source, visible=False, available=False, reason="Available after Setup"
         )
-        assert project(unavailable) == baseline
-        frame = slot.frames[source.key]
-        assert frame.status.isVisible()
-        assert frame.status.text() == "Available after Setup"
-        assert frame.status.parentWidget() is frame.target
+        project(unavailable)
+        assert source.key not in slot.frames
+        assert dialog.statuses[source.key] == "Available after Setup"
+        assert dialog.controls[source.key].toolTip() == "Available after Setup"
         assert dialog.hints[source.key].isHidden()
         assert dialog.names[source.key].isEnabled()
         project(replace(source, reason="Viewer unavailable"))
@@ -20376,7 +20370,7 @@ def test_preview_frame_metrics_show_live_values_and_clear_stale_or_hidden(
 
 
 @pytest.mark.parametrize("style", ["standard", "retro_console"])
-def test_preview_workspace_reserves_active_streams_and_timeline(
+def test_preview_workspace_frames_shown_streams_and_timeline(
     window, app, style, monkeypatch
 ):
     from cephvr.gui.preview_placement import preview_window_placement
@@ -20387,7 +20381,9 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
         window.screen(), "availableGeometry", lambda: QRect(0, 0, 1920, 1080)
     )
     sources = tuple(
-        PreviewView(str(i), name, active=i < 5, available=i < 4, reason="")
+        PreviewView(
+            str(i), name, active=i < 5, available=i < 4, visible=i < 4, reason=""
+        )
         for i, name in enumerate(
             ("Behavior", "Tracking cam", "Eye", "Stimulus", "Tracking", "Disabled")
         )
@@ -20406,17 +20402,17 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
     dialog = window.dashboard.preview_workspace
     window.resize(1600, 1000)
     app.processEvents()
-    assert tuple(window.preview_slot.frames) == ("0", "1", "2", "3", "4")
+    # Only shown streams take frames; the active but unavailable "4" has none.
+    assert tuple(window.preview_slot.frames) == ("0", "1", "2", "3")
     assert dialog.details.isHidden()
     assert dialog.preview_host.width() == dialog.splitter.width()
-    assert dialog.hud.geometry().bottom() < dialog.timeline.y()
-    assert dialog.timeline.geometry().bottom() < dialog.splitter.y()
-    assert dialog.timeline.width() == dialog.splitter.width()
-    assert dialog.timeline.isAncestorOf(dialog.toggle_bar)
+    assert dialog.hud.geometry().bottom() < dialog.timeline_card.y()
+    assert dialog.timeline_card.geometry().bottom() < dialog.splitter.y()
+    assert dialog.timeline_card.width() == dialog.splitter.width()
+    assert dialog.timeline_card.isAncestorOf(dialog.toggle_bar)
+    assert dialog.timeline_card.isAncestorOf(dialog.video_row)
+    assert all(dialog.video_row.isAncestorOf(c) for c in dialog.controls.values())
     targets = {key: frame.target for key, frame in window.preview_slot.frames.items()}
-    assert all(
-        frame.status.isVisible() for frame in window.preview_slot.frames.values()
-    )
     assert not dialog.empty_hint.isVisible()
     # Playback advances locally while the run is reported as running.
     assert dialog.timeline.elapsed == pytest.approx(12, abs=1)
@@ -20425,23 +20421,23 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
     if QApplication.platformName() != "windows":
         placements = [preview_window_placement(window, key) for key in targets]
         assert all(p.side >= 128 for p in placements)
+    # Hiding one stream frees its frame for the others.
     window.apply_view(
-        replace(view, previews=(replace(sources[0], visible=True), *sources[1:]))
+        replace(view, previews=(replace(sources[0], visible=False), *sources[1:]))
     )
-    assert {
-        key: frame.target for key, frame in window.preview_slot.frames.items()
-    } == targets
-    assert window.preview_slot.frames["0"].status.isHidden()
+    assert tuple(window.preview_slot.frames) == ("1", "2", "3")
+    window.apply_view(view)
+    targets = {key: frame.target for key, frame in window.preview_slot.frames.items()}
     requests = []
     dialog.visibility_requested.connect(lambda *args: requests.append(args))
     dialog.advanced_toggle.click()
     app.processEvents()
     assert dialog.details.isVisible()
     assert dialog.preview_host.geometry().right() < dialog.details.x()
+    # Card padding keeps the Projectors card a little above a third.
     assert dialog.details.width() / sum(dialog.splitter.sizes()) == pytest.approx(
-        1 / 3, abs=0.03
+        1 / 3, abs=0.06
     )
-    assert dialog.timeline.width() == dialog.splitter.width()
     assert dialog.details.isAncestorOf(dialog.timeline.motion_section)
     before = dialog.preview_host.width()
     dialog.splitter.moveSplitter(before - 180, 1)
@@ -20476,7 +20472,9 @@ def test_preview_workspace_chooses_largest_frames(app, count, width, height, col
     slot = PreviewSlot()
     slot.resize(width, height)
     slot.set_sources(
-        tuple(PreviewView(str(i), str(i), active=True) for i in range(count)),
+        tuple(
+            PreviewView(str(i), str(i), active=True, visible=True) for i in range(count)
+        ),
         reserve_active=True,
     )
     slot.show()
@@ -20522,8 +20520,9 @@ def test_preview_timeline_visibility_and_advanced_preference(app, tmp_path):
     assert again.advanced_toggle.isChecked() and again.timeline.advanced
     again.show()
     app.processEvents()
+    # Card padding keeps the Projectors card a little above a third.
     assert again.details.width() / sum(again.splitter.sizes()) == pytest.approx(
-        1 / 3, abs=0.03
+        1 / 3, abs=0.06
     )
     host.close()
     host.deleteLater()
@@ -20576,14 +20575,60 @@ def test_preview_top_row_holds_system_controls_hud_console_and_view_toggles(
     dialog = window.dashboard.preview_workspace
     show_previews(window)
     assert dialog.toggle_bar.isAncestorOf(dialog.advanced_toggle)
-    assert dialog.timeline.isAncestorOf(dialog.toggle_bar)
+    assert dialog.timeline_card.header.indexOf(dialog.toggle_bar) >= 0
     # No REC or output-fault lamp is drawn in the HUD card.
     assert not dialog.hud_card.findChildren(QLabel, "rec-lamp")
     cards = (window.dashboard.session_controls, dialog.hud_card, dialog.log_card)
     assert cards[0].geometry().right() < cards[1].x()
     assert cards[1].geometry().right() < cards[2].x()
     assert len({card.y() for card in cards}) == 1
-    assert dialog.timeline.y() > max(card.geometry().bottom() for card in cards)
+    assert dialog.timeline_card.y() > max(card.geometry().bottom() for card in cards)
+
+
+def test_dashboard_view_tabs_follow_session_and_manual_choice(window, app):
+    dashboard = window.dashboard
+    tabs = dashboard.view_tabs
+    assert [tabs.tabText(i) for i in range(tabs.count())] == ["Configure", "Monitor"]
+    assert tabs.currentIndex() == 0 and not dashboard.runtime_layout
+    tabs.setCurrentIndex(1)  # Monitor before Start: workspace with System controls
+    app.processEvents()
+    assert dashboard.runtime_layout
+    assert dashboard.preview_workspace.top.indexOf(dashboard.session_controls) >= 0
+    tabs.setCurrentIndex(0)
+    show_previews(window)  # Start switches to Monitor
+    assert tabs.currentIndex() == 1 and dashboard.runtime_layout
+    tabs.setCurrentIndex(0)  # A manual Configure choice survives running updates
+    window.apply_view(replace(dashboard.view, elapsed_s=5))
+    assert tabs.currentIndex() == 0 and not dashboard.runtime_layout
+    window.apply_view(replace(dashboard.view, phase=Phase.ENDED))
+    assert tabs.currentIndex() == 0
+    show_previews(window)
+    assert tabs.currentIndex() == 1
+    window.apply_view(replace(dashboard.view, phase=Phase.ENDED))
+    assert tabs.currentIndex() == 0 and not dashboard.runtime_layout
+
+
+def test_advanced_projector_toggles_free_hidden_sections(app):
+    from cephvr.gui.previews import PreviewWorkspace
+
+    workspace = PreviewWorkspace(None)
+    timeline = workspace.timeline
+    left, right = QWidget(), QWidget()
+    timeline.projector_cards = {"Left": left, "Right": right}
+    timeline.place_projectors()
+    timeline.cards_changed.emit()
+    assert list(workspace.projector_controls) == ["Left", "Right"]
+    assert (
+        workspace.advanced_row.isHidden() is not workspace.advanced_toggle.isChecked()
+    )
+    workspace.projector_controls["Left"].setChecked(False)
+    assert timeline.instrument_host.instruments == [right]
+    assert left.isHidden() and not timeline.projector_visible("Left")
+    workspace.projector_controls["Right"].setChecked(False)
+    assert timeline.instrument_host.instruments == [timeline.notice]
+    workspace.projector_controls["Left"].setChecked(True)
+    assert timeline.instrument_host.instruments == [left]
+    workspace.close()
 
 
 @pytest.mark.parametrize("style", ["standard", "retro_console"])
@@ -20605,7 +20650,9 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
         PreviewView(camera.key, camera.role, active=True, available=True, reason="")
         for camera in cameras
     )
-    state = DashboardView(connected=True, has_control=True, previews=sources)
+    state = DashboardView(
+        connected=True, has_control=True, previews=sources, phase=Phase.RUNNING
+    )
     window.recordings.install_values({behavior.key: True})
     window.apply_view(state)
     window.show()
@@ -20614,23 +20661,20 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
     requests = []
     dialog.visibility_requested.connect(lambda *args: requests.append(args))
     app.processEvents()
-    assert tuple(window.preview_slot.frames) == (behavior.key,)
+    # Toggles live in the timeline's Video row; nothing is shown yet, so no frames.
+    assert tuple(window.preview_slot.frames) == ("",)
     for camera in others:
         assert not dialog.controls[camera.key].isEnabled()
-        assert not dialog.source_widgets[camera.key].isVisible()
+        assert dialog.video_row.isAncestorOf(dialog.controls[camera.key])
         dialog.request(camera.key, True)
     assert not requests
-    frame = window.preview_slot.frames[behavior.key]
     control = dialog.controls[behavior.key]
-    assert frame.header.isAncestorOf(control)
+    assert control.text() == behavior.role
     assert control.isVisible() and control.isEnabled()
-    assert control.mapTo(frame, QPoint()).y() + control.height() <= frame.target.y()
-    assert frame.target.y() - (frame.header.y() + frame.header.height()) == 8
     added = others[0].key
     window.recordings.record[added].setChecked(True)
     app.processEvents()
-    assert set(window.preview_slot.frames) == {behavior.key, added}
-    assert window.preview_slot.frames[added].header.isAncestorOf(dialog.controls[added])
+    assert dialog.controls[added].isEnabled()
     dialog.controls[added].click()
     assert requests == [(added, True)] and not dialog.controls[added].isEnabled()
     visible = replace(
@@ -20640,6 +20684,10 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
         ),
     )
     window.apply_view(visible)
+    app.processEvents()
+    assert tuple(window.preview_slot.frames) == (added,)
+    frame = window.preview_slot.frames[added]
+    assert frame.header.isAncestorOf(dialog.source_widgets[added])
     window.recordings.record[added].setChecked(False)
     assert added in window.preview_slot.frames  # Keep an already-open viewer closable.
     dialog.controls[added].click()
@@ -20653,7 +20701,6 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
     window.select_page(0)
     show_previews(window)
     app.processEvents()
-    assert window.preview_slot.frames[behavior.key].header.isAncestorOf(control)
     window.apply_view(replace(state, has_control=False))
     assert not control.isEnabled()
     window.close()

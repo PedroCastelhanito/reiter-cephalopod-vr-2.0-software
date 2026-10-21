@@ -58,14 +58,16 @@ remain open. Continuous capture is design-only and was not certified.
   Offscreen reflow, frame identity, preference and plot checks pass22 cases; native
   viewer follow was not exercised. — [Runtime assessment](runtime.md)
 
-- [ ] `dashboard-embedded-previews`: with G01rev293/G02rev109, press Start and check the
-  Dashboard swaps to the runtime preview layout (System controls in place, HUD,
-  Console, timeline, stream footprints) and returns to the form after Stop/Ended.
-  Native viewers must sit on their in-window footprints, follow the main window
-  (move/minimize/restore), hide on leaving the Dashboard tab or the layout, and
-  reappear with Show state and capture intact. Previews are no longer available
-  before Start; the Cameras page grid is unchanged. Offscreen layout checks only;
-  native follow not exercised. — [Runtime](runtime.md)
+- [ ] `dashboard-embedded-previews`: with G01rev294/G02rev112, press Start and check the
+  Dashboard switches to Monitor (System controls at row height, HUD, Log, Timeline
+  card, stream footprints) and back to Configure after Stop/Ended; switch manually
+  both ways mid-session. Check each Video-row checkbox opens/closes its viewer and
+  that showing/hiding a stream reflows the remaining frames with each native viewer
+  re-placed on its new footprint (untouched windows follow; manually moved ones keep
+  their opt-out). Native viewers must follow the main window (move/minimize/restore),
+  hide on leaving the Dashboard tab or Monitor, and reappear with capture intact.
+  Advanced-row checkboxes hide/show projector sections. Offscreen layout checks only;
+  native follow and reflow not exercised. — [Runtime](runtime.md)
 
 - [ ] With G01rev268, open Previews before Setup and during a recorded trial, wide (side-by-side) and narrow (stacked), and check native viewers sit on their frames.
   Confirm in-frame reasons, the VIEW strip (the HUD no longer shows a REC lamp), the dimmed remaining plan, 60 s left-pinned window, cursor and
