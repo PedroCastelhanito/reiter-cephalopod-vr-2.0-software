@@ -10,8 +10,6 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `post-rig-commit-sync` [repo] Review and commit the current changes after cleanup, then sync main with origin. Owner: rig-validation chat. Done when commit and remote equality are verified. — [LOG](LOG.md)
-
 - [ ] `setup-watchdog-cleanup` [controller] [supervisor] [acquisition] [visual_stimulus] Diagnose the reproduced MCU PING failure and unconfirmed failed-Setup cleanup, then complete full-texture acceptance. Oct21 bounded dummy/Abort/reuse and326s idle reuse pass; full-texture Setup fails PING114.451ms/99.979ms, CancelSetup cleanup fails, supervisor subsequently shuts down owned processes; preserving recovery restores original runtime/history exactly. Cause remains unproven; runtime behavior changes require owner approval. Owner: rig-validation chat. — [Current evidence](reports/runtime.md#current-rig-validation--2026-10-21)
 
 - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).

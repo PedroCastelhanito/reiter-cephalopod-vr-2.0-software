@@ -8004,3 +8004,16 @@ retry of python -m build --no-isolation successfully produced source archive and
 Windows cp311 wheel outside the checkout. Logs retained in rig-validation/sync-build*.txt.
 Whole-tree diff whitespace passes. Origin fetched; main and origin/main identical
 before the requested new commit. Git stage/commit/push outcome follows separately.
+
+### 2026-10-21 - current changes committed and synced
+
+[repo] `post-rig-commit-sync`: committed the reviewed current source, contracts,
+docs, tests and retained evidence as2ad73198 (358 files); staged whitespace passed
+and no caches, media, package archives or NPY/NPZ datasets were staged. First push
+was rejected by automatic review because destination ownership was not evidenced.
+Read-only Git Credential Manager account listing confirmed PedroCastelhanito,
+matching existing origin owner; the reviewed retry then pushed main successfully
+fromc740c5c2 to2ad73198. No alternate remote or bypass used. Origin/main and HEAD
+match after push. Cleanup and validation results above remain scoped; MCU PING,
+long-path approval and parallel GUI input findings remain open. Task complete;
+this LOG/TODO reconciliation is a documentation-only follow-up to the verified sync.
