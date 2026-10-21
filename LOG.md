@@ -8119,3 +8119,14 @@ managed-output-280.txt. No Start, full-texture or full-recording acceptance clai
 MCU PING/full-workload and physical checks remain open. Task removed from TODO after
 recording completed focused verification. Preparing scoped commit/sync; concurrent
 GUI edits remain separate.
+
+### 2026-10-21 - approved long-path corrections committed and synced
+
+[controller] [shared] `long-output-path-preflight`: scoped implementation, owning
+tests, current reports/TODO and retained rig evidence committed as ee503203 and
+pushed to existing origin/main successfully. Staged whitespace passed; no caches,
+media or concurrent GUI changes included. Local HEAD and origin/main match after
+push. Concurrent GUI source/architecture/report/log changes and an independently
+appended live runtime stderr line remain untouched in the working tree. This final
+LOG reconciliation records verified sync; validation/remaining limitations above
+are unchanged.
