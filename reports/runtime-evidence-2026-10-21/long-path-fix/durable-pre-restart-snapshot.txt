@@ -1,0 +1,327 @@
+{
+  "controller_generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879",
+  "captured_monotonic_ns": "584803524590900",
+  "state_revision": "2044",
+  "configuration": {
+    "revision": "7",
+    "edit_validation": [
+      {
+        "configuration_revision": "7",
+        "completed": true,
+        "valid": true,
+        "component": "experiment",
+        "configuration_module_version": "experiment-v1"
+      },
+      {
+        "configuration_revision": "7",
+        "completed": true,
+        "valid": true,
+        "component": "acquisition",
+        "configuration_module_version": "acquisition-config-v1"
+      },
+      {
+        "configuration_revision": "7",
+        "completed": true,
+        "valid": true,
+        "component": "synchronization",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "7",
+        "completed": true,
+        "valid": true,
+        "component": "tracking",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "7",
+        "completed": true,
+        "valid": true,
+        "component": "visual_stimulus",
+        "configuration_module_version": "visual-stimulus-config-v2"
+      }
+    ]
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "760a5a58-3053-4fe3-a6c5-ec2211e33395"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "efdf7e5b-1b59-4764-a98e-a86ce3bcaf85"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "a2956836-8f6f-4aeb-a414-f861addc51dd"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879",
+          "session_id": "03c8100a-dbed-4d94-a1d2-6091d6e1aab7"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "4eec4271-397c-44af-abef-7425402a9e19"
+      },
+      "command": "CancelSetup",
+      "work": {
+        "session": {
+          "controller_generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879",
+          "session_id": "03c8100a-dbed-4d94-a1d2-6091d6e1aab7"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "interruption and cleanup confirmed"
+    },
+    {
+      "context": {
+        "command_id": "fedf368a-3be8-48a0-9501-df02c38e5b37"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "7e6c1499-c7d6-40fe-968c-98707d17d445"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "0aaefa44-d7b6-46b8-9254-4e4cb9630a63"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "fc2499c0-bd2f-45dc-afde-2b42333e9f2c"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879",
+          "session_id": "1c617675-3384-4908-8325-aa2bddd5c62a"
+        }
+      },
+      "complete": true,
+      "succeeded": false,
+      "progress": "Checking output folder\u2026",
+      "failure": {
+        "code": "SETUP_FAILED",
+        "message": "[WinError 3] The system cannot find the path specified: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\reports\\\\runtime-evidence-2026-10-21\\\\long-path-fix\\\\recordings\\\\pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\\\20261021_longpath_setup_oct21\\\\SPRIGCHECK-141027'"
+      }
+    },
+    {
+      "context": {
+        "command_id": "1b2ec826-8749-42ac-8057-18a951509f62"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "c5799220-1985-4230-80ca-a049ff121b38"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "3138733d-55bf-4ef5-b0d6-fd9e66f589a4"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "8e2e99b9-d447-4390-bfb2-f6819158ef1d"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879",
+          "session_id": "4998fb67-c2fe-40af-b520-fbeb0b714f7a"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "2376aeef-7c38-4a01-bbeb-a1bb46f93b5d"
+      },
+      "command": "CancelSetup",
+      "work": {
+        "session": {
+          "controller_generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879",
+          "session_id": "4998fb67-c2fe-40af-b520-fbeb0b714f7a"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "interruption and cleanup confirmed"
+    },
+    {
+      "context": {
+        "command_id": "653c9b41-faeb-4793-9922-9bd9cc2f62e0"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "c5e428f5-8fea-4a81-99e6-1f2c986ffa34"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "fe5920be-7d19-41d6-accb-4138ca17b453",
+      "component": "controller",
+      "message": "[WinError 3] The system cannot find the path specified: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\reports\\\\runtime-evidence-2026-10-21\\\\long-path-fix\\\\recordings\\\\pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\\\20261021_longpath_setup_oct21\\\\SPRIGCHECK-141027'"
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "ad7c8a98-64c2-439f-a81f-5ed5fd553429"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "ad7c8a98-64c2-439f-a81f-5ed5fd553429"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879"
+    },
+    "command_id": "760a5a58-3053-4fe3-a6c5-ec2211e33395",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "581833461074000",
+        "idle_swap_return_ns": "581833461405600",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "581833588456000",
+        "idle_swap_return_ns": "581833588540800",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "581833640426400",
+        "idle_swap_return_ns": "581833640552500",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "581833683293100",
+        "idle_swap_return_ns": "581833683362100",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "581833683417600",
+    "complete": true
+  },
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {},
+  "stimulus_preview": {
+    "source": {
+      "role": "visual_stimulus_renderer",
+      "generation": "a4cc033d-b6a5-4722-84f3-a6aae01e6ceb"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "ad7c8a98-64c2-439f-a81f-5ed5fd553429"
+    },
+    "session": {
+      "controller_generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879",
+      "session_id": "4998fb67-c2fe-40af-b520-fbeb0b714f7a"
+    },
+    "configuration_revision": "6",
+    "revision": "4"
+  }
+}

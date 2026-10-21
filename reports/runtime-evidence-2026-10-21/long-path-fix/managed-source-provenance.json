@@ -1,0 +1,10 @@
+{
+  "captured_utc": "2026-10-21T05:10:07.041612+00:00",
+  "revision": "975bbdaa66d59da75a6d3fc308fabdeee814ba8f",
+  "controller_generation": "b8c6f53a-2daf-4b8d-941a-44949d9e4879",
+  "sha256": {
+    "src/cephvr/controller/metadata/reservation.py": "91b3b68c4ddd192413ac9fa1cca72d6298956e8c1234f2cf2e35257f47f47399",
+    "tests/controller/test_storage.py": "6a0a798c94980c92ceea9a2d7b118818ede7c74f8787afae20f97ea2d1d1b512",
+    "config/last_configuration.json": "9df0aab55c69eb150b88eae5621f1f048861c2447d07449001063b8fcc16be59"
+  }
+}

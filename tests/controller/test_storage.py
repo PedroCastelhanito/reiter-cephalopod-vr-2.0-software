@@ -97,6 +97,112 @@ def test_unexpected_file_blocks_cancel_without_deletion(tmp_path: Path) -> None:
 
 @pytest.mark.windows
 @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+@pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+@pytest.mark.parametrize("session_length", [247, 280])
+def test_native_reservation_creates_long_child_namespaces(
+    tmp_path: Path, finish: str, session_length: int
+) -> None:
+    from cephvr.platform.windows.paths import extended_path
+
+    padding = session_length - len(str(_reservation(tmp_path).session_directory)) - 1
+    assert 0 < padding < 255
+    root = tmp_path / ("p" * padding)
+    Path(extended_path(root)).mkdir()
+    reservation = _reservation(root)
+    assert len(str(reservation.session_directory)) == session_length
+    assert len(str(reservation.protocol_directory)) > 260
+    assert len(str(reservation.spikeglx_directory)) > 260
+    paths = (
+        reservation.experiment_directory,
+        reservation.session_directory,
+        reservation.protocol_directory,
+        reservation.spikeglx_directory,
+    )
+    assert all(not str(path).startswith("\\\\?\\") for path in paths)
+    try:
+        assert reservation.acquire() == []
+        assert reservation._created == list(paths)
+        marker = reservation.inspect_marker()
+        assert marker.session_id == reservation.session_id
+        assert marker.controller_generation == reservation.generation
+        assert not marker.complete
+        competing = _reservation(root)
+        try:
+            with pytest.raises(StorageError, match="locked"):
+                competing.acquire()
+        finally:
+            competing.release()
+        if finish == "cancel":
+            reservation.cancel()
+            assert not reservation.held
+            assert not Path(extended_path(reservation.experiment_directory)).exists()
+        else:
+            evidence = reservation.protocol_directory / "retained.bin"
+            Path(extended_path(evidence)).write_bytes(b"preserve")
+            assert reservation._direct_children() == [evidence]
+            with pytest.raises(StorageError, match="unexpected files"):
+                reservation.cancel()
+            assert reservation.held
+            assert Path(extended_path(evidence)).read_bytes() == b"preserve"
+            assert reservation.inspect_marker() == marker
+            if finish == "reopen_close":
+                reservation.release()
+                reservation = OutputReservation.open_existing(
+                    paths[1], marker.session_id, marker.controller_generation
+                )
+                assert reservation.inspect_marker() == marker
+                assert reservation.session_directory == paths[1]
+            reservation.close_unactivated()
+            assert not reservation.held
+            assert Path(extended_path(evidence)).read_bytes() == b"preserve"
+            complete = json.loads(
+                Path(extended_path(reservation.marker)).read_text(encoding="utf-8")
+            )
+            assert complete["complete"] and complete["outcome"] == "not_activated"
+    finally:
+        reservation.release()
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+def test_native_long_path_collision_resolution_keeps_logical_identity(
+    tmp_path: Path,
+) -> None:
+    from cephvr.platform.windows.paths import extended_path
+
+    padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+    assert 0 < padding < 255
+    root = tmp_path / ("p" * padding)
+    root.mkdir()
+    reservation = _reservation(root)
+    assert len(str(reservation.protocol_directory)) > 260
+    Path(extended_path(reservation.protocol_directory)).mkdir(parents=True)
+    Path(extended_path(reservation.spikeglx_directory)).mkdir()
+    evidence = reservation.protocol_directory / "collision.bin"
+    Path(extended_path(evidence)).write_bytes(b"preserve until explicit choice")
+    try:
+        assert reservation.acquire() == [evidence]
+        assert reservation._direct_children() == [evidence]
+        with pytest.raises(StorageError, match="collision set changed"):
+            reservation.resolve_collisions([evidence.with_name("other.bin")])
+        assert (
+            Path(extended_path(evidence)).read_bytes()
+            == b"preserve until explicit choice"
+        )
+        reservation.resolve_collisions([evidence])
+        assert not Path(extended_path(evidence)).exists()
+        marker = reservation.inspect_marker()
+        assert marker.session_id == reservation.session_id
+        assert not marker.complete
+        reservation.close_unactivated()
+        assert not reservation.held
+        assert Path(extended_path(reservation.protocol_directory)).is_dir()
+    finally:
+        reservation.release()
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
 @pytest.mark.parametrize("preexisting", [False, True])
 def test_native_cancellation_handles_long_quarantine_paths(
     tmp_path: Path, preexisting: bool
@@ -153,10 +259,12 @@ def test_preexisting_session_cancellation_never_unlinks_new_owners_lock(
     assert reservation.acquire() == []
     assert reservation._lock_created
     if os.name == "nt":
+        from cephvr.platform.windows.paths import logical_path
+
         original_replace = os.replace
 
         def guarded_replace(source: Path, destination: Path) -> None:
-            if source == reservation.lock_path:
+            if Path(logical_path(source)) == reservation.lock_path:
                 assert reservation._lock_fd is None
                 assert reservation.held
             original_replace(source, destination)
@@ -218,12 +326,14 @@ def test_failed_session_quarantine_preserves_unfinished_marker(
 ) -> None:
     import os
 
+    from cephvr.platform.windows.paths import logical_path
+
     reservation = _reservation(tmp_path)
     reservation.acquire()
     original = os.replace
 
     def fail_session_rename(source: Path, destination: Path) -> None:
-        if source == reservation.session_directory:
+        if Path(logical_path(source)) == reservation.session_directory:
             raise OSError("busy directory")
         original(source, destination)
 

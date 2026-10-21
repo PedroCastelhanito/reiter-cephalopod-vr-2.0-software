@@ -18,12 +18,14 @@ def _move(source: Path, destination: Path, *, replace: bool) -> None:
     if sys.platform != "win32":
         raise WindowsLaunchError("Windows metadata publication requires Windows")
     source, destination = Path(source), Path(destination)
-    if source.parent.resolve(strict=True) != destination.parent.resolve(strict=True):
-        raise ValueError("metadata publication must remain in one directory")
     source_io, destination_io = (
         Path(extended_path(source)),
         Path(extended_path(destination)),
     )
+    if source_io.parent.resolve(strict=True) != destination_io.parent.resolve(
+        strict=True
+    ):
+        raise ValueError("metadata publication must remain in one directory")
     if source_io.is_symlink() or destination_io.is_symlink():
         raise ValueError("metadata publication cannot follow a symlink")
     if not source_io.is_file():

@@ -8017,3 +8017,105 @@ fromc740c5c2 to2ad73198. No alternate remote or bypass used. Origin/main and HEA
 match after push. Cleanup and validation results above remain scoped; MCU PING,
 long-path approval and parallel GUI input findings remain open. Task complete;
 this LOG/TODO reconciliation is a documentation-only follow-up to the verified sync.
+
+### 2026-10-21 - approved long-path reservation correction started
+
+[controller] [acquisition] [visual_stimulus] `long-output-path-preflight`: owner
+approved the focused long-path fix after the prior commit/sync. Clean975bbdaa baseline;
+Astra confirms E04/E07 existing semantics: extend only Windows mkdir I/O spelling,
+retain logical path identity, guards, symlink/collision checks and cleanup. ARCH-002
+review reuses the existing helper and cohesive reservation owner, adds no dependency,
+state or module. Sol6.1 owns existing-module native regression and managed verification;
+root owns production/docs. No MCU/deadline/firmware change authorized by this approval.
+
+### 2026-10-21 - long-path mkdir correction and adjacent listing failure
+
+[controller] [acquisition] [visual_stimulus] `long-output-path-preflight`: applied
+approved Windows-only extended-path mkdir I/O; logical paths, guards and cleanup
+bookkeeping unchanged. Sol6.1 added three native lifecycle cases to existing
+storage tests. All fail before fix creating261-character child directories; after
+fix creation succeeds but ordinary-path _direct_children enumeration fails.
+Existing storage29 pass/one skip and platform17 pass/one skip. Astra reviewed
+production/tests with no actionable ownership issue and requires logical returned
+children for any listing correction. Asked owner before extending runtime scope;
+managed Setup retest remains pending. Raw before/after evidence retained under
+reports/runtime-evidence-2026-10-21/long-path-fix. No MCU or timing changes.
+Unaffected controller checks subsequently pass744/four skips/three new cases
+excluded; controller Ruff, format145, Win32 mypy115 and boundaries742/zero pass.
+Commands/source provenance retained in long-path-fix/verification.json. No managed
+runtime mutations or restart performed; focused change remains uncommitted pending
+completion of the failing long-path regression and owner listing approval.
+
+### 2026-10-21 - approved long-path directory listing correction
+
+[controller] `long-output-path-preflight`: owner approved the adjacent listing fix.
+ARCH-002 review retains the existing reservation method and helper, without new
+state/dependencies. _direct_children enumerates extended Windows paths but returns
+logical directory/name children, preserving collision identity and ownership rules.
+Sol6.1 reruns native lifecycle cases; Astra reviews the focused change. Managed
+Setup remains gated on those results; no MCU/timing changes.
+Listing retest now completes acquisition; all three cases fail inspect_marker at
+ordinary-path os.open of the long marker filename (native-listing-after.txt/xml).
+Astra approves listing semantics; no runtime restart or managed test attempted.
+Requested owner approval for remaining reservation filesystem path-only handling,
+including the proven marker-open boundary, to preserve logical identity and all
+ownership/deletion safeguards without repeated per-call decisions. No further
+production change made pending that answer.
+
+### 2026-10-21 - remaining reservation path handling approved and applied
+
+[controller] `long-output-path-preflight`: owner approved remaining reservation
+filesystem path-only corrections. ARCH-002 consolidates existing Windows helper
+use in private I/O/strict-resolution functions; no new dependency or state. Marker
+open/stat, probes, listing, deletion and both rename operands use extended paths;
+logical identities, strict canonical checks, collision authorization and guard/
+lock/deletion ordering remain intact. Astra reviewed the complete diff without
+findings; Sol6.1 owns native tests and bounded managed Setup/cancel verification.
+
+### 2026-10-21 - reservation tests pass; broader durable publication gap
+
+[controller] [shared] `long-output-path-preflight`: controller748 pass/four skips,
+native platform17 pass/one skip, Ruff/format and Win32 mypy115 pass after approved
+reservation-only correction. Existing rename spies now normalize transport spelling
+to retain failure injection and guard assertions. Astra final review found nothing
+actionable. Prior live process had exited independently; absence was verified before
+normal launcher startup. First managed Ready/cancel succeeded but fixture path was
+too short; restored runtime/history exactly. Longer session Setup fails with truthful
+cleanup and exact restoration. Expanded native session280 geometry proves three
+failures in shared durable.py parent.resolve(strict=True); session247 cases pass.
+Requested approval for focused shared-helper correction; no out-of-scope edit made.
+Managed original-boundary acceptance subsequently passes: session247/child261,
+Ready4.5355s, Cancel132.33ms, exact marker identity and removed session namespace.
+Configuration cleanup=true; runtime configuration and saved history restored exactly
+(SHA256 9df0aab55c69eb150b88eae5621f1f048861c2447d07449001063b8fcc16be59).
+Controller b8c6f53a-2daf-4b8d-941a-44949d9e4879; no Start/full texture run. Evidence
+managed-output-r3.txt and final-snapshot.json. Remaining session280 shared-helper
+regressions stay failing and visible pending approval; commit/sync waits completion.
+
+### 2026-10-21 - shared durable helper long-path correction approved
+
+[controller] [shared] `long-output-path-preflight`: owner approved durable helper
+parent-resolution correction. ARCH-002 reorders the existing extended-path locals
+before strict same-parent validation; no new helper/dependency/state and no change
+to symlink checks, MoveFileExW flags or durability guarantees. Sol6.1 verifies the
+expanded native cases, publication guards and bounded managed session280; Astra
+reviews the focused diff. Prior failures remain retained as historical evidence.
+
+### 2026-10-21 - long-path reservation and managed Setup verified
+
+[controller] [shared] [acquisition] [visual_stimulus] `long-output-path-preflight`:
+completed owner-approved reservation and durable-helper path-only corrections.
+Astra final review found no actionable issue. Sol6.1 controller/native platform
+769 pass/five skips; Ruff, format147, Win32 mypy116, boundaries742/zero pass.
+Native session247/280 cases retain marker identity, ownership exclusion, unexpected
+files and stale-collision rejection; durable tests preserve same-parent/create/
+replace guards. Full managed session280/child294 Ready5.0185s, Cancel122.50ms,
+exact marker and removed session namespace pass. Normal shutdown's first absence
+check still saw two old processes; launch waited until a bounded second check
+confirmed zero. New controller16d96273-2eaa-4767-a153-efc12ddf481d is Configuration,
+cleanup confirmed. Original runtime/history restored exactly (SHA2569df0aab55c69eb150b88eae5621f1f048861c2447d07449001063b8fcc16be59).
+Evidence/commands/source hashes: long-path-fix/verification.json and
+managed-output-280.txt. No Start, full-texture or full-recording acceptance claimed;
+MCU PING/full-workload and physical checks remain open. Task removed from TODO after
+recording completed focused verification. Preparing scoped commit/sync; concurrent
+GUI edits remain separate.

@@ -1,0 +1,2 @@
+src\cephvr\controller\metadata\reservation.py:174: error: Need type annotation for "children" (hint: "children: list[<type>] = ...")  [var-annotated]
+Found 1 error in 1 file (checked 115 source files)

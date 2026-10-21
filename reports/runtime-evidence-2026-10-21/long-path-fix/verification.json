@@ -1,0 +1,249 @@
+{
+  "captured_utc": "2026-10-21T04:07:13.959220+00:00",
+  "revision": "975bbdaa66d59da75a6d3fc308fabdeee814ba8f",
+  "status": "Focused reservation and Windows durable path-I/O repair verified. All expanded native cases and affected owner suites pass; managed Setup/Cancel passes at session280/child294, with exact original restoration.",
+  "sha256": {
+    "src/cephvr/controller/metadata/reservation.py": "f573101461fd487a598dbe57f76870f32b45af7bfb7765c2cc0a9bf692c87375",
+    "tests/controller/test_storage.py": "8f32f6c19715cd166b96f78c06324eccf673197055a5eab749a32c45f07ad19b",
+    "config/last_configuration.json": "9df0aab55c69eb150b88eae5621f1f048861c2447d07449001063b8fcc16be59"
+  },
+  "native_test_scope": "Real Windows API against own temporary paths/guards;session247,protocol/spikeglx261;not rig workload acceptance",
+  "results": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_storage.py -q -k native_reservation_creates_long_child_namespaces",
+      "evidence": "native-before-r2.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "3",
+      "skipped": "0",
+      "tests": "3",
+      "time": "0.376",
+      "timestamp": "2026-10-21T13:05:01.953061+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_storage.py -q",
+      "evidence": "storage-after.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "3",
+      "skipped": "1",
+      "tests": "33",
+      "time": "0.631",
+      "timestamp": "2026-10-21T13:06:16.194521+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/platform/test_windows_native_on_rig.py -q",
+      "evidence": "platform-after.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "1",
+      "tests": "18",
+      "time": "2.205",
+      "timestamp": "2026-10-21T13:06:16.515982+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller -q -k \"not native_reservation_creates_long_child_namespaces\"",
+      "evidence": "controller-unaffected.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "4",
+      "tests": "748",
+      "time": "11.502",
+      "timestamp": "2026-10-21T13:06:51.531924+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "744 pass,4 skip,3 demonstrated long-path cases explicitly deselected;not complete owner pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_storage.py -q -k native_reservation_creates_long_child_namespaces",
+      "evidence": "native-listing-after.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "3",
+      "skipped": "0",
+      "tests": "3",
+      "time": "0.337",
+      "timestamp": "2026-10-21T14:06:32.050566+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "After approved mkdir+directory listing fixes;acquire completes then inspect_marker fails at plain os.open(marker):FileNotFoundErrorErrno2"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_storage.py -q -k native_reservation_creates_long_child_namespaces",
+      "evidence": "native-complete-after.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "3",
+      "time": "0.243",
+      "timestamp": "2026-10-21T14:08:20.243870+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "Original3nativecasespassaftercompleteapprovedreservationboundary"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller -q",
+      "evidence": "controller-final.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "4",
+      "tests": "752",
+      "time": "10.511",
+      "timestamp": "2026-10-21T14:09:00.311239+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "748pass4skipbeforeadding3broader280cases"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/platform/test_windows_native_on_rig.py -q",
+      "evidence": "platform-final.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "1",
+      "tests": "18",
+      "time": "2.069",
+      "timestamp": "2026-10-21T14:09:01.318542+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "17pass1symlinkprivilegeskip"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_storage.py -q -k \"native_reservation_creates_long_child_namespaces or native_long_path_collision\"",
+      "evidence": "native-geometries.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "3",
+      "skipped": "0",
+      "tests": "7",
+      "time": "0.449",
+      "timestamp": "2026-10-21T14:11:05.753170+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "4pass3fail;247cases+logicalcollisionpass;280casesfailatomic_json->Windowsdurable._move source.parent.resolve(strict=True)WinError3;notreservationboundary"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_storage.py -q -k \"native_reservation_creates_long_child_namespaces or native_long_path_collision\"",
+      "evidence": "native-durable-after.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "7",
+      "time": "0.319",
+      "timestamp": "2026-10-21T14:58:38.730970+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "All seven native cases pass after the approved Windows durable helper repair, including both 247- and 280-character session geometry."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller tests/platform/test_windows_native_on_rig.py -q",
+      "evidence": "controller-platform-durable-final.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "5",
+      "tests": "774",
+      "time": "12.430",
+      "timestamp": "2026-10-21T14:58:56.041105+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "Final affected controller and native Windows suite:769 passed,5 skipped. Includes long durable create/replace, existing-target refusal and cross-parent rejection."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_storage.py -q",
+      "evidence": "storage-final.txt",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "1",
+      "tests": "34",
+      "time": "0.596",
+      "timestamp": "2026-10-21T14:08:40.747223+09:00",
+      "hostname": "DESKTOP-MSOH8EL",
+      "scope": "Historical intermediate run:the unchanged logical-source rename spy stopped injecting after approved extended I/O spelling. Test-only logical_path normalization restored its original safety assertion;final owning suite passes."
+    }
+  ],
+  "static": {
+    "ruff": "Affected controller/durable source and owning tests pass;ruff-durable-final.txt",
+    "format": "147 files already formatted;format-durable-final.txt",
+    "mypy_win32": "116 source files pass;mypy-durable-final.txt",
+    "boundaries": "742 backend modules;0violations;existing cohesion warnings;boundaries-durable-final.txt"
+  },
+  "managed": "Both original child boundary(session247/child261) and expanded boundary(session280/child294) pass bounded Setup/Ready/Cancel. No trial was started.",
+  "assessment": [
+    "Failure-first, listing, marker-open and shared-durable failures remain retained as historical evidence. Each successive extension was separately approved.",
+    "The repaired reservation boundary keeps logical paths, exact guards, strict resolution, collision refusal, still-empty deletion and marker/lock sequencing. Native tests exercise refusal and preservation paths.",
+    "Windows durable create/replace now resolves extended parent paths strictly before MoveFileExW. Existing destination refusal and cross-parent rejection pass at both normal and280-character directories.",
+    "Final native geometry and owner suites pass. Managed fresh-runtime Setup/Cancel confirms the original and expanded path boundaries with exact session/marker identities and cleanup.",
+    "All managed attempts restored original runtime configuration and byte-exact saved history. No full-texture workload or trial Start was performed."
+  ],
+  "finished_utc": "2026-10-21T06:01:15.920650+00:00",
+  "current_sha256": {
+    "src/cephvr/controller/metadata/reservation.py": "91b3b68c4ddd192413ac9fa1cca72d6298956e8c1234f2cf2e35257f47f47399",
+    "src/cephvr/platform/windows/durable.py": "f29f56af79b2e298fcc908ed3eeb7ec52b5837612e6924a86a5d0c5508b1ded5",
+    "tests/controller/test_storage.py": "c1a9938793b02f0a41b94ce5dc55b400155d6e1a4d032b4858dbe7de405fc8bc",
+    "tests/platform/test_windows_native_on_rig.py": "faf095ffcfa806ce7e176133b512c55c7eace3865b40fdd60d0f0fe6187e20cc"
+  },
+  "updated_utc": "2026-10-21T06:01:15.920650+00:00",
+  "managed_attempts": [
+    {
+      "attempt": 1,
+      "evidence": "managed-output.txt",
+      "scope": "Fixture geometry error: child path was below 260 characters; Setup/Cancel and restoration pass, but this is not long-path acceptance.",
+      "setup_ready_ms": 5011.7018,
+      "cancel_ms": 137.9497,
+      "restored": true
+    },
+    {
+      "attempt": 2,
+      "evidence": "managed-output-r2.txt",
+      "scope": "Session path exceeds 260 characters; Setup fails with WinError 3 before backend preparation. Native 280-character cases identify the shared Windows durable helper strict-parent resolve boundary.",
+      "setup_ms": 36.517,
+      "restored": true
+    },
+    {
+      "attempt": 3,
+      "evidence": "managed-output-r3.txt",
+      "scope": "Exact 247-character session and 261-character protocol child. Small existing 60-second Gaussian protocol prepared with two attached cameras; Eye, Tracking processing and synchronization disabled. No Start or trial recording.",
+      "setup_ready_ms": 4535.5028,
+      "cancel_ms": 132.3294,
+      "session_id": "4998fb67-c2fe-40af-b520-fbeb0b714f7a",
+      "marker_identity_verified": true,
+      "logical_paths_preserved": true,
+      "created_session_namespace_absent": true,
+      "restored": true
+    },
+    {
+      "attempt": 4,
+      "evidence": "managed-output-280.txt;durable-managed/events.jsonl",
+      "scope": "Fresh normal runtime with an exact280-character session and294-character child. The existing60-second Gaussian protocol was prepared with two attached cameras. No Start or trial recording.",
+      "setup_ready_ms": 5018.4964,
+      "cancel_ms": 122.5019,
+      "session_id": "320d1812-204a-4e86-a7ad-db9618cd4797",
+      "marker_identity_verified": true,
+      "logical_paths_preserved": true,
+      "created_session_namespace_absent": true,
+      "restored": true
+    }
+  ],
+  "final_runtime": {
+    "controller_generation": "16d96273-2eaa-4767-a153-efc12ddf481d",
+    "phase": "Configuration",
+    "cleanup_confirmed": true,
+    "no_session": true,
+    "runtime_equals_original": true,
+    "history_bytes_equal": true,
+    "history_sha256": "9df0aab55c69eb150b88eae5621f1f048861c2447d07449001063b8fcc16be59",
+    "snapshot": "durable-managed/final-snapshot.json",
+    "restart": "Normal ShutdownApplication handoff;first5scheck retained2oldowned processes so no launch;secondboundedcheckverified0before normalentrylaunch",
+    "old_process_absence": "durable-old-processes-absent.json"
+  },
+  "managed_production_hash_matches_current": true,
+  "test_scope": "Existing owning storage module covers marker identity, competing ownership, logical created/listed paths, unexpected-file cancellation refusal, stale/exact collision resolution, cancellation, release/reopen, and close_unactivated file preservation. Two existing rename spies normalize I/O arguments back to logical paths so their original assertions still execute.",
+  "limits": [
+    "No full-texture workload, trial Start, long-path video recording, optical/electrical timing or full-workload PING acceptance.",
+    "No firmware,serial budget/retry,scientific settings or lifecycle policy changes.",
+    "Historical native failures remain evidence of earlier source states;they are resolved by the approved focused repair and final passing checks."
+  ],
+  "results_are_historical_sequence": true
+}

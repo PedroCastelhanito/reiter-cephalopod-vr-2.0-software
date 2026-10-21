@@ -674,26 +674,46 @@ def test_application_exit_receipt_is_durable_and_private(tmp_path: Path) -> None
     assert store.read_exit_receipt(str(uuid4())) is None
 
 
-def test_write_through_same_directory_publication(tmp_path: Path) -> None:
-    destination = tmp_path / "SESSION_CONFIG.json"
-    first = tmp_path / "first.tmp"
-    _synced(first, b'{"revision":1}')
+@pytest.mark.parametrize("long_path", [False, True])
+def test_write_through_same_directory_publication(
+    tmp_path: Path, long_path: bool
+) -> None:
+    directory = tmp_path
+    if long_path:
+        padding = 280 - len(str(tmp_path)) - 1
+        assert 0 < padding < 255
+        directory = tmp_path / ("p" * padding)
+        Path(extended_path(directory)).mkdir()
+        assert len(str(directory)) == 280
+    destination = directory / "SESSION_CONFIG.json"
+    destination_io = Path(extended_path(destination))
+    first = directory / "first.tmp"
+    _synced(Path(extended_path(first)), b'{"revision":1}')
     create_synced(first, destination)
-    assert destination.read_bytes() == b'{"revision":1}'
-    assert not first.exists()
+    assert destination_io.read_bytes() == b'{"revision":1}'
+    assert not Path(extended_path(first)).exists()
 
-    collision = tmp_path / "collision.tmp"
-    _synced(collision, b"collision")
+    collision = directory / "collision.tmp"
+    _synced(Path(extended_path(collision)), b"collision")
     with pytest.raises(WindowsLaunchError):
         create_synced(collision, destination)
-    assert destination.read_bytes() == b'{"revision":1}'
-    assert collision.exists()
+    assert destination_io.read_bytes() == b'{"revision":1}'
+    assert Path(extended_path(collision)).exists()
 
-    replacement = tmp_path / "replacement.tmp"
-    _synced(replacement, b'{"revision":2}')
+    replacement = directory / "replacement.tmp"
+    _synced(Path(extended_path(replacement)), b'{"revision":2}')
     replace_synced(replacement, destination)
-    assert destination.read_bytes() == b'{"revision":2}'
-    assert not replacement.exists()
+    assert destination_io.read_bytes() == b'{"revision":2}'
+    assert not Path(extended_path(replacement)).exists()
+
+    other = directory / "other"
+    Path(extended_path(other)).mkdir()
+    for publish in (create_synced, replace_synced):
+        with pytest.raises(ValueError, match="remain in one directory"):
+            publish(collision, other / destination.name)
+        assert Path(extended_path(collision)).read_bytes() == b"collision"
+        assert not Path(extended_path(other / destination.name)).exists()
+        assert destination_io.read_bytes() == b'{"revision":2}'
 
 
 def test_role_guard_rejects_second_owner_and_releases() -> None:

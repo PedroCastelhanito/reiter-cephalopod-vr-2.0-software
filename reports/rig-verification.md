@@ -4,7 +4,11 @@ Oct21 current execution: bounded two-camera/stimulus On60s→Off Abort5s→On60s
 Ready cancellation and fresh Setup/cancel after326.259s idle pass;16 outputs close,
 six videos decode/count exactly. Off has no camera demand and retains stimulus
 scientific files, without camera/encoder processes. Full20min acceptance is blocked:
-long-path Setup fails WinError206; shorter-path Setup reproduces MCU PING114.451ms
+initial long-path Setup failed WinError206; approved reservation fixes now pass
+managed session247/child261 and session280/child294 Ready/cancel with exact
+restoration after the approved durable-publication correction. Full recording at
+these paths remains unverified.
+Shorter-path full-texture Setup reproduces MCU PING114.451ms
 against99.979ms and unconfirmed cleanup. Subsequent automatic managed shutdown
 and preserving startup recovery confirm old process absence and exact original
 configuration/history restoration; failed-session unknown closure remains retained.

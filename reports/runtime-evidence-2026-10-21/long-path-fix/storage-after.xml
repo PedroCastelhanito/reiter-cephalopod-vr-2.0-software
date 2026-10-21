@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="1" tests="33" time="0.631" timestamp="2026-10-21T13:06:16.194521+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.controller.test_storage" name="test_session_subject_species_initials[0001-Sepia Pharaonis-SP0001]" time="0.001" /><testcase classname="tests.controller.test_storage" name="test_session_subject_species_initials[0001-  sepia   pharaonis  -SP0001]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_session_subject_species_initials[0002-Sepia Latimanus-SL0002]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_session_subject_species_initials[0003-Sepioteuthis lessoniana-SL0003]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_session_subject_species_initials[SP0001-Sepia Pharaonis-SP0001]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_session_subject_species_initials[0001--0001]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_session_subject_species_initials[legacy-unknown-legacy]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_session_subject_species_initials[0001-? unknown-0001]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_species_prefix_does_not_make_an_invalid_subject_valid[]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_species_prefix_does_not_make_an_invalid_subject_valid[  ]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_species_prefix_does_not_make_an_invalid_subject_valid[../]" time="0.000" /><testcase classname="tests.controller.test_storage" name="test_reservation_exclusive_and_cancel_removes_only_attempt_paths" time="0.022" /><testcase classname="tests.controller.test_storage" name="test_unexpected_file_blocks_cancel_without_deletion" time="0.013" /><testcase classname="tests.controller.test_storage" name="test_native_reservation_creates_long_child_namespaces[cancel]" time="0.004"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-426\\test_native_reservation_create0\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-426/test_native_reservation_create0')
+finish = 'cancel'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -&gt; None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 &lt; padding &lt; 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) &gt; 260
+        assert len(str(reservation.spikeglx_directory)) &gt; 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+&gt;           assert reservation.acquire() == []
+                   ^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:161: in acquire
+    conflicts = self._direct_children()
+                ^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\controller\metadata\reservation.py:168: in _direct_children
+    return [*self.protocol_directory.iterdir(), *self.spikeglx_directory.iterdir()]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-426/test_native_reservation_create0/pp...pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp/20260929_experiment/subject-131415/protocol-data')
+
+    def iterdir(self):
+        """Iterate over the files in this directory.  Does not yield any
+        result for the special paths '.' and '..'.
+        """
+&gt;       for name in os.listdir(self):
+                    ^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-426\\test_native_reservation_create0\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:931: FileNotFoundError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_native_reservation_creates_long_child_namespaces[close_unactivated]" time="0.005"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-426\\test_native_reservation_create1\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-426/test_native_reservation_create1')
+finish = 'close_unactivated'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -&gt; None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 &lt; padding &lt; 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) &gt; 260
+        assert len(str(reservation.spikeglx_directory)) &gt; 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+&gt;           assert reservation.acquire() == []
+                   ^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:161: in acquire
+    conflicts = self._direct_children()
+                ^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\controller\metadata\reservation.py:168: in _direct_children
+    return [*self.protocol_directory.iterdir(), *self.spikeglx_directory.iterdir()]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-426/test_native_reservation_create1/pp...pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp/20260929_experiment/subject-131415/protocol-data')
+
+    def iterdir(self):
+        """Iterate over the files in this directory.  Does not yield any
+        result for the special paths '.' and '..'.
+        """
+&gt;       for name in os.listdir(self):
+                    ^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-426\\test_native_reservation_create1\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:931: FileNotFoundError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_native_reservation_creates_long_child_namespaces[reopen_close]" time="0.004"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-426\\test_native_reservation_create2\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-426/test_native_reservation_create2')
+finish = 'reopen_close'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -&gt; None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 &lt; padding &lt; 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) &gt; 260
+        assert len(str(reservation.spikeglx_directory)) &gt; 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+&gt;           assert reservation.acquire() == []
+                   ^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:161: in acquire
+    conflicts = self._direct_children()
+                ^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\controller\metadata\reservation.py:168: in _direct_children
+    return [*self.protocol_directory.iterdir(), *self.spikeglx_directory.iterdir()]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-426/test_native_reservation_create2/pp...pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp/20260929_experiment/subject-131415/protocol-data')
+
+    def iterdir(self):
+        """Iterate over the files in this directory.  Does not yield any
+        result for the special paths '.' and '..'.
+        """
+&gt;       for name in os.listdir(self):
+                    ^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-426\\test_native_reservation_create2\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:931: FileNotFoundError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_native_cancellation_handles_long_quarantine_paths[False]" time="0.014" /><testcase classname="tests.controller.test_storage" name="test_native_cancellation_handles_long_quarantine_paths[True]" time="0.018" /><testcase classname="tests.controller.test_storage" name="test_preexisting_session_cancellation_never_unlinks_new_owners_lock" time="0.012" /><testcase classname="tests.controller.test_storage" name="test_existing_marker_inspection_requires_held_lock_and_keeps_recovery_evidence" time="0.011" /><testcase classname="tests.controller.test_storage" name="test_existing_lock_symlink_is_never_followed" time="0.003"><skipped type="pytest.skip" message="symlink creation unavailable on this host">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\controller\test_storage.py:271: symlink creation unavailable on this host</skipped></testcase><testcase classname="tests.controller.test_storage" name="test_failed_session_quarantine_preserves_unfinished_marker" time="0.012" /><testcase classname="tests.controller.test_storage" name="test_corrupt_existing_marker_is_preserved_for_startup_recovery" time="0.019" /><testcase classname="tests.controller.test_storage" name="test_writer_syncs_exact_json_and_rejects_changed_retry" time="0.022" /><testcase classname="tests.controller.test_storage" name="test_writer_rejects_unreserved_path_and_invalid_document" time="0.002" /><testcase classname="tests.controller.test_storage" name="test_writer_preserves_late_sync_evidence_and_seal_capacity" time="0.008" /><testcase classname="tests.controller.test_storage" name="test_cancelled_waiter_cannot_erase_required_writer_completion" time="0.012" /><testcase classname="tests.controller.test_storage" name="test_completed_id_is_not_evicted_by_next_admission_before_retirement" time="0.013" /><testcase classname="tests.controller.test_storage" name="test_writer_never_appends_to_unowned_existing_log" time="0.006" /><testcase classname="tests.controller.test_storage" name="test_writer_binds_work_and_operation_to_exact_session" time="0.002" /><testcase classname="tests.controller.test_storage" name="test_existing_reservation_recovery_requires_unchanged_marker" time="0.023" /><testcase classname="tests.controller.test_storage" name="test_recovery_log_adoption_requires_exact_held_file_identity" time="0.016" /><testcase classname="tests.controller.test_storage" name="test_owned_log_path_replacement_cannot_redirect_append" time="0.016" /></testsuite></testsuites>

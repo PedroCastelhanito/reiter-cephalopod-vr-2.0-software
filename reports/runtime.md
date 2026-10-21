@@ -5,7 +5,27 @@
 Under [E15](../docs/architecture/system-contracts.md#e15), Sol6.1 managed tests
 and Astra assessed decisions. Source/dirty-tree provenance, commands and raw results
 are retained in [verification](runtime-evidence-2026-10-21/rig-validation/verification.json).
-No runtime logic, firmware, retry or deadline was changed.
+The owner-approved long-path correction applies Windows extended paths only at
+reservation filesystem I/O and durable-publication parent resolution, retaining
+logical identities, strict same-parent/canonical checks, collision authorization,
+write-through flags and lock/cleanup ordering under
+[E04](../docs/architecture/supervisor.md#e04). Astra found no actionable issue.
+Final controller/native platform checks pass769 with five skips, including session
+paths247 and280, retained-file cancellation refusal, recovery/reopen, collision
+identity, and durable create/replace/cross-parent guards. Ruff, format147, Win32
+mypy116 and boundaries742/zero pass. Earlier failure-first results remain historical.
+
+Managed session247/child261 passes Ready4.5355s/Cancel132.33ms. After a normal
+shutdown and verified old-process absence, session280/child294 passes
+Ready5.0185s/Cancel122.50ms on controller16d96273-2eaa-4767-a153-efc12ddf481d.
+Both verify exact marker identities, removed session namespaces, Configuration
+cleanup confirmed, and byte-exact original runtime/history restoration. No Start
+or full texture workload was run. The initial short-geometry attempt and subsequent
+pre-fix longer-session failure remain labeled separately in
+[verification](runtime-evidence-2026-10-21/long-path-fix/verification.json), alongside
+commands and source hashes. [Longer-path managed result](runtime-evidence-2026-10-21/long-path-fix/managed-output-280.txt).
+The focused reservation/Setup task is complete; full recording acceptance remains
+separate. No MCU, retry or deadline behavior was changed.
 
 Two-camera/stimulus dummy acceptance passes: Ready cancellation, two 60-second
 normal trials around a video-Off 5-second Abort (166 ms), exact fresh identities,
@@ -17,8 +37,9 @@ required stimulus scientific files remain, with no camera worker or encoder.
 This does not establish active-camera video-Off evidence or physical pulse levels.
 
 The unchanged two-trial 20-minute texture protocol never reached Start:
-- Long output-root Setup fails with WinError206 creating protocol-data, before
-  recording; cleanup confirms. Existing writer long-path support is insufficient.
+- Initial long output-root Setup failed with WinError206 creating protocol-data,
+  before recording; cleanup confirmed. The approved correction and bounded native/
+  managed verification above resolve this reservation failure; full recording is untested.
 - A shorter-root Setup reproduces MCU PING failure: 114.451 ms against 99.979 ms,
   write 65.560 ms, read 48.864 ms, 125 late bytes, zero partial/unmatched/malformed.
   Only 0.027 ms is outside measured calls; call spans include scheduling/GIL time

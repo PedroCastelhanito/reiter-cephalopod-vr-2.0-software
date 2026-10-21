@@ -1,0 +1,29 @@
+.....................sF...........                                       [100%]
+================================== FAILURES ===================================
+_________ test_failed_session_quarantine_preserves_unfinished_marker __________
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-431/test_failed_session_quarantine0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000029136D53DD0>
+
+    def test_failed_session_quarantine_preserves_unfinished_marker(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import os
+    
+        reservation = _reservation(tmp_path)
+        reservation.acquire()
+        original = os.replace
+    
+        def fail_session_rename(source: Path, destination: Path) -> None:
+            if source == reservation.session_directory:
+                raise OSError("busy directory")
+            original(source, destination)
+    
+        monkeypatch.setattr(os, "replace", fail_session_rename)
+>       with pytest.raises(StorageError, match="unfinished marker retained"):
+E       Failed: DID NOT RAISE StorageError
+
+tests\controller\test_storage.py:336: Failed
+=========================== short test summary info ===========================
+FAILED tests/controller/test_storage.py::test_failed_session_quarantine_preserves_unfinished_marker
+1 failed, 32 passed, 1 skipped in 0.86s

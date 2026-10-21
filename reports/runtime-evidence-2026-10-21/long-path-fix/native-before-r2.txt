@@ -1,0 +1,157 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+________ test_native_reservation_creates_long_child_namespaces[cancel] ________
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-425/test_native_reservation_create0')
+finish = 'cancel'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -> None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 < padding < 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) > 260
+        assert len(str(reservation.spikeglx_directory)) > 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+>           assert reservation.acquire() == []
+                   ^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:147: in acquire
+    path.mkdir()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-425/test_native_reservation_create0/pp...pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp/20260929_experiment/subject-131415/protocol-data')
+mode = 511, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-425\\test_native_reservation_create0\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1116: FileNotFoundError
+__ test_native_reservation_creates_long_child_namespaces[close_unactivated] ___
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-425/test_native_reservation_create1')
+finish = 'close_unactivated'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -> None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 < padding < 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) > 260
+        assert len(str(reservation.spikeglx_directory)) > 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+>           assert reservation.acquire() == []
+                   ^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:147: in acquire
+    path.mkdir()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-425/test_native_reservation_create1/pp...pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp/20260929_experiment/subject-131415/protocol-data')
+mode = 511, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-425\\test_native_reservation_create1\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1116: FileNotFoundError
+_____ test_native_reservation_creates_long_child_namespaces[reopen_close] _____
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-425/test_native_reservation_create2')
+finish = 'reopen_close'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -> None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 < padding < 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) > 260
+        assert len(str(reservation.spikeglx_directory)) > 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+>           assert reservation.acquire() == []
+                   ^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:147: in acquire
+    path.mkdir()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-425/test_native_reservation_create2/pp...pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp/20260929_experiment/subject-131415/protocol-data')
+mode = 511, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-425\\test_native_reservation_create2\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\protocol-data'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1116: FileNotFoundError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_storage.py::test_native_reservation_creates_long_child_namespaces[cancel]
+FAILED tests/controller/test_storage.py::test_native_reservation_creates_long_child_namespaces[close_unactivated]
+FAILED tests/controller/test_storage.py::test_native_reservation_creates_long_child_namespaces[reopen_close]
+3 failed, 30 deselected in 0.50s

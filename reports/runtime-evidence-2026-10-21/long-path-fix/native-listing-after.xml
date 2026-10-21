@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="0.337" timestamp="2026-10-21T14:06:32.050566+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.controller.test_storage" name="test_native_reservation_creates_long_child_namespaces[cancel]" time="0.015"><failure message="cephvr.controller.metadata.types.StorageError: reservation marker is absent or unsafe">self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x0000016C8F493690&gt;
+
+    def _read_marker_bytes(self) -&gt; bytes:
+        if not self.held:
+            raise StorageError("marker read requires held reservation lock")
+        flags = (
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        )
+        try:
+&gt;           descriptor = os.open(self.marker, flags)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-429\\test_native_reservation_create0\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\.cephvr-reservation.json'
+
+src\cephvr\controller\metadata\reservation.py:289: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-429/test_native_reservation_create0')
+finish = 'cancel'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -&gt; None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 &lt; padding &lt; 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) &gt; 260
+        assert len(str(reservation.spikeglx_directory)) &gt; 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+            assert reservation.acquire() == []
+            assert reservation._created == list(paths)
+&gt;           marker = reservation.inspect_marker()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:265: in inspect_marker
+    raw = self._read_marker_bytes()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x0000016C8F493690&gt;
+
+    def _read_marker_bytes(self) -&gt; bytes:
+        if not self.held:
+            raise StorageError("marker read requires held reservation lock")
+        flags = (
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        )
+        try:
+            descriptor = os.open(self.marker, flags)
+        except OSError as exc:
+&gt;           raise StorageError("reservation marker is absent or unsafe") from exc
+E           cephvr.controller.metadata.types.StorageError: reservation marker is absent or unsafe
+
+src\cephvr\controller\metadata\reservation.py:291: StorageError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_native_reservation_creates_long_child_namespaces[close_unactivated]" time="0.012"><failure message="cephvr.controller.metadata.types.StorageError: reservation marker is absent or unsafe">self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x0000016C8F4CB3D0&gt;
+
+    def _read_marker_bytes(self) -&gt; bytes:
+        if not self.held:
+            raise StorageError("marker read requires held reservation lock")
+        flags = (
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        )
+        try:
+&gt;           descriptor = os.open(self.marker, flags)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-429\\test_native_reservation_create1\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\.cephvr-reservation.json'
+
+src\cephvr\controller\metadata\reservation.py:289: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-429/test_native_reservation_create1')
+finish = 'close_unactivated'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -&gt; None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 &lt; padding &lt; 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) &gt; 260
+        assert len(str(reservation.spikeglx_directory)) &gt; 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+            assert reservation.acquire() == []
+            assert reservation._created == list(paths)
+&gt;           marker = reservation.inspect_marker()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:265: in inspect_marker
+    raw = self._read_marker_bytes()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x0000016C8F4CB3D0&gt;
+
+    def _read_marker_bytes(self) -&gt; bytes:
+        if not self.held:
+            raise StorageError("marker read requires held reservation lock")
+        flags = (
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        )
+        try:
+            descriptor = os.open(self.marker, flags)
+        except OSError as exc:
+&gt;           raise StorageError("reservation marker is absent or unsafe") from exc
+E           cephvr.controller.metadata.types.StorageError: reservation marker is absent or unsafe
+
+src\cephvr\controller\metadata\reservation.py:291: StorageError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_native_reservation_creates_long_child_namespaces[reopen_close]" time="0.010"><failure message="cephvr.controller.metadata.types.StorageError: reservation marker is absent or unsafe">self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x0000016C8F4D6D50&gt;
+
+    def _read_marker_bytes(self) -&gt; bytes:
+        if not self.held:
+            raise StorageError("marker read requires held reservation lock")
+        flags = (
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        )
+        try:
+&gt;           descriptor = os.open(self.marker, flags)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-429\\test_native_reservation_create2\\ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\\20260929_experiment\\subject-131415\\.cephvr-reservation.json'
+
+src\cephvr\controller\metadata\reservation.py:289: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-429/test_native_reservation_create2')
+finish = 'reopen_close'
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(os.name != "nt", reason="requires native Windows path handling")
+    @pytest.mark.parametrize("finish", ["cancel", "close_unactivated", "reopen_close"])
+    def test_native_reservation_creates_long_child_namespaces(
+        tmp_path: Path, finish: str
+    ) -&gt; None:
+        from cephvr.platform.windows.paths import extended_path
+    
+        padding = 247 - len(str(_reservation(tmp_path).session_directory)) - 1
+        assert 0 &lt; padding &lt; 255
+        root = tmp_path / ("p" * padding)
+        root.mkdir()
+        reservation = _reservation(root)
+        assert len(str(reservation.session_directory)) == 247
+        assert len(str(reservation.protocol_directory)) &gt; 260
+        assert len(str(reservation.spikeglx_directory)) &gt; 260
+        paths = (
+            reservation.experiment_directory,
+            reservation.session_directory,
+            reservation.protocol_directory,
+            reservation.spikeglx_directory,
+        )
+        assert all(not str(path).startswith("\\\\?\\") for path in paths)
+        try:
+            assert reservation.acquire() == []
+            assert reservation._created == list(paths)
+&gt;           marker = reservation.inspect_marker()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:265: in inspect_marker
+    raw = self._read_marker_bytes()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x0000016C8F4D6D50&gt;
+
+    def _read_marker_bytes(self) -&gt; bytes:
+        if not self.held:
+            raise StorageError("marker read requires held reservation lock")
+        flags = (
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        )
+        try:
+            descriptor = os.open(self.marker, flags)
+        except OSError as exc:
+&gt;           raise StorageError("reservation marker is absent or unsafe") from exc
+E           cephvr.controller.metadata.types.StorageError: reservation marker is absent or unsafe
+
+src\cephvr\controller\metadata\reservation.py:291: StorageError</failure></testcase></testsuite></testsuites>
