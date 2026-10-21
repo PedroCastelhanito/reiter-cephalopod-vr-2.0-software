@@ -1,12 +1,11 @@
-"""External preview workspace; acquisition retains native windows and pixels."""
+"""In-Dashboard preview workspace; acquisition retains native windows and pixels."""
 
 from dataclasses import replace
 
-from PyQt6.QtCore import QByteArray, QSettings, Qt, pyqtSignal
-from PyQt6.QtGui import QCloseEvent, QHideEvent, QShowEvent
+from PyQt6.QtCore import QSettings, Qt, pyqtSignal
+from PyQt6.QtGui import QShowEvent
 from PyQt6.QtWidgets import (
     QCheckBox,
-    QDialog,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -18,49 +17,27 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.components import Card, FittedConsole, label
-from cephvr.gui.layouts import snap_tool_window
 from cephvr.gui.preview_log import PreviewLog
 from cephvr.gui.preview_timeline import StimulusTimeline
 from cephvr.gui.retro_overlay import set_glow
-from cephvr.gui.system_controls import SystemControls
 from cephvr.gui.theme import SIZES, retro_console
 from cephvr.gui.view import PreviewView
 
 
-def recording_state(output_status: str) -> tuple[str, str]:
-    """Map controller output-closure evidence to a lamp state and caption."""
-    if output_status in {"Last reported outputs open", "Open"}:
-        return "recording", "● REC"
-    if output_status == "Closing":
-        return "waiting", "◐ CLOSING"
-    if output_status in {"Failed", "Unconfirmed"}:
-        return "fault", f"▲ OUTPUT {output_status.upper()}"
-    return "idle", ""
+class PreviewWorkspace(QWidget):
+    """Runtime Dashboard body: controls, HUD and console above timeline and streams."""
 
-
-class PreviewDialog(QDialog):
     visibility_requested = pyqtSignal(str, bool)
-    opened = pyqtSignal()
 
-    def __init__(self, parent: QWidget, settings: QSettings | None = None) -> None:
+    def __init__(
+        self, parent: QWidget | None, settings: QSettings | None = None
+    ) -> None:
         super().__init__(parent)
         self.settings = settings
-        saved = (
-            settings.value("windows/preview-workspace")
-            if settings is not None
-            else None
-        )
-        self.saved_geometry = saved if isinstance(saved, QByteArray) else QByteArray()
         self._opened = False
         self.setObjectName("PreviewWorkspace")
-        self.setWindowTitle("Previews")
-        self.setWindowFlag(Qt.WindowType.WindowMinMaxButtonsHint, True)
-        # Height comes from the layout, so a small window never clips a frame row.
-        self.setMinimumWidth(600)
-        self.resize(1440, 960)
-        self.setWindowModality(Qt.WindowModality.NonModal)
         self.content = QVBoxLayout(self)
-        self.content.setContentsMargins(*([SIZES.compact_card_padding] * 4))
+        self.content.setContentsMargins(0, 0, 0, 0)
         self.content.setSpacing(16)
         self.details = QWidget(self)
         self.details_layout = QVBoxLayout(self.details)
@@ -77,14 +54,23 @@ class PreviewDialog(QDialog):
         self.hud = FittedConsole()
         self.hud.setProperty("terminal", "telemetry")
         self.hud.setAccessibleName("Experiment status")
-        self.recording_lamp = label("", "rec-lamp")
-        self.recording_lamp.setAccessibleName("Recording status")
         # Workspace-wide view options stay with the timeline.
         self.toggle_bar = QFrame()
         self.toggle_bar.setObjectName("PreviewToggles")
         toolbar = QHBoxLayout(self.toggle_bar)
         toolbar.setContentsMargins(10, 4, 10, 4)
         toolbar.setSpacing(SIZES.field_x_gap)
+        self.video_toggle = QCheckBox("Video previews")
+        self.video_toggle.setToolTip(
+            "Show the video stream section; hiding it closes open viewers "
+            "(capture continues)"
+        )
+        self.video_toggle.setChecked(
+            settings.value("windows/preview-video-visible", True, type=bool)
+            if settings is not None
+            else True
+        )
+        toolbar.addWidget(self.video_toggle)
         self.advanced_toggle = QCheckBox("Advanced previews")
         self.advanced_toggle.setToolTip("Show motion dials, arena map and size lanes")
         self.advanced_toggle.setChecked(
@@ -93,7 +79,6 @@ class PreviewDialog(QDialog):
             else False
         )
         toolbar.addWidget(self.advanced_toggle)
-        self.set_output_status("")
         # Keep status above the resizable stream/plot sections.
         self.timeline = StimulusTimeline()
         self.timeline.plots.removeWidget(self.timeline.motion_section)
@@ -105,24 +90,19 @@ class PreviewDialog(QDialog):
         self.empty_hint.setObjectName("PreviewWorkspaceEmpty")
         self.empty_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_layout.addWidget(self.empty_hint)
-        self.session_controls = SystemControls(compact=True)
-        self.session_controls.header.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.hud_card = Card("HUD", compact=True)
-        self.hud_card.header.addWidget(self.recording_lamp)
         self.hud_card.body.addWidget(self.hud)
         self.log_card = Card("Console", compact=True)
         self.log_tail = PreviewLog()
         self.log_card.body.addWidget(self.log_tail)
-        for column, card in enumerate(
-            (self.session_controls, self.hud_card, self.log_card)
-        ):
+        # Column 0 hosts the Dashboard's own System controls while this body shows.
+        for column, card in ((1, self.hud_card), (2, self.log_card)):
             card.setSizePolicy(
                 QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
             )
-            if card is not self.session_controls:
-                card.body.setAlignment(Qt.AlignmentFlag.AlignTop)
+            card.body.setAlignment(Qt.AlignmentFlag.AlignTop)
             self.top.addWidget(card, 0, column)
-        for column, stretch in enumerate((2, 3, 5)):
+        for column, stretch in enumerate((3, 3, 5)):
             self.top.setColumnStretch(column, stretch)
         self.timeline.body.insertWidget(
             0, self.toggle_bar, 0, Qt.AlignmentFlag.AlignRight
@@ -141,7 +121,9 @@ class PreviewDialog(QDialog):
         assert handle is not None
         handle.setToolTip("Drag to resize previews and plots")
         self.content.addWidget(self.splitter, 1)
+        self.set_video_visible(self.video_toggle.isChecked(), close_viewers=False)
         self.set_advanced_visible(self.advanced_toggle.isChecked())
+        self.video_toggle.toggled.connect(self.set_video_visible)
         self.advanced_toggle.toggled.connect(self.set_advanced_visible)
         self.views: dict[str, PreviewView] = {}
         self.controls: dict[str, QCheckBox] = {}
@@ -166,73 +148,41 @@ class PreviewDialog(QDialog):
 
     def showEvent(self, event: QShowEvent | None) -> None:
         super().showEvent(event)
-        if not self._opened and self.advanced_toggle.isChecked():
-            self.set_advanced_visible(True)
+        # Size the projector rail once the splitter has real geometry.
+        if not self._opened:
+            self._opened = True
+            if self.advanced_toggle.isChecked():
+                self.set_advanced_visible(True)
 
-    def set_output_status(self, output_status: str) -> None:
-        state, caption = recording_state(output_status)
-        lamp = self.recording_lamp
-        lamp.setText(caption)
-        # Only REC, closing and output faults are shown; idle has no lamp.
-        lamp.setVisible(state != "idle")
-        lamp.setToolTip(
-            f"Controller output evidence: {output_status or 'none reported'}"
-        )
-        if lamp.property("state") != state:
-            lamp.setProperty("state", state)
-            style = lamp.style()
-            if style is not None:
-                style.unpolish(lamp)
-                style.polish(lamp)
-
-    def set_advanced_visible(self, visible: bool) -> None:
+    def set_advanced_visible(self, visible: bool, *, persist: bool = True) -> None:
         self.timeline.set_advanced(visible)
         self.details.setVisible(visible)
         if visible:
-            width = max(1, self.splitter.width() - self.splitter.handleWidth())
-            self.splitter.setSizes([width * 2 // 3, width // 3])
-        if self.settings is not None:
+            self.split_sections()
+        if persist and self.settings is not None:
             self.settings.setValue("windows/preview-advanced-visible", visible)
 
-    def show_saved(self, main: QWidget) -> None:
-        if not self.isVisible():
-            restored = (
-                self._opened
-                or bool(self.saved_geometry)
-                and self.restoreGeometry(self.saved_geometry)
-            )
-            self.fit_contents()
-            self.show()
-            self._opened = True
-            if not restored:
-                snap_tool_window(main, self)
-        if self.isMinimized():
-            self.setWindowState(self.windowState() & ~Qt.WindowState.WindowMinimized)
-        self.raise_()
-        self.activateWindow()
-        self.opened.emit()
-
-    def reject(self) -> None:
-        self.hide()
-
-    def closeEvent(self, event: QCloseEvent | None) -> None:
-        # Keep the native owner HWND alive for acquisition-owned viewers.
-        if event is not None:
-            event.ignore()
-        self.hide()
-
-    def hideEvent(self, event: QHideEvent | None) -> None:
-        self.saved_geometry = self.saveGeometry()
+    def set_video_visible(self, visible: bool, *, close_viewers: bool = True) -> None:
+        """Show or hide the stream section; hiding closes open viewers, not capture."""
+        self.preview_host.setVisible(visible)
+        if visible:
+            self.split_sections()
+        elif close_viewers:
+            for key, view in tuple(self.views.items()):
+                if view.visible:
+                    self.request(key, False)
         if self.settings is not None:
-            self.settings.setValue("windows/preview-workspace", self.saved_geometry)
-            self.settings.sync()
-        super().hideEvent(event)
+            self.settings.setValue("windows/preview-video-visible", visible)
 
-    def apply_views(
-        self, views: tuple[PreviewView, ...], *, allowed: bool, sample: bool
-    ) -> None:
+    def split_sections(self) -> None:
+        """Give video two thirds beside the dials when both sections show."""
+        if self.preview_host.isHidden() or self.details.isHidden():
+            return
+        width = max(1, self.splitter.width() - self.splitter.handleWidth())
+        self.splitter.setSizes([width * 2 // 3, width // 3])
+
+    def apply_views(self, views: tuple[PreviewView, ...], *, allowed: bool) -> None:
         self.allowed = allowed
-        self.setWindowTitle("Previews · review" if sample else "Previews")
         if not self.controls or tuple(self.views) != tuple(view.key for view in views):
             for widget in self.source_widgets.values():
                 widget.hide()
@@ -337,15 +287,6 @@ class PreviewDialog(QDialog):
                 else "Operator control required"
             )
             self.names[key].setToolTip(control.toolTip())
-        if self.isVisible():
-            self.fit_contents()
-
-    def fit_contents(self) -> None:
-        screen = self.screen()
-        available = (
-            screen.availableGeometry().size() if screen is not None else self.size()
-        )
-        self.setMinimumWidth(min(660, available.width()))
 
     def request(self, key: str, visible: bool) -> None:
         view = self.views.get(key)

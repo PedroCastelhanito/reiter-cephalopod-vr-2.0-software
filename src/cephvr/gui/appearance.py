@@ -2,23 +2,38 @@
 
 from __future__ import annotations
 
+import re
 from functools import cache
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QByteArray, QEvent, QObject, QSettings
+from PyQt6.QtCore import QByteArray, QEvent, QMargins, QObject, QSettings, Qt
 from PyQt6.QtGui import QAction, QActionGroup, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QComboBox, QLabel, QLineEdit, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QTabBar,
+    QWidget,
+)
 
 from cephvr.gui.components import Button, Card, Console, FittedConsole, StatusColumn
 from cephvr.gui.dashboard import Dashboard
 from cephvr.gui.icons import device_icon
-from cephvr.gui.retro_instruments import FocusBrackets
-from cephvr.gui.retro_overlay import CrtEffects
+from cephvr.gui.retro_instruments import FocusBrackets, TabBrackets
+from cephvr.gui.retro_overlay import (
+    PHOSPHOR_SCANLINE_ALPHA,
+    SCANLINE_ALPHA,
+    CrtEffects,
+    WindowFilms,
+)
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import (
     COLORS,
-    RETRO_COLORS,
+    RETRO_PALETTES,
+    phosphor_stylesheet,
     retro_chrome_stylesheet,
     retro_console,
     retro_stylesheet,
@@ -40,6 +55,19 @@ def load_terminal_font() -> None:
         raise RuntimeError("Cannot load bundled IBM Plex Mono font")
 
 
+def caption_caps(text: str) -> str:
+    """Uppercase a caption but keep parenthesised units such as (mA) or (hh:mm:ss)."""
+    return re.sub(r"[^()]+(?![^(]*\))", lambda part: part[0].upper(), text)
+
+
+def mark_nested(card: Card) -> None:
+    """Cards inside another card render as subsections in Amber phosphor."""
+    parent = card.parentWidget()
+    while parent is not None and not isinstance(parent, Card):
+        parent = parent.parentWidget()
+    card.setProperty("nestedCard", parent is not None)
+
+
 class DashboardAppearance(QObject):
     def __init__(
         self,
@@ -56,13 +84,30 @@ class DashboardAppearance(QObject):
             window.devices,
             window.tracking,
             window.protocol,
-            dashboard.preview_dialog,
         )
         self.card_titles = {
             card: card.caption.text()
             for surface in self.surfaces
             for card in surface.findChildren(Card)
         }
+        # Subsection headings opt in with the `subsection` property; text is restored.
+        self.subsections = {
+            heading: heading.text()
+            for heading in window.findChildren(QLabel)
+            if heading.property("subsection") is True
+        }
+        # Field captions shown uppercase in Amber phosphor; text is restored after.
+        self.field_labels = {
+            caption: caption.text()
+            for caption in window.findChildren(QLabel)
+            if caption.property("role") == "label"
+            and caption.property("subsection") is not True
+        }
+        self.card_margins: dict[Card, QMargins] = {}
+        for card in self.card_titles:
+            mark_nested(card)
+        for bar in window.findChildren(QTabBar):
+            TabBrackets(bar)
         self.settings = settings
         app = QApplication.instance()
         assert isinstance(app, QApplication)
@@ -74,6 +119,7 @@ class DashboardAppearance(QObject):
             if item.property("role") == "brand"
         )
         self.original_brand = self.brand.text()
+        self.original_brand_alignment = self.brand.alignment()
         header.setObjectName("WindowHeader")
         menu_bar = window.menuBar()
         assert menu_bar is not None
@@ -86,6 +132,7 @@ class DashboardAppearance(QObject):
         for key, title in (
             ("standard", "Standard"),
             ("retro_console", "Retro console"),
+            ("amber_phosphor", "Amber phosphor"),
         ):
             action = QAction(title, group)
             action.setCheckable(True)
@@ -95,7 +142,7 @@ class DashboardAppearance(QObject):
         self.crt = CrtEffects(
             window, [window.page_title, *(card.caption for card in self.card_titles)]
         )
-        self.preview_crt = CrtEffects(dashboard.preview_dialog, [])
+        self.window_films = WindowFilms(window)
         menu.addSeparator()
         self.crt_action = QAction("CRT effects", menu)
         self.crt_action.setCheckable(True)
@@ -125,17 +172,24 @@ class DashboardAppearance(QObject):
 
     def select(self, name: str, *, persist: bool = True) -> None:
         self.name = name if name in self.actions else "standard"
+        retro = self.retro
+        palette_name = self.name if retro else None
+        colors = RETRO_PALETTES[self.name][0] if retro else COLORS
+        extras = phosphor_stylesheet(colors) if self.name == "amber_phosphor" else ""
         self.refresh_protocol_cards()
-        retro = self.name == "retro_console"
         self.actions[self.name].setChecked(True)
         self.window.setProperty("retroConsole", retro)
+        self.window.setProperty("retroPalette", palette_name)
         # Dialogs and tool windows inherit the complete palette from their owner.
         self.window.setStyleSheet(
-            retro_stylesheet() + retro_chrome_stylesheet() if retro else ""
+            retro_stylesheet(colors) + retro_chrome_stylesheet(colors) + extras
+            if retro
+            else ""
         )
         for surface in self.surfaces:
             surface.setProperty("retroConsole", retro)
-            surface.setStyleSheet(retro_stylesheet() if retro else "")
+            surface.setProperty("retroPalette", palette_name)
+            surface.setStyleSheet(retro_stylesheet(colors) + extras if retro else "")
             for control in surface.findChildren(Button):
                 # Polish first so layouts never use pre-style metrics (clipped labels).
                 control.ensurePolished()
@@ -147,8 +201,21 @@ class DashboardAppearance(QObject):
                 table.fit_rows()
             surface.update()
         self.brand.setText("CEPHVR" if retro else self.original_brand)
+        phosphor = self.name == "amber_phosphor"
         for card, title in self.card_titles.items():
-            card.caption.setText(title.upper() if retro else title)
+            card.caption.setText(self.card_title(title, card))
+            self.align_nested(card, phosphor)
+        for heading, text in self.subsections.items():
+            heading.setText(f"/// {text.upper()} \\\\\\" if phosphor else text)
+        for caption, text in list(self.field_labels.items()):
+            if caption.text() not in (text, caption_caps(text)):
+                text = self.field_labels[caption] = caption.text()  # changed by code
+            caption.setText(caption_caps(text) if phosphor else text)
+        # Amber phosphor names the page in the sidebar only, centred like navigation.
+        self.window.page_header.setVisible(not phosphor)
+        self.brand.setAlignment(
+            Qt.AlignmentFlag.AlignCenter if phosphor else self.original_brand_alignment
+        )
         self.refresh_device_icons()
         for console in self.window.findChildren(Console):
             console.ensurePolished()
@@ -156,21 +223,20 @@ class DashboardAppearance(QObject):
             if isinstance(console, FittedConsole):
                 console.fit_height()
         for status in self.window.findChildren(StatusColumn):
+            status.console.set_column_header(phosphor)
             status.render_hud()
         self.dashboard.render_hud()
         # Buttons outside the Dashboard that the retro chrome styles carry the marker.
-        for chrome_control in (
-            *self.window.page_buttons,
-            self.dashboard.preview_button,
-        ):
+        for chrome_control in self.window.page_buttons:
             chrome_control.setProperty("retroConsole", retro)
+            chrome_control.setProperty("retroPalette", palette_name)
             chrome_control.updateGeometry()
             chrome_control.update()
         self.dashboard.log_console.setPlaceholderText(
             "-- NO ENTRIES --" if retro else ""
         )
         # Measure after fonts and chrome are applied, including on style changes.
-        header_controls = (self.window.page_title, self.dashboard.preview_button)
+        header_controls = (self.window.page_title,)
         for header_control in header_controls:
             header_control.ensurePolished()
         self.window.page_header.setFixedHeight(
@@ -183,8 +249,6 @@ class DashboardAppearance(QObject):
             QApplication.sendPostedEvents(None, QEvent.Type.LayoutRequest)
         for brackets in self.focus_brackets:
             brackets.refresh()
-        if self.dashboard.preview_dialog.isVisible():
-            self.dashboard.preview_dialog.fit_contents()
         self.dashboard.update()
         if persist and self.settings is not None:
             self.settings.setValue("appearance/style", self.name)
@@ -210,34 +274,61 @@ class DashboardAppearance(QObject):
                 continue
             title = card.caption.text()
             self.card_titles[card] = title
-            if self.name == "retro_console":
-                card.caption.setText(title.upper())
+            mark_nested(card)
+            card.caption.setText(self.card_title(title, card))
+            self.align_nested(card, self.name == "amber_phosphor")
             self.crt.glow_labels.append(card.caption)
             added = True
         if added:
             self.apply_crt()
 
     def apply_crt(self) -> None:
-        enabled = self.name == "retro_console" and self.crt_action.isChecked()
+        enabled = self.retro and self.crt_action.isChecked()
         band = self.band_action.isChecked()
-        self.crt.apply(enabled, band=band)
-        self.preview_crt.apply(enabled, band=band)
-        self.dashboard.preview_dialog.restyle(enabled)
+        alpha = (
+            PHOSPHOR_SCANLINE_ALPHA if self.name == "amber_phosphor" else SCANLINE_ALPHA
+        )
+        self.crt.apply(enabled, band=band, scanline_alpha=alpha)
+        self.window_films.set(enabled, alpha)
+        self.dashboard.preview_workspace.restyle(enabled)
 
     def refresh_device_icons(self) -> None:
         bar = self.window.devices.tab_bar
         for index, key in enumerate(("camera", "board", "projector", "signal")):
+            colors = RETRO_PALETTES[self.name][0] if self.retro else COLORS
+            selected = colors.coral if self.name == "amber_phosphor" else colors.window
             color = (
-                (
-                    RETRO_COLORS.window
-                    if index == bar.currentIndex()
-                    else RETRO_COLORS.accent
-                )
-                if self.name == "retro_console"
-                else COLORS.accent
+                selected
+                if self.retro and index == bar.currentIndex()
+                else colors.accent
             )
             bar.setTabIcon(index, device_icon(key, color))
         self.window.devices.rail.refresh_icons()
+        accent = (RETRO_PALETTES[self.name][0] if self.retro else COLORS).accent
+        for control in self.window.findChildren(QPushButton):
+            name = control.property("iconName")
+            if isinstance(name, str):
+                control.setIcon(device_icon(name, accent))
+
+    def align_nested(self, card: Card, phosphor: bool) -> None:
+        """Phosphor nested cards drop their inset so content aligns with the parent."""
+        margins = self.card_margins.setdefault(card, card.body.contentsMargins())
+        flat = phosphor and card.property("nestedCard") is True
+        card.body.setContentsMargins(QMargins() if flat else margins)
+        card.caption.setContentsMargins(0 if flat else 6, 0, 0 if flat else 6, 0)
+
+    def card_title(self, title: str, card: Card | None = None) -> str:
+        """Display-only card caption for the selected style; stored titles stay."""
+        if self.name == "amber_phosphor":
+            if card is not None and card.property("nestedCard") is True:
+                return f"/// {title.upper()} \\\\\\"
+            return f"< {title.upper()} >"
+        return title.upper() if self.retro else title
+
+    @property
+    def retro(self) -> bool:
+        """Retro-family styles share geometry and decoration; palettes differ."""
+        return self.name in RETRO_PALETTES
 
     @property
     def focus_brackets(self) -> list[FocusBrackets]:

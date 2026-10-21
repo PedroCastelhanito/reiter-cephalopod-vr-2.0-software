@@ -9,7 +9,7 @@ from PyQt6.QtGui import QFont, QIcon, QPixmap
 from PyQt6.QtWidgets import QAbstractItemView, QTreeWidget, QTreeWidgetItem
 
 from cephvr.gui.icons import device_icon
-from cephvr.gui.theme import SIZES, colors_for, retro_console
+from cephvr.gui.theme import SIZES, colors_for, minimal_frames, retro_console
 
 RAIL_WIDTH = 176
 # Below this page width the rail yields to the top tabs so the two columns keep room.
@@ -91,5 +91,9 @@ class DeviceRail(QTreeWidget):
         current = self.currentItem()
         for index, item in enumerate(self.devices):
             selected = current is item
-            ink = colors.window if selected and retro_console(self) else colors.accent
+            ink = (
+                (colors.coral if minimal_frames(self) else colors.window)
+                if selected and retro_console(self)
+                else colors.accent
+            )
             item.setIcon(0, device_icon(DEVICE_ICONS[index], ink))

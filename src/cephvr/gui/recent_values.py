@@ -4,7 +4,7 @@ from PyQt6.QtCore import QEvent, QObject, QSettings, QStringListModel, Qt
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QCompleter, QLineEdit
 
-from cephvr.gui.theme import retro_console, suggestion_popup_stylesheet
+from cephvr.gui.theme import suggestion_popup_stylesheet
 
 RECENT_LIMIT = 10
 VALUE_LIMIT = 80
@@ -67,9 +67,7 @@ class SuggestOnRequest(QObject):
         if event is not None and event.type() == QEvent.Type.Show:
             popup = self.completer.popup()
             if watched is popup and popup is not None:
-                popup.setStyleSheet(
-                    suggestion_popup_stylesheet(retro_console(self.editor))
-                )
+                popup.setStyleSheet(suggestion_popup_stylesheet(self.editor))
             return False
         if event is None or not self.editor.isEnabled() or self.editor.text():
             return False

@@ -19,7 +19,7 @@ from cephvr.gui.formatting import clock_duration
 from cephvr.gui.projector_layers import layers_for
 from cephvr.gui.protocol_document import node_name
 from cephvr.gui.retro_instruments import tile_tint, unselected_epoch_brush
-from cephvr.gui.theme import colors_for, retro_console
+from cephvr.gui.theme import colors_for, minimal_frames, retro_console
 from cephvr.gui.timeline_actions import TimelineActions
 from cephvr.gui.timeline_details import (
     epoch_heading,
@@ -33,6 +33,9 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Node,
     Program,
 )
+
+# Amber phosphor epoch identity mark: "bar", "chip" or "text".
+PHOSPHOR_EPOCH_TILE = "bar"
 
 
 class ProgramTimeline(QWidget):
@@ -247,6 +250,8 @@ class ProgramTimeline(QWidget):
     def paintEvent(self, event: QPaintEvent | None) -> None:
         colors = colors_for(self)
         retro = retro_console(self)
+        # Amber phosphor marks selection with a dim fill and bright outline, not inverse.
+        minimal = retro and minimal_frames(self)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.hits.clear()
@@ -309,26 +314,49 @@ class ProgramTimeline(QWidget):
                 60,
             )
             selected = self.paths[i] in self.selection
+            inverse = retro and selected and not minimal
             group = isinstance(node, Group)
-            tint = tile_tint(self.type_keys[i]) if retro and not group else None
+            tint = tile_tint(self.type_keys[i], self) if retro and not group else None
+            # Amber phosphor: neutral recessed epoch tiles; identity colour is a single
+            # mark (strip, chip or label) so labels do not repeat the block colour.
+            plain = minimal and tint is not None
+            if plain:
+                assert tint is not None
+                ident = QColor(colors.accent) if selected else tint
+                painter.setBrush(QColor(colors.active if selected else colors.console))
+                painter.setPen(
+                    QPen(
+                        QColor(colors.accent if selected else colors.border),
+                        2 if selected else 1,
+                    )
+                )
+                painter.drawRect(rect)
+                if PHOSPHOR_EPOCH_TILE == "bar":
+                    painter.fillRect(
+                        QRectF(rect.left() + 1, rect.top() + 1, rect.width() - 2, 3),
+                        ident,
+                    )
             painter.setBrush(
-                QColor(colors.accent)
+                QColor(colors.active if minimal else colors.accent)
                 if retro and selected
                 else QColor(colors.selection if selected else colors.input)
                 if group
-                else unselected_epoch_brush(tint)
+                else unselected_epoch_brush(tint, colors)
                 if tint is not None
                 else stimulus_color(self.type_keys[i])
             )
             edge = QColor(
-                (colors.accent if group else colors.text) if selected else colors.border
+                (colors.accent if group or minimal else colors.text)
+                if selected
+                else colors.border
             )
             if tint is not None and not selected:
                 edge = QColor(tint)
                 edge.setAlpha(170)
-            painter.setPen(QPen(edge, 2 if selected else 1))
-            painter.drawRoundedRect(rect, 0 if retro else 6, 0 if retro else 6)
-            painter.setPen(QColor(colors.window if retro and selected else colors.text))
+            if not plain:
+                painter.setPen(QPen(edge, 2 if selected else 1))
+                painter.drawRoundedRect(rect, 0 if retro else 6, 0 if retro else 6)
+            painter.setPen(QColor(colors.window if inverse else colors.text))
             name = (
                 f"Epoch {i + 1}"
                 if isinstance(node, Epoch)
@@ -360,12 +388,24 @@ class ProgramTimeline(QWidget):
                     ),
                 )
                 self.hover_text.append((group_heading, name))
-                painter.setPen(
-                    QColor(colors.window if retro and selected else colors.text)
-                )
+                painter.setPen(QColor(colors.window if inverse else colors.text))
                 lines = ((5, counts),) if compact else ((5, counts), (29, summary))
                 summary = counts + " · " + summary
             for offset, text in lines:
+                if plain:
+                    label_ink = QColor(colors.text)
+                    if offset == 5 and PHOSPHOR_EPOCH_TILE == "chip":
+                        chip = QRectF(
+                            rect.left() + 5,
+                            rect.top() + 5,
+                            self.fontMetrics().horizontalAdvance(text) + 8,
+                            self.fontMetrics().height() + 2,
+                        )
+                        painter.fillRect(chip, ident)
+                        label_ink = QColor(colors.window)
+                    elif offset == 5 and PHOSPHOR_EPOCH_TILE == "text":
+                        label_ink = ident
+                    painter.setPen(label_ink if offset == 5 else QColor(colors.muted))
                 painter.drawText(
                     rect.adjusted(8, offset, -44 if offset == 5 else -8, 0),
                     Qt.AlignmentFlag.AlignTop,

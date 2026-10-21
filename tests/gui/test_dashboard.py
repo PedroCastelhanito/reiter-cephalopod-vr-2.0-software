@@ -38,6 +38,12 @@ from cephvr.gui.view import DashboardView, Phase, PreviewView, review_view
 from cephvr.gui.window import DashboardWindow
 
 
+def show_previews(target: DashboardWindow) -> None:
+    """Enter the runtime layout that hosts previews (Start swaps it in; G02)."""
+    target.apply_view(replace(target.dashboard.view, phase=Phase.RUNNING))
+    QApplication.processEvents()
+
+
 def log_rows(console: QPlainTextEdit) -> list[str]:
     """Log rows without their wall-clock stamp."""
     return [row[STAMP_WIDTH:] for row in console.toPlainText().splitlines()]
@@ -124,10 +130,11 @@ def test_review_blank_preview_connect_close_and_disconnect(
         target.show()
         for _ in range(4):
             app.processEvents()
-        target.dashboard.show_previews()
+        target.select_page(2)
+        target.devices.tabs.setCurrentIndex(0)
         app.processEvents()
-        log_height = target.dashboard.log_console.height()
-        assert target.preview_slot.isVisible()
+        # The Cameras grid shows only while a camera viewer is open or pending.
+        assert not target.preview_slot.isVisible()
         cameras.table.selectRow(0)
         camera = cameras.selected
         assert camera is not None
@@ -136,7 +143,6 @@ def test_review_blank_preview_connect_close_and_disconnect(
         assert camera.key in viewers.windows and len(visible) == 1
         app.processEvents()
         assert target.preview_slot.isVisible()
-        assert target.dashboard.log_console.height() == log_height
         frame = viewers.windows[camera.key][1]
         assert not frame.any()
         viewers.poll_windows()
@@ -158,8 +164,7 @@ def test_review_blank_preview_connect_close_and_disconnect(
         assert not viewers.windows and not viewers.timer.isActive()
         assert camera.connected and camera.capture_running
         app.processEvents()
-        assert target.preview_slot.isVisible()
-        assert target.dashboard.log_console.height() == log_height
+        assert not target.preview_slot.isVisible()
         assert not next(
             p for p in target.dashboard.view.previews if p.key == camera.key
         ).visible
@@ -169,18 +174,86 @@ def test_review_blank_preview_connect_close_and_disconnect(
         cameras.toggle_connection()
         assert not camera.connected and not viewers.windows and not visible
         app.processEvents()
+        assert not target.preview_slot.isVisible()
+        assert not visible and not viewers.timer.isActive()
+    finally:
+        viewers.close()
+        target.close()
+        target.deleteLater()
+        app.processEvents()
+
+
+def test_review_stimulus_viewer_lives_in_runtime_layout(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sys
+
+    import cephvr.gui.review_preview as previews
+
+    visible: set[str] = set()
+    shown: list[str] = []
+    cv = SimpleNamespace(
+        WINDOW_NORMAL=0,
+        WND_PROP_VISIBLE=1,
+        error=RuntimeError,
+        namedWindow=lambda title, _: visible.add(title),
+        imshow=lambda title, _: shown.append(title),
+        waitKey=lambda _: None,
+        moveWindow=lambda *_: None,
+        resizeWindow=lambda *_: None,
+        setWindowTitle=lambda *_: None,
+        destroyWindow=lambda title: visible.discard(title),
+        getWindowProperty=lambda title, _: int(title in visible),
+    )
+    monkeypatch.setitem(sys.modules, "cv2", cv)
+    monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+    monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+    monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+    monkeypatch.setattr(
+        previews,
+        "StagedPreviewWindow",
+        lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+    )
+    owner_state = {"minimized": False}
+    monkeypatch.setattr(
+        previews,
+        "bind_preview_owner",
+        lambda *_: SimpleNamespace(
+            sync=lambda _minimized=None: owner_state["minimized"],
+            close=lambda: None,
+            geometry=lambda: (0, 0, 300, 330),
+            placement_revision=lambda: None,
+            retarget=lambda _handle: None,
+        ),
+    )
+    target = DashboardWindow(sample=True)
+    controls = ReviewControls(target, fake_previews=True)
+    viewers = controls.preview_windows
+    assert viewers is not None
+    try:
+        monkeypatch.setattr(
+            target.screen(), "availableGeometry", lambda: QRect(0, 0, 1920, 1080)
+        )
+        target.resize(1440, 940)
+        target.show()
+        app.processEvents()
+        # Before Start the Dashboard has no preview footprints.
+        assert not target.preview_slot.isVisible()
+        show_previews(target)
+        app.processEvents()
         assert target.preview_slot.isVisible()
         controls.preview_visibility("stimulus", True)
         assert "stimulus" in viewers.windows
         assert not viewers.windows["stimulus"][1].any()
-        cameras.toggle_connection()
         controls.preview_visibility("stimulus", False)
         app.processEvents()
+        # Active footprints stay reserved for the whole run.
         assert target.preview_slot.isVisible()
-        cameras.toggle_connection()
+        # Leaving the runtime layout hides them again.
+        target.apply_view(replace(target.dashboard.view, phase=Phase.ENDED))
         app.processEvents()
-        assert target.preview_slot.isVisible()
-        assert target.dashboard.log_console.height() == log_height
+        assert not target.dashboard.runtime_layout
+        assert not target.preview_slot.isVisible()
         assert not visible and not viewers.timer.isActive()
     finally:
         viewers.close()
@@ -249,7 +322,7 @@ def test_multiple_review_previews_have_independent_source_frames(
         target.show()
         target.select_page(page)
         if page == 0:
-            target.dashboard.show_previews()
+            show_previews(target)
         for _ in range(4):
             app.processEvents()
         status = (
@@ -293,12 +366,14 @@ def test_multiple_review_previews_have_independent_source_frames(
         assert all(
             not a.intersects(b) for i, a in enumerate(frames) for b in frames[i + 1 :]
         )
-        assert status.hud_card.y() == 0
         if page == 0:
-            assert target.preview_slot.window() is target.dashboard.preview_dialog
+            # Embedded in the Dashboard window; its form log is not resized.
+            assert target.preview_slot.window() is target
+            assert target.dashboard.preview_workspace.isAncestorOf(target.preview_slot)
         else:
+            assert status.hud_card.y() == 0
             assert target.preview_slot.y() > status.log_card.geometry().bottom()
-        assert (status.console.height() < original_log_height) is (page != 0)
+            assert status.console.height() < original_log_height
         controls.preview_visibility(keys[0], False)
         app.processEvents()
         assert set(viewers.windows) == set(keys[1:])
@@ -383,7 +458,7 @@ def test_camera_preview_slots_only_include_enabled_cameras(
         == cameras.status_column.log_minimum_height
     )
     window.select_page(0)
-    window.dashboard.show_previews()
+    show_previews(window)
     app.processEvents()
     assert set(window.preview_slot.frames) == {source.key for source in sources}
     assert window.preview_slot.isVisible()
@@ -555,8 +630,8 @@ def test_preview_slot_tracks_relevant_tabs(
     window.resize(1440, 940)
     for _ in range(4):
         app.processEvents()
-    assert not window.preview_slot.isVisible()  # Reserved in the closed workspace.
-    window.dashboard.show_previews()
+    assert not window.preview_slot.isVisible()  # Dashboard hosts it only after Start.
+    show_previews(window)
     app.processEvents()
     expanded_log_height = window.dashboard.log_console.height()
     window.apply_view(
@@ -590,7 +665,7 @@ def test_preview_slot_tracks_relevant_tabs(
             slot = window.preview_slot
             frame_widget = next(iter(slot.frames.values()))
             target = frame_widget.target
-            region = window.dashboard.preview_dialog if page == 0 else window.stack
+            region = window.dashboard.preview_workspace if page == 0 else window.stack
             assert slot.height() < region.height()
             assert target.geometry().top() > frame_widget.header.geometry().bottom()
             assert (
@@ -603,12 +678,13 @@ def test_preview_slot_tracks_relevant_tabs(
             panel = window.stack.currentWidget()
             if panel is window.devices:
                 panel = window.devices.cameras
-            status = panel.columns[1]
             if page == 0:
-                assert slot.window() is window.dashboard.preview_dialog
-            else:
-                assert slot.parentWidget() is status
-                assert slot.y() > status.log_card.geometry().bottom()
+                assert slot.window() is window
+                assert window.dashboard.preview_workspace.isAncestorOf(slot)
+                continue
+            status = panel.columns[1]
+            assert slot.parentWidget() is status
+            assert slot.y() > status.log_card.geometry().bottom()
             assert status.hud_card.y() == 0
             if panel.mode == "wide":
                 assert (
@@ -1939,10 +2015,10 @@ def test_managed_total_time_tracks_trials_gaps_and_stops(window) -> None:
     assert view.total_elapsed_s == trial_duration + 10 + 12
     assert view.total_duration_s == total
     window.apply_view(view)
-    preview_text = window.dashboard.preview_dialog.hud.toPlainText()
+    preview_text = window.dashboard.preview_workspace.hud.toPlainText()
     # The preview HUD repeats every Dashboard row except OUTPUT, in aligned columns.
     for row in window.dashboard.status_column.rows:
-        if row is not None and row[0] != "OUTPUT":
+        if row is not None and row[0] != "OUTPUT DIR":
             assert row[0] in preview_text and row[1] in preview_text
     lines = preview_text.splitlines()
     assert len(lines) == 2
@@ -3028,7 +3104,7 @@ def test_compact_path_keeps_full_text_tooltip_and_editing(
     editor = window.dashboard.output_root
     path = r"D:\experiments\long project name\subjects\CEPH-007\sessions\2026-10-01"
     editor.setText(path)
-    window.dashboard.preview_button.setFocus()
+    window.dashboard.session_controls.command_buttons["Start"].setFocus()
     assert editor.text() == path and editor.toolTip() == path
     assert not editor.grab().isNull()
     editor.setFocus()
@@ -3630,113 +3706,30 @@ def test_successful_tracking_frame_poll_does_not_add_routine_log_row(
     console.deleteLater()
 
 
-def test_preview_geometry_survives_recreation(
-    app: QApplication, tmp_path: Path
-) -> None:
-    settings = QSettings(str(tmp_path / "ui.ini"), QSettings.Format.IniFormat)
-    first = DashboardWindow(settings=settings)
-    first.show()
-    first.dashboard.show_previews()
-    dialog = first.dashboard.preview_dialog
-    dialog.resize(650, 450)
-    dialog.move(70, 60)
-    app.processEvents()
-    expected = dialog.frameGeometry()
-    dialog.close()
-    first.dashboard.show_previews()
-    assert dialog.frameGeometry() == expected
-    first.close()
-    first.deleteLater()
-    app.processEvents()
-    second = DashboardWindow(
-        settings=QSettings(str(tmp_path / "ui.ini"), QSettings.Format.IniFormat)
-    )
-    second.show()
-    second.dashboard.show_previews()
-    app.processEvents()
-    assert second.dashboard.preview_dialog.frameGeometry() == expected
-    second.close()
-    second.deleteLater()
-    app.processEvents()
-
-
-@pytest.mark.parametrize("maximized", [False, True])
-@pytest.mark.parametrize("phase", [Phase.CONFIGURATION, Phase.RUNNING])
-def test_preview_button_restores_minimized_workspace(window, app, maximized, phase):
-    dashboard = window.dashboard
-    dashboard.apply_view(replace(dashboard.view, phase=phase))
-    dashboard.preview_button.click()
-    dialog = dashboard.preview_dialog
-    if maximized:
-        dialog.showMaximized()
-    app.processEvents()
-    handle = int(dialog.winId())
-    views = dict(dialog.views)
-    requests = []
-    dialog.visibility_requested.connect(lambda *args: requests.append(args))
-    dialog.showMinimized()
-    app.processEvents()
-    assert dialog.isMinimized()
-    dashboard.preview_button.click()
-    app.processEvents()
-    assert dialog.isVisible() and not dialog.isMinimized()
-    assert dialog.isMaximized() == maximized
-    assert int(dialog.winId()) == handle
-    assert dialog.views == views
-    assert not requests
-
-
-def test_review_intent_does_not_advance_session(window: DashboardWindow) -> None:
+def test_review_setup_click_logs_simulated_intent(window: DashboardWindow) -> None:
     dashboard = window.dashboard
     QTest.mouseClick(dashboard.command_buttons["Start"], Qt.MouseButton.LeftButton)
-    assert "Setup selected; no command sent" in dashboard.log_console.toPlainText()
-    assert dashboard.view.phase == Phase.CONFIGURATION
+    assert "Setup selected; simulated session" in dashboard.log_console.toPlainText()
 
 
-def test_preview_selector_reuses_modeless_window_and_keeps_visibility(
+def test_runtime_preview_controls_request_visibility_without_a_window(
     window: DashboardWindow, app: QApplication
 ) -> None:
     dashboard = window.dashboard
-    assert not dashboard.session_controls.isAncestorOf(dashboard.preview_button)
-    assert dashboard.preview_button.mapTo(window, QPoint()).y() < (
-        dashboard.session_controls.mapTo(window, QPoint()).y()
-    )
-    assert dashboard.preview_button.mapTo(window, QPoint()).x() > window.width() / 2
-    dashboard.preview_button.click()
-    dialog = dashboard.preview_dialog
-    assert dialog.isVisible() and not dialog.isModal()
-    assert dialog.height() >= 450
-    assert window.preview_slot.window() is dialog
+    assert dashboard.pages.currentWidget() is dashboard.form
+    show_previews(window)
+    dialog = dashboard.preview_workspace
+    assert dashboard.pages.currentWidget() is dialog
+    assert window.preview_slot.window() is window
     assert all(
         control.width() >= control.sizeHint().width()
         for control in dialog.controls.values()
     )
-    screen = window.screen()
-    assert screen is not None
-    assert dialog.frameGeometry().topLeft() == tool_window_position(
-        window.frameGeometry(),
-        dialog.frameGeometry().size(),
-        screen.availableGeometry(),
-    )
     dialog.controls["camera-1"].click()
     assert dialog.controls["camera-1"].isChecked()
-    assert dashboard.view.phase == Phase.CONFIGURATION
-    dialog.close()
-    app.processEvents()
-    dashboard.preview_button.click()
-    assert dashboard.preview_dialog is dialog
-    assert dialog.controls["camera-1"].isChecked()
-    dashboard.preview_button.click()
-    assert dialog.isVisible()
-    dialog.controls["tracking"].click()
     dialog.controls["camera-1"].click()
-    dialog.controls["tracking"].click()
     assert not any(item.visible for item in dashboard.view.previews)
     assert "no viewer command sent" in dashboard.log_console.toPlainText()
-    window.select_page(1)
-    assert not dashboard.preview_button.isVisible()
-    window.select_page(0)
-    assert dashboard.preview_button.isVisible()
 
 
 @pytest.mark.parametrize(
@@ -3763,7 +3756,7 @@ def test_preview_waits_for_report_and_handles_failure_closure_and_control_loss(
     dashboard.apply_view(state)
     requests: list[tuple[str, bool]] = []
     dashboard.preview_requested.connect(lambda key, show: requests.append((key, show)))
-    dialog = dashboard.preview_dialog
+    dialog = dashboard.preview_workspace
     dialog.controls["camera"].click()
     assert requests == [("camera", True)]
     assert not dialog.controls["camera"].isChecked()
@@ -3801,7 +3794,7 @@ def test_unavailable_preview_retains_reported_state_without_commands(
             previews=(PreviewView("camera", "Camera", visible=True, reason="Offline"),),
         )
     )
-    dialog = dashboard.preview_dialog
+    dialog = dashboard.preview_workspace
     assert dialog.controls["camera"].isChecked()
     assert not dialog.controls["camera"].isEnabled()
     assert dialog.statuses["camera"] == "Offline"
@@ -3886,7 +3879,7 @@ def test_review_selector_renders_completion_and_observer_lock(
     assert window.dashboard.view.output_status == "Closed"
     assert "TOTAL TIME" in window.dashboard.runtime_console.toPlainText()
     assert "D:/CephVR/SP0001-120000" in window.dashboard.runtime_console.toPlainText()
-    assert "OUTPUT" not in window.dashboard.preview_dialog.hud.toPlainText()
+    assert "OUTPUT" not in window.dashboard.preview_workspace.hud.toPlainText()
     controls.observer.setChecked(True)
     assert not window.dashboard.command_buttons["Start"].isEnabled()
 
@@ -3915,7 +3908,7 @@ def test_dashboard_has_only_requested_cards(window: DashboardWindow) -> None:
     titles = {
         card.header.itemAt(0).widget().text()
         for card in window.dashboard.findChildren(Card)
-        if not window.dashboard.preview_dialog.isAncestorOf(card)
+        if not window.dashboard.preview_workspace.isAncestorOf(card)
     }
     assert titles == {
         "System controls",
@@ -3961,10 +3954,8 @@ def test_hud_fits_content_and_log_fills_available_height(
         assert dashboard.mode == "wide"
         right = dashboard.columns[1]
         assert dashboard.hud_card.y() == 0
-        if preview_open:
-            assert window.preview_slot.window() is dashboard.preview_dialog
-        else:
-            assert window.preview_slot.isHidden()
+        # Previews are hosted only in the runtime layout, never beside the form.
+        assert window.preview_slot.isHidden()
         assert dashboard.log_card.geometry().bottom() == right.height() - 1
         assert dashboard.runtime_console.verticalScrollBar().maximum() == 0
         assert dashboard.log_console.height() > dashboard.log_console.minimumHeight()
@@ -4224,7 +4215,6 @@ def test_system_controls_show_backend_status_only_on_dashboard(window):
         "Visual stimulus",
         "Tracking",
     ]
-    assert not dashboard.preview_dialog.session_controls.findChildren(QRadioButton)
     assert (
         dashboard.session_controls.body.itemAt(0).layout()
         is dashboard.session_controls.header
@@ -4250,11 +4240,14 @@ def test_system_controls_show_backend_status_only_on_dashboard(window):
             indicator.click()
             assert indicator.isChecked() == (phase == Phase.READY)
             assert indicator.status in indicator.toolTip()
-    for controls in (
-        window.dashboard.session_controls,
-        window.dashboard.preview_dialog.session_controls,
-    ):
-        assert list(controls.command_buttons) == ["Start", "Stop"]
+    assert list(dashboard.session_controls.command_buttons) == ["Start", "Stop"]
+    # The same card, indicators included, moves into the runtime layout.
+    show_previews(window)
+    cell = dashboard.preview_workspace.top.itemAtPosition(0, 0)
+    assert cell is not None and cell.widget() is dashboard.session_controls
+    assert dashboard.session_controls.findChildren(QRadioButton) == list(
+        dashboard.backend_indicators.values()
+    )
 
 
 def test_preview_participation_gates_and_camera_draft_selection(
@@ -4262,7 +4255,7 @@ def test_preview_participation_gates_and_camera_draft_selection(
 ) -> None:
     cameras = window.devices.cameras
     dashboard = window.dashboard
-    dialog = dashboard.preview_dialog
+    dialog = dashboard.preview_workspace
     assert [item.name for item in dashboard.view.previews] == [
         "Behavior cam",
         "Tracking cam",
@@ -4312,7 +4305,7 @@ def test_camera_role_uniqueness_and_extra_preview_rows(window: DashboardWindow) 
     cameras.role.setCurrentText("Tracking cam")
     assert cameras.selected.role == "Behavior cam"
     cameras.role.setCurrentText("Unassigned")
-    assert "camera-1" not in window.dashboard.preview_dialog.controls
+    assert "camera-1" not in window.dashboard.preview_workspace.controls
     cameras.table.selectRow(1)
     cameras.role.setCurrentText("Behavior cam")
     assert cameras.selected.role == "Behavior cam"
@@ -4322,7 +4315,7 @@ def test_camera_role_uniqueness_and_extra_preview_rows(window: DashboardWindow) 
             window.dashboard.view, previews=(*window.dashboard.view.previews, extra)
         )
     )
-    dialog = window.dashboard.preview_dialog
+    dialog = window.dashboard.preview_workspace
     assert "extra" in dialog.controls
     assert not dialog.controls["extra"].isEnabled()
     assert not dialog.names["extra"].isEnabled()
@@ -4538,7 +4531,6 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
     window.page_buttons[0].click()
     app.processEvents()
     assert window.dashboard.hud_card.mapTo(window, QPoint()).y() == hud_top
-    assert window.dashboard.preview_button.parentWidget() is window.page_header
 
 
 def test_camera_batch_check_preserves_selection_and_connections(
@@ -17608,6 +17600,7 @@ def test_valid_pixels_and_axis_pitch_produce_coherent_views_across_projectors():
         ("retro_console", "standard", "standard"),
         ("standard", "retro_console", "retro_console"),
         ("retro_console", "unknown", "standard"),
+        ("standard", "amber_phosphor", "amber_phosphor"),
     ],
 )
 def test_managed_appearance_restores_shared_or_legacy_preference(
@@ -17623,7 +17616,10 @@ def test_managed_appearance_restores_shared_or_legacy_preference(
     try:
         assert window.appearance.name == expected
         assert window.appearance.actions[expected].isChecked()
-        assert window.property("retroConsole") == (expected == "retro_console")
+        assert window.property("retroConsole") == (expected != "standard")
+        assert window.property("retroPalette") == (
+            None if expected == "standard" else expected
+        )
         assert settings.value("review/appearance") == legacy
         assert settings.value("appearance/style") == shared
     finally:
@@ -17631,6 +17627,188 @@ def test_managed_appearance_restores_shared_or_legacy_preference(
         window.hide()
         window.deleteLater()
         app.processEvents()
+
+
+def test_retro_family_switch_repaints_with_owning_palette(
+    app: QApplication, tmp_path: Path
+) -> None:
+    from cephvr.gui.components import Button, StatusColumn
+    from cephvr.gui.retro_instruments import TabBrackets
+    from cephvr.gui.managed_window import ManagedDashboardWindow
+    from cephvr.gui.theme import (
+        COLORS,
+        PHOSPHOR_COLORS,
+        RETRO_COLORS,
+        colors_for,
+        suggestion_popup_stylesheet,
+    )
+
+    settings = QSettings(str(tmp_path / "appearance.ini"), QSettings.Format.IniFormat)
+    other = QSettings(str(tmp_path / "other.ini"), QSettings.Format.IniFormat)
+    phosphor = ManagedDashboardWindow(settings=settings)
+    retro = ManagedDashboardWindow(settings=other)
+    try:
+        retro.appearance.select("retro_console")
+        for name, expected in (
+            ("amber_phosphor", PHOSPHOR_COLORS),
+            ("retro_console", RETRO_COLORS),
+            ("amber_phosphor", PHOSPHOR_COLORS),
+        ):
+            phosphor.appearance.select(name)
+            assert phosphor.appearance.actions[name].isChecked()
+            assert phosphor.property("retroConsole") is True
+            assert phosphor.appearance.brand.text() == "CEPHVR"
+            for page in (phosphor.dashboard, phosphor.protocol, phosphor.devices):
+                assert colors_for(page) == expected
+            assert expected.accent in phosphor.dashboard.styleSheet()
+            assert expected.window in suggestion_popup_stylesheet(
+                phosphor.dashboard.subject_id
+            )
+            # A second window keeps its own Retro-family palette.
+            assert colors_for(retro.dashboard) == RETRO_COLORS
+            phosphor_style = name == "amber_phosphor"
+            caption = phosphor.dashboard.session_controls.caption.text()
+            assert caption == (
+                "< SYSTEM CONTROLS >" if phosphor_style else "SYSTEM CONTROLS"
+            )
+            heading = phosphor.recordings.data_heading
+            assert heading.text() == ("/// DATA \\\\\\" if phosphor_style else "Data")
+            assert phosphor.page_header.isHidden() == phosphor_style
+            appearance = phosphor.appearance
+            unit = next(
+                caption
+                for caption, text in appearance.field_labels.items()
+                if "(mA)" in text
+            )
+            assert ("(mA)" in unit.text()) and (
+                unit.text().startswith("RGB LED CURRENT") == phosphor_style
+            )
+            nested = [
+                card for card in appearance.card_titles if card.property("nestedCard")
+            ]
+            assert nested and all(
+                card.caption.text().startswith("///") == phosphor_style
+                for card in nested
+            )
+            assert phosphor.devices.tab_bar.findChild(TabBrackets) is not None
+            centred = (
+                phosphor.appearance.brand.alignment() & Qt.AlignmentFlag.AlignHCenter
+            )
+            assert bool(centred) == phosphor_style
+            status = phosphor.findChild(StatusColumn)
+            assert status is not None
+            assert status.hud_card.property("openFrame") is True
+            assert status.log_card.property("openFrame") is True
+            log = status.console
+            assert log.column_header.isHidden() != phosphor_style
+            assert (log.header_height > 0) == phosphor_style
+            nav = next(item for item in phosphor.page_buttons if item.isChecked())
+            assert isinstance(nav, Button)
+            assert nav.retro_label() == (
+                f"> {nav.text()} <" if phosphor_style else f"> {nav.text()}"
+            )
+        assert settings.value("appearance/style") == "amber_phosphor"
+        phosphor.appearance.select("standard")
+        assert colors_for(phosphor.dashboard) == COLORS
+        assert phosphor.property("retroPalette") is None
+    finally:
+        for window in (phosphor, retro):
+            window.tracking.annotation.close()
+            window.hide()
+            window.deleteLater()
+        app.processEvents()
+
+
+def test_log_wrap_hangs_under_message_column_and_round_trips() -> None:
+    from cephvr.gui.log_wrap import LINE_SEPARATOR, unwrap_row, wrap_row
+
+    row = "21:57:11  [GUI]       Local review draft restored;  no controller applied."
+    wrapped = wrap_row(row, 40, 22)
+    lines = wrapped.split(LINE_SEPARATOR)
+    assert len(lines) > 1 and all(len(line) <= 40 for line in lines)
+    assert all(
+        line.startswith(" " * 22) and line[22] != " " or line.startswith(" " * 23)
+        for line in lines[1:]
+    )
+    assert unwrap_row(wrapped, 22) == row
+    assert wrap_row(row, 200, 22) == row
+    assert wrap_row("x" * 60, 40, 22) == "x" * 60
+
+
+def test_phosphor_log_wraps_for_display_only(app: QApplication) -> None:
+    from cephvr.gui.components import LogConsole
+    from cephvr.gui.log_wrap import LINE_SEPARATOR
+
+    host = QWidget()
+    host.setProperty("retroConsole", True)
+    host.setProperty("retroPalette", "amber_phosphor")
+    log = LogConsole()
+    log.setParent(host)
+    log.resize(320, 200)
+    message = "Local review draft restored; no controller configuration applied."
+    log.appendPlainText(message)
+    log.set_entry_prompts(True)
+    text = log.document().firstBlock().text()
+    assert LINE_SEPARATOR in text
+    indent = log._wrap_indent
+    assert indent > 0
+    assert all(line.startswith(" " * indent) for line in text.split(LINE_SEPARATOR)[1:])
+    log.selectAll()
+    copied = log.createMimeDataFromSelection()
+    assert copied is not None and copied.text().endswith(message)
+    assert LINE_SEPARATOR not in copied.text()
+    host.setProperty("retroPalette", "retro_console")
+    log.set_entry_prompts(True)
+    assert LINE_SEPARATOR not in log.document().firstBlock().text()
+    host.deleteLater()
+
+
+def test_phosphor_popups_and_owned_windows_get_scanline_film(
+    app: QApplication, tmp_path: Path
+) -> None:
+    from PyQt6.QtWidgets import QDialog
+
+    from cephvr.gui.managed_window import ManagedDashboardWindow
+    from cephvr.gui.retro_overlay import PHOSPHOR_SCANLINE_ALPHA, CrtOverlay
+
+    settings = QSettings(str(tmp_path / "films.ini"), QSettings.Format.IniFormat)
+    window = ManagedDashboardWindow(settings=settings)
+    dialog = QDialog(window)
+    try:
+        window.appearance.select("amber_phosphor")
+        window.appearance.crt_action.setChecked(True)
+        dialog.show()
+        app.processEvents()
+        film = dialog.findChild(CrtOverlay)
+        assert film is not None and film.isVisible()
+        assert film.scanline_alpha == PHOSPHOR_SCANLINE_ALPHA
+        window.appearance.crt_action.setChecked(False)
+        assert film.isHidden()
+    finally:
+        dialog.close()
+        window.tracking.annotation.close()
+        window.hide()
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_log_column_header_tracks_category_width(app: QApplication) -> None:
+    from cephvr.gui.components import LogConsole
+
+    log = LogConsole()
+    log.appendPlainText("Sample subject loaded.")
+    row = log.document().firstBlock().text()
+    assert log.column_titles().index("MESSAGE") == row.index("Sample")
+    log.appendPlainText("[LONGCATEGORY] Wider source column.")
+    row = log.document().firstBlock().text()
+    assert log.column_titles().index("MESSAGE") == row.index("Sample")
+    log.set_column_header(True)
+    assert log.header_height > 0 and log.viewportMargins().top() == log.header_height
+    log.set_entry_prompts(True)
+    assert log.viewportMargins().top() == log.header_height
+    log.set_column_header(False)
+    assert log.viewportMargins().top() == 0
+    log.deleteLater()
 
 
 @pytest.mark.parametrize("width", [1440, 720])
@@ -17658,8 +17836,7 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
         review.dashboard.subject_id.setText("Unsaved subject")
         review.dashboard.age.setText("Unfinished edit")
         review.dashboard.log_console.setPlainText("Existing log entry")
-        review.dashboard.show_previews()
-        selector = review.dashboard.preview_dialog
+        selector = review.dashboard.preview_workspace
         preview_views = dict(selector.views)
         preview_requests = []
         selector.visibility_requested.connect(
@@ -17729,13 +17906,16 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
             gutter = review.dashboard.log_console.gutter
             assert gutter.isVisible() == (name == "retro_console")
             assert review.dashboard.view == current_view
-            assert selector.isVisible()
-            assert selector.views == preview_views and not preview_requests
             assert all(
                 control.isEnabled() == enabled
                 for control, enabled in device_gates.items()
             )
+            # The runtime preview layout renders in the chosen style, then returns.
+            show_previews(review)
+            assert selector.isVisible()
+            assert selector.views == preview_views and not preview_requests
             assert selector.timeline.property("role") != "card"
+            review.apply_view(current_view)
             assert review.devices.config_cards[0].caption.text() == (
                 "CONFIGURATION FILE"
                 if name == "retro_console"
@@ -17806,14 +17986,12 @@ def test_review_appearance_switch_preserves_drafts_and_runtime(
                 assert not overlay.band_timer.isActive()
                 review.appearance.crt_action.setChecked(False)
                 assert overlay.isHidden()
-                assert review.appearance.preview_crt.overlay.isHidden()
                 assert review.page_title.graphicsEffect() is None
                 assert (
                     review.dashboard.session_controls.caption.graphicsEffect() is None
                 )
                 review.appearance.crt_action.setChecked(True)
                 assert overlay.isVisible()
-                assert review.appearance.preview_crt.overlay.isVisible()
                 assert review.page_title.graphicsEffect() is not None
         review.appearance.select("standard")
         assert brackets.isHidden()
@@ -19614,21 +19792,23 @@ def test_pending_camera_button_cancel_is_bound_to_original_request(window, wired
     assert panel.pending_action.token is None
 
 
-def test_retro_epoch_tints_are_stable_and_dim() -> None:
+@pytest.mark.parametrize("style", ["retro_console", "amber_phosphor"])
+def test_retro_epoch_tints_are_stable_and_dim(app: QApplication, style: str) -> None:
     from PyQt6.QtGui import QColor
 
     from cephvr.gui.retro_instruments import tile_tint, unselected_epoch_brush
-    from cephvr.gui.theme import RETRO_COLORS, RETRO_TINTS
+    from cephvr.gui.theme import RETRO_PALETTES
 
-    allowed = {QColor(item).name() for item in RETRO_TINTS}
+    colors, tints = RETRO_PALETTES[style]
+    owner = QWidget()
+    owner.setProperty("retroPalette", style)
+    allowed = {QColor(item).name() for item in tints}
     for key in ("flow", "baseline", "recovery"):
-        tint = tile_tint(key)
-        assert tint == tile_tint(key) and tint.name() in allowed
-        assert unselected_epoch_brush(tint).lightnessF() < tint.lightnessF()
-        assert (
-            unselected_epoch_brush(tint).lightnessF()
-            > QColor(RETRO_COLORS.card).lightnessF()
-        )
+        tint = tile_tint(key, owner)
+        assert tint == tile_tint(key, owner) and tint.name() in allowed
+        brush = unselected_epoch_brush(tint, colors)
+        assert brush.lightnessF() < tint.lightnessF()
+        assert brush.lightnessF() > QColor(colors.card).lightnessF()
 
 
 def test_managed_preview_relayout_requires_visible_run_and_control(
@@ -19740,7 +19920,7 @@ def test_preview_log_four_lines_and_collapse_follows_latest(
     app.processEvents()
     assert scroll.value() == 0
     window.select_page(0)
-    window.dashboard.show_previews()
+    show_previews(window)
     for _ in range(4):
         app.processEvents()
     assert not dashboard_log.preview_compact
@@ -20102,10 +20282,10 @@ def test_crt_overlay_remains_input_transparent_when_native(app):
 @pytest.mark.parametrize("advanced", [False, True])
 def test_preview_workspace_pending_visible_update_preserves_placement(app, advanced):
     from cephvr.gui.preview_placement import PreviewSlot
-    from cephvr.gui.previews import PreviewDialog
+    from cephvr.gui.previews import PreviewWorkspace
 
     host = QWidget()
-    dialog = PreviewDialog(host)
+    dialog = PreviewWorkspace(None)
     slot = PreviewSlot()
     dialog.preview_layout.addWidget(slot)
     dialog.empty_hint.hide()
@@ -20120,7 +20300,7 @@ def test_preview_workspace_pending_visible_update_preserves_placement(app, advan
     )
 
     def project(view):
-        dialog.apply_views((view,), allowed=True, sample=False)
+        dialog.apply_views((view,), allowed=True)
         slot.set_sources((view,), reserve_active=True)
         slot.attach_controls(dialog, external=True)
         app.processEvents()
@@ -20154,7 +20334,7 @@ def test_preview_workspace_pending_visible_update_preserves_placement(app, advan
         project(replace(source, reason="Viewer unavailable"))
         assert dialog.statuses[source.key] == "Viewer unavailable"
         assert not dialog.hints[source.key].text()
-        dialog.apply_views((source,), allowed=False, sample=False)
+        dialog.apply_views((source,), allowed=False)
         assert dialog.hints[source.key].text() == "no control"
     finally:
         dialog.hide()
@@ -20195,30 +20375,6 @@ def test_preview_frame_metrics_show_live_values_and_clear_stale_or_hidden(
     frame.close()
 
 
-def test_preview_workspace_close_preserves_native_owner(app):
-    from PyQt6.QtGui import QCloseEvent
-    from PyQt6.QtWidgets import QWidget
-
-    from cephvr.gui.previews import PreviewDialog
-
-    host = QWidget()
-    preview = PreviewDialog(host)
-    preview.show()
-    app.processEvents()
-    handle = int(preview.winId())
-    event = QCloseEvent()
-    preview.closeEvent(event)
-    assert not event.isAccepted()
-    assert not preview.isVisible()
-    preview.show()
-    app.processEvents()
-    assert int(preview.winId()) == handle
-    preview.reject()
-    assert not preview.isVisible()
-    assert int(preview.winId()) == handle
-    host.close()
-
-
 @pytest.mark.parametrize("style", ["standard", "retro_console"])
 def test_preview_workspace_reserves_active_streams_and_timeline(
     window, app, style, monkeypatch
@@ -20238,12 +20394,17 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
     )
     window.protocol.editor.drafts = [TrialDraft("Motion", review_program())]
     view = DashboardView(
-        connected=True, has_control=True, previews=sources, trial_index=1, elapsed_s=12
+        connected=True,
+        has_control=True,
+        previews=sources,
+        trial_index=1,
+        elapsed_s=12,
+        phase=Phase.RUNNING,
     )
     window.apply_view(view)
-    window.dashboard.preview_button.click()
-    dialog = window.dashboard.preview_dialog
-    dialog.resize(1440, 960)
+    show_previews(window)
+    dialog = window.dashboard.preview_workspace
+    window.resize(1600, 1000)
     app.processEvents()
     assert tuple(window.preview_slot.frames) == ("0", "1", "2", "3", "4")
     assert dialog.details.isHidden()
@@ -20257,7 +20418,8 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
         frame.status.isVisible() for frame in window.preview_slot.frames.values()
     )
     assert not dialog.empty_hint.isVisible()
-    assert dialog.timeline.elapsed == 12
+    # Playback advances locally while the run is reported as running.
+    assert dialog.timeline.elapsed == pytest.approx(12, abs=1)
     assert not dialog.timeline.epoch_timeline.message
     assert not dialog.grab().isNull()
     if QApplication.platformName() != "windows":
@@ -20296,7 +20458,7 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
     assert not requests
     for name in dialog.names.values():
         assert name.text().startswith("[ ") and name.text().endswith(" ]")
-    dialog.resize(800, 700)
+    window.resize(900, 800)
     app.processEvents()
     assert all(
         window.preview_slot.rect().contains(frame.geometry())
@@ -20331,21 +20493,21 @@ def test_preview_workspace_chooses_largest_frames(app, count, width, height, col
 
 
 def test_preview_timeline_visibility_and_advanced_preference(app, tmp_path):
-    from cephvr.gui.previews import PreviewDialog
+    from cephvr.gui.previews import PreviewWorkspace
 
     settings = QSettings(str(tmp_path / "preview.ini"), QSettings.Format.IniFormat)
     # A preference saved before the timeline became permanent is ignored.
     settings.setValue("windows/preview-timeline-visible", False)
     host = QWidget()
-    dialog = PreviewDialog(host, settings)
+    dialog = PreviewWorkspace(None, settings)
     dialog.show()
     app.processEvents()
     assert dialog.timeline.isVisible()
     assert dialog.advanced_toggle.text() == "Advanced previews"
     assert not hasattr(dialog, "timeline_toggle")
     dialog.hide()
-    restored = PreviewDialog(
-        host, QSettings(settings.fileName(), QSettings.Format.IniFormat)
+    restored = PreviewWorkspace(
+        None, QSettings(settings.fileName(), QSettings.Format.IniFormat)
     )
     # Advanced previews default off and are remembered locally.
     assert not restored.advanced_toggle.isChecked()
@@ -20354,8 +20516,8 @@ def test_preview_timeline_visibility_and_advanced_preference(app, tmp_path):
     restored.advanced_toggle.click()
     assert restored.timeline.advanced
     assert settings.value("windows/preview-advanced-visible", type=bool)
-    again = PreviewDialog(
-        host, QSettings(settings.fileName(), QSettings.Format.IniFormat)
+    again = PreviewWorkspace(
+        None, QSettings(settings.fileName(), QSettings.Format.IniFormat)
     )
     assert again.advanced_toggle.isChecked() and again.timeline.advanced
     again.show()
@@ -20367,32 +20529,57 @@ def test_preview_timeline_visibility_and_advanced_preference(app, tmp_path):
     host.deleteLater()
 
 
-@pytest.mark.parametrize(
-    "output, state, caption",
-    [
-        ("No output closure evidence", "idle", ""),
-        ("Last reported outputs open", "recording", "● REC"),
-        ("Closing", "waiting", "◐ CLOSING"),
-        ("Unconfirmed", "fault", "▲ OUTPUT UNCONFIRMED"),
-        ("Last reported outputs closed", "idle", ""),
-    ],
-)
-def test_preview_hud_row_holds_recording_lamp_and_view_toggles(
-    window, app, output, state, caption
-):
-    dialog = window.dashboard.preview_dialog
-    window.apply_view(DashboardView(connected=True, output_status=output))
-    window.dashboard.preview_button.click()
+def test_video_previews_toggle_hides_section_and_closes_open_viewers(app, tmp_path):
+    from cephvr.gui.previews import PreviewWorkspace
+
+    path = str(tmp_path / "video.ini")
+    settings = QSettings(path, QSettings.Format.IniFormat)
+    workspace = PreviewWorkspace(None, settings)
+    workspace.resize(1200, 800)
+    workspace.apply_views(
+        (
+            PreviewView("a", "Behavior cam", active=True, available=True, visible=True),
+            PreviewView("b", "Tracking cam", active=True, available=True),
+        ),
+        allowed=True,
+    )
+    requests = []
+    workspace.visibility_requested.connect(lambda *args: requests.append(args))
+    workspace.show()
     app.processEvents()
-    lamp = dialog.recording_lamp
-    assert (lamp.property("state"), lamp.text()) == (state, caption)
-    assert output in lamp.toolTip()
-    # Idle has no lamp; only REC, closing and output faults are shown.
-    assert lamp.isVisible() == (state != "idle")
+    assert workspace.video_toggle.text() == "Video previews"
+    assert workspace.video_toggle.isChecked() and workspace.preview_host.isVisible()
+    assert workspace.toggle_bar.isAncestorOf(workspace.video_toggle)
+    workspace.advanced_toggle.setChecked(True)
+    workspace.video_toggle.click()
+    app.processEvents()
+    assert workspace.preview_host.isHidden()
+    # Only the open viewer is closed; capture and the dials are untouched.
+    assert requests == [("a", False)]
+    assert workspace.details.isVisible()
+    assert not settings.value("windows/preview-video-visible", type=bool)
+    workspace.video_toggle.click()
+    app.processEvents()
+    assert workspace.preview_host.isVisible() and workspace.details.isVisible()
+    assert workspace.preview_host.geometry().right() < workspace.details.x()
+    restored = PreviewWorkspace(None, QSettings(path, QSettings.Format.IniFormat))
+    assert restored.video_toggle.isChecked()
+    workspace.video_toggle.click()
+    again = PreviewWorkspace(None, QSettings(path, QSettings.Format.IniFormat))
+    assert not again.video_toggle.isChecked() and again.preview_host.isHidden()
+    workspace.close()
+
+
+def test_preview_top_row_holds_system_controls_hud_console_and_view_toggles(
+    window, app
+):
+    dialog = window.dashboard.preview_workspace
+    show_previews(window)
     assert dialog.toggle_bar.isAncestorOf(dialog.advanced_toggle)
-    assert dialog.hud_card.isAncestorOf(lamp)
     assert dialog.timeline.isAncestorOf(dialog.toggle_bar)
-    cards = (dialog.session_controls, dialog.hud_card, dialog.log_card)
+    # No REC or output-fault lamp is drawn in the HUD card.
+    assert not dialog.hud_card.findChildren(QLabel, "rec-lamp")
+    cards = (window.dashboard.session_controls, dialog.hud_card, dialog.log_card)
     assert cards[0].geometry().right() < cards[1].x()
     assert cards[1].geometry().right() < cards[2].x()
     assert len({card.y() for card in cards}) == 1
@@ -20422,8 +20609,8 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
     window.recordings.install_values({behavior.key: True})
     window.apply_view(state)
     window.show()
-    window.dashboard.show_previews()
-    dialog = window.dashboard.preview_dialog
+    show_previews(window)
+    dialog = window.dashboard.preview_workspace
     requests = []
     dialog.visibility_requested.connect(lambda *args: requests.append(args))
     app.processEvents()
@@ -20464,7 +20651,7 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
     app.processEvents()
     assert not dialog.source_widgets[behavior.key].isVisible()
     window.select_page(0)
-    window.dashboard.show_previews()
+    show_previews(window)
     app.processEvents()
     assert window.preview_slot.frames[behavior.key].header.isAncestorOf(control)
     window.apply_view(replace(state, has_control=False))
@@ -21768,7 +21955,7 @@ def test_preview_window_supplies_current_profile_or_edited_geometry(
     }
     projectors._geometry_dirty = False
     window.update_preview_timeline()
-    preview = window.dashboard.preview_dialog.timeline
+    preview = window.dashboard.preview_workspace.timeline
     assert preview.plan.geometry == geometry
     changed = geometry.model_copy(update={"observer_mm": (101.0, 100.0, 75.0)})
     monkeypatch.setattr(
@@ -21837,31 +22024,12 @@ def test_setup_checklist_camera_scope_completion_and_reconnect(window, ready):
     assert "Preparing camera for session" not in console.toPlainText()
 
 
-@pytest.mark.parametrize("phase", list(Phase))
-@pytest.mark.parametrize("observer", [False, True])
-def test_preview_system_controls_share_dashboard_gates(window, phase, observer):
-    dashboard = window.dashboard
-    dashboard.apply_view(review_view(phase, observer=observer))
-    preview = dashboard.preview_dialog.session_controls
-    for name, control in dashboard.command_buttons.items():
-        assert preview.command_buttons[name].isEnabled() == control.isEnabled()
-        assert preview.command_buttons[name].toolTip() == control.toolTip()
-        assert not preview.command_buttons[name].autoDefault()
-    primary = dashboard.command_buttons["Start"]
-    assert primary.text() == (
-        "Setup"
-        if phase in {Phase.CONFIGURATION, Phase.SETTING_UP, Phase.ENDED}
-        else "Start"
-    )
-    assert preview.command_buttons["Start"].text() == primary.text()
-
-
-def test_preview_commands_use_shared_validation_and_stop_choices(app):
+def test_runtime_commands_use_shared_validation_and_stop_choices(app):
     from cephvr.gui.dashboard import Dashboard
 
     dashboard = Dashboard(sample=True)
-    preview = dashboard.preview_dialog
-    buttons = preview.session_controls.command_buttons
+    preview = dashboard.preview_workspace
+    buttons = dashboard.command_buttons
     actions = []
     dashboard.action_requested.connect(actions.append)
     dashboard.apply_view(review_view(Phase.CONFIGURATION))
@@ -21876,16 +22044,18 @@ def test_preview_commands_use_shared_validation_and_stop_choices(app):
     buttons["Start"].click()
     buttons["Stop"].click()
     assert actions[-2:] == ["Start", "Cancel Setup"]
+    # Starting swaps the layout; the same System controls stay wired to the Dashboard.
     dashboard.apply_view(review_view(Phase.RUNNING))
+    assert dashboard.runtime_layout
     buttons["Stop"].click()
-    assert dashboard.stop_dialog.parent() is preview
+    assert dashboard.stop_dialog.parent() is dashboard
     dashboard.stop_dialog.choice_buttons["Stop after trial"].click()
     assert actions[-1] == "Stop after trial"
     buttons["Stop"].click()
     dashboard.apply_view(review_view(Phase.RUNNING, observer=True))
     assert dashboard.stop_dialog is None
     before = list(actions)
-    preview.session_controls.action_requested.emit("Start")
+    dashboard.session_controls.action_requested.emit("Start")
     assert actions == before
     dashboard.deleteLater()
     app.processEvents()
@@ -21896,7 +22066,7 @@ def test_preview_log_tail_tracks_four_rows_and_in_place_results(window, app, sty
     window.appearance.select(style, persist=False)
     dashboard = window.dashboard
     source = dashboard.log_console
-    tail = dashboard.preview_dialog.log_tail
+    tail = dashboard.preview_workspace.log_tail
     source.clear()
     for index in range(6):
         source.appendPlainText(f"Setup · Step {index}")
@@ -21908,12 +22078,11 @@ def test_preview_log_tail_tracks_four_rows_and_in_place_results(window, app, sty
     assert "Registering outputs… [Done]" in tail.toPlainText()
     assert tail.isReadOnly()
     assert tail.document().blockCount() == 4
-    dialog = dashboard.preview_dialog
-    dialog.show()
-    app.processEvents()
+    dialog = dashboard.preview_workspace
+    show_previews(window)
     assert tail.height() == dialog.hud.height()
     assert dialog.timeline.property("role") != "card"
-    controls = dialog.session_controls
+    controls = dashboard.session_controls
     start, stop = controls.command_buttons.values()
     assert start.geometry().center().y() == stop.geometry().center().y()
     assert abs(start.width() - stop.width()) <= 1
@@ -21932,3 +22101,51 @@ def test_preview_log_tail_tracks_four_rows_and_in_place_results(window, app, sty
     source.clear()
     assert tail.toPlainText() == "\n\n\n"
     assert source.toPlainText() == ""
+
+
+def test_review_session_commands_walk_phases_and_swap_preview_layout(window, app):
+    """G02: Start swaps the Dashboard to the preview layout; review simulates phases."""
+    controls = next(
+        item for item in window.children() if isinstance(item, ReviewControls)
+    )
+    dashboard = window.dashboard
+
+    def settle(phase: Phase) -> None:
+        deadline = QTimer()
+        deadline.setSingleShot(True)
+        deadline.start(8000)
+        while dashboard.view.phase != phase and deadline.isActive():
+            app.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
+        assert dashboard.view.phase == phase
+
+    settle(Phase.CONFIGURATION)
+    assert not dashboard.runtime_layout
+    dashboard.control_action("Start")
+    settle(Phase.READY)
+    assert not dashboard.runtime_layout
+    assert dashboard.session_controls.parentWidget() is not None
+    assert dashboard.left_layout.indexOf(dashboard.session_controls) == 0
+    dashboard.control_action("Start")
+    settle(Phase.RUNNING)
+    app.processEvents()
+    workspace = dashboard.preview_workspace
+    assert dashboard.runtime_layout
+    assert dashboard.pages.currentWidget() is workspace
+    cell = workspace.top.itemAtPosition(0, 0)
+    assert cell is not None and cell.widget() is dashboard.session_controls
+    assert dashboard.left_layout.indexOf(dashboard.session_controls) == -1
+    # The dummy run shows the epoch timeline and the motion dials.
+    assert workspace.advanced_toggle.isChecked() and workspace.timeline.advanced
+    assert workspace.timeline.isVisible() and workspace.details.isVisible()
+    assert workspace.timeline.epochs and workspace.timeline.panels
+    controls.simulate_action("Abort now")
+    settle(Phase.ENDED)
+    assert not dashboard.runtime_layout
+    assert dashboard.pages.currentWidget() is dashboard.form
+    assert dashboard.left_layout.indexOf(dashboard.session_controls) == 0
+    # A manual phase choice cancels pending simulated steps.
+    controls.simulate_action("Start")
+    controls.set_phase(Phase.CONFIGURATION)
+    for _ in range(40):
+        app.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
+    assert dashboard.view.phase == Phase.CONFIGURATION

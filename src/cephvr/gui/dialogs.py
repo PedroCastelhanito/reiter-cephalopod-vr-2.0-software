@@ -38,6 +38,7 @@ class StopDialog(QDialog):
             self.choice_buttons[action] = control
             actions.addWidget(control)
         self.cancel = button("Cancel")
+        self.cancel.setProperty("stopAction", True)
         self.cancel.setDefault(True)
         self.cancel.clicked.connect(self.reject)
         actions.addWidget(self.cancel)

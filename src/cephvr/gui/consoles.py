@@ -2,7 +2,7 @@
 
 from math import ceil
 
-from PyQt6.QtCore import QSize, Qt, QTimer
+from PyQt6.QtCore import QMimeData, QSize, Qt, QTimer
 from PyQt6.QtGui import (
     QContextMenuEvent,
     QPaintEvent,
@@ -28,13 +28,15 @@ from cephvr.gui.log_format import (
     terminal_body,
     terminal_row,
 )
+from cephvr.gui.log_wrap import unwrap_row, wrap_row
 from cephvr.gui.retro_instruments import (
+    ColumnHeader,
     PromptGutter,
     blink,
     prompt_cursor,
     terminal_marks,
 )
-from cephvr.gui.theme import SIZES, colors_for, retro_console
+from cephvr.gui.theme import SIZES, colors_for, minimal_frames, retro_console
 
 
 class Console(QPlainTextEdit):
@@ -45,6 +47,7 @@ class Console(QPlainTextEdit):
         assert document is not None
         self._plain_margin = document.documentMargin()
         self.gutter_width = 0
+        self.header_height = 0
         self.gutter = PromptGutter(self)
         self.setTabChangesFocus(True)
         self.setReadOnly(True)
@@ -70,7 +73,7 @@ class Console(QPlainTextEdit):
         assert document is not None
         document.setDocumentMargin(self._plain_margin)
         self.gutter_width = self.fontMetrics().horizontalAdvance("> ") if enabled else 0
-        self.setViewportMargins(self.gutter_width, 0, 0, 0)
+        self.setViewportMargins(self.gutter_width, self.header_height, 0, 0)
         self.gutter.place(self.gutter_width)
         viewport = self.viewport()
         assert viewport is not None
@@ -132,10 +135,84 @@ class LogConsole(Console):
         document = self.document()
         assert document is not None
         self.highlighter = LogHighlighter(document, lambda: colors_for(self).error)
+        self.column_header = ColumnHeader(self, self.column_titles)
+        # Indent of the wraps currently in the document; 0 means rows are unwrapped.
+        self._wrap_indent = 0
+        self.setUndoRedoEnabled(False)
         blink().toggled.connect(self.blink_cursor)
+
+    def rewrap(self, first: QTextBlock | None = None) -> None:
+        """Hang wrapped rows under the message column in Amber phosphor (display only).
+
+        Rewraps from `first` (all rows by default) and keeps the reader's position."""
+        document = self.document()
+        vertical = self.verticalScrollBar()
+        assert document is not None and vertical is not None
+        indent = STAMP_WIDTH + self._category_width + 1 if minimal_frames(self) else 0
+        advance = self.fontMetrics().horizontalAdvance(" ")
+        viewport = self.viewport()
+        columns = viewport.width() // advance - 1 if viewport and advance else 0
+        following = vertical.value() >= vertical.maximum()
+        anchor = self.firstVisibleBlock().blockNumber()
+        previous, self._wrap_indent = self._wrap_indent, indent
+        block = first if first is not None else document.begin()
+        while block.isValid():
+            text = block.text()
+            row = unwrap_row(text, previous)
+            shown = wrap_row(row, columns, indent) if indent else row
+            if shown != text:
+                cursor = QTextCursor(block)
+                cursor.movePosition(
+                    QTextCursor.MoveOperation.EndOfBlock,
+                    QTextCursor.MoveMode.KeepAnchor,
+                )
+                cursor.insertText(shown)
+            block = block.next()
+        if following:
+            vertical.setValue(vertical.maximum())
+            return
+        lines, block = 0, document.begin()
+        while block.isValid() and block.blockNumber() < anchor:
+            lines += block.lineCount()
+            block = block.next()
+        vertical.setValue(lines)
+
+    def createMimeDataFromSelection(self) -> QMimeData | None:
+        """Copy rows as stored: drop display-only wraps."""
+        if not self._wrap_indent:
+            return super().createMimeDataFromSelection()
+        # Qt's selection mime data regenerates its text, so return plain text only;
+        # selectedText() reports entry breaks as U+2029.
+        text = unwrap_row(self.textCursor().selectedText(), self._wrap_indent)
+        data = QMimeData()
+        data.setText(text.replace("\u2029", "\n"))
+        return data
+
+    def column_titles(self) -> str:
+        """Titles over the stamp, category and message columns of terminal rows."""
+        return (
+            "TIME".ljust(STAMP_WIDTH)
+            + "SOURCE".ljust(self._category_width + 1)
+            + "MESSAGE"
+        )
+
+    def set_column_header(self, enabled: bool) -> None:
+        """Reserve a top viewport margin for column titles (Amber phosphor only)."""
+        self.ensurePolished()
+        self.header_height = self.fontMetrics().lineSpacing() + 8 if enabled else 0
+        self.setViewportMargins(self.gutter_width, self.header_height, 0, 0)
+        self.column_header.place(self.header_height)
+        self.gutter.place(self.gutter_width)
+
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        super().resizeEvent(event)
+        self.column_header.place(self.header_height)
+        if self._wrap_indent:
+            self.rewrap()
 
     def set_entry_prompts(self, enabled: bool) -> None:
         super().set_entry_prompts(enabled)
+        self.rewrap()
         self.highlighter.rehighlight()
         if self.preview_compact:
             self._fit_four_lines()
@@ -190,9 +267,11 @@ class LogConsole(Console):
             prefix = CATEGORY_PREFIX.match(body)
             if prefix is not None:
                 self._category_width = max(self._category_width, len(prefix[1]))
+        self._wrap_indent = 0
         super().setPlainText(
             "\n".join(terminal_row(self._align_categories(body)) for body in bodies)
         )
+        self.rewrap()
 
     def clear(self) -> None:
         self._last_body = None
@@ -227,7 +306,10 @@ class LogConsole(Console):
             preceding_lines += block.lineCount()
             block = block.next()
         line_offset = max(0, vertical.value() - preceding_lines)
+        last = document.lastBlock().blockNumber()
         super().appendPlainText(text)
+        if self._wrap_indent:
+            self.rewrap(document.findBlockByNumber(last + 1))
         position = 0
         if not following and anchor.isValid():
             block = document.begin()
@@ -271,6 +353,9 @@ class LogConsole(Console):
             vertical.setValue(vertical.maximum() if following else y)
             horizontal.setValue(x)
             self._category_width = width
+            if self._wrap_indent:
+                # Realign existing wraps to the wider message column.
+                self.rewrap()
         return f"{prefix[1]:<{width}} {body[prefix.end() :]}"
 
     def append_entry(
@@ -334,6 +419,8 @@ class LogConsole(Console):
                 QTextCursor.MoveOperation.EndOfBlock, QTextCursor.MoveMode.KeepAnchor
             )
             cursor.insertText(body)
+            if self._wrap_indent:
+                self.rewrap(block)
             if before_anchor:
                 y += block.lineCount() - old_lines
             vertical.setValue(vertical.maximum() if following else y)

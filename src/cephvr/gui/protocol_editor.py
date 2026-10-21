@@ -441,6 +441,9 @@ class ProtocolEditor(PlannerControls):
             self,
         )
         dialog.setDefaultButton(QMessageBox.StandardButton.Cancel)
+        cancel = dialog.button(QMessageBox.StandardButton.Cancel)
+        assert cancel is not None
+        cancel.setProperty("stopAction", True)
 
         def finish(result: int) -> None:
             self.delete_dialog = None

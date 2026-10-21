@@ -13,7 +13,7 @@ from cephvr.gui.projector_optics import (
     bottom_mirror_footprint,
     projection_footprint,
 )
-from cephvr.gui.theme import SIZES, colors_for
+from cephvr.gui.theme import SIZES, colors_for, minimal_frames
 
 
 class TankDiagram(QWidget):
@@ -55,7 +55,11 @@ class TankDiagram(QWidget):
         painter.save()
         self.legend_regions.clear()
         font = painter.font()
-        font.setPointSize(SIZES.label_font)
+        phosphor = minimal_frames(self)
+        if phosphor:
+            font.setPixelSize(SIZES.label_font)  # match the style's label text
+        else:
+            font.setPointSize(SIZES.label_font)
         painter.setFont(font)
         x, y = 8.0, 14.0
         for key, title, color, marker in (
@@ -83,12 +87,14 @@ class TankDiagram(QWidget):
                 painter.setPen(QPen(QColor(colors.footprint), 1.5))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.drawRect(QRectF(x + 9, y - 8, 5, 8))
-                painter.setPen(QColor(color))
+                painter.setPen(QColor(colors.label if phosphor else color))
             elif marker == "dot":
                 painter.setBrush(QColor(color))
                 painter.drawEllipse(QPointF(x + 6, y - 4), 2.5, 2.5)
             else:
                 painter.drawLine(QPointF(x, y - 4), QPointF(x + 13, y - 4))
+            if phosphor:
+                painter.setPen(QColor(colors.label))
             painter.drawText(QPointF(x + 18, y), title)
             x += extent
         painter.restore()

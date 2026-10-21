@@ -7985,6 +7985,44 @@ application/device/workload acceptance remain pending. The earlier Mac packaging
 attempt failed at the existing AMD64 Windows DLL guard;
 [rig acceptance](rig-verification.md) remains the Windows verification boundary.
 
+### Dashboard embedded previews (2026-10-21)
+
+Owner request: replace the external Previews workspace with an in-Dashboard layout.
+Under [G01](../docs/architecture/gui.md#g01)/[G02](../docs/architecture/gui.md#g02)
+`Dashboard` now stacks the session form and a `PreviewWorkspace` widget; Start
+(phases Starting–Finalizing) shows the workspace and moves the Dashboard's own
+System controls card into its top row, and the form returns afterwards. The
+HUD recording lamp (REC/closing/fault text), Previews button, workspace geometry preference, minimize/restore handling and
+dialog-only CRT overlay were removed; previews are unavailable before Start.
+Placement now always measures against the main window (the Cameras path). In `--review`, Setup/Start/Stop walk a simulated session (no command sent); Start loads the sample trial program when the draft is blank and shows the Advanced previews dials for that run without saving the preference. This is
+source and offscreen-test evidence only; native Windows viewer follow remains pending
+in [rig-verification](rig-verification.md).
+
+### Amber phosphor style (2026-10-21)
+
+Owner request: a third Style option modelled on owner-supplied retro HUD references,
+iterated through owner-reviewed offscreen previews. Under
+[G02](../docs/architecture/gui.md#g02) rev111, `PHOSPHOR_COLORS` is a Retro-family
+palette selected by a `retroPalette` widget property beside `retroConsole`, so
+concurrent windows keep their own palette. Phosphor-only behaviour: recessed cards
+with dim outlines and corner brackets, open HUD/log frames (`openFrame`), `< TITLE >`
+captions and `/// NAME \\\` subsections (display-only; stored text unchanged),
+hidden page heading, centred bracketed navigation, filled orange/red buttons,
+underlined fields, inset checkboxes, log column titles (`ColumnHeader`) and
+display-only hanging log wraps (`log_wrap.py`; copy returns the stored row). CRT
+scanline alpha is 80 for Phosphor and unchanged for Retro.
+
+Evidence: focused appearance/log/CRT/button tests pass apart from the known
+native-mouse flake, which passes alone. Win32 mypy (193 files), ruff and format pass.
+Offscreen renders were inspected. The earlier full GUI run (before the last button,
+wrap and scanline edits) was 891 passed, 1 failed:
+`test_managed_total_time_tracks_trials_gaps_and_stops` expects a 2-line preview HUD
+but gets 4 lines. That HUD is part of the concurrent uncommitted embedded-previews
+change; this style work does not touch it, and it is not attributed here.
+Limitations: native look was seen only in owner screenshots of earlier revisions.
+Inset checkboxes rely on Qt `background-clip`; stripe visibility depends on the CRT
+toggle; wrap is phosphor-only.
+
 ### Backend review fixes (2026-10-08)
 
 Source review plus ruff/AST scans produced candidate findings; those confirmed in the code are fixed and tested, with evidence in [review-evidence-2026-10-08](review-evidence-2026-10-08/README.md). Fixed: supervisor shutdown replay, tracking-release gRPC retry, tolerant `source_registered`, concurrent worker cleanup, warnings for rejected participant Shutdown and persistent helper errors, launcher parser/reader resilience, client timeout messages and E02 Ctrl+C scope, shared policy digest ([E14](../docs/architecture/system-contracts.md#e14) revision 207), loopback/`contract_version` checks. Still open: `shutdown-health-checks` (controller-loss and fencing gaps), the TODO "For review" refactors, and coverage measurement. Local results do not close E15 rig checks.

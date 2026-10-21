@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 292
+**Status:** Accepted · **Revision:** 293
 
 - Camera and Visual Stimulus previews display the newest available frame at up to
   20 Hz, using the source rate when slower, without duplicate frames or catch-up
@@ -587,7 +587,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
   visibility evidence updates the GUI selector. Show first reveals a Win32 preview
   at its measured initial size and position in the current Preview grid, after
-  hidden creation/placement and without activation: Dashboard's modeless external workspace, or
+  hidden creation/placement and without activation: Dashboard's runtime preview layout, or
   below the existing HUD/log column on Devices/Cameras and Tracking. Keep the HUD and log
   at their existing top/right alignment; do not add a third column that shifts or
   narrows them. On Cameras/Tracking show Preview only while at least one preview is reported open;
@@ -620,27 +620,17 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   or an explicit centered Snap button restores that source's grid position/size;
   GUI translation and minimize/restore preserve this choice. A layout refresh may
   update only an existing viewer and must never reopen one closed through X.
-  Both pages retain external OpenCV previews. Dashboard's Previews action opens/raises a resizable modeless
-  workspace with source controls beside each frame heading and a resizable
-  planned stimulus timeline below. Above the previews, provide compact System
-  controls, HUD and Console in that left-to-right order on one aligned top row.
-  Controls match Dashboard's two-button layout without backend status indicators;
-  Center the equal-width controls vertically inside their card body. Console retains
-  the latest four runtime-log rows at the HUD's four-row height. Reuse Dashboard command validation, phase/authority gates and Stop choices;
-  parent confirmations to the initiating window. The read-only log tail mirrors
-  original timestamps and in-place progress/results without changing Dashboard
-  scroll position or history; keep four unwrapped rows, padding unused rows, with full text in the tooltip. Its stream grid chooses up to three columns to
-  maximize the fitted square size, retaining frame identities through visibility
-  changes. Closing/minimizing it
-  hides its native viewers without ending capture or clearing their Show state;
-  reopening restores them. Cameras retains its in-page grid. Switching pages
-  retargets the native display owner only within the same verified GUI process;
-  native windows remain above their current host, following its movement and
+  Both pages retain external OpenCV previews. Dashboard hosts them in its runtime
+  preview layout (G02): the footprints share the Dashboard window, so native viewers
+  follow that one host. Its stream grid chooses up to three columns to maximize the
+  fitted square size, retaining frame identities through visibility changes. Leaving
+  the Dashboard tab or the runtime layout hides the viewers without ending capture or
+  clearing their Show state; returning restores them. Cameras retains its in-page grid.
+  Switching pages retargets the native display owner only within the same verified GUI
+  process; native windows remain above their current host, following its movement and
   hide/minimize/restore. Restore refreshes the geometry baseline without clearing
-  a previously observed manual opt-out.
-  Dashboard log fills its available height even while the external workspace
-  shows previews. Fix the Cameras/Tracking log to four visible text lines while
-  its in-page Preview is shown; on this
+  a previously observed manual opt-out. Fix the Cameras/Tracking log to four visible
+  text lines while its in-page Preview is shown; on this
   collapse scroll to the latest entry. Retain manual scrolling thereafter and
   restore expanding height on last close.
   Initial measurement uses the same compact log geometry and restores it on failure.
@@ -1058,25 +1048,26 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Camera experiment enablement belongs to Devices. Dashboard shows a video-recording
   switch for each camera role and Visual Stimulus, plus Tracking velocities.
   Recording selections are retained but disabled while their source is inactive.
-- A secondary **Previews…** button at the right of the Dashboard header opens or
-  raises one reusable modeless preview workspace, with one checkbox per available
-  camera/tracking/stimulus viewer and no open-window count. Each source's Show checkbox
-  sits beside its own frame heading; status/reason text sits centered inside that frame,
-  and a one-word disabled hint beside Show appears only for observers or while an open
-  viewer covers the frame; omit the separate source-selector
-  card. The larger workspace defaults to 1440×960,
-  constrained to the operator monitor through shared tool-window placement; the new
-  workspace geometry preference supersedes the older selector geometry. Remember its position
-  and size across close/reopen and frontend restarts using local GUI preferences.
+- Pressing Start swaps the Dashboard body (below the page title) from the session form
+  to the runtime preview layout; it returns to the form after the session ends. The
+  swap follows reported phase: Starting, Running, Stopping and Finalizing show the
+  preview layout; every other phase, including Ready, shows the form. There is no
+  Previews button, separate window or geometry preference. The Dashboard's own System
+  controls card (with its backend indicators) moves unchanged into the top row's first
+  cell and returns to the form's left column afterwards; it is never duplicated. Each
+  source's Show checkbox sits beside its own frame heading; status/reason text sits
+  centered inside that frame, and a one-word disabled hint beside Show appears only for
+  observers or while an open viewer covers the frame. Recording selections and Session
+  config are not shown while the layout is active.
   Show a compact HUD using the Dashboard's same status, trial and time values, as
-  label-aligned columns. Beside it, a recording lamp reflects only controller
-  output-closure evidence: reported open outputs show REC, closing waits and
-  failed/unconfirmed show a fault; otherwise the lamp is hidden. The HUD is the
+  label-aligned columns, with no recording lamp or symbol text. The HUD is the
   middle card of the top row, between System controls and Console. Advanced previews
-  is a standard checkbox in the timeline, enabled independently of operator authority. Closing hides the workspace
-  and its native viewers while retaining logical Show state and capture; reopening
-  restores the same viewers. The current trial (or selected draft) epoch timeline
-  always spans the full workspace width directly below the HUD, without an outer
+  is a standard checkbox in the timeline, enabled independently of operator authority.
+  A **Video previews** checkbox beside it (default on, remembered locally) shows or
+  hides the stream section; hiding closes any open viewer through the normal Show
+  request, leaves capture unchanged, and Show must be chosen again after it returns.
+  The current trial (or selected draft) epoch timeline
+  always spans the full body width directly below the HUD, without an outer
   card frame or card heading. Below that row,
   streams fill the available width when Advanced previews is off (default,
   remembered locally). Enabling it shows a fitted grid of projector
@@ -1201,9 +1192,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 108
+**Status:** Accepted · **Revision:** 111
 
-- Preview workspace card titles and stream headings use the same coral-red hue as
+- Runtime preview layout card titles and stream headings use the same coral-red hue as
   the main GUI; retain the existing borders, type and console palette.
 
 - Preview rate footers use two centered muted rows with one decimal place, following G01
@@ -1284,8 +1275,27 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   accent for page headings, selected sidebar labels and active subtab text; keep
   form labels neutral, use bright blue coordinate headers and retain blue action/focus treatments. Embedded stimulus plots
   are excluded from the initial Dashboard increment.
-- Review and runtime offer the same window-bar Style menu with Standard and Retro
-  console, retaining a shared frontend preference with legacy Review fallback. Retro console
+- Review and runtime offer the same window-bar Style menu with Standard, Retro
+  console and Amber phosphor. Amber phosphor is a Retro-family style modelled on
+  the owner's satellite HUD reference. It keeps Retro's fonts, glyphs, prompts and
+  CRT rules on cool near-black, with red-orange card titles shown as `< TITLE >`,
+  pale-gold values over dim amber labels, and wide-tracked regular headings. Cards
+  are recessed to the log surface with a dim outline and bright corner brackets;
+  HUD/log cards keep only corners and centred edge segments, with unboxed text and
+  dim log column titles aligned to the log columns. Fields are underlined, checkboxes
+  inset (hover brightens the box and label), subsection headings shown as `/// NAME \\\`, and the page heading omitted.
+  The sidebar wordmark and navigation are centred: `> Page <` with bright brackets when selected, dim
+  brackets on hover. Buttons rest as orange outlines over a faint tint and fill orange
+  on hover; Stop, Abort, Disconnect and Cancel actions do the same in red; disabled
+  buttons are dim outlines and toggles fill only when checked. Selection elsewhere uses a dim amber fill with a bright outline. HUD and
+  log text share the value colour; wrapped log rows continue under the message
+  column for display only (copied text is the stored row). Focus is bright amber,
+  ready lamps are cream, waiting is orange and faults red; Amber phosphor has no cyan. Its CRT scanlines
+  are stronger so bright fills read as striped. With CRT effects on, Retro-family
+  popups, menus and owned windows carry the same scanline film. Decorations are display-only: stored
+  titles and headings are unchanged. The palette follows the owning window.
+  The Style menu retains a shared frontend preference with legacy Review fallback.
+  Retro console
   styles Dashboard, Devices, Tracking, Protocol planner/editor, Previews selector and window chrome with green-black surfaces, blue frames
   and actions, muted red-orange card titles, cyan page headings and field labels,
   restrained amber branding, pale green readouts/logs, cyan navigation/focus and warm warning/stop
@@ -1301,7 +1311,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   reported gap progress, excluding preparation/finalization overhead. Derive durations
   from the accepted configuration using bounded canonical expansion; unresolved
   durations leave totals unknown. Explain this scope in both HUD tooltips, while
-  Review supplies explicitly simulated values. Dashboard adds an Output row with the
+  Review supplies explicitly simulated values. Dashboard adds an Output dir row with the
   reserved E04 session directory (— before reservation); omit Reservation and Metadata rows.
   Status captions use brackets. Omit the trial-position strip; the HUD trial
   row retains the current index/count. Ready lamps are green,
@@ -1394,7 +1404,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Small shared components, layout helpers and value formatters apply those tokens;
   pages compose them using focused data and callbacks under ARCH-002. Do not copy
   page-local styles or introduce a generic form/runtime framework.
-- Keep a common content-measured title row, with Dashboard Previews at the right.
+- Keep a common content-measured title row.
   Device icon subtabs occupy the top of the left content column, followed by the
   per-device Configuration file card and then connection/settings cards. Subtabs expand to fill their column and align their top edge
   with the HUD card’s painted top border. The right HUD stays at the same top position across pages and

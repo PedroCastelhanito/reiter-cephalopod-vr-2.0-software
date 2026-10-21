@@ -4,7 +4,7 @@ from PyQt6.QtCore import QPointF, QRect, QSize
 from PyQt6.QtGui import QColor, QFont, QPainter, QTextLayout, QTextOption
 from PyQt6.QtWidgets import QHeaderView, QStyle, QStyleOptionHeader
 
-from cephvr.gui.theme import SIZES, colors_for
+from cephvr.gui.theme import SIZES, colors_for, minimal_frames
 
 
 class TableHeader(QHeaderView):
@@ -52,7 +52,8 @@ class TableHeader(QHeaderView):
         painter.save()
         style.drawControl(QStyle.ControlElement.CE_Header, option, painter, self)
         painter.setClipRect(rect)
-        painter.setPen(QColor(colors_for(self).accent))
+        colors = colors_for(self)
+        painter.setPen(QColor(colors.muted if minimal_frames(self) else colors.accent))
         layout = self.label_layout(index, rect.width())
         layout.draw(
             painter,

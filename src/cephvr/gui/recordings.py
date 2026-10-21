@@ -23,6 +23,8 @@ class RecordingsCard(Card):
         self.body.addLayout(self.source_grid)
         self.video_heading = label("Videos", "label")
         self.data_heading = label("Data", "label")
+        for heading in (self.video_heading, self.data_heading):
+            heading.setProperty("subsection", True)
         self.record: dict[str, QCheckBox] = {}
         self.source_labels: dict[str, QLabel] = {}
         self.touched: set[str] = set()

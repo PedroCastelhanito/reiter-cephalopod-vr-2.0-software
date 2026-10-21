@@ -140,12 +140,11 @@ class DashboardWindow(QMainWindow):
             control.setParent(self)
             control.hide()
         header.addStretch()
-        header.addWidget(self.dashboard.preview_button)
         self.preview_slot = PreviewSlot()
         self.recordings.changed.connect(self.update_preview_slot)
         self.protocol.participation_changed.connect(self.update_backend_indicators)
         self.devices.cameras.drafts_changed.connect(self.update_backend_indicators)
-        self.dashboard.preview_dialog.opened.connect(self.update_preview_timeline)
+        self.dashboard.runtime_layout_shown.connect(self.update_preview_timeline)
         self.protocol.editor.changed.connect(self.update_preview_timeline)
         body.addWidget(self.stack, 1)
         self.devices.tabs.currentChanged.connect(self.update_preview_slot)
@@ -197,7 +196,6 @@ class DashboardWindow(QMainWindow):
     def select_page(self, index: int) -> None:
         self.stack.setCurrentIndex(index)
         self.page_title.setText(PAGES[index].upper())
-        self.dashboard.preview_button.setVisible(index == 0)
         self.update_preview_slot()
 
     def update_backend_indicators(self) -> None:
@@ -216,21 +214,25 @@ class DashboardWindow(QMainWindow):
             status = self.devices.cameras.status_column
         elif page == 3:
             status = self.tracking.status
-        workspace = self.dashboard.preview_dialog
+        workspace = self.dashboard.preview_workspace
+        # The workspace hosts previews on the Dashboard only while a session runs.
+        embedded = page == 0 and self.dashboard.runtime_layout
         workspace.recording_enabled = {
             camera.key: self.recordings.record[camera.key].isChecked()
             for camera in self.devices.cameras.drafts
         }
         workspace.refresh()
-        host = workspace.preview_host if page == 0 else status
-        if page != 0:
-            workspace.hide()
-        if host is not None and self.preview_slot.parentWidget() is not host:
-            column = host.layout()
+        host = workspace.preview_host if embedded else None if page == 0 else status
+        # Park the slot in the (possibly hidden) workspace until a page hosts it.
+        parking = host if host is not None else workspace.preview_host
+        if self.preview_slot.parentWidget() is None or (
+            host is not None and self.preview_slot.parentWidget() is not host
+        ):
+            column = parking.layout()
             assert isinstance(column, QVBoxLayout)
             column.addWidget(self.preview_slot, 1)
         sources = self.dashboard.view.previews
-        if page == 0:
+        if embedded:
             sources = tuple(
                 source
                 for source in sources
@@ -246,8 +248,8 @@ class DashboardWindow(QMainWindow):
                 camera.key for camera in self.devices.cameras.drafts if camera.enabled
             }
             sources = tuple(source for source in sources if source.key in enabled)
-        self.preview_slot.set_sources(sources, reserve_active=page == 0)
-        self.preview_slot.attach_controls(workspace, external=page == 0)
+        self.preview_slot.set_sources(sources, reserve_active=embedded)
+        self.preview_slot.attach_controls(workspace, external=embedded)
         for key, frame in self.preview_slot.frames.items():
             frame.snap_button.setEnabled(bool(key) and self.dashboard.view.has_control)
         for column_status in (
@@ -263,9 +265,9 @@ class DashboardWindow(QMainWindow):
             assert isinstance(layout, QVBoxLayout)
             layout.setStretchFactor(column_status.log_card, 0 if compact else 1)
         self.preview_slot.setVisible(
-            status is not None
+            host is not None
             and any(
-                item.visible or item.pending or (page == 0 and item.active)
+                item.visible or item.pending or (embedded and item.active)
                 for item in sources
             )
         )
@@ -273,8 +275,13 @@ class DashboardWindow(QMainWindow):
     def update_preview_timeline(self) -> None:
         editor = self.protocol.editor
         view = self.dashboard.view
-        index = view.trial_index - 1 if view.trial_index else editor.index
-        timeline = self.dashboard.preview_dialog.timeline
+        # Sample views carry fixed trial numbers; show the edited draft instead.
+        index = (
+            view.trial_index - 1
+            if view.trial_index and not view.sample
+            else editor.index
+        )
+        timeline = self.dashboard.preview_workspace.timeline
         if not 0 <= index < len(editor.drafts):
             timeline.clear("Current trial program unavailable.")
             return
@@ -307,7 +314,7 @@ class DashboardWindow(QMainWindow):
         self.tracking.apply_view(view)
         self.update_backend_indicators()
         self.update_preview_slot()
-        if self.dashboard.preview_dialog.isVisible():
+        if self.dashboard.runtime_layout:
             self.update_preview_timeline()
         self.config_files.set_enabled(self.snapshots.available())
         if not self.protocol.can_edit and self.trial_preview is not None:

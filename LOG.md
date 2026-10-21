@@ -8746,3 +8746,126 @@ and git diff --check pass; working tree clean and HEAD/origin/main equal after
 push. Task complete; this completion record is committed and synced separately.
 Large traces remain local-only and require separate backup if needed; no runtime
 or rig tests were run for repository housekeeping.
+
+### 2026-10-21 - Amber phosphor Style option
+
+[gui] `amber-phosphor-style`: the owner shared retro HUD references and chose a
+third Style option: warm charcoal #26211d, orange base, cyan accent and ready
+lamps, yellow/red warnings (G02rev111). Added `PHOSPHOR_COLORS`/tints, a
+`retroPalette` widget property and owner-resolved Retro painter colors. Replaced
+the initial module-global palette before tests because it would leak across
+windows and tests. Extended the tint and preference tests and added a live-switch
+test. 46/47 selected GUI tests pass; the one native mouse-delivery flake passes
+alone. 78 preview timeline tests pass. Ruff, format and Win32 mypy (192 files)
+pass. Offscreen renders inspected. Another agent's working-tree stash briefly
+removed all uncommitted work; it was restored unchanged without intervention.
+No native display check.
+
+### 2026-10-21 - Dashboard embedded previews
+
+[gui] `dashboard-embedded-previews`: owner asked to replace the external Previews
+workspace with an in-Dashboard layout shown only after Start. `Dashboard` now stacks
+the session form and a `PreviewWorkspace` widget (was `PreviewDialog`); phases
+Starting-Finalizing show the workspace and the Dashboard's own System controls card
+moves into its top row (returns on Ready/Ended/Configuration). Removed the Previews
+button, workspace geometry preference, minimize/restore handling, dialog-only CRT
+overlay and the HUD REC/closing/fault lamp. Added a Video previews checkbox beside
+Advanced previews (hides the stream section; closes open viewers via Show requests,
+capture unchanged; remembered locally). Placement measures against the main window
+and the slot parks in the workspace until hosted. In `--review`, Setup/Start/Stop walk
+a simulated session; Start loads the sample program if the draft is blank and shows
+the dials without saving the preference. G01rev293/G02rev110, runtime report, rig
+checklist and development guide updated. ARCH-002 review: no new dependency or
+whole-runtime back-reference; the duplicated workspace System controls and tests were
+removed rather than extended.
+Checks: tests/gui 890 passed, 1 failed (`test_managed_total_time_tracks_trials_gaps_and_stops`,
+stale HUD line-count assertion, also fails on the untouched tree); ruff check/format,
+Win32 mypy and check_backend_boundaries (0 violations) pass. Local `*_pb2.py` were
+regenerated with tools/generate_contracts.py (gitignored, stale in this environment);
+this cleared 10 earlier failures and a Qt abort. Offscreen renders only: native Windows
+viewer follow, move/minimize/restore and hide-on-leave are unverified (rig checklist).
+Working tree also holds unrelated concurrent edits (amber-phosphor style in theme.py,
+components.py, retro_*.py, preview_projector_cards.py, protocol_timeline.py,
+recent_values.py) that were not made or reviewed here.
+
+### 2026-10-21 - Amber phosphor rework after native review
+
+[gui] `amber-phosphor-style`: the owner's native screenshot did not match the
+satellite reference. Sampled the reference (cool near-black, amber, pale cyan,
+red). Phosphor now uses cool near-black, dim amber single-line frames with
+corner brackets, regular-weight wide-tracked headings, orange inverse and checked
+fills, and outlined dim-amber selection. Cyan is limited to focus/instrument lines
+and ready lamps. Retro console is unchanged. G02rev111 was rewritten in place
+(the revision is still uncommitted). 158/159 selected GUI tests pass; the known
+native-mouse flake is the one failure. Win32 mypy passes. Offscreen renders of
+cool versus charcoal surfaces were sent to the owner; background choice pending.
+
+### 2026-10-21 - Amber phosphor refinement and application
+
+[gui] `amber-phosphor-style`: iterated with the owner through Dashboard previews.
+They chose satellite palette B, `< TITLE >` captions, `/// NAME \\\` subsections,
+recessed cards with dim outlines and bright corners, and open HUD/log frames with
+centred segments. Also: no page heading, centred `> Page <` navigation with hover
+brackets, underlined fields, inset checkboxes, dim labels, log column titles, orange
+waiting, matched HUD/log text, amber focus, filled orange buttons with red
+stop/abort/cancel/disconnect, and stronger phosphor-only CRT scanlines (V1).
+`QPlainTextEdit` ignores block hanging indents, so `log_wrap.py` adds display-only
+wraps with a copy override. Tests catch Qt regenerating selection mime data, and the
+override now returns plain text. Added focused tests (decorations, log header width,
+wrap round trip and copy). Focused suites pass except the known mouse flake, which
+passes alone. Win32 mypy and ruff pass. The earlier full GUI run had one failure in
+the concurrent preview-HUD work (`test_managed_total_time_tracks_trials_gaps_and_stops`),
+not attributed to this change. The owner asked for no full-suite rerun; the final
+revision was checked with focused suites only.
+
+### 2026-10-21 - Amber phosphor colour follow-up
+
+[gui] `amber-phosphor-style`: following the owner's native review, the HUD row
+`OUTPUT` is renamed `OUTPUT DIR` in all styles (G02; test filter updated). Amber
+phosphor now has no cyan: ready lamps and the matching epoch tint are cream
+`#ffe7b0`. Button fills are darker than the accent (orange `#c8741f`, red
+`#c4402c`, with lighter hovers). Disabled Stop/Cancel stay dim outlines through
+the existing command gates. 30 focused HUD/appearance tests pass and Win32 mypy
+passes. The full suite was not run (owner instruction). An offscreen render was
+inspected.
+
+### 2026-10-21 - Amber phosphor centred wordmark
+
+[gui] `amber-phosphor-style`: the CEPHVR sidebar wordmark is centred in Amber
+phosphor, matching the navigation; switching style restores its original alignment
+(G02). The style-switch test checks it. 6 focused appearance tests pass and mypy
+passes. An offscreen render was inspected; the full suite was not run.
+
+### 2026-10-21 - Amber phosphor outlined buttons
+
+[gui] `amber-phosphor-style`: the owner compared four button treatments and chose
+outlined-with-tint at rest plus fill on hover (B2+B3). Orange outline/text on
+`#2a1c10` fills `#c8741f` on hover; stop/abort/cancel/disconnect use a red outline
+on `#2c1210` and fill `#c4402c`. Pressed text is dark for contrast. G02 updated.
+Focused appearance/button tests pass. Offscreen rest and simulated-hover renders
+were inspected; the full suite was not run.
+
+### 2026-10-21 - Scanlines on popups and windows; checkbox hover
+
+[gui] `amber-phosphor-style`: at the owner's request, `WindowFilms` (`retro_overlay.py`,
+an application event filter) adds the CRT scanline film to Retro-family dropdowns,
+menus, completer popups and owned windows when they are shown. It follows the CRT
+toggle and per-style strength and updates open films on change; native file pickers
+are unaffected. Amber phosphor checkboxes brighten box and label on hover. G02
+updated. A new test covers the owned-dialog film and the CRT toggle; focused tests
+pass. Offscreen render confirms the dropdown film. Hover cannot be rendered
+offscreen and needs native confirmation; the full suite was not run.
+
+### 2026-10-21 - Amber phosphor page audit fixes
+
+[gui] `amber-phosphor-style`: audited every page and sub-tab offscreen, and applied
+the owner-approved fixes. Selected device-tab and rail icons are bright (previously
+dark on the dim fill). Tab bars are unboxed, with `TabBrackets` (bright on current,
+dim on hover). The geometry legend uses label size and colour. Table headers are
+transparent, with no table outline. Nested cards show as `/// NAME \\\`
+subsections, flush with parent content. Field captions are uppercase except units
+in parentheses. VSync mode is in a "Display synchronization" card (all styles). The
+card top line breaks around header actions (Preview). Copper replaces the muddy
+cream epoch tint. Refresh icons follow the palette accent. Epoch tiles gained three
+phosphor identity-mark options (`PHOSPHOR_EPOCH_TILE`); the owner's choice is
+pending. 11 focused tests pass and Win32 mypy passes. The full suite was not run.

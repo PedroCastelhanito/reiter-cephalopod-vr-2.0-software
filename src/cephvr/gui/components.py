@@ -32,11 +32,12 @@ from cephvr.gui.consoles import FittedConsole as FittedConsole
 from cephvr.gui.consoles import LogConsole as LogConsole
 from cephvr.gui.formatting import HudRows, hud_text
 from cephvr.gui.retro_instruments import (
+    corner_brackets,
     double_frame,
     paint_status_lamp,
 )
 from cephvr.gui.table_header import TableHeader
-from cephvr.gui.theme import SIZES, colors_for, retro_console
+from cephvr.gui.theme import SIZES, colors_for, minimal_frames, retro_console
 
 
 def label(text: str, role: str = "hint", *, wrap: bool = False) -> QLabel:
@@ -59,6 +60,8 @@ class Button(QPushButton):
         ):
             return None
         if role == "navigation":
+            if minimal_frames(self):
+                return f"> {self.text()} <" if self.isChecked() else self.text()
             return ("> " if self.isChecked() else "  ") + self.text()
         text = self.text().upper()
         return f"[ {text} ]"
@@ -78,6 +81,17 @@ class Button(QPushButton):
         self.initStyleOption(option)
         option.text = label_text
         QStylePainter(self).drawControl(QStyle.ControlElement.CE_PushButton, option)
+        if self.property("role") == "navigation" and minimal_frames(self):
+            # Bright brackets mark the current page; dim ones preview a hovered page.
+            colors = colors_for(self)
+            ink = colors.accent if self.isChecked() else colors.border
+            if self.isChecked() or self.underMouse():
+                corner_brackets(
+                    QPainter(self),
+                    QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5),
+                    QColor(ink),
+                    10,
+                )
 
 
 def button(text: str, role: str = "secondary", *, hint: str = "") -> QPushButton:
@@ -202,18 +216,29 @@ class Card(QFrame):
         frame.setTop(self.caption.geometry().center().y() + 0.5)
         colors = colors_for(self)
         radius = 0 if retro_console(self) else SIZES.card_radius
-        painter.setBrush(QColor(colors.card))
+        phosphor = minimal_frames(self) and retro_console(self)
+        if phosphor and self.property("nestedCard") is True:
+            return  # nested cards read as subsections: no fill, outline or brackets
+        # Amber phosphor recesses cards to the log surface; open frames drop the outline.
+        painter.setBrush(QColor(colors.console if phosphor else colors.card))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRoundedRect(frame, radius, radius)
         # Interrupt only the outline; keep the surface continuous beneath the title.
-        painter.setClipRegion(
-            QRegion(self.rect()).subtracted(QRegion(self.caption.geometry()))
-        )
+        gaps = QRegion(self.caption.geometry())
+        if phosphor:
+            # Header actions (e.g. Preview) interrupt the top line like the title.
+            for index in range(self.header.count()):
+                item = self.header.itemAt(index)
+                widget = item.widget() if item is not None else None
+                if widget is not None and widget.isVisible():
+                    gaps = gaps.united(QRegion(widget.geometry().adjusted(-4, 0, 4, 0)))
+        painter.setClipRegion(QRegion(self.rect()).subtracted(gaps))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QPen(QColor(colors.border), 1))
-        painter.drawRoundedRect(frame, radius, radius)
+        if not (phosphor and self.property("openFrame") is True):
+            painter.setPen(QPen(QColor(colors.border), 1))
+            painter.drawRoundedRect(frame, radius, radius)
         if retro_console(self):
-            double_frame(painter, frame)
+            double_frame(painter, frame, self)
 
 
 class StatusIndicator(QRadioButton):
@@ -265,10 +290,12 @@ class StatusColumn(QWidget):
         body.setSpacing(SIZES.card_gap)
         self.rows: HudRows = ()
         self.hud_card = Card(title)
+        self.hud_card.setProperty("openFrame", True)
         self.hud = FittedConsole()
         self.hud.setProperty("terminal", "telemetry")
         self.hud_card.body.addWidget(self.hud)
         self.log_card = Card("Runtime log", grow=True)
+        self.log_card.setProperty("openFrame", True)
         self.console = LogConsole()
         self.log_minimum_height = self.console.minimumHeight()
         self.log_card.body.addWidget(self.console, 1)

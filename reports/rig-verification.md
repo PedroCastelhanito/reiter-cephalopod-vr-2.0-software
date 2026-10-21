@@ -58,9 +58,17 @@ remain open. Continuous capture is design-only and was not certified.
   Offscreen reflow, frame identity, preference and plot checks pass22 cases; native
   viewer follow was not exercised. — [Runtime assessment](runtime.md)
 
+- [ ] `dashboard-embedded-previews`: with G01rev293/G02rev109, press Start and check the
+  Dashboard swaps to the runtime preview layout (System controls in place, HUD,
+  Console, timeline, stream footprints) and returns to the form after Stop/Ended.
+  Native viewers must sit on their in-window footprints, follow the main window
+  (move/minimize/restore), hide on leaving the Dashboard tab or the layout, and
+  reappear with Show state and capture intact. Previews are no longer available
+  before Start; the Cameras page grid is unchanged. Offscreen layout checks only;
+  native follow not exercised. — [Runtime](runtime.md)
+
 - [ ] With G01rev268, open Previews before Setup and during a recorded trial, wide (side-by-side) and narrow (stacked), and check native viewers sit on their frames.
-  Confirm in-frame reasons, the VIEW strip, REC only while controller-reported
-  outputs are open, the dimmed remaining plan, 60 s left-pinned window, cursor and
+  Confirm in-frame reasons, the VIEW strip (the HUD no longer shows a REC lamp), the dimmed remaining plan, 60 s left-pinned window, cursor and
   hover values; headings stay fixed while viewers open/close. Offscreen renders and
   focused tests only. — [Runtime assessment](runtime.md)
 

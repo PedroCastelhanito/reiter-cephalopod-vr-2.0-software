@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.gui.components import StatusColumn
 from cephvr.gui.preview_frame import PreviewFrame
-from cephvr.gui.previews import PreviewDialog
+from cephvr.gui.previews import PreviewWorkspace
 from cephvr.gui.view import PreviewView
 from cephvr.platform.windows.preview_owner import gui_window_identity
 from cephvr.platform.windows.window_coordinates import (
@@ -161,7 +161,7 @@ class PreviewSlot(QWidget):
             ),
         )
 
-    def attach_controls(self, workspace: PreviewDialog, *, external: bool) -> None:
+    def attach_controls(self, workspace: PreviewWorkspace, *, external: bool) -> None:
         workspace.attach_controls(
             {key: frame.header for key, frame in self.frames.items()}
             if external
@@ -241,14 +241,20 @@ def _activate_ancestor_layouts(widget: QWidget) -> None:
         frame.fit_target()
 
 
+def _embedding_workspace(area: QWidget | None) -> PreviewWorkspace | None:
+    """Return the Dashboard workspace hosting the slot, or None on device pages."""
+    parent = area.parentWidget() if area is not None else None
+    while parent is not None and not isinstance(parent, PreviewWorkspace):
+        parent = parent.parentWidget()
+    return parent
+
+
 def preview_window_placement(
     main: QWidget, key: str = ""
 ) -> rpc.PreviewWindowPlacement:
     """Measure the open-frame layout without retaining speculative visibility."""
     area = main.findChild(PreviewSlot)
-    host_window = area.window() if area is not None else None
-    if isinstance(host_window, PreviewDialog):
-        host_window.fit_contents()
+    workspace = _embedding_workspace(area)
     previous = area.eligible_sources() if area is not None else ()
     prospective = area is not None and any(
         item.key == key and not item.visible for item in area.sources
@@ -258,8 +264,8 @@ def preview_window_placement(
         area.arrange(
             tuple(item for item in area.sources if item in previous or item.key == key)
         )
-        if isinstance(host_window, PreviewDialog):
-            area.attach_controls(host_window, external=True)
+        if workspace is not None:
+            area.attach_controls(workspace, external=True)
     frame = area.frames.get(key) if area is not None else None
     slot = (
         frame.target
@@ -311,8 +317,8 @@ def preview_window_placement(
         if prospective:
             assert area is not None
             area.arrange(previous)
-            if isinstance(host_window, PreviewDialog):
-                area.attach_controls(host_window, external=True)
+            if workspace is not None:
+                area.attach_controls(workspace, external=True)
         if measuring:
             assert card is not None and owner is not None
             card.hide()

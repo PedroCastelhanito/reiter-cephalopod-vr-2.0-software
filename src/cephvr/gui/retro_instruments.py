@@ -1,18 +1,26 @@
 """Static Review instrument decoration; no device or experiment ownership."""
 
 import hashlib
+from collections.abc import Callable
 
 from PyQt6.QtCore import QEvent, QObject, QPointF, QRectF, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QPainter, QPaintEvent, QPen, QTextCursor
+from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent, QPen, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QPlainTextEdit,
     QRadioButton,
+    QTabBar,
     QWidget,
 )
 
 from cephvr.gui.log_colors import log_block_is_error
-from cephvr.gui.theme import RETRO_COLORS, RETRO_TINTS, retro_console
+from cephvr.gui.theme import (
+    Palette,
+    minimal_frames,
+    retro_colors,
+    retro_console,
+    retro_tints,
+)
 
 
 class Blink(QObject):
@@ -70,13 +78,14 @@ def prompt_cursor(console: QPlainTextEdit) -> None:
         rect.height(),
     )
     if viewport.rect().contains(block.toRect()):
-        QPainter(viewport).fillRect(block, QColor(RETRO_COLORS.accent))
+        QPainter(viewport).fillRect(block, QColor(retro_colors(console).accent))
 
 
-def tile_tint(key: str) -> QColor:
+def tile_tint(key: str, owner: QWidget) -> QColor:
     """Stable identity tint for a stimulus type, drawn from the Retro tint set."""
     index = int.from_bytes(hashlib.sha256(key.encode()).digest()[:2], "big")
-    return QColor(RETRO_TINTS[index % len(RETRO_TINTS)])
+    tints = retro_tints(owner)
+    return QColor(tints[index % len(tints)])
 
 
 def blend(base: str, ink: QColor, amount: float) -> QColor:
@@ -91,20 +100,22 @@ def blend(base: str, ink: QColor, amount: float) -> QColor:
     )
 
 
-def unselected_epoch_brush(tint: QColor) -> QColor:
+def unselected_epoch_brush(tint: QColor, colors: Palette) -> QColor:
     """Dim tinted fill for an unselected Retro epoch tile."""
-    return blend(RETRO_COLORS.card, tint, 0.18)
+    return blend(colors.card, tint, 0.18)
 
 
-def dashed_rule(painter: QPainter, left: float, right: float, y: float) -> None:
-    ink = QColor(RETRO_COLORS.border)
+def dashed_rule(
+    painter: QPainter, colors: Palette, left: float, right: float, y: float
+) -> None:
+    ink = QColor(colors.border)
     ink.setAlpha(120)
     painter.setPen(QPen(ink, 1, Qt.PenStyle.DashLine))
     painter.drawLine(QPointF(left, y), QPointF(right, y))
 
 
-def card_marks(painter: QPainter, frame: QRectF) -> None:
-    ink = QColor(RETRO_COLORS.focus)
+def card_marks(painter: QPainter, frame: QRectF, colors: Palette) -> None:
+    ink = QColor(colors.focus)
     ink.setAlpha(90)
     painter.setPen(QPen(ink, 1))
     for index, y in enumerate(
@@ -114,13 +125,50 @@ def card_marks(painter: QPainter, frame: QRectF) -> None:
         painter.drawLine(QPointF(frame.right() - length, y), QPointF(frame.right(), y))
 
 
-def double_frame(painter: QPainter, frame: QRectF) -> None:
-    """Retro card extras inside an already drawn outline: inner line, marks, corners."""
+def corner_brackets(
+    painter: QPainter, frame: QRectF, ink: QColor, length: float = 16
+) -> None:
     painter.setBrush(Qt.BrushStyle.NoBrush)
-    painter.setPen(QPen(QColor(RETRO_COLORS.border), 1))
+    painter.setPen(QPen(ink, 1))
+    for point, dx, dy in (
+        (frame.topLeft(), 1, 1),
+        (frame.topRight(), -1, 1),
+        (frame.bottomLeft(), 1, -1),
+        (frame.bottomRight(), -1, -1),
+    ):
+        painter.drawLine(point, point + QPointF(length * dx, 0))
+        painter.drawLine(point, point + QPointF(0, length * dy))
+
+
+def centre_segments(painter: QPainter, frame: QRectF, ink: QColor) -> None:
+    """Short centred edge lines for open instrument frames (30% of each edge)."""
+    painter.setPen(QPen(ink, 1))
+    centre, half_x, half_y = frame.center(), frame.width() * 0.15, frame.height() * 0.15
+    for y in (frame.top(), frame.bottom()):
+        painter.drawLine(
+            QPointF(centre.x() - half_x, y), QPointF(centre.x() + half_x, y)
+        )
+    for x in (frame.left(), frame.right()):
+        painter.drawLine(
+            QPointF(x, centre.y() - half_y), QPointF(x, centre.y() + half_y)
+        )
+
+
+def double_frame(painter: QPainter, frame: QRectF, owner: QWidget) -> None:
+    """Retro card extras inside an already drawn outline: inner line, marks, corners.
+    Amber phosphor adds bright corner brackets; open frames (`openFrame`) replace the
+    outline with centred edge segments."""
+    colors = retro_colors(owner)
+    if minimal_frames(owner):
+        if owner.property("openFrame") is True:
+            centre_segments(painter, frame, QColor(colors.border))
+        corner_brackets(painter, frame, QColor(colors.accent))
+        return
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+    painter.setPen(QPen(QColor(colors.border), 1))
     painter.drawRect(frame.adjusted(3, 3, -3, -3))
-    card_marks(painter, frame)
-    painter.setPen(QPen(QColor(RETRO_COLORS.accent), 1))
+    card_marks(painter, frame, colors)
+    painter.setPen(QPen(QColor(colors.accent), 1))
     for corner, direction in ((frame.bottomLeft(), 1), (frame.bottomRight(), -1)):
         painter.drawLine(corner, corner + QPointF(9 * direction, 0))
         painter.drawLine(corner, corner + QPointF(0, -9))
@@ -130,7 +178,8 @@ def terminal_marks(console: QPlainTextEdit, event: QPaintEvent) -> None:
     viewport = console.viewport()
     assert viewport is not None
     painter = QPainter(viewport)
-    ink = QColor(RETRO_COLORS.focus)
+    colors = retro_colors(console)
+    ink = QColor(colors.focus)
     ink.setAlpha(70)
     painter.setPen(ink)
     for index, y in enumerate(range(8, viewport.height() - 8, 20)):
@@ -144,7 +193,7 @@ def terminal_marks(console: QPlainTextEdit, event: QPaintEvent) -> None:
         if rect.top() > viewport.height():
             break
         if rect.bottom() >= 0 and not block.text():
-            dashed_rule(painter, 4, viewport.width() - 16, rect.center().y())
+            dashed_rule(painter, colors, 4, viewport.width() - 16, rect.center().y())
         block = block.next()
 
 
@@ -169,6 +218,7 @@ class PromptGutter(QWidget):
         painter = QPainter(self)
         painter.setFont(console.font())
         telemetry = console.property("terminal") == "telemetry"
+        colors = retro_colors(console)
         block = console.firstVisibleBlock()
         while block.isValid():
             rect = console.blockBoundingGeometry(block).translated(
@@ -180,15 +230,98 @@ class PromptGutter(QWidget):
             if rect.bottom() >= 0 and block.text() and layout and layout.lineCount():
                 line = layout.lineAt(0)
                 error = not telemetry and log_block_is_error(block)
-                painter.setPen(
-                    QColor(RETRO_COLORS.error if error else RETRO_COLORS.console_text)
-                )
+                painter.setPen(QColor(colors.error if error else colors.console_text))
                 painter.drawText(QPointF(2, rect.top() + line.y() + line.ascent()), ">")
             block = block.next()
 
 
+class TabBrackets(QWidget):
+    """Amber phosphor tab marks over an existing tab bar: bright brackets on the
+    current tab, dim ones on a hovered tab. Tabs keep native behaviour and text."""
+
+    def __init__(self, bar: QTabBar) -> None:
+        super().__init__(bar)
+        self.bar = bar
+        self.hover = -1
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        bar.setMouseTracking(True)
+        bar.installEventFilter(self)
+        bar.currentChanged.connect(lambda *_: self.update())
+        self.setGeometry(bar.rect())
+
+    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
+        if event is not None:
+            kind = event.type()
+            if kind in {QEvent.Type.Resize, QEvent.Type.Show}:
+                self.setGeometry(self.bar.rect())
+                self.raise_()
+            elif kind == QEvent.Type.MouseMove and isinstance(event, QMouseEvent):
+                hover = self.bar.tabAt(event.position().toPoint())
+                if hover != self.hover:
+                    self.hover = hover
+                    self.update()
+            elif kind == QEvent.Type.Leave and self.hover != -1:
+                self.hover = -1
+                self.update()
+        return False
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        if not minimal_frames(self.bar):
+            return
+        colors = retro_colors(self.bar)
+        painter = QPainter(self)
+        current = self.bar.currentIndex()
+        for index, ink in ((self.hover, colors.border), (current, colors.accent)):
+            if index < 0 or (index == current and ink == colors.border):
+                continue
+            rect = QRectF(self.bar.tabRect(index)).adjusted(1.5, 1.5, -2.5, -2.5)
+            corner_brackets(painter, rect, QColor(ink), 8)
+
+
+class ColumnHeader(QWidget):
+    """Dim column titles in a log's top viewport margin, aligned to its text columns.
+
+    The owner supplies the titles so category-width changes realign them; log text
+    blocks are never modified."""
+
+    def __init__(self, console: QPlainTextEdit, titles: Callable[[], str]) -> None:
+        super().__init__(console)
+        self.console = console
+        self.titles = titles
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        console.updateRequest.connect(lambda *_: self.update())
+        self.hide()
+
+    def place(self, height: int) -> None:
+        viewport = self.console.viewport()
+        assert viewport is not None
+        self.setGeometry(0, viewport.y() - height, self.console.width(), height)
+        self.setVisible(height > 0)
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        console = self.console
+        viewport = console.viewport()
+        document = console.document()
+        assert viewport is not None and document is not None
+        colors = retro_colors(console)
+        painter = QPainter(self)
+        painter.setFont(console.font())
+        ink = QColor(colors.muted)
+        ink.setAlpha(170)
+        painter.setPen(ink)
+        left = viewport.x() + document.documentMargin()
+        baseline = (self.height() + console.fontMetrics().ascent()) / 2 - 2
+        painter.drawText(QPointF(left, baseline), self.titles())
+        rule = QColor(colors.border)
+        painter.setPen(QPen(rule, 1, Qt.PenStyle.DashLine))
+        painter.drawLine(
+            QPointF(left, self.height() - 1.5),
+            QPointF(self.width() - 16, self.height() - 1.5),
+        )
+
+
 def paint_status_lamp(indicator: QRadioButton, status: str) -> None:
-    colors = RETRO_COLORS
+    colors = retro_colors(indicator)
     ink = (
         colors.ready
         if status == "Ready"
@@ -274,7 +407,7 @@ class FocusBrackets(QWidget):
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
-        painter.setPen(QPen(QColor(RETRO_COLORS.accent), 2))
+        painter.setPen(QPen(QColor(retro_colors(self).accent), 2))
         rect = QRectF(self.rect()).adjusted(1, 1, -1, -1)
         for point, dx, dy in (
             (rect.topLeft(), 1, 1),

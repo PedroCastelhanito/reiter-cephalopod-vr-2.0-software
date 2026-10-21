@@ -39,6 +39,7 @@ class ControlEditor(QWidget):
         actions = QHBoxLayout()
         self.save = button("Add control", "primary")
         self.cancel = button("Cancel")
+        self.cancel.setProperty("stopAction", True)
         self.save.clicked.connect(self.submit)
         self.cancel.clicked.connect(self.hide)
         actions.addWidget(self.save)

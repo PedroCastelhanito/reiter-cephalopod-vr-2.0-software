@@ -116,6 +116,82 @@ RETRO_TINTS = (
     RETRO_COLORS.error,
     RETRO_COLORS.mirror,
 )
+# Amber phosphor (satellite HUD): red-orange titles, pale-gold values and HUD/log text
+# over dim amber labels, dim frames with bright corner brackets, amber focus, orange
+# inverse fills and cream ready lamps on cool near-black.
+PHOSPHOR_COLORS = Palette(
+    window="#121719",
+    page="#121719",
+    sidebar="#0f1416",
+    card="#121719",
+    input="#0d1113",
+    border="#4a3219",
+    input_border="#5c3d20",
+    text="#ffc870",
+    muted="#a8743c",
+    label="#a6723c",
+    accent="#ff9f40",
+    coral="#ff6a45",
+    projection="#ffd27a",
+    footprint="#ff5a40",
+    mirror="#ffc870",
+    focus="#ffb85c",
+    hover="#2a2116",
+    active="#4a2e14",
+    selection="#4a2e14",
+    primary="#121719",
+    primary_hover="#2a2116",
+    secondary="#121719",
+    danger="#121719",
+    danger_border="#ff5a40",
+    console="#0d1113",
+    console_text="#ffc870",
+    ready="#ffe7b0",
+    waiting="#ff9f40",
+    error="#ff5a40",
+    disabled="#5e4a33",
+)
+# Buttons rest as outlined boxes over a faint tint and fill only on hover:
+# (resting tint, hover fill, outline/text).
+PHOSPHOR_BUTTON = ("#2a1c10", "#c8741f", "#ff9f40")
+PHOSPHOR_STOP_BUTTON = ("#2c1210", "#c4402c", "#ff6a50")
+PHOSPHOR_TINTS = (
+    PHOSPHOR_COLORS.accent,
+    "#d98a5a",
+    PHOSPHOR_COLORS.error,
+    PHOSPHOR_COLORS.projection,
+)
+# Retro-family styles share Retro geometry and decoration; only the palette differs.
+RETRO_PALETTES = {
+    "retro_console": (RETRO_COLORS, RETRO_TINTS),
+    "amber_phosphor": (PHOSPHOR_COLORS, PHOSPHOR_TINTS),
+}
+
+
+def retro_style(widget: QWidget) -> str:
+    """Owning Retro-family style; the appearance marks surfaces with `retroPalette`."""
+    current: QWidget | None = widget
+    while current is not None:
+        name = current.property("retroPalette")
+        if name in RETRO_PALETTES:
+            return str(name)
+        current = current.parentWidget()
+    return "retro_console"
+
+
+def minimal_frames(widget: QWidget) -> bool:
+    """Amber phosphor draws single-line frames with corner brackets."""
+    return retro_style(widget) == "amber_phosphor"
+
+
+def retro_colors(widget: QWidget) -> Palette:
+    return RETRO_PALETTES[retro_style(widget)][0]
+
+
+def retro_tints(widget: QWidget) -> tuple[str, ...]:
+    return RETRO_PALETTES[retro_style(widget)][1]
+
+
 RETRO_SIZES = replace(
     SIZES,
     card_radius=0,
@@ -139,7 +215,7 @@ def retro_console(widget: QWidget) -> bool:
 
 
 def colors_for(widget: QWidget) -> Palette:
-    return RETRO_COLORS if retro_console(widget) else COLORS
+    return retro_colors(widget) if retro_console(widget) else COLORS
 
 
 def stylesheet(
@@ -288,24 +364,18 @@ def stylesheet(
                    border-radius: 6px; min-height: 14px; text-align: center; }}
     QProgressBar::chunk {{ background: {c.primary}; border-radius: 5px; }}
     QToolTip {{ background: {c.card}; color: {c.text}; border: 1px solid {c.focus}; padding: 6px; }}
-    QDialog#PreviewWorkspace QLabel[role='eyebrow'],
-    QDialog#PreviewWorkspace QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; }}
-    QDialog#PreviewWorkspace QLabel[role='eyebrow']:disabled {{ color: {c.disabled}; }}
-    QDialog#PreviewWorkspace QLabel[role='muted'] {{ color: {c.label}; }}
-    QDialog#PreviewWorkspace QFrame#PreviewToggles {{ border: 1px solid {c.border};
+    QWidget#PreviewWorkspace QLabel[role='eyebrow'],
+    QWidget#PreviewWorkspace QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; }}
+    QWidget#PreviewWorkspace QLabel[role='eyebrow']:disabled {{ color: {c.disabled}; }}
+    QWidget#PreviewWorkspace QLabel[role='muted'] {{ color: {c.label}; }}
+    QWidget#PreviewWorkspace QFrame#PreviewToggles {{ border: 1px solid {c.border};
         border-radius: {s.field_radius}px; }}
-    QDialog#PreviewWorkspace QFrame#ProjectorCard {{ border: 1px solid {c.border};
+    QWidget#PreviewWorkspace QFrame#ProjectorCard {{ border: 1px solid {c.border};
         border-radius: {s.field_radius}px; }}
-    QLabel[role='rec-lamp'] {{ color: {c.muted}; font-weight: 700; letter-spacing: 1px;
-        padding: 0 6px; }}
-    QLabel[role='rec-lamp'][state='recording'] {{ color: {c.ready}; }}
-    QLabel[role='rec-lamp'][state='waiting'] {{ color: {c.waiting}; }}
-    QLabel[role='rec-lamp'][state='fault'] {{ color: {c.error}; }}
     """
 
 
-def retro_stylesheet() -> str:
-    c = RETRO_COLORS
+def retro_stylesheet(c: Palette = RETRO_COLORS) -> str:
     return (
         stylesheet(c, RETRO_SIZES, RETRO_FONT)
         + f"""
@@ -351,9 +421,10 @@ def retro_stylesheet() -> str:
     )
 
 
-def suggestion_popup_stylesheet(retro: bool) -> str:
+def suggestion_popup_stylesheet(editor: QWidget) -> str:
     """Completer popups are top-level widgets, so they take the style explicitly."""
-    c = RETRO_COLORS if retro else COLORS
+    retro = retro_console(editor)
+    c = colors_for(editor)
     family = RETRO_FONT if retro else "'Segoe UI', 'Helvetica Neue'"
     selected = (
         f"background: {c.accent}; color: {c.window};"
@@ -369,8 +440,7 @@ def suggestion_popup_stylesheet(retro: bool) -> str:
     """
 
 
-def retro_chrome_stylesheet() -> str:
-    c = RETRO_COLORS
+def retro_chrome_stylesheet(c: Palette = RETRO_COLORS) -> str:
     return f"""
     QMainWindow, QWidget#Shell, QWidget#Page {{ background: {c.page}; }}
     QFrame#Sidebar {{ background: {c.sidebar}; border-right: 1px solid {c.border}; }}
@@ -394,6 +464,82 @@ def retro_chrome_stylesheet() -> str:
     QMenuBar::item, QMenu::item {{ color: {c.text}; }}
     QMenuBar::item:selected, QMenu::item:selected {{ background: {c.accent}; color: {c.window}; }}
     QMenu {{ border: 1px solid {c.border}; }}
+    """
+
+
+def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
+    """Amber phosphor refinements over the Retro sheets: wide-tracked regular headings,
+    underlined fields, unboxed HUD/log text, inset checkboxes and bracketed
+    navigation (brackets are painted by the navigation button)."""
+    (tint, fill, ink), (stop_tint, stop_fill, stop_ink) = (
+        PHOSPHOR_BUTTON,
+        PHOSPHOR_STOP_BUTTON,
+    )
+    return f"""
+    QLabel[role='title'], QLabel[role='eyebrow'], QLabel[role='label'],
+    QLabel[role='selector-heading'], QHeaderView::section {{
+        font-weight: 400; letter-spacing: 2px; }}
+    QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; letter-spacing: 2px; }}
+    QPushButton, QPushButton[role='primary'], QPushButton[role='compact'] {{
+        font-weight: 400; background: {tint}; color: {ink};
+        border: 1px solid {ink}; }}
+    QPushButton:hover, QPushButton[role='primary']:hover,
+    QPushButton[role='compact']:hover {{ background: {fill}; color: {c.window};
+        border-color: {fill}; }}
+    QPushButton:pressed, QPushButton[role='primary']:pressed {{ background: {c.label};
+        color: {c.window}; border-color: {c.label}; }}
+    QPushButton[role='danger'], QPushButton[role='compact-stop'],
+    QPushButton[stopAction='true'] {{ background: {stop_tint}; color: {stop_ink};
+        border-color: {stop_fill}; }}
+    QPushButton[role='danger']:hover, QPushButton[role='compact-stop']:hover,
+    QPushButton[stopAction='true']:hover {{ background: {stop_fill};
+        color: {c.window}; border-color: {stop_fill}; }}
+    QPushButton[toggle='on'] {{ background: transparent; color: {c.text};
+        border-color: {c.input_border}; }}
+    QPushButton[toggle='on']:checked:enabled {{ background: {fill}; color: {c.window};
+        border-color: {fill}; }}
+    QPushButton:disabled, QPushButton:disabled:hover,
+    QPushButton[role='primary']:disabled, QPushButton[role='danger']:disabled,
+    QPushButton[role='compact']:disabled, QPushButton[role='compact-stop']:disabled,
+    QPushButton[stopAction='true']:disabled {{ background: transparent;
+        color: {c.disabled}; border-color: {c.input_border}; }}
+    QPushButton[role='icon'] {{ background: transparent; border-color: transparent; }}
+    QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{ background: transparent;
+        border: none; border-bottom: 1px solid {c.input_border}; padding-left: 2px; }}
+    QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
+        border-bottom: 1px solid {c.focus}; }}
+    QLineEdit[invalid='true'] {{ border-bottom: 1px solid {c.danger_border}; }}
+    QPlainTextEdit[role='console'] {{ border: none; background: transparent; }}
+    QCheckBox::indicator {{ width: 7px; height: 7px; padding: 3px; }}
+    QCheckBox::indicator:unchecked {{ background: transparent;
+        border: 1px solid {c.input_border}; }}
+    QCheckBox::indicator:checked {{ background: {c.accent}; border: 1px solid {c.accent};
+        background-clip: content; }}
+    QCheckBox:hover {{ color: {c.text}; }}
+    QCheckBox::indicator:unchecked:hover {{ border: 1px solid {c.accent}; }}
+    QCheckBox::indicator:checked:hover {{ background: {c.focus};
+        border: 1px solid {c.focus}; }}
+    QCheckBox:disabled:hover {{ color: {c.muted}; }}
+    QFrame#Sidebar QPushButton, QFrame#Sidebar QPushButton:checked,
+    QFrame#Sidebar QPushButton:hover {{ background: transparent;
+        border: 1px solid transparent; text-align: center; }}
+    QFrame#Sidebar QPushButton:checked {{ color: {c.coral}; }}
+    QFrame#Sidebar QPushButton:hover {{ color: {c.text}; }}
+    QFrame#Sidebar QLabel[role='brand'] {{ color: {c.coral}; font-weight: 400;
+        letter-spacing: 4px; }}
+    QListWidget[role='trials']::item:selected,
+    QTreeWidget[role='rail']::item:selected {{ background: {c.active}; color: {c.coral};
+        border: 1px solid {c.accent}; }}
+    QTabBar::tab, QTabBar::tab:selected, QTabBar::tab:hover {{ background: transparent;
+        border: 1px solid transparent; }}
+    QTabBar::tab {{ color: {c.muted}; }}
+    QTabBar::tab:hover {{ color: {c.text}; }}
+    QTabBar::tab:selected {{ color: {c.coral}; }}
+    QHeaderView::section {{ background: transparent; color: {c.muted}; border: none;
+        border-bottom: 1px dashed {c.border}; font-weight: 400; }}
+    QTableCornerButton::section {{ background: transparent; border: none; }}
+    QTableWidget {{ background: transparent; border: none; }}
+    QFrame[nestedCard='true'] QLabel[role='title'] {{ color: {c.label}; }}
     """
 
 

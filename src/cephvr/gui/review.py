@@ -4,17 +4,32 @@ import argparse
 import sys
 from dataclasses import replace
 
-from PyQt6.QtCore import QObject, QRect, QSettings, pyqtSignal
+from PyQt6.QtCore import QObject, QRect, QSettings, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QActionGroup, QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from cephvr.gui.layouts import show_maximized
 from cephvr.gui.preview_placement import preview_window_placement
 from cephvr.gui.projectors import DisplayInfo
+from cephvr.gui.protocol_document import blank_program, review_program
 from cephvr.gui.review_draft import draft_path, load_review_draft, save_review_draft
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import Phase, PreviewView, review_view
 from cephvr.gui.window import DashboardWindow
+
+# Simulated session progression per command: (phase, delay before entering, ms).
+SIMULATED_STEPS: dict[str, tuple[tuple[Phase, int], ...]] = {
+    "Setup": ((Phase.SETTING_UP, 0), (Phase.READY, 1200)),
+    "Cancel Setup": ((Phase.CONFIGURATION, 0),),
+    "Start": ((Phase.STARTING, 0), (Phase.RUNNING, 800)),
+    "Stop after trial": (
+        (Phase.STOPPING, 0),
+        (Phase.FINALIZING, 800),
+        (Phase.ENDED, 800),
+    ),
+    "Abort now": ((Phase.STOPPING, 0), (Phase.FINALIZING, 800), (Phase.ENDED, 800)),
+    "New session": ((Phase.CONFIGURATION, 0),),
+}
 
 
 class ReviewDashboardWindow(DashboardWindow):
@@ -141,11 +156,8 @@ class ReviewControls(QObject):
             app = QApplication.instance()
             if app is not None:
                 app.aboutToQuit.connect(self.preview_windows.close)
-        window.dashboard.action_requested.connect(
-            lambda action: window.dashboard.log_console.appendPlainText(
-                f"LOCAL REVIEW · {action} selected; no command sent."
-            )
-        )
+        self.simulation = 0
+        window.dashboard.action_requested.connect(self.simulate_action)
         window.dashboard.preview_requested.connect(self.preview_visibility)
         cameras = window.devices.cameras
         cameras.real_devices = real_devices
@@ -208,7 +220,47 @@ class ReviewControls(QObject):
             "Sample subject loaded.\nNo controller connection."
         )
 
-    def set_phase(self, phase: Phase) -> None:
+    def simulate_action(self, action: str) -> None:
+        """Walk a dummy session through phases; no command or backend is involved."""
+        self.window.dashboard.log_console.appendPlainText(
+            f"LOCAL REVIEW · {action} selected; simulated session, no command sent."
+        )
+        if action == "Start":
+            self.show_sample_motion()
+        self.simulation += 1
+        token = self.simulation
+        delay = 0
+        for phase, wait in SIMULATED_STEPS.get(action, ()):
+            delay += wait
+            QTimer.singleShot(
+                delay, lambda phase=phase: self.advance_simulation(token, phase)
+            )
+
+    def show_sample_motion(self) -> None:
+        """Give the dummy run an epoch timeline and dials without touching saved edits."""
+        editor = self.window.protocol.editor
+        draft = editor.drafts[editor.index]
+        if draft.program == blank_program():
+            editor.set_program(review_program())
+            self.window.dashboard.log_console.appendPlainText(
+                "LOCAL REVIEW · sample trial program loaded for the preview timeline."
+            )
+        workspace = self.window.dashboard.preview_workspace
+        if not workspace.advanced_toggle.isChecked():
+            # Review-only: show the dials without changing the saved preference.
+            workspace.advanced_toggle.blockSignals(True)
+            workspace.advanced_toggle.setChecked(True)
+            workspace.advanced_toggle.blockSignals(False)
+            workspace.set_advanced_visible(True, persist=False)
+
+    def advance_simulation(self, token: int, phase: Phase) -> None:
+        # A newer command or a manual phase choice supersedes pending steps.
+        if token == self.simulation:
+            self.set_phase(phase, manual=False)
+
+    def set_phase(self, phase: Phase, *, manual: bool = True) -> None:
+        if manual:
+            self.simulation += 1
         self.phase = phase
         self.phase_actions[phase].setChecked(True)
         self.window.apply_view(

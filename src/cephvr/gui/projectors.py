@@ -251,7 +251,10 @@ class ProjectorsPanel(DevicePanel):
         synchronization_layout = QVBoxLayout(synchronization)
         synchronization_layout.setContentsMargins(0, 0, 0, 0)
         synchronization_layout.setSpacing(SIZES.card_gap)
-        synchronization_layout.addWidget(self.timing.mode_field)
+        # VSync mode belongs to a card like the other synchronization controls.
+        self.vsync_card = Card("Display synchronization")
+        self.vsync_card.body.addWidget(self.timing.mode_field)
+        synchronization_layout.addWidget(self.vsync_card)
         synchronization_layout.addWidget(self.timing)
         synchronization_layout.addWidget(self.timing.blackouts)
         synchronization_layout.addStretch()

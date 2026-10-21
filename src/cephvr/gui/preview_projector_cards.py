@@ -124,4 +124,8 @@ class ProjectorCard(QFrame):
         if retro_console(self):
             # The QSS border is the outer line; add the Retro card's inner line/marks.
             painter = QPainter(self)
-            double_frame(painter, QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5))
+            double_frame(
+                painter,
+                QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5),
+                self,
+            )

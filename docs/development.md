@@ -260,10 +260,7 @@ Stop now interrupts an active trial; the other option finishes it. Selections re
 current phase/control gates; Cancel or dismissal sends no intent.
 Camera experiment enablement lives in Devices. Dashboard has a two-column Recordings
 card below Session config for camera/stimulus video and Tracking velocities, and no
-trial-plan editor or separate progress card. The top-right Previews button toggles a modeless selector; no open-window count is shown. First opening uses the
-12-pixel gap/top alignment; later openings restore saved position from local
-CephVR/Frontend GUI preferences and fit the compact selector to its current rows. In design-review mode,
-the selector uses labeled local visibility fixtures; managed mode opens the corresponding runtime viewers. Close inspection windows
+trial-plan editor or separate progress card. Pressing Start swaps the Dashboard body to the runtime preview layout (Starting through Finalizing); it returns to the form when the session ends. In design-review mode, the layout uses labeled local visibility fixtures; managed mode opens the corresponding runtime viewers. Close inspection windows
 after checking changes, then reopen the reviewed GUI for the owner to inspect.
 Devices has icon subtabs for Cameras, Microcontroller, Projectors and SpikeGLX with local
 draft fields and check actions. Protocol provides batch creation/editing, per-projector

@@ -71,6 +71,9 @@ class McuWiringEditor(QDialog):
             QDialogButtonBox.StandardButton.Cancel
             | QDialogButtonBox.StandardButton.Save
         )
+        cancel = self.buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        assert cancel is not None
+        cancel.setProperty("stopAction", True)
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
         form.addRow(self.buttons)

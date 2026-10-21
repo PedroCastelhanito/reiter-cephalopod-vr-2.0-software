@@ -978,7 +978,7 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
 
     from PyQt6.QtWidgets import QLabel, QWidget
 
-    from cephvr.gui.previews import PreviewDialog
+    from cephvr.gui.previews import PreviewWorkspace
 
     geometry, settings = linked_plan()
 
@@ -1004,7 +1004,7 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
 
     host = QWidget()
 
-    dialog = PreviewDialog(host)
+    dialog = PreviewWorkspace(None)
 
     try:
         plot = dialog.timeline
@@ -1117,11 +1117,11 @@ def test_retro_projector_headings_are_uppercase_and_glow(timeline):
 def test_retro_preview_controls_are_checkboxes_and_headings_glow(app):
     from PyQt6.QtWidgets import QCheckBox, QWidget
 
-    from cephvr.gui.previews import PreviewDialog
+    from cephvr.gui.previews import PreviewWorkspace
     from cephvr.gui.view import PreviewView
 
     host = QWidget()
-    dialog = PreviewDialog(host)
+    dialog = PreviewWorkspace(None)
     dialog.apply_views(
         (
             PreviewView(
@@ -1129,7 +1129,6 @@ def test_retro_preview_controls_are_checkboxes_and_headings_glow(app):
             ),
         ),
         allowed=True,
-        sample=False,
     )
     toggle, show = dialog.advanced_toggle, dialog.controls["behavior"]
     assert isinstance(toggle, QCheckBox) and isinstance(show, QCheckBox)
@@ -1140,9 +1139,7 @@ def test_retro_preview_controls_are_checkboxes_and_headings_glow(app):
     assert show.text() == "Show" and toggle.text() == "Advanced previews"
     toggle.setEnabled(False)
     toggle.setEnabled(True)
-    dialog.apply_views(
-        (PreviewView("camera", "Camera", visible=False),), allowed=True, sample=False
-    )
+    dialog.apply_views((PreviewView("camera", "Camera", visible=False),), allowed=True)
     assert dialog.names["camera"].graphicsEffect() is not None
     dialog.restyle(False)
     assert all(name.graphicsEffect() is None for name in dialog.names.values())
