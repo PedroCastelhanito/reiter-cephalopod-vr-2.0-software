@@ -10,7 +10,6 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `repo-cleanup-sync-oct21` [repo] Remove disposable caches, retain oversized trace evidence locally, repair unpublished commit and sync main. Owner: this chat. Done when remote main matches HEAD and working tree is clean.
 
 
 

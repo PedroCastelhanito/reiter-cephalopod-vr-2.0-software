@@ -8736,3 +8736,13 @@ environment, recordings, emergency reports and other evidence preserved.
 Initial sandbox fetch failed on FETCH_HEAD permission; approved retry succeeded.
 Repair will replace only the unpublished commit, preserving a local backup ref,
 then push normally. git diff --check passes; no runtime or rig tests needed.
+
+Completion: backup/pre-sync-20261021 retains original6f1434fa locally.
+Repaired25781b95 pushed normally to origin/main; no force push. Comparison
+against backup confirms all source/config changes preserved; only ignore rules,
+work records, retained emergency report, trace manifest and removal of the two
+trace blobs from Git differ. All outgoing blobs are below50 MB. Ignore checks
+and git diff --check pass; working tree clean and HEAD/origin/main equal after
+push. Task complete; this completion record is committed and synced separately.
+Large traces remain local-only and require separate backup if needed; no runtime
+or rig tests were run for repository housekeeping.
