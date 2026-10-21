@@ -90,6 +90,14 @@ class DetailedCompletion:
             and heartbeat.work.session == attempt.context
             and heartbeat.HasField("cleanup_resources_revision")
         )
+        unprepared_visual_stimulus = (
+            name == "visual_stimulus"
+            and not attempt.visual_stimulus_setup_dispatched
+            and not attempt.activated
+            and name not in attempt.ready
+            and registered is not None
+            and not registered.outputs
+        )
         source_obligations = (
             attempt.ready[name].cleanup_resources
             if attempt.incident_topology is not None and name in attempt.ready
@@ -103,12 +111,14 @@ class DetailedCompletion:
             if attempt.incident_topology is not None
             else heartbeat.cleanup_resources_revision
             if catalogued and heartbeat is not None
+            else 0
+            if unprepared_visual_stimulus
             else None
         )
         releases = {resource.resource: resource for resource in payload.resources}
         if registered is None:
             expected_outputs: set[str] = set()
-        elif not registered.outputs:
+        elif not registered.outputs and not unprepared_visual_stimulus:
             try:
                 planned = requested_output_identities(
                     attempt.prepared,

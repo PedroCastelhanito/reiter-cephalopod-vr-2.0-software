@@ -298,8 +298,14 @@ Dashboard output paths have an existing-folder picker and compact unfocused disp
 with full-path tooltips. Activity logs preserve the retained entry being read and
 follow new entries only when already at the bottom. These controls edit local drafts.
 
-Portable widget checks run with `QT_QPA_PLATFORM=offscreen python -m pytest tests/gui -q`
-(set the environment variable separately in PowerShell). These tests and local
+Portable widget checks run with `python -m pytest tests/gui -q`.
+`tests/gui/conftest.py` selects the offscreen Qt platform unless `QT_QPA_PLATFORM` is
+already set, so plain runs never open windows on the operator desktop. It also gives
+each GUI test a 120 s `pytest-timeout` limit, so a stalled event loop fails with stacks
+instead of hanging the run (without workers the timeout ends the whole session).
+Add `-n 8` (pytest-xdist) to spread GUI tests across processes, each with its own
+offscreen application; `-n auto` uses every core, so avoid it while the rig is
+running an experiment. These tests and local
 screenshots do not establish Windows integration or full-workload rig acceptance.
 
 ## Checks

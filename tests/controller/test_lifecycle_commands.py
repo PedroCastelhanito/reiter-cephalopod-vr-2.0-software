@@ -88,6 +88,12 @@ async def test_interrupt_during_finalize_joins_the_one_task(
     runtime.lifecycle.trial.phase = pb.TRIAL_PHASE_ENDED
     first = asyncio.create_task(runtime.interruption.finalize(attempt))
     await entered.wait()
+    assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_FINALIZING
+    setup = await runtime.setup(operator_command(runtime))
+    assert setup.result == pb.COMMAND_RESULT_REJECTED
+    assert "current phase or blocked cleanup" in setup.failure.message
+    new_session = await runtime.new_session(operator_command(runtime))
+    assert new_session.result == pb.COMMAND_RESULT_REJECTED
     abort_id = _operation(runtime, attempt, "AbortNow")
     async with runtime.lifecycle.lock:
         attempt.abort_command_ids.append(abort_id)
@@ -336,6 +342,7 @@ async def test_abort_during_starting_with_metadata_keeps_files_and_unblocks_setu
     assert runtime.lifecycle.attempt is None
     assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
     assert runtime.lifecycle.session.cleanup_confirmed
+    assert not (await runtime.snapshot()).HasField("last_finalization")
     start = runtime.control.operations[start_id]
     assert start.complete and not start.succeeded
     assert start.failure.message == "start cancelled: operator Abort now"
@@ -438,9 +445,13 @@ async def test_interrupted_trial_without_accepted_started_is_closed(
     assert persisted[-1]["start_unconfirmed"] == ["visual_stimulus"]
     assert persisted[-1]["participants_started"] == []
     assert [kind for kind, _ in events].count("trial_finished") == 1
-    assert runtime.lifecycle.trial.outcome == pb.TRIAL_OUTCOME_INTERRUPTED
-    assert runtime.lifecycle.trial.phase == pb.TRIAL_PHASE_ENDED
-    assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_ENDED
+    assert runtime.lifecycle.trial.phase == pb.TRIAL_PHASE_PENDING
+    assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
+    assert runtime.lifecycle.attempt is None
+    final = (await runtime.snapshot()).last_finalization
+    assert final.session.context == attempt.context
+    assert final.session.cleanup_confirmed
+    assert final.session.outcome == pb.SESSION_OUTCOME_INTERRUPTED
 
 
 async def test_interruption_before_release_creates_no_trial(
@@ -792,6 +803,21 @@ async def test_abort_uses_exact_cleanup_before_trial_and_session_metadata(
     monkeypatch.setattr(runtime.metadata, "persist", persist)
     monkeypatch.setattr(runtime.metadata, "log_event", event)
     monkeypatch.setattr(runtime.metadata, "finish_session", session)
+    runtime.projections.devices = pb.AcquisitionDeviceViews(
+        behavioral=pb.CameraDeviceView(
+            device_open=True,
+            preview_running=True,
+            preview_visible=True,
+            preview_run_id=attempt.context.session_id,
+        ),
+        tracking=pb.CameraDeviceView(
+            device_open=True,
+            preview_running=True,
+            preview_visible=True,
+            preview_run_id="unrelated-manual-run",
+        ),
+    )
+    configuration = runtime.configuration_state.current.SerializeToString()
     await asyncio.wait_for(runtime.interruption.interrupt(attempt, "Abort"), 2)
     assert events == [
         "interrupt",
@@ -807,24 +833,16 @@ async def test_abort_uses_exact_cleanup_before_trial_and_session_metadata(
     assert not attempt.finished
     assert attempt.trial_log_finished and attempt.closure.clean
     assert runtime.lifecycle.session.cleanup_confirmed
-    assert runtime.lifecycle.trial.outcome == pb.TRIAL_OUTCOME_INTERRUPTED
+    assert runtime.lifecycle.trial.phase == pb.TRIAL_PHASE_PENDING
+    assert not runtime.lifecycle.trial.HasField("context")
+    final = (await runtime.snapshot()).last_finalization
+    assert final.session.context == attempt.context
+    assert final.session.cleanup_confirmed
+    assert final.session.phase == pb.SESSION_PHASE_ENDED
+    assert final.trial.context.session == attempt.context
+    assert final.trial.phase == pb.TRIAL_PHASE_ENDED
+    assert runtime.configuration_state.current.SerializeToString() == configuration
     assert not runtime.control.warnings
-    runtime.projections.devices = pb.AcquisitionDeviceViews(
-        behavioral=pb.CameraDeviceView(
-            device_open=True,
-            preview_running=True,
-            preview_visible=True,
-            preview_run_id=attempt.context.session_id,
-        ),
-        tracking=pb.CameraDeviceView(
-            device_open=True,
-            preview_running=True,
-            preview_visible=True,
-            preview_run_id="unrelated-manual-run",
-        ),
-    )
-    receipt = await runtime.new_session(operator_command(runtime))
-    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
     assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
     assert runtime.lifecycle.attempt is None
     assert not runtime.projections.devices.behavioral.device_open
@@ -866,17 +884,26 @@ async def test_owner_cleanup_releases_prepared_preview_like_setup_guard(
 
 
 @pytest.mark.parametrize("metadata_clean", [False, True])
+@pytest.mark.parametrize("interrupted", [False, True])
 async def test_late_backend_cleanup_cannot_certify_failed_metadata(
-    tmp_path, monkeypatch, metadata_clean
+    tmp_path, monkeypatch, metadata_clean, interrupted
 ):
     runtime, attempt = _setup(tmp_path, monkeypatch)
     attempt.writer_closed = True
     attempt.closure.metadata_clean = metadata_clean
     runtime.lifecycle.session.phase = pb.SESSION_PHASE_ENDED
+    runtime.lifecycle.session.outcome = (
+        pb.SESSION_OUTCOME_INTERRUPTED if interrupted else pb.SESSION_OUTCOME_COMPLETED
+    )
     try:
         await runtime.cleanup.late_cleanup(attempt)
         assert runtime.lifecycle.session.cleanup_confirmed is metadata_clean
         assert attempt.reservation.held is not metadata_clean
+        reset = metadata_clean and interrupted
+        assert runtime.lifecycle.session.phase == (
+            pb.SESSION_PHASE_CONFIGURATION if reset else pb.SESSION_PHASE_ENDED
+        )
+        assert (runtime.lifecycle.attempt is None) is reset
     finally:
         if attempt.reservation.held:
             attempt.reservation.release()
@@ -912,3 +939,39 @@ async def test_spikeglx_stop_log_failure_preserves_confirmed_remote_stop(
         )
     finally:
         attempt.reservation.release()
+
+
+@pytest.mark.parametrize("blocked", ["cleanup", "authority", "shutdown", "intent"])
+async def test_interrupted_reset_preserves_reuse_and_shutdown_gates(
+    tmp_path, monkeypatch, blocked
+):
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    runtime.lifecycle.session.outcome = pb.SESSION_OUTCOME_INTERRUPTED
+    runtime.lifecycle.authority_lost = blocked == "authority"
+    runtime.lifecycle.session.shutdown_requested = blocked == "shutdown"
+    runtime.lifecycle.shutdown_intent_ns = 1_000 if blocked == "intent" else 0
+    try:
+        async with runtime.lifecycle.lock:
+            runtime.interruption._publish_ended_locked(attempt, blocked != "cleanup")
+        assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_ENDED
+        assert runtime.lifecycle.attempt is attempt
+        assert runtime.lifecycle.session.outcome == pb.SESSION_OUTCOME_INTERRUPTED
+    finally:
+        attempt.reservation.release()
+
+
+async def test_completed_session_keeps_explicit_new_session(tmp_path, monkeypatch):
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    runtime.lifecycle.trial.phase = pb.TRIAL_PHASE_ENDED
+    await runtime.interruption.finalize(attempt)
+    assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_ENDED
+    assert runtime.lifecycle.session.outcome == pb.SESSION_OUTCOME_COMPLETED
+    assert runtime.lifecycle.attempt is attempt
+    receipt = await runtime.new_session(operator_command(runtime))
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
+    assert runtime.lifecycle.attempt is None
+    final = (await runtime.snapshot()).last_finalization
+    assert final.session.context == attempt.context
+    assert final.session.cleanup_confirmed
+    assert final.session.outcome == pb.SESSION_OUTCOME_COMPLETED

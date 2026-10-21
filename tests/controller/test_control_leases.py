@@ -234,3 +234,23 @@ async def test_owner_loss_subscriptions_are_shared_and_delivered_once(path):
     else:
         await publisher.close_watch(watch)
     assert seen == ["observer", "cleanup"]
+
+
+def test_setup_progress_reaches_participant_snapshot_only_during_setup(tmp_path):
+    from .test_lifecycle_reports import _fixture
+
+    fixture = _fixture(tmp_path)
+    _, lifecycle, _, publisher, _, _ = _components()
+    lifecycle.attempt = fixture.attempt
+    lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+    fixture.attempt.setup_progress["visual_stimulus"] = (
+        "Uploading initial textures: 5/20"
+    )
+    snapshot = publisher.build_snapshot()
+    assert (
+        snapshot.participants[0].preparation_progress
+        == "Uploading initial textures: 5/20"
+    )
+    assert not snapshot.participants[0].ready.required_checks_passed
+    lifecycle.session.phase = pb.SESSION_PHASE_READY
+    assert not publisher.build_snapshot().participants[0].preparation_progress

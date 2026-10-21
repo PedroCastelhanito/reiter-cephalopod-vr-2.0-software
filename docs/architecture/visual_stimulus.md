@@ -25,7 +25,19 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 27
+**Status:** Accepted · **Revision:** 30
+
+- Visible stimulus previews report E08 PreviewRates using completed renderer batches and
+  successful preview swaps. The GL owner only queues optional reports through its
+  existing bounded bridge; telemetry cannot introduce a required report or block
+  rendering. Hide/reopen resets the preview measurement interval.
+
+- Before Visual Stimulus Setup is dispatched, session cancellation still requires
+  its exact cleanup proof under E06/E08. The renderer first verifies native release;
+  the coordinator registers an empty session catalogue before confirming cleanup.
+  The controller retains the dispatch fact: only a never-dispatched Visual Stimulus
+  session may have no prepared-output obligations. Dispatched work retains its
+  complete resource/output evidence; uncertainty blocks reuse.
 
 - Sessionless photodiode_placement and blackout_placement views use the same protected diagnostic ownership and native output pixel coordinates. Photodiode placement starts black when no complete initial pulse exists, then continuously presents a valid configured pulse bright/dark on black using V22; blackout placement shows black zones on neutral gray (0.25), without a photodiode. Bounded complete output snapshots update rectangles atomically after validation against the prepared active outputs, retaining exact identity/revision/deadline and increasing-sequence presentation evidence. Close restores Idle and releases diagnostic resources. These previews have no trial clock or recording. The existing GL-owner service loop repeats photodiode submissions while Active; presentation failure marks Unknown and enters existing renderer failure handling.
 
@@ -42,7 +54,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - The renderer also owns one optional native Visual Stimulus review window, prepared
   at Setup and controlled through authenticated controller/coordinator commands with
   exact session, configuration and process identity. Show/Hide and native X change
-  only visibility; status reports attest availability/visibility. Use the separate E13 preview/recording layouts without pixel RPCs. Viewer failures disable the
+  only visibility; status reports attest availability/visibility. Apply requested size
+  and visible-frame position before showing or binding a native owner that can show
+  the window. Preserve manual placement until explicit snap or reopen under G01.
+  Use the separate E13 preview/recording layouts without pixel RPCs. Viewer failures disable the
   viewer without aborting the experiment; retain failed cleanup ownership. Hide
   trial content at Idle and release the window with session resources.
 - One rendering worker serves the configured outputs and keeps running across trials
@@ -228,7 +243,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 16
+**Status:** Accepted · **Revision:** 20
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -283,15 +298,29 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Still images use bounded CPU/GPU residency owned by the renderer's resource
   subsystem. Setup decodes every required unique image under E07 using bounded
   scratch memory, retains validation/identity facts and prepares initial content;
-  it need not retain every decoded image. Share compatible immutable resources;
+  it need not retain every decoded image. Complete initial decoding and GPU
+  uploads (including completion fences) during Setup before Ready. Report stages
+  and completed validation/residency counts through E08's bounded operator
+  progress path while waiting. Share compatible immutable resources;
   allocate each still-image texture only in output contexts whose mapped surfaces
   consume it, taking the union across prepared trials and matching GPU accounting.
+  Fence uploads and retirement only in contexts holding that image's texture;
+  unallocated contexts have no image work to drain.
   Retain all unique images when budgets permit, otherwise prefetch from protected
   sources ahead of the resolved schedule and evict only resources no active consumer
   needs. Include source snapshots, decode/conversion/upload working memory and
   resident pixels in admission. Validation/protection/budget failure blocks Ready
   under existing Setup deadlines. One background loader prepares linear pixels;
-  the GL owner submits bounded upload chunks and polls completion without waiting.
+  the GL owner submits bounded batches of upload chunks per render turn and polls
+  completion without waiting. Fixed batch/chunk limits live in the E14 policy;
+  prefetch must have headroom above the scheduled image demand without changing
+  source precision, epoch clocks or per-instance late-image evidence.
+  After graphics preparation, collect Setup garbage within the original deadline
+  and freeze the renderer's prepared Python object graph until cleanup, preventing
+  recurring whole-graph cyclic-GC pauses during playback. Preserve normal collection
+  of newly allocated objects and the existing GC enablement state. The preparation
+  owner unfreezes on cleanup, including failed/cancelled Setup; reject an already
+  owned frozen heap rather than changing another owner's collection state.
   Register all planned image GPU obligations before Ready seals the E08 catalogue;
   lazy allocation/eviction uses those same identities without new playback registration.
   Cleanup accounts for both allocated and never-created obligations.

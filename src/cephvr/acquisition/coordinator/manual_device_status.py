@@ -113,6 +113,7 @@ class ManualDeviceStatusReporter:
             view.preview_visible = previous.preview_visible
             view.preview_visibility_revision = previous.preview_visibility_revision
             view.preview_failure = previous.preview_failure
+            view.rates.CopyFrom(previous.rates)
         if configuration_revision is not None:
             view.applied_configuration_revision = configuration_revision
         view.capabilities.CopyFrom(resolved.capabilities)
@@ -171,13 +172,23 @@ class ManualDeviceStatusReporter:
         view.preview_run_id = preview_run_id
         if not preview_run_id:
             view.preview_visible = False
+            view.ClearField("rates")
 
     def set_preview_visibility(
-        self, role: int, run_id: str, visible: bool, failure: str = ""
+        self,
+        role: int,
+        run_id: str,
+        visible: bool,
+        failure: str = "",
+        *,
+        rates: control.PreviewRates | None = None,
     ) -> wire.CameraPreviewVisibility | None:
         view = self._views.get(role)
         if view is None or not run_id or view.preview_run_id != run_id:
             return None
+        view.ClearField("rates")
+        if visible and rates is not None:
+            view.rates.CopyFrom(rates)
         self._preview_revision += 1
         view.preview_visible = visible
         view.preview_visibility_revision = self._preview_revision
@@ -191,6 +202,7 @@ class ManualDeviceStatusReporter:
             visible=visible,
             observed_monotonic_ns=self.clock(),
             failure=view.preview_failure,
+            rates=view.rates,
         )
 
     async def publish_preview_visibility(

@@ -55,6 +55,8 @@ __pycache__/
 
 # Captured run datasets and reproducible binaries remain local.
 /reports/**/recordings/
+/reports/runtime-evidence-2026-10-21/pilot-alignment/*.npy
+/reports/runtime-evidence-2026-10-21/pilot-alignment/*.npz
 /reports/**/*.whl
 /reports/**/*.tar.gz
 /reports/**/*.zip

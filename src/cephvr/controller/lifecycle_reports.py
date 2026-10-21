@@ -14,6 +14,7 @@ from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.evidence import started_satisfied, stopped_satisfied
 from cephvr.controller.lifecycle.activity import trial_state_required
+from cephvr.controller.lifecycle.setup_progress import retain_setup_progress
 from cephvr.controller.lifecycle_completion import (
     DetailedCompletion,
     retain_or_conflict,
@@ -189,6 +190,13 @@ class LifecycleReports:
         self, attempt: Attempt, payload: pb.BackendOperationReport, ingress_ns: int
     ) -> pb.ReportReceipt:
         operation = payload.operation
+        if not operation.complete and operation.command == "SetupSession":
+            receipt = retain_setup_progress(
+                attempt, payload, self.lifecycle.session.phase, ingress_ns
+            )
+            if receipt.result == pb.COMMAND_RESULT_ACCEPTED:
+                self.hooks.publish()
+            return receipt
         if operation.work.WhichOneof("work") == "trial":
             name = payload.source.backend_name
             backend = attempt.trial_participants.get(name)

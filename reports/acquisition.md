@@ -1,5 +1,67 @@
 # Acquisition status
 
+Oct21 current rig validation: two-camera normal60s → no-camera-demand/video-Off
+Abort5s → normal60s passes; all camera videos fully decode with exact logged counts.
+MCU PING recurs during full-texture Setup (114.451ms/99.979ms), followed by
+unconfirmed cancellation cleanup. This is new native failure evidence; earlier
+bounded passes do not close it. No firmware/deadline/retry change. See the
+[current combined assessment](runtime.md#current-rig-validation--2026-10-21).
+
+
+Oct21 `preview-frame-details`: [A10rev71](../docs/architecture/acquisition.md#a10)
+implements advisory source/preview FPS for open native camera viewers. Existing frame
+IDs and acquisition timestamps measure source rate despite viewer skipping; only new
+imshow images count as preview updates. One queued callback and one in-flight exact-
+reader report bound delivery through existing visibility state. Hide/retirement clears
+GUI evidence; cancellation keeps optional telemetry out of close waiting. No capture-
+worker traffic, scheduling, policy defaults or recording changes. ARCH-002 keeps
+measurement in a small shared helper and native-view ownership in PreviewWindows.
+Focused tests cover counter reset/stall, bounded delivery, retired readers and reordered
+visibility; LOG records validation. Native camera rates remain unverified after restart
+under E15.
+
+Oct21 `setup-watchdog-cleanup`: a real missing Eye camera exposed a worker failure
+that left Setup waiting for successful readback adoption. The coordinator now joins
+exact terminal resolution results under their original deadline before failing,
+retaining sibling readbacks before scope retirement. No retry, timeout or stale
+evidence rule changes. Missing-camera failure/cleanup, Ready cancellation, recorded
+10s Abort, fresh Setup/Start and60s two-camera normal closure pass on the rig;
+camera videos fully decode with matching counts. Original settings/history restore
+exactly. The disconnected Eye and intermittent MCU PING cause remain open; no
+continuous-capture implementation or firmware change is included. See the
+[current combined assessment](runtime.md) and
+[evidence](runtime-evidence-2026-10-21/setup-recovery/output-verification.json).
+
+## Continuous camera acquisition design — 2026-10-21
+
+Owner explicitly selected design recording before implementation. Accepted
+[A10rev70](../docs/architecture/acquisition.md#a10)/[A11rev52](../docs/architecture/acquisition.md#a11),
+with A02/A07/A09 and E05/E11/E12 amendments, supersede trial-only capture.
+No runtime, firmware, operator settings or executable policy was changed.
+Existing policy22 and lifecycle/wire/schema contracts still encode trial-only
+capture and per-trial camera ON/OFF; they require coordinated formalization with
+the implementation, not an isolated policy toggle. Repository source inspection
+identified coordinator trial preparation/pulses, worker capture/drain/recording
+completion and controller evidence gates as affected. Existing independent protocol6
+output masks provide the simpler mechanism; no new process or firmware scheduling
+protocol is selected. Actual warm-up/continuity and cleanup remain unverified.
+
+The former first-trigger/first-saved-source assumption is superseded for continuous
+capture. Pulse/counter correspondence must remain explicit across trial boundaries
+and across the later start of SpikeGLX saving; receipt-gated files may omit some
+gate-selected boundary exposures. No new physical anchor or timing accuracy is
+claimed. Historical SP0003-123824 measurements retain their original scope. Next
+work is indexed as `continuous-camera-acquisition`; rig checks are consolidated
+under [camera anchoring](rig-verification.md#camera-no-wiring-anchoring).
+
+Oct21 `pilot-spikeglx-alignment-inspection`: SP0003-123824 camera trains match
+26979/89933 retained frames plus1/2 logged post-cutoff exclusions; native counters
+are contiguous and pulse/native-clock fit RMS is14.85/10.56 us. This supports
+camera-to-OneBox correspondence, not calibrated exposure latency or neural-clock
+alignment. Shared probe/OneBox sync is absent. See the
+[current inspection and evidence](runtime.md#pilot-spikeglx-alignment-inspection--2026-10-21)
+and [rig follow-up](rig-verification.md#pilot-synchronization-verification).
+
 Oct20 `setup-watchdog-cleanup` reconnect: manual configuration used the same ownership
 error for actual ownership and a same-revision settings mismatch. A01 demand filtering
 leaves effective Use flags different from preserved operator selections after cleanup.
@@ -630,6 +692,12 @@ Per-case PFS serialization initially differs only in selector context; final
 pre-audit PFS restoration is byte-exact for all three cameras, with original feature
 readbacks verified. [Counts/full decodes/settings](runtime-evidence-2026-10-15/comprehensive-audit/direct-assessment.json),
 [final restoration](runtime-evidence-2026-10-15/comprehensive-audit/final-restoration.json).
+
+Oct21 `repo-unused-code-oct21` removes five unused recording compatibility
+modules that re-exported shared FFmpeg helpers. Existing filter tests import the
+shared owners directly, with unchanged test bodies and production behavior.
+[Cross-owner assessment](runtime.md#maintainability-review) records focused checks
+and the interrupted broader run; no acquisition policy or rig guarantee changed.
 
 Oct16 maintainability implementation shares controller-owned MCU validation with
 acquisition defaults and uses one exact worker session predicate. Existing operator
@@ -2132,14 +2200,12 @@ and per-image latch verification. Current CephVR adapter does not read CounterVa
 
 The retained baseline has Behavior trigger Line4, output Line2=UserOutput1;
 Tracking trigger Line2, Line3=input/source Off. CounterValue chunks are disabled
-on both; Tracking counters are Off. The owner selects the initial first-trigger/first-video-source assumption under
-[A09](../docs/architecture/acquisition.md#a09), keeping wiring and cadence unchanged.
-Stronger hardware/coded-trigger anchors are deferred. Resolve the first video frame's
-source explicitly, retain leading-loss/padding evidence and label the correspondence
-assumed; metadata-only runs analogously use their first received source row.
-No independent exposure-time or absolute-offset validation is claimed. Existing raw
-counter/timestamp evidence remains useful for spotting inconsistencies and later
-revising alignment. See the [baseline rig checks](rig-verification.md#camera-no-wiring-anchoring).
+on both; Tracking counters are Off. These are historical Oct14 readbacks, not
+current node queries. The former first-trigger/first-video-source assumption is
+superseded by the [continuous-capture design](#continuous-camera-acquisition-design--2026-10-21)
+under [A09](../docs/architecture/acquisition.md#a09). Existing hardware capability
+evidence does not establish an absolute trigger/frame anchor or exposure latency.
+See the [current rig checks](rig-verification.md#camera-no-wiring-anchoring).
 Eye was disabled; its PFS filename is not confirmed model evidence for this check.
 
 [Source hashes, documentation links and limitations](runtime-evidence-2026-10-14/camera-anchor-capabilities/context.json).

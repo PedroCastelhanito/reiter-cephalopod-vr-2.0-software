@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-21",
+  "scope": "Native isolated automated checks and real managed two-camera/stimulus dummy; attempted unchanged20-minute texture workload",
+  "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+  "native_and_automated": "automated-summary.json",
+  "static": {
+    "ruff": "All checks passed src/tests/tools/scripts",
+    "format": "977 files already formatted",
+    "mypy_win32": "850 source files pass",
+    "boundaries": "742 modules;0 violations;existing cohesion warnings",
+    "tracking_contracts": "48 pass;19 schemas canonical",
+    "visual_contracts": "42 pass;11 schemas checked"
+  },
+  "dummy": {
+    "ready_cancel": true,
+    "normal60s_on_twice": true,
+    "video_off_abort5s": true,
+    "abort_elapsed_ms": 166.0153,
+    "outputs_closed_present": 16,
+    "complete_video_decodes": 6,
+    "video_counts": [
+      [
+        1797,
+        3596,
+        3600
+      ],
+      [
+        1797,
+        3596,
+        3601
+      ]
+    ],
+    "save_off_scope": "No camera demand with Tracking backend disabled;no camera/video files;2 required stimulus scientific outputs retained",
+    "requested_actual_image_mismatches": 0,
+    "maximum_state_intervals_ms": [
+      36.8833,
+      33.3202,
+      26.6106
+    ],
+    "restoration_before_full_attempt": "Runtime equal and history byte-exact9df0aab55c69eb150b88eae5621f1f048861c2447d07449001063b8fcc16be59"
+  },
+  "idle_reuse": {
+    "cleanup_ns": 573131987814100,
+    "elapsed_ns": 326259127300,
+    "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197"
+  },
+  "new_native_findings": [
+    {
+      "finding": "Long-path Setup rejects WinError206 creating protocol-data before resource preparation",
+      "evidence": "full-texture-output.txt",
+      "scope": "native>260 path failed;not accepted"
+    },
+    {
+      "finding": "MCU PING deadline miss during complete texture Setup",
+      "elapsed_ms": 114.451,
+      "budget_ms": 99.979,
+      "write_ms": 65.56,
+      "total_read_ms": 48.864,
+      "reads": 1,
+      "bytes": 125,
+      "late_bytes": 125,
+      "partial_bytes": 0,
+      "unmatched": 0,
+      "malformed": 0,
+      "setup_elapsed_ms": 3714.8762,
+      "cleanup": "CancelSetup9.841s failed;Configuration retains session and cleanup_confirmed false",
+      "evidence": "ping-failure-command-snapshot.json;original ping-failure-snapshot.txt;full-texture/events.jsonl",
+      "restoration": "Subsequent managed automatic shutdown,exact old owned absence,normal restart,supported preserving recovery,and exact original runtime/history restore verified;see final_recovery"
+    }
+  ],
+  "failed_fixture_attempts": [
+    "15s rejected by accepted60s minimum before activation",
+    "CONNECT-only public STATUS has no active pin diagnostic;not serial failure",
+    "historical supervisor direct query helper denied CLI role;no bypass attempted"
+  ],
+  "limits": [
+    "No full20min StartSession occurred",
+    "No firmware,timeout,retry,scientific exposure/rate or runtime logic changed",
+    "Continuous capture is accepted design only and not certified",
+    "Physical optical/electrical,Tracking processing,remote SpikeGLX and brightness changes not tested"
+  ],
+  "final_recovery": {
+    "controller_generation": "efe06d83-4485-4e5d-91dc-00306026a16e",
+    "phase": "Configuration",
+    "cleanup_confirmed": true,
+    "session_id": null,
+    "prompts": [],
+    "old_owned_processes_remaining": 0,
+    "shutdown": "Automatic managed BACKEND_HEARTBEAT_LOST shutdown preceded attempted recovery RPC;no ad-hoc termination",
+    "recovery_choice": "recover;preserves files and unknown closure",
+    "runtime_equals_original": true,
+    "saved_history_equals_original_bytes": true,
+    "failed_session_files_preserved": true,
+    "recovery_report": "../texture-recordings/20261021_full_texture_rig_validation_oct21/SPRIGCHECK-115102/RECOVERY-24cd4107-c57a-40ca-acb4-506f45cd926c.json",
+    "snapshot": "recovery-restored-snapshot.json",
+    "processes": "recovery-restored-processes.json"
+  },
+  "historical_automated_failures": {
+    "backend_suite_before_fixture_corrections": "2600 pass,3fail,6skip,1deselected;39.43s",
+    "isolated_before_corrections": "3 MCU client failures and1 GUI stale-ack failure reproduced",
+    "correction": "test-only complete four-output stopped-state fixture and valid4digit GUI subject edit+serial assertion",
+    "focused_after_correction": "4 pass;client owner33pass;complete GUI runs pending",
+    "backend_suite_after_corrections": "2603 pass,6skip,1deselected;37.48s",
+    "gui_parallel_after_four_minimal_fixtures": "832pass,2hover failures;83.83s",
+    "gui_hover_original_isolated": "2pass;3.59s;not deterministically reproduced alone",
+    "gui_hover_experiment": "Controlled QCursor boundary+Enter/Leave fixture did not establish visibility despite timer/geometry checks;entire experiment reverted",
+    "gui_first_serial": "Interrupted by authorization at25%;no completed result",
+    "gui_final_serial": "834pass,414.82s;original hover tests retained",
+    "gui_parallel_final_repeat": "833pass,1fail,81.81s;test_trial_row_actions_scroll_target_and_align_cards[standard]:native MouseMove not delivered within1000ms;prior hover pair passes this repeat"
+  },
+  "test_provenance": {
+    "final_capture": "test-source-hashes-final.json",
+    "post_serial": "test-source-hashes-post-serial.json",
+    "changed_during_final_serial": []
+  },
+  "remaining_automated_limit": "Final serial834pass;parallel mode unstable across cursor-delivery cases:initial832pass/2hover failures,repeat833pass/1trial-row MouseMove failure. No production changes or extra repeats."
+}

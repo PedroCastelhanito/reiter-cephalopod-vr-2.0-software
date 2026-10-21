@@ -53,6 +53,8 @@ from cephvr.visual_stimulus.resources.display_calibration import (
     prepare_display_calibration_request,
 )
 from cephvr.visual_stimulus.resources.prepare import prepare_resources
+from cephvr.visual_stimulus.resources.prepared_heap import PreparedHeap
+from cephvr.visual_stimulus.resources.progress import SetupProgress
 from cephvr.visual_stimulus.resources.provenance import software_provenance
 from cephvr.visual_stimulus.resources.video import VideoPlayback
 from cephvr.visual_stimulus.resources.video_decoder import DecoderFactory
@@ -120,6 +122,8 @@ class NativePreparation:
         self.video_playback: VideoPlayback | None = None
         self.video_session: VideoSession | None = None
         self.image_residency: ImageResidency | None = None
+        self._prepared_heap = PreparedHeap()
+        self._progress = SetupProgress(None, clock_ns)
 
     def _retain_source_factory(
         self, factory: Callable[[Path], ProtectedSource]
@@ -291,6 +295,7 @@ class NativePreparation:
         *,
         announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None]
         | None = None,
+        progress: Callable[[str], None] | None = None,
     ) -> tuple[PreparedTrial, ...]:
         if self._bundles:
             raise RuntimeError(
@@ -298,6 +303,8 @@ class NativePreparation:
             )
         self._check(deadline_ns)
         self._deadline_ns = deadline_ns
+        self._progress = SetupProgress(progress, self.clock_ns)
+        self._progress.update("Preparing stimulus resources")
         if not request.HasField("session") or not request.session.HasField(
             "configuration"
         ):
@@ -352,7 +359,7 @@ class NativePreparation:
         artifacts: list[PreparedTrial] = []
         validated_images: dict[str, tuple[ImageSource, ImageInfo]] = {}
         try:
-            for trial in request.session.trials:
+            for trial_number, trial in enumerate(request.session.trials, 1):
                 self._check(deadline_ns)
                 if not trial.HasField("definition") or not trial.definition.HasField(
                     "stimulus"
@@ -395,6 +402,14 @@ class NativePreparation:
                         path = _resolve_asset_path(assets_root, asset.logical_path)
                         register(f"asset:{asset.asset_id}", str(path))
                     announce_batch(tuple(planned))
+                label = f"Trial {trial_number}/{len(request.session.trials)}"
+                self._progress.update(f"{label} — Protecting and reading assets")
+
+                def image_progress(done: int, total: int, label: str = label) -> None:
+                    self._progress.update(
+                        f"{label} — Decoding and validating textures", done, total
+                    )
+
                 bundle = prepare_resources(
                     program,
                     assets_root,
@@ -414,7 +429,9 @@ class NativePreparation:
                     defer_images=True,
                     validated_images=validated_images,
                     component_provenance=components,
+                    image_progress=image_progress,
                 )
+                self._progress.update(f"{label} — Compiling stimulus schedule")
                 trial_id = trial.context.trial_id
                 if trial_id in self._bundles:
                     raise ValueError(f"duplicate Visual Stimulus trial ID {trial_id}")
@@ -566,6 +583,11 @@ class NativePreparation:
                     announce=self._registered_announce(announce, ""),
                     clock_ns=self.clock_ns,
                     announce_batch=announce_batch,
+                    progress=lambda done, total: self._progress.update(
+                        "Decoding and uploading initial textures to projectors",
+                        done,
+                        total,
+                    ),
                 )
             if self.video_playback is not None:
                 self.video_playback.start(
@@ -627,6 +649,7 @@ class NativePreparation:
         if self.video_session is None:
             raise RuntimeError("CPU video preparation must precede graphics allocation")
         self.engine.set_video_provider(self.video_session.present)
+        self._progress.update("Preparing projector graphics")
         self.engine.set_video_reset(self.video_session.reset)
         display = artifacts[0].display
         first_bundle = self.resources_for(artifacts[0].identity.trial_id)
@@ -675,14 +698,21 @@ class NativePreparation:
             install_images(self.image_residency, self._deadline_ns)
         for artifact in artifacts:
             self._check(self._deadline_ns)
+            self._progress.update("Preparing trial graphics")
             self.engine.prepare_trial(
                 artifact, self.resources_for(artifact.identity.trial_id)
             )
             self._check(self._deadline_ns)
 
+        deadline_ns = self._deadline_ns
+        self._progress.update("Finalizing prepared stimulus memory")
+        self._prepared_heap.prepare(lambda: self._check(deadline_ns))
+        self._check(self._deadline_ns)
+        self._progress.update("Initial textures ready; publishing prepared trials")
         return artifacts
 
     def cleanup(self, deadline_ns: int | None = None) -> ResourceReleaseReport:
+        self._prepared_heap.release()
         released: list[str] = []
         outstanding: list[str] = []
         failed_sources: set[int] = set()

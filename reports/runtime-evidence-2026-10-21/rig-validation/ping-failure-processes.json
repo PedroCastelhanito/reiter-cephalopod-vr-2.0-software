@@ -1,0 +1,50 @@
+[
+  {
+    "ProcessId": 53292,
+    "ParentProcessId": 38284,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.supervisor.main --bootstrap-handle 824 --launcher-control-handle 828 --launcher-controller-control-handle 836 --launcher-ack-handle 844"
+  },
+  {
+    "ProcessId": 35452,
+    "ParentProcessId": 53292,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.controller.main --bootstrap-handle 712"
+  },
+  {
+    "ProcessId": 34504,
+    "ParentProcessId": 53292,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.main --bootstrap-handle 852"
+  },
+  {
+    "ProcessId": 36544,
+    "ParentProcessId": 53292,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.visual_stimulus.main --bootstrap-handle 864"
+  },
+  {
+    "ProcessId": 16120,
+    "ParentProcessId": 53292,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.tracking.main --bootstrap-handle 888"
+  },
+  {
+    "ProcessId": 29948,
+    "ParentProcessId": 53292,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.gui.main --bootstrap-handle 900"
+  },
+  {
+    "ProcessId": 47116,
+    "ParentProcessId": 34504,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.worker.main --bootstrap-handle 1044"
+  },
+  {
+    "ProcessId": 46324,
+    "ParentProcessId": 34504,
+    "Name": "cephvr-python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.worker.main --bootstrap-handle 1108"
+  }
+]

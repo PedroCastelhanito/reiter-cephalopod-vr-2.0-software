@@ -286,6 +286,17 @@ def stylesheet(
                    border-radius: 6px; min-height: 14px; text-align: center; }}
     QProgressBar::chunk {{ background: {c.primary}; border-radius: 5px; }}
     QToolTip {{ background: {c.card}; color: {c.text}; border: 1px solid {c.focus}; padding: 6px; }}
+    QDialog#PreviewWorkspace QLabel[role='eyebrow'],
+    QDialog#PreviewWorkspace QFrame[role='card'] QLabel[role='title'] {{ color: {c.accent}; }}
+    QDialog#PreviewWorkspace QLabel[role='eyebrow']:disabled {{ color: {c.disabled}; }}
+    QDialog#PreviewWorkspace QLabel[role='muted'] {{ color: {c.label}; }}
+    QDialog#PreviewWorkspace QFrame#PreviewToggles {{ border: 1px solid {c.border};
+        border-radius: {s.field_radius}px; }}
+    QLabel[role='rec-lamp'] {{ color: {c.muted}; font-weight: 700; letter-spacing: 1px;
+        padding: 0 6px; }}
+    QLabel[role='rec-lamp'][state='recording'] {{ color: {c.ready}; }}
+    QLabel[role='rec-lamp'][state='waiting'] {{ color: {c.waiting}; }}
+    QLabel[role='rec-lamp'][state='fault'] {{ color: {c.error}; }}
     """
 
 

@@ -155,8 +155,15 @@ socket permission; do not weaken their assertions to bypass an environment restr
 - Use `reports/rig-verification.md` as the single outstanding rig checklist and
   execution guide. Backend reports link to it instead of duplicating handoffs,
   procedures or deferred checks. Preserve explicit owner-approved deferrals.
+- [GOV-001](architecture.md#gov-001) records the owner's report-retention intent:
+  ordinary development evidence expires after 30 days; unresolved-issue evidence
+  remains protected until verified resolution, with eventual deletions logged.
+  Keep summaries, emergency reports and experiment output. This intent does not
+  schedule or authorize automatic cleanup during other work or issue completion.
+  Keep this as documented intent only; do not maintain a dedicated cleanup tool,
+  registry or schedule without a new request.
 - Preserve dated raw evidence and its contextual assessment together in dated
-  evidence directories. Record date, source revision when known, command/method,
+  evidence directories while retained under GOV-001. Record date, source revision when known, command/method,
   outcome and validation scope; label missing provenance and historical results.
   Never turn source review, collection or static checks into runtime/rig passes.
 - When consolidating, retain unresolved findings, unique evidence and useful source

@@ -1,0 +1,2 @@
+abort all outputs Closed/present; complete video decode counts match
+normal all outputs Closed/present; complete video decode counts match

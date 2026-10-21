@@ -256,7 +256,11 @@ one-shot query and is not polled during normal operation.
 `state_revision` increases within one controller generation. Skipped revisions
 are valid; ignore older views. Atomically capture initial state and arrange change
 delivery in the controller's state loop so a subscription cannot miss the current
-view. Slow clients may receive coalesced views; they must not block experiment
+view. `Snapshot.last_finalization` keeps one exact terminal session/trial view when
+identities retire after confirmed cleanup; it is overwritten on the next retirement
+and lost on controller restart. It is presentation evidence, not active work or a
+history stream. GUI clients use it only to close already displayed matching rows.
+Slow clients may receive coalesced views; they must not block experiment
 execution. State revisions do not replace command/configuration admission checks.
 Keep accepted-command completion results in `operations` for their command-record
 retention period; coalescing views cannot hide completion from a waiting client.

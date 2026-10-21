@@ -522,6 +522,7 @@ def _install_microcontroller(runtime: ControllerRuntime, *, uploader=None):
     observation.state.behavioral.running = False
     observation.state.tracking.running = False
     observation.state.eye_tracking.running = False
+    observation.state.trial_state.running = False
     serial.connect.return_value = observation
     serial.configure.return_value = observation
     serial.status.return_value = observation

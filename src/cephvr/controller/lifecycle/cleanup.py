@@ -12,6 +12,7 @@ from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.operations import ControlOperations
 from cephvr.controller.control.snapshots import SnapshotPublisher
+from cephvr.controller.lifecycle.session_reset import SessionReset
 from cephvr.controller.metadata.types import StorageError
 from cephvr.controller.ports import BackendPort, SupervisorPort
 from cephvr.controller.projections import ProjectionStore
@@ -54,6 +55,7 @@ class CleanupWorkflow:
         spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]],
         configuration: ConfigurationState,
         projections: ProjectionStore,
+        session_reset: SessionReset,
     ) -> None:
         self.lifecycle = lifecycle
         self.control = control
@@ -69,6 +71,7 @@ class CleanupWorkflow:
         self.spawn = spawn
         self.configuration_state = configuration
         self.projections = projections
+        self.session_reset = session_reset
         self._report: ReportReceiver | None = None
 
     def bind_report(self, report: ReportReceiver) -> None:
@@ -396,7 +399,7 @@ class CleanupWorkflow:
                 command.operator.command_id,
                 "CancelSetup",
                 attempt=attempt,
-                progress="bounded cleanup in progress",
+                progress="Cleaning up…",
             )
             if attempt.handoff is not None:
                 attempt.handoff.retire()
@@ -471,4 +474,5 @@ class CleanupWorkflow:
                 if not complete:
                     self.lifecycle.attempt = None
                     self.clear_projection_scope()
+                self.session_reset.interrupted()
                 self.publisher.publish()

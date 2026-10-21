@@ -36,7 +36,7 @@ Configuration:
 <a id="e12"></a>
 ### E12 — Remote SpikeGLX control
 
-**Status:** Accepted · **Revision:** 25
+**Status:** Accepted · **Revision:** 26
 
 - **Owner and transport:** the controller owns the only SpikeGLX client (no
   supervisor fallback), using the official SDK Python wrapper against SpikeGLX's
@@ -73,7 +73,10 @@ Configuration:
   CephVR cannot verify pulse recording. The check proves saved-channel configuration,
   not wiring or recorded pulses. Eye uses the first-class `eye_tracking_camera`
   role; no physical channel assignment is defaulted before rig verification.
-  Optional trial-state, projector-flip and custom
+  Paired sessions with active externally triggered cameras also require enabled,
+  mapped and saved Trial state for A09's analysis gate. Camera pulses already run
+  during Setup under A10; SpikeGLX saving still begins at session Start, so its first
+  recorded pulse is not the capture-generation origin. Optional projector-flip and custom
   inputs are supplemental saved-channel metadata, never SpikeGLX acquisition-setting
   commands; preserve stream identity and absent digital bit separately from bit zero.
 - **Start:** after `session_started` is synchronized, recheck running/saving-OFF and the

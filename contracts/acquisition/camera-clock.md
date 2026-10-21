@@ -87,24 +87,19 @@ Reference: [Basler timestamp documentation](https://docs.baslerweb.com/timestamp
 
 ## No-wiring anchor scope
 
-A09 accepts a first-trigger/first-video-source assumption for initial post hoc
-alignment, with existing trigger wiring, fixed cadence and trial-only capture.
-For each uniquely matched trial/camera pulse train, associate its first recorded
-trigger with the source image referenced by encoded video frame zero. Resolve that
-source through A07 video_frame mappings; this may be a later received source after invalid images or capacity loss.
-Preserve and flag leading invalid/dropped source rows rather than
-silently declaring that the first video source equals received frame_id zero.
-With video disabled, the analogous assumption uses the first received source row.
+A09's continuous-capture design requires correspondence across acquisition and
+recording boundaries; frame zero is not an anchor to the first pulse inside Trial
+state HIGH. Resolve encoded images through A07 source mappings and retain native
+counter/timestamp semantics, capture generation and bounded boundary context.
+Select analysis pulses by measured trigger rising edges within the Trial-state
+HIGH interval only after matching. Capture begins before SpikeGLX saving, so their
+first recorded samples do not define the same origin. Host-receipt membership
+can retain pre-gate exposures or omit in-gate exposures received after cutoff.
 
-The external compiler must identify this correspondence as assumed. It must not
-convert native counters into measured trigger identities or imply independently
-verified exposure timing. Subsequent source matching uses actual native timing/counter
-semantics and available gaps; video duplication never creates exposures. A known
-contradiction is surfaced for review; absence of a contradiction or a low fit residual
-does not prove the anchor. No new runtime trigger-index field, reset, firmware,
-pre-roll phase or live alignment process is required for this selected baseline.
-Retain raw identity/timing evidence so future alignment can revise the assumption.
-
-Stronger anchors are deferred pending observed need and a new owner request.
-Outstanding baseline checks live in the
+Missing/ambiguous matches and leading/trailing losses stay explicit. A low fit
+residual or equal counts alone do not prove absolute correspondence or exposure
+latency. No new wiring, counter reset, coded phase or live alignment service is
+selected. Detailed lifecycle/schema bindings await the design's implementation;
+do not reinterpret historical files as carrying evidence they never recorded.
+Outstanding checks live in the
 [rig checklist](../../reports/rig-verification.md#camera-no-wiring-anchoring).

@@ -1,0 +1,24 @@
+* Getting build dependencies for sdist...
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pyproject_hooks\_impl.py", line 30, in write_json
+    with open(path, "w", encoding="utf-8") as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Packages\\sandbox.{0de078f2-29b3-4e7f-abba-112d71fd9f06}\\AC\\Temp\\tmpz7l0k5rm\\input.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\shutil.py", line 636, in _rmtree_unsafe
+    os.rmdir(path)
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Packages\\sandbox.{0de078f2-29b3-4e7f-abba-112d71fd9f06}\\AC\\Temp\\tmpz7l0k5rm'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+TIP pass --env-dir and --sdist-extract-dir to keep the build environment and sources, then see https://build.pypa.io/en/stable/how-to/troubleshooting.html#debug-a-failed-build for help debugging a failed build
+ERROR Backend operation failed: PermissionError(13, 'Access is denied')
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\tempfile.py", line 278, in _dont_follow_symlinks
+    func(path, *args)
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Packages\\sandbox.{0de078f2-29b3-4e7f-abba-112d71fd9f06}\\AC\\Temp\\tmpz7l0k5rm'
+

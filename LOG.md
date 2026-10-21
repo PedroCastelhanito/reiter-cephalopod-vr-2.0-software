@@ -7066,3 +7066,941 @@ was interrupted. Latest fixture case passes alone; broad-run cause unproven and
 existing full-suite follow-up remains. No assertions weakened or unrelated runtime
 changes made. Vulture high-confidence scan retains six callback/test arguments.
 Current report records commands/scope; no rig/native or packaging rebuild claimed.
+
+### 2026-10-21 - preview-resize-feedback
+
+[gui] Owner reported periodic preview resizing during a running dummy trial.
+Source review and corrected offscreen regression reproduce pending status adding
+13 logical pixels of heading, shrinking placement and feeding the next poll.
+Initial regression fixture lacked active/empty-reason fields; corrected before
+confirming geometry failures with timeline shown and hidden. One conditional in
+the existing workspace suppresses waiting text for already-visible viewers;
+opening/failure messages and pending command gates remain intact under G01/G02.
+ARCH-002 review retains existing owners/dependencies and dashboard behavior tests.
+Eight focused preview tests pass; GUI/tests Ruff lint/format187, Win32 mypy184,
+boundaries740/zero and whitespace checks pass. Updated runtime assessment and
+existing rig checklist; TODO retains restart/native confirmation. No runtime
+commands or interruption of the owner's trial; full GUI/native acceptance unrun.
+
+### 2026-10-21 - preview-workspace-design-review
+
+[gui] Owner asked for feature/layout/style improvements from a Configuration-phase
+Previews screenshot. Reviewed `previews.py`, `preview_timeline.py` and G01/G02
+Previews rules; reported suggestions in chat, separating routine polish from
+changes that would amend accepted G01/G02 rules (centered startup window,
+history-only trace, polar orientation). No code, architecture or TODO changes;
+no checks run.
+
+### 2026-10-21 - interruption-configuration-reset
+
+[controller] [gui] Owner requested direct Configuration after protocol interruption.
+Amended E05rev97/E06rev79/G01rev262 and root register. E06 had pre-existing page77/
+register78 mismatch; both now79. Shared SessionReset extracts existing NewSession
+retirement; immediate/late confirmed interrupted cleanup invokes it automatically,
+after operation settlement. Retains durable results/settings and rejects stale
+session evidence; shutdown, authority loss and unresolved cleanup retain gates.
+Completed/Stopped remain explicit NewSession. ARCH-002 review keeps reset separate
+from oversized interruption/assembly owners and adds no dependencies.
+
+Two sandbox tests stalled before bodies in asyncio socketpair setup and were
+interrupted; loopback-enabled focused run passed27 with one obsolete Ended assertion.
+Updated it while retaining persisted Interrupted evidence. Final full controller
+suite731 passed,4 skipped,6 deselected; Ruff lint/format144, Win32 mypy114,
+boundaries741/zero and diff whitespace pass. Runtime report and rig checklist
+updated; TODO retains native restart/interruption/reuse check. No running-trial
+commands, application restart or native acceptance performed.
+
+### 2026-10-21 - recording-metrics-explanation
+
+[visual_stimulus] Investigated owner's terminal recording_metrics JSON. Source
+emits INFO summary unconditionally when the recording thread exits, including
+evidence-only trials. Read first/last records of owner's Desktop/tmp session
+SP0003-085120/protocol-data/0003_085211_stimulus_frames.jsonl: video_enabled=false;
+completion reports11580 states,46320 submission attempts,0 capture admissions,
+0 unresolved attempts and outcome completed. Zero video metrics are expected here,
+not evidence of no rendering. This is renderer evidence, not optical acceptance
+or a whole-session validation. No code/runtime changes or tests needed.
+
+### 2026-10-21 - quiet-recording-metrics
+
+[visual_stimulus] Removed terminal recording_metrics summary and dedicated logger
+setup at owner's request. Preserved capture metrics consumed by readback, scientific
+evidence and failure reporting under V12/E13; ARCH-002 removes unused plumbing.
+Initial tests caught removal of the live session.metrics alias (restored) plus
+sandbox extended-path failures. Final native-file-access recording suite73 passes;
+Ruff lint/format16, Win32 mypy15, boundaries741/zero pass. Updated owning report;
+no application restart or rig execution. Source task complete.
+
+### 2026-10-21 - runtime-log-terminal-format
+
+[gui] [controller] Owner asked to keep the HUD (plus an Output line) and keep
+intermediate steps, formatted tersely like a CRT terminal. Amended G02rev91 and
+register. New gui/log_format.py renders `HH:MM:SS SUBJECT step` with a fixed
+subject column; LogConsole applies it to all appends and skips exact consecutive
+repeats (e.g. duplicate Session Preparing to start). Shortened controller Setup/
+Start/cleanup/interruption step strings and GUI requested-action wording. Failure
+summaries now use the same `Subject · status` form. Dashboard HUD shows the
+reservation session_directory as OUTPUT; the preview HUD is unchanged. ARCH-002:
+formatter is a separate small module, no new dependencies.
+
+Checks: 159 focused dashboard tests pass. 4 timeline/variation hover cases fail
+because native MouseMove is not delivered here; unrelated to these changes. The
+controller suite passes (731, 4 skipped). Ruff lint/format, Win32 mypy (6 files),
+the boundary check (742 modules, 0 violations) and diff whitespace all pass.
+GUI not restarted; native appearance unverified.
+
+### 2026-10-21 - runtime-log-terminal-format (brackets)
+
+[gui] Owner asked for bracketed subjects. Log subject column now renders as
+`[SETUP]`, `[MCU]`, `[CAMERAS]` etc., padded to a fixed width; G02rev91 wording
+updated in place. 159 focused dashboard tests pass; the same 4 native-MouseMove
+hover cases fail as before. Ruff lint/format pass. GUI not restarted.
+
+### 2026-10-21 - preview-advanced-motion-dials (design)
+
+[gui] [tracking] [visual_stimulus] Owner reviewed sketches of per-stimulus
+preview plots. They accepted an epoch-only timeline (no speed trace; the current
+epoch fills to its elapsed fraction) and a locally remembered Advanced previews
+toggle, default off. That toggle shows texture dials (arrow direction/length =
+direction/speed, ring = angular speed), tracking-form longitudinal/lateral dials
+for live drive commands and authored trajectories, an arena world map with its
+tracking dial, feedback texture+tracking dial pairs and looming size lanes. They
+rejected onset/fade, luminance, grating/checkerboard parameter, video-playback and
+static-image plots. Amended G01rev264/G02rev92 and the register. Found that live
+Tracking drive values and renderer arena pose are not currently fed to the GUI;
+recorded as a follow-up under the new TODO task. Design only: no source changes.
+
+### 2026-10-21 - texture-residency-mismatch investigation
+
+[visual_stimulus] Owner asked why primate_cuttlebase_20min preview showed different
+textures across projectors. Fully parsed both SP0003-145623 renderer JSONLs and
+prepared recipes; matching requested families diverge through residency_hold in
+923/1,000 and933/1,000 presentations.887/878 presentations are mixed throughout
+all observed texture groups. Source V04 per-instance fallback explains divergence;
+loader-stage bottleneck remains unisolated. Saved/Desktop programs differ only in
+presence of GUI sequence metadata keys. Preserved inspection script, source hashes,
+counts/affected epochs and provenance limits; updated Visual Stimulus report/TODO.
+Inspection assertions pass. No runtime source edits, device commands, video decode,
+optical validation or performance attribution. Exact run source revision unavailable.
+
+### 2026-10-21 - preview-workspace-polish
+
+[gui] Owner approved most review items: in-frame stream reasons, VIEW toggle strip,
+recording lamp from controller output-closure status, 60 s left-pinned window,
+dimmed remaining plan, cursor/current epoch, hover readouts, headroom, unitless
+legend, tooltip-only caveat, accent headings and higher-contrast labels; polar
+orientation kept. Amended G01rev263/G02rev90 and register; updated runtime report and
+rig checklist. 131 focused offscreen tests pass (9 legacy timeline failures beforehand
+now pass); full offscreen tests/gui 798 pass, 2 fail outside this change. Ruff, Win32
+mypy, boundaries and whitespace pass. Failed attempt: first full run lacked
+QT_QPA_PLATFORM=offscreen, spawned real windows and stalled; stopped it and, by
+mistake, a concurrent agent's GUI test run. Native viewer check pending.
+
+### 2026-10-21 - texture-residency-mismatch upload bottleneck
+
+[visual_stimulus] Owner authorized repair and comparison with PsychoPy. Four
+source PNGs expand to41,297,200 bytes; original uploader needs45 service turns
+(750 ms at60 Hz before decoding) for each600 ms set. RTX5060Ti hidden-context
+probe confirms exact pixel readback, ~113 ms aggregate representative decode and
+small transfer cost. Bounded four-chunk batches need12 turns; precision/clocks,
+single decode worker, resource ownership and hold evidence unchanged. ARCH-002
+review keeps batching in existing focused GPU owner without dependencies or extra
+coordination. Regression fails with one-chunk scheduling; five upload tests pass.
+V04rev19/E14rev215 and policy19 declare bound; V04 owner page was16 while register
+was18, both reconciled to19. Native paced cache validation remains running.
+Initial probe attempts: missing DLL bootstrap corrected; generic managed Python
+correctly selected AMD, so used configured renderer executable; pixel-readback
+probe needed the texture's owning context restored after all-context fences.
+No production GPU preferences, protocol, image files or device outputs changed.
+
+### 2026-10-21 - pilot-spikeglx-alignment-inspection
+
+[spikeglx] [acquisition] [visual_stimulus] Inspected owner's SP0003-123824 protocol
+and original D: SpikeGLX recordings; C: copy had an empty SpikeGLX folder.
+Full OneBox digital scan and full117,109,938-sample probe SY scan confirm no shared
+sync transitions (probe words all64, metadata syncSourceIdx=0). Camera pulse
+trains26980/89935 match26979/89933 frames plus1/2 logged exclusions, with contiguous
+counters and native-clock fit RMS14.85/10.56 us. Full renderer logs have contiguous
+markers; Right-only analog photodiode bin-mean threshold checks recover expected
+transition counts, but clipping/chatter and local fit outliers prevent a calibrated
+optical-timing claim. Maximum render-evaluation gaps355.121/94.983 ms show why
+nominal video cadence cannot provide scientific timestamps. Recorded current
+assessment in runtime report, linked acquisition/visual reports, and added missing
+shared-sync/optical follow-up to the single rig checklist. External alignment
+recommendation preserves raw data and uses measured event tables; it does not
+authorize analysis-backend implementation or promote neural alignment to a pass.
+
+Validation: all five retained inspection scripts completed, with binary-size,
+contiguous-ID/counter, marker-pattern, pulse-count and candidate-polarity assertions
+where applicable. Full data inventory/small-file hashes and method/source limits
+saved in reports/runtime-evidence-2026-10-21/pilot-alignment/context.json.
+D: sandbox read initially denied, elevated read succeeded; matplotlib unavailable,
+so diagnostic waveform rendered with installed Pillow. Directory Ruff found no
+files because reports are excluded and is not a lint pass. No runtime source or
+settings changed; no video decode, full binary checksum, spike sorting, calibrated
+exposure/optical latency or rig test. Inspection complete; shared-clock verification
+remains open as pilot-shared-sync-verification. Diff whitespace checked.
+Evidence JSON, script syntax and new report links/anchor checks pass; the first
+link-check attempt used Windows' default text codec and failed on existing report
+Unicode, then passed with explicit UTF-8.
+
+
+### 2026-10-21 - reports-retention-policy investigation
+
+[repo] [shared] Owner asks for roughly one-month report cleanup and whether reports
+are saved with experiment output. Read E04, shared emergency writer, central writer
+and runtime call sites; no age-based cleanup or report-tree copy into output found.
+Inventory: 9,278 files/17,685,334,469 bytes; 215 root emergency reports/148,786 bytes.
+Most space is dated development evidence. Proposed 30-day dated-bundle expiry with
+current assessments, emergency reports and session data preserved; unique/unresolved
+evidence expiry needs scope clarification under GOV-001. Updated current report
+and TODO. Read-only investigation apart from tracking/report updates; no deletion,
+runtime change, scheduled job or test execution.
+
+### 2026-10-21 - gui-test-batching
+
+[gui] [repo] Owner approved offscreen GUI tests plus pytest-timeout==2.4.0 and
+pytest-xdist==3.8.0 dev pins. Added tests/gui/conftest.py (offscreen platform unless
+QT_QPA_PLATFORM is set, shared module-scoped themed app moved from test_dashboard,
+120 s timeout per GUI test) and updated docs/development.md. A probe confirmed the
+offscreen platform with the variable unset. Timings on the working tree (concurrent
+agent edits in progress): serial stopped by the timeout after ~412 s at the
+order-dependent modal in test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up
+(passes alone); `-n 8` 800 pass/2 fail in 85 s; `-n auto` (32) 799/3 in 42 s versus
+385 s serial earlier. Failures are outside this change; recorded under
+gui-dashboard-test-restoration. Ruff lint/format pass for tests/gui.
+
+### 2026-10-21 - texture-residency-mismatch context fences
+
+[visual_stimulus] Paced native cache baseline reproduces1,025/1,480 mixed groups
+in first60 s of each trial. Four-chunk run has0/0 holds/mixes over200 presentations.
+Timing instrumentation still finds long calls including all-context fences/polls.
+Each image only has allocations in its consuming outputs, so ARCH-002 removes
+unrelated-context fences: pass the existing texture list to the focused GPU port,
+retain every allocated context's completion/release proof, including partial uploads.
+Tests extend existing rendering/lifecycle owners; V04rev19 refined in place.
+Eight focused checks and exact four-image GPU readback pass; final paced probe
+is running. Initial focused tests stalled in restricted mode and were interrupted;
+normal-access215 tests and114 integration tests/82 subtests passed before this
+second increment. Simple doc-link probe initially parsed PowerShell inside fenced
+code as links; corrected probe excludes code and passes. No live app restart.
+
+
+### 2026-10-21 - reports-retention-policy implementation
+
+[repo] [shared] Owner accepted 30-day ordinary development-evidence expiry,
+protection for unresolved problems, deletion after explicit resolution, and retained
+summaries/emergency reports/experiment output. GOV-001rev27 and AGENTS record the
+rule and contributor workflow. Added standalone tools/cleanup_reports.py and an
+explicit issue/evidence registry covering73 current tasks; no backend dependency,
+process, policy setting or runtime path changed. ARCH-002 chooses a standard-library
+developer command, with a dedicated filesystem-retention test module because
+existing runtime cleanup tests have different ownership. The tool defaults to
+preview, rejects unsafe paths/unreviewed tasks and never infers resolution from
+TODO absence. Shared open protections win; linked paths/output subtrees/Markdown
+stay. File age uses the later directory date/mtime; explicit resolution bypasses
+age. Durable per-file intent/results and completed LOG batches record actual work.
+
+Validation:13 isolated tests pass; Ruff lint/format, Win32 mypy for the tool,
+boundaries745/zero and whitespace pass. Tests cover age/protection/output exclusions,
+invalid paths, missing tasks, explicit resolution, overlapping issues, linked-dir
+avoidance, changed inputs, exclusive locks and deletion failures. Initial lint fixed
+two import-order findings. Actual preview and --apply each report0 files/0 bytes;
+no historical evidence deleted or unresolved issue marked solved. Code review fixed
+lock release before final checks and rejects dangling log links.
+
+Created and viewed active Codex heartbeat clean-up-development-reports, daily09:00
+Asia/Tokyo. It reviews TODO/LOG/current reports, maintains explicit protections, runs
+preview/apply, repairs current expired links and only reports deletion/failure/action
+needed. Scheduled execution has not occurred yet; it depends on Codex automation
+execution. Usage/current runtime report updated; own implementation task complete.
+No full GUI/backend rerun or native/rig acceptance is relevant to this tool change.
+
+### 2026-10-21 - continuous-camera-acquisition design
+
+[acquisition] [controller] [spikeglx] Owner requested Setup capture/pulse warm-up,
+continuous pulses between trials, trial-only encoding and measured Trial state as
+the analysis gate; explicitly selected record-design-first rather than coding.
+Amended A02rev35/A07rev66/A09rev17/A10rev70/A11rev52 and E05rev98/E11rev18/E12rev26,
+updating the register. E12's previous owner revision25/register24 mismatch is now
+reconciled at26. Normal trial admission/LOW evidence is distinct from session/fault
+physical-stop proof. Replaced the obsolete first-trigger/first-video-source anchor
+with explicit native identity/counter/timing and boundary-context requirements;
+retained host-receipt recording membership, ambiguous/unmatched boundary evidence
+and unchanged SpikeGLX session-saving scope. Setup warm-up requires usable frames,
+without inventing a fixed stabilization duration. Existing selective protocol6
+masks are the simple proposed mechanism; no new firmware protocol/process selected.
+
+Updated acquisition/runtime assessments, camera-clock interpretation, contract-index
+implementation caveat, existing camera-anchor task and single rig checklist; queued
+continuous-camera-acquisition for a later authorized coding phase. Runtime, firmware,
+policy22, settings and detailed lifecycle schemas remain unchanged. Initial patch
+failed atomically on out-of-order context; corrected patch applied. Eight changed
+decision/register revisions, referenced anchors and diff whitespace checks pass.
+No runtime tests or rig acceptance claimed for this documentation-only increment.
+
+### 2026-10-21 - preview-advanced-motion-dials (implementation)
+
+[gui] [tracking] [visual_stimulus] Implemented G01rev264/G02rev92. The timeline is
+now epoch-only, with current-epoch progress, the existing 60 s window, ticks, hover
+and click-to-inspect, plus an epoch/elapsed readout. A VIEW-strip Advanced previews
+checkbox (default off, remembered locally) shows per-source instruments:
+- texture dials: arrow length = speed against the rings; ring = angular speed;
+- tracking-form forward/animal-left dials for authored trajectories and arenas;
+- an arena world map;
+- feedback texture+tracking dial pairs ("Waiting for tracking");
+- a looming size lane.
+Pose continuity replays V07 compile_boundaries through renderer InstanceState;
+feedback epochs leave the pose unknown until a fresh initialize/reset. ARCH-002: new
+preview_motion_dial/_state/_samples modules; the speed plot and polar plot were
+removed; preview_timeline.py is down to 372 lines, so no size warning. No new
+dependency, RPC, telemetry or command.
+Checks: test_preview_timeline 18 pass; 133 preview-selected GUI tests pass. Full
+tests/gui: 800 pass, 2 fail outside preview code (HUD OUTPUT row; managed config
+stale-after-ack), recorded as gui-dashboard-hud-config-test-failures without
+attribution. Ruff lint/format, Win32 mypy (7 files), boundaries (745 modules, 0
+violations) and diff whitespace pass. Offscreen renders were inspected; GUI not
+restarted, native appearance unverified. Live tracking/pose feed absent, so
+live-only dials stay waiting.
+
+
+### 2026-10-21 - reports-retention-policy intent only
+
+[repo] [shared] Owner clarified that retention should be logged as intent instead
+of scheduled. Deleted Codex heartbeat clean-up-development-reports; the automation
+tool confirms deleteStatus=deleted. Supersedes the active-schedule statement in the
+previous implementation entry. GOV-001rev28/register, AGENTS, usage and current
+runtime report now state intent only: ordinary development evidence after30 days,
+unresolved evidence protected until verified resolution, eventual deletions logged,
+summaries/emergency reports/experiment output preserved. No scheduled or automatic
+cleanup on issue completion; the prepared utility/registry are dormant pending an
+explicit cleanup request. No report deletion or cleanup execution in this action.
+No new open TODO work: recording intent and removing the schedule are complete.
+Documentation consistency/whitespace checked; runtime tests not rerun because
+no source behavior changed.
+
+
+### 2026-10-21 - reports-retention-tool-removal
+
+[repo] [shared] Owner requested removal of the dormant implementation, retaining
+only the documented intent. Removed tools/cleanup_reports.py, its dedicated
+tests/shared/test_report_retention.py, reports/retention.json and the verified-empty
+reports/retention-log.jsonl. Removed utility instructions and current report links;
+GOV-001rev29/register and AGENTS retain intent without a tool, registry or schedule.
+Historical LOG entries are preserved and superseded by this removal. No evidence,
+emergency report or experiment output was deleted. Existing unrelated edits kept.
+Checked remaining source/document references, file absence, GOV revision/anchor,
+shared-test collection and diff whitespace. No runtime suite or rig checks needed
+for removal of an unintegrated tool. Task complete; no remaining retention work.
+
+### 2026-10-21 - texture-residency-mismatch prepared heap
+
+[visual_stimulus] Final batched/consumer-fence cache run still showed one82 ms
+pause outside GPU calls. Follow-up gc.callbacks identifies104.10 ms generation2
+collection in the loader thread (same-process GIL blocks rendering), while texture
+readiness remains correct. Added a focused stdlib PreparedHeap owner: collect
+Setup garbage under original deadline, freeze existing graph after graphics
+preparation, preserve GC of new objects, unfreeze on every cleanup path. Reject
+foreign frozen ownership; repeat prepare/cleanup is idempotent. ARCH-002 keeps
+global collection ownership out of the GPU uploader in a small resource helper;
+NativePreparation remains the existing setup/cleanup orchestrator. V04rev19/E14
+policy19 refined in place. Pending-deadline/foreign-owner/reuse checks extend
+existing lifecycle tests. Initial mypy closure narrowing fixed with local deadline;
+Ruff encountered a transient mapped-file lock and succeeded on retry. Native
+prepared-heap check is running; no running application or scientific protocol edits.
+
+### 2026-10-21 - texture-residency-mismatch final validation
+
+[visual_stimulus] Owner-authorized source repair complete. Final RTX5060Ti probe
+uses unchanged protected PNGs and the actual first60 s of each saved trial, four
+hidden contexts,60 Hz and the1 GiB ceiling with scene/review reservations. All200
+presentations/3,600 texture groups use current matching images at every tested
+onset; zero holds/mixes. Service p99=1.91/1.82 ms, max=8.66/8.72 ms; no recorded
+GC pause>5 ms after prepared-heap ownership. All664 tested assets match saved
+hashes. Intermediate failures/timing evidence retained alongside final results.
+
+Final suite336 passed,1 skipped,1 deselected,82 subtests; includes real isolated
+Python cycle-collection/release validation. Ruff lint/format177, Win32 mypy161,
+boundaries746/zero, local Markdown link/anchor and whitespace checks pass. One
+format check exposed CRLF rewriting in configuration.py; formatter corrected it.
+Updated V04rev19/E14rev215, policy19, report and single rig checklist. TODO now
+tracks full20-minute combined/physical verification after restart; no camera,
+projector swaps, full renderer/recording workload, app restart or optical pass.
+PsychoPy/Psychtoolbox primary docs support ahead-of-time texture preparation;
+no framework replacement, precision reduction or late-image policy change.
+
+
+### 2026-10-21 - repo-unused-code-oct21
+
+[repo] [acquisition] [gui] [visual_stimulus] Audited tools, imports, callers,
+static unused-code candidates and exact duplicate test bodies under ARCH-002.
+Removed the standalone GUI calibration-assets prune CLI and its dedicated test,
+five acquisition recording FFmpeg re-export modules, and unused preview
+trace_value. Retargeted filter tests to shared owners; six test-function ASTs
+remain identical. Updated current reports and stale CLI instructions. Kept active
+build/generation/launch/rig tools and uncertain dynamic/framework/native owners.
+No assets, evidence, experiment output or new cleanup infrastructure involved;
+concurrent edits preserved. This completes the verified-unused cleanup task.
+
+29 focused filter/timeline tests pass. Acquisition/GUI Ruff lint and format401
+pass; Win32 source mypy373 passes; boundaries740/zero and diff whitespace pass.
+Broader acquisition and selected dashboard runs stopped producing output and were
+interrupted; these do not establish full-suite results. Extra test-inclusive mypy
+reported12 existing untyped-test errors outside source scope; source-only rerun
+passed. Process inspection via CIM was unavailable; only our exact test sessions
+were interrupted. No native/rig acceptance or exhaustive dead-code proof claimed.
+
+### 2026-10-21 - startup-spikeglx-log-explanation
+
+[gui] [controller] Investigated the owner's startup screenshot without changing
+runtime behavior. Managed GUI snapshot installation automatically requests the
+saved SpikeGLX host-file inventory once per controller/configuration identity in
+Configuration/Ready, independently of the recording checkbox. requested_action
+labels that background read as visible SpikeGLX work. Controller inventory.read
+loads saved host settings; this request does not contact the remote SpikeGLX app
+or start recording. Successful inventory delivery updates the panel without a
+matching completion log, so the ellipsis alone does not establish a pending read.
+Source inspection only; no tests, restart or hardware operations performed.
+
+### 2026-10-21 - setup-texture-progress
+
+[visual_stimulus] [controller] [gui] Owner requested initial decoding/upload during
+Setup and visible progress while waiting. Confirmed existing initial-residency gate
+already waits for decoding/uploads/fences before Ready; added actual per-trial
+validation and initial-residency counters, stage messages and one-second count
+throttling. Reused WorkerOperation/LifecycleReport and participant progress fields;
+no schema or dependency change. Optional delivery has one in-flight report and
+bounded capacity; failures cannot fail Setup. Exact generation/session/command and
+original-deadline admission rejects retired feedback without promoting readiness.
+V04rev20/E08rev178, root register and current reports/checklist updated. ARCH-002
+puts formatting/throttling and controller validation in focused helpers; resource
+orchestrators retain existing state ownership and cohesive size exceptions.
+
+309 focused checks passed initially. Final renderer/controller suite:1,195 passed,
+4 skipped,8 deselected;10 offscreen GUI action-log checks pass. Final first-service
+cancellation/deadline preservation passes159 owner tests. Ruff lint/format323,
+Win32 mypy277 and boundaries742/zero pass. An earlier combined run had1 failure
+in the existing20 ms reservation thread-start assertion (1,193 passed); isolated
+and final combined reruns passed. Initial lambda inference error corrected.
+Raw results and source/command context retained with Oct21 texture evidence.
+Implementation complete; native visible Setup progress/full20-minute combined and
+optical acceptance remains on texture-residency-mismatch and the single rig list.
+The running application was not restarted; user protocol/assets remain unchanged.
+
+
+### 2026-10-21 - action-log-inline-results
+
+[gui] Implemented the owner's silent-background-inventory and inline action-result
+request under G02 revision93; updated its owning rule/root register and runtime
+report. ActionProgress binds requested work and snapshot operations/preparation to
+retained console blocks; observed results append to the original timestamped row.
+Operation progress advances finish the preceding step, explicit readiness finishes
+participant preparation, and recovery/trial outcomes retain their actual status.
+Missing work is not success. Failure details remain available from the row; expired
+blocks cannot redirect a completion to newer text. ARCH-002 reuses existing focused
+projection/console owners, adds no dependencies and leaves main's GUI wiring cohesive.
+
+Final command: `.venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q
+-k "action_log or action_result or dispatched_action or log_rows or log_keeps or
+successful_tracking_frame_poll or managed_operation_log" --timeout=30`:
+21 passed,769 deselected offscreen. Changed-file Ruff lint/format4 and whitespace
+pass. Whole GUI Ruff/format191 and Win32 mypy187 passed before the final terminal
+recovery/trial additions; final whole-GUI reruns are blocked by a concurrent
+unterminated string at src/cephvr/gui/formatting.py:61, outside this change.
+Boundary check742/zero passed with existing cohesion advisories; no backend source
+changed here. An initial editor script used the Windows default encoding and stopped
+before test/doc edits; reran explicitly UTF-8. Initial tests exposed the inventory
+label removal mismatch and a test double missing ActionProgress; corrected both.
+A broader selection including managed_mcu stopped producing output after20 dots and
+was interrupted through its exact tool session; no broader pass claimed.
+No restart, hardware action or native appearance verification performed. Source task
+complete; existing runtime-log-terminal-format retains native verification.
+
+Validation note: new decision/report/evidence link targets and anchors pass.
+The broader Markdown scan stopped on a pre-existing missing runtime evidence image,
+reports/runtime-evidence-2026-10-17/review-synthetic-preview/retro-entry-hud.png;
+this increment did not create that link or remove its target. Diff whitespace passes.
+
+
+### 2026-10-21 - preview-compact-readouts
+
+[gui] Applied the owner's preview readout simplification under G02rev95; amended
+the owning record/root register and current runtime report. Epoch n / N sits above
+the strip without title/elapsed/duration readout. Motion dial values share one row;
+known stationary motion shows numeric zero, angular velocity keeps its sign, and
+unknown Tracking samples retain their explicit message. Existing clock, layout and
+instrument owners reused under ARCH-002; no new dependency or backend behavior.
+Updated owning preview tests:19 pass via `.venv/Scripts/python.exe -m pytest
+tests/gui/test_preview_timeline.py -q`. GUI Ruff lint/format191, Win32 mypy187,
+boundaries742/zero and git diff --check pass. Existing cohesion warnings reviewed;
+changed source owners are focused and below500 lines. The prior whole-GUI syntax
+block in formatting.py is absent in this later validation. Initial rg wildcard was
+unsupported on Windows; explicit source filenames used. No runtime restart or
+native appearance verification; existing preview-advanced-motion-dials tracks it.
+
+
+### 2026-10-21 - finalizing-log-after-reset-investigation
+
+[gui] [controller] Answered owner's question about the lingering Finalizing files
+line. Source inspection finds latest ActionProgress terminal suffix requires the
+same trial in ENDED, while SessionReset.interrupted replaces it with a pending
+identity-free trial before publishing Configuration. Screenshot's return to
+Configuration is consistent with completed interrupted cleanup and a stale log;
+it is not independent output-integrity evidence. Recorded the concrete projection
+gap in runtime report/TODO. No code changes, tests, restart or hardware operations.
+
+### 2026-10-21 - console-progress-in-place
+
+[gui] Owner requested progress update the same console line. G02rev96 now keeps
+counts/stage transitions in the original action row and timestamp, with a result
+suffix only from terminal evidence. Removed implicit Done on every progress change;
+LogConsole replaces the body of its existing scoped QTextBlock. Interleaved rows,
+selection, wrapping-aware reading position and follow-at-bottom are preserved in
+Dashboard and device consoles. ARCH-002 reuses the two existing focused owners;
+no dependency, backend or protocol change. Updated current report/root register and
+existing Setup rig check; source task complete, native appearance not exercised.
+
+`.venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k
+'action_result or action_log or action_progress or texture_setup_progress or
+in_place_progress or log_console or log_rows' -o faulthandler_timeout=30`:21 pass,
+772 deselected, including500 counts then upload stage, terminal result, both themes
+and wrapped progress above the reader. Changed-file Ruff lint/format and whole-GUI
+Win32 mypy187 initially pass; boundaries742/zero. A final static repeat during
+concurrent finalizing-log-after-reset edits sees action_progress.py formatting and
+new duplicate key annotation; those ongoing changes are preserved. No app restart,
+full GUI suite or hardware run. Prior full-workload rig limits remain unchanged.
+
+
+### 2026-10-21 - finalizing-log-after-reset
+
+[gui] [controller] Completed the owner's finalization-result/control-lock request
+under G02rev97/E08rev179. SessionReset retains one exact terminal session/trial view
+before reset; Snapshot.last_finalization closes matching existing log rows across
+coalesced Configuration transitions without replaying old success on reconnect.
+Cleanup results, interrupted outcome and active-work authority remain separate.
+Setup/Start/New session require editable cleanup-safe GUI state; Configuration
+cleanup blockers lock protocol/session editors. Controller Setup now rejects wrong
+phases/blocked cleanup before file loading and retains its commit check. Updated
+owning schema/generated bindings, architecture/register and runtime report.
+ARCH-002 reuses focused owners with no dependency or lifecycle/deadline change.
+
+Generated19 protobuf sources via `.venv/Scripts/python.exe tools/generate_contracts.py`.
+`.venv/Scripts/python.exe -m pytest tests/controller -q -m "not windows and not rig"`:
+733 passed,4 skipped,6 deselected. Two focused dashboard selections pass30+14 tests
+(finalization results/gates, cleanup-blocker projection, action rows, post-stop drafts,
+phase/observer/control/Stop/Setup behaviors). Ruff controller/GUI/test lint and
+format336 pass, Win32 source mypy302 passes, boundaries742/zero and whitespace pass.
+Existing large-owner advisories remain cohesive. Initial sandbox tmp_path creation
+failed; workspace-temp retry stalled and was stopped through its exact session.
+Normal Windows execution passed. Added assertions initially targeted the wrong
+cases (unactivated cancellation and interrupted outcome); corrected expectations
+before the full suite passed. Concurrent report text changed its marker during
+editing; re-read and preserved it. No native UI restart or rig/device action.
+Source task complete; interruption-configuration-reset retains native verification.
+
+
+### 2026-10-21 - setup-recovery-rig-verification-start
+
+[controller] [supervisor] [acquisition] [visual_stimulus] [gui] Owner authorized setup-watchdog-cleanup and interruption-configuration-reset rig work. Reviewed current reports, architecture and existing dirty working tree; preserving prior edits. Native window inventory shows no CephVR window. Elevated process inventory finds retained launcher chains but no controller/coordinator/worker process; exact endpoint and guarded launch checks are in progress. No firmware or scientific setting changes.
+
+### 2026-10-21 - preview-advanced-motion-dials (owner layout follow-up)
+
+[gui] Owner screenshot review asked to fix the preview HUD layout, drop the NOT
+RECORDING text, keep the stimulus timeline always visible under the HUD, remove
+the cursor time label and tidy the overall layout. Amended G01rev265/G02rev94 and
+the register; another session concurrently advanced G02 to rev95 (Epoch n / N
+readout, signed one-row dial values), and this work was merged with it.
+- HUD: formatting.hud_grid aligns label/value columns.
+- Lamp: hidden when idle; shows only REC, closing or output faults.
+- Timeline: always shown directly under the HUD at content height; streams fill the
+  rest. The Stimulus timeline checkbox, its preference and the splitter are removed.
+- Readout: the legend and epoch readout share the row above the strip; the cursor
+  time label is gone. Advanced previews re-lays the card out immediately.
+Also fixed test_managed_total_time_tracks_trials_gaps_and_stops, a stale assertion
+that the preview HUD repeats the Dashboard OUTPUT row (G02 intentionally omits it).
+Checks: 136 preview-selected tests pass; full tests/gui 817 pass, 1 fail
+(managed config stale-after-ack, still open under
+gui-dashboard-hud-config-test-failures). Ruff lint/format, Win32 mypy (5 files),
+boundaries (742 modules, 0 violations) and diff whitespace pass. Offscreen renders
+only; GUI not restarted. Observed that the working copies of architecture.md and
+gui.md are now CRLF throughout (not from this edit); Git normalizes them on commit.
+
+### 2026-10-21 - gui-serial-modal-hang
+
+[gui] Investigated the serial Trial preview modal hang. A diagnostic plugin turned
+static message boxes into printed failures and replayed collection order: the 458
+preceding tests plus the target pass, and a full serial run (802 pass/5 fail, no
+modal) passes the target; no polluting test exists in the current tree. The original
+hang coincided with another agent's in-progress GUI refactor (calibration_assets.py
+removal, new preview/log modules); cause unproven. Added an autouse
+`unexpected_modals` conftest guard (records the call, returns NoButton, fails at
+teardown) and one regression test. Verification: serial 818 pass/1 fail in 482 s,
+`-n 8` 819/1 in 80 s; the failure is ManagedConfiguration.stale, outside this work.
+Ruff lint/format pass for tests/gui.
+
+### 2026-10-21 - runtime-log-terminal-format (startup categories)
+
+[gui] Added Configuration and Controller subjects to the two owner-reported
+startup messages through the existing G02 terminal formatter. ARCH-002 review:
+two literal changes at existing call sites; no new dependencies or responsibilities.
+Updated the runtime report and retained the pending native verification task.
+Checks: pytest tests/gui/test_dashboard.py -q -k 'log_rows_use_terminal_columns or
+runtime_gui_close_reopen_preserves_full_draft' with QT_QPA_PLATFORM=offscreen and
+--basetemp=.pytest_tmp_startup_categories_20261021: 3 passed, 797 deselected.
+Initial selection matched no cases; initial corrected selection encountered sandbox
+temp creation errors, resolved with the fresh workspace basetemp. Source/formatter
+assertions verify both exact categorized messages. Ruff check/format and Win32
+mypy for src/cephvr/gui/main.py pass; backend boundaries: 742 modules, zero
+violations, existing size warnings reviewed for the affected call sites.
+git diff --check passes. Native GUI not restarted or visually verified.
+
+### 2026-10-21 - recordings-card-categories
+
+[gui] Completed owner-requested Recordings grouping under Cameras and Recorded
+data (Visual stimulus video, Tracking velocities and Save spikeglx). G01rev266
+and the root register record the layout; controls retain their existing state,
+persistence and authority/phase gates. ARCH-002 review reuses the focused module,
+label helper and grid without new dependencies. Extended the owning geometry test
+with group membership and repeated-rebuild coverage. Five focused offscreen
+layout/participation/persistence tests pass; Ruff check/format (source and owning
+test), Win32 mypy (recordings.py), boundaries (742 modules, zero violations) and
+diff whitespace pass. Existing source-size warnings do not affect the focused
+recordings module. Visually inspected the offscreen card; command/method, revision
+and scope are retained in reports/runtime-evidence-2026-10-21/recordings-categories/.
+Native GUI was not restarted; no hardware/rig acceptance claimed.
+
+[gui] Validation correction for recordings-card-categories: final whole-tree
+whitespace check now flags a concurrent unrelated blank line at EOF in
+tests/controller/test_setup.py:679. Earlier whole-tree check passed; the scoped
+check for this change passes. Left concurrent controller work untouched.
+
+### 2026-10-21 - gui-startup-stray-windows
+
+[gui] Reproduced the screenshot's detached timeline notice during construction:
+constructor refresh calls setVisible(True) before the parentless label enters its
+layout. Created the QLabel with instrument_host as parent; its existing visibility
+now stays in the preview hierarchy under G01. ARCH-002 review: focused one-line
+ownership correction, no added dependency or abstraction. Added construction,
+parent identity and Advanced visibility regression to the owning timeline module.
+The regression failed before the fix (unexpected visible top-level QLabel), then
+all20 tests/gui/test_preview_timeline.py cases passed. With QT_QPA_PLATFORM=offscreen,
+14 Dashboard tests selected by 'preview_hud_row or preview_advanced or
+preview_timeline or preview_workspace or runtime_gui_close_reopen_preserves_full_draft'
+also pass (786 deselected). Runs used fresh workspace basetemp directories.
+An assert-based check constructs DashboardWindow and ManagedDashboardWindow,
+processes events, and verifies no new visible top-level windows before show and
+only the main window afterward; both pass. Ruff check/format for timeline source
+and tests, Win32 mypy for preview_timeline.py, backend boundaries (742 modules,
+zero violations; other modules retain size warnings) and scoped diff whitespace
+pass. Updated the runtime report; local implementation task complete. Native GUI
+startup not restarted or verified; no device/rig acceptance claimed.
+
+
+### 2026-10-21 - setup-recovery-rig-failure-paths
+
+[controller] [supervisor] [acquisition] [visual_stimulus] [gui] setup-watchdog-cleanup / interruption-configuration-reset: authenticated inventory corrected the initial Python-only process filter; the runtime was live and idle under dedicated cephvr executables. Graceful restart loads current source. Eye serial40278236 is absent; only40065509/40747103 enumerate. A bounded all-camera fixture reproduced a worker failure hidden behind the camera-resolution barrier, then CancelSetup cleanup blockage. The first attempted controller-only dispatch filter was rejected by native reuse (supervisor correctly retained all participant obligations) and fully removed. Current correction keeps all cleanup obligations and requires renderer native release before an empty pre-Setup session proof. Acquisition retains sibling resolution results before retiring failed scope, avoiding the reproduced stale-readback shutdown; no stale guard relaxed. Interim2007 owner tests pass; final-source native retest pending. Initial fixture repetition metadata was rejected before activation; fixed. Sandbox pytest stalled; elevated focused checks pass. Computer Use app approval timed out, so visible GUI acceptance is still unverified. Failed-test reservation was preserved through explicit startup recovery; no remote SpikeGLX action or firmware change. Evidence: reports/runtime-evidence-2026-10-21/setup-recovery/.
+
+### 2026-10-21 - setup-recovery-rig-verification-complete
+
+[controller] [supervisor] [acquisition] [visual_stimulus] [gui]
+`setup-watchdog-cleanup` / `interruption-configuration-reset`: final V01rev28
+implementation preserves all required participant/fence/resource checks. It records
+whether Visual Stimulus Setup was dispatched and validates only never-dispatched
+empty-session output proof; the renderer confirms native release and the coordinator
+registers the zero catalogue before aggregate cleanup. Acquisition waits for sibling
+resolution results before retiring failure, without relaxing identity/deadline guards.
+Final native controller b548684d-25ca-4dc3-b8c3-31643a09b3af: expected missing-Eye
+Setup fails in2.710s and cleanup confirms; three fresh Setups4.401–4.657s, Ready
+cancel133ms, recorded10s Abort357ms with automatic Configuration and retained exact
+Interrupted results/settings, then fresh Setup/Start and60s normal stop/NewSession
+all pass. Original runtime configuration and history bytes restore exactly.
+All14 outputs are Closed/present; six videos completely decode/count correctly:
+Abort299/599/600 and normal1797/3596/3600 Behavior/Tracking/stimulus frames.
+
+`.venv/Scripts/python.exe -m pytest tests/acquisition tests/visual_stimulus
+tests/controller -q -m "not windows and not rig"`:2,012 pass,4 skip,10 deselected.
+Owner Ruff lint/format533, Win32 mypy463, boundaries742/zero and whitespace pass.
+Existing large lifecycle/state/report owners remain cohesive under ARCH-002; no
+dependency added. Initial pre-Setup proof attempts exposed missing catalogue/output
+evidence and remain retained, including emergency569974540398500 and the later
+CHILD_EXITED report; final source does not waive supervisor cleanup. Source hashes
+identify the dirty base revision; final formatting only normalizes three files.
+
+Correction to the preceding pending-UI assessment: final Computer Use retry succeeds
+after restoring the minimized Dashboard. Native logs show Interrupted and Done
+finalization suffixes; session fields and Setup are enabled, Start disabled, original
+metadata restored. GUI control returned through Control menu; saved native tree is
+`reports/runtime-evidence-2026-10-21/setup-recovery/native-dashboard.txt`.
+`interruption-configuration-reset` is complete and removed from TODO. PING did not
+recur; its intermittent cause/full texture-workload acceptance remain open under
+`setup-watchdog-cleanup`. No timeout/retry/firmware or remote SpikeGLX change.
+Current reports and single rig checklist updated; other fault/late/shutdown variants
+retain their existing scope. Evidence and exact commands are in the Oct21
+setup-recovery directory. No scientific exposure/gain or persistent recording
+selection was adopted by the tests.
+
+### 2026-10-21 - preview-side-by-side-layout
+
+[gui] preview-workspace-polish: owner approved a prototype of frames-left, timeline/dials-right after a layout review of the offscreen renders (stream frames were about 24% of a 1440x960 workspace; Advanced previews shrank them to about 196 px). PreviewDialog now switches to a side-by-side layout at >=1200 px wide and >=1.3 aspect (HUD, lamp, VIEW strip and timeline in the right column; Advanced instruments under the timeline); narrower windows keep the stacked layout. Recorded as G01rev267. Offscreen renders at 1440x960: frames about 380 px vs 290 px (Advanced off) and 196 px (on). ARCH-002 review: one layout switch plus a direction switch in StimulusTimeline, no new module. Updated the reserve test for both layouts and the slot-height assertion for the dialog. 136 selected Dashboard/timeline tests pass offscreen; 6 measured-affine tests fail on missing calibration JSON files with the feature disabled too (pre-existing, not investigated), and test_inline_timeline_actions_target_blocks_append_and_preserve_undo fails in the batch but passes alone with and without this change. Ruff, format, Win32 mypy and diff whitespace pass for the touched files. Not seen with native viewers or on the rig; the clipped second frame row at 1000x700 and Standard-style heading wrap remain open design findings.
+
+### 2026-10-21 - console-category-alignment
+
+[gui] Owner screenshot showed CONFIG and CONTROLLER messages starting at different
+columns. The old nine-character category width was shorter than CONTROLLER.
+G02rev98 now grows each console's width to its longest observed category and pads
+retained rows in place; keeps that width until clear. Timestamp, QTextBlock/action
+identity, diagnostics, result suffixes, reading position and selection survive.
+Progress replacements and duplicate suppression use the same alignment. ARCH-002
+reuses log_format/LogConsole; no new modules, dependencies or backend changes.
+Current runtime report/root register updated; source task complete, existing native
+runtime-log verification remains pending.
+
+24 selected offscreen Dashboard console/action tests pass. A further3 focused tests
+pass after adding actual cursor-rectangle x-coordinate assertions in both themes;
+checks cover later longer categories, interleaved progress/results, clear/reset,
+metadata, selection and scroll. Changed-file Ruff lint/format3, Win32 GUI mypy187,
+boundaries742/zero and whitespace pass. Tests used repository Python3.11 and pytest
+-k 'log_categories or category_expansion or action_result or action_log or
+texture_setup_progress or in_place_progress or log_console or log_rows'.
+Application not restarted; no live rig/whole-GUI acceptance claimed.
+
+### 2026-10-21 - preview-workspace-narrow-layout
+
+[gui] preview-workspace-narrow-layout: owner asked to fix the two open Previews findings. Replaced the dialog's fixed 600x450 minimum with a width-only minimum so the layout sets the minimum height, and gave frame headings non-breaking spaces so a wrapped heading keeps each bracket with its word. Recorded as G01rev268. Offscreen renders at 1000x700 (Advanced on, min height 961) and 900x600 (Advanced off, 691) show every frame row and heading. Extended the existing reserve test for bracket text and for a small window growing with frames inside the slot. 136 selected Dashboard/timeline tests pass offscreen; the 6 measured-affine failures (missing calibration files) and the order-sensitive native-mouse timeline test are unchanged and outside this change. Ruff, format, Win32 mypy, boundaries and diff whitespace pass for the touched files. A probe showed the window minimum can lag the layout minimum by about 26 px after Advanced toggles in one Retro sequence; not reproduced alone. Not seen with native viewers or on the rig. Task closed: both findings fixed and verified offscreen.
+
+### 2026-10-21 - preview-layout-splitter
+
+[gui] `preview-layout-splitter`: implemented the owner's HUD-first layout with a
+separate Advanced settings container; removed VIEW. Advanced off gives streams the
+full width; on shows plots in a native Qt horizontal splitter initially at25%, also
+when restoring the preference. Existing grid scoring now permits3/4 columns and
+clears unused stretches while retaining target identity. G01rev269 and root register
+updated; ARCH-002 review removed breakpoint switching, reused focused preview owners
+and added no dependencies/modules. Existing behavior tests extended.
+14 focused offscreen layout cases and20 timeline cases pass; Ruff check/format,
+Win32 mypy2, boundaries742/zero and scoped whitespace pass. Broader preview-selected
+Dashboard run stalled after27 progress dots and was interrupted with no summary.
+Initial test queried an absent grid column; guard corrected. Initial mypy optional
+handle warning fixed. A local UTF-8/default-codepage edit failure was corrected and
+TODO encoding restored; no task content discarded. Runtime report reconciled and
+implementation task complete; existing native viewer/DPI/trial acceptance stays open.
+Application not restarted and no hardware validation claimed.
+
+### 2026-10-21 - preview-hud-prompts
+
+[gui] `preview-hud-prompts`: added matching > markers to the preview HUD's TRIAL
+and TOTAL TIME column in Retro; TRIAL TIME already has the painted first-column
+prompt. G01/G02 presentation refinement; ARCH-002 keeps the change in the existing
+small grid formatter with no new owner/dependency. Six focused Dashboard HUD tests
+pass, plus direct Retro/Standard marker assertions. Ruff lint/format, Win32 mypy1,
+boundaries742/zero and scoped whitespace pass; format initially required line-ending
+normalization, applied. Runtime report updated; task complete. Native app not restarted.
+
+### 2026-10-21 - preview-plot-label
+
+[gui] `preview-plot-label`: moved Bottom · reference and other source controls out
+of the timeline header into the motion-plot section, directly above the plots.
+Epoch readout stays with the timeline. G02rev99/root register updated. ARCH-002
+keeps existing widgets/state and adds only their layout container; no dependencies
+or new modules. Existing owning tests extended for stacked/side-by-side placement,
+source toggle retention, Advanced hiding and independent epoch visibility.
+37 selected offscreen timeline/Dashboard preview tests pass; Ruff check/format,
+Win32 mypy1, boundaries742/zero and scoped whitespace pass. Runtime report updated
+and implementation task complete. Native app not restarted or visually inspected.
+
+### 2026-10-21 - stationary-polar-direction investigation
+
+[gui] `stationary-polar-direction`: inspected dial formatting and planned samples.
+Zero translation becomes vector=None, so the direction readout is omitted. A zero
+velocity has no movement direction; current planned orientation and retained last
+movement direction have different meanings. Asked the owner which to show. Existing
+PlannedStates can resolve orientation with continuity and explicit feedback-unknown
+handling. No code changed or tests run pending this display-semantics clarification.
+Task remains open; no native acceptance claimed.
+
+### 2026-10-21 - preview full-width timeline and stationary direction
+
+[gui] `preview-full-width-timeline` / `stationary-polar-direction`: completed both
+owner requests under G01rev270/G02rev100. Timeline is always full-width below HUD;
+Advanced container fills the HUD height. Motion section retains the resizable right
+pane, with its source controls. Owner confirmed current orientation at zero speed:
+readouts now use planned layer rotation/arena yaw, normalized, preserving continuity,
+reset, backward seek and unavailable feedback behavior; no stationary speed arrow.
+ARCH-002 reuses existing widgets/PlannedStates; one optional sample field, no new
+module/dependency/backend change. Updated owning tests, records/register and current
+runtime report. 41 focused offscreen Dashboard/timeline cases pass; initial continuity
+fixture inadvertently reset, then explicitly tested both reset and continuous cases.
+Ruff lint/format6, Win32 mypy4, boundaries742/zero and scoped whitespace pass. Tasks
+complete locally; native app not restarted and physical viewer acceptance not claimed.
+
+### 2026-10-21 - stimulus-preview-initial-placement
+
+[visual_stimulus] [gui] `stimulus-preview-initial-placement`: source inspection found
+owner construction can reveal the GLFW preview before its placement, followed by
+post-Show frame correction. V01rev29 now applies size/visible-frame positioning
+before owner binding or Show. Win32 uses the physical-frame helper directly; other
+platforms retain GLFW placement. ARCH-002 reorders existing focused operations,
+adds no dependencies/state, preserves manual placement/Snap/reopen and cleanup.
+103 rendering tests pass,1 native-marked deselected; initial focused selection1 pass.
+Ruff lint/format2, Win32 mypy1, boundaries742/zero and scoped whitespace pass.
+Native bounded GLFW NO_API hidden300x300 first-show probe read(410,220), exactly the
+requested visible corner, and destroyed its own window. No OpenGL/rig/DPI acceptance
+inferred. Existing app/trial left running; no runtime command sent. Owning report and
+architecture register updated, implementation task complete; live retest remains in
+the existing preview-workspace-polish acceptance item.
+
+### 2026-10-21 - rig-validation inventory and historical evidence
+
+[controller] [supervisor] [acquisition] [visual_stimulus] [gui] `rig-validation-oct21`: owner requested actual-rig tests and a dummy protocol including MCU PING, with Sol6.1 test management and Astra decision assessment. Inventoried TODO/current rig procedures and retained the existing dirty tree. Runtime behavior changes require owner approval; continuous-camera capture remains design-only. Native process inventory requires broader read access; sandbox process absence is not accepted as proof that no app is running.
+
+[controller] [gui] `runtime-historical-evidence-link`: verified both historical retro-entry HUD/log PNGs are absent from the evidence directory and filename search. Replaced broken report links with explicit unavailable-artifact labels, retaining the historical/offscreen limitation. Documentation-only check; no runtime test or reconstruction claimed. Task complete.
+
+### 2026-10-21 - preview-frame-details
+
+[gui] [acquisition] [visual_stimulus] [controller] [shared] `preview-frame-details`:
+owner explicitly requested live backend FPS. Titles/Show now sit8 logical pixels
+above native frames; two measured FPS rows sit below, with footer space included
+in adaptive grid scoring. Hidden/unmeasured/three-second-stale reports show a dash.
+Added optional common PreviewRates to existing camera visibility and stimulus
+preview messages; regenerated19 protos with tools/generate_contracts.py. Camera
+source deltas use existing frame IDs/timestamps, preview updates exclude cached
+redraws; renderer source batches and preview swaps are measured separately.
+Exact identities/revisions remain authoritative; bounded best-effort delivery and
+close cancellation preserve ownership and avoid new capture traffic. ARCH-002
+uses one focused shared meter, existing report paths and owning test modules;
+reviewed cohesive large managed-camera/native-renderer/lifecycle hook additions.
+Records/register now G01rev271/G02rev101/E08rev180/A10rev71/V01rev30; current backend
+reports updated. No policy/default/recording changes or new dependency.
+
+Validation: pytest tests/acquisition/test_manual_preview.py,
+tests/visual_stimulus/{test_rendering,test_lifecycle}.py and
+ tests/controller/{test_device_admission,test_camera_evidence}.py with
+`-q -x -m "not windows and not rig"`:409 passed,2 deselected. GUI Dashboard,
+shared invariants and stimulus transport with
+`-k "preview or authenticated_coordinator_renderer_replay" -m "not windows and not rig"`
+under QT_QPA_PLATFORM=offscreen:121 passed,717 deselected, including authenticated
+loopback transmission. Initial sandbox asynchronous runs stalled and were cancelled;
+permission-approved reruns completed. Updated an old fake ring fixture to supply
+its actual record interface, a float assertion to approximate comparison, and a
+stale zero-speed test expectation to the owner-requested orientation readout.
+Ruff lint/format21 touched Python files, Win32 mypy15 source files, boundary checker
+742 modules/zero violations and git diff --check pass. Size warnings reviewed as
+above; no rig equivalence inferred. Implementation complete; no app/backend restart
+or experiment command sent. Existing preview-workspace-polish acceptance now also
+tracks native footer appearance/live rates after restart.
+
+### 2026-10-21 - rig-validation bounded passes and native failures
+
+[controller] [supervisor] [acquisition] [visual_stimulus] [gui] `rig-validation-oct21`:
+Sol6.1 ran managed native checks; Astra assessed unchanged recovery/decision scope.
+Ready cancel, two60s On trials around5s Off Abort166ms,16 Closed outputs/six exact
+full decodes, and326.259s same-generation idle reuse pass. Off has no camera demand;
+required stimulus evidence remains. Static/contracts pass; backend2600 pass/3 fail,
+three isolated MCU RPC failures and existing GUI stale-ack failure retained.
+Initial15s fixture rejected by60s policy; CONNECT-only STATUS fixture rejected as no
+pin diagnostic; neither is a hardware defect. No original settings were adopted.
+Unchanged20min protocol attempted: long-path WinError206 before recording, then shorter
+path PING114.451/99.979ms and failed cancellation cleanup; no full trial started.
+Reports/TODO preserve findings and scope. Existing managed recovery underway, exact
+original configuration/history saved. Computer Use Dashboard approval timed out;
+no native GUI inspection claimed. No runtime behavior, firmware or deadline changes.
+
+### 2026-10-21 - rig-validation preserving recovery
+
+[controller] [supervisor] [acquisition] [visual_stimulus] [gui] `rig-validation-oct21`:
+existing supervisor shutdown completed automatically before a further Shutdown RPC
+could be sent; exact old owned-process absence confirmed. Normal launcher restart
+and supported preserving recovery retained the failed session/unknown closure.
+Controller efe06d83-4485-4e5d-91dc-00306026a16e now Configuration/cleanup confirmed,
+no session/prompts; original runtime configuration equals saved original and history
+is byte-exact. See startup-recover-restore.txt and recovery-restored-snapshot.json.
+Correction to evidence pointer: generic ping-failure-snapshot.json was overwritten
+by later helper reads; original failure remains ping-failure-command-snapshot.json
+and ping-failure-snapshot.txt. No failed output was relabelled successful.
+
+### 2026-10-21 - rig-validation test fixture corrections
+
+[controller] [acquisition] [gui] `mcu-rpc-regression-tests` and
+`gui-dashboard-hud-config-test-failures`: Astra identified stale fixtures; Sol6.1
+corrected only owning tests. MCU shared observation explicitly reports Trial-state
+running=False alongside all three camera outputs, preserving production verification.
+GUI post-submit test enters valid1234 and asserts edit_serial advances before ack.
+All4 focused cases and33 client cases pass; complete backend rerun2603 pass/6skip/
+1rig deselected. No production code, policy, deadline or firmware change.
+Tasks complete. FullGUI parallel832 pass/2 hover failures; original hover pair passes
+alone. Experimental offscreen cursor injection did not reliably exercise visibility
+and was fully reverted; no weakened assertions retained. First serial stopped at25%
+(no pass claimed); final serial underway. Existing GUI suite-restoration task stays
+open. Changed tests Ruff/format and scoped whitespace pass.
+
+### 2026-10-21 - rig-validation final verification and handoff
+
+[controller] [supervisor] [acquisition] [visual_stimulus] [gui] [tracking] [shared]
+[launcher] `rig-validation-oct21`: completed available bounded rig/dummy checks and
+TODO-driven verification. Final backend2603 pass/6skip/1deselected; GUI serial834 pass
+in414.82s with unchanged tested hashes. Final parallel833 pass/1 trial-row native
+mouse-delivery failure in81.81s; earlier parallel832/2 hover failures retained, both
+hover cases now pass. Parallel mouse delivery remains unresolved in the existing
+GUI-restoration task; no additional retries or weakened assertions. Test-only4
+fixture corrections retained, experimental hover changes fully reverted. Static,
+contract/schema and native focused results retained with scope; edited Markdown
+links/anchors and scoped git diff --check pass. Initial link checker whitespace
+parsing false-positive corrected before passing verification.
+
+Rig task complete as a test execution: bounded passes and recovery restored original
+configuration/history exactly. Full20min workload never started after PING failure;
+long-path runtime repair awaits owner approval, PING/cleanup cause needs further
+investigation. Existing setup-watchdog-cleanup, long-output-path-preflight and GUI
+restoration tasks preserve unresolved findings; physical/paired/full-workload checks
+remain open. No runtime behavior/firmware/deadline change. User approval request is
+limited to existing extended-path helper at Windows reservation directory creation.
+
+### 2026-10-21 - post-rig disposable artifact cleanup
+
+[repo] `post-rig-disposable-cleanup`: owner-authorized cleanup under
+[GOV-001](architecture.md#gov-001); inspected targets and checked resolved absolute
+repository paths, reparse points and tracked-file exclusion before native PowerShell
+deletion. Removed 337 cache roots (2,806 files / 89,315,282 bytes), 20 isolated pytest
+fixture roots (761 files / 1,920,558 bytes: three root `.pytest_tmp_*` directories
+and all 17 `reports/tmp-*` directories), and `.tmp/final-quality-packages` plus
+`.tmp/rig-packages` (four reproducible wheel/source archives / 6,846,086 bytes).
+Total: 359 roots, 3,571 files, 98,081,926 logical bytes (93.54 MiB); no deletion
+failures and no selected targets remained at verification. No temporary narrative
+report was established as redundant, so none was removed.
+
+Preserved all dated evidence, current reports, provenance, emergency/recovery files,
+experiment output and recordings, including Oct21 rig-validation, texture-recordings,
+PING/cleanup, long-path and parallel-GUI failure evidence. Kept `.venv`, native
+DLL/PYD files, SDK/toolchain material and uncertain `.tmp` content, including conflict
+backups, recovery scripts, managed recordings and historical test logs/fixtures.
+No process, runtime/configuration/firmware, source behavior or Git index was changed;
+no stage/commit/push. Initial handoff of the inventory through sandbox TEMP failed
+because that path did not persist between calls; it stopped before deletion. The
+successful pass performed inventory, deletion and verification in one session.
+
+Validation: SHA-256 comparison passed for 1,183 tracked/untracked source/config files
+and three ignored runtime/history JSON files. All 8,954 retained report/evidence
+files retained their paths, sizes and modification times; this is metadata verification,
+not a content hash or rig acceptance. An earlier broad hash attempt could not read six
+open stdout/stderr logs (Oct19 camera-timing, Oct20 continuous-acquisition and Oct21
+recovery); all were retained without touching their processes. Git status and cached
+diff were identical before/after deletion. Scoped `git diff --check -- TODO.md LOG.md`
+passes (existing CRLF normalization warnings only). No runtime suite was needed for
+artifact-only cleanup; no native/rig pass inferred. Task complete; retained uncertain
+material is intentional, not a failed deletion or unresolved cleanup blocker.
+
+### 2026-10-21 - post-rig commit and sync preparation
+
+[repo] `post-rig-commit-sync`: cleanup chat completed359 inspected roots/3,571
+files/93.54MiB and preserved source, runtime/history and retained evidence. Reviewed
+current accumulated source/contracts/docs/test changes for the requested commit.
+Added scoped ignore rules for three locally retained pilot-alignment NPY/NPZ derived
+datasets, consistent with existing captured-dataset policy; no evidence deleted.
+TODO whitespace consolidated without changing open findings. Final tested GUI/client
+hashes match. Existing results remain backend2603 pass, serialGUI834 pass and known
+parallelGUI input failure; no unnecessary rerun after artifact-only cleanup.
+Packaging validation initially hit sandbox temporary-directory permissions; approved
+retry of python -m build --no-isolation successfully produced source archive and
+Windows cp311 wheel outside the checkout. Logs retained in rig-validation/sync-build*.txt.
+Whole-tree diff whitespace passes. Origin fetched; main and origin/main identical
+before the requested new commit. Git stage/commit/push outcome follows separately.

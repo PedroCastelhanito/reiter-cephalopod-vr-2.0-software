@@ -1,0 +1,4 @@
+acquisition_eye_tracking_worker ResolveCameraConfiguration ef3ad4d3-966b-46ea-8dac-a8818f749c88 failed: CameraAdapterError: assigned Basler serial '40278236' matched 0 devices
+SetupSession 1731393b-1908-40ff-8fa5-af1c0682b145 failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: Setup was cancelled before configuration adoption
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -156,11 +156,20 @@ class SetupAdmission:
 
     async def setup(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
         command_id = command.operator.command_id
-        if not self.validators:
-            return self.control_operations.admission(
-                command_id, error="configuration validators unavailable"
-            )
         async with self.lifecycle.lock:
+            if (
+                self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
+                or self.lifecycle.attempt is not None
+                and not self.lifecycle.session.cleanup_confirmed
+            ):
+                return self.control_operations.admission(
+                    command_id,
+                    error="Setup unavailable in current phase or blocked cleanup",
+                )
+            if not self.validators:
+                return self.control_operations.admission(
+                    command_id, error="configuration validators unavailable"
+                )
             if self.lifecycle.startup_blocker:
                 return self.control_operations.admission(
                     command_id, error=self.lifecycle.startup_blocker
@@ -440,7 +449,7 @@ class SetupAdmission:
                 context=pb.OperationContext(command_id=command_id),
                 command="Setup",
                 work=pb.WorkContext(session=context),
-                progress="reserving output namespace",
+                progress="Reserving output folder…",
             )
             self.publisher.publish()
             self.spawn(

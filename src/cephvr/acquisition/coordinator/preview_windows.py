@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from uuid import uuid4
@@ -15,6 +16,7 @@ from cephvr.acquisition.preview.highgui import HighGuiPreview
 from cephvr.acquisition.state import CoordinatorIdentity, ResourceRecord, WorkerPreview
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as rpc
+from cephvr.control.v1 import types_pb2 as pb
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.deadlines import remaining_seconds
 
@@ -48,6 +50,7 @@ class PreviewWindows:
         self.report_timeout_ns = report_timeout_ns
         self._windows: dict[int, _Window] = {}
         self._notifications: set[asyncio.Task[None]] = set()
+        self._rate_tasks: dict[int, asyncio.Task[None]] = {}
 
     async def show(
         self,
@@ -92,12 +95,35 @@ class PreviewWindows:
         def on_closed(value: HighGuiPreview) -> None:
             loop.call_soon_threadsafe(self._closed, role, value)
 
+        rate_lock = threading.Lock()
+        rate_pending = False
+
+        def on_rates(
+            value: HighGuiPreview, source: float | None, shown: float, now: int
+        ) -> None:
+            nonlocal rate_pending
+            with rate_lock:
+                if rate_pending:
+                    return
+                rate_pending = True
+
+            def deliver() -> None:
+                nonlocal rate_pending
+                try:
+                    self._rates(role, value, source, shown, now)
+                finally:
+                    with rate_lock:
+                        rate_pending = False
+
+            loop.call_soon_threadsafe(deliver)
+
         reader = HighGuiPreview(
             attachment,
             preview.preview_output_bit_depth,
             {1: "Behavior camera", 2: "Tracking camera", 3: "Eye tracking"}[role],
             on_closed,
             placement=placement,
+            on_rates=on_rates,
         )
         window = _Window(
             role, preview.run_id, reader, resource, attachment.sync.transfer_id
@@ -126,6 +152,9 @@ class PreviewWindows:
             return
         if window.run_id != run_id:
             raise RuntimeError("window close targets a different preview run")
+        rate_task = self._rate_tasks.pop(role, None)
+        if rate_task is not None:
+            rate_task.cancel()
         window.reader.stop()
         released = await asyncio.wait_for(
             asyncio.shield(asyncio.wrap_future(window.reader.done)),
@@ -176,6 +205,40 @@ class PreviewWindows:
             window.resource.ledger_key, transfer_id=window.transfer_id
         )
         window.released = True
+
+    def _rates(
+        self,
+        role: int,
+        reader: HighGuiPreview,
+        source: float | None,
+        shown: float,
+        now: int,
+    ) -> None:
+        window = self._windows.get(role)
+        pending = self._rate_tasks.get(role)
+        if (
+            window is None
+            or window.reader is not reader
+            or not reader.visible
+            or (pending is not None and not pending.done())
+        ):
+            return
+        rates = pb.PreviewRates(
+            source_fps=source, preview_fps=shown, observed_monotonic_ns=now
+        )
+        observation = self.status.set_preview_visibility(
+            role, window.run_id, True, rates=rates
+        )
+        if observation is None:
+            return
+        task = asyncio.create_task(
+            self.status.publish_preview_visibility(
+                observation, deadline_ns=self.clock() + self.report_timeout_ns
+            )
+        )
+        self._rate_tasks[role] = task
+        self._notifications.add(task)
+        task.add_done_callback(self._notification_done)
 
     def _closed(self, role: int, reader: HighGuiPreview) -> None:
         window = self._windows.get(role)

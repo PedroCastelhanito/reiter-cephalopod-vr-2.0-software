@@ -96,6 +96,8 @@ class SnapshotPublisher:
             view.configuration_values.revision = self.configuration_state.revision
         view.session.CopyFrom(self.lifecycle.session)
         view.trial.CopyFrom(self.lifecycle.trial)
+        if self.lifecycle.last_finalization is not None:
+            view.last_finalization.CopyFrom(self.lifecycle.last_finalization)
         view.tracking_diagnostic.CopyFrom(self.control.tracking_diagnostic)
         if self.control.owner is not None:
             view.control.holder_client_id = self.control.owner[0]
@@ -181,6 +183,10 @@ class SnapshotPublisher:
                 participant.process.generation = backend.context.backend_generation
                 participant.enabled = True
                 participant.required = True
+                if self.lifecycle.session.phase == pb.SESSION_PHASE_SETTING_UP:
+                    participant.preparation_progress = (
+                        self.lifecycle.attempt.setup_progress.get(name, "")
+                    )
                 health = self.supervisor_state.processes.get(name)
                 if health is not None:
                     participant.process_running = health.process_running

@@ -50,6 +50,26 @@ def duration(seconds: float | None) -> str:
 HudRows = tuple[tuple[str, str] | None, ...]
 
 
+def hud_grid(lines: tuple[tuple[tuple[str, str], ...], ...], *, retro: bool) -> str:
+    """Align HUD pairs into label/value columns shared by every line."""
+    separator = " : " if retro else "  "
+    columns = max((len(line) for line in lines), default=0)
+    keys = [
+        max(len(line[i][0]) for line in lines if i < len(line)) for i in range(columns)
+    ]
+    values = [
+        max(len(line[i][1]) for line in lines if i < len(line)) for i in range(columns)
+    ]
+    return "\n".join(
+        "    ".join(
+            ("> " if retro and i else "")
+            + f"{key.upper():<{keys[i]}}{separator}{value:<{values[i]}}"
+            for i, (key, value) in enumerate(line)
+        ).rstrip()
+        for line in lines
+    )
+
+
 def hud_text(rows: HudRows, *, retro: bool) -> str:
     """Align HUD labels across sections; None separates groups, empty labels are notes."""
     width = max((len(row[0]) for row in rows if row is not None), default=0)

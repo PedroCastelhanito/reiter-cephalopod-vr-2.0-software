@@ -20,6 +20,8 @@ class RecordingsCard(Card):
         self.source_grid.setHorizontalSpacing(8)
         self.source_grid.setVerticalSpacing(12)
         self.body.addLayout(self.source_grid)
+        self.camera_heading = label("Cameras", "label")
+        self.data_heading = label("Recorded data", "label")
         self.record: dict[str, QCheckBox] = {}
         self.source_labels: dict[str, QLabel] = {}
         self.touched: set[str] = set()
@@ -74,16 +76,29 @@ class RecordingsCard(Card):
                 self.add_recording(camera.key, camera.role)
         while self.source_grid.count():
             self.source_grid.takeAt(0)
-        items = [
-            (self.source_labels[key], control) for key, control in self.record.items()
+        camera_items = [
+            (self.source_labels[key], control)
+            for key, control in self.record.items()
+            if key != "stimulus"
         ]
-        items.append((self.velocity_label, self.velocities))
-        items.append((self.spikeglx_label, self.spikeglx))
-        for index, (caption, control) in enumerate(items):
-            column = (index % 2) * 2
-            self.source_grid.addWidget(control, index // 2, column)
-            self.source_grid.addWidget(caption, index // 2, column + 1)
-            self.source_grid.setColumnStretch(column + 1, 1)
+        data_items = [
+            (self.source_labels["stimulus"], self.record["stimulus"]),
+            (self.velocity_label, self.velocities),
+            (self.spikeglx_label, self.spikeglx),
+        ]
+        row = 0
+        for heading, items in (
+            (self.camera_heading, camera_items),
+            (self.data_heading, data_items),
+        ):
+            self.source_grid.addWidget(heading, row, 0, 1, 4)
+            row += 1
+            for index, (caption, control) in enumerate(items):
+                column = (index % 2) * 2
+                self.source_grid.addWidget(control, row + index // 2, column)
+                self.source_grid.addWidget(caption, row + index // 2, column + 1)
+                self.source_grid.setColumnStretch(column + 1, 1)
+            row += (len(items) + 1) // 2
         self.refresh_controls()
 
     def recording_changed(self) -> None:

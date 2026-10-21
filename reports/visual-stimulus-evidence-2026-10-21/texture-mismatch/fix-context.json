@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-21",
+  "inspection_head": "c740c5c2881e11b4cf7f3d835ffa7708de6fdbfb",
+  "working_tree": "Dirty before task and concurrently edited in unrelated areas; hashes identify relevant final source.",
+  "source_sha256": {
+    "src/cephvr/visual_stimulus/rendering/image_gpu.py": "b0438f612d0321ced1c6ad419c5e9a2ba711f22401587a46cdb3a280b52a4960",
+    "src/cephvr/visual_stimulus/rendering/image_residency.py": "394b7ef9048b70572141d519751a77290e015db7c74ac7fe7ec7a8260f489943",
+    "src/cephvr/visual_stimulus/resources/image_worker.py": "9d768db088eb0f8f27826fbeb5e37f6e69904f2104256a2fd1da5a2c0dc71b2f",
+    "src/cephvr/visual_stimulus/resources/image_schedule.py": "ce5fba190e690c10c4d58559dd62395c6192948e24c70c9bb1f1b9a106c5e9c6",
+    "src/cephvr/visual_stimulus/configuration.py": "98182d2dff3bb2465faeffffa11265032698f47bb731986144b6d7402eaca1e6",
+    "contracts/policy/visual_stimulus_policy.toml": "703e793d7ebef6494f4c9bc2ebb0bd2b0de88ae41faf46d7047c9c9cf439a0e7",
+    "config/backends/visual_stimulus_config.toml": "8f742be3b71749a8f6834889c49fba032d7a61d39fc88398e4b9aa79817f5419",
+    "tests/visual_stimulus/test_rendering.py": "214bb87b87dffaead74219b79b02a4428bd986e3876a19fe679a1c4dd2681cd9",
+    "tests/visual_stimulus/test_lifecycle.py": "fa0a1a3e78febda59428e2ca46ffc9122cec7da2f8dcaf5be4ded289a6ee6e48",
+    "src/cephvr/visual_stimulus/resources/prepared_heap.py": "e8b7e220c0563e38af77b2495c50178abead0b0d5be469194697aff4bf1afe1f",
+    "src/cephvr/visual_stimulus/resources/session.py": "b43a2076ad8f54f5ae4ed2faff9c3edf579bdaeac04e05549ae13c0b90fd96d3"
+  },
+  "checks": [
+    {
+      "command": "python -m pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_resources.py tests/visual_stimulus/test_configuration.py tests/visual_stimulus/test_lifecycle.py tests/shared/test_config.py tests/controller/test_configuration.py tests/controller/test_configuration_transactions.py contracts/visual_stimulus/tests -q -m \"not windows and not rig\" -o faulthandler_timeout=20",
+      "result": "336 passed,1 skipped,1 deselected,82 subtests passed; normal file/loopback access",
+      "evidence": "validation-final.txt"
+    },
+    {
+      "command": "python -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus",
+      "result": "pass"
+    },
+    {
+      "command": "python -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus",
+      "result": "177 files formatted"
+    },
+    {
+      "command": "python -m mypy --platform win32 src/cephvr/visual_stimulus",
+      "result": "161 sources pass"
+    },
+    {
+      "command": "python tools/check_backend_boundaries.py",
+      "result": "746 modules,zero violations; existing cohesion advisories reviewed",
+      "evidence": "boundaries-prepared-heap.txt"
+    }
+  ],
+  "native_scope": "Production image decoder, protected read handles, schedule/residency, four hidden GLFW/ModernGL contexts on RTX 5060 Ti. First 60 s of each actual saved trial in sequence; 60 Hz requested service pacing. 1 GiB budget with 551476536 bytes reserved for scene/review obligations. Does not run render/composite/projector swaps, cameras or recording. Other local processes were not controlled. All 664 source PNGs in the tested segments match the historical recipe fingerprints (asset-verification.json).",
+  "baseline_scope": "Cache baseline overrides chunks per turn to 1 in otherwise corrected uploader, retaining removal of the trailing empty turn; original uploader separately measured in baseline-upload.json.",
+  "attempts": [
+    "First microprobe lacked DLL search bootstrap; corrected.",
+    "Generic managed Python selected AMD as configured; probe switched to configured cephvr-renderer.exe and verified RTX 5060 Ti. No GPU preferences changed.",
+    "Readback harness restored consuming context after all-context fences; exact readback then passed.",
+    "Restricted focused pytest run stalled without results, interrupted through its exact exec session; normal local access run passed.",
+    "One-chunk scheduling fails the new four-screen throughput regression (one-chunk-regression.txt).",
+    "PreparedHeap callback initially needed a local deadline for mypy narrowing; corrected.",
+    "Transient mapped-file lock during Ruff formatting resolved on retry.",
+    "Configuration CRLF rewrite caught by formatting check and corrected."
+  ],
+  "limitations": [
+    "Native cache probes are not complete protocol or combined-workload acceptance.",
+    "Final probe only measures image preparation/selection service, not full renderer or optical onset. No blanket real-time guarantee.",
+    "Running application was not restarted; new policy/runtime requires restart and fresh Setup."
+  ],
+  "changes": [
+    "Four 1 MiB chunks per upload turn instead of one; skips trailing unused contexts without another turn.",
+    "Only contexts with actual texture allocations create and poll image completion fences; partial uploads and retirement retain exact completion proofs.",
+    "V04rev19/E14rev215, fixed policy19 and loader digest aligned; no image precision, protocol clock, resource capacity, or late-image fallback change.",
+    "Prepare/cleanup owns collect/freeze/unfreeze of the long-lived object graph; new objects remain collectible. Deadline, foreign ownership, reuse and real cycle collection/release tested."
+  ],
+  "final_cache_results": "final-prepared-heap.json",
+  "timing_followup": "final-cache-gc.json confirms generation2 collection in loader thread; final-prepared-heap.json has no GC event >5 ms"
+}

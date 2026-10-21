@@ -254,7 +254,9 @@ class Preparation:
         self.artifact = artifact
         self.retired_resource_catalogues = 0
 
-    def prepare_trials(self, request, announce, deadline_ns, *, announce_batch=None):
+    def prepare_trials(
+        self, request, announce, deadline_ns, *, announce_batch=None, progress=None
+    ):
         return (self.artifact,)
 
     def cleanup(self, deadline_ns):
@@ -313,7 +315,7 @@ class Reports:
     def __init__(self):
         self.records = []
 
-    def send(self, method, message, deadline_ns):
+    def send(self, method, message, deadline_ns, *, required=True):
         self.records.append(
             (method, type(message).FromString(message.SerializeToString()), deadline_ns)
         )

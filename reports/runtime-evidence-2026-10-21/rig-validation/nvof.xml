@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="0.823" timestamp="2026-10-21T11:40:58.477622+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.tracking.test_windows_native" name="test_native_flow_lease_and_same_image_pair" time="0.802" /></testsuite></testsuites>

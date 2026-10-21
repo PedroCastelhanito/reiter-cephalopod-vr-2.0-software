@@ -64,10 +64,30 @@ def begin(
 ) -> PreparationJob:
     job = PreparationJob(request, deadline_ns, Future(), Future())
 
+    def progress(message: str) -> None:
+        reports.send(
+            "ReportWorkerOperation",
+            visual_stimulus.WorkerOperation(
+                source=request.command.target,
+                operation=pb.OperationState(
+                    context=pb.OperationContext(command_id=request.command.command_id),
+                    command="SetupSession",
+                    work=request.command.target.work,
+                    progress=message,
+                ),
+            ),
+            deadline_ns,
+            required=False,
+        )
+
     def run() -> None:
         try:
             artifacts = preparation.prepare_trials(
-                request, announce, deadline_ns, announce_batch=announce_batch
+                request,
+                announce,
+                deadline_ns,
+                announce_batch=announce_batch,
+                progress=progress,
             )
             if {item.identity.trial_id for item in artifacts} != {
                 item.context.trial_id for item in request.session.trials

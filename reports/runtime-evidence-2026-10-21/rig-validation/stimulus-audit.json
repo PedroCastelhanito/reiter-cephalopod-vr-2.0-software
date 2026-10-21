@@ -1,0 +1,90 @@
+[
+  {
+    "path": "reports\\runtime-evidence-2026-10-21\\rig-validation\\recordings\\20261021_bounded_rig_validation_oct21\\SPRIGCHECK-114234\\protocol-data\\RIGCHECK_114239_stimulus_frames.jsonl",
+    "render_groups": 3600,
+    "image_bindings": 14400,
+    "requested_actual_mismatches": 0,
+    "captures": {
+      "admitted": 3600
+    },
+    "submission_failures": {},
+    "maximum_state_interval_ns": 36883300,
+    "state_intervals_over_100ms": 0,
+    "outputs": {
+      "calibration_bottom": {
+        "maximum_interval_ns": 23675100,
+        "over_100ms": 0
+      },
+      "calibration_front": {
+        "maximum_interval_ns": 26302800,
+        "over_100ms": 0
+      },
+      "calibration_left": {
+        "maximum_interval_ns": 24322800,
+        "over_100ms": 0
+      },
+      "calibration_right": {
+        "maximum_interval_ns": 23845400,
+        "over_100ms": 0
+      }
+    }
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-21\\rig-validation\\recordings\\20261021_bounded_rig_validation_oct21\\SPRIGCHECK-114340\\protocol-data\\RIGCHECK_114342_stimulus_frames.jsonl",
+    "render_groups": 303,
+    "image_bindings": 1212,
+    "requested_actual_mismatches": 0,
+    "captures": {},
+    "submission_failures": {},
+    "maximum_state_interval_ns": 33320200,
+    "state_intervals_over_100ms": 0,
+    "outputs": {
+      "calibration_bottom": {
+        "maximum_interval_ns": 33356400,
+        "over_100ms": 0
+      },
+      "calibration_front": {
+        "maximum_interval_ns": 32530700,
+        "over_100ms": 0
+      },
+      "calibration_left": {
+        "maximum_interval_ns": 33369800,
+        "over_100ms": 0
+      },
+      "calibration_right": {
+        "maximum_interval_ns": 33469900,
+        "over_100ms": 0
+      }
+    }
+  },
+  {
+    "path": "reports\\runtime-evidence-2026-10-21\\rig-validation\\recordings\\20261021_bounded_rig_validation_oct21\\SPRIGCHECK-114348\\protocol-data\\RIGCHECK_114353_stimulus_frames.jsonl",
+    "render_groups": 3601,
+    "image_bindings": 14404,
+    "requested_actual_mismatches": 0,
+    "captures": {
+      "admitted": 3601
+    },
+    "submission_failures": {},
+    "maximum_state_interval_ns": 26610600,
+    "state_intervals_over_100ms": 0,
+    "outputs": {
+      "calibration_bottom": {
+        "maximum_interval_ns": 24850700,
+        "over_100ms": 0
+      },
+      "calibration_front": {
+        "maximum_interval_ns": 30401400,
+        "over_100ms": 0
+      },
+      "calibration_left": {
+        "maximum_interval_ns": 25416000,
+        "over_100ms": 0
+      },
+      "calibration_right": {
+        "maximum_interval_ns": 24913900,
+        "over_100ms": 0
+      }
+    }
+  }
+]

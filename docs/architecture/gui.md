@@ -16,7 +16,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 261
+**Status:** Accepted · **Revision:** 271
+
+- Preview stream headings and Show controls sit eight logical pixels above their native
+  frame, with measured source and preview FPS directly below. Hidden, unavailable or
+  three-second-stale measurements show a dash; layout reserves the footer when choosing
+  stream columns.
 
 - Devices/Projectors provides an explicit RGB LED current and Adjust action for all
   USB-detected TI projector interfaces. The controller owns SDK access under E02/E08,
@@ -155,8 +160,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   session mode and V02/V03 stimulus programming. Protocol type with Load/Save as sits
   left of one Assets folder (E07 root); narrow windows stack the pair. Dashboard owns
   camera/stimulus video recording, Tracking velocities and **Save spikeglx** in a
-  Recordings card below Session config, using two columns with each checkbox beside
-  its label. Save spikeglx is the existing E12 per-session pairing flag; keep one
+  Recordings card below Session config, grouped under Cameras and Recorded data
+  (Visual stimulus video, Tracking velocities and Save spikeglx), using two columns
+  within each category with each checkbox beside its label. Save spikeglx is the existing E12 per-session pairing flag; keep one
   checkbox/state and its existing persistence, confirmation and phase/authority gates. Assets are prepared externally. Tracking participation follows
   E10 without a Protocol status indicator; required acquisition/rendering is independent
   of optional video recording. Device controls stay in Devices.
@@ -1007,6 +1013,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   only, without a System controls badge. Setup requests
   preparation in Configuration and E05 New session in Ended; the latter returns to
   Configuration after cleanup and still requires fresh Setup/Start.
+  Interrupted sessions return there automatically through E05 after confirmed cleanup;
+  reflect the controller's Configuration state without a GUI New session command.
   In Ended, configuration editors unlock as next-session drafts only after confirmed
   cleanup, synchronized configuration and current operator authority. Retain those
   drafts through New session; completed-session metadata remains immutable.
@@ -1028,44 +1036,63 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - A secondary **Previews…** button at the right of the Dashboard header opens or
   raises one reusable modeless preview workspace, with one checkbox per available
   camera/tracking/stimulus viewer and no open-window count. Each source's Show checkbox
-  sits beside its own frame heading, with status below; omit the separate source-selector
+  sits beside its own frame heading; status/reason text sits centered inside that frame,
+  and a one-word disabled hint beside Show appears only for observers or while an open
+  viewer covers the frame; omit the separate source-selector
   card. The larger workspace defaults to 1440×960,
   constrained to the operator monitor through shared tool-window placement; the new
   workspace geometry preference supersedes the older selector geometry. Remember its position
   and size across close/reopen and frontend restarts using local GUI preferences.
-  Show a compact HUD using the Dashboard's same status, trial and time values.
-  Keep a Stimulus timeline checkbox above the streams, enabled independently of
-  operator authority. Default it on and remember its local visibility preference.
-  Hiding the entire plot panel releases its splitter space to the existing adaptive
-  preview grid; restoring it restores the split layout without changing viewer Show
-  state, capture or trial execution.
-  Closing hides the workspace and its native viewers while retaining logical Show
-  state and capture; reopening restores the same viewers. Below the streams, show
-  the current trial (or selected draft before a trial): a wide sampled planned-speed
-  timeline and a compact polar local-motion direction plot, surrounded by a signed
-  angular-speed ring with CW/CCW and °/s. Refresh both plots at5Hz. While running,
+  Show a compact HUD using the Dashboard's same status, trial and time values, as
+  label-aligned columns. Beside it, a recording lamp reflects only controller
+  output-closure evidence: reported open outputs show REC, closing waits and
+  failed/unconfirmed show a fault; otherwise the lamp is hidden. The HUD is always
+  the first row, with a separate equal-height Advanced settings container on its right (no VIEW
+  label), enabled independently of operator authority. Closing hides the workspace
+  and its native viewers while retaining logical Show state and capture; reopening
+  restores the same viewers. The current trial (or selected draft) epoch timeline
+  always spans the full workspace width directly below the HUD. Below that row,
+  streams fill the available width when Advanced settings is off (default,
+  remembered locally). Enabling it shows motion dials/maps and their source controls
+  on the right at one quarter of the available width; a draggable splitter resizes
+  both sections continuously. Advanced size lanes remain aligned to the timeline.
+  Stream grids choose up to four columns to maximize square frame size, including
+  three or four streams in one row when larger than a two-column arrangement.
+  Frame headings keep brackets with their words. These controls never change Show
+  state, capture or execution. Each dial's arrow gives direction and, against labelled rings, speed;
+  a surrounding signed ring gives angular speed with CW/CCW and °/s. Stationary
+  translation has no arrow but reports current planned orientation (layer rotation
+  or arena yaw, normalized to 0–360°), including continuity/reset semantics; it does
+  not retain the last movement direction. Unavailable/feedback-driven samples keep
+  their explicit messages. Texture dials show each projector source's local texture
+  motion. Tracking-form dials show a longitudinal/lateral mm/s vector: live Tracking
+  drive commands, and authored position trajectories as planned velocity in the moving
+  layer's or arena's heading frame. Arena previews add a top-down virtual-world map of
+  the path so far and current pose beside their tracking-form dial; feedback-driven
+  textures pair their texture dial with the driving tracking dial. Never mix units on
+  one dial. A source whose width or height varies adds a planned size lane (deg or mm)
+  aligned to the timeline. Refresh at5Hz. While running,
   advance planned time locally between reported elapsed-time updates; stop advancing
   on disconnection or a non-running phase, and clamp to the planned trial end.
-  The speed plot and epoch strip share a30s window centered on current time, including
-  at startup. Draw speed history only through the current evaluated velocity, with
-  each available line ending at the center; omit the vertical current-time bar.
-  Clip traces and epoch blocks to that range; leave pre-trial history blank and keep
+  The epoch timeline and size lane share a60s window that pins trial start to the left
+  edge until current time reaches its center, then keeps current time centered. Draw
+  solid size history through current time and the remaining planned size to the window
+  end as a dimmed dashed trace. Clip traces and epoch blocks to that range and keep
   nonnegative absolute trial-time ticks at5s intervals, coarsened to multiples of5s
-  on narrow plots to keep clock labels readable.
-  Format preview time readouts and ticks as hh:mm:ss; center rotated unit labels
-  beside each speed axis, clear of tick values.
-  Clicking the timeline inspects a planned instant until the next refresh. Stationary
-  translation has no direction arrow. Overlay available sources in the same speed
-  and polar plots with projector-named colored legend toggles; a toggle hides that
-  source's trace, direction and rotation together. Fully linked projectors expose only
+  on narrow plots and never overlapping, to keep clock labels readable.
+  Format preview time readouts and ticks as hh:mm:ss; legend entries omit units.
+  The not-measured caveat lives in the card tooltip, not a context line.
+  Hovering the timeline shows time, epoch and each source's planned values; clicking it
+  inspects a planned instant until the next refresh. Projector-named colored legend
+  toggles hide a source's dial, map and lane together. Fully linked projectors expose only
   their reference; include independently driven projectors alongside it. Group the same
   projector/layer across epochs, omitting linked followers and their stationary unlinked
-  baseline entries. An independently moving epoch still exposes that projector. Keep
-  mixed mm/s and deg/s on separately labeled scales in the shared speed plot; unsupported
-  sources explain their limits without hiding valid sources. Reuse canonical bounded
-  expansion/function evaluation; these plots are not measured output or timing evidence.
-  Unresolved duration/order, feedback, combined texture motion and trajectories show
-  their unsupported values as unavailable; no new telemetry or commands are introduced.
+  baseline entries. An independently moving epoch still exposes that projector.
+  Unsupported sources explain their limits without hiding valid sources. Reuse canonical
+  bounded expansion/function evaluation; planned values are not measured output or
+  timing evidence. Unresolved duration/order and combined texture motion show as
+  unavailable. Live-only dials and poses stay visible but empty, showing Waiting for
+  tracking, until reported values reach the GUI; previews introduce no commands.
   Frame headings use source labels, Show checkboxes and pending/error details with
   shared hover/focus styling. An empty workspace explains
   that no streams are enabled. It contains no duplicate window heading,
@@ -1133,15 +1160,31 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 89
+**Status:** Accepted · **Revision:** 101
 
-- Runtime logs show the current action and observed ongoing states, moving directly
-  to the next action on success. Omit routine admission, successful completion and
-  success-result rows. Explicit startup recovery/deletion also emits one confirmed
+- Preview rate footers use two centered muted rows with one decimal place, following G01
+  freshness and E08 measurement semantics.
+
+- Runtime logs show the current action and observed ongoing states. Background
+  inventory reads and routine admission remain silent. Append observed results to
+  the original action row, preserving its timestamp: `[Done]`, `[Failed]`,
+  `[Rejected]`, `[Cancelled]` or `[Unconfirmed]`; retain diagnostics on that row.
+  Update progress counts and stage changes for the same action in its existing row,
+  preserving the original timestamp and unrelated rows; only terminal evidence
+  appends a result. Progress changes alone never mark a step Done;
+  Finalization keeps Setup, Start/New session and protocol editors locked until
+  confirmed cleanup. Use the exact latest retired session/trial evidence to finish
+  existing rows across automatic Configuration reset; never replay old successes
+  on reconnect. Missing/disappearing work alone never proves success. Omit separate success-result rows. Explicit startup recovery/deletion also emits one confirmed
   terminal result, stating whether files were preserved or deleted; never leave only
   its running message after success or replay old completions from retained snapshots.
   Preserve errors, rejection, cancellation and unconfirmed
-  outcomes with details. Deduplicate unchanged snapshot/poll observations; never
+  outcomes with details. Render each row as local `HH:MM:SS`, a bracketed uppercase
+  subject column and a terse sentence-case step. Widen each console's subject column
+  to its longest observed category and realign retained rows when it grows, preserving
+  timestamps, diagnostics and row identities. Keep the width until the console is
+  cleared; skip exact consecutive repeats.
+  Deduplicate unchanged snapshot/poll observations; never
   fabricate progress or readiness. Camera Live requires A10 frame evidence and
   session Idle requires confirmed cleanup. E04 audit records and retained technical
   history keep their existing evidence; these are operator-log presentation rules.
@@ -1204,7 +1247,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   reported gap progress, excluding preparation/finalization overhead. Derive durations
   from the accepted configuration using bounded canonical expansion; unresolved
   durations leave totals unknown. Explain this scope in both HUD tooltips, while
-  Review supplies explicitly simulated values. Omit Outputs, Reservation and Metadata rows.
+  Review supplies explicitly simulated values. Dashboard adds an Output row with the
+  reserved E04 session directory (— before reservation); omit Reservation and Metadata rows.
   Status captions use brackets. Omit the trial-position strip; the HUD trial
   row retains the current index/count. Ready lamps are green,
   preparation/waiting amber, explicit faults red and unavailable states neutral;
@@ -1260,15 +1304,25 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Standard has neither. Omit the extra review/phase/clock banner; phase remains in
   the HUD. Previews places Show beside each bracketed stream heading and keeps the
   motion plots in the shared compact card frame. Place epoch labels in a separate
-  strip and the left-aligned source legend directly above the speed graph. Keep
-  the motion card vertically expanding, initially about42% of the workspace with
-  an adjustable splitter; align stream headings and native frame tops across each row.
-  The polar panel has a larger dial above aligned source/direction/rotation readouts.
-  Align the epoch strip to time; keep the zero trace inside the plot.
+  strip, with only the right-aligned epoch readout directly above it. Source legend
+  controls sit directly above the motion plots in their own section, independent of
+  the timeline header; hiding a source never hides its control or the epoch timeline. The epoch readout is only `Epoch n / N` (unknown n is
+  `—`); omit epoch title and elapsed/duration text below the strip. The timeline card takes only its content height; align
+  stream headings and native frame tops across each row.
+  Advanced dials and maps sit beside the streams below the full-width timeline, each above aligned source/direction/
+  speed/rotation readouts. Dial values share one numeric row with units; zero motion
+  shows zero rather than Still. Signed angular speed is positive CCW; tracking values
+  are forward then animal-left. Unavailable samples retain their explicit message.
+  The epoch timeline and size lanes share one console surface; the source legend
+  belongs to the adjacent motion section and follows Advanced visibility. Within Previews, card titles and stream headings use
+  the accent color rather than coral, unavailable-before-Setup headings stay bright,
+  and muted text and plot labels use the label shade for contrast.
+  Align the epoch strip to time; keep the zero size trace inside its lane.
   Tick scales use rounded multiples of five or ten, coarsened for wider ranges.
-  Each source uses one distinct theme color across its legend toggle, speed trace,
-  polar direction, surrounding rotation ring and value. Display local 0°/+X down, 90°/+Y right,
-  180° up and 270° left; this display rotation does not change stimulus values. Its modeless
+  Each source uses one distinct theme color across its legend toggle, size trace,
+  dial arrow, surrounding rotation ring and value. Texture dials display local 0°/+X down, 90°/+Y right,
+  180° up and 270° left; tracking-form dials put forward up and rightward lateral motion to the right.
+  These display rotations do not change stimulus or tracking values. Its modeless
   visibility/authority/pending gates remain unchanged. Device diagram geometry and
   semantic palette roles remain unchanged; diagrams use the active appearance palette.
   These preferences never enter experiment configuration.

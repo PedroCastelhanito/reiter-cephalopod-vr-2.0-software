@@ -1,0 +1,3 @@
+on-first all outputs Closed/present; complete video decode counts match
+off-abort all outputs Closed/present; complete video decode counts match
+on-reuse all outputs Closed/present; complete video decode counts match

@@ -1,0 +1,39 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+___ test_four_screen_image_set_upload_has_headroom_for_600ms_presentations ____
+
+    def test_four_screen_image_set_upload_has_headroom_for_600ms_presentations():
+        from cephvr.visual_stimulus.rendering.image_gpu import ImageGpu
+        from cephvr.visual_stimulus.resources.image_source import ImageSource
+    
+        sizes = {"front": (760, 690), "left": (1030, 680),
+                 "right": (1025, 695), "bottom": (685, 940)}
+        copied = bytearray()
+    
+        class Texture:
+            def write(self, data, **kwargs):
+                assert len(data) <= 1_048_576
+                copied.extend(data)
+    
+        gpu = ImageGpu({name: NS(activate=lambda: None,
+                                context=NS(texture=lambda *args, **kwargs: Texture()))
+                        for name in sizes})
+        turns = 0
+        for name, (width, height) in sizes.items():
+            source = ImageSource(name, width, height, 0, width * height * 16,
+                                 lambda check: b"", (name,))
+            pixels = bytes(range(256)) * (width * height // 16)
+            pixels += bytes(range((width * height * 16) % 256))
+            copied.clear()
+            textures = []
+            while True:
+                turns += 1
+                if gpu.upload(source, pixels, textures):
+                    break
+>               assert turns < 36
+E               assert 36 < 36
+
+tests\visual_stimulus\test_rendering.py:2176: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_rendering.py::test_four_screen_image_set_upload_has_headroom_for_600ms_presentations
+1 failed, 96 deselected in 0.23s

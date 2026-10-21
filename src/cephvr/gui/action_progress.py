@@ -32,13 +32,12 @@ def requested_action(action: str, options: dict[str, Any]) -> str:
         return f"Microcontroller · {step}" if step else ""
     return {
         "Setup": "Setup · Validating configuration…",
-        "submit_configuration": "Configuration · Applying current settings…",
+        "submit_configuration": "Configuration · Applying settings…",
         "Start": "Session · Preparing to start…",
-        "Stop after trial": "Session · Waiting for current trial to finish…",
-        "Cancel Setup": "Setup · Cancelling preparation…",
-        "Abort now": "Session · Stopping active work…",
+        "Stop after trial": "Session · Stopping after this trial…",
+        "Cancel Setup": "Setup · Cancelling…",
+        "Abort now": "Session · Stopping…",
         "spikeglx_connection": "SpikeGLX · Connecting…",
-        "get_spikeglx_inventory": "SpikeGLX · Reading device inventory…",
         "mcu_upload": "Microcontroller · Preparing firmware upload…",
         "begin_tracking_diagnostic": "Tracking · Preparing pipeline…",
         "close_tracking_diagnostic": "Tracking · Releasing pipeline…",
@@ -70,23 +69,93 @@ def _target(command: str) -> str:
 class ActionProgress:
     """Emit changes once per current scope without replaying old successes."""
 
-    def __init__(self, emit: Callable[[str, str], None]) -> None:
+    def __init__(
+        self,
+        emit: Callable[[str, str], None],
+        update: Callable[[str, tuple[str, ...], str, str, str], None] | None = None,
+    ) -> None:
         self.emit = emit
+        self.update = update
+        self.requests: dict[str, str] = {}
         self.identity: tuple[int, str] | None = None
         self.current: dict[tuple[str, ...], str] = {}
 
     def requested(self, action: str, message: str) -> None:
         if message:
-            self.emit(_target(action), message)
+            self.requests[action] = message
+            self.publish(_target(action), ("request", action), message)
+
+    def publish(
+        self,
+        target: str,
+        key: tuple[str, ...],
+        message: str,
+        result: str = "",
+        details: str = "",
+    ) -> None:
+        if self.update is not None:
+            self.update(target, key, message, result, details)
+        elif not result:
+            self.emit(target, message)
+
+    def finished(self, action: str, status: str, details: str = "") -> bool:
+        message = self.requests.pop(action, "")
+        if not message:
+            return False
+        result = (
+            "Done" if status == "completed" else status.replace("_", " ").capitalize()
+        )
+        self.publish(_target(action), ("request", action), message, result, details)
+        return True
 
     def install(self, epoch: int, state: pb.Snapshot) -> None:
         identity = (epoch, state.controller_generation)
         if identity != self.identity:
             self.current.clear()
             self.identity = identity
+        final = state.last_finalization
+        if (
+            final.session.phase == pb.SESSION_PHASE_ENDED
+            and final.session.cleanup_confirmed
+            and final.session.context.controller_generation
+            == state.controller_generation
+        ):
+            session_id = final.session.context.session_id
+            for pending_key, message in list(self.current.items()):
+                if pending_key[:2] not in {
+                    ("session", session_id),
+                    ("trial", session_id),
+                }:
+                    continue
+                if (
+                    pending_key[0] == "trial"
+                    and pending_key[2] != final.trial.context.trial_id
+                ):
+                    continue
+                result = (
+                    "Interrupted"
+                    if pending_key[0] == "trial"
+                    and final.trial.outcome == pb.TRIAL_OUTCOME_INTERRUPTED
+                    and not message.endswith("Finalizing files…")
+                    else "Done"
+                )
+                self.publish("", pending_key, "", result, str(final))
+                self.current.pop(pending_key)
         entries: dict[tuple[str, ...], tuple[str, str]] = {}
         session_id = state.session.context.session_id
         for operation in state.operations:
+            key: tuple[str, ...] = ("operation", operation.context.command_id)
+            if operation.complete and key in self.current:
+                result = (
+                    "Done"
+                    if operation.HasField("succeeded") and operation.succeeded
+                    else "Failed"
+                    if operation.HasField("succeeded") or operation.HasField("failure")
+                    else "Unconfirmed"
+                )
+                self.publish(
+                    _target(operation.command), key, "", result, str(operation)
+                )
             if (
                 operation.complete
                 or not operation.progress
@@ -105,6 +174,13 @@ class ActionProgress:
                 else f"{action_label(operation.command)} · {operation.progress}",
             )
         for recovery in state.recoveries:
+            key = ("recovery", recovery.attempt_id)
+            if recovery.HasField("completion_monotonic_ns") and key in self.current:
+                result = {
+                    pb.RECOVERY_OUTCOME_COMPLETED: "Done",
+                    pb.RECOVERY_OUTCOME_FAILED: "Failed",
+                }.get(recovery.outcome, "Unconfirmed")
+                self.publish("", key, "", result, str(recovery))
             if recovery.HasField("completion_monotonic_ns") or not recovery.progress:
                 continue
             entries[("recovery", recovery.attempt_id)] = (
@@ -124,9 +200,16 @@ class ActionProgress:
         if state.session.shutdown_requested:
             entries[("shutdown",)] = (
                 "",
-                "Shutdown · Stopping backends and releasing devices…",
+                "Shutdown · Releasing devices…",
             )
         trial = state.trial
+        key = ("trial", trial.context.session.session_id, trial.context.trial_id)
+        if trial.phase == pb.TRIAL_PHASE_ENDED and key in self.current:
+            result = {
+                pb.TRIAL_OUTCOME_COMPLETED: "Done",
+                pb.TRIAL_OUTCOME_INTERRUPTED: "Interrupted",
+            }.get(trial.outcome, "Unconfirmed")
+            self.publish("", key, "", result, str(trial))
         step = {
             pb.TRIAL_PHASE_PREPARING: "Preparing recording…",
             pb.TRIAL_PHASE_READY: "Waiting to start…",
@@ -139,17 +222,15 @@ class ActionProgress:
             and step
             and phase in {pb.SESSION_PHASE_RUNNING, pb.SESSION_PHASE_FINALIZING}
         ):
-            entries[("trial", trial.context.trial_id)] = (
+            entries[
+                ("trial", trial.context.session.session_id, trial.context.trial_id)
+            ] = (
                 "",
                 f"Trial {trial.context.trial_number} · {step}",
             )
         for participant in state.participants:
-            if phase != pb.SESSION_PHASE_SETTING_UP:
-                continue
             name = participant.process.role
             if name not in {"acquisition", "visual_stimulus", "tracking"}:
-                continue
-            if participant.ready.required_checks_passed:
                 continue
             label = {
                 "acquisition": "Cameras",
@@ -159,9 +240,14 @@ class ActionProgress:
             target = {"acquisition": "cameras", "visual_stimulus": "projectors"}.get(
                 name, "tracking"
             )
-            entries[
-                ("participant", session_id, name, participant.process.generation)
-            ] = (
+            key = ("participant", session_id, name, participant.process.generation)
+            if participant.ready.required_checks_passed:
+                if key in self.current:
+                    self.publish(target, key, "", "Done")
+                continue
+            if phase != pb.SESSION_PHASE_SETTING_UP:
+                continue
+            entries[key] = (
                 target,
                 f"{label} · {participant.preparation_progress or 'Preparing…'}",
             )
@@ -198,7 +284,7 @@ class ActionProgress:
             )
         for key, (target, message) in entries.items():
             if self.current.get(key) != message:
-                self.emit(target, message)
+                self.publish(target, key, message)
         self.current = {
             key: message for key, (_target_name, message) in entries.items()
         }

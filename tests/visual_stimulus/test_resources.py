@@ -1938,3 +1938,25 @@ def test_untagged_png_diagnostic_identifies_asset_and_override():
         decode_image(asset, encoded.getvalue())
     assert "noise" in str(error.value) and "textures/noise.png" in str(error.value)
     assert "color_override" in str(error.value) and "do not guess" in str(error.value)
+
+
+def test_setup_progress_throttles_counts_but_emits_stage_and_completion():
+    from cephvr.visual_stimulus.resources.progress import SetupProgress
+
+    now = [0]
+    messages = []
+    progress = SetupProgress(messages.append, lambda: now[0])
+    progress.update("Decoding textures", 0, 100)
+    for count in range(1, 99):
+        progress.update("Decoding textures", count, 100)
+    assert messages == ["Decoding textures: 0/100"]
+    now[0] = 1_000_000_000
+    progress.update("Decoding textures", 99, 100)
+    progress.update("Decoding textures", 100, 100)
+    progress.update("Decoding textures", 100, 100)
+    progress.update("Uploading initial textures", 0, 20)
+    assert messages[1:] == [
+        "Decoding textures: 99/100",
+        "Decoding textures: 100/100",
+        "Uploading initial textures: 0/20",
+    ]

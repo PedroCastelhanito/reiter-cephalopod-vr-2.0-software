@@ -1,0 +1,479 @@
+{
+  "0003_123845_behavioral_cam_frames.jsonl": {
+    "record_counts": {
+      "header": 1,
+      "frame": 26979,
+      "video_frame": 26979,
+      "completion": 1
+    },
+    "host_interval_ms": {
+      "percentiles": [
+        30.988999999999997,
+        32.454462,
+        33.3566,
+        34.253192,
+        35.646899999999995
+      ],
+      "nonpositive": 0
+    },
+    "outcomes": {
+      "real": 26979
+    },
+    "completions": [
+      {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 490861857489800,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 26979,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 26979,
+          "selected_source_frame_count": 26979,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 489961874363600,
+          "on_acknowledged_monotonic_ns": 489961903319600,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 490861860775300,
+          "off_acknowledged_monotonic_ns": 490861891114700
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 1,
+          "last_native_counter": 26979
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    ],
+    "camera_interval_ms": {
+      "percentiles": [
+        33.316731,
+        33.323454,
+        33.32421,
+        33.424893,
+        33.429131999999996
+      ],
+      "nonpositive": 0
+    },
+    "counter_steps": {
+      "1": 26978
+    },
+    "first_last_relative_s": [
+      0.0741919,
+      899.9967338
+    ]
+  },
+  "0003_123845_stimulus_frames.jsonl": {
+    "record_counts": {
+      "header": 1,
+      "render_group": 53978,
+      "clipping": 215912,
+      "group_update": 107956,
+      "encoder_outcome": 1,
+      "completion": 1
+    },
+    "host_interval_ms": {
+      "percentiles": [
+        4.3366999999999996,
+        13.89636,
+        16.6483,
+        19.543943999999996,
+        355.1207
+      ],
+      "nonpositive": 0
+    },
+    "outcomes": {
+      "returned": 215912,
+      "image_current": 215912
+    },
+    "completions": [
+      {
+        "kind": "encoder_outcome",
+        "admitted_count": 53978,
+        "input_submitted_count": 53978,
+        "capacity_drop_count": 0,
+        "selected_real_count": 53978,
+        "same_slot_omission_count": 0,
+        "encoded_frame_count": 53978,
+        "duplicate_frame_count": 0,
+        "final_input_group_id": 53977,
+        "cutoff_host_ns": 490861857489800,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      },
+      {
+        "kind": "completion",
+        "cutoff_host_ns": 490861857489800,
+        "last_group_id": 53977,
+        "state_count": 53978,
+        "submission_attempt_count": 215912,
+        "capture_admission_count": 53978,
+        "capture_drop_count": 0,
+        "same_slot_omission_count": 0,
+        "unresolved_attempt_count": 0,
+        "outcome": "completed"
+      }
+    ],
+    "marker_count": 53978,
+    "epoch_counts": {
+      "0": 53978
+    },
+    "marker_transitions": 50377,
+    "first_last_relative_s": [
+      0.0153405,
+      899.9907103
+    ]
+  },
+  "0003_125346_behavioral_cam_frames.jsonl": {
+    "record_counts": {
+      "header": 1,
+      "frame": 89933,
+      "video_frame": 89933,
+      "completion": 1
+    },
+    "host_interval_ms": {
+      "percentiles": [
+        30.9896,
+        32.4314,
+        33.355,
+        34.282106999999996,
+        35.671
+      ],
+      "nonpositive": 0
+    },
+    "outcomes": {
+      "real": 89933
+    },
+    "completions": [
+      {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 493862807825100,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 89933,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 89933,
+          "selected_source_frame_count": 89933,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 490862822527000,
+          "on_acknowledged_monotonic_ns": 490862853603900,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 493862816495200,
+          "off_acknowledged_monotonic_ns": 493862846746900
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 2,
+          "last_native_counter": 89934
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    ],
+    "camera_interval_ms": {
+      "percentiles": [
+        33.316542,
+        33.323426999999995,
+        33.32421,
+        33.42492,
+        33.431723999999996
+      ],
+      "nonpositive": 0
+    },
+    "counter_steps": {
+      "1": 89932
+    },
+    "first_last_relative_s": [
+      0.0721647,
+      2999.9923782
+    ]
+  },
+  "0003_125346_stimulus_frames.jsonl": {
+    "record_counts": {
+      "header": 1,
+      "render_group": 179985,
+      "clipping": 719940,
+      "group_update": 359970,
+      "encoder_outcome": 1,
+      "completion": 1
+    },
+    "host_interval_ms": {
+      "percentiles": [
+        5.440799999999999,
+        13.656866,
+        16.636699999999998,
+        19.940534000000003,
+        94.9831
+      ],
+      "nonpositive": 0
+    },
+    "outcomes": {
+      "returned": 719940,
+      "image_current": 719940
+    },
+    "completions": [
+      {
+        "kind": "encoder_outcome",
+        "admitted_count": 179985,
+        "input_submitted_count": 179985,
+        "capacity_drop_count": 0,
+        "selected_real_count": 179985,
+        "same_slot_omission_count": 0,
+        "encoded_frame_count": 179985,
+        "duplicate_frame_count": 0,
+        "final_input_group_id": 179984,
+        "cutoff_host_ns": 493862807825100,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      },
+      {
+        "kind": "completion",
+        "cutoff_host_ns": 493862807825100,
+        "last_group_id": 179984,
+        "state_count": 179985,
+        "submission_attempt_count": 719940,
+        "capture_admission_count": 179985,
+        "capture_drop_count": 0,
+        "same_slot_omission_count": 0,
+        "unresolved_attempt_count": 0,
+        "outcome": "completed"
+      }
+    ],
+    "marker_count": 179985,
+    "epoch_counts": {
+      "0": 602,
+      "1": 1200,
+      "2": 600,
+      "3": 1200,
+      "4": 600,
+      "5": 1200,
+      "6": 600,
+      "7": 1200,
+      "8": 600,
+      "9": 1200,
+      "10": 600,
+      "11": 1200,
+      "12": 600,
+      "13": 1200,
+      "14": 600,
+      "15": 1199,
+      "16": 600,
+      "17": 1200,
+      "18": 600,
+      "19": 1200,
+      "20": 600,
+      "21": 1200,
+      "22": 600,
+      "23": 1200,
+      "24": 600,
+      "25": 1200,
+      "26": 600,
+      "27": 1200,
+      "28": 600,
+      "29": 1200,
+      "30": 600,
+      "31": 1200,
+      "32": 600,
+      "33": 1198,
+      "34": 600,
+      "35": 1199,
+      "36": 601,
+      "37": 1200,
+      "38": 599,
+      "39": 1201,
+      "40": 600,
+      "41": 1200,
+      "42": 599,
+      "43": 1201,
+      "44": 599,
+      "45": 1200,
+      "46": 600,
+      "47": 1200,
+      "48": 600,
+      "49": 1200,
+      "50": 600,
+      "51": 1200,
+      "52": 599,
+      "53": 1200,
+      "54": 600,
+      "55": 1200,
+      "56": 600,
+      "57": 1200,
+      "58": 600,
+      "59": 1200,
+      "60": 600,
+      "61": 1200,
+      "62": 600,
+      "63": 1200,
+      "64": 600,
+      "65": 1200,
+      "66": 600,
+      "67": 1200,
+      "68": 600,
+      "69": 1200,
+      "70": 600,
+      "71": 1199,
+      "72": 600,
+      "73": 1200,
+      "74": 600,
+      "75": 1200,
+      "76": 600,
+      "77": 1200,
+      "78": 600,
+      "79": 1200,
+      "80": 600,
+      "81": 1200,
+      "82": 600,
+      "83": 1200,
+      "84": 600,
+      "85": 1200,
+      "86": 600,
+      "87": 1200,
+      "88": 600,
+      "89": 1199,
+      "90": 600,
+      "91": 1200,
+      "92": 600,
+      "93": 1200,
+      "94": 600,
+      "95": 1200,
+      "96": 600,
+      "97": 1200,
+      "98": 600,
+      "99": 1200,
+      "100": 600,
+      "101": 1200,
+      "102": 600,
+      "103": 1200,
+      "104": 600,
+      "105": 1200,
+      "106": 600,
+      "107": 1199,
+      "108": 599,
+      "109": 1200,
+      "110": 600,
+      "111": 1200,
+      "112": 600,
+      "113": 1200,
+      "114": 600,
+      "115": 1200,
+      "116": 600,
+      "117": 1200,
+      "118": 600,
+      "119": 1200,
+      "120": 600,
+      "121": 1200,
+      "122": 600,
+      "123": 1200,
+      "124": 600,
+      "125": 1198,
+      "126": 600,
+      "127": 1200,
+      "128": 600,
+      "129": 1200,
+      "130": 600,
+      "131": 1200,
+      "132": 600,
+      "133": 1200,
+      "134": 600,
+      "135": 1200,
+      "136": 600,
+      "137": 1200,
+      "138": 600,
+      "139": 1200,
+      "140": 600,
+      "141": 1200,
+      "142": 600,
+      "143": 1200,
+      "144": 599,
+      "145": 1200,
+      "146": 600,
+      "147": 1200,
+      "148": 600,
+      "149": 1200,
+      "150": 600,
+      "151": 1200,
+      "152": 600,
+      "153": 1200,
+      "154": 600,
+      "155": 1200,
+      "156": 600,
+      "157": 1200,
+      "158": 600,
+      "159": 1200,
+      "160": 600,
+      "161": 1200,
+      "162": 598,
+      "163": 1199,
+      "164": 600,
+      "165": 1200,
+      "166": 600,
+      "167": 1200,
+      "168": 600,
+      "169": 1200,
+      "170": 600,
+      "171": 1200,
+      "172": 600,
+      "173": 1200,
+      "174": 600,
+      "175": 1200,
+      "176": 600,
+      "177": 1200,
+      "178": 600,
+      "179": 1200,
+      "180": 600,
+      "181": 1199,
+      "182": 600,
+      "183": 1200,
+      "184": 600,
+      "185": 1200,
+      "186": 600,
+      "187": 1200,
+      "188": 600,
+      "189": 1200,
+      "190": 600,
+      "191": 1200,
+      "192": 600,
+      "193": 1200,
+      "194": 600,
+      "195": 1200,
+      "196": 600,
+      "197": 1200,
+      "198": 600,
+      "199": 1199
+    },
+    "marker_transitions": 167984,
+    "first_last_relative_s": [
+      0.0128958,
+      2999.99638
+    ]
+  }
+}

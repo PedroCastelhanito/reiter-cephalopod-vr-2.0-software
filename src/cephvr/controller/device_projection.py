@@ -3,6 +3,7 @@
 from cephvr.acquisition.identity import CAMERA_NAMES, camera_role_name
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.preview_rates import valid_rates
 
 
 def merge_devices(
@@ -20,6 +21,7 @@ def merge_devices(
                 current.preview_visible = prior.preview_visible
                 current.preview_visibility_revision = prior.preview_visibility_revision
                 current.preview_failure = prior.preview_failure
+                current.rates.CopyFrom(prior.rates)
     return adopted
 
 
@@ -40,6 +42,20 @@ def merge_preview_visibility(
         or len(observation.failure.encode("utf-8")) > 2048
     ):
         raise ValueError("preview visibility observation shape is invalid")
+    if (
+        observation.HasField("rates")
+        and observation.rates.ByteSize()
+        and not valid_rates(
+            observation.rates.source_fps
+            if observation.rates.HasField("source_fps")
+            else None,
+            observation.rates.preview_fps
+            if observation.rates.HasField("preview_fps")
+            else None,
+            observation.rates.observed_monotonic_ns,
+        )
+    ):
+        raise ValueError("invalid preview rates")
     adopted = pb.AcquisitionDeviceViews.FromString(previous.SerializeToString())
     device = getattr(adopted, camera_role_name(observation.camera))
     if (
@@ -50,13 +66,17 @@ def merge_preview_visibility(
     if observation.revision < device.preview_visibility_revision:
         return None
     if observation.revision == device.preview_visibility_revision:
-        if (observation.visible, observation.failure) != (
+        if (observation.visible, observation.failure, observation.rates) != (
             device.preview_visible,
             device.preview_failure,
+            device.rates,
         ):
             raise ValueError("preview visibility revision changed payload")
         return None
     device.preview_visible = observation.visible
     device.preview_visibility_revision = observation.revision
     device.preview_failure = observation.failure
+    device.ClearField("rates")
+    if observation.visible:
+        device.rates.CopyFrom(observation.rates)
     return adopted

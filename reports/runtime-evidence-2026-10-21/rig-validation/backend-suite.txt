@@ -1,0 +1,252 @@
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  8%]
+........................................................................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+........................................................................ [ 30%]
+......................................FFF............................... [ 33%]
+........................................................................ [ 35%]
+........................................................................ [ 38%]
+.......................................s................................ [ 41%]
+........................................................................ [ 44%]
+........................................................................ [ 46%]
+....s............................s...................................... [ 49%]
+........................................................................ [ 52%]
+........................................................................ [ 55%]
+........................................................................ [ 57%]
+...................................s.................................... [ 60%]
+........................................................................ [ 63%]
+........................................................................ [ 66%]
+.............s.......................................................... [ 68%]
+.........................................s.............................. [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 80%]
+........................................................................ [ 82%]
+........................................................................ [ 85%]
+........................................................................ [ 88%]
+........................................................................ [ 91%]
+........................................................................ [ 93%]
+........................................................................ [ 96%]
+........................................................................ [ 99%]
+.................                                                        [100%]
+================================== FAILURES ===================================
+_ test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[hex] _
+
+controller = (50046, <cephvr.shared.credentials.CredentialStore object at 0x000001DBF9006DD0>, <cephvr.controller.runtime.ControllerRuntime object at 0x000001DBF9032850>)
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-415/test_general_microcontroller_c0')
+source_kind = 'hex'
+
+    @pytest.mark.parametrize("source_kind", ["hex", "ino"])
+    async def test_general_microcontroller_commands_and_upload_work_without_acquisition_backend(
+        controller, tmp_path, source_kind
+    ):
+        from cephvr.controller.microcontroller.firmware import read_uno_image
+        from cephvr.controller.microcontroller.firmware_source import read_firmware
+    
+        port, store, runtime = controller
+        events = []
+        image_path = tmp_path / "compiled.hex"
+        image_path.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+        image = read_uno_image(str(image_path))
+        path = tmp_path / f"source.{source_kind}"
+        path.write_bytes(
+            b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+        )
+    
+        class Uploader:
+            cleanup_complete = True
+    
+            def reset_cancel(self):
+                pass
+    
+            def compile(self, selected, operation, *, deadline_ns):
+                events.append(("compile", operation.command_id, deadline_ns))
+                return image
+    
+            def prepare(self, selected):
+                assert selected.payload == image.payload
+    
+            def upload(self, port, operation, *, deadline_ns):
+                assert port == "COM8"
+                events.append(("upload", operation.command_id, deadline_ns))
+    
+            def close(self, *, deadline_ns):
+                self.cleanup_complete = True
+    
+            def cancel(self):
+                pass
+    
+        owner, serial = _install_microcontroller(runtime, uploader=Uploader())
+        assert runtime.microcontroller.device_views() is None
+        assert not runtime.configuration_state.current.backends[-1].enabled
+        principal = store.provision_client("gui")
+        async with loopback_channel(port, 16_777_216) as channel:
+            client = HeadlessClient(channel, principal)
+            stub = wire.ExperimentControllerServiceStub(channel)
+            async with client.observe():
+                await client.claim_control()
+                for kind in [
+                    rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+                    rpc.MICROCONTROLLER_COMMAND_KIND_START,
+                    rpc.MICROCONTROLLER_COMMAND_KIND_STOP,
+                    rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+                ]:
+                    request = rpc.MicrocontrollerCommandRequest(
+                        command=client.operator_command(),
+                        expected_configuration_revision=runtime.configuration_state.revision,
+                        kind=kind,
+                    )
+                    if kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
+                        request.signal = pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE
+                    if kind == rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE:
+                        request.firmware_path = str(path)
+                        request.firmware_sha256 = read_firmware(str(path)).digest
+                    admission = await stub.ExecuteMicrocontrollerCommand(
+                        request, metadata=principal.metadata(), timeout=2
+                    )
+                    assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+                    for _ in range(200):
+                        operation = runtime.control.operations[
+                            request.command.operator.command_id
+                        ]
+                        if operation.complete:
+                            break
+                        await asyncio.sleep(0.005)
+>                   assert operation.complete and operation.succeeded, operation.failure
+E                   AssertionError: code: "OPERATION_FAILED"
+E                     message: "Firmware verification did not confirm stopped camera outputs"
+E                     
+E                   assert (True and False)
+E                    +  where True = context {\n  command_id: "19a75a7f-517c-4f07-81ab-78577a5b8b12"\n}\ncommand: "ExecuteMicrocontrollerCommand"\ncomplete: tr...iled"\nfailure {\n  code: "OPERATION_FAILED"\n  message: "Firmware verification did not confirm stopped camera outputs"\n}\n.complete
+E                    +  and   False = context {\n  command_id: "19a75a7f-517c-4f07-81ab-78577a5b8b12"\n}\ncommand: "ExecuteMicrocontrollerCommand"\ncomplete: tr...iled"\nfailure {\n  code: "OPERATION_FAILED"\n  message: "Firmware verification did not confirm stopped camera outputs"\n}\n.succeeded
+
+tests\client\test_controller_rpc.py:720: AssertionError
+_ test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[ino] _
+
+controller = (50050, <cephvr.shared.credentials.CredentialStore object at 0x000001DBF92A9710>, <cephvr.controller.runtime.ControllerRuntime object at 0x000001DBF8F9D9D0>)
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-415/test_general_microcontroller_c1')
+source_kind = 'ino'
+
+    @pytest.mark.parametrize("source_kind", ["hex", "ino"])
+    async def test_general_microcontroller_commands_and_upload_work_without_acquisition_backend(
+        controller, tmp_path, source_kind
+    ):
+        from cephvr.controller.microcontroller.firmware import read_uno_image
+        from cephvr.controller.microcontroller.firmware_source import read_firmware
+    
+        port, store, runtime = controller
+        events = []
+        image_path = tmp_path / "compiled.hex"
+        image_path.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+        image = read_uno_image(str(image_path))
+        path = tmp_path / f"source.{source_kind}"
+        path.write_bytes(
+            b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+        )
+    
+        class Uploader:
+            cleanup_complete = True
+    
+            def reset_cancel(self):
+                pass
+    
+            def compile(self, selected, operation, *, deadline_ns):
+                events.append(("compile", operation.command_id, deadline_ns))
+                return image
+    
+            def prepare(self, selected):
+                assert selected.payload == image.payload
+    
+            def upload(self, port, operation, *, deadline_ns):
+                assert port == "COM8"
+                events.append(("upload", operation.command_id, deadline_ns))
+    
+            def close(self, *, deadline_ns):
+                self.cleanup_complete = True
+    
+            def cancel(self):
+                pass
+    
+        owner, serial = _install_microcontroller(runtime, uploader=Uploader())
+        assert runtime.microcontroller.device_views() is None
+        assert not runtime.configuration_state.current.backends[-1].enabled
+        principal = store.provision_client("gui")
+        async with loopback_channel(port, 16_777_216) as channel:
+            client = HeadlessClient(channel, principal)
+            stub = wire.ExperimentControllerServiceStub(channel)
+            async with client.observe():
+                await client.claim_control()
+                for kind in [
+                    rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+                    rpc.MICROCONTROLLER_COMMAND_KIND_START,
+                    rpc.MICROCONTROLLER_COMMAND_KIND_STOP,
+                    rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+                ]:
+                    request = rpc.MicrocontrollerCommandRequest(
+                        command=client.operator_command(),
+                        expected_configuration_revision=runtime.configuration_state.revision,
+                        kind=kind,
+                    )
+                    if kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
+                        request.signal = pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE
+                    if kind == rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE:
+                        request.firmware_path = str(path)
+                        request.firmware_sha256 = read_firmware(str(path)).digest
+                    admission = await stub.ExecuteMicrocontrollerCommand(
+                        request, metadata=principal.metadata(), timeout=2
+                    )
+                    assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+                    for _ in range(200):
+                        operation = runtime.control.operations[
+                            request.command.operator.command_id
+                        ]
+                        if operation.complete:
+                            break
+                        await asyncio.sleep(0.005)
+>                   assert operation.complete and operation.succeeded, operation.failure
+E                   AssertionError: code: "OPERATION_FAILED"
+E                     message: "Firmware verification did not confirm stopped camera outputs"
+E                     
+E                   assert (True and False)
+E                    +  where True = context {\n  command_id: "e6cab0b9-79eb-4acc-9761-e87d41c02975"\n}\ncommand: "ExecuteMicrocontrollerCommand"\ncomplete: tr...iled"\nfailure {\n  code: "OPERATION_FAILED"\n  message: "Firmware verification did not confirm stopped camera outputs"\n}\n.complete
+E                    +  and   False = context {\n  command_id: "e6cab0b9-79eb-4acc-9761-e87d41c02975"\n}\ncommand: "ExecuteMicrocontrollerCommand"\ncomplete: tr...iled"\nfailure {\n  code: "OPERATION_FAILED"\n  message: "Firmware verification did not confirm stopped camera outputs"\n}\n.succeeded
+
+tests\client\test_controller_rpc.py:720: AssertionError
+_______ test_normal_shutdown_releases_controller_owned_microcontroller ________
+
+controller = (50059, <cephvr.shared.credentials.CredentialStore object at 0x000001DBF92A2690>, <cephvr.controller.runtime.ControllerRuntime object at 0x000001DBF92C7BD0>)
+
+    async def test_normal_shutdown_releases_controller_owned_microcontroller(controller):
+        port, store, runtime = controller
+        owner, serial = _install_microcontroller(runtime)
+        owner.port_owned = True
+        owner.view.observation.CopyFrom(serial.connect.return_value)
+        runtime.lifecycle.session.cleanup_confirmed = True
+        principal = store.provision_client("gui")
+        async with loopback_channel(port, 16_777_216) as channel:
+            client = HeadlessClient(channel, principal)
+            async with client.observe():
+                await client.claim_control()
+                request = client.operator_command()
+                admission = await runtime.shutdown_application(request)
+                assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+                for _ in range(100):
+                    if owner.cleanup_complete:
+                        break
+                    await asyncio.sleep(0.005)
+>               assert owner.cleanup_complete
+E               assert False
+E                +  where False = <cephvr.controller.microcontroller.device.MicrocontrollerDevice object at 0x000001DBF9290BD0>.cleanup_complete
+
+tests\client\test_controller_rpc.py:761: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/client/test_controller_rpc.py::test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[hex]
+FAILED tests/client/test_controller_rpc.py::test_general_microcontroller_commands_and_upload_work_without_acquisition_backend[ino]
+FAILED tests/client/test_controller_rpc.py::test_normal_shutdown_releases_controller_owned_microcontroller
+3 failed, 2600 passed, 6 skipped, 1 deselected in 39.43s

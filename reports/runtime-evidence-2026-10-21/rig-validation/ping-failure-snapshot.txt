@@ -1,0 +1,586 @@
+{
+  "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+  "captured_monotonic_ns": "573540001088100",
+  "state_revision": "1311",
+  "configuration": {
+    "revision": "10",
+    "edit_validation": [
+      {
+        "configuration_revision": "10",
+        "completed": true,
+        "valid": true,
+        "component": "experiment",
+        "configuration_module_version": "experiment-v1"
+      },
+      {
+        "configuration_revision": "10",
+        "completed": true,
+        "valid": true,
+        "component": "acquisition",
+        "configuration_module_version": "acquisition-config-v1"
+      },
+      {
+        "configuration_revision": "10",
+        "completed": true,
+        "valid": true,
+        "component": "synchronization",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "10",
+        "completed": true,
+        "valid": true,
+        "component": "tracking",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "10",
+        "completed": true,
+        "valid": true,
+        "component": "visual_stimulus",
+        "configuration_module_version": "visual-stimulus-config-v2"
+      }
+    ]
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "context": {
+      "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+      "session_id": "3679c1f4-ab58-45b4-b752-66de400435c0"
+    }
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "db53f653-5bb1-4267-8021-e36f4ef76642"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL"
+    },
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "c220173f-b15a-4b10-af9e-d2f89378c4f9"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL"
+    }
+  ],
+  "operations": [
+    {
+      "context": {
+        "command_id": "c6888ba7-f86e-42da-8899-a241eafbedff"
+      },
+      "command": "ExecuteMicrocontrollerCommand",
+      "complete": true,
+      "succeeded": false,
+      "progress": "Microcontroller command failed",
+      "failure": {
+        "code": "OPERATION_FAILED",
+        "message": "no pin diagnostic is active"
+      }
+    },
+    {
+      "context": {
+        "command_id": "38140a15-deec-4a7b-bf7d-69afac2b91ed"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "f4a526e1-f78d-43ef-bb58-9013ac847d48"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "dfff4123-b7e7-4154-afb4-085a8e476b96"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "fba189db-3e9a-47bb-b00c-9c858212a5f6"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+          "session_id": "6974a9f9-55dc-471f-8524-c9998892b158"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "6d264a27-763d-48ca-b279-d857ca1c639c"
+      },
+      "command": "CancelSetup",
+      "work": {
+        "session": {
+          "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+          "session_id": "6974a9f9-55dc-471f-8524-c9998892b158"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "interruption and cleanup confirmed"
+    },
+    {
+      "context": {
+        "command_id": "34ba94be-0ada-41ae-ad2a-8a526b574cdb"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "7bf40e9e-8dcb-4d36-9728-c788891c812c"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "353dc0d1-28e8-49a3-9c54-89894057574f"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "a28a7697-71c8-47d4-bbba-47969070d1b9"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+          "session_id": "73920cb5-fc61-41ab-a5d5-4900f1c9927a"
+        }
+      },
+      "complete": true,
+      "succeeded": false,
+      "progress": "Checking output folder\u2026",
+      "failure": {
+        "code": "SETUP_FAILED",
+        "message": "[WinError 206] The filename or extension is too long: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\reports\\\\runtime-evidence-2026-10-21\\\\rig-validation\\\\full-texture\\\\recordings\\\\long-path-managed-recording-validation\\\\20261021_full_texture_rig_validation_oct21\\\\SPRIGCHECK-115032\\\\protocol-data'"
+      }
+    },
+    {
+      "context": {
+        "command_id": "071ec3fd-723e-4a91-9237-f3bcb0d23e58"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "7a24f203-decc-4c52-bdb0-547b3e51bb6b"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "26d82694-5a2b-4e63-88a1-b58161907b49"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "b1343ffe-a796-4f88-818b-4c4276093961"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "eb6cee75-abbc-482d-b369-d8a252bc0de8"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+          "session_id": "3679c1f4-ab58-45b4-b752-66de400435c0"
+        }
+      },
+      "complete": true,
+      "succeeded": false,
+      "progress": "Preparing cameras\u2026",
+      "failure": {
+        "code": "SETUP_FAILED",
+        "message": "acquisition readback: serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=114.451, budget_ms=99.979, write_ms=65.560, total_read_ms=48.864, reads=1, bytes=125, late_bytes=125, partial_bytes=0, longest_read_ms=48.864, unmatched=0, malformed=0"
+      }
+    },
+    {
+      "context": {
+        "command_id": "a3ebf8cc-23f5-4111-994f-eb9e1ef78442"
+      },
+      "command": "CancelSetup",
+      "work": {
+        "session": {
+          "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+          "session_id": "3679c1f4-ab58-45b4-b752-66de400435c0"
+        }
+      },
+      "complete": true,
+      "succeeded": false,
+      "progress": "cleanup evidence blocked",
+      "failure": {
+        "code": "OPERATION_FAILED",
+        "message": "cleanup could not be confirmed"
+      }
+    },
+    {
+      "context": {
+        "command_id": "f92026e1-795b-4ec2-82bf-700ac613517a"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    }
+  ],
+  "errors": [
+    {
+      "error_id": "0d29eec2-5bb0-41e4-a6cd-3abae9907d3e",
+      "source": {
+        "role": "supervisor",
+        "generation": "d90cadad-4c26-46bd-b00d-7531b0015fc6"
+      },
+      "work": {
+        "session": {
+          "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+          "session_id": "3679c1f4-ab58-45b4-b752-66de400435c0"
+        }
+      },
+      "occurred_monotonic_ns": "573513150488200",
+      "failure": {
+        "code": "BACKEND_HEARTBEAT_LOST",
+        "message": "visual_stimulus heartbeat silence"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "95844b7f-dd80-442f-97b5-375de332a5c9",
+      "component": "controller",
+      "message": "[WinError 206] The filename or extension is too long: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\reports\\\\runtime-evidence-2026-10-21\\\\rig-validation\\\\full-texture\\\\recordings\\\\long-path-managed-recording-validation\\\\20261021_full_texture_rig_validation_oct21\\\\SPRIGCHECK-115032\\\\protocol-data'"
+    },
+    {
+      "warning_id": "c622be4d-0fa9-4120-a414-2f3a38fd1596",
+      "component": "microcontroller",
+      "message": "serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=114.451, budget_ms=99.979, write_ms=65.560, total_read_ms=48.864, reads=1, bytes=125, late_bytes=125, partial_bytes=0, longest_read_ms=48.864, unmatched=0, malformed=0"
+    },
+    {
+      "warning_id": "5fbcb1cd-149b-4206-a227-89a1c861bd52",
+      "component": "controller",
+      "message": "acquisition readback: serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=114.451, budget_ms=99.979, write_ms=65.560, total_read_ms=48.864, reads=1, bytes=125, late_bytes=125, partial_bytes=0, longest_read_ms=48.864, unmatched=0, malformed=0"
+    },
+    {
+      "warning_id": "975a1927-7ae1-47f8-8dd5-69c3afbc723e",
+      "component": "controller",
+      "message": "attempt retired"
+    },
+    {
+      "warning_id": "67342431-8d47-4c3d-8c2d-06dea4a6e44e",
+      "component": "supervisor",
+      "message": "ffmpeg:f139a1b0-95a1-402a-8e0e-6135909989ea released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "b952ec21-3309-42ab-aa18-e98f54435973",
+      "component": "supervisor",
+      "message": "ffmpeg:35117261-981f-4a0f-b2f6-443754da4031 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "3f917fac-c36f-45ee-b117-75dd3c18b982",
+      "component": "supervisor",
+      "message": "ffmpeg:f7943d55-c5a5-46b2-9171-0e64b0bfa966 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "b826a9b9-889b-4981-a0f1-da559ebf69df",
+      "component": "supervisor",
+      "message": "ffmpeg:33dcd679-6bef-40ce-ac75-c3def009561d released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "9b9035ab-e558-412b-8b75-f68a1a02998c",
+      "component": "supervisor",
+      "message": "ffmpeg:1d245600-3940-4f9d-99bd-ca7ff3784d68 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "a4497d3e-5318-45e0-8df5-0bc591b8ae74",
+      "component": "supervisor",
+      "message": "ffmpeg:f589173f-d133-4070-9de5-d8f9767d0f6c released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "135803d8-92d3-434e-97a9-6c31180dab06",
+      "component": "supervisor",
+      "message": "ffmpeg:b126f7f4-7243-4bba-ad71-68bcdb1e87b6 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "17af75a6-dba8-46d1-9f96-e1a6538a6511",
+      "component": "supervisor",
+      "message": "ffmpeg:14727567-b47b-4595-adff-6d936d6b3754 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "7a0edcdc-e4e6-4282-9236-d3c112ddb0c6",
+      "component": "supervisor",
+      "message": "ffmpeg:b0ac2bf4-acda-4daa-9bde-d48e8e6e83d2 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "f62fb9c0-85cb-4984-a2a4-0e735dbb9fd1",
+      "component": "supervisor",
+      "message": "ffmpeg:dda2b154-7ee8-46e2-957e-76c086f33320 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "ac2578f8-a798-4033-99a3-93146803322b",
+      "component": "supervisor",
+      "message": "ffmpeg:1f9ed9e8-8a98-409b-a961-063c8a593dba released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "ff3bdc74-94b0-4631-9144-2669d05de8bf",
+      "component": "supervisor",
+      "message": "ffmpeg:cdcd2eba-d8f9-43fd-83b4-18fae3bfb015 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "e43a58df-ae9c-4a05-90b9-9c8bd9aa0bb9",
+      "component": "supervisor",
+      "message": "ffmpeg:68459a6d-ef3a-46cd-ac03-baecea20c111 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "f1b683df-c210-4573-8693-c97908ed88bd",
+      "component": "supervisor",
+      "message": "ffmpeg:cf6d10a5-ce3d-4b02-86e0-0abeff648fb7 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "adda0d62-2e84-4a3e-89a1-6b421c0de018",
+      "component": "supervisor",
+      "message": "ffmpeg:b75b1785-4b3d-40bd-946c-133f6334eb95 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "e4614dbb-b10b-44a1-9319-4707f2545635",
+      "component": "supervisor",
+      "message": "ffmpeg:ce1f6e2b-f044-4b52-b62e-854162628ccd released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "9b93a28e-6555-4f56-906d-0b8dbeef06cc",
+      "component": "supervisor",
+      "message": "ffmpeg:4c10ff55-3447-4034-8e46-93d14fb254f4 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "4373c84e-ad6e-4d54-838c-f06f7e4b875c",
+      "component": "supervisor",
+      "message": "ffmpeg:b0c9f5ca-ccaf-4f73-a0b5-6949ef490302 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "e4df7ce7-bb9b-40ff-8bf8-c69028de301b",
+      "component": "supervisor",
+      "message": "ffmpeg:cf057ff7-9cc4-4017-9a37-8f4c05201299 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "a6860bba-efac-45b1-bea2-1495d86d8689",
+      "component": "supervisor",
+      "message": "ffmpeg:856de542-bc5f-4ec2-bef5-f4c63011aa1d released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "ffc294f1-b93b-4bb5-919f-8a287673b3c0",
+      "component": "supervisor",
+      "message": "ffmpeg:4d19d8bb-68b3-4e83-b3bb-1080ddec3e88 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "9093577d-116c-46e1-bac3-45cae733044e",
+      "component": "supervisor",
+      "message": "ffmpeg:e6d6f42b-af64-4776-aa45-2bc36b47dbd1 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "d6fb9db4-8bdd-417d-8c18-70e383d5f569",
+      "component": "supervisor",
+      "message": "ffmpeg:038bb4d6-56fb-4732-929c-d957f6daf5d8 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "1e9d28b7-7c68-4546-8651-9e3d3210a10a",
+      "component": "supervisor",
+      "message": "ffmpeg:74cae56e-3aae-4083-aae9-55d760f3ec9d released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "01694834-7a9e-4614-a486-b4a71b3a2ac2",
+      "component": "supervisor",
+      "message": "participant interruption unconfirmed: RuntimeError('worker interrupt not accepted: INVALID_REQUEST')"
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "db53f653-5bb1-4267-8021-e36f4ef76642"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "db53f653-5bb1-4267-8021-e36f4ef76642"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "479b4165-98b5-4a92-a72f-a13a61239197"
+    },
+    "command_id": "e1e4c17c-eff7-4dd9-a4b5-7e17095fabb5",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "572931650650300",
+        "idle_swap_return_ns": "572931651015000",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "572931837450200",
+        "idle_swap_return_ns": "572931837812400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "572931905552200",
+        "idle_swap_return_ns": "572931905774700",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "572931972488900",
+        "idle_swap_return_ns": "572931972592400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "572931972652900",
+    "complete": true
+  },
+  "reservation": {
+    "session": {
+      "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+      "session_id": "3679c1f4-ab58-45b4-b752-66de400435c0"
+    },
+    "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-21\\texture-recordings\\20261021_full_texture_rig_validation_oct21\\SPRIGCHECK-115102",
+    "lock_held": true
+  },
+  "retained_since_monotonic_ns": "573513150488200",
+  "retained_truncated": true,
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {
+    "failure": "serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=114.451, budget_ms=99.979, write_ms=65.560, total_read_ms=48.864, reads=1, bytes=125, late_bytes=125, partial_bytes=0, longest_read_ms=48.864, unmatched=0, malformed=0"
+  },
+  "stimulus_preview": {
+    "source": {
+      "role": "visual_stimulus_renderer",
+      "generation": "38c78f54-8a46-47cc-88e0-0fdf0987d2cc"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "db53f653-5bb1-4267-8021-e36f4ef76642"
+    },
+    "session": {
+      "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+      "session_id": "6974a9f9-55dc-471f-8524-c9998892b158"
+    },
+    "configuration_revision": "6",
+    "revision": "10"
+  },
+  "last_finalization": {
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+        "session_id": "9f6349e4-9c38-4abe-9f86-57acf0663f11"
+      },
+      "outcome": "SESSION_OUTCOME_STOPPED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-21\\rig-validation\\recordings\\20261021_bounded_rig_validation_oct21\\SPRIGCHECK-114348",
+      "trial_count": 1,
+      "activated": true,
+      "stop_after_trial": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "479b4165-98b5-4a92-a72f-a13a61239197",
+          "session_id": "9f6349e4-9c38-4abe-9f86-57acf0663f11"
+        },
+        "trial_id": "7d5a3217-c6d7-4c17-984e-358cc229d3b4",
+        "trial_number": 1
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "573071536042100",
+      "scheduled_end_monotonic_ns": "573131536042100",
+      "actual_end_monotonic_ns": "573131536042100"
+    }
+  }
+}

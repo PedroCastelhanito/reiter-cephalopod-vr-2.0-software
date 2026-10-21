@@ -7,7 +7,9 @@ from collections.abc import Callable
 from typing import Any
 
 from cephvr.control.v1 import services_pb2 as rpc
+from cephvr.shared.clock import host_time_ns
 from cephvr.shared.preview_geometry import PreviewGeometryGuard
+from cephvr.shared.preview_rates import PreviewRateMeter
 from cephvr.visual_stimulus.rendering.capture import struct_quad
 from cephvr.visual_stimulus.rendering.native_display import attach_window_context
 
@@ -34,6 +36,9 @@ class StimulusPreview:
         self.geometry = PreviewGeometryGuard()
         self.owner_identity: tuple[int, int, int] | None = None
         self.title = "CephVR Visual stimulus"
+        self.on_rates: Callable[[float | None, float, int], None] = lambda *_: None
+        self.rates = PreviewRateMeter()
+        self.source_count = 0
 
     def prepare(self, shared_window: Any) -> None:
         glfw = self.glfw
@@ -65,6 +70,8 @@ class StimulusPreview:
         if placement.update_existing_only and not self.visible:
             return
         if visible:
+            if not self.visible:
+                self.rates = PreviewRateMeter()
             if placement.side and not 128 <= placement.side <= 2048:
                 raise ValueError("preview side must be 128..2048 pixels")
             if not self.visible or placement.snap_to_grid:
@@ -73,6 +80,25 @@ class StimulusPreview:
                 self.geometry.observe(
                     self.owner.geometry(), self.owner.placement_revision()
                 )
+            if (
+                placement.update_existing_only
+                and self.geometry.manual
+                and not placement.snap_to_grid
+            ):
+                return
+            if placement.side:
+                self.glfw.set_window_size(self.window, placement.side, placement.side)
+                if sys.platform != "win32":
+                    self.glfw.set_window_pos(self.window, placement.x, placement.y)
+            if sys.platform == "win32" and placement.side:
+                from cephvr.platform.windows.window_coordinates import (
+                    position_preview_frame,
+                )
+
+                position_preview_frame(
+                    self.title, placement.x, placement.y, topmost=False
+                )
+            # Binding the native owner can show the window; place it first.
             if placement.gui_window_handle and sys.platform == "win32":
                 from cephvr.platform.windows.preview_owner import WindowsPreviewOwner
 
@@ -89,25 +115,8 @@ class StimulusPreview:
                     self.owner_identity = identity
                     self.geometry.last = None
                     self.geometry.revision = None
-            if (
-                placement.update_existing_only
-                and self.geometry.manual
-                and not placement.snap_to_grid
-            ):
-                return
-            if placement.side:
-                self.glfw.set_window_size(self.window, placement.side, placement.side)
-                self.glfw.set_window_pos(self.window, placement.x, placement.y)
             self.glfw.set_window_should_close(self.window, False)
             self.glfw.show_window(self.window)
-            if sys.platform == "win32" and placement.side:
-                from cephvr.platform.windows.window_coordinates import (
-                    position_preview_frame,
-                )
-
-                position_preview_frame(
-                    self.title, placement.x, placement.y, topmost=False
-                )
         else:
             self.glfw.hide_window(self.window)
         if self.owner is not None and visible:
@@ -118,8 +127,16 @@ class StimulusPreview:
         self.visible = visible
         self.changed(True, visible, "")
 
+    def source_frame(self) -> None:
+        self.source_count += 1
+        self.rates.received(self.source_count, host_time_ns())
+
     def service(self) -> None:
         if self.window and self.visible:
+            now = host_time_ns()
+            rates = self.rates.sample(now)
+            if rates is not None:
+                self.on_rates(*rates, now)
             if self.owner is not None:
                 self.owner.sync()
             if self.glfw.window_should_close(self.window):
@@ -153,6 +170,7 @@ class StimulusPreview:
         self.resources[0]["image"].value = 0
         self.resources[2].render(mode=self.moderngl.TRIANGLE_STRIP)
         self.glfw.swap_buffers(self.window)
+        self.rates.presented += 1
 
     def clear(self) -> None:
         if self.context is not None:

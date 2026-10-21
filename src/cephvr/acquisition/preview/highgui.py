@@ -23,9 +23,11 @@ from cephvr.platform.windows.window_coordinates import (
     position_preview_frame,
     preview_window_handle,
 )
+from cephvr.shared.clock import host_time_ns
 from cephvr.shared.pixels.preparer import PixelPreparer, PreparedImage
 from cephvr.shared.pixels.types import PixelLayout
 from cephvr.shared.preview_geometry import PreviewGeometryGuard
+from cephvr.shared.preview_rates import PreviewRateMeter
 
 
 def display_array(image: PreparedImage, numpy: Any) -> Any:
@@ -54,11 +56,14 @@ class HighGuiPreview:
         title: str,
         on_closed: Callable[[HighGuiPreview], None],
         placement: rpc.PreviewWindowPlacement | None = None,
+        on_rates: Callable[[HighGuiPreview, float | None, float, int], None]
+        | None = None,
     ) -> None:
         self.attachment = attachment
         self.output_bits = output_bits
         self.title = title
         self.on_closed = on_closed
+        self.on_rates = on_rates
         self.placement = (
             None
             if placement is None
@@ -210,11 +215,16 @@ class HighGuiPreview:
                 geometry.arranged(owner.geometry(), owner.placement_revision())
             self.visible = True
             last = -1
+            meter = PreviewRateMeter()
             frame_wakeup = True
             latest: Any = None
             while not self._stop.is_set() and not ring.retired:
                 # Check X before imshow: imshow must never recreate a user-closed window.
                 cv.waitKey(1)
+                now_ns = host_time_ns()
+                rates = meter.sample(now_ns)
+                if rates is not None and self.on_rates is not None:
+                    self.on_rates(self, *rates, now_ns)
                 placement = self._take_placement()
                 if (
                     owner is not None
@@ -291,15 +301,21 @@ class HighGuiPreview:
                     current_run = ring.run_id
                     if current_run != run_id:
                         run_id, last = current_run, -1
+                        meter = PreviewRateMeter()
                 count = ring.published_count if frame_wakeup and run_id.int else 0
                 if count > 0 and count - 1 != last:
                     sequence = count - 1
                     read = ring.read_into(sequence, pixels, expected_run_id=run_id)
                     if read.status == "frame":
+                        if read.record is not None:
+                            meter.received(
+                                read.record.frame_id, read.record.acquisition_time_ns
+                            )
                         prepared = preparer.prepare_preview(pixels, self.output_bits)
                         latest = display_array(prepared, numpy)
                         if not owner_minimized:
                             cv.imshow(self.title, viewport.render(latest, cv, numpy))
+                            meter.presented += 1
                         if not self.ready.done():
                             cv.waitKey(1)
                             if not owner_minimized and not self._visible(cv):

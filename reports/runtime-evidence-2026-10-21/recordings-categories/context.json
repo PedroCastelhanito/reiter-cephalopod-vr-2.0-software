@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-21",
+  "source_revision": "c740c5c2881e11b4cf7f3d835ffa7708de6fdbfb plus uncommitted working-tree changes",
+  "method": "QT_QPA_PLATFORM=offscreen; QApplication, apply_theme, DashboardWindow(sample=True), ReviewControls; 1175x883 window; ensureWidgetVisible(recordings); recordings.grab().save(card.png)",
+  "outcome": "477x187 card rendered and visually inspected: Cameras and Recorded data headings, adjacent checkboxes and unclipped labels",
+  "checks": [
+    "pytest tests/gui/test_dashboard.py -q -k 'recording_checks_stay_next_to_labels or protocol_participation_and_asset_pages or runtime_gui_close_reopen_preserves_full_draft or full_gui_loaded_drafts_join_one_proposal' --basetemp=.pytest_tmp_recording_categories_20261021: 5 passed, 795 deselected (QT_QPA_PLATFORM=offscreen)",
+    "ruff check and ruff format --check src/cephvr/gui/recordings.py tests/gui/test_dashboard.py: pass",
+    "mypy --platform win32 src/cephvr/gui/recordings.py: pass",
+    "tools/check_backend_boundaries.py: 742 modules, zero violations; existing size warnings; affected recordings.py cohesive and below threshold",
+    "Scoped git diff --check passes; final whole-tree check flags concurrent unrelated tests/controller/test_setup.py:679 blank line at EOF (earlier whole-tree check passed)."
+  ],
+  "scope": "Local layout, edit gates and persistence; no native GUI restart or device/rig acceptance"
+}

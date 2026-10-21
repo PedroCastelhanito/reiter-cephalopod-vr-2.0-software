@@ -1,22 +1,28 @@
-"""Read-only speed timeline and synchronized polar motion instrument."""
+"""Read-only epoch timeline and time-aligned planned value lanes."""
 
-from math import ceil, cos, floor, log10, radians, sin
+from collections.abc import Callable
+from math import ceil, floor, log10
 
-from PyQt6.QtCore import QPointF, QRectF, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QPointF, QRectF, Qt, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
+    QHelpEvent,
     QMouseEvent,
     QPainter,
     QPainterPath,
     QPaintEvent,
     QPen,
-    QPolygonF,
 )
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QToolTip, QWidget
 
 from cephvr.gui.formatting import duration
-from cephvr.gui.preview_motion_data import MotionEpoch, MotionTrace, PolarSample
+from cephvr.gui.preview_motion_data import MotionEpoch, MotionTrace
 from cephvr.gui.theme import colors_for
+
+WINDOW_S = 60.0
+PLOT_LEFT = 64
+# Clearance above the largest planned value so traces never sit on the frame.
+HEADROOM = 1.1
 
 
 def plot_ticks(maximum: float, intervals: int = 5) -> tuple[float, ...]:
@@ -30,85 +36,232 @@ def plot_ticks(maximum: float, intervals: int = 5) -> tuple[float, ...]:
 
 
 def time_window(elapsed: float | None) -> tuple[float, float]:
-    start = (elapsed or 0.0) - 15.0
-    return start, start + 30.0
+    """Pin trial start to the left edge until current time reaches the center."""
+    start = max(0.0, (elapsed or 0.0) - WINDOW_S / 2)
+    return start, start + WINDOW_S
 
 
-class EpochStrip(QWidget):
-    def __init__(self) -> None:
-        super().__init__()
-        self.setFixedHeight(26)
-        self.epochs: tuple[MotionEpoch, ...] = ()
-        self.elapsed: float | None = None
-        self.setAccessibleName("Stimulus epoch markers")
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        painter = QPainter(self)
-        colors = colors_for(self)
-        painter.setPen(QColor(colors.muted))
-        painter.drawText(4, 18, "Epoch")
-        if not self.epochs:
-            return
-        start, end = time_window(self.elapsed)
-        width = max(1, self.width() - 128)
-        for index, epoch in enumerate(self.epochs):
-            visible_start, visible_end = max(start, epoch.start), min(end, epoch.end)
-            if visible_end <= visible_start:
-                continue
-            left = 64 + (visible_start - start) / (end - start) * width
-            span = (visible_end - visible_start) / (end - start) * width
-            rect = QRectF(left, 2, span, 22)
-            painter.fillRect(rect, QColor(colors.active if index % 2 else colors.card))
-            painter.setPen(QColor(colors.border))
-            painter.drawLine(rect.topLeft(), rect.bottomLeft())
-            if span > 24:
-                painter.setPen(QColor(colors.label))
-                text = painter.fontMetrics().elidedText(
-                    epoch.name, Qt.TextElideMode.ElideRight, int(span - 8)
-                )
-                painter.drawText(
-                    rect.adjusted(4, 0, -4, 0), Qt.AlignmentFlag.AlignVCenter, text
-                )
+def current_epoch(epochs: tuple[MotionEpoch, ...], time: float | None) -> int | None:
+    if time is None:
+        return None
+    index = next((i for i, e in enumerate(epochs) if e.start <= time < e.end), None)
+    if index is None and epochs and time == epochs[-1].end:
+        return len(epochs) - 1
+    return index
 
 
-class MotionPlot(QWidget):
+class TimeAxis(QWidget):
+    """Shared 60 s mapping, hover readout and click-to-inspect for aligned rows."""
+
     time_selected = pyqtSignal(float)
 
     def __init__(self) -> None:
         super().__init__()
-        self.setMinimumSize(200, 140)
+        self.setMouseTracking(True)
         self.epochs: tuple[MotionEpoch, ...] = ()
-        self.traces: list[MotionTrace] = []
-        self.errors: list[str] = []
         self.elapsed: float | None = None
-        self.message = "Select a trial with stimulus motion."
-        self.setAccessibleName("Planned stimulus speed against trial time")
+        self.right_margin = 24
+        self.message = ""
+        self.readout_lines: Callable[[float], list[str]] | None = None
 
     def plot_bounds(self) -> QRectF:
-        return QRectF(64, 25, max(1, self.width() - 128), max(1, self.height() - 59))
+        return QRectF(
+            PLOT_LEFT, 0, max(1, self.width() - PLOT_LEFT - self.right_margin), 1
+        )
+
+    def x_at(self, time: float) -> float:
+        bounds = self.plot_bounds()
+        start, end = time_window(self.elapsed)
+        return bounds.left() + (time - start) / (end - start) * bounds.width()
+
+    def time_at(self, x: float) -> float:
+        bounds = self.plot_bounds()
+        start, end = time_window(self.elapsed)
+        time = start + (x - bounds.left()) / bounds.width() * (end - start)
+        return max(0.0, min(self.epochs[-1].end, time))
+
+    def readout(self, time: float) -> str:
+        index = current_epoch(self.epochs, time)
+        heading = duration(time)
+        if index is not None:
+            heading += f" · {self.epochs[index].name}"
+        lines = [heading]
+        if self.readout_lines is not None:
+            lines.extend(self.readout_lines(time))
+        return "\n".join(lines)
+
+    def hovering(self, position: QPointF) -> bool:
+        bounds = self.plot_bounds()
+        return (
+            bool(self.epochs)
+            and not self.message
+            and bounds.left() <= position.x() <= bounds.right()
+        )
+
+    def event(self, event: QEvent | None) -> bool:
+        # Hovering replaces the static tooltip with planned values there.
+        if isinstance(event, QHelpEvent) and self.hovering(QPointF(event.pos())):
+            QToolTip.showText(
+                event.globalPos(), self.readout(self.time_at(event.pos().x())), self
+            )
+            return True
+        return super().event(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+        if event is not None and QToolTip.isVisible():
+            if self.hovering(event.position()):
+                QToolTip.showText(
+                    event.globalPosition().toPoint(),
+                    self.readout(self.time_at(event.position().x())),
+                    self,
+                )
+            else:
+                QToolTip.hideText()
+        super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if (
             event is not None
             and event.button() == Qt.MouseButton.LeftButton
-            and self.epochs
+            and self.hovering(event.position())
         ):
-            bounds = self.plot_bounds()
-            if bounds.contains(event.position()):
-                start, end = time_window(self.elapsed)
-                self.time_selected.emit(
-                    max(
-                        0.0,
-                        min(
-                            self.epochs[-1].end,
-                            start
-                            + (event.position().x() - bounds.left())
-                            / bounds.width()
-                            * (end - start),
-                        ),
-                    )
-                )
+            self.time_selected.emit(self.time_at(event.position().x()))
         super().mousePressEvent(event)
+
+    def draw_cursor(self, painter: QPainter, top: float, bottom: float) -> None:
+        start, end = time_window(self.elapsed)
+        if self.elapsed is not None and start <= self.elapsed <= end:
+            # Pixel-centre the 1 px cursor so antialiasing keeps it crisp.
+            x = round(self.x_at(self.elapsed)) + 0.5
+            painter.setPen(QPen(QColor(colors_for(self).label), 1))
+            painter.drawLine(QPointF(x, top), QPointF(x, bottom))
+
+
+class EpochTimeline(TimeAxis):
+    """Epoch blocks with current-epoch progress, a cursor and trial-time ticks."""
+
+    STRIP_TOP = 2
+    STRIP_HEIGHT = 24
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setFixedHeight(50)
+        self.setAccessibleName("Stimulus epoch timeline")
+
+    def plot_bounds(self) -> QRectF:
+        bounds = super().plot_bounds()
+        return QRectF(bounds.left(), self.STRIP_TOP, bounds.width(), self.STRIP_HEIGHT)
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        colors = colors_for(self)
+        bounds = self.plot_bounds()
+        painter.setPen(QColor(colors.label))
+        painter.drawText(
+            QRectF(4, bounds.top(), PLOT_LEFT - 8, bounds.height()),
+            Qt.AlignmentFlag.AlignVCenter,
+            "Epoch",
+        )
+        if self.message or not self.epochs:
+            painter.drawText(
+                bounds.adjusted(0, 0, 0, 24),
+                Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
+                self.message or "No epochs",
+            )
+            return
+        start, end = time_window(self.elapsed)
+        current = current_epoch(self.epochs, self.elapsed)
+        progress = QColor(colors.accent)
+        progress.setAlpha(90)
+        for index, epoch in enumerate(self.epochs):
+            visible_start, visible_end = max(start, epoch.start), min(end, epoch.end)
+            if visible_end <= visible_start:
+                continue
+            left, right = self.x_at(visible_start), self.x_at(visible_end)
+            rect = QRectF(left, bounds.top(), right - left, bounds.height())
+            painter.fillRect(
+                rect, QColor(colors.active if index == current else colors.card)
+            )
+            if index == current and self.elapsed is not None:
+                filled = self.x_at(min(max(self.elapsed, visible_start), visible_end))
+                painter.fillRect(
+                    QRectF(left, rect.top(), filled - left, rect.height()), progress
+                )
+                painter.setPen(QColor(colors.accent))
+                painter.drawRect(rect.adjusted(0.5, 0.5, -0.5, -0.5))
+            else:
+                painter.setPen(QColor(colors.border))
+                painter.drawLine(rect.topLeft(), rect.bottomLeft())
+            if rect.width() > 24:
+                painter.setPen(
+                    QColor(colors.text if index == current else colors.label)
+                )
+                text = painter.fontMetrics().elidedText(
+                    epoch.name, Qt.TextElideMode.ElideRight, int(rect.width() - 8)
+                )
+                painter.drawText(
+                    rect.adjusted(4, 0, -4, 0), Qt.AlignmentFlag.AlignVCenter, text
+                )
+        painter.setPen(QColor(colors.label))
+        label_width = (
+            painter.fontMetrics().horizontalAdvance(duration(max(0, end))) + 16
+        )
+        interval = max(5, ceil(label_width * (end - start) / bounds.width() / 5) * 5)
+        drawn_right = -float(label_width)
+        for tick_time in range(
+            max(0, ceil(start / interval) * interval),
+            floor(end / interval) * interval + 1,
+            interval,
+        ):
+            x = self.x_at(tick_time)
+            text = duration(tick_time)
+            half = painter.fontMetrics().horizontalAdvance(text) / 2
+            # Keep edge labels on-widget; skip one that would then touch its neighbour.
+            center = min(x, self.width() - half - 2)
+            if center - half < drawn_right + 8:
+                continue
+            drawn_right = center + half
+            painter.drawLine(
+                QPointF(x, bounds.bottom()), QPointF(x, bounds.bottom() + 3)
+            )
+            painter.drawText(
+                QRectF(center - 40, bounds.bottom() + 4, 80, 20),
+                Qt.AlignmentFlag.AlignCenter,
+                text,
+            )
+        # The tick axis already gives current time, so the cursor has no label.
+        self.draw_cursor(painter, 0, bounds.bottom() + 3)
+
+
+class TraceLane(TimeAxis):
+    """Planned value traces aligned to the epoch timeline (used for size)."""
+
+    def __init__(self, quantity: str) -> None:
+        super().__init__()
+        self.quantity = quantity
+        self.setFixedHeight(110)
+        self.traces: list[MotionTrace] = []
+        self.setAccessibleName(
+            f"Planned stimulus {quantity.lower()} against trial time"
+        )
+
+    @property
+    def units(self) -> list[str]:
+        return list(dict.fromkeys(trace.unit for trace in self.traces)) or ["deg"]
+
+    @property
+    def lane_margin(self) -> int:
+        """Reserve the right gutter only for a second unit's scale."""
+        return PLOT_LEFT if len(self.units) > 1 else 24
+
+    def plot_bounds(self) -> QRectF:
+        return QRectF(
+            PLOT_LEFT,
+            8,
+            max(1, self.width() - PLOT_LEFT - self.right_margin),
+            max(1, self.height() - 16),
+        )
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
@@ -116,35 +269,29 @@ class MotionPlot(QWidget):
         colors = colors_for(self)
         painter.fillRect(self.rect(), QColor(colors.console))
         painter.setPen(QColor(colors.label))
-        painter.drawText(
-            70,
-            16,
-            "Speed"
-            + (" · some sources unavailable (see legend)" if self.errors else ""),
-        )
         if self.message:
-            painter.setPen(QColor(colors.muted))
             painter.drawText(
-                self.rect().adjusted(20, 22, -20, -8),
+                self.rect().adjusted(20, 4, -20, -4),
                 Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
                 self.message,
             )
             return
         bounds = self.plot_bounds()
-        start, end = time_window(self.elapsed)
-        units = list(dict.fromkeys(trace.unit for trace in self.traces)) or ["mm/s"]
+        units = self.units
         scales = {
             unit: plot_ticks(
-                max(
+                HEADROOM
+                * max(
                     (
                         v
                         for trace in self.traces
                         if trace.unit == unit
-                        for segment in trace.segments
+                        for segment in (*trace.segments, *trace.planned)
                         for _, v in segment
                     ),
                     default=0,
-                )
+                ),
+                intervals=3,
             )
             for unit in units
         }
@@ -153,13 +300,14 @@ class MotionPlot(QWidget):
             ticks = scales[unit]
             padding = ticks[1] * 0.12
             return QPointF(
-                bounds.left() + (t - start) / (end - start) * bounds.width(),
+                self.x_at(t),
                 bounds.bottom()
                 - (value + padding) / (ticks[-1] + padding) * bounds.height(),
             )
 
+        start = time_window(self.elapsed)[0]
         for axis, unit in enumerate(units):
-            painter.setPen(QColor(colors.muted))
+            painter.setPen(QColor(colors.label))
             painter.save()
             painter.translate(
                 12 if axis == 0 else self.width() - 12, bounds.center().y()
@@ -168,7 +316,7 @@ class MotionPlot(QWidget):
             painter.drawText(
                 QRectF(-bounds.height() / 2, -10, bounds.height(), 20),
                 Qt.AlignmentFlag.AlignCenter,
-                unit,
+                f"{self.quantity} ({unit})",
             )
             painter.restore()
             for value in scales[unit]:
@@ -178,7 +326,7 @@ class MotionPlot(QWidget):
                     painter.drawLine(
                         QPointF(bounds.left(), y), QPointF(bounds.right(), y)
                     )
-                painter.setPen(QColor(colors.muted))
+                painter.setPen(QColor(colors.label))
                 painter.drawText(
                     QRectF(0 if axis == 0 else bounds.right() + 5, y - 9, 54, 18),
                     Qt.AlignmentFlag.AlignRight
@@ -186,175 +334,29 @@ class MotionPlot(QWidget):
                     else Qt.AlignmentFlag.AlignLeft,
                     f"{value:g}",
                 )
-        label_width = painter.fontMetrics().horizontalAdvance(duration(max(0, end))) + 8
-        interval = max(5, ceil(label_width * (end - start) / bounds.width() / 5) * 5)
-        for tick_time in range(
-            max(0, ceil(start / interval) * interval),
-            floor(end / interval) * interval + 1,
-            interval,
-        ):
-            x = point(tick_time, 0).x()
-            painter.setPen(QColor(colors.muted))
-            painter.drawText(
-                QRectF(x - 40, bounds.bottom() + 5, 80, 20),
-                Qt.AlignmentFlag.AlignCenter,
-                duration(tick_time),
-            )
-        painter.drawText(self.width() - 125, self.height() - 2, "Time (hh:mm:ss)")
         painter.save()
         painter.setClipRect(bounds.adjusted(0, -2, 0, 2))
         for trace in self.traces:
-            painter.setPen(QPen(QColor(getattr(colors, trace.color)), 2))
-            previous: tuple[float, float] | None = None
-            for segment in trace.segments:
-                path = QPainterPath()
-                for index, (t, value) in enumerate(segment):
-                    if index:
-                        path.lineTo(point(t, value, trace.unit))
-                    elif previous is not None and previous[0] == t:
-                        path.moveTo(point(*previous, trace.unit))
-                        path.lineTo(point(t, value, trace.unit))
-                    else:
-                        path.moveTo(point(t, value, trace.unit))
-                painter.drawPath(path)
-                previous = segment[-1] if segment else None
-                if segment and segment[-1][0] == (self.elapsed or 0.0):
-                    painter.setBrush(QColor(getattr(colors, trace.color)))
-                    painter.drawEllipse(point(*segment[-1], trace.unit), 2.5, 2.5)
-                    painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.restore()
-        if self.elapsed is not None and start <= self.elapsed <= end:
-            x = point(self.elapsed, 0).x()
-            painter.setPen(QPen(QColor(colors.coral), 2))
-            painter.drawText(
-                QRectF(min(max(x - 40, bounds.left()), bounds.right() - 80), 3, 80, 18),
-                Qt.AlignmentFlag.AlignCenter,
-                duration(self.elapsed),
-            )
-
-
-class PolarMotionPlot(QWidget):
-    def __init__(self) -> None:
-        super().__init__()
-        self.setMinimumSize(240, 190)
-        self.setMaximumWidth(380)
-        self.samples: list[PolarSample] = []
-        self.setAccessibleName("Local motion direction and angular speed")
-        self.setToolTip(
-            "Direction uses the programmed local axes: 0° (+X) points down; 90° (+Y) points right. The outer ring shows signed angular speed, not texture angle."
-        )
-
-    @staticmethod
-    def arrow(painter: QPainter, tip: QPointF, angle: float) -> None:
-        back = tip - QPointF(cos(angle) * 9, -sin(angle) * 9)
-        normal = QPointF(sin(angle) * 4, cos(angle) * 4)
-        painter.drawPolygon(QPolygonF([tip, back + normal, back - normal]))
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        colors = colors_for(self)
-        painter.fillRect(self.rect(), QColor(colors.console))
-        painter.setPen(QColor(colors.label))
-        painter.drawText(
-            QRectF(0, 3, self.width(), 20),
-            Qt.AlignmentFlag.AlignCenter,
-            "Direction & rotation",
-        )
-        footer = max(1, len(self.samples)) * 22 + 28
-        radius = max(
-            30.0, min(self.width() / 2 - 25, (self.height() - 32 - footer) / 2)
-        )
-        center = QPointF(self.width() / 2, 27 + radius)
-        inner = radius - 24
-
-        def point(angle: float, distance: float) -> QPointF:
-            return center + QPointF(cos(angle) * distance, -sin(angle) * distance)
-
-        painter.setPen(QPen(QColor(colors.border), 1))
-        painter.drawEllipse(center, radius, radius)
-        painter.drawEllipse(center, inner, inner)
-        for angle in (0, 90, 180, 270):
-            rad = radians(angle - 90)
-            painter.setPen(QPen(QColor(colors.border), 1))
-            painter.drawLine(center, point(rad, inner))
-            pos = point(rad, inner + 12)
-            painter.setPen(QColor(colors.muted))
-            painter.drawText(
-                QRectF(pos.x() - 15, pos.y() - 8, 30, 16),
-                Qt.AlignmentFlag.AlignCenter,
-                str(angle),
-            )
-        table_top = self.height() - footer
-        painter.setPen(QColor(colors.border))
-        painter.drawLine(12, table_top, self.width() - 12, table_top)
-        painter.setPen(QColor(colors.muted))
-        for left, width, title in (
-            (12, self.width() * 0.4 - 12, "Source"),
-            (
-                self.width() * 0.4,
-                self.width() * 0.23,
-                "Direction" if self.width() >= 300 else "Dir.",
-            ),
-            (self.width() * 0.63, self.width() * 0.37 - 12, "Rotation"),
-        ):
-            painter.drawText(
-                QRectF(left, table_top + 4, width, 18),
-                Qt.AlignmentFlag.AlignLeft,
-                title,
-            )
-        for index, sample in enumerate(self.samples):
-            color = QColor(getattr(colors, sample.color))
-            painter.setPen(QPen(color, 2))
-            painter.setBrush(color)
-            if sample.direction is not None:
-                rad = radians(sample.direction - 90)
-                tip = point(rad, inner * (0.9 - index * 0.08))
-                painter.drawLine(center, tip)
-                self.arrow(painter, tip, rad)
-            if sample.angular_speed:
-                sign = 1 if sample.angular_speed > 0 else -1
-                ring = radius - index * 4
-                angles = [radians(35 + sign * i * 3) for i in range(41)]
-                path = QPainterPath(point(angles[0], ring))
-                for arc_angle in angles[1:]:
-                    path.lineTo(point(arc_angle, ring))
-                painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.drawPath(path)
-                painter.setBrush(color)
-                self.arrow(
-                    painter, point(angles[-1], ring), angles[-1] + sign * radians(90)
-                )
-            direction = (
-                f"{sample.direction:.3g}°"
-                if sample.direction is not None
-                else "Still"
-                if sample.message == "No translation"
-                else "—"
-            )
-            rotation = (
-                f"{abs(sample.angular_speed):.3g}°/s {'CCW' if sample.angular_speed > 0 else 'CW'}"
-                if sample.angular_speed
-                else "0°/s"
-                if sample.angular_speed == 0
-                else "—"
-            )
-            for left, width, text in (
-                (12, self.width() * 0.4 - 16, sample.name.split(" · ")[0]),
-                (self.width() * 0.4, self.width() * 0.23, direction),
-                (self.width() * 0.63, self.width() * 0.37 - 12, rotation),
+            color = QColor(getattr(colors, trace.color))
+            planned = QColor(color)
+            planned.setAlpha(110)
+            for pen, segments in (
+                (QPen(planned, 1.5, Qt.PenStyle.DashLine), trace.planned),
+                (QPen(color, 2), trace.segments),
             ):
-                painter.drawText(
-                    QRectF(left, table_top + 25 + index * 22, width, 20),
-                    Qt.AlignmentFlag.AlignLeft,
-                    painter.fontMetrics().elidedText(
-                        text, Qt.TextElideMode.ElideRight, int(width)
-                    ),
-                )
-        if not self.samples:
-            painter.setPen(QColor(colors.muted))
-            painter.drawText(
-                QRectF(4, table_top + 25, self.width() - 8, 18),
-                Qt.AlignmentFlag.AlignCenter,
-                "No sources selected",
-            )
+                painter.setPen(pen)
+                previous: tuple[float, float] | None = None
+                for segment in segments:
+                    path = QPainterPath()
+                    for index, (t, value) in enumerate(segment):
+                        if index:
+                            path.lineTo(point(t, value, trace.unit))
+                        elif previous is not None and previous[0] == t:
+                            path.moveTo(point(*previous, trace.unit))
+                            path.lineTo(point(t, value, trace.unit))
+                        else:
+                            path.moveTo(point(t, value, trace.unit))
+                    painter.drawPath(path)
+                    previous = segment[-1] if segment else None
+        painter.restore()
+        self.draw_cursor(painter, bounds.top(), bounds.bottom())

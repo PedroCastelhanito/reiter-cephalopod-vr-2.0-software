@@ -92,5 +92,6 @@ def assemble_driver(
         shutdown=shutdown,
     )
     port.preview_changed = driver.preview_changed
+    port.preview_rates = driver.preview_rates
     declare.operation = driver.announce
     return driver

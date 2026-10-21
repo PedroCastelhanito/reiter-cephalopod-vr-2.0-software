@@ -1,0 +1,24 @@
+[
+  {
+    "recipe": "0003_145745_stimulus_LOG.json",
+    "recipe_sha256": "ae96c2d9052db0fece34396e93f872223649633ab038e299cb8abf089f4bb566",
+    "verified_images": 340,
+    "recorded_renderer_provenance": {
+      "content_sha256": "2a6d65fa290b00fcd760007cd69447f3929e7133943c0faced24935e7e5ffc49",
+      "implementation": "cephvr.visual_stimulus.python-source-v1",
+      "role": "renderer",
+      "version": "2.0.0.dev0"
+    }
+  },
+  {
+    "recipe": "0003_150746_stimulus_LOG.json",
+    "recipe_sha256": "6593cf98800eedc6ec27518eed552461bf688585bce1dff4d8b7c49d08b1fec8",
+    "verified_images": 324,
+    "recorded_renderer_provenance": {
+      "content_sha256": "2a6d65fa290b00fcd760007cd69447f3929e7133943c0faced24935e7e5ffc49",
+      "implementation": "cephvr.visual_stimulus.python-source-v1",
+      "role": "renderer",
+      "version": "2.0.0.dev0"
+    }
+  }
+]

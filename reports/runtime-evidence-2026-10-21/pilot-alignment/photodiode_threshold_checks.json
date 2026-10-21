@@ -1,0 +1,95 @@
+{
+  "method": "exploratory 30-sample bin means with fixed thresholds; not calibrated event timestamps",
+  "checks": [
+    {
+      "threshold_v": 1.0,
+      "total_transitions": 218364,
+      "runs_below_3ms": 0,
+      "per_trial": [
+        {
+          "trial": 1,
+          "transitions": 50378
+        },
+        {
+          "trial": 2,
+          "transitions": 167986
+        }
+      ]
+    },
+    {
+      "threshold_v": 1.5,
+      "total_transitions": 218364,
+      "runs_below_3ms": 0,
+      "per_trial": [
+        {
+          "trial": 1,
+          "transitions": 50378
+        },
+        {
+          "trial": 2,
+          "transitions": 167986
+        }
+      ]
+    },
+    {
+      "threshold_v": 2.0,
+      "total_transitions": 218364,
+      "runs_below_3ms": 0,
+      "per_trial": [
+        {
+          "trial": 1,
+          "transitions": 50378
+        },
+        {
+          "trial": 2,
+          "transitions": 167986
+        }
+      ]
+    },
+    {
+      "threshold_v": 2.5,
+      "total_transitions": 218730,
+      "runs_below_3ms": 183,
+      "per_trial": [
+        {
+          "trial": 1,
+          "transitions": 50452
+        },
+        {
+          "trial": 2,
+          "transitions": 168278
+        }
+      ]
+    }
+  ],
+  "candidate_sequence_matches": [
+    {
+      "trial": 1,
+      "paired_transitions": 50378,
+      "host_to_obx_slope": 0.9999821558098443,
+      "residual_ms_percentiles": [
+        -52.37963036381643,
+        -3.4400339637768695,
+        -0.6662540844786236,
+        9.845914021155973,
+        16.684746231248937
+      ],
+      "residual_rms_ms": 2.7628702780420498,
+      "scope": "ordered candidate matching to render evaluation, not calibrated submission-to-photon latency"
+    },
+    {
+      "trial": 2,
+      "paired_transitions": 167985,
+      "host_to_obx_slope": 0.9999868467232936,
+      "residual_ms_percentiles": [
+        -55.01332767744316,
+        -10.149037366581979,
+        1.2288500943213876,
+        4.773451409928384,
+        37.32631541151932
+      ],
+      "residual_rms_ms": 3.616641932187463,
+      "scope": "ordered candidate matching to render evaluation, not calibrated submission-to-photon latency"
+    }
+  ]
+}

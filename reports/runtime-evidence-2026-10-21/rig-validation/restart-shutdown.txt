@@ -1,0 +1,1 @@
+Graceful ShutdownApplication admitted CommandOutcome(command_id='0ad7a299-d3ef-4d9c-96f5-0673cc6ffb30', complete=False, succeeded=None, needs_input=False, failure='')

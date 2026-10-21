@@ -25,7 +25,7 @@ class ImageGpuPort(Protocol):
     def upload(
         self, source: ImageSource, pixels: bytes, textures: list[Any]
     ) -> bool: ...
-    def fence(self, fences: list[Any]) -> None: ...
+    def fence(self, textures: list[Any], fences: list[Any]) -> None: ...
     def ready(self, fences: list[Any]) -> bool: ...
     def release(self, textures: list[Any], fences: list[Any]) -> None: ...
 
@@ -49,6 +49,7 @@ class ImageResidency:
         clock_ns: Callable[[], int] = time.perf_counter_ns,
         announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None]
         | None = None,
+        progress: Callable[[int, int], None] | None = None,
     ) -> None:
         self.schedule, self.budget, self.clock_ns = schedule, budget, clock_ns
         self.entries = {key: ResidentImage() for key in schedule.sources}
@@ -76,6 +77,7 @@ class ImageResidency:
         self.worker = ImageWorker(budget, clock_ns=clock_ns)
         self._announce_batch = announce_batch
         self._announced: set[str] = set()
+        self._progress = progress
         self.released_keys: set[str] = set()
 
     def _validate_capacity(self) -> None:
@@ -176,7 +178,7 @@ class ImageResidency:
                 if result.key not in self._desired:
                     completed = True
                     if entry.textures:
-                        self._gpu.fence(entry.fences)
+                        self._gpu.fence(entry.textures, entry.fences)
                         entry.state = "retiring"
                         self._fenced.add(result.key)
                     else:
@@ -190,7 +192,7 @@ class ImageResidency:
                 )
                 if not completed:
                     return
-                self._gpu.fence(entry.fences)
+                self._gpu.fence(entry.textures, entry.fences)
                 entry.state = "uploading"
                 self._fenced.add(result.key)
             except BaseException as exc:
@@ -251,7 +253,7 @@ class ImageResidency:
         for key in tuple(self._allocated):
             entry = self.entries[key]
             if key not in desired and entry.state == "resident":
-                self._gpu.fence(entry.fences)
+                self._gpu.fence(entry.textures, entry.fences)
                 entry.state = "retiring"
                 self._fenced.add(key)
         self._pending = deque(ordered_desired)
@@ -272,6 +274,11 @@ class ImageResidency:
             if self.clock_ns() >= deadline_ns:
                 raise TimeoutError("initial image residency missed Setup deadline")
             self.service(deadline_ns)
+            if self._progress is not None:
+                self._progress(
+                    sum(self.entries[key].state == "resident" for key in self._desired),
+                    len(self._desired),
+                )
             if (
                 all(self.entries[key].state == "resident" for key in self._desired)
                 and not self.worker.busy
@@ -384,7 +391,7 @@ class ImageResidency:
             try:
                 if entry.textures:
                     if entry.state != "retiring":
-                        self._gpu.fence(entry.fences)
+                        self._gpu.fence(entry.textures, entry.fences)
                         entry.state = "retiring"
                     if not self._gpu.ready(entry.fences):
                         errors.append(f"{self._owner(key)}:GPU completion pending")

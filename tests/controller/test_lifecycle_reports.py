@@ -155,6 +155,7 @@ def _fixture(root: Path) -> _Fixture:
         reservation=reservation,
         required={"visual_stimulus": participant},
         setup_operations={"visual_stimulus": "setup"},
+        visual_stimulus_setup_dispatched=True,
     )
     attempt.scope_commands["scope"] = ("visual_stimulus", "incident", 1)
     attempt.setup_deadline_ns = 100
@@ -376,6 +377,47 @@ async def test_failed_setup_cleanup_matches_registered_output_set_exactly(
     assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) is accepted
     if not accepted:
         assert receipt.failure.code == "EVIDENCE"
+
+
+@pytest.mark.parametrize(
+    "dispatched,heartbeat", ((False, False), (False, True), (True, False), (True, True))
+)
+async def test_pre_dispatch_stimulus_cleanup_requires_exact_empty_proof(
+    tmp_path, dispatched, heartbeat
+):
+    fixture = _fixture(tmp_path)
+    attempt = fixture.attempt
+    attempt.visual_stimulus_setup_dispatched = dispatched
+    setting = attempt.prepared.configuration.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
+    setting.visual_stimulus.save_visual_stimulus_data = True
+    source = pb.ProcessIdentity(
+        role="visual_stimulus", generation=fixture.backend.backend_generation
+    )
+    work = pb.WorkContext(session=attempt.context)
+    operation = pb.OperationContext(command_id=str(uuid4()))
+    attempt.registered_context = svc.RegisteredContext(work=work)
+    attempt.registered_context.cleanup_commands.add(
+        target=source, work=work, operation=operation
+    )
+    if heartbeat:
+        fixture.supervisor.processes["visual_stimulus"] = svc.ProcessHealthStatus(
+            process=source,
+            last_heartbeat=pb.HeartbeatReport(
+                source=source, work=work, cleanup_resources_revision=0
+            ),
+        )
+    cleanup = pb.CleanupReport(
+        source=source,
+        work=work,
+        operation=operation,
+        verified_monotonic_ns=1,
+        trial_activity_stopped=True,
+        cleanup_resources_revision=0,
+    )
+    receipt = await fixture.reports.receive(pb.LifecycleReport(cleanup=cleanup), 50)
+    assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) is not dispatched
 
 
 @pytest.mark.parametrize("path", [None, "wrong.jsonl", "camera.jsonl"])
@@ -744,3 +786,55 @@ async def test_successful_prepare_completion_can_follow_accepted_trial_ready(
     assert (
         await fixture.reports.receive(report, 50)
     ).result == pb.COMMAND_RESULT_REJECTED
+
+
+async def test_setup_progress_is_nonterminal_and_rejects_stale_or_invalid_reports(
+    tmp_path,
+):
+    fixture = _fixture(tmp_path)
+    operation = pb.OperationState(
+        context=pb.OperationContext(command_id="setup"),
+        command="SetupSession",
+        work=pb.WorkContext(session=fixture.attempt.context),
+        progress="Uploading initial textures: 4/20",
+    )
+    report = pb.LifecycleReport(
+        operation=pb.BackendOperationReport(
+            source=fixture.backend,
+            operation=operation,
+        )
+    )
+    receipt = await fixture.reports.receive(report, 50)
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert fixture.attempt.setup_progress == {"visual_stimulus": operation.progress}
+    assert not fixture.attempt.scope_results and not fixture.attempt.ready
+    assert fixture.attempt.setup_deadline_ns == 100
+    assert not fixture.attempt.changed.is_set()
+    assert fixture.publications == [1]
+
+    for mutation in (
+        lambda r: setattr(r.operation.source, "backend_generation", "stale"),
+        lambda r: setattr(r.operation.operation.context, "command_id", "stale"),
+        lambda r: setattr(r.operation.operation.work.session, "session_id", "stale"),
+        lambda r: setattr(r.operation.operation, "progress", "x" * 2049),
+        lambda r: setattr(r.operation.operation, "progress", ""),
+        lambda r: setattr(r.operation.operation, "succeeded", True),
+    ):
+        changed = pb.LifecycleReport.FromString(report.SerializeToString())
+        mutation(changed)
+        assert (
+            await fixture.reports.receive(changed, 50)
+        ).result == pb.COMMAND_RESULT_REJECTED
+    assert (
+        await fixture.reports.receive(report, 101)
+    ).result == pb.COMMAND_RESULT_REJECTED
+    fixture.attempt.cancel_requested = True
+    assert (
+        await fixture.reports.receive(report, 50)
+    ).result == pb.COMMAND_RESULT_REJECTED
+    fixture.attempt.cancel_requested = False
+    fixture.lifecycle.session.phase = pb.SESSION_PHASE_READY
+    assert (
+        await fixture.reports.receive(report, 50)
+    ).result == pb.COMMAND_RESULT_REJECTED
+    assert fixture.publications == [1]

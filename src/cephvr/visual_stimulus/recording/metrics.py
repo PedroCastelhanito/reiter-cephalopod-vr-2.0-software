@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import threading
 from collections.abc import Callable
 
@@ -170,14 +169,3 @@ class RecordingMetrics:
                 "submitted_bytes": self._written_bytes,
                 "cancelled_captures": self._cancelled,
             }
-
-
-def configure_recording_logger() -> None:
-    """Enable JSON summary output in the renderer without changing root logging."""
-    logger = logging.getLogger("cephvr.visual_stimulus.recording.session")
-    if not logger.handlers:
-        handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter("%(message)s"))
-        logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-    logger.propagate = False

@@ -102,6 +102,7 @@ class PreparationContext:
                         "closed-loop Visual Stimulus feedback descriptor unavailable"
                     )
                 request.feedback_attachment.CopyFrom(tracking.feedback)
+            attempt.visual_stimulus_setup_dispatched = True
         return request
 
     def catalogues_match_ready(self, attempt: Attempt) -> bool:

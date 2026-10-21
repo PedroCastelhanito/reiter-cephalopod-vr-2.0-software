@@ -172,6 +172,7 @@ class LifecycleState:
     trial: pb.TrialState = field(
         default_factory=lambda: pb.TrialState(phase=pb.TRIAL_PHASE_PENDING)
     )
+    last_finalization: pb.SessionFinalization | None = None
     attempt: Attempt | None = None
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     changed: asyncio.Condition = field(default_factory=asyncio.Condition)
@@ -379,6 +380,7 @@ class Attempt:
     reservation: OutputReservation
     required: dict[str, BackendPort]
     setup_operations: dict[str, str]
+    visual_stimulus_setup_dispatched: bool = False
     ready: dict[str, pb.ReadyReport] = field(default_factory=dict)
     trial_ready: dict[str, pb.ReadyReport] = field(default_factory=dict)
     trial_results: dict[str, pb.OperationState] = field(default_factory=dict)
@@ -444,6 +446,7 @@ class Attempt:
     confirmed_incidents: dict[str, pb.RuntimeIncident] = field(default_factory=dict)
     scope_commands: dict[str, tuple[str, str, int]] = field(default_factory=dict)
     scope_results: dict[str, pb.OperationState] = field(default_factory=dict)
+    setup_progress: dict[str, str] = field(default_factory=dict)
     scope_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     scope_inflight: dict[str, frozenset[str]] = field(default_factory=dict)
     cleanup_catalogue_revisions: dict[str, int] = field(default_factory=dict)

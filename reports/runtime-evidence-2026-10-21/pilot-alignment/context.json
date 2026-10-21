@@ -1,0 +1,127 @@
+{
+  "inspection_date": "2026-10-21",
+  "timezone": "Asia/Tokyo",
+  "source_root": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824",
+  "acquisition_source_revision": "unknown; saved provenance reports 2.0.0.dev0",
+  "inspection_repository_head": "c740c5c2881e11b4cf7f3d835ffa7708de6fdbfb",
+  "inspection_worktree": "dirty with concurrent unrelated changes",
+  "python": "3.11.15",
+  "method": "run inspect_pulses.py, inspect_logs.py, inspect_probe_sync.py, inspect_photodiode.py, check_matching.py with repository Python; D: reads required sandbox escalation",
+  "outcome": "camera/OneBox correspondence supported; photodiode candidate sequence recoverable; shared probe/OneBox SY wave absent; no validated neural clock mapping",
+  "validation_scope": "full OneBox digital scan, full probe SY scan, full timing JSONL scan; metadata binary byte counts checked; assertion-based identity/pattern/count checks; analog windows and full bin-mean threshold checks",
+  "limitations": [
+    "No raw data or runtime settings modified",
+    "No neural waveform processing or spike sorting",
+    "No full binary checksum verification or video decoding",
+    "No certified optical or exposure latency calibration",
+    "No production alignment implementation or rig acceptance"
+  ],
+  "failed_attempts": [
+    "Initial C: session copy has empty spikeglx-data",
+    "Initial D: sandbox read denied; elevated read succeeded",
+    "matplotlib unavailable in repository and bundled runtimes; waveform diagnostic rendered with installed Pillow",
+    "Directory Ruff invocation found no files because reports are excluded; not counted as lint validation"
+  ],
+  "sources": [
+    "https://billkarsh.github.io/SpikeGLX/help/syncEdges/Sync_edges/",
+    "https://github.com/billkarsh/SpikeGLX/blob/master/Markdown/SpikeGLX_OneBox_Quickstart.md",
+    "https://billkarsh.github.io/SpikeGLX/More_help/Metadata_20.html"
+  ],
+  "files": [
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\.cephvr-reservation.json",
+      "bytes": 151,
+      "sha256": "9f4c47876468c0ae1dca8812bb6bc7a5a761df48a7855669d6e8c70585dd35a1"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\.cephvr.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_123845_behavioral_cam.mp4",
+      "bytes": 3114763825
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_123845_behavioral_cam_frames.jsonl",
+      "bytes": 9523966
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_123845_LOG.json",
+      "bytes": 9074,
+      "sha256": "db824c4743f7b5e5101e5fd8141df258afcf1131fb557287969af14580933cef"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_123845_stimulus.mp4",
+      "bytes": 125153879
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_123845_stimulus_frames.jsonl",
+      "bytes": 305615443
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_123845_stimulus_LOG.json",
+      "bytes": 38101,
+      "sha256": "a842b6155646faf9d4cd318161a43b795da5e213ef19c3709a81ed78fab65896"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_125346_behavioral_cam.mp4",
+      "bytes": 9774791513
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_125346_behavioral_cam_frames.jsonl",
+      "bytes": 31872636
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_125346_LOG.json",
+      "bytes": 484699,
+      "sha256": "e7e3278890881d7d95ed89f4083f5ce052374f105eaa65151437d8d883c065a2"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_125346_stimulus.mp4",
+      "bytes": 2305082431
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_125346_stimulus_frames.jsonl",
+      "bytes": 1028191806
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\0003_125346_stimulus_LOG.json",
+      "bytes": 1308638,
+      "sha256": "db76ea825a9e9367441632131d1e456b79218affa0d2755b8bf66f64f68f19e1"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\SCHEMA.json",
+      "bytes": 17498,
+      "sha256": "3792815c8795888c50b28203b2743e9fa9f91326b5fd2461d22bcf70935c1e96"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\SESSION_CONFIG.json",
+      "bytes": 1854562,
+      "sha256": "f6ea7b2cf2d733a6d96b459fdd88de3154f5ce643de0eeefb422f9ff4e8b2950"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\protocol-data\\SESSION_LOG.jsonl",
+      "bytes": 1441,
+      "sha256": "8b3a1a0269f6ff5bab0fb6e034b3b84551c62db5c36b31ad1d678dfeba273ad8"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\spikeglx-data\\SP0003-123824_g1\\SP0003-123824_g1_imec0\\SP0003-123824_g1_t0.imec0.ap.bin",
+      "bytes": 90174652260
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\spikeglx-data\\SP0003-123824_g1\\SP0003-123824_g1_imec0\\SP0003-123824_g1_t0.imec0.ap.meta",
+      "bytes": 18162,
+      "sha256": "373e677e4a8e3804ccac96c7a8ee4121b679356ede35ba161cf7df75b1af844a"
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\spikeglx-data\\SP0003-123824_g1\\SP0003-123824_g1_t0.obx0.obx.bin",
+      "bytes": 3312294720
+    },
+    {
+      "path": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824\\spikeglx-data\\SP0003-123824_g1\\SP0003-123824_g1_t0.obx0.obx.meta",
+      "bytes": 1002,
+      "sha256": "3659dc1528164b045750efa4b4ca32cd529733a9e81095eb195162f41774b051"
+    }
+  ]
+}

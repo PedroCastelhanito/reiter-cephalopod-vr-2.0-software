@@ -24,6 +24,15 @@ class MotionEpoch:
     end: float
     name: str
     settings: tuple[Settings, ...]
+    scene_id: str = ""
+    start_ns: int = 0
+    end_ns: int = 0
+
+    def local_ns(self, time: float) -> int:
+        """Epoch-local evaluation time, clamped inside the half-open epoch."""
+        return max(
+            0, min(round((time - self.start) * 1e9), self.end_ns - self.start_ns - 1)
+        )
 
 
 def motion_epochs(program: Program, seed: str) -> tuple[MotionEpoch, ...]:
@@ -36,16 +45,26 @@ def motion_epochs(program: Program, seed: str) -> tuple[MotionEpoch, ...]:
                 raise ValueError("Set a stimulus seed to preview shuffled order.")
             pending.extend(node.body)
     epochs = []
-    elapsed = 0.0
+    elapsed_ns = 0
     for occurrence in expand_program(
         program, seed_decimal=seed or "0", max_expanded_epochs=2000
     ):
         source = occurrence.source
         if not isinstance(source.duration, Fixed):
             raise ValueError("Variable epoch timing is resolved at Setup.")
-        end = elapsed + source.duration.duration.ns() / 1e9
-        epochs.append(MotionEpoch(elapsed, end, source.epoch_id, occurrence.settings))
-        elapsed = end
+        end_ns = elapsed_ns + source.duration.duration.ns()
+        epochs.append(
+            MotionEpoch(
+                elapsed_ns / 1e9,
+                end_ns / 1e9,
+                source.epoch_id,
+                occurrence.settings,
+                source.scene_id,
+                elapsed_ns,
+                end_ns,
+            )
+        )
+        elapsed_ns = end_ns
     return tuple(epochs)
 
 
@@ -211,12 +230,46 @@ class MotionTrace:
     unit: str
     color: str
     segments: tuple[tuple[tuple[float, float], ...], ...]
+    # Remaining planned samples after current time, drawn dimmed.
+    planned: tuple[tuple[tuple[float, float], ...], ...] = ()
 
 
 @dataclass(frozen=True)
-class PolarSample:
+class DialSample:
+    """One dial's planned or live vector; vector is None when it has no arrow."""
+
     name: str
     color: str
-    direction: float | None
+    form: str  # "texture": local X/Y axes; "tracking": forward/left body frame.
+    unit: str
+    vector: tuple[float, float] | None
     angular_speed: float | None
+    scale: float
+    rotation_scale: float
     message: str = ""
+    orientation_deg: float | None = None
+
+
+def planned_size(setting: Settings, local_ns: int) -> tuple[float, float]:
+    if setting.kind == "arena":
+        raise ValueError("Arena scenes have no layer size.")
+    return (
+        evaluate_function(setting.width, local_ns),
+        evaluate_function(setting.height, local_ns),
+    )
+
+
+def size_functions_vary(settings: tuple[Settings | None, ...]) -> tuple[bool, bool]:
+    """Report whether width/height change within or across a source's epochs."""
+    varies = []
+    for name in ("width", "height"):
+        functions = [
+            getattr(setting, name)
+            for setting in settings
+            if setting is not None and setting.kind != "arena"
+        ]
+        varies.append(
+            any(not isinstance(function, Constant) for function in functions)
+            or len({function.value for function in functions}) > 1
+        )
+    return varies[0], varies[1]

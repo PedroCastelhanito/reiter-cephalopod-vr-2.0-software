@@ -20,13 +20,13 @@ from cephvr.gui.components import (
     field,
 )
 from cephvr.gui.dialogs import StopDialog, SubjectReuseDialog
-from cephvr.gui.formatting import duration
+from cephvr.gui.formatting import duration, hud_grid
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import DirectoryField
 from cephvr.gui.previews import PreviewDialog
 from cephvr.gui.recent_values import RecentValues, suggest_values
 from cephvr.gui.subject_history import SubjectSessions, find_subject_sessions
-from cephvr.gui.theme import SIZES
+from cephvr.gui.theme import SIZES, retro_console
 from cephvr.gui.view import DashboardView, Phase
 
 SPECIES = ("Sepia Pharaonis", "Sepia Latimanus", "Sepioteuthis lessoniana")
@@ -226,6 +226,7 @@ class Dashboard(ResponsiveColumns):
             action in ACTION_PHASES
             and view.phase in ACTION_PHASES[action]
             and view.has_control
+            and (action not in {"Setup", "Start", "New session"} or view.can_edit)
             and (view.connected or view.sample)
         )
 
@@ -366,11 +367,9 @@ class Dashboard(ResponsiveColumns):
                 "TOTAL TIME",
                 f"{duration(view.total_elapsed_s)} / {duration(view.total_duration_s)}",
             ),
+            ("OUTPUT", view.output_directory or "—"),
         )
         self.status_column.set_rows((rows[0], None, *rows[1:]))
-        self.preview_dialog.hud.setPlainText(
-            "\n".join(
-                "    ".join(f"{key}: {value}" for key, value in pair)
-                for pair in (rows[:2], rows[2:])
-            )
-        )
+        self.preview_dialog.set_output_status(view.output_status)
+        hud = self.preview_dialog.hud
+        hud.setPlainText(hud_grid((rows[:2], rows[2:4]), retro=retro_console(hud)))

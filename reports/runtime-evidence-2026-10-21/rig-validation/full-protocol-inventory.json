@@ -1,0 +1,14 @@
+{
+  "protocol": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\primate_cuttlebase_20min.json",
+  "sha256": "fb0f9b552342221bc4704031c62b7f0ec7074d95a1f17d937b1230c63bd78aee",
+  "asset_root": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media",
+  "trials": [
+    "Primate - Part 1 - 10 minutes",
+    "Cuttlebase - Part 1 - 10 minutes"
+  ],
+  "assets": [
+    960,
+    960
+  ],
+  "missing": []
+}

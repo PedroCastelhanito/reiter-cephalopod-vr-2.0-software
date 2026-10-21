@@ -1,0 +1,34 @@
+[
+  {
+    "trial": 1,
+    "pulse_count": 26980,
+    "saved_frames": 26979,
+    "post_cutoff_pulses": 1,
+    "first_pulse_vs_gate_us": 0.0,
+    "camera_to_obx_slope": 0.9999918038054464,
+    "residual_us_percentiles": [
+      -27.910958351640147,
+      -25.961109284935446,
+      -0.8773451440902136,
+      41.40855351509211,
+      58.043349280417765
+    ],
+    "residual_rms_us": 14.846109139723612
+  },
+  {
+    "trial": 2,
+    "pulse_count": 89935,
+    "saved_frames": 89933,
+    "post_cutoff_pulses": 2,
+    "first_pulse_vs_gate_us": -33.000033000033,
+    "camera_to_obx_slope": 0.9999919651599171,
+    "residual_us_percentiles": [
+      -23.181058850241243,
+      -20.759570902555424,
+      0.0038362486520782113,
+      23.12783078650678,
+      33.88672348791921
+    ],
+    "residual_rms_us": 10.559180012420704
+  }
+]

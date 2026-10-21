@@ -1,0 +1,152 @@
+Window: "CephVR2.0 — Dashboard", App: cephvr-python.exe.
+	0 window (settable, string) CephVR2.0 — Dashboard Secondary Actions: Raise ID: QApplication.ManagedDashboardWindow
+		1 title bar (settable, string) Value: CephVR2.0 — Dashboard
+			2 menu bar System ID: MenuBar
+				3 menu item System
+			4 button Minimize
+			5 button Restore
+			6 button Close
+		7 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell
+			8 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Sidebar
+				9 text CEPHVR ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.QLabel
+				10 check box (settable, string) Dashboard ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.Button
+				11 check box (settable, string) Protocol ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.Button
+				12 check box (settable, string) Devices ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.Button
+				13 check box (settable, string) Tracking ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.Button
+				14 text VERSION 2.0 ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.QLabel
+			15 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page
+				16 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.WindowHeader
+					17 text DASHBOARD ID: QApplication.ManagedDashboardWindow.Shell.Page.WindowHeader.QLabel
+					18 button (settable, string) Previews… ID: QApplication.ManagedDashboardWindow.Shell.Page.WindowHeader.Button
+				19 pane (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget
+					20 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard
+						21 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea
+							22 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport
+								23 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget
+									24 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card
+										25 text SYSTEM CONTROLS ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QLabel
+										26 check box (settable, string) Cameras · Unavailable ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.StatusIndicator
+										27 check box (settable, string) Visual stimulus · Unavailable ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.StatusIndicator
+										28 check box (settable, string) Tracking · Unavailable ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.StatusIndicator
+										29 button (settable, string) Setup ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.Button
+										30 button (disabled, settable, string) Start ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.Button
+										31 button (disabled, settable, string) Stop ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.Button
+									32 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card
+										33 text SESSION CONFIG ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QLabel
+										34 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget
+											35 text SUBJECT ID ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLabel
+											36 edit (settable, string) SUBJECT ID Value: 0003 ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLineEdit
+										37 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget
+											38 text EXPERIMENT ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLabel
+											39 edit (settable, string) EXPERIMENT Value: ephys-pilot ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLineEdit
+										40 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget
+											41 text OUTPUT DIRECTORY ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLabel
+											42 group (settable, string) OUTPUT DIRECTORY ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.DirectoryField
+												43 edit (settable, string) Value: C:/Data/projects/reiter-cephalopod-vr/cephvr-data ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.DirectoryField.PathEdit
+												44 button (settable, string) Browse… ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.DirectoryField.Button
+										45 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget
+											46 text SPECIES ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLabel
+											47 combo box (settable, string) SPECIES Value: Sepia Pharaonis ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.SelectionBox
+										48 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget
+											49 text SEX ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLabel
+											50 combo box (settable, string) SEX Value: Not specified ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.SelectionBox
+										51 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget
+											52 text AGE (dph) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLabel
+											53 edit (settable, string) AGE (dph) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLineEdit
+										54 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget
+											55 text SIZE (mm) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLabel
+											56 edit (settable, string) SIZE (mm) Value: 5.0 ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLineEdit
+										57 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget
+											58 text CONDITION ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLabel
+											59 edit (settable, string) CONDITION Value: Mantle+head fixation ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QWidget.QLineEdit
+									60 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard
+										61 text RECORDINGS ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+										62 text Cameras ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+										63 text Recorded data ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+										64 check box (settable, string) Record Visual stimulus video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QCheckBox
+										65 text Visual stimulus video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+										66 check box (settable, string) Tracking velocities ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QCheckBox
+										67 text Tracking velocities ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+										68 check box (settable, string) Save spikeglx ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QCheckBox
+										69 text Save spikeglx ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+										70 check box (settable, string) Record Behavior cam video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QCheckBox
+										71 text Behavior cam video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+										72 check box (settable, string) Record Tracking cam video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QCheckBox
+										73 text Tracking cam video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+							74 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_vcontainer
+								75 scroll bar (settable, float) Value: 0 ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QScrollArea.qt_scrollarea_vcontainer.QScrollBar
+						76 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn
+							77 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card
+								78 text RUNTIME HUD ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card.QLabel
+								79 edit Value: STATUS : Configuration TRIAL : 0/1 TRIAL TIME : — / — TOTAL TIME : 00:00:00 / 00:50:00 OUTPUT : — ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card.FittedConsole
+									80 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card.FittedConsole.qt_scrollarea_viewport
+									81 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card.FittedConsole.PromptGutter
+							82 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card
+								83 text RUNTIME LOG ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card.QLabel
+								84 edit Value: 10:59:15 [CONTROLLER] Controller connected. 10:59:28 [RECOVERY] Recovering unfinished session… [Done] 10:59:28 [SETUP] Preparing cameras… [Failed] 10:59:28 [STIMULUS] Preparing… 10:59:28 [CAMERAS] Preparing… 10:59:29 [MCU] Ready 10:59:30 Retained controller summary acknowledged. 10:59:31 [SETUP] Registering outputs… [Done] 10:59:31 [STIMULUS] Finalizing prepared stimulus memory [Done] 10:59:31 [CAMERAS] Preparing… [Done] 10:59:32 [MCU] Ready 10:59:36 [SESSION] Ready 10:59:36 [SETUP] Cleaning up… [Done] 10:59:36 [SETUP] Registering outputs… [Done] 10:59:36 [STIMULUS] Finalizing prepared stimulus memory [Done] 10:59:36 [CAMERAS] Preparing… [Done] 10:59:37 [MCU] Ready 10:59:40 [SESSION] Finalizing session… [Done] 10:59:40 [SESSION] Freezing configuration… [Done] 10:59:40 [TRIAL 1] Finalizing files… [Interrupted] 10:59:51 [ABORT] Interrupting… [Done] 10:59:51 [SETUP] Registering outputs… [Done] 10:59:51 [STIMULUS] Finalizing prepared stimulus memory [Done] 10:59:51 [CAMERAS] Preparing… [Done] 10:59:52 [MCU] Ready 10:59:56 [SESSION] Idle [Done] 10:59:56 [SESSION] Freezing configuration… [Done] 10:59:56 [TRIAL 1] Finalizing files… [Done] ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card.LogConsole
+									85 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card.LogConsole.qt_scrollarea_viewport
+									86 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.StatusColumn.Card.LogConsole.PromptGutter
+		87 menu bar (settable, string) ID: QApplication.ManagedDashboardWindow.QMenuBar
+			88 menu item (settable, string) Style ID: QApplication.ManagedDashboardWindow.QMenuBar.QAction
+			89 menu item (settable, string) View ID: QApplication.ManagedDashboardWindow.QMenuBar.QAction
+			90 menu item (settable, string) Control ID: QApplication.ManagedDashboardWindow.QMenuBar.QAction
+		91 group (settable, string) ID: QApplication.ManagedDashboardWindow.CrtOverlay
+
+Document text: ```
+10:59:15  [CONTROLLER] Controller connected.
+10:59:28  [RECOVERY]  Recovering unfinished session… [Done]
+10:59:28  [SETUP]     Preparing cameras… [Failed]
+10:59:28  [STIMULUS]  Preparing…
+10:59:28  [CAMERAS]   Preparing…
+10:59:29  [MCU]       Ready
+10:59:30  Retained controller summary acknowledged.
+10:59:31  [SETUP]     Registering outputs… [Done]
+10:59:31  [STIMULUS]  Finalizing prepared stimulus memory [Done]
+10:59:31  [CAMERAS]   Preparing… [Done]
+10:59:32  [MCU]       Ready
+10:59:36  [SESSION]   Ready
+10:59:36  [SETUP]     Cleaning up… [Done]
+10:59:36  [SETUP]     Registering outputs… [Done]
+10:59:36  [STIMULUS]  Finalizing prepared stimulus memory [Done]
+10:59:36  [CAMERAS]   Preparing… [Done]
+10:59:37  [MCU]       Ready
+10:59:40  [SESSION]   Finalizing session… [Done]
+10:59:40  [SESSION]   Freezing configuration… [Done]
+10:59:40  [TRIAL 1]   Finalizing files… [Interrupted]
+10:59:51  [ABORT]     Interrupting… [Done]
+10:59:51  [SETUP]     Registering outputs… [Done]
+10:59:51  [STIMULUS]  Finalizing prepared stimulus memory [Done]
+10:59:51  [CAMERAS]   Preparing… [Done]
+10:59:52  [MCU]       Ready
+10:59:56  [SESSION]   Idle [Done]
+10:59:56  [SESSION]   Freezing configuration… [Done]
+10:59:56  [TRIAL 1]   Finalizing files… [Done]
+```
+10:59:15  [CONTROLLER] Controller connected.
+10:59:28  [RECOVERY]  Recovering unfinished session… [Done]
+10:59:28  [SETUP]     Preparing cameras… [Failed]
+10:59:28  [STIMULUS]  Preparing…
+10:59:28  [CAMERAS]   Preparing…
+10:59:29  [MCU]       Ready
+10:59:30  Retained controller summary acknowledged.
+10:59:31  [SETUP]     Registering outputs… [Done]
+10:59:31  [STIMULUS]  Finalizing prepared stimulus memory [Done]
+10:59:31  [CAMERAS]   Preparing… [Done]
+10:59:32  [MCU]       Ready
+10:59:36  [SESSION]   Ready
+10:59:36  [SETUP]     Cleaning up… [Done]
+10:59:36  [SETUP]     Registering outputs… [Done]
+10:59:36  [STIMULUS]  Finalizing prepared stimulus memory [Done]
+10:59:36  [CAMERAS]   Preparing… [Done]
+10:59:37  [MCU]       Ready
+10:59:40  [SESSION]   Finalizing session… [Done]
+10:59:40  [SESSION]   Freezing configuration… [Done]
+10:59:40  [TRIAL 1]   Finalizing files… [Interrupted]
+10:59:51  [ABORT]     Interrupting… [Done]
+10:59:51  [SETUP]     Registering outputs… [Done]
+10:59:51  [STIMULUS]  Finalizing prepared stimulus memory [Done]
+10:59:51  [CAMERAS]   Preparing… [Done]
+10:59:52  [MCU]       Ready
+10:59:56  [SESSION]   Idle [Done]
+10:59:56  [SESSION]   Freezing configuration… [Done]
+10:59:56  [TRIAL 1]   Finalizing files… [Done]

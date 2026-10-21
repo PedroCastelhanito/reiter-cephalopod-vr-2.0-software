@@ -194,6 +194,12 @@ def dashboard_view(
         has_control=state.control.holder_client_id == client_id,
         configuration_wired=configuration_wired,
         cleanup_confirmed=state.session.cleanup_confirmed,
+        cleanup_pending=bool(state.session.cleanup_blockers)
+        or (
+            state.session.phase == pb.SESSION_PHASE_CONFIGURATION
+            and bool(state.session.context.session_id)
+            and not state.session.cleanup_confirmed
+        ),
         trial_index=trial_index,
         trial_count=trial_count,
         elapsed_s=elapsed,
@@ -206,6 +212,9 @@ def dashboard_view(
         stimulus_status=statuses["Visual stimulus"],
         tracking_status=statuses["Tracking"],
         output_status=output,
+        output_directory=state.reservation.session_directory
+        if state.HasField("reservation")
+        else "",
         reservation_status=reservation_status,
         previews=previews,
     )

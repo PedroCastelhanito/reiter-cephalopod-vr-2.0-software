@@ -2,12 +2,13 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 18
+policy_version = 19
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_required_evidence_thread"
 rendering_library = "moderngl"
 window_library = "glfw"
+prepared_heap = "freeze_after_preparation_until_cleanup"
 
 [projection]
 method = "generalized_off_axis_perspective"
@@ -48,6 +49,7 @@ arena_profile = "glb2_static_unlit_v1"
 [image_residency]
 loader_threads = 1
 upload_chunk_bytes = 1048576
+upload_chunks_per_turn = 4
 readiness = "pin_first_use_per_instance"
 late_image = "previous_texture_current_motion"
 evidence = "requested_actual_indices_and_identity_repetition"

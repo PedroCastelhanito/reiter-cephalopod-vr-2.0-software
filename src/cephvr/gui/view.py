@@ -26,6 +26,9 @@ class PreviewView:
     reason: str = "Viewer connection unavailable"
     pending: bool = False
     active: bool = False
+    source_fps: float | None = None
+    preview_fps: float | None = None
+    rates_observed_ns: int = 0
 
 
 @dataclass(frozen=True)
@@ -36,6 +39,7 @@ class DashboardView:
     sample: bool = False
     configuration_wired: bool = True
     cleanup_confirmed: bool = False
+    cleanup_pending: bool = False
     trial_index: int = 0
     trial_count: int = 0
     elapsed_s: float | None = None
@@ -48,6 +52,7 @@ class DashboardView:
     stimulus_status: str = "Unavailable"
     tracking_status: str = "Unavailable"
     output_status: str = "No controller evidence"
+    output_directory: str = ""
     reservation_status: str = "Not started"
     previews: tuple[PreviewView, ...] = ()
 
@@ -55,6 +60,7 @@ class DashboardView:
     def can_edit(self) -> bool:
         return (
             (self.sample or self.connected)
+            and not self.cleanup_pending
             and self.configuration_wired
             and self.has_control
             and (
@@ -98,6 +104,7 @@ def review_view(phase: Phase, *, observer: bool = False) -> DashboardView:
         camera_status="Ready" if prepared else "Not prepared",
         stimulus_status="Ready" if prepared else "Not prepared",
         tracking_status="Ready" if prepared else "Not prepared",
+        output_directory="D:/CephVR/SP0001-120000" if prepared else "",
         output_status="Closed"
         if phase == Phase.ENDED
         else "Open"

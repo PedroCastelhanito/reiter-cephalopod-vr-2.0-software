@@ -492,17 +492,7 @@ def test_recording_session_cancel_before_header_reconciles_process_without_outpu
     assert events == ["registered_child_started", "exact_child_reconciled"]
     assert not (tmp_path / "frames.jsonl").exists()
 
-    import json
-
-    summaries = [
-        r.getMessage()
-        for r in caplog.records
-        if '"event": "recording_metrics"' in r.getMessage()
-    ]
-    assert len(summaries) == 1
-    summary = json.loads(summaries[0])
-    assert summary["evidence_path"] == str(tmp_path / "frames.jsonl")
-    assert summary["active_capture_slots"] == 0
+    assert not any("recording_metrics" in r.getMessage() for r in caplog.records)
 
 
 def test_recording_session_services_video_sync_independently_of_evidence_sync(
@@ -1629,53 +1619,6 @@ def test_invalid_encoder_count_does_not_inflate_diagnostics(consumed: int) -> No
     assert worker.metrics.snapshot()["submitted_bytes"] == 0
     assert worker.counts().input_submitted_count == 0
     assert worker.counts().unresolved_capture_count == 1
-
-
-def test_renderer_diagnostics_emit_json_with_root_warning_level(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    import json
-    import logging
-    import time
-
-    from cephvr.visual_stimulus.recording.metrics import configure_recording_logger
-
-    root = logging.getLogger()
-    logger = logging.getLogger("cephvr.visual_stimulus.recording.session")
-    old = (logger.handlers, logger.level, logger.propagate, root.level)
-    logger.handlers = []
-    root.setLevel(logging.WARNING)
-    try:
-        configure_recording_logger()
-        configure_recording_logger()
-        assert len(logger.handlers) == 1
-        evidence = EvidenceWriter(max_pending_bytes=1024)
-        worker = RecordingWorker(
-            capture_slots=1,
-            evidence=evidence,
-            encoder=_Input(),
-            video_start_ns=0,
-        )
-        session = RecordingSession(
-            worker=worker,
-            evidence=evidence,
-            evidence_path=tmp_path / "frames.jsonl",
-            recipe_path=tmp_path / "recipe.json",
-            max_queued_evidence_bytes=1024,
-            finalizer=lambda _counts: (b"{}\n", b"{}\n"),
-        )
-        result = session.finish(deadline_ns=time.perf_counter_ns() + 2_000_000_000)
-        assert not result.evidence_closed
-        lines = capsys.readouterr().err.splitlines()
-        assert len(lines) == 1
-        assert json.loads(lines[0])["event"] == "recording_metrics"
-        assert root.level == logging.WARNING
-    finally:
-        for handler in logger.handlers:
-            handler.close()
-        logger.handlers, level, logger.propagate, root_level = old
-        logger.setLevel(level)
-        root.setLevel(root_level)
 
 
 @pytest.mark.parametrize("cancel", [False, True])

@@ -597,7 +597,13 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             sequences.append(sequence)
             pixels[:] = native
             self.published_count = 6
-            return SimpleNamespace(status="frame")
+            return SimpleNamespace(
+                status="frame",
+                record=SimpleNamespace(
+                    frame_id=sequence,
+                    acquisition_time_ns=(sequence + 1) * 1_000_000_000,
+                ),
+            )
 
         def wait(self, _timeout: int) -> bool:
             if failure == "wait":
@@ -735,6 +741,7 @@ async def test_backend_window_release_gates_native_owner(
             callback: object,
             *,
             placement: object = None,
+            on_rates: object = None,
         ) -> None:
             self.ready: Future[None] = Future()
             self.done: Future[bool] = Future()
@@ -3239,3 +3246,39 @@ async def test_session_viewer_binds_existing_slot_and_rejects_old_session(monkey
         await owner.execute(request, deadline_ns=100)
     ).result == control.COMMAND_RESULT_REJECTED
     assert execute.await_count == 1
+
+
+async def test_preview_rate_delivery_is_bounded_and_rejects_retired_reader():
+    from cephvr.acquisition.coordinator.preview_windows import PreviewWindows
+
+    reader = SimpleNamespace(visible=True)
+    gate = asyncio.Event()
+    sent = []
+
+    async def publish(observation, *, deadline_ns):
+        sent.append(observation)
+        await gate.wait()
+
+    status = SimpleNamespace(
+        set_preview_visibility=lambda *args, **kwargs: kwargs["rates"],
+        publish_preview_visibility=publish,
+    )
+    owner = PreviewWindows(
+        identity=SimpleNamespace(),
+        resources={},
+        ledger=SimpleNamespace(),
+        status=status,
+        clock=lambda: 10,
+        report_timeout_ns=100,
+    )
+    owner._windows[1] = SimpleNamespace(reader=reader, run_id="current")
+    owner._rates(1, reader, 60, 15, 9)
+    owner._rates(1, reader, 60, 16, 10)
+    assert len(owner._notifications) == 1
+    await asyncio.sleep(0)
+    assert sent[0].source_fps == 60 and sent[0].preview_fps == 15
+    gate.set()
+    await asyncio.gather(*tuple(owner._notifications))
+    owner._windows[1].reader = object()
+    owner._rates(1, reader, 60, 30, 11)
+    assert len(sent) == 1

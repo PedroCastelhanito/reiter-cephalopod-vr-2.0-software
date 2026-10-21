@@ -1,10 +1,64 @@
 # Rig verification — outstanding checks
 
+Oct21 current execution: bounded two-camera/stimulus On60s→Off Abort5s→On60s,
+Ready cancellation and fresh Setup/cancel after326.259s idle pass;16 outputs close,
+six videos decode/count exactly. Off has no camera demand and retains stimulus
+scientific files, without camera/encoder processes. Full20min acceptance is blocked:
+long-path Setup fails WinError206; shorter-path Setup reproduces MCU PING114.451ms
+against99.979ms and unconfirmed cleanup. Subsequent automatic managed shutdown
+and preserving startup recovery confirm old process absence and exact original
+configuration/history restoration; failed-session unknown closure remains retained.
+Do not repeat full workload or close its
+checkbox from dummy evidence. [Current assessment and raw evidence](runtime.md#current-rig-validation--2026-10-21).
+Physical pulse/optical, active-camera video-Off, fault/storage matrix and GUI appearance
+remain open. Continuous capture is design-only and was not certified.
+
+
+<a id="pilot-synchronization-verification"></a>
+- [ ] Before a future timing-sensitive paired experiment, configure and verify a
+  shared periodic SpikeGLX sync wave in both OneBox SY and probe SY, with matched
+  edges throughout a saved test and documented rate calibration. SP0003-123824
+  has no SY transitions and cannot supply this verification. Check analog
+  photodiode gain/range, thresholds, short-pulse rejection, polarity delays and
+  optical coverage of each required projector; retain camera trigger/exposure
+  semantics. No settings were changed by the read-only inspection. Detailed
+  findings and data limits: [pilot assessment](runtime.md#pilot-spikeglx-alignment-inspection--2026-10-21).
+
+- [ ] After restarting with V04rev20/policy19, verify Setup displays per-trial
+  decoding/validation and initial GPU-upload counts on one updated console row
+  while waiting, and reaches Ready
+  only after initial textures finish uploading. Then run the complete unchanged
+  primate_cuttlebase_20min protocol with normal camera/review recording. Require
+  requested=actual for all four images on every texture render group, including
+  each first group after onset and the second-trial transition; inspect submission
+  cadence and use optical timing evidence for physical synchronization. Hidden
+  four-context loader probes do not close this full-workload check. Keep the
+  historical SP0003-145623 mismatches distinct from new results. — [Assessment](visual_stimulus.md#primatecuttlebase-texture-mismatch--2026-10-21)
+
+
+- [ ] After restart, interrupt a protocol and verify automatic Configuration after
+  confirmed cleanup, retained settings and Interrupted output records, then fresh
+  Setup/Start with new identities. Unconfirmed cleanup must remain blocked; late
+  confirmation should permit automatic reset, while application Shutdown must not.
+  Oct21 native10s Abort returns automatically to Configuration in357ms with exact
+  Interrupted finalization/settings retained; fresh Setup/Start and recorded60s
+  normal stop pass, all outputs close and six videos decode/count correctly.
+  Native GUI confirms terminal rows, editable Configuration/Setup and disabled
+  Start. Late-confirmation and shutdown/fault branches remain pending. — [Runtime](runtime.md)
+
 - [ ] After GUI restart, toggle Stimulus timeline in Previews with native viewers
   open. Verify automatic followers resize/reposition into the expanded grid and
   restore with the plot, retaining Show/capture state and existing manual opt-out.
+  Verify unchanged visible stimulus previews keep a stable frame/window size across
+  repeated placement polls with timeline shown and hidden (Oct21 pending-header fix).
   Offscreen reflow, frame identity, preference and plot checks pass22 cases; native
   viewer follow was not exercised. — [Runtime assessment](runtime.md)
+
+- [ ] With G01rev268, open Previews before Setup and during a recorded trial, wide (side-by-side) and narrow (stacked), and check native viewers sit on their frames.
+  Confirm in-frame reasons, the VIEW strip, REC only while controller-reported
+  outputs are open, the dimmed remaining plan, 60 s left-pinned window, cursor and
+  hover values; headings stay fixed while viewers open/close. Offscreen renders and
+  focused tests only. — [Runtime assessment](runtime.md)
 
 - [ ] Reopen the GUI with G01rev261/G02rev89, finish a session through Stop and verify
   all configuration draft editors unlock only after confirmed cleanup.
@@ -1189,28 +1243,33 @@ recordings will be externally triggered. This is owner-supplied wiring evidence;
 the remaining checks below concern retained channel identity, source correspondence
 and loss accounting. Historical free-running runs retain their original scope.
 
-Owner-selected simple baseline (2026-10-14): [A09](../docs/architecture/acquisition.md#a09)
-assumes the first trigger in the matched trial/camera pulse train corresponds to the
-source image of the first video frame. This is an assumption, not a demonstrated
-physical anchor. Keep existing wiring, fixed-rate triggers and trial-only capture;
-stronger counters/ExposureActive/coded pre-trial triggers are deferred. Always-save
-camera/stimulus evidence is locally implemented; native checks are listed below.
+The Oct21 [A09/A10 design](../docs/architecture/acquisition.md#a09) supersedes the
+first-trigger/first-video-source assumption for continuous acquisition. Runtime
+implementation is pending. Retain existing wiring/rates; no ExposureActive wiring
+or coded trigger phase is selected. Historical trial-only tests do not validate
+the new capture lifetime or boundary correspondence.
 
-- [ ] Verify saved camera-trigger routes and identify the correct trial pulse train;
+- [ ] After implementation, verify usable frames before Setup Ready and uninterrupted
+  camera pulse phase/capture across Ready and repeated trials/gaps, with no non-trial
+  video frames. Verify Trial state LOW outside trials, normal trial-only closure,
+  and actual device/pulse stopping on Cancel Setup, session end, Abort and faults.
+
+- [ ] Verify saved camera-trigger and Trial-state routes and select rising edges in
+  the measured HIGH interval (start inclusive/end exclusive);
   retain original OneBox files/meta and camera/native timestamp/counter descriptors.
-  The first trigger means this camera/trial's first pulse, not the first event of
-  any kind in the session recording.
+  SpikeGLX saving begins after Setup capture: its first pulse is not the acquisition
+  origin. Verify boundary matching with native generation/counter/timestamp context.
 - [ ] Resolve encoded frame zero to its actual source using video_frame mappings;
   inspect leading invalid images and recording losses (plus padding for historical
-  schema4 files). Report any
-  conflict with first-trigger correspondence. Metadata-only runs use the first
-  received source row, explicitly labeled assumed.
+  schema4 files). Do not pair it automatically with the first in-gate pulse.
+  Include exposures before the rising gate and in-gate exposures received after
+  recording cutoff; report unmatched pulses/frames and ambiguous correspondence.
 - [ ] Inspect timing/count consistency at beginning/middle/end under normal repeated
   trials and combined load; map sequential video indices through source identity and
   distinguish source loss from encoding loss. Historical duplicates retain their labels. Native counter gaps are interpreted
   only under their retained semantics. Good fit does not independently prove offset.
-- [ ] Retain mismatches, missing first-frame/pulse evidence, interrupted trials and
-  unknown intervals for owner review. Revisit stronger anchoring only if needed;
+- [ ] Retain mismatches, missing frame/pulse evidence, interrupted trials and
+  unknown intervals for owner review. Validate a stronger anchor if required;
   do not add wiring, reset counters or change cadence as part of this check.
 
 Method and provenance are specified in the

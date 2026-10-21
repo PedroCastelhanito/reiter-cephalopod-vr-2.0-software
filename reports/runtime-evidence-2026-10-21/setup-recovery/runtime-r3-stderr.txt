@@ -1,0 +1,5 @@
+acquisition_eye_tracking_worker ResolveCameraConfiguration cf6e1ba0-3e34-431f-bb6b-48dc22f37a14 failed: CameraAdapterError: assigned Basler serial '40278236' matched 0 devices
+SetupSession 39f0f6a0-c942-412c-b218-e6c658e4a957 failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 3 resolution failed: WORKER_OPERATION_FAILED: assigned Basler serial '40278236' matched 0 devices
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_OPERATION: camera resolution belongs to a stale or cancelled configuration; worker=fbc2ae44-e402-447d-b9cd-acbd48f3f01d command=ResolveCameraConfiguration command_id=71a75945-b7d3-4306-86b6-0f87b3c3aebe complete=True ingress_ns=569964444998500
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

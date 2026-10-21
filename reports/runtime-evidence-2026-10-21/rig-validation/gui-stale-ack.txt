@@ -1,0 +1,61 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__________ test_managed_configuration_keeps_post_submit_edits_on_ack __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001A605E6DC60>
+
+    def test_managed_configuration_keeps_post_submit_edits_on_ack(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.control.v1 import types_pb2 as control_pb
+        from cephvr.gui.managed_configuration import (
+            ConfigurationPages,
+            ManagedConfiguration,
+        )
+    
+        window.apply_view(review_view(Phase.CONFIGURATION))
+        generation = str(uuid4())
+        initial = control_pb.Snapshot(controller_generation=generation)
+        initial.configuration.revision = 4
+        initial.configuration_values.revision = 4
+        initial.configuration_values.current.mode = control_pb.SESSION_MODE_OPEN_LOOP
+        from tests.visual_stimulus.support import valid_display_json
+    
+        visual = initial.configuration_values.current.backends.add(
+            backend_name="visual_stimulus", enabled=True
+        )
+        visual.visual_stimulus.display.profile_json = valid_display_json()
+        manager = ManagedConfiguration(
+            ConfigurationPages(
+                window.dashboard,
+                window.protocol,
+                window.recordings,
+                window.devices.cameras,
+                window.devices.projectors,
+                window.tracking,
+            )
+        )
+        assert manager.install(initial)
+        window.protocol.editor.add_button.click()
+        submitted = manager.collect(initial.configuration_values.current)
+        submitted_edit_serial = manager.edit_serial
+        acknowledged = control_pb.Snapshot(controller_generation=generation)
+        acknowledged.configuration.revision = 5
+        acknowledged.configuration_values.revision = 5
+        acknowledged.configuration_values.current.CopyFrom(submitted)
+    
+        editor = window.dashboard.subject_id
+        editor.setFocus()
+        QTest.keyClick(editor, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+        QTest.keyClicks(editor, "changed after submission")
+        manager.note_installed_revision(
+            acknowledged, submitted_edit_serial=submitted_edit_serial
+        )
+>       assert manager.stale
+E       assert False
+E        +  where False = <cephvr.gui.managed_configuration.ManagedConfiguration object at 0x000001A605E5B790>.stale
+
+tests\gui\test_dashboard.py:9418: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_managed_configuration_keeps_post_submit_edits_on_ack
+1 failed in 1.95s

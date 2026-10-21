@@ -42,6 +42,7 @@ from cephvr.controller.lifecycle.evidence_wait import EvidenceWaiter
 from cephvr.controller.lifecycle.handoffs import PreparationHandoffs
 from cephvr.controller.lifecycle.interruption import InterruptionWorkflow
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
+from cephvr.controller.lifecycle.session_reset import SessionReset
 from cephvr.controller.lifecycle.setup_admission import SetupAdmission
 from cephvr.controller.lifecycle.setup_execution import SetupExecution
 from cephvr.controller.lifecycle.start import StartActivation
@@ -327,6 +328,9 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         hooks=device_hooks,
         finish_camera_operation=camera_readback.finish_camera_operation,
     )
+    session_reset = SessionReset(
+        i.lifecycle, i.configuration_state, i.metadata_state, i.projections
+    )
     cleanup = CleanupWorkflow(
         lifecycle=i.lifecycle,
         control=i.control,
@@ -342,6 +346,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         spawn=i.spawn,
         configuration=i.configuration_state,
         projections=i.projections,
+        session_reset=session_reset,
     )
     owned_camera_edits = OwnedCameraEdits(
         lifecycle=i.lifecycle,
@@ -446,16 +451,14 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
     )
     session_commands = SessionCommands(
         lifecycle=i.lifecycle,
-        configuration=i.configuration_state,
         control=i.control,
-        metadata_state=i.metadata_state,
         metadata=metadata,
         limit_state=i.limit_state,
         cleanup=cleanup,
         interruption=interruption,
         publisher=publisher,
         operations=control_operations,
-        projections=i.projections,
+        session_reset=session_reset,
         supervisor=i.supervisor,
         generation=i.generation,
         supervisor_generation=i.supervisor_generation,

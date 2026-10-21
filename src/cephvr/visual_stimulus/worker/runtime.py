@@ -101,6 +101,11 @@ class VisualStimulusWorkerRuntime:
                 "UpdateDisplayCalibration",
             }
             and command.target.work != self.context.work
+            and not (
+                sessionless_diagnostic_safety
+                and method in {"CancelSetup", "Cleanup"}
+                and command.target.work.WhichOneof("work") == "session"
+            )
         ):
             work = command.target.work
             if (

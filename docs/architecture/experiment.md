@@ -65,7 +65,7 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
 <a id="e05"></a>
 ### E05 — Lifecycle and trial timing
 
-**Status:** Accepted · **Revision:** 96
+**Status:** Accepted · **Revision:** 98
 
 #### Lifecycle
 
@@ -105,6 +105,9 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   Ready reports, then waits in Ready. It does not activate the session or create
   trial files. Allocate the Setup attempt's session/trial IDs before preparation
   fan-out so all backend results use the same identities.
+  A10 camera acquisition and trigger warm-up run during Setup and continue through
+  Ready/intertrial gaps; they do not activate trial recording. Cancellation and
+  session termination must release that ongoing capture/pulse ownership.
 - **Start** is separate. It revalidates the prepared state, freezes the effective
   configuration, saves and synchronizes `SESSION_CONFIG.json`, and registers
   recovery context. The controller then activates the session and writes and
@@ -121,11 +124,13 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
 - Remote ephys recording is not a camera/Visual Stimulus per-trial output and does not change
   the trial clock. Its completion result follows E12's delegated native
   finalization contract; transport/runtime integration remains local work.
-- Remain in Ended with the session result visible until an explicit **New session**
-  command, which after confirmed cleanup returns to Configuration with the current
-  reusable settings and unlocks editing; unresolved cleanup blocks it. It requires
-  fresh Setup and Start with new identities allocated during Setup, and never
-  restarts processes or resumes the old session.
+- Interrupted sessions return automatically to Configuration once finalization and
+  exact cleanup are confirmed, including confirmation received late. Preserve durable
+  Interrupted results and error history, retain reusable settings and retire the old
+  session/trial identities. Unresolved cleanup, lost controller authority or application
+  shutdown blocks automatic reset. Completed/Stopped sessions remain in Ended until
+  explicit **New session**, also requiring confirmed cleanup. Both paths require fresh
+  Setup and Start with new identities; neither restarts processes or resumes old work.
 - **Cancel Setup** is available to the lease holder in SettingUp and Ready. It
   cancels and unarms all participants concurrently, invalidates readiness, deletes
   the directories/marker that Setup created, releases the output reservation (E04)
@@ -142,7 +147,8 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   trial end in Ended with Interrupted outcome and unresolved cleanup recorded
   separately. An unactivated attempt returns to Configuration with cleanup blocked,
   without inventing a trial or Interrupted session. E06 governs the warning and
-  subsequent confirmation; no automatic new session follows cleanup completion.
+  subsequent confirmation; confirmed interrupted cleanup follows the automatic
+  Configuration transition above.
 - Each participant sends **Ready** only after verifying its backend, devices and
   current trial resources. Obtain a fresh Ready before every trial, including the
   first; readiness is never reused.
@@ -155,7 +161,10 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   independently of output closure. Include actual activity-stop time, each producer
   recording cutoff under E11, and confirmation of the stop conditions: Visual Stimulus is Idle
   and recording no longer admits samples outside the trial interval. Draining
-  already admitted samples may continue.
+  already admitted samples may continue. Normal acquisition Stopped requires its
+  trial admission cutoff and applicable Trial-state LOW evidence, while A10 capture
+  and camera pulses continue between trials. Abort/session cleanup separately requires
+  actual camera/pulse stop; neither report may substitute for the other.
 - Each participant sends **Finished** only after trial work has ended and every
   enabled output obligation is satisfied. Normally this requires successful
   closure; explicitly empty camera/Visual Stimulus review-video results may instead confirm an
@@ -558,7 +567,7 @@ these are not unanswered controller ownership choices.
 <a id="e11"></a>
 ### E11 — Trial recording interval
 
-**Status:** Accepted · **Revision:** 17
+**Status:** Accepted · **Revision:** 18
 
 - All local camera/Visual Stimulus/tracking trial outputs use the authoritative start T and
   normal end `T + duration`. E12's separate session-scoped SpikeGLX recording may
@@ -566,7 +575,10 @@ these are not unanswered controller ownership choices.
   the producer cutoffs below.
 - Data membership is start inclusive and end exclusive. Camera membership uses A09
   host receipt, with hardware exposure/trigger timing retained as alignment
-  evidence.
+  evidence. A10 capture warm-up/continuous pulses do not admit pretrial or intertrial
+  frames to encoding. A09's measured Trial-state gate selects pulses for external
+  analysis independently; a pulse selected there need not have an image in a
+  host-receipt-gated file, and a saved boundary image need not belong to that gate.
 - On Abort/failure, each producer promptly seals sample admission at its local
   host-monotonic cutoff, capped by the scheduled normal end. Preserve the original
   interruption-request time separately for deadlines and diagnostics; it is not a

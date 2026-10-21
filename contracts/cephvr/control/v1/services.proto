@@ -441,6 +441,7 @@ message CameraPreviewVisibility {
   bool visible = 4;
   int64 observed_monotonic_ns = 5;
   string failure = 6; // Window/reader failure, never camera capture failure.
+  PreviewRates rates = 7;
 }
 
 message SnapshotRequest {

@@ -371,6 +371,13 @@ class ManagedCameras(QObject):
                     draft.key,
                     draft.role,
                     visible=visible,
+                    source_fps=device.rates.source_fps
+                    if device.rates.HasField("source_fps")
+                    else None,
+                    preview_fps=device.rates.preview_fps
+                    if device.rates.HasField("preview_fps")
+                    else None,
+                    rates_observed_ns=device.rates.observed_monotonic_ns,
                     pending=reconnecting,
                     available=assigned
                     and bool(device.preview_running or session_preview),

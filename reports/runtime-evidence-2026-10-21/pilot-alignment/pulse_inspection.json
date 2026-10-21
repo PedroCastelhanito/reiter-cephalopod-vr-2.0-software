@@ -1,0 +1,501 @@
+{
+  "source": "D:\\cephvr-data\\protocol-data\\20261020_ephys-pilot\\SP0003-123824",
+  "method": "full OneBox sample scan; three 5-second probe SY windows",
+  "streams": {
+    "onebox": {
+      "metadata": {
+        "acqXaDwSy": "12,1,1",
+        "appVersion": "20251218",
+        "fileCreateTime": "2026-10-20T12:38:41",
+        "fileName": "C:/SGL_DATA/SP0003-123824_g1/SP0003-123824_g1_t0.obx0.obx.bin",
+        "fileSHA1": "43880EF0BC607F5444D76CA8ECDB414CE36CBED8",
+        "fileSizeBytes": "3312294720",
+        "fileTimeSecs": "3903.779823779824",
+        "firstSample": "144852448",
+        "gateMode": "Immediate",
+        "imDatApi": "4.1.3",
+        "imDatBs_fw": "4.0.240",
+        "imDatBsc_fw": "4.0.240",
+        "imDatBsc_hw": "5.4",
+        "imDatBsc_pn": "NPOB_ACQ_00-05-04",
+        "imDatBsc_sn": "23190268",
+        "imDatObx_slot": "21",
+        "imErrFlags0_IS_CT_SR_LK_PP_SY_MS": "0 0 0 0 0 0 0",
+        "imTrgRising": "true",
+        "imTrgSource": "0",
+        "nDataDirs": "1",
+        "nSavedChans": "14",
+        "obAiRangeMax": "5",
+        "obAiRangeMin": "-5",
+        "obErrFlags0_IS_CT_SR_LK_PP_SY_MS": "0 0 0 0 0 0 0",
+        "obMaxInt": "32768",
+        "obSampRate": "30303",
+        "snsSaveChanSubset": "all",
+        "snsXaDwSy": "12,1,1",
+        "syncSourceIdx": "0",
+        "syncSourcePeriod": "1",
+        "trigMode": "Immediate",
+        "typeImEnabled": "1",
+        "typeNiEnabled": "0",
+        "typeObEnabled": "1",
+        "typeThis": "obx",
+        "userNotes": "",
+        "~snsChanMap": "(12,1,1)(XA0;0:0)(XA1;1:1)(XA2;2:2)(XA3;3:3)(XA4;4:4)(XA5;5:5)(XA6;6:6)(XA7;7:7)(XA8;8:8)(XA9;9:9)(XA10;10:10)(XA11;11:11)(XD0;12:12)(SY0;13:13)"
+      },
+      "samples": 118296240,
+      "analog_voltage_percentiles_0_1_50_99_100": [
+        [
+          0.001068115234375,
+          4.872894287109375,
+          4.880523681640625,
+          4.88861083984375,
+          4.895477294921875
+        ],
+        [
+          0.003662109375,
+          0.0189208984375,
+          0.30181884765625,
+          4.999847412109375,
+          4.999847412109375
+        ],
+        [
+          0.040130615234375,
+          0.041351318359375,
+          0.1678466796875,
+          4.886627197265625,
+          4.89532470703125
+        ],
+        [
+          3.180389404296875,
+          3.22998046875,
+          3.269500732421875,
+          3.57391357421875,
+          3.747711181640625
+        ],
+        [
+          3.1524658203125,
+          3.16558837890625,
+          3.16864013671875,
+          3.172454833984375,
+          3.69140625
+        ],
+        [
+          1.702728271484375,
+          1.713714599609375,
+          1.72393798828125,
+          1.734161376953125,
+          1.751708984375
+        ],
+        [
+          1.719207763671875,
+          1.7266845703125,
+          1.728973388671875,
+          1.731414794921875,
+          1.782989501953125
+        ],
+        [
+          1.713714599609375,
+          1.7193603515625,
+          1.722259521484375,
+          1.72515869140625,
+          1.771392822265625
+        ],
+        [
+          1.721649169921875,
+          1.722412109375,
+          1.72271728515625,
+          1.7230224609375,
+          1.72393798828125
+        ],
+        [
+          1.721038818359375,
+          1.72149658203125,
+          1.72210693359375,
+          1.722412109375,
+          1.7230224609375
+        ],
+        [
+          1.7193603515625,
+          1.71966552734375,
+          1.720123291015625,
+          1.720428466796875,
+          1.720733642578125
+        ],
+        [
+          1.722564697265625,
+          1.7230224609375,
+          1.72332763671875,
+          1.723785400390625,
+          1.7254638671875
+        ]
+      ],
+      "edges": {
+        "XD0_rise": {
+          "count": 2,
+          "first_s": [
+            1.7059697059697059,
+            902.6432366432366
+          ],
+          "last_s": [
+            1.7059697059697059,
+            902.6432366432366
+          ],
+          "interval_percentiles_s": [
+            900.9372669372669,
+            900.9372669372669,
+            900.9372669372669,
+            900.9372669372669,
+            900.9372669372669
+          ]
+        },
+        "XD0_fall": {
+          "count": 2,
+          "first_s": [
+            901.6819126819126,
+            3902.6013266013265
+          ],
+          "last_s": [
+            901.6819126819126,
+            3902.6013266013265
+          ],
+          "interval_percentiles_s": [
+            3000.9194139194137,
+            3000.9194139194137,
+            3000.9194139194137,
+            3000.9194139194137,
+            3000.9194139194137
+          ]
+        },
+        "XD1_rise": {
+          "count": 2723102,
+          "first_s": [
+            0.014091014091014091,
+            0.015411015411015411,
+            0.016368016368016367,
+            0.016434016434016433,
+            0.030723030723030724,
+            0.030855030855030854
+          ],
+          "last_s": [
+            3903.7613107613106,
+            3903.775665775666,
+            3903.775731775732,
+            3903.776952776953,
+            3903.777051777052,
+            3903.777942777943
+          ],
+          "interval_percentiles_s": [
+            6.6000066000066e-05,
+            6.6000066000066e-05,
+            0.000693000693000693,
+            0.014355014355014356,
+            0.014487014487014487
+          ]
+        },
+        "XD1_fall": {
+          "count": 2723102,
+          "first_s": [
+            0.01419001419001419,
+            0.015477015477015478,
+            0.0164010164010164,
+            0.016467016467016468,
+            0.030756030756030756,
+            0.03092103092103092
+          ],
+          "last_s": [
+            3903.7613767613766,
+            3903.775698775699,
+            3903.775797775798,
+            3903.776985776986,
+            3903.777084777085,
+            3903.777975777976
+          ],
+          "interval_percentiles_s": [
+            6.6000066000066e-05,
+            6.6000066000066e-05,
+            0.000561000561000561,
+            0.014355014355014356,
+            0.01452001452001452
+          ]
+        },
+        "XD2_rise": {
+          "count": 116915,
+          "first_s": [
+            1.7059697059697059,
+            1.7393657393657393,
+            1.7726957726957726,
+            1.806025806025806,
+            1.8394548394548396,
+            1.8727518727518728
+          ],
+          "last_s": [
+            3902.4259974259976,
+            3902.4593274593276,
+            3902.4926574926576,
+            3902.5260865260866,
+            3902.5593835593836,
+            3902.5927135927136
+          ],
+          "interval_percentiles_s": [
+            0.0332970332970333,
+            0.0332970332970333,
+            0.03333003333003333,
+            0.03342903342903343,
+            0.9922119922119922
+          ]
+        },
+        "XD2_fall": {
+          "count": 116915,
+          "first_s": [
+            1.7226677226677227,
+            1.755997755997756,
+            1.7894267894267895,
+            1.8227238227238227,
+            1.856053856053856,
+            1.8894828894828894
+          ],
+          "last_s": [
+            3902.4426294426294,
+            3902.4760584760584,
+            3902.5093885093884,
+            3902.5426855426854,
+            3902.5761145761144,
+            3902.6012936012935
+          ],
+          "interval_percentiles_s": [
+            0.025179025179025177,
+            0.0332970332970333,
+            0.03333003333003333,
+            0.03342903342903343,
+            0.9921129921129921
+          ]
+        },
+        "XD3_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD3_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD4_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD4_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD5_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD5_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD6_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD6_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD7_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD7_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD8_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD8_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD9_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD9_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD10_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD10_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD11_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "XD11_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "SY6_rise": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        },
+        "SY6_fall": {
+          "count": 0,
+          "first_s": [],
+          "last_s": [],
+          "interval_percentiles_s": []
+        }
+      }
+    },
+    "probe": {
+      "metadata": {
+        "acqApLfSy": "384,0,1",
+        "appVersion": "20251218",
+        "fileCreateTime": "2026-10-20T12:38:41",
+        "fileName": "C:/SGL_DATA/SP0003-123824_g1/SP0003-123824_g1_imec0/SP0003-123824_g1_t0.imec0.ap.bin",
+        "fileSHA1": "7F25EC0A56162E7EACC9520BAAA2E3B22CB9F7FD",
+        "fileSizeBytes": "90174652260",
+        "fileTimeSecs": "3903.62512636777",
+        "firstSample": "143405517",
+        "gateMode": "Immediate",
+        "imAiRangeMax": "0.62",
+        "imAiRangeMin": "-0.62",
+        "imAnyChanFullBand": "true",
+        "imCalibrated": "true",
+        "imChan0Ref": "ext",
+        "imChan0apGain": "100",
+        "imColsPerShank": "2",
+        "imDatApi": "4.1.3",
+        "imDatBs_fw": "4.0.240",
+        "imDatBsc_fw": "4.0.240",
+        "imDatBsc_hw": "5.4",
+        "imDatBsc_pn": "NPOB_ACQ_00-05-04",
+        "imDatBsc_sn": "23190268",
+        "imDatBsc_tech": "std",
+        "imDatFx_hw": "0.1",
+        "imDatFx_pn": "NPM_FLEX_01",
+        "imDatFx_sn": "0",
+        "imDatHs_fw": "0.0.0",
+        "imDatHs_hw": "3.2",
+        "imDatHs_pn": "NPM_HS_31",
+        "imDatHs_sn": "23200141",
+        "imDatPrb_dock": "1",
+        "imDatPrb_pn": "NP2004",
+        "imDatPrb_port": "1",
+        "imDatPrb_slot": "21",
+        "imDatPrb_sn": "23176517251",
+        "imDatPrb_sr_mask": "1",
+        "imDatPrb_sr_nok": "1",
+        "imDatPrb_tech": "std",
+        "imDatPrb_type": "2003",
+        "imErrFlags0_IS_CT_SR_LK_PP_SY_MS": "0 0 0 0 0 0 0",
+        "imIsSvyRun": "false",
+        "imLEDEnable": "false",
+        "imLowLatency": "false",
+        "imMaxInt": "2048",
+        "imRowsPerShank": "640",
+        "imSRAtDetect": "true",
+        "imSampRate": "30000.303361344537",
+        "imStdby": "",
+        "imSvyMaxBnk": "-1",
+        "imSvyNShanks": "1",
+        "imSvySecPerBnk": "35",
+        "imSvySettleSec": "2",
+        "imTipLength": "206",
+        "imTrgRising": "true",
+        "imTrgSource": "0",
+        "imX0EvenRow": "27",
+        "imX0OddRow": "27",
+        "imXPitch": "32",
+        "imZPitch": "15",
+        "imroFile": "",
+        "nDataDirs": "1",
+        "nSavedChans": "385",
+        "obErrFlags0_IS_CT_SR_LK_PP_SY_MS": "0 0 0 0 0 0 0",
+        "snsApLfSy": "384,0,1",
+        "snsSaveChanSubset": "0:384",
+        "syncImInputSlot": "2",
+        "syncSourceIdx": "0",
+        "syncSourcePeriod": "1",
+        "trigMode": "Immediate",
+        "typeImEnabled": "1",
+        "typeNiEnabled": "0",
+        "typeObEnabled": "1",
+        "typeThis": "imec",
+        "userNotes": ""
+      },
+      "samples": 117109938,
+      "windows": [
+        {
+          "start_s": 0,
+          "unique_SY": [
+            64
+          ],
+          "rising_samples": [],
+          "rising_seconds": []
+        },
+        {
+          "start_s": 1900,
+          "unique_SY": [
+            64
+          ],
+          "rising_samples": [],
+          "rising_seconds": []
+        },
+        {
+          "start_s": 3898,
+          "unique_SY": [
+            64
+          ],
+          "rising_samples": [],
+          "rising_seconds": []
+        }
+      ]
+    }
+  }
+}

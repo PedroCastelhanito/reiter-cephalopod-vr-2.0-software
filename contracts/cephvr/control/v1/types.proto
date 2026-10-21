@@ -826,6 +826,14 @@ message AcquisitionWarningView {
   optional uint64 warning_revision = 6;
   repeated Warning warnings = 7; // Complete view; <=10, exact matching scope/source.
 }
+// Display-only, approximately one-second host-clock rates; absent means unmeasured.
+// Camera source rate uses received-frame identity/time deltas, not preview publication.
+// Renderer source rate counts completed output batches. Neither proves optical cadence.
+message PreviewRates {
+  optional double source_fps = 1;
+  optional double preview_fps = 2;
+  int64 observed_monotonic_ns = 3;
+}
 message CameraDeviceView {
   optional bool device_open = 1;
   optional bool preview_running = 2;
@@ -840,6 +848,7 @@ message CameraDeviceView {
   optional bool preview_visible = 11; // Acquisition-owned OpenCV window observation.
   uint64 preview_visibility_revision = 12;
   string preview_failure = 13;
+  PreviewRates rates = 14;
   // Descriptive evidence, not controller configuration or execution authority.
   // No frames, native handles, PFS text or scientific histories.
 }
@@ -874,7 +883,14 @@ message TrialPulseEvidence {
   cephvr.acquisition.v1.PulseCommandEvidence on = 2;
   cephvr.acquisition.v1.PulseCommandEvidence off = 3;
 }
+// Latest retired session only, copied after terminal cleanup before identities reset.
+// Presentation evidence, never an active work scope or permission to resume work.
+message SessionFinalization {
+  SessionState session = 1;
+  TrialState trial = 2;
+}
 message Snapshot {
+  SessionFinalization last_finalization = 31; // Bounded latest terminal evidence across Configuration reset.
   StimulusPreviewState stimulus_preview = 30;
   string controller_generation = 1;
   int64 captured_monotonic_ns = 2;
@@ -945,4 +961,5 @@ message StimulusPreviewState {
   bool available = 6;
   bool visible = 7;
   string failure = 8;
+  PreviewRates rates = 9;
 }

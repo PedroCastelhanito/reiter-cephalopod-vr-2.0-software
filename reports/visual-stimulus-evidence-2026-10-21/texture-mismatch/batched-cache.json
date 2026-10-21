@@ -1,0 +1,44 @@
+{
+  "chunks_per_turn": 4,
+  "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "method": "Paced production image-cache probe with real protected PNGs and four hidden GL contexts.\nNo projector swaps, cameras, scientific run, or output recording are started.\n",
+  "trials": [
+    {
+      "trial": "8ef90847-2828-4936-ba0e-136a6c73b571",
+      "seconds": 60,
+      "counts": {
+        "texture_groups": 1799,
+        "held_groups": 0,
+        "mixed_groups": 0
+      },
+      "presentations": 100,
+      "onset_hold_epochs": [],
+      "first_hold": null,
+      "service_ms": {
+        "p50": 0.11549994815140963,
+        "p99": 3.3671000273898244,
+        "maximum": 18.854200025089085
+      },
+      "peak_reserved_gpu_bytes": 1069647336
+    },
+    {
+      "trial": "7f2d2a0d-b96f-4d30-8bc1-83fb46a0aa4b",
+      "seconds": 60,
+      "counts": {
+        "texture_groups": 1796,
+        "held_groups": 0,
+        "mixed_groups": 0
+      },
+      "presentations": 100,
+      "onset_hold_epochs": [],
+      "first_hold": null,
+      "service_ms": {
+        "p50": 0.14480005484074354,
+        "p99": 2.5260000256821513,
+        "maximum": 89.21330003067851
+      },
+      "peak_reserved_gpu_bytes": 1069647336
+    }
+  ],
+  "upload_source_sha256": "ee2b8c0bfaa9c8cb2d2ef7b6e77924c967bd13a4be490343a7ed25bd2eb927ee"
+}

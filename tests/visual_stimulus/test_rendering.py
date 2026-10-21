@@ -1846,7 +1846,7 @@ def test_texture_recipe_numeric_boolean_values_match_boolean_flags() -> None:
         np.testing.assert_array_equal(numeric_pixels, boolean_pixels)
 
 
-def _resident_images(*, count=8, batch=False):
+def _resident_images(*, count=8, batch=False, progress=None):
     import threading
 
     from cephvr.visual_stimulus.rendering.image_residency import ImageResidency
@@ -1891,6 +1891,7 @@ def _resident_images(*, count=8, batch=False):
         budget,
         announce=lambda *args: None,
         announce_batch=register_many if batch else None,
+        progress=progress,
     )
 
     class GPU:
@@ -1903,7 +1904,7 @@ def _resident_images(*, count=8, batch=False):
             textures.append(source.key)
             return True
 
-        def fence(self, fences):
+        def fence(self, textures, fences):
             fences.append(True)
 
         def ready(self, fences):
@@ -2117,7 +2118,51 @@ def test_image_upload_and_release_skip_unconsumed_output_contexts(selected):
     assert textures == []
 
 
-def test_image_upload_submits_bounded_chunks_without_repeating_color_conversion():
+@pytest.mark.parametrize(
+    "allocated", [(), (None, "left"), (None, "left", None, "bottom")]
+)
+def test_image_fences_only_allocated_contexts_including_partial_upload(
+    monkeypatch, allocated
+):
+    from cephvr.visual_stimulus.rendering.image_gpu import ImageGpu
+
+    active = []
+    deleted = []
+    gl = NS(
+        GL_SYNC_GPU_COMMANDS_COMPLETE=1,
+        GL_WAIT_FAILED=2,
+        GL_ALREADY_SIGNALED=3,
+        GL_CONDITION_SATISFIED=4,
+        glFenceSync=lambda *_: active[-1],
+        glFlush=lambda: None,
+        glClientWaitSync=lambda *_: 3,
+        glDeleteSync=deleted.append,
+    )
+    monkeypatch.setitem(sys.modules, "OpenGL", NS(GL=gl))
+    outputs = {
+        name: NS(activate=lambda n=name: active.append(n))
+        for name in ("front", "left", "right", "bottom")
+    }
+    gpu = ImageGpu(outputs)
+    fences = []
+    gpu.fence(list(allocated), fences)
+    expected = [name for name in allocated if name is not None]
+    assert active == expected
+    assert [fence for _, fence in fences] == expected
+    active.clear()
+    if expected:
+        gl.glClientWaitSync = lambda *_: 5  # Not yet signalled.
+        assert not gpu.ready(fences)
+        assert [fence for _, fence in fences] == expected
+        assert deleted == []
+        active.clear()
+        gl.glClientWaitSync = lambda *_: 3
+    assert gpu.ready(fences)
+    assert active == deleted == expected
+    assert fences == []
+
+
+def test_image_upload_submits_bounded_batches_without_repeating_color_conversion():
     from cephvr.visual_stimulus.rendering.image_gpu import ImageGpu
     from cephvr.visual_stimulus.resources.image_source import ImageSource
 
@@ -2129,20 +2174,75 @@ def test_image_upload_submits_bounded_chunks_without_repeating_color_conversion(
 
     class Context:
         def texture(self, size, channels, *, dtype):
-            assert size == (1024, 128) and channels == 4 and dtype == "f4"
+            assert size == (1024, 512) and channels == 4 and dtype == "f4"
             return Texture()
 
     gpu = ImageGpu({"output": NS(context=Context(), activate=lambda: None)})
-    source = ImageSource("key", 1024, 128, 4_000_000, 2_097_152, lambda check: b"")
+    source = ImageSource("key", 1024, 512, 16_000_000, 8_388_608, lambda check: b"")
     textures = []
-    pixels = bytes(2_097_152)
+    pixels = bytes(8_388_608)
     assert not gpu.upload(source, pixels, textures)
+    assert len(calls) == 4
     assert gpu.upload(source, pixels, textures)
     assert len(textures) == 1
-    assert calls == [
-        (1_048_576, (0, 0, 1024, 64), 1),
-        (1_048_576, (0, 64, 1024, 64), 1),
-    ]
+    assert calls == [(1_048_576, (0, row, 1024, 64), 1) for row in range(0, 512, 64)]
+
+
+def test_four_screen_image_set_upload_has_headroom_for_600ms_presentations():
+    import tomllib
+    from pathlib import Path
+
+    from cephvr.visual_stimulus.rendering import image_gpu
+    from cephvr.visual_stimulus.rendering.image_gpu import ImageGpu
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+
+    policy = tomllib.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "contracts/policy/visual_stimulus_policy.toml"
+        ).read_text()
+    )["image_residency"]
+    assert image_gpu.UPLOAD_CHUNK_BYTES == policy["upload_chunk_bytes"]
+    assert image_gpu.UPLOAD_CHUNKS_PER_TURN == policy["upload_chunks_per_turn"]
+    sizes = {
+        "front": (760, 690),
+        "left": (1030, 680),
+        "right": (1025, 695),
+        "bottom": (685, 940),
+    }
+    copied = bytearray()
+
+    class Texture:
+        def write(self, data, **kwargs):
+            assert len(data) <= 1_048_576
+            copied.extend(data)
+
+    gpu = ImageGpu(
+        {
+            name: NS(
+                activate=lambda: None,
+                context=NS(texture=lambda *args, **kwargs: Texture()),
+            )
+            for name in sizes
+        }
+    )
+    turns = 0
+    for name, (width, height) in sizes.items():
+        source = ImageSource(
+            name, width, height, 0, width * height * 16, lambda check: b"", (name,)
+        )
+        pixels = bytes(range(256)) * (width * height // 16)
+        pixels += bytes(range((width * height * 16) % 256))
+        copied.clear()
+        textures = []
+        while True:
+            turns += 1
+            if gpu.upload(source, pixels, textures):
+                break
+            assert turns < 36
+        assert copied == pixels
+    # Leave at least half the 36 refresh turns for decode, fences and rendering.
+    assert turns <= 18
 
 
 def test_image_lookahead_skips_long_repeated_history_without_scanning_suffix():
@@ -2681,6 +2781,74 @@ def test_physical_texture_coverage_preserves_tile_scale_and_anchor(angle):
     assert covering_texture(artifact, unchanged, "bottom") is unchanged
 
 
+def test_stimulus_preview_places_before_owner_can_show_and_preserves_manual_moves(
+    monkeypatch,
+):
+    import cephvr.visual_stimulus.rendering.preview as module
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.platform.windows import preview_owner, window_coordinates
+
+    monkeypatch.setattr(module.sys, "platform", "win32")
+    events = []
+    revision = [0]
+    owner = NS(
+        geometry=lambda: (410, 220, 400, 430),
+        placement_revision=lambda: revision[0],
+        sync=lambda: events.append("sync"),
+        close=lambda: None,
+    )
+
+    def bind(*args):
+        events.append("bind-show")
+        return owner
+
+    monkeypatch.setattr(preview_owner, "WindowsPreviewOwner", bind)
+    monkeypatch.setattr(
+        window_coordinates,
+        "position_preview_frame",
+        lambda title, x, y, **kw: events.append(("position", x, y)),
+    )
+    glfw = NS(
+        set_window_size=lambda window, w, h: events.append(("size", w, h)),
+        set_window_pos=lambda *args: pytest.fail(
+            "Win32 placement must use the visible frame"
+        ),
+        set_window_should_close=lambda *args: None,
+        show_window=lambda window: events.append("show"),
+        hide_window=lambda window: events.append("hide"),
+    )
+    preview = module.StimulusPreview(glfw, NS(), lambda *args: None)
+    preview.window, preview.context = object(), object()
+    hint = rpc.PreviewWindowPlacement(
+        x=410,
+        y=220,
+        side=400,
+        gui_window_handle=1,
+        gui_process_id=2,
+        gui_process_creation_time_100ns=3,
+    )
+    preview.set_visible(True, hint)
+    assert events[:4] == [
+        ("size", 400, 400),
+        ("position", 410, 220),
+        "bind-show",
+        "show",
+    ]
+    events.clear()
+    revision[0] += 1
+    hint.update_existing_only = True
+    preview.set_visible(True, hint)
+    assert not events
+    hint.snap_to_grid = True
+    preview.set_visible(True, hint)
+    assert events[:3] == [("size", 400, 400), ("position", 410, 220), "show"]
+    preview.set_visible(False, rpc.PreviewWindowPlacement())
+    events.clear()
+    hint.update_existing_only = hint.snap_to_grid = False
+    preview.set_visible(True, hint)
+    assert events[:3] == [("size", 400, 400), ("position", 410, 220), "show"]
+
+
 def test_stimulus_native_close_hides_and_failed_release_retains_ownership(monkeypatch):
     import cephvr.visual_stimulus.rendering.preview as module
     from cephvr.control.v1 import services_pb2 as rpc
@@ -2820,3 +2988,52 @@ def test_native_review_layouts_crop_only_preview_and_rotate_full_recording():
         for texture in sources:
             texture.release()
         context.release()
+
+
+@pytest.mark.parametrize("stop", ["complete", "cancel", "deadline"])
+def test_setup_texture_progress_waits_for_gpu_completion(stop):
+    import threading
+    import time
+
+    progress = []
+    cache, budget, gpu, gate, loads, aliases = _resident_images(
+        count=1, progress=lambda done, total: progress.append((done, total))
+    )
+    gpu.release_allowed = False
+    budget.cancelled = threading.Event()
+    deadline = [time.perf_counter_ns() + 2_000_000_000]
+    cache.clock_ns = lambda: deadline[0] - 1
+    polls = [0]
+    original_service = cache.service
+
+    def service(bound):
+        original_service(bound)
+        if cache.entries["image-0"].state == "uploading":
+            polls[0] += 1
+            assert progress[-1] == (0, 1)
+            if polls[0] == 3:
+                if stop == "complete":
+                    gpu.release_allowed = True
+                elif stop == "cancel":
+                    budget.cancelled.set()
+                else:
+                    deadline[0] += 2
+
+    cache.service = service
+    try:
+        if stop == "complete":
+            cache.prepare(deadline[0])
+            assert progress[-1] == (1, 1)
+            assert cache.entries["image-0"].state == "resident"
+            assert len(loads) == 1
+        else:
+            expected = InterruptedError if stop == "cancel" else TimeoutError
+            with pytest.raises(expected):
+                cache.prepare(deadline[0])
+            assert (1, 1) not in progress
+        assert polls[0] >= 3
+    finally:
+        gate.set()
+        gpu.release_allowed = True
+        assert cache.close(time.perf_counter_ns() + 2_000_000_000)
+        assert cache.release_gpu() == ()

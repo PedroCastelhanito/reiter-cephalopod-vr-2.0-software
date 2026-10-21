@@ -104,7 +104,7 @@ Remaining format mappings and integration are classified in the contract worklis
 <a id="a02"></a>
 ### A02 — Acquisition service and camera workers
 
-**Status:** Accepted · **Revision:** 34
+**Status:** Accepted · **Revision:** 35
 
 - One acquisition coordinator serves Behavioral, Tracking and Eye tracking roles through one external control
   endpoint; it aggregates readiness/closure and never relays pixels.
@@ -173,8 +173,9 @@ Remaining format mappings and integration are classified in the contract worklis
   heartbeat) and errors directly to the supervisor, under E08. Control/health threads
   stay separate from blocking data work; one data/lifecycle owner applies commands.
   Responsive RPCs do not prove capture/encoding progress.
-- Camera workers persist through a session, idle between trials; reuse requires prior
-  closure, reset trial state and fresh Ready. No automatic worker restart or session
+- Camera workers persist and capture continuously from Setup through intertrial gaps
+  under A10; trial recording reuse requires prior closure, reset trial-local state
+  and fresh Ready without restarting capture or trigger phase. No automatic worker restart or session
   resumption; E06 governs cleanup. Crash output follows A07 (no recovery tool).
 
 **Contract status:** worker RPCs and launch interfaces are declared; runtime providers
@@ -328,7 +329,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 65
+**Status:** Accepted · **Revision:** 66
 
 **Files**
 
@@ -383,8 +384,8 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   maximum-loss window.
 - `completion` (once, at closure): outcome (`completed`/`interrupted`), producer
   cutoff, final received count and accounting completion, recorded video frame count,
-  A11 ON/OFF dispatch/acknowledgement evidence (SYS-004), post-cutoff excluded-frame
-  count/last native counter (A09), one SDK transport-counter summary and grouped
+  A11 trial-state boundary evidence separately from session camera-pulse lifetime
+  evidence, bounded boundary-frame/native-counter context (A09), one SDK transport-counter summary and grouped
   diagnostics. Unknown values are `null`, never guessed. No timing history or setup
   copy.
 - Diagnostics use stable CephVR codes with native SDK cause/details, grouped by code
@@ -409,13 +410,15 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   at **10,000 per camera** (`pending_records_capacity`, configurable); exhaustion is a
   logging failure: fence the recording path and report to E06, never silently drop
   records, block capture or claim complete accounting.
-- Once all trial accounting, bounded post-cutoff retrieval and final purge are sealed,
+- Once trial admission and its ordered frame accounting are sealed,
   the capture thread hands the recording thread one terminal end marker carrying the
-  E11 cutoff, in-trial received count, actual stop observation and excluded-frame
-  accounting; unknown values stay absent with explicit incomplete accounting. Camera
-  Stopped stays prompt and independent of this drain. The recording thread reconciles
-  unique complete IDs, cutoff and applicable ON/OFF outcomes before successful
-  closure. Stop/finalization deadlines are unchanged; the
+  E11 cutoff, in-trial received count, actual admission-stop observation and bounded
+  boundary context; unknown values stay absent with explicit incomplete accounting.
+  Normal trial closure neither purges nor stops A10's continuing capture, and never
+  waits for an unbounded count of intertrial frames. Camera Stopped means trial
+  admission stopped; physical capture/pulse stop is separate session/fault cleanup
+  evidence. The recording thread reconciles unique complete IDs, cutoff and applicable
+  Trial-state outcomes before successful closure. Stop/finalization deadlines are unchanged; the
   [recording lifecycle](../../contracts/acquisition/recording-lifecycle.md) binds
   failures.
 - At finalization, including Interrupted trials, drain admitted frames, reconcile the
@@ -607,7 +610,7 @@ deferral (E15) remains.
 <a id="a09"></a>
 ### A09 — Source-frame identity
 
-**Status:** Accepted · **Revision:** 16
+**Status:** Accepted · **Revision:** 17
 
 - A camera frame belongs to a trial only if its host-monotonic receipt timestamp
   (A05) satisfies `trial_start <= receipt < trial_stop`, using the normal scheduled
@@ -626,18 +629,19 @@ deferral (E15) remains.
   separate and unchanged. A frame reference must include its camera and trial
   identity (directly or through unambiguous enclosing context); a bare counter is not
   globally unique.
-- For initial Behavioral/Tracking post hoc alignment, accept the owner's simplifying
-  assumption that the first recorded camera trigger in the matched trial's pulse
-  train corresponds to the source image of its first video frame. Label this an
-  assumed anchor, not independently measured correspondence. Use A07's encoded-to-
-  source mapping: later sequential video indices are not pulse indices when
-  acquisition or recording has lost an image. Preserve native timestamps/counters and explicit drops;
-  conflicting evidence is reported, never silently renumbered or repaired. With
-  video disabled, use the first received source row as the analogous assumed anchor.
-  Retain existing wiring, cadence and trial boundaries. ExposureActive wiring,
-  counter-origin changes and irregular pre-trial/in-trial trigger phases are deferred
-  unless a later owner request revisits this assumption. SYS-004 pulse timing
-  authority is unchanged; only the initial correspondence is assumed.
+- For post hoc analysis, select camera trigger rising edges in the measured
+  SpikeGLX Trial-state HIGH interval, start inclusive and end exclusive. Establish
+  frame-to-pulse correspondence before applying that gate; the first saved frame
+  is not assumed to match its first pulse. Continuous capture may deliver an image
+  exposed before the gate rises, or deliver an in-gate exposure after recording
+  admission closes. Preserve A07 encoded-to-source mappings, native counters/timestamps,
+  capture-generation identity and bounded boundary context across trial changes.
+  Do not reset native acquisition identity, equate video indices to pulse indices,
+  or treat Setup's first pulse as the first pulse in the later-started SpikeGLX file.
+  Missing/ambiguous correspondence and gated pulses without saved images remain
+  explicit; never shift the gate, renumber or fabricate frames to make counts agree.
+  This analysis gate does not replace E11's online host-receipt boundary. Existing
+  wiring/rates remain; ExposureActive wiring and coded trigger phases are not selected.
 - With a reliable camera hardware frame counter, retain native counters alongside
   CephVR identity and detect unexpected gaps between valid received frames, after
   accounting for documented wrap/reset behavior. Record the gap, warn and continue
@@ -670,19 +674,32 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 69
+**Status:** Accepted · **Revision:** 71
+
+- Visible native camera previews report E08 PreviewRates from existing latest-frame IDs
+  and acquisition timestamps, without adding capture-worker messages. One queued
+  callback and one in-flight rate report per viewer bound optional delivery; exact
+  reader/run identity gates reports, and closing cancels pending rate delivery.
 
 **Capture lifetime**
 
 - Read SDK images in order (Basler OneByOne) from a configurable
   **10-buffer SDK pool** per camera, separate from consumer rings, validated at Setup
   and fixed for the session. Upstream buffering is not a latency/loss guarantee.
-- Capture only during trials; no intertrial capture, including for preview.
-  Preparation may keep cameras open/configured and arm external triggering with pulses
-  off. After prior drain/closure, purge stale SDK frames before arming; never reopen
-  devices routinely or discard admitted trial data. Free-running capture starts at T.
-  E05 evidence deadlines and E11 bounds apply.
-- At cutoff, seal trial admission but keep bounded excluded-frame retrieval until
+- Setup configures and starts capture for A01's active camera roles, arms external
+  cameras before enabling their A11 trigger pulses, and verifies usable frame delivery
+  before Ready within the existing Setup deadline. Free-running cameras also start
+  capture during Setup. This acquisition warm-up adds no invented stabilization
+  duration or thermal/photometric guarantee. Failed/cancelled Setup stops capture and
+  pulses with exact cleanup evidence.
+- Keep capture and external trigger phase continuous in Ready, through trials and
+  intertrial gaps. Trial start/end gates only E11 recording/processing admission and
+  A11 Trial state; it never restarts capture, resets native counters or purges live SDK
+  buffers. Encode only admitted trial frames; Setup/intertrial frames are not saved.
+  Session end, cancellation, Abort/interruption and required fault cleanup stop capture
+  and pulses under existing ownership/deadline rules. Normal trial Stopped confirms
+  admission ended and Trial state LOW, not that the continuously acquiring camera stopped.
+- At physical capture/pulse shutdown, keep bounded excluded-frame retrieval until
   external OFF has a terminal outcome plus the prepared drain margin (exposure,
   transfer and one frame period). Count final purge discards when observable; unknown
   counts stay unknown. Control handoffs yield terminal drain without flushing SDK
@@ -961,7 +978,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 51
+**Status:** Accepted · **Revision:** 52
 
 **Board and firmware**
 
@@ -1067,12 +1084,13 @@ hardware information and later implementation; no new deferral is implied.
 
 **Boundaries and stopping**
 
-- Normal ON dispatch boundary B binds to host T and OFF to T + duration; reserve the
+- Trial-state ON dispatch boundary B binds to host T and OFF to T + duration; reserve the
   serial channel before each and dispatch at the boundary after valid release. This
   schedules host dispatch, not firmware application or a physical edge; camera
   admission/cutoff stays independent under E11. Keep dispatch/acknowledgement
-  observations separate and persist them in each recorded camera's A07 frame-log
-  completion line (`pulses`).
+  observations separate under A07. Camera ON belongs to Setup after capture is armed;
+  camera OFF belongs to session/fault cleanup, not normal trial boundaries. Retain
+  session camera-pulse evidence separately from per-trial Trial-state evidence.
   [MCU timing](../../contracts/acquisition/microcontroller.md#host-boundary-and-evidence-binding)
   defines wire evidence and start/stop deadline limits. No early compensation or new
   firmware clock/scheduling protocol.
@@ -1097,8 +1115,10 @@ hardware information and later implementation; no new deferral is implied.
 
 **Outputs and rates**
 
-- Grouped ON/OFF drives enabled externally triggered roles at trial boundaries;
-  individual preview control remains, and preview asserts no trial marker. The first
+- Setup ON drives enabled externally triggered roles continuously under A10;
+  normal trial ON/OFF selects only Trial state and preserves every camera output's
+  phase. Session cleanup/Abort stops all owned active outputs. Individual preview
+  control remains, and preview asserts no trial marker. The first
   pulse starts on ON application without a full-period delay. Repeated ON retains
   phase; OFF is repeat-safe. Physical simultaneous edges are not guaranteed.
 - CONFIGURE replaces both roles together. Active outputs derive from session roles
@@ -1147,7 +1167,7 @@ hardware information and later implementation; no new deferral is implied.
   inert for compatibility; they cannot enable the input. V20 presentation modes do
   not require an MCU input. Firmware implements output diagnostics only.
 - Trial state is active-high. During an enabled acquisition session, its enabled
-  output joins the existing released-trial ON/OFF mask: HIGH on application at T,
+  output is selected independently of continuous camera pulses: HIGH on application at T,
   held HIGH until normal end or Abort/interruption, then LOW. It remains independent
   of camera trigger modes, stays LOW during previews/gaps, and uses the same
   watchdog, exact boundary cancellation and truthful stop evidence. Setup and each

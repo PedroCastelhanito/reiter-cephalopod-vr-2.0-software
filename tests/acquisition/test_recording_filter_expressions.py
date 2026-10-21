@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from cephvr.acquisition.recording.filter_expressions import (
+from cephvr.shared.ffmpeg_filter_expressions import (
     ExpressionError,
     resolve_dimensions,
 )
-from cephvr.acquisition.recording.filters import (
+from cephvr.shared.ffmpeg_filters import (
     ImageFormat,
     source_format,
     validate_filter_chain,

@@ -1152,3 +1152,43 @@ async def test_preview_release_transport_preserves_one_authenticated_deadline(
     report = svc.PreviewConsumerReport()
     result = await port.report_preview_consumer_state(report, deadline_ns=deadline)
     assert result.result == pb.COMMAND_RESULT_ACCEPTED and calls == [report]
+
+
+def test_preview_rates_follow_visibility_revision_and_reject_invalid_samples():
+    from cephvr.controller.device_projection import (
+        merge_devices,
+        merge_preview_visibility,
+    )
+
+    prior = pb.AcquisitionDeviceViews()
+    prior.behavioral.preview_run_id = _id()
+    prior.behavioral.preview_running = True
+    report = svc.AcquisitionDeviceStatusReport(
+        preview_visibility=svc.CameraPreviewVisibility(
+            camera=1,
+            preview_run_id=prior.behavioral.preview_run_id,
+            revision=1,
+            visible=True,
+            observed_monotonic_ns=10,
+            rates=pb.PreviewRates(
+                source_fps=60, preview_fps=15, observed_monotonic_ns=9
+            ),
+        )
+    )
+    current = merge_preview_visibility(report, prior)
+    assert current.behavioral.rates.preview_fps == 15
+    assert merge_preview_visibility(report, current) is None
+    assert merge_devices(prior, current).behavioral.rates.source_fps == 60
+    report.preview_visibility.rates.preview_fps = float("nan")
+    with pytest.raises(ValueError, match="rates"):
+        merge_preview_visibility(report, current)
+    report.preview_visibility.rates.preview_fps = 16
+    with pytest.raises(ValueError, match="payload"):
+        merge_preview_visibility(report, current)
+    report.preview_visibility.revision = 2
+    report.preview_visibility.visible = False
+    report.preview_visibility.ClearField("rates")
+    closed = merge_preview_visibility(report, current)
+    assert not closed.behavioral.HasField("rates")
+    report.preview_visibility.revision = 1
+    assert merge_preview_visibility(report, closed) is None

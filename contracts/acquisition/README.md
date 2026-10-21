@@ -7,6 +7,13 @@ authorized stage under [ARCH-001](../../architecture.md#arch-001); its
 [implementation review](../../reports/acquisition.md) records
 progress, acceptance and verification separately from these declarations.
 
+The Oct21 continuous-capture design in A02/A07/A09/A10/A11 and E05/E11 supersedes
+the trial-only lifetime described by the current implementation contracts and
+policy22. The owner requested design first. Before implementation, reconcile
+recording-lifecycle, capture-wait, worker-control, MCU evidence bindings, frame-log
+schema and configuration/policy declarations together; do not enable continuous
+capture by changing a policy value alone. [Current scope and pending work](../../reports/acquisition.md#continuous-camera-acquisition-design--2026-10-21).
+
 | Artifact | Defined scope |
 | --- | --- |
 | [Camera adapter](camera_adapter.pyi) | Typed in-worker SDK boundary and buffer lifetime |

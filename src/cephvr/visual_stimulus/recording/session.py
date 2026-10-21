@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-import logging
 import threading
 import time
 from collections import deque
@@ -383,15 +381,3 @@ class RecordingSession:
                 pass  # Same: the recording failure is reported, not the cleanup's.
             self._error = exc
             self._done = True
-        finally:
-            logging.getLogger(__name__).info(
-                "%s",
-                json.dumps(
-                    {
-                        "event": "recording_metrics",
-                        "evidence_path": str(self.evidence_path),
-                        **self.metrics.snapshot(),
-                    },
-                    sort_keys=True,
-                ),
-            )

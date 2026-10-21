@@ -296,8 +296,10 @@ def test_setup_rejects_incomplete_output_closure_before_ready() -> None:
 
 
 @pytest.mark.parametrize("ingress_ns", (50, 101))
+@pytest.mark.parametrize("stage", ("setup", "resolution"))
 def test_setup_surfaces_retained_camera_failure_under_original_deadline(
     ingress_ns: int,
+    stage: str,
 ) -> None:
     async def scenario() -> None:
         operation = control.OperationContext(command_id="camera-setup")
@@ -330,9 +332,55 @@ def test_setup_surfaces_retained_camera_failure_under_original_deadline(
         error = RuntimeError if ingress_ns <= 100 else TimeoutError
         match = "ENCODER: unsupported input" if ingress_ns <= 100 else "deadline"
         with pytest.raises(error, match=match):
-            await SessionSetup._wait_worker_setup(setup, (worker,), 100)
+            if stage == "resolution":
+                await SessionSetup._wait_camera_resolutions(setup, (child,), 100)
+            else:
+                await SessionSetup._wait_worker_setup(setup, (worker,), 100)
 
     asyncio.run(scenario())
+
+
+async def test_failed_resolution_waits_for_sibling_before_scope_retirement():
+    import time
+
+    deadline = time.perf_counter_ns() + 1_000_000_000
+    children = tuple(
+        ChildOperation(
+            command_id=str(uuid4()),
+            camera=role,
+            work=control.WorkContext(),
+            parent_operation=control.OperationContext(command_id="setup"),
+            kind="resolve_camera",
+            deadline_ns=deadline,
+        )
+        for role in (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_EYE_TRACKING)
+    )
+    failed, pending = children
+    failed.report = control.OperationState(
+        context=control.OperationContext(command_id=failed.command_id),
+        complete=True,
+        succeeded=False,
+        failure=control.Failure(code="MISSING_CAMERA", message="disconnected"),
+    )
+    failed.report_ingress_ns = time.perf_counter_ns()
+    setup = cast(
+        SessionSetup, SimpleNamespace(lock=asyncio.Lock(), clock=time.perf_counter_ns)
+    )
+    task = asyncio.create_task(
+        SessionSetup._wait_camera_resolutions(setup, children, deadline)
+    )
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    assert not task.done()
+    pending.report = control.OperationState(
+        context=control.OperationContext(command_id=pending.command_id),
+        complete=True,
+        succeeded=True,
+    )
+    pending.report_ingress_ns = time.perf_counter_ns()
+    pending.updated.set()
+    with pytest.raises(RuntimeError, match="MISSING_CAMERA: disconnected"):
+        await task
 
 
 def test_trial_preparation_surfaces_exact_worker_failure(

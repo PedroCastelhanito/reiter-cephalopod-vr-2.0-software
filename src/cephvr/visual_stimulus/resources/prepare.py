@@ -59,6 +59,7 @@ def prepare_resources(
     defer_images: bool = False,
     component_provenance: tuple[ComponentProvenance, ...] | None = None,
     validated_images: dict[str, tuple[ImageSource, ImageInfo]] | None = None,
+    image_progress: Callable[[int, int], None] | None = None,
 ) -> PreparedResourceBundle:
     """Protect all source assets and return canonical manifest facts.
 
@@ -181,6 +182,11 @@ def prepare_resources(
         entries: list[Resource] = []
         prepared_content: dict[str, object] = {}
         image_sources = {}
+        image_total = sum(
+            item.profile in RELOADABLE_IMAGE_PROFILES for item in program.assets
+        )
+        if defer_images and image_progress is not None:
+            image_progress(0, image_total)
         dependency_ids = frozenset(item.asset_id for item in dependencies_to_prepare)
         sources_by_id = source_set.by_id()
         recipe_dependency_content = {}
@@ -278,6 +284,8 @@ def prepare_resources(
                     new_validation_keys.append(validation_key)
                 image_source, info = validation_cache[validation_key]
                 image_sources[authored.asset_id] = image_source
+                if image_progress is not None:
+                    image_progress(len(image_sources), image_total)
                 interpretation = image_interpretation(authored, info)
                 kind = "image"
                 provider = (

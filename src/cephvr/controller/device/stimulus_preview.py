@@ -12,6 +12,7 @@ from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import ConfigurationState, LifecycleState, LimitsState
 from cephvr.shared.deadlines import remaining_seconds
+from cephvr.shared.preview_rates import valid_rates
 
 
 class StimulusPreviewController:
@@ -51,6 +52,18 @@ class StimulusPreviewController:
                 or report.configuration_revision != self.configuration.revision
                 or len(report.failure) > 512
                 or (report.visible and not report.available)
+                or (
+                    report.HasField("rates")
+                    and not valid_rates(
+                        report.rates.source_fps
+                        if report.rates.HasField("source_fps")
+                        else None,
+                        report.rates.preview_fps
+                        if report.rates.HasField("preview_fps")
+                        else None,
+                        report.rates.observed_monotonic_ns,
+                    )
+                )
             ):
                 return pb.ReportReceipt(
                     result=pb.COMMAND_RESULT_REJECTED,

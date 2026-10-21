@@ -126,7 +126,7 @@ class StartActivation:
                 context=pb.OperationContext(command_id=command_id),
                 command="StartSession",
                 work=pb.WorkContext(session=attempt.context),
-                progress="freezing configuration and metadata",
+                progress="Freezing configuration…",
             )
             attempt.closure.start_command_id = command_id
             self.publisher.publish()

@@ -1,0 +1,41 @@
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "7057fb4f-6fd4-45fd-b801-4427dd0e0c76"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}]}
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "7057fb4f-6fd4-45fd-b801-4427dd0e0c76"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}, {"context": {"command_id": "d5619241-4b8f-4550-a961-50f2fa30ad9c"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}]}
+UpdateConfiguration {"command_id": "d5619241-4b8f-4550-a961-50f2fa30ad9c", "complete": true, "succeeded": true, "needs_input": false, "failure": "", "elapsed_ms": 17.1266}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "7057fb4f-6fd4-45fd-b801-4427dd0e0c76"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}, {"context": {"command_id": "d5619241-4b8f-4550-a961-50f2fa30ad9c"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "fcb890e1-71b0-4f3e-9f51-30f769ce905f"}, "command": "Setup", "work": {"session": {"controller_generation": "10dac498-3ef8-48f8-bd60-b7e0a9c642cd", "session_id": "08c60095-1bba-47aa-a34f-cde9396ead4b"}}, "progress": "Reserving output folder\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "7057fb4f-6fd4-45fd-b801-4427dd0e0c76"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}, {"context": {"command_id": "d5619241-4b8f-4550-a961-50f2fa30ad9c"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "fcb890e1-71b0-4f3e-9f51-30f769ce905f"}, "command": "Setup", "work": {"session": {"controller_generation": "10dac498-3ef8-48f8-bd60-b7e0a9c642cd", "session_id": "08c60095-1bba-47aa-a34f-cde9396ead4b"}}, "progress": "Checking output folder\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "7057fb4f-6fd4-45fd-b801-4427dd0e0c76"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}, {"context": {"command_id": "d5619241-4b8f-4550-a961-50f2fa30ad9c"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "fcb890e1-71b0-4f3e-9f51-30f769ce905f"}, "command": "Setup", "work": {"session": {"controller_generation": "10dac498-3ef8-48f8-bd60-b7e0a9c642cd", "session_id": "08c60095-1bba-47aa-a34f-cde9396ead4b"}}, "progress": "Registering backends\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "7057fb4f-6fd4-45fd-b801-4427dd0e0c76"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}, {"context": {"command_id": "d5619241-4b8f-4550-a961-50f2fa30ad9c"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "fcb890e1-71b0-4f3e-9f51-30f769ce905f"}, "command": "Setup", "work": {"session": {"controller_generation": "10dac498-3ef8-48f8-bd60-b7e0a9c642cd", "session_id": "08c60095-1bba-47aa-a34f-cde9396ead4b"}}, "progress": "Preparing cameras\u2026"}]}
+state {"phase": "SESSION_PHASE_SETTING_UP", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "7057fb4f-6fd4-45fd-b801-4427dd0e0c76"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}, {"context": {"command_id": "d5619241-4b8f-4550-a961-50f2fa30ad9c"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "fcb890e1-71b0-4f3e-9f51-30f769ce905f"}, "command": "Setup", "work": {"session": {"controller_generation": "10dac498-3ef8-48f8-bd60-b7e0a9c642cd", "session_id": "08c60095-1bba-47aa-a34f-cde9396ead4b"}}, "complete": true, "succeeded": false, "progress": "Preparing cameras\u2026", "failure": {"code": "SETUP_FAILED", "message": "acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 3 resolution failed: WORKER_OPERATION_FAILED: assigned Basler serial '40278236' matched 0 devices"}}]}
+Setup {"command_id": "fcb890e1-71b0-4f3e-9f51-30f769ce905f", "complete": true, "succeeded": false, "needs_input": false, "failure": "SETUP_FAILED: acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 3 resolution failed: WORKER_OPERATION_FAILED: assigned Basler serial '40278236' matched 0 devices", "elapsed_ms": 2635.8694}
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "7057fb4f-6fd4-45fd-b801-4427dd0e0c76"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}, {"context": {"command_id": "d5619241-4b8f-4550-a961-50f2fa30ad9c"}, "command": "UpdateConfiguration", "complete": true, "succeeded": true, "progress": "configuration revision committed"}, {"context": {"command_id": "fcb890e1-71b0-4f3e-9f51-30f769ce905f"}, "command": "Setup", "work": {"session": {"controller_generation": "10dac498-3ef8-48f8-bd60-b7e0a9c642cd", "session_id": "08c60095-1bba-47aa-a34f-cde9396ead4b"}}, "complete": true, "succeeded": false, "progress": "Preparing cameras\u2026", "failure": {"code": "SETUP_FAILED", "message": "acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 3 resolution failed: WORKER_OPERATION_FAILED: assigned Basler serial '40278236' matched 0 devices"}}]}
+restoration_blocked {"phase": 1, "cleanup": false}
+error "TimeoutError()"
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 500, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 145, in _wait
+    await self._changed.wait()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py", line 267, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\setup-recovery\verify.py", line 184, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\setup-recovery\verify.py", line 113, in main
+    await asyncio.wait_for(client._wait(lambda s: s.session.phase == pb.SESSION_PHASE_CONFIGURATION and s.session.cleanup_confirmed), 40)
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 502, in wait_for
+    raise exceptions.TimeoutError() from exc
+TimeoutError

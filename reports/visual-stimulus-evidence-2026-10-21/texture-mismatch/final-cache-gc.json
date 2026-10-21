@@ -1,0 +1,67 @@
+{
+  "chunks_per_turn": 4,
+  "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "method": "Paced production image-cache probe with real protected PNGs and four hidden GL contexts.\nNo projector swaps, cameras, scientific run, or output recording are started.\n",
+  "trials": [
+    {
+      "trial": "8ef90847-2828-4936-ba0e-136a6c73b571",
+      "seconds": 60,
+      "counts": {
+        "texture_groups": 1800,
+        "held_groups": 0,
+        "mixed_groups": 0
+      },
+      "presentations": 100,
+      "onset_hold_epochs": [],
+      "first_hold": null,
+      "service_ms": {
+        "p50": 0.10740000288933516,
+        "p99": 1.7603000160306692,
+        "maximum": 5.617999937385321
+      },
+      "peak_reserved_gpu_bytes": 1069647336,
+      "slow_selects": [],
+      "slow_stages": [
+        {
+          "method": "upload",
+          "ms": 5.532899987883866,
+          "epoch": 44,
+          "seconds": 13.266799699980766
+        }
+      ],
+      "gc_events": [],
+      "main_thread": 23316
+    },
+    {
+      "trial": "7f2d2a0d-b96f-4d30-8bc1-83fb46a0aa4b",
+      "seconds": 60,
+      "counts": {
+        "texture_groups": 1795,
+        "held_groups": 0,
+        "mixed_groups": 0
+      },
+      "presentations": 100,
+      "onset_hold_epochs": [],
+      "first_hold": null,
+      "service_ms": {
+        "p50": 0.14320004265755415,
+        "p99": 1.7230999656021595,
+        "maximum": 2.9648999916389585
+      },
+      "peak_reserved_gpu_bytes": 1069647336,
+      "slow_selects": [],
+      "slow_stages": [],
+      "gc_events": [
+        {
+          "generation": 2,
+          "ms": 104.09639996942133,
+          "epoch": 8,
+          "seconds": 2.506256200023927,
+          "thread": 20688
+        }
+      ],
+      "main_thread": 23316
+    }
+  ],
+  "upload_source_sha256": "b0438f612d0321ced1c6ad419c5e9a2ba711f22401587a46cdb3a280b52a4960"
+}

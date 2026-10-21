@@ -72,7 +72,7 @@ class ManagedGui(QObject):
         self.close_pending = False
         self.history = GuiHistory(window.snapshots, gui_history_path or history_path())
         self.state: pb.Snapshot | None = None
-        self.action_progress = ActionProgress(self.log_action)
+        self.action_progress = ActionProgress(self.log_action, self.update_action)
         self._inventory_identity: tuple[str, int] | None = None
         self.display_operations = ManagedDisplayOperations(
             window.devices.projectors,
@@ -238,7 +238,9 @@ class ManagedGui(QObject):
             self.connected_once = True
             self.control_ready = True
             self._connection_identity = (epoch, generation)
-            self.window.dashboard.log_console.appendPlainText("Controller connected.")
+            self.window.dashboard.log_console.appendPlainText(
+                "Controller · Controller connected."
+            )
             self.claim_unheld_control()
             return
         if self.connected_once:
@@ -362,7 +364,7 @@ class ManagedGui(QObject):
                         self.configuration.tracking_dirty = True
                         self.configuration.edit_serial += 1
                         self.window.dashboard.log_console.appendPlainText(
-                            "Previous GUI configuration restored as a local draft."
+                            "Configuration · Previous GUI configuration restored as a local draft."
                         )
             else:
                 self.history.restore_attempted = True
@@ -468,6 +470,23 @@ class ManagedGui(QObject):
         elif target:
             getattr(self.window.devices, target).console.appendPlainText(message)
 
+    def update_action(
+        self,
+        target: str,
+        key: tuple[str, ...],
+        message: str,
+        result: str,
+        details: str,
+    ) -> None:
+        self.window.dashboard.log_console.action_entry(key, message, result, details)
+        if target == "tracking":
+            console = self.window.tracking.status.console
+        elif target:
+            console = getattr(self.window.devices, target).console
+        else:
+            return
+        console.action_entry(key, message, result, details)
+
     def stimulus_preview_finished(self, action: str, *_: object) -> None:
         if action != "set_stimulus_preview":
             return
@@ -484,11 +503,16 @@ class ManagedGui(QObject):
     ) -> None:
         label = action_label(action)
         normalized = status.replace("_", " ").capitalize()
-        if status != "completed":
+        inline = self.action_progress.finished(
+            action,
+            status,
+            f"Action: {action}\nCommand ID: {command_id}\nStatus: {status}\nMessage: {message}",
+        )
+        if status != "completed" and not inline:
             summary = (
                 f"{label} · Waiting for operator input…"
                 if status == "needs_input"
-                else f"{label}: {normalized.lower()}"
+                else f"{label} · {normalized.lower()}"
                 + (f" — {message}" if message else "")
             )
             self.window.dashboard.log_console.append_entry(
@@ -549,7 +573,7 @@ class ManagedGui(QObject):
         ):
             if self.configuration.dirty or self.configuration.stale:
                 self.window.dashboard.log_console.appendPlainText(
-                    "Returning to Configuration. Your edits are retained for the next Setup."
+                    "Configuration · Returning; edits kept for next Setup"
                 )
             self.bridge.request("New session")
             return
@@ -755,7 +779,16 @@ class ManagedGui(QObject):
             if success or message.startswith("Cancelled")
             else f"{label} failed: {message}"
         )
-        if not success:
+        inline = self.action_progress.finished(
+            action,
+            "completed"
+            if success
+            else "cancelled"
+            if message.startswith("Cancelled")
+            else "failed",
+            f"Action: {action}\nSuccess: {success}\nMessage: {message}",
+        )
+        if not success and not inline:
             self.window.dashboard.log_console.append_entry(
                 rendered,
                 f"Action: {action}\nSuccess: {success}\nMessage: {message}",

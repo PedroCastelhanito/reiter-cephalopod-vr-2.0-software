@@ -1,0 +1,35 @@
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "910e5a18-a706-4f33-88f8-5228dd0c7aad"}, "command": "InitializeDisplay", "complete": true, "succeeded": true, "progress": "Idle output confirmed"}]}
+restoration_blocked {"phase": 1, "cleanup": false}
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": []}
+state {"phase": "SESSION_PHASE_CONFIGURATION", "trial": "TRIAL_PHASE_PENDING", "cleanup": false, "operations": [{"context": {"command_id": "140d09ac-58cf-4af8-ac91-bf182b8c8c23"}, "command": "ReleaseManualCameraState", "complete": true, "succeeded": true, "progress": "manual camera state released"}]}
+error "ClientError(\"REJECTED: configuration validation failed: trials[0].stimulus.program.program_json: 1 validation error for Program\\n  Value error, Repetition settings must match the enclosing group repetitions [type=value_error, input_value={'format_version': 2, 'as...', 'value': 1.0}}]]}]}]}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error\")"
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\setup-recovery\verify.py", line 172, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\setup-recovery\verify.py", line 108, in main
+    await update(candidate)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\setup-recovery\verify.py", line 75, in update
+    await command("UpdateConfiguration", rpc.UpdateConfigurationRequest(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-21\setup-recovery\verify.py", line 68, in command
+    result = await asyncio.wait_for(client.execute(name, request), 120)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 274, in execute
+    admission = await self._admit(
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 173, in _admit
+    raise ClientError(
+cephvr.client.session.ClientError: REJECTED: configuration validation failed: trials[0].stimulus.program.program_json: 1 validation error for Program
+  Value error, Repetition settings must match the enclosing group repetitions [type=value_error, input_value={'format_version': 2, 'as...', 'value': 1.0}}]]}]}]}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/value_error

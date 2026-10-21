@@ -142,6 +142,30 @@ class Reports:
         link = self.state.links.get(report.operation.context.command_id)
         if link is None or report.source != link.child.target:
             raise ValueError("worker operation does not match a retained command")
+        if not report.operation.complete and report.operation.progress:
+            if (
+                link.method != "SetupSession"
+                or report.operation.command != "SetupSession"
+                or report.operation.work != link.child.target.work
+                or self.state.interrupted
+                or self.state.sealed
+                or len(report.operation.progress.encode("utf-8")) > 2048
+            ):
+                raise ValueError("progress outside live Setup")
+            progress = pb.OperationState.FromString(
+                report.operation.SerializeToString()
+            )
+            progress.context.command_id = link.parent.command_id
+            progress.work.CopyFrom(link.parent.work)
+            await self.controller.receipt(
+                "ReportLifecycle",
+                pb.LifecycleReport(
+                    operation=pb.BackendOperationReport(
+                        source=self.identity.backend, operation=progress
+                    )
+                ),
+                deadline_ns=link.deadline_ns,
+            )
         if report.HasField("prepared_artifact"):
             setup = self.state.setup
             if setup is None or link.method != "SetupSession" or self.state.interrupted:
@@ -335,6 +359,19 @@ class Reports:
             payload.source.CopyFrom(self.identity.process)
             payload.operation.command_id = link.parent.command_id
             payload.cleanup_resources_revision = self.state.catalogue_revision
+            if self.state.setup is None and work.WhichOneof("work") == "session":
+                await self.supervisor.receipt(
+                    "ReportHeartbeat",
+                    pb.HeartbeatReport(
+                        source=self.identity.process,
+                        work=work,
+                        sent_monotonic_ns=self.clock(),
+                        session_phase=pb.SESSION_PHASE_CONFIGURATION,
+                        cleanup_resources_revision=self.state.catalogue_revision,
+                        cleanup_resources=self.state.resources,
+                    ),
+                    deadline_ns=link.deadline_ns,
+                )
         else:
             if payload.context.backend != self.identity.backend:
                 raise ValueError("worker evidence backend mismatch")

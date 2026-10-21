@@ -17,12 +17,14 @@ from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
     QLabel,
+    QPlainTextEdit,
     QPushButton,
     QToolButton,
     QWidget,
 )
 
 from cephvr.gui.layouts import tool_window_position
+from cephvr.gui.log_format import STAMP_WIDTH
 from cephvr.gui.managed_status import (
     dashboard_view,
     has_retained_history,
@@ -32,9 +34,13 @@ from cephvr.gui.managed_status import (
     retained_summary,
 )
 from cephvr.gui.review import ReviewControls
-from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import DashboardView, Phase, PreviewView, review_view
 from cephvr.gui.window import DashboardWindow
+
+
+def log_rows(console: QPlainTextEdit) -> list[str]:
+    """Log rows without their wall-clock stamp."""
+    return [row[STAMP_WIDTH:] for row in console.toPlainText().splitlines()]
 
 
 @pytest.mark.parametrize(
@@ -584,7 +590,8 @@ def test_preview_slot_tracks_relevant_tabs(
             slot = window.preview_slot
             frame_widget = next(iter(slot.frames.values()))
             target = frame_widget.target
-            assert slot.height() < window.stack.height()
+            region = window.dashboard.preview_dialog if page == 0 else window.stack
+            assert slot.height() < region.height()
             assert target.geometry().top() > frame_widget.header.geometry().bottom()
             assert (
                 abs(target.geometry().center().x() - frame_widget.rect().center().x())
@@ -624,16 +631,6 @@ def test_preview_slot_tracks_relevant_tabs(
                 width, height = preview_frame_extra()
                 frame = QRect(hint.x, hint.y, hint.side + width, hint.side + height)
                 assert QRect(origin, target.size()).contains(frame)
-
-
-@pytest.fixture(scope="module")
-def app() -> QApplication:
-    result = QApplication.instance()
-    if result is None:
-        result = QApplication([])
-    assert isinstance(result, QApplication)
-    apply_theme(result)
-    return result
 
 
 @pytest.fixture
@@ -742,6 +739,24 @@ def open_protocol_group(editor, *, generate=False):
 
     editor.set_program(grouped_program(editor.program))
     editor.enter_group()
+
+
+def test_unpatched_modal_is_recorded_instead_of_blocking(
+    window: DashboardWindow, unexpected_modals: list[str], monkeypatch
+) -> None:
+    from PyQt6.QtWidgets import QMessageBox
+
+    import cephvr.gui.window as window_module
+
+    def broken(*args, **kwargs):
+        raise ValueError("asset folder missing")
+
+    monkeypatch.setattr(window_module, "TrialPreview", broken)
+    window.open_trial_preview()
+    assert window.trial_preview is None
+    assert unexpected_modals == ["information: Trial preview: asset folder missing"]
+    assert QMessageBox.question(window, "Q", "?") == QMessageBox.StandardButton.NoButton
+    unexpected_modals.clear()  # Recorded as expected; do not fail at teardown.
 
 
 def test_offline_frontend_cannot_request_commands(app: QApplication) -> None:
@@ -1925,9 +1940,13 @@ def test_managed_total_time_tracks_trials_gaps_and_stops(window) -> None:
     assert view.total_duration_s == total
     window.apply_view(view)
     preview_text = window.dashboard.preview_dialog.hud.toPlainText()
+    # The preview HUD repeats every Dashboard row except OUTPUT, in aligned columns.
     for row in window.dashboard.status_column.rows:
-        if row is not None:
-            assert f"{row[0]}: {row[1]}" in preview_text
+        if row is not None and row[0] != "OUTPUT":
+            assert row[0] in preview_text and row[1] in preview_text
+    lines = preview_text.splitlines()
+    assert len(lines) == 2
+    assert lines[0].index("TRIAL ") == lines[1].index("TOTAL TIME")
     config.trials[0].stimulus.program.program_json = "{}"
     assert session_timeline(state, 12, 0) == (None, None)
 
@@ -3046,6 +3065,181 @@ def test_log_overflow_has_visible_working_scrollbar(
     assert scroll.maximum() == 0 and not scroll.isVisible()
 
 
+def test_log_rows_use_terminal_columns_and_skip_exact_repeats(
+    window: DashboardWindow,
+) -> None:
+    from datetime import datetime
+
+    from cephvr.gui.log_format import terminal_body, terminal_row
+
+    now = datetime(2026, 10, 21, 14, 12, 3)
+    assert terminal_row(terminal_body("Setup · Waiting for backends…"), now) == (
+        "14:12:03  [SETUP]     Waiting for backends…"
+    )
+    assert terminal_body("Visual stimulus · Preparing…") == "[STIMULUS]  Preparing…"
+    assert terminal_row("Setup selected; no command sent", now) == (
+        "14:12:03  Setup selected; no command sent"
+    )
+    console = window.dashboard.log_console
+    console.setPlainText("")
+    for message in ("Session · Preparing to start…",) * 2 + ("Session · Ready",):
+        console.appendPlainText(message)
+    console.append_entry("Session · Ready", "details", error=True)
+    rows = console.toPlainText().splitlines()
+    assert [row[STAMP_WIDTH:] for row in rows] == [
+        "[SESSION]   Preparing to start…",
+        "[SESSION]   Ready",
+        "[SESSION]   Ready",
+    ]
+
+
+@pytest.mark.parametrize("result", ["Done", "Failed", "Cancelled", "Unconfirmed"])
+def test_action_result_updates_original_row_without_touching_other_actions(
+    window, result
+):
+    console = window.dashboard.log_console
+    console.clear()
+    console.action_entry(("first",), "Setup · Preparing…")
+    original = console.toPlainText()
+    console.action_entry(("second",), "Setup · Preparing…")
+    console.appendPlainText("Unrelated observation")
+    console.action_entry(("first",), "", result, "original diagnostics")
+    rows = console.toPlainText().splitlines()
+    assert rows[0] == original + f" [{result}]"
+    assert rows[1].endswith("Preparing…")
+    assert rows[2].endswith("Unrelated observation")
+    assert console.document().firstBlock().userData().details == "original diagnostics"
+    console.action_entry(("first",), "", result)
+    assert console.toPlainText().splitlines() == rows
+    console.clear()
+    console.action_entry(("second",), "", result)
+    assert console.toPlainText() == ""
+
+
+def test_action_results_do_not_reuse_evicted_blocks(window):
+    console = window.dashboard.log_console
+    console.clear()
+    console.setMaximumBlockCount(2)
+    console.action_entry(("old",), "Setup · Preparing…")
+    console.appendPlainText("Newer")
+    console.appendPlainText("Newest")
+    console.action_entry(("old",), "", "Done")
+    assert [row[STAMP_WIDTH:] for row in console.toPlainText().splitlines()] == [
+        "Newer",
+        "Newest",
+    ]
+    console.action_entry(("old",), "Setup · Preparing…", "Failed", "failure evidence")
+    assert console.document().lastBlock().userData().details == "failure evidence"
+    assert console.toPlainText().endswith("[Failed]")
+
+
+def test_action_results_follow_operation_and_participant_evidence(window):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_progress import ActionProgress
+
+    console = window.dashboard.log_console
+    console.clear()
+    log = ActionProgress(
+        lambda *_: None, lambda _target, *args: console.action_entry(*args)
+    )
+    log.requested("Setup", "Setup · Validating configuration…")
+    state = pb.Snapshot(controller_generation="controller")
+    state.session.phase = pb.SESSION_PHASE_SETTING_UP
+    operation = state.operations.add(
+        command="Setup", progress="Reserving output folder…"
+    )
+    operation.context.command_id = "setup-1"
+    participant = state.participants.add()
+    participant.process.role = "visual_stimulus"
+    participant.process.generation = "worker-1"
+    log.install(1, state)
+    operation.progress = "Registering outputs…"
+    log.install(1, state)
+    operation.complete = True
+    operation.succeeded = True
+    state.session.phase = pb.SESSION_PHASE_READY
+    participant.ready.required_checks_passed = True
+    log.install(1, state)
+    assert log.finished("Setup", "completed", "Setup confirmed")
+    rows = console.toPlainText().splitlines()
+    assert sum(row.endswith("[Done]") for row in rows) == 3
+    assert "Reserving output folder" not in console.toPlainText()
+    log.install(1, state)
+    assert console.toPlainText().splitlines() == rows
+    console.clear()
+    log.install(2, state)
+    assert "[Done]" not in console.toPlainText()
+
+
+def test_action_results_keep_unknown_and_failed_completion_truthful(window):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_progress import ActionProgress
+
+    console = window.dashboard.log_console
+    console.clear()
+    log = ActionProgress(
+        lambda *_: None, lambda _target, *args: console.action_entry(*args)
+    )
+    state = pb.Snapshot(controller_generation="controller")
+    operation = state.operations.add(command="Setup", progress="Preparing…")
+    operation.context.command_id = "setup"
+    recovery = state.recoveries.add(attempt_id="recovery", progress="Releasing…")
+    state.session.phase = pb.SESSION_PHASE_RUNNING
+    state.trial.context.trial_id = "trial"
+    state.trial.phase = pb.TRIAL_PHASE_FINALIZING
+    log.install(1, state)
+    operation.complete = True
+    operation.succeeded = False
+    recovery.completion_monotonic_ns = 1
+    state.trial.phase = pb.TRIAL_PHASE_ENDED
+    state.trial.outcome = pb.TRIAL_OUTCOME_INTERRUPTED
+    log.install(1, state)
+    text = console.toPlainText()
+    assert "Preparing… [Failed]" in text
+    assert "Releasing… [Unconfirmed]" in text
+    assert "Finalizing files… [Interrupted]" in text
+    assert "[Done]" not in text
+
+
+@pytest.mark.parametrize("matches", [True, False])
+def test_finalization_result_survives_coalesced_configuration_reset(window, matches):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_progress import ActionProgress
+
+    console = window.dashboard.log_console
+    console.clear()
+    log = ActionProgress(
+        lambda *_: None, lambda _target, *args: console.action_entry(*args)
+    )
+    state = pb.Snapshot(controller_generation="controller")
+    state.session.phase = pb.SESSION_PHASE_FINALIZING
+    state.session.context.session_id = "session"
+    state.session.context.controller_generation = "controller"
+    state.trial.context.session.CopyFrom(state.session.context)
+    state.trial.context.trial_id = "trial"
+    state.trial.phase = pb.TRIAL_PHASE_FINALIZING
+    log.install(1, state)
+    state.last_finalization.session.CopyFrom(state.session)
+    state.last_finalization.session.phase = pb.SESSION_PHASE_ENDED
+    state.last_finalization.session.cleanup_confirmed = True
+    state.last_finalization.trial.CopyFrom(state.trial)
+    state.last_finalization.trial.outcome = pb.TRIAL_OUTCOME_INTERRUPTED
+    if not matches:
+        state.last_finalization.session.context.session_id = "other-session"
+    state.ClearField("session")
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.session.cleanup_confirmed = True
+    state.ClearField("trial")
+    log.install(1, state)
+    rows = console.toPlainText().splitlines()
+    assert sum(row.endswith("[Done]") for row in rows) == (2 if matches else 0)
+    log.install(1, state)
+    assert console.toPlainText().splitlines() == rows
+    console.clear()
+    log.install(2, state)
+    assert console.toPlainText() == ""
+
+
 def test_log_keeps_reading_position_during_append_and_retention(
     window: DashboardWindow, app: QApplication
 ) -> None:
@@ -3063,8 +3257,8 @@ def test_log_keeps_reading_position_during_append_and_retention(
     console.appendPlainText("Latest")
     assert scroll.value() == scroll.maximum()
     console.clear()
-    console.appendPlainText("Fresh")
-    assert console.toPlainText() == "Fresh"
+    console.appendPlainText("Latest")
+    assert log_rows(console) == ["Latest"]
 
 
 @pytest.mark.parametrize(
@@ -3109,7 +3303,7 @@ def test_log_error_color_preserves_text_details_and_style_switch(
                 block.layout().formats()[0].format.foreground().color().name()
                 == COLORS.error
             )
-        assert console.toPlainText() == text + "\nNext normal entry"
+        assert log_rows(console) == [text, "Next normal entry"]
         assert block.userData().details == "exact command details"
     finally:
         console.deleteLater()
@@ -3128,16 +3322,16 @@ def test_log_entry_details_follow_their_own_bounded_document_block(
     document = console.document()
     assert document is not None
     first, second = document.begin(), document.begin().next()
-    assert first.text() == "First accepted"
+    assert first.text()[STAMP_WIDTH:] == "First accepted"
     assert isinstance(first.userData(), _LogDetails)
     assert first.userData().details == "command_id=first"
-    assert second.text() == "Second · failed"
+    assert second.text()[STAMP_WIDTH:] == "Second · failed"
     assert isinstance(second.userData(), _LogDetails)
     assert second.userData().details == "command_id=second\n<unknown>"
     console.appendPlainText("Third")
     app.processEvents()
     assert document.blockCount() == 2
-    assert document.begin().text() == "Second · failed"
+    assert document.begin().text()[STAMP_WIDTH:] == "Second · failed"
     assert document.begin().userData().details == "command_id=second\n<unknown>"
     console.deleteLater()
 
@@ -3152,6 +3346,7 @@ def test_managed_operation_log_suppresses_success_and_preserves_failure(
     manager = SimpleNamespace(
         window=SimpleNamespace(dashboard=SimpleNamespace(log_console=console)),
         prompts=SimpleNamespace(operation_finished=lambda _action: None),
+        action_progress=SimpleNamespace(finished=lambda *_: False),
     )
     ManagedGui.operation_finished(
         manager, "Setup", "command-1", "completed", "Completed."
@@ -3159,9 +3354,8 @@ def test_managed_operation_log_suppresses_success_and_preserves_failure(
     ManagedGui.operation_finished(
         manager, "Setup", "command-2", "failed", "<unknown> renderer failure"
     )
-    rows = console.toPlainText().splitlines()
-    assert rows == [
-        "Setup: failed — <unknown> renderer failure",
+    assert log_rows(console) == [
+        "[SETUP]     failed — <unknown> renderer failure",
     ]
     document = console.document()
     assert document is not None
@@ -3274,9 +3468,10 @@ async def test_recovery_result_feedback_waits_for_confirmed_prompt_completion(
         ("Setup", {}, "Setup · Validating configuration…"),
         ("spikeglx_connection", {}, "SpikeGLX · Connecting…"),
         ("begin_tracking_diagnostic", {}, "Tracking · Preparing pipeline…"),
-        ("Abort now", {}, "Session · Stopping active work…"),
+        ("Abort now", {}, "Session · Stopping…"),
         ("save_configuration_history", {}, "Shutdown · Saving configuration…"),
         ("tracking_diagnostic_frame", {}, ""),
+        ("get_spikeglx_inventory", {}, ""),
     ],
 )
 def test_dispatched_action_log_uses_actions_without_poll_results(
@@ -3364,6 +3559,12 @@ def test_action_log_covers_session_backends_recording_recovery_and_shutdown():
     log.install(1, state)
     assert ("projectors", "Visual stimulus · Preparing…") in rows
     assert ("tracking", "Tracking · Preparing…") in rows
+    state.participants[0].preparation_progress = "Decoding textures: 120/500"
+    log.install(1, state)
+    assert rows[-1] == ("projectors", "Visual stimulus · Decoding textures: 120/500")
+    count = len(rows)
+    log.install(1, state)
+    assert len(rows) == count
     state.session.phase = pb.SESSION_PHASE_READY
     log.install(1, state)
     assert rows[-1] == ("", "Session · Ready")
@@ -3398,7 +3599,7 @@ def test_action_log_covers_session_backends_recording_recovery_and_shutdown():
     assert len(rows) == count
     state.session.shutdown_requested = True
     log.install(1, state)
-    assert rows[-1] == ("", "Shutdown · Stopping backends and releasing devices…")
+    assert rows[-1] == ("", "Shutdown · Releasing devices…")
 
 
 def test_successful_tracking_frame_poll_does_not_add_routine_log_row(
@@ -3411,6 +3612,7 @@ def test_successful_tracking_frame_poll_does_not_add_routine_log_row(
     manager = SimpleNamespace(
         window=SimpleNamespace(dashboard=SimpleNamespace(log_console=console)),
         cameras=SimpleNamespace(finished=lambda *_: None),
+        action_progress=SimpleNamespace(finished=lambda *_: False),
     )
     ManagedGui.command_finished(
         manager, "tracking_diagnostic_frame", True, "Frame ready"
@@ -3419,7 +3621,7 @@ def test_successful_tracking_frame_poll_does_not_add_routine_log_row(
     ManagedGui.command_finished(
         manager, "tracking_diagnostic_frame", False, "Frame failed"
     )
-    assert console.toPlainText() == "Tracking diagnostic frame failed: Frame failed"
+    assert log_rows(console) == ["Tracking diagnostic frame failed: Frame failed"]
     console.deleteLater()
 
 
@@ -3566,7 +3768,7 @@ def test_preview_waits_for_report_and_handles_failure_closure_and_control_loss(
     dashboard.apply_view(
         replace(state, previews=(replace(item, reason="Open failed"),))
     )
-    assert dialog.statuses["camera"].text() == "Open failed"
+    assert dialog.statuses["camera"] == "Open failed"
     assert dialog.controls["camera"].isEnabled()
     dashboard.apply_view(replace(state, previews=(replace(item, visible=True),)))
     assert dialog.controls["camera"].isChecked()
@@ -3597,7 +3799,7 @@ def test_unavailable_preview_retains_reported_state_without_commands(
     dialog = dashboard.preview_dialog
     assert dialog.controls["camera"].isChecked()
     assert not dialog.controls["camera"].isEnabled()
-    assert dialog.statuses["camera"].text() == "Offline"
+    assert dialog.statuses["camera"] == "Offline"
 
 
 @pytest.mark.parametrize(
@@ -3678,6 +3880,8 @@ def test_review_selector_renders_completion_and_observer_lock(
     assert "Completed" in window.dashboard.runtime_console.toPlainText()
     assert window.dashboard.view.output_status == "Closed"
     assert "TOTAL TIME" in window.dashboard.runtime_console.toPlainText()
+    assert "D:/CephVR/SP0001-120000" in window.dashboard.runtime_console.toPlainText()
+    assert "OUTPUT" not in window.dashboard.preview_dialog.hud.toPlainText()
     controls.observer.setChecked(True)
     assert not window.dashboard.command_buttons["Setup"].isEnabled()
 
@@ -3842,6 +4046,60 @@ def test_post_stop_session_draft_editing_requires_cleanup_and_authority(
     assert window.tracking.configuration.isEnabled() is editable
     window.apply_view(replace(view, connected=False))
     assert not window.dashboard.subject_id.isEnabled()
+
+
+@pytest.mark.parametrize(
+    "phase,cleanup,pending",
+    [
+        (Phase.FINALIZING, False, False),
+        (Phase.ENDED, False, False),
+        (Phase.CONFIGURATION, False, True),
+    ],
+)
+def test_finalization_locks_setup_and_protocol_controls(
+    window, phase, cleanup, pending
+):
+    view = replace(
+        review_view(phase), cleanup_confirmed=cleanup, cleanup_pending=pending
+    )
+    window.apply_view(view)
+    assert not window.dashboard.command_buttons["Setup"].isEnabled()
+    assert not window.dashboard.command_buttons["Start"].isEnabled()
+    assert not window.protocol.editor.isEnabled()
+    assert not window.dashboard.subject_id.isEnabled()
+    assert not window.dashboard.can_request("Setup")
+    assert not window.dashboard.can_request("New session")
+    window.apply_view(
+        replace(
+            view,
+            phase=Phase.CONFIGURATION,
+            cleanup_confirmed=True,
+            cleanup_pending=False,
+        )
+    )
+    assert window.dashboard.command_buttons["Setup"].isEnabled()
+    assert window.protocol.editor.isEnabled()
+
+
+def test_configuration_cleanup_blockers_lock_protocol_projection(window):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_status import dashboard_view
+
+    state = pb.Snapshot()
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.control.holder_client_id = "gui"
+    state.session.cleanup_blockers.add(resource="recording files")
+    view = dashboard_view(state, "gui", (), configuration_wired=True)
+    window.apply_view(view)
+    assert view.cleanup_pending
+    assert not window.dashboard.command_buttons["Setup"].isEnabled()
+    assert not window.protocol.editor.isEnabled()
+    state.session.ClearField("cleanup_blockers")
+    state.session.cleanup_confirmed = True
+    view = dashboard_view(state, "gui", (), configuration_wired=True)
+    window.apply_view(view)
+    assert window.dashboard.command_buttons["Setup"].isEnabled()
+    assert window.protocol.editor.isEnabled()
 
 
 def test_post_stop_subject_draft_survives_new_session_snapshot(
@@ -7906,6 +8164,7 @@ def test_managed_close_finishes_only_after_controller_save_result(
     )
 
     manager.cameras = SimpleNamespace(finished=lambda *_: None)
+    manager.action_progress = SimpleNamespace(finished=lambda *_: False)
     manager.prompts = SimpleNamespace(operation_finished=lambda _action: None)
     ManagedGui.request_close(manager)
     assert manager.close_pending and not closed
@@ -9152,13 +9411,14 @@ def test_managed_configuration_keeps_post_submit_edits_on_ack(
     editor = window.dashboard.subject_id
     editor.setFocus()
     QTest.keyClick(editor, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
-    QTest.keyClicks(editor, "changed after submission")
+    QTest.keyClicks(editor, "1234")
+    assert manager.edit_serial > submitted_edit_serial
     manager.note_installed_revision(
         acknowledged, submitted_edit_serial=submitted_edit_serial
     )
     assert manager.stale
     assert "newer local edits" in manager.last_error
-    assert editor.text() == "changed after submission"
+    assert editor.text() == "1234"
 
     from PyQt6.QtGui import QAction
 
@@ -10162,6 +10422,19 @@ def test_recording_checks_stay_next_to_labels(
     window.page_buttons[0].click()
     app.processEvents()
     panel = window.recordings
+    panel.sync_cameras()
+    panel.sync_cameras()
+    grid = panel.source_grid
+    assert panel.camera_heading.text() == "Cameras"
+    assert panel.data_heading.text() == "Recorded data"
+    camera_row = grid.getItemPosition(grid.indexOf(panel.camera_heading))[0]
+    data_row = grid.getItemPosition(grid.indexOf(panel.data_heading))[0]
+    for camera in window.devices.cameras.drafts:
+        row = grid.getItemPosition(grid.indexOf(panel.record[camera.key]))[0]
+        assert camera_row < row < data_row
+    for control in (panel.record["stimulus"], panel.velocities, panel.spikeglx):
+        assert grid.getItemPosition(grid.indexOf(control))[0] > data_row
+    assert grid.count() == 2 + 2 * (len(panel.record) + 2)
     dashboard = window.dashboard
     assert dashboard.isAncestorOf(panel)
     assert not window.protocol.isAncestorOf(panel)
@@ -13610,6 +13883,7 @@ def test_managed_mcu_pending_completion_and_final_status(
     manager = SimpleNamespace(
         window=window,
         mcu=binding,
+        action_progress=SimpleNamespace(finished=lambda *_: False),
         cameras=SimpleNamespace(finished=lambda *_: None),
     )
     binding.test_connection()
@@ -17675,47 +17949,6 @@ def test_native_adapter_name_identifies_scaled_displays(app: QApplication):
     )
 
 
-def test_pruning_keeps_referenced_and_newest_reference_profiles(tmp_path: Path):
-    import os
-
-    from cephvr.gui.calibration_assets import prune_reference_profiles, referenced_names
-
-    folder = tmp_path / "calibration"
-    folder.mkdir()
-    names = {
-        face: [f"reference_{face}_{index:064x}.json" for index in range(6)]
-        for face in ("front", "left")
-    }
-    for files in names.values():
-        for age, name in enumerate(files):  # index 0 is the oldest
-            path = folder / name
-            path.write_text("{}")
-            os.utime(path, (1_000_000 + age, 1_000_000 + age))
-    for keep in ("diagnostic_front.json", "rig_geometry_grid.glb", "notes.txt"):
-        (folder / keep).write_text("x")
-    (folder / f"reference_front_{'g' * 64}.json").write_text("{}")  # not a hash name
-    saved = tmp_path / "runtime_gui.json"
-    saved.write_text(f'{{"logical_path": "calibration/{names["front"][0]}"}}')
-    referenced = referenced_names([saved, tmp_path / "missing.json"])
-    assert referenced == {names["front"][0]}
-    dry = prune_reference_profiles(tmp_path, referenced)
-    assert len(dry.removed) == 5 and all(p.exists() for p in dry.removed)
-    done = prune_reference_profiles(tmp_path, referenced, apply=True)
-    assert done == dry
-    assert sorted(p.name for p in done.removed) == sorted(
-        names["front"][1:3] + names["left"][:3]
-    )
-    assert (folder / names["front"][0]).exists()  # referenced although oldest
-    assert all((folder / n).exists() for n in names["front"][3:] + names["left"][3:])
-    assert {p.name for p in folder.iterdir() if "reference_" not in p.name} == {
-        "diagnostic_front.json",
-        "rig_geometry_grid.glb",
-        "notes.txt",
-    }
-    with pytest.raises(ValueError, match="No calibration folder"):
-        prune_reference_profiles(tmp_path / "empty", frozenset())
-
-
 def test_protocol_arena_limits_default_edit_undo_and_saved_region(window, app):
     from cephvr.gui.protocol_batches import grouped_program
     from cephvr.gui.protocol_document import blank_program
@@ -19848,6 +20081,102 @@ def test_crt_overlay_remains_input_transparent_when_native(app):
     host.close()
 
 
+@pytest.mark.parametrize("advanced", [False, True])
+def test_preview_workspace_pending_visible_update_preserves_placement(app, advanced):
+    from cephvr.gui.preview_placement import PreviewSlot
+    from cephvr.gui.previews import PreviewDialog
+
+    host = QWidget()
+    dialog = PreviewDialog(host)
+    slot = PreviewSlot()
+    dialog.preview_layout.addWidget(slot)
+    dialog.empty_hint.hide()
+    dialog.advanced_toggle.setChecked(advanced)
+    source = PreviewView(
+        "stimulus",
+        "Visual stimulus",
+        active=True,
+        available=True,
+        visible=True,
+        reason="",
+    )
+
+    def project(view):
+        dialog.apply_views((view,), allowed=True, sample=False)
+        slot.set_sources((view,), reserve_active=True)
+        slot.attach_controls(dialog, external=True)
+        app.processEvents()
+        slot.align_headers(True)
+        app.processEvents()
+        return QRect(slot.target.geometry())
+
+    try:
+        project(source)
+        dialog.show()
+        app.processEvents()
+        baseline = project(source)
+        for pending in (True, False) * 4:
+            assert project(replace(source, pending=pending)) == baseline
+            assert dialog.controls[source.key].isEnabled() is not pending
+            assert dialog.hints[source.key].text() == ("closing…" if pending else "")
+        project(replace(source, visible=False, pending=True))
+        assert dialog.statuses[source.key] == "Waiting for viewer…"
+        assert not dialog.hints[source.key].text()  # The frame shows the wait.
+        # Reasons sit inside the frame, so heading height and placement stay fixed.
+        unavailable = replace(
+            source, visible=False, available=False, reason="Available after Setup"
+        )
+        assert project(unavailable) == baseline
+        frame = slot.frames[source.key]
+        assert frame.status.isVisible()
+        assert frame.status.text() == "Available after Setup"
+        assert frame.status.parentWidget() is frame.target
+        assert dialog.hints[source.key].isHidden()
+        assert dialog.names[source.key].isEnabled()
+        project(replace(source, reason="Viewer unavailable"))
+        assert dialog.statuses[source.key] == "Viewer unavailable"
+        assert not dialog.hints[source.key].text()
+        dialog.apply_views((source,), allowed=False, sample=False)
+        assert dialog.hints[source.key].text() == "no control"
+    finally:
+        dialog.hide()
+        host.close()
+        host.deleteLater()
+
+
+def test_preview_frame_metrics_show_live_values_and_clear_stale_or_hidden(
+    app, monkeypatch
+):
+    from cephvr.gui import preview_frame
+    from cephvr.gui.preview_frame import PreviewFrame
+
+    now = 10_000_000_000
+    monkeypatch.setattr(preview_frame, "host_time_ns", lambda: now)
+    frame = PreviewFrame()
+    frame.resize(600, 900)
+    source = PreviewView(
+        "stimulus",
+        "Visual stimulus",
+        visible=True,
+        source_fps=59.8,
+        preview_fps=29.9,
+        rates_observed_ns=now - 100,
+    )
+    frame.set_metrics(source)
+    frame.show()
+    app.processEvents()
+    assert frame.metrics.text() == "Source: 59.8 fps\nPreview: 29.9 fps"
+    assert frame.target.y() - (frame.header.y() + frame.header.height()) == 8
+    assert frame.metrics.y() == frame.target.y() + frame.target.height() + 8
+    assert frame.rect().contains(frame.metrics.geometry())
+    frame.set_metrics(replace(source, visible=False))
+    assert frame.metrics.text() == "Source: — fps\nPreview: — fps"
+    now += 4_000_000_000
+    frame.set_metrics(source)
+    assert frame.metrics.text() == "Source: — fps\nPreview: — fps"
+    frame.close()
+
+
 def test_preview_workspace_close_preserves_native_owner(app):
     from PyQt6.QtGui import QCloseEvent
     from PyQt6.QtWidgets import QWidget
@@ -19899,17 +20228,19 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
     dialog.resize(1440, 960)
     app.processEvents()
     assert tuple(window.preview_slot.frames) == ("0", "1", "2", "3", "4")
-    assert dialog.timeline.height() >= dialog.height() * 0.30
-    assert len({window.preview_slot.frames[str(i)].target.y() for i in range(3)}) == 1
+    assert dialog.details.isHidden()
+    assert dialog.preview_host.width() == dialog.splitter.width()
+    assert dialog.hud.geometry().bottom() < dialog.timeline.y()
+    assert dialog.timeline.geometry().bottom() < dialog.splitter.y()
+    assert dialog.timeline.width() == dialog.splitter.width()
+    assert dialog.toggle_bar.height() == dialog.hud.height()
     targets = {key: frame.target for key, frame in window.preview_slot.frames.items()}
-    assert window.preview_slot.columns == 3
     assert all(
         frame.status.isVisible() for frame in window.preview_slot.frames.values()
     )
     assert not dialog.empty_hint.isVisible()
-    assert dialog.timeline.y() > dialog.preview_host.geometry().bottom()
-    assert dialog.timeline.plot.elapsed == 12
-    assert not dialog.timeline.plot.message
+    assert dialog.timeline.elapsed == 12
+    assert not dialog.timeline.epoch_timeline.message
     assert not dialog.grab().isNull()
     if QApplication.platformName() != "windows":
         placements = [preview_window_placement(window, key) for key in targets]
@@ -19921,63 +20252,133 @@ def test_preview_workspace_reserves_active_streams_and_timeline(
         key: frame.target for key, frame in window.preview_slot.frames.items()
     } == targets
     assert window.preview_slot.frames["0"].status.isHidden()
-    dialog.resize(800, 800)
-    app.processEvents()
-    assert window.preview_slot.columns == 3
-    assert dialog.timeline.y() > dialog.preview_host.geometry().bottom()
-    for frame in window.preview_slot.frames.values():
-        assert window.preview_slot.rect().contains(frame.geometry())
-        assert frame.target.width() >= 128
-
     requests = []
     dialog.visibility_requested.connect(lambda *args: requests.append(args))
-    height_with_timeline = dialog.preview_host.height()
-    side_with_timeline = window.preview_slot.frames["0"].target.width()
-    dialog.timeline_toggle.click()
+    dialog.advanced_toggle.click()
     app.processEvents()
-    assert dialog.timeline.isHidden()
-    assert dialog.splitter.sizes()[1] == 0
-    assert dialog.preview_host.height() > height_with_timeline
-    assert window.preview_slot.frames["0"].target.width() > side_with_timeline
+    assert dialog.details.isVisible()
+    assert dialog.preview_host.geometry().right() < dialog.details.x()
+    assert dialog.details.width() / sum(dialog.splitter.sizes()) == pytest.approx(
+        0.25, abs=0.03
+    )
+    assert dialog.timeline.width() == dialog.splitter.width()
+    assert dialog.details.isAncestorOf(dialog.timeline.motion_section)
+    before = dialog.preview_host.width()
+    dialog.splitter.moveSplitter(before - 180, 1)
+    app.processEvents()
+    assert dialog.preview_host.width() < before
+    assert dialog.details.width() > sum(dialog.splitter.sizes()) * 0.3
+    assert {
+        key: frame.target for key, frame in window.preview_slot.frames.items()
+    } == targets
+    dialog.advanced_toggle.click()
+    app.processEvents()
+    assert dialog.details.isHidden()
+    assert dialog.preview_host.width() == dialog.splitter.width()
+    assert not requests
+    for name in dialog.names.values():
+        assert name.text().startswith("[ ") and name.text().endswith(" ]")
+    dialog.resize(800, 700)
+    app.processEvents()
     assert all(
         window.preview_slot.rect().contains(frame.geometry())
         for frame in window.preview_slot.frames.values()
     )
-    assert {
-        key: frame.target for key, frame in window.preview_slot.frames.items()
-    } == targets
-    window.apply_view(view)
-    assert dialog.timeline.isHidden()
-    dialog.timeline_toggle.click()
+
+
+@pytest.mark.parametrize(
+    "count,width,height,columns",
+    [(3, 1600, 500, 3), (4, 1800, 500, 4), (4, 900, 900, 2)],
+)
+def test_preview_workspace_chooses_largest_frames(app, count, width, height, columns):
+    from cephvr.gui.preview_placement import PreviewSlot
+
+    slot = PreviewSlot()
+    slot.resize(width, height)
+    slot.set_sources(
+        tuple(PreviewView(str(i), str(i), active=True) for i in range(count)),
+        reserve_active=True,
+    )
+    slot.show()
     app.processEvents()
-    assert dialog.timeline.isVisible()
-    assert dialog.preview_host.height() == height_with_timeline
-    assert not requests
+    assert slot.columns == columns
+    targets = [frame.target for frame in slot.frames.values()]
+    slot.resize(900, 900)
+    app.processEvents()
+    assert slot.columns == 2
+    assert [frame.target for frame in slot.frames.values()] == targets
+    if slot.grid.columnCount() > 3:
+        assert slot.grid.columnStretch(3) == 0
+    slot.close()
 
 
-def test_preview_timeline_visibility_preference(app, tmp_path):
+def test_preview_timeline_visibility_and_advanced_preference(app, tmp_path):
     from cephvr.gui.previews import PreviewDialog
 
     settings = QSettings(str(tmp_path / "preview.ini"), QSettings.Format.IniFormat)
+    # A preference saved before the timeline became permanent is ignored.
+    settings.setValue("windows/preview-timeline-visible", False)
     host = QWidget()
     dialog = PreviewDialog(host, settings)
     dialog.show()
     app.processEvents()
-    assert dialog.timeline_toggle.isChecked()
-    dialog.timeline_toggle.click()
+    assert dialog.timeline.isVisible()
+    assert dialog.advanced_toggle.text() == "Advanced settings"
+    assert not hasattr(dialog, "timeline_toggle")
     dialog.hide()
-    dialog.show()
-    app.processEvents()
-    assert dialog.timeline.isHidden()
     restored = PreviewDialog(
         host, QSettings(settings.fileName(), QSettings.Format.IniFormat)
     )
-    assert not restored.timeline_toggle.isChecked()
-    assert restored.timeline.isHidden()
-    restored.timeline_toggle.click()
-    assert settings.value("windows/preview-timeline-visible", type=bool)
+    # Advanced previews default off and are remembered locally.
+    assert not restored.advanced_toggle.isChecked()
+    assert not restored.timeline.advanced
+    assert restored.toggle_bar.isAncestorOf(restored.advanced_toggle)
+    restored.advanced_toggle.click()
+    assert restored.timeline.advanced
+    assert settings.value("windows/preview-advanced-visible", type=bool)
+    again = PreviewDialog(
+        host, QSettings(settings.fileName(), QSettings.Format.IniFormat)
+    )
+    assert again.advanced_toggle.isChecked() and again.timeline.advanced
+    again.show()
+    app.processEvents()
+    assert again.details.width() / sum(again.splitter.sizes()) == pytest.approx(
+        0.25, abs=0.03
+    )
     host.close()
     host.deleteLater()
+
+
+@pytest.mark.parametrize(
+    "output, state, caption",
+    [
+        ("No output closure evidence", "idle", ""),
+        ("Last reported outputs open", "recording", "● REC"),
+        ("Closing", "waiting", "◐ CLOSING"),
+        ("Unconfirmed", "fault", "▲ OUTPUT UNCONFIRMED"),
+        ("Last reported outputs closed", "idle", ""),
+    ],
+)
+def test_preview_hud_row_holds_recording_lamp_and_view_toggles(
+    window, app, output, state, caption
+):
+    dialog = window.dashboard.preview_dialog
+    window.apply_view(DashboardView(connected=True, output_status=output))
+    window.dashboard.preview_button.click()
+    app.processEvents()
+    lamp = dialog.recording_lamp
+    assert (lamp.property("state"), lamp.text()) == (state, caption)
+    assert output in lamp.toolTip()
+    # Idle has no lamp; only REC, closing and output faults are shown.
+    assert lamp.isVisible() == (state != "idle")
+    assert dialog.toggle_bar.isAncestorOf(dialog.advanced_toggle)
+    top = dialog.hud.geometry()
+    for widget in (lamp, dialog.toggle_bar)[0 if state != "idle" else 1 :]:
+        assert widget.geometry().left() >= top.right()
+        assert widget.geometry().intersects(
+            top.adjusted(-2000, 0, 2000, 0)
+        )  # Same row as the HUD.
+    assert dialog.splitter.y() > top.bottom()
 
 
 @pytest.mark.parametrize("style", ["standard", "retro_console"])
@@ -20019,6 +20420,7 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
     assert frame.header.isAncestorOf(control)
     assert control.isVisible() and control.isEnabled()
     assert control.mapTo(frame, QPoint()).y() + control.height() <= frame.target.y()
+    assert frame.target.y() - (frame.header.y() + frame.header.height()) == 8
     added = others[0].key
     window.recordings.record[added].setChecked(True)
     app.processEvents()
@@ -20054,7 +20456,9 @@ def test_preview_inline_controls_follow_camera_recording_choices(app, style):
     app.processEvents()
 
 
-def test_preview_timeline_speed_units_epochs_and_unresolved_order(app):
+def test_preview_timeline_dial_units_epochs_and_unresolved_order(app):
+    from math import hypot
+
     from cephvr.gui.preview_motion_data import planned_speed
     from cephvr.gui.preview_timeline import StimulusTimeline
     from cephvr.gui.protocol_batches import grouped_program
@@ -20086,26 +20490,27 @@ def test_preview_timeline_speed_units_epochs_and_unresolved_order(app):
     with pytest.raises(ValueError, match="Linked motion"):
         planned_speed(tile.model_copy(update={"linked_to": "reference"}), 0)
     timeline = StimulusTimeline()
+    timeline.set_advanced(True)
     timeline.set_program(program, "", "Trial 1")
-    assert [(e.start, e.end) for e in timeline.plot.epochs] == [
+    assert [(e.start, e.end) for e in timeline.epochs] == [
         (0, 5),
         (5, 25),
         (25, 60),
     ]
-    assert {value for _, value in timeline.plot.traces[0].segments[0]} == {0}
-    assert len(timeline.plot.traces[0].segments) == 1
+    timeline.set_elapsed(2)
+    assert timeline.dial_samples[0].message == "No stimulus"
     timeline.set_elapsed(10)
-    assert {value for _, value in timeline.plot.traces[0].segments[1]} == {30}
+    assert hypot(*timeline.dial_samples[0].vector) == pytest.approx(30)
+    assert timeline.dial_samples[0].unit == "deg/s"
     timeline.set_elapsed(30)
-    assert {value for _, value in timeline.plot.traces[0].segments[-1]} == {0}
-    assert timeline.plot.traces[0].unit == "deg/s"
+    assert timeline.dial_samples[0].vector is None
     grouped = grouped_program(program)
     group = grouped.sequence[0].model_copy(update={"order": "shuffle_each_repetition"})
     shuffled = grouped.model_copy(update={"sequence": (group,)})
     timeline.set_program(shuffled, "", "Shuffled")
-    assert "seed" in timeline.plot.message and not timeline.plot.traces
+    assert "seed" in timeline.epoch_timeline.message and not timeline.dial_samples
     timeline.set_program(shuffled, "42", "Shuffled")
-    assert not timeline.plot.message and timeline.plot.traces
+    assert not timeline.epoch_timeline.message and timeline.dial_samples
     timeline.close()
 
 
@@ -20114,6 +20519,7 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
     from PyQt6.QtTest import QTest
 
     from cephvr.gui.preview_motion_data import planned_rotation
+    from cephvr.gui.preview_motion_dial import rotation_text, vector_text
     from cephvr.gui.preview_timeline import StimulusTimeline
     from cephvr.gui.protocol_document import review_program
     from cephvr.visual_stimulus.config.models.program_model import Constant, Hold, Rate
@@ -20146,22 +20552,22 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
     )
     timeline = StimulusTimeline()
     timeline.resize(1000, 340)
+    timeline.set_advanced(True)
     timeline.set_program(program, "", "Trial")
     timeline.show()
     app.processEvents()
-    assert len(timeline.toggles) == 1
-    assert next(iter(timeline.toggles.values())).text() == "Bottom · reference · deg/s"
-    assert timeline.epoch_strip.epochs == timeline.plot.epochs
+    assert len(timeline.toggles) == 1 and len(timeline.dials) == 1
+    assert next(iter(timeline.toggles.values())).text() == "Bottom · reference"
+    assert timeline.size_lane.epochs == timeline.epochs
     assert (
-        timeline.epoch_strip.mapTo(
-            timeline, QPoint(0, timeline.epoch_strip.height())
-        ).y()
-        <= timeline.plot.mapTo(timeline, QPoint(0, 0)).y()
+        timeline.epoch_timeline.mapTo(timeline, QPoint(0, 0)).y()
+        >= next(iter(timeline.toggles.values())).mapTo(timeline, QPoint(0, 0)).y()
     )
     timeline.set_elapsed(12)
-    assert timeline.polar.samples[0].direction == pytest.approx(180)
-    assert timeline.polar.samples[0].angular_speed == -15
-    assert not timeline.polar.samples[0].message
+    sample = timeline.dial_samples[0]
+    assert vector_text(sample).endswith("· 180°")
+    assert sample.angular_speed == -15 and rotation_text(sample) == "-15°/s"
+    assert not sample.message
     assert (
         planned_rotation(
             source.model_copy(
@@ -20181,19 +20587,17 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
         == 15
     )
     timeline.set_elapsed(45)
-    assert timeline.epoch_strip.elapsed == timeline.plot.elapsed == 45
-    bounds = timeline.plot.plot_bounds()
+    assert timeline.epoch_timeline.elapsed == timeline.elapsed == 45
+    strip = timeline.epoch_timeline
     QTest.mouseClick(
-        timeline.plot,
+        strip,
         Qt.MouseButton.LeftButton,
-        pos=QPoint(
-            round(bounds.left() + bounds.width() / 2), round(bounds.center().y())
-        ),
+        pos=QPoint(round(strip.x_at(30)), round(strip.plot_bounds().center().y())),
     )
-    assert timeline.plot.elapsed == pytest.approx(30, abs=0.1)
-    assert timeline.polar.samples[0].direction is None
-    assert timeline.polar.samples[0].angular_speed == 0
-    assert timeline.polar.samples[0].message == "No stimulus"
+    assert timeline.elapsed == pytest.approx(30, abs=0.1)
+    assert timeline.dial_samples[0].vector is None
+    assert timeline.dial_samples[0].angular_speed == 0
+    assert timeline.dial_samples[0].message == "No stimulus"
     stopped = source.model_copy(
         update={"phase_x": Hold(kind="hold"), "phase_y": Hold(kind="hold")}
     )
@@ -20202,14 +20606,13 @@ def test_preview_motion_reference_projector_polar_rotation_and_cursor(app):
     )
     timeline.set_program(program, "", "Rotate only")
     timeline.set_elapsed(0)
-    assert (
-        timeline.polar.samples[0].direction is None
-        and timeline.polar.samples[0].message == "No translation"
-    )
-    assert timeline.polar.samples[0].angular_speed == -15
+    # Stationary translation has no arrow.
+    assert timeline.dial_samples[0].vector is None
+    assert vector_text(timeline.dial_samples[0]) == "0 deg/s · 0°"
+    assert timeline.dial_samples[0].angular_speed == -15
     timeline.clear("Unavailable")
-    assert not timeline.polar.samples
-    assert not timeline.plot.traces and not timeline.epoch_strip.epochs
+    assert not timeline.dial_samples and not timeline.dials
+    assert not timeline.epochs and timeline.epoch_timeline.message == "Unavailable"
     timeline.close()
 
 
@@ -20229,28 +20632,13 @@ def test_preview_motion_ticks(maximum, expected):
 
 
 @pytest.mark.parametrize(
-    "elapsed, expected",
-    [
-        (None, (0, 30)),
-        (0, (0, 30)),
-        (12, (0, 30)),
-        (30, (0, 30)),
-        (45, (15, 45)),
-        (60.5, (30.5, 60.5)),
-    ],
-)
-def test_preview_motion_sliding_window(elapsed, expected):
-    from cephvr.gui.preview_motion_plot import time_window
-
-    assert time_window(elapsed) == expected
-
-
-@pytest.mark.parametrize(
     "independent,mixed_units", [(False, False), (True, False), (True, True)]
 )
 def test_preview_motion_overlay_linked_baseline_and_independent(
     app, independent, mixed_units
 ):
+    from math import hypot
+
     from cephvr.gui.preview_timeline import StimulusTimeline
     from cephvr.gui.protocol_document import review_program
     from cephvr.visual_stimulus.config.models.program_model import (
@@ -20315,27 +20703,31 @@ def test_preview_motion_overlay_linked_baseline_and_independent(
     )
     timeline = StimulusTimeline()
     timeline.resize(1100, 350)
+    timeline.set_advanced(True)
     timeline.set_program(program, "", "Overlay")
+    timeline.set_elapsed(2)
+    # Stationary baselines keep the linked projectors grouped under the reference.
+    assert timeline.dial_samples[0].vector is None
     timeline.set_elapsed(12)
     assert [s.name for s in timeline.sources] == (
         ["Bottom · reference", "Front"] if independent else ["Bottom · reference"]
     )
-    assert len(timeline.plot.traces) == len(timeline.sources)
-    assert {trace.unit for trace in timeline.plot.traces} == (
+    samples = timeline.dial_samples
+    assert len(samples) == len(timeline.sources)
+    # Mixed units stay on separate dials instead of sharing one scale.
+    assert {sample.unit for sample in samples} == (
         {"mm/s", "deg/s"} if mixed_units else {"deg/s"}
     )
-    assert len(timeline.polar.samples) == len(timeline.sources)
-    assert len({trace.color for trace in timeline.plot.traces}) == len(timeline.sources)
-    assert {v for _, v in timeline.plot.traces[0].segments[0]} == {0}
-    assert {v for _, v in timeline.plot.traces[0].segments[1]} == {20}
+    assert len({sample.color for sample in samples}) == len(timeline.sources)
+    assert hypot(*samples[0].vector) == pytest.approx(20)
     reference = timeline.sources[0]
     timeline.toggles[reference.key].setChecked(False)
-    assert all(trace.name != reference.name for trace in timeline.plot.traces)
-    assert all(sample.name != reference.name for sample in timeline.polar.samples)
+    assert len(timeline.dial_samples) == len(timeline.sources) - 1
+    assert timeline.dials[0].isHidden()
     timeline.set_program(program, "", "Overlay")
     assert not timeline.toggles[reference.key].isChecked()
     timeline.toggles[reference.key].setChecked(True)
-    assert timeline.plot.traces[0].name == reference.name
+    assert timeline.dial_samples[0].name == "Bottom · texture"
     timeline.show()
     app.processEvents()
     assert not timeline.grab().isNull()
@@ -20367,8 +20759,11 @@ def test_preview_motion_overlay_linked_baseline_and_independent(
             "",
             "Unsupported Front",
         )
-        assert [trace.name for trace in timeline.plot.traces] == ["Bottom · reference"]
-        assert "Front" in timeline.plot.errors[0]
+        timeline.set_elapsed(12)
+        valid, unsupported = timeline.dial_samples
+        assert valid.vector is not None and not valid.message
+        assert unsupported.name.startswith("Front")
+        assert "Combined texture translation" in unsupported.message
     timeline.close()
 
 
@@ -21143,3 +21538,163 @@ def test_four_digit_subject_and_species_setup(window, subject):
     requested.clear()
     dashboard.setup()
     assert requested == ["Setup"]  # Optional metadata remains absent when unset.
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+def test_texture_setup_progress_replaces_one_row_through_ready(window, app, style):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.action_progress import ActionProgress
+
+    window.appearance.select(style, persist=False)
+    consoles = (window.dashboard.log_console, window.devices.projectors.console)
+    for console in consoles:
+        console.clear()
+
+    def update(_target, *args):
+        for console in consoles:
+            console.action_entry(*args)
+
+    log = ActionProgress(lambda *_: None, update)
+    state = pb.Snapshot(controller_generation="controller")
+    state.session.context.session_id = "session"
+    state.session.phase = pb.SESSION_PHASE_SETTING_UP
+    participant = state.participants.add()
+    participant.process.role = "visual_stimulus"
+    participant.process.generation = "renderer"
+    participant.preparation_progress = "Decoding textures: 0/500"
+    log.install(1, state)
+    originals = [console.toPlainText()[:STAMP_WIDTH] for console in consoles]
+    for console in consoles:
+        console.appendPlainText("Unrelated camera observation")
+    for count in range(1, 501):
+        participant.preparation_progress = f"Decoding textures: {count}/500"
+        log.install(1, state)
+    participant.preparation_progress = "Uploading initial textures: 8/40"
+    log.install(1, state)
+    for console, stamp in zip(consoles, originals, strict=True):
+        rows = console.toPlainText().splitlines()
+        assert len(rows) == 2
+        assert rows[0] == stamp + "[STIMULUS]  Uploading initial textures: 8/40"
+        assert rows[1].endswith("Unrelated camera observation")
+        assert "[Done]" not in console.toPlainText()
+    participant.ready.required_checks_passed = True
+    log.install(1, state)
+    for console in consoles:
+        rows = console.toPlainText().splitlines()
+        assert len(rows) == 2 and rows[0].endswith("8/40 [Done]")
+    app.processEvents()
+
+
+def test_in_place_progress_preserves_reader_selection_and_scroll(window, app):
+    from PyQt6.QtGui import QTextCursor
+
+    console = window.dashboard.log_console
+    console.clear()
+    console.action_entry(("loading",), "Visual stimulus · Decoding: 0/500")
+    for number in range(100):
+        console.appendPlainText(f"Observation {number}")
+    app.processEvents()
+    document = console.document()
+    cursor = QTextCursor(document.findBlockByNumber(40))
+    cursor.select(QTextCursor.SelectionType.BlockUnderCursor)
+    console.setTextCursor(cursor)
+    selected = console.textCursor().selectedText()
+    scroll = console.verticalScrollBar()
+    scroll.setValue(20)
+    before = scroll.value()
+    console.action_entry(("loading",), "Visual stimulus · Decoding: 250/500")
+    app.processEvents()
+    assert scroll.value() == before
+    assert console.textCursor().selectedText() == selected
+    anchor = console.firstVisibleBlock().text()
+    console.action_entry(
+        ("loading",), "Visual stimulus · " + "Long wrapping preparation stage " * 20
+    )
+    app.processEvents()
+    assert console.firstVisibleBlock().text() == anchor
+    assert console.textCursor().selectedText() == selected
+    scroll.setValue(scroll.maximum())
+    console.action_entry(("loading",), "Visual stimulus · Decoding: 500/500")
+    app.processEvents()
+    assert scroll.value() == scroll.maximum()
+    assert document.blockCount() == 101
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console"])
+def test_log_categories_expand_to_longest_without_replacing_rows(window, app, style):
+    from PyQt6.QtGui import QTextCursor
+
+    window.appearance.select(style, persist=False)
+    console = window.dashboard.log_console
+    console.clear()
+    console.append_entry(
+        "Configuration · restored", "configuration details", error=False
+    )
+    first = console.document().begin()
+    stamp = first.text()[:STAMP_WIDTH]
+    metadata = first.userData()
+    console.action_entry(("loading",), "Visual stimulus · loading")
+    loading = console.document().lastBlock()
+    console.appendPlainText("Controller · connected")
+    rows = console.toPlainText().splitlines()
+    assert (
+        len(
+            {
+                row.index(word)
+                for row, word in zip(
+                    rows, ("restored", "loading", "connected"), strict=True
+                )
+            }
+        )
+        == 1
+    )
+    assert first.text().startswith(stamp) and first.userData() is metadata
+    assert console.document().findBlockByNumber(1) == loading
+    cursor = QTextCursor(first)
+    cursor.setPosition(first.position() + first.text().index("restored"))
+    cursor.movePosition(
+        QTextCursor.MoveOperation.EndOfBlock, QTextCursor.MoveMode.KeepAnchor
+    )
+    console.setTextCursor(cursor)
+    console.appendPlainText("Category much longer · extended")
+    assert console.textCursor().selectedText() == "restored"
+    console.action_entry(("loading",), "Visual stimulus · uploaded")
+    console.action_entry(("loading",), "", "Done")
+    rows = console.toPlainText().splitlines()
+    assert len(rows) == 4
+    assert (
+        len(
+            {
+                row.index(word)
+                for row, word in zip(
+                    rows, ("restored", "uploaded", "connected", "extended"), strict=True
+                )
+            }
+        )
+        == 1
+    )
+    assert rows[1].endswith("uploaded [Done]")
+    assert first.userData() is metadata
+    console.appendPlainText("Configuration · repeated")
+    console.appendPlainText("Configuration · repeated")
+    assert len(console.toPlainText().splitlines()) == 5
+    app.processEvents()
+
+
+def test_category_expansion_preserves_reading_position_and_resets_on_clear(window, app):
+    console = window.dashboard.log_console
+    console.clear()
+    console.action_entry(("loading",), "Setup · progress")
+    for index in range(100):
+        console.appendPlainText(f"Setup · Observation {index}")
+    app.processEvents()
+    scroll = console.verticalScrollBar()
+    scroll.setValue(20)
+    anchor = console.firstVisibleBlock()
+    console.action_entry(("loading",), "A much longer category · progress")
+    app.processEvents()
+    assert console.firstVisibleBlock() == anchor
+    assert console.document().blockCount() == 101
+    console.clear()
+    console.appendPlainText("Setup · reset")
+    assert console.toPlainText()[STAMP_WIDTH:] == "[SETUP]     reset"

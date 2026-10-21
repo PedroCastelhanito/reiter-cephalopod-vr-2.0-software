@@ -97,7 +97,7 @@ class SetupExecution:
 
     async def run_setup(self, attempt: Attempt, command_id: str, deadline: int) -> None:
         try:
-            await self._action(command_id, "Checking recording destination…")
+            await self._action(command_id, "Checking output folder…")
             retained_deadline = await self._reserve_output(
                 attempt, command_id, deadline
             )
@@ -106,9 +106,9 @@ class SetupExecution:
             deadline, supervisor = await self._prepare_participants(
                 attempt, command_id, retained_deadline
             )
-            await self._action(command_id, "Resolving settings and recording outputs…")
+            await self._action(command_id, "Resolving outputs…")
             await self.resolution.resolve_settings_and_outputs(attempt, deadline)
-            await self._action(command_id, "Registering prepared outputs…")
+            await self._action(command_id, "Registering outputs…")
             await self._register_final_context(
                 attempt, command_id, deadline, supervisor
             )
@@ -223,7 +223,7 @@ class SetupExecution:
         if attempt.paired:
             await self._action(command_id, "Preparing SpikeGLX…")
             await self._prepare_spikeglx(attempt, deadline)
-        await self._action(command_id, "Registering backend ownership…")
+        await self._action(command_id, "Registering backends…")
         supervisor = await self._register_preliminary_context(
             attempt, command_id, deadline
         )
@@ -236,11 +236,11 @@ class SetupExecution:
             await self._action(command_id, "Preparing cameras…")
         await self._setup_acquisition(attempt, deadline)
         if any(name != "acquisition" for name in attempt.required):
-            await self._action(command_id, "Preparing remaining backends…")
+            await self._action(command_id, "Preparing backends…")
         await self._setup_other_backends(attempt, deadline, closed_loop_handoff)
         if attempt.handoff is not None:
             await self.handoffs.complete_preparation_handoff(attempt, deadline)
-        await self._action(command_id, "Waiting for backend readiness…")
+        await self._action(command_id, "Waiting for backends…")
         if await self.evidence_waiter.wait_lifecycle_with_recovery(
             attempt, "setup_ready", frozenset(attempt.required), deadline
         ):

@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-21",
+  "head": "c740c5c2881e11b4cf7f3d835ffa7708de6fdbfb",
+  "provenance": "Dirty shared worktree; concurrent unrelated edits retained. Hashes identify reviewed source.",
+  "source_sha256": {
+    "src/cephvr/visual_stimulus/resources/progress.py": "cd3289a17cda3c7b7f66f7916b8a0d2460f5cece9d1dddbb78971534da3234a2",
+    "src/cephvr/visual_stimulus/resources/prepare.py": "cae9d6e505f01beb6a88735e67682f5e2cc4502321bf8263c21607197309b3f4",
+    "src/cephvr/visual_stimulus/resources/session.py": "d0276bf6186481055545254cc7a94f3caaf101278e357ef56156ce5dc5f5d519",
+    "src/cephvr/visual_stimulus/rendering/image_residency.py": "018919567c996c03c3ee5398775f40560fff08a1589ce5b1a4506d47f5c0ca91",
+    "src/cephvr/visual_stimulus/worker/preparation.py": "55070925fad1fe4ace80be41491d92d86f8ab01050d4906c363523fb1f9bba2c",
+    "src/cephvr/visual_stimulus/worker/reporting.py": "a4f77d258a51d5e4f16c992e628f1e84706526b56e01a1399308f7b5db298385",
+    "src/cephvr/visual_stimulus/worker/ports.py": "efd9737e859e1f71015ff611647264ff1d83a15347ea00005d24d2aeb683fc77",
+    "src/cephvr/visual_stimulus/coordinator/reports.py": "172ae7df0256aabfe55f9d22f09b060a2ddc350d8d254cccb71071aaf9bfd8ba",
+    "src/cephvr/controller/lifecycle/setup_progress.py": "07d1c8957abc63275d1b0643bdb701da7ee5aa6fe636cea42034ac4dc3dc2d35",
+    "src/cephvr/controller/lifecycle_reports.py": "127cdb0246ea8e0794ba39f185a7e6c5dd0e1e2cbca5eae9707523faf02d753b",
+    "src/cephvr/controller/control/snapshots.py": "dd21a3634030b927d0deafe63f1c7fc3fdbb4c00de70c4aabece6011ec550331",
+    "src/cephvr/controller/state.py": "199589a399538b53e9b5e5fc05556c2096a7f04e6bdd197da6a18092d1a6e642"
+  },
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus tests/controller -q -m \"not windows and not rig\" -o faulthandler_timeout=30",
+      "result": "1195 passed, 4 skipped, 8 deselected; final ordering-only change followed by159 owner passes"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"action_log or action_progress\" -o faulthandler_timeout=30",
+      "result": "10 passed, 779 deselected; offscreen"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_lifecycle.py -q -m \"not windows and not rig\" -o faulthandler_timeout=30",
+      "result": "159 passed, 1 deselected after final first-service ordering preservation"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus src/cephvr/controller tests/controller",
+      "result": "pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus src/cephvr/controller tests/controller",
+      "result": "323 files pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/visual_stimulus src/cephvr/controller",
+      "result": "277 sources pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "742 modules, zero violations; cohesion warnings reviewed"
+    }
+  ],
+  "intermediate_results": [
+    "Initial309 focused passes",
+    "Initial combined1193 passed,4 skipped,8 deselected,1 existing20ms reservation-thread start assertion failed; isolated and final combined reruns pass",
+    "Initial Mypy callback type-inference error fixed with typed local callback"
+  ],
+  "limits": "No restart, physical projector timing, cameras/review workload or complete20-minute protocol verification in this increment. Existing native probe evidence retains its separate historical scope."
+}

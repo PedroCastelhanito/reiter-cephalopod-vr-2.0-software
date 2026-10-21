@@ -613,7 +613,7 @@ def test_failed_setup_cleanup_waits_for_terminal_report_acceptance():
             confirmed.append((method, deadline_ns))
         original_confirm(method, message, deadline_ns)
 
-    def send(method, message, deadline_ns):
+    def send(method, message, deadline_ns, *, required=True):
         if (
             method == "ReportWorkerLifecycle"
             and message.report.WhichOneof("report") == "cleanup"
@@ -641,6 +641,39 @@ def test_failed_setup_cleanup_waits_for_terminal_report_acceptance():
         and message.report.WhichOneof("report") == "ready"
         for method, message, _ in reports.records
     )
+
+
+@pytest.mark.parametrize("release_failure", (False, True))
+def test_unprepared_session_cleanup_requires_native_release(release_failure):
+    driver, clock, reports, _, _, command, _ = prepared_driver()
+    driver.cleanup(command())
+    reports.records.clear()
+    cancel = command()
+    cancel.target.work.session.session_id = str(uuid4())
+
+    if release_failure:
+
+        def fail():
+            raise RuntimeError("native release blocked")
+
+        driver.engine.cleanup = fail
+        with pytest.raises(RuntimeError, match="native release blocked"):
+            driver.execute("CancelSetup", cancel, clock() + 100_000_000)
+        assert not any(
+            method == "ReportWorkerLifecycle" for method, _, _ in reports.records
+        )
+    else:
+        driver.execute("CancelSetup", cancel, clock() + 100_000_000)
+        proof = next(
+            message.report.cleanup
+            for method, message, _ in reports.records
+            if method == "ReportWorkerLifecycle"
+        )
+        assert proof.work == cancel.target.work
+        assert proof.operation.command_id == cancel.command_id
+        assert (
+            proof.trial_activity_stopped and not proof.resources and not proof.outputs
+        )
 
 
 def test_preparation_rejection_stays_setup_failure_and_allows_reuse():
@@ -674,7 +707,9 @@ def test_preparation_rejection_stays_setup_failure_and_allows_reuse():
         request.policies.limits.max_document_bytes = 1_000_000
         return request, trial
 
-    def reject_preparation(_request, _announce, _deadline_ns, *, announce_batch=None):
+    def reject_preparation(
+        _request, _announce, _deadline_ns, *, announce_batch=None, progress=None
+    ):
         raise ValueError("recording byte budget rejected Setup")
 
     driver.preparation.prepare_trials = reject_preparation
@@ -1870,7 +1905,7 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
             textures.append(object())
             return True
 
-        def fence(self, fences):
+        def fence(self, textures, fences):
             fences.append(object())
 
         def ready(self, fences):
@@ -2005,12 +2040,16 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
     deadline = time.monotonic_ns() + 5_000_000_000
     try:
         batches = []
+        progress = []
         artifacts = preparation.prepare_trials(
             request,
             lambda key, path: announcements.append(key),
             deadline,
             announce_batch=batches.append,
+            progress=progress.append,
         )
+        assert "Trial 1/1 — Decoding and validating textures: 1/1" in progress
+        assert not any("uploading" in message for message in progress)
         assert len(batches) == 1
         assert (
             batches[0][0][0] == f"visual_stimulus:{trial.context.trial_id}:asset:recipe"
@@ -2024,6 +2063,8 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
         )
         assert preparation.image_residency is not None
         artifacts = preparation.prepare_graphics(artifacts)
+        assert "Decoding and uploading initial textures to projectors: 1/1" in progress
+        assert progress[-1] == "Initial textures ready; publishing prepared trials"
         assert any(
             item.role == "graphics_driver" and item.version == "fixture-driver"
             for item in artifacts[0].manifest.provenance
@@ -2045,6 +2086,108 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
     assert sources and all(source.closed for source in sources)
     assert preparation.image_residency is None
     assert not preparation._bundles
+
+
+@pytest.mark.parametrize("failure", [None, "deadline", "foreign_owner"])
+def test_prepared_heap_preserves_gc_ownership_deadline_and_reuse(monkeypatch, failure):
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.resources import prepared_heap
+
+    events = []
+    frozen = [5 if failure == "foreign_owner" else 0]
+
+    def freeze():
+        events.append("freeze")
+        frozen[0] = 100
+
+    def unfreeze():
+        events.append("unfreeze")
+        frozen[0] = 0
+
+    monkeypatch.setattr(
+        prepared_heap,
+        "gc",
+        SimpleNamespace(
+            get_freeze_count=lambda: frozen[0],
+            collect=lambda: events.append("collect"),
+            freeze=freeze,
+            unfreeze=unfreeze,
+        ),
+    )
+    heap = prepared_heap.PreparedHeap()
+
+    def check():
+        if failure == "deadline" and "collect" in events:
+            raise TimeoutError("original Setup deadline")
+
+    try:
+        if failure:
+            with pytest.raises(TimeoutError if failure == "deadline" else RuntimeError):
+                heap.prepare(check)
+        else:
+            heap.prepare(check)
+            heap.prepare(check)
+            assert events == ["collect", "freeze"]
+    finally:
+        heap.release()
+        heap.release()
+    if failure == "foreign_owner":
+        assert frozen == [5] and events == []
+    elif failure == "deadline":
+        assert frozen == [0] and events == ["collect"]
+    else:
+        assert frozen == [0] and events == ["collect", "freeze", "unfreeze"]
+        heap.prepare(check)
+        heap.release()
+        assert events == ["collect", "freeze", "unfreeze"] * 2
+
+
+def test_prepared_heap_collects_new_cycles_and_releases_prepared_cycles():
+    import subprocess
+    import sys
+    import textwrap
+
+    # Isolate the interpreter-global heap from pytest and its fixture graph.
+    subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            textwrap.dedent("""
+        import gc
+        import weakref
+        from cephvr.visual_stimulus.resources.prepared_heap import PreparedHeap
+        class Node:
+            pass
+        old = Node()
+        old.link = old
+        old_ref = weakref.ref(old)
+        heap = PreparedHeap()
+        enabled = gc.isenabled()
+        heap.prepare(lambda: None)
+        try:
+            assert gc.isenabled() == enabled
+            del old
+            young = Node()
+            young.link = young
+            young_ref = weakref.ref(young)
+            del young
+            gc.collect()
+            assert young_ref() is None
+            assert old_ref() is not None
+        finally:
+            heap.release()
+        gc.collect()
+        assert old_ref() is None
+        assert gc.get_freeze_count() == 0
+        assert gc.isenabled() == enabled
+        """),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
 
 
 @pytest.mark.parametrize("failure", [None, "graphics", "cancelled", "deadline", "size"])
@@ -2158,3 +2301,97 @@ def test_setup_publishes_only_final_graphics_provenance_under_original_deadline(
     assert not job.thread.is_alive()
     job.service_graphics(preparer, cancelled=False, now_ns=time.perf_counter_ns())
     assert events == ([] if failure in ("cancelled", "deadline") else ["graphics"])
+
+
+def test_preparation_job_reports_cpu_and_graphics_progress_with_setup_identity():
+    import time
+
+    from cephvr.visual_stimulus.worker.preparation import begin
+
+    artifact = make_prepared_trial()
+    request = visual_stimulus.WorkerSetup(
+        command=visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=pb.ProcessIdentity(
+                    role="visual_stimulus_renderer", generation=str(uuid4())
+                ),
+                work=pb.WorkContext(
+                    session=pb.SessionContext(session_id=artifact.identity.session_id)
+                ),
+            ),
+        )
+    )
+    request.session.trials.add(
+        context=pb.TrialContext(trial_id=artifact.identity.trial_id)
+    )
+    messages = []
+
+    class ProgressReports(Reports):
+        def send(self, method, message, deadline_ns, *, required=True):
+            messages.append((method, message, deadline_ns, required))
+
+    class Preparer(Preparation):
+        def prepare_trials(self, *args, progress=None, **kwargs):
+            self.progress = progress
+            progress("Decoding textures: 1/1")
+            return (self.artifact,)
+
+        def prepare_graphics(self, artifacts):
+            self.progress("Uploading initial textures: 1/1")
+            return artifacts
+
+    preparation = Preparer(artifact)
+    deadline = time.perf_counter_ns() + 2_000_000_000
+    job = begin(
+        request,
+        preparation,
+        Recorder(),
+        ProgressReports(),
+        lambda *_: None,
+        deadline,
+        time.perf_counter_ns,
+    )
+    try:
+        job.graphics_input.result(timeout=1)
+        job.service_graphics(
+            preparation, cancelled=False, now_ns=time.perf_counter_ns()
+        )
+        assert len(job.result.result(timeout=1)) == 1
+        assert [item[1].operation.progress for item in messages] == [
+            "Decoding textures: 1/1",
+            "Uploading initial textures: 1/1",
+        ]
+        for method, report, bound, required in messages:
+            assert method == "ReportWorkerOperation" and not required
+            assert bound == deadline and report.source == request.command.target
+            assert report.operation.context.command_id == request.command.command_id
+            assert report.operation.work == request.command.target.work
+            assert not report.operation.complete
+    finally:
+        job.thread.join(timeout=2)
+        assert not job.thread.is_alive()
+
+
+def test_preview_rates_use_optional_exact_session_reports_and_clear_on_hide():
+    driver, clock, reports, *_ = prepared_driver()
+    required_flags = []
+    original_send = reports.send
+
+    def send(method, message, deadline_ns, *, required=True):
+        required_flags.append(required)
+        original_send(method, message, deadline_ns, required=required)
+
+    reports.send = send
+    driver.preview_changed(True, True, "")
+    driver.preview_rates(59.8, 29.9, clock())
+    rate = reports.records[-1][1]
+    assert not required_flags[-1]
+    assert rate.rates.source_fps == 59.8 and rate.rates.preview_fps == 29.9
+    assert rate.session == driver.state.setup.session.context
+    driver.preview_changed(True, False, "")
+    hidden = reports.records[-1][1]
+    assert required_flags[-1] and not hidden.HasField("rates")
+    revision = hidden.revision
+    driver.preview_rates(60, 30, clock())
+    assert reports.records[-1][1].revision == revision

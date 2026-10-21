@@ -109,6 +109,7 @@ class ModernGLPort:
         self._released: list[str] = []
         self.preview: Any | None = None
         self.preview_changed: Callable[[bool, bool, str], None] = lambda *_: None
+        self.preview_rates: Callable[[float | None, float, int], None] = lambda *_: None
         self._review_layout: Any | None = None
 
     @staticmethod
@@ -382,6 +383,7 @@ class ModernGLPort:
             self.preview = StimulusPreview(
                 self._glfw, self._moderngl, self.preview_changed
             )
+            self.preview.on_rates = self.preview_rates
             first = next(iter(self._outputs.values()))
             try:
                 self.preview.prepare(first.window)
@@ -537,6 +539,8 @@ class ModernGLPort:
             activities.append(
                 OutputActivity(output_id, entry, returned, context.swap_interval, error)
             )
+        if self.preview is not None:
+            self.preview.source_frame()
         if (
             self.preview is not None
             and self.preview.visible

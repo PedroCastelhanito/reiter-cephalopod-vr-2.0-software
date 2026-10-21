@@ -1,0 +1,87 @@
+{
+  "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "method": "Current production decoder and ImageGpu; immutable encoded snapshots; four hidden contexts, no swaps/rendering/recording; unpaced transfer timings; exact GPU readback.",
+  "sources": [
+    {
+      "asset": "primate/0_metamer1_Left.png",
+      "width": 1030,
+      "height": 680,
+      "bytes": 11206400,
+      "decode_ms": [
+        30.739899957552552,
+        30.321999918669462,
+        30.011900002136827,
+        31.134200049564242,
+        30.14899999834597
+      ],
+      "upload_turn_ms": [
+        1.127400086261332,
+        1.1430999729782343,
+        0.5607999628409743
+      ],
+      "turns": 3,
+      "pixel_readback_exact": true
+    },
+    {
+      "asset": "primate/0_metamer1_Front.png",
+      "width": 760,
+      "height": 690,
+      "bytes": 8390400,
+      "decode_ms": [
+        22.96049997676164,
+        22.077800007537007,
+        22.40339992567897,
+        22.52030000090599,
+        22.301299963146448
+      ],
+      "upload_turn_ms": [
+        1.8351000035181642,
+        0.6775000365450978,
+        0.09200000204145908
+      ],
+      "turns": 3,
+      "pixel_readback_exact": true
+    },
+    {
+      "asset": "primate/0_metamer1_Right.png",
+      "width": 1025,
+      "height": 695,
+      "bytes": 11398000,
+      "decode_ms": [
+        30.163099989295006,
+        30.756500083953142,
+        31.31820005364716,
+        30.97309998702258,
+        30.5651999078691
+      ],
+      "upload_turn_ms": [
+        0.8602000307291746,
+        0.35639991983771324,
+        0.5701000336557627
+      ],
+      "turns": 3,
+      "pixel_readback_exact": true
+    },
+    {
+      "asset": "primate/0_metamer1_Bottom.png",
+      "width": 685,
+      "height": 940,
+      "bytes": 10302400,
+      "decode_ms": [
+        28.749599936418235,
+        28.714500018395483,
+        29.147799941711128,
+        29.221000033430755,
+        30.11510008946061
+      ],
+      "upload_turn_ms": [
+        0.8480000542476773,
+        0.4031999269500375,
+        0.2710000844672322
+      ],
+      "turns": 3,
+      "pixel_readback_exact": true
+    }
+  ],
+  "upload_sha256": "b0438f612d0321ced1c6ad419c5e9a2ba711f22401587a46cdb3a280b52a4960"
+}

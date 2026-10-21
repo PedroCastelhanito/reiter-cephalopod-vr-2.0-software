@@ -1,0 +1,8 @@
+{
+  "method": "every probe SY word scanned",
+  "samples": 117109938,
+  "word_counts": {
+    "64": 117109938
+  },
+  "bit6_transitions": 0
+}

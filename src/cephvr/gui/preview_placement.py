@@ -2,7 +2,7 @@
 
 from math import ceil
 
-from PyQt6.QtCore import QPoint, QRect, pyqtSignal
+from PyQt6.QtCore import QPoint, QRect, QTimer, pyqtSignal
 from PyQt6.QtGui import (
     QGuiApplication,
     QResizeEvent,
@@ -45,6 +45,10 @@ class PreviewSlot(QWidget):
         self.reserve_active = False
         self.columns = 0
         self.set_sources(())
+        self.metrics_timer = QTimer(self)
+        self.metrics_timer.setInterval(1000)
+        self.metrics_timer.timeout.connect(self.refresh_metrics)
+        self.metrics_timer.start()
 
     @property
     def target(self) -> QWidget:
@@ -84,7 +88,7 @@ class PreviewSlot(QWidget):
                 old_frame.setParent(None)
                 old_frame.deleteLater()
         self.frames = {}
-        for col in range(3):
+        for col in range(max(self.grid.columnCount(), columns)):
             self.grid.setColumnStretch(col, 1 if col < columns else 0)
         for row in range(self.grid.rowCount()):
             self.grid.setRowStretch(row, 0)
@@ -100,6 +104,7 @@ class PreviewSlot(QWidget):
                 )
             frame.empty = not key
             source = by_key.get(key)
+            frame.set_metrics(source if self.reserve_active else None)
             waiting = bool(
                 self.reserve_active and source is not None and not source.visible
             )
@@ -126,6 +131,12 @@ class PreviewSlot(QWidget):
             self.grid.setRowStretch(index // columns, 1)
         self.updateGeometry()
 
+    def refresh_metrics(self) -> None:
+        if self.isVisible():
+            by_key = {source.key: source for source in self.arranged_sources}
+            for key, frame in self.frames.items():
+                frame.set_metrics(by_key.get(key) if self.reserve_active else None)
+
     def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         if self.reserve_active and self.grid_columns(len(self.frames)) != self.columns:
@@ -136,13 +147,15 @@ class PreviewSlot(QWidget):
     def grid_columns(self, count: int) -> int:
         if not self.reserve_active:
             return min(2, max(1, count))
-        maximum = min(3, max(1, count), max(1, (self.width() + 8) // 208))
+        maximum = min(4, max(1, count), max(1, (self.width() + 8) // 208))
         return max(
             range(1, maximum + 1),
             key=lambda columns: (
                 min(
                     self.width() / columns - 24,
-                    self.height() / ceil(max(1, count) / columns) - 54,
+                    self.height() / ceil(max(1, count) / columns)
+                    - 54
+                    - (2 * self.fontMetrics().height() + 8),
                 ),
                 -columns,
             ),
@@ -158,12 +171,11 @@ class PreviewSlot(QWidget):
             frame.caption.setVisible(
                 not external or key not in workspace.source_widgets
             )
-            if (
-                external
-                and key in workspace.statuses
-                and workspace.statuses[key].text()
-            ):
-                frame.status.hide()
+            # The workspace reason replaces the frame's own waiting text in place.
+            text = workspace.statuses.get(key, "") if external else ""
+            if text:
+                frame.status.setText(text)
+                frame.status.show()
         self.align_headers(external)
 
     def align_headers(self, external: bool) -> None:

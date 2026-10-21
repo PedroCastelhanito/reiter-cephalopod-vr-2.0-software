@@ -1,0 +1,4 @@
+SetupSession 9ab874e5-9b20-4dc5-a778-3eba839eee43 failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: Setup was cancelled before configuration adoption
+CephVR supervisor shutdown: BACKEND_HEARTBEAT_LOST: visual_stimulus heartbeat silence
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

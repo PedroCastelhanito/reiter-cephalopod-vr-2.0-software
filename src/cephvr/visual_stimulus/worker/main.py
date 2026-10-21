@@ -53,11 +53,7 @@ async def _close_worker_resources(
 async def run(bootstrap: WorkerBootstrap) -> None:
     if sys.platform != "win32":
         raise RuntimeError("managed renderer requires Windows")
-    from cephvr.visual_stimulus.recording.metrics import configure_recording_logger
-
     from .native import assemble_driver
-
-    configure_recording_logger()
 
     loop = asyncio.get_running_loop()
     native = WindowsJobs()

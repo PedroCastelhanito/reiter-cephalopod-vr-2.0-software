@@ -1,0 +1,99 @@
+{
+  "prepared_heap": true,
+  "chunks_per_turn": 4,
+  "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "method": "Paced production image-cache probe with real protected PNGs and four hidden GL contexts.\nNo projector swaps, cameras, scientific run, or output recording are started.\n",
+  "trials": [
+    {
+      "trial": "8ef90847-2828-4936-ba0e-136a6c73b571",
+      "seconds": 60,
+      "counts": {
+        "texture_groups": 1800,
+        "held_groups": 0,
+        "mixed_groups": 0
+      },
+      "presentations": 100,
+      "onset_hold_epochs": [],
+      "first_hold": null,
+      "service_ms": {
+        "p50": 0.09670003782957792,
+        "p99": 1.9117000047117472,
+        "maximum": 8.660800056532025
+      },
+      "peak_reserved_gpu_bytes": 1069647336,
+      "slow_selects": [
+        {
+          "epoch": 38,
+          "seconds": 11.466728299972601,
+          "ms": 8.660800056532025,
+          "thread_cpu_ms": 0.0
+        }
+      ],
+      "slow_stages": [
+        {
+          "method": "upload",
+          "ms": 5.23129990324378,
+          "epoch": 8,
+          "seconds": 2.467038800008595
+        },
+        {
+          "method": "upload",
+          "ms": 8.432600065134466,
+          "epoch": 38,
+          "seconds": 11.466728299972601
+        },
+        {
+          "method": "upload",
+          "ms": 5.972899962216616,
+          "epoch": 88,
+          "seconds": 26.467209200025536
+        }
+      ],
+      "gc_events": [],
+      "main_thread": 40116
+    },
+    {
+      "trial": "7f2d2a0d-b96f-4d30-8bc1-83fb46a0aa4b",
+      "seconds": 60,
+      "counts": {
+        "texture_groups": 1800,
+        "held_groups": 0,
+        "mixed_groups": 0
+      },
+      "presentations": 100,
+      "onset_hold_epochs": [],
+      "first_hold": null,
+      "service_ms": {
+        "p50": 0.14070002362132072,
+        "p99": 1.8209000118076801,
+        "maximum": 8.718200027942657
+      },
+      "peak_reserved_gpu_bytes": 1069647336,
+      "slow_selects": [
+        {
+          "epoch": 5,
+          "seconds": 1.567163800005801,
+          "ms": 8.718200027942657,
+          "thread_cpu_ms": 15.625
+        }
+      ],
+      "slow_stages": [
+        {
+          "method": "upload",
+          "ms": 5.9154999908059835,
+          "epoch": 5,
+          "seconds": 1.567163800005801
+        },
+        {
+          "method": "ready",
+          "ms": 5.294700036756694,
+          "epoch": 8,
+          "seconds": 2.4837795000057667
+        }
+      ],
+      "gc_events": [],
+      "main_thread": 40116
+    }
+  ],
+  "upload_source_sha256": "b0438f612d0321ced1c6ad419c5e9a2ba711f22401587a46cdb3a280b52a4960"
+}

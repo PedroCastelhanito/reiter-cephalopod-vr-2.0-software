@@ -346,3 +346,23 @@ def test_managed_gui_credential_uses_exact_process_generation(tmp_path: Path) ->
         store.provision_client("cli", generation=_id(), token="launch-token")
     store.remove_client(principal)
     assert store.lookup(generation) is None
+
+
+def test_preview_rates_count_source_deltas_and_presentations_without_guessing():
+    from cephvr.shared.preview_rates import PreviewRateMeter, valid_rates
+
+    meter = PreviewRateMeter()
+    assert meter.sample(1_000_000_000) is None
+    meter.received(100, 1_000_000_000)
+    meter.received(160, 2_000_000_000)
+    meter.presented = 15
+    assert meter.sample(1_500_000_000) is None
+    assert meter.sample(2_000_000_000) == (60, 15)
+    assert meter.sample(3_000_000_000) == (0, 0)
+    meter.received(0, 3_100_000_000)
+    meter.received(30, 4_100_000_000)
+    meter.presented = 10
+    assert meter.sample(4_100_000_000) == pytest.approx((30, 10 / 1.1))
+    assert not valid_rates(float("nan"), 20, 1)
+    assert not valid_rates(30, -1, 1)
+    assert valid_rates(None, 0, 1)

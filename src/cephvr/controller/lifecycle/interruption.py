@@ -546,7 +546,7 @@ class InterruptionWorkflow:
             return False
 
     def _publish_ended_locked(self, attempt: Attempt, clean: bool) -> None:
-        """Commit Finalizing to Ended and settle the closure; lifecycle lock held."""
+        """Settle closure and reset clean interruptions; lifecycle lock held."""
         self.lifecycle.session.phase = pb.SESSION_PHASE_ENDED
         self.lifecycle.session.cleanup_confirmed = (
             clean and not self.lifecycle.authority_lost
@@ -561,6 +561,7 @@ class InterruptionWorkflow:
         attempt.closure.done = True
         attempt.closure.clean = clean
         self.cleanup.settle_operations(attempt)
+        self.cleanup.session_reset.interrupted()
         self.publisher.publish()
 
 

@@ -1,0 +1,2 @@
+Supported recovery preserved failed session; original unknown closure retained
+Original runtime configuration and saved history restored exactly

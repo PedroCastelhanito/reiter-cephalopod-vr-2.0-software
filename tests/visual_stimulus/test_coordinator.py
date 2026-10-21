@@ -31,6 +31,33 @@ from cephvr.visual_stimulus.worker.reporting import ReportBridge
 from .support import Clock, make_prepared_trial
 
 
+@pytest.mark.parametrize("scope", ("session", "trial", "none"))
+def test_unprepared_cancel_accepts_only_session_cleanup(scope):
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    request = wire.BackendCommand(
+        command_id=str(uuid4()), issuer=identity.controller, target=identity.backend
+    )
+    if scope == "session":
+        request.work.session.session_id = str(uuid4())
+    elif scope == "trial":
+        request.work.trial.trial_id = str(uuid4())
+    if scope == "session":
+        validate(identity, State(), "CancelSetup", request)
+    else:
+        with pytest.raises(ValueError, match="no open calibration"):
+            validate(identity, State(), "CancelSetup", request)
+
+
 class Peer:
     def __init__(self):
         self.commands = []
@@ -830,3 +857,104 @@ def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates(
     state.interrupted = True
     with pytest.raises(ValueError, match="fenced"):
         validate(identity, state, "UpdateDisplayCalibration", request)
+
+
+async def test_setup_progress_maps_worker_command_without_completing_it():
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    parent = wire.BackendCommand(
+        command_id=str(uuid4()),
+        target=identity.backend,
+        work=pb.WorkContext(session=pb.SessionContext(session_id=str(uuid4()))),
+    )
+    child = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        target=visual_stimulus.WorkerContext(
+            worker=identity.worker,
+            owner=identity.process,
+            work=parent.work,
+        ),
+    )
+    state = State(
+        links={child.command_id: CommandLink("SetupSession", parent, child, 1234)}
+    )
+    controller, supervisor = Peer(), Peer()
+    reports = Reports(
+        identity,
+        state,
+        command_ledger(identity.process.generation, 10**12, 1_000_000),
+        controller,
+        supervisor,
+        Clock(),
+    )
+    report = visual_stimulus.WorkerOperation(
+        source=child.target,
+        operation=pb.OperationState(
+            context=pb.OperationContext(command_id=child.command_id),
+            command="SetupSession",
+            work=child.target.work,
+            progress="Decoding textures: 50/500",
+        ),
+    )
+    await reports.operation(report)
+    method, forwarded, deadline = controller.reports[-1]
+    assert method == "ReportLifecycle" and deadline == 1234
+    assert forwarded.operation.source == identity.backend
+    assert forwarded.operation.operation.context.command_id == parent.command_id
+    assert forwarded.operation.operation.work == parent.work
+    assert forwarded.operation.operation.progress == report.operation.progress
+    assert not forwarded.operation.operation.complete
+    assert not state.prepared and not supervisor.reports
+    report.source.worker.generation = "foreign"
+    with pytest.raises(ValueError, match="retained command"):
+        await reports.operation(report)
+
+
+async def test_optional_progress_handoff_is_bounded_and_delivery_failure_is_nonfatal():
+    gate = asyncio.Event()
+    entered = asyncio.Event()
+    failures = []
+
+    class SlowPeer(Peer):
+        async def receipt(self, method, request, *, deadline_ns):
+            self.reports.append((method, request, deadline_ns))
+            entered.set()
+            await gate.wait()
+            raise TimeoutError("progress unavailable")
+
+    peer = SlowPeer()
+    bridge = ReportBridge(
+        asyncio.get_running_loop(),
+        peer,
+        Peer(),
+        failed=failures.append,
+        maximum_bytes=1024,
+        maximum_reports=2,
+    )
+    bridge.send(
+        "ReportWorkerOperation", visual_stimulus.WorkerOperation(), 1234, required=False
+    )
+    await entered.wait()
+    for _ in range(100):
+        bridge.send(
+            "ReportWorkerOperation",
+            visual_stimulus.WorkerOperation(),
+            1234,
+            required=False,
+        )
+    assert len(bridge.pending) == 1
+    assert len(peer.reports) == 1
+    gate.set()
+    from cephvr.shared.clock import host_time_ns
+
+    await bridge.drain(host_time_ns() + 1_000_000_000)
+    assert not failures and not bridge.pending

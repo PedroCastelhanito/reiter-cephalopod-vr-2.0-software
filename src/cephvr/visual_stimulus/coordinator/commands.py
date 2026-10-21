@@ -425,12 +425,22 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
             if (state.display is not None and state.display.HasField("calibration"))
             else None
         )
-        if calibration is None or calibration.state not in {
-            visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_PREPARING,
-            visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE,
-            visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_CLOSING,
-            visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_UNKNOWN,
-        }:
+        unprepared_cleanup = (
+            method in {"CancelSetup", "Cleanup"}
+            and command.work.WhichOneof("work") == "session"
+            and not state.resources
+            and not state.recipe_results
+        )
+        if not unprepared_cleanup and (
+            calibration is None
+            or calibration.state
+            not in {
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_PREPARING,
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE,
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_CLOSING,
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+            }
+        ):
             raise ValueError("sessionless safety command has no open calibration")
     elif method not in {"Shutdown"}:
         if state.setup is None:

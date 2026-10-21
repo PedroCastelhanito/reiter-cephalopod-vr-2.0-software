@@ -1,0 +1,141 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 25%]
+........................................................................ [ 34%]
+........................................................................ [ 43%]
+........................................................................ [ 51%]
+........................................................................ [ 60%]
+........................................................................ [ 69%]
+........................................................................ [ 77%]
+.....F.................................................................. [ 86%]
+........................................................................ [ 94%]
+..........................................                               [100%]
+================================== FAILURES ===================================
+_______ test_trial_row_actions_scroll_target_and_align_cards[standard] ________
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000017CAA1BD360>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000017CA0DCADD0>
+style = 'standard'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_trial_row_actions_scroll_target_and_align_cards(window, app, style):
+        from PyQt6.QtWidgets import QMessageBox
+    
+        window.appearance.select(style)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        trials = editor.trials
+        editor.drafts[editor.index].name = "Primate - Part 1 of 2 (10 minutes)"
+        trials.item(editor.index).setText(editor.drafts[editor.index].name)
+        window.resize(1280, 1100)
+        app.processEvents()
+        assert editor.trial_card.height() == editor.timeline_card.height()
+        for card, controls in (
+            (editor.trial_card, (editor.trial_card.caption, trials)),
+            (
+                editor.timeline_card,
+                (
+                    editor.timeline_card.caption,
+                    editor.timeline,
+                    editor.group_editor,
+                    editor.output_preview_button,
+                    editor.sequence_summary,
+                ),
+            ),
+        ):
+            assert all(
+                card.rect().contains(
+                    control.rect().translated(control.mapTo(card, QPoint()))
+                )
+                for control in controls
+            )
+        assert editor.selected_group_label.text() == "Selected group"
+        assert editor.group_editor.parentWidget() is editor.timeline_card
+        assert editor.sequence_summary.geometry().bottom() < editor.timeline.y()
+        assert editor.group_editor.y() > editor.timeline.geometry().bottom()
+        last_right = (
+            editor.timeline.x()
+            + len(editor.timeline.nodes) * editor.timeline.block_width()
+            - 7
+        )
+        assert abs(editor.group_editor.geometry().right() + 1 - last_right) <= 1
+        QTest.mouseMove(editor.group_editor.name)
+        app.processEvents()
+        remove = next(c for c in trials.removers if c.isVisible())
+        assert remove.property("trial_row") == editor.index
+        assert trials.viewport().rect().contains(remove.geometry())
+        assert not remove.visibleRegion().isEmpty()
+        QTest.mouseClick(remove, Qt.MouseButton.LeftButton)
+        assert editor.drafts[editor.index].name in editor.delete_dialog.text()
+        editor.delete_dialog.button(QMessageBox.StandardButton.Cancel).click()
+        assert not hasattr(editor, "delete_trial_button")
+        assert trials.add.height() == trials.visualItemRect(trials.item(0)).height()
+        assert trials.add.y() > trials.visualItemRect(trials.item(0)).bottom()
+        QTest.mouseClick(trials.add, Qt.MouseButton.LeftButton)
+        editor.add_trial()
+        assert editor.index == 2
+        app.processEvents()
+        rect = trials.visualItemRect(trials.item(0))
+>       _move_mouse_and_wait_for_native_event(trials.viewport(), rect.center(), app)
+
+tests\gui\test_dashboard.py:17194: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+widget = <PyQt6.QtWidgets.QWidget object at 0x0000017CAA28C1F0>
+position = PyQt6.QtCore.QPoint(162, 20)
+app = <PyQt6.QtWidgets.QApplication object at 0x0000017CA0DCADD0>
+timeout_ms = 1000
+
+    def _move_mouse_and_wait_for_native_event(
+        widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+    ) -> None:
+        """Wait for the platform-delivered hover event after moving the real cursor."""
+        from PyQt6.QtCore import QObject
+    
+        target_global = widget.mapToGlobal(position)
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        matched = False
+    
+        class TargetMouseMove(QObject):
+            def eventFilter(self, receiver, event):
+                nonlocal matched
+                if (
+                    receiver is widget
+                    and event.type() == QEvent.Type.MouseMove
+                    and event.globalPosition().toPoint() == target_global
+                ):
+                    matched = True
+                    QTimer.singleShot(0, loop.quit)
+                return False
+    
+        probe = TargetMouseMove(widget)
+        widget.installEventFilter(probe)
+        timer.start(timeout_ms)
+        try:
+            QTest.mouseMove(widget, position)
+            if not matched:
+                loop.exec()
+        finally:
+            timer.stop()
+            widget.removeEventFilter(probe)
+>       assert matched, (
+            f"native MouseMove was not delivered to {type(widget).__name__} at "
+            f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+            f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+            f"{widget.size()}"
+        )
+E       AssertionError: native MouseMove was not delivered to QWidget at PyQt6.QtCore.QPoint(366, 300) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(204, 280) PyQt6.QtCore.QSize(176, 245)
+E       assert False
+
+tests\gui\test_dashboard.py:686: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards[standard]
+1 failed, 833 passed in 81.81s (0:01:21)

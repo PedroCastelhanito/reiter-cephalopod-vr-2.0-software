@@ -24,6 +24,7 @@ from cephvr.acquisition.ports import (
     SupervisorPort,
 )
 from cephvr.acquisition.state import (
+    ChildOperation,
     ConfigurationRecord,
     CoordinatorIdentity,
     PulseRecord,
@@ -166,9 +167,10 @@ class SessionSetup:
                 session, request, deadline_ns
             )
             self._require_live_setup(session, deadline_ns)
-            await self.preparation.resolve_cameras(
+            resolutions = await self.preparation.resolve_cameras(
                 session, request, records, deadline_ns
             )
+            await self._wait_camera_resolutions(resolutions, deadline_ns)
             self._require_live_setup(session, deadline_ns)
             remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
@@ -209,6 +211,29 @@ class SessionSetup:
             session.setup_cancelled = True
             await self.cancel(session, deadline_ns=deadline_ns)
             raise
+
+    async def _wait_camera_resolutions(
+        self, children: tuple[ChildOperation, ...], deadline_ns: int
+    ) -> None:
+        tasks = [
+            asyncio.create_task(
+                wait_child_operation(child, deadline_ns, self.lock, self.clock)
+            )
+            for child in children
+        ]
+        try:
+            # Retain sibling readbacks before retiring the shared Setup scope.
+            results = await asyncio.gather(*tasks)
+        finally:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+        for child, result in zip(children, results, strict=True):
+            if not result.succeeded:
+                raise RuntimeError(
+                    f"camera role {child.camera} resolution failed: "
+                    f"{result.failure.code}: {result.failure.message}"
+                )
 
     async def _wait_worker_setup(
         self, records: tuple[WorkerRecord, ...], deadline_ns: int

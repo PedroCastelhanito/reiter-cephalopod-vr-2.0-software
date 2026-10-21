@@ -5,6 +5,9 @@ from typing import Any
 
 from cephvr.visual_stimulus.resources.image_source import ImageSource
 
+UPLOAD_CHUNK_BYTES = 1_048_576
+UPLOAD_CHUNKS_PER_TURN = 4
+
 
 class ImageGpu:
     def __init__(self, outputs: Mapping[str, Any]) -> None:
@@ -12,8 +15,16 @@ class ImageGpu:
         self._progress: dict[int, tuple[int, int]] = {}
 
     def upload(self, source: ImageSource, pixels: bytes, textures: list[Any]) -> bool:
-        # Limit each render-owner turn to one transfer chunk; driver allocation
-        # latency still needs rig measurement and is not a real-time guarantee.
+        # A single chunk per refresh cannot sustain four large images every 600 ms.
+        # Bound the batch; allocation/driver latency still needs rig measurement.
+        for _ in range(UPLOAD_CHUNKS_PER_TURN):
+            if self._upload_chunk(source, pixels, textures):
+                return True
+        return False
+
+    def _upload_chunk(
+        self, source: ImageSource, pixels: bytes, textures: list[Any]
+    ) -> bool:
         output_index, row = self._progress.get(id(textures), (0, 0))
         outputs = tuple(self.outputs.items())
         while output_index < len(outputs) and (
@@ -36,7 +47,7 @@ class ImageGpu:
             texture.filter = (0x2601, 0x2601)
             texture.repeat_x = texture.repeat_y = False
         row_bytes = source.width * 16
-        rows = min(source.height - row, max(1, 1_048_576 // row_bytes))
+        rows = min(source.height - row, max(1, UPLOAD_CHUNK_BYTES // row_bytes))
         data = memoryview(pixels)[row * row_bytes : (row + rows) * row_bytes]
         textures[output_index].write(
             data, viewport=(0, row, source.width, rows), alignment=1
@@ -44,16 +55,24 @@ class ImageGpu:
         row += rows
         if row == source.height:
             output_index, row = output_index + 1, 0
+            while output_index < len(outputs) and (
+                source.output_ids is not None
+                and outputs[output_index][0] not in source.output_ids
+            ):
+                output_index += 1
         if output_index == len(self.outputs):
             self._progress.pop(id(textures), None)
             return True
         self._progress[id(textures)] = (output_index, row)
         return False
 
-    def fence(self, fences: list[Any]) -> None:
+    def fence(self, textures: list[Any], fences: list[Any]) -> None:
         from OpenGL import GL
 
-        for output in self.outputs.values():
+        # Only allocating contexts can have submitted work using this image.
+        for output, texture in zip(self.outputs.values(), textures, strict=False):
+            if texture is None:
+                continue
             output.activate()
             fence = GL.glFenceSync(GL.GL_SYNC_GPU_COMMANDS_COMPLETE, 0)
             if not fence:

@@ -143,10 +143,30 @@ class LifecycleDriver:
             clock=clock,
         )
 
-    def preview_changed(self, available: bool, visible: bool, failure: str) -> None:
+    def preview_rates(self, source: float | None, shown: float, now: int) -> None:
+        if (
+            self._preview_state is not None
+            and self._preview_state[0]
+            and self._preview_state[1]
+        ):
+            self.preview_changed(
+                *self._preview_state,
+                rates=pb.PreviewRates(
+                    source_fps=source, preview_fps=shown, observed_monotonic_ns=now
+                ),
+            )
+
+    def preview_changed(
+        self,
+        available: bool,
+        visible: bool,
+        failure: str,
+        *,
+        rates: pb.PreviewRates | None = None,
+    ) -> None:
         setup = self.state.setup
         state = available, visible, failure
-        if setup is None or self._preview_state == state:
+        if setup is None or (self._preview_state == state and rates is None):
             return
         self._preview_state = state
         self.preview_revision += 1
@@ -161,8 +181,10 @@ class LifecycleDriver:
                 available=available,
                 visible=visible,
                 failure=failure,
+                rates=rates,
             ),
             self.clock() + self.policies.supervisor_registration.initial_ns,
+            required=rates is None,
         )
 
     def execute(
@@ -603,6 +625,24 @@ class LifecycleDriver:
             self.state.resources.clear()
             self.state.pending_resources.clear()
             self.preparation.retire_released_resources()
+            if command.target.work.WhichOneof("work") == "session":
+                # No Setup adopted these resources; prove native release before
+                # confirming the registered session's empty resource catalogue.
+                self.confirm_cleanup(
+                    pb.LifecycleReport(
+                        cleanup=pb.CleanupReport(
+                            source=self.worker,
+                            work=command.target.work,
+                            operation=pb.OperationContext(
+                                command_id=command.command_id
+                            ),
+                            verified_monotonic_ns=self.clock(),
+                            trial_activity_stopped=True,
+                            cleanup_resources_revision=self.state.catalogue_revision,
+                        )
+                    ),
+                    self.deadline_ns,
+                )
             return
         cleanup_resources(
             self.state,

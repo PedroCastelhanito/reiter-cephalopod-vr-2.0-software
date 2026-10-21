@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-21",
+  "base_revision": "c740c5c2881e11b4cf7f3d835ffa7708de6fdbfb",
+  "dirty_tree": true,
+  "sha256": {
+    "src/cephvr/acquisition/coordinator/session.py": "abc11bd9c612d1b6550b1418fc8f3e61342cbdb02c920f0bb88e3e1c8ffec3c5",
+    "src/cephvr/acquisition/coordinator/session_preparation.py": "4d4012200136c668b18d81e06f82cd7f5dfe3885233b0a71d7caaf075bd77314",
+    "src/cephvr/controller/state.py": "ba5982e3daaa089d62dd2191d9d9b63c2b03750c0f7d01ef428c96e4968b4d18",
+    "src/cephvr/controller/lifecycle/preparation_context.py": "66e95c770de205a8a61d098ecf010e7027aacdbaaafdc25d65338669042e04ba",
+    "src/cephvr/controller/lifecycle_completion.py": "510c49ddaffb0db0c6bd8e777fda70b2971bae6f28af2e1287c72cfa4589ff03",
+    "src/cephvr/visual_stimulus/coordinator/commands.py": "b5891118a1a1207e0fabdb07bfe66b39095cab4e88da7684c414473f2e850eb2",
+    "src/cephvr/visual_stimulus/coordinator/reports.py": "ef5d37eb5b35844b68eaba1ad824fcaf01a48bf7af21f8a3fe0a8e9dce73d08c",
+    "src/cephvr/visual_stimulus/worker/runtime.py": "63cde4ec25aa981eb7dcf8f1fd18fa095622b281c764b163ba79a15f0a6b605c",
+    "src/cephvr/visual_stimulus/worker/lifecycle.py": "f29e7e618378dcf404210a50dbc076941fbbeb2ee36b16060bd5eb0797b1f2be"
+  },
+  "post_format_sha256": {
+    "src/cephvr/acquisition/coordinator/session.py": "abc11bd9c612d1b6550b1418fc8f3e61342cbdb02c920f0bb88e3e1c8ffec3c5",
+    "src/cephvr/acquisition/coordinator/session_preparation.py": "4d4012200136c668b18d81e06f82cd7f5dfe3885233b0a71d7caaf075bd77314",
+    "src/cephvr/controller/state.py": "37f8bb5a418ac7001b07884c6097da5ec21f418ce7d4f8524721beb66cb7090e",
+    "src/cephvr/controller/lifecycle/preparation_context.py": "d232b47d9e0ea60598d631a62c3cd4f587dbe6524ce84fd302f546d5430c74c8",
+    "src/cephvr/controller/lifecycle_completion.py": "510c49ddaffb0db0c6bd8e777fda70b2971bae6f28af2e1287c72cfa4589ff03",
+    "src/cephvr/visual_stimulus/coordinator/commands.py": "b5891118a1a1207e0fabdb07bfe66b39095cab4e88da7684c414473f2e850eb2",
+    "src/cephvr/visual_stimulus/coordinator/reports.py": "ef5d37eb5b35844b68eaba1ad824fcaf01a48bf7af21f8a3fe0a8e9dce73d08c",
+    "src/cephvr/visual_stimulus/worker/runtime.py": "63cde4ec25aa981eb7dcf8f1fd18fa095622b281c764b163ba79a15f0a6b605c",
+    "src/cephvr/visual_stimulus/worker/lifecycle.py": "f29e7e618378dcf404210a50dbc076941fbbeb2ee36b16060bd5eb0797b1f2be"
+  },
+  "post_run_change": "Ruff normalized formatting/line endings in controller state/preparation and removed a test EOF blank line; no behavior change."
+}

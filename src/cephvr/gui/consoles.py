@@ -7,7 +7,9 @@ from PyQt6.QtGui import (
     QContextMenuEvent,
     QPaintEvent,
     QResizeEvent,
+    QTextBlock,
     QTextBlockUserData,
+    QTextCursor,
     QTextOption,
 )
 from PyQt6.QtWidgets import (
@@ -19,6 +21,13 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.log_colors import LogHighlighter
+from cephvr.gui.log_format import (
+    CATEGORY_PREFIX,
+    STAMP_WIDTH,
+    SUBJECT_WIDTH,
+    terminal_body,
+    terminal_row,
+)
 from cephvr.gui.retro_instruments import (
     PromptGutter,
     blink,
@@ -110,6 +119,9 @@ class LogConsole(Console):
     def __init__(self, *, lines: int = 7) -> None:
         super().__init__(lines=lines)
         self.preview_compact = False
+        self._last_body: str | None = None
+        self._category_width = SUBJECT_WIDTH + 2
+        self._actions: dict[tuple[str, ...], QTextBlock] = {}
         self._expanded_minimum = self.minimumHeight()
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll = self.verticalScrollBar()
@@ -169,9 +181,31 @@ class LogConsole(Console):
         if retro_console(self) and blink().on:
             prompt_cursor(self)
 
+    def setPlainText(self, text: str | None) -> None:
+        self._last_body = None
+        self._category_width = SUBJECT_WIDTH + 2
+        self._actions.clear()
+        super().setPlainText(text)
+
+    def clear(self) -> None:
+        self._last_body = None
+        self._category_width = SUBJECT_WIDTH + 2
+        self._actions.clear()
+        super().clear()
+
     def appendPlainText(self, text: str | None) -> None:
+        """Append a timestamped row, skipping an exact repeat of the last row."""
         if not text:
             return
+        first, separator, rest = text.partition("\n")
+        body = self._align_categories(terminal_body(first) + separator + rest)
+        if body != self._last_body:
+            self._append_row(body)
+
+    def _append_row(self, body: str) -> None:
+        body = self._align_categories(body)
+        self._last_body = body
+        text = terminal_row(body)
         vertical = self.verticalScrollBar()
         horizontal = self.horizontalScrollBar()
         assert vertical is not None and horizontal is not None
@@ -197,13 +231,48 @@ class LogConsole(Console):
         vertical.setValue(vertical.maximum() if following else position)
         horizontal.setValue(x)
 
+    def _align_categories(self, body: str) -> str:
+        prefix = CATEGORY_PREFIX.match(body)
+        if prefix is None:
+            return body
+        width = max(self._category_width, len(prefix[1]))
+        if width > self._category_width:
+            vertical, horizontal = self.verticalScrollBar(), self.horizontalScrollBar()
+            assert vertical is not None and horizontal is not None
+            y, x = vertical.value(), horizontal.value()
+            following = y >= vertical.maximum()
+            anchor = self.firstVisibleBlock()
+            document = self.document()
+            assert document is not None
+            block = document.begin()
+            while block.isValid():
+                existing = CATEGORY_PREFIX.match(block.text()[STAMP_WIDTH:])
+                if existing is not None:
+                    old_lines = block.lineCount()
+                    cursor = QTextCursor(block)
+                    cursor.setPosition(
+                        block.position() + STAMP_WIDTH + len(existing[1])
+                    )
+                    cursor.setPosition(
+                        block.position() + STAMP_WIDTH + existing.end(),
+                        QTextCursor.MoveMode.KeepAnchor,
+                    )
+                    cursor.insertText(" " * (width - len(existing[1]) + 1))
+                    if block.blockNumber() < anchor.blockNumber():
+                        y += block.lineCount() - old_lines
+                block = block.next()
+            vertical.setValue(vertical.maximum() if following else y)
+            horizontal.setValue(x)
+            self._category_width = width
+        return f"{prefix[1]:<{width}} {body[prefix.end() :]}"
+
     def append_entry(
         self, summary: str, details: str, *, error: bool | None = None
     ) -> None:
         """Append a concise row with diagnostics bound to its document block."""
         summary = summary.replace("\r\n", "\n").replace("\r", "\n")
-        summary = " · ".join(summary.splitlines())
-        self.appendPlainText(summary)
+        first, *rest = summary.splitlines() or [""]
+        self._append_row(" · ".join([terminal_body(first), *rest]))
         document = self.document()
         assert document is not None
         block = document.lastBlock()
@@ -212,6 +281,62 @@ class LogConsole(Console):
         self.setToolTip(
             "Right-click or use the context-menu key on an entry for details."
         )
+
+    def action_entry(
+        self, key: tuple[str, ...], message: str, result: str = "", details: str = ""
+    ) -> None:
+        """Bind progress to a retained block and append its observed result in place."""
+        self._actions = {k: b for k, b in self._actions.items() if b.isValid()}
+        block = self._actions.get(key)
+        if result:
+            if block is None:
+                if message and result != "Done" and details:
+                    self.append_entry(
+                        f"{message} [{result}]",
+                        details,
+                        error=result in {"Failed", "Rejected", "Unconfirmed"},
+                    )
+                return
+            cursor = QTextCursor(block)
+            cursor.movePosition(QTextCursor.MoveOperation.EndOfBlock)
+            cursor.insertText(f" [{result}]")
+            if details:
+                block.setUserData(
+                    _LogDetails(
+                        details, error=result in {"Failed", "Rejected", "Unconfirmed"}
+                    )
+                )
+                self.setToolTip(
+                    "Right-click or use the context-menu key on an entry for details."
+                )
+            self.highlighter.rehighlightBlock(block)
+            self._actions.pop(key, None)
+            self._last_body = None
+            return
+        if block is not None:
+            body = self._align_categories(terminal_body(message))
+            vertical, horizontal = self.verticalScrollBar(), self.horizontalScrollBar()
+            assert vertical is not None and horizontal is not None
+            y, x = vertical.value(), horizontal.value()
+            following = y >= vertical.maximum()
+            before_anchor = block.blockNumber() < self.firstVisibleBlock().blockNumber()
+            old_lines = block.lineCount()
+            cursor = QTextCursor(block)
+            cursor.setPosition(block.position() + STAMP_WIDTH)
+            cursor.movePosition(
+                QTextCursor.MoveOperation.EndOfBlock, QTextCursor.MoveMode.KeepAnchor
+            )
+            cursor.insertText(body)
+            if before_anchor:
+                y += block.lineCount() - old_lines
+            vertical.setValue(vertical.maximum() if following else y)
+            horizontal.setValue(x)
+            self._last_body = None
+            return
+        self._append_row(terminal_body(message))
+        document = self.document()
+        assert document is not None
+        self._actions[key] = document.lastBlock()
 
     def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
         if event is None:

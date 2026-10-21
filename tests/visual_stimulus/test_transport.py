@@ -846,10 +846,15 @@ async def test_authenticated_coordinator_renderer_replay_and_stale_generation():
                 revision=1,
                 available=True,
                 visible=True,
+                rates=pb.PreviewRates(
+                    source_fps=60, preview_fps=30, observed_monotonic_ns=1234
+                ),
             ),
             deadline_ns=deadline,
         )
         assert sink.messages[-1][0] == "ReportStimulusPreview"
+        assert sink.messages[-1][1].rates.source_fps == 60
+        assert sink.messages[-1][1].rates.preview_fps == 30
         previous_execute = device.execute
 
         def reject_preview(method, request, deadline_ns):

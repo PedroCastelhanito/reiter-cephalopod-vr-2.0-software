@@ -1,0 +1,146 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 25%]
+........................................................................ [ 34%]
+........................................................................ [ 43%]
+........................................................................ [ 51%]
+........................................................................ [ 60%]
+........................................................................ [ 69%]
+........................................................................ [ 77%]
+........................................................................ [ 86%]
+........................................................................ [ 94%]
+........................................FF                               [100%]
+================================== FAILURES ===================================
+_ test_variation_hover_does_not_change_visibility_during_enter_dispatch[standard] _
+[gw7] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000212E391E320>
+app = <PyQt6.QtWidgets.QApplication object at 0x00000212E1119480>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000212F981CC50>
+style = 'standard'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_variation_hover_does_not_change_visibility_during_enter_dispatch(
+        window, app, monkeypatch, style
+    ):
+        from PyQt6.QtCore import QPointF
+        from PyQt6.QtGui import QCursor, QEnterEvent
+    
+        appearance = window.appearance
+        appearance.select(style, persist=False)
+        try:
+            window.page_buttons[1].click()
+            editor = window.protocol.editor
+            open_protocol_group(editor)
+            editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+            editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+            form = editor.subgroup
+            form.add_rule.click()
+            app.processEvents()
+            row = form.rows[0]
+            table = form.variation_table
+            calls = []
+            with monkeypatch.context() as patch:
+                patch.setattr(
+                    row.remove, "setVisible", lambda visible: calls.append(visible)
+                )
+                point = QPointF(row.target.rect().center())
+                event = QEnterEvent(
+                    point, point, QPointF(row.target.mapToGlobal(point.toPoint()))
+                )
+                table.eventFilter(row.target, event)
+                assert calls == []
+            row.remove.hide()
+            row.enterEvent(event)
+            assert row.remove.isHidden()  # Table mode has one hover owner.
+            window.protocol.config_scroll.ensureWidgetVisible(table)
+            app.processEvents()
+            QTest.mouseMove(form.add_rule, form.add_rule.rect().center())
+            QTest.qWait(20)
+            QTest.mouseMove(row.target, row.target.rect().center())
+            QTest.qWait(50)
+            app.processEvents()
+>           assert not row.remove.isHidden(), (
+                QCursor.pos(),
+                row.target.mapToGlobal(row.target.rect().center()),
+                table.viewport().mapFromGlobal(QCursor.pos()),
+                table.viewport().rect(),
+                table.isVisible(),
+            )
+E           AssertionError: (PyQt6.QtCore.QPoint(10, 10), PyQt6.QtCore.QPoint(291, 813), PyQt6.QtCore.QPoint(-207, -769), PyQt6.QtCore.QRect(0, 0, 1176, 69), True)
+E           assert not True
+E            +  where True = <built-in method isHidden of Button object at 0x00000212F98331C0>()
+E            +    where <built-in method isHidden of Button object at 0x00000212F98331C0> = <cephvr.gui.components.Button object at 0x00000212F98331C0>.isHidden
+E            +      where <cephvr.gui.components.Button object at 0x00000212F98331C0> = <cephvr.gui.batch_variation.BatchVariationRow object at 0x00000212F44AD3F0>.remove
+
+tests\gui\test_dashboard.py:19054: AssertionError
+_ test_variation_hover_does_not_change_visibility_during_enter_dispatch[retro_console] _
+[gw7] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000212F98332E0>
+app = <PyQt6.QtWidgets.QApplication object at 0x00000212E1119480>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000212AAE3A8D0>
+style = 'retro_console'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_variation_hover_does_not_change_visibility_during_enter_dispatch(
+        window, app, monkeypatch, style
+    ):
+        from PyQt6.QtCore import QPointF
+        from PyQt6.QtGui import QCursor, QEnterEvent
+    
+        appearance = window.appearance
+        appearance.select(style, persist=False)
+        try:
+            window.page_buttons[1].click()
+            editor = window.protocol.editor
+            open_protocol_group(editor)
+            editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+            editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+            form = editor.subgroup
+            form.add_rule.click()
+            app.processEvents()
+            row = form.rows[0]
+            table = form.variation_table
+            calls = []
+            with monkeypatch.context() as patch:
+                patch.setattr(
+                    row.remove, "setVisible", lambda visible: calls.append(visible)
+                )
+                point = QPointF(row.target.rect().center())
+                event = QEnterEvent(
+                    point, point, QPointF(row.target.mapToGlobal(point.toPoint()))
+                )
+                table.eventFilter(row.target, event)
+                assert calls == []
+            row.remove.hide()
+            row.enterEvent(event)
+            assert row.remove.isHidden()  # Table mode has one hover owner.
+            window.protocol.config_scroll.ensureWidgetVisible(table)
+            app.processEvents()
+            QTest.mouseMove(form.add_rule, form.add_rule.rect().center())
+            QTest.qWait(20)
+            QTest.mouseMove(row.target, row.target.rect().center())
+            QTest.qWait(50)
+            app.processEvents()
+>           assert not row.remove.isHidden(), (
+                QCursor.pos(),
+                row.target.mapToGlobal(row.target.rect().center()),
+                table.viewport().mapFromGlobal(QCursor.pos()),
+                table.viewport().rect(),
+                table.isVisible(),
+            )
+E           AssertionError: (PyQt6.QtCore.QPoint(10, 10), PyQt6.QtCore.QPoint(291, 815), PyQt6.QtCore.QPoint(-207, -772), PyQt6.QtCore.QRect(0, 0, 1176, 68), True)
+E           assert not True
+E            +  where True = <built-in method isHidden of Button object at 0x00000212E189F880>()
+E            +    where <built-in method isHidden of Button object at 0x00000212E189F880> = <cephvr.gui.components.Button object at 0x00000212E189F880>.isHidden
+E            +      where <cephvr.gui.components.Button object at 0x00000212E189F880> = <cephvr.gui.batch_variation.BatchVariationRow object at 0x00000212E189F640>.remove
+
+tests\gui\test_dashboard.py:19054: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_variation_hover_does_not_change_visibility_during_enter_dispatch[standard]
+FAILED tests/gui/test_dashboard.py::test_variation_hover_does_not_change_visibility_during_enter_dispatch[retro_console]
+2 failed, 832 passed in 83.83s (0:01:23)

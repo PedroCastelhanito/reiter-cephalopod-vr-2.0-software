@@ -12,16 +12,14 @@ from cephvr.controller.control.operations import ControlOperations
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.lifecycle.cleanup import CleanupWorkflow
 from cephvr.controller.lifecycle.interruption import InterruptionWorkflow
+from cephvr.controller.lifecycle.session_reset import SessionReset
 from cephvr.controller.metadata.coordination import MetadataCoordinator
 from cephvr.controller.ports import SupervisorPort
-from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
     Attempt,
-    ConfigurationState,
     ControlState,
     LifecycleState,
     LimitsState,
-    MetadataState,
 )
 
 _ABORT_UNAVAILABLE = "Abort unavailable"
@@ -34,16 +32,14 @@ class SessionCommands:
         self,
         *,
         lifecycle: LifecycleState,
-        configuration: ConfigurationState,
         control: ControlState,
-        metadata_state: MetadataState,
         metadata: MetadataCoordinator,
         limit_state: LimitsState,
         cleanup: CleanupWorkflow,
         interruption: InterruptionWorkflow,
         publisher: SnapshotPublisher,
         operations: ControlOperations,
-        projections: ProjectionStore,
+        session_reset: SessionReset,
         supervisor: SupervisorPort | None,
         generation: str,
         supervisor_generation: str,
@@ -52,16 +48,14 @@ class SessionCommands:
         save_history: Callable[[int], Coroutine[Any, Any, None]],
     ) -> None:
         self.lifecycle = lifecycle
-        self.configuration_state = configuration
         self.control = control
-        self.metadata_state = metadata_state
         self.metadata = metadata
         self.limit_state = limit_state
         self.cleanup = cleanup
         self.interruption = interruption
         self.publisher = publisher
         self.control_operations = operations
-        self.projections = projections
+        self.session_reset = session_reset
         self.supervisor = supervisor
         self.generation = generation
         self.supervisor_generation = supervisor_generation
@@ -178,7 +172,7 @@ class SessionCommands:
                 command.operator.command_id,
                 "AbortNow",
                 attempt=attempt,
-                progress="interruption in progress",
+                progress="Interrupting…",
                 safety="abort",
             )
             self.metadata.queue_event(
@@ -199,27 +193,7 @@ class SessionCommands:
                     command.operator.command_id,
                     error=error or "New session requires confirmed cleanup",
                 )
-            # NewSession is admitted only after exact session cleanup proof.
-            if self.projections.devices is not None:
-                for role in ("behavioral", "tracking", "eye_tracking"):
-                    view = getattr(self.projections.devices, role)
-                    if view.preview_run_id == self.lifecycle.session.context.session_id:
-                        view.device_open = False
-                        view.preview_prepared = False
-                        view.preview_running = False
-                        view.preview_visible = False
-                        view.cleanup_pending = False
-                        view.preview_run_id = ""
-            self.lifecycle.attempt = None
-            self.lifecycle.session = pb.SessionState(
-                phase=pb.SESSION_PHASE_CONFIGURATION, cleanup_confirmed=True
-            )
-            self.lifecycle.trial = pb.TrialState(phase=pb.TRIAL_PHASE_PENDING)
-            self.projections.set_scope(
-                pb.WorkContext(), self.configuration_state.revision
-            )
-            self.metadata_state.results.clear()
-            self.metadata_state.latest_synced.clear()
+            self.session_reset.reset()
             self.control_operations.operation(
                 command.operator.command_id,
                 "NewSession",

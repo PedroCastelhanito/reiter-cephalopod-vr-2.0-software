@@ -1,0 +1,1 @@
+Original runtime configuration and saved history restored exactly

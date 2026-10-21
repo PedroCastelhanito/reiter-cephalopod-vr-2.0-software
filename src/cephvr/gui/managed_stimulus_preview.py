@@ -40,6 +40,13 @@ def stimulus_preview_view(state: pb.Snapshot, pending: bool = False) -> PreviewV
         active=active,
         available=available,
         visible=current and view.visible,
+        source_fps=view.rates.source_fps
+        if current and view.rates.HasField("source_fps")
+        else None,
+        preview_fps=view.rates.preview_fps
+        if current and view.rates.HasField("preview_fps")
+        else None,
+        rates_observed_ns=view.rates.observed_monotonic_ns if current else 0,
         pending=pending,
         reason=view.failure
         if current and view.failure

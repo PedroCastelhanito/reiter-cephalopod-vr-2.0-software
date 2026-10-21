@@ -37,10 +37,10 @@ from cephvr.visual_stimulus.config.projection import projection_values
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 18
+_POLICY_VERSION = 19
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "8cf3300ced9aaf5a430ab72d80ec3286cda9aa6461d04a62f0de3ae1014a66a3"
+_POLICY_SHA256 = "3fb0d853862cc1a57a9a9b52e51af8e2d958eeb08a4345a51c66c3b6cee43493"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port
@@ -65,6 +65,7 @@ __all__ = ["apply_pacing_settings", "resolve_pacing_profile"]
 _POLICY_KEYS = frozenset(
     """
     runtime.process_layout runtime.rendering_library runtime.window_library
+    runtime.prepared_heap
     projection.method projection.surfaces projection.observer_position_policy
     projection.geometric_correction projection.optional_correction_inputs
     programs.authoring_model programs.scene_composition programs.storage_format
@@ -77,6 +78,7 @@ _POLICY_KEYS = frozenset(
     assets.source_stability assets.protection_failure assets.image_profiles
     assets.video_profiles assets.arena_profile
     image_residency.loader_threads image_residency.upload_chunk_bytes
+    image_residency.upload_chunks_per_turn
     image_residency.readiness image_residency.late_image image_residency.evidence
     arena.source_policy arena.boundary_source arena.movement_modes
     arena.boundary_response arena.shading

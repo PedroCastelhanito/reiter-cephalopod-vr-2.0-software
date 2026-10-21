@@ -22,6 +22,7 @@ from cephvr.acquisition.coordinator.session_payloads import (
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
 from cephvr.acquisition.ports import ControllerPort, ResourcePort, SerialOwnerPort
 from cephvr.acquisition.state import (
+    ChildOperation,
     ConfigurationRecord,
     CoordinatorIdentity,
     PulseRecord,
@@ -204,7 +205,7 @@ class SessionPreparation:
         request: wire.SetupSessionRequest,
         records: tuple[WorkerRecord, ...],
         deadline_ns: int,
-    ) -> None:
+    ) -> tuple[ChildOperation, ...]:
         self._require_live(session, deadline_ns)
         applications = {
             cast(camera.CameraRole, role): getattr(
@@ -225,13 +226,14 @@ class SessionPreparation:
                 deadline_ns=deadline_ns,
             )
         dispatch = []
+        operations = []
         for role in sorted(session.required_cameras):
             role_enum = cast(camera.CameraRole, role)
             settings = applications[role_enum]
             if not settings.HasField("device") or not settings.device.device_id:
                 raise ValueError(f"camera role {role} has no assigned device ID")
             policy = camera_policy(request.acquisition_policies, role_enum)
-            child, _operation, port = retain_worker_command(
+            child, operation, port = retain_worker_command(
                 by_role[role_enum],
                 work=session.work,
                 parent_operation=session.operation,
@@ -247,6 +249,7 @@ class SessionPreparation:
             )
             resolve.transport.CopyFrom(policy.transport)
             dispatch.append((port, resolve))
+            operations.append(operation)
         calls = [
             port.resolve_camera_configuration(resolve, deadline_ns=deadline_ns)
             for port, resolve in dispatch
@@ -284,6 +287,7 @@ class SessionPreparation:
             if receipt.result != control.COMMAND_RESULT_ACCEPTED:
                 raise RuntimeError("controller rejected camera-free Setup resolution")
             session.resolution_reported = True
+        return tuple(operations)
 
     async def prepare_workers(
         self,

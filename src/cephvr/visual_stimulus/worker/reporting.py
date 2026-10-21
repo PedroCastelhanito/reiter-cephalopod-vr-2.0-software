@@ -32,6 +32,7 @@ class ReportBridge:
         self.maximum_bytes, self.maximum_reports = maximum_bytes, maximum_reports
         self.pending: dict[Future[None], int] = {}
         self.lock = threading.Lock()
+        self._optional: Future[None] | None = None
         self.retain_lifecycle: (
             Callable[[visual_stimulus.WorkerLifecycle, int], Awaitable[None]] | None
         ) = None
@@ -70,19 +71,37 @@ class ReportBridge:
                     f"bytes={message.ByteSize()}: {exc}"
                 ) from exc
 
-    def _enqueue(self, method: str, message: Message, deadline_ns: int) -> Future[None]:
+    def _enqueue(
+        self, method: str, message: Message, deadline_ns: int, *, required: bool = True
+    ) -> Future[None]:
         data = message.SerializeToString(deterministic=True)
         snapshot = type(message).FromString(data)
+
+        async def deliver() -> None:
+            try:
+                await self._deliver(method, snapshot, deadline_ns)
+            except Exception:
+                if required:
+                    raise
+
         with self.lock:
+            if not required and (
+                (self._optional is not None and not self._optional.done())
+                or len(self.pending) >= self.maximum_reports
+                or sum(self.pending.values()) + len(data) > self.maximum_bytes
+            ):
+                dropped: Future[None] = Future()
+                dropped.set_result(None)
+                return dropped
             if (
                 len(self.pending) >= self.maximum_reports
                 or sum(self.pending.values()) + len(data) > self.maximum_bytes
             ):
                 raise RuntimeError("bounded worker report handoff exhausted")
-            future = asyncio.run_coroutine_threadsafe(
-                self._deliver(method, snapshot, deadline_ns), self.loop
-            )
+            future = asyncio.run_coroutine_threadsafe(deliver(), self.loop)
             self.pending[future] = len(data)
+            if not required:
+                self._optional = future
 
         def done(result: Future[None]) -> None:
             with self.lock:
@@ -95,8 +114,10 @@ class ReportBridge:
         future.add_done_callback(done)
         return future
 
-    def send(self, method: str, message: Message, deadline_ns: int) -> None:
-        self._enqueue(method, message, deadline_ns)
+    def send(
+        self, method: str, message: Message, deadline_ns: int, *, required: bool = True
+    ) -> None:
+        self._enqueue(method, message, deadline_ns, required=required)
 
     def confirm(self, method: str, message: Message, deadline_ns: int) -> None:
         self._enqueue(method, message, deadline_ns).result(

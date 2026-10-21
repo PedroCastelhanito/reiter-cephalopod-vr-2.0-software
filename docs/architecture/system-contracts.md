@@ -52,7 +52,7 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 <a id="e06"></a>
 ### E06 — Stop, interruption, timeout, and recovery
 
-**Status:** Accepted · **Revision:** 77
+**Status:** Accepted · **Revision:** 79
 
 **Operator commands**
 
@@ -142,8 +142,8 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
   results. Each blocker clears automatically only when its obligation is verified;
   the overall block clears only when all are resolved. Never infer file closure from
   a heartbeat, elapsed time or process exit alone. Keep the original Interrupted
-  outcome and error history; the operator still requests New session or fresh Setup
-  explicitly.
+  outcome in durable results and retain error history. E05 owns automatic return to
+  Configuration after confirmed interrupted cleanup; fresh Setup/Start remain explicit.
 - Cleanup evidence covers stopped work, output/metadata results and release of
   trial/session resources, not exit of normal resident processes or the Visual Stimulus runtime.
   Resource release is distinct from successful recording; cleanup never relabels a
@@ -218,7 +218,15 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 177
+**Status:** Accepted · **Revision:** 180
+
+- Optional PreviewRates travel through existing exact-run camera visibility and exact-
+  session stimulus preview state, approximately once per second. Source FPS measures
+  camera frame-ID/timestamp deltas or completed renderer batches; preview FPS counts new
+  image submissions/swaps, excluding cached camera redraws. These host measurements are
+  advisory, not configured rates, optical timing or health authority. Delivery is
+  bounded and best-effort; stale/hidden evidence must not appear live. No image data
+  enters control transport.
 
 **Processes and startup**
 
@@ -405,6 +413,11 @@ design; runtime monitoring remains unimplemented.
   reconnect; it replaces that projection atomically, never controller lifecycle/
   readiness or retained evidence
   ([status binding](../../contracts/README.md#supervisor-status-views)).
+- Snapshot retains one latest retired session/trial finalization view across
+  Configuration reset, copied under the lifecycle lock after confirmed terminal
+  cleanup with exact original identities. It is bounded presentation evidence,
+  overwritten by the next retired session and cleared on controller restart; it
+  neither grants work authority nor replays terminal success in a fresh GUI.
 - WatchState is the only streaming RPC; other calls are unary. It publishes complete,
   coalesced current views, never patches or event replay, without blocking control;
   configuration values arrive in each stream's first item and on each revision
@@ -529,6 +542,11 @@ design; runtime monitoring remains unimplemented.
   obligation. FFmpeg has no gRPC/heartbeat: its feeding worker monitors
   output/progress/errors and the supervisor tracks identity/exit. A healthy control
   thread does not prove data progress.
+- Setup operator feedback uses nonterminal operation progress, relayed by the
+  owning coordinator with exact command, backend generation and session identity.
+  The controller exposes only live, in-deadline Setup progress in participant
+  snapshots. Keep delivery bounded and optional; it cannot establish Ready,
+  complete an operation, extend a deadline or replace worker health evidence.
 - E03 governs GUI reconnect, explicit control acquisition and warning
   acknowledgement. There is no automatic GUI relaunch: after a crash the operator
   reopens the GUI from the normal launcher under the single-GUI guard while the
@@ -576,15 +594,17 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 214
+**Status:** Accepted · **Revision:** 215
 
-- Visual Stimulus policy version18 combines the accepted file-owned projection limits
+- Visual Stimulus policy version19 combines the accepted file-owned projection limits
   (V15/G01) with required scientific evidence and optional reduced review video
   using sequential timestamp-mapped frames and uncropped equal-cell recording with
   Bottom review rotation, no labels and no gutters for matching post-rotation sizes;
   cropped display-layout preview omits labels and retains its own geometry
   and calibration metadata (E13/V12/V28). Keep the matching loader
-  digest and both file versions aligned.
+  digest and both file versions aligned. V04 also bounds image upload batches
+  to preserve prefetch throughput without an unbounded render-thread upload, and
+  owns the prepared-heap collection lifetime.
 
 - **Operator files contain only settings.** Human-readable `<backend>_config.toml`
   files under [config/backends/](../../config/backends/README.md) hold only values an

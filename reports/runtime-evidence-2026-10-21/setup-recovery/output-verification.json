@@ -1,0 +1,153 @@
+{
+  "ffprobe": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+  "runs": [
+    {
+      "label": "abort",
+      "outcome": "interrupted",
+      "outputs": [
+        {
+          "tag": "behavioral_cam_frames",
+          "counts": {
+            "video_frames": 299,
+            "source_frames": 299
+          },
+          "bytes": 104691
+        },
+        {
+          "tag": "behavioral_cam",
+          "counts": {
+            "frames": 299
+          },
+          "bytes": 27159386,
+          "decode": {
+            "width": 1760,
+            "height": 1716,
+            "nb_read_frames": "299"
+          }
+        },
+        {
+          "tag": "tracking_cam_frames",
+          "counts": {
+            "video_frames": 599,
+            "source_frames": 599
+          },
+          "bytes": 208189
+        },
+        {
+          "tag": "tracking_cam",
+          "counts": {
+            "frames": 599
+          },
+          "bytes": 64252,
+          "decode": {
+            "width": 1588,
+            "height": 1344,
+            "nb_read_frames": "599"
+          }
+        },
+        {
+          "tag": "stimulus_LOG",
+          "counts": {
+            "documents": 1
+          },
+          "bytes": 42112
+        },
+        {
+          "tag": "stimulus_frames",
+          "counts": {
+            "render_groups": 600
+          },
+          "bytes": 3404746
+        },
+        {
+          "tag": "stimulus",
+          "counts": {
+            "input_frames": 600,
+            "frames": 600,
+            "duplicate_frames": 0
+          },
+          "bytes": 19982090,
+          "decode": {
+            "width": 1280,
+            "height": 720,
+            "nb_read_frames": "600"
+          }
+        }
+      ]
+    },
+    {
+      "label": "normal",
+      "outcome": "completed",
+      "outputs": [
+        {
+          "tag": "behavioral_cam_frames",
+          "counts": {
+            "video_frames": 1797,
+            "source_frames": 1797
+          },
+          "bytes": 625490
+        },
+        {
+          "tag": "behavioral_cam",
+          "counts": {
+            "frames": 1797
+          },
+          "bytes": 159418564,
+          "decode": {
+            "width": 1760,
+            "height": 1716,
+            "nb_read_frames": "1797"
+          }
+        },
+        {
+          "tag": "tracking_cam_frames",
+          "counts": {
+            "video_frames": 3596,
+            "source_frames": 3596
+          },
+          "bytes": 1255138
+        },
+        {
+          "tag": "tracking_cam",
+          "counts": {
+            "frames": 3596
+          },
+          "bytes": 375504,
+          "decode": {
+            "width": 1588,
+            "height": 1344,
+            "nb_read_frames": "3596"
+          }
+        },
+        {
+          "tag": "stimulus_LOG",
+          "counts": {
+            "documents": 1
+          },
+          "bytes": 42112
+        },
+        {
+          "tag": "stimulus_frames",
+          "counts": {
+            "render_groups": 3600
+          },
+          "bytes": 20462055
+        },
+        {
+          "tag": "stimulus",
+          "counts": {
+            "input_frames": 3600,
+            "frames": 3600,
+            "duplicate_frames": 0
+          },
+          "bytes": 119317093,
+          "decode": {
+            "width": 1280,
+            "height": 720,
+            "nb_read_frames": "3600"
+          }
+        }
+      ]
+    }
+  ]
+}
