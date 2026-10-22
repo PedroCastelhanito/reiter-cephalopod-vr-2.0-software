@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src"
 ASSEMBLY = {
     "cephvr.gui.review",
+    "cephvr.gui.startup",
     "cephvr.tracking.main",
     "cephvr.tracking.transport.services",
     "cephvr.tracking.transport.server",
@@ -57,6 +58,7 @@ ENTRY_MODULES = {
     "cephvr.acquisition.worker.server",
     "cephvr.acquisition.worker.service",
     "cephvr.gui.review",
+    "cephvr.gui.startup",
     "cephvr.acquisition.transport.services",
 }
 

@@ -783,7 +783,7 @@ class ModernGLPort:
             self._moderngl = None
         return errors
 
-    def release(self) -> ResourceReleaseReport:
+    def release(self, deadline_ns: int | None = None) -> ResourceReleaseReport:
         self._assert_owner()
         outstanding = []
         if self.preview is not None:
@@ -822,7 +822,7 @@ class ModernGLPort:
                 self._released.append("visual_stimulus:gpu:display-calibration:arena")
         residency = getattr(self, "_image_residency", None)
         if residency is not None:
-            image_errors = residency.release_gpu()
+            image_errors = residency.release_gpu(deadline_ns=deadline_ns)
             self._released.extend(sorted(residency.released_keys))
             outstanding.extend(image_errors)
             if not image_errors:

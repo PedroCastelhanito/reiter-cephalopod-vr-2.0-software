@@ -1,0 +1,4 @@
+CephVR supervisor shutdown: JOB_INSPECTION_FAILED: planned job membership could not be verified: QueryFullProcessImageNameW for PID 50932 failed: WinError 5
+InterruptSession c3168514-ff24-4409-bc32-12baa77cdddb failed: SESSION_IDENTITY: no exact live session
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -1,0 +1,5 @@
+edited True focus_speed False visible True enabled True dirty True
+afterfocus focus_duration False timer True dirty True changed False
+motion x=Rate(kind='rate', function=Constant(kind='constant', value=-30.0)) y=Rate(kind='rate', function=Constant(kind='constant', value=3.67394039744206e-15)) rotation=Rate(kind='rate', function=Constant(kind='constant', value=0.0))
+afterwait dirty False changed True notice 
+queued changed True notice 

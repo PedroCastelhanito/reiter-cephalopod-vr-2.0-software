@@ -1,0 +1,120 @@
+{
+  "checked": [
+    {
+      "source": "architecture.md",
+      "target": "docs/architecture/gui.md#g02",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "TODO.md",
+      "target": "reports/runtime-evidence-2026-10-22/rig-checks",
+      "exists": true
+    },
+    {
+      "source": "TODO.md",
+      "target": "reports/rig-verification.md",
+      "exists": true
+    },
+    {
+      "source": "TODO.md",
+      "target": "reports/runtime.md",
+      "exists": true
+    },
+    {
+      "source": "TODO.md",
+      "target": "docs/architecture/gui.md#g01",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "TODO.md",
+      "target": "reports/rig-verification.md",
+      "exists": true
+    },
+    {
+      "source": "TODO.md",
+      "target": "reports/runtime.md#rig-checks-oct22",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "TODO.md",
+      "target": "reports/rig-verification.md",
+      "exists": true
+    },
+    {
+      "source": "reports/runtime.md",
+      "target": "../architecture.md#gov-001",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/runtime.md",
+      "target": "../docs/architecture/system-contracts.md#e15",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/runtime.md",
+      "target": "runtime-evidence-2026-10-22/rig-checks/README.md",
+      "exists": true
+    },
+    {
+      "source": "reports/runtime.md",
+      "target": "emergency-649269129986100-560b85e4-87df-4bdf-9d90-e4d49d32de79.json",
+      "exists": true
+    },
+    {
+      "source": "reports/runtime.md",
+      "target": "../docs/architecture/system-contracts.md#e06",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/runtime.md",
+      "target": "../docs/architecture/visual_stimulus.md#v01",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/runtime.md",
+      "target": "../docs/architecture/gui.md#g02",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/acquisition.md",
+      "target": "runtime.md#rig-checks-oct22",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/visual_stimulus.md",
+      "target": "../docs/architecture/visual_stimulus.md#v01",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/visual_stimulus.md",
+      "target": "../docs/architecture/system-contracts.md#e06",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/visual_stimulus.md",
+      "target": "runtime.md#rig-checks-oct22",
+      "exists": true,
+      "anchor_exists": true
+    },
+    {
+      "source": "reports/rig-verification.md",
+      "target": "runtime.md#rig-checks-oct22",
+      "exists": true,
+      "anchor_exists": true
+    }
+  ],
+  "failures": [],
+  "scope": "new local Markdown link targets and anchors only; existing links not re-audited",
+  "anchor_failures": []
+}

@@ -1,5 +1,18 @@
 # Visual Stimulus status
 
+
+Oct22 current result: the image-read ctypes lifetime defect and helper retirement
+proof mismatch are fixed. Final uninstrumented unchanged2×600s playback/recording
+completes with confirmed cleanup, all14 outputs closed and six videos fully decoded.
+All4000 image/blank occurrences agree; no image mismatch, residency hold or failed
+submission. Worst state interval improves105.882→31.9408ms; worst output interval
+107.899→38.6401ms and software onset47.1322→21.8091ms. Neither helper warning recurs.
+This is software timing/content validation, not strict60Hz or optical/electrical
+certification. Exact original configuration/history is restored; app is idle.
+483 Visual Stimulus and168 supervisor tests pass; prior899 GUI-node coverage remains.
+One pre-Start MCU PING timeout followed by a successful fresh retry and separate idle
+shutdown findings remain explicit follow-ups. [Evidence and limits](runtime.md#rig-checks-oct22).
+
 Oct21 `stimulus-rig-direction-authoring`: [G01](../docs/architecture/gui.md#g01)rev289 / G02rev106,
 [V02](../docs/architecture/visual_stimulus.md#v02)rev15 and
 [V08](../docs/architecture/visual_stimulus.md#v08)rev7 implemented for physical-screen

@@ -1,0 +1,27 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+____________ test_managed_total_time_tracks_trials_gaps_and_stops _____________
+tests\gui\test_dashboard.py:2021: in test_managed_total_time_tracks_trials_gaps_and_stops
+    assert len(lines) == 2
+E   AssertionError: assert 4 == 2
+E    +  where 4 = len(['STATUS      Ended', 'TRIAL       2/2', 'TRIAL TIME  00:00:12 / �', 'TOTAL TIME  00:01:22 / 00:02:10'])
+______________ test_all_pages_share_fitted_hud_and_expanding_log ______________
+tests\gui\test_dashboard.py:4396: in test_all_pages_share_fitted_hud_and_expanding_log
+    assert len(set(top_positions)) == 1
+E   assert 2 == 1
+E    +  where 2 = len({(83, 83), (134, 134)})
+E    +    where {(83, 83), (134, 134)} = set([(134, 134), (83, 83), (83, 83), (83, 83), (83, 83)])
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+tests\gui\test_dashboard.py:4525: in test_device_tabs_sit_above_controls_without_moving_hud
+    assert (
+E   assert 83 == 134
+E    +  where 83 = <built-in method y of QPoint object at 0x0000028A962CEF80>()
+E    +    where <built-in method y of QPoint object at 0x0000028A962CEF80> = PyQt6.QtCore.QPoint(822, 83).y
+E    +      where PyQt6.QtCore.QPoint(822, 83) = <built-in method mapTo of Card object at 0x0000028A93A51E10>(<cephvr.gui.window.DashboardWindow object at 0x0000028A9631B2E0>, PyQt6.QtCore.QPoint())
+E    +        where <built-in method mapTo of Card object at 0x0000028A93A51E10> = <cephvr.gui.components.Card object at 0x0000028A93A51E10>.mapTo
+E    +        and   PyQt6.QtCore.QPoint() = QPoint()
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_managed_total_time_tracks_trials_gaps_and_stops
+FAILED tests/gui/test_dashboard.py::test_all_pages_share_fitted_hud_and_expanding_log
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+3 failed, 816 deselected in 4.20s

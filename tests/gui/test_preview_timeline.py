@@ -1,7 +1,7 @@
 """Standalone preview clock and painter checks without a Dashboard/device fixture."""
 
 import pytest
-from PyQt6.QtCore import QPoint, Qt
+from PyQt6.QtCore import QEvent, QPoint, Qt
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication, QCheckBox
 
@@ -601,6 +601,42 @@ def test_authored_trajectory_uses_tracking_form_and_size_lane(timeline):
     assert lane.traces[0].segments[-1][-1] == pytest.approx((14, 5 + 2 * 9))
 
 
+def test_projector_card_retains_every_same_face_layer(timeline):
+    app = QApplication.instance()
+    texture = review_program().sequence[1].settings[0]
+    second = texture.model_copy(
+        update={
+            "instance_id": "second_layer",
+            "motion": texture.motion.model_copy(
+                update={"rotation": Rate(kind="rate", function=constant(7))}
+            ),
+        }
+    )
+    timeline.set_program(with_settings((), (texture, second), ()), "", "Layers")
+    timeline.set_advanced(True)
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    timeline.set_playback(12, running=False)
+    timeline.timer.timeout.emit()
+    face = timeline.panels[0].source.key[0]
+    layers = [panel for panel in timeline.panels if panel.source.key[0] == face]
+    assert len(layers) == 2
+    assert len(timeline.projector_cards[face].findChildren(MotionDial)) == 2
+    assert [
+        sample.angular_speed
+        for panel, sample in zip(timeline.panels, timeline.dial_samples, strict=True)
+        if panel.source.key[0] == face
+    ] == [0, 7]
+    timeline.set_projector_visible(face, False)
+    assert timeline.projector_cards[face].isHidden()
+    timeline.set_projector_visible(face, True)
+    app.processEvents()
+    assert all(
+        dial.isVisible()
+        for dial in timeline.projector_cards[face].findChildren(MotionDial)
+    )
+    timeline.refresh()
+
+
 def test_feedback_texture_pairs_waiting_texture_and_tracking_dials(timeline):
 
     texture = review_program().sequence[1].settings[0]
@@ -970,10 +1006,11 @@ def test_linked_dials_rebuild_for_geometry_and_isolate_unavailable_sources(timel
     assert not samples["Left"].message and not samples["Right"].message
 
 
+@pytest.mark.parametrize("style", [None, "amber_phosphor"])
 @pytest.mark.parametrize("size", [(1440, 960), (1000, 700), (600, 480)])
 @pytest.mark.parametrize("driving", [False, True])
 def test_all_projector_plots_fit_visible_workspace_without_scroll(
-    timeline, size, driving
+    timeline, size, driving, style
 ):
 
     from PyQt6.QtWidgets import QLabel, QWidget
@@ -1005,6 +1042,8 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
     host = QWidget()
 
     dialog = PreviewWorkspace(None)
+    dialog.setProperty("retroPalette", style)
+    dialog.setProperty("retroConsole", style is not None)
 
     try:
         plot = dialog.timeline
@@ -1028,7 +1067,7 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
 
         # Reflow after dragging the divider, then returning it to its usual width.
 
-        for width in (size[0] // 3, size[0] // 4):
+        for width in (size[0] // 3, size[0] - 180, size[0] // 4):
             dialog.splitter.setSizes([size[0] - width, width])
 
             app.processEvents()
@@ -1043,7 +1082,7 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
 
             assert len(cards) == 4
 
-            assert [card.findChild(QLabel).text() for card in cards] == [
+            assert [card.findChild(QLabel).name_text for card in cards] == [
                 "Left",
                 "Front",
                 "Right",
@@ -1051,6 +1090,26 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
             ]
 
             assert plot.cards.spacing() == 16
+            bounds = cards[0].geometry()
+            for card in cards[1:]:
+                bounds = bounds.united(card.geometry())
+            assert (
+                abs(bounds.center().y() - plot.instrument_host.rect().center().y()) <= 1
+            )
+            margins = plot.cards.contentsMargins()
+            if plot.instrument_host.columns != len(cards):
+                assert margins.top() == margins.bottom() == 0
+            else:
+                host = plot.instrument_host
+                row_height = round(
+                    (host.width() - 16 * (len(cards) - 1))
+                    / len(cards)
+                    / host.cell_size.width()
+                    * host.cell_size.height()
+                )
+                assert bounds.height() <= row_height + 1
+                if host.height() > row_height + 2:
+                    assert margins.top() > 0
 
             for card in cards:
                 assert card.isVisible()
@@ -1112,6 +1171,26 @@ def test_retro_projector_headings_are_uppercase_and_glow(timeline):
     timeline.setProperty("retroConsole", False)
     timeline.restyle(False)
     assert [heading.text() for heading in timeline.headings] == plain
+    from cephvr.gui.theme import colors_for
+
+    for style in ("amber_phosphor", "retro_console", None):
+        timeline.setProperty("retroPalette", style)
+        timeline.setProperty("retroConsole", style is not None)
+        timeline.restyle()
+        expected = f"color: {colors_for(timeline).coral};"
+        assert {heading.styleSheet() for heading in timeline.headings} == {expected}
+        timeline.rebuild_instruments()
+        assert {heading.styleSheet() for heading in timeline.headings} == {expected}
+    from cephvr.gui.theme import colors_for
+
+    for style in ("amber_phosphor", "retro_console", None):
+        timeline.setProperty("retroPalette", style)
+        timeline.setProperty("retroConsole", style is not None)
+        timeline.restyle()
+        expected = f"color: {colors_for(timeline).coral};"
+        assert {heading.styleSheet() for heading in timeline.headings} == {expected}
+        timeline.rebuild_instruments()
+        assert {heading.styleSheet() for heading in timeline.headings} == {expected}
 
 
 def test_retro_preview_controls_are_checkboxes_and_headings_glow(app):

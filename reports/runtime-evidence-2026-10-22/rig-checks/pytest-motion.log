@@ -1,0 +1,10 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+________________ test_motion_auto_commit_and_invalid_edit_undo ________________
+tests\gui\test_dashboard.py:10299: in test_motion_auto_commit_and_invalid_edit_undo
+    assert editor.program != original
+E   AssertionError: assert Program(format_version=2, assets=(Asset(asset_id='stimulus_1', logical_path='texture.png', color_override=None, profil...b=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()),)),)) != Program(format_version=2, assets=(Asset(asset_id='stimulus_1', logical_path='texture.png', color_override=None, profil...b=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()),)),))
+E    +  where Program(format_version=2, assets=(Asset(asset_id='stimulus_1', logical_path='texture.png', color_override=None, profil...b=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()),)),)) = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x0000024CE9914A60>.program
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_motion_auto_commit_and_invalid_edit_undo
+1 failed in 1.51s

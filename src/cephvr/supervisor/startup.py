@@ -29,6 +29,7 @@ from cephvr.platform.windows.python_runtime import (
 )
 from cephvr.shared.clock import HostClockDescriptor
 from cephvr.shared.managed_modules import (
+    REQUIRED_MODULES,
     managed_modules,
     missing_roles,
     no_tracking_from_bootstrap,
@@ -430,7 +431,7 @@ async def run_supervisor(
             return await _launch_role_plan(
                 inputs,
                 "gui",
-                "cephvr.gui.main",
+                REQUIRED_MODULES["gui"],
                 child,
                 request.child.generation,
                 token,

@@ -1,0 +1,2 @@
+RIGCHECK_115036_stimulus_frames.jsonl state {'count': 35999, 'minimum_ns': 4761700, 'p50_ns': 16680100, 'p95_ns': 18789400, 'p99_ns': 20170600, 'p999_ns': 21820100, 'maximum_ns': 53529700, 'gaps_over_ms': {'20': 444, '25': 9, '35': 3, '50': 1, '100': 0}}
+RIGCHECK_120037_stimulus_frames.jsonl state {'count': 35994, 'minimum_ns': 4846700, 'p50_ns': 16679000, 'p95_ns': 19543000, 'p99_ns': 21579400, 'p999_ns': 23545300, 'maximum_ns': 105882000, 'gaps_over_ms': {'20': 1338, '25': 12, '35': 4, '50': 4, '100': 1}}

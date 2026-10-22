@@ -18,8 +18,6 @@ from cephvr.gui.theme import (
 )
 
 RAIL_WIDTH = 176
-# Below this page width the rail yields to the top tabs so the two columns keep room.
-RAIL_MIN_PAGE_WIDTH = 1000
 DEVICE_ICONS = ("camera", "board", "projector", "signal")
 
 
@@ -29,9 +27,14 @@ class DeviceRail(QTreeWidget):
     chosen = pyqtSignal(int, int)  # device index, section index (-1 = the device)
 
     def __init__(
-        self, names: tuple[str, ...], sections: dict[int, tuple[str, ...]]
+        self,
+        names: tuple[str, ...],
+        sections: dict[int, tuple[str, ...]],
+        *,
+        icons: tuple[str, ...] = DEVICE_ICONS,
     ) -> None:
         super().__init__()
+        self.icons = icons
         self.setProperty("role", "rail")
         self.setAccessibleName("Devices navigation")
         self.setHeaderHidden(True)
@@ -92,7 +95,7 @@ class DeviceRail(QTreeWidget):
         self.refresh_icons()
 
     def refresh_icons(self) -> None:
-        """Icons follow the active palette; a selected device row uses inverse ink."""
+        """Selected icons brighten with their text on the unfilled navigation row."""
         colors = colors_for(self)
         current = self.currentItem()
         for index, item in enumerate(self.devices):
@@ -100,7 +103,10 @@ class DeviceRail(QTreeWidget):
             if minimal_frames(self) and retro_console(self):
                 ink = colors.text if selected else PHOSPHOR_TAB_DIM
             else:
-                ink = (
-                    colors.window if selected and retro_console(self) else colors.accent
-                )
-            item.setIcon(0, device_icon(DEVICE_ICONS[index], ink))
+                ink = colors.text if selected else colors.accent
+            item.setIcon(
+                0,
+                device_icon(self.icons[index], ink)
+                if index < len(self.icons)
+                else QIcon(),
+            )

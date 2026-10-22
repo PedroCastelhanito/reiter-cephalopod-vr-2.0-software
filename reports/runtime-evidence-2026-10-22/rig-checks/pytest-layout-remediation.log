@@ -1,0 +1,10 @@
+..F                                                                      [100%]
+================================== FAILURES ===================================
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+tests\gui\test_dashboard.py:4434: in test_device_tabs_sit_above_controls_without_moving_hud
+    device_hud_top = window.devices.cameras.hud_card.mapTo(window, QPoint()).y()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'CamerasPanel' object has no attribute 'hud_card'
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+1 failed, 2 passed, 816 deselected in 6.21s

@@ -1,0 +1,44 @@
+[
+  {
+    "ProcessId": 29184,
+    "ParentProcessId": 9420,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" -u scripts/start_runtime_gui.py"
+  },
+  {
+    "ProcessId": 30844,
+    "ParentProcessId": 29184,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -u scripts/start_runtime_gui.py"
+  },
+  {
+    "ProcessId": 33432,
+    "ParentProcessId": 30844,
+    "Name": "python.exe",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe"
+  },
+  {
+    "ProcessId": 20512,
+    "ParentProcessId": 33432,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe"
+  },
+  {
+    "ProcessId": 6836,
+    "ParentProcessId": 37780,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" -u reports/runtime-evidence-2026-10-22/rig-checks/cleanup-fix/verify_outputs.py reports/runtime-evidence-2026-10-22/rig-checks/cleanup-fix/queue-fix/full-texture"
+  },
+  {
+    "ProcessId": 9608,
+    "ParentProcessId": 6836,
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -u reports/runtime-evidence-2026-10-22/rig-checks/cleanup-fix/verify_outputs.py reports/runtime-evidence-2026-10-22/rig-checks/cleanup-fix/queue-fix/full-texture"
+  },
+  {
+    "ProcessId": 636,
+    "ParentProcessId": 9608,
+    "Name": "ffprobe.exe",
+    "CommandLine": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE -v error -count_frames -select_streams v:0 -show_entries stream=width,height,nb_read_frames -of json \\\\?\\C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-114917\\protocol-data\\RIGCHECK_120037_behavioral_cam.mp4"
+  }
+]

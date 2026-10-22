@@ -1,0 +1,139 @@
+{
+  "controller_generation": "fc3524d2-f93b-4fa9-b990-193d0d08b9de",
+  "captured_monotonic_ns": "650098361933600",
+  "state_revision": "435",
+  "configuration": {
+    "revision": "1"
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "2d7f8658-8782-4cae-abd8-59d4009c23b8"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "5b5949b0-27aa-4f90-a38e-f7374a4e37e0"
+      },
+      "command": "StartupRecovery",
+      "work": {
+        "session": {
+          "controller_generation": "de8e791d-6bc0-4a5a-92be-d49425f130a6",
+          "session_id": "76f65fbf-f9b5-4f3c-ba9d-df1d7fbe86aa"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "startup reservation recovery confirmed"
+    },
+    {
+      "context": {
+        "command_id": "f51b9906-9b4f-4560-bd1e-a9f1fa8ad803"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "8bea3f92-f1c1-4e28-98fa-f2a9dac69ebf",
+      "component": "startup_recovery",
+      "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote recording and disable saving before another paired session; local recovery does not establish remote stopping or scientific file closure."
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "202d651a-194f-4f38-8f62-73d094e19eae"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "202d651a-194f-4f38-8f62-73d094e19eae"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "fc3524d2-f93b-4fa9-b990-193d0d08b9de"
+    },
+    "command_id": "2d7f8658-8782-4cae-abd8-59d4009c23b8",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "649390349435900",
+        "idle_swap_return_ns": "649390349767900",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "649390470813700",
+        "idle_swap_return_ns": "649390470896400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "649390517300400",
+        "idle_swap_return_ns": "649390517373800",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "649390560327800",
+        "idle_swap_return_ns": "649390560484700",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "649390560550900",
+    "complete": true
+  },
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {},
+  "stimulus_preview": {}
+}

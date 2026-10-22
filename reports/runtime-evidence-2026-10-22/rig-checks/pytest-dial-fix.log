@@ -1,0 +1,13 @@
+...............................F........................................ [ 88%]
+.........                                                                [100%]
+================================== FAILURES ===================================
+______________ test_projector_card_retains_every_same_face_layer ______________
+tests\gui\test_preview_timeline.py:617: in test_projector_card_retains_every_same_face_layer
+    assert tuple(sample.name for sample in timeline.dial_samples) == tuple(
+E   AssertionError: assert ('Left � text...ht � texture') == ('Left', 'Lef...ht � layer 2')
+E     
+E     At index 0 diff: 'Left � texture' != 'Left'
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/gui/test_preview_timeline.py::test_projector_card_retains_every_same_face_layer
+1 failed, 80 passed in 3.93s

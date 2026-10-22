@@ -1,0 +1,44 @@
+[
+  {
+    "ProcessId": 21152,
+    "ParentProcessId": 51900,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-22T08:57:17.086442+09:00",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" -u -X faulthandler -m pytest -n 2 -q -p slot_exception_checks tests/gui --timeout=120 -o faulthandler_timeout=60 --tb=short --junitxml reports/runtime-evidence-2026-10-22/rig-checks/pytest-gui-final-parallel.xml"
+  },
+  {
+    "ProcessId": 43792,
+    "ParentProcessId": 21152,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-22T08:57:17.09833+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -u -X faulthandler -m pytest -n 2 -q -p slot_exception_checks tests/gui --timeout=120 -o faulthandler_timeout=60 --tb=short --junitxml reports/runtime-evidence-2026-10-22/rig-checks/pytest-gui-final-parallel.xml"
+  },
+  {
+    "ProcessId": 44052,
+    "ParentProcessId": 43792,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-22T08:57:17.383813+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -u -c \"import sys;exec(eval(sys.stdin.readline()))\""
+  },
+  {
+    "ProcessId": 38720,
+    "ParentProcessId": 44052,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-22T08:57:17.394083+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -u -c \"import sys;exec(eval(sys.stdin.readline()))\""
+  },
+  {
+    "ProcessId": 26672,
+    "ParentProcessId": 43792,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-22T08:57:17.470463+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -u -c \"import sys;exec(eval(sys.stdin.readline()))\""
+  },
+  {
+    "ProcessId": 43800,
+    "ParentProcessId": 26672,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-22T08:57:17.478279+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -u -c \"import sys;exec(eval(sys.stdin.readline()))\""
+  }
+]

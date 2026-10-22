@@ -1,0 +1,6 @@
+{
+  "TimeCreated": "2026-10-22T08:43:48.4685111+09:00",
+  "ProviderName": "Application Error",
+  "Id": 1000,
+  "Message": "Faulting application name: python.exe, version: 3.11.15150.1013, time stamp: 0x69a9b167\r\nFaulting module name: Qt6Core.dll, version: 6.11.2.0, time stamp: 0x6a7cf959\r\nException code: 0xc0000409\r\nFault offset: 0x000000000001c8d8\r\nFaulting process id: 0x6A90\r\nFaulting application start time: 0x1DD61B4688FB7E8\r\nFaulting application path: C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\r\nFaulting module path: C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Lib\\site-packages\\PyQt6\\Qt6\\bin\\Qt6Core.dll\r\nReport Id: b16011e3-a5b6-4886-a5a8-cc29faac9c80\r\nFaulting package full name: \r\nFaulting package-relative application ID: "
+}

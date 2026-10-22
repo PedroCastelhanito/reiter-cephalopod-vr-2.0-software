@@ -269,6 +269,7 @@ def _launch(
     pid: int,
     *,
     python: bool,
+    work: types.WorkContext = WORK,
 ) -> wire.LaunchState:
     plan = wire.PlanLaunchRequest(
         command_id=str(uuid4()),
@@ -277,7 +278,7 @@ def _launch(
         executable=EXE,
         python_worker=python,
         stop_method="grpc_shutdown" if python else "owner_stdin_eof",
-        work=WORK,
+        work=work,
         parent_operation=types.OperationContext(command_id=str(uuid4())),
     )
     state = registry.plan(plan)
@@ -304,7 +305,10 @@ def _launch(
 
 
 def _worker_and_helper(
-    runtime: SupervisorRuntime, native: Native
+    runtime: SupervisorRuntime,
+    native: Native,
+    *,
+    helper_work: types.WorkContext = WORK,
 ) -> tuple[wire.LaunchState, wire.LaunchState]:
     acquisition = _identity("acquisition")
     worker = _launch(
@@ -322,6 +326,7 @@ def _worker_and_helper(
         _identity(FFMPEG_ROLE),
         12,
         python=False,
+        work=helper_work,
     )
     return worker, helper
 

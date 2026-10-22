@@ -1,0 +1,42 @@
+{
+  "captured_at": "2026-10-22T09:07:37.0634841+09:00",
+  "previous_test_ids_remaining": [],
+  "pytest_processes": [],
+  "restored_managed_processes": [
+    {
+      "ProcessId": 59064,
+      "Name": "cephvr-python.exe",
+      "CreationDate": "2026-10-22T08:55:50.101977+09:00"
+    },
+    {
+      "ProcessId": 57384,
+      "Name": "cephvr-python.exe",
+      "CreationDate": "2026-10-22T08:55:50.382478+09:00"
+    },
+    {
+      "ProcessId": 15048,
+      "Name": "cephvr-python.exe",
+      "CreationDate": "2026-10-22T08:55:50.390944+09:00"
+    },
+    {
+      "ProcessId": 33728,
+      "Name": "cephvr-python.exe",
+      "CreationDate": "2026-10-22T08:55:50.396709+09:00"
+    },
+    {
+      "ProcessId": 52700,
+      "Name": "cephvr-python.exe",
+      "CreationDate": "2026-10-22T08:55:50.40271+09:00"
+    },
+    {
+      "ProcessId": 18952,
+      "Name": "cephvr-python.exe",
+      "CreationDate": "2026-10-22T08:55:50.409008+09:00"
+    },
+    {
+      "ProcessId": 30932,
+      "Name": "cephvr-renderer.exe",
+      "CreationDate": "2026-10-22T08:55:50.84118+09:00"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "captured_local": "2026-10-22T09:08:34.971453",
+  "scope": "final tracked changes, retained emergency and exercised evidence harnesses",
+  "sha256": {
+    "LOG.md": "0fe47a5fa3396cbc794b14d53e2a860454e5717eeb51f8691010f41127ac7ad2",
+    "TODO.md": "adcf64ea3ad103302e2c2b55f056137990214ef5f2eba28955394fcef9139c4b",
+    "architecture.md": "2bc7e511df151fd536a0f34c4da76a4146cae26a2d6873dfdba00ab3e57a191d",
+    "contracts/visual_stimulus/prepared-trial.schema.json": "956ced33a7f552443fe29f884b065df743a3a486bc4009376c2501d9e51a99e7",
+    "docs/architecture/gui.md": "25b7e8b96d76fa1575f9a32e4ff91c740594609c2cc5c3f64bac113d1bbbedf0",
+    "reports/acquisition.md": "43600a47783485c949de494d42d0749f04f18d16f68812c4a5406601b19de1ea",
+    "reports/rig-verification.md": "8b1f314b7d749fffb061da28a0c191862f45a34b44480ae04fa75624f97b0182",
+    "reports/runtime.md": "b158d4a88d3daaec3c659ceefcead36f474fa83bd0d09c8ec1975ee34cbe7d44",
+    "reports/visual_stimulus.md": "8f2d7be3fd8d466946a2cb6f6f502a78d33958bc58a2baf356ae0b8bfcf046e6",
+    "scripts/start_runtime_gui.py": "3c058035f62dd34d84edf350f9403e647fa37597715b0795828c34d27f912a66",
+    "src/cephvr/gui/appearance.py": "d4411b033b7635bad6b25ad84cc6c6552f31bd36b2c69ae18c0736fadeefaba7",
+    "src/cephvr/gui/preview_timeline.py": "a2241910fefcfdcb73345afb25847dfb821ed56d2294ee4ac33e018443cc729e",
+    "tests/gui/test_dashboard.py": "5d3492fa6c3bc7dbfaecded4959ff808c72c8493717eb791b2e5382a7ac4e10d",
+    "tests/gui/test_preview_timeline.py": "84a69d6cd09684288d6844fbf33d6e7550c8a5037477745ec2972aa5944c0b0f",
+    "reports/emergency-649269129986100-560b85e4-87df-4bdf-9d90-e4d49d32de79.json": "3829742e49ee63d9a8bb2262d6cf994933aaa3b494473746c0aa227e067d208e",
+    "reports/runtime-evidence-2026-10-22/rig-checks/slot_exception_checks.py": "dfc322da353c1baf37554f5127aa04dc72054c86181ebe6e9b6e0e5cf63412e6",
+    "reports/runtime-evidence-2026-10-22/rig-checks/gui_verify.py": "607a493f2f90f2374f09ffd8566dec74a44e4ebea3b05a2fe35ce459676cea4a",
+    "reports/runtime-evidence-2026-10-22/rig-checks/live-setup/controlled_setup.py": "06681d808729a56271d277570b208c1f76992c0d5b6b6c9f8216722161fdca1c",
+    "reports/runtime-evidence-2026-10-22/rig-checks/live-setup/recovery_restore.py": "09b0919ccfcf65200714e121a0b384287b83edd6e79fb1bec35a4a55669f3db1"
+  }
+}

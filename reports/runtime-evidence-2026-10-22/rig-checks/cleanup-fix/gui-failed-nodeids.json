@@ -1,0 +1,7 @@
+[
+  "tests/gui/test_dashboard.py::test_timeline_epoch_shortcuts_and_keyboard_history",
+  "tests/gui/test_dashboard.py::test_review_devices_capture_aligned_fields_and_wrapped_headers[720]",
+  "tests/gui/test_dashboard.py::test_review_devices_capture_aligned_fields_and_wrapped_headers[1175]",
+  "tests/gui/test_dashboard.py::test_review_devices_capture_aligned_fields_and_wrapped_headers[1440]",
+  "tests/gui/test_dashboard.py::test_linked_texture_motion_variation_reports_reference_and_recovers[Speed]"
+]

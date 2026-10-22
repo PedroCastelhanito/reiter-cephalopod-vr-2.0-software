@@ -8,11 +8,11 @@ from PyQt6.QtCore import QObject, QRect, QSettings, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QActionGroup, QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
-from cephvr.gui.layouts import show_maximized
 from cephvr.gui.preview_placement import preview_window_placement
 from cephvr.gui.projectors import DisplayInfo
 from cephvr.gui.protocol_document import blank_program, review_program
 from cephvr.gui.review_draft import draft_path, load_review_draft, save_review_draft
+from cephvr.gui.splash import StartupSplash
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import Phase, PreviewView, review_view
 from cephvr.gui.window import DashboardWindow
@@ -372,9 +372,12 @@ def main() -> None:
         parser.error("--fake-previews requires --review with simulated devices")
     app = QApplication(sys.argv[:1])
     app.setApplicationName("CephVR2.0 Dashboard")
+    settings = QSettings("CephVR", "Frontend")
+    splash = StartupSplash(settings)
+    splash.begin()
     apply_theme(app)
     window_class = ReviewDashboardWindow if args.review else DashboardWindow
-    window = window_class(sample=args.review, settings=QSettings("CephVR", "Frontend"))
+    window = window_class(sample=args.review, settings=settings)
     if args.review:
         ReviewControls(
             window,
@@ -405,7 +408,7 @@ def main() -> None:
                 "Review draft not restored",
                 f"The saved review draft was preserved but could not be restored: {exc}",
             )
-    show_maximized(window)
+    splash.reveal(window)
     window.raise_()
     window.activateWindow()
     sys.exit(app.exec())

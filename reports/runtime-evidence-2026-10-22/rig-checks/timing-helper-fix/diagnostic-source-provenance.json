@@ -1,0 +1,6 @@
+{
+  "src/cephvr/visual_stimulus/worker/native.py": "77ac6ab9c9200d7d6b12357813fd04a0f73f8c7bbf22b092c97dbbc571479871",
+  "src/cephvr/supervisor/acquisition_worker.py": "07ab94283abc2ef6cc3e097222841d0703db5b7e18fa32066acf83a01bb61eeb",
+  "src/cephvr/supervisor/registry.py": "605c83adeb2ba5828a8227f516634439dc42a1c40b6b58dfabe6f986432f8d0f",
+  "reports\\runtime-evidence-2026-10-22\\rig-checks\\timing-helper-fix\\runtime_probe.py": "f6c1f8bc5ebf105db7ad7fa3dae3598a22c9083c1ee68c9e48e7a13119e12503"
+}

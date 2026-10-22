@@ -1,0 +1,182 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 120.0s
+timeout method: thread
+timeout func_only: False
+collecting ... collected 1 item
+
+tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields[KeyboardModifier.ControlModifier] PASSED [100%]
+tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields[KeyboardModifier.ControlModifier] ERROR [100%]
+
+=================================== ERRORS ====================================
+_ ERROR at teardown of test_compact_reference_rows_share_headers_and_commit_relocated_fields[KeyboardModifier.ControlModifier] _
+Uncaught Qt-slot exception:
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+---------------------------- Captured stdout call -----------------------------
+UNCAUGHT QT SLOT tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields[KeyboardModifier.ControlModifier]
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+UNCAUGHT QT SLOT tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields[KeyboardModifier.ControlModifier]
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+UNCAUGHT QT SLOT tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields[KeyboardModifier.ControlModifier]
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+UNCAUGHT QT SLOT tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields[KeyboardModifier.ControlModifier]
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-22\rig-checks\pytest-compact-isolation.xml -
+=========================== short test summary info ===========================
+ERROR tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields[KeyboardModifier.ControlModifier] - Failed: Uncaught Qt-slot exception:
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\window.py", line 301, in update_preview_timeline
+    timeline.set_program(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 264, in set_program
+    self.refresh()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 360, in refresh
+    self.refresh_instruments(index, time)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_timeline.py", line 417, in refresh_instruments
+    dial.set_sample(dial_sample)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\preview_motion_dial.py", line 101, in set_sample
+    self.setToolTip(TOOLTIPS[sample.form])
+RuntimeError: wrapped C/C++ object of type MotionDial has been deleted
+========================= 1 passed, 1 error in 3.13s ==========================

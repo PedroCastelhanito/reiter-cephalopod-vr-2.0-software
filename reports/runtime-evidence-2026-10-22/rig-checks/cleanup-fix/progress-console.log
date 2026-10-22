@@ -1,0 +1,290 @@
+{
+  "controller_generation": "50f5a6fa-d65e-408d-9e52-797d044ed872",
+  "captured_monotonic_ns": "652598322719100",
+  "state_revision": "298",
+  "configuration": {
+    "revision": "2",
+    "edit_validation": [
+      {
+        "configuration_revision": "2",
+        "completed": true,
+        "valid": true,
+        "component": "experiment",
+        "configuration_module_version": "experiment-v1"
+      },
+      {
+        "configuration_revision": "2",
+        "completed": true,
+        "valid": true,
+        "component": "acquisition",
+        "configuration_module_version": "acquisition-config-v1"
+      },
+      {
+        "configuration_revision": "2",
+        "completed": true,
+        "valid": true,
+        "component": "synchronization",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "2",
+        "completed": true,
+        "valid": true,
+        "component": "tracking",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "2",
+        "completed": true,
+        "valid": true,
+        "component": "visual_stimulus",
+        "configuration_module_version": "visual-stimulus-config-v2"
+      }
+    ]
+  },
+  "session": {
+    "phase": "SESSION_PHASE_SETTING_UP",
+    "context": {
+      "controller_generation": "50f5a6fa-d65e-408d-9e52-797d044ed872",
+      "session_id": "e63914b9-3ff3-4145-aca9-7b67bebae16e"
+    },
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_diag22\\SPRIGCHECK-094813",
+    "trial_count": 2
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "4fad5a2a-2431-4ec9-8a48-4ce870b7e174"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "preparation_progress": "Trial 2/2 \u2014 Decoding and validating textures: 750/960"
+    },
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "d571cde6-0b52-4dfe-acd9-67cc60e14b79"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "d571cde6-0b52-4dfe-acd9-67cc60e14b79"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "50f5a6fa-d65e-408d-9e52-797d044ed872",
+              "session_id": "e63914b9-3ff3-4145-aca9-7b67bebae16e"
+            }
+          },
+          "operation": {
+            "command_id": "c74a5a61-f938-43a3-a011-d06fcf6a910e"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    }
+  ],
+  "control": {
+    "holder_client_id": "cda47485-9095-4a92-91b4-197b70913ac5",
+    "control_generation": "f7987711-9d59-4fbf-931a-57c811caca26"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "9c0c24c7-2bf4-40e2-8ef7-f25902908510"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "0c705f35-54c1-4aad-aafc-a675c59f7d9d"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "dd67af90-0b60-4824-a0bd-a50121f28b79"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "50f5a6fa-d65e-408d-9e52-797d044ed872",
+          "session_id": "e63914b9-3ff3-4145-aca9-7b67bebae16e"
+        }
+      },
+      "progress": "Waiting for backends\u2026"
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "4fad5a2a-2431-4ec9-8a48-4ce870b7e174"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "4fad5a2a-2431-4ec9-8a48-4ce870b7e174"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "50f5a6fa-d65e-408d-9e52-797d044ed872"
+    },
+    "command_id": "9c0c24c7-2bf4-40e2-8ef7-f25902908510",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "652446465615600",
+        "idle_swap_return_ns": "652446465969900",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "652446583145400",
+        "idle_swap_return_ns": "652446583234700",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "652446630605900",
+        "idle_swap_return_ns": "652446630673500",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "652446677934400",
+        "idle_swap_return_ns": "652446678009400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "652446678068500",
+    "complete": true
+  },
+  "reservation": {
+    "session": {
+      "controller_generation": "50f5a6fa-d65e-408d-9e52-797d044ed872",
+      "session_id": "e63914b9-3ff3-4145-aca9-7b67bebae16e"
+    },
+    "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_diag22\\SPRIGCHECK-094813",
+    "lock_held": true
+  },
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {
+    "observation": {
+      "port": "COM8",
+      "connection_id": "783ee462-e77a-4951-9bef-f32242c207e8",
+      "request_id": "783ee462-e77a-4951-9bef-f32242c207e8-6",
+      "observed_monotonic_ns": "652597644152200",
+      "state": {
+        "configuration_valid": true,
+        "watchdog_stopped": false,
+        "watchdog_ms": 3000,
+        "behavioral": {
+          "enabled": true,
+          "running": false,
+          "pin": "D11",
+          "applied_frequency_hz": 30.0
+        },
+        "tracking": {
+          "enabled": true,
+          "running": false,
+          "pin": "D10",
+          "applied_frequency_hz": 60.0
+        },
+        "eye_tracking": {
+          "enabled": false,
+          "running": false
+        },
+        "trial_state": {
+          "enabled": true,
+          "running": false,
+          "pin": "D12"
+        }
+      },
+      "capabilities": {
+        "protocol_version": 6,
+        "firmware": "cephvr2_uno_6",
+        "pins": [
+          "D2",
+          "D3",
+          "D4",
+          "D5",
+          "D6",
+          "D7",
+          "D8",
+          "D9",
+          "D10",
+          "D11",
+          "D12",
+          "D13"
+        ],
+        "minimum_requested_hz": 0.1,
+        "maximum_requested_hz": 100.0,
+        "minimum_watchdog_ms": 500,
+        "maximum_watchdog_ms": 10000,
+        "rising_edge_input_pins": [
+          "D2",
+          "D3"
+        ]
+      },
+      "capabilities_observed_monotonic_ns": "652532790978500",
+      "unmatched_replies": "0",
+      "malformed_replies": "0"
+    }
+  },
+  "stimulus_preview": {}
+}

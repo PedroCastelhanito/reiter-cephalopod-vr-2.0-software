@@ -379,7 +379,7 @@ class ImageResidency:
     def close(self, deadline_ns: int) -> bool:
         return self.worker.close(deadline_ns)
 
-    def release_gpu(self) -> tuple[str, ...]:
+    def release_gpu(self, deadline_ns: int | None = None) -> tuple[str, ...]:
         if self._gpu is None:
             return ()
         errors = []
@@ -390,10 +390,26 @@ class ImageResidency:
                 continue
             try:
                 if entry.textures:
+                    if deadline_ns is not None and self.clock_ns() >= deadline_ns:
+                        errors.append(f"{self._owner(key)}:GPU completion pending")
+                        continue
                     if entry.state != "retiring":
                         self._gpu.fence(entry.textures, entry.fences)
                         entry.state = "retiring"
-                    if not self._gpu.ready(entry.fences):
+                    ready = False
+                    while deadline_ns is None or self.clock_ns() < deadline_ns:
+                        ready = self._gpu.ready(entry.fences)
+                        if ready or deadline_ns is None:
+                            break
+                        # Recheck the shared budget after yielding on the GL owner.
+                        time.sleep(0)
+                    if (
+                        ready
+                        and deadline_ns is not None
+                        and self.clock_ns() >= deadline_ns
+                    ):
+                        ready = False
+                    if not ready:
                         errors.append(f"{self._owner(key)}:GPU completion pending")
                         continue
                 self._gpu.release(entry.textures, entry.fences)

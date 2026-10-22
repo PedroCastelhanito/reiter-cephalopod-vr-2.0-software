@@ -2,7 +2,7 @@
 
 import json
 
-from PyQt6.QtCore import QEvent, QSettings
+from PyQt6.QtCore import QEvent, QSettings, QSize, Qt
 from PyQt6.QtGui import QAction, QCloseEvent
 from PyQt6.QtWidgets import (
     QButtonGroup,
@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.appearance import DashboardAppearance, load_terminal_font
+from cephvr.gui.appearance import DashboardAppearance
 from cephvr.gui.components import StatusColumn, button, label
 from cephvr.gui.dashboard import Dashboard
 from cephvr.gui.devices import DevicesPage
@@ -24,7 +24,7 @@ from cephvr.gui.notices import StatusEvent
 from cephvr.gui.preview_placement import PreviewSlot
 from cephvr.gui.protocol import ProtocolPage
 from cephvr.gui.recordings import RecordingsCard
-from cephvr.gui.theme import SIZES
+from cephvr.gui.theme import SIZES, load_terminal_font
 from cephvr.gui.tracking import TrackingPage
 from cephvr.gui.trial_preview import TrialPreview
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
@@ -61,13 +61,17 @@ class DashboardWindow(QMainWindow):
         sidebar.setFixedWidth(SIZES.sidebar_width)
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(12, 24, 12, 18)
-        sidebar_layout.setSpacing(8)
+        sidebar_layout.setSpacing(16)
         sidebar_layout.addWidget(label("CephVR", "brand"))
         sidebar_layout.addSpacing(24)
         self.navigation = QButtonGroup(self)
         self.page_buttons = []
         for index, name in enumerate(PAGES):
             control = button(name, "navigation")
+            control.setProperty(
+                "iconName", ("dashboard", "protocol", "devices", "tracking")[index]
+            )
+            control.setIconSize(QSize(20, 20))
             control.setCheckable(True)
             self.navigation.addButton(control, index)
             sidebar_layout.addWidget(control)
@@ -95,6 +99,16 @@ class DashboardWindow(QMainWindow):
         self.devices = DevicesPage(
             sample=sample, settings=settings, review=device_review
         )
+        for index, section in ((0, self.dashboard), (2, self.devices)):
+            section.rail.setFixedWidth(SIZES.sidebar_width - 40)
+            section.rail.setIconSize(QSize(16, 16))
+            section.rail.setFixedHeight(40 * len(section.rail.devices))
+            sidebar_layout.insertWidget(
+                sidebar_layout.indexOf(self.page_buttons[index]) + 1,
+                section.rail,
+                alignment=Qt.AlignmentFlag.AlignRight,
+            )
+        self.stack.currentChanged.connect(self.refresh_side_navigation)
         self.recordings = RecordingsCard(
             self.devices.cameras, self.devices.spikeglx.pairing
         )
@@ -164,25 +178,33 @@ class DashboardWindow(QMainWindow):
         assert menu_bar is not None
         menu = menu_bar.addMenu("View")
         assert menu is not None
-        self.side_rail_action = QAction("Devices side navigation", menu)
+        self.side_rail_action = QAction("Side navigation", menu)
         self.side_rail_action.setCheckable(True)
         self.side_rail_action.setToolTip(
-            "Show devices and their sections as one list beside the Devices page."
+            "Show Dashboard views and Devices in side navigation."
         )
         self.side_rail_action.setChecked(
-            settings.value("devices/side_rail", False, type=bool) if settings else False
+            settings.value("devices/side_rail", True, type=bool) if settings else True
         )
         self.side_rail_action.toggled.connect(
             lambda enabled: self.set_side_rail(enabled, settings)
         )
         menu.addAction(self.side_rail_action)
-        self.devices.set_side_rail(self.side_rail_action.isChecked())
+        self.set_side_rail(self.side_rail_action.isChecked(), None)
 
     def set_side_rail(self, enabled: bool, settings: QSettings | None) -> None:
         self.devices.set_side_rail(enabled)
+        self.dashboard.set_side_rail(enabled)
+        self.refresh_side_navigation()
         if settings is not None:
             settings.setValue("devices/side_rail", enabled)
             settings.sync()
+
+    def refresh_side_navigation(self) -> None:
+        for index, section in ((0, self.dashboard), (2, self.devices)):
+            section.rail.setVisible(
+                section.side_rail and self.stack.currentIndex() == index
+            )
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
         self.tracking.annotation.close()

@@ -1,0 +1,485 @@
+{
+  "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+  "captured_monotonic_ns": "655026522098900",
+  "state_revision": "2333",
+  "configuration": {
+    "revision": "6",
+    "locked": true,
+    "edit_validation": [
+      {
+        "configuration_revision": "6",
+        "completed": true,
+        "valid": true,
+        "component": "experiment",
+        "configuration_module_version": "experiment-v1"
+      },
+      {
+        "configuration_revision": "6",
+        "completed": true,
+        "valid": true,
+        "component": "acquisition",
+        "configuration_module_version": "acquisition-config-v1"
+      },
+      {
+        "configuration_revision": "6",
+        "completed": true,
+        "valid": true,
+        "component": "synchronization",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "6",
+        "completed": true,
+        "valid": true,
+        "component": "tracking",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "6",
+        "completed": true,
+        "valid": true,
+        "component": "visual_stimulus",
+        "configuration_module_version": "visual-stimulus-config-v2"
+      }
+    ]
+  },
+  "session": {
+    "phase": "SESSION_PHASE_RUNNING",
+    "context": {
+      "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+      "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+    },
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-101629",
+    "trial_count": 2,
+    "activated": true
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+        "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+      },
+      "trial_id": "1032be4a-e6e0-4db9-9684-ec8dd83e95cb",
+      "trial_number": 2
+    },
+    "phase": "TRIAL_PHASE_RUNNING",
+    "start_monotonic_ns": "654910383451000",
+    "scheduled_end_monotonic_ns": "655510383451000"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "73575b7b-07b8-4bee-918f-b26059b1f958"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "73575b7b-07b8-4bee-918f-b26059b1f958"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+              "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+            }
+          },
+          "operation": {
+            "command_id": "989523da-fc8e-4439-a488-baa03a5f7318"
+          }
+        },
+        "configuration_revision": "6",
+        "required_checks_passed": true
+      }
+    },
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "2bbf4861-9afb-4108-a469-cb7992c37e18"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "2bbf4861-9afb-4108-a469-cb7992c37e18"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+              "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+            }
+          },
+          "operation": {
+            "command_id": "8434afd3-00f6-4def-8912-cc1ab792f7fb"
+          }
+        },
+        "configuration_revision": "6",
+        "required_checks_passed": true
+      }
+    }
+  ],
+  "control": {
+    "holder_client_id": "be3fe50c-5016-4346-ae84-1949124eefd1",
+    "control_generation": "064f737a-5b06-407d-b5fa-bb89baa32de6"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "3585ccec-d0ac-434b-b9b3-fb42274cf9da"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+          "session_id": "ff51adc3-6bd5-4699-a8ec-1cc8e11ae1c9"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "a79c9fee-63a9-4d7f-a8fa-c18e17e9883b"
+      },
+      "command": "StartSession",
+      "work": {
+        "session": {
+          "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+          "session_id": "ff51adc3-6bd5-4699-a8ec-1cc8e11ae1c9"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "session activated"
+    },
+    {
+      "context": {
+        "command_id": "728f3443-99e3-4462-984b-96bcb5ea331d"
+      },
+      "command": "StopAfterTrial",
+      "work": {
+        "session": {
+          "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+          "session_id": "ff51adc3-6bd5-4699-a8ec-1cc8e11ae1c9"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "stop preference updated"
+    },
+    {
+      "context": {
+        "command_id": "551fefb8-36ac-4cc4-93a1-8776a577ed57"
+      },
+      "command": "NewSession",
+      "complete": true,
+      "succeeded": true,
+      "progress": "new configuration session created"
+    },
+    {
+      "context": {
+        "command_id": "2e7c4780-6cc6-4910-9911-5b75aa0b375e"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "8f1c404f-ea83-4ebd-9382-f6ea0c0b34d7"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "5f6d37ae-ed49-4721-9f02-52fbbef42a6a"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "713f0656-4e3d-4a82-abfc-a1f43c1c2d9d"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+          "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "d7cfd449-c9c9-4a92-822c-038a06937d0e"
+      },
+      "command": "StartSession",
+      "work": {
+        "session": {
+          "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+          "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "session activated"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "aa6c3781-1dd8-4fb8-8fa0-8ff0e5f17921",
+      "component": "supervisor",
+      "message": "ffmpeg:8d7ad7d7-37c8-4889-a20e-596e6cdfae04 released without worker closure evidence; outputs unconfirmed"
+    }
+  ],
+  "metadata": [
+    {
+      "operation": {
+        "command_id": "dcf91959-634c-47f0-92ba-b5d51326c312"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-101629\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "2ae42ac2-c242-4a93-a70b-487f025989ec"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-101629\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "7e738b87-b064-4d7b-be94-7e6964b04337"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-101629\\protocol-data\\RIGCHECK_102751_LOG.json"
+    },
+    {
+      "operation": {
+        "command_id": "dd3875ff-9900-498d-8c0c-59964117adc3"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-101629\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "2bbf4861-9afb-4108-a469-cb7992c37e18"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "2bbf4861-9afb-4108-a469-cb7992c37e18"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6"
+    },
+    "command_id": "7d558a0a-da52-4db2-991f-042cd8771daa",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "653837404133700",
+        "idle_swap_return_ns": "653837404489600",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "653837527056300",
+        "idle_swap_return_ns": "653837527146700",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "653837578535700",
+        "idle_swap_return_ns": "653837578613100",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "653837627670500",
+        "idle_swap_return_ns": "653837627748100",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "653837627803900",
+    "complete": true
+  },
+  "reservation": {
+    "session": {
+      "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+      "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+    },
+    "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-101629",
+    "lock_held": true,
+    "ready_for_outputs": true
+  },
+  "retained_truncated": true,
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {
+    "observation": {
+      "port": "COM8",
+      "connection_id": "24105433-8f2a-4553-88d6-15d1cb0524a3",
+      "request_id": "24105433-8f2a-4553-88d6-15d1cb0524a3-670",
+      "observed_monotonic_ns": "655025815936900",
+      "state": {
+        "configuration_valid": true,
+        "watchdog_stopped": false,
+        "watchdog_ms": 3000,
+        "behavioral": {
+          "enabled": true,
+          "running": true,
+          "pin": "D11",
+          "applied_frequency_hz": 30.0
+        },
+        "tracking": {
+          "enabled": true,
+          "running": true,
+          "pin": "D10",
+          "applied_frequency_hz": 60.0
+        },
+        "eye_tracking": {
+          "enabled": false,
+          "running": false
+        },
+        "trial_state": {
+          "enabled": true,
+          "running": true,
+          "pin": "D12"
+        }
+      },
+      "capabilities": {
+        "protocol_version": 6,
+        "firmware": "cephvr2_uno_6",
+        "pins": [
+          "D2",
+          "D3",
+          "D4",
+          "D5",
+          "D6",
+          "D7",
+          "D8",
+          "D9",
+          "D10",
+          "D11",
+          "D12",
+          "D13"
+        ],
+        "minimum_requested_hz": 0.1,
+        "maximum_requested_hz": 100.0,
+        "minimum_watchdog_ms": 500,
+        "maximum_watchdog_ms": 10000,
+        "rising_edge_input_pins": [
+          "D2",
+          "D3"
+        ]
+      },
+      "capabilities_observed_monotonic_ns": "654228885909700",
+      "unmatched_replies": "0",
+      "malformed_replies": "0"
+    }
+  },
+  "stimulus_preview": {
+    "source": {
+      "role": "visual_stimulus_renderer",
+      "generation": "33bfec79-640d-4e2d-9ede-6b28d19937af"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "2bbf4861-9afb-4108-a469-cb7992c37e18"
+    },
+    "session": {
+      "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+      "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+    },
+    "configuration_revision": "6",
+    "revision": "5",
+    "available": true
+  },
+  "last_finalization": {
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+        "session_id": "ff51adc3-6bd5-4699-a8ec-1cc8e11ae1c9"
+      },
+      "outcome": "SESSION_OUTCOME_STOPPED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_ack22trial\\SPRIGCHECK-101228",
+      "trial_count": 1,
+      "activated": true,
+      "stop_after_trial": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+          "session_id": "ff51adc3-6bd5-4699-a8ec-1cc8e11ae1c9"
+        },
+        "trial_id": "0e089802-8169-45f8-8705-2145fc3ad6f5",
+        "trial_number": 1
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "654026686277200",
+      "scheduled_end_monotonic_ns": "654086686277200",
+      "actual_end_monotonic_ns": "654086686277200"
+    }
+  }
+}

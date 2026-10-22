@@ -54,7 +54,7 @@ class PreviewWorkspace(QWidget):
         self.hud = FittedConsole()
         self.hud.setProperty("terminal", "telemetry")
         self.hud.setAccessibleName("Experiment status")
-        # Workspace-wide view options stay with the timeline.
+        # Workspace-wide view options share a separate section below the timeline.
         self.toggle_bar = QFrame()
         self.toggle_bar.setObjectName("PreviewToggles")
         toolbar = QHBoxLayout(self.toggle_bar)
@@ -79,7 +79,7 @@ class PreviewWorkspace(QWidget):
             else False
         )
         toolbar.addWidget(self.advanced_toggle)
-        # Per-item selectors under the timeline: one row per enabled master toggle.
+        # Per-item selectors: one row per enabled master toggle.
         self.video_row = QWidget()
         self.video_choices = QHBoxLayout(self.video_row)
         self.video_choices.setContentsMargins(0, 0, 0, 0)
@@ -108,7 +108,7 @@ class PreviewWorkspace(QWidget):
         self.preview_layout.addWidget(self.empty_hint)
         self.hud_card = Card("HUD", compact=True)
         self.hud_card.body.addWidget(self.hud)
-        self.log_card = Card("Log", compact=True)
+        self.log_card = Card("LOG console", compact=True)
         self.log_tail = PreviewLog()
         self.log_card.body.addWidget(self.log_tail)
         # Column 0 hosts the Dashboard's own System controls while this body shows.
@@ -121,12 +121,14 @@ class PreviewWorkspace(QWidget):
         for column, stretch in enumerate((3, 3, 5)):
             self.top.setColumnStretch(column, stretch)
         self.timeline_card = Card("Timeline", self)
-        self.timeline_card.header.addWidget(self.toggle_bar)
         self.timeline_card.body.addWidget(self.timeline)
-        self.timeline_card.body.addWidget(self.video_row)
-        self.timeline_card.body.addWidget(self.advanced_row)
+        self.controls_card = Card("Preview controls", self, compact=True)
+        self.controls_card.header.addWidget(self.toggle_bar)
+        self.controls_card.body.addWidget(self.video_row)
+        self.controls_card.body.addWidget(self.advanced_row)
         self.content.addWidget(self.top_host)
         self.content.addWidget(self.timeline_card)
+        self.content.addWidget(self.controls_card)
         self.splitter = QSplitter(Qt.Orientation.Horizontal, self)
         self.splitter.setChildrenCollapsible(False)
         self.splitter.setHandleWidth(16)
@@ -221,7 +223,7 @@ class PreviewWorkspace(QWidget):
                 layout.setSpacing(2)
                 row = QHBoxLayout()
                 name = label(view.name, "eyebrow", wrap=True)
-                # The stream's toggle lives in the timeline's Video row; checking it
+                # The stream's toggle lives in the Preview controls Video row; checking it
                 # opens the native viewer and gives the stream a frame.
                 control = QCheckBox(view.name)
                 control.setProperty("role", "viewer-toggle")

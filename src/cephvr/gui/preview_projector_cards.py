@@ -56,6 +56,14 @@ class InstrumentGrid(QWidget):
             )
 
         columns = max(range(1, count + 1), key=scale)
+        # Center the whole projector row, including headings, in spare height.
+        inset = 0
+        if columns == count and all(
+            isinstance(widget, ProjectorCard) for widget in self.instruments
+        ):
+            row_height = round(self.cell_size.height() * scale(columns))
+            inset = max(0, (self.height() - row_height) // 2)
+        self.grid.setContentsMargins(0, inset, 0, inset)
         if columns == self.columns and self.grid.count() == len(self.instruments):
             return
         self.columns = columns
@@ -91,7 +99,7 @@ class ProjectorHeading(QLabel):
     def restyle(self, retro: bool, glow: bool) -> None:
         name = self.name_text.upper() if retro else self.name_text
         # Amber phosphor shows projectors as subsections of the Projectors card.
-        self.setText(f"/// {name} \\\\\\" if minimal_frames(self) else name)
+        self.setText(f"| {name} |" if minimal_frames(self) else name)
         set_glow(self, retro and glow)
 
 

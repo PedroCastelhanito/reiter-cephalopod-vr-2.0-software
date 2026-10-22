@@ -1,0 +1,24 @@
+{
+  "generation": "ed0cf088-7f99-419f-8308-60f7396161e5",
+  "session_id": "2e34ee88-6aae-4a60-b805-f0e82a371325",
+  "session_completed": true,
+  "trial2_completed": true,
+  "cleanup_confirmed": true,
+  "idle_configuration": true,
+  "runtime_equal": true,
+  "history_bytes_equal": true,
+  "history_sha256": "7c12d49cc9fc46e4f8b14d547882514c49fb50b7c78ba39b27cf2f34c2d8b93c",
+  "errors": [],
+  "warnings": [
+    {
+      "warning_id": "626b7f67-7329-4e9b-b419-c21504b9738d",
+      "component": "supervisor",
+      "message": "ffmpeg:7e4a21ad-4c02-4db6-b9c3-a26ea73b91c1 released without worker closure evidence; outputs unconfirmed"
+    },
+    {
+      "warning_id": "d825fdd5-92cf-43ee-bbd6-054c74bc4f8e",
+      "component": "supervisor",
+      "message": "ffmpeg:49db380b-56b9-42e2-8bdc-4f5f871e0cec released without worker closure evidence; outputs unconfirmed"
+    }
+  ]
+}

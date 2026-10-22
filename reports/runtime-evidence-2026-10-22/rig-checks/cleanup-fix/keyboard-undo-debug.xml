@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.432" timestamp="2026-10-22T10:08:00.956711+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_timeline_epoch_shortcuts_and_keyboard_history" time="0.663"><failure message="assert Program(forma...tings=()))),)) == Program(forma...tings=()))),))&#10;  &#10;  Use -v to get more diff">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000021BD29A9AB0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x0000021BD35741F0&gt;
+
+    def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(editor.program))
+        editor.enter_group()
+        original = editor.program
+        window.activateWindow()
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        assert window.isActiveWindow() and editor.hierarchy.contents.hasFocus()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+        )
+        duplicate = editor.program
+        assert len(duplicate.sequence[0].body) == len(original.sequence[0].body) + 1
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier
+        )
+&gt;       assert editor.program == original
+E       assert Program(forma...tings=()))),)) == Program(forma...tings=()))),))
+E         
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:13709: AssertionError</failure></testcase></testsuite></testsuites>

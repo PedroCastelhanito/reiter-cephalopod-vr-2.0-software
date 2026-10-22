@@ -470,6 +470,17 @@ class LaunchRegistry:
             and entry.plan.child.role in ACQUISITION_WORKER_ROLES
         )
 
+    def acknowledged_camera_cleanup(
+        self, worker: types.ProcessIdentity
+    ) -> wire.AcquisitionWorkerCleanupProof | None:
+        """Copy the exact worker's already-validated retirement proof, if retained."""
+        for entry in self._entries.values():
+            if entry.plan.child == worker and entry.camera_cleanup_proof is not None:
+                return wire.AcquisitionWorkerCleanupProof.FromString(
+                    entry.camera_cleanup_proof
+                )
+        return None
+
     def release(self, command_id: str, obligations_met: bool) -> wire.LaunchState:
         entry = self._get(command_id)
         if entry.state.phase == wire.LAUNCH_PHASE_RELEASED:

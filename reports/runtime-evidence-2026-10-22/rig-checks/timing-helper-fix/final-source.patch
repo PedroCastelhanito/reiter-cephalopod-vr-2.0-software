@@ -1,0 +1,377 @@
+diff --git a/src/cephvr/platform/windows/protected_source.py b/src/cephvr/platform/windows/protected_source.py
+index 8163d1da..f76cad86 100644
+--- a/src/cephvr/platform/windows/protected_source.py
++++ b/src/cephvr/platform/windows/protected_source.py
+@@ -11,6 +11,24 @@ from pathlib import Path
+ from typing import BinaryIO
+ 
+ 
++class _Info(ctypes.Structure):
++    _fields_ = [
++        ("attributes", wintypes.DWORD),
++        ("creation_low", wintypes.DWORD),
++        ("creation_high", wintypes.DWORD),
++        ("access_low", wintypes.DWORD),
++        ("access_high", wintypes.DWORD),
++        ("write_low", wintypes.DWORD),
++        ("write_high", wintypes.DWORD),
++        ("volume", wintypes.DWORD),
++        ("size_high", wintypes.DWORD),
++        ("size_low", wintypes.DWORD),
++        ("links", wintypes.DWORD),
++        ("index_high", wintypes.DWORD),
++        ("index_low", wintypes.DWORD),
++    ]
++
++
+ class ProtectedSourceError(OSError):
+     pass
+ 
+@@ -53,23 +71,6 @@ class ProtectedWindowsSource:
+ 
+     @staticmethod
+     def _file_identity(handle: int) -> tuple[int, int, int]:
+-        class _Info(ctypes.Structure):
+-            _fields_ = [
+-                ("attributes", wintypes.DWORD),
+-                ("creation_low", wintypes.DWORD),
+-                ("creation_high", wintypes.DWORD),
+-                ("access_low", wintypes.DWORD),
+-                ("access_high", wintypes.DWORD),
+-                ("write_low", wintypes.DWORD),
+-                ("write_high", wintypes.DWORD),
+-                ("volume", wintypes.DWORD),
+-                ("size_high", wintypes.DWORD),
+-                ("size_low", wintypes.DWORD),
+-                ("links", wintypes.DWORD),
+-                ("index_high", wintypes.DWORD),
+-                ("index_low", wintypes.DWORD),
+-            ]
+-
+         info = _Info()
+         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+         fn = kernel.GetFileInformationByHandle
+diff --git a/src/cephvr/supervisor/acquisition_worker.py b/src/cephvr/supervisor/acquisition_worker.py
+index 36c40a89..1fe9922e 100644
+--- a/src/cephvr/supervisor/acquisition_worker.py
++++ b/src/cephvr/supervisor/acquisition_worker.py
+@@ -21,7 +21,7 @@ from cephvr.supervisor.ports import SupervisorOutbound
+ from cephvr.supervisor.receipts import require_accepted
+ from cephvr.supervisor.registration import RegistrationCoordinator
+ from cephvr.supervisor.registry import LIVE_PHASES, LaunchError, LaunchRegistry
+-from cephvr.supervisor.worker_context import launch_work_matches
++from cephvr.supervisor.worker_context import launch_work_matches, work_covered_by
+ 
+ _T = TypeVar("_T")
+ QUERY_TIMEOUT_NS = 2_000_000_000  # per worker query in one reconcile pass
+@@ -256,9 +256,16 @@ class AcquisitionWorkerControl:
+             and helper.plan.HasField("work")
+             and helper.phase == wire.LAUNCH_PHASE_OPERATIONAL
+         ]
++        acknowledged = {
++            helper.plan.command_id
++            for helper in helpers
++            if self._acknowledged_helper_cleanup(helper)
++        }
+         queries: dict[tuple[str, str, bytes], asyncio.Task[acq.WorkerState]] = {}
+         for helper in helpers:
+             plan = helper.plan
++            if plan.command_id in acknowledged:
++                continue
+             owner = workers.get((plan.owner.role, plan.owner.generation))
+             if owner is None or not owner.HasField("endpoint"):
+                 continue
+@@ -291,6 +298,10 @@ class AcquisitionWorkerControl:
+         for helper in helpers:
+             plan = helper.plan
+             name = f"ffmpeg:{plan.command_id}"
++            if plan.command_id in acknowledged:
++                # Resource release only; this does not manufacture output success.
++                self._release(helper)
++                continue
+             owner = workers.get((plan.owner.role, plan.owner.generation))
+             owner_live = (
+                 owner is not None
+@@ -328,6 +339,22 @@ class AcquisitionWorkerControl:
+                 )
+         return unconfirmed
+ 
++    def _acknowledged_helper_cleanup(self, helper: wire.LaunchState) -> bool:
++        proof = self.registry.acknowledged_camera_cleanup(helper.plan.owner)
++        if proof is None:
++            return False
++        source = proof.cleanup.source
++        return bool(
++            source.worker == helper.plan.owner
++            and work_covered_by(source.work, helper.plan.work)
++            and any(
++                item.resource == f"ffmpeg:{helper.plan.command_id}"
++                and item.released
++                and not item.failure.ByteSize()
++                for item in proof.cleanup.cleanup.resources
++            )
++        )
++
+     @staticmethod
+     def _target(
+         owner: wire.LaunchState, plan: wire.PlanLaunchRequest
+diff --git a/src/cephvr/supervisor/registry.py b/src/cephvr/supervisor/registry.py
+index 6b3c0d28..4428826b 100644
+--- a/src/cephvr/supervisor/registry.py
++++ b/src/cephvr/supervisor/registry.py
+@@ -470,6 +470,17 @@ class LaunchRegistry:
+             and entry.plan.child.role in ACQUISITION_WORKER_ROLES
+         )
+ 
++    def acknowledged_camera_cleanup(
++        self, worker: types.ProcessIdentity
++    ) -> wire.AcquisitionWorkerCleanupProof | None:
++        """Copy the exact worker's already-validated retirement proof, if retained."""
++        for entry in self._entries.values():
++            if entry.plan.child == worker and entry.camera_cleanup_proof is not None:
++                return wire.AcquisitionWorkerCleanupProof.FromString(
++                    entry.camera_cleanup_proof
++                )
++        return None
++
+     def release(self, command_id: str, obligations_met: bool) -> wire.LaunchState:
+         entry = self._get(command_id)
+         if entry.state.phase == wire.LAUNCH_PHASE_RELEASED:
+diff --git a/tests/supervisor/support.py b/tests/supervisor/support.py
+index 30eab78c..e391aaa1 100644
+--- a/tests/supervisor/support.py
++++ b/tests/supervisor/support.py
+@@ -269,6 +269,7 @@ def _launch(
+     pid: int,
+     *,
+     python: bool,
++    work: types.WorkContext = WORK,
+ ) -> wire.LaunchState:
+     plan = wire.PlanLaunchRequest(
+         command_id=str(uuid4()),
+@@ -277,7 +278,7 @@ def _launch(
+         executable=EXE,
+         python_worker=python,
+         stop_method="grpc_shutdown" if python else "owner_stdin_eof",
+-        work=WORK,
++        work=work,
+         parent_operation=types.OperationContext(command_id=str(uuid4())),
+     )
+     state = registry.plan(plan)
+@@ -304,7 +305,10 @@ def _launch(
+ 
+ 
+ def _worker_and_helper(
+-    runtime: SupervisorRuntime, native: Native
++    runtime: SupervisorRuntime,
++    native: Native,
++    *,
++    helper_work: types.WorkContext = WORK,
+ ) -> tuple[wire.LaunchState, wire.LaunchState]:
+     acquisition = _identity("acquisition")
+     worker = _launch(
+@@ -322,6 +326,7 @@ def _worker_and_helper(
+         _identity(FFMPEG_ROLE),
+         12,
+         python=False,
++        work=helper_work,
+     )
+     return worker, helper
+ 
+diff --git a/tests/supervisor/test_recovery.py b/tests/supervisor/test_recovery.py
+index 63b87fda..2e6f7e3f 100644
+--- a/tests/supervisor/test_recovery.py
++++ b/tests/supervisor/test_recovery.py
+@@ -14,7 +14,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
+ from cephvr.control.v1 import services_pb2 as wire
+ from cephvr.control.v1 import services_pb2_grpc
+ from cephvr.control.v1 import types_pb2 as types
+-from cephvr.shared.clock import host_time_ns
++from cephvr.shared.clock import describe_host_clock, host_time_ns
+ from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
+ from cephvr.shared.resources import ResourceObligationRegistry
+ from cephvr.supervisor.acquisition_worker import AcquisitionWorkerControl
+@@ -217,6 +217,111 @@ async def test_owner_cleanup_required_releases_empty_helper_as_unconfirmed(
+     assert _phase(runtime, helper) == wire.LAUNCH_PHASE_RELEASED
+ 
+ 
++@pytest.mark.parametrize(
++    "case",
++    [
++        "valid",
++        "missing",
++        "wrong_session",
++        "foreign_helper_session",
++        "wrong_worker",
++        "missing_helper",
++        "unreleased",
++        "live_helper",
++    ],
++)
++async def test_retired_worker_session_proof_discharges_only_exact_helper_resource(
++    tmp_path: Path,
++    case: str,
++) -> None:
++    from cephvr.supervisor.registry import LaunchError
++
++    runtime, native, _, _ = make_runtime(tmp_path)
++    trial = types.WorkContext(
++        trial=types.TrialContext(
++            session=WORK.session,
++            trial_id=str(uuid4()),
++            trial_number=1,
++        )
++    )
++    if case == "foreign_helper_session":
++        trial.trial.session.session_id = str(uuid4())
++    worker, helper = _worker_and_helper(runtime, native, helper_work=trial)
++    source = acq.WorkerContext(
++        worker=worker.plan.child,
++        owner=worker.plan.owner,
++        work=WORK,
++        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++    )
++    command_id = str(uuid4())
++    proof = wire.AcquisitionWorkerCleanupProof(
++        operation=acq.WorkerOperationReport(
++            source=source,
++            operation=types.OperationState(
++                context=types.OperationContext(command_id=command_id),
++                command="Cleanup",
++                work=WORK,
++                complete=True,
++                succeeded=True,
++            ),
++        ),
++        cleanup=acq.WorkerLifecycleEvidence(
++            source=source,
++            operation=types.OperationContext(command_id=command_id),
++            state_revision=1,
++        ),
++    )
++    proof.cleanup.cleanup.resources.add(resource="camera-device", released=True)
++    if case != "missing_helper":
++        proof.cleanup.cleanup.resources.add(
++            resource=f"ffmpeg:{helper.plan.command_id}", released=case != "unreleased"
++        )
++    if case == "wrong_session":
++        proof.cleanup.source.work.session.session_id = str(uuid4())
++    if case == "wrong_worker":
++        proof.cleanup.source.worker.generation = str(uuid4())
++    request = wire.ConfirmLaunchRequest(
++        command_id=str(uuid4()),
++        launch_command_id=worker.plan.command_id,
++        owner=worker.plan.owner,
++        child=worker.plan.child,
++        pid=worker.pid,
++        creation_time_100ns=worker.creation_time_100ns,
++        acquisition_worker_cleanup=proof,
++    )
++    if case in {"wrong_session", "wrong_worker", "unreleased"}:
++        with pytest.raises(LaunchError, match="incomplete or mismatched"):
++            runtime.registry.confirm(request, describe_host_clock())
++    elif case != "missing":
++        runtime.registry.confirm(request, describe_host_clock())
++    native.jobs[worker.containment_job_name] = []
++    if case in {"valid", "missing_helper", "live_helper", "foreign_helper_session"}:
++        runtime.registry.confirm(request, describe_host_clock())
++    if case != "live_helper":
++        native.jobs[helper.containment_job_name] = []
++    messages = (
++        await runtime.shutdown.acquisition_worker_control.reconcile_native_helper_exits(
++            host_time_ns() + 5_000_000_000
++        )
++    )
++    if case == "valid":
++        assert messages == []
++        assert _phase(runtime, helper) == wire.LAUNCH_PHASE_RELEASED
++        # Session resource proof does not supply or modify a trial output result.
++        assert not proof.cleanup.cleanup.outputs
++    elif case == "live_helper":
++        assert messages == []
++        assert _phase(runtime, helper) == wire.LAUNCH_PHASE_OPERATIONAL
++        assert (
++            "PROCESS_STILL_RUNNING"
++            in runtime.shutdown.acquisition_worker_control.helper_errors[
++                helper.plan.command_id
++            ]
++        )
++    else:
++        assert len(messages) == 1 and "outputs unconfirmed" in messages[0]
++
++
+ async def test_unreachable_live_owner_records_error_and_keeps_helper(
+     tmp_path: Path,
+ ) -> None:
+diff --git a/tests/supervisor/test_registry.py b/tests/supervisor/test_registry.py
+index 6c6a5b88..174fc3f6 100644
+--- a/tests/supervisor/test_registry.py
++++ b/tests/supervisor/test_registry.py
+@@ -262,6 +262,12 @@ def test_camera_release_requires_exact_retained_cleanup_and_empty_job() -> None:
+         registry.confirm(request, describe_host_clock()).phase
+         == wire.LAUNCH_PHASE_OPERATIONAL
+     )
++    copied = registry.acknowledged_camera_cleanup(worker.plan.child)
++    assert copied is not None
++    copied.cleanup.cleanup.resources.clear()
++    retained = registry.acknowledged_camera_cleanup(worker.plan.child)
++    assert retained is not None and retained.cleanup.cleanup.resources
++    assert registry.acknowledged_camera_cleanup(_identity(WORKER_ROLE)) is None
+     changed_proof = wire.ConfirmLaunchRequest.FromString(request.SerializeToString())
+     changed_proof.command_id = str(uuid4())
+     changed_proof.acquisition_worker_cleanup.cleanup.state_revision += 1
+diff --git a/tests/visual_stimulus/test_windows_resources.py b/tests/visual_stimulus/test_windows_resources.py
+index c6ca37c3..64095764 100644
+--- a/tests/visual_stimulus/test_windows_resources.py
++++ b/tests/visual_stimulus/test_windows_resources.py
+@@ -38,6 +38,10 @@ def test_protected_source_denies_mutation_until_all_reader_owners_close(tmp_path
+             assert source.identity == ProtectedWindowsSource._file_identity(
+                 source._handle
+             )
++        for _ in range(32):
++            with source.independent_reader() as reader:
++                assert reader.read() == b"0123456789"
++            assert reader.closed
+     finally:
+         source.close_after_consumers()
+     source.close_after_consumers()
+@@ -45,3 +49,39 @@ def test_protected_source_denies_mutation_until_all_reader_owners_close(tmp_path
+         source.independent_reader()
+     path.write_bytes(b"released")
+     assert path.read_bytes() == b"released"
++
++
++def test_protected_source_identity_reuses_native_abi_type(monkeypatch):
++    import ctypes
++    from types import SimpleNamespace
++
++    observed = []
++
++    class Information:
++        succeeded = True
++
++        def __call__(self, handle, info):
++            observed.append(self.argtypes[1])
++            info._obj.volume = handle
++            info._obj.index_high = handle + 1
++            info._obj.index_low = handle + 2
++            return self.succeeded
++
++    information = Information()
++    monkeypatch.setattr(
++        ctypes,
++        "WinDLL",
++        lambda *args, **kwargs: SimpleNamespace(GetFileInformationByHandle=information),
++    )
++    for handle in range(256):
++        assert ProtectedWindowsSource._file_identity(handle) == (
++            handle,
++            handle + 1,
++            handle + 2,
++        )
++    assert len(set(observed)) == 1
++    information.succeeded = False
++    monkeypatch.setattr(ctypes, "get_last_error", lambda: 6)
++    with pytest.raises(OSError) as error:
++        ProtectedWindowsSource._file_identity(1)
++    assert error.value.winerror == 6

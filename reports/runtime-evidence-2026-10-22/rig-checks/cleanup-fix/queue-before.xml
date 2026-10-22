@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.248" timestamp="2026-10-22T11:43:39.177758+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.visual_stimulus.test_recording" name="test_clipping_burst_retains_all_records_across_recording_stall" time="0.014"><failure message="BufferError: required Visual Stimulus evidence exceeded evidence_pending_bytes">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-470/test_clipping_burst_retains_al0')
+
+    def test_clipping_burst_retains_all_records_across_recording_stall(
+        tmp_path: Path,
+    ) -&gt; None:
+        import json
+        import time
+    
+        gate = threading.Event()
+        recipe = ArtifactRef(
+            relative_path="recipe.json",
+            sha256="a" * 64,
+            byte_length=1,
+            schema_id="prepared-v2",
+        )
+        header = Header(
+            kind="header",
+            format_version=3,
+            identity=_identity(),
+            writer_generation="writer",
+            recipe=recipe,
+            trial_start_host_ns=1,
+            required_output_ids=("front",),
+            renderer_compatibility="renderer-v1",
+        )
+        path = tmp_path / "frames.jsonl"
+        session = RecordingSession(
+            worker=None,
+            evidence=EvidenceWriter(max_pending_bytes=16_777_216),
+            evidence_path=path,
+            recipe_path=tmp_path / "recipe.json",
+            max_queued_evidence_bytes=16_777_216,
+            finalizer=lambda _counts: (),
+            startup=lambda: gate.wait(5),
+        )
+        runtime = RecordingCaptureRuntime(
+            NS(), session, None, evidence_pending_bytes=16_777_216, capture_slots=1
+        )
+        state = EvidenceStateSnapshot(0, "scene", 12, (), (), (), ())
+        try:
+            session.publish_header(header, recipe)
+            for group in range(32):
+                runtime.rendered(
+                    NS(
+                        group=NS(group_id=group, outputs=()),
+                        evidence_state=state,
+                        evidence_submissions=(),
+                    )
+                )
+&gt;               runtime.diagnostics(
+                    tuple(
+                        DiagnosticSnapshot(group, face, 0, 12, ())
+                        for face in ("front", "left", "right", "bottom")
+                    )
+                )
+
+tests\visual_stimulus\test_recording.py:1205: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\recording\capture_runtime.py:167: in diagnostics
+    self.session.enqueue_evidence_factory(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.visual_stimulus.recording.session.RecordingSession object at 0x00000247935EBE10&gt;
+factory = &lt;function _clipping_factory.&lt;locals&gt;.build at 0x00000247935E6DE0&gt;
+reserved_bytes = 262144
+
+    def enqueue_evidence_factory(
+        self,
+        factory: Callable[[], Record],
+        *,
+        reserved_bytes: int,
+    ) -&gt; None:
+        """Defer model creation and JSON serialization to the recording thread."""
+        if reserved_bytes &lt;= 0:
+            raise ValueError("evidence line reservation must be positive")
+        with self._condition:
+            if self._closing:
+                raise RuntimeError("evidence cutoff is sealed")
+            pending_total = self._line_bytes + self.evidence.pending_bytes
+            if reserved_bytes &gt; self.max_queued_evidence_bytes - pending_total:
+&gt;               raise BufferError(
+                    "required Visual Stimulus evidence exceeded evidence_pending_bytes"
+                )
+E               BufferError: required Visual Stimulus evidence exceeded evidence_pending_bytes
+
+src\cephvr\visual_stimulus\recording\session.py:135: BufferError</failure></testcase></testsuite></testsuites>

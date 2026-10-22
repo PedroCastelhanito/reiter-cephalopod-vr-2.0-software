@@ -1,0 +1,208 @@
+{
+  "controller_generation": "e985c1a2-bff6-4c7b-abbc-6bbd3a1bd130",
+  "captured_monotonic_ns": "673307458488800",
+  "state_revision": "2693",
+  "configuration": {
+    "revision": "3",
+    "edit_validation": [
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "experiment",
+        "configuration_module_version": "experiment-v1"
+      },
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "acquisition",
+        "configuration_module_version": "acquisition-config-v1"
+      },
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "synchronization",
+        "configuration_module_version": "synchronization-config-v1"
+      },
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "tracking",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "visual_stimulus",
+        "configuration_module_version": "visual-stimulus-config-v2"
+      }
+    ]
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "1c95510a-9700-4b03-9835-8e7bc8abebcf"
+      },
+      "command": "NewSession",
+      "complete": true,
+      "succeeded": true,
+      "progress": "new configuration session created"
+    },
+    {
+      "context": {
+        "command_id": "6be97e5d-3319-4f76-a622-6e17f3274562"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "3b7290dd-4e48-4dd0-a57d-d8d1db3365e8"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "e88c6174-a674-4538-8e26-0a94da030944"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "e88c6174-a674-4538-8e26-0a94da030944"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "e985c1a2-bff6-4c7b-abbc-6bbd3a1bd130"
+    },
+    "command_id": "97fa6d22-b9a1-4ae8-9155-65407dd85ed4",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671366094989800",
+        "idle_swap_return_ns": "671366095326400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671366210656200",
+        "idle_swap_return_ns": "671366210834600",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671366259375900",
+        "idle_swap_return_ns": "671366259563300",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671366304818500",
+        "idle_swap_return_ns": "671366304996700",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "671366305067500",
+    "complete": true
+  },
+  "retained_truncated": true,
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {},
+  "stimulus_preview": {
+    "source": {
+      "role": "visual_stimulus_renderer",
+      "generation": "5519e35d-6b5f-42ef-ad04-1a8e9f559241"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "e88c6174-a674-4538-8e26-0a94da030944"
+    },
+    "session": {
+      "controller_generation": "e985c1a2-bff6-4c7b-abbc-6bbd3a1bd130",
+      "session_id": "f8ee72c7-205e-4c62-b3c5-076023aa7a75"
+    },
+    "configuration_revision": "2",
+    "revision": "2"
+  },
+  "last_finalization": {
+    "session": {
+      "phase": "SESSION_PHASE_ENDED",
+      "context": {
+        "controller_generation": "e985c1a2-bff6-4c7b-abbc-6bbd3a1bd130",
+        "session_id": "f8ee72c7-205e-4c62-b3c5-076023aa7a75"
+      },
+      "outcome": "SESSION_OUTCOME_COMPLETED",
+      "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-150222",
+      "trial_count": 2,
+      "activated": true,
+      "cleanup_confirmed": true
+    },
+    "trial": {
+      "context": {
+        "session": {
+          "controller_generation": "e985c1a2-bff6-4c7b-abbc-6bbd3a1bd130",
+          "session_id": "f8ee72c7-205e-4c62-b3c5-076023aa7a75"
+        },
+        "trial_id": "87a015fc-f604-4f4e-921c-a443b3244675",
+        "trial_number": 2
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_COMPLETED",
+      "start_monotonic_ns": "672060626788600",
+      "scheduled_end_monotonic_ns": "672660626788600",
+      "actual_end_monotonic_ns": "672660626788600"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+A fresh GUI was launched in existing application generation.
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 44972 exited; cleanup evidence remains required.
+CephVR launcher controller channel lost: eof.
+CephVR launcher supervisor channel lost: eof.
+
+Source: root's direct poll of launcher session38664; process exit0.
+This is a retained contextual transcription, not the original full launcher log.
+Exit0 does not prove failed-session cleanup or output closure.

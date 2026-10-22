@@ -1,0 +1,42 @@
+KEY DEBUG {'key': '(<Key.Key_D: 68>, <KeyboardModifier.ControlModifier: 67108864>)', 'active': True, 'widget_visible': True, 'widget_enabled': True, 'focus': ('ProgramTimeline', 'Group contents'), 'wanted_focus': True, 'scope': (0,), 'selected_paths': ((0, 0),), 'editor_enabled': True}
+KEY AFTER {'feedback': '', 'notice': '', 'scope': (0,), 'count': 4}
+KEY DEBUG {'key': '(<Key.Key_Z: 90>, <KeyboardModifier.ControlModifier: 67108864>)', 'active': False, 'widget_visible': True, 'widget_enabled': True, 'focus': None, 'wanted_focus': False, 'scope': (0,), 'selected_paths': ((0, 1),), 'editor_enabled': True}
+KEY AFTER {'feedback': '', 'notice': '', 'scope': (0,), 'count': 4}
+F
+================================== FAILURES ===================================
+_____________ test_timeline_epoch_shortcuts_and_keyboard_history ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000021BD29A9AB0>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000021BD35741F0>
+
+    def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(editor.program))
+        editor.enter_group()
+        original = editor.program
+        window.activateWindow()
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        assert window.isActiveWindow() and editor.hierarchy.contents.hasFocus()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+        )
+        duplicate = editor.program
+        assert len(duplicate.sequence[0].body) == len(original.sequence[0].body) + 1
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier
+        )
+>       assert editor.program == original
+E       assert Program(forma...tings=()))),)) == Program(forma...tings=()))),))
+E         
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:13709: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_timeline_epoch_shortcuts_and_keyboard_history
+1 failed in 1.45s

@@ -3,6 +3,7 @@
 from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
 from PyQt6.QtGui import (
     QColor,
+    QIcon,
     QPainter,
     QPaintEvent,
     QPen,
@@ -61,7 +62,7 @@ class Button(QPushButton):
             return None
         if role == "navigation":
             if minimal_frames(self):
-                return f"> {self.text()} <" if self.isChecked() else self.text()
+                return f"< {self.text()} >" if self.isChecked() else self.text()
             return ("> " if self.isChecked() else "  ") + self.text()
         text = self.text().upper()
         return f"[ {text} ]"
@@ -80,7 +81,40 @@ class Button(QPushButton):
         option = QStyleOptionButton()
         self.initStyleOption(option)
         option.text = label_text
-        QStylePainter(self).drawControl(QStyle.ControlElement.CE_PushButton, option)
+        if (
+            self.property("role") == "navigation"
+            and minimal_frames(self)
+            and self.isChecked()
+        ):
+            # Paint the leading bracket before the icon, not inside Qt's text label.
+            icon = QIcon(option.icon)
+            option.text = ""
+            option.icon = QIcon()
+            painter = QStylePainter(self)
+            painter.drawControl(QStyle.ControlElement.CE_PushButton, option)
+            painter.setPen(QColor(colors_for(self).coral))
+            x = 12
+            prefix = self.fontMetrics().horizontalAdvance("< ")
+            painter.drawText(
+                QRectF(x, 0, prefix, self.height()), Qt.AlignmentFlag.AlignVCenter, "< "
+            )
+            x += prefix
+            icon.paint(
+                painter,
+                x,
+                (self.height() - self.iconSize().height()) // 2,
+                self.iconSize().width(),
+                self.iconSize().height(),
+            )
+            x += self.iconSize().width() + 6
+            painter.drawText(
+                QRectF(x, 0, self.width() - x - 8, self.height()),
+                Qt.AlignmentFlag.AlignVCenter,
+                f"{self.text()} >",
+            )
+            painter.end()
+        else:
+            QStylePainter(self).drawControl(QStyle.ControlElement.CE_PushButton, option)
         if self.property("role") == "navigation" and minimal_frames(self):
             # Bright brackets mark the current page; dim ones preview a hovered page.
             colors = colors_for(self)
@@ -283,18 +317,18 @@ class StatusIndicator(QRadioButton):
 class StatusColumn(QWidget):
     """Shared fitted HUD above a log that consumes the remaining column height."""
 
-    def __init__(self, title: str = "HUD") -> None:
+    def __init__(self) -> None:
         super().__init__()
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(SIZES.card_gap)
         self.rows: HudRows = ()
-        self.hud_card = Card(title)
+        self.hud_card = Card("HUD")
         self.hud_card.setProperty("openFrame", True)
         self.hud = FittedConsole()
         self.hud.setProperty("terminal", "telemetry")
         self.hud_card.body.addWidget(self.hud)
-        self.log_card = Card("Log", grow=True)
+        self.log_card = Card("LOG console", grow=True)
         self.log_card.setProperty("openFrame", True)
         self.console = LogConsole()
         self.log_minimum_height = self.console.minimumHeight()

@@ -1,0 +1,7 @@
+Date: 2026-10-22 Asia/Tokyo
+Source: working tree based on 814e555edcb50a60774ac8101c68bfde0c3b7f28 with pre-existing concurrent edits and this task edits.
+Method: repository Python3.11, QT_QPA_PLATFORM=offscreen; QApplication/apply_theme; DashboardWindow(sample=True), Amber phosphor, 1920x1000; local Phase.RUNNING presentation with four unavailable PreviewView records and Advanced enabled; process Qt events then QWidget.grab().save. No backend launched.
+Outcome: amber-monitor.png inspected, larger text and separate Preview controls card/Video and Advanced rows visible without overlap.
+Scope: offscreen synthetic presentation only; not native DPI, viewer or rig acceptance.
+
+2026-10-22 centering follow-up, same base revision plus current edits: centered-projectors.png is an offscreen InstrumentGrid geometry-only render (850x480, cell220x266, four ProjectorCards with headings and empty MotionDials, Amber properties/sheets). All cards y119/height242: equal119px margins. No dial samples, native CRT surface or backend; not an appearance/rig acceptance image.

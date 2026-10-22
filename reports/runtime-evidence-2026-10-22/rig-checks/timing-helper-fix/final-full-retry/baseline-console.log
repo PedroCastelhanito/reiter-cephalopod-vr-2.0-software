@@ -1,0 +1,225 @@
+{
+  "controller_generation": "0d6c377d-b7bc-4ad7-a29f-5f10a9e42059",
+  "captured_monotonic_ns": "671298007988600",
+  "state_revision": "89",
+  "configuration": {
+    "revision": "3",
+    "edit_validation": [
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "experiment",
+        "configuration_module_version": "experiment-v1"
+      },
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "acquisition",
+        "configuration_module_version": "acquisition-config-v1"
+      },
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "synchronization",
+        "configuration_module_version": "synchronization-config-v1"
+      },
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "tracking",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "3",
+        "completed": true,
+        "valid": true,
+        "component": "visual_stimulus",
+        "configuration_module_version": "visual-stimulus-config-v2"
+      }
+    ]
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "a13f0246-a871-4ceb-9979-43fb5d72af80"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "e98e9858-8f07-42b1-a8de-0ad1e861d9b4"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "0fea6a9f-0f76-4b7b-9e90-ff1c97885873"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "0d6c377d-b7bc-4ad7-a29f-5f10a9e42059",
+          "session_id": "90fb4dc6-4b6d-4f65-80d0-4aa6ce31b8c0"
+        }
+      },
+      "complete": true,
+      "succeeded": false,
+      "progress": "Preparing cameras\u2026",
+      "failure": {
+        "code": "SETUP_FAILED",
+        "message": "acquisition readback: serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=200.495, budget_ms=199.987, write_ms=73.045, total_read_ms=127.411, reads=2, bytes=150, late_bytes=43, partial_bytes=107, longest_read_ms=111.433, unmatched=0, malformed=0; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=56.992,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=16.007,native_write_thread_cpu_ms=0.000; buffer_query_calls=2,buffer_query_wall_ms=63.668,buffer_query_thread_cpu_ms=0.000; native_read_calls=2,native_read_wall_ms=63.685,native_read_thread_cpu_ms=0.000"
+      }
+    },
+    {
+      "context": {
+        "command_id": "d2d050e5-ef42-4183-96f6-eff5511157cb"
+      },
+      "command": "CancelSetup",
+      "work": {
+        "session": {
+          "controller_generation": "0d6c377d-b7bc-4ad7-a29f-5f10a9e42059",
+          "session_id": "90fb4dc6-4b6d-4f65-80d0-4aa6ce31b8c0"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "interruption and cleanup confirmed"
+    },
+    {
+      "context": {
+        "command_id": "27f338da-6f64-4384-8280-58087e1ce5ff"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "84cdae92-1c30-459b-b94d-ac321bc6e278"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "2bc6837c-786d-4a30-810c-586afd146ca3",
+      "component": "microcontroller",
+      "message": "serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=200.495, budget_ms=199.987, write_ms=73.045, total_read_ms=127.411, reads=2, bytes=150, late_bytes=43, partial_bytes=107, longest_read_ms=111.433, unmatched=0, malformed=0; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=56.992,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=16.007,native_write_thread_cpu_ms=0.000; buffer_query_calls=2,buffer_query_wall_ms=63.668,buffer_query_thread_cpu_ms=0.000; native_read_calls=2,native_read_wall_ms=63.685,native_read_thread_cpu_ms=0.000"
+    },
+    {
+      "warning_id": "f72dc6a2-d1ab-4b8d-ac9a-e47ec0ca5cea",
+      "component": "controller",
+      "message": "acquisition readback: serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=200.495, budget_ms=199.987, write_ms=73.045, total_read_ms=127.411, reads=2, bytes=150, late_bytes=43, partial_bytes=107, longest_read_ms=111.433, unmatched=0, malformed=0; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=56.992,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=16.007,native_write_thread_cpu_ms=0.000; buffer_query_calls=2,buffer_query_wall_ms=63.668,buffer_query_thread_cpu_ms=0.000; native_read_calls=2,native_read_wall_ms=63.685,native_read_thread_cpu_ms=0.000"
+    },
+    {
+      "warning_id": "c0d5de54-b156-4e33-923c-01fe2936a8f1",
+      "component": "controller",
+      "message": "attempt retired"
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "de929e09-9c37-4a22-830d-a691f73bb66e"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "de929e09-9c37-4a22-830d-a691f73bb66e"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "0d6c377d-b7bc-4ad7-a29f-5f10a9e42059"
+    },
+    "command_id": "a13f0246-a871-4ceb-9979-43fb5d72af80",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671240590260700",
+        "idle_swap_return_ns": "671240590595500",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671240704856900",
+        "idle_swap_return_ns": "671240704929100",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671240751490900",
+        "idle_swap_return_ns": "671240751651500",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671240795559300",
+        "idle_swap_return_ns": "671240795717400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "671240795769000",
+    "complete": true
+  },
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {
+    "failure": "serial watchdog keepalive failed: no matched complete acknowledgement for PING before deadline; elapsed_ms=200.495, budget_ms=199.987, write_ms=73.045, total_read_ms=127.411, reads=2, bytes=150, late_bytes=43, partial_bytes=107, longest_read_ms=111.433, unmatched=0, malformed=0; serial_calls: timeout_config_calls=1,timeout_config_wall_ms=56.992,timeout_config_thread_cpu_ms=0.000; native_write_calls=1,native_write_wall_ms=16.007,native_write_thread_cpu_ms=0.000; buffer_query_calls=2,buffer_query_wall_ms=63.668,buffer_query_thread_cpu_ms=0.000; native_read_calls=2,native_read_wall_ms=63.685,native_read_thread_cpu_ms=0.000"
+  },
+  "stimulus_preview": {}
+}

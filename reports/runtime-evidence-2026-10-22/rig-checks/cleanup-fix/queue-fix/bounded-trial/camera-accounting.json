@@ -1,0 +1,126 @@
+[
+  {
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_ack22trial\\SPRIGCHECK-114605\\protocol-data\\RIGCHECK_114645_behavioral_cam_frames.jsonl",
+    "identity": {
+      "session_id": "77138ccb-9372-4766-af0e-d81da1baf16e",
+      "trial_id": "04c4a7d7-dca7-42a3-babd-6bfd6da21444",
+      "trial_number": 1,
+      "camera_role": "behavioral",
+      "device_id": "40065509",
+      "session_config_reference": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_ack22trial\\SPRIGCHECK-114605",
+      "recording_identity_version": 1
+    },
+    "mp4_identity_tags": {
+      "major_brand": "isom",
+      "minor_version": "512",
+      "compatible_brands": "isomiso6iso2avc1mp41",
+      "cephvr_identity_version": "1",
+      "cephvr_session_id": "77138ccb-9372-4766-af0e-d81da1baf16e",
+      "cephvr_trial_id": "04c4a7d7-dca7-42a3-babd-6bfd6da21444",
+      "cephvr_camera_role": "behavioral",
+      "cephvr_device_id": "40065509",
+      "encoder": "Lavf63.1.102"
+    },
+    "received": 1797,
+    "encoded": 1797,
+    "dropped": 0,
+    "invalid": 0,
+    "dispositions": {
+      "real": 1797
+    },
+    "native_counter_first": 0,
+    "native_counter_last": 1796,
+    "native_counter_missing_within_observed_stream": 0,
+    "native_counter_regressions": 0,
+    "nominal_rate_hz": "30",
+    "nominal_trial_slot_count": "1800",
+    "first_host_receipt_minus_target_ns": 73637500,
+    "last_host_receipt_minus_boundary_ns": -15886600,
+    "maximum_host_receipt_interval_ns": 34426000,
+    "pulses": {
+      "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+      "on_dispatched_monotonic_ns": 659643933335800,
+      "on_acknowledged_monotonic_ns": 659643965649800,
+      "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+      "off_dispatched_monotonic_ns": 659703933539800,
+      "off_acknowledged_monotonic_ns": 659703961833700
+    },
+    "transport_summary": {
+      "buffer_underruns": null,
+      "failed_buffers": 0,
+      "missed_frames": 0,
+      "resend_requests": null,
+      "resend_packets": null,
+      "resynchronizations": 0
+    },
+    "diagnostics": [],
+    "post_cutoff": {
+      "accounting_complete": true,
+      "excluded_frame_count": 2,
+      "last_native_counter": 1798
+    },
+    "limits": "Host receipt/native counters do not prove electrical trigger or exposure onset. Nominal slots are not an independently measured pulse count."
+  },
+  {
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_ack22trial\\SPRIGCHECK-114605\\protocol-data\\RIGCHECK_114645_tracking_cam_frames.jsonl",
+    "identity": {
+      "session_id": "77138ccb-9372-4766-af0e-d81da1baf16e",
+      "trial_id": "04c4a7d7-dca7-42a3-babd-6bfd6da21444",
+      "trial_number": 1,
+      "camera_role": "tracking",
+      "device_id": "40747103",
+      "session_config_reference": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_ack22trial\\SPRIGCHECK-114605",
+      "recording_identity_version": 1
+    },
+    "mp4_identity_tags": {
+      "major_brand": "isom",
+      "minor_version": "512",
+      "compatible_brands": "isomiso6iso2avc1mp41",
+      "cephvr_identity_version": "1",
+      "cephvr_session_id": "77138ccb-9372-4766-af0e-d81da1baf16e",
+      "cephvr_trial_id": "04c4a7d7-dca7-42a3-babd-6bfd6da21444",
+      "cephvr_camera_role": "tracking",
+      "cephvr_device_id": "40747103",
+      "encoder": "Lavf63.1.102"
+    },
+    "received": 3596,
+    "encoded": 3596,
+    "dropped": 0,
+    "invalid": 0,
+    "dispositions": {
+      "real": 3596
+    },
+    "native_counter_first": 0,
+    "native_counter_last": 3595,
+    "native_counter_missing_within_observed_stream": 0,
+    "native_counter_regressions": 0,
+    "nominal_rate_hz": "60",
+    "nominal_trial_slot_count": "3600",
+    "first_host_receipt_minus_target_ns": 33538200,
+    "last_host_receipt_minus_boundary_ns": -5961700,
+    "maximum_host_receipt_interval_ns": 18204500,
+    "pulses": {
+      "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+      "on_dispatched_monotonic_ns": 659643933335800,
+      "on_acknowledged_monotonic_ns": 659643965649800,
+      "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+      "off_dispatched_monotonic_ns": 659703933539800,
+      "off_acknowledged_monotonic_ns": 659703961833700
+    },
+    "transport_summary": {
+      "buffer_underruns": null,
+      "failed_buffers": 0,
+      "missed_frames": 0,
+      "resend_requests": null,
+      "resend_packets": null,
+      "resynchronizations": 0
+    },
+    "diagnostics": [],
+    "post_cutoff": {
+      "accounting_complete": true,
+      "excluded_frame_count": 2,
+      "last_native_counter": 3597
+    },
+    "limits": "Host receipt/native counters do not prove electrical trigger or exposure onset. Nominal slots are not an independently measured pulse count."
+  }
+]

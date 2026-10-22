@@ -41,7 +41,7 @@ class TrackingPage(ResponsiveColumns):
 
     def __init__(self, cameras: CamerasPanel) -> None:
         left, layout = column()
-        self.status = StatusColumn("Tracking HUD")
+        self.status = StatusColumn()
         super().__init__(left, self.status)
         self.cameras = cameras
         self.view = DashboardView()

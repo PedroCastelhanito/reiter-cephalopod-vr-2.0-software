@@ -1,0 +1,14 @@
+{
+  "head": "814e555edcb50a60774ac8101c68bfde0c3b7f28",
+  "working_tree": "existing dirty shared tree, scoped patch retained; no commits",
+  "source_sha256": {
+    "src/cephvr/platform/windows/protected_source.py": "befdff559a88d5acc66f71338022114917471f556b20374e268462efcfb3cdcf",
+    "src/cephvr/supervisor/registry.py": "605c83adeb2ba5828a8227f516634439dc42a1c40b6b58dfabe6f986432f8d0f",
+    "src/cephvr/supervisor/acquisition_worker.py": "07ab94283abc2ef6cc3e097222841d0703db5b7e18fa32066acf83a01bb61eeb",
+    "tests/supervisor/support.py": "969e274ebd2ee4a62ede444f94e1d048be1aca9fd06ab48aa7285632aa3fbb42",
+    "tests/supervisor/test_recovery.py": "62000b13ed85cfff03124bd86166abfc407390f7f51bccb14b4ee121198c9d97",
+    "tests/supervisor/test_registry.py": "f5ec4b0e535f9dedf1d4e0d97cfa8fbf5f36d826d177b39453efa4bc4818050e",
+    "tests/visual_stimulus/test_windows_resources.py": "441ebe1d20db33cf9fb623c9207a0a985e6c59f48a775400645d2f41e85235b7"
+  },
+  "temporary_native_hook_removed": true
+}

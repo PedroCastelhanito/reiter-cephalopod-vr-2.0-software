@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import re
-from functools import cache
-from importlib.resources import files
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QByteArray, QEvent, QMargins, QObject, QSettings, Qt
-from PyQt6.QtGui import QAction, QActionGroup, QFontDatabase
+from PyQt6.QtCore import QEvent, QMargins, QObject, QSettings, QSize, Qt
+from PyQt6.QtGui import QAction, QActionGroup
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -29,6 +27,7 @@ from cephvr.gui.retro_overlay import (
     CrtEffects,
     WindowFilms,
 )
+from cephvr.gui.splash import saved_style
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import (
     COLORS,
@@ -43,18 +42,6 @@ from cephvr.gui.theme import (
 
 if TYPE_CHECKING:
     from cephvr.gui.window import DashboardWindow
-
-
-@cache
-def load_terminal_font() -> None:
-    """Register the packaged OFL font once, without an installed-font dependency."""
-    data = (
-        files("cephvr.gui")
-        .joinpath("assets/fonts/IBMPlexMono-Regular.ttf")
-        .read_bytes()
-    )
-    if QFontDatabase.addApplicationFontFromData(QByteArray(data)) < 0:
-        raise RuntimeError("Cannot load bundled IBM Plex Mono font")
 
 
 def caption_caps(text: str) -> str:
@@ -115,6 +102,12 @@ class DashboardAppearance(QObject):
         assert isinstance(app, QApplication)
         app.focusChanged.connect(self.focus_editor)
         window.devices.tab_bar.currentChanged.connect(self.refresh_device_icons)
+        window.devices.projectors.setup_tabs.currentChanged.connect(
+            self.refresh_device_icons
+        )
+        dashboard.view_tabs.currentChanged.connect(self.refresh_device_icons)
+        dashboard.layout_switched.connect(self.refresh_device_icons)
+        window.navigation.idToggled.connect(self.refresh_navigation)
         self.brand = next(
             item
             for item in window.findChildren(QLabel)
@@ -160,14 +153,7 @@ class DashboardAppearance(QObject):
         )
         self.band_action.toggled.connect(self.set_band)
         menu.addAction(self.band_action)
-        saved = (
-            settings.value(
-                "appearance/style", settings.value("review/appearance", "standard")
-            )
-            if settings
-            else "standard"
-        )
-        self.select(str(saved), persist=False)
+        self.select(saved_style(settings), persist=False)
         window.protocol.editor.timeline.screens_changed.connect(
             self.refresh_protocol_cards
         )
@@ -208,7 +194,14 @@ class DashboardAppearance(QObject):
             card.caption.setText(self.card_title(title, card))
             self.align_nested(card, phosphor)
         for heading, text in self.subsections.items():
-            heading.setText(f"/// {text.upper()} \\\\\\" if phosphor else text)
+            heading.setText(f"| {text.upper()} |" if phosphor else text)
+        # Monitor/table rebuilds retire labels; keep original text only for live ones.
+        self.field_labels = {
+            caption: self.field_labels.get(caption, caption.text())
+            for caption in self.window.findChildren(QLabel)
+            if caption.property("role") == "label"
+            and caption.property("subsection") is not True
+        }
         for caption, text in list(self.field_labels.items()):
             if caption.text() not in (text, caption_caps(text)):
                 text = self.field_labels[caption] = caption.text()  # changed by code
@@ -294,22 +287,41 @@ class DashboardAppearance(QObject):
         self.window_films.set(enabled, alpha)
         self.dashboard.preview_workspace.restyle(enabled)
 
+    def refresh_navigation(self) -> None:
+        """Paint checked state before the clicked handler does page-layout work."""
+        colors = RETRO_PALETTES[self.name][0] if self.retro else COLORS
+        for control in self.window.page_buttons:
+            name = control.property("iconName")
+            if isinstance(name, str):
+                ink = colors.coral if control.isChecked() else colors.muted
+                control.setIcon(device_icon(name, ink))
+                control.repaint()
+
     def refresh_device_icons(self) -> None:
-        bar = self.window.devices.tab_bar
-        for index, key in enumerate(("camera", "board", "projector", "signal")):
-            colors = RETRO_PALETTES[self.name][0] if self.retro else COLORS
-            phosphor = self.name == "amber_phosphor"
-            current = index == bar.currentIndex()
-            if phosphor:
-                color = colors.text if current else PHOSPHOR_TAB_DIM
-            else:
-                color = colors.window if self.retro and current else colors.accent
-            bar.setTabIcon(index, device_icon(key, color))
+        colors = RETRO_PALETTES[self.name][0] if self.retro else COLORS
+        for bar, keys in (
+            (self.window.devices.tab_bar, ("camera", "board", "projector", "signal")),
+            (self.dashboard.view_tabs, ("configure", "monitor")),
+            (
+                self.window.devices.projectors.setup_tabs,
+                ("geometry", "calibration", "sync"),
+            ),
+        ):
+            bar.setIconSize(QSize(20, 20))
+            for index, key in enumerate(keys):
+                current = index == bar.currentIndex()
+                if self.name == "amber_phosphor":
+                    color = colors.text if current else PHOSPHOR_TAB_DIM
+                else:
+                    color = colors.window if self.retro and current else colors.accent
+                bar.setTabIcon(index, device_icon(key, color))
         self.window.devices.rail.refresh_icons()
+        self.dashboard.rail.refresh_icons()
+        self.refresh_navigation()
         accent = (RETRO_PALETTES[self.name][0] if self.retro else COLORS).accent
         for control in self.window.findChildren(QPushButton):
             name = control.property("iconName")
-            if isinstance(name, str):
+            if isinstance(name, str) and control.property("role") != "navigation":
                 control.setIcon(device_icon(name, accent))
 
     def align_nested(self, card: Card, phosphor: bool) -> None:
@@ -326,7 +338,7 @@ class DashboardAppearance(QObject):
         """Display-only card caption for the selected style; stored titles stay."""
         if self.name == "amber_phosphor":
             if card is not None and card.property("nestedCard") is True:
-                return f"/// {title.upper()} \\\\\\"
+                return f"| {title.upper()} |"
             return f"< {title.upper()} >"
         return title.upper() if self.retro else title
 

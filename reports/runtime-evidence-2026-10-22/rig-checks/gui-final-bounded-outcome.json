@@ -1,0 +1,11 @@
+{
+  "outcome": "intentionally interrupted at bounded observation window",
+  "observed_pass_reports": 432,
+  "observed_failure_reports": 0,
+  "observed_error_reports": 0,
+  "junit_present": false,
+  "full_collected_cases": 899,
+  "complete_suite_pass": false,
+  "nodeids_not_retained_by_quiet_partial_output": true,
+  "stopped_local": "2026-10-22T09:07:24.260268"
+}

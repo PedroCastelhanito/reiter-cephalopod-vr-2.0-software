@@ -21,7 +21,7 @@ from cephvr.supervisor.ports import SupervisorOutbound
 from cephvr.supervisor.receipts import require_accepted
 from cephvr.supervisor.registration import RegistrationCoordinator
 from cephvr.supervisor.registry import LIVE_PHASES, LaunchError, LaunchRegistry
-from cephvr.supervisor.worker_context import launch_work_matches
+from cephvr.supervisor.worker_context import launch_work_matches, work_covered_by
 
 _T = TypeVar("_T")
 QUERY_TIMEOUT_NS = 2_000_000_000  # per worker query in one reconcile pass
@@ -256,9 +256,16 @@ class AcquisitionWorkerControl:
             and helper.plan.HasField("work")
             and helper.phase == wire.LAUNCH_PHASE_OPERATIONAL
         ]
+        acknowledged = {
+            helper.plan.command_id
+            for helper in helpers
+            if self._acknowledged_helper_cleanup(helper)
+        }
         queries: dict[tuple[str, str, bytes], asyncio.Task[acq.WorkerState]] = {}
         for helper in helpers:
             plan = helper.plan
+            if plan.command_id in acknowledged:
+                continue
             owner = workers.get((plan.owner.role, plan.owner.generation))
             if owner is None or not owner.HasField("endpoint"):
                 continue
@@ -291,6 +298,10 @@ class AcquisitionWorkerControl:
         for helper in helpers:
             plan = helper.plan
             name = f"ffmpeg:{plan.command_id}"
+            if plan.command_id in acknowledged:
+                # Resource release only; this does not manufacture output success.
+                self._release(helper)
+                continue
             owner = workers.get((plan.owner.role, plan.owner.generation))
             owner_live = (
                 owner is not None
@@ -327,6 +338,22 @@ class AcquisitionWorkerControl:
                     f"{name} released without worker closure evidence; outputs unconfirmed"
                 )
         return unconfirmed
+
+    def _acknowledged_helper_cleanup(self, helper: wire.LaunchState) -> bool:
+        proof = self.registry.acknowledged_camera_cleanup(helper.plan.owner)
+        if proof is None:
+            return False
+        source = proof.cleanup.source
+        return bool(
+            source.worker == helper.plan.owner
+            and work_covered_by(source.work, helper.plan.work)
+            and any(
+                item.resource == f"ffmpeg:{helper.plan.command_id}"
+                and item.released
+                and not item.failure.ByteSize()
+                for item in proof.cleanup.cleanup.resources
+            )
+        )
 
     @staticmethod
     def _target(

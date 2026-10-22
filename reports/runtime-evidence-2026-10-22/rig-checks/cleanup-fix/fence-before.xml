@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="0.481" timestamp="2026-10-22T09:52:01.415584+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.visual_stimulus.test_rendering" name="test_image_cleanup_services_fences_within_original_deadline[eventual]" time="0.011"><failure message="TypeError: ImageResidency.release_gpu() got an unexpected keyword argument 'deadline_ns'">completion = 'eventual'
+
+    @pytest.mark.parametrize("completion", ["eventual", "pending", "error"])
+    def test_image_cleanup_services_fences_within_original_deadline(completion):
+        import time
+    
+        cache, budget, gpu, gate, _, _ = _resident_images()
+        try:
+            cache.prepare(time.perf_counter_ns() + 2_000_000_000)
+            assert cache.close(time.perf_counter_ns() + 2_000_000_000)
+            original_ready = gpu.ready
+            polls = []
+            fence_calls = []
+            original_fence = gpu.fence
+    
+            def fence(textures, fences):
+                fence_calls.append(id(textures))
+                original_fence(textures, fences)
+    
+            def ready(fences):
+                polls.append(id(fences))
+                if completion == "error":
+                    raise RuntimeError("completion check failed")
+                if completion == "pending" or polls.count(id(fences)) == 1:
+                    return False
+                return original_ready(fences)
+    
+            gpu.fence, gpu.ready = fence, ready
+            ticks = iter(range(100, 1000))
+            cache.clock_ns = lambda: next(ticks)
+&gt;           errors = cache.release_gpu(deadline_ns=105)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: ImageResidency.release_gpu() got an unexpected keyword argument 'deadline_ns'
+
+tests\visual_stimulus\test_rendering.py:2067: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_rendering" name="test_image_cleanup_services_fences_within_original_deadline[pending]" time="0.008"><failure message="TypeError: ImageResidency.release_gpu() got an unexpected keyword argument 'deadline_ns'">completion = 'pending'
+
+    @pytest.mark.parametrize("completion", ["eventual", "pending", "error"])
+    def test_image_cleanup_services_fences_within_original_deadline(completion):
+        import time
+    
+        cache, budget, gpu, gate, _, _ = _resident_images()
+        try:
+            cache.prepare(time.perf_counter_ns() + 2_000_000_000)
+            assert cache.close(time.perf_counter_ns() + 2_000_000_000)
+            original_ready = gpu.ready
+            polls = []
+            fence_calls = []
+            original_fence = gpu.fence
+    
+            def fence(textures, fences):
+                fence_calls.append(id(textures))
+                original_fence(textures, fences)
+    
+            def ready(fences):
+                polls.append(id(fences))
+                if completion == "error":
+                    raise RuntimeError("completion check failed")
+                if completion == "pending" or polls.count(id(fences)) == 1:
+                    return False
+                return original_ready(fences)
+    
+            gpu.fence, gpu.ready = fence, ready
+            ticks = iter(range(100, 1000))
+            cache.clock_ns = lambda: next(ticks)
+&gt;           errors = cache.release_gpu(deadline_ns=105)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: ImageResidency.release_gpu() got an unexpected keyword argument 'deadline_ns'
+
+tests\visual_stimulus\test_rendering.py:2067: TypeError</failure></testcase><testcase classname="tests.visual_stimulus.test_rendering" name="test_image_cleanup_services_fences_within_original_deadline[error]" time="0.007"><failure message="TypeError: ImageResidency.release_gpu() got an unexpected keyword argument 'deadline_ns'">completion = 'error'
+
+    @pytest.mark.parametrize("completion", ["eventual", "pending", "error"])
+    def test_image_cleanup_services_fences_within_original_deadline(completion):
+        import time
+    
+        cache, budget, gpu, gate, _, _ = _resident_images()
+        try:
+            cache.prepare(time.perf_counter_ns() + 2_000_000_000)
+            assert cache.close(time.perf_counter_ns() + 2_000_000_000)
+            original_ready = gpu.ready
+            polls = []
+            fence_calls = []
+            original_fence = gpu.fence
+    
+            def fence(textures, fences):
+                fence_calls.append(id(textures))
+                original_fence(textures, fences)
+    
+            def ready(fences):
+                polls.append(id(fences))
+                if completion == "error":
+                    raise RuntimeError("completion check failed")
+                if completion == "pending" or polls.count(id(fences)) == 1:
+                    return False
+                return original_ready(fences)
+    
+            gpu.fence, gpu.ready = fence, ready
+            ticks = iter(range(100, 1000))
+            cache.clock_ns = lambda: next(ticks)
+&gt;           errors = cache.release_gpu(deadline_ns=105)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: ImageResidency.release_gpu() got an unexpected keyword argument 'deadline_ns'
+
+tests\visual_stimulus\test_rendering.py:2067: TypeError</failure></testcase></testsuite></testsuites>

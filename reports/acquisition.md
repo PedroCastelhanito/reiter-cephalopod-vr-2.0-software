@@ -1,5 +1,18 @@
 # Acquisition status
 
+
+Oct22 current result: the image-read ctypes lifetime defect and helper retirement
+proof mismatch are fixed. Final uninstrumented unchanged2×600s playback/recording
+completes with confirmed cleanup, all14 outputs closed and six videos fully decoded.
+All4000 image/blank occurrences agree; no image mismatch, residency hold or failed
+submission. Worst state interval improves105.882→31.9408ms; worst output interval
+107.899→38.6401ms and software onset47.1322→21.8091ms. Neither helper warning recurs.
+This is software timing/content validation, not strict60Hz or optical/electrical
+certification. Exact original configuration/history is restored; app is idle.
+483 Visual Stimulus and168 supervisor tests pass; prior899 GUI-node coverage remains.
+One pre-Start MCU PING timeout followed by a successful fresh retry and separate idle
+shutdown findings remain explicit follow-ups. [Evidence and limits](runtime.md#rig-checks-oct22).
+
 Oct21 `preview-20hz`: [A03](../docs/architecture/acquisition.md#a03) revision35
 and [A10](../docs/architecture/acquisition.md#a10) revision72 implement G01's display
 cadence and raise the session publication default to20 Hz. Pending newest frames

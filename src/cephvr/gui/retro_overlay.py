@@ -18,7 +18,7 @@ from cephvr.gui.theme import retro_colors, retro_console
 SCANLINE_PITCH = 3
 SCANLINE_ALPHA = 18
 # Amber phosphor scanlines read as stripes on bright fills, like a CRT terminal.
-PHOSPHOR_SCANLINE_ALPHA = 80
+PHOSPHOR_SCANLINE_ALPHA = 60
 VIGNETTE_ALPHA = 55
 GLOW_ALPHA = 140
 BAND_HEIGHT = 90

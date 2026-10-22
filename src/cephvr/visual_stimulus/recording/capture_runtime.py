@@ -166,7 +166,8 @@ class RecordingCaptureRuntime:
                 )
             self.session.enqueue_evidence_factory(
                 _clipping_factory(snapshot),
-                reserved_bytes=min(self.evidence_pending_bytes, 256 * 1024),
+                # V28 Clipping: 128-character output ID, three fixed stages/scalars.
+                reserved_bytes=min(self.evidence_pending_bytes, 2048),
             )
 
     def feedback(self, records: tuple[FeedbackEvidence, ...]) -> None:

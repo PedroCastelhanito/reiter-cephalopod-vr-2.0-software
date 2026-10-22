@@ -1,7 +1,6 @@
 """Devices presentation draft; edits stay local and actions never call hardware."""
 
 from PyQt6.QtCore import QSettings, QSignalBlocker, QSize, Qt
-from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QStackedWidget,
@@ -12,7 +11,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.cameras import CamerasPanel
 from cephvr.gui.components import Card
-from cephvr.gui.devices_rail import RAIL_MIN_PAGE_WIDTH, DeviceRail
+from cephvr.gui.devices_rail import DeviceRail
 from cephvr.gui.icons import device_icon
 from cephvr.gui.layouts import column
 from cephvr.gui.mcu_wiring_editor import McuWiringEditor
@@ -45,17 +44,8 @@ class DevicesPage(QWidget):
         self.tab_bar.setElideMode(Qt.TextElideMode.ElideRight)
         self.tab_bar.currentChanged.connect(self.tabs.setCurrentIndex)
         self.tabs.currentChanged.connect(self.tab_bar.setCurrentIndex)
-        self.rail_host = QWidget()
-        self.rail_layout = QVBoxLayout(self.rail_host)
-        self.rail_layout.setContentsMargins(0, 0, 0, 0)
-        self.rail_host.hide()
-        row = QHBoxLayout()
-        row.setSpacing(SIZES.column_gap)
-        row.addWidget(self.rail_host)
-        row.addWidget(self.tabs, 1)
-        body.addLayout(row, 1)
+        body.addWidget(self.tabs, 1)
         self.side_rail = False
-        self.rail_mode = False
         self.cameras = CamerasPanel(sample=sample)
         self.microcontroller = MicrocontrollerPanel(settings=settings)
         self.wiring_dialog: McuWiringEditor | None = None
@@ -136,16 +126,10 @@ class DevicesPage(QWidget):
         navigation_layout.setContentsMargins(0, caption.sizeHint().height() // 2, 0, 0)
         self.rail = DeviceRail(
             ("Cameras", "Microcontroller", "Projectors", "SpikeGLX"),
-            {
-                2: tuple(
-                    self.projectors.setup_tabs.tabText(index)
-                    for index in range(self.projectors.setup_tabs.count())
-                )
-            },
+            {},
         )
-        self.rail_layout.setContentsMargins(0, caption.sizeHint().height() // 2, 0, 0)
-        self.rail_layout.addWidget(self.rail)
-        self.rail_layout.addStretch()
+        self.rail.setParent(self)
+        self.rail.hide()
         self.rail.chosen.connect(self.select_from_rail)
         self.tab_bar.currentChanged.connect(self.sync_rail)
         self.projectors.setup_tabs.currentChanged.connect(self.sync_rail)
@@ -158,21 +142,12 @@ class DevicesPage(QWidget):
         layout = self.panels[index].columns[0].layout()
         assert isinstance(layout, QVBoxLayout)
         layout.insertWidget(0, self.navigation)
-        self.navigation.setVisible(not self.rail_mode)
+        self.navigation.setVisible(not self.side_rail)
 
     def set_side_rail(self, enabled: bool) -> None:
-        """Trial layout: one side list replaces the device and Projectors tab strips."""
+        """Replace the device tab strip; Projectors keeps its local section tabs."""
         self.side_rail = enabled
-        self.apply_navigation()
-
-    def apply_navigation(self) -> None:
-        rail_mode = self.side_rail and self.width() >= RAIL_MIN_PAGE_WIDTH
-        if rail_mode == self.rail_mode:
-            return
-        self.rail_mode = rail_mode
-        self.rail_host.setVisible(rail_mode)
-        self.navigation.setVisible(not rail_mode)
-        self.projectors.setup_tabs.setVisible(not rail_mode)
+        self.navigation.setVisible(not enabled)
         self.sync_rail()
 
     def select_from_rail(self, device: int, section: int) -> None:
@@ -182,12 +157,7 @@ class DevicesPage(QWidget):
 
     def sync_rail(self, *_: int) -> None:
         device = self.tab_bar.currentIndex()
-        section = self.projectors.setup_tabs.currentIndex() if device == 2 else -1
-        self.rail.show_position(device, section)
-
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
-        super().resizeEvent(event)
-        self.apply_navigation()
+        self.rail.show_position(device, -1)
 
     def _port_options(self) -> tuple[tuple[str, str], ...]:
         panel = self.microcontroller

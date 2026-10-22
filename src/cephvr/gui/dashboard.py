@@ -22,6 +22,7 @@ from cephvr.gui.components import (
     combo,
     field,
 )
+from cephvr.gui.devices_rail import DeviceRail
 from cephvr.gui.dialogs import StopDialog, SubjectReuseDialog
 from cephvr.gui.formatting import duration, hud_grid
 from cephvr.gui.layouts import ResponsiveColumns, column
@@ -90,6 +91,17 @@ class Dashboard(QWidget):
         )
         outer.addWidget(self.view_tabs, 0, Qt.AlignmentFlag.AlignLeft)
         pages_host = QWidget()
+        self.rail = DeviceRail(
+            ("Configure", "Monitor"), {}, icons=("configure", "monitor")
+        )
+        self.rail.setAccessibleName("Dashboard navigation")
+        self.rail.chosen.connect(
+            lambda index, section: self.view_tabs.setCurrentIndex(index)
+        )
+        self.rail.show_position(0, -1)
+        self.side_rail = True
+        self.rail.setParent(self)
+        self.rail.hide()
         outer.addWidget(pages_host, 1)
         self.pages = QStackedLayout(pages_host)
         self.pages.setContentsMargins(0, 0, 0, 0)
@@ -397,6 +409,10 @@ class Dashboard(QWidget):
         ):
             self.backend_indicators[name].set_status(status)
 
+    def set_side_rail(self, enabled: bool) -> None:
+        self.side_rail = enabled
+        self.view_tabs.setVisible(not enabled)
+
     def set_runtime_layout(self, active: bool) -> None:
         """Show the preview workspace from Start until the session ends.
 
@@ -409,6 +425,7 @@ class Dashboard(QWidget):
         self.view_tabs.blockSignals(True)
         self.view_tabs.setCurrentIndex(1 if active else 0)
         self.view_tabs.blockSignals(False)
+        self.rail.show_position(1 if active else 0, -1)
         controls = self.session_controls
         if active:
             self.left_layout.removeWidget(controls)

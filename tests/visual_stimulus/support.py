@@ -230,7 +230,7 @@ class Graphics:
         self.begun = False
         return () if self.fail_idle else self.activity()
 
-    def cleanup(self):
+    def cleanup(self, deadline_ns=None):
         return ResourceReleaseReport(("display:projector/main",))
 
 

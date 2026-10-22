@@ -1,0 +1,1618 @@
+[
+  {
+    "path": "cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-114917\\protocol-data\\RIGCHECK_115036_stimulus_frames.jsonl",
+    "groups": 36000,
+    "gaps_over35ms": 3,
+    "worst": [
+      {
+        "group_id": 33437,
+        "eval_interval_ns": 53529700,
+        "previous_return_to_eval_ns": 37499700,
+        "eval_to_first_entry_ns": 4771500,
+        "nearby": [
+          {
+            "id": 33435,
+            "eval": 660432083573700,
+            "epoch": 1857,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 33435,
+                "phase": "returned",
+                "entry_host_ns": 660432098988600,
+                "return_host_ns": 660432099163400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 33435,
+                "phase": "returned",
+                "entry_host_ns": 660432086727700,
+                "return_host_ns": 660432098282700,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 33435,
+                "phase": "returned",
+                "entry_host_ns": 660432098363300,
+                "return_host_ns": 660432098682600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 33435,
+                "phase": "returned",
+                "entry_host_ns": 660432098725600,
+                "return_host_ns": 660432098946600,
+                "swap_interval": 1,
+                "marker_index": 33435,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 33436,
+            "eval": 660432100146200,
+            "epoch": 1857,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 33436,
+                "phase": "returned",
+                "entry_host_ns": 660432115983400,
+                "return_host_ns": 660432116176200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 33436,
+                "phase": "returned",
+                "entry_host_ns": 660432104813600,
+                "return_host_ns": 660432115094600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 33436,
+                "phase": "returned",
+                "entry_host_ns": 660432115305400,
+                "return_host_ns": 660432115585600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 33436,
+                "phase": "returned",
+                "entry_host_ns": 660432115646300,
+                "return_host_ns": 660432115927900,
+                "swap_interval": 1,
+                "marker_index": 33436,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 33437,
+            "eval": 660432153675900,
+            "epoch": 1857,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 33437,
+                "phase": "returned",
+                "entry_host_ns": 660432160256400,
+                "return_host_ns": 660432160637500,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 33437,
+                "phase": "returned",
+                "entry_host_ns": 660432158447400,
+                "return_host_ns": 660432159254900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 33437,
+                "phase": "returned",
+                "entry_host_ns": 660432159325600,
+                "return_host_ns": 660432159779000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 33437,
+                "phase": "returned",
+                "entry_host_ns": 660432159833400,
+                "return_host_ns": 660432160204700,
+                "swap_interval": 1,
+                "marker_index": 33437,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 33438,
+            "eval": 660432161960500,
+            "epoch": 1857,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 33438,
+                "phase": "returned",
+                "entry_host_ns": 660432168703600,
+                "return_host_ns": 660432168920200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 33438,
+                "phase": "returned",
+                "entry_host_ns": 660432167125900,
+                "return_host_ns": 660432167900200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 33438,
+                "phase": "returned",
+                "entry_host_ns": 660432168042400,
+                "return_host_ns": 660432168340600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 33438,
+                "phase": "returned",
+                "entry_host_ns": 660432168397400,
+                "return_host_ns": 660432168656500,
+                "swap_interval": 1,
+                "marker_index": 33438,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "group_id": 20951,
+        "eval_interval_ns": 38940800,
+        "previous_return_to_eval_ns": 23610000,
+        "eval_to_first_entry_ns": 9155500,
+        "nearby": [
+          {
+            "id": 20949,
+            "eval": 660223980159800,
+            "epoch": 1163,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 20949,
+                "phase": "returned",
+                "entry_host_ns": 660223995976800,
+                "return_host_ns": 660223996274700,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 20949,
+                "phase": "returned",
+                "entry_host_ns": 660223984914700,
+                "return_host_ns": 660223995162900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 20949,
+                "phase": "returned",
+                "entry_host_ns": 660223995263100,
+                "return_host_ns": 660223995556100,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 20949,
+                "phase": "returned",
+                "entry_host_ns": 660223995628200,
+                "return_host_ns": 660223995903500,
+                "swap_interval": 1,
+                "marker_index": 20949,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 20950,
+            "eval": 660223997251400,
+            "epoch": 1163,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 20950,
+                "phase": "returned",
+                "entry_host_ns": 660224012394600,
+                "return_host_ns": 660224012582200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 20950,
+                "phase": "returned",
+                "entry_host_ns": 660224000436700,
+                "return_host_ns": 660224011810800,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 20950,
+                "phase": "returned",
+                "entry_host_ns": 660224011904900,
+                "return_host_ns": 660224012118700,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 20950,
+                "phase": "returned",
+                "entry_host_ns": 660224012163100,
+                "return_host_ns": 660224012347600,
+                "swap_interval": 1,
+                "marker_index": 20950,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 20951,
+            "eval": 660224036192200,
+            "epoch": 1164,
+            "images": [
+              "image_172_left",
+              "image_172_front",
+              "image_172_right",
+              "image_172_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 20951,
+                "phase": "returned",
+                "entry_host_ns": 660224047970900,
+                "return_host_ns": 660224048226300,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 20951,
+                "phase": "returned",
+                "entry_host_ns": 660224045347700,
+                "return_host_ns": 660224046259600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 20951,
+                "phase": "returned",
+                "entry_host_ns": 660224046606100,
+                "return_host_ns": 660224047270100,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 20951,
+                "phase": "returned",
+                "entry_host_ns": 660224047427300,
+                "return_host_ns": 660224047905300,
+                "swap_interval": 1,
+                "marker_index": 20951,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 20952,
+            "eval": 660224049374800,
+            "epoch": 1164,
+            "images": [
+              "image_172_left",
+              "image_172_front",
+              "image_172_right",
+              "image_172_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 20952,
+                "phase": "returned",
+                "entry_host_ns": 660224056690700,
+                "return_host_ns": 660224056934200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 20952,
+                "phase": "returned",
+                "entry_host_ns": 660224055338100,
+                "return_host_ns": 660224055967300,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 20952,
+                "phase": "returned",
+                "entry_host_ns": 660224056048300,
+                "return_host_ns": 660224056313800,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 20952,
+                "phase": "returned",
+                "entry_host_ns": 660224056385700,
+                "return_host_ns": 660224056621900,
+                "swap_interval": 1,
+                "marker_index": 20952,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "group_id": 28521,
+        "eval_interval_ns": 35212800,
+        "previous_return_to_eval_ns": 1168200,
+        "eval_to_first_entry_ns": 5748100,
+        "nearby": [
+          {
+            "id": 28519,
+            "eval": 660350148807600,
+            "epoch": 1584,
+            "images": [
+              "image_041_left",
+              "image_041_front",
+              "image_041_right",
+              "image_041_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 28519,
+                "phase": "returned",
+                "entry_host_ns": 660350164416100,
+                "return_host_ns": 660350164645100,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 28519,
+                "phase": "returned",
+                "entry_host_ns": 660350154451900,
+                "return_host_ns": 660350163761600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 28519,
+                "phase": "returned",
+                "entry_host_ns": 660350163860000,
+                "return_host_ns": 660350164108500,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 28519,
+                "phase": "returned",
+                "entry_host_ns": 660350164170200,
+                "return_host_ns": 660350164365400,
+                "swap_interval": 1,
+                "marker_index": 28519,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 28520,
+            "eval": 660350165633000,
+            "epoch": 1584,
+            "images": [
+              "image_041_left",
+              "image_041_front",
+              "image_041_right",
+              "image_041_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 28520,
+                "phase": "returned",
+                "entry_host_ns": 660350199349200,
+                "return_host_ns": 660350199677600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 28520,
+                "phase": "returned",
+                "entry_host_ns": 660350197609600,
+                "return_host_ns": 660350198347200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 28520,
+                "phase": "returned",
+                "entry_host_ns": 660350198417500,
+                "return_host_ns": 660350198778200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 28520,
+                "phase": "returned",
+                "entry_host_ns": 660350198854900,
+                "return_host_ns": 660350199294300,
+                "swap_interval": 1,
+                "marker_index": 28520,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 28521,
+            "eval": 660350200845800,
+            "epoch": 1584,
+            "images": [
+              "image_041_left",
+              "image_041_front",
+              "image_041_right",
+              "image_041_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 28521,
+                "phase": "returned",
+                "entry_host_ns": 660350209196000,
+                "return_host_ns": 660350209377500,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 28521,
+                "phase": "returned",
+                "entry_host_ns": 660350206593900,
+                "return_host_ns": 660350207210800,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 28521,
+                "phase": "returned",
+                "entry_host_ns": 660350207279200,
+                "return_host_ns": 660350208787000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 28521,
+                "phase": "returned",
+                "entry_host_ns": 660350208866700,
+                "return_host_ns": 660350209148100,
+                "swap_interval": 1,
+                "marker_index": 28521,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 28522,
+            "eval": 660350210121700,
+            "epoch": 1584,
+            "images": [
+              "image_041_left",
+              "image_041_front",
+              "image_041_right",
+              "image_041_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 28522,
+                "phase": "returned",
+                "entry_host_ns": 660350216208500,
+                "return_host_ns": 660350216339000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 28522,
+                "phase": "returned",
+                "entry_host_ns": 660350215361200,
+                "return_host_ns": 660350215765600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 28522,
+                "phase": "returned",
+                "entry_host_ns": 660350215823800,
+                "return_host_ns": 660350215998400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 28522,
+                "phase": "returned",
+                "entry_host_ns": 660350216039200,
+                "return_host_ns": 660350216173900,
+                "swap_interval": 1,
+                "marker_index": 28522,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-114917\\protocol-data\\RIGCHECK_120037_stimulus_frames.jsonl",
+    "groups": 35995,
+    "gaps_over35ms": 4,
+    "worst": [
+      {
+        "group_id": 26257,
+        "eval_interval_ns": 105882000,
+        "previous_return_to_eval_ns": 6403900,
+        "eval_to_first_entry_ns": 8619800,
+        "nearby": [
+          {
+            "id": 26255,
+            "eval": 660913490639100,
+            "epoch": 1458,
+            "images": [
+              "image_191_left",
+              "image_191_front",
+              "image_191_right",
+              "image_191_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 26255,
+                "phase": "returned",
+                "entry_host_ns": 660913505655600,
+                "return_host_ns": 660913505935100,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 26255,
+                "phase": "returned",
+                "entry_host_ns": 660913496655800,
+                "return_host_ns": 660913497052900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 26255,
+                "phase": "returned",
+                "entry_host_ns": 660913497110300,
+                "return_host_ns": 660913497400400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 26255,
+                "phase": "returned",
+                "entry_host_ns": 660913497535400,
+                "return_host_ns": 660913505497300,
+                "swap_interval": 1,
+                "marker_index": 26255,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 26256,
+            "eval": 660913506886800,
+            "epoch": 1458,
+            "images": [
+              "image_191_left",
+              "image_191_front",
+              "image_191_right",
+              "image_191_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 26256,
+                "phase": "returned",
+                "entry_host_ns": 660913605910800,
+                "return_host_ns": 660913606364900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 26256,
+                "phase": "returned",
+                "entry_host_ns": 660913604162200,
+                "return_host_ns": 660913604843300,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 26256,
+                "phase": "returned",
+                "entry_host_ns": 660913604918600,
+                "return_host_ns": 660913605378300,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 26256,
+                "phase": "returned",
+                "entry_host_ns": 660913605434400,
+                "return_host_ns": 660913605756100,
+                "swap_interval": 1,
+                "marker_index": 26256,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 26257,
+            "eval": 660913612768800,
+            "epoch": 1459,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 26257,
+                "phase": "returned",
+                "entry_host_ns": 660913623168700,
+                "return_host_ns": 660913623401900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 26257,
+                "phase": "returned",
+                "entry_host_ns": 660913621388600,
+                "return_host_ns": 660913622147000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 26257,
+                "phase": "returned",
+                "entry_host_ns": 660913622215700,
+                "return_host_ns": 660913622610100,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 26257,
+                "phase": "returned",
+                "entry_host_ns": 660913622670000,
+                "return_host_ns": 660913623095900,
+                "swap_interval": 1,
+                "marker_index": 26257,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 26258,
+            "eval": 660913624310900,
+            "epoch": 1459,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 26258,
+                "phase": "returned",
+                "entry_host_ns": 660913630406100,
+                "return_host_ns": 660913630640200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 26258,
+                "phase": "returned",
+                "entry_host_ns": 660913628653300,
+                "return_host_ns": 660913629184800,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 26258,
+                "phase": "returned",
+                "entry_host_ns": 660913629248600,
+                "return_host_ns": 660913630064400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 26258,
+                "phase": "returned",
+                "entry_host_ns": 660913630126500,
+                "return_host_ns": 660913630355700,
+                "swap_interval": 1,
+                "marker_index": 26258,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "group_id": 17462,
+        "eval_interval_ns": 82855600,
+        "previous_return_to_eval_ns": 1133000,
+        "eval_to_first_entry_ns": 5666700,
+        "nearby": [
+          {
+            "id": 17460,
+            "eval": 660766872603900,
+            "epoch": 970,
+            "images": [
+              "image_114_left",
+              "image_114_front",
+              "image_114_right",
+              "image_114_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 17460,
+                "phase": "returned",
+                "entry_host_ns": 660766887128400,
+                "return_host_ns": 660766887444400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 17460,
+                "phase": "returned",
+                "entry_host_ns": 660766881269800,
+                "return_host_ns": 660766886566800,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 17460,
+                "phase": "returned",
+                "entry_host_ns": 660766886643300,
+                "return_host_ns": 660766886864800,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 17460,
+                "phase": "returned",
+                "entry_host_ns": 660766886909600,
+                "return_host_ns": 660766887076300,
+                "swap_interval": 1,
+                "marker_index": 17460,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 17461,
+            "eval": 660766888193800,
+            "epoch": 970,
+            "images": [
+              "image_114_left",
+              "image_114_front",
+              "image_114_right",
+              "image_114_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 17461,
+                "phase": "returned",
+                "entry_host_ns": 660766969537800,
+                "return_host_ns": 660766969916400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 17461,
+                "phase": "returned",
+                "entry_host_ns": 660766967233800,
+                "return_host_ns": 660766967934400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 17461,
+                "phase": "returned",
+                "entry_host_ns": 660766968003400,
+                "return_host_ns": 660766968619100,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 17461,
+                "phase": "returned",
+                "entry_host_ns": 660766968695400,
+                "return_host_ns": 660766969199000,
+                "swap_interval": 1,
+                "marker_index": 17461,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 17462,
+            "eval": 660766971049400,
+            "epoch": 970,
+            "images": [
+              "image_114_left",
+              "image_114_front",
+              "image_114_right",
+              "image_114_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 17462,
+                "phase": "returned",
+                "entry_host_ns": 660766978230900,
+                "return_host_ns": 660766978433600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 17462,
+                "phase": "returned",
+                "entry_host_ns": 660766976716100,
+                "return_host_ns": 660766977570200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 17462,
+                "phase": "returned",
+                "entry_host_ns": 660766977630700,
+                "return_host_ns": 660766977905300,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 17462,
+                "phase": "returned",
+                "entry_host_ns": 660766977968800,
+                "return_host_ns": 660766978182200,
+                "swap_interval": 1,
+                "marker_index": 17462,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 17463,
+            "eval": 660766979061700,
+            "epoch": 970,
+            "images": [
+              "image_114_left",
+              "image_114_front",
+              "image_114_right",
+              "image_114_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 17463,
+                "phase": "returned",
+                "entry_host_ns": 660766993621000,
+                "return_host_ns": 660766993910200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 17463,
+                "phase": "returned",
+                "entry_host_ns": 660766991791900,
+                "return_host_ns": 660766992612300,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 17463,
+                "phase": "returned",
+                "entry_host_ns": 660766992687300,
+                "return_host_ns": 660766993194200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 17463,
+                "phase": "returned",
+                "entry_host_ns": 660766993256500,
+                "return_host_ns": 660766993569600,
+                "swap_interval": 1,
+                "marker_index": 17463,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "group_id": 9837,
+        "eval_interval_ns": 76247100,
+        "previous_return_to_eval_ns": 624200,
+        "eval_to_first_entry_ns": 7662100,
+        "nearby": [
+          {
+            "id": 9835,
+            "eval": 660639771830900,
+            "epoch": 546,
+            "images": [
+              "image_090_left",
+              "image_090_front",
+              "image_090_right",
+              "image_090_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 9835,
+                "phase": "returned",
+                "entry_host_ns": 660639785980800,
+                "return_host_ns": 660639786258600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 9835,
+                "phase": "returned",
+                "entry_host_ns": 660639778000600,
+                "return_host_ns": 660639784898600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 9835,
+                "phase": "returned",
+                "entry_host_ns": 660639785084600,
+                "return_host_ns": 660639785531700,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 9835,
+                "phase": "returned",
+                "entry_host_ns": 660639785658100,
+                "return_host_ns": 660639785930300,
+                "swap_interval": 1,
+                "marker_index": 9835,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 9836,
+            "eval": 660639787205000,
+            "epoch": 546,
+            "images": [
+              "image_090_left",
+              "image_090_front",
+              "image_090_right",
+              "image_090_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 9836,
+                "phase": "returned",
+                "entry_host_ns": 660639862652500,
+                "return_host_ns": 660639862827900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 9836,
+                "phase": "returned",
+                "entry_host_ns": 660639861256400,
+                "return_host_ns": 660639861845200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 9836,
+                "phase": "returned",
+                "entry_host_ns": 660639861902500,
+                "return_host_ns": 660639862266900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 9836,
+                "phase": "returned",
+                "entry_host_ns": 660639862319800,
+                "return_host_ns": 660639862610900,
+                "swap_interval": 1,
+                "marker_index": 9836,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 9837,
+            "eval": 660639863452100,
+            "epoch": 546,
+            "images": [
+              "image_090_left",
+              "image_090_front",
+              "image_090_right",
+              "image_090_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 9837,
+                "phase": "returned",
+                "entry_host_ns": 660639872118900,
+                "return_host_ns": 660639872290000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 9837,
+                "phase": "returned",
+                "entry_host_ns": 660639871114200,
+                "return_host_ns": 660639871499300,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 9837,
+                "phase": "returned",
+                "entry_host_ns": 660639871558000,
+                "return_host_ns": 660639871772900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 9837,
+                "phase": "returned",
+                "entry_host_ns": 660639871844800,
+                "return_host_ns": 660639872036900,
+                "swap_interval": 1,
+                "marker_index": 9837,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 9838,
+            "eval": 660639873048500,
+            "epoch": 546,
+            "images": [
+              "image_090_left",
+              "image_090_front",
+              "image_090_right",
+              "image_090_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 9838,
+                "phase": "returned",
+                "entry_host_ns": 660639886075500,
+                "return_host_ns": 660639886493100,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 9838,
+                "phase": "returned",
+                "entry_host_ns": 660639884178200,
+                "return_host_ns": 660639884849600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 9838,
+                "phase": "returned",
+                "entry_host_ns": 660639884948900,
+                "return_host_ns": 660639885501100,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 9838,
+                "phase": "returned",
+                "entry_host_ns": 660639885572700,
+                "return_host_ns": 660639886008000,
+                "swap_interval": 1,
+                "marker_index": 9838,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "group_id": 3096,
+        "eval_interval_ns": 54576600,
+        "previous_return_to_eval_ns": 39399400,
+        "eval_to_first_entry_ns": 9181300,
+        "nearby": [
+          {
+            "id": 3094,
+            "eval": 660527418012400,
+            "epoch": 171,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 3094,
+                "phase": "returned",
+                "entry_host_ns": 660527433545100,
+                "return_host_ns": 660527433945000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 3094,
+                "phase": "returned",
+                "entry_host_ns": 660527421112400,
+                "return_host_ns": 660527421642000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 3094,
+                "phase": "returned",
+                "entry_host_ns": 660527421723300,
+                "return_host_ns": 660527421945400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 3094,
+                "phase": "returned",
+                "entry_host_ns": 660527421998200,
+                "return_host_ns": 660527433370900,
+                "swap_interval": 1,
+                "marker_index": 3094,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 3095,
+            "eval": 660527435388400,
+            "epoch": 171,
+            "images": [],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 3095,
+                "phase": "returned",
+                "entry_host_ns": 660527450078500,
+                "return_host_ns": 660527450565600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 3095,
+                "phase": "returned",
+                "entry_host_ns": 660527438744700,
+                "return_host_ns": 660527439161400,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 3095,
+                "phase": "returned",
+                "entry_host_ns": 660527439247200,
+                "return_host_ns": 660527439492600,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 3095,
+                "phase": "returned",
+                "entry_host_ns": 660527439558900,
+                "return_host_ns": 660527449876100,
+                "swap_interval": 1,
+                "marker_index": 3095,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 3096,
+            "eval": 660527489965000,
+            "epoch": 172,
+            "images": [
+              "image_198_left",
+              "image_198_front",
+              "image_198_right",
+              "image_198_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 3096,
+                "phase": "returned",
+                "entry_host_ns": 660527500702200,
+                "return_host_ns": 660527501019700,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 3096,
+                "phase": "returned",
+                "entry_host_ns": 660527499146300,
+                "return_host_ns": 660527499900300,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 3096,
+                "phase": "returned",
+                "entry_host_ns": 660527499961300,
+                "return_host_ns": 660527500354000,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 3096,
+                "phase": "returned",
+                "entry_host_ns": 660527500407000,
+                "return_host_ns": 660527500627000,
+                "swap_interval": 1,
+                "marker_index": 3096,
+                "marker_high": true,
+                "failure_code": null
+              }
+            ]
+          },
+          {
+            "id": 3097,
+            "eval": 660527502101600,
+            "epoch": 172,
+            "images": [
+              "image_198_left",
+              "image_198_front",
+              "image_198_right",
+              "image_198_bottom"
+            ],
+            "submissions": [
+              {
+                "output_id": "calibration_bottom",
+                "attempt_index": 3097,
+                "phase": "returned",
+                "entry_host_ns": 660527509066500,
+                "return_host_ns": 660527509203900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_front",
+                "attempt_index": 3097,
+                "phase": "returned",
+                "entry_host_ns": 660527508416700,
+                "return_host_ns": 660527508683900,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_left",
+                "attempt_index": 3097,
+                "phase": "returned",
+                "entry_host_ns": 660527508727500,
+                "return_host_ns": 660527508864200,
+                "swap_interval": 1,
+                "marker_index": null,
+                "marker_high": null,
+                "failure_code": null
+              },
+              {
+                "output_id": "calibration_right",
+                "attempt_index": 3097,
+                "phase": "returned",
+                "entry_host_ns": 660527508900200,
+                "return_host_ns": 660527509033600,
+                "swap_interval": 1,
+                "marker_index": 3097,
+                "marker_high": false,
+                "failure_code": null
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

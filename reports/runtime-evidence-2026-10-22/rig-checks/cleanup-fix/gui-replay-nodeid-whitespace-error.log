@@ -1,0 +1,29 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 60.0s
+timeout method: thread
+timeout func_only: False
+collecting ... collected 0 items
+
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-22\rig-checks\cleanup-fix\gui-serial-replays.xml -
+============================ no tests ran in 0.46s ============================
+ERROR: not found: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\gui\test_dashboard.py::test_timeline_epoch_shortcuts_and_keyboard_history 
+(no match in any of [<Module test_dashboard.py>])
+
+ERROR: not found: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\gui\test_dashboard.py::test_review_devices_capture_aligned_fields_and_wrapped_headers
+(no match in any of [<Module test_dashboard.py>])
+
+ERROR: not found: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\gui\test_dashboard.py::test_review_devices_capture_aligned_fields_and_wrapped_headers
+(no match in any of [<Module test_dashboard.py>])
+
+ERROR: not found: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\gui\test_dashboard.py::test_review_devices_capture_aligned_fields_and_wrapped_headers
+(no match in any of [<Module test_dashboard.py>])
+
+ERROR: not found: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\gui\test_dashboard.py::test_linked_texture_motion_variation_reports_reference_and_recovers
+(no match in any of [<Module test_dashboard.py>])
+

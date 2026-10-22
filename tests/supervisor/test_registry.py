@@ -262,6 +262,12 @@ def test_camera_release_requires_exact_retained_cleanup_and_empty_job() -> None:
         registry.confirm(request, describe_host_clock()).phase
         == wire.LAUNCH_PHASE_OPERATIONAL
     )
+    copied = registry.acknowledged_camera_cleanup(worker.plan.child)
+    assert copied is not None
+    copied.cleanup.cleanup.resources.clear()
+    retained = registry.acknowledged_camera_cleanup(worker.plan.child)
+    assert retained is not None and retained.cleanup.cleanup.resources
+    assert registry.acknowledged_camera_cleanup(_identity(WORKER_ROLE)) is None
     changed_proof = wire.ConfirmLaunchRequest.FromString(request.SerializeToString())
     changed_proof.command_id = str(uuid4())
     changed_proof.acquisition_worker_cleanup.cleanup.state_revision += 1

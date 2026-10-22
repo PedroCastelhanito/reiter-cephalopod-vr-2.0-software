@@ -1,0 +1,131 @@
+{
+  "controller_generation": "fc3524d2-f93b-4fa9-b990-193d0d08b9de",
+  "captured_monotonic_ns": "649407410959500",
+  "state_revision": "15",
+  "configuration": {
+    "revision": "1"
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "2d7f8658-8782-4cae-abd8-59d4009c23b8"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "ed16647d-8c1a-489f-8e16-f3ccff1a92f1",
+      "component": "startup_recovery",
+      "message": "Unfinished session: C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_ack22setup\\SPRIGCHECK-085225. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\cephvr-data\\\\r22\\\\20261022_ack22setup\\\\SPRIGCHECK-085225\\\\protocol-data\\\\SESSION_CONFIG.json' Start recovery preserves scientific files and writes a recovery report; it does not certify unknown outputs or resume the experiment. Cancel and delete files permanently deletes this entire session, including protocol-data and any imported spikeglx-data. Both actions require the exclusive session lock. Close leaves files and the Setup blocker unchanged. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect that exact recording and disable saving manually before another paired session."
+    }
+  ],
+  "prompts": [
+    {
+      "prompt_id": "24c8184e-a76e-4421-846c-0557883dfb1d",
+      "setup": {
+        "controller_generation": "de8e791d-6bc0-4a5a-92be-d49425f130a6",
+        "session_id": "76f65fbf-f9b5-4f3c-ba9d-df1d7fbe86aa"
+      },
+      "operation": {
+        "command_id": "fd9463fa-3f07-49a9-8455-1282dd78f398"
+      },
+      "explanation": "Unfinished session: C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_ack22setup\\SPRIGCHECK-085225. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\cephvr-data\\\\r22\\\\20261022_ack22setup\\\\SPRIGCHECK-085225\\\\protocol-data\\\\SESSION_CONFIG.json' Start recovery preserves scientific files and writes a recovery report; it does not certify unknown outputs or resume the experiment. Cancel and delete files permanently deletes this entire session, including protocol-data and any imported spikeglx-data. Both actions require the exclusive session lock. Close leaves files and the Setup blocker unchanged. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect that exact recording and disable saving manually before another paired session.",
+      "permitted_choices": [
+        "recover",
+        "delete"
+      ]
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "202d651a-194f-4f38-8f62-73d094e19eae"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "202d651a-194f-4f38-8f62-73d094e19eae"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "fc3524d2-f93b-4fa9-b990-193d0d08b9de"
+    },
+    "command_id": "2d7f8658-8782-4cae-abd8-59d4009c23b8",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "649390349435900",
+        "idle_swap_return_ns": "649390349767900",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "649390470813700",
+        "idle_swap_return_ns": "649390470896400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "649390517300400",
+        "idle_swap_return_ns": "649390517373800",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "649390560327800",
+        "idle_swap_return_ns": "649390560484700",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "649390560550900",
+    "complete": true
+  },
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {},
+  "stimulus_preview": {}
+}

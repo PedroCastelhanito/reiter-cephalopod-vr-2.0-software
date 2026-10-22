@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.064" timestamp="2026-10-22T14:58:34.048374+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.visual_stimulus.test_windows_resources" name="test_protected_source_identity_reuses_native_abi_type" time="0.005"><failure message="AssertionError: assert 256 == 1&#10; +  where 256 = len({&lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, ...})&#10; +    where {&lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, ...} = set([&lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, ...])">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000029E7E1EE350&gt;
+
+    def test_protected_source_identity_reuses_native_abi_type(monkeypatch):
+        import ctypes
+        from types import SimpleNamespace
+    
+        observed = []
+        class Information:
+            succeeded = True
+            def __call__(self, handle, info):
+                observed.append(self.argtypes[1])
+                info._obj.volume = handle
+                info._obj.index_high = handle + 1
+                info._obj.index_low = handle + 2
+                return self.succeeded
+    
+        information = Information()
+        monkeypatch.setattr(ctypes, "WinDLL", lambda *args, **kwargs: SimpleNamespace(GetFileInformationByHandle=information))
+        for handle in range(256):
+            assert ProtectedWindowsSource._file_identity(handle) == (handle, handle + 1, handle + 2)
+&gt;       assert len(set(observed)) == 1
+E       AssertionError: assert 256 == 1
+E        +  where 256 = len({&lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, ...})
+E        +    where {&lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, ...} = set([&lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'&gt;, &lt;class 'cephvr.platform.windows.protected_source.LP__Info'&gt;, ...])
+
+tests\visual_stimulus\test_windows_resources.py:68: AssertionError</failure></testcase></testsuite></testsuites>

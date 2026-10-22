@@ -1,0 +1,1 @@
+Date:2026-10-22 Asia/Tokyo. Source: uncommitted working tree, G02rev122. Method: repository Python3.11 Qt offscreen DashboardWindow(sample=True), Amber phosphor,1920x1000, Devices/Projectors selected. Final render inspected: compact main-sidebar links, full Microcontroller label, projector subtabs below Displays. No native runtime restart or hardware verification.

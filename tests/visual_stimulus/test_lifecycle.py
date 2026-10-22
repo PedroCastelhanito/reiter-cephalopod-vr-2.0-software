@@ -536,7 +536,9 @@ def test_pre_setup_display_cleanup_retains_resources_when_release_is_unknown():
     )
     artifact = make_prepared_trial()
     graphics = Graphics(clock, artifact)
-    graphics.cleanup = lambda: ResourceReleaseReport((), ("display:unknown",))
+    graphics.cleanup = lambda deadline_ns=None: ResourceReleaseReport(
+        (), ("display:unknown",)
+    )
     driver = LifecycleDriver(
         worker=worker,
         owner=owner,
@@ -596,7 +598,7 @@ def test_failed_setup_cleanup_waits_for_terminal_report_acceptance():
     with pytest.raises(ValueError) as setup_error:
         driver.execute("SetupSession", setup, setup.command.deadline_monotonic_ns)
     driver.fail(setup_error.value)
-    driver.engine.cleanup = lambda: ResourceReleaseReport(())
+    driver.engine.cleanup = lambda deadline_ns=None: ResourceReleaseReport(())
     assert not driver.state.ready
     assert any(
         method == "ReportError" and message.failure.message == str(setup_error.value)
@@ -653,7 +655,7 @@ def test_unprepared_session_cleanup_requires_native_release(release_failure):
 
     if release_failure:
 
-        def fail():
+        def fail(deadline_ns=None):
             raise RuntimeError("native release blocked")
 
         driver.engine.cleanup = fail
@@ -1343,7 +1345,7 @@ def test_failed_native_calibration_source_close_is_retried_by_lifecycle_cleanup(
         def poll_diagnostics(self):
             return ()
 
-        def release(self):
+        def release(self, deadline_ns=None):
             return ResourceReleaseReport(())
 
     class Engine:
@@ -1357,7 +1359,7 @@ def test_failed_native_calibration_source_close_is_retried_by_lifecycle_cleanup(
         def poll_diagnostics(self):
             return ()
 
-        def cleanup(self):
+        def cleanup(self, deadline_ns=None):
             return ResourceReleaseReport(())
 
     arena_doc, binary = glb_fixture()
@@ -1614,7 +1616,9 @@ def test_cleanup_keeps_graphics_until_capture_cancellation_is_confirmed():
     driver, clock, reports, recorder, graphics, command, release = prepared_driver()
     calls = []
     recorder.cleanup = lambda _: ResourceReleaseReport((), ("pending-pbo",))
-    graphics.cleanup = lambda: calls.append("graphics") or ResourceReleaseReport(())
+    graphics.cleanup = lambda deadline_ns=None: (
+        calls.append(("graphics", deadline_ns)) or ResourceReleaseReport(())
+    )
     cleanup_command = command()
     deadline = clock() + 10_000_000
 
@@ -1638,7 +1642,7 @@ def test_cleanup_keeps_graphics_until_capture_cancellation_is_confirmed():
     assert not driver.state.cleaned
     recorder.cleanup = lambda _: ResourceReleaseReport(())
     clean()
-    assert calls == ["graphics"] and driver.state.cleaned
+    assert calls == [("graphics", deadline)] and driver.state.cleaned
     assert all(item[1] == deadline for item in reports.lifecycle("cleanup"))
 
 
@@ -1963,7 +1967,7 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
                 assert len(self.resources[key]) == 1
             self.prepared.append(artifact.identity.trial_id)
 
-        def release(self):
+        def release(self, deadline_ns=None):
             if self.cache is None:
                 return ResourceReleaseReport(())
             outstanding = self.cache.release_gpu()

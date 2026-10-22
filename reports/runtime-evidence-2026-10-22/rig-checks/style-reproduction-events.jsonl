@@ -1,0 +1,21 @@
+{"event": "event_loop_start", "host_ns": 648384122104900, "platform": "windows"}
+{"event": "before_monitor", "host_ns": 648385128537900}
+{"event": "after_monitor", "host_ns": 648385178615600, "runtime_layout": true}
+{"event": "before_amber", "host_ns": 648387126622200}
+{"event": "after_amber", "host_ns": 648387547410600}
+{"event": "finish", "host_ns": 648392120483000, "visible": true, "runtime_layout": true}
+{"event": "event_loop_end", "host_ns": 648392161980400, "exit_code": 0}
+{"event": "event_loop_start", "host_ns": 648466271927700, "platform": "windows"}
+{"event": "before_monitor", "host_ns": 648467274202300}
+{"event": "after_monitor", "host_ns": 648467310745100, "runtime_layout": true}
+{"event": "before_amber", "host_ns": 648469279029900}
+{"event": "after_amber", "host_ns": 648469703734600}
+{"event": "finish", "host_ns": 648474285322900, "visible": true, "runtime_layout": true}
+{"event": "event_loop_end", "host_ns": 648474326520000, "exit_code": 0}
+{"event": "event_loop_start", "host_ns": 648506131757800, "platform": "windows"}
+{"event": "before_monitor", "host_ns": 648507130838900}
+{"event": "after_monitor", "host_ns": 648507166741600, "runtime_layout": true}
+{"event": "before_amber", "host_ns": 648509134801600}
+{"event": "after_amber", "host_ns": 648509557851400, "style": "amber_phosphor"}
+{"event": "finish", "host_ns": 648514133965800, "visible": true, "runtime_layout": true}
+{"event": "event_loop_end", "host_ns": 648514200793400, "exit_code": 0}

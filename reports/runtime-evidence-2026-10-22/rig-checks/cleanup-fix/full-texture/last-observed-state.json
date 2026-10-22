@@ -1,0 +1,199 @@
+{
+  "host_ns": 655135880013400,
+  "kind": "state",
+  "value": {
+    "phase": "SESSION_PHASE_ENDED",
+    "trial": "TRIAL_PHASE_ENDED",
+    "cleanup": false,
+    "operations": [
+      {
+        "context": {
+          "command_id": "3585ccec-d0ac-434b-b9b3-fb42274cf9da"
+        },
+        "command": "Setup",
+        "work": {
+          "session": {
+            "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+            "session_id": "ff51adc3-6bd5-4699-a8ec-1cc8e11ae1c9"
+          }
+        },
+        "complete": true,
+        "succeeded": true,
+        "progress": "Ready"
+      },
+      {
+        "context": {
+          "command_id": "a79c9fee-63a9-4d7f-a8fa-c18e17e9883b"
+        },
+        "command": "StartSession",
+        "work": {
+          "session": {
+            "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+            "session_id": "ff51adc3-6bd5-4699-a8ec-1cc8e11ae1c9"
+          }
+        },
+        "complete": true,
+        "succeeded": true,
+        "progress": "session activated"
+      },
+      {
+        "context": {
+          "command_id": "728f3443-99e3-4462-984b-96bcb5ea331d"
+        },
+        "command": "StopAfterTrial",
+        "work": {
+          "session": {
+            "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+            "session_id": "ff51adc3-6bd5-4699-a8ec-1cc8e11ae1c9"
+          }
+        },
+        "complete": true,
+        "succeeded": true,
+        "progress": "stop preference updated"
+      },
+      {
+        "context": {
+          "command_id": "551fefb8-36ac-4cc4-93a1-8776a577ed57"
+        },
+        "command": "NewSession",
+        "complete": true,
+        "succeeded": true,
+        "progress": "new configuration session created"
+      },
+      {
+        "context": {
+          "command_id": "2e7c4780-6cc6-4910-9911-5b75aa0b375e"
+        },
+        "command": "UpdateConfiguration",
+        "complete": true,
+        "succeeded": true,
+        "progress": "configuration revision committed"
+      },
+      {
+        "context": {
+          "command_id": "8f1c404f-ea83-4ebd-9382-f6ea0c0b34d7"
+        },
+        "command": "ReleaseManualCameraState",
+        "complete": true,
+        "succeeded": true,
+        "progress": "manual camera state released"
+      },
+      {
+        "context": {
+          "command_id": "5f6d37ae-ed49-4721-9f02-52fbbef42a6a"
+        },
+        "command": "UpdateConfiguration",
+        "complete": true,
+        "succeeded": true,
+        "progress": "configuration revision committed"
+      },
+      {
+        "context": {
+          "command_id": "713f0656-4e3d-4a82-abfc-a1f43c1c2d9d"
+        },
+        "command": "Setup",
+        "work": {
+          "session": {
+            "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+            "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+          }
+        },
+        "complete": true,
+        "succeeded": true,
+        "progress": "Ready"
+      },
+      {
+        "context": {
+          "command_id": "d7cfd449-c9c9-4a92-822c-038a06937d0e"
+        },
+        "command": "StartSession",
+        "work": {
+          "session": {
+            "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+            "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+          }
+        },
+        "complete": true,
+        "succeeded": true,
+        "progress": "session activated"
+      }
+    ],
+    "trial_state": {
+      "context": {
+        "session": {
+          "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+          "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+        },
+        "trial_id": "1032be4a-e6e0-4db9-9684-ec8dd83e95cb",
+        "trial_number": 2
+      },
+      "phase": "TRIAL_PHASE_ENDED",
+      "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+      "start_monotonic_ns": "654910383451000",
+      "scheduled_end_monotonic_ns": "655510383451000",
+      "interruption_issued_monotonic_ns": "655095410238600"
+    },
+    "participants": [
+      {
+        "process": {
+          "role": "acquisition",
+          "generation": "73575b7b-07b8-4bee-918f-b26059b1f958"
+        },
+        "enabled": true,
+        "required": true,
+        "process_running": true,
+        "connected": true,
+        "health": "LAUNCH_PHASE_OPERATIONAL",
+        "ready": {
+          "context": {
+            "backend": {
+              "backend_name": "acquisition",
+              "backend_generation": "73575b7b-07b8-4bee-918f-b26059b1f958"
+            },
+            "work": {
+              "session": {
+                "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+                "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+              }
+            },
+            "operation": {
+              "command_id": "989523da-fc8e-4439-a488-baa03a5f7318"
+            }
+          },
+          "configuration_revision": "6",
+          "required_checks_passed": true
+        }
+      },
+      {
+        "process": {
+          "role": "visual_stimulus",
+          "generation": "2bbf4861-9afb-4108-a469-cb7992c37e18"
+        },
+        "enabled": true,
+        "required": true,
+        "process_running": true,
+        "connected": true,
+        "health": "LAUNCH_PHASE_OPERATIONAL",
+        "ready": {
+          "context": {
+            "backend": {
+              "backend_name": "visual_stimulus",
+              "backend_generation": "2bbf4861-9afb-4108-a469-cb7992c37e18"
+            },
+            "work": {
+              "session": {
+                "controller_generation": "8f8de639-faaa-4e7c-b44e-1bd889f299a6",
+                "session_id": "64068837-3699-4de1-a66a-2880b6b7c8c8"
+              }
+            },
+            "operation": {
+              "command_id": "8434afd3-00f6-4def-8912-cc1ab792f7fb"
+            }
+          },
+          "configuration_revision": "6",
+          "required_checks_passed": true
+        }
+      }
+    ]
+  }
+}

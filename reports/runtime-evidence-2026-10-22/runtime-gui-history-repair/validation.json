@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-22",
+  "source_revision": "814e555edcb50a60774ac8101c68bfde0c3b7f28",
+  "source_state": "pre-existing dirty working tree",
+  "method": "Repository Python 3.11, offscreen Qt full GUI validators, GuiHistory.restore and evidence-only save/readback; explicit two-camera inventory, no device discovery",
+  "original_sha256": "6310204d5fef1597970146cbecd10d66ced3b676a57694bae66b0da11ccf79f0",
+  "repaired_sha256": "249fd80b16b987c6bc9880f37465c266864a274a7484c981b7e94dab1c6f52b1",
+  "changes": [
+    "Remove camera 40278236 from experiment.cameras",
+    "Remove 40278236 recording flag"
+  ],
+  "outcome": "Full draft validation, restoration, save/readback passed",
+  "limits": "Current native GUI not restarted or modified; its failed/unattempted restore latch persists until reopen. No runtime/device/rig acceptance.",
+  "process_validation": "Initial assertions passed but implicit Qt teardown exited1 without diagnostic; independent repeat with explicit widget deletion passed and exited0."
+}

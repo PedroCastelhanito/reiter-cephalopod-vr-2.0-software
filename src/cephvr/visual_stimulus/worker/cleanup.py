@@ -52,7 +52,7 @@ def cleanup_resources(
     # confirmed cancellation. Destroying them here would erase that ownership.
     if recording_released:
         try:
-            graphics = engine.cleanup()
+            graphics = engine.cleanup(deadline_ns=deadline_ns)
             keys.update(graphics.released)
             failures.extend(graphics.outstanding)
             if not graphics.outstanding:

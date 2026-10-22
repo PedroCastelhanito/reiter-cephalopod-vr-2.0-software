@@ -687,7 +687,7 @@ class RendererEngine:
             )
         return tuple(idle(self._display))
 
-    def cleanup(self) -> ResourceReleaseReport:
+    def cleanup(self, deadline_ns: int | None = None) -> ResourceReleaseReport:
         self._assert_owner()
         self._prepared = None
         self._prepared_resources = None
@@ -698,4 +698,4 @@ class RendererEngine:
         self._state = TrialState()
         self._display = None
         self._display_observation = None
-        return self._port.release()
+        return self._port.release(deadline_ns=deadline_ns)

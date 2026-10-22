@@ -14,7 +14,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import services_pb2_grpc
 from cephvr.control.v1 import types_pb2 as types
-from cephvr.shared.clock import host_time_ns
+from cephvr.shared.clock import describe_host_clock, host_time_ns
 from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
 from cephvr.shared.resources import ResourceObligationRegistry
 from cephvr.supervisor.acquisition_worker import AcquisitionWorkerControl
@@ -215,6 +215,111 @@ async def test_owner_cleanup_required_releases_empty_helper_as_unconfirmed(
     assert len(messages) == 1
     assert f"ffmpeg:{helper.plan.command_id}" in messages[0]
     assert _phase(runtime, helper) == wire.LAUNCH_PHASE_RELEASED
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "valid",
+        "missing",
+        "wrong_session",
+        "foreign_helper_session",
+        "wrong_worker",
+        "missing_helper",
+        "unreleased",
+        "live_helper",
+    ],
+)
+async def test_retired_worker_session_proof_discharges_only_exact_helper_resource(
+    tmp_path: Path,
+    case: str,
+) -> None:
+    from cephvr.supervisor.registry import LaunchError
+
+    runtime, native, _, _ = make_runtime(tmp_path)
+    trial = types.WorkContext(
+        trial=types.TrialContext(
+            session=WORK.session,
+            trial_id=str(uuid4()),
+            trial_number=1,
+        )
+    )
+    if case == "foreign_helper_session":
+        trial.trial.session.session_id = str(uuid4())
+    worker, helper = _worker_and_helper(runtime, native, helper_work=trial)
+    source = acq.WorkerContext(
+        worker=worker.plan.child,
+        owner=worker.plan.owner,
+        work=WORK,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+    )
+    command_id = str(uuid4())
+    proof = wire.AcquisitionWorkerCleanupProof(
+        operation=acq.WorkerOperationReport(
+            source=source,
+            operation=types.OperationState(
+                context=types.OperationContext(command_id=command_id),
+                command="Cleanup",
+                work=WORK,
+                complete=True,
+                succeeded=True,
+            ),
+        ),
+        cleanup=acq.WorkerLifecycleEvidence(
+            source=source,
+            operation=types.OperationContext(command_id=command_id),
+            state_revision=1,
+        ),
+    )
+    proof.cleanup.cleanup.resources.add(resource="camera-device", released=True)
+    if case != "missing_helper":
+        proof.cleanup.cleanup.resources.add(
+            resource=f"ffmpeg:{helper.plan.command_id}", released=case != "unreleased"
+        )
+    if case == "wrong_session":
+        proof.cleanup.source.work.session.session_id = str(uuid4())
+    if case == "wrong_worker":
+        proof.cleanup.source.worker.generation = str(uuid4())
+    request = wire.ConfirmLaunchRequest(
+        command_id=str(uuid4()),
+        launch_command_id=worker.plan.command_id,
+        owner=worker.plan.owner,
+        child=worker.plan.child,
+        pid=worker.pid,
+        creation_time_100ns=worker.creation_time_100ns,
+        acquisition_worker_cleanup=proof,
+    )
+    if case in {"wrong_session", "wrong_worker", "unreleased"}:
+        with pytest.raises(LaunchError, match="incomplete or mismatched"):
+            runtime.registry.confirm(request, describe_host_clock())
+    elif case != "missing":
+        runtime.registry.confirm(request, describe_host_clock())
+    native.jobs[worker.containment_job_name] = []
+    if case in {"valid", "missing_helper", "live_helper", "foreign_helper_session"}:
+        runtime.registry.confirm(request, describe_host_clock())
+    if case != "live_helper":
+        native.jobs[helper.containment_job_name] = []
+    messages = (
+        await runtime.shutdown.acquisition_worker_control.reconcile_native_helper_exits(
+            host_time_ns() + 5_000_000_000
+        )
+    )
+    if case == "valid":
+        assert messages == []
+        assert _phase(runtime, helper) == wire.LAUNCH_PHASE_RELEASED
+        # Session resource proof does not supply or modify a trial output result.
+        assert not proof.cleanup.cleanup.outputs
+    elif case == "live_helper":
+        assert messages == []
+        assert _phase(runtime, helper) == wire.LAUNCH_PHASE_OPERATIONAL
+        assert (
+            "PROCESS_STILL_RUNNING"
+            in runtime.shutdown.acquisition_worker_control.helper_errors[
+                helper.plan.command_id
+            ]
+        )
+    else:
+        assert len(messages) == 1 and "outputs unconfirmed" in messages[0]
 
 
 async def test_unreachable_live_owner_records_error_and_keeps_helper(

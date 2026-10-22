@@ -1,0 +1,7 @@
+{"event": "event_loop_start", "host_ns": 648466271927700, "platform": "windows"}
+{"event": "before_monitor", "host_ns": 648467274202300}
+{"event": "after_monitor", "host_ns": 648467310745100, "runtime_layout": true}
+{"event": "before_amber", "host_ns": 648469279029900}
+{"event": "after_amber", "host_ns": 648469703734600}
+{"event": "finish", "host_ns": 648474285322900, "visible": true, "runtime_layout": true}
+{"event": "event_loop_end", "host_ns": 648474326520000, "exit_code": 0}

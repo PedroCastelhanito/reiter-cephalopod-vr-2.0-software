@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "commands": {
+    "Setup": {
+      "command_id": "8b8e512f-2e71-4fa7-9277-1a65537d0fae",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": "",
+      "elapsed_ms": 76684.3021
+    },
+    "CancelSetup": {
+      "command_id": "bbd4b649-e8c3-4905-8bf1-5978fae253be",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": "",
+      "elapsed_ms": 264.0674
+    },
+    "restoration": {
+      "runtime_equal": true,
+      "saved_bytes_equal": true,
+      "saved_sha256": "d3e1b9c0ff202b72b358f18e0508ec37bfa44b5809083d375b50c5c44a8275e8"
+    }
+  },
+  "evidence_limit": "accepted commands and cleanup_confirmed; no raw CleanupReport or historical rejection predicate"
+}

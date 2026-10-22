@@ -61,8 +61,8 @@ def test_every_required_role_has_an_entry_point_module() -> None:
         "tracking",
         "gui",
     }
-    # gui.main may be absent while that package is unfinished; the rest must exist.
-    assert set(missing_roles()) <= {"gui"}
+    assert REQUIRED_MODULES["gui"] == "cephvr.gui.startup"
+    assert missing_roles() == []
 
 
 @pytest.mark.parametrize("no_tracking", [False, True])

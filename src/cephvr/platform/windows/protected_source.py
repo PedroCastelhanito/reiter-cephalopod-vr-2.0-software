@@ -11,6 +11,24 @@ from pathlib import Path
 from typing import BinaryIO
 
 
+class _Info(ctypes.Structure):
+    _fields_ = [
+        ("attributes", wintypes.DWORD),
+        ("creation_low", wintypes.DWORD),
+        ("creation_high", wintypes.DWORD),
+        ("access_low", wintypes.DWORD),
+        ("access_high", wintypes.DWORD),
+        ("write_low", wintypes.DWORD),
+        ("write_high", wintypes.DWORD),
+        ("volume", wintypes.DWORD),
+        ("size_high", wintypes.DWORD),
+        ("size_low", wintypes.DWORD),
+        ("links", wintypes.DWORD),
+        ("index_high", wintypes.DWORD),
+        ("index_low", wintypes.DWORD),
+    ]
+
+
 class ProtectedSourceError(OSError):
     pass
 
@@ -53,23 +71,6 @@ class ProtectedWindowsSource:
 
     @staticmethod
     def _file_identity(handle: int) -> tuple[int, int, int]:
-        class _Info(ctypes.Structure):
-            _fields_ = [
-                ("attributes", wintypes.DWORD),
-                ("creation_low", wintypes.DWORD),
-                ("creation_high", wintypes.DWORD),
-                ("access_low", wintypes.DWORD),
-                ("access_high", wintypes.DWORD),
-                ("write_low", wintypes.DWORD),
-                ("write_high", wintypes.DWORD),
-                ("volume", wintypes.DWORD),
-                ("size_high", wintypes.DWORD),
-                ("size_low", wintypes.DWORD),
-                ("links", wintypes.DWORD),
-                ("index_high", wintypes.DWORD),
-                ("index_low", wintypes.DWORD),
-            ]
-
         info = _Info()
         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
         fn = kernel.GetFileInformationByHandle

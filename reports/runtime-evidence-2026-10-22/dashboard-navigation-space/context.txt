@@ -1,0 +1,1 @@
+Date:2026-10-22 Asia/Tokyo. Uncommitted working tree; G01rev299/G02rev121. Method: repository Python3.11 Qt offscreen DashboardWindow(sample=True), Amber phosphor, Monitor,1920x1000. Result: compact view links in main sidebar, content begins directly alongside it. No native runtime or hardware verification.

@@ -1,0 +1,58 @@
+F......                                                                  [100%]
+================================== FAILURES ===================================
+_____________ test_timeline_epoch_shortcuts_and_keyboard_history ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002148BB47D90>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002148BAF8E50>
+
+    def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(editor.program))
+        editor.enter_group()
+        original = editor.program
+        window.activateWindow()
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        assert window.isActiveWindow() and editor.hierarchy.contents.hasFocus()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+        )
+        duplicate = editor.program
+        assert len(duplicate.sequence[0].body) == len(original.sequence[0].body) + 1
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier
+        )
+>       assert editor.program == original
+E       assert Program(forma...tings=()))),)) == Program(forma...tings=()))),))
+E         
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:13709: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_timeline_epoch_shortcuts_and_keyboard_history
+1 failed, 6 passed in 12.60s
+Windows fatal exception: access violation
+
+Current thread 0x00008d60 (most recent call first):
+  Garbage-collecting
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\_pytest\unraisableexception.py", line 33 in gc_collect_harder
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\_pytest\unraisableexception.py", line 172 in pytest_unconfigure
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\_pytest\config\__init__.py", line 1212 in _ensure_unconfigure
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\_pytest\main.py", line 372 in wrap_session
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\_pytest\main.py", line 377 in pytest_cmdline_main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\_pytest\config\__init__.py", line 229 in _main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\_pytest\config\__init__.py", line 253 in _console_main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pytest\__main__.py", line 9 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main

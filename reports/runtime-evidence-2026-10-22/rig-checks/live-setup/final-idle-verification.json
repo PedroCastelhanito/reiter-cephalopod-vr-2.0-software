@@ -1,0 +1,9 @@
+{
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true
+  },
+  "runtime_equal_to_baseline": true,
+  "history_bytes_equal": true,
+  "prompts": []
+}

@@ -1,0 +1,33 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+____________ test_protected_source_identity_reuses_native_abi_type ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000029E7E1EE350>
+
+    def test_protected_source_identity_reuses_native_abi_type(monkeypatch):
+        import ctypes
+        from types import SimpleNamespace
+    
+        observed = []
+        class Information:
+            succeeded = True
+            def __call__(self, handle, info):
+                observed.append(self.argtypes[1])
+                info._obj.volume = handle
+                info._obj.index_high = handle + 1
+                info._obj.index_low = handle + 2
+                return self.succeeded
+    
+        information = Information()
+        monkeypatch.setattr(ctypes, "WinDLL", lambda *args, **kwargs: SimpleNamespace(GetFileInformationByHandle=information))
+        for handle in range(256):
+            assert ProtectedWindowsSource._file_identity(handle) == (handle, handle + 1, handle + 2)
+>       assert len(set(observed)) == 1
+E       AssertionError: assert 256 == 1
+E        +  where 256 = len({<class 'cephvr.platform.windows.protected_source.LP__Info'>, <class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'>, <class 'cephvr.platform.windows.protected_source.LP__Info'>, ...})
+E        +    where {<class 'cephvr.platform.windows.protected_source.LP__Info'>, <class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'>, <class 'cephvr.platform.windows.protected_source.LP__Info'>, ...} = set([<class 'cephvr.platform.windows.protected_source.LP__Info'>, <class 'cephvr.platform.windows.protected_source.LP__Inf...'cephvr.platform.windows.protected_source.LP__Info'>, <class 'cephvr.platform.windows.protected_source.LP__Info'>, ...])
+
+tests\visual_stimulus\test_windows_resources.py:68: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_windows_resources.py::test_protected_source_identity_reuses_native_abi_type
+1 failed, 1 deselected in 0.08s

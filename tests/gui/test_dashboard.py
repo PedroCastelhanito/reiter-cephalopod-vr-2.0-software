@@ -2018,8 +2018,24 @@ def test_managed_total_time_tracks_trials_gaps_and_stops(window) -> None:
         if row is not None and row[0] != "OUTPUT DIR":
             assert row[0] in preview_text and row[1] in preview_text
     lines = preview_text.splitlines()
-    assert len(lines) == 2
-    assert lines[0].index("TRIAL ") == lines[1].index("TOTAL TIME")
+    hud_rows = tuple(
+        row
+        for row in window.dashboard.status_column.rows
+        if row is not None and row[0] != "OUTPUT DIR"
+    )
+    assert len(lines) == len(hud_rows) == 4
+    assert all(
+        line.startswith(key) for line, (key, _) in zip(lines, hud_rows, strict=True)
+    )
+    assert (
+        len(
+            {
+                line.index(value, len(key))
+                for line, (key, value) in zip(lines, hud_rows, strict=True)
+            }
+        )
+        == 1
+    )
     config.trials[0].stimulus.program.program_json = "{}"
     assert session_timeline(state, 12, 0) == (None, None)
 
@@ -3912,7 +3928,7 @@ def test_dashboard_has_only_requested_cards(window: DashboardWindow) -> None:
         "Session config",
         "Saving options",
         "HUD",
-        "Log",
+        "LOG console",
     }
     assert not any(
         item.property("role") == "pill" for item in window.findChildren(QLabel)
@@ -4354,11 +4370,19 @@ def test_camera_pfs_picker_preserves_camera_identity_and_editing_gate(
     assert set(cameras.fields) == {"trigger_frequency_hz"}
 
 
+@pytest.mark.parametrize("side_navigation", [False, True])
 def test_all_pages_share_fitted_hud_and_expanding_log(
-    window: DashboardWindow, app: QApplication
+    window: DashboardWindow, app: QApplication, side_navigation: bool
 ) -> None:
     from cephvr.gui.components import StatusColumn
 
+    for status in window.findChildren(StatusColumn):
+        assert status.hud_card.caption.text() == "HUD"
+        assert status.log_card.caption.text() == "LOG console"
+    previews = window.dashboard.preview_workspace
+    assert previews.hud_card.caption.text() == "HUD"
+    assert previews.log_card.caption.text() == "LOG console"
+    window.side_rail_action.setChecked(side_navigation)
     targets = [(0, None), *((2, i) for i in range(4)), (3, None)]
     top_positions = []
     for page, subtab in targets:
@@ -4393,7 +4417,14 @@ def test_all_pages_share_fitted_hud_and_expanding_log(
         assert sizes[0][0] == sizes[1][0]
         assert sizes[1][1] > sizes[0][1]
 
-    assert len(set(top_positions)) == 1
+    from cephvr.gui.theme import SIZES
+
+    assert all(left == hud for left, hud in top_positions)
+    assert len(set(top_positions[1:])) == 1
+    tab_offset = (
+        0 if side_navigation else window.dashboard.view_tabs.height() + SIZES.card_gap
+    )
+    assert top_positions[0] == tuple(top + tab_offset for top in top_positions[1])
 
 
 def test_device_tabs_sit_above_controls_without_moving_hud(
@@ -4409,6 +4440,13 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
     from cephvr.gui.theme import SIZES
 
     bar = window.devices.tab_bar
+    app.processEvents()
+    device_hud_top = (
+        window.devices.cameras.columns[1].hud_card.mapTo(window, QPoint()).y()
+    )
+    assert (
+        device_hud_top + window.dashboard.view_tabs.height() + SIZES.card_gap == hud_top
+    )
 
     def visible_tab(index):
         arrows = [
@@ -4524,7 +4562,7 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
             if width == 1920:
                 assert (
                     panel.layout_card if index == 2 else panel.columns[1].hud_card
-                ).mapTo(window, QPoint()).y() == hud_top
+                ).mapTo(window, QPoint()).y() == device_hud_top
     window.page_buttons[0].click()
     app.processEvents()
     assert window.dashboard.hud_card.mapTo(window, QPoint()).y() == hud_top
@@ -8765,11 +8803,13 @@ def test_configuration_scroll_keeps_projector_status_fixed(
     window.devices.tabs.setCurrentIndex(2)
     panel = window.devices.projectors
     assert [panel.setup_tabs.tabText(i) for i in range(3)] == [
-        "Screen calibration",
         "Rig geometry",
-        "Synchronization",
+        "Projection calibration",
+        "Projection synchronization",
     ]
-    panel.setup_tabs.setCurrentIndex(1)
+    assert panel.setup_pages.currentWidget() is panel.rig_page
+    assert panel.calibration.caption.text() == "Projection calibration"
+    panel.setup_tabs.setCurrentIndex(0)
     app.processEvents()
     top = panel.layout_card.mapTo(window, QPoint())
     log = panel.status_column.log_card.mapTo(window, QPoint())
@@ -10267,7 +10307,10 @@ def test_motion_auto_commit_and_invalid_edit_undo(
     motion.speed.selectAll()
     QTest.keyClicks(motion.speed, "30")
     editor.subgroup.composer.duration.setFocus()
-    app.processEvents()
+    for _ in range(100):
+        if editor.program != original:
+            break
+        QTest.qWait(10)
     assert editor.program != original
     assert editor.program.sequence[0].body[0].settings[
         0
@@ -13658,27 +13701,26 @@ def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
     editor = window.protocol.editor
     from cephvr.gui.protocol_batches import grouped_program
 
+    def press(widget, key, modifiers=Qt.KeyboardModifier.NoModifier):
+        window.activateWindow()
+        widget.setFocus()
+        app.processEvents()
+        assert window.isActiveWindow() and widget.hasFocus()
+        QTest.keyClick(widget, key, modifiers)
+
     editor.set_program(grouped_program(editor.program))
     editor.enter_group()
     original = editor.program
-    editor.hierarchy.contents.setFocus()
-    app.processEvents()
-    QTest.keyClick(
-        editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
-    )
+    press(editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
     duplicate = editor.program
     assert len(duplicate.sequence[0].body) == len(original.sequence[0].body) + 1
     editor.hierarchy.contents.setFocus()
     app.processEvents()
-    QTest.keyClick(
-        editor.hierarchy.contents, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier
-    )
+    press(editor.hierarchy.contents, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier)
     assert editor.program == original
-    QTest.keyClick(
-        editor.hierarchy.contents, Qt.Key.Key_Y, Qt.KeyboardModifier.ControlModifier
-    )
+    press(editor.hierarchy.contents, Qt.Key.Key_Y, Qt.KeyboardModifier.ControlModifier)
     assert editor.program == duplicate
-    QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Backspace)
+    press(editor.hierarchy.contents, Qt.Key.Key_Backspace)
     assert len(editor.program.sequence[0].body) == len(original.sequence[0].body)
     assert not any(
         action.text() in {"Undo", "Redo"} for action in editor.epoch_menu.actions()
@@ -13686,10 +13728,8 @@ def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
     editor.hierarchy.contents.choose(0, Qt.KeyboardModifier.NoModifier)
     editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.ShiftModifier)
     before = editor.program
-    QTest.keyClick(
-        editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
-    )
-    QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Backspace)
+    press(editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
+    press(editor.hierarchy.contents, Qt.Key.Key_Backspace)
     assert editor.program == before
     text_field = editor.subgroup.composer.duration
     text_field.setText("123")
@@ -13697,7 +13737,7 @@ def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
     text_field.setCursorPosition(3)
     app.processEvents()
     before = editor.program
-    QTest.keyClick(text_field, Qt.Key.Key_Backspace)
+    press(text_field, Qt.Key.Key_Backspace)
     assert text_field.text() == "12"
     assert editor.program == before
     editor.subgroup.discard()
@@ -17653,6 +17693,17 @@ def test_retro_family_switch_repaints_with_owning_palette(
         ):
             phosphor.appearance.select(name)
             assert phosphor.appearance.actions[name].isChecked()
+            assert all(not button.icon().isNull() for button in phosphor.page_buttons)
+            for bar in (
+                phosphor.devices.tab_bar,
+                phosphor.dashboard.view_tabs,
+                phosphor.devices.projectors.setup_tabs,
+            ):
+                assert all(not bar.tabIcon(i).isNull() for i in range(bar.count()))
+            assert all(
+                not item.icon(0).isNull() for item in phosphor.dashboard.rail.devices
+            )
+
             assert phosphor.property("retroConsole") is True
             assert phosphor.appearance.brand.text() == "CEPHVR"
             for page in (phosphor.dashboard, phosphor.protocol, phosphor.devices):
@@ -17669,7 +17720,7 @@ def test_retro_family_switch_repaints_with_owning_palette(
                 "< SYSTEM CONTROLS >" if phosphor_style else "SYSTEM CONTROLS"
             )
             heading = phosphor.recordings.data_heading
-            assert heading.text() == ("/// DATA \\\\\\" if phosphor_style else "Data")
+            assert heading.text() == ("| DATA |" if phosphor_style else "Data")
             assert phosphor.page_header.isHidden() == phosphor_style
             appearance = phosphor.appearance
             unit = next(
@@ -17684,7 +17735,7 @@ def test_retro_family_switch_repaints_with_owning_palette(
                 card for card in appearance.card_titles if card.property("nestedCard")
             ]
             assert nested and all(
-                card.caption.text().startswith("///") == phosphor_style
+                card.caption.text().startswith("| ") == phosphor_style
                 for card in nested
             )
             assert phosphor.devices.tab_bar.findChild(TabBrackets) is not None
@@ -17702,7 +17753,7 @@ def test_retro_family_switch_repaints_with_owning_palette(
             nav = next(item for item in phosphor.page_buttons if item.isChecked())
             assert isinstance(nav, Button)
             assert nav.retro_label() == (
-                f"> {nav.text()} <" if phosphor_style else f"> {nav.text()}"
+                f"< {nav.text()} >" if phosphor_style else f"> {nav.text()}"
             )
         assert settings.value("appearance/style") == "amber_phosphor"
         phosphor.appearance.select("standard")
@@ -17714,6 +17765,22 @@ def test_retro_family_switch_repaints_with_owning_palette(
             window.hide()
             window.deleteLater()
         app.processEvents()
+
+
+def test_monitor_style_switch_uses_live_field_captions(window, app):
+    window.appearance.select("retro_console", persist=False)
+    prior = set(window.appearance.field_labels)
+    show_previews(window)
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    live = set(window.findChildren(QLabel))
+    assert prior - live, "Monitor must exercise retired caption wrappers"
+    added = QLabel("Fresh label (mA)", window.dashboard)
+    added.setProperty("role", "label")
+    window.appearance.actions["amber_phosphor"].trigger()
+    assert set(window.appearance.field_labels) <= set(window.findChildren(QLabel))
+    assert added.text() == "FRESH LABEL (mA)"
+    window.appearance.actions["retro_console"].trigger()
+    assert added.text() == "Fresh label (mA)"
 
 
 def test_log_wrap_hangs_under_message_column_and_round_trips() -> None:
@@ -18934,11 +19001,17 @@ def test_review_devices_capture_aligned_fields_and_wrapped_headers(app, width):
         for _ in range(5):
             app.processEvents()
         timing = projectors.timing
-        assert timing.mode_field.width() == timing.width()
+        card = projectors.vsync_card
+        assert card.width() == timing.width()
         assert (
-            timing.mode_field.mapTo(projectors, QPoint()).x()
+            card.mapTo(projectors, QPoint()).x()
             == timing.mapTo(projectors, QPoint()).x()
         )
+        margins = card.body.contentsMargins()
+        assert (
+            timing.mode_field.width() == card.width() - margins.left() - margins.right()
+        )
+        assert timing.mode_field.mapTo(card, QPoint()).x() == margins.left()
     finally:
         reviewed.hide()
         reviewed.deleteLater()
@@ -19931,7 +20004,7 @@ def test_preview_log_four_lines_and_collapse_follows_latest(
     assert not hasattr(window.dashboard, "trial_position")
 
 
-def test_devices_side_rail_mirrors_tabs_and_yields_when_narrow(
+def test_devices_side_rail_mirrors_tabs_in_main_sidebar(
     app: QApplication, tmp_path: Path
 ) -> None:
     settings = QSettings(str(tmp_path / "rail.ini"), QSettings.Format.IniFormat)
@@ -19942,40 +20015,73 @@ def test_devices_side_rail_mirrors_tabs_and_yields_when_narrow(
         window.show()
         window.page_buttons[2].click()
         app.processEvents()
-        # Default: the existing top tabs, no rail.
-        assert not devices.rail_mode and devices.rail_host.isHidden()
-        assert devices.navigation.isVisible()
-        window.side_rail_action.setChecked(True)
-        app.processEvents()
-        assert devices.rail_mode and devices.rail_host.isVisible()
+        assert window.side_rail_action.isChecked()
+        assert devices.side_rail and devices.rail.isVisible()
+        assert devices.rail.parentWidget() is window.page_buttons[2].parentWidget()
+        assert devices.rail.height() == 160
+        for style in ("standard", "retro_console", "amber_phosphor"):
+            window.appearance.select(style, persist=False)
+            app.processEvents()
+            assert devices.rail.x() > window.page_buttons[2].x()
+            assert (
+                devices.rail.font().pixelSize()
+                < window.page_buttons[2].font().pixelSize()
+            )
+            assert (
+                devices.rail.visualItemRect(devices.rail.devices[-1]).bottom()
+                < devices.rail.viewport().height()
+            )
+        assert devices.tabs.x() == 0
         assert devices.navigation.isHidden()
-        assert devices.projectors.setup_tabs.isHidden()
-        assert settings.value("devices/side_rail", type=bool) is True
+        assert not devices.projectors.setup_tabs.isHidden()
         rail = devices.rail
         assert [rail.devices[i].text(0) for i in range(4)] == [
             devices.tab_bar.tabText(i) for i in range(4)
         ]
-        # Rail drives the tab bar and the Projectors section tabs.
-        rail.item_chosen(rail.rows[(2, 1)])
+        assert len(rail.rows) == 4
+        rail.item_chosen(rail.rows[(2, -1)])
         assert devices.tab_bar.currentIndex() == 2
-        assert devices.projectors.setup_tabs.currentIndex() == 1
-        assert rail.currentItem() is rail.rows[(2, 1)]
+        assert rail.currentItem() is rail.rows[(2, -1)]
+        assert devices.projectors.setup_tabs.isVisible()
+        dashboard = window.dashboard
+        window.page_buttons[0].click()
+        app.processEvents()
+        assert dashboard.rail.isVisible() and dashboard.view_tabs.isHidden()
+        assert devices.rail.isHidden()
+        assert dashboard.rail.parentWidget() is window.page_buttons[0].parentWidget()
+        assert dashboard.rail.height() < 110
+        assert dashboard.form.x() == 0
+        window.resize(900, 800)
+        app.processEvents()
+        assert dashboard.rail.isVisible() and dashboard.view_tabs.isHidden()
+        window.resize(1600, 900)
+        dashboard.rail.item_chosen(dashboard.rail.rows[(1, -1)])
+        assert dashboard.runtime_layout and dashboard.view_tabs.currentIndex() == 1
+        dashboard.view_tabs.setCurrentIndex(0)
+        assert dashboard.rail.currentItem() is dashboard.rail.rows[(0, -1)]
+        window.apply_view(review_view(Phase.RUNNING))
+        assert dashboard.rail.currentItem() is dashboard.rail.rows[(1, -1)]
+        window.apply_view(review_view(Phase.CONFIGURATION))
+        assert dashboard.rail.currentItem() is dashboard.rail.rows[(0, -1)]
+        window.page_buttons[2].click()
+        assert dashboard.rail.isHidden()
         # Tab changes elsewhere are mirrored without echoing a choice back.
         chosen: list[tuple[int, int]] = []
         rail.chosen.connect(lambda device, section: chosen.append((device, section)))
         devices.projectors.setup_tabs.setCurrentIndex(2)
         devices.tab_bar.setCurrentIndex(3)
         assert rail.currentItem() is rail.rows[(3, -1)] and not chosen
-        # Narrow pages fall back to the top tabs.
+        # Compact sidebar navigation also preserves content width on narrow pages.
         window.resize(900, 800)
         app.processEvents()
-        assert not devices.rail_mode and devices.rail_host.isHidden()
-        assert devices.navigation.isVisible()
+        assert devices.rail.isVisible()
+        assert devices.navigation.isHidden()
         assert devices.projectors.setup_tabs.isVisibleTo(devices.projectors)
         window.resize(1600, 900)
         window.side_rail_action.setChecked(False)
         app.processEvents()
-        assert not devices.rail_mode and devices.navigation.isVisible()
+        assert devices.rail.isHidden() and devices.navigation.isVisible()
+        assert dashboard.rail.isHidden() and not dashboard.view_tabs.isHidden()
         assert settings.value("devices/side_rail", type=bool) is False
     finally:
         window.close()
@@ -20369,7 +20475,7 @@ def test_preview_frame_metrics_show_live_values_and_clear_stale_or_hidden(
     frame.close()
 
 
-@pytest.mark.parametrize("style", ["standard", "retro_console"])
+@pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
 def test_preview_workspace_frames_shown_streams_and_timeline(
     window, app, style, monkeypatch
 ):
@@ -20407,10 +20513,13 @@ def test_preview_workspace_frames_shown_streams_and_timeline(
     assert dialog.details.isHidden()
     assert dialog.preview_host.width() == dialog.splitter.width()
     assert dialog.hud.geometry().bottom() < dialog.timeline_card.y()
-    assert dialog.timeline_card.geometry().bottom() < dialog.splitter.y()
+    assert dialog.timeline_card.geometry().bottom() < dialog.controls_card.y()
+    assert dialog.controls_card.geometry().bottom() < dialog.splitter.y()
     assert dialog.timeline_card.width() == dialog.splitter.width()
-    assert dialog.timeline_card.isAncestorOf(dialog.toggle_bar)
-    assert dialog.timeline_card.isAncestorOf(dialog.video_row)
+    assert dialog.controls_card.width() == dialog.timeline_card.width()
+    assert dialog.controls_card.isAncestorOf(dialog.toggle_bar)
+    assert dialog.controls_card.isAncestorOf(dialog.video_row)
+    assert dialog.controls_card.isAncestorOf(dialog.advanced_row)
     assert all(dialog.video_row.isAncestorOf(c) for c in dialog.controls.values())
     targets = {key: frame.target for key, frame in window.preview_slot.frames.items()}
     assert not dialog.empty_hint.isVisible()
@@ -20452,8 +20561,10 @@ def test_preview_workspace_frames_shown_streams_and_timeline(
     assert dialog.details.isHidden()
     assert dialog.preview_host.width() == dialog.splitter.width()
     assert not requests
+    left, right = ("<", ">") if style == "amber_phosphor" else ("[", "]")
     for name in dialog.names.values():
-        assert name.text().startswith("[ ") and name.text().endswith(" ]")
+        assert name.text().startswith(left + " ")
+        assert name.text().endswith(" " + right)
     window.resize(900, 800)
     app.processEvents()
     assert all(
@@ -20575,7 +20686,7 @@ def test_preview_top_row_holds_system_controls_hud_console_and_view_toggles(
     dialog = window.dashboard.preview_workspace
     show_previews(window)
     assert dialog.toggle_bar.isAncestorOf(dialog.advanced_toggle)
-    assert dialog.timeline_card.header.indexOf(dialog.toggle_bar) >= 0
+    assert dialog.controls_card.header.indexOf(dialog.toggle_bar) >= 0
     # No REC or output-fault lamp is drawn in the HUD card.
     assert not dialog.hud_card.findChildren(QLabel, "rec-lamp")
     cards = (window.dashboard.session_controls, dialog.hud_card, dialog.log_card)
@@ -22196,3 +22307,175 @@ def test_review_session_commands_walk_phases_and_swap_preview_layout(window, app
     for _ in range(40):
         app.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
     assert dashboard.view.phase == Phase.CONFIGURATION
+
+
+@pytest.mark.parametrize("name", ["standard", "retro_console", "amber_phosphor"])
+def test_startup_splash_hides_construction_and_reveals_ready_window(
+    app, tmp_path, name
+):
+    from PyQt6.QtCore import QObject
+    from PyQt6.QtTest import QSignalSpy
+
+    from cephvr.gui.splash import StartupSplash
+
+    settings = QSettings(str(tmp_path / "startup.ini"), QSettings.Format.IniFormat)
+    settings.setValue("appearance/style", name)
+    shows = []
+
+    class VisibleWindows(QObject):
+        def eventFilter(self, watched, event):
+            if (
+                event.type() == QEvent.Type.Show
+                and isinstance(watched, QWidget)
+                and watched.isWindow()
+            ):
+                shows.append(watched)
+            return False
+
+    observer = VisibleWindows()
+    app.installEventFilter(observer)
+    splash = StartupSplash(settings)
+    target = None
+    try:
+        splash.begin()
+        assert splash.isVisible() and splash.timer.isActive()
+        QTest.mouseClick(splash, Qt.MouseButton.LeftButton)
+        assert splash.isVisible()
+        ticks = QSignalSpy(splash.timer.timeout)
+        assert ticks.wait(2000)
+        target = DashboardWindow(sample=True, settings=settings)
+        assert not target.isVisible()
+        assert shows == [splash]
+        assert target.appearance.name == splash.style_name == name
+        assert (
+            splash.pixmap().toImage().pixelColor(10, 10).name() == splash.colors.window
+        )
+        splash.reveal(target)
+        app.processEvents()
+        assert target.isVisible() and target.isMaximized()
+        assert not splash.isVisible() and not splash.timer.isActive()
+        assert shows == [splash, target]
+    finally:
+        app.removeEventFilter(observer)
+        splash.close()
+        splash.deleteLater()
+        if target is not None:
+            target.close()
+            target.deleteLater()
+        app.processEvents()
+
+
+@pytest.mark.parametrize(
+    "saved,legacy,expected",
+    [
+        (None, "retro_console", "retro_console"),
+        ("bad", "amber_phosphor", "standard"),
+        ("standard", "amber_phosphor", "standard"),
+    ],
+)
+def test_startup_splash_preference_fallback(app, tmp_path, saved, legacy, expected):
+    from cephvr.gui.splash import StartupSplash, saved_style
+
+    settings = QSettings(str(tmp_path / "style.ini"), QSettings.Format.IniFormat)
+    settings.setValue("review/appearance", legacy)
+    settings.setValue("review/crt", False)
+    if saved is not None:
+        settings.setValue("appearance/style", saved)
+    before = {key: settings.value(key) for key in settings.allKeys()}
+    splash = StartupSplash(settings)
+    assert splash.style_name == expected == saved_style(settings)
+    assert not splash.crt
+    assert {key: settings.value(key) for key in settings.allKeys()} == before
+    splash.deleteLater()
+
+
+def test_startup_bootstrap_closes_splash_on_failure(app, monkeypatch):
+    from cephvr.gui import main as managed
+    from cephvr.gui import startup
+    from cephvr.gui.splash import StartupSplash
+
+    created = []
+
+    class Splash(StartupSplash):
+        def __init__(self, settings):
+            super().__init__(settings)
+            created.append(self)
+
+    def fail(*, splash):
+        assert splash.isVisible()
+        raise RuntimeError("bootstrap failed")
+
+    monkeypatch.setattr(startup, "QApplication", lambda args: app)
+    monkeypatch.setattr(startup, "StartupSplash", Splash)
+    monkeypatch.setattr(managed, "main", fail)
+    with pytest.raises(RuntimeError, match="bootstrap failed"):
+        startup.main()
+    assert len(created) == 1
+    assert not created[0].isVisible()
+    assert not created[0].timer.isActive()
+    created[0].deleteLater()
+
+
+def test_splash_moves_during_construction_without_dispatching_callbacks(app, tmp_path):
+    import time
+
+    from cephvr.gui.splash import StartupSplash
+
+    settings = QSettings(str(tmp_path / "motion.ini"), QSettings.Format.IniFormat)
+    splash = StartupSplash(settings)
+    owner = QWidget()
+    queued = []
+    try:
+        splash.begin()
+        QTimer.singleShot(0, lambda: queued.append(True))
+        before = splash.phase
+        # No event-loop pumping: this models synchronous widget construction.
+        time.sleep(0.06)
+        child = QWidget(owner)
+        assert splash.phase != before
+        assert not queued
+        assert child.parentWidget() is owner
+        # The bright segment travels right, then back left, inside its track.
+        for phase, left in [(0, 210), (144, 354), (216, 282)]:
+            splash.phase = phase
+            splash.redraw()
+            picture = splash.pixmap().toImage()
+            assert picture.pixelColor(left + 1, 264).name() == splash.colors.accent
+            assert picture.pixelColor(209, 264).name() == splash.colors.window
+            assert picture.pixelColor(390, 264).name() == splash.colors.window
+        splash.close()
+        assert not splash.timer.isActive()
+    finally:
+        splash.close()
+        splash.deleteLater()
+        owner.deleteLater()
+        app.processEvents()
+
+
+def test_navigation_repaints_selection_before_page_work(window, app):
+    from PyQt6.QtCore import QObject
+
+    window.appearance.select("amber_phosphor", persist=False)
+    target = window.page_buttons[2]
+    painted = []
+
+    class Watch(QObject):
+        def eventFilter(self, obj, event):
+            if obj is target and event.type() == QEvent.Type.Paint:
+                painted.append(target.isChecked())
+            return False
+
+    watch = Watch()
+    target.installEventFilter(watch)
+    checked_before_clicked = []
+    window.navigation.idToggled.connect(
+        lambda index, checked: (
+            checked_before_clicked.append(True in painted)
+            if index == 2 and checked
+            else None
+        )
+    )
+    target.click()
+    assert checked_before_clicked == [True]
+    assert target.retro_label() == "< Devices >"
+    target.removeEventFilter(watch)

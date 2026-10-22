@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 294
+**Status:** Accepted · **Revision:** 299
 
 - Camera and Visual Stimulus previews display the newest available frame at up to
   20 Hz, using the source rate when slower, without duplicate frames or catch-up
@@ -774,8 +774,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Discovery/loading never writes preferences or guesses replacement displays;
   invalid preferences stay preserved and save/restore failures are reported.
   V15 owns output selection without altering calibrated surfaces.
-  Below the inventory, sections are ordered Screen calibration, Rig geometry,
-  Synchronization. Screen calibration uses a CephVR1.0-style per-face table containing
+  Below the inventory, sections are ordered Rig geometry, Projection calibration,
+  Projection synchronization. Projection calibration uses a CephVR1.0-style per-face table containing
   paired integer Width/Height, separate Offset X/Y columns in pixels and inverse-axis controls.
   Omit table arrows; Up/Down keys step by exactly 1 px through the existing draft/live-update path.
   Partial typed input is retained; fractional dimensions fail validation. Rig geometry owns tank
@@ -926,8 +926,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   explicit right distance against this rule before adopting; unequal offsets reject
   the whole load. Version 2 saves only independent calibration values.
   Diagram and projection conversion share the same corner calculation.
-  Synchronization is the last Projectors tab, following Screen calibration and Rig
-  geometry. It offers Free run (no VSync), VSync on pulse display, and VSync on all
+  Projection synchronization is the last Projectors tab, following Rig geometry
+  and Projection calibration. It offers Free run (no VSync), VSync on pulse display, and VSync on all
   displays under V20, without an MCU input prerequisite or contextual MCU editor.
   Projector flip and camera-trigger phase offsets remain deferred under A11,
   independently of presentation pacing. Existing mode labels migrate on draft load.
@@ -1048,7 +1048,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Camera experiment enablement belongs to Devices. Dashboard shows a video-recording
   switch for each camera role and Visual Stimulus, plus Tracking velocities.
   Recording selections are retained but disabled while their source is inactive.
-- A Configure | Monitor tab bar heads the Dashboard body. Configure shows the session
+- Dashboard side navigation places Configure and Monitor beneath Dashboard in the
+  main sidebar, reserving no second content column. Disabling the shared G02
+  navigation preference restores the top tab bar. Configure shows the session
   form; Monitor shows the runtime preview layout. Entering a run phase (Starting,
   Running, Stopping, Finalizing) switches to Monitor and leaving it switches to
   Configure; only these transitions switch automatically, and the operator may switch
@@ -1057,7 +1059,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   The Dashboard's own System controls card (with its backend indicators) moves
   unchanged into Monitor's top row, stretching to that row's height, and returns to
   the form afterwards; it is never duplicated. A Timeline card holds the epoch timeline
-  with the Video/Advanced previews toggles in its header, then a Video row with one
+  only. A separate full-width Preview controls card below it holds the Video/Advanced
+  previews toggles in its header, then a Video row with one
   checkbox per stream (named by the stream; checking opens its viewer) and an
   Advanced row with one checkbox per projector; each row shows only while its master
   toggle is on. Only shown or opening streams take frames, so unchecked streams free
@@ -1067,13 +1070,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Show a compact HUD using the Dashboard's same status, trial and time values, as
   label-aligned columns, with no recording lamp or symbol text. The HUD is the
   middle card of the top row, between System controls and Console. Advanced previews
-  is a standard checkbox in the timeline, enabled independently of operator authority.
+  is a standard checkbox in Preview controls, enabled independently of operator authority.
   A **Video previews** checkbox beside it (default on, remembered locally) shows or
   hides the stream section; hiding closes any open viewer through the normal Show
   request, leaves capture unchanged, and Show must be chosen again after it returns.
   The current trial (or selected draft) epoch timeline
-  always spans the full body width directly below the HUD, without an outer
-  card frame or card heading. Below that row,
+  always spans the full body width in its Timeline card directly below the HUD.
+  Below Preview controls,
   streams fill the available width when Advanced previews is off (default,
   remembered locally). Enabling it shows a fitted grid of projector
   cards on the right at one third of the available width; a draggable splitter
@@ -1084,7 +1087,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   instruments; retain accessible dial names. Use16px section/card gaps and divider
   spacing. There are no per-source visibility toggles. Center each instrument in its grid
   cell and choose rows/columns to maximize their scale within the available width
-  and height. Scale the complete instruments proportionally, including labels and
+  and height. When projector cards fit in a single row, center that row vertically
+  in the section, keeping headings with their instruments; multi-row grids use the
+  available height. Scale the complete instruments proportionally, including labels and
   readouts, so every card stays visible without horizontal or vertical scrolling.
   Advanced size lanes remain aligned to the timeline.
   Stream grids choose up to four columns to maximize square frame size, including
@@ -1197,9 +1202,22 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 112
+**Status:** Accepted · **Revision:** 128
 
-- Runtime preview layout card titles and stream headings use the same coral-red hue as
+- GUI startup displays a compact text-only `CephVR2.0` / `Initializing` splash,
+  using the saved Style (legacy fallback and unknown-to-Standard behavior retained),
+  a thin indeterminate segment moving side to side and no terminal cursor. During
+  widget construction, repaint only the splash without dispatching queued callbacks;
+  animation uses elapsed time and stops on close. Standard uses white/blue,
+  Retro coral/cyan and Amber amber/gold; Retro-family scanlines/glow respect CRT effects.
+  Construct, style and prepaint the main window while hidden, then reveal it and close
+  the splash. Child controls must be parented before visibility changes. The managed
+  GUI bootstrap shows the splash before frontend imports; it does not own devices,
+  extend startup deadlines or wait indefinitely for controller connectivity. Startup
+  failures retain their existing propagation and close the splash.
+- Shared interface, label, title, console and sidebar fonts are enlarged by one pixel
+  across Standard and Retro-family styles; retain their relative hierarchy.
+- Runtime preview layout card titles, projector headings and stream headings use the same coral-red hue as
   the main GUI; retain the existing borders, type and console palette.
 
 - Preview rate footers use two centered muted rows with one decimal place, following G01
@@ -1284,23 +1302,25 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   console and Amber phosphor. Amber phosphor is a Retro-family style modelled on
   the owner's satellite HUD reference. It keeps Retro's fonts, glyphs, prompts and
   CRT rules on cool near-black, with red-orange card titles shown as `< TITLE >`,
-  pale-gold values over dim amber labels, and wide-tracked regular headings. Cards
+  pale-gold values over readable muted amber labels, slightly lifted dark surfaces
+  and frames, and wide-tracked regular headings. Cards
   are recessed to the log surface with a dim outline and bright corner brackets;
   HUD/log cards keep only corners and centred edge segments, with unboxed text and
   dim log column titles aligned to the log columns. Fields are underlined, checkboxes
   inset (hover brightens the box and label), tabs unboxed with dim text/icons and
   corner brackets (gold current tab, dim hover), table headers plain over a dashed rule, nested cards
   as flush subsections, epoch tiles neutral with the epoch name above one tint bar
-  and `Epoch N · duration` below, subsection headings shown as `/// NAME \\\`, and the page heading omitted.
-  The sidebar wordmark and navigation are centred: `> Page <` with bright brackets when selected, dim
-  brackets on hover. Buttons rest as plain orange outlines and fill orange
+  and `Epoch N · duration` below, subsection headings shown as `| NAME |`, and the page heading omitted.
+  The sidebar wordmark is centred and navigation is left-aligned: `< Icon Title >` with bright brackets when selected, dim
+  brackets on hover. Selected text stays coral-red under hover; repaint
+  navigation icons and labels on the checked-state signal before page-layout work. Buttons rest as plain orange outlines and fill orange
   on hover; Stop, Abort, Disconnect and Cancel actions do the same in red; disabled
   buttons are dim outlines and toggles fill only when checked. Selection elsewhere (trials, group/epoch blocks, batch bands) has no fill: pale-gold
   text and a bright outline. HUD and
   log text share the value colour; wrapped log rows continue under the message
   column for display only (copied text is the stored row). Focus is bright amber,
   ready lamps are cream, waiting is orange and faults red; Amber phosphor has no cyan. Its CRT scanlines
-  are stronger so bright fills read as striped. With CRT effects on, Retro-family
+  remain stronger than Retro but softened for readability, so bright fills read as striped. With CRT effects on, Retro-family
   popups, menus and owned windows carry the same scanline film. Decorations are display-only: stored
   titles and headings are unchanged. The palette follows the owning window.
   The Style menu retains a shared frontend preference with legacy Review fallback.
@@ -1380,8 +1400,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   viewport margin, so top/bottom padding stays small.
   Standard has neither. Omit the extra review/phase/clock banner; phase remains in
   the HUD. Stream headings are bracketed names (`< NAME >` in Amber phosphor, which also
-  shows projectors as `/// NAME \\\` sections with dials directly under the heading);
-  the HUD and log cards are titled HUD and Log on every page. Place epoch labels in a separate
+  shows projectors as `| NAME |` sections with dials directly under the heading);
+  the HUD and log cards are titled HUD and LOG console on every page and device tab,
+  without backend prefixes (Retro-family styles retain uppercase decoration). Place epoch labels in a separate
   strip, with only the right-aligned epoch readout directly above it. Source legend
   controls sit directly above the motion plots in their own section, independent of
   the timeline header; hiding a source never hides its control or the epoch timeline. The epoch readout is only `Epoch n / N` (unknown n is
@@ -1418,15 +1439,31 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Device icon subtabs occupy the top of the left content column, followed by the
   per-device Configuration file card and then connection/settings cards. Subtabs expand to fill their column and align their top edge
   with the HUD card’s painted top border. The right HUD stays at the same top position across pages and
-  device subtabs in the two-column layout. Use the existing stacked layout on narrow
+  device subtabs in the two-column layout; only Dashboard's fallback Configure | Monitor
+  top tab bar and its card gap shift that page's controls and HUD together. Use the existing stacked layout on narrow
   windows; tab overflow scrolls without replacing navigation with a dropdown.
-- View > Devices side navigation (off by default; owner trial, local preference) shows
-  one rail beside the Devices page listing Cameras, Microcontroller, Projectors (with
-  Screen calibration, Rig geometry and Synchronization beneath it) and SpikeGLX. It
-  mirrors and drives the existing device tabs and Projectors section tabs, which stay
-  the source of state, and replaces both tab strips while the page is at least 1000 px
-  wide; narrower pages show the tab strips as before. Control, authority and selection
-  gates are unchanged.
+- Navigation pairs labels with theme-colored outline icons: Dashboard panels,
+  Protocol timeline, Devices USB, Tracking CephVR1 six-arrow flow, Configure sliders,
+  Monitor eye, Cameras camera, Microcontroller chip, existing Projector, SpikeGLX
+  waveform, Rig geometry cube, Projection calibration scan corners and Projection
+  synchronization nested pulse squares. Icons follow selected/inactive palette colors;
+  the main sidebar reserves room for icons and complete bracketed labels.
+- View > Side navigation defaults on, retaining an explicit saved local preference.
+  Dashboard shows compact Configure and Monitor links below its main sidebar button
+  only while Dashboard is selected, at every window width. Devices likewise shows
+  Cameras, Microcontroller, Projectors and SpikeGLX beneath its main sidebar button
+  only while Devices is selected; neither page reserves a second navigation column. Projectors' Rig geometry,
+  Projection calibration and Projection synchronization tabs remain below Displays
+  in the content column, independent of the rail. Rails mirror/drive existing view
+  tabs and preserve automatic session transitions and manual selection. Disabling
+  Side navigation restores top tabs on both pages; control and authority gates are
+  unchanged. The214px main sidebar fits complete device labels beside their icons. Main page
+  links are left-aligned; their child links are indented16px with12px text,16px
+  icons and compact rows separated by6px of vertical margin. Reserve40px per child
+  row and16px between sidebar entries, keeping child groups together beneath their
+  parent while main sections have more breathing room. Selected sidebar child links
+  use a slim left accent bar and brighter text/icons on an unfilled background;
+  neither selection nor hover draws a surrounding box.
 - Empty inventory tables and the Displays layout say what to do (for example, use the
   refresh button) instead of showing a blank body. A disabled Load/Save as button's
   tooltip states why: editing is locked (controller not connected, another window holds
@@ -1472,7 +1509,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   dependent section so hidden sections leave no empty gap; preserve compact
   same-row/table checkboxes beside their associated values.
 - Camera trigger source/rate/pin fields align at their bottom edge when labels wrap.
-  The independent VSync mode field spans its full settings column, aligned to card edges.
+  VSync mode occupies a Display synchronization card aligned to sibling card edges;
+  its field fills the shared card body within the normal padding.
 - Keep page alignment, fixed card gaps, labeled fields, natural button heights,
   content-measured table columns, semantic status labels and inherited dialog styling
   consistent across pages. Same-row controls share their tallest natural height

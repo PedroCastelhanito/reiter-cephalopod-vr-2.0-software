@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="4.180" timestamp="2026-10-22T08:42:46.736755+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_managed_total_time_tracks_trials_gaps_and_stops" time="0.638"><failure message="AssertionError: assert 4 == 2&#10; +  where 4 = len(['STATUS      Ended', 'TRIAL       2/2', 'TRIAL TIME  00:00:12 / —', 'TOTAL TIME  00:01:22 / 00:02:10'])">tests\gui\test_dashboard.py:2021: in test_managed_total_time_tracks_trials_gaps_and_stops
+    assert len(lines) == 2
+E   AssertionError: assert 4 == 2
+E    +  where 4 = len(['STATUS      Ended', 'TRIAL       2/2', 'TRIAL TIME  00:00:12 / —', 'TOTAL TIME  00:01:22 / 00:02:10'])</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_all_pages_share_fitted_hud_and_expanding_log" time="0.794"><failure message="assert 2 == 1&#10; +  where 2 = len({(83, 83), (134, 134)})&#10; +    where {(83, 83), (134, 134)} = set([(134, 134), (83, 83), (83, 83), (83, 83), (83, 83)])">tests\gui\test_dashboard.py:4396: in test_all_pages_share_fitted_hud_and_expanding_log
+    assert len(set(top_positions)) == 1
+E   assert 2 == 1
+E    +  where 2 = len({(83, 83), (134, 134)})
+E    +    where {(83, 83), (134, 134)} = set([(134, 134), (83, 83), (83, 83), (83, 83), (83, 83)])</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_device_tabs_sit_above_controls_without_moving_hud" time="1.059"><failure message="assert 83 == 134&#10; +  where 83 = &lt;built-in method y of QPoint object at 0x0000028A962CEF80&gt;()&#10; +    where &lt;built-in method y of QPoint object at 0x0000028A962CEF80&gt; = PyQt6.QtCore.QPoint(822, 83).y&#10; +      where PyQt6.QtCore.QPoint(822, 83) = &lt;built-in method mapTo of Card object at 0x0000028A93A51E10&gt;(&lt;cephvr.gui.window.DashboardWindow object at 0x0000028A9631B2E0&gt;, PyQt6.QtCore.QPoint())&#10; +        where &lt;built-in method mapTo of Card object at 0x0000028A93A51E10&gt; = &lt;cephvr.gui.components.Card object at 0x0000028A93A51E10&gt;.mapTo&#10; +        and   PyQt6.QtCore.QPoint() = QPoint()">tests\gui\test_dashboard.py:4525: in test_device_tabs_sit_above_controls_without_moving_hud
+    assert (
+E   assert 83 == 134
+E    +  where 83 = &lt;built-in method y of QPoint object at 0x0000028A962CEF80&gt;()
+E    +    where &lt;built-in method y of QPoint object at 0x0000028A962CEF80&gt; = PyQt6.QtCore.QPoint(822, 83).y
+E    +      where PyQt6.QtCore.QPoint(822, 83) = &lt;built-in method mapTo of Card object at 0x0000028A93A51E10&gt;(&lt;cephvr.gui.window.DashboardWindow object at 0x0000028A9631B2E0&gt;, PyQt6.QtCore.QPoint())
+E    +        where &lt;built-in method mapTo of Card object at 0x0000028A93A51E10&gt; = &lt;cephvr.gui.components.Card object at 0x0000028A93A51E10&gt;.mapTo
+E    +        and   PyQt6.QtCore.QPoint() = QPoint()</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,7 @@
+{
+  "scripts/start_runtime_gui.py": "3c058035f62dd34d84edf350f9403e647fa37597715b0795828c34d27f912a66",
+  "contracts/visual_stimulus/prepared-trial.schema.json": "956ced33a7f552443fe29f884b065df743a3a486bc4009376c2501d9e51a99e7",
+  "config/backends/microcontroller_config.toml": "f2a831fcc46376dab9d45f7cb69b726e9027b4cda5d9c6336352c0c5bcbe6c62",
+  "config/backends/experiment_config.toml": "2b12d05977ae3ce3dca5a3855077d8c2304627b134fbf50a3350b3146c1bfc63",
+  "tools/test_on_rig.ps1": "f7ef26af4896928a57de9a9eeb7e1662fa228f7e874bc027fe76da233284d6be"
+}

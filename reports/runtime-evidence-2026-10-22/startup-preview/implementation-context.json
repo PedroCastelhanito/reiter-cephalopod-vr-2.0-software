@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-22",
+  "timezone": "Asia/Tokyo",
+  "head": "814e555edcb50a60774ac8101c68bfde0c3b7f28",
+  "scope": "Working tree with pre-existing unrelated changes; offscreen only, no native runtime restart",
+  "source_sha256": {
+    "src/cephvr/gui/splash.py": "2a56dac6e9bdf36d8602f36b8f96cd88b5c18eebb5544db78c3681f0838e64be",
+    "src/cephvr/gui/startup.py": "e584e6a5e86ed65acf3c1af20b9b6619612eb6875bf189b37a363ee81eb5a259",
+    "src/cephvr/gui/main.py": "4a8cfa45c50aafa4a10643cb6d89c3ecd31832e0b1641b7d28f2a8c32cc380a0",
+    "src/cephvr/gui/review.py": "38a318e2868e92e11a198d98428dccd181e8005acc044d3820f550cd179dc3c8",
+    "src/cephvr/gui/appearance.py": "93351005b58b54414912f75b052d63d3145128ae78de54e8266b8a1d7e841d76",
+    "src/cephvr/gui/theme.py": "2c791a35cde9168eb1eb5c83e42098d3de35453dc18cee4b22aabffcc5406500",
+    "src/cephvr/gui/window.py": "1cde677d14a5b2899b48ba960588b8309a29a893da1434f91a8aee618401eaab",
+    "src/cephvr/gui/batch_create.py": "c0b2818b7bc84e2a3f3d338091fabd48f54403be596a71ddfebe669e6bfeadad",
+    "src/cephvr/supervisor/startup.py": "951f5c7d17e137261386d2051bb610c6eb817933b30b2547b312e9c8cf382899",
+    "src/cephvr/shared/managed_modules.py": "d8e0328f7b6d4a88a453f390d7f8957e33b0dae9f109ae644a2bde354733284a",
+    "tests/gui/test_dashboard.py": "58233f88a268f8a726eed8ae3a0bf305118c3aa0a3ea7da16179e4859afdb802",
+    "tests/launcher/test_preflight.py": "7378ba301717e0e595f13b2505bd7d97f047f3f297d66238539ed8669c906077",
+    "tools/check_backend_boundaries.py": "635700a7c2f9fb8fcec321112fcdfe2f8f0690d8c9a507355ab794e7c20da571"
+  },
+  "checks": {
+    "gui": "QT_QPA_PLATFORM=offscreen; python -m pytest tests/gui/test_dashboard.py -q -k \"startup_splash or startup_bootstrap or retro_family_switch or appearance or phosphor or subgroup\"; 28 passed; external writable basetemp required by demo_assets",
+    "launch": "python -m pytest tests/launcher/test_preflight.py tests/supervisor/test_registration.py -q -k \"port or entry_point or launch_roles or no_tracking or bootstrap_ports\" -m \"not windows and not rig\"; 25 passed",
+    "static": "ruff check/format13 files, mypy --platform win32 10 source files, check_backend_boundaries751/zero; git diff --check pass",
+    "import": "Fresh interpreter import cephvr.gui.startup leaves cephvr.gui.main and cephvr.gui.window unloaded"
+  },
+  "render": "QApplication offscreen; isolated QSettings per style; StartupSplash(settings).pixmap().save; bundled IBM Plex Mono; visually inspected all three PNGs",
+  "limitations": [
+    "No native startup/display/rig acceptance",
+    "Broader supervisor selections interrupted after stalled runs; no full-suite pass",
+    "Activity animation advances with the Qt event loop; synchronous loading can pause motion"
+  ]
+}

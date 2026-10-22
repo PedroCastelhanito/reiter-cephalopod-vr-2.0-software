@@ -1,0 +1,20 @@
+{
+  "diagnostic_perturbed": true,
+  "diagnostic_elapsed_ns": 262800,
+  "errors": [
+    "TypeError"
+  ],
+  "snapshots": [
+    {
+      "stage": "after_setup_freeze",
+      "start_ns": 670319933525100,
+      "elapsed_ns": 40200,
+      "freeze_count": 267811,
+      "tracked_total": 2,
+      "type_counts": {
+        "builtins.cell": 2
+      },
+      "samples": []
+    }
+  ]
+}

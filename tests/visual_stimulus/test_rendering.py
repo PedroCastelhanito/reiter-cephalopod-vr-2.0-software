@@ -2036,6 +2036,92 @@ def test_image_residency_cleanup_retains_gpu_reservation_until_fence_and_release
         cache.release_gpu()
 
 
+@pytest.mark.parametrize("completion", ["eventual", "pending", "error"])
+def test_image_cleanup_services_fences_within_original_deadline(completion):
+    import time
+
+    cache, budget, gpu, gate, _, _ = _resident_images()
+    try:
+        cache.prepare(time.perf_counter_ns() + 2_000_000_000)
+        assert cache.close(time.perf_counter_ns() + 2_000_000_000)
+        original_ready = gpu.ready
+        polls = []
+        fence_calls = []
+        original_fence = gpu.fence
+
+        def fence(textures, fences):
+            fence_calls.append(id(textures))
+            original_fence(textures, fences)
+
+        def ready(fences):
+            polls.append(id(fences))
+            if completion == "error":
+                raise RuntimeError("completion check failed")
+            if completion == "pending" or polls.count(id(fences)) == 1:
+                return False
+            return original_ready(fences)
+
+        gpu.fence, gpu.ready = fence, ready
+        # The previous one-shot path rejects even a fence that settles next poll.
+        assert cache.release_gpu()
+        assert budget.usage.gpu_bytes == 48
+        polls.clear()
+        ticks = iter(range(100, 1000))
+        cache.clock_ns = lambda: next(ticks)
+        errors = cache.release_gpu(deadline_ns=120)
+        assert len(fence_calls) == len(set(fence_calls))
+        if completion == "eventual":
+            assert not errors
+            assert budget.usage.gpu_bytes == 0
+            assert len(polls) == 6
+        else:
+            assert errors
+            assert budget.usage.gpu_bytes == 48
+            assert len(cache.released_keys) == 5
+            if completion == "error":
+                assert all("completion check failed" in error for error in errors)
+                assert len(polls) == 3
+            else:
+                assert all("GPU completion pending" in error for error in errors)
+                assert len(polls) <= 20
+    finally:
+        gate.set()
+        gpu.ready = original_ready
+        cache.clock_ns = time.perf_counter_ns
+        cache.close(time.perf_counter_ns() + 2_000_000_000)
+        cache.release_gpu()
+
+
+@pytest.mark.parametrize("expired", [False, True])
+def test_image_cleanup_does_not_poll_after_original_deadline(monkeypatch, expired):
+    import time
+
+    cache, budget, gpu, gate, _, _ = _resident_images()
+    original_ready = gpu.ready
+    try:
+        cache.prepare(time.perf_counter_ns() + 2_000_000_000)
+        assert cache.close(time.perf_counter_ns() + 2_000_000_000)
+        now, polls = [120 if expired else 100], []
+
+        def ready(fences):
+            polls.append(True)
+            return len(polls) > 1
+
+        gpu.ready = ready
+        cache.clock_ns = lambda: now[0]
+        monkeypatch.setattr(time, "sleep", lambda _: now.__setitem__(0, 120))
+        assert cache.release_gpu(deadline_ns=120)
+        assert len(polls) == (0 if expired else 1)
+        assert budget.usage.gpu_bytes == 48
+        assert len(cache.released_keys) == 5
+    finally:
+        gate.set()
+        gpu.ready = original_ready
+        cache.clock_ns = time.perf_counter_ns
+        cache.close(time.perf_counter_ns() + 2_000_000_000)
+        cache.release_gpu()
+
+
 @pytest.mark.parametrize("physical", [False, True])
 def test_image_schedule_unions_only_consuming_outputs_across_trials(physical):
     from cephvr.visual_stimulus.resources.image_schedule import ImageSchedule
@@ -2153,6 +2239,12 @@ def test_image_fences_only_allocated_contexts_including_partial_upload(
     if expected:
         gl.glClientWaitSync = lambda *_: 5  # Not yet signalled.
         assert not gpu.ready(fences)
+        assert [fence for _, fence in fences] == expected
+        assert deleted == []
+        active.clear()
+        gl.glClientWaitSync = lambda *_: gl.GL_WAIT_FAILED
+        with pytest.raises(RuntimeError, match="completion check failed"):
+            gpu.ready(fences)
         assert [fence for _, fence in fences] == expected
         assert deleted == []
         active.clear()

@@ -9,7 +9,7 @@ REQUIRED_MODULES = {
     "acquisition": "cephvr.acquisition.main",
     "visual_stimulus": "cephvr.visual_stimulus.main",
     "tracking": "cephvr.tracking.main",
-    "gui": "cephvr.gui.main",
+    "gui": "cephvr.gui.startup",
 }
 
 

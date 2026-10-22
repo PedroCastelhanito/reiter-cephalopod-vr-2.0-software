@@ -1,0 +1,6 @@
+Date: 2026-10-22 (Asia/Tokyo)
+Source: working tree based on 814e555edcb50a60774ac8101c68bfde0c3b7f28; includes uncommitted concurrent changes.
+Method: repository Python3.11, QT_QPA_PLATFORM=offscreen, DashboardWindow(sample=True), Amber phosphor,1920x1000; capture Dashboard and Devices/Projectors after processing Qt events.
+Outcome: navigation icons render; final Dashboard sidebar widened to fit complete selected label.
+Tracking reference: CephVR1 protocol/src/protocol/gui/icons/tracking_optic_flow.svg (six arrows).
+Scope: sample Qt rendering only; no managed-runtime restart, device operation or native display acceptance.

@@ -17,7 +17,6 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.action_progress import ActionProgress
 from cephvr.gui.controller_bridge import ControllerBridge
 from cephvr.gui.gui_history import GuiHistory, history_path
-from cephvr.gui.layouts import show_maximized
 from cephvr.gui.managed_cameras import ManagedCameras
 from cephvr.gui.managed_close import save_failure_choice
 from cephvr.gui.managed_configuration import ConfigurationPages, ManagedConfiguration
@@ -40,6 +39,7 @@ from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
 from cephvr.gui.managed_window import ManagedDashboardWindow
 from cephvr.gui.preview_placement import preview_window_placement
 from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
+from cephvr.gui.splash import StartupSplash
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import DashboardView
 from cephvr.platform.windows.bootstrap import read_bootstrap
@@ -884,7 +884,7 @@ class ManagedGui(QObject):
         self.bridge.wait(3000)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, *, splash: StartupSplash | None = None) -> int:
     parser = argparse.ArgumentParser(description="CephVR managed GUI")
     parser.add_argument("--bootstrap-handle", type=int, required=True)
     args = parser.parse_args(argv)
@@ -919,10 +919,15 @@ def main(argv: list[str] | None = None) -> int:
                 or any(type(delay) is not int or delay < 0 for delay in delays)
             ):
                 raise ValueError("GUI reconnect delays must be nonnegative integers")
-            app = QApplication(sys.argv[:1])
+            app = QApplication.instance() or QApplication(sys.argv[:1])
+            assert isinstance(app, QApplication)
             app.setApplicationName("CephVR2.0 Dashboard")
+            settings = QSettings("CephVR", "Frontend")
+            if splash is None:
+                splash = StartupSplash(settings)
+                splash.begin()
             apply_theme(app)
-            window = ManagedDashboardWindow(settings=QSettings("CephVR", "Frontend"))
+            window = ManagedDashboardWindow(settings=settings)
             bridge = ControllerBridge(
                 principal,
                 int(bootstrap["controller_port"]),
@@ -931,9 +936,12 @@ def main(argv: list[str] | None = None) -> int:
             )
             manager = ManagedGui(window, bridge)
             app.aboutToQuit.connect(manager.shutdown)
-            show_maximized(window)
+            splash.reveal(window)
             return app.exec()
         finally:
+            if splash is not None:
+                splash.timer.stop()
+                splash.close()
             store.remove_client(principal)
 
 

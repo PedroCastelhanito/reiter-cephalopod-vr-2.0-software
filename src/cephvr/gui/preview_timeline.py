@@ -276,7 +276,7 @@ class StimulusTimeline(QWidget):
         self.projector_cards = {}
         self.dials, self.maps = [], []
         self.headings = []
-        cards: list[tuple[str, ProjectorCard]] = []
+        groups: dict[str, tuple[ProjectorHeading, list[QWidget]]] = {}
         for panel in self.panels:
             instruments: list[QWidget] = []
             if panel.arena:
@@ -287,14 +287,20 @@ class StimulusTimeline(QWidget):
                 dial = MotionDial()
                 self.dials.append(dial)
                 instruments.append(dial)
-            heading = ProjectorHeading(panel.source.name.removesuffix(" · reference"))
-            heading.setStyleSheet(f"color: {getattr(colors_for(self), panel.color)};")
-            self.headings.append(heading)
-            cards.append((panel.source.key[0], ProjectorCard(heading, instruments)))
+            name = panel.source.key[0]
+            if name not in groups:
+                heading = ProjectorHeading(name)
+                self.headings.append(heading)
+                groups[name] = (heading, [])
+            # One card owns every layer's instruments; duplicate face keys lose none.
+            groups[name][1].extend(instruments)
         order = {"Left": 0, "Front": 1, "Right": 2, "Bottom": 3}
-        self.projector_cards = dict(
-            sorted(cards, key=lambda item: order.get(item[0], 4))
-        )
+        self.projector_cards = {
+            name: ProjectorCard(heading, instruments)
+            for name, (heading, instruments) in sorted(
+                groups.items(), key=lambda item: order.get(item[0], 4)
+            )
+        }
         self.place_projectors()
         self.restyle()
         self.cards_changed.emit()
@@ -331,6 +337,7 @@ class StimulusTimeline(QWidget):
             self.glow = glow
         retro = retro_console(self)
         for heading in self.headings:
+            heading.setStyleSheet(f"color: {colors_for(self).coral};")
             heading.restyle(retro, self.glow)
 
     def readout_lines(self, time: float) -> list[str]:

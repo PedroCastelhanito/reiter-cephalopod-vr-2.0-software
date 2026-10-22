@@ -79,7 +79,7 @@ class CalibrationTable(Card):
     close_requested = pyqtSignal()
 
     def __init__(self, drafts: dict[str, dict[str, str]]) -> None:
-        super().__init__("Screen calibration")
+        super().__init__("Projection calibration")
         self.drafts = drafts
         self.controls: dict[tuple[str, str], QWidget] = {}
         self.table = DataTable(len(FACES), 4)

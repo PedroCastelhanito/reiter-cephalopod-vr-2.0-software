@@ -46,7 +46,7 @@ class CamerasPanel(ResponsiveColumns):
 
     def __init__(self, *, sample: bool = False) -> None:
         left, left_layout = column()
-        right = StatusColumn("Camera HUD")
+        right = StatusColumn()
         self.status_column = right
         self.console = right.console
         self.console.setPlainText(

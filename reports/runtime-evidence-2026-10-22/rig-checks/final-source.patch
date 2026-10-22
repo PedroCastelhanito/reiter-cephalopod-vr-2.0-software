@@ -1,0 +1,648 @@
+diff --git a/LOG.md b/LOG.md
+index a5d04a3c..896c59a2 100644
+--- a/LOG.md
++++ b/LOG.md
+@@ -8912,3 +8912,146 @@ reserve-all/Show-in-header expectations changed and added two tests. The preview
+ suite (187) passes, as do focused title/switch tests; Win32 mypy, ruff and the
+ boundary check pass (theme.py 579-line advisory recorded). The rig checklist entry
+ was updated for native reflow/re-placement. The full suite was not run.
++
++### 2026-10-22 - Rig automated verification and artifact repairs
++
++[repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking]
++`rig-checks-oct22`: Sol6.1 manages tests and Astra reviews outcomes. Clean initial
++source revision is retained with raw evidence in
++`reports/runtime-evidence-2026-10-22/rig-checks`. Existing `tools/test_on_rig.ps1`
++passes prerequisites, syntax, lint, 749 module boundaries (zero violations), Win32
++mypy (857 files), 48 Tracking/42 Visual Stimulus contracts and Tracking schema drift.
++It exposes pre-existing launcher trailing whitespace and stale prepared-trial schema
++missing accepted rig-angle draft properties (G01/V02/V08). Removed whitespace and
++regenerated the sole schema from authoritative models; format (984 files), all
++11 Visual Stimulus schemas and diff whitespace now pass. No runtime behavior change.
++Sandbox full pytest stalled after 72 cases and was interrupted; elevated process
++inventory confirmed all test children absent. Elevated bounded non-GUI rerun passes
++2629 tests, six skipped, one rig deselected in 33.24s. Five skips require symlink
++privilege/Developer Mode; one requires native C++ compiler for the actual sketch.
++Package build initially fails sandbox temporary-directory permission, then elevated
++build succeeds (Windows wheel and sdist). Retained manifest warning: no calibration
++Markdown files. GUI serial tests/native layout and staged watchdog verification
++remain in progress; no physical acceptance claimed from these automated checks.
++
++### 2026-10-22 - Native quick layout and observed GUI exit
++
++[gui] [controller] [visual_stimulus] `rig-checks-oct22`: root's native quick check
++observes Configure→Monitor, aligned System/HUD/Log row, readable controls and
++visible timeline at1442×972. Empty PREVIEW with all Video switches Off needs intent
++review. GUI48068 exits after Style/Amber selection attempt; Windows Application
++Error1000 at08:33:50 records Qt6Core6.11.2/0xc0000409. Retained raw event and
++post-exit snapshot in dated rig evidence; action association is not proven cause.
++Controller/backends remain alive in Configuration/no context, manual camera
++release succeeds and no Setup/Start/device change occurred. Root launcher emits
++no trace. Astra selects isolated GUI regression/reproduction before physical
++workload tests; scientific/optical acceptance remains open.
++
++### 2026-10-22 - Native Monitor style-switch crash repair
++
++[gui] `rig-checks-oct22`: isolated disposable native Dashboard reproduces QAction
++Amber failure at appearance.py213: retained QLabel wrapper already deleted after
++Monitor rebuild. A custom exception hook retains the exact traceback, so initial
++process exit0 is explicitly not a pass. Under G01/G02 and ARCH-002, refresh the
++field-caption cache from live labels at style switch, preserving surviving original
++text and including newly created labels. No new dependency, callback registry or
++runtime ownership. Existing focus-bracket lifetime pattern supplies the simpler
++approach. Added owning dashboard coverage for actual Monitor/DeferredDelete plus
++new captions and Amber→Retro restoration; two focused style tests pass9.36s.
++Same native QAction path then completes Amber with no exception and clean process
++exit0 after correct fixture DeferredDelete cleanup. An intermediate fixture exited
++0xc0000005 during interpreter teardown; preserved separately and not counted pass.
++Native screenshot is retained locally. Full serial GUI suite remains in flight,
++using source imported before this fix; final focused/full results will state this
++provenance. Root is checking the actual managed popup/menu separately.
++
++### 2026-10-22 - Managed native style and layout confirmation
++
++[gui] `rig-checks-oct22` / `dashboard-embedded-previews` / `amber-phosphor-style`:
++after reopening the actual managed GUI from final source, root confirms native
++Configure→Monitor→Style/Amber and Amber→Retro both succeed; original Retro restored.
++At1920×1032, System/HUD/Log row heights align, timeline/controls are readable,
++Protocol epoch tiles and Devices camera HUD/log/tab rail have no apparent overlap.
++These are direct native observations from tool screenshots, not retained image
++artifacts. The disposable native1440×940 image is separately retained locally.
++Correction to prior quick-layout uncertainty: G01 explicitly requires the generic
++PREVIEW/NO SIGNAL empty-state footprint; Astra confirms allVideoOff placeholder
++is intentional, not a defect. GUI remains Configuration on Devices with cameras
++disconnected; root releases native inputs. Viewer placement/reflow, alternate DPI,
++all dialogs and physical workload/timing remain unverified. Full initial serial
++GUI regression continues against pre-fix imports; final focused coverage is separate.
++
++### 2026-10-22 - Layout and queued-event regression expectations
++
++[gui] `rig-checks-oct22` / `gui-dashboard-test-restoration`: isolated initial suite
++failures show stale two-row HUD expectation (current accepted four-row HUD), and
++two cross-page top-position checks omit G01rev294's Dashboard view tab bar/gap.
++With root/Astra review, G02rev113 and root register clarify that existing mechanical
++Dashboard offset while preserving other pages/device-subtab alignment. Tests retain
++exact tab-height-plus-card-gap offset, each-page controls/HUD alignment and device
++subtab stability; all three pass6.09s after correcting a test status-column accessor.
++Fourth failure is queued auto-commit event timing: diagnostic retains dirty/pending
++0ms timer after one processEvents, then normal auto-commit x=-30 with no error.
++A bounded≤1s event wait replaces the single event pump; no forced commit/debounce or
++motion policy change. Original direction, undo and invalid-duration assertions remain;
++isolated case passes4.01s. The original full serial run remains pre-fix evidence,
++with four observed failures; final affected selection will run after it completes.
++
++### 2026-10-22 - Full GUI abort isolated and projector layer ownership repaired
++
++[gui] `rig-checks-oct22`: initial pre-fix serial GUI run aborts after409 completed
++cases, four known assertion failures, no JUnit. Windows ApplicationError1000 at
++08:43:48 confirms Qt6Core0xc0000409. Instrumented isolation of the next compact
++reference test retains deleted MotionDial exceptions and unconditionally fails
++teardown (body pass is not acceptance). Source review identifies per-source cards
++collapsed into a face-keyed dictionary: duplicate face layers lose earlier parent
++cards while ordered dial refs remain. Astra-reviewed G01/ARCH-002 repair groups
++all source instruments by face before constructing one owning ProjectorCard; the
++ordered dials/maps remain unchanged. Owning timeline regression retains two layers
++through DeferredDelete, clock refresh and hide/show with distinct0/7deg/s samples.
++All79 timeline tests and both interrupted compact-reference variants pass81 in3.94s.
++Final899 GUI collection now runs in four serial batches with retained JUnit and
++unbuffered per-case progress. A disposable verification plugin captures uncaught
++Qt-slot exceptions and always fails the owning teardown; no log-and-pass behavior.
++Native cursor cases are not parallelized. Physical timing tests wait until these
++checks finish. No full GUI pass claimed from the aborted original prefix.
++
++### 2026-10-22 - Full-texture Ready, failed Cancel proof and safe recovery
++
++[controller] [supervisor] [acquisition] [visual_stimulus] [gui] `rig-checks-oct22` /
++`setup-watchdog-cleanup`: with approved200ms ACK/450ms Stopped settings (Started250ms
++unchanged), full unchanged two-trial texture Setup reaches Ready in84.7078s; no
++PING timeout. CancelSetup fails after10.0275s: renderer cleanup report rejected
++for identity/release proof, renderer44972 exits and supervisor automatically shuts
++application down. No Start issued; bounded trial/full20min acceptance stay blocked.
++The observer script's exit0 is not a pass; cancellation/restoration criteria failed.
++No source fix follows the generic predicate without actual rejected report/catalogue.
++Raw Ready/final snapshots, command events and emergency649269129986100... retained.
++Before an explicit Shutdown could be sent, elevated inventory proves all exact old
++core PIDs absent and no managed processes; root observes launcher exit0 with
++CHILD_EXITED/channelEOF (exit is not cleanup proof). Saved history remains byte-exact.
++Normal relaunch/new generation and exact-session preserving Recover succeed;
++original live configuration/history already match, so no overwrite is needed.
++Failed session76f65fbf retains unknown closure, no files deleted/no proof fabricated.
++Root selects final two-worker offscreen regression with serial failure replays
++while the rig is idle; no timing/device checks run concurrently.
++
++### 2026-10-22 - Bounded verification handoff
++
++[repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking]
++`rig-checks-oct22`: final lint, format (984 files), Win32 mypy (857 files), module
++boundaries (749 modules, zero violations), schemas and final Windows wheel/sdist
++build pass. New local Markdown links/anchors pass (20 targets). JUnit node union
++proves 93 unique complete owning GUI passes; backend 2629 pass/six prerequisite
++skips and separate generated-image NVOF capability pass remain distinct.
++Root's bounded final two-worker full GUI attempt stops after about 10 minutes:
++432 passing reports, zero failure/error reports, no JUnit. This is partial coverage,
++not a full 899-case pass; quiet partial output does not retain per-node identities.
++No failure replays are needed because none were reported. Exact test process tree
++and all pytest/execnet children are absent; restored managed app stays alive.
++Final read-only snapshot confirms Configuration, cleanup_confirmed=true, no prompts,
++exact original live configuration and saved-history bytes. Old failed session's
++unknown closure stays retained. No trial/full20min run follows the cleanup blocker.
++This bounded execution increment ends; remaining work is carried by existing
++`setup-watchdog-cleanup` and `gui-dashboard-test-restoration` tasks, which supersede
++the temporary execution entry without claiming their acceptance complete.
+diff --git a/TODO.md b/TODO.md
+index ebe02af6..f35c8885 100644
+--- a/TODO.md
++++ b/TODO.md
+@@ -26,9 +26,10 @@ Blocked and Deferred entries name their reason.
+ 
+ 
+ 
+-- [ ] `dashboard-embedded-previews` [gui] Confirm the in-Dashboard Monitor view natively (rig checklist): Configure|Monitor switching, per-stream Video toggles with frame reflow and native viewer re-placement, Advanced projector toggles. Status: G01rev294/G02rev112 source and tests done locally (preview suite 187 pass, new view-switch/projector-toggle tests); native Windows viewer behaviour unverified; stale `managed_total_time` HUD assertion still open (`gui-dashboard-test-restoration`). — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01), [Rig checklist](reports/rig-verification.md)
+ 
+-- [ ] `setup-watchdog-cleanup` [controller] [supervisor] [acquisition] [visual_stimulus] Verify the approved 200 ms MCU ACK / 450 ms stop-report settings on the rig. Done when: a fresh connection loads both values; full-workload Setup reaches Ready without PING timeout; CancelSetup confirms cleanup without worker rejection or heartbeat loss; a subsequent bounded trial meets the unchanged 250 ms Started deadline and the 450 ms Stopped deadline; settings are preserved and evidence recorded. Status: 211 local tests pass/one skip; live verification pending, original delay and historical cleanup causes unresolved. Coordinate exclusive rig use to avoid application replacement during testing. Owner: rig-validation chat. See [current evidence](reports/runtime.md#current-rig-validation--2026-10-21) and [rig checklist](reports/rig-verification.md).
++- [ ] `dashboard-embedded-previews` [gui] Confirm the in-Dashboard Monitor view natively (rig checklist): Configure|Monitor switching, per-stream Video toggles with frame reflow and native viewer re-placement, Advanced projector toggles. Status: Oct22 native Configure/Monitor and Amber/Retro layout inspected, two lifetime crashes repaired, 93 unique owning GUI checks pass; G02rev113 clarifies Dashboard tab offset and stale HUD fixture is fixed. Actual native stream viewer reflow/follow and projector toggle behavior remain unverified. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01), [Rig checklist](reports/rig-verification.md)
++
++- [ ] `setup-watchdog-cleanup` [controller] [supervisor] [acquisition] [visual_stimulus] Verify the approved 200 ms MCU ACK / 450 ms stop-report settings on the rig. Done when: a fresh connection loads both values; full-workload Setup reaches Ready without PING timeout; CancelSetup confirms cleanup without worker rejection or heartbeat loss; a subsequent bounded trial meets the unchanged 250 ms Started deadline and the 450 ms Stopped deadline; settings are preserved and evidence recorded. Status: Oct 22 full-texture Setup reaches Ready (84.7 s, no PING timeout); Cancel fails renderer cleanup identity/release proof, blocking subsequent trial/full load. Preserving recovery restores original configuration/history. Next: capture rejected CleanupReport and registered catalogue before a targeted fix. Coordinate exclusive rig use to avoid application replacement during testing. Owner: rig-validation chat. See [current evidence](reports/runtime.md#rig-checks-oct22) and [rig checklist](reports/rig-verification.md).
+ 
+ - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).
+ 
+@@ -38,7 +39,7 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
+ 
+ ## Next
+ 
+-- [ ] `amber-phosphor-style` [gui] Owner confirms the G02rev111 Amber phosphor style natively (all pages, dialogs, button colours, log wrap and copy, CRT stripes). Status: implemented through owner-reviewed previews; focused tests and static checks pass; native look of the final revision unseen. — [Runtime](reports/runtime.md#amber-phosphor-style-2026-10-21), [G02](docs/architecture/gui.md#g02)
++- [ ] `amber-phosphor-style` [gui] Owner confirms the G02rev111 Amber phosphor style natively (all pages, dialogs, button colours, log wrap and copy, CRT stripes). Status: Oct 22 actual managed Monitor, Protocol and Devices Amber/Retro appearance inspected, with original Retro restored; all-page/dialog/log-copy/CRT acceptance remains open. Focused tests and static checks pass. — [Runtime](reports/runtime.md#amber-phosphor-style-2026-10-21), [G02](docs/architecture/gui.md#g02)
+ 
+ - [ ] `texture-residency-mismatch` [visual_stimulus] [controller] Verify Setup decoding/upload progress and the complete primate/cuttlebase protocol after restart with normal camera/review recording: all requested/actual images agree at every onset and throughout playback, with acceptable submission/optical timing. Source fix and progress complete: bounded upload batching, consumer-context fences and prepared-heap GC lifetime; 200 native hidden-context presentations/3,600 texture groups have zero holds/mixes. Latest renderer/controller1,195 tests and10 GUI checks pass; final159 owner checks pass. Full20-minute combined/physical acceptance remains pending. — [Assessment](reports/visual_stimulus.md#primatecuttlebase-texture-mismatch--2026-10-21), [Rig checklist](reports/rig-verification.md) Oct21 unchanged20min Setup blocked by reproduced MCU PING/cleanup failure before Start; bounded dummy image agreement does not close full-workload acceptance.
+ 
+@@ -58,7 +59,7 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
+ 
+ - [ ] `camera-demand-native-verification` [controller] [acquisition] Verify unused-camera pulses stay off, Tracking-required metadata persists, and USB stops omit unsupported-counter warnings while SDK failures still warn; include all-camera-Off Trial state normal/Abort behavior after compatible firmware deployment. Local1499 tests pass; native acceptance pending. - [Rig checklist](reports/rig-verification.md), [Acquisition](reports/acquisition.md)
+ 
+-- [ ] `gui-dashboard-test-restoration` [gui] Resolve parallel native-mouse delivery instability and obtain a clean parallel full GUI run. Oct21 corrected stale-ack fixture; full serial834 pass/414.82s. Parallel runs832/2hover failures then833/1 trial-row mouse-delivery failure; hover pair passes alone and on final repeat. No production defect established; experimental cursor fixture fully reverted. — [Current evidence](reports/runtime.md#current-rig-validation--2026-10-21)
++- [ ] `gui-dashboard-test-restoration` [gui] Obtain a complete final-source GUI run, retaining native input and exception coverage. Done when: all 899 current cases have complete outcomes and any parallel input failures have focused serial evidence. Status: Oct22 two lifetime crashes and four stale/event fixtures repaired; 93 unique owning cases pass. Bounded two-worker attempt has 432 passing reports/no failures, but no JUnit/full-suite pass; broad coverage remains incomplete. — [Current evidence](reports/runtime.md#rig-checks-oct22)
+ 
+ - [ ] `action-progress-live-check` [gui] [controller] [acquisition] [visual_stimulus] [tracking] [spikeglx] Verify action-only logs after restart during already-authorized device/lifecycle checks, including quiet polls, truthful Live/Idle, preserved failure details and prompt OFF with stalled progress delivery. Status: source implementation,380 backend/62 focused GUI tests and static checks pass; physical execution remains untested. Broader GUI preview geometry failure is recorded without baseline attribution. Do not lift existing device/scientific deferrals. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
+ 
+diff --git a/architecture.md b/architecture.md
+index 1a20235c..3ab249b8 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -1,6 +1,6 @@
+ # CephVR2.0 architecture
+ 
+-Last updated: 2026-10-21
++Last updated: 2026-10-22
+ 
+ This overview and the linked records in `docs/architecture/` form the authoritative
+ architecture. Each decision has one home; this register locates it by permanent ID.
+@@ -65,7 +65,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 25 |
+ | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
+ | <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 294 |
+-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 112 |
++| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 113 |
+ | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
+ | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
+ | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 35 |
+diff --git a/contracts/visual_stimulus/prepared-trial.schema.json b/contracts/visual_stimulus/prepared-trial.schema.json
+index dd22dfcf..33f091f3 100644
+--- a/contracts/visual_stimulus/prepared-trial.schema.json
++++ b/contracts/visual_stimulus/prepared-trial.schema.json
+@@ -3806,6 +3806,20 @@
+           "title": "Kind",
+           "type": "string"
+         },
++        "rig_coordinates": {
++          "default": false,
++          "title": "Rig Coordinates",
++          "type": "boolean"
++        },
++        "rig_angle_version": {
++          "default": 1,
++          "enum": [
++            1,
++            2
++          ],
++          "title": "Rig Angle Version",
++          "type": "integer"
++        },
+         "instance_id": {
+           "maxLength": 128,
+           "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+@@ -5127,6 +5141,20 @@
+     "VariationDraft": {
+       "additionalProperties": false,
+       "properties": {
++        "rig_coordinates": {
++          "default": false,
++          "title": "Rig Coordinates",
++          "type": "boolean"
++        },
++        "rig_angle_version": {
++          "default": 1,
++          "enum": [
++            1,
++            2
++          ],
++          "title": "Rig Angle Version",
++          "type": "integer"
++        },
+         "projector": {
+           "maxLength": 4096,
+           "title": "Projector",
+diff --git a/docs/architecture/gui.md b/docs/architecture/gui.md
+index 516c877d..7e2d7e17 100644
+--- a/docs/architecture/gui.md
++++ b/docs/architecture/gui.md
+@@ -1197,7 +1197,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ <a id="g02"></a>
+ ### G02 — Shared frontend formatting
+ 
+-**Status:** Accepted · **Revision:** 112
++**Status:** Accepted · **Revision:** 113
+ 
+ - Runtime preview layout card titles and stream headings use the same coral-red hue as
+   the main GUI; retain the existing borders, type and console palette.
+@@ -1418,7 +1418,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+   Device icon subtabs occupy the top of the left content column, followed by the
+   per-device Configuration file card and then connection/settings cards. Subtabs expand to fill their column and align their top edge
+   with the HUD card’s painted top border. The right HUD stays at the same top position across pages and
+-  device subtabs in the two-column layout. Use the existing stacked layout on narrow
++  device subtabs in the two-column layout, except Dashboard's G01 Configure | Monitor
++  tab bar and its card gap shift that page's controls and HUD together. Use the existing stacked layout on narrow
+   windows; tab overflow scrolls without replacing navigation with a dropdown.
+ - View > Devices side navigation (off by default; owner trial, local preference) shows
+   one rail beside the Devices page listing Cameras, Microcontroller, Projectors (with
+diff --git a/reports/acquisition.md b/reports/acquisition.md
+index ae2ec598..9c6e7200 100644
+--- a/reports/acquisition.md
++++ b/reports/acquisition.md
+@@ -1,5 +1,14 @@
+ # Acquisition status
+ 
++
++Oct22 native full-texture Setup reaches Ready with configured 200 ms MCU ACK and no
++PING timeout. Cancel is blocked by Visual Stimulus cleanup-evidence rejection, so
++Started 250 ms/Stopped 450 ms trial acceptance remains untested. File-policy loaders
++verify those unchanged configured bounds; no firmware or scientific settings were
++changed. Original live/history state is restored through preserving startup
++recovery. [Current rig result](runtime.md#rig-checks-oct22).
++
++
+ Oct21 `preview-20hz`: [A03](../docs/architecture/acquisition.md#a03) revision35
+ and [A10](../docs/architecture/acquisition.md#a10) revision72 implement G01's display
+ cadence and raise the session publication default to20 Hz. Pending newest frames
+diff --git a/reports/rig-verification.md b/reports/rig-verification.md
+index 4b3acb9c..1b06a148 100644
+--- a/reports/rig-verification.md
++++ b/reports/rig-verification.md
+@@ -1,5 +1,17 @@
+ # Rig verification — outstanding checks
+ 
++Oct22 current execution: full unchanged texture Setup reaches Ready in 84.708 s
++without PING timeout under configured 200 ms ACK. CancelSetup fails renderer cleanup
++identity/release proof and triggers automatic shutdown; no Start/bounded 250 ms/450 ms
++trial or full 20-minute acceptance follows. Exact old-process absence and supported
++preserving startup recovery restore original live configuration/history, retaining
++failed-session unknown closure. Two GUI lifetime crashes are repaired and actual
++managed Monitor/Amber/Retro layout is inspected; native viewer/DPI/optical checks
++remain open. Backend/static/package and 93 unique owning GUI checks pass. Broad GUI
++coverage remains incomplete: the bounded parallel attempt records 432 passing reports
++without final JUnit; it does not establish a full-suite or physical acceptance pass.
++[Current assessment/evidence](runtime.md#rig-checks-oct22).
++
+ Oct21 current execution: bounded two-camera/stimulus On60s→Off Abort5s→On60s,
+ Ready cancellation and fresh Setup/cancel after326.259s idle pass;16 outputs close,
+ six videos decode/count exactly. Off has no camera demand and retains stimulus
+diff --git a/reports/runtime.md b/reports/runtime.md
+index 8f9fd137..3cc389b2 100644
+--- a/reports/runtime.md
++++ b/reports/runtime.md
+@@ -1,5 +1,71 @@
+ # Controller and supervisor status
+ 
++
++<a id="rig-checks-oct22"></a>
++## Current rig verification — 2026-10-22
++
++Sol 6.1 manages tests; Astra reviews results under
++[GOV-001](../architecture.md#gov-001)/[E15](../docs/architecture/system-contracts.md#e15).
++[Raw commands, provenance, logs and JUnit](runtime-evidence-2026-10-22/rig-checks/README.md)
++retain initial failures, instrumented runs and validation limits.
++
++**Current rig result:** the unchanged full-texture two-trial Setup reaches Ready
++in 84.7078 s with configured 200 ms MCU ACK and no PING timeout. CancelSetup then fails
++after 10.0275 s: `ReportLifecycle: EVIDENCE: cleanup identity or release proof missing`.
++Renderer PID 44972 exits and the supervisor automatically shuts the application down;
++[emergency evidence](emergency-649269129986100-560b85e4-87df-4bdf-9d90-e4d49d32de79.json)
++and exact process-absence inventory are retained. No Start was issued. A bounded
++Started 250 ms/Stopped 450 ms trial and full 20-minute acceptance remain blocked under
++[E06/E08](../docs/architecture/system-contracts.md#e06)/
++[V01](../docs/architecture/visual_stimulus.md#v01). The generic predicate does not
++identify the failed identity/catalogue/release/output term; a targeted fix needs
++the actual rejected CleanupReport and registered native catalogue, without relaxing
++proof. The observer's exit 0 is explicitly not a cleanup pass.
++
++**Safe final state:** after verified old-process absence, normal relaunch and the
++supported exact-session preserving recovery succeed. Original live configuration
++and saved-history bytes match exactly (SHA256 retained); no rewrite is needed.
++Failed session 76f65fbf retains unknown closure and its files. No firmware, scientific
++settings, remote recording or cleanup-proof bypass was introduced.
++
++**GUI repairs and native check:** Monitor→Amber exposed a deleted QLabel caption;
++style selection now refreshes its cache from live children while preserving original
++text. A separate multi-layer projector-card key overwrite destroyed earlier layer
++parents; one face card now owns all layer instruments, preserving dial/map order.
++Both use focused existing owners under ARCH-002. Native disposable reproduction
++passes with proper Qt teardown; the original exception and an intermediate fixture
++teardown failure remain labeled. Root then confirms actual managed menu Amber→Retro,
++Configure→Monitor, aligned System/HUD/Log and readable timeline/Protocol/Devices at
++1920×1032, restoring original Retro. These are direct tool observations, not saved
++screenshots; the separate 1440×940 disposable image is retained locally. Generic
++PREVIEW/NO SIGNAL with Video off is G01's intended empty state. Viewer reflow/follow,
++all dialogs, alternate DPI and physical/optical checks remain open.
++
++**Automated checks:** 2,629 backend tests pass, six prerequisite skips; 40 Windows-marked
++cases pass with one symlink skip included in those totals. The separate existing
++rig-only generated-image CUDA/NVOF lease/readback/closure test passes one case;
++scientific Tracking remains deferred. Final-source owning GUI coverage passes 93
++unique cases across 79 timeline cases and 14 Dashboard/style/layout cases (overlap
++excluded). Four stale/timing fixtures are reconciled without production motion or
++layout changes; [G02 revision 113](../docs/architecture/gui.md#g02) records G01's approved
++Dashboard-tab offset while preserving within-page/device-subtab alignment.
++Full lint, format (984 files), Win32 mypy (857 files), boundaries (749 modules/zero violations), 90 contracts and 30 schemas
++pass; Windows wheel/sdist build succeeds. Pre-existing launcher whitespace and a
++stale generated prepared-trial schema are repaired from authoritative source.
++Five skips need symlink privilege/Developer Mode and one needs actual-sketch C++.
++
++The initial full GUI run aborts after 409 cases/no JUnit; a final serial prefix of 51
++passes is intentionally stopped to prioritize live checks and is not a suite pass.
++The final two-worker offscreen 899-case attempt is stopped at the agreed roughly
++10-minute bound: 432 passing reports, zero failure/error reports, no JUnit. This is
++partial coverage, not a full-suite pass, and quiet partial output lacks per-node
++identities. The explicit harness fails any uncaught Qt-slot exception at teardown.
++Exact test-process absence is verified while the restored managed app remains alive;
++its final snapshot confirms Configuration, cleanup_confirmed=true, no prompts and
++exact original runtime/history. Initial sandbox pytest/build restrictions are
++retained separately from elevated outcomes. No optical,
++source-content, physical-speed or full-workload checkbox is closed by these results.
++
+ Oct21 `uppercase-disabled-buttons`: [G02](../docs/architecture/gui.md#g02) keeps
+ Retro action labels uppercase regardless of enabled state. Shared Button renderer
+ only; ARCH-002 removes the case branch without new dependencies. Offscreen enabled/
+diff --git a/reports/visual_stimulus.md b/reports/visual_stimulus.md
+index bd98fdca..52ad191d 100644
+--- a/reports/visual_stimulus.md
++++ b/reports/visual_stimulus.md
+@@ -1,5 +1,19 @@
+ # Visual Stimulus status
+ 
++
++Oct22 native verification: unchanged full-texture protocol Setup reaches Ready in
++84.708 s without MCU PING failure, but CancelSetup rejects renderer cleanup evidence
++with `cleanup identity or release proof missing`; renderer exits and the application
++shuts down automatically. Under [V01](../docs/architecture/visual_stimulus.md#v01)/
++[E06/E08](../docs/architecture/system-contracts.md#e06), no Start or full-workload
++acceptance follows unconfirmed cleanup. The generic controller predicate cannot
++identify whether identity, catalogue revision, release proof or recipe outputs
++failed; retain actual rejected CleanupReport plus registered catalogue for a
++focused follow-up, without relaxing guards. Exact old-process absence and supported
++preserving recovery restore original configuration/history; failed-session unknown
++closure remains retained. [Current assessment/evidence](runtime.md#rig-checks-oct22).
++
++
+ Oct21 `stimulus-rig-direction-authoring`: [G01](../docs/architecture/gui.md#g01)rev289 / G02rev106,
+ [V02](../docs/architecture/visual_stimulus.md#v02)rev15 and
+ [V08](../docs/architecture/visual_stimulus.md#v08)rev7 implemented for physical-screen
+diff --git a/scripts/start_runtime_gui.py b/scripts/start_runtime_gui.py
+index 1a840b64..d1e4a98e 100644
+--- a/scripts/start_runtime_gui.py
++++ b/scripts/start_runtime_gui.py
+@@ -49,4 +49,3 @@ def main(argv: list[str] | None = None) -> int:
+ 
+ if __name__ == "__main__":
+     raise SystemExit(main())
+-                                                                    
+\ No newline at end of file
+diff --git a/src/cephvr/gui/appearance.py b/src/cephvr/gui/appearance.py
+index 5887e229..f12fbf05 100644
+--- a/src/cephvr/gui/appearance.py
++++ b/src/cephvr/gui/appearance.py
+@@ -209,6 +209,13 @@ class DashboardAppearance(QObject):
+             self.align_nested(card, phosphor)
+         for heading, text in self.subsections.items():
+             heading.setText(f"/// {text.upper()} \\\\\\" if phosphor else text)
++        # Monitor/table rebuilds retire labels; keep original text only for live ones.
++        self.field_labels = {
++            caption: self.field_labels.get(caption, caption.text())
++            for caption in self.window.findChildren(QLabel)
++            if caption.property("role") == "label"
++            and caption.property("subsection") is not True
++        }
+         for caption, text in list(self.field_labels.items()):
+             if caption.text() not in (text, caption_caps(text)):
+                 text = self.field_labels[caption] = caption.text()  # changed by code
+diff --git a/src/cephvr/gui/preview_timeline.py b/src/cephvr/gui/preview_timeline.py
+index ca416190..6a2310fa 100644
+--- a/src/cephvr/gui/preview_timeline.py
++++ b/src/cephvr/gui/preview_timeline.py
+@@ -276,7 +276,7 @@ class StimulusTimeline(QWidget):
+         self.projector_cards = {}
+         self.dials, self.maps = [], []
+         self.headings = []
+-        cards: list[tuple[str, ProjectorCard]] = []
++        groups: dict[str, tuple[ProjectorHeading, list[QWidget]]] = {}
+         for panel in self.panels:
+             instruments: list[QWidget] = []
+             if panel.arena:
+@@ -287,14 +287,23 @@ class StimulusTimeline(QWidget):
+                 dial = MotionDial()
+                 self.dials.append(dial)
+                 instruments.append(dial)
+-            heading = ProjectorHeading(panel.source.name.removesuffix(" · reference"))
+-            heading.setStyleSheet(f"color: {getattr(colors_for(self), panel.color)};")
+-            self.headings.append(heading)
+-            cards.append((panel.source.key[0], ProjectorCard(heading, instruments)))
++            name = panel.source.key[0]
++            if name not in groups:
++                heading = ProjectorHeading(name)
++                heading.setStyleSheet(
++                    f"color: {getattr(colors_for(self), panel.color)};"
++                )
++                self.headings.append(heading)
++                groups[name] = (heading, [])
++            # One card owns every layer's instruments; duplicate face keys lose none.
++            groups[name][1].extend(instruments)
+         order = {"Left": 0, "Front": 1, "Right": 2, "Bottom": 3}
+-        self.projector_cards = dict(
+-            sorted(cards, key=lambda item: order.get(item[0], 4))
+-        )
++        self.projector_cards = {
++            name: ProjectorCard(heading, instruments)
++            for name, (heading, instruments) in sorted(
++                groups.items(), key=lambda item: order.get(item[0], 4)
++            )
++        }
+         self.place_projectors()
+         self.restyle()
+         self.cards_changed.emit()
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index 514f05db..82cd2b61 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -2018,8 +2018,24 @@ def test_managed_total_time_tracks_trials_gaps_and_stops(window) -> None:
+         if row is not None and row[0] != "OUTPUT DIR":
+             assert row[0] in preview_text and row[1] in preview_text
+     lines = preview_text.splitlines()
+-    assert len(lines) == 2
+-    assert lines[0].index("TRIAL ") == lines[1].index("TOTAL TIME")
++    hud_rows = tuple(
++        row
++        for row in window.dashboard.status_column.rows
++        if row is not None and row[0] != "OUTPUT DIR"
++    )
++    assert len(lines) == len(hud_rows) == 4
++    assert all(
++        line.startswith(key) for line, (key, _) in zip(lines, hud_rows, strict=True)
++    )
++    assert (
++        len(
++            {
++                line.index(value, len(key))
++                for line, (key, value) in zip(lines, hud_rows, strict=True)
++            }
++        )
++        == 1
++    )
+     config.trials[0].stimulus.program.program_json = "{}"
+     assert session_timeline(state, 12, 0) == (None, None)
+ 
+@@ -4393,7 +4409,12 @@ def test_all_pages_share_fitted_hud_and_expanding_log(
+         assert sizes[0][0] == sizes[1][0]
+         assert sizes[1][1] > sizes[0][1]
+ 
+-    assert len(set(top_positions)) == 1
++    from cephvr.gui.theme import SIZES
++
++    assert all(left == hud for left, hud in top_positions)
++    assert len(set(top_positions[1:])) == 1
++    tab_offset = window.dashboard.view_tabs.height() + SIZES.card_gap
++    assert top_positions[0] == tuple(top + tab_offset for top in top_positions[1])
+ 
+ 
+ def test_device_tabs_sit_above_controls_without_moving_hud(
+@@ -4409,6 +4430,13 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
+     from cephvr.gui.theme import SIZES
+ 
+     bar = window.devices.tab_bar
++    app.processEvents()
++    device_hud_top = (
++        window.devices.cameras.columns[1].hud_card.mapTo(window, QPoint()).y()
++    )
++    assert (
++        device_hud_top + window.dashboard.view_tabs.height() + SIZES.card_gap == hud_top
++    )
+ 
+     def visible_tab(index):
+         arrows = [
+@@ -4524,7 +4552,7 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
+             if width == 1920:
+                 assert (
+                     panel.layout_card if index == 2 else panel.columns[1].hud_card
+-                ).mapTo(window, QPoint()).y() == hud_top
++                ).mapTo(window, QPoint()).y() == device_hud_top
+     window.page_buttons[0].click()
+     app.processEvents()
+     assert window.dashboard.hud_card.mapTo(window, QPoint()).y() == hud_top
+@@ -10267,7 +10295,10 @@ def test_motion_auto_commit_and_invalid_edit_undo(
+     motion.speed.selectAll()
+     QTest.keyClicks(motion.speed, "30")
+     editor.subgroup.composer.duration.setFocus()
+-    app.processEvents()
++    for _ in range(100):
++        if editor.program != original:
++            break
++        QTest.qWait(10)
+     assert editor.program != original
+     assert editor.program.sequence[0].body[0].settings[
+         0
+@@ -17716,6 +17747,22 @@ def test_retro_family_switch_repaints_with_owning_palette(
+         app.processEvents()
+ 
+ 
++def test_monitor_style_switch_uses_live_field_captions(window, app):
++    window.appearance.select("retro_console", persist=False)
++    prior = set(window.appearance.field_labels)
++    show_previews(window)
++    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
++    live = set(window.findChildren(QLabel))
++    assert prior - live, "Monitor must exercise retired caption wrappers"
++    added = QLabel("Fresh label (mA)", window.dashboard)
++    added.setProperty("role", "label")
++    window.appearance.actions["amber_phosphor"].trigger()
++    assert set(window.appearance.field_labels) <= set(window.findChildren(QLabel))
++    assert added.text() == "FRESH LABEL (mA)"
++    window.appearance.actions["retro_console"].trigger()
++    assert added.text() == "Fresh label (mA)"
++
++
+ def test_log_wrap_hangs_under_message_column_and_round_trips() -> None:
+     from cephvr.gui.log_wrap import LINE_SEPARATOR, unwrap_row, wrap_row
+ 
+diff --git a/tests/gui/test_preview_timeline.py b/tests/gui/test_preview_timeline.py
+index f3e84222..bdebe1b8 100644
+--- a/tests/gui/test_preview_timeline.py
++++ b/tests/gui/test_preview_timeline.py
+@@ -1,7 +1,7 @@
+ """Standalone preview clock and painter checks without a Dashboard/device fixture."""
+ 
+ import pytest
+-from PyQt6.QtCore import QPoint, Qt
++from PyQt6.QtCore import QEvent, QPoint, Qt
+ from PyQt6.QtTest import QTest
+ from PyQt6.QtWidgets import QApplication, QCheckBox
+ 
+@@ -601,6 +601,42 @@ def test_authored_trajectory_uses_tracking_form_and_size_lane(timeline):
+     assert lane.traces[0].segments[-1][-1] == pytest.approx((14, 5 + 2 * 9))
+ 
+ 
++def test_projector_card_retains_every_same_face_layer(timeline):
++    app = QApplication.instance()
++    texture = review_program().sequence[1].settings[0]
++    second = texture.model_copy(
++        update={
++            "instance_id": "second_layer",
++            "motion": texture.motion.model_copy(
++                update={"rotation": Rate(kind="rate", function=constant(7))}
++            ),
++        }
++    )
++    timeline.set_program(with_settings((), (texture, second), ()), "", "Layers")
++    timeline.set_advanced(True)
++    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
++    timeline.set_playback(12, running=False)
++    timeline.timer.timeout.emit()
++    face = timeline.panels[0].source.key[0]
++    layers = [panel for panel in timeline.panels if panel.source.key[0] == face]
++    assert len(layers) == 2
++    assert len(timeline.projector_cards[face].findChildren(MotionDial)) == 2
++    assert [
++        sample.angular_speed
++        for panel, sample in zip(timeline.panels, timeline.dial_samples, strict=True)
++        if panel.source.key[0] == face
++    ] == [0, 7]
++    timeline.set_projector_visible(face, False)
++    assert timeline.projector_cards[face].isHidden()
++    timeline.set_projector_visible(face, True)
++    app.processEvents()
++    assert all(
++        dial.isVisible()
++        for dial in timeline.projector_cards[face].findChildren(MotionDial)
++    )
++    timeline.refresh()
++
++
+ def test_feedback_texture_pairs_waiting_texture_and_tracking_dials(timeline):
+ 
+     texture = review_program().sequence[1].settings[0]

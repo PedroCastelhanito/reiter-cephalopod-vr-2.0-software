@@ -1,0 +1,111 @@
+{
+  "controller_generation": "0d6c377d-b7bc-4ad7-a29f-5f10a9e42059",
+  "captured_monotonic_ns": "671254018687300",
+  "state_revision": "13",
+  "configuration": {
+    "revision": "1"
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "control": {
+    "holder_client_id": "8ddc29ce-ec0e-4a01-982c-4c177d589279",
+    "control_generation": "061bfe1b-b515-46d5-b228-ca6f57b85569"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "a13f0246-a871-4ceb-9979-43fb5d72af80"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    }
+  ],
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "de929e09-9c37-4a22-830d-a691f73bb66e"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "de929e09-9c37-4a22-830d-a691f73bb66e"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "0d6c377d-b7bc-4ad7-a29f-5f10a9e42059"
+    },
+    "command_id": "a13f0246-a871-4ceb-9979-43fb5d72af80",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671240590260700",
+        "idle_swap_return_ns": "671240590595500",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671240704856900",
+        "idle_swap_return_ns": "671240704929100",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671240751490900",
+        "idle_swap_return_ns": "671240751651500",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "671240795559300",
+        "idle_swap_return_ns": "671240795717400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "671240795769000",
+    "complete": true
+  },
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {},
+  "stimulus_preview": {}
+}

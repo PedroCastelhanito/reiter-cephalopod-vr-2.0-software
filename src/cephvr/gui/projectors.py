@@ -266,9 +266,9 @@ class ProjectorsPanel(DevicePanel):
         calibration_layout.addWidget(self.calibration)
         calibration_layout.addStretch()
         for title, card in (
-            ("Screen calibration", calibration_page),
             ("Rig geometry", self.rig_page),
-            ("Synchronization", synchronization),
+            ("Projection calibration", calibration_page),
+            ("Projection synchronization", synchronization),
         ):
             self.setup_tabs.addTab(title)
             self.setup_pages.addWidget(card)

@@ -1,0 +1,19 @@
+{
+  "format": "cephvr-microcontroller-config",
+  "version": 3,
+  "port": "COM8",
+  "firmware_path": "C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/firmware/uno/cephvr2_mcu/cephvr2_mcu.ino",
+  "trial_state": {
+    "pin": "D12",
+    "enabled": true
+  },
+  "projector_flip": {
+    "pin": "D2",
+    "enabled": false
+  },
+  "camera_pins": {
+    "behavioral": "D11",
+    "tracking": "D10",
+    "eye_tracking": ""
+  }
+}

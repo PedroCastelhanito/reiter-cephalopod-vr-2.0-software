@@ -1,0 +1,6 @@
+{
+  "src/cephvr/platform/windows/protected_source.py": "befdff559a88d5acc66f71338022114917471f556b20374e268462efcfb3cdcf",
+  "src/cephvr/supervisor/acquisition_worker.py": "07ab94283abc2ef6cc3e097222841d0703db5b7e18fa32066acf83a01bb61eeb",
+  "src/cephvr/supervisor/registry.py": "605c83adeb2ba5828a8227f516634439dc42a1c40b6b58dfabe6f986432f8d0f",
+  "src/cephvr/visual_stimulus/worker/native.py": "966f9a70d2f5396e64320e97b1df0de9f727adb6e3c7b7deafda7d53398a8d56"
+}

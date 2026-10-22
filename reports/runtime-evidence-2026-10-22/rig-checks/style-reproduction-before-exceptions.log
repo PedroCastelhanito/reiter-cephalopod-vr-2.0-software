@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\appearance.py", line 141, in <lambda>
+    action.triggered.connect(lambda checked=False, name=key: self.select(name))
+                                                             ^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\appearance.py", line 213, in select
+    if caption.text() not in (text, caption_caps(text)):
+       ^^^^^^^^^^^^^^
+RuntimeError: wrapped C/C++ object of type QLabel has been deleted

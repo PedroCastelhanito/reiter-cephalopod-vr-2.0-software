@@ -1,0 +1,5 @@
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 40528 exited; cleanup evidence remains required
+InterruptSession e40e6e35-570f-4cf3-a40a-06ad48ff026c failed: SESSION_IDENTITY: no exact live session
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

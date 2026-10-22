@@ -1122,6 +1122,112 @@ def test_clipping_evidence_records_empty_coverage_and_exact_group_output() -> No
     assert record.stages == ()
 
 
+@pytest.mark.parametrize("output_id", ["\x00" * 128, "😀" * 128, '"\\' * 64])
+def test_clipping_reservation_covers_maximum_schema_record(output_id: str) -> None:
+    from cephvr.visual_stimulus.config.models.evidence_model import EvidenceRecord
+
+    reservations = []
+
+    def enqueue(factory, *, reserved_bytes: int) -> None:
+        encoded = EvidenceWriter._encode(EvidenceRecord(payload=factory()))
+        assert len(encoded) <= reserved_bytes == 2048
+        reservations.append(reserved_bytes)
+
+    runtime = RecordingCaptureRuntime(
+        NS(),
+        NS(enqueue_evidence_factory=enqueue),
+        None,
+        evidence_pending_bytes=16_777_216,
+        capture_slots=1,
+    )
+    runtime.last_group_id = (1 << 64) - 1
+    runtime.diagnostics(
+        (
+            DiagnosticSnapshot(
+                (1 << 64) - 1,
+                output_id,
+                (1 << 32) - 1,
+                (1 << 63) - 1,
+                ("alpha", "linear_output", "device_code"),
+            ),
+        )
+    )
+    assert reservations == [2048]
+
+
+def test_clipping_burst_retains_all_records_across_recording_stall(
+    tmp_path: Path,
+) -> None:
+    import json
+    import time
+
+    gate = threading.Event()
+    recipe = ArtifactRef(
+        relative_path="recipe.json",
+        sha256="a" * 64,
+        byte_length=1,
+        schema_id="prepared-v2",
+    )
+    header = Header(
+        kind="header",
+        format_version=3,
+        identity=_identity(),
+        writer_generation="writer",
+        recipe=recipe,
+        trial_start_host_ns=1,
+        required_output_ids=("front", "left", "right", "bottom"),
+        renderer_compatibility="renderer-v1",
+    )
+    path = tmp_path / "frames.jsonl"
+    session = RecordingSession(
+        worker=None,
+        evidence=EvidenceWriter(max_pending_bytes=16_777_216),
+        evidence_path=path,
+        recipe_path=tmp_path / "recipe.json",
+        max_queued_evidence_bytes=16_777_216,
+        finalizer=lambda _counts: (),
+        startup=lambda: gate.wait(5),
+    )
+    runtime = RecordingCaptureRuntime(
+        NS(), session, None, evidence_pending_bytes=16_777_216, capture_slots=1
+    )
+    state = EvidenceStateSnapshot(0, "scene", 12, (), (), (), ())
+    try:
+        session.publish_header(header, recipe)
+        for group in range(32):
+            runtime.rendered(
+                NS(
+                    group=NS(group_id=group, outputs=()),
+                    evidence_state=state,
+                    evidence_submissions=(),
+                )
+            )
+            runtime.diagnostics(
+                tuple(
+                    DiagnosticSnapshot(group, face, 0, 12, ())
+                    for face in ("front", "left", "right", "bottom")
+                )
+            )
+        assert session._line_bytes < session.max_queued_evidence_bytes
+        # Old 256 KiB clipping reservations exhausted 16 MiB after only 12 groups.
+        assert 32 * 5 * 256 * 1024 > session.max_queued_evidence_bytes
+    finally:
+        gate.set()
+        result = session.finish(deadline_ns=time.perf_counter_ns() + 5_000_000_000)
+    assert result.evidence_closed
+    records = [json.loads(line)["payload"] for line in path.read_text().splitlines()]
+    assert [r["group_id"] for r in records if r["kind"] == "render_group"] == list(
+        range(32)
+    )
+    assert [
+        (r["group_id"], r["output_id"]) for r in records if r["kind"] == "clipping"
+    ] == [
+        (group, face)
+        for group in range(32)
+        for face in ("front", "left", "right", "bottom")
+    ]
+
+
 def test_evidence_queue_runs_while_overlapped_encoder_write_is_pending(
     tmp_path: Path,
 ) -> None:

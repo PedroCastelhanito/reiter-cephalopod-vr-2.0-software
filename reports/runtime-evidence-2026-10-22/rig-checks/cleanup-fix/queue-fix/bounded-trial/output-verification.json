@@ -1,0 +1,125 @@
+{
+  "ffprobe": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+  "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_ack22trial\\SPRIGCHECK-114605",
+  "trials": [
+    {
+      "trial_number": 1,
+      "outputs": [
+        {
+          "tag": "behavioral_cam_frames",
+          "bytes": 625432,
+          "counts": {
+            "video_frames": 1797,
+            "source_frames": 1797
+          }
+        },
+        {
+          "tag": "behavioral_cam",
+          "bytes": 265243817,
+          "counts": {
+            "frames": 1797
+          },
+          "decode": {
+            "width": 2456,
+            "height": 2568,
+            "nb_read_frames": "1797"
+          }
+        },
+        {
+          "tag": "tracking_cam_frames",
+          "bytes": 1255080,
+          "counts": {
+            "video_frames": 3596,
+            "source_frames": 3596
+          }
+        },
+        {
+          "tag": "tracking_cam",
+          "bytes": 371463,
+          "counts": {
+            "frames": 3596
+          },
+          "decode": {
+            "width": 1588,
+            "height": 1344,
+            "nb_read_frames": "3596"
+          }
+        },
+        {
+          "tag": "stimulus_LOG",
+          "bytes": 1245362,
+          "counts": {
+            "documents": 1
+          }
+        },
+        {
+          "tag": "stimulus_frames",
+          "bytes": 18289141,
+          "counts": {
+            "render_groups": 3601
+          },
+          "encoder": {
+            "kind": "encoder_outcome",
+            "admitted_count": 3601,
+            "input_submitted_count": 3601,
+            "capacity_drop_count": 0,
+            "selected_real_count": 3601,
+            "same_slot_omission_count": 0,
+            "encoded_frame_count": 3601,
+            "duplicate_frame_count": 0,
+            "final_input_group_id": 3600,
+            "cutoff_host_ns": 659703925550800,
+            "exit_code": 0,
+            "eof_sent": true,
+            "drain_confirmed": true
+          },
+          "texture_audit": {
+            "groups": 3601,
+            "bindings": 14404,
+            "occurrences": 1,
+            "mismatches": 0,
+            "residency_holds": 0,
+            "maximum_state_interval_ns": 29886900,
+            "maximum_output_intervals_ns": {
+              "calibration_right": 18992600,
+              "calibration_bottom": 19270300,
+              "calibration_left": 18528300,
+              "calibration_front": 24879200
+            },
+            "captures": {
+              "admitted": 3601,
+              "transfer_complete": 3601,
+              "input_submitted": 3601
+            },
+            "submission_failures": {},
+            "submission_phases": {
+              "returned": 14404
+            },
+            "first_groups": {
+              "0": {
+                "group_id": 0,
+                "evaluation_host_ns": 659643930792500,
+                "onset_delay_ns": 5241700
+              }
+            }
+          }
+        },
+        {
+          "tag": "stimulus",
+          "bytes": 10985902,
+          "counts": {
+            "input_frames": 3601,
+            "frames": 3601,
+            "duplicate_frames": 0
+          },
+          "decode": {
+            "width": 1280,
+            "height": 720,
+            "nb_read_frames": "3601"
+          }
+        }
+      ],
+      "expected_occurrences": 1
+    }
+  ]
+}

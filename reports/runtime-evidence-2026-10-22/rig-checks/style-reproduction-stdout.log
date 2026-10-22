@@ -1,0 +1,7 @@
+{"event": "event_loop_start", "host_ns": 648506131757800, "platform": "windows"}
+{"event": "before_monitor", "host_ns": 648507130838900}
+{"event": "after_monitor", "host_ns": 648507166741600, "runtime_layout": true}
+{"event": "before_amber", "host_ns": 648509134801600}
+{"event": "after_amber", "host_ns": 648509557851400, "style": "amber_phosphor"}
+{"event": "finish", "host_ns": 648514133965800, "visible": true, "runtime_layout": true}
+{"event": "event_loop_end", "host_ns": 648514200793400, "exit_code": 0}

@@ -22,7 +22,7 @@ class DevicePanel(ResponsiveColumns):
         actions: tuple[str, ...],
     ) -> None:
         left, left_layout = column()
-        right = StatusColumn("Device HUD")
+        right = StatusColumn()
         super().__init__(left, right)
         self.configuration = Card(title)
         self.form = QGridLayout()

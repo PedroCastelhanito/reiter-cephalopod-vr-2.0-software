@@ -109,6 +109,7 @@ class BatchCreate(QWidget):
         ):
             control.setMinimumWidth(0)
             widget = field(caption, control)
+            widget.setParent(self.generation_controls)
             widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
             self.parameter_fields.append(widget)
         equal_row_height(

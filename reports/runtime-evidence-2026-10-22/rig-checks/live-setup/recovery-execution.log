@@ -1,0 +1,2 @@
+preserving_recovery {'command_id': '5b5949b0-27aa-4f90-a38e-f7374a4e37e0', 'complete': True, 'succeeded': True, 'needs_input': False, 'failure': ''}
+{"preserved_failed_session": "76f65fbf-f9b5-4f3c-ba9d-df1d7fbe86aa", "runtime_equal": true, "history_bytes_equal": true, "history_sha256": "d3e1b9c0ff202b72b358f18e0508ec37bfa44b5809083d375b50c5c44a8275e8", "prior_unknown_closure_not_upgraded": true}

@@ -1,0 +1,216 @@
+{
+  "scope": "host software evaluation and submission entry intervals, no optical onset/strict60Hz guarantee",
+  "trials": [
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-114917\\protocol-data\\RIGCHECK_115036_stimulus_frames.jsonl",
+      "groups": 36000,
+      "state": {
+        "count": 35999,
+        "minimum_ns": 4761700,
+        "p50_ns": 16680100,
+        "p95_ns": 18789400,
+        "p99_ns": 20170600,
+        "p999_ns": 21820100,
+        "maximum_ns": 53529700,
+        "gaps_over_ms": {
+          "20": 444,
+          "25": 9,
+          "35": 3,
+          "50": 1,
+          "100": 0
+        }
+      },
+      "outputs": {
+        "calibration_bottom": {
+          "count": 35999,
+          "minimum_ns": 4969000,
+          "p50_ns": 16675000,
+          "p95_ns": 17919700,
+          "p99_ns": 19200000,
+          "p999_ns": 20865100,
+          "maximum_ns": 44273000,
+          "gaps_over_ms": {
+            "20": 148,
+            "25": 6,
+            "35": 2,
+            "50": 0,
+            "100": 0
+          }
+        },
+        "calibration_front": {
+          "count": 35999,
+          "minimum_ns": 4262000,
+          "p50_ns": 16641600,
+          "p95_ns": 20742000,
+          "p99_ns": 23627300,
+          "p999_ns": 27635800,
+          "maximum_ns": 53633800,
+          "gaps_over_ms": {
+            "20": 2920,
+            "25": 184,
+            "35": 6,
+            "50": 1,
+            "100": 0
+          }
+        },
+        "calibration_left": {
+          "count": 35999,
+          "minimum_ns": 5723800,
+          "p50_ns": 16668900,
+          "p95_ns": 17416300,
+          "p99_ns": 18706800,
+          "p999_ns": 20368200,
+          "maximum_ns": 44020200,
+          "gaps_over_ms": {
+            "20": 54,
+            "25": 6,
+            "35": 1,
+            "50": 0,
+            "100": 0
+          }
+        },
+        "calibration_right": {
+          "count": 35999,
+          "minimum_ns": 5191000,
+          "p50_ns": 16670500,
+          "p95_ns": 17704500,
+          "p99_ns": 18975700,
+          "p999_ns": 20708600,
+          "maximum_ns": 44187100,
+          "gaps_over_ms": {
+            "20": 94,
+            "25": 6,
+            "35": 2,
+            "50": 0,
+            "100": 0
+          }
+        }
+      },
+      "slow_state_gaps": [
+        {
+          "group": 20951,
+          "epoch": 1164,
+          "interval_ns": 38940800
+        },
+        {
+          "group": 28521,
+          "epoch": 1584,
+          "interval_ns": 35212800
+        },
+        {
+          "group": 33437,
+          "epoch": 1857,
+          "interval_ns": 53529700
+        }
+      ]
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\r22\\20261022_full22fixed\\SPRIGCHECK-114917\\protocol-data\\RIGCHECK_120037_stimulus_frames.jsonl",
+      "groups": 35995,
+      "state": {
+        "count": 35994,
+        "minimum_ns": 4846700,
+        "p50_ns": 16679000,
+        "p95_ns": 19543000,
+        "p99_ns": 21579400,
+        "p999_ns": 23545300,
+        "maximum_ns": 105882000,
+        "gaps_over_ms": {
+          "20": 1338,
+          "25": 12,
+          "35": 4,
+          "50": 4,
+          "100": 1
+        }
+      },
+      "outputs": {
+        "calibration_bottom": {
+          "count": 35994,
+          "minimum_ns": 4197300,
+          "p50_ns": 16666500,
+          "p95_ns": 18639000,
+          "p99_ns": 20748600,
+          "p999_ns": 22643900,
+          "maximum_ns": 100255200,
+          "gaps_over_ms": {
+            "20": 693,
+            "25": 4,
+            "35": 4,
+            "50": 4,
+            "100": 1
+          }
+        },
+        "calibration_front": {
+          "count": 35994,
+          "minimum_ns": 4363100,
+          "p50_ns": 16723800,
+          "p95_ns": 21559400,
+          "p99_ns": 24812600,
+          "p999_ns": 27933400,
+          "maximum_ns": 107506400,
+          "gaps_over_ms": {
+            "20": 3964,
+            "25": 327,
+            "35": 4,
+            "50": 4,
+            "100": 1
+          }
+        },
+        "calibration_left": {
+          "count": 35994,
+          "minimum_ns": 4245600,
+          "p50_ns": 16668700,
+          "p95_ns": 19837500,
+          "p99_ns": 22631900,
+          "p999_ns": 26708000,
+          "maximum_ns": 107808300,
+          "gaps_over_ms": {
+            "20": 1651,
+            "25": 113,
+            "35": 4,
+            "50": 4,
+            "100": 1
+          }
+        },
+        "calibration_right": {
+          "count": 35994,
+          "minimum_ns": 4163400,
+          "p50_ns": 16672600,
+          "p95_ns": 19944800,
+          "p99_ns": 22684500,
+          "p999_ns": 26760700,
+          "maximum_ns": 107899000,
+          "gaps_over_ms": {
+            "20": 1747,
+            "25": 116,
+            "35": 4,
+            "50": 4,
+            "100": 1
+          }
+        }
+      },
+      "slow_state_gaps": [
+        {
+          "group": 3096,
+          "epoch": 172,
+          "interval_ns": 54576600
+        },
+        {
+          "group": 9837,
+          "epoch": 546,
+          "interval_ns": 76247100
+        },
+        {
+          "group": 17462,
+          "epoch": 970,
+          "interval_ns": 82855600
+        },
+        {
+          "group": 26257,
+          "epoch": 1459,
+          "interval_ns": 105882000
+        }
+      ]
+    }
+  ]
+}

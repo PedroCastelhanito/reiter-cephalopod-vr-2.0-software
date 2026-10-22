@@ -1,0 +1,460 @@
+"""Detailed Cleanup proof and late Finished reconciliation (E04/E06)."""
+
+from __future__ import annotations
+
+import asyncio
+from collections.abc import Callable, Coroutine, Sized
+from copy import deepcopy
+from typing import Any, Protocol, TypeVar
+from uuid import uuid4
+
+from google.protobuf.message import Message
+
+from cephvr.control.v1 import services_pb2 as svc
+from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.evidence import outputs_satisfied
+from cephvr.controller.planning import PlanningError, requested_output_identities
+from cephvr.controller.ports import BackendPort
+from cephvr.controller.receipts import rejected_receipt
+from cephvr.controller.state import (
+    RETAINED_LIMIT,
+    Attempt,
+    LifecycleState,
+    LimitsState,
+    SupervisorState,
+)
+from cephvr.shared.cleanup_outputs import (
+    cleanup_output_absence_proven,
+    cleanup_output_discharged,
+)
+from cephvr.shared.resources import cleanup_command_fenced
+
+_Report = TypeVar("_Report", bound=Message)
+
+
+def retain_or_conflict(
+    store: dict[str, _Report], key: str, payload: _Report, conflict_message: str
+) -> pb.ReportReceipt | None:
+    """Reject a changed duplicate report, else retain a copy of the payload."""
+    existing = store.get(key)
+    if existing is not None and existing.SerializeToString(
+        deterministic=True
+    ) != payload.SerializeToString(deterministic=True):
+        return rejected_receipt("CONFLICT", conflict_message)
+    store[key] = deepcopy(payload)
+    return None
+
+
+class CompletionHooks(Protocol):
+    @property
+    def publish(self) -> Callable[[], None]: ...
+
+    @property
+    def spawn(self) -> Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]]: ...
+
+    @property
+    def late_cleanup(self) -> Callable[[Attempt], Coroutine[Any, Any, None]]: ...
+
+    @property
+    def log_event(self) -> Callable[..., Coroutine[Any, Any, None]]: ...
+
+
+class DetailedCompletion:
+    def __init__(
+        self,
+        *,
+        lifecycle: LifecycleState,
+        supervisor: SupervisorState,
+        limits: LimitsState,
+        hooks: CompletionHooks,
+    ) -> None:
+        self.lifecycle = lifecycle
+        self.supervisor = supervisor
+        self.limits = limits
+        self.hooks = hooks
+
+    def cleanup(self, attempt: Attempt, payload: pb.CleanupReport) -> pb.ReportReceipt:
+        name = payload.source.role
+        backend = attempt.required.get(name)
+        registered = attempt.registered_context
+        health = self.supervisor.processes.get(name)
+        heartbeat = (
+            health.last_heartbeat
+            if health is not None and health.HasField("last_heartbeat")
+            else None
+        )
+        catalogued = (
+            heartbeat is not None
+            and heartbeat.source == payload.source
+            and heartbeat.work.WhichOneof("work") == "session"
+            and heartbeat.work.session == attempt.context
+            and heartbeat.HasField("cleanup_resources_revision")
+        )
+        unprepared_visual_stimulus = (
+            name == "visual_stimulus"
+            and not attempt.visual_stimulus_setup_dispatched
+            and not attempt.activated
+            and name not in attempt.ready
+            and registered is not None
+            and not registered.outputs
+        )
+        source_obligations = (
+            attempt.ready[name].cleanup_resources
+            if attempt.incident_topology is not None and name in attempt.ready
+            else heartbeat.cleanup_resources
+            if catalogued and heartbeat is not None
+            else ()
+        )
+        obligations = {resource.resource: resource for resource in source_obligations}
+        revision = (
+            attempt.cleanup_catalogue_revisions.get(name)
+            if attempt.incident_topology is not None
+            else heartbeat.cleanup_resources_revision
+            if catalogued and heartbeat is not None
+            else 0
+            if unprepared_visual_stimulus
+            else None
+        )
+        releases = {resource.resource: resource for resource in payload.resources}
+        if registered is None:
+            expected_outputs: set[str] = set()
+        elif not registered.outputs and not unprepared_visual_stimulus:
+            try:
+                planned = requested_output_identities(
+                    attempt.prepared,
+                    {
+                        backend_name: participant.context
+                        for backend_name, participant in attempt.required.items()
+                    },
+                )
+            except PlanningError:
+                return rejected_receipt(
+                    "EVIDENCE", "failed Setup output identities unavailable"
+                )
+            expected_outputs = {
+                output.output_key
+                for output in planned
+                if output.backend.backend_name == name
+            }
+        else:
+            expected_outputs = {
+                output.output_key
+                for output in registered.outputs
+                if output.backend.backend_name == name
+            }
+        actual_outputs = {output.output_key: output for output in payload.outputs}
+        if (
+            registered is not None
+            and not registered.outputs
+            and any(
+                not cleanup_output_absence_proven(output) for output in payload.outputs
+            )
+        ):
+            return rejected_receipt(
+                "EVIDENCE", "failed Setup output absence proof is invalid"
+            )
+        proof_valid = self._cleanup_proof_valid(
+            attempt,
+            payload,
+            backend=backend,
+            registered=registered,
+            revision=revision,
+            obligations=obligations,
+            source_obligations=source_obligations,
+            releases=releases,
+            expected_outputs=expected_outputs,
+            actual_outputs=actual_outputs,
+        )
+        try:
+            # Temporary no-Start diagnostic: retain the exact rejected proof inputs.
+            import json
+            from pathlib import Path
+            from google.protobuf.json_format import MessageToDict
+
+            def observed(message: Message | None) -> object:
+                return (
+                    None
+                    if message is None
+                    else MessageToDict(message, preserving_proto_field_name=True)
+                )
+
+            evidence = {
+                "accepted_by_exact_predicate": proof_valid,
+                "payload": observed(payload),
+                "payload_wire_hex": payload.SerializeToString().hex(),
+                "registered": observed(registered),
+                "heartbeat": observed(heartbeat),
+                "ready": observed(attempt.ready.get(name)),
+                "backend": observed(backend.context if backend else None),
+                "expected_revision": revision,
+                "frozen_revisions": dict(attempt.cleanup_catalogue_revisions),
+                "expected_outputs": sorted(expected_outputs),
+                "prepared_outputs": [observed(o) for o in attempt.prepared.outputs],
+                "source_obligations": [observed(o) for o in source_obligations],
+                "command_fenced": registered is not None
+                and cleanup_command_fenced(payload, registered),
+                "scheduled_outputs_valid": registered is not None
+                and expected_outputs <= actual_outputs.keys()
+                and DetailedCompletion._scheduled_cleanup_outputs_valid(
+                    attempt, name, registered, actual_outputs
+                ),
+                "output_absence": {
+                    key: cleanup_output_absence_proven(o)
+                    for key, o in actual_outputs.items()
+                },
+            }
+            directory = (
+                Path(__file__).resolve().parents[3]
+                / "reports/runtime-evidence-2026-10-22/rig-checks/cleanup-fix"
+            )
+            directory.mkdir(parents=True, exist_ok=True)
+            (
+                directory
+                / ("cleanup-" + attempt.context.session_id + "-" + name + ".json")
+            ).write_text(json.dumps(evidence, indent=2), encoding="utf-8")
+        except Exception as exc:
+            print("temporary cleanup capture failed:", repr(exc), flush=True)
+        if not proof_valid:
+            return rejected_receipt(
+                "EVIDENCE", "cleanup identity or release proof missing"
+            )
+        if (
+            conflict := retain_or_conflict(
+                attempt.cleanup, name, payload, "changed duplicate Cleanup"
+            )
+        ) is not None:
+            return conflict
+        attempt.changed.set()
+        self.hooks.publish()
+        if (
+            self.lifecycle.session.phase
+            in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_ENDED)
+            and not self.lifecycle.session.cleanup_confirmed
+        ):
+            self.hooks.spawn(self.hooks.late_cleanup(attempt))
+        return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    @staticmethod
+    def _cleanup_proof_valid(
+        attempt: Attempt,
+        payload: pb.CleanupReport,
+        *,
+        backend: BackendPort | None,
+        registered: svc.RegisteredContext | None,
+        revision: int | None,
+        obligations: dict[str, pb.ResourceObligation],
+        source_obligations: Sized,
+        releases: dict[str, pb.ResourceRelease],
+        expected_outputs: set[str],
+        actual_outputs: dict[str, pb.OutputResult],
+    ) -> bool:
+        """Exact identity, release and output-closure proof for one Cleanup report."""
+        return not (
+            backend is None
+            or payload.source.generation != backend.context.backend_generation
+            or payload.work.WhichOneof("work") != "session"
+            or payload.work.session != attempt.context
+            or not payload.trial_activity_stopped
+            or registered is None
+            or not cleanup_command_fenced(payload, registered)
+            or revision is None
+            or not payload.HasField("cleanup_resources_revision")
+            or payload.cleanup_resources_revision != revision
+            or payload.verified_monotonic_ns <= 0
+            or set(releases) != set(obligations)
+            or len(obligations) != len(source_obligations)
+            or len(releases) != len(payload.resources)
+            or any(
+                not release.released
+                or release.failure.code
+                or release.failure.message
+                or release.HasField("path") != obligations[key].HasField("path")
+                or release.HasField("path")
+                and release.path != obligations[key].path
+                for key, release in releases.items()
+            )
+            or set(actual_outputs) != expected_outputs
+            or len(actual_outputs) != len(payload.outputs)
+            or registered.outputs
+            and not DetailedCompletion._scheduled_cleanup_outputs_valid(
+                attempt, payload.source.role, registered, actual_outputs
+            )
+            or any(
+                not cleanup_output_discharged(output)
+                for output in actual_outputs.values()
+            )
+        )
+
+    @staticmethod
+    def _scheduled_cleanup_outputs_valid(
+        attempt: Attempt,
+        name: str,
+        registered: svc.RegisteredContext,
+        results: dict[str, pb.OutputResult],
+    ) -> bool:
+        """Join frozen Setup identities to controller-owned scheduled paths (E08)."""
+        scheduled = [
+            o for o in attempt.prepared.outputs if o.backend.backend_name == name
+        ]
+        by_key = {o.output_key: o for o in scheduled}
+        frozen = [o for o in registered.outputs if o.backend.backend_name == name]
+        if (
+            len(by_key) != len(scheduled)
+            or set(by_key) != {o.output_key for o in frozen}
+            or len(frozen) != len(by_key)
+        ):
+            return False
+        for identity in frozen:
+            plan = by_key[identity.output_key]
+            if (
+                identity.HasField("path")
+                and identity.path
+                and identity.path != plan.path
+            ):
+                return False
+            original, adopted = deepcopy(identity), deepcopy(plan)
+            original.ClearField("path")
+            adopted.ClearField("path")
+            if original != adopted:
+                return False
+            result = results[identity.output_key]
+            if plan.HasField("path") and plan.path:
+                if result.path != plan.path:
+                    return False
+            elif not cleanup_output_absence_proven(result):
+                return False
+        return True
+
+    def _retain_late_finished(
+        self,
+        attempt: Attempt,
+        payload: pb.FinishedReport,
+        name: str,
+        backend: BackendPort,
+        ingress_ns: int,
+    ) -> pb.ReportReceipt | None:
+        """Retain an exact late Finished with its recovery record, or reject it."""
+        trial_id = payload.context.work.trial.trial_id
+        recovered_key = (trial_id, name)
+        if (
+            len(attempt.recovered_finished)
+            >= len(attempt.prepared.trials) * len(attempt.required)
+            and recovered_key not in attempt.recovered_finished
+        ):
+            return rejected_receipt("CAPACITY", "late Finished retention exhausted")
+        attempt.recovered_finished[recovered_key] = deepcopy(payload)
+        closure = [
+            {
+                "output_key": item.output_key,
+                "closure": pb.OutputClosure.Name(item.closure),
+            }
+            for item in payload.outputs
+        ]
+        recovered = pb.RecoveryState(
+            attempt_id=str(uuid4()),
+            affected=pb.ProcessIdentity(
+                role=name, generation=backend.context.backend_generation
+            ),
+            work=pb.WorkContext(trial=payload.context.work.trial),
+            trigger=pb.Failure(
+                code="FINISHED_TIMEOUT",
+                message="initial Finished evidence deadline expired",
+            ),
+            action="reconcile exact Finished output closure",
+            start_monotonic_ns=attempt.finished_deadline_ns,
+            deadline_monotonic_ns=attempt.finished_deadline_ns
+            + self.limits.current.recovery_ns,
+            completion_monotonic_ns=ingress_ns,
+            progress="exact late Finished accepted; original trial outcome unchanged",
+            outcome=pb.RECOVERY_OUTCOME_COMPLETED,
+            evidence=f"{len(payload.outputs)} exact output closure result(s) retained",
+        )
+        self.supervisor.controller_recoveries.append(recovered)
+        self.supervisor.retained_truncated |= (
+            len(self.supervisor.controller_recoveries) > RETAINED_LIMIT
+        )
+        self.supervisor.controller_recoveries = self.supervisor.controller_recoveries[
+            -RETAINED_LIMIT:
+        ]
+        if (
+            attempt.writer is not None
+            and not attempt.writer_closed
+            and not attempt.recovery_log_closed
+        ):
+            recovery_task = self.hooks.spawn(
+                self.hooks.log_event(
+                    attempt,
+                    "recovery",
+                    details={
+                        "component": "Finished",
+                        "action": "reconcile exact output closure",
+                        "trial_id": trial_id,
+                        "backend": name,
+                        "outputs": closure,
+                        "initial_deadline_ns": attempt.finished_deadline_ns,
+                    },
+                    at_ns=ingress_ns,
+                    trial_number=payload.context.work.trial.trial_number,
+                    outcome="completed",
+                )
+            )
+            attempt.recovery_log_tasks.add(recovery_task)
+            recovery_task.add_done_callback(attempt.recovery_log_finished)
+        return None
+
+    def finished(
+        self, attempt: Attempt, payload: pb.FinishedReport, name: str, ingress_ns: int
+    ) -> pb.ReportReceipt | None:
+        backend = attempt.required[name]
+        trial_expected_outputs = [
+            output
+            for output in attempt.prepared.outputs
+            if output.trial == attempt.prepared.trials[attempt.trial_index].context
+            and output.backend.backend_name == name
+        ]
+        unavailable = attempt.unavailable_resources()
+        interrupted_recovery_deadline = (
+            min(
+                attempt.finished_deadline_ns + self.limits.current.recovery_ns,
+                attempt.finalization_deadline_ns,
+            )
+            if attempt.finalization_deadline_ns
+            else 0
+        )
+        within_finished_gate = (
+            ingress_ns <= attempt.finished_deadline_ns
+            or attempt.recovering_evidence == "finished"
+            and ingress_ns <= attempt.recovery_deadline_ns
+            or attempt.interrupted
+            and ingress_ns <= interrupted_recovery_deadline
+            and not attempt.recovery_log_closed
+        )
+        earliest_finished_ns = (
+            attempt.target_ns if attempt.interruption_issued_ns else attempt.end_ns
+        )
+        if (
+            self.lifecycle.trial.phase
+            not in (pb.TRIAL_PHASE_RUNNING, pb.TRIAL_PHASE_FINALIZING)
+            or ingress_ns < earliest_finished_ns
+            or not within_finished_gate
+            or not payload.trial_activity_stopped
+            or not outputs_satisfied(
+                trial_expected_outputs,
+                payload.outputs,
+                unavailable=unavailable,
+            )
+        ):
+            return rejected_receipt("EVIDENCE", "Finished closure incomplete")
+        old_finished = attempt.finished.get(name)
+        if old_finished is not None and old_finished.SerializeToString(
+            deterministic=True
+        ) != payload.SerializeToString(deterministic=True):
+            return rejected_receipt("CONFLICT", "changed duplicate Finished")
+        if old_finished is None and ingress_ns > attempt.finished_deadline_ns:
+            rejected = self._retain_late_finished(
+                attempt, payload, name, backend, ingress_ns
+            )
+            if rejected is not None:
+                return rejected
+        attempt.finished[name] = deepcopy(payload)
+        return None

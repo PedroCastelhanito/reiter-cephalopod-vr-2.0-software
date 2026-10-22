@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="5" time="7.730" timestamp="2026-10-22T10:05:48.729692+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_timeline_epoch_shortcuts_and_keyboard_history" time="0.665"><failure message="AssertionError: assert 3 == (3 + 1)&#10; +  where 3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())))&#10; +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())) = Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None, body=(Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=()))).body&#10; +  and   3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())))&#10; +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())) = Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None, body=(Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=()))).body">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000025043B61900&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000250447440D0&gt;
+
+    def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(editor.program))
+        editor.enter_group()
+        original = editor.program
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+        )
+        duplicate = editor.program
+&gt;       assert len(duplicate.sequence[0].body) == len(original.sequence[0].body) + 1
+E       AssertionError: assert 3 == (3 + 1)
+E        +  where 3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())))
+E        +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())) = Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None, body=(Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=()))).body
+E        +  and   3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())))
+E        +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())) = Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None, body=(Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='5')), settings=(), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Flow', batch_label='', batch_id=None, subgroup_draft=None, scene_id='flow', duration=Fixed(kind='fixed', duration=Time(seconds='20')), settings=(TextureSettings(instance_id='flow', space=AngularSpace(kind='visual_angle', frame_id='rig', frame_to_rig_xyzw=(0.0, 0.0, 0.0, 1.0), surfaces=('left', 'right')), initial=Initial2D(x=0.0, y=0.0, rotation_deg=0.0), width=Constant(kind='constant', value=90.0), height=Constant(kind='constant', value=90.0), opacity=Constant(kind='constant', value=1.0), motion=Motion2D(x=Hold(kind='hold'), y=Hold(kind='hold'), rotation=Hold(kind='hold')), reset=True, assignments=(), feedback=(), linked_to=None, kind='texture', pattern=Grating(kind='sine_grating', frequency=Constant(kind='constant', value=0.05)), initial_phase_x_cycles=0.0, initial_phase_y_cycles=0.0, phase_x=Rate(kind='rate', function=Constant(kind='constant', value=1.5)), phase_y=Hold(kind='hold'), mean_linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),), repetition_rules=(), repetition_settings=()), Epoch(kind='epoch', epoch_id='Recovery', batch_label='', batch_id=None, subgroup_draft=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=()))).body
+
+tests\gui\test_dashboard.py:13701: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_review_devices_capture_aligned_fields_and_wrapped_headers[720]" time="1.196"><failure message="assert 482 == 514&#10; +  where 482 = &lt;built-in method width of QWidget object at 0x00000250471EB250&gt;()&#10; +    where &lt;built-in method width of QWidget object at 0x00000250471EB250&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x00000250471EB250&gt;.width&#10; +      where &lt;PyQt6.QtWidgets.QWidget object at 0x00000250471EB250&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x00000250471EB520&gt;.mode_field&#10; +  and   514 = &lt;built-in method width of ProjectorPulses object at 0x00000250471EB520&gt;()&#10; +    where &lt;built-in method width of ProjectorPulses object at 0x00000250471EB520&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x00000250471EB520&gt;.width">app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000250447440D0&gt;, width = 720
+
+    @pytest.mark.parametrize("width", [720, 1175, 1440])
+    def test_review_devices_capture_aligned_fields_and_wrapped_headers(app, width):
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.gui.table_header import TableHeader
+        from cephvr.gui.tables import DataTable
+    
+        reviewed = ReviewDashboardWindow(sample=True)
+        try:
+            ReviewControls(reviewed, simulate_projectors=True)
+            reviewed.appearance.select("retro_console")
+            reviewed.resize(width, 940)
+            reviewed.show()
+            reviewed.page_buttons[2].click()
+            for _ in range(5):
+                app.processEvents()
+            camera = reviewed.devices.cameras
+            editors = (
+                camera.trigger_source,
+                camera.fields["trigger_frequency_hz"],
+                camera.trigger_pin,
+            )
+            assert len({e.mapTo(camera.configuration, QPoint()).y() for e in editors}) == 1
+            assert len({e.height() for e in editors}) == 1
+            for index in range(4):
+                reviewed.devices.tabs.setCurrentIndex(index)
+                for _ in range(5):
+                    app.processEvents()
+                for table in reviewed.devices.panels[index].findChildren(DataTable):
+                    if not table.isVisible():
+                        continue
+                    header = table.horizontalHeader()
+                    assert isinstance(header, TableHeader)
+                    if header.isHidden():
+                        continue
+                    for column in range(header.count()):
+                        if not header.isSectionHidden(column):
+                            layout = header.label_layout(column, header.sectionSize(column))
+                            assert layout.boundingRect().height() + 16 &lt;= header.height()
+            projectors = reviewed.devices.projectors
+            reviewed.devices.tabs.setCurrentIndex(2)
+            projectors.setup_tabs.setCurrentIndex(2)
+            for _ in range(5):
+                app.processEvents()
+            timing = projectors.timing
+&gt;           assert timing.mode_field.width() == timing.width()
+E           assert 482 == 514
+E            +  where 482 = &lt;built-in method width of QWidget object at 0x00000250471EB250&gt;()
+E            +    where &lt;built-in method width of QWidget object at 0x00000250471EB250&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x00000250471EB250&gt;.width
+E            +      where &lt;PyQt6.QtWidgets.QWidget object at 0x00000250471EB250&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x00000250471EB520&gt;.mode_field
+E            +  and   514 = &lt;built-in method width of ProjectorPulses object at 0x00000250471EB520&gt;()
+E            +    where &lt;built-in method width of ProjectorPulses object at 0x00000250471EB520&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x00000250471EB520&gt;.width
+
+tests\gui\test_dashboard.py:18984: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_review_devices_capture_aligned_fields_and_wrapped_headers[1175]" time="1.448"><failure message="assert 445 == 477&#10; +  where 445 = &lt;built-in method width of QWidget object at 0x000002504470AF80&gt;()&#10; +    where &lt;built-in method width of QWidget object at 0x000002504470AF80&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x000002504470AF80&gt;.width&#10; +      where &lt;PyQt6.QtWidgets.QWidget object at 0x000002504470AF80&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x000002504470B010&gt;.mode_field&#10; +  and   477 = &lt;built-in method width of ProjectorPulses object at 0x000002504470B010&gt;()&#10; +    where &lt;built-in method width of ProjectorPulses object at 0x000002504470B010&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x000002504470B010&gt;.width">app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000250447440D0&gt;, width = 1175
+
+    @pytest.mark.parametrize("width", [720, 1175, 1440])
+    def test_review_devices_capture_aligned_fields_and_wrapped_headers(app, width):
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.gui.table_header import TableHeader
+        from cephvr.gui.tables import DataTable
+    
+        reviewed = ReviewDashboardWindow(sample=True)
+        try:
+            ReviewControls(reviewed, simulate_projectors=True)
+            reviewed.appearance.select("retro_console")
+            reviewed.resize(width, 940)
+            reviewed.show()
+            reviewed.page_buttons[2].click()
+            for _ in range(5):
+                app.processEvents()
+            camera = reviewed.devices.cameras
+            editors = (
+                camera.trigger_source,
+                camera.fields["trigger_frequency_hz"],
+                camera.trigger_pin,
+            )
+            assert len({e.mapTo(camera.configuration, QPoint()).y() for e in editors}) == 1
+            assert len({e.height() for e in editors}) == 1
+            for index in range(4):
+                reviewed.devices.tabs.setCurrentIndex(index)
+                for _ in range(5):
+                    app.processEvents()
+                for table in reviewed.devices.panels[index].findChildren(DataTable):
+                    if not table.isVisible():
+                        continue
+                    header = table.horizontalHeader()
+                    assert isinstance(header, TableHeader)
+                    if header.isHidden():
+                        continue
+                    for column in range(header.count()):
+                        if not header.isSectionHidden(column):
+                            layout = header.label_layout(column, header.sectionSize(column))
+                            assert layout.boundingRect().height() + 16 &lt;= header.height()
+            projectors = reviewed.devices.projectors
+            reviewed.devices.tabs.setCurrentIndex(2)
+            projectors.setup_tabs.setCurrentIndex(2)
+            for _ in range(5):
+                app.processEvents()
+            timing = projectors.timing
+&gt;           assert timing.mode_field.width() == timing.width()
+E           assert 445 == 477
+E            +  where 445 = &lt;built-in method width of QWidget object at 0x000002504470AF80&gt;()
+E            +    where &lt;built-in method width of QWidget object at 0x000002504470AF80&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x000002504470AF80&gt;.width
+E            +      where &lt;PyQt6.QtWidgets.QWidget object at 0x000002504470AF80&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x000002504470B010&gt;.mode_field
+E            +  and   477 = &lt;built-in method width of ProjectorPulses object at 0x000002504470B010&gt;()
+E            +    where &lt;built-in method width of ProjectorPulses object at 0x000002504470B010&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x000002504470B010&gt;.width
+
+tests\gui\test_dashboard.py:18984: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_review_devices_capture_aligned_fields_and_wrapped_headers[1440]" time="1.447"><failure message="assert 577 == 609&#10; +  where 577 = &lt;built-in method width of QWidget object at 0x00000250471F2290&gt;()&#10; +    where &lt;built-in method width of QWidget object at 0x00000250471F2290&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x00000250471F2290&gt;.width&#10; +      where &lt;PyQt6.QtWidgets.QWidget object at 0x00000250471F2290&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x00000250471F2A70&gt;.mode_field&#10; +  and   609 = &lt;built-in method width of ProjectorPulses object at 0x00000250471F2A70&gt;()&#10; +    where &lt;built-in method width of ProjectorPulses object at 0x00000250471F2A70&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x00000250471F2A70&gt;.width">app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000250447440D0&gt;, width = 1440
+
+    @pytest.mark.parametrize("width", [720, 1175, 1440])
+    def test_review_devices_capture_aligned_fields_and_wrapped_headers(app, width):
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.gui.table_header import TableHeader
+        from cephvr.gui.tables import DataTable
+    
+        reviewed = ReviewDashboardWindow(sample=True)
+        try:
+            ReviewControls(reviewed, simulate_projectors=True)
+            reviewed.appearance.select("retro_console")
+            reviewed.resize(width, 940)
+            reviewed.show()
+            reviewed.page_buttons[2].click()
+            for _ in range(5):
+                app.processEvents()
+            camera = reviewed.devices.cameras
+            editors = (
+                camera.trigger_source,
+                camera.fields["trigger_frequency_hz"],
+                camera.trigger_pin,
+            )
+            assert len({e.mapTo(camera.configuration, QPoint()).y() for e in editors}) == 1
+            assert len({e.height() for e in editors}) == 1
+            for index in range(4):
+                reviewed.devices.tabs.setCurrentIndex(index)
+                for _ in range(5):
+                    app.processEvents()
+                for table in reviewed.devices.panels[index].findChildren(DataTable):
+                    if not table.isVisible():
+                        continue
+                    header = table.horizontalHeader()
+                    assert isinstance(header, TableHeader)
+                    if header.isHidden():
+                        continue
+                    for column in range(header.count()):
+                        if not header.isSectionHidden(column):
+                            layout = header.label_layout(column, header.sectionSize(column))
+                            assert layout.boundingRect().height() + 16 &lt;= header.height()
+            projectors = reviewed.devices.projectors
+            reviewed.devices.tabs.setCurrentIndex(2)
+            projectors.setup_tabs.setCurrentIndex(2)
+            for _ in range(5):
+                app.processEvents()
+            timing = projectors.timing
+&gt;           assert timing.mode_field.width() == timing.width()
+E           assert 577 == 609
+E            +  where 577 = &lt;built-in method width of QWidget object at 0x00000250471F2290&gt;()
+E            +    where &lt;built-in method width of QWidget object at 0x00000250471F2290&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x00000250471F2290&gt;.width
+E            +      where &lt;PyQt6.QtWidgets.QWidget object at 0x00000250471F2290&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x00000250471F2A70&gt;.mode_field
+E            +  and   609 = &lt;built-in method width of ProjectorPulses object at 0x00000250471F2A70&gt;()
+E            +    where &lt;built-in method width of ProjectorPulses object at 0x00000250471F2A70&gt; = &lt;cephvr.gui.projector_pulses.ProjectorPulses object at 0x00000250471F2A70&gt;.width
+
+tests\gui\test_dashboard.py:18984: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_linked_texture_motion_variation_reports_reference_and_recovers[Speed]" time="1.135" /></testsuite></testsuites>

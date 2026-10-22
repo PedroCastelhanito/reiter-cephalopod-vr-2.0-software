@@ -251,7 +251,7 @@ class _UnusedPort:
     def diagnostics_pending(self) -> bool:
         return False
 
-    def release(self) -> ResourceReleaseReport:
+    def release(self, deadline_ns: int | None = None) -> ResourceReleaseReport:
         return ResourceReleaseReport(())
 
 

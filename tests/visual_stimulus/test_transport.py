@@ -378,7 +378,7 @@ async def test_authenticated_first_use_calibration_repeat_and_close_recovery(tmp
     graphics = Graphics(Clock(), artifact)
     graphics.close_failure_once = False
     graphics.presented_calibrations = 0
-    graphics.cleanup = lambda: ResourceReleaseReport(())
+    graphics.cleanup = lambda deadline_ns=None: ResourceReleaseReport(())
 
     def activities():
         now = host_time_ns()
