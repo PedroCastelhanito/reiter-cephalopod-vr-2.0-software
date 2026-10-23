@@ -116,7 +116,7 @@ class MicrocontrollerPanel(DevicePanel):
         self.review_tests: set[str] = set()
         self.test_buttons: dict[str, QPushButton] = {}
         self.enable_controls: dict[str, QCheckBox] = {}
-        self.triggers = Card("Outputs", compact=True)
+        self.triggers = Card("Outputs")
         self.output_table = self.pin_table("Output")
         self.triggers.body.addWidget(self.output_table)
         self.trial_pin = self.add_pin_row(
@@ -147,7 +147,7 @@ class MicrocontrollerPanel(DevicePanel):
                 )
             )
             self.output_table.set_control(row, 4, self.output_remove[key])
-        self.io = Card("Inputs", compact=True)
+        self.io = Card("Inputs")
         self.input_table = self.pin_table("Input")
         self.flip_pin = self.add_pin_row(
             self.input_table, 0, "projector-flip", "Projector flip"

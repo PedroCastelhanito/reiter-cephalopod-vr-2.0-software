@@ -4,6 +4,11 @@ import re
 from decimal import Decimal, InvalidOperation
 
 
+def caption_caps(text: str) -> str:
+    """Uppercase a caption but keep parenthesised units such as (mA) or (hh:mm:ss)."""
+    return re.sub(r"[^()]+(?![^(]*\))", lambda part: part[0].upper(), text)
+
+
 def parse_clock_duration(value: str) -> str:
     """Convert an epoch clock entry to exact decimal seconds."""
     parts = value.strip().split(":")

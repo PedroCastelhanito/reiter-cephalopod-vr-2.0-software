@@ -65,7 +65,10 @@ class PlannerControls(QWidget):
         self.group_controls = QHBoxLayout()
         self.group_controls.setSpacing(0)
         self.selected_group_label = label("Selected group", "label")
-        self.group_controls.addWidget(self.selected_group_label)
+        # Top-aligned so it shares a baseline with the Group name/Repetitions captions.
+        self.group_controls.addWidget(
+            self.selected_group_label, 0, Qt.AlignmentFlag.AlignTop
+        )
         self.group_controls.addSpacing(16)
         self.group_controls.addStretch(1)
         self.group_controls.addWidget(self.group_editor)

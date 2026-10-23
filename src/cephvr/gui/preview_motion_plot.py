@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import QToolTip, QWidget
 
 from cephvr.gui.formatting import duration
 from cephvr.gui.preview_motion_data import MotionEpoch, MotionTrace
-from cephvr.gui.theme import colors_for
+from cephvr.gui.theme import colors_for, minimal_frames
 
 WINDOW_S = 60.0
 PLOT_LEFT = 64
@@ -177,7 +177,7 @@ class EpochTimeline(TimeAxis):
         start, end = time_window(self.elapsed)
         current = current_epoch(self.epochs, self.elapsed)
         progress = QColor(colors.accent)
-        progress.setAlpha(90)
+        progress.setAlpha(55 if minimal_frames(self) else 90)
         for index, epoch in enumerate(self.epochs):
             visible_start, visible_end = max(start, epoch.start), min(end, epoch.end)
             if visible_end <= visible_start:

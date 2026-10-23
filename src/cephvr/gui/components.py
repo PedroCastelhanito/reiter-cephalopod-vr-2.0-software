@@ -3,6 +3,7 @@
 from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
 from PyQt6.QtGui import (
     QColor,
+    QFont,
     QIcon,
     QPainter,
     QPaintEvent,
@@ -32,8 +33,8 @@ from cephvr.gui.consoles import Console as Console
 from cephvr.gui.consoles import FittedConsole as FittedConsole
 from cephvr.gui.consoles import LogConsole as LogConsole
 from cephvr.gui.formatting import HudRows, hud_text
+from cephvr.gui.icons import device_icon
 from cephvr.gui.retro_instruments import (
-    corner_brackets,
     double_frame,
     paint_status_lamp,
 )
@@ -62,7 +63,7 @@ class Button(QPushButton):
             return None
         if role == "navigation":
             if minimal_frames(self):
-                return f"< {self.text()} >" if self.isChecked() else self.text()
+                return self.text()
             return ("> " if self.isChecked() else "  ") + self.text()
         text = self.text().upper()
         return f"[ {text} ]"
@@ -73,7 +74,52 @@ class Button(QPushButton):
             size.setWidth(size.width() + self.fontMetrics().horizontalAdvance("[  ]"))
         return size
 
+    def paint_phosphor_navigation(self) -> None:
+        """Big `>` marks the current page and previews a hovered one; no brackets.
+        Icon and label share one ink so every state changes both together."""
+        colors = colors_for(self)
+        option = QStyleOptionButton()
+        self.initStyleOption(option)
+        option.text, option.icon = "", QIcon()
+        painter = QStylePainter(self)
+        painter.drawControl(QStyle.ControlElement.CE_PushButton, option)
+        selected = self.isChecked()
+        hovered = self.underMouse() and self.isEnabled()
+        ink = colors.coral if selected else colors.text if hovered else colors.muted
+        if selected or hovered:
+            marker = QFont(self.font())
+            marker.setPixelSize(SIZES.title_font + 8)
+            painter.setFont(marker)
+            painter.setPen(QColor(colors.coral if selected else colors.label))
+            painter.drawText(
+                QRectF(10, 0, 20, self.height()), Qt.AlignmentFlag.AlignVCenter, ">"
+            )
+            painter.setFont(self.font())
+        x = 32
+        name = self.property("iconName")
+        size = self.iconSize()
+        if isinstance(name, str):
+            device_icon(name, ink).paint(
+                painter,
+                x,
+                (self.height() - size.height()) // 2,
+                size.width(),
+                size.height(),
+            )
+            x += size.width() + 6
+        painter.setPen(QColor(ink))
+        painter.drawText(
+            QRectF(x, 0, self.width() - x - 8, self.height()),
+            Qt.AlignmentFlag.AlignVCenter,
+            self.text(),
+        )
+        painter.end()
+
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        if self.property("role") == "navigation" and minimal_frames(self):
+            if retro_console(self):
+                self.paint_phosphor_navigation()
+                return
         label_text = self.retro_label()
         if label_text is None:
             super().paintEvent(event)
@@ -81,51 +127,7 @@ class Button(QPushButton):
         option = QStyleOptionButton()
         self.initStyleOption(option)
         option.text = label_text
-        if (
-            self.property("role") == "navigation"
-            and minimal_frames(self)
-            and self.isChecked()
-        ):
-            # Paint the leading bracket before the icon, not inside Qt's text label.
-            icon = QIcon(option.icon)
-            option.text = ""
-            option.icon = QIcon()
-            painter = QStylePainter(self)
-            painter.drawControl(QStyle.ControlElement.CE_PushButton, option)
-            painter.setPen(QColor(colors_for(self).coral))
-            x = 12
-            prefix = self.fontMetrics().horizontalAdvance("< ")
-            painter.drawText(
-                QRectF(x, 0, prefix, self.height()), Qt.AlignmentFlag.AlignVCenter, "< "
-            )
-            x += prefix
-            icon.paint(
-                painter,
-                x,
-                (self.height() - self.iconSize().height()) // 2,
-                self.iconSize().width(),
-                self.iconSize().height(),
-            )
-            x += self.iconSize().width() + 6
-            painter.drawText(
-                QRectF(x, 0, self.width() - x - 8, self.height()),
-                Qt.AlignmentFlag.AlignVCenter,
-                f"{self.text()} >",
-            )
-            painter.end()
-        else:
-            QStylePainter(self).drawControl(QStyle.ControlElement.CE_PushButton, option)
-        if self.property("role") == "navigation" and minimal_frames(self):
-            # Bright brackets mark the current page; dim ones preview a hovered page.
-            colors = colors_for(self)
-            ink = colors.accent if self.isChecked() else colors.border
-            if self.isChecked() or self.underMouse():
-                corner_brackets(
-                    QPainter(self),
-                    QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5),
-                    QColor(ink),
-                    10,
-                )
+        QStylePainter(self).drawControl(QStyle.ControlElement.CE_PushButton, option)
 
 
 def button(text: str, role: str = "secondary", *, hint: str = "") -> QPushButton:

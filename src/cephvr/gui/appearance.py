@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QEvent, QMargins, QObject, QSettings, QSize, Qt
@@ -19,8 +18,9 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import Button, Card, Console, FittedConsole, StatusColumn
 from cephvr.gui.dashboard import Dashboard
+from cephvr.gui.formatting import caption_caps
 from cephvr.gui.icons import device_icon
-from cephvr.gui.retro_instruments import FocusBrackets, TabBrackets
+from cephvr.gui.retro_instruments import FocusBrackets, TabMarkers
 from cephvr.gui.retro_overlay import (
     PHOSPHOR_SCANLINE_ALPHA,
     SCANLINE_ALPHA,
@@ -42,11 +42,6 @@ from cephvr.gui.theme import (
 
 if TYPE_CHECKING:
     from cephvr.gui.window import DashboardWindow
-
-
-def caption_caps(text: str) -> str:
-    """Uppercase a caption but keep parenthesised units such as (mA) or (hh:mm:ss)."""
-    return re.sub(r"[^()]+(?![^(]*\))", lambda part: part[0].upper(), text)
 
 
 def mark_nested(card: Card) -> None:
@@ -96,7 +91,7 @@ class DashboardAppearance(QObject):
         for card in self.card_titles:
             mark_nested(card)
         for bar in window.findChildren(QTabBar):
-            TabBrackets(bar)
+            TabMarkers(bar).hover_changed.connect(self.refresh_tab_icons)
         self.settings = settings
         app = QApplication.instance()
         assert isinstance(app, QApplication)
@@ -297,7 +292,7 @@ class DashboardAppearance(QObject):
                 control.setIcon(device_icon(name, ink))
                 control.repaint()
 
-    def refresh_device_icons(self) -> None:
+    def refresh_tab_icons(self) -> None:
         colors = RETRO_PALETTES[self.name][0] if self.retro else COLORS
         for bar, keys in (
             (self.window.devices.tab_bar, ("camera", "board", "projector", "signal")),
@@ -308,13 +303,24 @@ class DashboardAppearance(QObject):
             ),
         ):
             bar.setIconSize(QSize(20, 20))
+            markers = bar.findChild(TabMarkers)
+            hover = markers.hover if markers is not None else -1
             for index, key in enumerate(keys):
                 current = index == bar.currentIndex()
                 if self.name == "amber_phosphor":
-                    color = colors.text if current else PHOSPHOR_TAB_DIM
+                    color = (
+                        colors.coral
+                        if current
+                        else colors.text
+                        if index == hover
+                        else PHOSPHOR_TAB_DIM
+                    )
                 else:
                     color = colors.window if self.retro and current else colors.accent
                 bar.setTabIcon(index, device_icon(key, color))
+
+    def refresh_device_icons(self) -> None:
+        self.refresh_tab_icons()
         self.window.devices.rail.refresh_icons()
         self.dashboard.rail.refresh_icons()
         self.refresh_navigation()

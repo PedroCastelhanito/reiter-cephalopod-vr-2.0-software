@@ -1202,7 +1202,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 128
+**Status:** Accepted · **Revision:** 130
 
 - GUI startup displays a compact text-only `CephVR2.0` / `Initializing` splash,
   using the saved Style (legacy fallback and unknown-to-Standard behavior retained),
@@ -1215,6 +1215,23 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   GUI bootstrap shows the splash before frontend imports; it does not own devices,
   extend startup deadlines or wait indefinitely for controller connectivity. Startup
   failures retain their existing propagation and close the splash.
+- Amber phosphor themes every popup and dialog surface: combo drop-downs open below
+  the field with a dim-tint highlight (no solid accent slab or default scroller strips),
+  message boxes draw Amber glyph icons instead of the native coloured ones, and expanding
+  tab bars (Projector setup, Tracking) elide text rather than show Qt's unthemed
+  scroll buttons. Microcontroller Inputs/Outputs use the standard card padding, and the
+  review window shares one View menu.
+- Amber navigation marks selection with a chevron, never brackets: a large coral `>`
+  before the current main page and a small one before the current sidebar row or in-page
+  tab, with icon and label in the same coral. Hover previews with a dim `>` and a
+  cream icon/label. Dim inks, borders, disabled text and hover fills keep at least
+  4.5:1 (tabs), 4.0:1 (disabled), 3:1 (field underlines), 2.4:1 (card frames) and 4.5:1
+  (dark text on hover fills) against the Amber surfaces. Disabled fields stay unfilled,
+  placeholders use the dim tab ink, and table headers use the field-caption style
+  (uppercase, tracked, regular weight, units kept, line breaks as spaces) with
+  width-capped cell editors left-aligned under them. Read-only log consoles show the
+  block caret only while focused, the epoch readout aligns with the first epoch tile and
+  the unfilled Setup geometry card does not reserve the 3D view.
 - Shared interface, label, title, console and sidebar fonts are enlarged by one pixel
   across Standard and Retro-family styles; retain their relative hierarchy.
 - Runtime preview layout card titles, projector headings and stream headings use the same coral-red hue as

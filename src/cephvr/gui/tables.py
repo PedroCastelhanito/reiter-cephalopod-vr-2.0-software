@@ -105,6 +105,9 @@ class DataTable(QTableWidget):
         layout = QHBoxLayout(host)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(control)
+        if control.maximumWidth() < 16777215:
+            # A width-capped editor starts at the column's left edge, under its header.
+            layout.setAlignment(control, Qt.AlignmentFlag.AlignLeft)
         self.setCellWidget(row, column, host)
         timer = QTimer(host)
         timer.setSingleShot(True)

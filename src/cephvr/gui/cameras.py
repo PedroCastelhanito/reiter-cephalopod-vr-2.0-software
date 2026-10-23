@@ -173,7 +173,7 @@ class CamerasPanel(ResponsiveColumns):
         self.trigger_source.setSizePolicy(
             QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed
         )
-        self.trigger_source.setPlaceholderText("Select trigger source")
+        self.trigger_source.setPlaceholderText("Select source")
         self.trigger_source.setCurrentIndex(-1)
         self.trigger_source.currentTextChanged.connect(
             lambda value: self.edit("trigger_clock", value)

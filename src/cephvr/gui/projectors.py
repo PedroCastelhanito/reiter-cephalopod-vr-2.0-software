@@ -243,6 +243,9 @@ class ProjectorsPanel(DevicePanel):
         self.setup_tabs = QTabBar()
         self.setup_tabs.setExpanding(True)
         self.setup_tabs.setDrawBase(False)
+        # Elide instead of showing Qt's unthemed scroll buttons on narrow windows.
+        self.setup_tabs.setUsesScrollButtons(False)
+        self.setup_tabs.setElideMode(Qt.TextElideMode.ElideRight)
         self.setup_pages = QStackedWidget()
         self.setup_pages.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum

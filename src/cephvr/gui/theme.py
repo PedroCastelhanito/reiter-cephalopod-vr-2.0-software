@@ -4,8 +4,8 @@ from dataclasses import dataclass, replace
 from functools import cache
 from importlib.resources import files
 
-from PyQt6.QtCore import QByteArray
-from PyQt6.QtGui import QColor, QFont, QFontDatabase, QPalette
+from PyQt6.QtCore import QByteArray, QRectF, Qt
+from PyQt6.QtGui import QColor, QFont, QFontDatabase, QIcon, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QLineEdit,
@@ -140,8 +140,8 @@ PHOSPHOR_COLORS = Palette(
     sidebar="#161b1d",
     card="#191f21",
     input="#14191b",
-    border="#624522",
-    input_border="#75502b",
+    border="#82592b",
+    input_border="#94673a",
     text="#ffd184",
     muted="#c18c50",
     label="#bf8a50",
@@ -164,14 +164,16 @@ PHOSPHOR_COLORS = Palette(
     ready="#ffe7b0",
     waiting="#ff9f40",
     error="#ff5a40",
-    disabled="#715b40",
+    disabled="#9a7b52",
 )
 # Buttons rest as outlined boxes over a faint tint and fill only on hover:
 # (resting tint, hover fill, outline/text).
-PHOSPHOR_BUTTON = ("transparent", "#c8741f", "#ff9f40")
-PHOSPHOR_STOP_BUTTON = ("transparent", "#c4402c", "#ff6a50")
+PHOSPHOR_BUTTON = ("transparent", "#e0872e", "#ff9f40")
+PHOSPHOR_STOP_BUTTON = ("transparent", "#ee6a52", "#ff6a50")
 # Unselected tab text and icons stay dim so the bracketed current tab stands out.
-PHOSPHOR_TAB_DIM = "#9b754b"
+PHOSPHOR_TAB_DIM = "#b0844f"
+# Left padding that leaves room for the `>` tab marker before icon and text.
+PHOSPHOR_TAB_GUTTER = 16
 PHOSPHOR_TINTS = (
     PHOSPHOR_COLORS.accent,
     "#d98a5a",
@@ -535,6 +537,10 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
     QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
         border-bottom: 1px solid {c.focus}; }}
     QLineEdit[invalid='true'] {{ border-bottom: 1px solid {c.danger_border}; }}
+    QLineEdit, QPlainTextEdit {{ placeholder-text-color: {PHOSPHOR_TAB_DIM}; }}
+    QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
+        background: transparent; color: {c.disabled};
+        border-bottom: 1px solid {c.border}; }}
     QPlainTextEdit[role='console'] {{ border: none; background: transparent; }}
     QCheckBox::indicator {{ width: 7px; height: 7px; padding: 3px; }}
     QCheckBox::indicator:unchecked {{ background: transparent;
@@ -556,22 +562,78 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
     QListWidget[role='trials']::item:selected,
     QTreeWidget[role='rail']::item:selected {{ background: {c.active}; color: {c.text};
         border: 1px solid {c.accent}; }}
+    QFrame#Sidebar QTreeWidget[role='rail']::item {{ color: {PHOSPHOR_TAB_DIM};
+        padding: 6px 6px 6px 20px; }}
+    QFrame#Sidebar QTreeWidget[role='rail']::item:hover {{ color: {c.text}; }}
+    QFrame#Sidebar QTreeWidget[role='rail']::item:selected,
+    QFrame#Sidebar QTreeWidget[role='rail']::item:selected:hover {{ color: {c.coral};
+        border-left-color: transparent; }}
     QTabBar::tab, QTabBar::tab:selected, QTabBar::tab:hover {{ background: transparent;
         border: 1px solid transparent; }}
-    QTabBar::tab {{ color: {PHOSPHOR_TAB_DIM}; }}
-    QTabBar::tab:hover {{ color: {c.label}; }}
-    QTabBar::tab:selected {{ color: {c.text}; }}
+    QTabBar::tab {{ color: {PHOSPHOR_TAB_DIM}; padding-left: {PHOSPHOR_TAB_GUTTER}px; }}
+    QTabBar::tab:hover {{ color: {c.text}; }}
+    QTabBar::tab:selected, QTabBar::tab:selected:hover {{ color: {c.coral}; }}
     QHeaderView::section {{ background: transparent; color: {c.muted}; border: none;
         border-bottom: 1px dashed {c.border}; font-weight: 400; }}
     QTableCornerButton::section {{ background: transparent; border: none; }}
     QTableWidget {{ background: transparent; border: none; }}
+    QComboBox {{ combobox-popup: 0; }}
+    QComboBoxPrivateContainer, QComboBox QAbstractItemView {{ background: {c.input};
+        color: {c.text}; border: 1px solid {c.input_border}; outline: none; }}
+    QComboBox QAbstractItemView {{ selection-background-color: {c.hover};
+        selection-color: {c.accent}; }}
+    QComboBox QAbstractItemView::item:selected {{ background: {c.hover};
+        color: {c.accent}; }}
     QFrame[nestedCard='true'] QLabel[role='title'] {{ color: {c.label}; }}
     QWidget#PreviewWorkspace QFrame#ProjectorCard {{ border: none; }}
     """
 
 
+# Message-box glyph and colour per standard icon, drawn in the Amber palette.
+PHOSPHOR_DIALOG_ICONS = {
+    QStyle.StandardPixmap.SP_MessageBoxInformation: ("i", "accent"),
+    QStyle.StandardPixmap.SP_MessageBoxQuestion: ("?", "accent"),
+    QStyle.StandardPixmap.SP_MessageBoxWarning: ("!", "accent"),
+    QStyle.StandardPixmap.SP_MessageBoxCritical: ("×", "error"),
+}
+
+
+def phosphor_dialog_icon(glyph: str, ink: str, ratio: float) -> QIcon:
+    size = 32
+    pixmap = QPixmap(int(size * ratio), int(size * ratio))
+    pixmap.setDevicePixelRatio(ratio)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setPen(QColor(ink))
+    painter.drawRect(QRectF(1.5, 1.5, size - 3, size - 3))
+    font = QFont("IBM Plex Mono")
+    font.setPixelSize(20)
+    painter.setFont(font)
+    painter.drawText(QRectF(0, 0, size, size), Qt.AlignmentFlag.AlignCenter, glyph)
+    painter.end()
+    return QIcon(pixmap)
+
+
 class EditorCursorStyle(QProxyStyle):
     """Let Qt own insertion, scrolling and blinking for the Retro block caret."""
+
+    def standardIcon(
+        self,
+        standard_icon: QStyle.StandardPixmap,
+        option: QStyleOption | None = None,
+        widget: QWidget | None = None,
+    ) -> QIcon:
+        if (
+            widget is not None
+            and standard_icon in PHOSPHOR_DIALOG_ICONS
+            and retro_console(widget)
+            and minimal_frames(widget)
+        ):
+            glyph, key = PHOSPHOR_DIALOG_ICONS[standard_icon]
+            return phosphor_dialog_icon(
+                glyph, getattr(retro_colors(widget), key), widget.devicePixelRatioF()
+            )
+        return super().standardIcon(standard_icon, option, widget)
 
     def pixelMetric(
         self,

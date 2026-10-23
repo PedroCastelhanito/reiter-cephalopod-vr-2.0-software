@@ -89,6 +89,8 @@ class TrackingPage(ResponsiveColumns):
             self.tabs.addTab(name)
         self.tabs.setExpanding(True)
         self.tabs.setDrawBase(False)
+        self.tabs.setUsesScrollButtons(False)
+        self.tabs.setElideMode(Qt.TextElideMode.ElideRight)
         layout.addWidget(self.tabs)
         self.forms = TrackingForms()
         self.pages = QStackedWidget()

@@ -4,9 +4,16 @@ Presentation only. The device tab bar and the Projectors section tabs stay the
 source of truth; the rail mirrors and drives them.
 """
 
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QIcon, QPixmap
-from PyQt6.QtWidgets import QAbstractItemView, QTreeWidget, QTreeWidgetItem
+from PyQt6.QtCore import QEvent, QModelIndex, QRectF, QSize, Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QTreeWidget,
+    QTreeWidgetItem,
+)
 
 from cephvr.gui.icons import device_icon
 from cephvr.gui.theme import (
@@ -19,6 +26,42 @@ from cephvr.gui.theme import (
 
 RAIL_WIDTH = 176
 DEVICE_ICONS = ("camera", "board", "projector", "signal")
+
+
+class RailMarkerDelegate(QStyledItemDelegate):
+    """Amber rows keep the stylesheet's text/icon and add a small `>` in the left gutter:
+    coral on the current row, dim on a hovered one."""
+
+    def paint(
+        self,
+        painter: QPainter | None,
+        option: QStyleOptionViewItem,
+        index: QModelIndex,
+    ) -> None:
+        super().paint(painter, option, index)
+        if painter is None:
+            return
+        view = self.parent()
+        if not isinstance(view, QTreeWidget) or not (
+            minimal_frames(view) and retro_console(view)
+        ):
+            return
+        selected = bool(option.state & QStyle.StateFlag.State_Selected)
+        hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
+        if not (selected or hovered):
+            return
+        colors = colors_for(view)
+        painter.save()
+        font = QFont(view.font())
+        font.setPixelSize(SIZES.label_font + 3)
+        painter.setFont(font)
+        painter.setPen(QColor(colors.coral if selected else colors.label))
+        painter.drawText(
+            QRectF(option.rect.left() + 4, option.rect.top(), 14, option.rect.height()),
+            Qt.AlignmentFlag.AlignVCenter,
+            ">",
+        )
+        painter.restore()
 
 
 class DeviceRail(QTreeWidget):
@@ -37,6 +80,10 @@ class DeviceRail(QTreeWidget):
         self.icons = icons
         self.setProperty("role", "rail")
         self.setAccessibleName("Devices navigation")
+        self.hover: QTreeWidgetItem | None = None
+        self.setMouseTracking(True)
+        self.setItemDelegate(RailMarkerDelegate(self))
+        self.itemEntered.connect(self.set_hover)
         self.setHeaderHidden(True)
         self.setRootIsDecorated(False)
         # Sections align under the device label via a blank icon, not a tree indent.
@@ -94,6 +141,15 @@ class DeviceRail(QTreeWidget):
             self.blockSignals(False)
         self.refresh_icons()
 
+    def set_hover(self, item: QTreeWidgetItem | None, column: int = 0) -> None:
+        if item is not self.hover:
+            self.hover = item
+            self.refresh_icons()
+
+    def leaveEvent(self, event: QEvent | None) -> None:
+        self.set_hover(None)
+        super().leaveEvent(event)
+
     def refresh_icons(self) -> None:
         """Selected icons brighten with their text on the unfilled navigation row."""
         colors = colors_for(self)
@@ -101,7 +157,13 @@ class DeviceRail(QTreeWidget):
         for index, item in enumerate(self.devices):
             selected = current is item
             if minimal_frames(self) and retro_console(self):
-                ink = colors.text if selected else PHOSPHOR_TAB_DIM
+                ink = (
+                    colors.coral
+                    if selected
+                    else colors.text
+                    if item is self.hover
+                    else PHOSPHOR_TAB_DIM
+                )
             else:
                 ink = colors.text if selected else colors.accent
             item.setIcon(

@@ -17671,7 +17671,7 @@ def test_retro_family_switch_repaints_with_owning_palette(
 ) -> None:
     from cephvr.gui.components import Button, StatusColumn
     from cephvr.gui.managed_window import ManagedDashboardWindow
-    from cephvr.gui.retro_instruments import TabBrackets
+    from cephvr.gui.retro_instruments import TabMarkers
     from cephvr.gui.theme import (
         COLORS,
         PHOSPHOR_COLORS,
@@ -17738,7 +17738,7 @@ def test_retro_family_switch_repaints_with_owning_palette(
                 card.caption.text().startswith("| ") == phosphor_style
                 for card in nested
             )
-            assert phosphor.devices.tab_bar.findChild(TabBrackets) is not None
+            assert phosphor.devices.tab_bar.findChild(TabMarkers) is not None
             centred = (
                 phosphor.appearance.brand.alignment() & Qt.AlignmentFlag.AlignHCenter
             )
@@ -17753,7 +17753,7 @@ def test_retro_family_switch_repaints_with_owning_palette(
             nav = next(item for item in phosphor.page_buttons if item.isChecked())
             assert isinstance(nav, Button)
             assert nav.retro_label() == (
-                f"< {nav.text()} >" if phosphor_style else f"> {nav.text()}"
+                nav.text() if phosphor_style else f"> {nav.text()}"
             )
         assert settings.value("appearance/style") == "amber_phosphor"
         phosphor.appearance.select("standard")
@@ -17854,6 +17854,343 @@ def test_phosphor_popups_and_owned_windows_get_scanline_film(
         window.hide()
         window.deleteLater()
         app.processEvents()
+
+
+def test_phosphor_tab_bars_elide_without_unthemed_scroll_buttons(
+    app: QApplication, tmp_path: Path
+) -> None:
+    settings = QSettings(str(tmp_path / "tabs.ini"), QSettings.Format.IniFormat)
+    window = DashboardWindow(sample=True, settings=settings)
+    try:
+        window.appearance.select("amber_phosphor", persist=False)
+        window.resize(900, 700)
+        window.show()
+        window.page_buttons[2].click()
+        app.processEvents()
+        bars = (window.devices.projectors.setup_tabs, window.tracking.tabs)
+        for bar in bars:
+            # Qt's scroll buttons ignore the Amber sheet and draw white boxes.
+            assert not bar.usesScrollButtons()
+            assert bar.elideMode() == Qt.TextElideMode.ElideRight
+        setup = window.devices.projectors.setup_tabs
+        assert (
+            sum(setup.tabRect(i).width() for i in range(setup.count())) <= setup.width()
+        )
+    finally:
+        window.close()
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_phosphor_combo_popup_and_dialog_icons_follow_amber(
+    app: QApplication, tmp_path: Path
+) -> None:
+    from PyQt6.QtGui import QColor, QIcon
+    from PyQt6.QtWidgets import QComboBox, QMessageBox, QStyle
+
+    from cephvr.gui.theme import PHOSPHOR_COLORS
+
+    settings = QSettings(str(tmp_path / "popup.ini"), QSettings.Format.IniFormat)
+    window = DashboardWindow(sample=True, settings=settings)
+    try:
+        window.appearance.select("amber_phosphor", persist=False)
+        window.show()
+        app.processEvents()
+        combo = next(
+            item
+            for item in window.dashboard.findChildren(QComboBox)
+            if item.isVisible() and item.count() > 1
+        )
+        combo.setCurrentIndex(0)
+        combo.showPopup()
+        app.processEvents()
+        popup = combo.view().window()
+        image = popup.grab().toImage()
+        # The highlighted row is a dim tint, not a solid accent slab with dark text,
+        # and no unthemed white scroller strips frame the list.
+        row = combo.view().visualRect(combo.view().model().index(0, 0))
+        tinted = image.pixelColor(image.width() - 12, row.center().y() + 2)
+        assert tinted.lightness() < 90
+        assert all(
+            image.pixelColor(image.width() // 2, y).lightness() < 140
+            for y in (0, image.height() - 1)
+        )
+        combo.hidePopup()
+        box = QMessageBox(window)
+
+        def icon(kind: QStyle.StandardPixmap) -> QIcon:
+            # The sheet wrapper is replaced on style changes: fetch it fresh.
+            style = box.style()
+            assert style is not None
+            return style.standardIcon(kind, None, box)
+
+        warning = icon(QStyle.StandardPixmap.SP_MessageBoxWarning)
+        critical = icon(QStyle.StandardPixmap.SP_MessageBoxCritical)
+        assert warning.pixmap(32, 32).toImage().pixelColor(1, 16) == QColor(
+            PHOSPHOR_COLORS.accent
+        )
+        assert critical.pixmap(32, 32).toImage().pixelColor(1, 16) == QColor(
+            PHOSPHOR_COLORS.error
+        )
+        window.appearance.select("standard", persist=False)
+        standard = icon(QStyle.StandardPixmap.SP_MessageBoxWarning)
+        assert standard.pixmap(32, 32).toImage().pixelColor(1, 16) != QColor(
+            PHOSPHOR_COLORS.accent
+        )
+        box.deleteLater()
+    finally:
+        window.close()
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_microcontroller_io_cards_share_standard_card_padding(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    panel = window.devices.microcontroller
+    window.page_buttons[2].click()
+    window.devices.select_from_rail(1, -1)
+    app.processEvents()
+    reference = panel.configuration.body.contentsMargins()
+    assert panel.io.body.contentsMargins() == reference
+    assert panel.triggers.body.contentsMargins() == reference
+
+    # Add buttons share the left/right edges of the sibling connection button.
+    def span(widget: QWidget) -> tuple[int, int]:
+        left = widget.mapTo(window, QPoint(0, 0)).x()
+        return left, left + widget.width()
+
+    connection = next(
+        item
+        for item in panel.findChildren(QPushButton)
+        if item.text().strip().lower().startswith("test connection")
+    )
+    for card in (panel.io, panel.triggers):
+        added = card.body.itemAt(card.body.count() - 1).widget()
+        assert added is not None and span(added) == span(connection)
+
+
+def test_review_controls_share_the_window_view_menu(window: DashboardWindow) -> None:
+    menu_bar = window.menuBar()
+    assert menu_bar is not None
+    titles = [action.text() for action in menu_bar.actions()]
+    assert titles.count("View") == 1
+    view = next(
+        action.menu() for action in menu_bar.actions() if action.text() == "View"
+    )
+    assert view is not None
+    entries = [action.text() for action in view.actions()]
+    assert "Side navigation" in entries and "Preview session state" in entries
+
+
+def _coral_pixels(image, region: QRect | None = None) -> int:
+    """Count strongly coral pixels; muted, label and cream inks never qualify."""
+    area = region or image.rect()
+    return sum(
+        1
+        for x in range(area.left(), area.right())
+        for y in range(area.top(), area.bottom())
+        if (c := image.pixelColor(x, y)).red() > 215
+        and c.green() < 135
+        and c.blue() < 110
+    )
+
+
+def test_phosphor_navigation_uses_chevron_markers_with_hover(
+    app: QApplication, tmp_path: Path
+) -> None:
+    from cephvr.gui.retro_instruments import TabMarkers
+
+    settings = QSettings(str(tmp_path / "chevron.ini"), QSettings.Format.IniFormat)
+    window = DashboardWindow(sample=True, settings=settings)
+    try:
+        window.appearance.select("amber_phosphor", persist=False)
+        window.resize(1400, 900)
+        window.show()
+        window.page_buttons[2].click()
+        app.processEvents()
+        gutter = QRect(8, 0, 24, window.page_buttons[0].height())
+        selected = window.page_buttons[2].grab().toImage()
+        idle = window.page_buttons[1].grab().toImage()
+        # Big coral `>` and coral label for the current page; none on idle pages.
+        assert _coral_pixels(selected, gutter) > 8
+        assert _coral_pixels(idle) == 0
+        # Hover previews the page with a dim marker and a brighter label.
+        # Offscreen hover is unreliable, so set the state the painter reads.
+        window.page_buttons[1].setAttribute(Qt.WidgetAttribute.WA_UnderMouse, True)
+        hovered = window.page_buttons[1].grab().toImage()
+        window.page_buttons[1].setAttribute(Qt.WidgetAttribute.WA_UnderMouse, False)
+        assert hovered != idle
+        assert _coral_pixels(hovered) == 0
+        # Rail rows: small coral `>` on the current row, in the gutter left of the icon.
+        rail = window.devices.rail
+        rail.show_position(2, -1)
+        rail_image = rail.viewport().grab().toImage()
+        row = rail.visualItemRect(rail.devices[2])
+        assert (
+            _coral_pixels(rail_image, QRect(row.left(), row.top(), 18, row.height()))
+            > 3
+        )
+        # Hovering a row recolours its icon through the same refresh path.
+        before = rail.devices[0].icon(0).pixmap(20, 20).toImage()
+        rail.set_hover(rail.devices[0])
+        assert rail.devices[0].icon(0).pixmap(20, 20).toImage() != before
+        rail.set_hover(None)
+        # In-page tabs: coral marker before the current tab, dim one on hover, and
+        # hover recolours tab icons.
+        window.devices.select_from_rail(2, 0)
+        app.processEvents()
+        bar = window.devices.projectors.setup_tabs
+        markers = bar.findChild(TabMarkers)
+        assert markers is not None
+        assert not markers.marker_rect(0).isEmpty()
+        assert markers.marker_rect(0).right() <= bar.tabRect(0).right()
+        icons_before = bar.tabIcon(1).pixmap(20, 20).toImage()
+        markers.set_hover(1)
+        assert bar.tabIcon(1).pixmap(20, 20).toImage() != icons_before
+        markers.set_hover(-1)
+        grabbed = bar.grab().toImage()
+        marker = markers.marker_rect(0).toRect()
+        assert _coral_pixels(grabbed, marker) > 3
+    finally:
+        window.close()
+        window.deleteLater()
+        app.processEvents()
+
+
+def _contrast(foreground: str, background: str) -> float:
+    def luminance(value: str) -> float:
+        channels = [int(value.lstrip("#")[i : i + 2], 16) / 255 for i in (0, 2, 4)]
+        r, g, b = (
+            c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+            for c in channels
+        )
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+    high, low = sorted((luminance(foreground), luminance(background)), reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+def test_amber_palette_keeps_readable_contrast() -> None:
+    from cephvr.gui.theme import (
+        PHOSPHOR_BUTTON,
+        PHOSPHOR_COLORS,
+        PHOSPHOR_STOP_BUTTON,
+        PHOSPHOR_TAB_DIM,
+    )
+
+    c = PHOSPHOR_COLORS
+    for surface in (c.page, c.console, c.input):
+        assert _contrast(c.disabled, surface) >= 4.0
+        assert _contrast(PHOSPHOR_TAB_DIM, surface) >= 4.5
+        assert _contrast(c.input_border, surface) >= 3.0
+        assert _contrast(c.border, surface) >= 2.4
+    # Dark label text on each hover fill, including the Stop action.
+    assert _contrast(c.window, PHOSPHOR_BUTTON[1]) >= 4.5
+    assert _contrast(c.window, PHOSPHOR_STOP_BUTTON[1]) >= 4.5
+
+
+def test_amber_disabled_fields_and_placeholders_are_unfilled_and_legible() -> None:
+    from cephvr.gui.theme import PHOSPHOR_COLORS, PHOSPHOR_TAB_DIM, phosphor_stylesheet
+
+    sheet = " ".join(phosphor_stylesheet().split())
+    assert (
+        "QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, "
+        "QDoubleSpinBox:disabled { background: transparent;"
+    ) in sheet
+    assert f"color: {PHOSPHOR_COLORS.disabled}" in sheet
+    assert f"placeholder-text-color: {PHOSPHOR_TAB_DIM}" in sheet
+
+
+def test_amber_table_headers_share_the_caption_style(
+    app: QApplication, tmp_path: Path
+) -> None:
+    settings = QSettings(str(tmp_path / "headers.ini"), QSettings.Format.IniFormat)
+    window = DashboardWindow(sample=True, settings=settings)
+    try:
+        measurements = window.devices.projectors.measurements.table
+        screens = window.devices.projectors.screen_editor.table
+        header = measurements.horizontalHeader()
+        screen_header = screens.horizontalHeader()
+        assert header is not None and screen_header is not None
+        window.appearance.select("standard", persist=False)
+        assert header.label_layout(1, 400).text() == "Measured X / Y (mm)"
+        window.appearance.select("amber_phosphor", persist=False)
+        # Uppercase, units kept, and a line break in the source is a plain space.
+        assert header.label_layout(1, 400).text() == "MEASURED X / Y (mm)"
+        assert screen_header.label_layout(1, 400).text() == "WIDTH (mm)"
+        assert header.label_layout(1, 400).font().letterSpacing() == 2
+        assert not header.label_layout(1, 400).font().bold()
+    finally:
+        window.close()
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_width_capped_table_editors_start_under_their_header(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    window.page_buttons[2].click()
+    window.devices.select_from_rail(3, -1)
+    app.processEvents()
+    table = window.devices.spikeglx.table
+    app.processEvents()
+    from PyQt6.QtWidgets import QLineEdit
+
+    host = table.cellWidget(0, 4)
+    assert host is not None
+    editor = host.findChild(QLineEdit)
+    assert editor is not None and editor.maximumWidth() < host.width()
+    assert editor.geometry().left() == 0
+
+
+def test_log_block_caret_shows_only_while_focused(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.gui import consoles
+    from cephvr.gui.components import LogConsole
+    from cephvr.gui.retro_instruments import blink
+
+    blink().on = True
+    calls: list[int] = []
+    monkeypatch.setattr(consoles, "prompt_cursor", lambda console: calls.append(1))
+    focus = {"on": False}
+    monkeypatch.setattr(LogConsole, "hasFocus", lambda self: focus["on"])
+    log = LogConsole()
+    log.setProperty("retroConsole", True)
+    log.resize(300, 100)
+    log.show()
+    app.processEvents()
+    calls.clear()
+    log.repaint()
+    assert not calls
+    focus["on"] = True
+    log.repaint()
+    assert calls
+    log.close()
+
+
+def test_amber_layout_details_align_and_shrink(window: DashboardWindow) -> None:
+    from cephvr.gui.tank_diagram import TankDiagram
+
+    # Empty Setup geometry reserves only the legend and hint, not the 3D view.
+    empty = TankDiagram()
+    assert empty.sizeHint().height() < 150 and empty.minimumSizeHint().height() < 150
+    empty.rig = SimpleNamespace()  # type: ignore[assignment]
+    assert empty.sizeHint().height() > 250 and empty.minimumSizeHint().height() == 150
+    empty.deleteLater()
+    # The epoch readout is left-aligned with the first epoch tile.
+    timeline = window.dashboard.preview_workspace.timeline
+    assert timeline.epoch_label.alignment() & Qt.AlignmentFlag.AlignLeft
+    # "Selected group" shares the caption row of the fields beside it.
+    controls = window.protocol.editor.group_controls
+    assert controls.itemAt(0).alignment() & Qt.AlignmentFlag.AlignTop
+    # The trigger-source placeholder fits its narrow column.
+    window.page_buttons[2].click()
+    window.devices.select_from_rail(0, -1)
+    window.resize(1440, 900)
+    cameras = window.devices.cameras
+    assert cameras.trigger_source.placeholderText() == "Select source"
 
 
 def test_log_column_header_tracks_category_width(app: QApplication) -> None:
@@ -22477,5 +22814,5 @@ def test_navigation_repaints_selection_before_page_work(window, app):
     )
     target.click()
     assert checked_before_clicked == [True]
-    assert target.retro_label() == "< Devices >"
+    assert target.retro_label() == "Devices"
     target.removeEventFilter(watch)

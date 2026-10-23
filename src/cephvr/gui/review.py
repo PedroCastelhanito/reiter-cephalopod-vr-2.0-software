@@ -102,7 +102,10 @@ class ReviewControls(QObject):
         super().__init__(window)
         menu_bar = window.menuBar()
         assert menu_bar is not None
-        menu = menu_bar.addMenu("View")
+        # Share the window's own View menu rather than adding a second one.
+        menu = next(
+            (item.menu() for item in menu_bar.actions() if item.text() == "View"), None
+        ) or menu_bar.addMenu("View")
         assert menu is not None
         phases = menu.addMenu("Preview session state")
         assert phases is not None

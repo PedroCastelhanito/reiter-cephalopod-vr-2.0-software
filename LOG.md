@@ -9279,3 +9279,40 @@ current GUI must close without saving/reopen and current-window edits would be l
 Native reopen/save unverified.
 
 Final git diff --check passed; existing CRLF-to-LF normalization warnings only.
+
+
+### 2026-10-23 — [gui] Amber phosphor offscreen style review and fixes
+
+Completed part of `amber-phosphor-style` under G02rev129. Owner asked for a style review of
+the GUI (mainly Amber); rendered every page, Devices/Projectors section, Tracking tab and
+Dashboard phase offscreen and drove hover/focus/popup/dialog states (scratchpad scripts, no
+repo files). Owner then selected issues 1-4 and 6: Projector setup and Tracking tab bars
+elide instead of showing Qt's white scroll buttons; Amber combo popups use a non-overlay
+dim-tint list with themed frame; Amber message boxes draw glyph icons via the shared style
+(`EditorCursorStyle.standardIcon`); Microcontroller Inputs/Outputs use standard card
+padding; review controls reuse the window's View menu. ARCH-002 review: existing theme
+owner and style proxy reused, no new state/dependencies. Four focused tests added to
+tests/gui/test_dashboard.py (the Microcontroller one confirmed failing without the fix);
+66 related tests pass (630s), Ruff check/format, Win32 mypy 195 sources, boundary 750/zero
+and whitespace pass. First broad `-k` run segfaulted once in the `window` fixture
+construction and a wider selection hung, so I narrowed the selection; the crash was not
+reproduced and is unexplained. Native Windows appearance unverified; remaining findings are
+in the runtime report section.
+
+
+### 2026-10-23 — [gui] Amber chevron navigation, contrast and layout fixes
+
+Completed part of `amber-phosphor-style` under G02rev130, owner-selected review items 7-20.
+Main page buttons paint a large coral `>` (no brackets), sidebar rows and in-page tabs a small
+one via `RailMarkerDelegate`/`TabMarkers` (renamed from `TabBrackets`), with matching
+coral icon/label and cream hover; tab icons recolour on hover through
+`refresh_tab_icons`. Palette: disabled `#9a7b52`, tab dim `#b0844f`, input border `#94673a`,
+card border `#82592b`, lighter button/Stop hover fills, placeholder colour, unfilled disabled
+fields. `TableHeader` uses the shared caption style (`caption_caps` moved to formatting),
+`DataTable.set_control` left-aligns capped editors, tank legend spacing, trigger placeholder
+"Select source", empty tank card shrinks, epoch label left-aligned with lighter progress,
+Selected group top-aligned, log caret only when focused. ARCH-002: existing owners reused,
+no new state or dependencies. Eight focused tests added; the existing bracket assertions
+were updated. 87 related GUI tests pass (413s; one new test was flaky on offscreen hover and now sets the hover state directly). Ruff check/format, Win32 mypy 195 sources, boundary 750/zero and whitespace pass.
+Not fixed: Preview controls toggle overlap, empty left-column space (see report).
+Pre-existing: proportional-header-width test fails at HEAD (macOS 1px). Native unverified.

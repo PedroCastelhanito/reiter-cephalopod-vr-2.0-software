@@ -20,6 +20,28 @@ its restore latch requires reopening. Close without saving discards current-wind
 edits and retains the repaired on-disk draft. Native reopen/save remains unverified;
 no hardware actions or runtime/rig acceptance claimed.
 
+## Amber phosphor style review — 2026-10-23
+
+Offscreen Amber render (macOS, Review window, 1680px) of every page, Devices/Projectors
+section, Tracking tab and Dashboard phase plus hover/focus/popup/dialog states; native
+Windows appearance not inspected. G02rev129 fixed: unthemed white tab scroll buttons
+(Projector setup and Tracking tabs now elide), solid-accent combo highlight and default
+popup scroller strips (non-overlay dim-tint popup), native coloured message-box icons
+(Amber glyph icons), 4px narrower Microcontroller Inputs/Outputs cards (standard card
+padding) and the duplicate review View menu. G02rev130 then fixed: chevron navigation (large coral `>` main pages, small `>` sidebar
+rows and in-page tabs, coral icon/label, hover preview and icon brightening), disabled-field
+fill, button/Stop hover fills, disabled/dim/placeholder/border contrast, unified uppercase
+tracked table headers with left-aligned capped editors, tank-legend spacing, shorter
+trigger-source placeholder, shrinking empty Setup geometry card, left-aligned epoch readout
+with a lighter progress fill, top-aligned Selected group caption, and focus-only log caret.
+Not changed: the Preview controls toggle overlapping the card frame (not selected), the
+Protocol reference-row "—" placeholders under blank headings (empty-state, headings reappear
+with a layer), the Trials card height (tied to the Trial timeline card row) and the empty
+space below short left-column pages (content ends). Native appearance unverified; scanline
+film over hover fills was not separately tuned beyond lighter fills. Focused tests added for
+each fix; `test_stimulus_mode_and_duration_use_proportional_header_widths` fails at HEAD
+too (1px mode/duration offset on macOS offscreen), so it is pre-existing.
+
 ## Sidebar subtab selection — 2026-10-22
 
 G02rev128 replaces child-link selection boxes with a2px left accent bar, brighter

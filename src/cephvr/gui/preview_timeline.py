@@ -101,7 +101,7 @@ class StimulusTimeline(QWidget):
         )
         self.epoch_label = QLabel("")
         self.epoch_label.setAlignment(
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
         self.epoch_label.setAccessibleName("Current epoch")
         self.size_lane = TraceLane("Size")
@@ -112,8 +112,9 @@ class StimulusTimeline(QWidget):
         # Only the epoch readout belongs to the timeline header.
         legend_row = QHBoxLayout()
         legend_row.setContentsMargins(PLOT_LEFT, 0, 24, 4)
-        legend_row.addStretch(1)
+        # Left-aligned with the first epoch tile so it reads as the row's caption.
         legend_row.addWidget(self.epoch_label)
+        legend_row.addStretch(1)
         console_layout.addLayout(legend_row)
         console_layout.addWidget(self.epoch_timeline)
         console_layout.addWidget(self.size_lane)

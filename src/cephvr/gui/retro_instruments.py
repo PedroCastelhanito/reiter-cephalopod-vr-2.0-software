@@ -4,7 +4,15 @@ import hashlib
 from collections.abc import Callable
 
 from PyQt6.QtCore import QEvent, QObject, QPointF, QRectF, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent, QPen, QTextCursor
+from PyQt6.QtGui import (
+    QColor,
+    QFont,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QTextCursor,
+)
 from PyQt6.QtWidgets import (
     QApplication,
     QPlainTextEdit,
@@ -15,6 +23,8 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.log_colors import log_block_is_error
 from cephvr.gui.theme import (
+    PHOSPHOR_TAB_GUTTER,
+    SIZES,
     Palette,
     minimal_frames,
     retro_colors,
@@ -235,9 +245,12 @@ class PromptGutter(QWidget):
             block = block.next()
 
 
-class TabBrackets(QWidget):
-    """Amber phosphor tab marks over an existing tab bar: bright brackets on the
-    current tab, dim ones on a hovered tab. Tabs keep native behaviour and text."""
+class TabMarkers(QWidget):
+    """Amber phosphor tab marks over an existing tab bar: a small coral `>` before the
+    current tab's content and a dim one before a hovered tab. Tabs keep native
+    behaviour and text; `hover_changed` lets the owner recolour icons."""
+
+    hover_changed = pyqtSignal()
 
     def __init__(self, bar: QTabBar) -> None:
         super().__init__(bar)
@@ -249,6 +262,12 @@ class TabBrackets(QWidget):
         bar.currentChanged.connect(lambda *_: self.update())
         self.setGeometry(bar.rect())
 
+    def set_hover(self, index: int) -> None:
+        if index != self.hover:
+            self.hover = index
+            self.update()
+            self.hover_changed.emit()
+
     def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
         if event is not None:
             kind = event.type()
@@ -256,26 +275,39 @@ class TabBrackets(QWidget):
                 self.setGeometry(self.bar.rect())
                 self.raise_()
             elif kind == QEvent.Type.MouseMove and isinstance(event, QMouseEvent):
-                hover = self.bar.tabAt(event.position().toPoint())
-                if hover != self.hover:
-                    self.hover = hover
-                    self.update()
-            elif kind == QEvent.Type.Leave and self.hover != -1:
-                self.hover = -1
-                self.update()
+                self.set_hover(self.bar.tabAt(event.position().toPoint()))
+            elif kind == QEvent.Type.Leave:
+                self.set_hover(-1)
         return False
+
+    def marker_rect(self, index: int) -> QRectF:
+        """Gutter just left of the tab's centred icon and text."""
+        rect = self.bar.tabRect(index)
+        metrics = self.bar.fontMetrics()
+        content = metrics.horizontalAdvance(self.bar.tabText(index))
+        if not self.bar.tabIcon(index).isNull():
+            content += self.bar.iconSize().width() + 6
+        # The tab sheet pads PHOSPHOR_TAB_GUTTER on the left and 5px on the right.
+        centre = (rect.left() + PHOSPHOR_TAB_GUTTER + rect.right() - 5) / 2
+        left = max(rect.left() + 2, centre - content / 2 - 14)
+        return QRectF(left, rect.top(), 12, rect.height())
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         if not minimal_frames(self.bar):
             return
         colors = retro_colors(self.bar)
         painter = QPainter(self)
+        font = QFont(self.bar.font())
+        font.setPixelSize(SIZES.label_font + 3)
+        painter.setFont(font)
         current = self.bar.currentIndex()
-        for index, ink in ((self.hover, colors.border), (current, colors.accent)):
-            if index < 0 or (index == current and ink == colors.border):
+        for index, ink in ((self.hover, colors.label), (current, colors.coral)):
+            if index < 0 or (index == current and ink == colors.label):
                 continue
-            rect = QRectF(self.bar.tabRect(index)).adjusted(1.5, 1.5, -2.5, -2.5)
-            corner_brackets(painter, rect, QColor(ink), 8)
+            painter.setPen(QColor(ink))
+            painter.drawText(
+                self.marker_rect(index), Qt.AlignmentFlag.AlignVCenter, ">"
+            )
 
 
 class ColumnHeader(QWidget):

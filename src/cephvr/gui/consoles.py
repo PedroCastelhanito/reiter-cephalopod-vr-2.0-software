@@ -255,7 +255,8 @@ class LogConsole(Console):
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         super().paintEvent(event)
-        if retro_console(self) and blink().on:
+        # Read-only logs show the block caret only while focused for copy/selection.
+        if retro_console(self) and blink().on and self.hasFocus():
             prompt_cursor(self)
 
     def setPlainText(self, text: str | None) -> None:

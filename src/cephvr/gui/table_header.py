@@ -4,16 +4,26 @@ from PyQt6.QtCore import QPointF, QRect, QSize
 from PyQt6.QtGui import QColor, QFont, QPainter, QTextLayout, QTextOption
 from PyQt6.QtWidgets import QHeaderView, QStyle, QStyleOptionHeader
 
-from cephvr.gui.theme import SIZES, colors_for, minimal_frames
+from cephvr.gui.formatting import caption_caps
+from cephvr.gui.theme import SIZES, colors_for, minimal_frames, retro_console
 
 
 class TableHeader(QHeaderView):
+    def phosphor(self) -> bool:
+        return minimal_frames(self) and retro_console(self)
+
     def label_layout(self, index: int, width: int) -> QTextLayout:
         model = self.model()
         text = str(model.headerData(index, self.orientation()) or "") if model else ""
         font = QFont(self.font())
         font.setPixelSize(SIZES.label_font)
-        font.setBold(True)
+        text = text.replace("\n", " ")
+        if self.phosphor():
+            # Same caption treatment as field labels: tracked, uppercase, regular.
+            text = caption_caps(text)
+            font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 2)
+        else:
+            font.setBold(True)
         layout = QTextLayout(text, font)
         option = QTextOption()
         option.setWrapMode(QTextOption.WrapMode.WrapAtWordBoundaryOrAnywhere)
@@ -53,7 +63,7 @@ class TableHeader(QHeaderView):
         style.drawControl(QStyle.ControlElement.CE_Header, option, painter, self)
         painter.setClipRect(rect)
         colors = colors_for(self)
-        painter.setPen(QColor(colors.muted if minimal_frames(self) else colors.accent))
+        painter.setPen(QColor(colors.label if self.phosphor() else colors.accent))
         layout = self.label_layout(index, rect.width())
         layout.draw(
             painter,

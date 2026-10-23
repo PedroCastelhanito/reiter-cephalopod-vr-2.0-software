@@ -37,14 +37,17 @@ class TankDiagram(QWidget):
                 "subject",
             )
         }
-        self.setMinimumHeight(150)
         self.setAccessibleName("Tank, screens and projector footprints")
         self.setCursor(Qt.CursorShape.OpenHandCursor)
         self.setMouseTracking(True)
         self.setToolTip("Click a legend to show or hide its elements · Drag to rotate")
 
     def sizeHint(self) -> QSize:
-        return QSize(260, 265)
+        # Before a rig exists only the legend and a hint show: do not reserve the 3D view.
+        return QSize(260, 265 if self.rig is not None else 110)
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(0, 150 if self.rig is not None else 90)
 
     def set_element_visible(self, key: str, visible: bool) -> None:
         self.visible_elements[key] = visible
@@ -68,7 +71,7 @@ class TankDiagram(QWidget):
             ("projection", "Projection", colors.projection, "optics"),
             ("subject", "Subject", colors.text, "dot"),
         ):
-            extent = painter.fontMetrics().horizontalAdvance(title) + 32
+            extent = painter.fontMetrics().horizontalAdvance(title) + 40
             if x + extent > self.width() - 5 and x > 8:
                 x, y = 8, y + 20
             self.legend_regions[key] = QRectF(x - 3, y - 14, extent, 20)
@@ -95,7 +98,7 @@ class TankDiagram(QWidget):
                 painter.drawLine(QPointF(x, y - 4), QPointF(x + 13, y - 4))
             if phosphor:
                 painter.setPen(QColor(colors.label))
-            painter.drawText(QPointF(x + 18, y), title)
+            painter.drawText(QPointF(x + 22, y), title)
             x += extent
         painter.restore()
         return y + 8
@@ -184,6 +187,7 @@ class TankDiagram(QWidget):
             f"{face}: {issue}" for face, issue in self.projection_issues.items()
         )
         self.setToolTip("\n".join(descriptions))
+        self.updateGeometry()
         self.update()
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
